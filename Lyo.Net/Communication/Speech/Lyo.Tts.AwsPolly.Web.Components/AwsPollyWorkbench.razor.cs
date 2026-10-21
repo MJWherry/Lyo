@@ -1,13 +1,6 @@
-using System.Net.Http.Json;
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Metadata.Records;
-using Lyo.Web.Components;
 using Lyo.Web.Primitives;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Lyo.Tts.AwsPolly.Web.Components;
@@ -15,14 +8,14 @@ namespace Lyo.Tts.AwsPolly.Web.Components;
 public partial class AwsPollyWorkbench
 {
     private const string AutoLanguage = "__default__";
-    private readonly IReadOnlyList<LanguageCodeInfo> _languages = LanguageCodeInfo.All.Where(i => i != LanguageCodeInfo.Unknown).OrderBy(i => i.Description).ToArray();
     private readonly IReadOnlyList<AwsPollyVoiceId> _availableVoices = Enum.GetValues<AwsPollyVoiceId>().Where(i => i != AwsPollyVoiceId.Unknown).ToArray();
-    private bool _busy;
-    private AudioFormat _audioFormat = AudioFormat.Mp3;
+    private readonly IReadOnlyList<LanguageCodeInfo> _languages = LanguageCodeInfo.All.Where(i => i != LanguageCodeInfo.Unknown).OrderBy(i => i.Description).ToArray();
     private byte[]? _audioBytes;
+    private AudioFormat _audioFormat = AudioFormat.Mp3;
     private string? _audioSource;
-    private AwsPollyVoiceId _selectedVoiceId = AwsPollyVoiceId.Amy;
+    private bool _busy;
     private string _selectedLanguage = AutoLanguage;
+    private AwsPollyVoiceId _selectedVoiceId = AwsPollyVoiceId.Amy;
     private string _text = "Hello from Lyo.";
 
     protected override void OnInitialized()

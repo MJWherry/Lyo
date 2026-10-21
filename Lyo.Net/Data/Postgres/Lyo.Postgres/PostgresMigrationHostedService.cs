@@ -36,7 +36,6 @@ public sealed class PostgresMigrationHostedService<TContext, TOptions> : IHosted
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.ConnectionString);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(options.Schema);
         _logger.LogInformation("Running PostgreSQL migrations for {Context} (schema: {Schema})", typeof(TContext).Name, options.Schema);
-
         var connectionString = new NpgsqlConnectionStringBuilder(options.ConnectionString) { SearchPath = options.Schema }.ConnectionString;
         await using var context = PostgresSchema.CreateContext<TContext>(connectionString, options.Schema);
         await PostgresSchema.EnsureAsync(context, options.Schema, ct).ConfigureAwait(false);

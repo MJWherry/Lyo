@@ -4,6 +4,8 @@ namespace Lyo.Authentication.Web.Components.Wasm.Pages;
 
 public partial class WasmAuthHandoffPage
 {
+    private string? _error;
+
     /// <summary>Handoff code minted by the API. Bound from <c>?lyo_handoff=...</c>.</summary>
     [SupplyParameterFromQuery(Name = "lyo_handoff")]
     public string? HandoffCode { get; set; }
@@ -15,8 +17,6 @@ public partial class WasmAuthHandoffPage
     /// <summary>Optional override for the root element id used by the element-id scheme.</summary>
     [Parameter]
     public string? ElementId { get; set; }
-
-    private string? _error;
 
     protected override async Task OnInitializedAsync()
     {

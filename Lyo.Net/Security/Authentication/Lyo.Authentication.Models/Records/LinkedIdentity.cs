@@ -3,8 +3,8 @@ using System.Diagnostics;
 namespace Lyo.Authentication.Models.Records;
 
 /// <summary>
-/// Mapping between a Lyo user and an external OIDC identity (a single <c>(provider, subject)</c> tuple). Backed by <c>[user].[linked_identity]</c> when persisted
-/// via <c>Lyo.Authentication.Postgres</c>.
+/// Mapping between a Lyo user and an external OIDC identity (a single <c>(provider, subject)</c> tuple). Backed by <c>[user].[linked_identity]</c> when persisted via
+/// <c>Lyo.Authentication.Postgres</c>.
 /// </summary>
 /// <param name="Id">Stable identifier for the link.</param>
 /// <param name="UserId">Lyo user this identity belongs to.</param>

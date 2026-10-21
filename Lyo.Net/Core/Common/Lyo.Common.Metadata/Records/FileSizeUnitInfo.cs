@@ -2,7 +2,6 @@ using System.Globalization;
 using Lyo.Common.Core;
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Extensions;
-using Lyo.Common.Metadata.Extensions;
 
 namespace Lyo.Common.Metadata.Records;
 
@@ -34,7 +33,6 @@ public record FileSizeUnitInfo(string Name, string Abbreviation, string Descript
     static FileSizeUnitInfo()
     {
         var fields = typeof(FileSizeUnitInfo).PublicStaticFields<FileSizeUnitInfo>();
-
         foreach (var unit in fields) {
             if (unit.FileSizeUnit == (FileSizeUnit)(-1)) // Omit the unknown sentinel
                 continue;

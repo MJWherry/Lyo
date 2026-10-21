@@ -2,7 +2,8 @@
 
 People-domain records: `Person`, contact, employment, identification, and relationships.
 
-**Archetype E (plugin).** Vendor ingest (e.g. [`Lyo.Endato.Client`](../../../Integration/Endato/Lyo.Endato.Client/README.md)) is Archetype C. Map into `people.*` in the host. See [package layout](../../../docs/package-layout.md).
+**Archetype E (plugin).** Vendor ingest (e.g. [`Lyo.Endato.Client`](../../../Integration/Endato/Lyo.Endato.Client/README.md)) is Archetype C. Map into `people.*` in the host.
+See [package layout](../../../docs/package-layout.md).
 
 ## Examples
 
@@ -60,7 +61,11 @@ var display = person.Name.DisplayName; // PreferredName ?? FullName
 ## Overview
 
 Demographics, contact info, addresses, employment, relationships, and preferences live on `Person`. Addresses reuse
-`Lyo.Geolocation.Models`. Internal rows sit in `people.*` with parallel `{entity}_source` link tables ([`EntitySourceRecord`](../../../Core/EntityReference/Lyo.EntityReference.Models/EntitySourceRecord.cs) / [`PeopleSourceTypes`](PeopleSourceTypes.cs)): `source_entity_*` plus `imported_at` (owner via parent FK). Aggregates implement `IEntitySourceDerived` (`Sources`, optional `LocallyModifiedAt`). Enriched locations may also be stored in [`geolocation.address`](../../../Core/Geolocation/Lyo.Geolocation.Postgres/README.md). Cross-store links use `EntityRef` on source rows (e.g. `GeolocationAddress`), not cross-schema FKs.
+`Lyo.Geolocation.Models`. Internal rows sit in `people.*` with parallel `{entity}_source` link tables ([
+`EntitySourceRecord`](../../../Core/EntityReference/Lyo.EntityReference.Models/EntitySourceRecord.cs) / [`PeopleSourceTypes`](PeopleSourceTypes.cs)): `source_entity_*` plus
+`imported_at` (owner via parent FK). Aggregates implement `IEntitySourceDerived` (`Sources`, optional `LocallyModifiedAt`). Enriched locations may also be stored in [
+`geolocation.address`](../../../Core/Geolocation/Lyo.Geolocation.Postgres/README.md). Cross-store links use `EntityRef` on source rows (e.g. `GeolocationAddress`), not cross-schema
+FKs.
 
 ## Core types
 

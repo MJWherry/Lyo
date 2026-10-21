@@ -1,7 +1,5 @@
 using System.Diagnostics;
-using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Lyo.Api.Mapping;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Common.Response;
@@ -11,7 +9,6 @@ using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Update;
 using Lyo.Cache;
 using Lyo.Common.Core.Conversion;
-using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
@@ -25,7 +22,6 @@ using Lyo.Job.Postgres.Database;
 using Lyo.MessageQueue;
 using Lyo.Metrics;
 using Lyo.Parameters;
-using Lyo.Query.Models.Parameters;
 using Lyo.Scheduler;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -57,13 +53,16 @@ public class JobService(
     private const string ScheduleSlotUniqueConstraint = "ix_job_run_schedule_slot_unique";
     private const string IdempotencyKeyUniqueConstraint = "ix_job_run_idempotency_key_unique";
 
+    /// <summary>Most due <c>Queued</c> runs a single resync call will republish. Callers repeat the call to work through a larger backlog.</summary>
+    private const int ResyncBatchLimit = 2_000;
+
     private readonly IMetrics _metrics = metrics ?? NullMetrics.Instance;
     private readonly IJobParameterEncryptionService? _parameterEncryption = parameterEncryption;
 
     /// <summary>
     /// The CAS transitions below use <c>ExecuteUpdateAsync</c>, which bypasses the CRUD services (and therefore their query-cache invalidation), so any cached
-    /// <see cref="JobRun" /> GET and list entries must be invalidated by hand. Definition grids that project last-run columns are tagged as
-    /// <c>entity:jobdefinition</c>, not <c>entity:jobrun</c>, so both type tags are cleared.
+    /// <see cref="JobRun" /> GET and list entries must be invalidated by hand. Definition grids that project last-run columns are tagged as <c>entity:jobdefinition</c>, not
+    /// <c>entity:jobrun</c>, so both type tags are cleared.
     /// </summary>
     private Task InvalidateRunCacheAsync(Guid jobRunId)
     {
@@ -84,6 +83,7 @@ public class JobService(
                     ctx.Entity.JobRunId = jobRunId;
                 }, ct: ct)
             .ConfigureAwait(false);
+
         if (result.IsSuccess)
             await QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<JobRun, JobDefinition>(cache).ConfigureAwait(false);
 
@@ -136,6 +136,7 @@ public class JobService(
             if (existingSlot is not null) {
                 logger.LogInformation(
                     "Duplicate job run for schedule {ScheduleId} slot {Slot:u} returned existing run {RunId}", request.JobScheduleId, request.ScheduledSlotUtc, existingSlot.Id);
+
                 await guardTx.CommitAsync(CancellationToken.None).ConfigureAwait(false);
                 return ResultFactory.CreateSuccess(MaskRunResponse(existingSlot));
             }
@@ -195,6 +196,7 @@ public class JobService(
             if (existingSlot is not null) {
                 logger.LogInformation(
                     "Duplicate job run for schedule {ScheduleId} slot {Slot:u} returned existing run {RunId}", request.JobScheduleId, request.ScheduledSlotUtc, existingSlot.Id);
+
                 return ResultFactory.CreateSuccess(MaskRunResponse(existingSlot));
             }
 
@@ -212,7 +214,6 @@ public class JobService(
             return result;
 
         await QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<JobRun, JobDefinition>(cache).ConfigureAwait(false);
-
         activity?.SetTag("job.run.id", result.Data!.Id);
         _metrics.IncrementCounter(Constants.Metrics.Service.RunCreated, tags: [("definition", result.Data!.JobDefinition?.Name ?? "unknown")]);
         if (suppressDispatch) {
@@ -343,9 +344,9 @@ public class JobService(
     }
 
     /// <summary>
-    /// Moves a run from <c>Queued</c> to <c>Running</c> using an atomic compare-and-swap. Any other state (already <c>Running</c> from a duplicate delivery,
-    /// <c>Cancelling</c> from a queued-run cancel, or <c>Finished</c>) is rejected so redelivered dispatch messages never execute a run twice. This is a worker-trusted
-    /// endpoint: the returned run has encrypted parameter values decrypted so workers can execute with real values (all other read endpoints stay masked).
+    /// Moves a run from <c>Queued</c> to <c>Running</c> using an atomic compare-and-swap. Any other state (already <c>Running</c> from a duplicate delivery, <c>Cancelling</c>
+    /// from a queued-run cancel, or <c>Finished</c>) is rejected so redelivered dispatch messages never execute a run twice. This is a worker-trusted endpoint: the returned run has
+    /// encrypted parameter values decrypted so workers can execute with real values (all other read endpoints stay masked).
     /// </summary>
     public async Task<(JobRunRes? Result, LyoProblemDetails? Error)> StartedJobRun(Guid jobRunId, JobRunStartedReq? request = null, CancellationToken ct = default)
     {
@@ -375,14 +376,14 @@ public class JobService(
         }
 
         var updatedRows = await db.JobRuns.Where(r => r.Id == jobRunId && r.State == JobState.Queued)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(r => r.State, JobState.Running)
-                .SetProperty(r => r.StartedTimestamp, startedAt)
-                .SetProperty(r => r.UpdatedTimestamp, startedAt)
-                .SetProperty(r => r.SlaBreached, r => r.SlaBreached || slaBreached)
-                .SetProperty(r => r.WorkerInstanceId, workerInstanceId)
-                .SetProperty(r => r.WorkerMachineName, workerMachineName)
-                .SetProperty(r => r.WorkerProcessId, workerProcessId), ct)
+            .ExecuteUpdateAsync(
+                s => s.SetProperty(r => r.State, JobState.Running)
+                    .SetProperty(r => r.StartedTimestamp, startedAt)
+                    .SetProperty(r => r.UpdatedTimestamp, startedAt)
+                    .SetProperty(r => r.SlaBreached, r => r.SlaBreached || slaBreached)
+                    .SetProperty(r => r.WorkerInstanceId, workerInstanceId)
+                    .SetProperty(r => r.WorkerMachineName, workerMachineName)
+                    .SetProperty(r => r.WorkerProcessId, workerProcessId), ct)
             .ConfigureAwait(false);
 
         if (updatedRows == 0) {
@@ -433,11 +434,11 @@ public class JobService(
             var now = DateTime.UtcNow;
             await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
             var cancelledRows = await db.JobRuns.Where(r => r.Id == jobRunId && r.State == JobState.Queued)
-                .ExecuteUpdateAsync(s => s
-                    .SetProperty(r => r.State, JobState.Finished)
-                    .SetProperty(r => r.Result, JobRunResult.Cancelled)
-                    .SetProperty(r => r.FinishedTimestamp, now)
-                    .SetProperty(r => r.UpdatedTimestamp, now), ct)
+                .ExecuteUpdateAsync(
+                    s => s.SetProperty(r => r.State, JobState.Finished)
+                        .SetProperty(r => r.Result, JobRunResult.Cancelled)
+                        .SetProperty(r => r.FinishedTimestamp, now)
+                        .SetProperty(r => r.UpdatedTimestamp, now), ct)
                 .ConfigureAwait(false);
 
             if (cancelledRows > 0) {
@@ -465,8 +466,8 @@ public class JobService(
     }
 
     /// <summary>
-    /// Moves a run from <c>Running</c> back to <c>Queued</c> using an atomic compare-and-swap. Used by workers during graceful host shutdown to hand the run back for
-    /// redelivery instead of terminally cancelling it. <c>Cancelling</c> runs are intentionally rejected. A pending user cancellation must not be forgotten by a restart.
+    /// Moves a run from <c>Running</c> back to <c>Queued</c> using an atomic compare-and-swap. Used by workers during graceful host shutdown to hand the run back for redelivery
+    /// instead of terminally cancelling it. <c>Cancelling</c> runs are intentionally rejected. A pending user cancellation must not be forgotten by a restart.
     /// </summary>
     public async Task<(JobRunRes? Result, LyoProblemDetails? Error)> RequeueJobRun(Guid jobRunId, CancellationToken ct = default)
     {
@@ -479,14 +480,14 @@ public class JobService(
         // Clear the worker attribution along with the timestamps. The run is going back on the queue and a different worker will pick it
         // up, so leaving the old worker's instance/machine/process on the row misattributes the next attempt in the UI and in queries.
         var updatedRows = await db.JobRuns.Where(r => r.Id == jobRunId && r.State == JobState.Running)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(r => r.State, JobState.Queued)
-                .SetProperty(r => r.StartedTimestamp, (DateTime?)null)
-                .SetProperty(r => r.LastHeartbeatUtc, (DateTime?)null)
-                .SetProperty(r => r.WorkerInstanceId, (Guid?)null)
-                .SetProperty(r => r.WorkerMachineName, (string?)null)
-                .SetProperty(r => r.WorkerProcessId, (int?)null)
-                .SetProperty(r => r.UpdatedTimestamp, now), ct)
+            .ExecuteUpdateAsync(
+                s => s.SetProperty(r => r.State, JobState.Queued)
+                    .SetProperty(r => r.StartedTimestamp, (DateTime?)null)
+                    .SetProperty(r => r.LastHeartbeatUtc, (DateTime?)null)
+                    .SetProperty(r => r.WorkerInstanceId, (Guid?)null)
+                    .SetProperty(r => r.WorkerMachineName, (string?)null)
+                    .SetProperty(r => r.WorkerProcessId, (int?)null)
+                    .SetProperty(r => r.UpdatedTimestamp, now), ct)
             .ConfigureAwait(false);
 
         if (updatedRows == 0)
@@ -501,8 +502,8 @@ public class JobService(
 
     /// <summary>
     /// Finalizes a run and records its results. The state transition is an atomic compare-and-swap over <c>Running</c>/<c>Cancelling</c> inside a transaction with the result
-    /// inserts, so two concurrent finishes (a redelivered completion, or a worker finishing as maintenance times the run out) cannot both append result rows and publish
-    /// duplicate finished events. The loser is rejected.
+    /// inserts, so two concurrent finishes (a redelivered completion, or a worker finishing as maintenance times the run out) cannot both append result rows and publish duplicate
+    /// finished events. The loser is rejected.
     /// </summary>
     public async Task<(JobRunRes? Result, LyoProblemDetails? Error)> FinishedJobRun(Guid jobRunId, IReadOnlyList<JobRunResultReq> results, CancellationToken ct = default)
     {
@@ -531,8 +532,7 @@ public class JobService(
         await using var transaction = await db.Database.BeginTransactionAsync(ct).ConfigureAwait(false);
         var claimed = await db.JobRuns.Where(r => r.Id == jobRunId && (r.State == JobState.Running || r.State == JobState.Cancelling))
             .ExecuteUpdateAsync(
-                s => s
-                    .SetProperty(r => r.State, JobState.Finished)
+                s => s.SetProperty(r => r.State, JobState.Finished)
                     .SetProperty(r => r.Result, resultEnum)
                     .SetProperty(r => r.FinishedTimestamp, finishedAt)
                     .SetProperty(r => r.UpdatedTimestamp, finishedAt)
@@ -543,8 +543,7 @@ public class JobService(
             await transaction.RollbackAsync(ct).ConfigureAwait(false);
             _metrics.IncrementCounter(Constants.Metrics.Service.RunFinishRejected);
             return (null,
-                LogAndReturnApiError(
-                    $"Job is not in a finishable state (must be Running or Cancelling); it may already be Finished. Run {jobRunId}.", ApiErrCodes.InvalidRequest));
+                LogAndReturnApiError($"Job is not in a finishable state (must be Running or Cancelling); it may already be Finished. Run {jobRunId}.", ApiErrCodes.InvalidRequest));
         }
 
         foreach (var res in results) {
@@ -557,7 +556,6 @@ public class JobService(
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         await transaction.CommitAsync(ct).ConfigureAwait(false);
         await InvalidateRunCacheAsync(jobRunId).ConfigureAwait(false);
-
         _metrics.IncrementCounter(Constants.Metrics.Service.RunFinished, tags: [("result", resultEnum.ToString())]);
         if (existing.StartedTimestamp.HasValue)
             _metrics.RecordTiming(Constants.Metrics.Service.RunDuration, finishedAt - existing.StartedTimestamp.Value, [("result", resultEnum.ToString())]);
@@ -574,10 +572,7 @@ public class JobService(
         }
 
         var savedResult = await queryService.Get<JobRun, JobRunRes>(
-                [jobRunId],
-                [
-                    "JobRunResults", "JobRunLogs", "JobRunParameters", "JobSchedule", "JobDefinition", "JobDefinition.JobSchedules"
-                ])
+                [jobRunId], ["JobRunResults", "JobRunLogs", "JobRunParameters", "JobSchedule", "JobDefinition", "JobDefinition.JobSchedules"])
             .ConfigureAwait(false);
 
         return (MaskRunResponse(savedResult!), null);
@@ -604,8 +599,8 @@ public class JobService(
 
     /// <summary>
     /// Republishes due <c>Queued</c> runs whose dispatch message is not already on the worker queue. The Runs grid uses this when an operator needs to refill RabbitMQ after a
-    /// queue was emptied. Runs already present on <c>job.run.{workerType}</c> or its <c>.wait</c> delay queue are skipped. Duplicate publishes are harmless because
-    /// <c>StartedJobRun</c> only transitions <c>Queued -&gt; Running</c> once.
+    /// queue was emptied. Runs already present on <c>job.run.{workerType}</c> or its <c>.wait</c> delay queue are skipped. Duplicate publishes are harmless because <c>StartedJobRun</c>
+    /// only transitions <c>Queued -&gt; Running</c> once.
     /// </summary>
     /// <param name="definitionId">When set, only runs of this definition are considered.</param>
     /// <param name="ct">Token used to cancel the resync.</param>
@@ -632,10 +627,11 @@ public class JobService(
             candidates.RemoveRange(ResyncBatchLimit, candidates.Count - ResyncBatchLimit);
 
         if (candidates.Count == 0)
-            return (new JobRunResyncRes(), null);
+            return (new(), null);
 
         var alreadyQueued = await new JobQueuedRunInspector(mqService, logger).GetQueuedRunIdsAsync(candidates.Select(c => c.WorkerType), candidates.Count, ct)
             .ConfigureAwait(false);
+
         var republished = 0;
         var failed = 0;
         var alreadyInQueue = 0;
@@ -658,7 +654,7 @@ public class JobService(
         if (republished > 0)
             _metrics.IncrementCounter(Constants.Metrics.Service.RunResynced, republished);
 
-        return (new JobRunResyncRes {
+        return (new() {
             Queued = candidates.Count,
             AlreadyInQueue = alreadyInQueue,
             Republished = republished,
@@ -668,8 +664,8 @@ public class JobService(
     }
 
     /// <summary>
-    /// Returns the latest run, latest successful run, and latest failed run per definition in one call. Used by the scheduler's definition refresh so it does not need three
-    /// HTTP queries per definition.
+    /// Returns the latest run, latest successful run, and latest failed run per definition in one call. Used by the scheduler's definition refresh so it does not need three HTTP
+    /// queries per definition.
     /// </summary>
     public async Task<IReadOnlyList<JobDefinitionLatestRunsRes>> GetLatestRuns(IReadOnlyList<Guid> definitionIds, CancellationToken ct = default)
     {
@@ -891,8 +887,8 @@ public class JobService(
 
     /// <summary>
     /// Fills in schedule-parameter overrides when the run names a schedule, then definition defaults the caller omitted, then validates the resulting parameter set. A "run this
-    /// schedule" request can send only <see cref="JobRunReq.JobScheduleId" />. The stored schedule parameters are applied before definition back-fill so they win over definition
-    /// defaults the same way the scheduler does. The scheduler still pre-populates values itself.
+    /// schedule" request can send only <see cref="JobRunReq.JobScheduleId" />. The stored schedule parameters are applied before definition back-fill so they win over definition defaults
+    /// the same way the scheduler does. The scheduler still pre-populates values itself.
     /// </summary>
     /// <param name="request">Run request, mutated in place with the back-filled parameters.</param>
     /// <param name="ct">Token used to cancel the back-fill.</param>
@@ -902,7 +898,6 @@ public class JobService(
         await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var errors = new List<string>();
         await ApplyScheduleParameterOverridesAsync(request, db, errors, ct).ConfigureAwait(false);
-
         var defParams = await db.JobParameters.Where(p => p.JobDefinitionId == request.JobDefinitionId).ToListAsync(ct).ConfigureAwait(false);
         if (defParams.Count > 0) {
             var specs = defParams.Select(JobDefinitionWriteValidator.ToSpec).ToList();
@@ -929,10 +924,7 @@ public class JobService(
         if (request.JobScheduleId is not { } scheduleId)
             return;
 
-        var schedule = await db.JobSchedules.AsNoTracking()
-            .Include(s => s.JobScheduleParameters)
-            .FirstOrDefaultAsync(s => s.Id == scheduleId, ct)
-            .ConfigureAwait(false);
+        var schedule = await db.JobSchedules.AsNoTracking().Include(s => s.JobScheduleParameters).FirstOrDefaultAsync(s => s.Id == scheduleId, ct).ConfigureAwait(false);
         if (schedule is null) {
             errors.Add($"Job schedule '{scheduleId}' was not found.");
             return;
@@ -1074,14 +1066,11 @@ public class JobService(
         return finishedAt > run.StartedTimestamp.Value.AddMinutes(expectedMinutes);
     }
 
-    /// <summary>Most due <c>Queued</c> runs a single resync call will republish. Callers repeat the call to work through a larger backlog.</summary>
-    private const int ResyncBatchLimit = 2_000;
-
-    /// <summary>A due <c>Queued</c> run reduced to the fields required to republish its dispatch message.</summary>
-    private sealed record ResyncCandidate(Guid Id, string WorkerType, int Priority);
-
     private Task PublishSlaAlertAsync(Guid definitionId, Guid runId, string? definitionName, string detail)
         => TryPublishAsync(
             () => eventPublisher.PublishAlertAsync(definitionId, runId, JobAlertType.SlaBreach, $"{detail} for '{definitionName ?? definitionId.ToString()}' (run {runId})"),
             "Failed to publish SLA alert for run {RunId}", runId);
+
+    /// <summary>A due <c>Queued</c> run reduced to the fields required to republish its dispatch message.</summary>
+    private sealed record ResyncCandidate(Guid Id, string WorkerType, int Priority);
 }

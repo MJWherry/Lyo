@@ -2,7 +2,8 @@
 
 @if (Release is null) {
     <MudText Typo="Typo.body2">No release selected.</MudText>
-} else {
+}
+else {
     <MudStack Spacing="3">
         <MudStack Row="true" Spacing="3">
             @if (!string.IsNullOrWhiteSpace(CoverImageUrl)) {
@@ -18,7 +19,8 @@
         <MudText Typo="Typo.subtitle1">Credits</MudText>
         @if (Release.Credits.Count == 0) {
             <MudText Typo="Typo.body2">None</MudText>
-        } else {
+        }
+        else {
             <MudSimpleTable Dense="true" Hover="true">
                 <thead>
                 <tr>
@@ -40,7 +42,8 @@
         <MudText Typo="Typo.subtitle1">Tracks</MudText>
         @if (Release.Tracks.Count == 0) {
             <MudText Typo="Typo.body2">None</MudText>
-        } else {
+        }
+        else {
             <MudSimpleTable Dense="true" Hover="true">
                 <thead>
                 <tr>

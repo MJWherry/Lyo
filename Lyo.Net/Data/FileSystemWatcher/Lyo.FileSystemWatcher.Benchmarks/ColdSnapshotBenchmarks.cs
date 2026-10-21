@@ -13,8 +13,8 @@ namespace Lyo.FileSystemWatcher.Benchmarks;
 [BenchmarkParameter("EnableHashing", Description = "Whether the snapshot computes per-file fingerprints for move and rename detection.")]
 public class ColdSnapshotBenchmarks
 {
-    private IOTempSession _session = null!;
     private FileSystemWatcherOptions _options = null!;
+    private IOTempSession _session = null!;
 
     [Params(200, 2000)]
     public int FileCount { get; set; }

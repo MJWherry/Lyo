@@ -10,15 +10,12 @@ public sealed class AuditPostgresFixture : PostgresServiceFixtureBase<AuditDbCon
 {
     public IAuditRecorder Recorder { get; private set; } = null!;
 
-    protected override void ConfigureServices(IServiceCollection services, string connectionString) =>
-        services.AddDbContextFactory<AuditDbContext>(
-            opts => opts.UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "audit")));
+    protected override void ConfigureServices(IServiceCollection services, string connectionString)
+        => services.AddDbContextFactory<AuditDbContext>(opts => opts.UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "audit")));
 
     protected override ValueTask OnMigratedAsync(CancellationToken cancellationToken)
     {
-        Recorder = new PostgresAuditRecorder(
-            ContextFactory, new EntityRefOptions(), new PostgresAuditOptions { Tenancy = new() { Mode = TenancyMode.MultiTenantOptional } });
-
+        Recorder = new PostgresAuditRecorder(ContextFactory, new(), new() { Tenancy = new() { Mode = TenancyMode.MultiTenantOptional } });
         return ValueTask.CompletedTask;
     }
 }

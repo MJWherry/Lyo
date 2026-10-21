@@ -15,12 +15,14 @@ public static class ContainerTestHost
     /// <paramref name="readyDelay" /> is set, the call waits that long after start for servers whose wait strategy fires before they accept connections.
     /// </summary>
     public static async Task<IContainer?> TryStartAsync(
-        string image, Func<ContainerBuilder, ContainerBuilder> configure, CancellationToken cancellationToken, TimeSpan? readyDelay = null)
+        string image,
+        Func<ContainerBuilder, ContainerBuilder> configure,
+        CancellationToken cancellationToken,
+        TimeSpan? readyDelay = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(image);
         ArgumentHelpers.ThrowIfNull(configure);
-
-        var container = configure(new ContainerBuilder(image)).Build();
+        var container = configure(new(image)).Build();
         try {
             await container.StartAsync(cancellationToken);
         }

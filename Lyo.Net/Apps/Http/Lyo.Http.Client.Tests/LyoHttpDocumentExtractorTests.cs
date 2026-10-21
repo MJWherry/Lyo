@@ -1,4 +1,3 @@
-using Lyo.Http.Client;
 using Lyo.Http.Client.Extract;
 
 namespace Lyo.Http.Client.Tests;
@@ -29,10 +28,7 @@ public sealed class LyoHttpDocumentExtractorTests
     [Fact]
     public void ExtractLinks_ExtensionFilter()
     {
-        var items = LyoHttpDocumentExtractor.ExtractLinks(Html(), new() {
-            FileExtensionFilter = [".zip", ".pdf"],
-            LinkResolutionBaseUri = "https://cdn.example.test/"
-        });
+        var items = LyoHttpDocumentExtractor.ExtractLinks(Html(), new() { FileExtensionFilter = [".zip", ".pdf"], LinkResolutionBaseUri = "https://cdn.example.test/" });
         var urls = LyoHttpDocumentExtractor.ToUrlList(items);
         Assert.Contains(urls, u => u.Contains("a.zip", StringComparison.Ordinal));
         Assert.Contains(urls, u => u.Contains("notes.pdf", StringComparison.Ordinal));

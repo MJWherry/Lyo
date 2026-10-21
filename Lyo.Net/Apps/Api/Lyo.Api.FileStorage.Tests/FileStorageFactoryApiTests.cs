@@ -1,14 +1,12 @@
 using System.Net;
 using System.Net.Http.Json;
 using Lyo.Api.FileStorage.Models;
+using Lyo.Cache;
 using Lyo.FileMetadataStore.Postgres;
 using Lyo.FileStorage;
-using Lyo.Cache;
 using Lyo.FileStorage.Abstractions;
-using Lyo.FileStorage.Models;
 using Lyo.IO.Temp.Models;
 using Lyo.KeyStore;
-using Lyo.Testing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,18 +29,17 @@ public sealed class FileStorageFactoryApiTests
                 stores.AddDisk("a", options => options.RootDirectoryPath = rootA);
             });
         });
-        using var client = Client(app);
 
-        var listed = await client.GetFromJsonAsync<FileStorageStoreResponse[]>("/FileStorage/stores", TestCancellation.TestCt);
+        using var client = Client(app);
+        var listed = await client.GetFromJsonAsync<FileStorageStoreResponse[]>("/FileStorage/stores", TestCt);
         Assert.Equal(["a", "b"], listed!.Select(store => store.Name).ToArray());
         Assert.All(listed, store => Assert.Null(store.FileMetadataRoute));
         Assert.Contains(listed, store => store.Route == "FileStorage/a");
-
-        var saved = await client.PostAsJsonAsync("/FileStorage/a/files/save", new SaveFileRequest(payload), TestCancellation.TestCt);
+        var saved = await client.PostAsJsonAsync("/FileStorage/a/files/save", new SaveFileRequest(payload), TestCt);
         Assert.Equal(HttpStatusCode.OK, saved.StatusCode);
         Assert.True(Contains(rootA, payload));
         Assert.False(Contains(rootB, payload));
-        Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsync("/FileStorage/a/files/" + Guid.NewGuid() + "/access-links", JsonContent.Create(new { }), TestCancellation.TestCt)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.PostAsync("/FileStorage/a/files/" + Guid.NewGuid() + "/access-links", JsonContent.Create(new { }), TestCt)).StatusCode);
     }
 
     [Fact]
@@ -52,18 +49,20 @@ public sealed class FileStorageFactoryApiTests
         var rootA = session.CreateDirectory("a");
         var rootB = session.CreateDirectory("b");
         var payload = new byte[] { 9, 8, 7 };
-        await using var app = await Start(services => {
-            services.AddLocalCache();
-            services.AddFileStorageFactory(stores => {
-                stores.AddDisk("a", options => options.RootDirectoryPath = rootA);
-                stores.AddDisk("b", options => options.RootDirectoryPath = rootB);
-            });
-            var catalog = (FileStorageFactoryCatalog)services.Single(descriptor => descriptor.ServiceType == typeof(FileStorageFactoryCatalog)).ImplementationInstance!;
-            catalog.DefaultName = "a";
-        }, new() { DirectUploadPath = "" });
+        await using var app = await Start(
+            services => {
+                services.AddLocalCache();
+                services.AddFileStorageFactory(stores => {
+                    stores.AddDisk("a", options => options.RootDirectoryPath = rootA);
+                    stores.AddDisk("b", options => options.RootDirectoryPath = rootB);
+                });
+
+                var catalog = (FileStorageFactoryCatalog)services.Single(descriptor => descriptor.ServiceType == typeof(FileStorageFactoryCatalog)).ImplementationInstance!;
+                catalog.DefaultName = "a";
+            }, new() { DirectUploadPath = "" });
 
         using var client = Client(app);
-        var saved = await client.PostAsJsonAsync("/FileStorage/files/save", new SaveFileRequest(payload), TestCancellation.TestCt);
+        var saved = await client.PostAsJsonAsync("/FileStorage/files/save", new SaveFileRequest(payload), TestCt);
         Assert.Equal(HttpStatusCode.OK, saved.StatusCode);
         Assert.True(Contains(rootA, payload));
         Assert.False(Contains(rootB, payload));
@@ -90,12 +89,12 @@ public sealed class FileStorageFactoryApiTests
         var payload = new byte[] { 4, 5, 6 };
         await using var app = await Start(services => {
             services.AddLocalCache();
-            services.AddKeyedSingleton<IFileStorageService>(FileStorageApiOptions.DefaultServiceKey, new LocalFileStorageService(new DiskFileStorageOptions { RootDirectoryPath = root }));
+            services.AddKeyedSingleton<IFileStorageService>(FileStorageApiOptions.DefaultServiceKey, new LocalFileStorageService(new() { RootDirectoryPath = root }));
         });
-        using var client = Client(app);
 
-        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/FileStorage/stores", TestCancellation.TestCt)).StatusCode);
-        var saved = await client.PostAsJsonAsync("/FileStorage/files/save", new SaveFileRequest(payload), TestCancellation.TestCt);
+        using var client = Client(app);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/FileStorage/stores", TestCt)).StatusCode);
+        var saved = await client.PostAsJsonAsync("/FileStorage/files/save", new SaveFileRequest(payload), TestCt);
         Assert.Equal(HttpStatusCode.OK, saved.StatusCode);
         Assert.True(Contains(root, payload));
     }
@@ -110,13 +109,14 @@ public sealed class FileStorageFactoryApiTests
                 stores.AddDisk("locked", disk => disk.Configure(options => options.RootDirectoryPath = session.CreateDirectory("locked")).UseEncryption("kek"));
                 stores.AddDisk("open", options => options.RootDirectoryPath = session.CreateDirectory("open"));
             });
+
             services.AddKeyedSingleton<IKeyStore>("kek", new ListingKeyStore("locked-key"));
             services.AddSingleton<IKeyStore>(new ListingKeyStore("shared-key"));
         });
-        using var client = Client(app);
 
-        Assert.Equal(["locked-key"], await client.GetFromJsonAsync<string[]>("/FileStorage/locked/key-ids", TestCancellation.TestCt));
-        Assert.Equal(["shared-key"], await client.GetFromJsonAsync<string[]>("/FileStorage/open/key-ids", TestCancellation.TestCt));
+        using var client = Client(app);
+        Assert.Equal(["locked-key"], await client.GetFromJsonAsync<string[]>("/FileStorage/locked/key-ids", TestCt));
+        Assert.Equal(["shared-key"], await client.GetFromJsonAsync<string[]>("/FileStorage/open/key-ids", TestCt));
     }
 
     private static async Task<WebApplication> Start(Action<IServiceCollection> configure, FileStorageApiOptions? options = null)
@@ -131,7 +131,7 @@ public sealed class FileStorageFactoryApiTests
         return app;
     }
 
-    private static HttpClient Client(WebApplication app) => new() { BaseAddress = new Uri(app.Urls.First()) };
+    private static HttpClient Client(WebApplication app) => new() { BaseAddress = new(app.Urls.First()) };
 
     private static bool Contains(string root, byte[] payload)
     {

@@ -4,8 +4,8 @@ using RabbitMQ.Client;
 namespace Lyo.MessageQueue.RabbitMq.Tests;
 
 /// <summary>
-/// Shared RabbitMQ broker for this assembly's integration tests (management image so peek and queue stats work). Each test builds its own
-/// <see cref="RabbitMqService" /> through <see cref="CreateService" /> so publisher confirms and per-queue limits can differ.
+/// Shared RabbitMQ broker for this assembly's integration tests (management image so peek and queue stats work). Each test builds its own <see cref="RabbitMqService" />
+/// through <see cref="CreateService" /> so publisher confirms and per-queue limits can differ.
 /// </summary>
 public sealed class RabbitMqBrokerFixture : RabbitMqContainerFixtureBase
 {

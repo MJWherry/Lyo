@@ -1,10 +1,12 @@
 # Lyo.FileStorage.Ftp
 
-Lyo.FileStorage physical-IO backend for FTP/FTPS. Save, read, delete, copy, move, and DEK header rotation work. v1 does not implement presigned URLs or multipart (the base throws NotSupportedException).
+Lyo.FileStorage physical-IO backend for FTP/FTPS. Save, read, delete, copy, move, and DEK header rotation work. v1 does not implement presigned URLs or multipart (the base throws
+NotSupportedException).
 
 ## Features
 
-- **Shared remote storage core.** `FTPFileStorageService` subclasses `RemoteFileStorageServiceBase` in `Lyo.FileStorage`, which already covers streaming, encryption-header handling, copy/move, and health. What this package adds is `FtpRemoteFileTransport` (`IRemoteFileTransport` over `Lyo.Ftp.Client`), plus options and DI.
+- **Shared remote storage core.** `FTPFileStorageService` subclasses `RemoteFileStorageServiceBase` in `Lyo.FileStorage`, which already covers streaming, encryption-header
+  handling, copy/move, and health. What this package adds is `FtpRemoteFileTransport` (`IRemoteFileTransport` over `Lyo.Ftp.Client`), plus options and DI.
 - **FTP physical IO.** Commit-on-close upload and a leased read stream.
 - **Path jail.** POSIX paths rooted at `Ftp.RootRemoteDirectory`.
 - **DI.** `AddFtpFileStorageService` and `AddFtpFileStorageServiceFromConfiguration`, matching the Blob extensions.

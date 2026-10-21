@@ -1,7 +1,5 @@
-using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
-using Lyo.Formatter.Web.Components;
 using Lyo.Job.Models.Context;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Response;
@@ -11,8 +9,8 @@ namespace Lyo.Job.Scheduler.Tests;
 
 /// <summary>
 /// The step editor advertises the tokens a workflow step's parameter templates and condition gates can read, and what actually resolves is whatever
-/// <see cref="JobWorkflowEngine.BuildStepScope" /> seeded. Both go through <see cref="JobContextBag.WithWorkflowStep" />, and these assert that stays true — so an engine
-/// change cannot leave the editor offering paths that resolve to nothing.
+/// <see cref="JobWorkflowEngine.BuildStepScope" /> seeded. Both go through <see cref="JobContextBag.WithWorkflowStep" />, and these assert that stays true — so an engine change
+/// cannot leave the editor offering paths that resolve to nothing.
 /// </summary>
 public class JobWorkflowFormatterContextTests
 {
@@ -22,12 +20,10 @@ public class JobWorkflowFormatterContextTests
         var definition = BuildDefinition();
         var step = BuildStep("Transform", definition.Id);
         var upstreamRun = BuildRun(definition.Id);
-
         var bag = new JobContextBag().WithWorkflowStep(step, definition, [("Extract", upstreamRun)]);
-
         Assert.True(bag.TryGetValue("Step.Extract.Result.RowCount", out var rowCount));
         Assert.Equal("42", rowCount);
-        Assert.True(bag.TryGetValue("Step.Extract.Parameter.EmailTo", out _));
+        Assert.True(bag.TryGetValue("Step.Extract.Parameter.EmailTo", out var _));
         Assert.Same(upstreamRun, bag["Step.Extract"]);
     }
 
@@ -37,9 +33,7 @@ public class JobWorkflowFormatterContextTests
     {
         var definition = BuildDefinition();
         var step = BuildStep("Transform", definition.Id);
-
         var bag = new JobContextBag().WithWorkflowStep(step, definition, []);
-
         Assert.Same(step, bag[JobContextBag.CurrentStepKey]);
         Assert.Same(definition, bag["Definition"]);
     }
@@ -49,11 +43,10 @@ public class JobWorkflowFormatterContextTests
     {
         var definition = BuildDefinition();
         var extract = BuildStep("Extract", definition.Id);
-        var transform = BuildStep("Transform", definition.Id, dependsOn: extract.Id);
+        var transform = BuildStep("Transform", definition.Id, extract.Id);
         var workflow = BuildWorkflow([extract, transform]);
         var workflowRun = BuildWorkflowRun(workflow, """{"Env":"prod"}""");
         var upstreamRun = BuildRun(definition.Id);
-
         var engine = EngineScope(workflowRun, transform, definition, [("Extract", upstreamRun)]);
         var editor = JobWorkflowFormatterContext.Build(transform, definition, workflow, ["Env"], [("Extract", definition)]);
 
@@ -70,9 +63,7 @@ public class JobWorkflowFormatterContextTests
     {
         var definition = BuildDefinition();
         var step = BuildStep("Transform", definition.Id);
-
         var editor = JobWorkflowFormatterContext.Build(step, definition, BuildWorkflow([step]), [], [("Extract", definition)]);
-
         var upstream = Assert.IsType<Dictionary<string, object?>>(editor["Step.Extract"]);
         Assert.Contains(nameof(JobRunRes.State), upstream.Keys);
         Assert.Contains(nameof(JobRunRes.FinishedTimestamp), upstream.Keys);
@@ -86,27 +77,22 @@ public class JobWorkflowFormatterContextTests
     {
         var definition = BuildDefinition();
         var step = BuildStep("Transform", definition.Id);
-
         var editor = JobWorkflowFormatterContext.Build(step, definition, BuildWorkflow([step]), ["Env", "Region"], []);
-
-
         Assert.True(editor.ContainsKey("Input.Env"));
         Assert.True(editor.ContainsKey("Input.Region"));
     }
 
     /// <summary>
-    /// The step editor offers condition fields and template tokens by walking this bag into dotted paths, so what the catalog produces is literally the vocabulary the user
-    /// picks from. These are the paths that made the hand-written list unnecessary.
+    /// The step editor offers condition fields and template tokens by walking this bag into dotted paths, so what the catalog produces is literally the vocabulary the user picks
+    /// from. These are the paths that made the hand-written list unnecessary.
     /// </summary>
     [Fact]
     public void Build_WalkedIntoPaths_OffersUpstreamWorkflowInputAndDefinitionFields()
     {
         var definition = BuildDefinition();
         var step = BuildStep("Transform", definition.Id);
-
         var context = JobWorkflowFormatterContext.Build(step, definition, BuildWorkflow([step]), ["Env"], [("Extract", definition)]);
         var paths = JobWorkflowFormatterContext.Paths(context);
-
         Assert.Contains("Workflow.Name", paths);
         Assert.Contains("Definition.Name", paths);
         Assert.Contains("Input.Env", paths);
@@ -126,11 +112,9 @@ public class JobWorkflowFormatterContextTests
     }
 
     private static JobWorkflowStepRes BuildStep(string name, Guid definitionId, Guid? dependsOn = null)
-        => new(
-            LyoGuid.CreateV7(), LyoGuid.CreateV7(), definitionId, name, 0, dependsOn?.ToString(), JobWorkflowFailurePolicy.Stop, null, true);
+        => new(LyoGuid.CreateV7(), LyoGuid.CreateV7(), definitionId, name, 0, dependsOn?.ToString(), JobWorkflowFailurePolicy.Stop, null, true);
 
-    private static JobWorkflowRes BuildWorkflow(IReadOnlyList<JobWorkflowStepRes> steps)
-        => new(LyoGuid.CreateV7(), "Nightly", "Nightly pipeline", true, steps);
+    private static JobWorkflowRes BuildWorkflow(IReadOnlyList<JobWorkflowStepRes> steps) => new(LyoGuid.CreateV7(), "Nightly", "Nightly pipeline", true, steps);
 
     private static JobWorkflowRunRes BuildWorkflowRun(JobWorkflowRes workflow, string? inputsJson)
         => new(LyoGuid.CreateV7(), workflow.Id, JobWorkflowRunState.Running, null, null, DateTime.UtcNow, [], workflow, InputsJson: inputsJson);

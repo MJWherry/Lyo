@@ -1,6 +1,8 @@
 # Lyo.Billing.Web.Components
 
-`BillingDashboard` is a product UI (not a workbench) hosted by TestGateway at `/billing`. Grids reuse `LyoDataGridProjected`, chips, dialogs, and forms. Compose a draft (manual lines or unbilled charges), issue, Internal-pay, void, and open the invoice PDF via `IBillingClient.InvoicePdfHref`. Invoice view, void, PDF, and draft delete open from the grid in a Large dialog — not a tab page-swap. Bulk PDF, void, and delete-drafts live on the invoice grid. `BillingWorkbench` remains in the package unused.
+`BillingDashboard` is a product UI (not a workbench) hosted by TestGateway at `/billing`. Grids reuse `LyoDataGridProjected`, chips, dialogs, and forms. Compose a draft (manual
+lines or unbilled charges), issue, Internal-pay, void, and open the invoice PDF via `IBillingClient.InvoicePdfHref`. Invoice view, void, PDF, and draft delete open from the grid in
+a Large dialog — not a tab page-swap. Bulk PDF, void, and delete-drafts live on the invoice grid. `BillingWorkbench` remains in the package unused.
 
 ## Features
 

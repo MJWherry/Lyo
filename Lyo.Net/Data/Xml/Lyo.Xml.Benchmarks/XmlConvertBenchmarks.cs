@@ -1,7 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using Lyo.Benchmark;
 using Lyo.Benchmark.Data;
-using Lyo.Xml;
 
 namespace Lyo.Xml.Benchmarks;
 

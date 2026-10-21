@@ -127,12 +127,10 @@ public class FileTypeInfoRegistryTests
     }
 
     [Fact]
-    public void FileTypeInfo_FromMimeType_StripsCharsetParameter()
-        => Assert.Same(FileTypeInfo.Txt, FileTypeInfo.FromMimeType("text/plain; charset=utf-8"));
+    public void FileTypeInfo_FromMimeType_StripsCharsetParameter() => Assert.Same(FileTypeInfo.Txt, FileTypeInfo.FromMimeType("text/plain; charset=utf-8"));
 
     [Fact]
-    public void FileTypeInfo_FromMime_SharedOctetStream_IsUnknown()
-        => Assert.Same(FileTypeInfo.Unknown, FileTypeInfo.FromMime(MimeTypeInfo.Unknown));
+    public void FileTypeInfo_FromMime_SharedOctetStream_IsUnknown() => Assert.Same(FileTypeInfo.Unknown, FileTypeInfo.FromMime(MimeTypeInfo.Unknown));
 
     [Fact]
     public void HeaderSignatures_Pdf_IsPercentPdfAtOffsetZero()

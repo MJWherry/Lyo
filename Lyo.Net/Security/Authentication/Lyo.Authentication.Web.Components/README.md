@@ -1,6 +1,8 @@
 # Lyo.Authentication.Web.Components
 
-Host-agnostic Razor / MudBlazor components for Lyo authentication. Ships Login, Profile, Tokens, Auth Debug, and the hostable AuthAdminPanel (projected user/token/claim/scope/identity/audit grids). Pair the admin panel with `Lyo.Api.Authentication` and an authenticated `IApiClient`. Server and Wasm host adapters implement the self-service abstractions.
+Host-agnostic Razor / MudBlazor components for Lyo authentication. Ships Login, Profile, Tokens, Auth Debug, and the hostable AuthAdminPanel (projected
+user/token/claim/scope/identity/audit grids). Pair the admin panel with `Lyo.Api.Authentication` and an authenticated `IApiClient`. Server and Wasm host adapters implement the
+self-service abstractions.
 
 ## Examples
 
@@ -31,15 +33,16 @@ services.AddLyoAuthWebComponentsWasm(configuration);
 
 ## Pages
 
-| Route(s) | Component | Purpose |
-| ------------------------------------------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/auth/login`, `/auth/login/{*ReturnUrl}` | `LoginPage` | Provider buttons + optional username/password card. |
-| `/auth/debug` | `DebugPage` | Active session inspector: expiry, scopes, claims, decoded JWT. |
-| `/auth/profile`, `/auth/profile/{userId:guid}` | `ProfilePage` | Current user (no segment) or arbitrary user (with `{userId}`, requires `auth.users.read` scope). Edit is shown when `IApiClient` is registered. Grants for that user are listed when `IGrantStore` is registered. |
-| `/auth/tokens` | `TokensPage` | Mint PATs via `POST /tokens`. Lists tokens in `AuthTokenGrid` (self-service revoke; no `internal` rows) when `IApiClient` is available. |
-| `/auth/admin`, `/auth/admin/users/{userId:guid}` | `AuthAdminPanel` | Administrative users / tokens / claims / scopes / identities / audit / grants. Token revoke keeps the row; hard-delete destroys the hash. |
+| Route(s)                                         | Component        | Purpose                                                                                                                                                                                                           |
+|--------------------------------------------------|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `/auth/login`, `/auth/login/{*ReturnUrl}`        | `LoginPage`      | Provider buttons + optional username/password card.                                                                                                                                                               |
+| `/auth/debug`                                    | `DebugPage`      | Active session inspector: expiry, scopes, claims, decoded JWT.                                                                                                                                                    |
+| `/auth/profile`, `/auth/profile/{userId:guid}`   | `ProfilePage`    | Current user (no segment) or arbitrary user (with `{userId}`, requires `auth.users.read` scope). Edit is shown when `IApiClient` is registered. Grants for that user are listed when `IGrantStore` is registered. |
+| `/auth/tokens`                                   | `TokensPage`     | Mint PATs via `POST /tokens`. Lists tokens in `AuthTokenGrid` (self-service revoke; no `internal` rows) when `IApiClient` is available.                                                                           |
+| `/auth/admin`, `/auth/admin/users/{userId:guid}` | `AuthAdminPanel` | Administrative users / tokens / claims / scopes / identities / audit / grants. Token revoke keeps the row; hard-delete destroys the hash.                                                                         |
 
-Login, Debug, Profile, and Tokens are wrapped in [`LyoElementRoot`](../../../Apps/Web/Lyo.Web.Components/LyoElementRoot.razor) so each rendered root gets a deterministic DOM id. Override via `ElementId`. `AuthAdminPanel` talks to `Auth/User` (and siblings) through `IApiClient`; do not map those routes anonymous.
+Login, Debug, Profile, and Tokens are wrapped in [`LyoElementRoot`](../../../Apps/Web/Lyo.Web.Components/LyoElementRoot.razor) so each rendered root gets a deterministic DOM id.
+Override via `ElementId`. `AuthAdminPanel` talks to `Auth/User` (and siblings) through `IApiClient`; do not map those routes anonymous.
 
 ## Abstractions (`Abstractions/`)
 
@@ -56,11 +59,13 @@ Login, Debug, Profile, and Tokens are wrapped in [`LyoElementRoot`](../../../App
 
 ## Registration
 
-The consuming Blazor host discovers the Razor pages via the standard `Router AppAssembly=...` plus `AdditionalAssemblies` mechanism. Add `typeof(Lyo.Authentication.Web.Components.Pages.LoginPage).Assembly` to your router if your app does not auto-scan referenced assemblies.
+The consuming Blazor host discovers the Razor pages via the standard `Router AppAssembly=...` plus `AdditionalAssemblies` mechanism. Add
+`typeof(Lyo.Authentication.Web.Components.Pages.LoginPage).Assembly` to your router if your app does not auto-scan referenced assemblies.
 
 ## Password card (optional)
 
-The username/password card on `LoginPage` renders only when `IAuthPasswordSignIn` is registered and `LyoAuthWebComponentsOptions.EnablePasswordSignIn` is `true` (default). The Lyo BFF / API stack does not ship a password grant. Consumers that want this card supply their own `IAuthPasswordSignIn`, for example against a custom `/account/login` endpoint.
+The username/password card on `LoginPage` renders only when `IAuthPasswordSignIn` is registered and `LyoAuthWebComponentsOptions.EnablePasswordSignIn` is `true` (default). The Lyo
+BFF / API stack does not ship a password grant. Consumers that want this card supply their own `IAuthPasswordSignIn`, for example against a custom `/account/login` endpoint.
 
 ## Dependencies
 

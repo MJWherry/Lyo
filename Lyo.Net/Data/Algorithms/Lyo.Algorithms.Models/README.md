@@ -1,6 +1,7 @@
 # Lyo.Algorithms.Models
 
-The catalog contract shared by the in-memory store, Postgres, SQLite, the API, and the client. `Request/` and `Response/` are separate: a save sends `AlgorithmRevisionReq`, a read returns `AlgorithmDefinitionRes`. `Kind` is `AlgorithmKind`, not a string. The compiler and registry stay in `Lyo.Algorithms`. This package has no DI registration.
+The catalog contract shared by the in-memory store, Postgres, SQLite, the API, and the client. `Request/` and `Response/` are separate: a save sends `AlgorithmRevisionReq`, a read
+returns `AlgorithmDefinitionRes`. `Kind` is `AlgorithmKind`, not a string. The compiler and registry stay in `Lyo.Algorithms`. This package has no DI registration.
 
 ## Features
 

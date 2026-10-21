@@ -26,9 +26,7 @@ public sealed class AzureBlobDirectUploadChecksumTests(AzuriteFixture fixture) :
     {
         Assert.SkipWhen(fixture.ConnectionString is null, "Docker is unavailable, so Azurite cannot start.");
         var options = new AzureBlobFileStorageOptions {
-            ConnectionString = fixture.ConnectionString!,
-            ContainerName = $"c-{LyoGuid.CreateV7():N}",
-            HashAlgorithm = HashAlgorithm.Sha512
+            ConnectionString = fixture.ConnectionString!, ContainerName = $"c-{LyoGuid.CreateV7():N}", HashAlgorithm = HashAlgorithm.Sha512
         };
 
         configure?.Invoke(options);
@@ -56,13 +54,10 @@ public sealed class AzureBlobDirectUploadChecksumTests(AzuriteFixture fixture) :
         var payload = TestData.Create(8192, 1);
         var md5 = MD5.HashData(payload);
         var begin = await service.BeginDirectUploadAsync(new() { DeclaredMaxSizeBytes = payload.Length, OriginalFileName = "a.bin", ExpectedContentMd5 = md5 }, TestCt);
-
         Assert.NotNull(begin.RequiredPutHeaders);
         Assert.Equal(Convert.ToBase64String(md5), begin.RequiredPutHeaders["Content-MD5"]);
         Assert.Equal(HttpStatusCode.Created, await PutAsync(begin, payload));
-
         var done = await service.CompleteDirectUploadAsync(begin.FileId, ct: TestCt);
-
         Assert.Equal(FileAvailability.Available, done.Availability);
         Assert.Equal(payload.Length, done.OriginalFileSize);
         Assert.Equal(md5, done.OriginalFileHash);
@@ -87,9 +82,7 @@ public sealed class AzureBlobDirectUploadChecksumTests(AzuriteFixture fixture) :
         var payload = "%PDF-1.4\n"u8.ToArray().Concat(TestData.Create(64 * 1024, 4)).ToArray();
         var begin = await service.BeginDirectUploadAsync(new() { DeclaredMaxSizeBytes = payload.Length, OriginalFileName = "report.pdf" }, TestCt);
         Assert.Equal(HttpStatusCode.Created, await PutAsync(begin, payload));
-
         var done = await service.CompleteDirectUploadAsync(begin.FileId, ct: TestCt);
-
         Assert.Equal(FileAvailability.Available, done.Availability);
         Assert.Equal(MD5.HashData(payload), done.OriginalFileHash);
         Assert.Equal(HashAlgorithm.Md5, done.HashAlgorithm);

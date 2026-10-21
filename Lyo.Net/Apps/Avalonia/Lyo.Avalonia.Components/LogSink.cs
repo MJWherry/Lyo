@@ -12,15 +12,15 @@ public sealed class LogSink
     private readonly Lock _gate = new();
     private readonly List<LogLine> _lines = [];
 
+    /// <summary>Newest lines kept. Older lines are dropped.</summary>
+    public int Capacity { get; }
+
     /// <summary>Creates a sink that drops the oldest line once <paramref name="capacity" /> is exceeded.</summary>
     public LogSink(int capacity = DefaultCapacity)
     {
         ArgumentHelpers.ThrowIfNullOrNotInRange(capacity, 1);
         Capacity = capacity;
     }
-
-    /// <summary>Newest lines kept. Older lines are dropped.</summary>
-    public int Capacity { get; }
 
     /// <summary>A non-blank line was added.</summary>
     public event Action<LogLine>? Written;
@@ -29,7 +29,7 @@ public sealed class LogSink
     public event Action? Cleared;
 
     /// <summary>Records <paramref name="message" /> at <see cref="LogLevel.Information" /> when it has text.</summary>
-    public void Write(string? message) => Write(LogLevel.Information, message, null);
+    public void Write(string? message) => Write(LogLevel.Information, message);
 
     /// <summary>
     /// Records <paramref name="message" /> when it has text. <paramref name="source" /> is the logger or component name. <paramref name="context" /> is scope and message
@@ -39,6 +39,7 @@ public sealed class LogSink
     {
         if (string.IsNullOrWhiteSpace(message))
             return;
+
         var fields = context is { Count: > 0 } ? context : null;
         var failure = string.IsNullOrWhiteSpace(exceptionText) ? null : exceptionText;
         var line = new LogLine(DateTimeOffset.UtcNow, level, message.Trim(), string.IsNullOrWhiteSpace(source) ? null : source.Trim(), fields, failure);
@@ -64,25 +65,20 @@ public sealed class LogSink
     {
         lock (_gate)
             _lines.Clear();
+
         var cleared = Cleared;
         cleared?.Invoke();
     }
 }
 
 /// <summary>
-/// Forwards <see cref="ILogger" /> messages into a <see cref="LogSink" />. Levels below <see cref="MinimumLevel" /> are dropped. Scopes and the exception are kept on the line.
+/// Forwards <see cref="ILogger" /> messages into a <see cref="LogSink" />. Levels below <see cref="MinimumLevel" /> are dropped. Scopes and the exception are kept on the
+/// line.
 /// </summary>
 public sealed class LogSinkLoggerProvider(LogSink sink) : ILoggerProvider, ISupportExternalScope
 {
     private readonly LogSink _sink = ArgumentHelpers.ThrowIfNullReturn(sink);
     private IExternalScopeProvider _scopes = new LoggerExternalScopeProvider();
-
-    /// <inheritdoc />
-    public void SetScopeProvider(IExternalScopeProvider scopeProvider)
-    {
-        ArgumentHelpers.ThrowIfNull(scopeProvider);
-        _scopes = scopeProvider;
-    }
 
     /// <summary>Lowest level forwarded to the sink. Defaults to <see cref="LogLevel.Information" />.</summary>
     public LogLevel MinimumLevel { get; set; } = LogLevel.Information;
@@ -93,9 +89,18 @@ public sealed class LogSinkLoggerProvider(LogSink sink) : ILoggerProvider, ISupp
     /// <inheritdoc />
     public void Dispose() { }
 
+    /// <inheritdoc />
+    public void SetScopeProvider(IExternalScopeProvider scopeProvider)
+    {
+        ArgumentHelpers.ThrowIfNull(scopeProvider);
+        _scopes = scopeProvider;
+    }
+
     private sealed class SinkLogger(LogSinkLoggerProvider provider, string category) : ILogger
     {
-        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => provider._scopes.Push(state);
+        public IDisposable? BeginScope<TState>(TState state)
+            where TState : notnull
+            => provider._scopes.Push(state);
 
         public bool IsEnabled(LogLevel logLevel) => logLevel >= provider.MinimumLevel;
 
@@ -103,9 +108,11 @@ public sealed class LogSinkLoggerProvider(LogSink sink) : ILoggerProvider, ISupp
         {
             if (!IsEnabled(logLevel))
                 return;
+
             var text = formatter(state, exception);
             if (exception != null && (string.IsNullOrWhiteSpace(text) || !text.Contains(exception.Message, StringComparison.Ordinal)))
                 text = string.IsNullOrWhiteSpace(text) ? exception.Message : text + " " + exception.Message;
+
             var fields = new List<LogField>();
             provider._scopes.ForEachScope(static (scope, list) => Collect(scope, list), fields);
             Collect(state, fields);
@@ -116,12 +123,15 @@ public sealed class LogSinkLoggerProvider(LogSink sink) : ILoggerProvider, ISupp
         {
             if (state is not IEnumerable<KeyValuePair<string, object?>> pairs)
                 return;
+
             foreach (var pair in pairs) {
                 if (pair.Key == "{OriginalFormat}" || string.IsNullOrWhiteSpace(pair.Key))
                     continue;
+
                 var value = pair.Value?.ToString();
                 if (string.IsNullOrWhiteSpace(value))
                     continue;
+
                 var field = new LogField(pair.Key, value);
                 var index = fields.FindIndex(item => item.Name == pair.Key);
                 if (index >= 0)

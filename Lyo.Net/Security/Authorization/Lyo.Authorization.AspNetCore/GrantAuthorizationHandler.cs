@@ -1,11 +1,9 @@
+using System.Security.Claims;
 using Lyo.Exceptions;
 
 namespace Lyo.Authorization.AspNetCore;
 
-/// <summary>
-/// Succeeds when the caller holds the grant. It does not fail the requirement.
-/// Anonymous callers are rejected by <c>RequireAuthenticatedUser</c> on the policy.
-/// </summary>
+/// <summary>Succeeds when the caller holds the grant. It does not fail the requirement. Anonymous callers are rejected by <c>RequireAuthenticatedUser</c> on the policy.</summary>
 public sealed class GrantAuthorizationHandler : AuthorizationHandler<GrantAuthorizationRequirement>
 {
     private readonly IResourceAuthorization _authorization;
@@ -32,24 +30,28 @@ public sealed class GrantAuthorizationHandler : AuthorizationHandler<GrantAuthor
 
         if (!TryRoute(http, requirement.ResourceIdRoute, out var resourceId))
             return;
+
         if (resourceId is not null && Guid.TryParse(resourceId, out var resourceGuid))
             resourceId = resourceGuid.ToString("D");
 
         if (!TryTenant(http, requirement.TenantRoute, out var tenant))
             return;
 
-        var allowed = await _authorization.IsAllowedAsync(new GrantCheck {
-            Subject = subject,
-            Action = requirement.Action,
-            ResourceType = requirement.ResourceType,
-            ResourceId = resourceId,
-            TenantId = tenant
-        }, http.RequestAborted).ConfigureAwait(false);
+        var allowed = await _authorization.IsAllowedAsync(
+                new() {
+                    Subject = subject,
+                    Action = requirement.Action,
+                    ResourceType = requirement.ResourceType,
+                    ResourceId = resourceId,
+                    TenantId = tenant
+                }, http.RequestAborted)
+            .ConfigureAwait(false);
+
         if (allowed)
             context.Succeed(requirement);
     }
 
-    private static string? Subject(System.Security.Claims.ClaimsPrincipal user)
+    private static string? Subject(ClaimsPrincipal user)
     {
         var lyoUser = user.FindFirst("lyo:user")?.Value;
         if (!string.IsNullOrWhiteSpace(lyoUser))
@@ -64,6 +66,7 @@ public sealed class GrantAuthorizationHandler : AuthorizationHandler<GrantAuthor
         value = null;
         if (route is null)
             return true;
+
         if (!http.Request.RouteValues.TryGetValue(route, out var raw) || raw is null)
             return false;
 
@@ -76,8 +79,10 @@ public sealed class GrantAuthorizationHandler : AuthorizationHandler<GrantAuthor
         tenant = null;
         if (route is null)
             return true;
+
         if (!TryRoute(http, route, out var text) || text is null)
             return false;
+
         if (!Guid.TryParse(text, out var parsed))
             return false;
 

@@ -1,9 +1,6 @@
 namespace Lyo.Formatter;
 
-/// <summary>
-/// Evaluates <c>{...}</c> tokens. <see cref="FormatterExpressionEvaluator" /> is the default.
-/// A host can replace it; <c>AddFormatterService</c> does not register algorithms.
-/// </summary>
+/// <summary>Evaluates <c>{...}</c> tokens. <see cref="FormatterExpressionEvaluator" /> is the default. A host can replace it; <c>AddFormatterService</c> does not register algorithms.</summary>
 public interface IFormatterExpressionEvaluator
 {
     /// <summary>Returns an error message when <paramref name="expression" /> cannot be parsed, or null when it is acceptable.</summary>

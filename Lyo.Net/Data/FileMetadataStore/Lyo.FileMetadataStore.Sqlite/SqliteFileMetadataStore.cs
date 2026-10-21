@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
-using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileMetadataStore.Sqlite.Database;
 using Lyo.Health;
@@ -156,7 +155,7 @@ public class SqliteFileMetadataStore : IFileMetadataStore, IHealth, IDisposable
         }
         else if (normalized != null) {
             var nested = normalized + "/";
-            query = query.Where(e => e.PathPrefix == normalized || e.PathPrefix != null && e.PathPrefix.StartsWith(nested));
+            query = query.Where(e => e.PathPrefix == normalized || (e.PathPrefix != null && e.PathPrefix.StartsWith(nested)));
         }
 
         var entities = await query.OrderBy(e => e.PathPrefix).ThenBy(e => e.Id).Take(maxKeys).ToListAsync(ct).ConfigureAwait(false);
@@ -168,8 +167,7 @@ public class SqliteFileMetadataStore : IFileMetadataStore, IHealth, IDisposable
     {
         ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
         var cutoff = DateTime.SpecifyKind(beganBefore, DateTimeKind.Utc);
-        var entities = await _dbContext.FileMetadata
-            .Where(e => e.DeletedAt == null && e.Availability == nameof(FileAvailability.PendingDirectUpload) && e.Timestamp < cutoff)
+        var entities = await _dbContext.FileMetadata.Where(e => e.DeletedAt == null && e.Availability == nameof(FileAvailability.PendingDirectUpload) && e.Timestamp < cutoff)
             .OrderBy(e => e.Timestamp)
             .Take(maxKeys)
             .ToListAsync(ct)
@@ -183,12 +181,12 @@ public class SqliteFileMetadataStore : IFileMetadataStore, IHealth, IDisposable
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(text);
         ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
-        var entities = await _dbContext.FileMetadata
-            .Where(e => e.DeletedAt == null && e.OriginalFileName != null && e.OriginalFileName.Contains(text))
+        var entities = await _dbContext.FileMetadata.Where(e => e.DeletedAt == null && e.OriginalFileName != null && e.OriginalFileName.Contains(text))
             .OrderBy(e => e.OriginalFileName)
             .Take(maxKeys)
             .ToListAsync(ct)
             .ConfigureAwait(false);
+
         return entities.Select(e => e.ToFileStoreResult()).ToList();
     }
 
@@ -207,6 +205,7 @@ public class SqliteFileMetadataStore : IFileMetadataStore, IHealth, IDisposable
             StoredKey = entity.SourceFileName,
             CreatedAt = DateTime.UtcNow
         };
+
         _dbContext.FileRevisions.Add(revision);
         entity.SourceFileName = storedKey;
         await _dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -218,26 +217,6 @@ public class SqliteFileMetadataStore : IFileMetadataStore, IHealth, IDisposable
     {
         var entity = await _dbContext.FileRevisions.AsNoTracking().FirstOrDefaultAsync(e => e.Id == revisionId, ct).ConfigureAwait(false);
         return entity is null ? null : new FileRevision(entity.Id, entity.ParentId, entity.StoredKey, entity.CreatedAt);
-    }
-
-    /// <inheritdoc />
-    public string HealthCheckName => "filestore-sqlite";
-
-    /// <inheritdoc />
-    public async Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-    {
-        var sw = Stopwatch.StartNew();
-        try {
-            var canConnect = await _dbContext.Database.CanConnectAsync(ct).ConfigureAwait(false);
-            sw.Stop();
-            return canConnect
-                ? HealthResult.Healthy(sw.Elapsed, null, new Dictionary<string, object?> { ["database"] = "filestore" })
-                : HealthResult.Unhealthy(sw.Elapsed, "Database connection failed");
-        }
-        catch (Exception ex) {
-            sw.Stop();
-            return HealthResult.Unhealthy(sw.Elapsed, ex.Message, null, ex);
-        }
     }
 
     /// <inheritdoc />
@@ -257,6 +236,7 @@ public class SqliteFileMetadataStore : IFileMetadataStore, IHealth, IDisposable
             Slug = slug ?? "",
             Automatic = automatic
         };
+
         _dbContext.FileTags.Add(entity);
         await _dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
         return entity.ToFileTag();
@@ -321,7 +301,26 @@ public class SqliteFileMetadataStore : IFileMetadataStore, IHealth, IDisposable
         var files = await _dbContext.FileMetadata.AsNoTracking().Where(e => e.DeletedAt == null).ToListAsync(ct).ConfigureAwait(false);
         var ids = files.Select(f => f.Id).ToArray();
         var tagRows = await _dbContext.FileTags.AsNoTracking().Where(t => ids.Contains(t.FileId)).ToListAsync(ct).ConfigureAwait(false);
-        return FileTagGrouper.Group(
-            groupBy, virtualPath, files.Select(static f => f.ToFileStoreResult()).ToArray(), tagRows.Select(static t => t.ToFileTag()).ToArray(), maxKeys);
+        return FileTagGrouper.Group(groupBy, virtualPath, files.Select(static f => f.ToFileStoreResult()).ToArray(), tagRows.Select(static t => t.ToFileTag()).ToArray(), maxKeys);
+    }
+
+    /// <inheritdoc />
+    public string HealthCheckName => "filestore-sqlite";
+
+    /// <inheritdoc />
+    public async Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
+    {
+        var sw = Stopwatch.StartNew();
+        try {
+            var canConnect = await _dbContext.Database.CanConnectAsync(ct).ConfigureAwait(false);
+            sw.Stop();
+            return canConnect
+                ? HealthResult.Healthy(sw.Elapsed, null, new Dictionary<string, object?> { ["database"] = "filestore" })
+                : HealthResult.Unhealthy(sw.Elapsed, "Database connection failed");
+        }
+        catch (Exception ex) {
+            sw.Stop();
+            return HealthResult.Unhealthy(sw.Elapsed, ex.Message, null, ex);
+        }
     }
 }

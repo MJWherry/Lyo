@@ -9,8 +9,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Lyo.Algorithms.Seed;
 
 /// <summary>
-/// EF seed of expression definitions, one revision, and a latest label.
-/// The first row publishes the fishing formula under <c>leaderboard.seed_fishing_0</c>, the same key <c>LeaderboardCatalog.KeyFor("seed-fishing-0")</c> produces. Schema <c>algorithms</c>.
+/// EF seed of expression definitions, one revision, and a latest label. The first row publishes the fishing formula under <c>leaderboard.seed_fishing_0</c>, the same key
+/// <c>LeaderboardCatalog.KeyFor("seed-fishing-0")</c> produces. Schema <c>algorithms</c>.
 /// </summary>
 public sealed class AlgorithmEfSeedContributor : SeedContributor, IEfSeedSource
 {
@@ -19,8 +19,8 @@ public sealed class AlgorithmEfSeedContributor : SeedContributor, IEfSeedSource
 
     /// <summary>Expression that scores fish type, weight bands, and clamped length. Bass at weight 6 and length 15 is 38.</summary>
     public const string FishingFormula = """
-        fish_type + (weight >= 5 && weight < 10 ? 3 : (weight >= 0 && weight < 5 ? 1 : 0)) + (length < 10 ? 0 : (length > 20 ? 50 : (length - 10) / 10 * 50))
-        """;
+                                         fish_type + (weight >= 5 && weight < 10 ? 3 : (weight >= 0 && weight < 5 ? 1 : 0)) + (length < 10 ? 0 : (length > 20 ? 50 : (length - 10) / 10 * 50))
+                                         """;
 
     /// <inheritdoc />
     public override string Name => "Algorithms";
@@ -35,9 +35,7 @@ public sealed class AlgorithmEfSeedContributor : SeedContributor, IEfSeedSource
     public DbContext CreateContext(string connectionString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        var options = new DbContextOptionsBuilder<AlgorithmDbContext>()
-            .UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<AlgorithmDbContext>().UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema)).Options;
         return new AlgorithmDbContext(options);
     }
 
@@ -46,27 +44,33 @@ public sealed class AlgorithmEfSeedContributor : SeedContributor, IEfSeedSource
     {
         graph.OnClear(ClearAsync);
         var now = DateTime.UtcNow;
-        var definitions = graph.Entity(options.Count, i => new AlgorithmDefinitionEntity {
-            Id = LyoGuid.CreateV7(),
-            Key = i == 0 ? FishingKey : $"scoring.{i}",
-            Name = i == 0 ? "Bass derby" : $"Points table {i}",
-            Kind = nameof(AlgorithmKind.Expression),
-            CurrentRevision = 1,
-            CreatedTimestamp = now
-        });
-        definitions.ForEach(_ => 1, (definition, _) => new AlgorithmRevisionEntity {
-            DefinitionId = definition.Id,
-            Revision = 1,
-            Kind = nameof(AlgorithmKind.Expression),
-            Source = definition.Key == FishingKey ? FishingFormula : "1",
-            CreatedTimestamp = now
-        });
-        definitions.ForEach(_ => 1, (definition, _) => new AlgorithmLabelEntity {
-            DefinitionId = definition.Id,
-            Label = "latest",
-            Revision = 1,
-            IsMutable = true
-        });
+        var definitions = graph.Entity(
+            options.Count,
+            i => new AlgorithmDefinitionEntity {
+                Id = LyoGuid.CreateV7(),
+                Key = i == 0 ? FishingKey : $"scoring.{i}",
+                Name = i == 0 ? "Bass derby" : $"Points table {i}",
+                Kind = nameof(AlgorithmKind.Expression),
+                CurrentRevision = 1,
+                CreatedTimestamp = now
+            });
+
+        definitions.ForEach(
+            _ => 1, (definition, _) => new AlgorithmRevisionEntity {
+                DefinitionId = definition.Id,
+                Revision = 1,
+                Kind = nameof(AlgorithmKind.Expression),
+                Source = definition.Key == FishingKey ? FishingFormula : "1",
+                CreatedTimestamp = now
+            });
+
+        definitions.ForEach(
+            _ => 1, (definition, _) => new AlgorithmLabelEntity {
+                DefinitionId = definition.Id,
+                Label = "latest",
+                Revision = 1,
+                IsMutable = true
+            });
     }
 
     private static async Task ClearAsync(SeedSession session, CancellationToken ct)

@@ -20,9 +20,9 @@ internal sealed class TestQueueWorker : QueueWorkerBase<TestRequest, Result<Test
 }
 
 /// <summary>
-/// Test worker with injectable DoWork plus requeue/DLQ settings for retry-cap and poison-message tests. The behavior func runs per message with the request
-/// and a 1-based call count; thrown exceptions reach the worker like a real DoWork failure. When <c>maxRequeueCount</c> is null, the cap is taken from
-/// <c>workerOptions</c> the same way <c>AddJobWorker</c> does.
+/// Test worker with injectable DoWork plus requeue/DLQ settings for retry-cap and poison-message tests. The behavior func runs per message with the request and a 1-based
+/// call count; thrown exceptions reach the worker like a real DoWork failure. When <c>maxRequeueCount</c> is null, the cap is taken from <c>workerOptions</c> the same way
+/// <c>AddJobWorker</c> does.
 /// </summary>
 internal sealed class ConfigurableTestQueueWorker : QueueWorkerBase<TestRequest, Result<TestRequest>>
 {

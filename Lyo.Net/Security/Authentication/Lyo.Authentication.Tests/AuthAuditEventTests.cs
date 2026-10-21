@@ -38,9 +38,7 @@ public class AuthAuditEventTests
     public async Task RecordAsync_ThrowingRecorder_IsSwallowed()
     {
         var recorder = new ThrowingRecorder();
-        var ex = await Record.ExceptionAsync(() => recorder.RecordAsync(
-            null, null, AuthAuditEventKind.TokenRejected, reason: "Revoked", ct: TestCt));
-
+        var ex = await Record.ExceptionAsync(() => recorder.RecordAsync(null, null, AuthAuditEventKind.TokenRejected, reason: "Revoked", ct: TestCt));
         Assert.Null(ex);
     }
 

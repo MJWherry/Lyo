@@ -6,15 +6,6 @@ namespace Lyo.Csv.Tests;
 
 public class MemberOrderTests
 {
-    private sealed class Person
-    {
-        public string? GivenName { get; set; }
-
-        public int Age { get; set; }
-
-        public string? Note { get; set; }
-    }
-
     [Fact]
     public void ExportToCsvString_OrderAlphabetical_WritesAgeBeforeGivenName()
     {
@@ -38,4 +29,13 @@ public class MemberOrderTests
     }
 
     private static string Header(string csv) => csv.Replace("\r", "").Split('\n')[0];
+
+    private sealed class Person
+    {
+        public string? GivenName { get; set; }
+
+        public int Age { get; set; }
+
+        public string? Note { get; set; }
+    }
 }

@@ -1,7 +1,6 @@
 using Azure.Storage.Blobs;
 using Lyo.Common.Core.Pathing;
 using Lyo.Exceptions.Models;
-using Lyo.IO.FileSystem;
 
 namespace Lyo.FileStorage.AzureBlob.Tests;
 

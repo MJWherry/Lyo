@@ -30,8 +30,7 @@ public class LocalMultipartUploadServiceTests
         var multipart = new LocalMultipartUploadService(scope.Storage, sessions, scope.Options);
         var begin = await multipart.BeginAsync(new() { PartSizeBytes = 16 * 1024 }, TestCt);
         await multipart.AbortAsync(begin.SessionId, TestCt);
-        await Assert.ThrowsAnyAsync<Exception>(async () => await multipart.UploadPartAsync(
-            begin.SessionId, 1, new MemoryStream(new byte[] { 1, 2, 3 }), TestCt));
+        await Assert.ThrowsAnyAsync<Exception>(async () => await multipart.UploadPartAsync(begin.SessionId, 1, new MemoryStream(new byte[] { 1, 2, 3 }), TestCt));
     }
 
     [Fact]
@@ -41,8 +40,7 @@ public class LocalMultipartUploadServiceTests
         var sessions = new InMemoryMultipartUploadSessionStore();
         var multipart = new LocalMultipartUploadService(scope.Storage, sessions, scope.Options);
         var begin = await multipart.BeginAsync(new() { PartSizeBytes = 16 * 1024 }, TestCt);
-        await Assert.ThrowsAnyAsync<Exception>(async () => await multipart.UploadPartAsync(
-            begin.SessionId, 0, new MemoryStream(new byte[] { 1 }), TestCt));
+        await Assert.ThrowsAnyAsync<Exception>(async () => await multipart.UploadPartAsync(begin.SessionId, 0, new MemoryStream(new byte[] { 1 }), TestCt));
     }
 
     [Fact]
@@ -65,7 +63,6 @@ public class LocalMultipartUploadServiceTests
         using var scope = LocalFileStorageTestScope.Create();
         var sessions = new InMemoryMultipartUploadSessionStore();
         var multipart = new LocalMultipartUploadService(scope.Storage, sessions, scope.Options);
-        await Assert.ThrowsAnyAsync<Exception>(async () => await multipart.BeginAsync(
-            new() { PartSizeBytes = 16 * 1024, Encrypt = true, KeyId = null }, TestCt));
+        await Assert.ThrowsAnyAsync<Exception>(async () => await multipart.BeginAsync(new() { PartSizeBytes = 16 * 1024, Encrypt = true, KeyId = null }, TestCt));
     }
 }

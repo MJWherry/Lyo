@@ -1,17 +1,16 @@
 using System.Text;
 using System.Text.Json;
-using Lyo.Job.Models.Events;
+using Lyo.Exceptions;
 using Lyo.MessageQueue;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Constants = Lyo.Job.Models.Constants;
-using Lyo.Exceptions;
 
 namespace Lyo.Job.Postgres;
 
 /// <summary>
-/// Reads the worker dispatch queues to find which runs already have a message waiting. Resync uses this to republish only the runs the broker actually lost. Republishing blindly
-/// would hand every worker a duplicate for runs that were merely slow to be picked up. Peek failures are treated as "queue empty", so a broker hiccup can cause a duplicate
+/// Reads the worker dispatch queues to find which runs already have a message waiting. Resync uses this to republish only the runs the broker actually lost. Republishing
+/// blindly would hand every worker a duplicate for runs that were merely slow to be picked up. Peek failures are treated as "queue empty", so a broker hiccup can cause a duplicate
 /// dispatch but never a missed one. The run lifecycle is idempotent on the worker side (<c>StartedJobRun</c> transitions <c>Queued</c> to <c>Running</c> once).
 /// </summary>
 /// <param name="mqService">Transport to peek, or null when the host has none.</param>

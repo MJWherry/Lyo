@@ -13,6 +13,9 @@ public sealed class PuppeteerSharpWebAutomationTestEngineFixture : IWebAutomatio
     private ILoggerFactory _loggerFactory;
     private ServiceProvider _provider;
 
+    /// <summary>Current xUnit cancellation token. Reads <see cref="TestContext.Current" /> when accessed, so each test gets that test's token.</summary>
+    public CancellationToken TestCt => TestContext.Current.CancellationToken;
+
     public PuppeteerSharpWebAutomationTestEngineFixture()
     {
         _root = Path.Combine(Path.GetTempPath(), "lyo-web-automation-tests", "puppeteersharp");
@@ -28,9 +31,6 @@ public sealed class PuppeteerSharpWebAutomationTestEngineFixture : IWebAutomatio
     }
 
     public string EngineName => "PuppeteerSharp";
-
-    /// <summary>Current xUnit cancellation token. Reads <see cref="TestContext.Current"/> when accessed, so each test gets that test's token.</summary>
-    public CancellationToken TestCt => TestContext.Current.CancellationToken;
 
     public Task<IWebAutomationSession> CreateSessionAsync(CancellationToken ct = default)
     {

@@ -12,7 +12,6 @@ public class TabberTests
         var tabber = new Tabber();
         tabber.Add(new() { Header = "Record", Content = record });
         tabber.Add(new() { Header = "Tools", Content = tools });
-
         Assert.Equal(0, tabber.SelectedIndex);
         Assert.True(record.IsVisible);
         Assert.False(tools.IsVisible);
@@ -28,11 +27,9 @@ public class TabberTests
         tabber.Add(new() { Header = "Record", Content = record });
         tabber.Add(new() { Header = "Tools", Content = tools });
         var parent = record.Parent;
-
         tabber.Select(1);
         tabber.Select(0);
         tabber.Select(1);
-
         Assert.Equal(1, tabber.SelectedIndex);
         Assert.False(record.IsVisible);
         Assert.True(tools.IsVisible);
@@ -48,9 +45,7 @@ public class TabberTests
         tabber.Add(new() { Header = "Two", Content = new TextBox(), CanClose = true });
         tabber.Add(new() { Header = "Three", Content = new TextBox(), CanClose = true });
         tabber.Select(1);
-
         tabber.Close(1);
-
         Assert.Equal(2, tabber.Pages.Count);
         Assert.Equal("Three", tabber.Pages[tabber.SelectedIndex].Header);
         Assert.Equal(1, tabber.SelectedIndex);
@@ -67,7 +62,6 @@ public class TabberTests
         var headers = Assert.IsType<StackPanel>(tabber.Children[0]);
         var toolsHeader = Assert.IsType<Border>(headers.Children[1]);
         var label = Assert.IsType<TextBlock>(Assert.IsType<StackPanel>(toolsHeader.Child).Children[0]);
-
         Assert.Equal(1, tabber.IndexAt(label));
         Assert.Equal(-1, tabber.IndexAt(record));
     }

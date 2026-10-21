@@ -1,6 +1,8 @@
 # Lyo.FileTags.FFmpeg
 
-Audio and video tags for [`Lyo.FileTags`](../Lyo.FileTags/README.md). Extensions are mp3, m4a, flac, wav, ogg, mp4, mov, mkv, and webm. Images are not claimed. Read merges ffprobe format tags over stream tags. Write is `-c copy`, optional `-map_metadata -1`, then `-metadata`. It does not re-encode. Convert-time `-metadata` during an encode stays in [`Lyo.FFmpeg`](../../Media/Lyo.FFmpeg/README.md).
+Audio and video tags for [`Lyo.FileTags`](../Lyo.FileTags/README.md). Extensions are mp3, m4a, flac, wav, ogg, mp4, mov, mkv, and webm. Images are not claimed. Read merges ffprobe
+format tags over stream tags. Write is `-c copy`, optional `-map_metadata -1`, then `-metadata`. It does not re-encode. Convert-time `-metadata` during an encode stays in [
+`Lyo.FFmpeg`](../../Media/Lyo.FFmpeg/README.md).
 
 ## Features
 
@@ -21,10 +23,10 @@ await tags.WriteAsync("tone.wav", new FileTagWriteRequest(new Dictionary<FileTag
 
 ## Public types
 
-| Type | Description |
-| --------------------- | ----------------------------------------------------------------- |
+| Type                  | Description                                                       |
+|-----------------------|-------------------------------------------------------------------|
 | FFmpegFileTagProvider | IFileTagReader and IFileTagWriter for audio and video extensions. |
-| Extensions | AddFFmpegFileTags() and AddFFmpegFileTags(FFmpegOptions). |
+| Extensions            | AddFFmpegFileTags() and AddFFmpegFileTags(FFmpegOptions).         |
 
 ## Dependencies
 

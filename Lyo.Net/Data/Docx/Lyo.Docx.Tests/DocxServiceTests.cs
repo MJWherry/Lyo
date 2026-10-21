@@ -23,12 +23,8 @@ public class DocxServiceTests
     [Fact]
     public void Fill_TokenSplitAcrossRuns_ReplacesOnce()
     {
-        var bytes = Document(body => body.AppendChild(new Paragraph(
-            new Run(new Text("{Na")),
-            new Run(new Text("me}")))));
-
+        var bytes = Document(body => body.AppendChild(new Paragraph(new Run(new Text("{Na")), new Run(new Text("me}")))));
         var filled = _docx.Fill(bytes, new { Name = "Ada" });
-
         Assert.Equal("Ada", _docx.ReadText(filled));
     }
 
@@ -36,9 +32,7 @@ public class DocxServiceTests
     public void Fill_UnknownToken_LeavesRunUnchanged()
     {
         var bytes = Document(body => body.AppendChild(Paragraph("{Missing}")));
-
         var filled = _docx.Fill(bytes, new { Name = "Ada" });
-
         Assert.Equal("{Missing}", _docx.ReadText(filled));
     }
 
@@ -49,7 +43,7 @@ public class DocxServiceTests
         using var stream = new MemoryStream();
         using (var package = WordprocessingDocument.Create(stream, WordprocessingDocumentType.Document, true)) {
             var main = package.AddMainDocumentPart();
-            main.Document = new Document(new Body());
+            main.Document = new(new Body());
             build(main.Document.Body!);
             main.Document.Save();
         }

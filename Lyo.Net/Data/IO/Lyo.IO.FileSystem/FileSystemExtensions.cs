@@ -1,13 +1,15 @@
 using System.Text;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Core.Pathing;
 using Lyo.Exceptions;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.IO.FileSystem;
 
 /// <summary>Convenience helpers that IOTemp and similar callers used on the old storage-provider surface.</summary>
 public static class FileSystemExtensions
 {
+    private const int CopyBufferSize = 81920;
+
     extension(IFileSystem fileSystem)
     {
         /// <summary>Creates an empty file at <paramref name="path" />, replacing any file already there.</summary>
@@ -17,9 +19,7 @@ public static class FileSystemExtensions
             using var _ = fileSystem.OpenCreate(path);
         }
 
-        /// <summary>
-        /// Checks that <paramref name="path" /> can be read and written. Throw on access denied. In-memory backends may no-op when they cannot probe.
-        /// </summary>
+        /// <summary>Checks that <paramref name="path" /> can be read and written. Throw on access denied. In-memory backends may no-op when they cannot probe.</summary>
         public void EnsureDirectoryAccessible(string path)
         {
             ArgumentHelpers.ThrowIfNull(fileSystem);
@@ -167,8 +167,6 @@ public static class FileSystemExtensions
 #endif
         }
     }
-
-    private const int CopyBufferSize = 81920;
 
     private static byte[] DrainToArray(Stream stream)
     {

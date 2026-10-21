@@ -46,19 +46,17 @@ public class ValueOrChainRangeTests
     }
 
     [Fact]
-    public void IfInRange_TimeSpan_Inside_ReturnsChosen()
-        => Assert.Equal("in", TimeSpan.FromMinutes(30).IfInRange(TimeSpan.Zero, TimeSpan.FromHours(1), "in").OrDefault("out"));
+    public void IfInRange_TimeSpan_Inside_ReturnsChosen() => Assert.Equal("in", TimeSpan.FromMinutes(30).IfInRange(TimeSpan.Zero, TimeSpan.FromHours(1), "in").OrDefault("out"));
 
     [Fact]
     public void IfInRange_DateOnly_Inside_ReturnsChosen()
     {
         var day = new DateOnly(2024, 7, 1);
-        Assert.Equal("in", day.IfInRange(new DateOnly(2024, 6, 1), new DateOnly(2024, 8, 31), "in").OrDefault("out"));
+        Assert.Equal("in", day.IfInRange(new(2024, 6, 1), new(2024, 8, 31), "in").OrDefault("out"));
     }
 
     [Fact]
-    public void IfInRange_TimeOnly_Inside_ReturnsChosen()
-        => Assert.Equal("in", new TimeOnly(12, 0).IfInRange(new TimeOnly(9, 0), new TimeOnly(17, 0), "in").OrDefault("out"));
+    public void IfInRange_TimeOnly_Inside_ReturnsChosen() => Assert.Equal("in", new TimeOnly(12, 0).IfInRange(new(9, 0), new(17, 0), "in").OrDefault("out"));
 
     [Fact]
     public void IfInRange_String_Inside_ReturnsChosen() => Assert.Equal("in", "m".IfInRange("a", "z", "in").OrDefault("out"));
@@ -81,10 +79,11 @@ public class ValueOrChainRangeTests
     public void IfInRange_Func_Outside_DoesNotInvoke()
     {
         var invoked = false;
-        var result = 5.IfInRange(1, 2, () => {
-                invoked = true;
-                return "in";
-            })
+        var result = 5.IfInRange(
+                1, 2, () => {
+                    invoked = true;
+                    return "in";
+                })
             .OrDefault("out");
 
         Assert.Equal("out", result);
@@ -102,10 +101,11 @@ public class ValueOrChainRangeTests
     {
         var invoked = false;
         var result = 1.IfInRange(1, 2, "low")
-            .OrIfInRange(3, 4, () => {
-                invoked = true;
-                return "mid";
-            })
+            .OrIfInRange(
+                3, 4, () => {
+                    invoked = true;
+                    return "mid";
+                })
             .OrDefault("other");
 
         Assert.Equal("low", result);
@@ -116,8 +116,7 @@ public class ValueOrChainRangeTests
     public void IfInRange_InvertedBounds_Throws() => Assert.Throws<ArgumentException>(() => 1.IfInRange(3, 1, "x"));
 
     [Fact]
-    public void OrThrow_Open_ThrowsFactoryException()
-        => Assert.Throws<KeyNotFoundException>(() => 5.IfInRange(1, 2, "in").OrThrow(() => new KeyNotFoundException("missing")));
+    public void OrThrow_Open_ThrowsFactoryException() => Assert.Throws<KeyNotFoundException>(() => 5.IfInRange(1, 2, "in").OrThrow(() => new KeyNotFoundException("missing")));
 
     [Fact]
     public void OrThrow_Chosen_ReturnsValue() => Assert.Equal("in", 1.IfInRange(1, 2, "in").OrThrow(() => new KeyNotFoundException("missing")));

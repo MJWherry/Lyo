@@ -1,5 +1,4 @@
 using Lyo.Exceptions;
-using Lyo.FeatureFlags;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -13,8 +12,8 @@ public static class Extensions
     extension(IApplicationBuilder app)
     {
         /// <summary>
-        /// Adds <see cref="FeatureFlagMiddleware" />. Call this after <c>UseRouting</c> and authentication, and before <c>UseAuthorization</c>.
-        /// The host still calls <c>AddFeatureFlags</c> or <c>AddFeatureFlagsFromConfiguration</c>.
+        /// Adds <see cref="FeatureFlagMiddleware" />. Call this after <c>UseRouting</c> and authentication, and before <c>UseAuthorization</c>. The host still calls
+        /// <c>AddFeatureFlags</c> or <c>AddFeatureFlagsFromConfiguration</c>.
         /// </summary>
         /// <param name="configure">Optional tenant claim and context factory. Null keeps the default claim mapping.</param>
         public IApplicationBuilder UseFeatureFlags(Action<FeatureFlagEndpointOptions>? configure = null)
@@ -31,26 +30,23 @@ public static class Extensions
     extension(IEndpointRouteBuilder endpoints)
     {
         /// <summary>
-        /// Maps <c>GET /features</c> to the flag names <see cref="IFeatureFlagService.IsEnabled" /> returns true for the current caller.
-        /// The caller is the same one <see cref="FeatureFlagMiddleware" /> builds. Disabled names are omitted. Rules and percentages are not returned.
-        /// No registered service returns an empty 500.
+        /// Maps <c>GET /features</c> to the flag names <see cref="IFeatureFlagService.IsEnabled" /> returns true for the current caller. The caller is the same one
+        /// <see cref="FeatureFlagMiddleware" /> builds. Disabled names are omitted. Rules and percentages are not returned. No registered service returns an empty 500.
         /// </summary>
         public RouteHandlerBuilder MapFeatureFlags()
         {
             ArgumentHelpers.ThrowIfNull(endpoints);
-            var options = endpoints is IApplicationBuilder app
-                && app.Properties.TryGetValue(FeatureFlagCaller.OptionsKey, out var stored)
-                && stored is FeatureFlagEndpointOptions configured
-                ? configured
-                : new FeatureFlagEndpointOptions();
+            var options = endpoints is IApplicationBuilder app && app.Properties.TryGetValue(FeatureFlagCaller.OptionsKey, out var stored) &&
+                stored is FeatureFlagEndpointOptions configured
+                    ? configured
+                    : new();
 
             return endpoints.MapGet("/features", (HttpContext context) => EnabledNames(context, options));
         }
 
         /// <summary>
-        /// Maps <c>GET /features/manage</c> and <c>PUT /features/manage/{name}</c>.
-        /// The list includes every flag's name and mode. The put sets that flag on or off and clears its percentage and rules.
-        /// An unknown name is an empty 404. No registered service is an empty 500. The host authorizes these routes.
+        /// Maps <c>GET /features/manage</c> and <c>PUT /features/manage/{name}</c>. The list includes every flag's name and mode. The put sets that flag on or off and clears its
+        /// percentage and rules. An unknown name is an empty 404. No registered service is an empty 500. The host authorizes these routes.
         /// </summary>
         public RouteGroupBuilder MapFeatureFlagManagement()
         {
@@ -80,10 +76,8 @@ public static class Extensions
         var caller = FeatureFlagCaller.Create(context, options);
         var monitor = context.RequestServices.GetService<IOptionsMonitor<FeatureFlagOptions>>();
         var names = new List<string>();
-        if (monitor is not null)
-        {
-            foreach (var pair in monitor.CurrentValue.Flags)
-            {
+        if (monitor is not null) {
+            foreach (var pair in monitor.CurrentValue.Flags) {
                 if (service.IsEnabled(pair.Key, caller))
                     names.Add(pair.Key);
             }
@@ -100,7 +94,7 @@ public static class Extensions
 
         var rows = new List<FeatureFlagState>();
         foreach (var pair in monitor.Flags)
-            rows.Add(new FeatureFlagState { Name = pair.Key, Mode = pair.Value.Mode.ToString() });
+            rows.Add(new() { Name = pair.Key, Mode = pair.Value.Mode.ToString() });
 
         return Results.Ok(rows);
     }
@@ -116,6 +110,7 @@ public static class Extensions
         var next = FeatureFlagUpdate.WithEnabled(monitor, name, body.Enabled);
         if (next is null)
             return Results.StatusCode(StatusCodes.Status404NotFound);
+
         if (!updater.TryApply(next))
             return Results.StatusCode(StatusCodes.Status500InternalServerError);
 

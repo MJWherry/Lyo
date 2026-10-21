@@ -6,15 +6,15 @@ public class FFmpegFileTagProviderTests
     public void Read_FormatTagWinsOverStreamTag()
     {
         const string json = """
-            {
-              "streams": [
-                { "tags": { "title": "Other", "artist": "Band", "composer": "Ignored" } }
-              ],
-              "format": {
-                "tags": { "title": "Show", "composer": "Ada" }
-              }
-            }
-            """;
+                            {
+                              "streams": [
+                                { "tags": { "title": "Other", "artist": "Band", "composer": "Ignored" } }
+                              ],
+                              "format": {
+                                "tags": { "title": "Show", "composer": "Ada" }
+                              }
+                            }
+                            """;
 
         var tags = FFmpegTagJson.Parse(json);
         Assert.Equal("Show", tags.Tags[FileTagKey.Title]);
@@ -31,8 +31,7 @@ public class FFmpegFileTagProviderTests
         Assert.Equal("copy", args[args.IndexOf("-c") + 1]);
         Assert.Equal("title=Show", args[args.IndexOf("-metadata") + 1]);
         Assert.DoesNotContain("libx264", args);
-
-        var cleared = new FileTagWriteRequest(request.Tags, clearExisting: true);
+        var cleared = new FileTagWriteRequest(request.Tags, true);
         var clearedArgs = FFmpegFileTagProvider.BuildWriteArguments("in.wav", "out.wav", cleared).ToList();
         var mapAt = clearedArgs.IndexOf("-map_metadata");
         Assert.Equal("-1", clearedArgs[mapAt + 1]);

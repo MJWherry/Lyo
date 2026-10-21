@@ -72,8 +72,9 @@ public class ReceiptStitcherTests
         try {
             for (var i = 0; i < count; i++)
                 frames[i] = Frames.Rows(width, height, i * shift);
+
             using var result = ReceiptStitcher.Stitch(frames);
-            Assert.Equal(height + (shift * (count - 1)), result.Height);
+            Assert.Equal(height + shift * (count - 1), result.Height);
             for (var y = 0; y < result.Height; y++)
                 Assert.Equal(Frames.RowColor(y), result[0, y]);
         }

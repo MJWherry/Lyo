@@ -1,6 +1,7 @@
 # Lyo.Diagnostic.AspNetCore
 
-ASP.NET Core integration for `Lyo.Diagnostic`. Per-request scoped breadcrumb trails and exception recording to the in-memory error inbox plus structured logging, without replacing existing problem-details middleware.
+ASP.NET Core integration for `Lyo.Diagnostic`. Per-request scoped breadcrumb trails and exception recording to the in-memory error inbox plus structured logging, without replacing
+existing problem-details middleware.
 
 ## Examples
 
@@ -42,13 +43,13 @@ public sealed class OrdersController(IBreadcrumbTrail breadcrumbs)
 
 ## Options (`DiagnosticWebOptions`)
 
-| Property | What it does |
-| ----------------------------- | -------------------------------------------------------------------------------------- |
-| `MinimumSeverity` | The inbox only stores occurrences at this severity or higher. |
-| `RecordExpectedControlFlow` | Expected control-flow classifications are skipped when this is `false`. |
-| `BreadcrumbCapacity` | Per-request breadcrumb ceiling (`IBreadcrumbTrail`). |
-| `InMemoryInboxMaxOccurrences` | Upper bound for the singleton `InMemoryErrorInbox`. |
-| `CorrelationIdHeaders` | Tried in order for `RequestMetadata.CorrelationId`; `TraceIdentifier` is the fallback. |
+| Property                      | What it does                                                                           |
+|-------------------------------|----------------------------------------------------------------------------------------|
+| `MinimumSeverity`             | The inbox only stores occurrences at this severity or higher.                          |
+| `RecordExpectedControlFlow`   | Expected control-flow classifications are skipped when this is `false`.                |
+| `BreadcrumbCapacity`          | Per-request breadcrumb ceiling (`IBreadcrumbTrail`).                                   |
+| `InMemoryInboxMaxOccurrences` | Upper bound for the singleton `InMemoryErrorInbox`.                                    |
+| `CorrelationIdHeaders`        | Tried in order for `RequestMetadata.CorrelationId`; `TraceIdentifier` is the fallback. |
 
 ## Controller breadcrumbs
 

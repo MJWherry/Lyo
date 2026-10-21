@@ -1,6 +1,8 @@
 # Lyo.FileTags.Images
 
-Picture tags for [`Lyo.FileTags`](../Lyo.FileTags/README.md). Extensions are jpeg, png, webp, gif, and tiff. Read maps EXIF artist, date, description, and copyright onto `FileTagKey`. Any other EXIF name is `Custom`. Write sets those mapped tags and saves the image. Width, height, and format stay on [`IImageService.GetMetadataAsync`](../../Images/Lyo.Images/README.md).
+Picture tags for [`Lyo.FileTags`](../Lyo.FileTags/README.md). Extensions are jpeg, png, webp, gif, and tiff. Read maps EXIF artist, date, description, and copyright onto
+`FileTagKey`. Any other EXIF name is `Custom`. Write sets those mapped tags and saves the image. Width, height, and format stay on [
+`IImageService.GetMetadataAsync`](../../Images/Lyo.Images/README.md).
 
 ## Features
 
@@ -21,10 +23,10 @@ if (read.IsSuccess && read.Data!.Tags.TryGetValue(FileTagKey.Artist, out var art
 
 ## Public types
 
-| Type | Description |
-| -------------------- | --------------------------------------------------------- |
+| Type                 | Description                                               |
+|----------------------|-----------------------------------------------------------|
 | ImageFileTagProvider | IFileTagReader and IFileTagWriter for picture extensions. |
-| Extensions | AddImageFileTags(). |
+| Extensions           | AddImageFileTags().                                       |
 
 ## Dependencies
 

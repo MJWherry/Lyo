@@ -1,4 +1,4 @@
-using Lyo.Config;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Config.Postgres.Database;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
@@ -6,17 +6,17 @@ using Lyo.Exceptions;
 using Lyo.Health;
 using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Config.Postgres;
 
 /// <summary>Postgres-backed IConfigStore.</summary>
 public sealed class PostgresConfigStore : IConfigStore, IHealth
 {
+    private const string EncryptionRequiredMessage = "Encrypted config requires IEncryptionService on the API host.";
     private readonly IDbContextFactory<ConfigDbContext> _contextFactory;
+    private readonly IConfigValueEncryptionService? _encryption;
     private readonly EntityRefOptions _entityRefOptions;
     private readonly TenancyOptions _featureTenancy;
-    private readonly IConfigValueEncryptionService? _encryption;
 
     /// <summary>Constructs a new PostgresConfigStore.</summary>
     public PostgresConfigStore(
@@ -70,6 +70,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
             SubjectEntityType = definition.SubjectEntityType,
             CreatedTimestamp = definition.CreatedTimestamp == default ? DateTime.UtcNow : definition.CreatedTimestamp
         };
+
         ApplyDefinition(entity, definition);
         context.ConfigDefinitions.Add(entity);
         await AppendDefinitionRevisionRowAsync(context, entity, ct).ConfigureAwait(false);
@@ -319,8 +320,8 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.ConfigBindings.AsNoTracking().FirstOrDefaultAsync(
-                x => x.SubjectEntityType == forEntity.EntityType && x.SubjectEntityId == forEntity.EntityId && x.Key == key && x.TenantId == resolvedTenant, ct)
+        var entity = await context.ConfigBindings.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.SubjectEntityType == forEntity.EntityType && x.SubjectEntityId == forEntity.EntityId && x.Key == key && x.TenantId == resolvedTenant, ct)
             .ConfigureAwait(false);
 
         return entity == null ? null : await ToBindingRecordAsync(context, entity, ct).ConfigureAwait(false);
@@ -392,7 +393,12 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         ArgumentHelpers.ThrowIfNull(forEntity);
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var definitions = await context.ConfigDefinitions.AsNoTracking().Where(x => x.SubjectEntityType == forEntity.EntityType).OrderBy(x => x.Key).ToListAsync(ct).ConfigureAwait(false);
+        var definitions = await context.ConfigDefinitions.AsNoTracking()
+            .Where(x => x.SubjectEntityType == forEntity.EntityType)
+            .OrderBy(x => x.Key)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
         var bindings = await context.ConfigBindings.AsNoTracking()
             .Where(x => x.SubjectEntityType == forEntity.EntityType && x.SubjectEntityId == forEntity.EntityId && x.TenantId == resolvedTenant)
             .ToListAsync(ct)
@@ -421,12 +427,9 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     public string HealthCheckName => "config-postgres";
 
     /// <inheritdoc />
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => PostgresHealth.CheckAsync(_contextFactory, PostgresConfigOptions.Schema, ct);
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => PostgresHealth.CheckAsync(_contextFactory, PostgresConfigOptions.Schema, ct);
 
     private Guid? ResolveTenant(Guid? tenantId) => TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
-
-    private const string EncryptionRequiredMessage = "Encrypted config requires IEncryptionService on the API host.";
 
     private void ApplyDefinition(ConfigDefinitionEntity entity, ConfigDefinitionRecord definition)
     {
@@ -590,8 +593,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
             definition.IsRequired && !HasDefault(definition),
             $"Cannot delete binding for required config key '{definition.Key}' (no default is defined). Add a default, set IsRequired to false, or delete the definition instead.");
 
-    private static bool HasDefault(ConfigDefinitionEntity definition)
-        => definition.DefaultValueJson != null || definition.EncryptedDefaultValue is { Length: > 0 };
+    private static bool HasDefault(ConfigDefinitionEntity definition) => definition.DefaultValueJson != null || definition.EncryptedDefaultValue is { Length: > 0 };
 
     private ConfigBindingRevisionRecord ToRevisionRecord(ConfigBindingRevisionEntity entity, string valueType)
         => new() {

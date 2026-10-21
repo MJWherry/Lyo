@@ -3,8 +3,8 @@ using System.Collections.Concurrent;
 namespace Lyo.Media.Models;
 
 /// <summary>
-/// Hardware encoder device. Lookups are thread-safe. <see cref="None" /> forces the CPU.
-/// A null option inherits the host setting. <see cref="Custom" /> does not invent encoder names such as <c>h264_amf</c>.
+/// Hardware encoder device. Lookups are thread-safe. <see cref="None" /> forces the CPU. A null option inherits the host setting. <see cref="Custom" /> does not invent
+/// encoder names such as <c>h264_amf</c>.
 /// </summary>
 public sealed record HardwareAccel
 {
@@ -63,7 +63,7 @@ public sealed record HardwareAccel
     public static HardwareAccel Custom(string id)
     {
         _ = BuiltIns;
-        return NamedCatalog.GetOrCustom(ById, id, key => new HardwareAccel(key, key));
+        return NamedCatalog.GetOrCustom(ById, id, key => new(key, key));
     }
 
     /// <inheritdoc />

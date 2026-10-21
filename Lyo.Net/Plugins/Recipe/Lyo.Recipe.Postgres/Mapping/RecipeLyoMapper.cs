@@ -6,7 +6,7 @@ using Lyo.Recipe.Postgres.Database;
 
 namespace Lyo.Recipe.Postgres.Mapping;
 
-/// <summary>Hand-rolled <see cref="ILyoMapper"/> for Recipe Req/entity/Res. Explicit property assignments.</summary>
+/// <summary>Hand-rolled <see cref="ILyoMapper" /> for Recipe Req/entity/Res. Explicit property assignments.</summary>
 public sealed class RecipeLyoMapper : ILyoMapper
 {
     /// <inheritdoc />
@@ -51,8 +51,7 @@ public sealed class RecipeLyoMapper : ILyoMapper
         }
     }
 
-    private static InvalidOperationException Unmapped(Type source, Type dest)
-        => new($"No mapping configured from {source.Name} to {dest.Name}.");
+    private static InvalidOperationException Unmapped(Type source, Type dest) => new($"No mapping configured from {source.Name} to {dest.Name}.");
 
     private static DateTime UtcNow() => DateTime.UtcNow;
 

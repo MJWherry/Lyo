@@ -85,15 +85,20 @@ cd Lyo.Net/Tools/Lyo.TestGateway && dotnet run --launch-profile http
 
 ## Realm-role mapping
 
-Keycloak emits realm roles under `realm_access.roles` in the id_token. The Lyo provider extracts that list, looks each role up in `RolesToScopes`, and writes the union into `LinkedIdentity.Scopes`. Demoting a user in Keycloak, by removing a role from their realm membership, takes effect on their next login. The next minted Lyo JWT will not carry the removed scopes. Roles that are not in the mapping table are silently dropped so adding a Keycloak role can never accidentally grant Lyo scopes.
+Keycloak emits realm roles under `realm_access.roles` in the id_token. The Lyo provider extracts that list, looks each role up in `RolesToScopes`, and writes the union into
+`LinkedIdentity.Scopes`. Demoting a user in Keycloak, by removing a role from their realm membership, takes effect on their next login. The next minted Lyo JWT will not carry the
+removed scopes. Roles that are not in the mapping table are silently dropped so adding a Keycloak role can never accidentally grant Lyo scopes.
 
 ## Local development setup
 
-End-to-end recipe for exercising the BFF flow against a Keycloak running on your laptop, with `Lyo.TestApi` as the API/auth server (`http://localhost:5251`) and `Lyo.TestGateway` as the browser consumer (`http://localhost:5138`). Keycloak runs on `http://localhost:8080` and is reachable directly from both your browser and the TestApi.
+End-to-end recipe for exercising the BFF flow against a Keycloak running on your laptop, with `Lyo.TestApi` as the API/auth server (`http://localhost:5251`) and `Lyo.TestGateway`
+as the browser consumer (`http://localhost:5138`). Keycloak runs on `http://localhost:8080` and is reachable directly from both your browser and the TestApi.
 
 ## 1. Run Keycloak locally
 
-The official `quay.io/keycloak/keycloak` image in dev mode (HTTP, in-memory DB, wiped on container restart) is the fastest way to get a working IdP. Both env-var name pairs are set on purpose: Keycloak <=25 reads `KEYCLOAK_ADMIN*`, Keycloak >=26 reads `KC_BOOTSTRAP_ADMIN_*`. Leaving both in place keeps the snippet image-version-agnostic. Once it's up, open <http://localhost:8080/> and sign in to the admin console as `admin` / `admin`.
+The official `quay.io/keycloak/keycloak` image in dev mode (HTTP, in-memory DB, wiped on container restart) is the fastest way to get a working IdP. Both env-var name pairs are set
+on purpose: Keycloak <=25 reads `KEYCLOAK_ADMIN*`, Keycloak >=26 reads `KC_BOOTSTRAP_ADMIN_*`. Leaving both in place keeps the snippet image-version-agnostic. Once it's up,
+open <http://localhost:8080/> and sign in to the admin console as `admin` / `admin`.
 
 ## 2. Create the realm and the Lyo client
 
@@ -107,14 +112,16 @@ The official `quay.io/keycloak/keycloak` image in dev mode (HTTP, in-memory DB, 
 - Authorization = OFF.
 - Authentication flow: leave **Standard flow** ticked; untick everything else.
 - *Login settings*:
-- Valid redirect URIs: `http://localhost:5251/auth/callback/keycloak:lyo`. **Must include the `:lyo` suffix.** The Lyo provider name defaults to `keycloak:{realm}`, and that's the segment the API uses to route the callback.
+- Valid redirect URIs: `http://localhost:5251/auth/callback/keycloak:lyo`. **Must include the `:lyo` suffix.** The Lyo provider name defaults to `keycloak:{realm}`, and that's the
+  segment the API uses to route the callback.
 - Web origins: `http://localhost:5251` (or `+` to mirror the redirect-URI list).
 - Root URL / Home URL / Admin URL can stay empty.
 - *Credentials* tab. Copy the **Client secret**. You'll paste it into user-secrets in the next step.
 
 ## 3. Create realm roles + a test user
 
-- **Realm roles → Create role** for each role you want to be able to map → for example `lyo-admin`, `lyo-people-rw`. These names go on the *Keycloak* side; `RolesToScopes` (next step) decides what Lyo scopes they grant.
+- **Realm roles → Create role** for each role you want to be able to map → for example `lyo-admin`, `lyo-people-rw`. These names go on the *Keycloak* side; `RolesToScopes` (next
+  step) decides what Lyo scopes they grant.
 - **Users → Add user**: username = `dev@lyolabs.io` (or whatever), Email verified = ON.
 - *Credentials* tab → Set password (non-temporary).
 - *Role mappings* tab → Assign role → tick the realm roles you created in step 1.
@@ -134,24 +141,28 @@ block. It is identical no matter which IdP you pair Lyo with.
 
 - `http://localhost:8080/realms/lyo/.well-known/openid-configuration`. Should return the realm's discovery document.
 - `http://localhost:5251/.well-known/jwks.json`. Lyo signing keys.
-- Visit `http://localhost:5138`, click **Sign in with Keycloak** (or hit `http://localhost:5138/auth/sign-in/keycloak:lyo?returnUrl=/`). The Gateway 302s to the TestApi, which 302s to Keycloak's login page, which 302s back to the TestApi callback, which 302s to `http://localhost:5138/auth/handoff?lyo_handoff=lyoh_...`. The Gateway redeems the code server-side, drops `lyo_session`, and lands you on `/`.
+- Visit `http://localhost:5138`, click **Sign in with Keycloak** (or hit `http://localhost:5138/auth/sign-in/keycloak:lyo?returnUrl=/`). The Gateway 302s to the TestApi, which 302s
+  to Keycloak's login page, which 302s back to the TestApi callback, which 302s to `http://localhost:5138/auth/handoff?lyo_handoff=lyoh_...`. The Gateway redeems the code
+  server-side, drops `lyo_session`, and lands you on `/`.
 - After login, `GET http://localhost:5251/auth/me` returns the principal. `LinkedIdentity.Scopes` will contain the union of scope arrays mapped from the user's realm roles.
 
 ## 6. Common local pitfalls
 
-| Symptom | Cause / fix |
-| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `redirect_uri_mismatch` (Keycloak error page) | The URI in *Valid redirect URIs* doesn't byte-for-byte equal `KeycloakAuth:RedirectUri`. Most often the `:lyo` suffix was dropped or the port mismatches. |
-| `Invalid client or Invalid client credentials` | Client secret mismatch (regenerate in Keycloak's *Credentials* tab and re-set the user-secret), or the realm name differs from `KeycloakAuth:Realm`. |
-| Login succeeds but `LinkedIdentity.Scopes` is empty | Either the user has no realm roles assigned, none of those roles are in `RolesToScopes`, or the `roles` scope wasn't requested. Lyo requests `roles` by default. That last case only happens if you've overridden `KeycloakAuth:Scopes`. |
-| `Realm does not exist` from Lyo on startup | `KeycloakAuth:BaseUrl` includes a `/realms/...` segment. Keep `BaseUrl` at the server root (e.g. `http://localhost:8080`); the provider appends `/realms/{Realm}` itself. |
-| Callback redirects to the API origin instead of the Gateway | Same root cause as in the Google guide. Gateway origin isn't in `LyoSso:AllowedReturnOrigins`. |
-| Keycloak loses all state between restarts | Expected with `start-dev` (in-memory dev DB). For persistence, swap the run command for `start` with `KC_DB=postgres`, mount a Postgres volume, and supply real DB credentials. |
+| Symptom                                                     | Cause / fix                                                                                                                                                                                                                              |
+|-------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `redirect_uri_mismatch` (Keycloak error page)               | The URI in *Valid redirect URIs* doesn't byte-for-byte equal `KeycloakAuth:RedirectUri`. Most often the `:lyo` suffix was dropped or the port mismatches.                                                                                |
+| `Invalid client or Invalid client credentials`              | Client secret mismatch (regenerate in Keycloak's *Credentials* tab and re-set the user-secret), or the realm name differs from `KeycloakAuth:Realm`.                                                                                     |
+| Login succeeds but `LinkedIdentity.Scopes` is empty         | Either the user has no realm roles assigned, none of those roles are in `RolesToScopes`, or the `roles` scope wasn't requested. Lyo requests `roles` by default. That last case only happens if you've overridden `KeycloakAuth:Scopes`. |
+| `Realm does not exist` from Lyo on startup                  | `KeycloakAuth:BaseUrl` includes a `/realms/...` segment. Keep `BaseUrl` at the server root (e.g. `http://localhost:8080`); the provider appends `/realms/{Realm}` itself.                                                                |
+| Callback redirects to the API origin instead of the Gateway | Same root cause as in the Google guide. Gateway origin isn't in `LyoSso:AllowedReturnOrigins`.                                                                                                                                           |
+| Keycloak loses all state between restarts                   | Expected with `start-dev` (in-memory dev DB). For persistence, swap the run command for `start` with `KC_DB=postgres`, mount a Postgres volume, and supply real DB credentials.                                                          |
 
 ## 7. Peer vs broker (recap)
 
-- **Peer mode.** Register `AddGoogleProviderFromConfiguration` AND `AddKeycloakProviderFromConfiguration`. The Lyo login chooser routes to `/auth/login/google` or `/auth/login/keycloak:lyo`. Both providers issue Lyo JWTs of the same shape. Downstream APIs never need to care which IdP minted the original id_token.
-- **Broker mode.** Register only `AddKeycloakProviderFromConfiguration` on the Lyo side. Configure Google or any other IdP as a *federated identity provider* inside Keycloak. Lyo only ever talks to Keycloak. Keycloak's `identity_provider` claim carries the upstream IdP name for auditing.
+- **Peer mode.** Register `AddGoogleProviderFromConfiguration` AND `AddKeycloakProviderFromConfiguration`. The Lyo login chooser routes to `/auth/login/google` or
+  `/auth/login/keycloak:lyo`. Both providers issue Lyo JWTs of the same shape. Downstream APIs never need to care which IdP minted the original id_token.
+- **Broker mode.** Register only `AddKeycloakProviderFromConfiguration` on the Lyo side. Configure Google or any other IdP as a *federated identity provider* inside Keycloak. Lyo
+  only ever talks to Keycloak. Keycloak's `identity_provider` claim carries the upstream IdP name for auditing.
 
 ## 8. Promote to deployed environments
 
@@ -160,7 +171,8 @@ Replace localhost URLs with the deployed equivalents and add more `Valid redirec
 - Staging: `https://api-staging.example.com/auth/callback/keycloak:lyo` + `LyoSso:AllowedReturnOrigins` includes `https://app-staging.example.com`
 - Production: `https://api.example.com/auth/callback/keycloak:lyo` + `LyoSso:AllowedReturnOrigins` includes `https://app.example.com`
 
-Production Keycloak must terminate TLS, either directly via `KC_HTTPS_*` settings or behind a reverse proxy with `KC_PROXY=edge`/`KC_HOSTNAME=...`. The Lyo provider only requires HTTPS in non-loopback deployments. Confirm with `curl https://sso.example.com/realms/lyo/.well-known/openid-configuration` from the API host before flipping any traffic over.
+Production Keycloak must terminate TLS, either directly via `KC_HTTPS_*` settings or behind a reverse proxy with `KC_PROXY=edge`/`KC_HOSTNAME=...`. The Lyo provider only requires
+HTTPS in non-loopback deployments. Confirm with `curl https://sso.example.com/realms/lyo/.well-known/openid-configuration` from the API host before flipping any traffic over.
 
 ## Dependencies
 

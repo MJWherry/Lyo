@@ -6,15 +6,25 @@ namespace Lyo.Story.Sqlite.Database;
 public class StoryDbContext : DbContext
 {
     public DbSet<StoryEntity> Stories { get; set; } = null!;
+
     public DbSet<StorySceneEntity> Scenes { get; set; } = null!;
+
     public DbSet<StoryNodeEntity> Nodes { get; set; } = null!;
+
     public DbSet<StoryVariableEntity> Variables { get; set; } = null!;
+
     public DbSet<StoryActionEntity> Actions { get; set; } = null!;
+
     public DbSet<StoryChoiceEntity> Choices { get; set; } = null!;
+
     public DbSet<StoryReactionEntity> Reactions { get; set; } = null!;
+
     public DbSet<StoryEffectEntity> Effects { get; set; } = null!;
+
     public DbSet<StoryPlaythroughEntity> Playthroughs { get; set; } = null!;
+
     public DbSet<StoryPlaythroughVariableEntity> PlaythroughVariables { get; set; } = null!;
+
     public DbSet<StoryPlaythroughEventEntity> PlaythroughEvents { get; set; } = null!;
 
     public StoryDbContext(DbContextOptions<StoryDbContext> options)

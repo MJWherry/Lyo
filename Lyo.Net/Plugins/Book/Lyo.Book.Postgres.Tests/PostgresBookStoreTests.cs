@@ -1,8 +1,7 @@
 using Lyo.Book.Enums;
-using Lyo.Exceptions;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions.Models;
 using Microsoft.Extensions.DependencyInjection;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Book.Postgres.Tests;
 
@@ -18,10 +17,17 @@ public sealed class PostgresBookStoreTests(BookPostgresFixture fixture)
         var format = await SaveFormatAsync("hardcover", "Hardcover", ct);
         var genre = await SaveGenreAsync("fantasy", "Fantasy", ct: ct);
         var book = NewBook($"rt-{LyoGuid.CreateV7():N}", type.Id, format.Id, [genre.Id]);
-        book.AlternateTitles = [new BookAlternateTitle { Title = "Alt", Kind = TitleKind.Translated, Language = "fr", SortOrder = 1 }];
-        book.Identifiers = [new BookIdentifier { Scheme = BookIdentifierSchemes.Isbn13, Value = "978-1-4028-9462-6", IsPrimary = true }];
-        book.Contributors = [new BookContributor { DisplayName = "Ada Lovelace", Role = ContributorRole.Author, Ordinal = 1 }];
+        book.AlternateTitles = [
+            new() {
+                Title = "Alt",
+                Kind = TitleKind.Translated,
+                Language = "fr",
+                SortOrder = 1
+            }
+        ];
 
+        book.Identifiers = [new() { Scheme = BookIdentifierSchemes.Isbn13, Value = "978-1-4028-9462-6", IsPrimary = true }];
+        book.Contributors = [new() { DisplayName = "Ada Lovelace", Role = ContributorRole.Author, Ordinal = 1 }];
         await Store.SaveBookAsync(book, ct);
         var loaded = await Store.GetBookByIdAsync(book.Id, ct);
         Assert.NotNull(loaded);
@@ -38,9 +44,8 @@ public sealed class PostgresBookStoreTests(BookPostgresFixture fixture)
         var ct = TestCt;
         var isbn = UniqueIsbn13();
         var book = NewBook($"isbn-{LyoGuid.CreateV7():N}");
-        book.Identifiers = [new BookIdentifier { Scheme = BookIdentifierSchemes.Isbn13, Value = FormatIsbn(isbn), IsPrimary = true }];
+        book.Identifiers = [new() { Scheme = BookIdentifierSchemes.Isbn13, Value = FormatIsbn(isbn), IsPrimary = true }];
         await Store.SaveBookAsync(book, ct);
-
         var found = await Store.GetBookByIdentifierAsync(BookIdentifierSchemes.Isbn13, FormatIsbn(isbn), ct);
         Assert.NotNull(found);
         Assert.Equal(book.Id, found.Id);
@@ -52,11 +57,10 @@ public sealed class PostgresBookStoreTests(BookPostgresFixture fixture)
         var ct = TestCt;
         var isbn = UniqueIsbn13();
         var first = NewBook($"dup-a-{LyoGuid.CreateV7():N}");
-        first.Identifiers = [new BookIdentifier { Scheme = BookIdentifierSchemes.Isbn13, Value = isbn, IsPrimary = true }];
+        first.Identifiers = [new() { Scheme = BookIdentifierSchemes.Isbn13, Value = isbn, IsPrimary = true }];
         await Store.SaveBookAsync(first, ct);
-
         var second = NewBook($"dup-b-{LyoGuid.CreateV7():N}");
-        second.Identifiers = [new BookIdentifier { Scheme = BookIdentifierSchemes.Isbn13, Value = FormatIsbn(isbn), IsPrimary = true }];
+        second.Identifiers = [new() { Scheme = BookIdentifierSchemes.Isbn13, Value = FormatIsbn(isbn), IsPrimary = true }];
         await Assert.ThrowsAsync<ConflictException>(() => Store.SaveBookAsync(second, ct));
     }
 
@@ -81,7 +85,7 @@ public sealed class PostgresBookStoreTests(BookPostgresFixture fixture)
         var other = NewBook($"{prefix}-no");
         await Store.SaveBookAsync(matching, ct);
         await Store.SaveBookAsync(other, ct);
-        var results = await Store.SearchBooksAsync(new BookQuery { TitleContains = prefix, TypeId = type.Id }, ct);
+        var results = await Store.SearchBooksAsync(new() { TitleContains = prefix, TypeId = type.Id }, ct);
         Assert.Equal(matching.Id, Assert.Single(results).Id);
     }
 
@@ -103,7 +107,7 @@ public sealed class PostgresBookStoreTests(BookPostgresFixture fixture)
         var ct = TestCt;
         var book = NewBook($"flt-{LyoGuid.CreateV7():N}");
         await Store.SaveBookAsync(book, ct);
-        var results = await Store.SearchBooksAsync(new BookQuery { FilterBookIds = [] }, ct);
+        var results = await Store.SearchBooksAsync(new() { FilterBookIds = [] }, ct);
         Assert.Empty(results);
     }
 
@@ -115,7 +119,7 @@ public sealed class PostgresBookStoreTests(BookPostgresFixture fixture)
         await Store.SaveBookAsync(NewBook($"{prefix}-a"), ct);
         await Store.SaveBookAsync(NewBook($"{prefix}-b"), ct);
         await Store.SaveBookAsync(NewBook($"{prefix}-c"), ct);
-        var page = await Store.SearchBooksAsync(new BookQuery { TitleContains = prefix, Skip = 1, Take = 1 }, ct);
+        var page = await Store.SearchBooksAsync(new() { TitleContains = prefix, Skip = 1, Take = 1 }, ct);
         Assert.Single(page);
     }
 
@@ -129,7 +133,6 @@ public sealed class PostgresBookStoreTests(BookPostgresFixture fixture)
         book.SeriesId = series.Id;
         book.SeriesIndex = 2;
         await Store.SaveBookAsync(book, ct);
-
         await Store.DeleteSeriesAsync(series.Id, ct);
         var loaded = await Store.GetBookByIdAsync(book.Id, ct);
         Assert.NotNull(loaded);
@@ -153,11 +156,22 @@ public sealed class PostgresBookStoreTests(BookPostgresFixture fixture)
         var ct = TestCt;
         var book = NewBook($"casc-{LyoGuid.CreateV7():N}");
         await Store.SaveBookAsync(book, ct);
-        var chapter = new BookChapter { BookId = book.Id, ChapterNumber = 1, Language = "en", Title = "One" };
-        await Store.SaveChapterAsync(chapter, ct);
-        var page = new BookPage { ChapterId = chapter.Id, PageNumber = 1, Text = "hello world", ContentType = BookContentTypes.PlainText };
-        await Store.SavePageAsync(page, ct);
+        var chapter = new BookChapter {
+            BookId = book.Id,
+            ChapterNumber = 1,
+            Language = "en",
+            Title = "One"
+        };
 
+        await Store.SaveChapterAsync(chapter, ct);
+        var page = new BookPage {
+            ChapterId = chapter.Id,
+            PageNumber = 1,
+            Text = "hello world",
+            ContentType = BookContentTypes.PlainText
+        };
+
+        await Store.SavePageAsync(page, ct);
         await Store.DeleteBookAsync(book.Id, ct);
         Assert.Null(await Store.GetPageByIdAsync(page.Id, ct: ct));
         Assert.Null(await Store.GetBookByIdAsync(book.Id, ct));
@@ -168,7 +182,7 @@ public sealed class PostgresBookStoreTests(BookPostgresFixture fixture)
     {
         var ct = TestCt;
         var (_, chapter, page) = await SeedPageAsync("visible body token", BookContentTypes.PlainText, ct);
-        var listed = await Store.GetPagesByChapterAsync(chapter.Id, includeText: false, ct);
+        var listed = await Store.GetPagesByChapterAsync(chapter.Id, false, ct);
         var row = Assert.Single(listed);
         Assert.Null(row.Text);
         Assert.True(row.HasContent);
@@ -183,11 +197,9 @@ public sealed class PostgresBookStoreTests(BookPostgresFixture fixture)
         var ct = TestCt;
         var token = $"lyoztoken{LyoGuid.CreateV7():N}";
         var (book, _, _) = await SeedPageAsync($"A paragraph about {token} in the woods.", BookContentTypes.PlainText, ct);
-
-        var hits = await Store.SearchPagesAsync(new PageQuery { FullText = token }, ct);
+        var hits = await Store.SearchPagesAsync(new() { FullText = token }, ct);
         Assert.Contains(hits, h => h.BookId == book.Id && !string.IsNullOrEmpty(h.Snippet));
-
-        var books = await Store.SearchBooksAsync(new BookQuery { FullText = token }, ct);
+        var books = await Store.SearchBooksAsync(new() { FullText = token }, ct);
         Assert.Contains(books, b => b.Id == book.Id);
     }
 
@@ -197,10 +209,9 @@ public sealed class PostgresBookStoreTests(BookPostgresFixture fixture)
         var ct = TestCt;
         var visible = $"vis{LyoGuid.CreateV7():N}";
         await SeedPageAsync($"<div class=\"hiddentagattr\">{visible}</div>", BookContentTypes.Html, ct);
-
-        var visibleHits = await Store.SearchPagesAsync(new PageQuery { FullText = visible }, ct);
+        var visibleHits = await Store.SearchPagesAsync(new() { FullText = visible }, ct);
         Assert.NotEmpty(visibleHits);
-        var tagHits = await Store.SearchPagesAsync(new PageQuery { FullText = "hiddentagattr" }, ct);
+        var tagHits = await Store.SearchPagesAsync(new() { FullText = "hiddentagattr" }, ct);
         Assert.Empty(tagHits);
     }
 
@@ -212,7 +223,14 @@ public sealed class PostgresBookStoreTests(BookPostgresFixture fixture)
         await Store.SaveBookAsync(book, ct);
         var chapter = new BookChapter { BookId = book.Id, ChapterNumber = 1, Language = "en" };
         await Store.SaveChapterAsync(chapter, ct);
-        var page = new BookPage { ChapterId = chapter.Id, PageNumber = 1, ScanFileRef = LyoGuid.CreateV7().ToString("D"), Width = 800, Height = 1200 };
+        var page = new BookPage {
+            ChapterId = chapter.Id,
+            PageNumber = 1,
+            ScanFileRef = LyoGuid.CreateV7().ToString("D"),
+            Width = 800,
+            Height = 1200
+        };
+
         await Store.SavePageAsync(page, ct);
         var loaded = await Store.GetPageByIdAsync(page.Id, ct: ct);
         Assert.NotNull(loaded);
@@ -226,7 +244,7 @@ public sealed class PostgresBookStoreTests(BookPostgresFixture fixture)
         var ct = TestCt;
         var (book, chapter, page) = await SeedPageAsync("one two three", BookContentTypes.PlainText, ct);
         await Store.SavePageTextAsync(page.Id, "one two three four", BookContentTypes.PlainText, ct);
-        var saved = await Store.GetPageByIdAsync(page.Id, includeText: true, ct);
+        var saved = await Store.GetPageByIdAsync(page.Id, true, ct);
         Assert.Equal("one two three four", saved!.Text);
         Assert.Equal(4, saved.WordCount);
         var ch = await Store.GetChapterByIdAsync(chapter.Id, ct);
@@ -239,9 +257,21 @@ public sealed class PostgresBookStoreTests(BookPostgresFixture fixture)
     {
         var book = NewBook($"txt-{LyoGuid.CreateV7():N}");
         await Store.SaveBookAsync(book, ct);
-        var chapter = new BookChapter { BookId = book.Id, ChapterNumber = 1, Language = "en", Title = "Ch" };
+        var chapter = new BookChapter {
+            BookId = book.Id,
+            ChapterNumber = 1,
+            Language = "en",
+            Title = "Ch"
+        };
+
         await Store.SaveChapterAsync(chapter, ct);
-        var page = new BookPage { ChapterId = chapter.Id, PageNumber = 1, Text = text, ContentType = contentType };
+        var page = new BookPage {
+            ChapterId = chapter.Id,
+            PageNumber = 1,
+            Text = text,
+            ContentType = contentType
+        };
+
         await Store.SavePageAsync(page, ct);
         return (book, chapter, page);
     }
@@ -284,6 +314,5 @@ public sealed class PostgresBookStoreTests(BookPostgresFixture fixture)
         return $"978{n:D10}";
     }
 
-    private static string FormatIsbn(string digits)
-        => digits.Length == 13 ? $"{digits[..3]}-{digits[3]}-{digits[4..8]}-{digits[8..12]}-{digits[12]}" : digits;
+    private static string FormatIsbn(string digits) => digits.Length == 13 ? $"{digits[..3]}-{digits[3]}-{digits[4..8]}-{digits[8..12]}-{digits[12]}" : digits;
 }

@@ -5,15 +5,15 @@ using Lyo.Authentication.AspNetCore;
 using Lyo.Authentication.AspNetCore.Endpoints;
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.OpenIdConnect.Client;
-using Lyo.Authentication.Services.Opaque;
-using Lyo.Authentication.Services.Users;
 using Lyo.Authentication.OpenIdConnect.Coordinator;
 using Lyo.Authentication.OpenIdConnect.Discovery;
-using Lyo.Authentication.Sso.Completion;
-using Lyo.Authentication.Sso.Endpoints;
 using Lyo.Authentication.OpenIdConnect.Pkce;
 using Lyo.Authentication.OpenIdConnect.Provider;
 using Lyo.Authentication.Options;
+using Lyo.Authentication.Services.Opaque;
+using Lyo.Authentication.Services.Users;
+using Lyo.Authentication.Sso.Completion;
+using Lyo.Authentication.Sso.Endpoints;
 using Lyo.Common.Core.Extensions;
 using Lyo.KeyStore;
 using Microsoft.AspNetCore.Builder;
@@ -167,6 +167,7 @@ public sealed class EndToEndSmokeTests
                                 o.DefaultUserScopes.Add("auth.tokens.read");
                                 o.DefaultUserScopes.Add("auth.tokens.write");
                             });
+
                             services.AddSingleton<IOpenIdConnectProvider>(new ScopedFakeProvider("people.read", "auth.tokens.read", "auth.tokens.write"));
                             services.AddHttpClient<OidcDiscoveryCache>().ConfigurePrimaryHttpMessageHandler(() => fx.Idp.CreateHandler());
                             services.AddHttpClient<OidcJwksResolver>().ConfigurePrimaryHttpMessageHandler(() => fx.Idp.CreateHandler());

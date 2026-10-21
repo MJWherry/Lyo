@@ -1,3 +1,5 @@
+using System.Buffers.Binary;
+
 namespace Lyo.Cache.Tests;
 
 public class CacheItemTests
@@ -66,9 +68,8 @@ public class CacheItemTests
         var framed = new byte[9 + payload.Length];
         "LYO1"u8.CopyTo(framed);
         framed[4] = 0x03;
-        System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(framed.AsSpan(5, 4), (uint)payload.Length);
+        BinaryPrimitives.WriteUInt32LittleEndian(framed.AsSpan(5, 4), (uint)payload.Length);
         payload.CopyTo(framed.AsSpan(9));
-
         var item = CacheItem.FromStoredBytes("framed-key", framed);
         Assert.True(item.Encrypted);
         Assert.True(item.Compressed);

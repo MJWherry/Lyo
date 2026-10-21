@@ -25,8 +25,7 @@ public sealed class UserScopeNamesTests
 
     private sealed class EmptyScopeStore : IUserScopeStore
     {
-        public Task<IReadOnlyList<LyoUserScope>> ListForUserAsync(Guid userId, Guid? tenantId, CancellationToken ct = default)
-            => Task.FromResult<IReadOnlyList<LyoUserScope>>([]);
+        public Task<IReadOnlyList<LyoUserScope>> ListForUserAsync(Guid userId, Guid? tenantId, CancellationToken ct = default) => Task.FromResult<IReadOnlyList<LyoUserScope>>([]);
 
         public Task<LyoUserScope> CreateAsync(LyoUserScope scope, Guid? tenantId, CancellationToken ct = default) => throw new NotSupportedException();
 

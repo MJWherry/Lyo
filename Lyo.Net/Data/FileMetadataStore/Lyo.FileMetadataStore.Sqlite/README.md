@@ -1,6 +1,7 @@
 # Lyo.FileMetadataStore.Sqlite
 
-EF Core SQLite IFileMetadataStore. Same store and adjunct services as [Lyo.FileMetadataStore.Postgres](../Lyo.FileMetadataStore.Postgres/README.md), for embedded, offline-first, and local-dev hosts.
+EF Core SQLite IFileMetadataStore. Same store and adjunct services as [Lyo.FileMetadataStore.Postgres](../Lyo.FileMetadataStore.Postgres/README.md), for embedded, offline-first,
+and local-dev hosts.
 
 ## Examples
 
@@ -48,13 +49,13 @@ services.AddS3FileStorageServiceKeyed("my-files")
 
 ## Types
 
-| Component | Role |
-| --------------------------------- | -------------------------------------------------- |
-| SqliteFileMetadataStore | IFileMetadataStore + IHealth |
-| SqliteFileAuditSink | IFileAuditEventHandler. Append-only audit rows. |
-| SqliteMultipartUploadSessionStore | IMultipartUploadSessionStore |
-| SqliteFileDownloadAccessService | Time-limited download access tokens |
-| SqliteFileMetadataStoreDbContext | EF Core context (5 tables, same shape as Postgres) |
+| Component                         | Role                                               |
+|-----------------------------------|----------------------------------------------------|
+| SqliteFileMetadataStore           | IFileMetadataStore + IHealth                       |
+| SqliteFileAuditSink               | IFileAuditEventHandler. Append-only audit rows.    |
+| SqliteMultipartUploadSessionStore | IMultipartUploadSessionStore                       |
+| SqliteFileDownloadAccessService   | Time-limited download access tokens                |
+| SqliteFileMetadataStoreDbContext  | EF Core context (5 tables, same shape as Postgres) |
 
 Tables: `file_metadata`, `file_data`, `file_audit_events`, `multipart_upload_session`, `file_download_access_links`.
 
@@ -64,11 +65,15 @@ Tables: `file_metadata`, `file_data`, `file_audit_events`, `multipart_upload_ses
 
 ## How migrations run
 
-Migrations ship in this package. Turn on EnableAutoMigrations (via [`Lyo.Sqlite`](../../Sqlite/Lyo.Sqlite/README.md)) or run `dotnet ef database update` using SqliteFileMetadataStoreDbContextFactory. Design-time connection string: FILEMETADATASTORE_CONNECTION_STRING or FILESTORE_CONNECTION_STRING (defaults to `Data Source=./filestore-design.db`). `DropStagedFileUpload` removes the former `staged_file_upload` table. `AddFileMetadataJson` adds opaque `metadata_json` on `file_metadata` and `multipart_upload_session`.
+Migrations ship in this package. Turn on EnableAutoMigrations (via [`Lyo.Sqlite`](../../Sqlite/Lyo.Sqlite/README.md)) or run `dotnet ef database update` using
+SqliteFileMetadataStoreDbContextFactory. Design-time connection string: FILEMETADATASTORE_CONNECTION_STRING or FILESTORE_CONNECTION_STRING (defaults to
+`Data Source=./filestore-design.db`). `DropStagedFileUpload` removes the former `staged_file_upload` table. `AddFileMetadataJson` adds opaque `metadata_json` on `file_metadata` and
+`multipart_upload_session`.
 
 ## Writer limits
 
-SQLite is single-writer. Fine for embedded clients, local tools, and low-concurrency dev hosts. High-throughput multi-instance ingestion should use Postgres. Enable WAL at the connection level if the host opens many concurrent readers (`PRAGMA journal_mode=WAL`).
+SQLite is single-writer. Fine for embedded clients, local tools, and low-concurrency dev hosts. High-throughput multi-instance ingestion should use Postgres. Enable WAL at the
+connection level if the host opens many concurrent readers (`PRAGMA journal_mode=WAL`).
 
 ## Dependencies
 

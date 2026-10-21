@@ -1,6 +1,5 @@
 using System.Reflection;
 using System.Text;
-using Lyo.Result;
 
 namespace Lyo.Yaml;
 
@@ -31,17 +30,15 @@ public interface IYamlWriter
     /// <summary>Writes <see cref="ExportFormattedToYamlString{T}" /> to <paramref name="yamlStream" />. The stream is left open.</summary>
     void ExportFormattedToYaml<T>(IEnumerable<T> items, IReadOnlyDictionary<string, Func<T, string>> fields, Stream yamlStream);
 
-    /// <summary>
-    /// Writes one object per item. The key is the field name and the value is the property value, in dictionary order. <c>Order</c> does not reorder these keys.
-    /// </summary>
+    /// <summary>Writes one object per item. The key is the field name and the value is the property value, in dictionary order. <c>Order</c> does not reorder these keys.</summary>
     string ExportColumnsToYamlString<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns);
 
     /// <summary>Writes <see cref="ExportColumnsToYamlString{T}" /> to <paramref name="yamlStream" />. The stream is left open.</summary>
     void ExportColumnsToYaml<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns, Stream yamlStream);
 
     /// <summary>
-    /// Writes <paramref name="dataTable" /> as a sequence of maps. Header text is the key. A blank header is <c>Column{index}</c>. A repeated header throws. Empty cells stay empty
-    /// strings. A footer is the last map.
+    /// Writes <paramref name="dataTable" /> as a sequence of maps. Header text is the key. A blank header is <c>Column{index}</c>. A repeated header throws. Empty cells stay
+    /// empty strings. A footer is the last map.
     /// </summary>
     string ExportToYamlStringFromDataTable(DataTable.Models.DataTable dataTable);
 

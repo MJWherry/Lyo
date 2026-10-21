@@ -67,18 +67,15 @@ internal sealed class DivergentKeyStore : IKeyStore, IKeyInventoryStore
 
     public KeyMetadata? GetKeyMetadata(string keyId, string version) => _inner.GetKeyMetadata(keyId, version);
 
-    public Task<KeyMetadata?> GetKeyMetadataAsync(string keyId, string version, CancellationToken ct = default)
-        => _inner.GetKeyMetadataAsync(keyId, version, ct);
+    public Task<KeyMetadata?> GetKeyMetadataAsync(string keyId, string version, CancellationToken ct = default) => _inner.GetKeyMetadataAsync(keyId, version, ct);
 
     public void SetKeyMetadata(string keyId, string version, KeyMetadata metadata) => _inner.SetKeyMetadata(keyId, version, metadata);
 
-    public Task SetKeyMetadataAsync(string keyId, string version, KeyMetadata metadata, CancellationToken ct = default)
-        => _inner.SetKeyMetadataAsync(keyId, version, metadata, ct);
+    public Task SetKeyMetadataAsync(string keyId, string version, KeyMetadata metadata, CancellationToken ct = default) => _inner.SetKeyMetadataAsync(keyId, version, metadata, ct);
 
     public byte[]? GetSaltForVersion(string keyId, string version) => _inner.GetSaltForVersion(keyId, version);
 
-    public Task<byte[]?> GetSaltForVersionAsync(string keyId, string version, CancellationToken ct = default)
-        => _inner.GetSaltForVersionAsync(keyId, version, ct);
+    public Task<byte[]?> GetSaltForVersionAsync(string keyId, string version, CancellationToken ct = default) => _inner.GetSaltForVersionAsync(keyId, version, ct);
 
     public string UpdateKey(string keyId, byte[] key) => _inner.UpdateKey(keyId, key);
 
@@ -86,6 +83,5 @@ internal sealed class DivergentKeyStore : IKeyStore, IKeyInventoryStore
 
     public string UpdateKeyFromString(string keyId, string keyString) => _inner.UpdateKeyFromString(keyId, keyString);
 
-    public Task<string> UpdateKeyFromStringAsync(string keyId, string keyString, CancellationToken ct = default)
-        => _inner.UpdateKeyFromStringAsync(keyId, keyString, ct);
+    public Task<string> UpdateKeyFromStringAsync(string keyId, string keyString, CancellationToken ct = default) => _inner.UpdateKeyFromStringAsync(keyId, keyString, ct);
 }

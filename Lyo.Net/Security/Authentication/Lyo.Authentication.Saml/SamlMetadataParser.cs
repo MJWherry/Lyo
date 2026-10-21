@@ -14,30 +14,29 @@ public static class SamlMetadataParser
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(xml);
         XmlDocument document;
-        try
-        {
+        try {
             document = SamlXml.Load(xml);
         }
-        catch (Exception ex) when (ex is not ExternalLoginRejectedException)
-        {
+        catch (Exception ex) when (ex is not ExternalLoginRejectedException) {
             throw new ExternalLoginRejectedException("SamlMetadata", "IdP metadata is not a readable XML document.");
         }
 
-        var entity = SamlXml.Elements(document, "EntityDescriptor", SamlConstants.Metadata).FirstOrDefault()
-            ?? throw new ExternalLoginRejectedException("SamlMetadata", "IdP metadata has no EntityDescriptor.");
+        var entity = SamlXml.Elements(document, "EntityDescriptor", SamlConstants.Metadata).FirstOrDefault() ??
+            throw new ExternalLoginRejectedException("SamlMetadata", "IdP metadata has no EntityDescriptor.");
+
         var entityId = entity.GetAttribute("entityID");
         if (string.IsNullOrWhiteSpace(entityId))
             throw new ExternalLoginRejectedException("SamlMetadata", "IdP metadata has no entityID.");
 
-        var idp = SamlXml.Child(entity, "IDPSSODescriptor", SamlConstants.Metadata)
-            ?? throw new ExternalLoginRejectedException("SamlMetadata", "IdP metadata has no IDPSSODescriptor.");
+        var idp = SamlXml.Child(entity, "IDPSSODescriptor", SamlConstants.Metadata) ??
+            throw new ExternalLoginRejectedException("SamlMetadata", "IdP metadata has no IDPSSODescriptor.");
 
         var certificates = new List<byte[]>();
-        foreach (var key in SamlXml.Elements(idp, "KeyDescriptor", SamlConstants.Metadata))
-        {
+        foreach (var key in SamlXml.Elements(idp, "KeyDescriptor", SamlConstants.Metadata)) {
             var use = key.GetAttribute("use");
             if (use.Equals("encryption", StringComparison.OrdinalIgnoreCase))
                 continue;
+
             if (use.Length > 0 && !use.Equals("signing", StringComparison.OrdinalIgnoreCase))
                 continue;
 
@@ -45,14 +44,12 @@ public static class SamlMetadataParser
             if (string.IsNullOrWhiteSpace(encoded))
                 continue;
 
-            try
-            {
+            try {
                 var der = Convert.FromBase64String(encoded.Trim());
                 _ = X509CertificateLoader.LoadCertificate(der);
                 certificates.Add(der);
             }
-            catch (Exception ex) when (ex is FormatException or CryptographicException)
-            {
+            catch (Exception ex) when (ex is FormatException or CryptographicException) {
                 throw new ExternalLoginRejectedException("SamlMetadata", "IdP metadata contains a signing certificate that cannot be read.");
             }
         }
@@ -61,10 +58,10 @@ public static class SamlMetadataParser
             throw new ExternalLoginRejectedException("SamlMetadata", "IdP metadata has no signing certificate.");
 
         string? redirect = null;
-        foreach (var service in SamlXml.Elements(idp, "SingleSignOnService", SamlConstants.Metadata))
-        {
+        foreach (var service in SamlXml.Elements(idp, "SingleSignOnService", SamlConstants.Metadata)) {
             if (!service.GetAttribute("Binding").Equals(SamlConstants.HttpRedirectBinding, StringComparison.Ordinal))
                 continue;
+
             redirect = service.GetAttribute("Location");
             break;
         }
@@ -72,6 +69,6 @@ public static class SamlMetadataParser
         if (string.IsNullOrWhiteSpace(redirect))
             throw new ExternalLoginRejectedException("SamlMetadata", "IdP metadata has no HTTP-Redirect SingleSignOnService.");
 
-        return new SamlIdpMetadata(entityId, redirect, certificates);
+        return new(entityId, redirect, certificates);
     }
 }

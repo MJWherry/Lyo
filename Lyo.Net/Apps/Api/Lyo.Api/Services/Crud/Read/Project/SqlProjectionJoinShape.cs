@@ -23,7 +23,7 @@ internal static class SqlProjectionJoinShape
             if (SharedEntityMetadataCache.IsCollectionType(current))
                 current = SharedEntityMetadataCache.GetCollectionElementType(current);
 
-            if (!QueryPath.TryParseSegment(t, out var segmentName, out var window, out _))
+            if (!QueryPath.TryParseSegment(t, out var segmentName, out var window, out var _))
                 return false;
 
             var property = SharedEntityMetadataCache.ResolveProperty(current, segmentName);

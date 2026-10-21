@@ -1,6 +1,7 @@
 # Lyo.HomeInventory.Seed
 
-`HomeInventoryEfSeedContributor` writes one category and one location, then `options.Count` items. Each item gets one stock row, one receipt movement, and one attachment in schema `home_inventory`. `OnClear` deletes children before parents so `--replace` can run.
+`HomeInventoryEfSeedContributor` writes one category and one location, then `options.Count` items. Each item gets one stock row, one receipt movement, and one attachment in schema
+`home_inventory`. `OnClear` deletes children before parents so `--replace` can run.
 
 ## Features
 

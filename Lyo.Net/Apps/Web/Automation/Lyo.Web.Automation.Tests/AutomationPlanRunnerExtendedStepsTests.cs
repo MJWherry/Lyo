@@ -67,7 +67,6 @@ public sealed class AutomationPlanRunnerExtendedStepsTests
         using var httpClient = new HttpClient(new StubHttpHandler(_ => new(HttpStatusCode.OK)));
         var runner = new AutomationPlanRunner(httpClient, new NullSink(), new NullStorage(), new SimpleServiceProvider(new()));
         var plan = new AutomationPlan("list", [new StoreStringListAutomationStep("urls", ["https://cdn.example/a.png", "https://cdn.example/b.png"])]);
-
         var result = await runner.RunWithResultAsync(session, plan, null, null, CancellationToken.None);
         Assert.Equal(["https://cdn.example/a.png", "https://cdn.example/b.png"], result.Snapshot.StringLists["urls"]);
     }
@@ -79,7 +78,6 @@ public sealed class AutomationPlanRunnerExtendedStepsTests
         using var httpClient = new HttpClient(new StubHttpHandler(_ => new(HttpStatusCode.OK)));
         var runner = new AutomationPlanRunner(httpClient, new NullSink(), new NullStorage(), new SimpleServiceProvider(new()));
         var plan = new AutomationPlan("net", [new CaptureNetworkAutomationStep("urls", @"\.jpg$", 10)]);
-
         var result = await runner.RunWithResultAsync(session, plan, null, null, CancellationToken.None);
         Assert.Equal("https://cdn.example/a.jpg", Assert.Single(result.Snapshot.StringLists["urls"]));
     }
@@ -91,7 +89,6 @@ public sealed class AutomationPlanRunnerExtendedStepsTests
         using var httpClient = new HttpClient(new StubHttpHandler(_ => new(HttpStatusCode.OK)));
         var runner = new AutomationPlanRunner(httpClient, new NullSink(), new NullStorage(), new SimpleServiceProvider(new()));
         var plan = new AutomationPlan("net", [new CaptureNetworkAutomationStep("urls", "(", 10)]);
-
         var error = await Assert.ThrowsAsync<InvalidOperationException>(() => runner.RunWithResultAsync(session, plan, null, null, CancellationToken.None));
         Assert.Contains("(", error.Message);
     }

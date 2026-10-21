@@ -8,8 +8,8 @@ namespace Lyo.FileStorage.Policy;
 public static class FileSniffedTypeFilter
 {
     /// <summary>
-    /// Rejects <paramref name="sniffed" /> when a sniffed-type list is configured and the type fails that list. An unrecognized header fails a whitelist and passes a
-    /// blacklist. Names in the same signature family match one another.
+    /// Rejects <paramref name="sniffed" /> when a sniffed-type list is configured and the type fails that list. An unrecognized header fails a whitelist and passes a blacklist.
+    /// Names in the same signature family match one another.
     /// </summary>
     /// <param name="options">Storage options that carry the lists.</param>
     /// <param name="sniffed">Type returned by <see cref="IFileTypeSniffer.Identify" />.</param>

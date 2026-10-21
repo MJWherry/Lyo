@@ -1,12 +1,12 @@
 namespace Lyo.Web.Primitives;
 
 /// <summary>
-/// Small per-user string store for UI state that should survive a reload but does not belong in the URL, such as which tab was last open. Implemented by
-/// <c>ClientStore</c> in <c>Lyo.Web.Primitives</c> over browser local storage.
+/// Small per-user string store for UI state that should survive a reload but does not belong in the URL, such as which tab was last open. Implemented by <c>ClientStore</c>
+/// in <c>Lyo.Web.Primitives</c> over browser local storage.
 /// </summary>
 /// <remarks>
-/// Components resolve this with <c>GetService</c> rather than injecting it, so a host that never registered an implementation still works and simply forgets the
-/// preference between visits. Register it alongside the store with <c>AddLyoClientStore</c>.
+/// Components resolve this with <c>GetService</c> rather than injecting it, so a host that never registered an implementation still works and simply forgets the preference
+/// between visits. Register it alongside the store with <c>AddLyoClientStore</c>.
 /// </remarks>
 public interface ILyoUiPreferences
 {

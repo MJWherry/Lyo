@@ -1,4 +1,3 @@
-using System.IO;
 using System.Xml;
 
 namespace Lyo.Authentication.Saml;
@@ -9,13 +8,13 @@ public static class SamlXml
     /// <summary>Parses <paramref name="xml" /> with whitespace preserved and entity expansion disabled.</summary>
     public static XmlDocument Load(string xml)
     {
-        var settings = new XmlReaderSettings
-        {
+        var settings = new XmlReaderSettings {
             DtdProcessing = DtdProcessing.Prohibit,
             XmlResolver = null,
             MaxCharactersFromEntities = 0,
             MaxCharactersInDocument = SamlConstants.MaxDocumentBytes
         };
+
         using var reader = XmlReader.Create(new StringReader(xml), settings);
         var document = new XmlDocument { PreserveWhitespace = true, XmlResolver = null };
         document.Load(reader);
@@ -29,11 +28,8 @@ public static class SamlXml
         if (root is not XmlElement && root is not XmlDocument)
             return found;
 
-        var nodes = root is XmlDocument document
-            ? document.GetElementsByTagName(localName, namespaceUri)
-            : ((XmlElement)root).GetElementsByTagName(localName, namespaceUri);
-        foreach (XmlNode node in nodes)
-        {
+        var nodes = root is XmlDocument document ? document.GetElementsByTagName(localName, namespaceUri) : ((XmlElement)root).GetElementsByTagName(localName, namespaceUri);
+        foreach (XmlNode node in nodes) {
             if (node is XmlElement element)
                 found.Add(element);
         }
@@ -44,8 +40,7 @@ public static class SamlXml
     /// <summary>Direct child element, or null.</summary>
     public static XmlElement? Child(XmlElement parent, string localName, string namespaceUri)
     {
-        foreach (XmlNode node in parent.ChildNodes)
-        {
+        foreach (XmlNode node in parent.ChildNodes) {
             if (node is XmlElement element && element.LocalName == localName && element.NamespaceURI == namespaceUri)
                 return element;
         }

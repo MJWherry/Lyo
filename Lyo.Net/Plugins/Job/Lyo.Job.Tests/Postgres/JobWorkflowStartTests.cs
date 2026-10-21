@@ -25,10 +25,8 @@ public class JobWorkflowStartTests(JobPostgresFixture fixture) : IClassFixture<J
         await using var scope = fixture.ServiceProvider.CreateAsyncScope();
         var service = scope.ServiceProvider.GetRequiredService<JobWorkflowService>();
         var result = await service.StartWorkflowAsync(workflowId, new(), TestCt);
-
         Assert.True(result.IsSuccess, result.Error?.Detail ?? "start failed");
         Assert.Equal(JobWorkflowRunState.Pending, result.Data!.State);
-
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
         await using var db = await factory.CreateDbContextAsync(TestCt);
         var runSteps = await db.JobWorkflowRunSteps.AsNoTracking().Where(s => s.JobWorkflowRunId == result.Data.Id).ToListAsync(TestCt);
@@ -48,11 +46,9 @@ public class JobWorkflowStartTests(JobPostgresFixture fixture) : IClassFixture<J
         var key = $"test:{LyoGuid.CreateV7():N}";
         var first = await service.StartWorkflowAsync(workflowId, new() { IdempotencyKey = key }, TestCt);
         var second = await service.StartWorkflowAsync(workflowId, new() { IdempotencyKey = key }, TestCt);
-
         Assert.True(first.IsSuccess, first.Error?.Detail ?? "first start failed");
         Assert.True(second.IsSuccess, second.Error?.Detail ?? "second start failed");
         Assert.Equal(first.Data!.Id, second.Data!.Id);
-
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
         await using var db = await factory.CreateDbContextAsync(TestCt);
         Assert.Equal(1, await db.JobWorkflowRuns.CountAsync(r => r.JobWorkflowId == workflowId, TestCt));
@@ -73,7 +69,6 @@ public class JobWorkflowStartTests(JobPostgresFixture fixture) : IClassFixture<J
         Assert.True(first.IsSuccess, first.Error?.Detail ?? "first start failed");
         Assert.True(second.IsSuccess, second.Error?.Detail ?? "second start failed");
         Assert.Equal(first.Data!.Id, second.Data!.Id);
-
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
         await using var db = await factory.CreateDbContextAsync(TestCt);
         Assert.Equal(1, await db.JobWorkflowRuns.CountAsync(r => r.JobWorkflowId == workflowId, TestCt));
@@ -86,10 +81,8 @@ public class JobWorkflowStartTests(JobPostgresFixture fixture) : IClassFixture<J
         await using var scope = fixture.ServiceProvider.CreateAsyncScope();
         var service = scope.ServiceProvider.GetRequiredService<JobWorkflowService>();
         var result = await service.StartWorkflowAsync(workflowId, new(), TestCt);
-
         Assert.False(result.IsSuccess);
         Assert.Contains("disabled", result.Error?.GetFullMessage() ?? "", StringComparison.OrdinalIgnoreCase);
-
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
         await using var db = await factory.CreateDbContextAsync(TestCt);
         Assert.False(await db.JobWorkflowRuns.AnyAsync(r => r.JobWorkflowId == workflowId, TestCt));
@@ -114,7 +107,6 @@ public class JobWorkflowStartTests(JobPostgresFixture fixture) : IClassFixture<J
         await using var scope = fixture.ServiceProvider.CreateAsyncScope();
         var service = scope.ServiceProvider.GetRequiredService<JobWorkflowService>();
         var result = await service.StartWorkflowAsync(LyoGuid.CreateV7(), new(), TestCt);
-
         Assert.False(result.IsSuccess);
         Assert.Contains("not found", result.Error?.GetFullMessage() ?? "", StringComparison.OrdinalIgnoreCase);
     }
@@ -126,7 +118,6 @@ public class JobWorkflowStartTests(JobPostgresFixture fixture) : IClassFixture<J
         await using var scope = fixture.ServiceProvider.CreateAsyncScope();
         var service = scope.ServiceProvider.GetRequiredService<JobWorkflowService>();
         var result = await service.StartWorkflowAsync(workflowId, new() { Inputs = new Dictionary<string, string> { ["Env"] = "prod" } }, TestCt);
-
         Assert.True(result.IsSuccess, result.Error?.Detail ?? "start failed");
         Assert.Equal("prod", ReadInput(result.Data!.InputsJson, "Env"));
     }
@@ -139,9 +130,7 @@ public class JobWorkflowStartTests(JobPostgresFixture fixture) : IClassFixture<J
         await using var scope = fixture.ServiceProvider.CreateAsyncScope();
         var service = scope.ServiceProvider.GetRequiredService<JobWorkflowService>();
         var request = new JobWorkflowStartReq {
-            JobScheduleId = scheduleId,
-            ScheduledSlotUtc = new DateTime(2026, 9, 23, 7, 0, 0, DateTimeKind.Utc),
-            Inputs = new Dictionary<string, string> { ["Env"] = "prod" }
+            JobScheduleId = scheduleId, ScheduledSlotUtc = new DateTime(2026, 9, 23, 7, 0, 0, DateTimeKind.Utc), Inputs = new Dictionary<string, string> { ["Env"] = "prod" }
         };
 
         var result = await service.StartWorkflowAsync(workflowId, request, TestCt);
@@ -160,7 +149,6 @@ public class JobWorkflowStartTests(JobPostgresFixture fixture) : IClassFixture<J
         await using var scope = fixture.ServiceProvider.CreateAsyncScope();
         var service = scope.ServiceProvider.GetRequiredService<JobWorkflowService>();
         var request = new JobWorkflowStartReq { JobScheduleId = scheduleId, ScheduledSlotUtc = new DateTime(2026, 9, 23, 8, 0, 0, DateTimeKind.Utc) };
-
         var result = await service.StartWorkflowAsync(workflowId, request, TestCt);
 
         // A disabled parameter is excluded from a scheduled job run, so a branch must not see it either.

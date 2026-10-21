@@ -192,7 +192,6 @@ public sealed class PostgresPackageMetadataStoreTests
         var id = Guid.Parse("10101010-1010-1010-1010-101010101010");
         await store.RegisterManyAsync([new(["ReReg."], new(id, PackageEcosystem.NuGet, "ReReg", "1"))], TestCt);
         await store.RegisterManyAsync([new(["ReReg."], new(id, PackageEcosystem.NuGet, "ReReg", "2"))], TestCt);
-
         var meta = await store.TryGetForFrameAsync("", "ReReg.Type.M", TestCt);
         Assert.NotNull(meta);
         Assert.Equal("2", meta.Version);
@@ -209,10 +208,7 @@ public sealed class PostgresPackageMetadataStoreTests
         var store = new PostgresPackageMetadataStore(Factory);
         var id = Guid.Parse("20202020-2020-2020-2020-202020202020");
         await store.RegisterManyAsync(
-        [
-            new(["DupBatch."], new(id, PackageEcosystem.NuGet, "First", "1")),
-            new(["DupBatch.Later."], new(id, PackageEcosystem.NuGet, "Second", "2"))
-        ], TestCt);
+            [new(["DupBatch."], new(id, PackageEcosystem.NuGet, "First", "1")), new(["DupBatch.Later."], new(id, PackageEcosystem.NuGet, "Second", "2"))], TestCt);
 
         var dropped = await store.TryGetForFrameAsync("", "DupBatch.Only", TestCt);
         var kept = await store.TryGetForFrameAsync("", "DupBatch.Later.Type.M", TestCt);
@@ -229,7 +225,6 @@ public sealed class PostgresPackageMetadataStoreTests
         var store = new PostgresPackageMetadataStore(Factory);
         var id = Guid.Parse("30303030-3030-3030-3030-303030303030");
         await store.RegisterManyAsync([new(["DupPre", "DupPre."], new(id, PackageEcosystem.NuGet, "DupPre", "1"))], TestCt);
-
         await using var ctx = await Factory.CreateDbContextAsync(TestCt);
         var prefixes = await ctx.StackPrefixes.AsNoTracking().Where(p => p.PackageMetadataId == id).ToListAsync(TestCt);
         Assert.Single(prefixes);
@@ -247,7 +242,6 @@ public sealed class PostgresPackageMetadataStoreTests
         var second = Guid.Parse("40404040-4040-4040-4040-404040404041");
         await store.RegisterManyAsync([new(["StealMe.", "KeepA."], new(first, PackageEcosystem.NuGet, "First", "1"))], TestCt);
         await store.RegisterManyAsync([new(["StealMe."], new(second, PackageEcosystem.NuGet, "Second", "1"))], TestCt);
-
         var stolen = await store.TryGetForFrameAsync("", "StealMe.Type.M", TestCt);
         var kept = await store.TryGetForFrameAsync("", "KeepA.Type.M", TestCt);
         Assert.Equal("Second", stolen!.Name);
@@ -307,12 +301,10 @@ public sealed class PostgresPackageMetadataStoreTests
         private readonly DbContextOptions<PackageMetadataDbContext> _options;
 
         public InterceptingContextFactory(string connectionString, DbCommandInterceptor interceptor)
-        {
-            _options = new DbContextOptionsBuilder<PackageMetadataDbContext>()
-                .UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", PostgresPackageMetadataOptions.Schema))
+            => _options = new DbContextOptionsBuilder<PackageMetadataDbContext>().UseNpgsql(
+                    connectionString, npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", PostgresPackageMetadataOptions.Schema))
                 .AddInterceptors(interceptor)
                 .Options;
-        }
 
         public PackageMetadataDbContext CreateDbContext() => new(_options);
 

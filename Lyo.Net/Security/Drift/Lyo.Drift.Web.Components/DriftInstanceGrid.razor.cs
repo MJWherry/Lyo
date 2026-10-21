@@ -2,6 +2,12 @@ namespace Lyo.Drift.Web.Components;
 
 public partial class DriftInstanceGrid
 {
+    private static readonly string[] _quickSearchProperties = ["InstanceKey", "MachineName"];
+
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("InstanceKey", "Key"), new("MachineName", "Machine"), new("State")];
+
+    private LyoDataGridProjected? _dataGrid;
+
     /// <summary>HTTP client used for Query and instance actions.</summary>
     [Parameter]
     [EditorRequired]
@@ -18,15 +24,8 @@ public partial class DriftInstanceGrid
 
     private string _route => $"{BaseRoute.TrimEnd('/')}/Instance";
 
-    private LyoDataGridProjected? _dataGrid;
-
-    private static readonly string[] _quickSearchProperties = ["InstanceKey", "MachineName"];
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("InstanceKey", "Key"), new("MachineName", "Machine"), new("State")];
-
     private static bool CanStop(object? item)
-        => Enum.TryParse<DriftInstanceState>(ProjectedValueHelper.GetDisplayValue(item, "State"), ignoreCase: true, out var state)
-            && state == DriftInstanceState.Running;
+        => Enum.TryParse<DriftInstanceState>(ProjectedValueHelper.GetDisplayValue(item, "State"), true, out var state) && state == DriftInstanceState.Running;
 
     private async Task ViewInstance(object? item)
     {
@@ -73,7 +72,8 @@ public partial class DriftInstanceGrid
         if (id is null)
             return;
 
-        if (!await DialogService.ConfirmDeleteAsync($"drift instance {id.Value.ToString()[..8]}…", "Snapshots, diffs, and changes for this instance are removed.", "Confirm Delete"))
+        if (!await DialogService.ConfirmDeleteAsync(
+            $"drift instance {id.Value.ToString()[..8]}…", "Snapshots, diffs, and changes for this instance are removed.", "Confirm Delete"))
             return;
 
         try {
@@ -93,8 +93,7 @@ public partial class DriftInstanceGrid
         if (id is null)
             return null;
 
-        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<DriftInstanceRes>>(
-            $"{_route}/QueryConcrete", new() { Keys = [[id.Value]], Amount = 1 });
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<DriftInstanceRes>>($"{_route}/QueryConcrete", new() { Keys = [[id.Value]], Amount = 1 });
         return res?.Items?.FirstOrDefault();
     }
 }

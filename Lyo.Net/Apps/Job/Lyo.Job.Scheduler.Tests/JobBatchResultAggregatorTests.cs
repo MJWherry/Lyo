@@ -1,8 +1,9 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Job.Models.Enums;
+using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Constants = Lyo.Job.Models.Constants;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Scheduler.Tests;
 
@@ -28,7 +29,8 @@ public class JobBatchResultAggregatorTests
     [Fact]
     public void Aggregate_SumsCountersAndOmitsZeroes()
     {
-        var results = JobBatchResultAggregator.Aggregate([
+        var results = JobBatchResultAggregator.Aggregate(
+        [
             Child(JobRunResult.Success, (Constants.Data.JobRunResultKey.CreateCount, 3)),
             Child(JobRunResult.Success, (Constants.Data.JobRunResultKey.CreateCount, 4), (Constants.Data.JobRunResultKey.UpdateCount, 1))
         ]);
@@ -47,8 +49,7 @@ public class JobBatchResultAggregatorTests
     }
 
     /// <summary>Result values are stored as JSON, so a string arrives in quotes.</summary>
-    private static string? ResultValue(IEnumerable<Lyo.Job.Models.Request.JobRunResultReq> results, string key)
-        => results.FirstOrDefault(r => r.Key == key)?.Value?.Trim('"');
+    private static string? ResultValue(IEnumerable<JobRunResultReq> results, string key) => results.FirstOrDefault(r => r.Key == key)?.Value?.Trim('"');
 
     private static JobRunRes Child(JobRunResult result, params (string Key, int Value)[] counters)
     {

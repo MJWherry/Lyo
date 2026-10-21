@@ -25,14 +25,13 @@ public class OpenTelemetryMetricsTests
             if (instrument.Meter.Name == meterName && instrument.Name == "requests_total")
                 meterListener.EnableMeasurementEvents(instrument);
         };
+
         listener.SetMeasurementEventCallback<long>((_, value, _, _) => Interlocked.Add(ref observed, value));
         listener.Start();
-
         var services = new ServiceCollection();
         services.AddLyoMetricsWithOpenTelemetry(o => o.ServiceName = meterName);
         using var provider = services.BuildServiceProvider();
         provider.GetRequiredService<IMetrics>().IncrementCounter("requests.total", 3);
-
         Assert.Equal(3, observed);
     }
 }

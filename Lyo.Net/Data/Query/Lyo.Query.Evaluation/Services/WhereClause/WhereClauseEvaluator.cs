@@ -11,7 +11,6 @@ using Lyo.Common.Core.Enums;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Lyo.Parameters;
-using Lyo.Query;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
@@ -63,10 +62,7 @@ internal record PropertyPathMetadata(IReadOnlyList<PropertyInfo> Properties, Typ
 /// </remarks>
 public class WhereClauseEvaluator : IWhereClauseService
 {
-    /// <summary>
-    /// Cap on a caller-supplied regex pattern, shared with <see cref="LyoParameterValidator.MaxValidationRegexLength" /> so both validation surfaces accept the same
-    /// patterns.
-    /// </summary>
+    /// <summary>Cap on a caller-supplied regex pattern, shared with <see cref="LyoParameterValidator.MaxValidationRegexLength" /> so both validation surfaces accept the same patterns.</summary>
     public const int MaxRegexPatternLength = LyoParameterValidator.MaxValidationRegexLength;
 
     /// <summary>
@@ -98,8 +94,8 @@ public class WhereClauseEvaluator : IWhereClauseService
 
     private static readonly MethodInfo RegexIsMatchMethod = typeof(Regex).GetMethod(nameof(Regex.IsMatch), [typeof(string), typeof(string)])!;
 
-    private static readonly MethodInfo RegexIsMatchWithTimeoutMethod =
-        typeof(Regex).GetMethod(nameof(Regex.IsMatch), [typeof(string), typeof(string), typeof(RegexOptions), typeof(TimeSpan)])!;
+    private static readonly MethodInfo RegexIsMatchWithTimeoutMethod = typeof(Regex).GetMethod(
+        nameof(Regex.IsMatch), [typeof(string), typeof(string), typeof(RegexOptions), typeof(TimeSpan)])!;
 
     private static readonly MethodInfo[] QueryableOrderMethods = typeof(Queryable).GetMethods(BindingFlags.Public | BindingFlags.Static)
         .Where(m => m.Name is "OrderBy" or "OrderByDescending" or "ThenBy" or "ThenByDescending")
@@ -109,6 +105,29 @@ public class WhereClauseEvaluator : IWhereClauseService
     private static readonly BoundedCache<string, object> MatcherCache = new(MaxCompiledArtifactCacheEntries);
     private static readonly BoundedCache<string, object?> EfPredicateCache = new(MaxCompiledArtifactCacheEntries);
     private static readonly BoundedCache<string, IReadOnlyList<string>> IncludePathCache = new(MaxCompiledArtifactCacheEntries);
+
+    /// <summary>
+    /// Operators that pass the current ordering through unchanged. Walking past them is what lets <c>query.OrderBy(x).AsNoTracking()</c> still be recognised as ordered;
+    /// inspecting only the outermost call reported it as unordered, so the next sort emitted <c>OrderBy</c> and silently discarded the first sort key.
+    /// </summary>
+    private static readonly HashSet<string> OrderPreservingQueryOperators = new(StringComparer.Ordinal) {
+        "AsNoTracking",
+        "AsNoTrackingWithIdentityResolution",
+        "AsTracking",
+        "AsSplitQuery",
+        "AsSingleQuery",
+        "IgnoreQueryFilters",
+        "IgnoreAutoIncludes",
+        "Include",
+        "ThenInclude",
+        "TagWith",
+        "TagWithCallSite",
+        "Where",
+        "Cast",
+        "OfType",
+        "Skip",
+        "Take"
+    };
 
     /// <summary>Converts filter literals to the CLR type of the compared property.</summary>
     protected readonly IValueConversionService ValueConversion;
@@ -190,17 +209,6 @@ public class WhereClauseEvaluator : IWhereClauseService
             throw;
         }
     }
-
-    /// <summary>
-    /// Last chance to reshape the cached predicate for a specific <see cref="IQueryProvider" />. The default returns <paramref name="expression" /> unchanged. Postgres
-    /// rewrites <see cref="FuzzyMatch.Similarity" /> to <c>EF.Functions.TrigramsSimilarity</c> so Npgsql can emit SQL <c>similarity()</c>.
-    /// </summary>
-    /// <typeparam name="TEntity">Entity type.</typeparam>
-    /// <param name="expression">Predicate produced by <see cref="GetEfPredicate{TEntity}" />.</param>
-    /// <param name="provider">LINQ provider that will run the predicate.</param>
-    /// <returns>The predicate to pass to <c>Queryable.Where</c>.</returns>
-    protected virtual Expression<Func<TEntity, bool>> RewriteQueryablePredicate<TEntity>(Expression<Func<TEntity, bool>> expression, IQueryProvider provider)
-        => expression;
 
     /// <inheritdoc />
     public virtual IQueryable<TEntity> SortByProperty<TEntity>(IQueryable<TEntity> source, string propertyName, SortDirection? direction = null)
@@ -287,9 +295,19 @@ public class WhereClauseEvaluator : IWhereClauseService
         }
     }
 
+    /// <summary>
+    /// Last chance to reshape the cached predicate for a specific <see cref="IQueryProvider" />. The default returns <paramref name="expression" /> unchanged. Postgres rewrites
+    /// <see cref="FuzzyMatch.Similarity" /> to <c>EF.Functions.TrigramsSimilarity</c> so Npgsql can emit SQL <c>similarity()</c>.
+    /// </summary>
+    /// <typeparam name="TEntity">Entity type.</typeparam>
+    /// <param name="expression">Predicate produced by <see cref="GetEfPredicate{TEntity}" />.</param>
+    /// <param name="provider">LINQ provider that will run the predicate.</param>
+    /// <returns>The predicate to pass to <c>Queryable.Where</c>.</returns>
+    protected virtual Expression<Func<TEntity, bool>> RewriteQueryablePredicate<TEntity>(Expression<Func<TEntity, bool>> expression, IQueryProvider provider) => expression;
+
     /// <remarks>
-    /// Every node resolves through the memoized matcher. Building and compiling a fresh delegate per node made an explain cost one JIT compilation per node plus another for
-    /// each sub-clause parent, so a 50-node tree paid 50+ compilations on every call.
+    /// Every node resolves through the memoized matcher. Building and compiling a fresh delegate per node made an explain cost one JIT compilation per node plus another for each
+    /// sub-clause parent, so a 50-node tree paid 50+ compilations on every call.
     /// </remarks>
     private WhereClauseExplainNode BuildExplainNode<TEntity>(TEntity entity, Models.Common.WhereClause node, string path, int depth)
     {
@@ -512,8 +530,8 @@ public class WhereClauseEvaluator : IWhereClauseService
     /// <param name="parameter">Lambda parameter the property paths are rooted at.</param>
     /// <param name="includeSubClauses">Whether nested sub-clauses contribute to the expression.</param>
     /// <param name="depth">
-    /// Current recursion depth. A deeply nested clause would otherwise overflow the stack, which is process-fatal and cannot be caught, so the walk refuses to descend past
-    /// <see cref="WhereClauseHelpers.MaxClauseDepth" />.
+    /// Current recursion depth. A deeply nested clause would otherwise overflow the stack, which is process-fatal and cannot be caught, so the walk refuses to descend
+    /// past <see cref="WhereClauseHelpers.MaxClauseDepth" />.
     /// </param>
     private Expression BuildWhereClauseExpression<TEntity>(Models.Common.WhereClause node, ParameterExpression parameter, bool includeSubClauses, int depth)
     {
@@ -532,9 +550,9 @@ public class WhereClauseEvaluator : IWhereClauseService
     /// short-circuits a trivial regex.
     /// </summary>
     /// <remarks>
-    /// Both the scalar path and the collection-element paths resolve here. They used to differ: the OR-group collection branch parsed against the property type rather than
-    /// the operator-adjusted parse type, so a <c>Contains</c> or a rewritten regex against a Guid collection element tried to read the fragment as a Guid and threw, while the
-    /// same filter outside an OR group worked.
+    /// Both the scalar path and the collection-element paths resolve here. They used to differ: the OR-group collection branch parsed against the property type rather than the
+    /// operator-adjusted parse type, so a <c>Contains</c> or a rewritten regex against a Guid collection element tried to read the fragment as a Guid and threw, while the same filter
+    /// outside an OR group worked.
     /// </remarks>
     /// <param name="comparison">The comparison operator.</param>
     /// <param name="rawValue">The unparsed filter literal.</param>
@@ -542,7 +560,7 @@ public class WhereClauseEvaluator : IWhereClauseService
     /// <param name="propertyType">CLR type of the compared property.</param>
     /// <param name="target">Expression producing the property value.</param>
     /// <param name="parameter">Lambda parameter the comparison is built against.</param>
-    /// <param name="threshold">Optional Fuzzy / NotFuzzy cutoff; omitted uses <see cref="ConditionClause.DefaultFuzzyThreshold"/>.</param>
+    /// <param name="threshold">Optional Fuzzy / NotFuzzy cutoff; omitted uses <see cref="ConditionClause.DefaultFuzzyThreshold" />.</param>
     private Expression BuildLeafComparison(
         ComparisonOperatorEnum comparison,
         object? rawValue,
@@ -635,6 +653,7 @@ public class WhereClauseEvaluator : IWhereClauseService
             var (collectionExpr, elementParam, elementPropExpr, elementType) = BuildCollectionElementAccess(pathMetadata, parameter);
             var comparisonElement = BuildLeafComparison(
                 condition.Comparison, condition.Value, condition.Field, pathMetadata.FinalType, elementPropExpr, elementParam, condition.Threshold);
+
             return BuildAnyCall(collectionExpr, elementType, comparisonElement, elementParam);
         }
 
@@ -812,8 +831,8 @@ public class WhereClauseEvaluator : IWhereClauseService
     }
 
     /// <summary>
-    /// Emits <see cref="Regex.IsMatch(string,string)" />. The two-argument overload is deliberate: it is the form Npgsql translates to the <c>~</c> operator, so the pattern
-    /// runs in the database on the <see cref="IQueryable{T}" /> path. Predicates compiled for in-memory evaluation are rewritten to the timeout-bounded overload by
+    /// Emits <see cref="Regex.IsMatch(string,string)" />. The two-argument overload is deliberate: it is the form Npgsql translates to the <c>~</c> operator, so the pattern runs
+    /// in the database on the <see cref="IQueryable{T}" /> path. Predicates compiled for in-memory evaluation are rewritten to the timeout-bounded overload by
     /// <see cref="InMemoryEvaluationRewriter" />, because there the pattern runs in this process.
     /// </summary>
     protected virtual Expression BuildRegexComparison(Expression target, Expression value, bool negate)
@@ -998,6 +1017,7 @@ public class WhereClauseEvaluator : IWhereClauseService
                 var part = propertyParts[i];
                 if (part.Contains('[') || part.Contains(']'))
                     throw new InvalidQueryException($"Index is not valid in a filter ('{propertyName}').");
+
                 if (string.Equals(part, "Count", StringComparison.OrdinalIgnoreCase) && properties.Count > 0) {
                     var prevProp = properties[^1];
                     var prevType = prevProp.PropertyType;
@@ -1189,23 +1209,17 @@ public class WhereClauseEvaluator : IWhereClauseService
             ComparisonOperatorEnum.LessThan => new(ComparisonType.SimpleComparison, ExpressionType.LessThan),
             ComparisonOperatorEnum.LessThanOrEqual => new(ComparisonType.SimpleComparison, ExpressionType.LessThanOrEqual),
             ComparisonOperatorEnum.Contains when SupportsStringMethodComparisons(propertyType) => new(
-                ComparisonType.StringMethod, ToLowerMethod: StringToLowerMethod,
-                StringMethod: typeof(string).GetMethod(nameof(string.Contains), [typeof(string)])!),
+                ComparisonType.StringMethod, ToLowerMethod: StringToLowerMethod, StringMethod: typeof(string).GetMethod(nameof(string.Contains), [typeof(string)])!),
             ComparisonOperatorEnum.NotContains when SupportsStringMethodComparisons(propertyType) => new(
-                ComparisonType.NegatedStringMethod, ToLowerMethod: StringToLowerMethod,
-                StringMethod: typeof(string).GetMethod(nameof(string.Contains), [typeof(string)])!),
+                ComparisonType.NegatedStringMethod, ToLowerMethod: StringToLowerMethod, StringMethod: typeof(string).GetMethod(nameof(string.Contains), [typeof(string)])!),
             ComparisonOperatorEnum.StartsWith when SupportsStringMethodComparisons(propertyType) => new(
-                ComparisonType.StringMethod, ToLowerMethod: StringToLowerMethod,
-                StringMethod: typeof(string).GetMethod(nameof(string.StartsWith), [typeof(string)])!),
+                ComparisonType.StringMethod, ToLowerMethod: StringToLowerMethod, StringMethod: typeof(string).GetMethod(nameof(string.StartsWith), [typeof(string)])!),
             ComparisonOperatorEnum.EndsWith when SupportsStringMethodComparisons(propertyType) => new(
-                ComparisonType.StringMethod, ToLowerMethod: StringToLowerMethod,
-                StringMethod: typeof(string).GetMethod(nameof(string.EndsWith), [typeof(string)])!),
+                ComparisonType.StringMethod, ToLowerMethod: StringToLowerMethod, StringMethod: typeof(string).GetMethod(nameof(string.EndsWith), [typeof(string)])!),
             ComparisonOperatorEnum.NotStartsWith when SupportsStringMethodComparisons(propertyType) => new(
-                ComparisonType.NegatedStringMethod, ToLowerMethod: StringToLowerMethod,
-                StringMethod: typeof(string).GetMethod(nameof(string.StartsWith), [typeof(string)])!),
+                ComparisonType.NegatedStringMethod, ToLowerMethod: StringToLowerMethod, StringMethod: typeof(string).GetMethod(nameof(string.StartsWith), [typeof(string)])!),
             ComparisonOperatorEnum.NotEndsWith when SupportsStringMethodComparisons(propertyType) => new(
-                ComparisonType.NegatedStringMethod, ToLowerMethod: StringToLowerMethod,
-                StringMethod: typeof(string).GetMethod(nameof(string.EndsWith), [typeof(string)])!),
+                ComparisonType.NegatedStringMethod, ToLowerMethod: StringToLowerMethod, StringMethod: typeof(string).GetMethod(nameof(string.EndsWith), [typeof(string)])!),
             ComparisonOperatorEnum.In => new(ComparisonType.OneOf),
             ComparisonOperatorEnum.NotIn => new(ComparisonType.NotOneOf),
             ComparisonOperatorEnum.Regex when SupportsStringMethodComparisons(propertyType) => new(ComparisonType.Regex),
@@ -1251,29 +1265,6 @@ public class WhereClauseEvaluator : IWhereClauseService
     private static string GetOrderingMethodName<T>(IQueryable<T> source, SortDirection sortDirection)
         => !IsQueryableOrdered(source) ? sortDirection == SortDirection.Desc ? "OrderByDescending" : "OrderBy" :
             sortDirection == SortDirection.Desc ? "ThenByDescending" : "ThenBy";
-
-    /// <summary>
-    /// Operators that pass the current ordering through unchanged. Walking past them is what lets <c>query.OrderBy(x).AsNoTracking()</c> still be recognised as ordered;
-    /// inspecting only the outermost call reported it as unordered, so the next sort emitted <c>OrderBy</c> and silently discarded the first sort key.
-    /// </summary>
-    private static readonly HashSet<string> OrderPreservingQueryOperators = new(StringComparer.Ordinal) {
-        "AsNoTracking",
-        "AsNoTrackingWithIdentityResolution",
-        "AsTracking",
-        "AsSplitQuery",
-        "AsSingleQuery",
-        "IgnoreQueryFilters",
-        "IgnoreAutoIncludes",
-        "Include",
-        "ThenInclude",
-        "TagWith",
-        "TagWithCallSite",
-        "Where",
-        "Cast",
-        "OfType",
-        "Skip",
-        "Take"
-    };
 
     /// <summary>
     /// Whether an ordering has already been established on <paramref name="source" />. Cannot use <c>source is IOrderedQueryable&lt;T&gt;</c>: EF Core's root queryable
@@ -1443,8 +1434,8 @@ public class WhereClauseEvaluator : IWhereClauseService
 
     /// <summary>
     /// Retargets the expression tree from "translatable to SQL" to "safe and correct in this process". Two swaps: <see cref="Regex.IsMatch(string,string)" /> becomes the
-    /// timeout-bounded overload, because a pattern like <c>^(a+)+$</c> backtracks catastrophically and would otherwise pin a core with no way to interrupt it; and
-    /// <c>ToLower()</c> becomes <see cref="string.ToLowerInvariant" />, because the culture-sensitive fold makes matching depend on the server's locale.
+    /// timeout-bounded overload, because a pattern like <c>^(a+)+$</c> backtracks catastrophically and would otherwise pin a core with no way to interrupt it; and <c>ToLower()</c>
+    /// becomes <see cref="string.ToLowerInvariant" />, because the culture-sensitive fold makes matching depend on the server's locale.
     /// </summary>
     private sealed class InMemoryEvaluationRewriter : ExpressionVisitor
     {

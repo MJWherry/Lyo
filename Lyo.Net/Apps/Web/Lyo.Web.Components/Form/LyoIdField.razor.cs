@@ -4,6 +4,8 @@ namespace Lyo.Web.Components.Form;
 
 public partial class LyoIdField
 {
+    private bool _showFull;
+
     /// <summary>Optional HTML <c>id</c> override for the root node.</summary>
     [Parameter]
     public string? ElementId { get; set; }
@@ -38,8 +40,6 @@ public partial class LyoIdField
     [Parameter]
     public Margin Margin { get; set; } = Margin.Dense;
 
-    private bool _showFull;
-
     private string? FullValue {
         get {
             if (Value is Guid guid)
@@ -51,13 +51,11 @@ public partial class LyoIdField
 
     private bool HasValue => FullValue is not null;
 
-    private LyoIdAbbreviation EffectiveAbbreviation
-        => FullValue is { } text && IsNumericId(text) ? LyoIdAbbreviation.None : Abbreviation;
+    private LyoIdAbbreviation EffectiveAbbreviation => FullValue is { } text && IsNumericId(text) ? LyoIdAbbreviation.None : Abbreviation;
 
     private bool ShowsToggle => HasValue && EffectiveAbbreviation != LyoIdAbbreviation.None && FullValue!.Length > Math.Max(1, AbbreviationLength);
 
-    private string DisplayValue
-        => FullValue is null ? "null" : _showFull ? FullValue : Abbreviate(FullValue, EffectiveAbbreviation, AbbreviationLength);
+    private string DisplayValue => FullValue is null ? "null" : _showFull ? FullValue : Abbreviate(FullValue, EffectiveAbbreviation, AbbreviationLength);
 
     private string ToggleIcon => _showFull ? Icons.Material.Filled.Compress : Icons.Material.Filled.OpenInFull;
 

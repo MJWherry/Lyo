@@ -34,8 +34,8 @@ public static class CloudObjectKeyBuilder
     }
 
     /// <summary>
-    /// Takes the trailing characters of <paramref name="sourceFileName" /> after the GUID prefix so hashed storage layouts keep extensions and extra suffix
-    /// segments (for example <c>.gz</c> or <c>.enc</c>).
+    /// Takes the trailing characters of <paramref name="sourceFileName" /> after the GUID prefix so hashed storage layouts keep extensions and extra suffix segments (for example
+    /// <c>.gz</c> or <c>.enc</c>).
     /// </summary>
     /// <param name="fileId">Logical file identifier used when matching prefixed filenames.</param>
     /// <param name="sourceFileName">Stored filename that may start with the file id in <c>N</c> (no hyphens) or default <c>D</c> (with hyphens) format.</param>

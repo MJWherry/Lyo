@@ -5,10 +5,7 @@ namespace Lyo.Web.Components.Media;
 /// <summary>Turns caption tracks into the attributes an HTML <c>&lt;track&gt;</c> expects.</summary>
 public static class MediaCaptions
 {
-    /// <summary>
-    /// Drops tracks with a blank <see cref="MediaCaptionTrack.Src" />, trims the rest, and keeps a single default.
-    /// A null list is empty.
-    /// </summary>
+    /// <summary>Drops tracks with a blank <see cref="MediaCaptionTrack.Src" />, trims the rest, and keeps a single default. A null list is empty.</summary>
     public static IReadOnlyList<MediaCaptionTrack> Resolve(IReadOnlyList<MediaCaptionTrack>? tracks)
     {
         if (tracks is null || tracks.Count == 0)
@@ -41,7 +38,7 @@ public static class MediaCaptions
             MediaCaptionKind.Descriptions => "descriptions",
             MediaCaptionKind.Chapters => "chapters",
             MediaCaptionKind.Metadata => "metadata",
-            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Caption kind is not mapped.")
+            var _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "Caption kind is not mapped.")
         };
     }
 
@@ -49,14 +46,13 @@ public static class MediaCaptions
     public static IReadOnlyDictionary<string, object> TrackAttributes(MediaCaptionTrack track)
     {
         ArgumentHelpers.ThrowIfNull(track);
-        var attributes = new Dictionary<string, object> {
-            ["src"] = track.Src,
-            ["kind"] = HtmlKind(track.Kind)
-        };
+        var attributes = new Dictionary<string, object> { ["src"] = track.Src, ["kind"] = HtmlKind(track.Kind) };
         if (!string.IsNullOrWhiteSpace(track.Label))
             attributes["label"] = track.Label;
+
         if (!string.IsNullOrWhiteSpace(track.Language))
             attributes["srclang"] = track.Language;
+
         if (track.Default)
             attributes["default"] = true;
 

@@ -19,10 +19,7 @@ public sealed class LoadTestReport : BenchmarkReport
     public List<GradeRow> Grades { get; set; } = [];
 }
 
-/// <summary>
-/// Shape of one load-test query case so latencies can be read in context (how many where clauses, which filters/sorts/includes, and how many fields the projection
-/// selects).
-/// </summary>
+/// <summary>Shape of one load-test query case so latencies can be read in context (how many where clauses, which filters/sorts/includes, and how many fields the projection selects).</summary>
 public sealed class LoadCase
 {
     /// <summary>Case id, matching <see cref="Hotspot.Case" /> (for example <c>complex_querynode</c>).</summary>

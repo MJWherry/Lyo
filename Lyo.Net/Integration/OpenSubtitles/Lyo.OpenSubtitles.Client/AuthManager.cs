@@ -10,10 +10,10 @@ public sealed class AuthManager(OpenSubtitlesClient client)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(username);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(password);
-        var response = await client.PostAsAsync<LoginRequest, LoginResponse>("login", new LoginRequest { Username = username, Password = password }, ct: ct).ConfigureAwait(false);
+        var response = await client.PostAsAsync<LoginRequest, LoginResponse>("login", new() { Username = username, Password = password }, ct: ct).ConfigureAwait(false);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(response.Token);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(response.BaseUrl);
-        return new OpenSubtitlesSession(response.Token, response.BaseUrl);
+        return new(response.Token, response.BaseUrl);
     }
 
     internal sealed class LoginRequest

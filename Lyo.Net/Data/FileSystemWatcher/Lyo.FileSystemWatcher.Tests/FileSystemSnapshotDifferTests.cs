@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Lyo.FileSystemWatcher.Models;
 using Lyo.Testing;
 
@@ -68,23 +69,25 @@ public class FileSystemSnapshotDifferTests
     {
         var oldTree = Tree("root", File("a.txt", 1, "h1"));
         var newTree = Tree("root", File("a.txt", 1, "h1"), File("b.txt", 2, "h2"));
-        var json = System.Text.Json.JsonSerializer.Serialize(newTree);
-        var restored = System.Text.Json.JsonSerializer.Deserialize<FileSystemSnapshotTreeDto>(json);
+        var json = JsonSerializer.Serialize(newTree);
+        var restored = JsonSerializer.Deserialize<FileSystemSnapshotTreeDto>(json);
         restored.ShouldNotBeNull();
         var changes = FileSystemSnapshotDiffer.DetectChanges(oldTree, restored!, ct: TestCt);
         changes.Single(c => !c.IsDirectory).ChangeType.ShouldBe(FileSystemChangeKind.Created);
     }
 
     private static FileSystemSnapshotEntryDto File(string path, long size, string hash, string? fingerprint = null)
-        => new() { Path = path, IsDirectory = false, FileSize = size, Hash = hash, Fingerprint = fingerprint ?? hash };
+        => new() {
+            Path = path,
+            IsDirectory = false,
+            FileSize = size,
+            Hash = hash,
+            Fingerprint = fingerprint ?? hash
+        };
 
     private static FileSystemSnapshotTreeDto Tree(string root, params FileSystemSnapshotEntryDto[] files)
     {
-        var tree = new FileSystemSnapshotTreeDto {
-            RootPath = root,
-            PathComparison = nameof(StringComparison.OrdinalIgnoreCase),
-            Root = new() { RelativePath = "" }
-        };
+        var tree = new FileSystemSnapshotTreeDto { RootPath = root, PathComparison = nameof(StringComparison.OrdinalIgnoreCase), Root = new() { RelativePath = "" } };
         foreach (var file in files)
             PlaceFile(tree, file.Path, file);
 

@@ -1,9 +1,7 @@
 using System.Text.Json;
 using Lyo.Algorithms;
 using Lyo.Algorithms.Models;
-using Lyo.Algorithms.Models.Request;
 using Lyo.Exceptions.Models;
-using Lyo.Leaderboard;
 using Lyo.Leaderboard.Enums;
 
 namespace Lyo.Leaderboard.Postgres;
@@ -27,10 +25,7 @@ internal sealed class LeaderboardCatalog
     }
 
     /// <summary>Copies the latest expression source onto <paramref name="board" />. A missing revision leaves the formula empty.</summary>
-    public async Task ApplyFormulaAsync(BoardRecord board, CancellationToken ct)
-    {
-        board.ScoreFormula = await LoadSourceAsync(board.AlgorithmKey, ct).ConfigureAwait(false);
-    }
+    public async Task ApplyFormulaAsync(BoardRecord board, CancellationToken ct) => board.ScoreFormula = await LoadSourceAsync(board.AlgorithmKey, ct).ConfigureAwait(false);
 
     /// <summary>Publishes <paramref name="formula" /> as the latest expression revision. An empty formula leaves the catalog unchanged.</summary>
     public async Task SaveFormulaAsync(string algorithmKey, string? formula, CancellationToken ct)
@@ -38,15 +33,14 @@ internal sealed class LeaderboardCatalog
         if (string.IsNullOrWhiteSpace(formula))
             return;
 
-        var result = await _catalog.SaveRevisionAsync(
-            algorithmKey, new AlgorithmRevisionReq { Kind = AlgorithmKind.Expression, Source = formula, Name = algorithmKey }, ct).ConfigureAwait(false);
+        var result = await _catalog.SaveRevisionAsync(algorithmKey, new() { Kind = AlgorithmKind.Expression, Source = formula, Name = algorithmKey }, ct).ConfigureAwait(false);
         if (!result.IsSuccess)
             throw new BadRequestException(result.Errors![0].Message);
     }
 
     /// <summary>
-    /// Scores one entry. Choice columns write their number under the property key and the choice key under <c>{key}_key</c>.
-    /// A missing number is 0. No published formula scores 0.
+    /// Scores one entry. Choice columns write their number under the property key and the choice key under <c>{key}_key</c>. A missing number is 0. No published formula scores
+    /// 0.
     /// </summary>
     public async Task<(decimal Total, string? Breakdown)> ScoreAsync(
         string algorithmKey,
@@ -75,6 +69,7 @@ internal sealed class LeaderboardCatalog
                 var keyName = property.Key + "_key";
                 if (AlgorithmContextBag.IsIdentifier(keyName))
                     bag.Set(keyName, choice.Key);
+
                 continue;
             }
 
@@ -118,6 +113,6 @@ internal sealed class LeaderboardCatalog
     }
 
     private static ScoringPropertyRecord? Find(IReadOnlyList<ScoringPropertyRecord> properties, EntryValueRecord value)
-        => properties.FirstOrDefault(p => value.PropertyId != Guid.Empty && p.Id == value.PropertyId)
-            ?? properties.FirstOrDefault(p => !string.IsNullOrWhiteSpace(value.PropertyKey) && string.Equals(p.Key, value.PropertyKey, StringComparison.OrdinalIgnoreCase));
+        => properties.FirstOrDefault(p => value.PropertyId != Guid.Empty && p.Id == value.PropertyId) ?? properties.FirstOrDefault(p
+            => !string.IsNullOrWhiteSpace(value.PropertyKey) && string.Equals(p.Key, value.PropertyKey, StringComparison.OrdinalIgnoreCase));
 }

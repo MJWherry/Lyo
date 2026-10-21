@@ -34,8 +34,7 @@ public sealed class IdempotencyEntryEntityConfiguration : IEntityTypeConfigurati
             .HasFilter("state IN ('in_progress', 'completed', 'failed')")
             .IsUnique()
             .HasDatabaseName("ix_idempotency_entry_live_scope_key");
-        builder.HasIndex(e => new { e.Kind, e.State, e.AvailableAt })
-            .HasFilter("kind = 'outbox' AND state = 'in_progress'")
-            .HasDatabaseName("ix_idempotency_entry_outbox_due");
+
+        builder.HasIndex(e => new { e.Kind, e.State, e.AvailableAt }).HasFilter("kind = 'outbox' AND state = 'in_progress'").HasDatabaseName("ix_idempotency_entry_outbox_due");
     }
 }

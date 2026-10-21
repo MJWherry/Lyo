@@ -22,7 +22,7 @@ public class PeoplePostgresExtensionsTests
     public void AddPeopleDbContext_WithNullConnectionString_ThrowsArgumentNullException()
     {
         var services = new ServiceCollection();
-        var ex = Assert.Throws<ArgumentNullException>(() => services.AddPeopleDbContext((string)null!));
+        var ex = Assert.Throws<ArgumentNullException>(() => services.AddPeopleDbContext(null!));
         Assert.Equal("connectionString", ex.ParamName);
     }
 

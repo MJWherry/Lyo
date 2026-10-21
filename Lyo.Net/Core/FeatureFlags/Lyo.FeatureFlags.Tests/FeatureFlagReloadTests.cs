@@ -1,4 +1,3 @@
-using Lyo.FeatureFlags;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -18,9 +17,7 @@ public sealed class FeatureFlagReloadTests
         next.Add("b").On();
         string? changed = null;
         provider.GetRequiredService<IOptionsMonitor<FeatureFlagOptions>>().OnChange((options, _) => changed = options.Flags.Keys.Single());
-
         Assert.True(updater.TryApply(next));
-
         var service = provider.GetRequiredService<IFeatureFlagService>();
         Assert.False(service.IsEnabled("a"));
         Assert.True(service.IsEnabled("b"));
@@ -39,10 +36,8 @@ public sealed class FeatureFlagReloadTests
         var updater = provider.GetRequiredService<IFeatureFlagUpdater>();
         var fired = false;
         provider.GetRequiredService<IOptionsMonitor<FeatureFlagOptions>>().OnChange((_, _) => fired = true);
-        var bad = new FeatureFlagOptions { Flags = new Dictionary<string, FeatureFlagDefinition> { ["x"] = new() { Mode = FeatureFlagMode.Percentage } } };
-
+        var bad = new FeatureFlagOptions { Flags = new() { ["x"] = new() { Mode = FeatureFlagMode.Percentage } } };
         Assert.False(updater.TryApply(bad));
-
         Assert.True(provider.GetRequiredService<IFeatureFlagService>().IsEnabled("a"));
         Assert.False(fired);
     }
@@ -50,18 +45,16 @@ public sealed class FeatureFlagReloadTests
     [Fact]
     public void FromConfiguration_Reload_FlipsFlag()
     {
-        var source = new ReloadableConfigurationSource(new Dictionary<string, string?> { ["FeatureFlags:Flags:sample:Mode"] = "Off" });
+        var source = new ReloadableConfigurationSource(new() { ["FeatureFlags:Flags:sample:Mode"] = "Off" });
         var configuration = new ConfigurationBuilder().Add(source).Build();
         var services = new ServiceCollection();
         services.AddFeatureFlagsFromConfiguration(configuration);
         using var provider = services.BuildServiceProvider();
         var service = provider.GetRequiredService<IFeatureFlagService>();
         Assert.False(service.IsEnabled("sample"));
-
-        source.Provider.Set(new Dictionary<string, string?> { ["FeatureFlags:Flags:sample:Mode"] = "On" });
+        source.Provider.Set(new() { ["FeatureFlags:Flags:sample:Mode"] = "On" });
         Assert.True(service.IsEnabled("sample"));
-
-        source.Provider.Set(new Dictionary<string, string?> { ["FeatureFlags:Flags:other:Mode"] = "On" });
+        source.Provider.Set(new() { ["FeatureFlags:Flags:other:Mode"] = "On" });
         Assert.False(service.IsEnabled("sample"));
         Assert.True(service.IsEnabled("other"));
     }
@@ -69,35 +62,27 @@ public sealed class FeatureFlagReloadTests
     [Fact]
     public void FromConfiguration_BadReload_KeepsPrevious()
     {
-        var source = new ReloadableConfigurationSource(new Dictionary<string, string?> { ["FeatureFlags:Flags:sample:Mode"] = "On" });
+        var source = new ReloadableConfigurationSource(new() { ["FeatureFlags:Flags:sample:Mode"] = "On" });
         var configuration = new ConfigurationBuilder().Add(source).Build();
         var services = new ServiceCollection();
         services.AddFeatureFlagsFromConfiguration(configuration);
         using var provider = services.BuildServiceProvider();
         var service = provider.GetRequiredService<IFeatureFlagService>();
-
-        source.Provider.Set(new Dictionary<string, string?> { ["FeatureFlags:Flags:sample:Mode"] = "Percent" });
-
+        source.Provider.Set(new() { ["FeatureFlags:Flags:sample:Mode"] = "Percent" });
         Assert.True(service.IsEnabled("sample"));
     }
 
     [Fact]
     public void AddFeatureFlags_Action_DoesNotWatchConfiguration()
     {
-        var source = new ReloadableConfigurationSource(new Dictionary<string, string?> { ["FeatureFlags:Flags:a:Mode"] = "On" });
+        var source = new ReloadableConfigurationSource(new() { ["FeatureFlags:Flags:a:Mode"] = "On" });
         var configuration = new ConfigurationBuilder().Add(source).Build();
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(configuration);
         services.AddFeatureFlags(o => o.Add("a").On());
         using var provider = services.BuildServiceProvider();
         var service = provider.GetRequiredService<IFeatureFlagService>();
-
-        source.Provider.Set(new Dictionary<string, string?>
-        {
-            ["FeatureFlags:Flags:a:Mode"] = "Off",
-            ["FeatureFlags:Flags:b:Mode"] = "On"
-        });
-
+        source.Provider.Set(new() { ["FeatureFlags:Flags:a:Mode"] = "Off", ["FeatureFlags:Flags:b:Mode"] = "On" });
         Assert.True(service.IsEnabled("a"));
         Assert.False(service.IsEnabled("b"));
     }
@@ -109,9 +94,7 @@ public sealed class FeatureFlagReloadTests
         options.Add("billing").Percentage(10);
         options.Add("sample");
         options.Validate();
-
         var next = FeatureFlagUpdate.WithEnabled(options, "sample", true);
-
         Assert.NotNull(next);
         Assert.Equal(FeatureFlagMode.On, next.Flags["sample"].Mode);
         Assert.Equal(FeatureFlagMode.Percentage, next.Flags["billing"].Mode);
@@ -125,9 +108,7 @@ public sealed class FeatureFlagReloadTests
         var options = new FeatureFlagOptions();
         options.Add("gated").WhenUser("user-a");
         options.Validate();
-
         var next = FeatureFlagUpdate.WithEnabled(options, "gated", false);
-
         Assert.NotNull(next);
         var flag = next.Flags["gated"];
         Assert.Equal(FeatureFlagMode.Off, flag.Mode);
@@ -141,7 +122,6 @@ public sealed class FeatureFlagReloadTests
         var options = new FeatureFlagOptions();
         options.Add("sample").On();
         options.Validate();
-
         Assert.Null(FeatureFlagUpdate.WithEnabled(options, "missing", true));
         Assert.Equal(FeatureFlagMode.On, options.Flags["sample"].Mode);
     }
@@ -153,9 +133,7 @@ public sealed class FeatureFlagReloadTests
         options.Add("billing").Percentage(10).StickToTenant();
         options.Add("gated").WhenUser("user-a");
         options.Validate();
-
         var next = FeatureFlagUpdate.WithEnabled(options, "billing", true);
-
         Assert.NotNull(next);
         Assert.Equal(FeatureFlagMode.Percentage, options.Flags["billing"].Mode);
         Assert.Equal(10, options.Flags["billing"].Percentage);

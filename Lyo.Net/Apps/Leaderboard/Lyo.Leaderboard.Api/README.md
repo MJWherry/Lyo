@@ -1,6 +1,7 @@
 # Lyo.Leaderboard.Api
 
-Embed with `AddLeaderboardApi` and `MapLeaderboardApiEndpoints`. Test hosts use `AddLeaderboardApiForWorkbench`, which skips algorithm registration when the catalog is already present, and maps routes with authentication off.
+Embed with `AddLeaderboardApi` and `MapLeaderboardApiEndpoints`. Test hosts use `AddLeaderboardApiForWorkbench`, which skips algorithm registration when the catalog is already
+present, and maps routes with authentication off.
 
 ## Features
 

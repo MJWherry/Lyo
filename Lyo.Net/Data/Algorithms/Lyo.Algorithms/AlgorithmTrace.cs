@@ -33,7 +33,16 @@ internal static class AlgorithmTrace
             _stack.Pop();
         }
 
-        _stack.Peek().Add(new() { Key = key, Kind = kind, Input = input, Points = points(value), Children = children });
+        _stack.Peek()
+        .Add(
+            new() {
+                Key = key,
+                Kind = kind,
+                Input = input,
+                Points = points(value),
+                Children = children
+            });
+
         return value;
     }
 }

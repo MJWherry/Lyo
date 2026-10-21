@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Core.Pathing;
 using Lyo.Common.Metadata.Records;
 using Lyo.Compression;
@@ -14,7 +15,6 @@ using Lyo.FileStorage.Policy;
 using Lyo.Health;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.FileStorage.Remote;
 
@@ -68,8 +68,7 @@ public abstract class RemoteFileStorageServiceBase : FileStorageServiceBase
     }
 
     /// <summary>Copy and move are supported. Presigned read and direct upload are not. FTP and SFTP have no delegated upload URL.</summary>
-    public override FileStorageCapabilities GetCapabilities()
-        => new(false, false, true, true, this is IFileStoragePhysical);
+    public override FileStorageCapabilities GetCapabilities() => new(false, false, true, true, this is IFileStoragePhysical);
 
     /// <inheritdoc />
     protected override async Task<HealthResult> CheckHealthLightweightAsync(CancellationToken ct)
@@ -219,9 +218,7 @@ public abstract class RemoteFileStorageServiceBase : FileStorageServiceBase
         return movedMeta;
     }
 
-    /// <summary>
-    /// Builds the absolute remote path for a file. Without a prefix, ids are sharded two levels deep by their leading hex digits so one directory does not collect every file.
-    /// </summary>
+    /// <summary>Builds the absolute remote path for a file. Without a prefix, ids are sharded two levels deep by their leading hex digits so one directory does not collect every file.</summary>
     /// <param name="fileId">File identifier, rendered without dashes.</param>
     /// <param name="extension">Suffix appended after the id, including any pipeline extensions.</param>
     /// <param name="pathPrefix">Caller-chosen prefix. Sharding is skipped when this is supplied.</param>

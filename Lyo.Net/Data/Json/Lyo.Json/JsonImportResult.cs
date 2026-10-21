@@ -1,8 +1,8 @@
 namespace Lyo.Json;
 
 /// <summary>
-/// Partial JSON import. <see cref="IsSuccess" /> stays true when individual elements fail. A null document, an empty document, or a root object without
-/// <c>rowsPath</c> fails the document and returns no rows.
+/// Partial JSON import. <see cref="IsSuccess" /> stays true when individual elements fail. A null document, an empty document, or a root object without <c>rowsPath</c> fails
+/// the document and returns no rows.
 /// </summary>
 /// <typeparam name="T">Element type.</typeparam>
 public sealed class JsonImportResult<T>
@@ -24,6 +24,5 @@ public sealed class JsonImportResult<T>
         => new() { IsSuccess = true, Rows = rows, Issues = issues ?? [] };
 
     /// <summary>Document failure. Rows stay empty.</summary>
-    public static JsonImportResult<T> DocumentError(string message)
-        => new() { IsSuccess = false, Message = message };
+    public static JsonImportResult<T> DocumentError(string message) => new() { IsSuccess = false, Message = message };
 }

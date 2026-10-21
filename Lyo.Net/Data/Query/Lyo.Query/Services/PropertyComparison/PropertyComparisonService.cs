@@ -5,10 +5,7 @@ using Lyo.Common.Core.Conversion;
 
 namespace Lyo.Query.Services.PropertyComparison;
 
-/// <summary>
-/// Cached reflection implementation of <see cref="IPropertyComparisonService" />. Builds a comparison plan per entity/request type pair and reuses compiled property
-/// getters.
-/// </summary>
+/// <summary>Cached reflection implementation of <see cref="IPropertyComparisonService" />. Builds a comparison plan per entity/request type pair and reuses compiled property getters.</summary>
 /// <param name="cache">Cache for comparison metadata and delegates.</param>
 /// <param name="cacheOptions">Expirations for cached reflection artifacts.</param>
 public sealed class PropertyComparisonService(ICacheService cache, CacheOptions cacheOptions) : IPropertyComparisonService

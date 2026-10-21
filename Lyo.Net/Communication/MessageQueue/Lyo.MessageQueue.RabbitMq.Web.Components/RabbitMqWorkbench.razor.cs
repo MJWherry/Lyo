@@ -1,31 +1,26 @@
 using System.Text;
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Health;
-using Lyo.MessageQueue;
-using Lyo.MessageQueue.RabbitMq;
 using Lyo.Web.Components.Dialog;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.MessageQueue.RabbitMq.Web.Components;
 
 public partial class RabbitMqWorkbench : IAsyncDisposable
 {
-    [Inject]
-    private IRabbitMqService MqService { get; set; } = null!;
-
-    [Inject]
-    private IDialogService DialogService { get; set; } = null!;
+    private readonly List<KeyValuePair<string, string>> _details = [];
 
     private bool _busy;
-    private readonly List<KeyValuePair<string, string>> _details = [];
     private string _envelopeMessageId = string.Empty;
     private string _envelopeTraceId = string.Empty;
     private string _exchangeName = string.Empty;
     private List<MessageExchangeInfo> _exchangeStats = [];
+    private bool _exchangesLoaded;
     private HealthResult? _lastHealth;
+    private bool _managementOk;
     private string _messageBody = """{"message":"hello from lyo gateway"}""";
     private int _messagePriority;
     private int _peekCount = 10;
@@ -36,21 +31,25 @@ public partial class RabbitMqWorkbench : IAsyncDisposable
     private double _sendDelaySeconds;
     private bool _showDefaultExchanges;
     private bool _statsAutoRefresh;
-    private int _statsRefreshIntervalSeconds = 5;
     private CancellationTokenSource? _statsRefreshCts;
-    private bool _wrapInEnvelope;
+    private int _statsRefreshIntervalSeconds = 5;
     private int _tabIndex;
-    private bool _exchangesLoaded;
-    private bool _managementOk;
+    private bool _wrapInEnvelope;
+
+    [Inject]
+    private IRabbitMqService MqService { get; set; } = null!;
+
+    [Inject]
+    private IDialogService DialogService { get; set; } = null!;
 
     /// <summary>True when AMQP is connected, or the management API just responded — listing queues does not need AMQP.</summary>
     private bool IsBrokerConnected => MqService.IsConnected() || _managementOk;
 
-    private IReadOnlyList<string> BindableExchangeNames
-        => _exchangeStats.Where(e => !string.IsNullOrEmpty(e.Name)).Select(e => e.Name).Distinct(StringComparer.Ordinal).ToList();
+    private IReadOnlyList<string> BindableExchangeNames => _exchangeStats.Where(e => !string.IsNullOrEmpty(e.Name)).Select(e => e.Name).Distinct(StringComparer.Ordinal).ToList();
 
-    private IReadOnlyList<string> BindableQueueNames
-        => _queueStats.Select(q => q.Name).ToList();
+    private IReadOnlyList<string> BindableQueueNames => _queueStats.Select(q => q.Name).ToList();
+
+    public async ValueTask DisposeAsync() => await StopStatsAutoRefreshAsync();
 
     protected override async Task OnInitializedAsync()
     {
@@ -71,7 +70,13 @@ public partial class RabbitMqWorkbench : IAsyncDisposable
         _busy = true;
         try {
             _lastHealth = await MqService.CheckHealthAsync();
-            SetDetails("Health Check", _lastHealth.IsHealthy, [Detail("Healthy", _lastHealth.IsHealthy.ToString()), Detail("Duration", _lastHealth.Duration.ToString()), Detail("Message", _lastHealth.Message ?? "(none)"), Detail("Checked", _lastHealth.CheckedAt.ToString("u")), Detail("Exception", _lastHealth.Exception?.Message ?? "(none)"), .. _lastHealth.Metadata?.Select(x => Detail(x.Key, x.Value?.ToString() ?? "(null)")).ToList() ?? []]);
+            SetDetails(
+                "Health Check", _lastHealth.IsHealthy,
+                [
+                    Detail("Healthy", _lastHealth.IsHealthy.ToString()), Detail("Duration", _lastHealth.Duration.ToString()), Detail("Message", _lastHealth.Message ?? "(none)"),
+                    Detail("Checked", _lastHealth.CheckedAt.ToString("u")), Detail("Exception", _lastHealth.Exception?.Message ?? "(none)"),
+                    .. _lastHealth.Metadata?.Select(x => Detail(x.Key, x.Value?.ToString() ?? "(null)")).ToList() ?? []
+                ]);
         }
         catch (Exception ex) {
             SetStatus(ex.Message, Severity.Error);
@@ -103,15 +108,15 @@ public partial class RabbitMqWorkbench : IAsyncDisposable
                 ok = await MqService.CreateQueue(request.Name.Trim(), request.Durable, request.Exclusive, request.AutoDelete, arguments);
 
             _queueName = request.Name.Trim();
-            SetDetails("Create Queue", ok, [
-                Detail("Queue", _queueName),
-                Detail("Durable", request.Durable.ToString()),
-                Detail("Exclusive", request.Exclusive.ToString()),
-                Detail("Auto Delete", request.AutoDelete.ToString()),
-                Detail("With DLQ", request.CreateWithDlq.ToString()),
-                Detail("DLQ Name", request.CreateWithDlq ? string.IsNullOrWhiteSpace(request.DlqName) ? $"{_queueName}.dlq" : request.DlqName.Trim() : "(none)"),
-                Detail("Max Priority", request.MaxPriority > 0 ? request.MaxPriority.ToString() : "(none)")
-            ]);
+            SetDetails(
+                "Create Queue", ok,
+                [
+                    Detail("Queue", _queueName), Detail("Durable", request.Durable.ToString()), Detail("Exclusive", request.Exclusive.ToString()),
+                    Detail("Auto Delete", request.AutoDelete.ToString()), Detail("With DLQ", request.CreateWithDlq.ToString()),
+                    Detail("DLQ Name", request.CreateWithDlq ? string.IsNullOrWhiteSpace(request.DlqName) ? $"{_queueName}.dlq" : request.DlqName.Trim() : "(none)"),
+                    Detail("Max Priority", request.MaxPriority > 0 ? request.MaxPriority.ToString() : "(none)")
+                ]);
+
             await RefreshQueueStatsAsync(false);
         }
         catch (Exception ex) {
@@ -136,7 +141,13 @@ public partial class RabbitMqWorkbench : IAsyncDisposable
         try {
             var ok = await MqService.CreateExchange(request.Name.Trim(), request.Type, request.Durable, request.AutoDelete);
             _exchangeName = request.Name.Trim();
-            SetDetails("Create Exchange", ok, [Detail("Exchange", _exchangeName), Detail("Type", request.Type), Detail("Durable", request.Durable.ToString()), Detail("Auto Delete", request.AutoDelete.ToString())]);
+            SetDetails(
+                "Create Exchange", ok,
+                [
+                    Detail("Exchange", _exchangeName), Detail("Type", request.Type), Detail("Durable", request.Durable.ToString()),
+                    Detail("Auto Delete", request.AutoDelete.ToString())
+                ]);
+
             await RefreshExchangesAsync(false);
         }
         catch (Exception ex) {
@@ -335,7 +346,14 @@ public partial class RabbitMqWorkbench : IAsyncDisposable
         if (!TryBuildPublishBytes(out var bytes, out var _))
             bytes = [];
 
-        SetDetails(operation, ok, [Detail("Queue", _queueName), Detail("QueueMessageEnvelope", _wrapInEnvelope.ToString()), Detail("Priority", _messagePriority > 0 ? _messagePriority.ToString() : "(default)"), Detail("Delay", operation.Contains("Delayed", StringComparison.Ordinal) ? $"{_sendDelaySeconds}s" : "(none)"), Detail("Payload Size", FileSizeUnitInfo.FormatBestFitAbbreviation(bytes.LongLength, lowercaseAbbreviation: false))]);
+        SetDetails(
+            operation, ok,
+            [
+                Detail("Queue", _queueName), Detail("QueueMessageEnvelope", _wrapInEnvelope.ToString()),
+                Detail("Priority", _messagePriority > 0 ? _messagePriority.ToString() : "(default)"),
+                Detail("Delay", operation.Contains("Delayed", StringComparison.Ordinal) ? $"{_sendDelaySeconds}s" : "(none)"),
+                Detail("Payload Size", FileSizeUnitInfo.FormatBestFitAbbreviation(bytes.LongLength, lowercaseAbbreviation: false))
+            ]);
     }
 
     private async Task SendToExchangeAsync()
@@ -356,7 +374,13 @@ public partial class RabbitMqWorkbench : IAsyncDisposable
             }
 
             var ok = await MqService.SendToExchange(_exchangeName, _routingKey, bytes);
-            SetDetails("Send To Exchange", ok, [Detail("Exchange", _exchangeName), Detail("Routing Key", _routingKey), Detail("QueueMessageEnvelope", _wrapInEnvelope.ToString()), Detail("Priority", _messagePriority > 0 ? _messagePriority.ToString() : "(default)"), Detail("Payload Size", FileSizeUnitInfo.FormatBestFitAbbreviation(bytes.LongLength, lowercaseAbbreviation: false))]);
+            SetDetails(
+                "Send To Exchange", ok,
+                [
+                    Detail("Exchange", _exchangeName), Detail("Routing Key", _routingKey), Detail("QueueMessageEnvelope", _wrapInEnvelope.ToString()),
+                    Detail("Priority", _messagePriority > 0 ? _messagePriority.ToString() : "(default)"),
+                    Detail("Payload Size", FileSizeUnitInfo.FormatBestFitAbbreviation(bytes.LongLength, lowercaseAbbreviation: false))
+                ]);
         }
         catch (Exception ex) {
             SetStatus(ex.Message, Severity.Error);
@@ -378,7 +402,12 @@ public partial class RabbitMqWorkbench : IAsyncDisposable
         _busy = true;
         try {
             _peekedMessages = (await MqService.PeekQueueMessages(_queueName, _peekCount)).ToList();
-            SetDetails("Peek Messages", true, [Detail("Queue", _queueName), Detail("Requested", _peekCount.ToString()), Detail("Returned", _peekedMessages.Count.ToString()), Detail("Ack Mode", "Requeue (no ack/remove)")]);
+            SetDetails(
+                "Peek Messages", true,
+                [
+                    Detail("Queue", _queueName), Detail("Requested", _peekCount.ToString()), Detail("Returned", _peekedMessages.Count.ToString()),
+                    Detail("Ack Mode", "Requeue (no ack/remove)")
+                ]);
         }
         catch (Exception ex) {
             SetStatus(ex.Message, Severity.Error);
@@ -397,7 +426,13 @@ public partial class RabbitMqWorkbench : IAsyncDisposable
             _queueStats = (await MqService.GetAllQueuesInfoAsync()).ToList();
             _managementOk = true;
             if (updateStatus)
-                SetDetails("Queue Stats", true, [Detail("Queues", _queueStats.Count.ToString()), Detail("Total Messages", _queueStats.Sum(q => q.Messages).ToString()), Detail("Total Consumers", _queueStats.Sum(q => q.Consumers).ToString()), Detail("Auto Refresh", _statsAutoRefresh ? $"every {_statsRefreshIntervalSeconds}s" : "off")]);
+                SetDetails(
+                    "Queue Stats", true,
+                    [
+                        Detail("Queues", _queueStats.Count.ToString()), Detail("Total Messages", _queueStats.Sum(q => q.Messages).ToString()),
+                        Detail("Total Consumers", _queueStats.Sum(q => q.Consumers).ToString()),
+                        Detail("Auto Refresh", _statsAutoRefresh ? $"every {_statsRefreshIntervalSeconds}s" : "off")
+                    ]);
         }
         catch (Exception ex) {
             _managementOk = false;
@@ -417,7 +452,9 @@ public partial class RabbitMqWorkbench : IAsyncDisposable
             _exchangeStats = (await MqService.GetAllExchangesInfoAsync()).ToList();
             _exchangesLoaded = true;
             if (updateStatus)
-                SetDetails("Exchange Stats", true, [Detail("Exchanges", _exchangeStats.Count.ToString()), Detail("Custom", _exchangeStats.Count(e => !RabbitMqColorHelper.IsDefaultExchange(e.Name)).ToString())]);
+                SetDetails(
+                    "Exchange Stats", true,
+                    [Detail("Exchanges", _exchangeStats.Count.ToString()), Detail("Custom", _exchangeStats.Count(e => !RabbitMqColorHelper.IsDefaultExchange(e.Name)).ToString())]);
         }
         catch (Exception ex) {
             if (updateStatus)
@@ -464,8 +501,6 @@ public partial class RabbitMqWorkbench : IAsyncDisposable
         _statsRefreshCts.Dispose();
         _statsRefreshCts = null;
     }
-
-    public async ValueTask DisposeAsync() => await StopStatsAutoRefreshAsync();
 
     private async Task TryConnectQuietAsync()
     {

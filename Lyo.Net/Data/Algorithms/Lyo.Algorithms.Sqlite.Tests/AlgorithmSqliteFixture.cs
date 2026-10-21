@@ -1,7 +1,7 @@
 using Lyo.Algorithms.Sqlite.Database;
+using Lyo.Common.Core.Identifiers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Algorithms.Sqlite.Tests;
 
@@ -11,7 +11,7 @@ public sealed class AlgorithmSqliteFixture : IAsyncLifetime
 
     public ServiceProvider ServiceProvider { get; private set; } = null!;
 
-    /// <summary>Current xUnit cancellation token. Reads <see cref="TestContext.Current"/> when accessed, so each test gets that test's token.</summary>
+    /// <summary>Current xUnit cancellation token. Reads <see cref="TestContext.Current" /> when accessed, so each test gets that test's token.</summary>
     public CancellationToken TestCt => TestContext.Current.CancellationToken;
 
     public async ValueTask InitializeAsync()

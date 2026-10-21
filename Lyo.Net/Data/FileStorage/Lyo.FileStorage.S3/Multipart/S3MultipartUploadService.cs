@@ -1,12 +1,11 @@
-using Lyo.Common.Core.Pathing;
 using System.Text.Json;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Lyo.Common.Core.Extensions;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
-using Lyo.FileStorage;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Multipart;
 using Lyo.FileStorage.OperationContext;
@@ -15,7 +14,6 @@ using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using CompleteMultipartUploadRequest = Lyo.FileStorage.Multipart.CompleteMultipartUploadRequest;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.FileStorage.S3.Multipart;
 
@@ -105,9 +103,8 @@ public sealed class S3MultipartUploadService : IMultipartUploadService
             var state = JsonSerializer.Serialize(new S3ProviderState { StagingKey = stagingKey, UploadId = uploadId });
             var record = new MultipartUploadSessionRecord(
                 sessionId, tenant, now, now.Add(ttl), targetFileId, request.PathPrefix, request.Compress, request.Encrypt, request.KeyId, request.OriginalFileName,
-                request.ContentType, FileStorageServiceBase.NormalizeCharset(request.Charset), MultipartSessionStatus.Active, MultipartUploadProviderKind.AwsS3, state, request.DeclaredContentLength, request.PartSizeBytes) {
-                MetadataJson = FileStoreResult.SerializeMetadata(request.Metadata)
-            };
+                request.ContentType, FileStorageServiceBase.NormalizeCharset(request.Charset), MultipartSessionStatus.Active, MultipartUploadProviderKind.AwsS3, state,
+                request.DeclaredContentLength, request.PartSizeBytes) { MetadataJson = FileStoreResult.SerializeMetadata(request.Metadata) };
 
             try {
                 await _sessions.CreateAsync(record, ct).ConfigureAwait(false);

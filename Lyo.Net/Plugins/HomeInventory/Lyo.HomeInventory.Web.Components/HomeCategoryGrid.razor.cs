@@ -1,6 +1,5 @@
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
-using Lyo.Query.Models.Common.Request;
 using Lyo.Web.Components.DataGrid;
 using Lyo.Web.Components.Models;
 
@@ -9,6 +8,12 @@ namespace Lyo.HomeInventory.Web.Components;
 /// <summary>Category grid with name-then-add and inline rename.</summary>
 public partial class HomeCategoryGrid
 {
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Name"), new("Slug")];
+
+    private LyoDataGridProjected? _dataGrid;
+    private string _draftName = "";
+    private Guid? _editingId;
+
     /// <summary>HTTP client.</summary>
     [Parameter]
     [EditorRequired]
@@ -21,16 +26,11 @@ public partial class HomeCategoryGrid
 
     private string _route => $"{BaseRoute.TrimEnd('/')}/Categories";
 
-    private LyoDataGridProjected? _dataGrid;
-    private string _draftName = "";
-    private Guid? _editingId;
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Name"), new("Slug")];
-
     private void BeginEdit(object? item)
     {
         if (!ProjectedValueHelper.TryGetGuid(ProjectedValueHelper.GetValue(item, "Id"), out var id))
             return;
+
         _editingId = id;
         _draftName = ProjectedValueHelper.GetDisplayValue(item, "Name");
     }
@@ -48,7 +48,7 @@ public partial class HomeCategoryGrid
             return;
 
         if (_editingId is Guid id) {
-            var loaded = await ApiClient.QueryConcreteAsync<QueryRes<HomeCategoryRes>>(_route, new QueryConcreteReq { Keys = [[id]], Amount = 1 });
+            var loaded = await ApiClient.QueryConcreteAsync<QueryRes<HomeCategoryRes>>(_route, new() { Keys = [[id]], Amount = 1 });
             var existing = loaded?.Items?.FirstOrDefault();
             var req = existing == null
                 ? new HomeCategoryReq { Name = name }
@@ -59,11 +59,11 @@ public partial class HomeCategoryGrid
                     Description = existing.Description,
                     SortOrder = existing.SortOrder
                 };
+
             await ApiClient.PostAsAsync<UpdateRequest<HomeCategoryReq>, UpdateResult<HomeCategoryRes>>($"{_route}/Update", new(req, id));
         }
-        else {
-            await ApiClient.PostAsAsync<HomeCategoryReq, CreateResult<HomeCategoryRes>>(_route, new HomeCategoryReq { Name = name });
-        }
+        else
+            await ApiClient.PostAsAsync<HomeCategoryReq, CreateResult<HomeCategoryRes>>(_route, new() { Name = name });
 
         _editingId = null;
         _draftName = "";

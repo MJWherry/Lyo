@@ -1,6 +1,7 @@
 # Lyo.Payments
 
-`IPaymentCollector` collects funds and returns a reference. Hosts call Billing `RecordPaymentAsync` on success so the ledger is posted there. `InternalPaymentCollector` always succeeds and is meant for TestGateway / local workbenches.
+`IPaymentCollector` collects funds and returns a reference. Hosts call Billing `RecordPaymentAsync` on success so the ledger is posted there. `InternalPaymentCollector` always
+succeeds and is meant for TestGateway / local workbenches.
 
 ## Features
 

@@ -15,9 +15,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyo.FileStorage;
 
-/// <summary>
-/// Batch DEK migration (re-wrapping envelope keys) and full payload rotation (decrypt, then re-encrypt ciphertext) via <see cref="IFileStoragePhysicalIO" />.
-/// </summary>
+/// <summary>Batch DEK migration (re-wrapping envelope keys) and full payload rotation (decrypt, then re-encrypt ciphertext) via <see cref="IFileStoragePhysicalIO" />.</summary>
 internal sealed class FileStorageDekOperations
 {
     private const long LargePayloadSpillThresholdBytes = 32L * 1024 * 1024;
@@ -170,14 +168,13 @@ internal sealed class FileStorageDekOperations
         return migResult;
     }
 
-    /// <summary>
-    /// Decrypts each requested file entirely, re-seals ciphertext with refreshed KEK/version material from policy or explicit overrides, and writes updated metadata hashes.
-    /// </summary>
+    /// <summary>Decrypts each requested file entirely, re-seals ciphertext with refreshed KEK/version material from policy or explicit overrides, and writes updated metadata hashes.</summary>
     /// <remarks>Rotates payloads end to end. Failures accumulate per file while others keep processing.</remarks>
     /// <param name="fileIds">File ids slated for cryptographic rotation.</param>
     /// <param name="targetKeyId">Optional override KEK id. Omit to derive per-record defaults.</param>
     /// <param name="targetKeyVersion">
-    /// Optional override KEK version. Omit together with <paramref name="targetKeyId" /> to keep recorded versions unless a new KEK requires fresh versions.
+    /// Optional override KEK version. Omit together with <paramref name="targetKeyId" /> to keep recorded versions unless a new KEK requires fresh
+    /// versions.
     /// </param>
     /// <param name="batchSize">Chunk size that sets batch logging boundaries.</param>
     /// <param name="ct">Cancellation token passed through storage pipelines.</param>
@@ -268,8 +265,8 @@ internal sealed class FileStorageDekOperations
     }
 
     /// <summary>
-    /// Returns a seekable stream positioned at 0 that holds the decrypted payload of <paramref name="metadata" />. Small payloads stay in a pre-sized <see cref="MemoryStream" />;
-    /// payloads over <see cref="LargePayloadSpillThresholdBytes" /> spill to a temp file (DeleteOnClose) to bound RAM.
+    /// Returns a seekable stream positioned at 0 that holds the decrypted payload of <paramref name="metadata" />. Small payloads stay in a pre-sized <see cref="MemoryStream" />
+    /// ; payloads over <see cref="LargePayloadSpillThresholdBytes" /> spill to a temp file (DeleteOnClose) to bound RAM.
     /// </summary>
     private async Task<Stream> ReadEncryptedPayloadAsync(FileStoreResult metadata, CancellationToken ct)
     {
@@ -305,9 +302,7 @@ internal sealed class FileStorageDekOperations
         }
     }
 
-    /// <summary>
-    /// Builds the seekable destination buffer for the DEK rotate decrypt pass. Spills to a temp file (DeleteOnClose) past <see cref="LargePayloadSpillThresholdBytes" />.
-    /// </summary>
+    /// <summary>Builds the seekable destination buffer for the DEK rotate decrypt pass. Spills to a temp file (DeleteOnClose) past <see cref="LargePayloadSpillThresholdBytes" />.</summary>
     private static Stream CreateDecryptedSpillStream(long originalSize)
     {
         if (originalSize <= LargePayloadSpillThresholdBytes) {

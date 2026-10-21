@@ -7,8 +7,6 @@ using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Enums;
 using Lyo.Api.Models.Error;
 using Lyo.Common.Core;
-using Lyo.Common.Core.Enums;
-using Lyo.Common.Core.Extensions;
 using Lyo.Common.Metadata.Extensions;
 using Lyo.Exceptions;
 using Lyo.Query.Models.Attributes;
@@ -48,9 +46,20 @@ public partial class LyoDataGrid<T> : IDataGridExportHost, ILyoDataGridToolbarHo
     [Inject]
     private IServiceProvider Services { get; set; } = default!;
 
+    /// <summary>Optional root HTML <c>id</c> override; default is <c>lyo-data-grid-{grid-key}</c> (normalized segment).</summary>
+    [Parameter]
+    public string? ElementId { get; set; }
+
     [Parameter]
     [EditorRequired]
     public IApiClient ApiClient { get; set; }
+
+    private static string SortIcon(SortDirection direction)
+        => direction switch {
+            SortDirection.Ascending => Icons.Material.Filled.ArrowUpward,
+            SortDirection.Descending => Icons.Material.Filled.ArrowDownward,
+            var _ => Icons.Material.Filled.SwapVert
+        };
 
 #region Parameters
 
@@ -105,8 +114,8 @@ public partial class LyoDataGrid<T> : IDataGridExportHost, ILyoDataGridToolbarHo
     private string ExportRoute => Route.TrimEnd('/') + "/Export";
 
     /// <summary>
-    /// Property paths OR-ed into the quick-search filter. When null or empty, paths are taken from column <c>QuickSearchPropertyName</c> values.
-    /// Leaf <c>Id</c> columns are always included so pasting an identifier matches without listing it here.
+    /// Property paths OR-ed into the quick-search filter. When null or empty, paths are taken from column <c>QuickSearchPropertyName</c> values. Leaf <c>Id</c> columns are
+    /// always included so pasting an identifier matches without listing it here.
     /// </summary>
     [Parameter]
     public IReadOnlyList<string>? QuickSearchProperties { get; init; }
@@ -152,7 +161,10 @@ public partial class LyoDataGrid<T> : IDataGridExportHost, ILyoDataGridToolbarHo
     private IReadOnlyList<LyoGridCardColumn> _cardColumns = [];
     private LyoDataGridLayout? _userLayout;
     private readonly CancellationTokenSource _cts = new();
-    private readonly TaskCompletionSource _restoreGate = new(TaskCreationOptions.RunContinuationsAsynchronously); // MudDataGrid loads in its first AfterRender; wait so sorts/page restore win.
+
+    private readonly TaskCompletionSource
+        _restoreGate = new(TaskCreationOptions.RunContinuationsAsynchronously); // MudDataGrid loads in its first AfterRender; wait so sorts/page restore win.
+
     private bool _disposed;
 
     private MudDataGrid<T>? _dataGrid;
@@ -256,11 +268,11 @@ public partial class LyoDataGrid<T> : IDataGridExportHost, ILyoDataGridToolbarHo
             await _viewport.StartAsync(Services.GetService<IBrowserViewportService>(), () => InvokeAsync(StateHasChanged));
 
         UpdateCardColumns();
-
         if (!_stateRestored) {
             _stateRestored = true;
             if (_dataGrid != null)
                 await RestoreGridState();
+
             _restoreGate.TrySetResult();
         }
 
@@ -310,6 +322,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost, ILyoDataGridToolbarHo
     {
         if (_disposed)
             return;
+
         _disposed = true;
         StopAutoRefresh();
         _restoreGate.TrySetCanceled();
@@ -319,8 +332,8 @@ public partial class LyoDataGrid<T> : IDataGridExportHost, ILyoDataGridToolbarHo
     }
 
     /// <summary>
-    /// Refreshes the card column snapshot after a draw, which is the only point where the registry is fully populated: the grid clears it at the start of every
-    /// draw and the column components re-register while they draw.
+    /// Refreshes the card column snapshot after a draw, which is the only point where the registry is fully populated: the grid clears it at the start of every draw and the
+    /// column components re-register while they draw.
     /// </summary>
     private void UpdateCardColumns()
     {
@@ -328,8 +341,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost, ILyoDataGridToolbarHo
             return;
 
         var snapshot = _propertyColumnRegistry.GetCardColumns(GetVisibleColumnFields());
-        if (snapshot.Count == _cardColumns.Count
-            && snapshot.Zip(_cardColumns).All(pair => pair.First.Field == pair.Second.Field && pair.First.IsTitle == pair.Second.IsTitle))
+        if (snapshot.Count == _cardColumns.Count && snapshot.Zip(_cardColumns).All(pair => pair.First.Field == pair.Second.Field && pair.First.IsTitle == pair.Second.IsTitle))
             return;
 
         _cardColumns = snapshot;
@@ -429,6 +441,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost, ILyoDataGridToolbarHo
             SelectedItems = [];
             if (savedState.Page > 0)
                 _gridCurrentPage = savedState.Page;
+
             if (savedState.PageSize > 0)
                 _rowsPerPage = savedState.PageSize;
         }
@@ -485,10 +498,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost, ILyoDataGridToolbarHo
     /// <summary>When <see cref="KeySelector" /> is set, number of rows selected across all pages (otherwise current grid selection count).</summary>
     private int EffectiveSelectedCount => KeySelector is null ? SelectedItems.Count : _selection.Count;
 
-    private void ApplyDerivedSelection()
-        => SelectedItems = KeySelector is null || CurrentResults?.Items is null
-            ? []
-            : _selection.ItemsOnPage(CurrentResults.Items, KeySelector);
+    private void ApplyDerivedSelection() => SelectedItems = KeySelector is null || CurrentResults?.Items is null ? [] : _selection.ItemsOnPage(CurrentResults.Items, KeySelector);
 
     private Task OnGridSelectedItemsChanged(HashSet<T> items)
     {
@@ -527,8 +537,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost, ILyoDataGridToolbarHo
             if (_dataGrid.SortDefinitions.Count != 0)
                 sorts = _dataGrid.SortDefinitions.Values.Select(sd => new SavedSort { SortBy = sd.SortBy, Descending = sd.Descending, Index = sd.Index }).ToList();
 
-            List<object[]>? selectedKeys = KeySelector != null && _selection.Count > 0 ? _selection.Keys.ToList() : null;
-
+            var selectedKeys = KeySelector != null && _selection.Count > 0 ? _selection.Keys.ToList() : null;
             await ClientStore.SetGridStateAsync(
                 GridKey, new LyoDataGridState<T> {
                     CurrentQuery = CurrentQuery,
@@ -590,6 +599,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost, ILyoDataGridToolbarHo
                 s.Stop();
                 _lastQueryElapsedMs = s.ElapsedMilliseconds;
             }
+
             if (QueryError is null)
                 await RelatedEntityLoader.LoadAsync(_relatedLookup, _relatedRegistry, CurrentResults.Items?.Cast<object?>() ?? [], ApiClient, Logger, linkedCts.Token);
 
@@ -612,6 +622,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost, ILyoDataGridToolbarHo
         finally {
             if (loadEpoch == _loadEpoch)
                 _loading = false;
+
             if (!_disposed) {
                 await InvokeAsync(StateHasChanged);
                 if (_toolbar is not null && (_toolbar.SearchHadFocus || _refocusSearchAfterLoad)) {
@@ -681,7 +692,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost, ILyoDataGridToolbarHo
             }
 
             var actualNavigationSort = string.Join(".", pathSegments);
-            queryBuilder.AddSort(actualNavigationSort, sort.Descending ? Lyo.Common.Core.Enums.SortDirection.Desc : Lyo.Common.Core.Enums.SortDirection.Asc, index);
+            queryBuilder.AddSort(actualNavigationSort, sort.Descending ? Common.Core.Enums.SortDirection.Desc : Common.Core.Enums.SortDirection.Asc, index);
         }
         else {
             // Simple property sorting
@@ -696,7 +707,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost, ILyoDataGridToolbarHo
             OperationHelpers.ThrowIfNull(propertyInfo, $"Sort property not resolved for '{sort.SortBy}'.");
             var dbNameAttr = propertyInfo.GetCustomAttribute<QueryPropertyNameAttribute>();
             var propertyName = dbNameAttr?.PropertyName ?? propertyInfo.Name;
-            queryBuilder.AddSort(propertyName, sort.Descending ? Lyo.Common.Core.Enums.SortDirection.Desc : Lyo.Common.Core.Enums.SortDirection.Asc, index);
+            queryBuilder.AddSort(propertyName, sort.Descending ? Common.Core.Enums.SortDirection.Desc : Common.Core.Enums.SortDirection.Asc, index);
         }
     }
 
@@ -704,13 +715,12 @@ public partial class LyoDataGrid<T> : IDataGridExportHost, ILyoDataGridToolbarHo
     {
         if (_disposed || _dataGrid is null)
             return;
+
         try {
             await _dataGrid.ReloadServerData();
         }
-        catch (ObjectDisposedException) {
-        }
-        catch (OperationCanceledException) {
-        }
+        catch (ObjectDisposedException) { }
+        catch (OperationCanceledException) { }
     }
 
 #endregion
@@ -863,6 +873,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost, ILyoDataGridToolbarHo
             { dialog => dialog.PatchRoute, PatchRoute },
             { dialog => dialog.ApiClient, ApiClient }
         };
+
         var dialog = await DialogService.ShowAsync<LyoBulkPatchDialog>("Bulk patch", parameters, LyoDialogPresets.Medium);
         var result = await dialog.Result;
         if (result is { Canceled: false }) {
@@ -874,7 +885,6 @@ public partial class LyoDataGrid<T> : IDataGridExportHost, ILyoDataGridToolbarHo
     private async Task BulkDelete()
     {
         var keyList = KeySelector is null ? [] : _selection.Keys.ToList();
-
         var request = new DeleteRequest { Keys = keyList, AllowMultiple = true };
         try {
             var bulkRoute = DeleteRoute + "/Bulk";
@@ -892,10 +902,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost, ILyoDataGridToolbarHo
         }
     }
 
-    /// <summary>
-    /// <see cref="Column{T}.PropertyName" /> values for Mud columns the user hid (columns panel). Applied when defaulting those fields off in the export column
-    /// selector dialog.
-    /// </summary>
+    /// <summary><see cref="Column{T}.PropertyName" /> values for Mud columns the user hid (columns panel). Applied when defaulting those fields off in the export column selector dialog.</summary>
     private List<string>? GetHiddenFieldNamesForExportDialog()
     {
         if (_dataGrid?.RenderedColumns == null)
@@ -1011,8 +1018,7 @@ public partial class LyoDataGrid<T> : IDataGridExportHost, ILyoDataGridToolbarHo
             builder.CloseComponent();
         };
 
-    private async Task ShowRequestDialog()
-        => await ShowInJsonDialog(CurrentQuery, "Request", QueryRoute);
+    private async Task ShowRequestDialog() => await ShowInJsonDialog(CurrentQuery, "Request", QueryRoute);
 
     private async Task ShowResponseDialog()
         => await ShowInJsonDialog(
@@ -1032,64 +1038,85 @@ public partial class LyoDataGrid<T> : IDataGridExportHost, ILyoDataGridToolbarHo
             { i => i.Path, path },
             { i => i.Chips, chips }
         };
+
         await DialogService.ShowAsync(typeof(JsonViewDialog<TModel>), title, parameters, LyoDialogPresets.Medium);
     }
 
 #endregion
 
-    /// <summary>Optional root HTML <c>id</c> override; default is <c>lyo-data-grid-{grid-key}</c> (normalized segment).</summary>
-    [Parameter]
-    public string? ElementId { get; set; }
-
-    private static string SortIcon(SortDirection direction)
-        => direction switch {
-            SortDirection.Ascending => Icons.Material.Filled.ArrowUpward,
-            SortDirection.Descending => Icons.Material.Filled.ArrowDownward,
-            var _ => Icons.Material.Filled.SwapVert
-        };
-
 #region ILyoDataGridToolbarHost
 
     bool ILyoDataGridToolbarHost.Loading => _loading;
+
     bool ILyoDataGridToolbarHost.HasKeySelector => KeySelector is not null;
+
     IDataGridExportHost ILyoDataGridToolbarHost.ExportHost => this;
+
     bool ILyoDataGridToolbarHost.AutoRefreshEnabled => _autoRefreshEnabled;
+
     TimeSpan ILyoDataGridToolbarHost.RefreshInterval => _refreshInterval;
+
     bool ILyoDataGridToolbarHost.CardMode => CardMode;
+
     IReadOnlyList<LyoGridCardColumn> ILyoDataGridToolbarHost.SortableCardColumns => SortableCardColumns;
+
     bool ILyoDataGridToolbarHost.ShowLayoutToggle => ShowLayoutToggle;
+
     LyoDataGridLayout ILyoDataGridToolbarHost.EffectiveLayout => EffectiveLayout;
+
     IReadOnlyList<FilterState> ILyoDataGridToolbarHost.FilterStates => _filterStates;
+
     string ILyoDataGridToolbarHost.QuickSearchPlaceholder => QuickSearchPlaceholder;
+
     int ILyoDataGridToolbarHost.EffectiveSelectedCount => EffectiveSelectedCount;
 
-    string? ILyoDataGridToolbarHost.SearchText
-    {
+    string? ILyoDataGridToolbarHost.SearchText {
         get => _searchText;
         set => _searchText = value;
     }
 
     bool ILyoDataGridToolbarHost.HasFeature(LyoDataGridFeatureFlags feature) => HasFeature(feature);
+
     string ILyoDataGridToolbarHost.GetBulkLabel() => GetBulkLabel();
+
     Task ILyoDataGridToolbarHost.BulkPatchAsync() => BulkPatch();
+
     Task ILyoDataGridToolbarHost.BulkDeleteAsync() => BulkDelete();
+
     Task ILyoDataGridToolbarHost.ShowRequestDialogAsync() => ShowRequestDialog();
+
     Task ILyoDataGridToolbarHost.ShowResponseDialogAsync() => ShowResponseDialog();
+
     Task ILyoDataGridToolbarHost.RefreshDataAsync() => RefreshData();
+
     void ILyoDataGridToolbarHost.ToggleAutoRefresh() => ToggleAutoRefresh();
+
     void ILyoDataGridToolbarHost.SetRefreshInterval(int seconds) => SetRefreshInterval(seconds);
+
     SortDirection ILyoDataGridToolbarHost.CardSortDirection(LyoGridCardColumn column) => CardSortDirection(column);
+
     string ILyoDataGridToolbarHost.SortIcon(SortDirection direction) => SortIcon(direction);
+
     Task ILyoDataGridToolbarHost.SortByCardColumnAsync(LyoGridCardColumn column) => SortByCardColumn(column);
+
     void ILyoDataGridToolbarHost.ShowColumnsPanel() => _dataGrid?.ShowColumnsPanel();
+
     Task ILyoDataGridToolbarHost.SetLayoutAsync(LyoDataGridLayout layout) => SetLayout(layout);
+
     Task ILyoDataGridToolbarHost.OnSearchDebouncedAsync(string value) => OnSearchDebounced(value);
+
     Task ILyoDataGridToolbarHost.OnSearchKeyDownAsync(KeyboardEventArgs e) => OnSearchKeyDown(e);
+
     IEnumerable<ConditionClause> ILyoDataGridToolbarHost.GetActiveFilters() => GetActiveFilters();
+
     Task ILyoDataGridToolbarHost.OnFiltersChangedAsync(List<ConditionClause> conditions) => OnFiltersChanged(conditions);
+
     Task ILyoDataGridToolbarHost.ToggleFilterAsync(int index) => ToggleFilter(index);
+
     Task ILyoDataGridToolbarHost.RemoveFilterAsync(int index) => RemoveFilter(index);
+
     string ILyoDataGridToolbarHost.GetFilterDisplayText(ConditionClause condition) => GetFilterDisplayText(condition);
+
     string ILyoDataGridToolbarHost.GetFilterDisplayDetailText(ConditionClause condition) => GetFilterDisplayDetailText(condition);
 
 #endregion

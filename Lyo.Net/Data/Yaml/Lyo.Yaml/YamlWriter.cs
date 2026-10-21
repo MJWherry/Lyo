@@ -2,7 +2,6 @@ using System.Reflection;
 using System.Text;
 using Lyo.Exceptions;
 using Lyo.Json;
-using Lyo.Result;
 
 namespace Lyo.Yaml;
 
@@ -83,8 +82,7 @@ public sealed class YamlWriter : IYamlWriter
     }
 
     /// <inheritdoc />
-    public void ExportToYamlFromDataTable(DataTable.Models.DataTable dataTable, Stream yamlStream)
-        => Write(ExportToYamlStringFromDataTable(dataTable), yamlStream);
+    public void ExportToYamlFromDataTable(DataTable.Models.DataTable dataTable, Stream yamlStream) => Write(ExportToYamlStringFromDataTable(dataTable), yamlStream);
 
     /// <inheritdoc />
     public byte[] ExportToYamlBytesFromDataTable(DataTable.Models.DataTable dataTable, Encoding? encoding = null)
@@ -128,11 +126,7 @@ public sealed class YamlWriter : IYamlWriter
     }
 
     /// <inheritdoc />
-    public async Task ExportFormattedToYamlAsync<T>(
-        IEnumerable<T> items,
-        IReadOnlyDictionary<string, Func<T, string>> fields,
-        Stream yamlStream,
-        CancellationToken ct = default)
+    public async Task ExportFormattedToYamlAsync<T>(IEnumerable<T> items, IReadOnlyDictionary<string, Func<T, string>> fields, Stream yamlStream, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(yamlStream);
         var bytes = _engine.Encoding.GetBytes(ExportFormattedToYamlString(items, fields));
@@ -140,11 +134,7 @@ public sealed class YamlWriter : IYamlWriter
     }
 
     /// <inheritdoc />
-    public async Task ExportColumnsToYamlAsync<T>(
-        IEnumerable<T> items,
-        IReadOnlyDictionary<string, PropertyInfo> columns,
-        Stream yamlStream,
-        CancellationToken ct = default)
+    public async Task ExportColumnsToYamlAsync<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns, Stream yamlStream, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(yamlStream);
         var bytes = _engine.Encoding.GetBytes(ExportColumnsToYamlString(items, columns));

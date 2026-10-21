@@ -3,7 +3,10 @@ using Lyo.Story.Models.Response;
 
 namespace Lyo.Story.Client;
 
-/// <summary>Typed HTTP client for story graph save/load/delete and play. Row list and filter use <see cref="Lyo.Api.Client.IApiClient.QueryConcreteAsync{TResult}" /> on <c>Story/Stories</c>.</summary>
+/// <summary>
+/// Typed HTTP client for story graph save/load/delete and play. Row list and filter use <see cref="Lyo.Api.Client.IApiClient.QueryConcreteAsync{TResult}" /> on
+/// <c>Story/Stories</c>.
+/// </summary>
 public interface IStoryClient
 {
     /// <summary>Upserts a play graph.</summary>

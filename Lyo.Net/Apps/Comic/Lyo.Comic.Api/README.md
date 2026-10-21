@@ -1,6 +1,7 @@
 # Lyo.Comic.Api
 
-Maps CRUD on `ComicDbContext` entities (series, alternate titles, volumes, chapters, pages, characters) via `Lyo.Api` `CreateBuilder` with entity-as-both DTOs. Register the store with `AddComicApiFromConfiguration` (or `AddPostgresComicStore` plus `AddLyoCrudServices<ComicDbContext>`), then call `BuildComicGroup`. Example host: `Lyo.Comic.Api.Example`.
+Maps CRUD on `ComicDbContext` entities (series, alternate titles, volumes, chapters, pages, characters) via `Lyo.Api` `CreateBuilder` with entity-as-both DTOs. Register the store
+with `AddComicApiFromConfiguration` (or `AddPostgresComicStore` plus `AddLyoCrudServices<ComicDbContext>`), then call `BuildComicGroup`. Example host: `Lyo.Comic.Api.Example`.
 
 ## Features
 

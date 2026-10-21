@@ -1,6 +1,7 @@
 # Lyo.Billing.Api.Example
 
-Runnable example: Ledger + Billing DI, field-encryption demo key, `BuildLedgerGroup` and `BuildBillingGroup`. Demo wiring (local cache, OpenAPI/Scalar, hardcoded field-encryption seed). Prefer embedding those calls in another host when composing APIs. Not packed to NuGet. Binds http://localhost:5105 (see Properties/launchSettings.json).
+Runnable example: Ledger + Billing DI, field-encryption demo key, `BuildLedgerGroup` and `BuildBillingGroup`. Demo wiring (local cache, OpenAPI/Scalar, hardcoded field-encryption
+seed). Prefer embedding those calls in another host when composing APIs. Not packed to NuGet. Binds http://localhost:5105 (see Properties/launchSettings.json).
 
 ## Features
 

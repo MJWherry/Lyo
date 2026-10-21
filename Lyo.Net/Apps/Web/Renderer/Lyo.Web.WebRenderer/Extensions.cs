@@ -41,8 +41,8 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Adds a scoped <see cref="HtmlRenderer" /> and <see cref="IWebRendererService" />. An existing
-        /// <see cref="WebRenderOptions" /> registration is kept. <see cref="ILogger{TCategoryName}" /> must be registered.
+        /// Adds a scoped <see cref="HtmlRenderer" /> and <see cref="IWebRendererService" />. An existing <see cref="WebRenderOptions" /> registration is kept.
+        /// <see cref="ILogger{TCategoryName}" /> must be registered.
         /// </summary>
         /// <param name="options">Validated options. Used when the collection does not already contain <see cref="WebRenderOptions" />.</param>
         /// <returns>The service collection for chaining.</returns>
@@ -55,15 +55,14 @@ public static class Extensions
             services.TryAddSingleton<BrowserSession>(provider => {
                 var registered = provider.GetRequiredService<WebRenderOptions>();
                 var recorded = registered.EnableMetrics ? provider.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
-                return new BrowserSession(registered, provider.GetService<ILogger<BrowserSession>>(), recorded);
+                return new(registered, provider.GetService<ILogger<BrowserSession>>(), recorded);
             });
+
             services.TryAddScoped<HtmlRenderer>(provider => new(provider, provider.GetRequiredService<ILoggerFactory>()));
-            services.TryAddScoped<WebRendererService>(provider => new WebRendererService(
-                provider.GetRequiredService<HtmlRenderer>(),
-                provider.GetRequiredService<ILogger<WebRendererService>>(),
-                provider.GetService<IMetrics>(),
-                provider.GetService<WebRenderOptions>(),
-                provider.GetRequiredService<BrowserSession>()));
+            services.TryAddScoped<WebRendererService>(provider => new(
+                provider.GetRequiredService<HtmlRenderer>(), provider.GetRequiredService<ILogger<WebRendererService>>(), provider.GetService<IMetrics>(),
+                provider.GetService<WebRenderOptions>(), provider.GetRequiredService<BrowserSession>()));
+
             services.TryAddScoped<IWebRendererService>(provider => provider.GetRequiredService<WebRendererService>());
             services.TryAddScoped<IWebRenderGenerator>(provider => provider.GetRequiredService<WebRendererService>());
             return services;

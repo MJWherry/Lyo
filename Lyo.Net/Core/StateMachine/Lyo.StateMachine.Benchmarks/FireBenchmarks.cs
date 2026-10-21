@@ -44,24 +44,20 @@ public class FireBenchmarks
         var clock = DateTime.UnixEpoch;
         _idle = new(BenchState.Idle, 0, clock);
         _level3 = new(BenchState.Level3, 0, clock);
-
         var flat = new StateMachineBuilder<BenchState, BenchTrigger, BenchContext>("flat", BenchState.Idle).UseClock(() => clock);
         flat.Configure(BenchState.Idle).Permit(BenchTrigger.Go, BenchState.Busy);
         flat.Configure(BenchState.Busy).Permit(BenchTrigger.Back, BenchState.Idle);
         _flat = flat.Build();
-
         var hooks = new StateMachineBuilder<BenchState, BenchTrigger, BenchContext>("hooks", BenchState.Idle).UseClock(() => clock);
         hooks.Configure(BenchState.Idle).Permit(BenchTrigger.Go, BenchState.Busy).OnExit(t => t.Context.Counter++);
         hooks.Configure(BenchState.Busy).Permit(BenchTrigger.Back, BenchState.Idle).OnEntry(t => t.Context.Counter++);
         _withHooks = hooks.Build();
-
         var nested = new StateMachineBuilder<BenchState, BenchTrigger, BenchContext>("nested", BenchState.Level3).UseClock(() => clock);
         nested.Configure(BenchState.Level1).Permit(BenchTrigger.Leave, BenchState.Other).OnExit(t => t.Context.Counter++);
         nested.Configure(BenchState.Level2).SubstateOf(BenchState.Level1).OnExit(t => t.Context.Counter++);
         nested.Configure(BenchState.Level3).SubstateOf(BenchState.Level2).OnExit(t => t.Context.Counter++);
         nested.Configure(BenchState.Other).OnEntry(t => t.Context.Counter++);
         _nested = nested.Build();
-
         var dynamic = new StateMachineBuilder<BenchState, BenchTrigger, BenchContext>("dynamic", BenchState.Idle).UseClock(() => clock);
         dynamic.Configure(BenchState.Idle).PermitDynamic(BenchTrigger.Go, c => c.Counter >= 0 ? BenchState.Busy : BenchState.Other, BenchState.Busy, BenchState.Other);
         _dynamic = dynamic.Build();

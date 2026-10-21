@@ -2,7 +2,6 @@ using System.Text.Json;
 using Lyo.Common.Metadata.Records;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Web.Components;
-using Lyo.Web.Primitives;
 using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
@@ -14,8 +13,8 @@ public partial class QueryBuilderWorkbench : IAsyncDisposable
     private const int SaveDebounceMs = 450;
 
     private readonly List<FilterPropertyDefinition> _propertyDefinitions = [
-        new("Name", "Name"), new("Id", "Id", LyoTypeInfo.Int), new("CreatedAt", "Created At", LyoTypeInfo.DateTime),
-        new("IsActive", "Active", LyoTypeInfo.Bool), new("Type", "Type")
+        new("Name", "Name"), new("Id", "Id", LyoTypeInfo.Int), new("CreatedAt", "Created At", LyoTypeInfo.DateTime), new("IsActive", "Active", LyoTypeInfo.Bool),
+        new("Type", "Type")
     ];
 
     private QueryConcreteReq _entityQuery = new() { Start = 0, Amount = 20 };

@@ -1,8 +1,8 @@
 using Lyo.Api.Models.Common.Request;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Job.Client;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Tests;
 
@@ -67,8 +67,7 @@ internal sealed class RecordingApiClient : StubApiClient
         string? enumerableDelimiter = null,
         Action<HttpRequestMessage>? before = null,
         CancellationToken ct = default)
-        where TRequest : default
-        where TResult : default
+        where TRequest : default where TResult : default
     {
         LastUri = uri;
         return Task.FromResult(default(TResult));
@@ -81,7 +80,11 @@ internal sealed class RecordingApiClient : StubApiClient
         return Task.FromResult(default(TResult));
     }
 
-    public override Task<TResult> PatchAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+    public override Task<TResult> PatchAsAsync<TRequest, TResult>(
+        string uri,
+        TRequest? request = default,
+        Action<HttpRequestMessage>? before = null,
+        CancellationToken ct = default)
         where TRequest : default
     {
         LastUri = uri;

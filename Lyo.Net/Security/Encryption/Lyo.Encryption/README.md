@@ -1,8 +1,10 @@
 # Lyo.Encryption
 
-Authenticated encryption for .NET: symmetric AEAD (AES-GCM, ChaCha20-Poly1305, XChaCha20-Poly1305, AES-CCM, AES-SIV), RSA and AES-GCM + RSA hybrids, plus envelope / two-key flows via `ITwoKeyEncryptionService`.
+Authenticated encryption for .NET: symmetric AEAD (AES-GCM, ChaCha20-Poly1305, XChaCha20-Poly1305, AES-CCM, AES-SIV), RSA and AES-GCM + RSA hybrids, plus envelope / two-key flows
+via `ITwoKeyEncryptionService`.
 
-Primary contracts: `IEncryptionService` (single key), `ITwoKeyEncryptionService` (per-operation DEK wrapped by a KEK), and `EncryptionServiceBase` (streaming, string, and file helpers). Keys can be inline or resolved from `Lyo.KeyStore` by `keyId`.
+Primary contracts: `IEncryptionService` (single key), `ITwoKeyEncryptionService` (per-operation DEK wrapped by a KEK), and `EncryptionServiceBase` (streaming, string, and file
+helpers). Keys can be inline or resolved from `Lyo.KeyStore` by `keyId`.
 
 For architecture, threat model, and operational checklists, see the [Security/Encryption README](../README.md). This file covers this assembly's types and methods.
 
@@ -26,7 +28,8 @@ Confidentiality + integrity (authenticated tags). Tampering surfaces as `Decrypt
 - **Streaming.** `EncryptToStreamAsync` / `DecryptToStreamAsync` for large payloads (framed wire format)
 - **Files.** `EncryptToFileAsync`, `DecryptFromFileAsync`, and stream-to-file variants
 - **Strings.** `EncryptString` / `DecryptString` with per-direction encoding (UTF-8 by default)
-- **Raw AEAD.** `IRawAead.EncryptRaw` / `DecryptRaw` emit `[nonce][tag][ciphertext]` (AES-SIV: RFC 5297 `SIV || ciphertext`) for stock crypto clients. Not interchangeable with framed `Encrypt` / `Decrypt`.
+- **Raw AEAD.** `IRawAead.EncryptRaw` / `DecryptRaw` emit `[nonce][tag][ciphertext]` (AES-SIV: RFC 5297 `SIV || ciphertext`) for stock crypto clients. Not interchangeable with
+  framed `Encrypt` / `Decrypt`.
 
 ### Integration
 
@@ -35,10 +38,17 @@ Confidentiality + integrity (authenticated tags). Tampering surfaces as `Decrypt
 - Non-throwing `EncryptionResult` / `DecryptionResult` ([`Lyo.Result`](../../../Core/Result/Lyo.Result/README.md))
 - `SecurityUtilities` for buffer zeroing and constant-time compare. Not KDFs. See [`Lyo.KeyStore`](../Lyo.KeyStore/README.md).
 
-- **`EncryptionAlgorithmInfo`** (`Models/`). Catalog record describing each AEAD algorithm: `Kind`, `Name`, `DefaultKeyBytes`, `NonceSize`, `TagSize`, `MinSingleShotSize`, `SupportsStreaming`, `NonceMisuseResistant`, and the `FileTypeInfo` that carries its extension, plus derived `AuthenticatorOverheadBytes`. Entries for AES-GCM, ChaCha20-Poly1305, AES-CCM, XChaCha20-Poly1305, and AES-SIV, with `All`, `FromKind` / `TryFromKind`, and `TryFromExtension` lookups. The service implementations read their sizes from this record rather than hard-coding them.
-- **`SingleShotEnvelope`**. The framing shared by every single-shot AEAD service: `Allocate` lays out header, nonce, authenticator, and payload in one buffer (`EnvelopeBuffer` exposes each region as a `Span<byte>`), and `Read` parses an existing envelope into an `EnvelopeHeader` with `KeyId`, `KeyVersion`, and the offsets needed to slice it. `MaxKeyIdBytes` bounds untrusted key identifiers.
-- **`RawAeadEnvelope`**. Headerless sibling of `SingleShotEnvelope`: `Allocate` / `Read` for `[nonce][tag][ciphertext]` (AES-SIV uses the nonce field as the synthetic IV with a zero-length tag, which is RFC 5297 `SIV || ciphertext`). Used by `IRawAead`; do not mix with framed `Encrypt` / `Decrypt`.
-- **`BinaryWriterString`**. Span-based `GetByteCount` / `Write` / `Read` for strings in the length-prefixed format `BinaryWriter.Write(string)` produces, so envelope headers can be built and parsed without a `MemoryStream` round-trip.
+- **`EncryptionAlgorithmInfo`** (`Models/`). Catalog record describing each AEAD algorithm: `Kind`, `Name`, `DefaultKeyBytes`, `NonceSize`, `TagSize`, `MinSingleShotSize`,
+  `SupportsStreaming`, `NonceMisuseResistant`, and the `FileTypeInfo` that carries its extension, plus derived `AuthenticatorOverheadBytes`. Entries for AES-GCM, ChaCha20-Poly1305,
+  AES-CCM, XChaCha20-Poly1305, and AES-SIV, with `All`, `FromKind` / `TryFromKind`, and `TryFromExtension` lookups. The service implementations read their sizes from this record
+  rather than hard-coding them.
+- **`SingleShotEnvelope`**. The framing shared by every single-shot AEAD service: `Allocate` lays out header, nonce, authenticator, and payload in one buffer (`EnvelopeBuffer`
+  exposes each region as a `Span<byte>`), and `Read` parses an existing envelope into an `EnvelopeHeader` with `KeyId`, `KeyVersion`, and the offsets needed to slice it.
+  `MaxKeyIdBytes` bounds untrusted key identifiers.
+- **`RawAeadEnvelope`**. Headerless sibling of `SingleShotEnvelope`: `Allocate` / `Read` for `[nonce][tag][ciphertext]` (AES-SIV uses the nonce field as the synthetic IV with a
+  zero-length tag, which is RFC 5297 `SIV || ciphertext`). Used by `IRawAead`; do not mix with framed `Encrypt` / `Decrypt`.
+- **`BinaryWriterString`**. Span-based `GetByteCount` / `Write` / `Read` for strings in the length-prefixed format `BinaryWriter.Write(string)` produces, so envelope headers can be
+  built and parsed without a `MemoryStream` round-trip.
 
 ## Examples
 
@@ -109,16 +119,16 @@ AES-GCM encrypts 10 MB in ~5 ms with gigabyte-class throughput.
 
 ## Service matrix
 
-| Type | Role |
-| ------------------------------------- | ----------------------------------------------------------------------------- |
-| `AesGcmEncryptionService` | AES-GCM. Key size via `AesGcmKeySizeBits`. |
-| `ChaCha20Poly1305EncryptionService` | ChaCha20-Poly1305 (IETF nonce) |
-| `XChaCha20Poly1305EncryptionService` | XChaCha20-Poly1305 (extended nonce) |
-| `AesCcmEncryptionService` | AES-CCM |
-| `AesSivEncryptionService` | AES-SIV (misuse-resistant synthetic IV) |
-| `RsaEncryptor` / `RsaDecryptor` | RSA encrypt (public key) / decrypt (private key), chunked for large plaintext |
-| `AesGcmRsaEncryptionService` | Hybrid: RSA wraps AES key, AES-GCM protects payload |
-| `TwoKeyEncryptionService<TKek, TDek>` | Envelope: random DEK per operation, KEK encrypts DEK |
+| Type                                  | Role                                                                          |
+|---------------------------------------|-------------------------------------------------------------------------------|
+| `AesGcmEncryptionService`             | AES-GCM. Key size via `AesGcmKeySizeBits`.                                    |
+| `ChaCha20Poly1305EncryptionService`   | ChaCha20-Poly1305 (IETF nonce)                                                |
+| `XChaCha20Poly1305EncryptionService`  | XChaCha20-Poly1305 (extended nonce)                                           |
+| `AesCcmEncryptionService`             | AES-CCM                                                                       |
+| `AesSivEncryptionService`             | AES-SIV (misuse-resistant synthetic IV)                                       |
+| `RsaEncryptor` / `RsaDecryptor`       | RSA encrypt (public key) / decrypt (private key), chunked for large plaintext |
+| `AesGcmRsaEncryptionService`          | Hybrid: RSA wraps AES key, AES-GCM protects payload                           |
+| `TwoKeyEncryptionService<TKek, TDek>` | Envelope: random DEK per operation, KEK encrypts DEK                          |
 
 Concrete types live under `AesGcm/`, `ChaCha20Poly1305/`, `Symmetric/Aes/*`, `Symmetric/ChaCha/*`, `Rsa/`, `AesGcmRsa/`, and `TwoKey/`.
 
@@ -126,12 +136,14 @@ Concrete types live under `AesGcm/`, `ChaCha20Poly1305/`, `Symmetric/Aes/*`, `Sy
 
 - `Encrypt` / `Decrypt` on `byte[]`, `ReadOnlySpan<byte>`, or slice overloads
 - `EncryptString` / `DecryptString`
-- `EncryptToStreamAsync` / `DecryptToStreamAsync`. Output begins with a small header (format version, algorithm id, reserved bytes) followed by length-prefixed encrypted chunks (default plaintext chunk size 1 MiB, configurable)
+- `EncryptToStreamAsync` / `DecryptToStreamAsync`. Output begins with a small header (format version, algorithm id, reserved bytes) followed by length-prefixed encrypted chunks
+  (default plaintext chunk size 1 MiB, configurable)
 - `EncryptToFileAsync` / `DecryptFromFileAsync`
 
 ## IRawAead (headerless interop)
 
-- `EncryptRaw` / `DecryptRaw` on `byte[]` and `ReadOnlySpan<byte>`. Layout is `[nonce][tag][ciphertext]` (AES-SIV: `SIV || ciphertext`). Implemented by `EncryptionServiceBase`; not on `IEncryptionService`.
+- `EncryptRaw` / `DecryptRaw` on `byte[]` and `ReadOnlySpan<byte>`. Layout is `[nonce][tag][ciphertext]` (AES-SIV: `SIV || ciphertext`). Implemented by `EncryptionServiceBase`; not
+  on `IEncryptionService`.
 - Raw blobs do not record key id or version. `keyId` uses the current KeyStore key; after rotation pass `keyVersion` on decrypt (or the raw key bytes).
 - Framed `Encrypt` output is not `DecryptRaw`-able and the reverse is also true. Streams, two-key, RSA, and file storage stay on the Lyo envelope.
 
@@ -144,64 +156,78 @@ Concrete types live under `AesGcm/`, `ChaCha20Poly1305/`, `Symmetric/Aes/*`, `Sy
 
 ## Thread safety
 
-`EncryptionServiceBase` documents that multiple threads may call the same instance concurrently. Each invocation uses its own cryptographic context. If `IKeyStore` or other dependencies are not thread-safe, synchronize or scope lifetimes accordingly.
+`EncryptionServiceBase` documents that multiple threads may call the same instance concurrently. Each invocation uses its own cryptographic context. If `IKeyStore` or other
+dependencies are not thread-safe, synchronize or scope lifetimes accordingly.
 
 ## Dependency injection (this assembly)
 
-Register `Microsoft.Extensions.DependencyInjection.Abstractions` (already referenced by this package on netstandard2.0 and net10.0). Algorithm addons (`Lyo.Encryption.AesCcm`, `.AesSiv`, `.XChaCha20Poly1305`) add their own `Add*Encryption` helpers. Keys come from [`Lyo.KeyStore`](../Lyo.KeyStore/README.md).
+Register `Microsoft.Extensions.DependencyInjection.Abstractions` (already referenced by this package on netstandard2.0 and net10.0). Algorithm addons (`Lyo.Encryption.AesCcm`,
+`.AesSiv`, `.XChaCha20Poly1305`) add their own `Add*Encryption` helpers. Keys come from [`Lyo.KeyStore`](../Lyo.KeyStore/README.md).
 
 ## Registration overview
 
-| Call | Registers |
-| --------------------------------------------- | ------------------------------------------------------------------------- |
-| `AddLocalKeyStore(configure)` | `LocalKeyStore` + unkeyed `IKeyStore` |
-| `AddKeyedLocalKeyStore(key, configure)` | Per-key `LocalKeyStore` + `IKeyStore` |
-| `AddEncryptionServiceKeyed(...)` | Keyed DEK/KEK concretes, `IEncryptionService`, `ITwoKeyEncryptionService` |
-| `AddAesCcmEncryption()` (addon) | Unkeyed `AesCcmEncryptionService` only |
-| `AddDefaultEncryptionService<T>()` | Unkeyed `IEncryptionService` → `T` |
-| `AddDefaultTwoKeyEncryptionService<T>()` | Unkeyed `ITwoKeyEncryptionService` → `T` (rare) |
-| `AddRsaEncryption` / `AddAesGcmRsaEncryption` | Scoped RSA / hybrid services (paths or PFX) |
+| Call                                          | Registers                                                                 |
+|-----------------------------------------------|---------------------------------------------------------------------------|
+| `AddLocalKeyStore(configure)`                 | `LocalKeyStore` + unkeyed `IKeyStore`                                     |
+| `AddKeyedLocalKeyStore(key, configure)`       | Per-key `LocalKeyStore` + `IKeyStore`                                     |
+| `AddEncryptionServiceKeyed(...)`              | Keyed DEK/KEK concretes, `IEncryptionService`, `ITwoKeyEncryptionService` |
+| `AddAesCcmEncryption()` (addon)               | Unkeyed `AesCcmEncryptionService` only                                    |
+| `AddDefaultEncryptionService<T>()`            | Unkeyed `IEncryptionService` → `T`                                        |
+| `AddDefaultTwoKeyEncryptionService<T>()`      | Unkeyed `ITwoKeyEncryptionService` → `T` (rare)                           |
+| `AddRsaEncryption` / `AddAesGcmRsaEncryption` | Scoped RSA / hybrid services (paths or PFX)                               |
 
-Unkeyed addon methods do not register `IEncryptionService` until you call `AddDefaultEncryptionService<TConcrete>()`. File storage and envelope encryption should use keyed registration, which includes `ITwoKeyEncryptionService`.
+Unkeyed addon methods do not register `IEncryptionService` until you call `AddDefaultEncryptionService<TConcrete>()`. File storage and envelope encryption should use keyed
+registration, which includes `ITwoKeyEncryptionService`.
 
 ## Keyed two-key (recommended)
 
-`AddEncryptionServiceKeyed` overloads accept an existing keyed key-store name, or register the store via `Func<IServiceProvider, TKeyStore>`. Generic overloads support different DEK vs KEK types when both implement `IEncryptionService` and are built from `IKeyStore`. See source for the built-in type matrix.
+`AddEncryptionServiceKeyed` overloads accept an existing keyed key-store name, or register the store via `Func<IServiceProvider, TKeyStore>`. Generic overloads support different
+DEK vs KEK types when both implement `IEncryptionService` and are built from `IKeyStore`. See source for the built-in type matrix.
 
 ## Configuration notes
 
-- **Service options.** `EncryptionServiceOptions` (`MaxInputSize`, `FileExtension`, `AesGcmKeySize`, and others) are set on concrete service constructors today. Use algorithm parameters on `AddEncryptionServiceKeyed` (`aesGcmKeySize`) or construct services manually for advanced cases.
-- **Secrets and key material.** Use `AddLocalKeyStore` / `AddKeyedLocalKeyStore` with `configure => { ... }` and read `IConfiguration` inside that callback, the same pattern as other Lyo apps. There is no `AddEncryptionServiceFromConfiguration` on this package. Bind appsettings in the key-store configure delegate or in a custom `IKeyStore` factory.
+- **Service options.** `EncryptionServiceOptions` (`MaxInputSize`, `FileExtension`, `AesGcmKeySize`, and others) are set on concrete service constructors today. Use algorithm
+  parameters on `AddEncryptionServiceKeyed` (`aesGcmKeySize`) or construct services manually for advanced cases.
+- **Secrets and key material.** Use `AddLocalKeyStore` / `AddKeyedLocalKeyStore` with `configure => { ... }` and read `IConfiguration` inside that callback, the same pattern as
+  other Lyo apps. There is no `AddEncryptionServiceFromConfiguration` on this package. Bind appsettings in the key-store configure delegate or in a custom `IKeyStore` factory.
 
 ## Options
 
 `EncryptionServiceOptions` (per concrete service):
 
-| Property | Typical use |
-| --------------------------------- | -------------------------------------------------------------------- |
-| `FileExtension` | Suffix for encrypted artifacts (required non-empty on base ctor) |
-| `MinInputSize` / `MaxInputSize` | Enforced on encrypt paths |
-| `CurrentFormatVersion` | Stream/header version. Defaults align with `StreamFormatVersion.V1`. |
-| `AesGcmKeySize` / `AesSivKeySize` | Algorithm-specific key material where applicable |
+| Property                          | Typical use                                                          |
+|-----------------------------------|----------------------------------------------------------------------|
+| `FileExtension`                   | Suffix for encrypted artifacts (required non-empty on base ctor)     |
+| `MinInputSize` / `MaxInputSize`   | Enforced on encrypt paths                                            |
+| `CurrentFormatVersion`            | Stream/header version. Defaults align with `StreamFormatVersion.V1`. |
+| `AesGcmKeySize` / `AesSivKeySize` | Algorithm-specific key material where applicable                     |
 
 ## Result and error types
 
 - `Lyo.Encryption.Models.EncryptionResult` / `DecryptionResult.` `Result<byte[]>` with key metadata for APIs that avoid exceptions.
-- `Lyo.Encryption.EncryptionErrorCodes.` Stable error-code constants paired with `EncryptionResult` / `DecryptionResult`, for example `KEY_NOT_FOUND`, `DECRYPTION_FAILED`, `INVALID_HEADER`. Use these instead of string-matching exception messages.
+- `Lyo.Encryption.EncryptionErrorCodes.` Stable error-code constants paired with `EncryptionResult` / `DecryptionResult`, for example `KEY_NOT_FOUND`, `DECRYPTION_FAILED`,
+  `INVALID_HEADER`. Use these instead of string-matching exception messages.
 - `DecryptionFailedException`, `EncryptionException`, `InvalidDataException`, `ArgumentOutsideRangeException.` See `IEncryptionService` XML for which throws apply.
 
 ## Helpers and validation
 
-- `Lyo.Encryption.TwoKey.TwoKeyDekValidation.` Validates `DekAlgorithm` + DEK key-material byte length for all supported symmetric algorithms. Used on decrypt to reject mismatched envelopes before any cryptographic call.
-- `Lyo.Encryption.RsaKeyLoader.` PEM/PFX RSA key loading helper. Uses BouncyCastle on `netstandard2.0` and `RSA.ImportFromPem` / `X509Certificate2` on `net10.0`. Invoked transitively by `RsaEncryptor` / `RsaDecryptor` / `AesGcmRsaEncryptionService` constructors but exposed for callers that want to share a loaded key across services.
-- `Lyo.Encryption.ISymmetricKeyMaterialSize.` Implemented by every symmetric `IEncryptionService` to advertise its accepted key-material sizes in bytes, e.g. AES-GCM = `{16, 24, 32}`, XChaCha20-Poly1305 = `{32}`. `TwoKeyDekValidation` and key-store validators rely on this.
-- `Encrypt` / `Decrypt` `ReadOnlySpan<byte>` overloads on `IEncryptionService`. Zero-copy entry points for callers that already hold a contiguous buffer. The legacy `byte[]` overloads remain.
-- `TwoKeyEncryptionResult` fields. Beyond ciphertext, the record carries `EncryptedDek`, `DekKeyMaterialBytes`, `KeyEncryptionKeySalt`, `KeyId`, `KeyVersion`, and `TotalSize`. The legacy `Lyo.Encryption.Models.TwoKeyEncryptionResult` is preserved for callers that still consume the result-builder shape.
+- `Lyo.Encryption.TwoKey.TwoKeyDekValidation.` Validates `DekAlgorithm` + DEK key-material byte length for all supported symmetric algorithms. Used on decrypt to reject mismatched
+  envelopes before any cryptographic call.
+- `Lyo.Encryption.RsaKeyLoader.` PEM/PFX RSA key loading helper. Uses BouncyCastle on `netstandard2.0` and `RSA.ImportFromPem` / `X509Certificate2` on `net10.0`. Invoked
+  transitively by `RsaEncryptor` / `RsaDecryptor` / `AesGcmRsaEncryptionService` constructors but exposed for callers that want to share a loaded key across services.
+- `Lyo.Encryption.ISymmetricKeyMaterialSize.` Implemented by every symmetric `IEncryptionService` to advertise its accepted key-material sizes in bytes, e.g. AES-GCM =
+  `{16, 24, 32}`, XChaCha20-Poly1305 = `{32}`. `TwoKeyDekValidation` and key-store validators rely on this.
+- `Encrypt` / `Decrypt` `ReadOnlySpan<byte>` overloads on `IEncryptionService`. Zero-copy entry points for callers that already hold a contiguous buffer. The legacy `byte[]`
+  overloads remain.
+- `TwoKeyEncryptionResult` fields. Beyond ciphertext, the record carries `EncryptedDek`, `DekKeyMaterialBytes`, `KeyEncryptionKeySalt`, `KeyId`, `KeyVersion`, and `TotalSize`. The
+  legacy `Lyo.Encryption.Models.TwoKeyEncryptionResult` is preserved for callers that still consume the result-builder shape.
 
 ## Streaming two-key
 
-- `EncryptStreamAsync(Stream input, Stream output, ...)` / `DecryptStreamAsync(Stream input, Stream output, TwoKeyEncryptionResult metadata, ...)`. Operates on an existing `TwoKeyEncryptionResult` (carries the wrapped DEK, key id/version, salt).
-- `EncryptToStreamAsync(...)` / `DecryptToStreamAsync(...)`. Writes the combined wire format (encrypted-DEK header + chunked ciphertext) to a single output stream and reads it back without external metadata.
+- `EncryptStreamAsync(Stream input, Stream output, ...)` / `DecryptStreamAsync(Stream input, Stream output, TwoKeyEncryptionResult metadata, ...)`. Operates on an existing
+  `TwoKeyEncryptionResult` (carries the wrapped DEK, key id/version, salt).
+- `EncryptToStreamAsync(...)` / `DecryptToStreamAsync(...)`. Writes the combined wire format (encrypted-DEK header + chunked ciphertext) to a single output stream and reads it back
+  without external metadata.
 
 ## Upgrade checklist (short)
 

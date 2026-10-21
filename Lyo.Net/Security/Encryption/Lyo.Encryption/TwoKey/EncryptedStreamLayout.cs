@@ -2,9 +2,7 @@ using Lyo.Encryption.Security;
 
 namespace Lyo.Encryption.TwoKey;
 
-/// <summary>
-/// Parsed two-key stream prefix: header bytes, the unwrapped DEK, and the fixed frame size of every non-final chunk. Dispose wipes the DEK.
-/// </summary>
+/// <summary>Parsed two-key stream prefix: header bytes, the unwrapped DEK, and the fixed frame size of every non-final chunk. Dispose wipes the DEK.</summary>
 public sealed class EncryptedStreamLayout : IDisposable
 {
     private readonly byte[] _dek;

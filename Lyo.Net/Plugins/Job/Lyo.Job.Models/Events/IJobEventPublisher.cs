@@ -3,9 +3,9 @@ using Lyo.Job.Models.Enums;
 namespace Lyo.Job.Models.Events;
 
 /// <summary>
-/// Transport-agnostic surface for job lifecycle event publishing and subscription. Implement this interface to use any message broker (RabbitMQ, Azure Service Bus, AWS
-/// SQS, and so on) and register the implementation in the DI container. API hosts with a job database use <c>MqJobEventPublisher</c> in <c>Lyo.Job.Postgres</c>;
-/// scheduler/worker hosts use <c>Lyo.Job.Client.MqJobEventPublisher</c> (<c>IMqService</c> + Job API client, no EF).
+/// Transport-agnostic surface for job lifecycle event publishing and subscription. Implement this interface to use any message broker (RabbitMQ, Azure Service Bus, AWS SQS,
+/// and so on) and register the implementation in the DI container. API hosts with a job database use <c>MqJobEventPublisher</c> in <c>Lyo.Job.Postgres</c>; scheduler/worker hosts use
+/// <c>Lyo.Job.Client.MqJobEventPublisher</c> (<c>IMqService</c> + Job API client, no EF).
 /// </summary>
 public interface IJobEventPublisher
 {
@@ -37,8 +37,8 @@ public interface IJobEventPublisher
     Task PublishRunFinishedAsync(Guid runId, CancellationToken ct = default);
 
     /// <summary>
-    /// Send a freshly materialized workflow run to the engine queue so its root steps are dispatched. A workflow run is created in <c>Pending</c> with every step
-    /// <c>Pending</c>; nothing moves it forward until the engine receives this event, because there is no completed job run to react to yet.
+    /// Send a freshly materialized workflow run to the engine queue so its root steps are dispatched. A workflow run is created in <c>Pending</c> with every step <c>Pending</c>;
+    /// nothing moves it forward until the engine receives this event, because there is no completed job run to react to yet.
     /// </summary>
     /// <param name="workflowRunId">ID of the newly created workflow run.</param>
     /// <param name="ct">Cancellation token.</param>
@@ -50,8 +50,8 @@ public interface IJobEventPublisher
     Task PublishRunCancelledAsync(Guid runId, CancellationToken ct = default);
 
     /// <summary>
-    /// Broadcast that a job definition has changed (for example enabled/disabled, schedule updated). Scheduler instances subscribe to this to refresh their in-memory
-    /// definition cache.
+    /// Broadcast that a job definition has changed (for example enabled/disabled, schedule updated). Scheduler instances subscribe to this to refresh their in-memory definition
+    /// cache.
     /// </summary>
     /// <param name="definitionId">ID of the changed job definition.</param>
     /// <param name="ct">Cancellation token.</param>
@@ -65,10 +65,7 @@ public interface IJobEventPublisher
     /// <param name="ct">Cancellation token.</param>
     Task PublishAlertAsync(Guid definitionId, Guid? runId, JobAlertType alertType, string message, CancellationToken ct = default);
 
-    /// <summary>
-    /// Subscribe to definition-change notifications. The scheduler calls this once on startup to invalidate its in-memory cache whenever a
-    /// definition is updated.
-    /// </summary>
+    /// <summary>Subscribe to definition-change notifications. The scheduler calls this once on startup to invalidate its in-memory cache whenever a definition is updated.</summary>
     /// <param name="subscriberQueueName">Queue name to bind/subscribe on (transport-specific).</param>
     /// <param name="handler">Message handler. Return <c>true</c> to requeue (for example on transient error), <c>false</c> to acknowledge.</param>
     /// <param name="ct">Cancellation token.</param>
@@ -81,15 +78,15 @@ public interface IJobEventPublisher
 
     /// <summary>
     /// Subscribe to run-cancellation notifications for a specific worker type. Workers call this on startup to receive cancellation signals for runs they are processing.
-    /// Implementations must deliver each cancellation to <b>every</b> subscribed instance (broadcast/fanout, for example a per-instance exclusive queue bound to the cancel routing
-    /// key). A shared competing-consumer queue would deliver each cancel to only one instance of a scaled-out worker type and silently lose cancellations.
+    /// Implementations must deliver each cancellation to <b>every</b> subscribed instance (broadcast/fanout, for example a per-instance exclusive queue bound to the cancel routing key).
+    /// A shared competing-consumer queue would deliver each cancel to only one instance of a scaled-out worker type and silently lose cancellations.
     /// </summary>
     /// <param name="workerType">Worker type, used to derive the subscription name.</param>
     /// <param name="handler">Called with the <see cref="Guid" /> of the run that should be cancelled. Instances not executing that run ignore it.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <param name="instanceSuffix">
-    /// Optional per-instance suffix for the exclusive cancel queue (<c>job.run.{workerType}.cancel.{suffix}</c>). When omitted, the implementation generates one. Workers that
-    /// report the cancel queue in instance metadata should pass a suffix they already know.
+    /// Optional per-instance suffix for the exclusive cancel queue (<c>job.run.{workerType}.cancel.{suffix}</c>). When omitted, the implementation generates
+    /// one. Workers that report the cancel queue in instance metadata should pass a suffix they already know.
     /// </param>
     Task SubscribeToRunCancellationsAsync(string workerType, Func<Guid, Task> handler, CancellationToken ct = default, string? instanceSuffix = null);
 }

@@ -6,6 +6,7 @@ using Lyo.Tag.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace Lyo.Tag.Postgres;
 
 /// <summary>DI helpers for PostgreSQL tag store registration.</summary>
@@ -31,7 +32,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresTagOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddTagDbContextFactory(options);
         }
 
@@ -42,7 +42,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPostgresDbContextFactory<TagDbContext, PostgresTagOptions>(options);
             services.AddEntityRefOptions();
-
             return services;
         }
 
@@ -64,7 +63,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresTagOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddPostgresTagStore(options);
         }
 
@@ -75,8 +73,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(options);
             services.AddTagDbContextFactory(options);
             services.AddSingleton<ITagStore>(sp => new PostgresTagStore(
-                sp.GetRequiredService<IDbContextFactory<TagDbContext>>(), sp.GetRequiredService<EntityRefOptions>(),
-                sp.GetRequiredService<PostgresTagOptions>(), sp.GetServices<IEntityRefActionInterceptor>()));
+                sp.GetRequiredService<IDbContextFactory<TagDbContext>>(), sp.GetRequiredService<EntityRefOptions>(), sp.GetRequiredService<PostgresTagOptions>(),
+                sp.GetServices<IEntityRefActionInterceptor>()));
 
             return services;
         }

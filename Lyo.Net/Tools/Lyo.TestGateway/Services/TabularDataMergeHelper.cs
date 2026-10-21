@@ -1,6 +1,6 @@
 using Lyo.DataTable.Models;
-using LyoDataTable = Lyo.DataTable.Models.DataTable;
 using Lyo.Exceptions;
+using LyoDataTable = Lyo.DataTable.Models.DataTable;
 
 namespace Lyo.TestGateway.Services;
 

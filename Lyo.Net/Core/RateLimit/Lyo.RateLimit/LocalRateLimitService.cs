@@ -6,8 +6,8 @@ namespace Lyo.RateLimit;
 /// <summary>In-memory quotas for one process. A per-key lock makes concurrent acquires on the same partition share one count.</summary>
 public sealed class LocalRateLimitService : IRateLimitService
 {
-    private readonly RateLimitOptions _options;
     private readonly ConcurrentDictionary<string, Bucket> _buckets = new(StringComparer.Ordinal);
+    private readonly RateLimitOptions _options;
 
     /// <summary>Creates a store that reads <paramref name="options" />.<see cref="RateLimitOptions.Clock" /> when a request omits the time.</summary>
     public LocalRateLimitService(RateLimitOptions options)
@@ -30,7 +30,7 @@ public sealed class LocalRateLimitService : IRateLimitService
         var windowMs = (long)request.Window.TotalMilliseconds;
         var now = ResolveNow(request);
         var key = RateLimitKeys.Build(request.Policy, request.PartitionKey, request.Pattern, windowMs);
-        var bucket = _buckets.GetOrAdd(key, static _ => new Bucket());
+        var bucket = _buckets.GetOrAdd(key, static _ => new());
         RateLimitDecision decision;
         lock (bucket.Gate) {
             if (bucket.Seen && now - bucket.LastTouchMs > windowMs * 2)
@@ -46,7 +46,7 @@ public sealed class LocalRateLimitService : IRateLimitService
                 RateLimitWindow.Fixed => AcquireFixed(bucket, request, now, windowMs),
                 RateLimitWindow.Sliding => AcquireSliding(bucket, request, now, windowMs),
                 RateLimitWindow.TokenBucket => AcquireToken(bucket, request, now, windowMs),
-                _ => throw new ArgumentException("Unknown rate-limit window.", nameof(request))
+                var _ => throw new ArgumentException("Unknown rate-limit window.", nameof(request))
             };
         }
 
@@ -107,8 +107,8 @@ public sealed class LocalRateLimitService : IRateLimitService
         }
 
         bucket.Current++;
-        var used = RateLimitMath.SlidingUsedMilli(bucket.Previous, elapsed, windowMs) + (bucket.Current * 1000L);
-        var remaining = ((request.PermitLimit * 1000L) - used) / 1000L;
+        var used = RateLimitMath.SlidingUsedMilli(bucket.Previous, elapsed, windowMs) + bucket.Current * 1000L;
+        var remaining = (request.PermitLimit * 1000L - used) / 1000L;
         if (remaining < 0)
             remaining = 0;
 
@@ -123,9 +123,8 @@ public sealed class LocalRateLimitService : IRateLimitService
             bucket.TimestampMs = now;
             bucket.HasWindow = true;
         }
-        else {
+        else
             RateLimitMath.TryRefillToken(ref bucket.Tokens, ref bucket.TimestampMs, now, request.PermitLimit, windowMs);
-        }
 
         if (bucket.Tokens < 1000) {
             var retry = RateLimitMath.TokenRetryAfterMs(bucket.Tokens, request.PermitLimit, windowMs);
@@ -142,14 +141,9 @@ public sealed class LocalRateLimitService : IRateLimitService
         if (extra <= 0)
             return;
 
-        var oldest = _buckets
-            .OrderBy(static pair => pair.Value.LastTouchMs)
-            .Take(extra)
-            .Select(static pair => pair.Key)
-            .ToArray();
-
+        var oldest = _buckets.OrderBy(static pair => pair.Value.LastTouchMs).Take(extra).Select(static pair => pair.Key).ToArray();
         foreach (var key in oldest)
-            _buckets.TryRemove(key, out _);
+            _buckets.TryRemove(key, out var _);
     }
 
     private long ResolveNow(RateLimitRequest request)
@@ -176,16 +170,16 @@ public sealed class LocalRateLimitService : IRateLimitService
     private sealed class Bucket
     {
         public readonly object Gate = new();
-        public bool Seen;
-        public bool HasWindow;
-        public int PermitLimit;
-        public long LastTouchMs;
-        public long WindowId;
         public long Count;
-        public long Previous;
         public long Current;
-        public long Tokens;
+        public bool HasWindow;
+        public long LastTouchMs;
+        public int PermitLimit;
+        public long Previous;
+        public bool Seen;
         public long TimestampMs;
+        public long Tokens;
+        public long WindowId;
 
         public void Reset()
         {

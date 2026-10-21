@@ -1,7 +1,7 @@
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Postgres.Database;
-using Lyo.Job.Seed;
 using Lyo.Seed;
+using JobRunResult = Lyo.Job.Postgres.Database.JobRunResult;
 
 namespace Lyo.Job.Seed.Tests;
 
@@ -27,7 +27,7 @@ public sealed class JobEfSeedContributorTests
         Assert.Equal(4, runs.Count);
         Assert.Equal(4, transport.Items.OfType<JobRunLog>().Count());
         Assert.Equal(4, transport.Items.OfType<JobRunParameter>().Count());
-        Assert.Equal(4, transport.Items.OfType<Lyo.Job.Postgres.Database.JobRunResult>().Count());
+        Assert.Equal(4, transport.Items.OfType<JobRunResult>().Count());
         Assert.Single(transport.Items.OfType<JobBlackoutCalendar>());
         Assert.Single(transport.Items.OfType<JobBlackoutWindow>());
         Assert.Single(transport.Items.OfType<JobWorkerInstance>());
@@ -36,11 +36,13 @@ public sealed class JobEfSeedContributorTests
         Assert.Equal(4, steps.Count);
         Assert.Equal(4, runSteps.Count);
         Assert.Equal(workflow.Id, workflowRun.JobWorkflowId);
-        Assert.All(definitions, definition => {
-            Assert.False(definition.Enabled);
-            Assert.Contains(runs, run => run.JobDefinitionId == definition.Id && run.State == JobState.Finished && run.ParentJobRunId == null && run.ReRanFromJobRunId == null);
-            Assert.Contains(steps, step => step.JobDefinitionId == definition.Id && step.JobWorkflowId == workflow.Id && !step.Enabled);
-        });
+        Assert.All(
+            definitions, definition => {
+                Assert.False(definition.Enabled);
+                Assert.Contains(runs, run => run.JobDefinitionId == definition.Id && run.State == JobState.Finished && run.ParentJobRunId == null && run.ReRanFromJobRunId == null);
+                Assert.Contains(steps, step => step.JobDefinitionId == definition.Id && step.JobWorkflowId == workflow.Id && !step.Enabled);
+            });
+
         Assert.All(schedules, schedule => Assert.False(schedule.Enabled));
         Assert.All(runSteps, step => Assert.Equal(workflowRun.Id, step.JobWorkflowRunId));
     }
@@ -68,6 +70,7 @@ public sealed class JobEfSeedContributorTests
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

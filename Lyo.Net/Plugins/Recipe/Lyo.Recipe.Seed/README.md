@@ -1,6 +1,7 @@
 # Lyo.Recipe.Seed
 
-EF seed of one category, then `Count` ingredients and recipes (two catalog-linked lines and two steps each). Each recipe links its first line to its first step and has one attachment. Schema `recipe`.
+EF seed of one category, then `Count` ingredients and recipes (two catalog-linked lines and two steps each). Each recipe links its first line to its first step and has one
+attachment. Schema `recipe`.
 
 ## Dependencies
 

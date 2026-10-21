@@ -23,7 +23,7 @@ public class ExtensionsTests
     public void AddAuditDbContext_WithNullOrEmptyConnectionString_Throws()
     {
         var services = new ServiceCollection();
-        Assert.Throws<ArgumentNullException>(() => services.AddAuditDbContext((string)null!));
+        Assert.Throws<ArgumentNullException>(() => services.AddAuditDbContext(null!));
         Assert.Throws<ArgumentException>(() => services.AddAuditDbContext(""));
     }
 

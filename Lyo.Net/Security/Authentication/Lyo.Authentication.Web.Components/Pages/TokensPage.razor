@@ -1,7 +1,5 @@
 @page "/auth/tokens"
-@using Lyo.Authentication.Models
 @using Lyo.Authentication.Models.Format
-@using Lyo.Authentication.Models.Records
 
 @inject IAuthTokenManagementClient TokenClient
 @inject IAuthSessionAccessor SessionAccessor
@@ -231,7 +229,9 @@
                                             </td>
                                             <td>@token.Ring</td>
                                             <td>@TokenScopes(token)</td>
-                                            <td><LyoTimestamp Value="@token.CreatedAt" Kind="LyoTimestampKind.Relative"/></td>
+                                            <td>
+                                                <LyoTimestamp Value="@token.CreatedAt" Kind="LyoTimestampKind.Relative"/>
+                                            </td>
                                             <td>
                                                 @if (token.ExpiresAt is { } exp) {
                                                     <LyoTimestamp Value="@exp" Kind="LyoTimestampKind.Relative"/>
@@ -249,7 +249,7 @@
                             </TableContent>
                             <CardContent>
                                 @foreach (var token in _tokens) {
-                                    <LyoRecordCard Title="@token.DisplayName" Subtitle="@token.Id.ToString()">
+                                    <LyoRecordCard Title="@token.DisplayName" Subtitle="@token.Id">
                                         <TitleContent>
                                             <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
                                                 <LyoChip Variant="Variant.Outlined" Label="@token.Kind"/>
@@ -260,7 +260,7 @@
                                             @RevokeButton(token)
                                         </Actions>
                                         <ChildContent>
-                                            <LyoRecordField Label="Ring" Value="@token.Ring.ToString()"/>
+                                            <LyoRecordField Label="Ring" Value="@token.Ring"/>
                                             <LyoRecordField Label="Scopes">
                                                 @TokenScopes(token)
                                             </LyoRecordField>
@@ -289,40 +289,43 @@
 
 @code {
 
-    private RenderFragment<AuthTokenSummary> TokenScopes => token => @<text>
-        @if (token.Scopes.Length == 0) {
-            <MudText Typo="Typo.caption" Color="Color.Secondary">(none)</MudText>
-        }
-        else {
-            <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
-                @foreach (var scope in token.Scopes) {
-                    <LyoChip Label="@scope"/>
-                }
-            </MudStack>
-        }
+    private RenderFragment<AuthTokenSummary> TokenScopes
+        => token => @<text>
+                         @if (token.Scopes.Length == 0) {
+                             <MudText Typo="Typo.caption" Color="Color.Secondary">(none)</MudText>
+                         }
+                         else {
+                             <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                 @foreach (var scope in token.Scopes) {
+                                     <LyoChip Label="@scope"/>
+                                 }
+                             </MudStack>
+                         }
     </text>;
 
-    private RenderFragment<AuthTokenSummary> TokenStatus => token => @<text>
-        @if (token.RevokedAt is not null) {
-            <LyoChip Color="Color.Error" Label="Revoked"/>
-        }
-        else if (!token.IsActive(DateTime.UtcNow)) {
-            <LyoChip Color="Color.Warning" Label="Expired"/>
-        }
-        else {
-            <LyoChip Color="Color.Success" Label="Active"/>
-        }
+    private RenderFragment<AuthTokenSummary> TokenStatus
+        => token => @<text>
+                         @if (token.RevokedAt is not null) {
+                             <LyoChip Color="Color.Error" Label="Revoked"/>
+                         }
+                         else if (!token.IsActive(DateTime.UtcNow)) {
+                             <LyoChip Color="Color.Warning" Label="Expired"/>
+                         }
+                         else {
+                             <LyoChip Color="Color.Success" Label="Active"/>
+                         }
     </text>;
 
-    private RenderFragment<AuthTokenSummary> RevokeButton => token => @<text>
-        @if (token.RevokedAt is null) {
-            <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                           Color="Color.Error"
-                           Size="Size.Small"
-                           title="Revoke"
-                           OnClick="@(() => RevokeAsync(token))"
-                           Disabled="_revoking"/>
-        }
+    private RenderFragment<AuthTokenSummary> RevokeButton
+        => token => @<text>
+                         @if (token.RevokedAt is null) {
+                             <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                            Color="Color.Error"
+                                            Size="Size.Small"
+                                            title="Revoke"
+                                            OnClick="@(() => RevokeAsync(token))"
+                                            Disabled="_revoking"/>
+                         }
     </text>;
 
 }

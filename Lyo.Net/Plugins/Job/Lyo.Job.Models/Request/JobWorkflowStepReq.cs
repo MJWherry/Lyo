@@ -30,8 +30,7 @@ public sealed class JobWorkflowStepReq
 
     /// <summary>
     /// Serialized <see cref="WhereClause" /> gating this step, evaluated against the step's context. Each <c>ConditionClause.Field</c> is a context path such as
-    /// <c>Step.Extract.Result.RowCount</c>, <c>Input.Env</c>, or <c>Workflow.Name</c>, and a <c>GroupClause</c> combines predicates with AND/OR. Null runs the step
-    /// unconditionally.
+    /// <c>Step.Extract.Result.RowCount</c>, <c>Input.Env</c>, or <c>Workflow.Name</c>, and a <c>GroupClause</c> combines predicates with AND/OR. Null runs the step unconditionally.
     /// </summary>
     public string? ConditionJson { get; set; }
 

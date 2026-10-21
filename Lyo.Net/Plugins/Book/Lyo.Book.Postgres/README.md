@@ -1,6 +1,8 @@
 # Lyo.Book.Postgres
 
-PostgreSQL and EF Core implementation of `Lyo.Book.IBookStore` (`PostgresBookStore`) via `BookDbContext`, `PostgresBookOptions`, and `AddPostgresMigrations<BookDbContext, PostgresBookOptions>`. Page bodies are raw `text` with a stored generated `tsvector` (English; HTML tags stripped). `PostgresBookStore` implements `Lyo.Health.IHealth`.
+PostgreSQL and EF Core implementation of `Lyo.Book.IBookStore` (`PostgresBookStore`) via `BookDbContext`, `PostgresBookOptions`, and
+`AddPostgresMigrations<BookDbContext, PostgresBookOptions>`. Page bodies are raw `text` with a stored generated `tsvector` (English; HTML tags stripped). `PostgresBookStore`
+implements `Lyo.Health.IHealth`.
 
 ## Features
 

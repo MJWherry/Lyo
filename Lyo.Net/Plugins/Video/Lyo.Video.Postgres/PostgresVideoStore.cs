@@ -26,8 +26,7 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
     public string HealthCheckName => "video-postgres";
 
     /// <inheritdoc />
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => PostgresHealth.CheckAsync(_contextFactory, PostgresVideoOptions.Schema, ct);
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => PostgresHealth.CheckAsync(_contextFactory, PostgresVideoOptions.Schema, ct);
 
     /// <inheritdoc />
     public async Task SaveTitleAsync(VideoTitle title, CancellationToken ct = default)
@@ -37,13 +36,10 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
             throw new UnprocessableEntityException("A movie cannot own a season.");
 
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var existing = title.Id != Guid.Empty
-            ? await LoadTitleQuery(ctx, tracking: true).FirstOrDefaultAsync(t => t.Id == title.Id, ct).ConfigureAwait(false)
-            : null;
-
+        var existing = title.Id != Guid.Empty ? await LoadTitleQuery(ctx, true).FirstOrDefaultAsync(t => t.Id == title.Id, ct).ConfigureAwait(false) : null;
         var id = existing?.Id ?? (title.Id == Guid.Empty ? LyoGuid.CreateV7() : title.Id);
         if (existing == null)
-            ctx.Titles.Add(existing = new VideoTitleEntity { Id = id, CreatedTimestamp = DateTime.UtcNow });
+            ctx.Titles.Add(existing = new() { Id = id, CreatedTimestamp = DateTime.UtcNow });
 
         existing.Title = title.Title;
         existing.Slug = title.Slug;
@@ -57,8 +53,8 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
         existing.Overview = title.Overview;
         if (title.Transcript != null)
             existing.Transcript = title.Transcript;
-        existing.CollectionId = title.CollectionId;
 
+        existing.CollectionId = title.CollectionId;
         ctx.Credits.RemoveRange(existing.Credits);
         foreach (var credit in title.Credits)
             ctx.Credits.Add(ToCredit(credit, id, null));
@@ -70,18 +66,21 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
         ReplaceYoutube(ctx, existing.Youtube, title.Youtube, id, null);
         ReplaceSeasons(ctx, existing, title.Seasons, id);
         ctx.AlternateTitles.RemoveRange(existing.AlternateTitles);
-        foreach (var alt in title.AlternateTitles)
-            ctx.AlternateTitles.Add(new VideoAlternateTitleEntity {
-                Id = alt.Id == Guid.Empty ? LyoGuid.CreateV7() : alt.Id,
-                TitleId = id,
-                Title = alt.Title,
-                Language = alt.Language,
-                Kind = alt.Kind,
-                SortOrder = alt.SortOrder
-            });
+        foreach (var alt in title.AlternateTitles) {
+            ctx.AlternateTitles.Add(
+                new() {
+                    Id = alt.Id == Guid.Empty ? LyoGuid.CreateV7() : alt.Id,
+                    TitleId = id,
+                    Title = alt.Title,
+                    Language = alt.Language,
+                    Kind = alt.Kind,
+                    SortOrder = alt.SortOrder
+                });
+        }
+
         ctx.TitleGenres.RemoveRange(existing.GenreLinks);
         foreach (var genreId in title.GenreIds.Distinct())
-            ctx.TitleGenres.Add(new VideoTitleGenreEntity { TitleId = id, GenreId = genreId });
+            ctx.TitleGenres.Add(new() { TitleId = id, GenreId = genreId });
 
         await SaveCatchingConflictAsync(ctx, ct).ConfigureAwait(false);
         title.Id = id;
@@ -91,7 +90,7 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
     public async Task<VideoTitle?> GetTitleByIdAsync(Guid id, CancellationToken ct = default)
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await LoadTitleQuery(ctx, tracking: false).FirstOrDefaultAsync(t => t.Id == id, ct).ConfigureAwait(false);
+        var entity = await LoadTitleQuery(ctx, false).FirstOrDefaultAsync(t => t.Id == id, ct).ConfigureAwait(false);
         return entity == null ? null : ToTitle(entity);
     }
 
@@ -100,7 +99,7 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(slug);
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await LoadTitleQuery(ctx, tracking: false).FirstOrDefaultAsync(t => t.Slug == slug, ct).ConfigureAwait(false);
+        var entity = await LoadTitleQuery(ctx, false).FirstOrDefaultAsync(t => t.Slug == slug, ct).ConfigureAwait(false);
         return entity == null ? null : ToTitle(entity);
     }
 
@@ -116,6 +115,7 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
             .Select(i => (Guid?)i.TitleId)
             .FirstOrDefaultAsync(ct)
             .ConfigureAwait(false);
+
         return titleId is null ? null : await GetTitleByIdAsync(titleId.Value, ct).ConfigureAwait(false);
     }
 
@@ -139,9 +139,11 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
         var id = genre.Id == Guid.Empty ? LyoGuid.CreateV7() : genre.Id;
         if (genre.ParentGenreId is Guid parent)
             await EnsureNoGenreCycleAsync(ctx, id, parent, ct).ConfigureAwait(false);
+
         var existing = genre.Id != Guid.Empty ? await ctx.Genres.FirstOrDefaultAsync(g => g.Id == genre.Id, ct).ConfigureAwait(false) : null;
         if (existing == null)
-            ctx.Genres.Add(existing = new VideoGenreEntity { Id = id });
+            ctx.Genres.Add(existing = new() { Id = id });
+
         existing.ParentGenreId = genre.ParentGenreId;
         existing.Slug = genre.Slug;
         existing.Name = genre.Name;
@@ -155,7 +157,15 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entity = await ctx.Genres.AsNoTracking().FirstOrDefaultAsync(g => g.Id == id, ct).ConfigureAwait(false);
-        return entity == null ? null : new VideoGenre { Id = entity.Id, ParentGenreId = entity.ParentGenreId, Slug = entity.Slug, Name = entity.Name, SortOrder = entity.SortOrder };
+        return entity == null
+            ? null
+            : new VideoGenre {
+                Id = entity.Id,
+                ParentGenreId = entity.ParentGenreId,
+                Slug = entity.Slug,
+                Name = entity.Name,
+                SortOrder = entity.SortOrder
+            };
     }
 
     /// <inheritdoc />
@@ -163,19 +173,27 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var rows = await ctx.Genres.AsNoTracking().OrderBy(g => g.Name).ToListAsync(ct).ConfigureAwait(false);
-        return rows.Select(g => new VideoGenre { Id = g.Id, ParentGenreId = g.ParentGenreId, Slug = g.Slug, Name = g.Name, SortOrder = g.SortOrder }).ToArray();
+        return rows.Select(g => new VideoGenre {
+                Id = g.Id,
+                ParentGenreId = g.ParentGenreId,
+                Slug = g.Slug,
+                Name = g.Name,
+                SortOrder = g.SortOrder
+            })
+            .ToArray();
     }
 
     /// <inheritdoc />
     public async Task DeleteGenreAsync(Guid id, CancellationToken ct = default)
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        if (await ctx.Genres.AnyAsync(g => g.ParentGenreId == id, ct).ConfigureAwait(false)
-            || await ctx.TitleGenres.AnyAsync(g => g.GenreId == id, ct).ConfigureAwait(false))
+        if (await ctx.Genres.AnyAsync(g => g.ParentGenreId == id, ct).ConfigureAwait(false) || await ctx.TitleGenres.AnyAsync(g => g.GenreId == id, ct).ConfigureAwait(false))
             throw ConflictException.ForResource("VideoGenre", id);
+
         var entity = await ctx.Genres.FirstOrDefaultAsync(g => g.Id == id, ct).ConfigureAwait(false);
         if (entity == null)
             return;
+
         ctx.Genres.Remove(entity);
         await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
     }
@@ -188,7 +206,7 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
             return [];
 
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var q = LoadTitleQuery(ctx, tracking: false);
+        var q = LoadTitleQuery(ctx, false);
         if (!string.IsNullOrWhiteSpace(query.TitleContains)) {
             var needle = query.TitleContains.ToLowerInvariant();
             q = q.Where(t => t.Title.ToLower().Contains(needle) || t.AlternateTitles.Any(a => a.Title.ToLower().Contains(needle)));
@@ -196,10 +214,13 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
 
         if (query.Kind is VideoTitleKind kind)
             q = q.Where(t => t.Kind == kind);
+
         if (query.GenreId is Guid genreId)
             q = q.Where(t => t.GenreLinks.Any(g => g.GenreId == genreId));
+
         if (query.Year is int year)
             q = q.Where(t => t.Year == year);
+
         if (!string.IsNullOrWhiteSpace(query.IdentifierScheme) && !string.IsNullOrWhiteSpace(query.IdentifierValue)) {
             var normalized = VideoIdentifierSchemes.Normalize(query.IdentifierScheme, query.IdentifierValue);
             q = q.Where(t => t.Identifiers.Any(i => i.Scheme == query.IdentifierScheme && i.NormalizedValue == normalized));
@@ -224,17 +245,15 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
         var movies = ctx.Titles.AsNoTracking()
             .Where(t => t.Kind == VideoTitleKind.Movie && t.SearchVector.Matches(EF.Functions.PlainToTsQuery("english", fullText)))
             .Select(t => new VideoTranscriptHit {
-                TitleId = t.Id,
-                EpisodeId = null,
-                Snippet = EF.Functions.PlainToTsQuery("english", fullText).GetResultHeadline(t.Transcript ?? "")
+                TitleId = t.Id, EpisodeId = null, Snippet = EF.Functions.PlainToTsQuery("english", fullText).GetResultHeadline(t.Transcript ?? "")
             });
+
         var episodes = ctx.Episodes.AsNoTracking()
             .Where(e => e.SearchVector.Matches(EF.Functions.PlainToTsQuery("english", fullText)))
             .Select(e => new VideoTranscriptHit {
-                TitleId = e.Season!.TitleId,
-                EpisodeId = e.Id,
-                Snippet = EF.Functions.PlainToTsQuery("english", fullText).GetResultHeadline(e.Transcript ?? "")
+                TitleId = e.Season!.TitleId, EpisodeId = e.Id, Snippet = EF.Functions.PlainToTsQuery("english", fullText).GetResultHeadline(e.Transcript ?? "")
             });
+
         return await movies.Concat(episodes).ToListAsync(ct).ConfigureAwait(false);
     }
 
@@ -245,6 +264,7 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
         var row = await ctx.Titles.AsNoTracking().Where(t => t.Id == titleId).Select(t => new { t.Transcript }).FirstOrDefaultAsync(ct).ConfigureAwait(false);
         if (row == null)
             throw NotFoundException.ForResource("VideoTitle", titleId);
+
         return row.Transcript;
     }
 
@@ -255,6 +275,7 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
         var entity = await ctx.Titles.FirstOrDefaultAsync(t => t.Id == titleId, ct).ConfigureAwait(false);
         if (entity == null)
             throw NotFoundException.ForResource("VideoTitle", titleId);
+
         entity.Transcript = transcript;
         await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
     }
@@ -266,6 +287,7 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
         var row = await ctx.Episodes.AsNoTracking().Where(e => e.Id == episodeId).Select(e => new { e.Transcript }).FirstOrDefaultAsync(ct).ConfigureAwait(false);
         if (row == null)
             throw NotFoundException.ForResource("VideoEpisode", episodeId);
+
         return row.Transcript;
     }
 
@@ -276,6 +298,7 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
         var entity = await ctx.Episodes.FirstOrDefaultAsync(e => e.Id == episodeId, ct).ConfigureAwait(false);
         if (entity == null)
             throw NotFoundException.ForResource("VideoEpisode", episodeId);
+
         entity.Transcript = transcript;
         await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
     }
@@ -288,7 +311,8 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
         var id = collection.Id == Guid.Empty ? LyoGuid.CreateV7() : collection.Id;
         var existing = collection.Id != Guid.Empty ? await ctx.Collections.FirstOrDefaultAsync(c => c.Id == collection.Id, ct).ConfigureAwait(false) : null;
         if (existing == null)
-            ctx.Collections.Add(existing = new VideoCollectionEntity { Id = id });
+            ctx.Collections.Add(existing = new() { Id = id });
+
         existing.Title = collection.Title;
         existing.Slug = collection.Slug;
         await SaveCatchingConflictAsync(ctx, ct).ConfigureAwait(false);
@@ -319,7 +343,8 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
         var id = cut.Id == Guid.Empty ? LyoGuid.CreateV7() : cut.Id;
         var existing = cut.Id != Guid.Empty ? await ctx.Cuts.FirstOrDefaultAsync(c => c.Id == cut.Id, ct).ConfigureAwait(false) : null;
         if (existing == null)
-            ctx.Cuts.Add(existing = new VideoCutEntity { Id = id, TitleId = cut.TitleId });
+            ctx.Cuts.Add(existing = new() { Id = id, TitleId = cut.TitleId });
+
         existing.TitleId = cut.TitleId;
         existing.Name = cut.Name;
         existing.RuntimeSeconds = cut.RuntimeSeconds;
@@ -340,8 +365,10 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
             var next = await ctx.Genres.AsNoTracking().Where(g => g.Id == current).Select(g => g.ParentGenreId).FirstOrDefaultAsync(ct).ConfigureAwait(false);
             if (next == null)
                 return;
+
             if (next == genreId)
                 throw new UnprocessableEntityException("Genre parent would create a cycle.");
+
             current = next.Value;
         }
 
@@ -358,7 +385,7 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
             var match = season.Id != Guid.Empty ? existing.Seasons.FirstOrDefault(s => s.Id == season.Id) : null;
             if (match == null) {
                 var seasonId = season.Id == Guid.Empty ? LyoGuid.CreateV7() : season.Id;
-                match = new VideoSeasonEntity { Id = seasonId, TitleId = titleId };
+                match = new() { Id = seasonId, TitleId = titleId };
                 ctx.Seasons.Add(match);
                 season.Id = seasonId;
             }
@@ -380,7 +407,7 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
             var match = episode.Id != Guid.Empty ? season.Episodes.FirstOrDefault(e => e.Id == episode.Id) : null;
             if (match == null) {
                 var episodeId = episode.Id == Guid.Empty ? LyoGuid.CreateV7() : episode.Id;
-                match = new VideoEpisodeEntity { Id = episodeId, SeasonId = season.Id, CreatedTimestamp = DateTime.UtcNow };
+                match = new() { Id = episodeId, SeasonId = season.Id, CreatedTimestamp = DateTime.UtcNow };
                 ctx.Episodes.Add(match);
                 episode.Id = episodeId;
             }
@@ -393,12 +420,15 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
             match.StillImageRef = episode.StillImageRef;
             if (episode.Transcript != null)
                 match.Transcript = episode.Transcript;
+
             ctx.Credits.RemoveRange(match.Credits);
             foreach (var credit in episode.Credits)
                 ctx.Credits.Add(ToCredit(credit, null, match.Id));
+
             ctx.EpisodeIdentifiers.RemoveRange(match.Identifiers);
             foreach (var identifier in episode.Identifiers)
                 ctx.EpisodeIdentifiers.Add(ToEpisodeIdentifier(identifier, match.Id));
+
             ReplaceYoutube(ctx, match.Youtube, episode.Youtube, null, match.Id);
         }
     }
@@ -408,12 +438,12 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
         if (link == null || string.IsNullOrWhiteSpace(link.VideoId)) {
             if (existing != null)
                 ctx.YoutubeLinks.Remove(existing);
+
             return;
         }
 
-        if (existing == null) {
-            ctx.YoutubeLinks.Add(existing = new VideoYoutubeLinkEntity { Id = LyoGuid.CreateV7(), TitleId = titleId, EpisodeId = episodeId });
-        }
+        if (existing == null)
+            ctx.YoutubeLinks.Add(existing = new() { Id = LyoGuid.CreateV7(), TitleId = titleId, EpisodeId = episodeId });
 
         existing.VideoId = link.VideoId.Trim();
         existing.ChannelId = link.ChannelId.Trim();
@@ -422,15 +452,21 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
 
     private static IQueryable<VideoTitleEntity> LoadTitleQuery(VideoDbContext ctx, bool tracking)
     {
-        var query = ctx.Titles
-            .Include(t => t.Credits)
+        var query = ctx.Titles.Include(t => t.Credits)
             .Include(t => t.Identifiers)
             .Include(t => t.Youtube)
-            .Include(t => t.Seasons).ThenInclude(s => s.Episodes).ThenInclude(e => e.Credits)
-            .Include(t => t.Seasons).ThenInclude(s => s.Episodes).ThenInclude(e => e.Identifiers)
-            .Include(t => t.Seasons).ThenInclude(s => s.Episodes).ThenInclude(e => e.Youtube)
+            .Include(t => t.Seasons)
+            .ThenInclude(s => s.Episodes)
+            .ThenInclude(e => e.Credits)
+            .Include(t => t.Seasons)
+            .ThenInclude(s => s.Episodes)
+            .ThenInclude(e => e.Identifiers)
+            .Include(t => t.Seasons)
+            .ThenInclude(s => s.Episodes)
+            .ThenInclude(e => e.Youtube)
             .Include(t => t.GenreLinks)
             .Include(t => t.AlternateTitles);
+
         return tracking ? query : query.AsNoTracking();
     }
 
@@ -463,9 +499,7 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
             TitleId = titleId,
             Scheme = identifier.Scheme,
             Value = identifier.Value,
-            NormalizedValue = string.IsNullOrEmpty(identifier.NormalizedValue)
-                ? VideoIdentifierSchemes.Normalize(identifier.Scheme, identifier.Value)
-                : identifier.NormalizedValue,
+            NormalizedValue = string.IsNullOrEmpty(identifier.NormalizedValue) ? VideoIdentifierSchemes.Normalize(identifier.Scheme, identifier.Value) : identifier.NormalizedValue,
             IsPrimary = identifier.IsPrimary
         };
 
@@ -475,9 +509,7 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
             EpisodeId = episodeId,
             Scheme = identifier.Scheme,
             Value = identifier.Value,
-            NormalizedValue = string.IsNullOrEmpty(identifier.NormalizedValue)
-                ? VideoIdentifierSchemes.Normalize(identifier.Scheme, identifier.Value)
-                : identifier.NormalizedValue,
+            NormalizedValue = string.IsNullOrEmpty(identifier.NormalizedValue) ? VideoIdentifierSchemes.Normalize(identifier.Scheme, identifier.Value) : identifier.NormalizedValue,
             IsPrimary = identifier.IsPrimary
         };
 
@@ -496,38 +528,44 @@ public sealed class PostgresVideoStore : IVideoStore, IHealth
             Overview = entity.Overview,
             CollectionId = entity.CollectionId,
             GenreIds = entity.GenreLinks.Select(g => g.GenreId).ToArray(),
-            AlternateTitles = entity.AlternateTitles.OrderBy(a => a.SortOrder).Select(a => new VideoAlternateTitle {
-                Id = a.Id,
-                Title = a.Title,
-                Language = a.Language,
-                Kind = a.Kind,
-                SortOrder = a.SortOrder
-            }).ToArray(),
+            AlternateTitles = entity.AlternateTitles.OrderBy(a => a.SortOrder)
+                .Select(a => new VideoAlternateTitle {
+                    Id = a.Id,
+                    Title = a.Title,
+                    Language = a.Language,
+                    Kind = a.Kind,
+                    SortOrder = a.SortOrder
+                })
+                .ToArray(),
             CreatedTimestamp = entity.CreatedTimestamp,
             UpdatedTimestamp = entity.UpdatedTimestamp,
             Youtube = ToLink(entity.Youtube),
             Credits = entity.Credits.OrderBy(c => c.Ordinal).Select(ToCreditModel).ToArray(),
             Identifiers = entity.Identifiers.Select(ToIdentifierModel).ToArray(),
-            Seasons = entity.Seasons.OrderBy(s => s.SeasonNumber).Select(s => new VideoSeason {
-                Id = s.Id,
-                TitleId = s.TitleId,
-                SeasonNumber = s.SeasonNumber,
-                Name = s.Name,
-                Year = s.Year,
-                Episodes = s.Episodes.OrderBy(e => e.EpisodeNumber).Select(e => new VideoEpisode {
-                    Id = e.Id,
-                    SeasonId = e.SeasonId,
-                    EpisodeNumber = e.EpisodeNumber,
-                    Title = e.Title,
-                    RuntimeSeconds = e.RuntimeSeconds,
-                    AirDate = e.AirDate?.ToDateTime(TimeOnly.MinValue),
-                    VideoFileRef = e.VideoFileRef,
-                    StillImageRef = e.StillImageRef,
-                    Youtube = ToLink(e.Youtube),
-                    Credits = e.Credits.OrderBy(c => c.Ordinal).Select(ToCreditModel).ToArray(),
-                    Identifiers = e.Identifiers.Select(ToIdentifierModel).ToArray()
-                }).ToArray()
-            }).ToArray()
+            Seasons = entity.Seasons.OrderBy(s => s.SeasonNumber)
+                .Select(s => new VideoSeason {
+                    Id = s.Id,
+                    TitleId = s.TitleId,
+                    SeasonNumber = s.SeasonNumber,
+                    Name = s.Name,
+                    Year = s.Year,
+                    Episodes = s.Episodes.OrderBy(e => e.EpisodeNumber)
+                        .Select(e => new VideoEpisode {
+                            Id = e.Id,
+                            SeasonId = e.SeasonId,
+                            EpisodeNumber = e.EpisodeNumber,
+                            Title = e.Title,
+                            RuntimeSeconds = e.RuntimeSeconds,
+                            AirDate = e.AirDate?.ToDateTime(TimeOnly.MinValue),
+                            VideoFileRef = e.VideoFileRef,
+                            StillImageRef = e.StillImageRef,
+                            Youtube = ToLink(e.Youtube),
+                            Credits = e.Credits.OrderBy(c => c.Ordinal).Select(ToCreditModel).ToArray(),
+                            Identifiers = e.Identifiers.Select(ToIdentifierModel).ToArray()
+                        })
+                        .ToArray()
+                })
+                .ToArray()
         };
 
     private static YoutubeVideoLink? ToLink(VideoYoutubeLinkEntity? link)

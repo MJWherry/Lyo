@@ -1,6 +1,7 @@
 # Lyo.Tag.Seed
 
-`TagEfSeedContributor` writes `options.Count` public tags (type `tag`, unique slug) for tenant `TagEfSeedContributor.TenantId` and subject `seed` / `seed`. `OnClear` deletes tags so `--replace` can run.
+`TagEfSeedContributor` writes `options.Count` public tags (type `tag`, unique slug) for tenant `TagEfSeedContributor.TenantId` and subject `seed` / `seed`. `OnClear` deletes tags
+so `--replace` can run.
 
 ## Features
 

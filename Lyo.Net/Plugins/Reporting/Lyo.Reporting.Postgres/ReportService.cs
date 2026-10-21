@@ -28,8 +28,8 @@ using ReportingConstants = Lyo.Reporting.Models.Constants;
 namespace Lyo.Reporting.Postgres;
 
 /// <summary>
-/// Orchestrates report generation: optional <see cref="IReportDataProvider" />, render via <see cref="IReportRenderer" /> into IoTemp, then optional consumer hooks (for example
-/// persist via FileStorage). Reporting does not reference FileStorage.
+/// Orchestrates report generation: optional <see cref="IReportDataProvider" />, render via <see cref="IReportRenderer" /> into IoTemp, then optional consumer hooks (for
+/// example persist via FileStorage). Reporting does not reference FileStorage.
 /// </summary>
 public sealed class ReportService(
     IDbContextFactory<ReportingContext> dbFactory,
@@ -229,7 +229,6 @@ public sealed class ReportService(
             ctx.ReportDataJson = reportDataJson;
             parametersJson = SerializeParametersJson(mergedParameters);
             paramResList = mergedParameters.Zip(generationParamEntities, (req, entity) => ReportingLyoMapper.ToRes(entity) with { Value = req.Value }).ToList();
-
             if (hooks.BeforeGenerateAsync is not null)
                 await hooks.BeforeGenerateAsync(ctx, runCt).ConfigureAwait(false);
 
@@ -398,8 +397,8 @@ public sealed class ReportService(
     }
 
     /// <summary>
-    /// Generate writes via EF, not CRUD services, so list/GET query-cache tags are not invalidated automatically. Definition grids that project last-generation columns are tagged
-    /// as <c>entity:reportdefinition</c>, not <c>entity:reportgeneration</c>.
+    /// Generate writes via EF, not CRUD services, so list/GET query-cache tags are not invalidated automatically. Definition grids that project last-generation columns are
+    /// tagged as <c>entity:reportdefinition</c>, not <c>entity:reportgeneration</c>.
     /// </summary>
     private async Task InvalidateGenerationCacheAsync(Guid generationId)
     {
@@ -512,8 +511,7 @@ public sealed class ReportService(
 
     /// <summary>Strips directory segments and invalid or control characters. Caps length at <see cref="MaxFileNameLength" /> while preserving the extension.</summary>
     /// <remarks>Invalid characters are dropped rather than replaced, so a caller-supplied path never becomes a name padded with underscores.</remarks>
-    internal static string? SanitizeFileName(string? name)
-        => PathHelpers.SanitizeFileName(name, null, true, true, MaxFileNameLength);
+    internal static string? SanitizeFileName(string? name) => PathHelpers.SanitizeFileName(name, null, true, true, MaxFileNameLength);
 
     /// <summary>
     /// Resolves a provider-supplied pre-rendered path and confirms it sits under an allowed root, so a provider cannot hand generation an arbitrary readable file (for example

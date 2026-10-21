@@ -6,7 +6,7 @@ using Lyo.Tag;
 
 namespace Lyo.Recipe.Client;
 
-/// <summary>Typed HTTP client for extra Recipe routes. Category, ingredient, recipe, and attachment CRUD stay on <see cref="Lyo.Api.Client.IApiClient"/>.</summary>
+/// <summary>Typed HTTP client for extra Recipe routes. Category, ingredient, recipe, and attachment CRUD stay on <see cref="Lyo.Api.Client.IApiClient" />.</summary>
 public interface IRecipeClient
 {
     /// <summary>Ingredient lines for one recipe.</summary>
@@ -33,7 +33,7 @@ public interface IRecipeClient
     /// <summary>Recipes and steps that use one catalog ingredient.</summary>
     Task<IReadOnlyList<IngredientUsageRes>> ListIngredientUsageAsync(Guid ingredientId, CancellationToken ct = default);
 
-    /// <summary>Notes on a category, ingredient, or recipe. <paramref name="parentRoute"/> is <c>Recipe/Categories</c>, <c>Recipe/Ingredients</c>, or <c>Recipe/Recipes</c>.</summary>
+    /// <summary>Notes on a category, ingredient, or recipe. <paramref name="parentRoute" /> is <c>Recipe/Categories</c>, <c>Recipe/Ingredients</c>, or <c>Recipe/Recipes</c>.</summary>
     Task<IReadOnlyList<NoteRecord>> GetNotesAsync(string parentRoute, Guid id, CancellationToken ct = default);
 
     /// <summary>Adds a note on a category, ingredient, or recipe.</summary>

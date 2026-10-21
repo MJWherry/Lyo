@@ -16,7 +16,6 @@ public class PostgresExtensionsTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddPostgresDbContextFactory<TestDbContext, TestPostgresOptions>(ValidOptions);
-
         using var provider = services.BuildServiceProvider();
         Assert.Equal(ValidOptions.ConnectionString, provider.GetRequiredService<IOptions<TestPostgresOptions>>().Value.ConnectionString);
         Assert.NotNull(provider.GetRequiredService<IDbContextFactory<TestDbContext>>());
@@ -29,7 +28,6 @@ public class PostgresExtensionsTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddPostgresDbContextFactory<TestDbContext, TestPostgresOptions>(ValidOptions);
-
         using var provider = services.BuildServiceProvider();
         using var context = provider.GetRequiredService<IDbContextFactory<TestDbContext>>().CreateDbContext();
         var relational = RelationalOptionsExtension.Extract(context.GetService<IDbContextOptions>());

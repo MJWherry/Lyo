@@ -2,7 +2,7 @@ using Lyo.EntityReference.Models;
 
 namespace Lyo.Billing;
 
-/// <summary>Lite person payload owned by billing when People is not wired. Attach via EntityRef type <see cref="BillingEntityTypes.BillingPerson"/>.</summary>
+/// <summary>Lite person payload owned by billing when People is not wired. Attach via EntityRef type <see cref="BillingEntityTypes.BillingPerson" />.</summary>
 [EntityRefLogicalType(BillingEntityTypes.BillingPerson)]
 public sealed class BillingPersonRecord
 {

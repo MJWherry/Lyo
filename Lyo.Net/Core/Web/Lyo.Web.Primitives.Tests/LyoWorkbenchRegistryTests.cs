@@ -1,4 +1,3 @@
-using Lyo.Web.Primitives;
 using Microsoft.AspNetCore.Components;
 
 namespace Lyo.Web.Primitives.Tests;

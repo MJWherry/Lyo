@@ -1,15 +1,13 @@
+using System.Text.Json;
 using Lyo.Api.Client;
-using Lyo.Api.Models.Common.Response;
+using Lyo.Common.Core.Identifiers;
+using Lyo.Common.Metadata.Records;
 using Lyo.Drift.Client;
 using Lyo.Drift.Models.Request;
-using Lyo.Drift.Models.Response;
 using Lyo.Http.Client;
 using Lyo.Http.Client.Plan;
 using Lyo.Http.Client.Session;
 using Lyo.Query.Models.Common.Request;
-using System.Text.Json;
-using Lyo.Common.Metadata.Records;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Drift.Tests;
 
@@ -159,29 +157,16 @@ internal sealed class RecordingApiClient : IApiClient
     public Task<TResult> DeleteAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException();
 
-    public Task<TResult> DeleteAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
-        => throw new NotImplementedException();
+    public Task<TResult> DeleteAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default) => throw new NotImplementedException();
 
     public string ToQueryString<T>(T obj, string? enumerableDelimiter = null) => throw new NotImplementedException();
 
-    public Task<TResult?> QueryProjectAsync<TResult>(
-        string route,
-        ProjectionQueryReq request,
-        Action<HttpRequestMessage>? before = null,
-        CancellationToken ct = default)
+    public Task<TResult?> QueryProjectAsync<TResult>(string route, ProjectionQueryReq request, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException();
 
-    public Task<TResult?> QueryConcreteAsync<TResult>(
-        string route,
-        QueryConcreteReq request,
-        Action<HttpRequestMessage>? before = null,
-        CancellationToken ct = default)
+    public Task<TResult?> QueryConcreteAsync<TResult>(string route, QueryConcreteReq request, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException();
 
-    public Task<TResult?> QuerySqlAsync<TResult>(
-        string route,
-        QueryRequestBase request,
-        Action<HttpRequestMessage>? before = null,
-        CancellationToken ct = default)
+    public Task<TResult?> QuerySqlAsync<TResult>(string route, QueryRequestBase request, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException();
 }

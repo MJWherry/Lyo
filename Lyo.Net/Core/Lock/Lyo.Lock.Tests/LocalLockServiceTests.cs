@@ -81,8 +81,8 @@ public class LocalLockServiceTests
     {
         var handle = await _service.AcquireAsync("test-key-6", TimeSpan.FromSeconds(5), ct: TestCt);
         handle.ShouldNotBeNull();
-        await Assert.ThrowsAsync<TimeoutException>(async () => await _service.ExecuteWithLockAsync(
-            "test-key-6", _ => Task.CompletedTask, TimeSpan.FromMilliseconds(50), ct: TestCt));
+        await Assert.ThrowsAsync<TimeoutException>(async ()
+            => await _service.ExecuteWithLockAsync("test-key-6", _ => Task.CompletedTask, TimeSpan.FromMilliseconds(50), ct: TestCt));
 
         await handle.ReleaseAsync();
     }

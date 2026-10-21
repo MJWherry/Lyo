@@ -8,8 +8,8 @@ public sealed class FileStorageFactory : IFileStorageFactory, IDisposable
 {
     private readonly Dictionary<string, IFileStorageService> _cache = new(StringComparer.OrdinalIgnoreCase);
     private readonly FileStorageFactoryCatalog _catalog;
-    private readonly List<IDisposable> _owned = [];
     private readonly object _gate = new();
+    private readonly List<IDisposable> _owned = [];
     private readonly IServiceProvider _services;
     private bool _disposed;
 
@@ -18,6 +18,22 @@ public sealed class FileStorageFactory : IFileStorageFactory, IDisposable
     {
         _services = ArgumentHelpers.ThrowIfNullReturn(services);
         _catalog = ArgumentHelpers.ThrowIfNullReturn(catalog);
+    }
+
+    /// <summary>Disposes stores this scope created. Instances passed to <c>Register</c> are left alone.</summary>
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+        lock (_gate) {
+            foreach (var owned in _owned)
+                owned.Dispose();
+
+            _owned.Clear();
+            _cache.Clear();
+        }
     }
 
     /// <inheritdoc />
@@ -29,10 +45,9 @@ public sealed class FileStorageFactory : IFileStorageFactory, IDisposable
     /// <inheritdoc />
     public IFileStorageService Get(string name)
     {
-        if (!TryGet(name, out var service))
-            throw new InvalidOperationException(string.IsNullOrWhiteSpace(name)
-                ? "A file storage name is required."
-                : $"No file storage service is registered under '{name}'.");
+        if (!TryGet(name, out var service)) {
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(name) ? "A file storage name is required." : $"No file storage service is registered under '{name}'.");
+        }
 
         return service!;
     }
@@ -42,6 +57,7 @@ public sealed class FileStorageFactory : IFileStorageFactory, IDisposable
     {
         if (_disposed)
             throw new ObjectDisposedException(nameof(FileStorageFactory));
+
         service = null;
         if (string.IsNullOrWhiteSpace(name) || !_catalog.TryFind(name, out var registration))
             return false;
@@ -62,27 +78,10 @@ public sealed class FileStorageFactory : IFileStorageFactory, IDisposable
     /// <inheritdoc />
     public string? GetEncryptionServiceKey(string name)
     {
-        if (!_catalog.TryFind(name, out var registration))
-            throw new InvalidOperationException(string.IsNullOrWhiteSpace(name)
-                ? "A file storage name is required."
-                : $"No file storage service is registered under '{name}'.");
+        if (!_catalog.TryFind(name, out var registration)) {
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(name) ? "A file storage name is required." : $"No file storage service is registered under '{name}'.");
+        }
 
         return registration.EncryptionServiceKey;
-    }
-
-    /// <summary>Disposes stores this scope created. Instances passed to <c>Register</c> are left alone.</summary>
-    public void Dispose()
-    {
-        if (_disposed)
-            return;
-
-        _disposed = true;
-        lock (_gate) {
-            foreach (var owned in _owned)
-                owned.Dispose();
-
-            _owned.Clear();
-            _cache.Clear();
-        }
     }
 }

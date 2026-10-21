@@ -1,6 +1,5 @@
 using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Response;
-using Lyo.Parameters;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Web.Components.DataGrid;
 using Lyo.Web.Components.Dialog;
@@ -14,6 +13,16 @@ namespace Lyo.Reporting.Web.Components;
 
 public partial class ReportGenerationGrid
 {
+    private static readonly string[] _keySelectFields = ["Id", "OutputFileId", "StartedTimestamp", "FinishedTimestamp", "OriginalFileName", "ReportDefinitionId"];
+
+    private static readonly string[] _quickSearchProperties = ["Id", "ReportDefinitionId", "ReportDefinition.Name", "OriginalFileName", "OutputFileId"];
+
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [
+        new("Status"), new("Format"), new("CreatedBy", "Created By"), new("ReportDefinition.Name", "Definition")
+    ];
+
+    private LyoDataGridProjected? _dataGrid;
+
     [Parameter]
     [EditorRequired]
     public IApiClient ApiClient { get; set; } = null!;
@@ -29,15 +38,6 @@ public partial class ReportGenerationGrid
     public Func<Guid, CancellationToken, Task<string?>>? ViewFileUrlAsync { get; set; }
 
     private string _generationRoute => $"{BaseRoute.TrimEnd('/')}/Generation";
-
-    private LyoDataGridProjected? _dataGrid;
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Status"), new("Format"), new("CreatedBy", "Created By"), new("ReportDefinition.Name", "Definition")];
-
-    private static readonly string[] _keySelectFields = ["Id", "OutputFileId", "StartedTimestamp", "FinishedTimestamp", "OriginalFileName", "ReportDefinitionId"];
-
-    private static readonly string[] _quickSearchProperties = ["Id", "ReportDefinitionId", "ReportDefinition.Name", "OriginalFileName", "OutputFileId"];
-
 
     private static (DateTime? Started, DateTime? Finished) GetTimestamps(object? item)
         => (LyoDateTimeDisplay.ToDateTime(ProjectedValueHelper.GetValue(item, "StartedTimestamp")),
@@ -85,6 +85,7 @@ public partial class ReportGenerationGrid
             { d => d.ViewFileUrlAsync, ViewFileUrlAsync },
             { d => d.LoadReportDataAsync, ReportGenerationDataLoader.Create(ApiClient, _generationRoute) }
         };
+
         await DialogService.ShowAsync<ReportGenerationView>("Report Generation", parameters, LyoDialogPresets.Medium);
     }
 

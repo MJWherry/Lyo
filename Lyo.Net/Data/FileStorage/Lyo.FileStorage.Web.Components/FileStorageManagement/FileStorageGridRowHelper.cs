@@ -15,9 +15,7 @@ public static class FileStorageGridRowHelper
     public static WhereClause CreateActiveFilesWhere()
         => WhereClauseBuilder.And(static b => b.Equals("DeletedAt", null).NotEquals("Availability", nameof(FileAvailability.Deleted)));
 
-    /// <summary>
-    /// Same tombstone filter as the Files grid, optionally AND-ed with <paramref name="extra" /> as a nested child (PathPrefix, subtree, and similar).
-    /// </summary>
+    /// <summary>Same tombstone filter as the Files grid, optionally AND-ed with <paramref name="extra" /> as a nested child (PathPrefix, subtree, and similar).</summary>
     public static WhereClause CombineWithActive(WhereClause? extra)
     {
         if (extra == null)
@@ -31,8 +29,8 @@ public static class FileStorageGridRowHelper
     }
 
     /// <summary>
-    /// AND-combines <see cref="CreateActiveFilesWhere" /> onto <paramref name="query" /> so tombstones stay out of File and Tree listings.
-    /// Leaves search and column filters already on the builder.
+    /// AND-combines <see cref="CreateActiveFilesWhere" /> onto <paramref name="query" /> so tombstones stay out of File and Tree listings. Leaves search and column filters
+    /// already on the builder.
     /// </summary>
     public static void ExcludeDeleted(ProjectionQueryReqBuilder query)
     {

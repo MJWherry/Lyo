@@ -8,13 +8,14 @@ public class CsvImportResultTests
     public void Parse_Csv_TwoBadRows_ReturnsThreeGoodRows()
     {
         const string csv = """
-            Id,Name,Age
-            1,Alice,30
-            2,Bob,nope
-            3,Charlie,40
-            4,Dana,nope
-            5,Eve,22
-            """;
+                           Id,Name,Age
+                           1,Alice,30
+                           2,Bob,nope
+                           3,Charlie,40
+                           4,Dana,nope
+                           5,Eve,22
+                           """;
+
         var result = new CsvService().ParseStringAsResult<Person>(csv);
         Assert.True(result.IsSuccess);
         Assert.Equal(["Alice", "Charlie", "Eve"], result.Data!.Select(row => row.Name!).ToArray());

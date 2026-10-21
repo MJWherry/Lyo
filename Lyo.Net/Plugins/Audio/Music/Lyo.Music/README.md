@@ -1,6 +1,7 @@
 # Lyo.Music
 
-Domain contracts for a release-centric music catalog. A `MusicRelease` is one edition. An optional `MusicReleaseGroup` groups editions of the same album. Credits use an opaque `PersonRef`. `AudioFileRef` and `CoverImageRef` are opaque file refs. Favorite and Tag attach via `MusicEntityTypes`.
+Domain contracts for a release-centric music catalog. A `MusicRelease` is one edition. An optional `MusicReleaseGroup` groups editions of the same album. Credits use an opaque
+`PersonRef`. `AudioFileRef` and `CoverImageRef` are opaque file refs. Favorite and Tag attach via `MusicEntityTypes`.
 
 ## Features
 

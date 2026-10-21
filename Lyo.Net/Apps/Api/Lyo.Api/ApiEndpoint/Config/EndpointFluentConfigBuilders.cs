@@ -50,9 +50,7 @@ public sealed class CreateEndpointConfigBuilder<TRequest, TEntity, TDbContext>
         };
 }
 
-/// <summary>
-/// Fluent settings for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithGet(Action{GetEndpointConfigBuilder{TDbEntity,TDbContext}})" />.
-/// </summary>
+/// <summary>Fluent settings for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithGet(Action{GetEndpointConfigBuilder{TDbEntity,TDbContext}})" />.</summary>
 public sealed class GetEndpointConfigBuilder<TEntity, TDbContext>
     where TDbContext : DbContext where TEntity : class
 {
@@ -131,12 +129,15 @@ public sealed class UpdateEndpointConfigBuilder<TRequest, TEntity, TDbContext>
     }
 
     public UpdateConfig<TRequest, TEntity, TDbContext> Build()
-        => new() { Before = BeforeAction, After = AfterAction, Auth = AuthPolicy, PropertyAuthorization = PropertyRules };
+        => new() {
+            Before = BeforeAction,
+            After = AfterAction,
+            Auth = AuthPolicy,
+            PropertyAuthorization = PropertyRules
+        };
 }
 
-/// <summary>
-/// Fluent settings for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithPatch(Action{PatchEndpointConfigBuilder{TDbEntity,TDbContext}})" />.
-/// </summary>
+/// <summary>Fluent settings for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithPatch(Action{PatchEndpointConfigBuilder{TDbEntity,TDbContext}})" />.</summary>
 public sealed class PatchEndpointConfigBuilder<TEntity, TDbContext>
     where TDbContext : DbContext where TEntity : class
 {
@@ -195,9 +196,7 @@ public sealed class PatchEndpointConfigBuilder<TEntity, TDbContext>
         };
 }
 
-/// <summary>
-/// Fluent settings for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithDelete(Action{DeleteEndpointConfigBuilder{TDbEntity,TDbContext}})" />.
-/// </summary>
+/// <summary>Fluent settings for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithDelete(Action{DeleteEndpointConfigBuilder{TDbEntity,TDbContext}})" />.</summary>
 public sealed class DeleteEndpointConfigBuilder<TEntity, TDbContext>
     where TDbContext : DbContext where TEntity : class
 {
@@ -428,9 +427,7 @@ public sealed class QueryEndpointConfigBuilder<TDbEntity>
     }
 }
 
-/// <summary>
-/// Fluent settings for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithExport(Action{ExportEndpointConfigBuilder{TDbEntity}})" />.
-/// </summary>
+/// <summary>Fluent settings for <see cref="ApiEndpointBuilder{TDbContext,TDbEntity,TRequest,TResponse,TKey}.WithExport(Action{ExportEndpointConfigBuilder{TDbEntity}})" />.</summary>
 public sealed class ExportEndpointConfigBuilder<TDbEntity>
 {
     public EndpointAuth? AuthPolicy { get; private set; }

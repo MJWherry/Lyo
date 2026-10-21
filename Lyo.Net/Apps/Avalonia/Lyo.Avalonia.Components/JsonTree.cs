@@ -39,11 +39,13 @@ public static class JsonTree
             case JsonValueKind.Object:
                 foreach (var property in value.EnumerateObject())
                     children.Add(Node(property.Name, property.Value));
+
                 break;
             case JsonValueKind.Array:
                 var index = 0;
                 foreach (var item in value.EnumerateArray())
                     children.Add(Node(index++.ToString(), item));
+
                 break;
         }
 
@@ -59,6 +61,7 @@ public static class JsonTree
         if (value.ValueKind == JsonValueKind.Object) {
             if (children.Count == 0)
                 return prefix + "{}";
+
             var names = children.Select(child => child.Label.Split(':')[0].Trim());
             return prefix + "{" + string.Join(", ", names) + "}";
         }
@@ -66,12 +69,13 @@ public static class JsonTree
         return prefix + Scalar(value);
     }
 
-    private static string Scalar(JsonElement value) => value.ValueKind switch {
-        JsonValueKind.String => value.GetString() ?? "",
-        JsonValueKind.True => "true",
-        JsonValueKind.False => "false",
-        JsonValueKind.Null => "null",
-        JsonValueKind.Number => value.GetRawText(),
-        _ => value.GetRawText()
-    };
+    private static string Scalar(JsonElement value)
+        => value.ValueKind switch {
+            JsonValueKind.String => value.GetString() ?? "",
+            JsonValueKind.True => "true",
+            JsonValueKind.False => "false",
+            JsonValueKind.Null => "null",
+            JsonValueKind.Number => value.GetRawText(),
+            var _ => value.GetRawText()
+        };
 }

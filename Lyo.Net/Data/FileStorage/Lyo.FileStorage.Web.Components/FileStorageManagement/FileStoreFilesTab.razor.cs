@@ -128,10 +128,9 @@ public partial class FileStoreFilesTab : ComponentBase
             var uri = Host.BuildSaveStreamUri(
                 string.IsNullOrWhiteSpace(_saveOriginalFileName) ? _uploadedFile.FileName : _saveOriginalFileName, _saveCompress, _saveEncrypt,
                 _saveEncrypt ? NullIfWhiteSpace(_saveKeyId) : null, string.IsNullOrWhiteSpace(_savePathPrefix) ? null : _savePathPrefix, _saveChunkSize);
+
             var result = await Host.ApiClient.PostFileAsAsync<FileStoreResult>(uri, _uploadedFile.FilePath).ConfigureAwait(false);
-
             await Host.NotifyFilesChangedAsync();
-
             Host.SetStatus($"Uploaded file {result.Id}.", Severity.Success);
             _uploadStatus = $"Uploaded file {result.Id}.";
         }
@@ -153,17 +152,17 @@ public partial class FileStoreFilesTab : ComponentBase
 
         _fileBusy = true;
         try {
-            _migrationResult = await Host.ApiClient
-                .PostAsAsync<MigrateDeksRequest, DekMigrationResult>(
+            _migrationResult = await Host.ApiClient.PostAsAsync<MigrateDeksRequest, DekMigrationResult>(
                     Host.FilesApi("files/migrate-deks"),
                     new(
-                        _migrationSourceKeyId, NullIfWhiteSpace(_migrationSourceKeyVersion), NullIfWhiteSpace(_migrationTargetKeyId),
-                        NullIfWhiteSpace(_migrationTargetKeyVersion), _migrationBatchSize))
+                        _migrationSourceKeyId, NullIfWhiteSpace(_migrationSourceKeyVersion), NullIfWhiteSpace(_migrationTargetKeyId), NullIfWhiteSpace(_migrationTargetKeyVersion),
+                        _migrationBatchSize))
                 .ConfigureAwait(false);
 
             Host.SetStatus(
                 _migrationResult.AllSucceeded ? $"{CryptoOpsKind} migration completed." : $"{CryptoOpsKind} migration completed with failures.",
                 _migrationResult.AllSucceeded ? Severity.Success : Severity.Warning);
+
             await Host.NotifyFilesChangedAsync();
         }
         catch (Exception ex) {
@@ -181,14 +180,14 @@ public partial class FileStoreFilesTab : ComponentBase
 
         _fileBusy = true;
         try {
-            _rotationResult = await Host.ApiClient
-                .PostAsAsync<RotateDeksRequest, DekMigrationResult>(
-                    Host.FilesApi("files/rotate-deks"),
-                    new(fileIds, NullIfWhiteSpace(_rotationTargetKeyId), NullIfWhiteSpace(_rotationTargetKeyVersion), _rotationBatchSize))
+            _rotationResult = await Host.ApiClient.PostAsAsync<RotateDeksRequest, DekMigrationResult>(
+                    Host.FilesApi("files/rotate-deks"), new(fileIds, NullIfWhiteSpace(_rotationTargetKeyId), NullIfWhiteSpace(_rotationTargetKeyVersion), _rotationBatchSize))
                 .ConfigureAwait(false);
+
             Host.SetStatus(
                 _rotationResult.AllSucceeded ? $"{CryptoOpsKind} rotation completed." : $"{CryptoOpsKind} rotation completed with failures.",
                 _rotationResult.AllSucceeded ? Severity.Success : Severity.Warning);
+
             await Host.NotifyFilesChangedAsync();
         }
         catch (Exception ex) {

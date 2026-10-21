@@ -1,3 +1,4 @@
+using System.Globalization;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,13 +11,13 @@ using OpenTelemetry.Resources;
 
 namespace Lyo.Metrics.OpenTelemetry;
 
-/// <summary>DI helpers that register OpenTelemetry-backed <see cref="IMetrics"/>.</summary>
+/// <summary>DI helpers that register OpenTelemetry-backed <see cref="IMetrics" />.</summary>
 public static class Extensions
 {
     extension(IServiceCollection services)
     {
         /// <summary>Registers OpenTelemetry metrics from a configure delegate.</summary>
-        /// <param name="configure">Fills <see cref="OpenTelemetryOptions"/> after defaults.</param>
+        /// <param name="configure">Fills <see cref="OpenTelemetryOptions" /> after defaults.</param>
         /// <param name="configureMeterProvider">Optional extra meter exporters or instrumentation.</param>
         /// <returns>The same collection, for chaining.</returns>
         public IServiceCollection AddLyoMetricsWithOpenTelemetry(Action<OpenTelemetryOptions> configure, Action<MeterProviderBuilder>? configureMeterProvider = null)
@@ -28,9 +29,9 @@ public static class Extensions
             return services.AddLyoMetricsWithOpenTelemetry(options, configureMeterProvider);
         }
 
-        /// <summary>Binds <see cref="OpenTelemetryOptions"/> from configuration, then registers OpenTelemetry metrics.</summary>
+        /// <summary>Binds <see cref="OpenTelemetryOptions" /> from configuration, then registers OpenTelemetry metrics.</summary>
         /// <param name="configuration">Configuration root (for example <c>builder.Configuration</c>).</param>
-        /// <param name="configSectionName">Section to bind; defaults to <see cref="OpenTelemetryOptions.SectionName"/>.</param>
+        /// <param name="configSectionName">Section to bind; defaults to <see cref="OpenTelemetryOptions.SectionName" />.</param>
         /// <param name="configureMeterProvider">Optional extra meter exporters or instrumentation.</param>
         /// <returns>The same collection, for chaining.</returns>
         public IServiceCollection AddLyoMetricsWithOpenTelemetryFromConfiguration(
@@ -46,8 +47,8 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Registers <see cref="OpenTelemetryMetrics"/> as <see cref="IMetrics"/> and an OpenTelemetry meter named <see cref="OpenTelemetryOptions.ServiceName"/>.
-        /// OTLP export (metrics and <c>ILogger</c>) is enabled when <see cref="OpenTelemetryOptions.Endpoint"/> or <c>OTEL_EXPORTER_OTLP_*</c> supplies a collector URL.
+        /// Registers <see cref="OpenTelemetryMetrics" /> as <see cref="IMetrics" /> and an OpenTelemetry meter named <see cref="OpenTelemetryOptions.ServiceName" />. OTLP export
+        /// (metrics and <c>ILogger</c>) is enabled when <see cref="OpenTelemetryOptions.Endpoint" /> or <c>OTEL_EXPORTER_OTLP_*</c> supplies a collector URL.
         /// </summary>
         /// <param name="options">Validated registration options.</param>
         /// <param name="configureMeterProvider">Optional extra meter exporters or instrumentation.</param>
@@ -79,10 +80,9 @@ public static class Extensions
     private static bool TryResolveOtlpEndpoint(OpenTelemetryOptions options, out Uri endpoint)
     {
         var raw = FirstNonEmpty(
-            options.Endpoint,
-            Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT"),
-            Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT"),
+            options.Endpoint, Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT"), Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT"),
             Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT"));
+
         if (raw is null) {
             endpoint = null!;
             return false;
@@ -96,9 +96,11 @@ public static class Extensions
     {
         if (options.MetricExportIntervalMs is not { } ms)
             return;
+
         if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("OTEL_METRIC_EXPORT_INTERVAL")))
             return;
-        Environment.SetEnvironmentVariable("OTEL_METRIC_EXPORT_INTERVAL", ms.ToString(System.Globalization.CultureInfo.InvariantCulture));
+
+        Environment.SetEnvironmentVariable("OTEL_METRIC_EXPORT_INTERVAL", ms.ToString(CultureInfo.InvariantCulture));
     }
 
     private static OtlpExportProtocol ResolveOtlpProtocol(OpenTelemetryOptions options)

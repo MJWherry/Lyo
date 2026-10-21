@@ -5,26 +5,16 @@ namespace Lyo.Xml.Tests;
 
 public class XmlServiceTests
 {
-    private sealed class Person
-    {
-        public string? GivenName { get; set; }
-
-        public int? Age { get; set; }
-
-        public string? Note { get; set; }
-
-        public List<string>? Tags { get; set; }
-    }
-
     [Fact]
     public void ParseString_Person_MatchesJsonContract()
     {
         const string xml = """
-            <person>
-              <givenName>Ada</givenName>
-              <age>36</age>
-            </person>
-            """;
+                           <person>
+                             <givenName>Ada</givenName>
+                             <age>36</age>
+                           </person>
+                           """;
+
         var person = new XmlService().ParseString<Person>(xml);
         Assert.Equal("Ada", person.GivenName);
         Assert.Equal(36, person.Age);
@@ -43,12 +33,13 @@ public class XmlServiceTests
     public void ParseString_RepeatedElement_LoadsAsList()
     {
         const string xml = """
-            <person>
-              <givenName>Ada</givenName>
-              <tags>a</tags>
-              <tags>b</tags>
-            </person>
-            """;
+                           <person>
+                             <givenName>Ada</givenName>
+                             <tags>a</tags>
+                             <tags>b</tags>
+                           </person>
+                           """;
+
         var person = new XmlService().ParseString<Person>(xml);
         Assert.Equal(["a", "b"], person.Tags);
     }
@@ -70,5 +61,16 @@ public class XmlServiceTests
         Assert.DoesNotContain("note", xml, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("age", xml, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("tags", xml, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private sealed class Person
+    {
+        public string? GivenName { get; set; }
+
+        public int? Age { get; set; }
+
+        public string? Note { get; set; }
+
+        public List<string>? Tags { get; set; }
     }
 }

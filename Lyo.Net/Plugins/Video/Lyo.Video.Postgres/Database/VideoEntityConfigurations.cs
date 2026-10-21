@@ -23,7 +23,7 @@ public sealed class VideoTitleEntityConfiguration : IEntityTypeConfiguration<Vid
         builder.Property(e => e.VideoFileRef).HasMaxLength(512).HasColumnName("video_file_ref");
         builder.Property(e => e.Overview).HasMaxLength(8192).HasColumnName("overview");
         builder.Property(e => e.Transcript).HasColumnType("text").HasColumnName("transcript");
-        builder.Property(e => e.SearchVector).HasColumnName("search_vector").HasColumnType("tsvector").HasComputedColumnSql(SearchVectorSql, stored: true);
+        builder.Property(e => e.SearchVector).HasColumnName("search_vector").HasColumnType("tsvector").HasComputedColumnSql(SearchVectorSql, true);
         builder.Property(e => e.CollectionId).HasColumnName("collection_id").HasColumnType("uuid");
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
@@ -71,7 +71,7 @@ public sealed class VideoEpisodeEntityConfiguration : IEntityTypeConfiguration<V
         builder.Property(e => e.VideoFileRef).HasMaxLength(512).HasColumnName("video_file_ref");
         builder.Property(e => e.StillImageRef).HasMaxLength(512).HasColumnName("still_image_ref");
         builder.Property(e => e.Transcript).HasColumnType("text").HasColumnName("transcript");
-        builder.Property(e => e.SearchVector).HasColumnName("search_vector").HasColumnType("tsvector").HasComputedColumnSql(VideoTitleEntityConfiguration.SearchVectorSql, stored: true);
+        builder.Property(e => e.SearchVector).HasColumnName("search_vector").HasColumnType("tsvector").HasComputedColumnSql(VideoTitleEntityConfiguration.SearchVectorSql, true);
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
         builder.HasIndex(e => new { e.SeasonId, e.EpisodeNumber }).IsUnique().HasDatabaseName("ix_video_episode_number");

@@ -27,8 +27,7 @@ internal static class IOTempExternalIo
             if (storage.FileExists(path))
                 return true;
         }
-        catch (InvalidFormatException) {
-        }
+        catch (InvalidFormatException) { }
 
         return File.Exists(path);
     }
@@ -39,14 +38,12 @@ internal static class IOTempExternalIo
             if (storage.DirectoryExists(path))
                 return true;
         }
-        catch (InvalidFormatException) {
-        }
+        catch (InvalidFormatException) { }
 
         return Directory.Exists(path);
     }
 
-    public static long GetLength(IFileSystem storage, string path)
-        => IsOnStorage(storage, path) ? storage.GetLength(path) : new FileInfo(path).Length;
+    public static long GetLength(IFileSystem storage, string path) => IsOnStorage(storage, path) ? storage.GetLength(path) : new FileInfo(path).Length;
 
     public static Stream OpenRead(IFileSystem storage, string path)
     {

@@ -12,8 +12,8 @@ public static class Extensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers <see cref="GrantAuthorizationHandler" /> and a policy provider that forwards non-grant names.
-        /// A second call does nothing. The existing provider descriptor is captured here and is not resolved from inside this factory.
+        /// Registers <see cref="GrantAuthorizationHandler" /> and a policy provider that forwards non-grant names. A second call does nothing. The existing provider descriptor is
+        /// captured here and is not resolved from inside this factory.
         /// </summary>
         public IServiceCollection AddLyoGrantAuthorization()
         {
@@ -42,6 +42,7 @@ public static class Extensions
     {
         if (captured?.ImplementationInstance is IAuthorizationPolicyProvider instance)
             return instance;
+
         if (captured?.ImplementationType is not null)
             return (IAuthorizationPolicyProvider)ActivatorUtilities.CreateInstance(services, captured.ImplementationType);
 

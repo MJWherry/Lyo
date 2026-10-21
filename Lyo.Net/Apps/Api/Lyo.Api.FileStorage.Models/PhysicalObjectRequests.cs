@@ -7,8 +7,7 @@ namespace Lyo.Api.FileStorage.Models;
 public sealed record MovePhysicalObjectRequest(string PhysicalKey, string? DestinationPathPrefix = null)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => $"MovePhysicalObjectRequest: PhysicalKey={PhysicalKey}, DestinationPathPrefix={DestinationPathPrefix ?? "(root)"}";
+    public override string ToString() => $"MovePhysicalObjectRequest: PhysicalKey={PhysicalKey}, DestinationPathPrefix={DestinationPathPrefix ?? "(root)"}";
 }
 
 /// <summary>JSON body posted to <c>files/physical/copy</c>.</summary>
@@ -16,8 +15,7 @@ public sealed record MovePhysicalObjectRequest(string PhysicalKey, string? Desti
 public sealed record CopyPhysicalObjectRequest(string PhysicalKey, string? DestinationPathPrefix = null)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => $"CopyPhysicalObjectRequest: PhysicalKey={PhysicalKey}, DestinationPathPrefix={DestinationPathPrefix ?? "(root)"}";
+    public override string ToString() => $"CopyPhysicalObjectRequest: PhysicalKey={PhysicalKey}, DestinationPathPrefix={DestinationPathPrefix ?? "(root)"}";
 }
 
 /// <summary>JSON body posted to <c>files/physical/rename</c>.</summary>

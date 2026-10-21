@@ -24,7 +24,7 @@ public sealed class TomlReader : ITomlReader
     public T ParseStream<T>(Stream tomlStream)
     {
         ArgumentHelpers.ThrowIfNull(tomlStream);
-        using var reader = new StreamReader(tomlStream, _engine.Encoding, detectEncodingFromByteOrderMarks: true, 1024, leaveOpen: true);
+        using var reader = new StreamReader(tomlStream, _engine.Encoding, true, 1024, true);
         return ParseString<T>(reader.ReadToEnd());
     }
 
@@ -70,7 +70,7 @@ public sealed class TomlReader : ITomlReader
     public Result<DataTable.Models.DataTable> ParseStreamAsDataTable(Stream tomlStream, bool hasFooterRow = false)
     {
         ArgumentHelpers.ThrowIfNull(tomlStream);
-        using var reader = new StreamReader(tomlStream, _engine.Encoding, detectEncodingFromByteOrderMarks: true, 1024, leaveOpen: true);
+        using var reader = new StreamReader(tomlStream, _engine.Encoding, true, 1024, true);
         return ParseStringAsDataTable(reader.ReadToEnd(), hasFooterRow);
     }
 
@@ -95,7 +95,7 @@ public sealed class TomlReader : ITomlReader
     public async Task<T> ParseStreamAsync<T>(Stream tomlStream, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(tomlStream);
-        using var reader = new StreamReader(tomlStream, _engine.Encoding, detectEncodingFromByteOrderMarks: true, 1024, leaveOpen: true);
+        using var reader = new StreamReader(tomlStream, _engine.Encoding, true, 1024, true);
         var toml = await reader.ReadToEndAsync(ct).ConfigureAwait(false);
         return ParseString<T>(toml);
     }
@@ -125,7 +125,11 @@ public sealed class TomlReader : ITomlReader
     }
 
     /// <inheritdoc />
-    public Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(byte[] tomlBytes, bool hasFooterRow = false, Encoding? encoding = null, CancellationToken ct = default)
+    public Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(
+        byte[] tomlBytes,
+        bool hasFooterRow = false,
+        Encoding? encoding = null,
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(tomlBytes);
         ct.ThrowIfCancellationRequested();
@@ -136,7 +140,7 @@ public sealed class TomlReader : ITomlReader
     public async Task<Result<DataTable.Models.DataTable>> ParseStreamAsDataTableAsync(Stream tomlStream, bool hasFooterRow = false, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(tomlStream);
-        using var reader = new StreamReader(tomlStream, _engine.Encoding, detectEncodingFromByteOrderMarks: true, 1024, leaveOpen: true);
+        using var reader = new StreamReader(tomlStream, _engine.Encoding, true, 1024, true);
         var toml = await reader.ReadToEndAsync(ct).ConfigureAwait(false);
         return ParseStringAsDataTable(toml, hasFooterRow);
     }

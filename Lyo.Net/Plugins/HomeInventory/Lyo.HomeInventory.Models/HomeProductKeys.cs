@@ -1,8 +1,8 @@
 namespace Lyo.HomeInventory.Models;
 
 /// <summary>
-/// Well-known identifier kinds for <see cref="HomeProductKeyEntry"/>. An item may store several rows of the same kind (two Wi-Fi MACs, two SKUs for kit parts). There
-/// is no generic MAC or Ethernet kind — use <see cref="WifiMac"/> or <see cref="BluetoothMac"/>.
+/// Well-known identifier kinds for <see cref="HomeProductKeyEntry" />. An item may store several rows of the same kind (two Wi-Fi MACs, two SKUs for kit parts). There is no
+/// generic MAC or Ethernet kind — use <see cref="WifiMac" /> or <see cref="BluetoothMac" />.
 /// </summary>
 public static class HomeProductKeys
 {
@@ -53,7 +53,8 @@ public static class HomeProductKeys
 
     /// <summary>Known kinds in display order. Custom free-text kinds are allowed in addition to these.</summary>
     public static readonly string[] All = [
-        Sku, SerialNumber, ProductCode, ModelNumber, VendorSku, Upc, Ean, Isbn, Imei, WifiMac, BluetoothMac, LotNumber, BatchNumber, PurchaseOrder, SalesOrder
+        Sku, SerialNumber, ProductCode, ModelNumber, VendorSku, Upc, Ean, Isbn, Imei, WifiMac,
+        BluetoothMac, LotNumber, BatchNumber, PurchaseOrder, SalesOrder
     ];
 
     /// <summary>Short label for a known kind; unknown values are returned unchanged.</summary>

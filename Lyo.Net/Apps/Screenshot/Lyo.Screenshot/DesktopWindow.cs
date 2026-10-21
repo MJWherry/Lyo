@@ -12,8 +12,10 @@ public static class DesktopWindowFilter
         foreach (var window in windows) {
             if (string.IsNullOrWhiteSpace(window.Title) || window.Title == "lyo-shot")
                 continue;
+
             if (window.Bounds.Width < 1 || window.Bounds.Height < 1)
                 continue;
+
             kept.Add(window);
         }
 
@@ -25,9 +27,12 @@ public static class DesktopWindowFilter
     {
         if (windowId == 0)
             return false;
-        foreach (var window in open)
+
+        foreach (var window in open) {
             if (window.Id == windowId)
                 return false;
+        }
+
         return true;
     }
 }
@@ -39,7 +44,7 @@ public static class DesktopWindows
     public static IReadOnlyList<DesktopWindow> List()
     {
         try {
-            return DesktopWindowFilter.Selectable(Lyo.Desktop.DesktopWindows.List());
+            return DesktopWindowFilter.Selectable(Desktop.DesktopWindows.List());
         }
         catch (Exception ex) when (ex is DllNotFoundException or InvalidOperationException) {
             return [];

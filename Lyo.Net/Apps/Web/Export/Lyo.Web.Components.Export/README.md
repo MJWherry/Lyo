@@ -30,7 +30,8 @@ builder.Services.AddLyoDataGridExport();
 
 ## Using the grid
 
-Every format menu item opens the column picker. The caller chooses fields, SmartFormat templates, and column order. On the server, register the matching API export addon (`AddYamlExport`, `AddXmlExport`, `AddTomlExport`, `AddCsvExport`, or `AddXlsxExport`).
+Every format menu item opens the column picker. The caller chooses fields, SmartFormat templates, and column order. On the server, register the matching API export addon
+(`AddYamlExport`, `AddXmlExport`, `AddTomlExport`, `AddCsvExport`, or `AddXlsxExport`).
 
 ## Dependencies
 

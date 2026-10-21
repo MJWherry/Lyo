@@ -2,7 +2,6 @@ using Lyo.Reporting.Models.Builders;
 using Lyo.Reporting.Models.Composition;
 using Lyo.Reporting.Models.Controls;
 using Lyo.Reporting.Models.Models;
-using Lyo.Reporting.Models.Response;
 
 namespace Lyo.Reporting.Tests;
 
@@ -14,15 +13,10 @@ public sealed class ReportCompositionProcessorTests
         var report = ReportBuilder<object>.New()
             .SetTitle("{ReportTitle}")
             .AddParameter("ReportTitle", example: "\"Q4\"")
-            .AddSection(
-                "S",
-                s => s.AddText("Hello {Name}")
-                    .AddGrid(g => g.SetTemplateColumns("repeat(auto-fit, minmax(220px, 1fr))").AddCard("Period", "{Period}")))
+            .AddSection("S", s => s.AddText("Hello {Name}").AddGrid(g => g.SetTemplateColumns("repeat(auto-fit, minmax(220px, 1fr))").AddCard("Period", "{Period}")))
             .Build();
 
-        var bound = ReportCompositionProcessor.Bind(
-            report, new Dictionary<string, string?> { ["ReportTitle"] = "Q4", ["Name"] = "Ada", ["Period"] = "2024" });
-
+        var bound = ReportCompositionProcessor.Bind(report, new Dictionary<string, string?> { ["ReportTitle"] = "Q4", ["Name"] = "Ada", ["Period"] = "2024" });
         Assert.Equal("Q4", bound.Title);
         Assert.Equal("Hello Ada", bound.Sections[0].Controls.OfType<Block>().First().Content);
         var card = bound.Sections[0].Controls.OfType<Grid>().SelectMany(g => g.Controls).OfType<Card>().Single();
@@ -72,7 +66,6 @@ public sealed class ReportCompositionProcessorTests
         var hidden = ReportCompositionProcessor.Bind(report, new Dictionary<string, string?> { ["ShowRisks"] = "false" });
         Assert.Single(hidden.Sections);
         Assert.Equal("Always", hidden.Sections[0].Title);
-
         var shown = ReportCompositionProcessor.Bind(report, new Dictionary<string, string?> { ["ShowRisks"] = "true" });
         Assert.Equal(2, shown.Sections.Count);
     }
@@ -81,9 +74,7 @@ public sealed class ReportCompositionProcessorTests
     public void BindJson_JsonStringParameter_UnwrapsValue()
     {
         var json = ReportJson.Serialize(ReportBuilder<object>.New().SetTitle("{Period}").Build());
-        var bound = ReportCompositionProcessor.BindJson(
-            json, [new ReportGenerationParameterRes(Guid.Empty, Guid.Empty, "Period", "System.String", "\"Q4 2024\"", null, null)]);
-
+        var bound = ReportCompositionProcessor.BindJson(json, [new(Guid.Empty, Guid.Empty, "Period", "System.String", "\"Q4 2024\"", null, null)]);
         Assert.Equal("Q4 2024", bound.Title);
     }
 

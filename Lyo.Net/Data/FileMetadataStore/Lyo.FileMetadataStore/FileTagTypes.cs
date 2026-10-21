@@ -23,8 +23,7 @@ public static class FileTagTypes
     public const int MaxSlugLength = 200;
 
     /// <summary>True for types the service writes and callers cannot add or remove.</summary>
-    public static bool IsReserved(string tagType)
-        => string.Equals(tagType, FileType, StringComparison.Ordinal) || string.Equals(tagType, Imported, StringComparison.Ordinal);
+    public static bool IsReserved(string tagType) => string.Equals(tagType, FileType, StringComparison.Ordinal) || string.Equals(tagType, Imported, StringComparison.Ordinal);
 
     /// <summary>Rejects empty text, overlong text, and slash characters. Tag types also cannot contain a colon.</summary>
     public static void Validate(string tagType, string value, string? slug)

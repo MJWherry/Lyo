@@ -13,10 +13,7 @@ public interface ILyoRefreshTokenIssuer
     /// <param name="parentJti"><c>jti</c> of the access JWT this refresh token is paired with.</param>
     /// <param name="lifetime">How long the refresh token lives. Use <see cref="TimeSpan.Zero" /> for no expiry.</param>
     /// <param name="provider">Name of the IdP that minted the parent session (e.g. <c>google</c>, <c>keycloak:my-realm</c>, or <c>local</c> for refresh-on-refresh).</param>
-    /// <param name="externalSubject">
-    /// Provider <c>sub</c> claim, when known. Used on rotation to re-resolve the <see cref="LinkedIdentity" /> and pick up scope
-    /// grants/revocations.
-    /// </param>
+    /// <param name="externalSubject">Provider <c>sub</c> claim, when known. Used on rotation to re-resolve the <see cref="LinkedIdentity" /> and pick up scope grants/revocations.</param>
     /// <param name="ct">Cancellation token.</param>
     Task<IssuedApiToken> IssueAsync(Guid userId, string parentJti, TimeSpan lifetime, string provider, string? externalSubject, CancellationToken ct = default);
 }

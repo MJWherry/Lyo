@@ -7,12 +7,12 @@ using Microsoft.Extensions.Options;
 
 namespace Lyo.Recipe.Client;
 
-/// <summary>DI helpers for <see cref="RecipeClient"/>.</summary>
+/// <summary>DI helpers for <see cref="RecipeClient" />.</summary>
 public static class Extensions
 {
     extension(IServiceCollection services)
     {
-        /// <summary>Adds <see cref="IRecipeClient"/> on the <typeparamref name="TApiClient"/> already in the container.</summary>
+        /// <summary>Adds <see cref="IRecipeClient" /> on the <typeparamref name="TApiClient" /> already in the container.</summary>
         public IServiceCollection AddRecipeClient<TApiClient>(Action<RecipeClientOptions> configure)
             where TApiClient : class, IApiClient
         {
@@ -23,7 +23,7 @@ public static class Extensions
             return services.AddRecipeClient<TApiClient>(options);
         }
 
-        /// <summary>Adds <see cref="IRecipeClient"/> on the <typeparamref name="TApiClient"/> already in the container.</summary>
+        /// <summary>Adds <see cref="IRecipeClient" /> on the <typeparamref name="TApiClient" /> already in the container.</summary>
         public IServiceCollection AddRecipeClient<TApiClient>(RecipeClientOptions? options = null)
             where TApiClient : class, IApiClient
         {
@@ -33,7 +33,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Adds <see cref="IRecipeClient"/> on the <typeparamref name="TApiClient"/> already in the container, binding route options from configuration.</summary>
+        /// <summary>Adds <see cref="IRecipeClient" /> on the <typeparamref name="TApiClient" /> already in the container, binding route options from configuration.</summary>
         public IServiceCollection AddRecipeClientFromConfiguration<TApiClient>(IConfiguration configuration, string configSectionName = RecipeClientOptions.SectionName)
             where TApiClient : class, IApiClient
         {
@@ -45,7 +45,7 @@ public static class Extensions
             return services.AddRecipeClient<TApiClient>(options);
         }
 
-        /// <summary>Adds <see cref="IRecipeClient"/> on an API client resolved by <paramref name="apiClientFactory"/>.</summary>
+        /// <summary>Adds <see cref="IRecipeClient" /> on an API client resolved by <paramref name="apiClientFactory" />.</summary>
         public IServiceCollection AddRecipeClient(Func<IServiceProvider, IApiClient> apiClientFactory, Action<RecipeClientOptions> configure)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -55,7 +55,7 @@ public static class Extensions
             return services.AddRecipeClient(apiClientFactory, options);
         }
 
-        /// <summary>Adds <see cref="IRecipeClient"/> on an API client resolved by <paramref name="apiClientFactory"/>.</summary>
+        /// <summary>Adds <see cref="IRecipeClient" /> on an API client resolved by <paramref name="apiClientFactory" />.</summary>
         public IServiceCollection AddRecipeClient(Func<IServiceProvider, IApiClient> apiClientFactory, RecipeClientOptions? options = null)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -65,7 +65,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Adds <see cref="IRecipeClient"/> on an API client resolved by <paramref name="apiClientFactory"/>, binding route options from configuration.</summary>
+        /// <summary>Adds <see cref="IRecipeClient" /> on an API client resolved by <paramref name="apiClientFactory" />, binding route options from configuration.</summary>
         public IServiceCollection AddRecipeClientFromConfiguration(
             Func<IServiceProvider, IApiClient> apiClientFactory,
             IConfiguration configuration,

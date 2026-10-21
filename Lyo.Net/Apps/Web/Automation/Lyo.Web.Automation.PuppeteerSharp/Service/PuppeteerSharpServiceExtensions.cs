@@ -31,7 +31,9 @@ public static class PuppeteerSharpServiceExtensions
 
     /// <summary>Binds <paramref name="configuration" /> to <see cref="PuppeteerSharpBrowserOptions" /> and registers the browser service.</summary>
     public static IServiceCollection AddPuppeteerSharpBrowserServiceFromConfiguration(
-        this IServiceCollection services, IConfiguration configuration, string? configSectionName = null)
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string? configSectionName = null)
     {
         ArgumentHelpers.ThrowIfNull(services);
         ArgumentHelpers.ThrowIfNull(configuration);

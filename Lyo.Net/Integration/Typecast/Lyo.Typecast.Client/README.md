@@ -1,6 +1,7 @@
 # Lyo.Typecast.Client
 
-HTTP client for Typecast text-to-speech and voice catalog work. `TypecastClient` subclasses `Lyo.Api.Client.ApiClient`, sets the `X-API-KEY` header from `TypecastClientOptions`, and surfaces two managers (`TextToSpeech`, `Voices`) over the REST endpoints.
+HTTP client for Typecast text-to-speech and voice catalog work. `TypecastClient` subclasses `Lyo.Api.Client.ApiClient`, sets the `X-API-KEY` header from `TypecastClientOptions`,
+and surfaces two managers (`TextToSpeech`, `Voices`) over the REST endpoints.
 
 Multi-targets `netstandard2.0` and `net10.0`.
 
@@ -42,36 +43,38 @@ public readonly VoiceManager Voices;
 
 ## Service registration
 
-`IServiceCollection` has three DI extensions: every overload registers `TypecastClient` as a singleton. When the container has `ILoggerFactory` or `HttpClient`, those are used; otherwise the client falls back to sensible defaults. Example `appsettings.json`:
+`IServiceCollection` has three DI extensions: every overload registers `TypecastClient` as a singleton. When the container has `ILoggerFactory` or `HttpClient`, those are used;
+otherwise the client falls back to sensible defaults. Example `appsettings.json`:
 
 ## `TypecastClientOptions`
 
 Subclass of `ApiClientOptions`, so the usual HTTP transport knobs come along (`BaseUrl`, timeouts, retry, etc.).
 
-| Property | Notes |
-| ------------- | ----------------------------------------------------------------------------- |
-| `ApiKey` | Required. Transmitted as `X-API-KEY`. |
-| `BaseUrl` | Falls back to `https://api.typecast.ai`. |
+| Property      | Notes                                                                         |
+|---------------|-------------------------------------------------------------------------------|
+| `ApiKey`      | Required. Transmitted as `X-API-KEY`.                                         |
+| `BaseUrl`     | Falls back to `https://api.typecast.ai`.                                      |
 | `SectionName` | `"TypecastClient"`. Default section for `AddTypecastClientFromConfiguration`. |
 
 Serialization uses snake_case names, case-insensitive reads, and `WhenWritingNull` ignore so it matches Typecast's API.
 
 ## `TypecastClient` `TextToSpeechManager`
 
-| Method | Endpoint | Returns |
-| ----------------------------------------------------------- | ------------------------- | ------------------------------- |
+| Method                                                      | Endpoint                  | Returns                         |
+|-------------------------------------------------------------|---------------------------|---------------------------------|
 | `SynthesizeAsync(TypecastTtsRequest request, ct = default)` | `POST /v1/text-to-speech` | `byte[]` (audio as WAV or MP3). |
 
 ## `TypecastClient` `VoiceManager`
 
-| Method | Endpoint | Returns |
-| ------------------------------------------------------------- | -------------------------- | ----------------------------------- |
-| `ListVoicesAsync(VoiceListReq? request = null, ct = default)` | `GET /v2/voices` | `List<Voice>` (empty list if none). |
-| `GetVoiceAsync(string voiceId, ct = default)` | `GET /v2/voices/{voiceId}` | `Voice?` |
+| Method                                                        | Endpoint                   | Returns                             |
+|---------------------------------------------------------------|----------------------------|-------------------------------------|
+| `ListVoicesAsync(VoiceListReq? request = null, ct = default)` | `GET /v2/voices`           | `List<Voice>` (empty list if none). |
+| `GetVoiceAsync(string voiceId, ct = default)`                 | `GET /v2/voices/{voiceId}` | `Voice?`                            |
 
 ## Request types
 
-- **`TypecastTtsRequest`.** Subclasses `Lyo.Tts.Models.TtsRequest`. Fields: `VoiceId`, `Text`, `Model` (defaults to `TypecastModel.SsfmV30`), `Language` (`LanguageCodeInfo`, serialized as ISO 639-3), `Prompt`, `Output`, `Seed`, computed `AudioFormat`.
+- **`TypecastTtsRequest`.** Subclasses `Lyo.Tts.Models.TtsRequest`. Fields: `VoiceId`, `Text`, `Model` (defaults to `TypecastModel.SsfmV30`), `Language` (`LanguageCodeInfo`,
+  serialized as ISO 639-3), `Prompt`, `Output`, `Seed`, computed `AudioFormat`.
 - **`Prompt`.** emotion / style knobs (including the `"smart"` mode with optional `previous_text` / `next_text` context).
 - **`OutputSettings`.** volume / pitch / tempo / audio format.
 - **`VoiceListReq`.** optional `Model`, `Gender`, `Age`, `UseCases` filters.
@@ -97,17 +100,17 @@ var request = TypecastTtsRequestBuilder
 var audio = await client.TextToSpeech.SynthesizeAsync(request, ct);
 ```
 
-| Method | Sets |
-| ------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `New()` / `Create(voiceId, text)` | Static factories. |
-| `WithVoiceId(string)` / `WithText(string)` | Mandatory fields. |
-| `WithModel(string)` | e.g. `"ssfm-v30"`, `"ssfm-v21"`. |
-| `WithLanguage(string)` | Tries ISO 639-3 before ISO 639-1; leaves language unset when the code is unknown. |
-| `WithPrompt(Prompt)` / `WithPrompt(Action<Prompt>)` | Assign or configure in place. |
-| `WithSmartPrompt(previousText?, nextText?)` | Shortcut for `"smart"` emotion mode. |
-| `WithOutput(OutputSettings)` / `WithOutput(Action<OutputSettings>)` | Assign or configure in place. |
-| `WithSeed(int)` | Fixed-seed generation. |
-| `Build()` | Checks required fields, then returns the `TypecastTtsRequest`. |
+| Method                                                              | Sets                                                                              |
+|---------------------------------------------------------------------|-----------------------------------------------------------------------------------|
+| `New()` / `Create(voiceId, text)`                                   | Static factories.                                                                 |
+| `WithVoiceId(string)` / `WithText(string)`                          | Mandatory fields.                                                                 |
+| `WithModel(string)`                                                 | e.g. `"ssfm-v30"`, `"ssfm-v21"`.                                                  |
+| `WithLanguage(string)`                                              | Tries ISO 639-3 before ISO 639-1; leaves language unset when the code is unknown. |
+| `WithPrompt(Prompt)` / `WithPrompt(Action<Prompt>)`                 | Assign or configure in place.                                                     |
+| `WithSmartPrompt(previousText?, nextText?)`                         | Shortcut for `"smart"` emotion mode.                                              |
+| `WithOutput(OutputSettings)` / `WithOutput(Action<OutputSettings>)` | Assign or configure in place.                                                     |
+| `WithSeed(int)`                                                     | Fixed-seed generation.                                                            |
+| `Build()`                                                           | Checks required fields, then returns the `TypecastTtsRequest`.                    |
 
 ## Dependencies
 

@@ -1,6 +1,7 @@
 # Lyo.Drift.Api
 
-Maps instance upsert, heartbeat/stop, snapshot/diff/change ingest, Query/Get, and DiffAgainst. Register the store with `AddPostgresDriftManagement` from `Lyo.Drift.Postgres` first. Example host: `Lyo.Drift.Api.Example`.
+Maps instance upsert, heartbeat/stop, snapshot/diff/change ingest, Query/Get, and DiffAgainst. Register the store with `AddPostgresDriftManagement` from `Lyo.Drift.Postgres` first.
+Example host: `Lyo.Drift.Api.Example`.
 
 ## Features
 

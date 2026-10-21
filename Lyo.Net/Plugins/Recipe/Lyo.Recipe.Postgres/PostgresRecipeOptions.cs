@@ -12,7 +12,7 @@ public sealed class PostgresRecipeOptions : PostgresOptionsBase
     /// <summary>PostgreSQL schema that owns recipe tables.</summary>
     public const string Schema = "recipe";
 
-    /// <summary>Tenancy rules for this feature. Properties left unset come from <see cref="EntityRefOptions"/>.</summary>
+    /// <summary>Tenancy rules for this feature. Properties left unset come from <see cref="EntityRefOptions" />.</summary>
     /// <remarks>Recipe entities expose a nullable <c>tenant_id</c>, so any of the three tenancy modes is allowed.</remarks>
     public TenancyOptions Tenancy { get; set; } = new();
 

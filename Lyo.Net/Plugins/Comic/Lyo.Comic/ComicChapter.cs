@@ -33,9 +33,7 @@ public sealed class ComicChapter
     /// <summary>Value of the original release date of this chapter. Time portion is ignored; treat as date only.</summary>
     public DateTime? PublishedDate { get; set; }
 
-    /// <summary>
-    /// An opaque reference to the source this chapter was ingested from (e.g. a scraper site identifier, URL, or external ID). Null for internally created records.
-    /// </summary>
+    /// <summary>An opaque reference to the source this chapter was ingested from (e.g. a scraper site identifier, URL, or external ID). Null for internally created records.</summary>
     public string? Source { get; set; }
 
     /// <summary>An opaque reference to the chapter cover image (e.g. file storage id) stored here.</summary>

@@ -4,7 +4,9 @@ Typed HTTP client for the [OpenSubtitles](https://www.opensubtitles.com/) consum
 
 **Archetype C (vendor client).** The host keeps subtitle files and any title mapping. This package does not store rows.
 
-`OpenSubtitlesClient` subclasses `LyoHttpClient`. `Api-Key` and `ApplicationUserAgent` (`AppName vVersion`) are set once. Login returns a token and a bare hostname (`api.opensubtitles.com` or `vip-api.opensubtitles.com`). Download and user info send that token and call `https://{hostname}/api/v1/...`. The client does not download the temporary file link, so the API key is not sent to the file host.
+`OpenSubtitlesClient` subclasses `LyoHttpClient`. `Api-Key` and `ApplicationUserAgent` (`AppName vVersion`) are set once. Login returns a token and a bare hostname
+(`api.opensubtitles.com` or `vip-api.opensubtitles.com`). Download and user info send that token and call `https://{hostname}/api/v1/...`. The client does not download the
+temporary file link, so the API key is not sent to the file host.
 
 ## Features
 

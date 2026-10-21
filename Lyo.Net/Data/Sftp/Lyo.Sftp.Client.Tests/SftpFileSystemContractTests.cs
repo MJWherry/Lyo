@@ -6,8 +6,8 @@ using Lyo.IO.FileSystem.Tests;
 namespace Lyo.Sftp.Client.Tests;
 
 /// <summary>
-/// Runs the shared <see cref="IFileSystem" /> contract against <see cref="SftpFileSystem" />. One container is shared by the whole class and each test gets its own
-/// remote root, so the cases stay isolated without paying for a container apiece.
+/// Runs the shared <see cref="IFileSystem" /> contract against <see cref="SftpFileSystem" />. One container is shared by the whole class and each test gets its own remote
+/// root, so the cases stay isolated without paying for a container apiece.
 /// </summary>
 [Trait("Category", "Integration")]
 public sealed class SftpFileSystemContractTests(SftpContainerFixture fixture) : IFileSystemContractTests, IClassFixture<SftpContainerFixture>

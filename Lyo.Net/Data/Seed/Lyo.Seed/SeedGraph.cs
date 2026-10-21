@@ -3,24 +3,23 @@ using Lyo.Exceptions;
 namespace Lyo.Seed;
 
 /// <summary>
-/// Ordered generation graph. <see cref="Entity{T}(int, Func{int, T})"/> factories return each item. The engine never references Bogus.
-/// Child <see cref="ForEach{TParent, TChild}"/> factories get the parent so they can fill foreign keys.
+/// Ordered generation graph. <see cref="Entity{T}(int, Func{int, T})" /> factories return each item. The engine never references Bogus. Child
+/// <see cref="ForEach{TParent, TChild}" /> factories get the parent so they can fill foreign keys.
 /// </summary>
 public sealed class SeedGraph
 {
     private readonly List<ISeedStep> _steps = [];
-    private Func<ISeedTransport, CancellationToken, Task<bool>>? _skipWhen;
     private Func<ISeedTransport, CancellationToken, Task<bool>>? _defaultOccupied;
-    private Func<SeedSession, CancellationToken, Task>? _onClear;
+    private Func<ISeedTransport, CancellationToken, Task<bool>>? _skipWhen;
 
-    /// <summary>CLR type of the first <see cref="Entity{T}(int, Func{int, T})"/> registration, used for the default skip-if-not-empty check.</summary>
+    /// <summary>CLR type of the first <see cref="Entity{T}(int, Func{int, T})" /> registration, used for the default skip-if-not-empty check.</summary>
     internal Type? RootType { get; private set; }
 
     internal Func<ISeedTransport, CancellationToken, Task<bool>>? SkipWhenCallback => _skipWhen ?? _defaultOccupied;
 
-    internal Func<SeedSession, CancellationToken, Task>? OnClearCallback => _onClear;
+    internal Func<SeedSession, CancellationToken, Task>? OnClearCallback { get; private set; }
 
-    /// <summary>Builds <paramref name="count"/> items with <paramref name="create"/> (0-based index) and writes them as one batch.</summary>
+    /// <summary>Builds <paramref name="count" /> items with <paramref name="create" /> (0-based index) and writes them as one batch.</summary>
     public SeedEntity<T> Entity<T>(int count, Func<int, T> create)
         where T : class
     {
@@ -45,22 +44,20 @@ public sealed class SeedGraph
     }
 
     /// <summary>
-    /// After each generated <typeparamref name="TParent"/>, builds N children. A prior <see cref="Entity{T}(int, Func{int, T})"/> or <c>ForEach</c> for
-    /// <typeparamref name="TParent"/> is required.
+    /// After each generated <typeparamref name="TParent" />, builds N children. A prior <see cref="Entity{T}(int, Func{int, T})" /> or <c>ForEach</c> for
+    /// <typeparamref name="TParent" /> is required.
     /// </summary>
     public SeedEntity<TChild> ForEach<TParent, TChild>(Func<TParent, int> count, Func<TParent, int, TChild> create)
-        where TParent : class
-        where TChild : class
+        where TParent : class where TChild : class
     {
         ArgumentHelpers.ThrowIfNull(count);
         ArgumentHelpers.ThrowIfNull(create);
-        var parent = FindParentStep<TParent>()
-            ?? throw new SeedException($"No parent set registered for {typeof(TParent).Name}. Call Entity<{typeof(TParent).Name}> first.");
+        var parent = FindParentStep<TParent>() ?? throw new SeedException($"No parent set registered for {typeof(TParent).Name}. Call Entity<{typeof(TParent).Name}> first.");
         var child = parent.AddChild(count, create);
         return new(this, child);
     }
 
-    /// <summary>Runs after earlier entity batches have been written. Use <see cref="SeedSession.Generated{T}"/> and <see cref="SeedSession.PersistAsync{T}"/>.</summary>
+    /// <summary>Runs after earlier entity batches have been written. Use <see cref="SeedSession.Generated{T}" /> and <see cref="SeedSession.PersistAsync{T}" />.</summary>
     public SeedGraph After(Func<SeedSession, CancellationToken, Task> step)
     {
         ArgumentHelpers.ThrowIfNull(step);
@@ -76,11 +73,11 @@ public sealed class SeedGraph
         return this;
     }
 
-    /// <summary>Required for <see cref="SeedConflictMode.Replace"/>. Delete existing rows in a schema-safe order.</summary>
+    /// <summary>Required for <see cref="SeedConflictMode.Replace" />. Delete existing rows in a schema-safe order.</summary>
     public SeedGraph OnClear(Func<SeedSession, CancellationToken, Task> clear)
     {
         ArgumentHelpers.ThrowIfNull(clear);
-        _onClear = clear;
+        OnClearCallback = clear;
         return this;
     }
 
@@ -107,6 +104,7 @@ public sealed class SeedGraph
         for (var i = _steps.Count - 1; i >= 0; i--) {
             if (_steps[i] is IParentStep parent && parent.ItemType == typeof(TParent))
                 return parent;
+
             if (_steps[i] is IParentStep nested) {
                 var found = nested.FindDescendant(typeof(TParent));
                 if (found != null)
@@ -118,7 +116,7 @@ public sealed class SeedGraph
     }
 }
 
-/// <summary>Fluent handle for one generated set. Sibling <see cref="ForEach{TChild}"/> calls stay here; chaining <c>ForEach</c> nests under the child type.</summary>
+/// <summary>Fluent handle for one generated set. Sibling <see cref="ForEach{TChild}" /> calls stay here; chaining <c>ForEach</c> nests under the child type.</summary>
 public sealed class SeedEntity<T>
     where T : class
 {
@@ -141,7 +139,7 @@ public sealed class SeedEntity<T>
         return new(_graph, child);
     }
 
-    /// <summary>Adds an <see cref="SeedGraph.After"/> callback on the parent graph.</summary>
+    /// <summary>Adds an <see cref="SeedGraph.After" /> callback on the parent graph.</summary>
     public SeedGraph After(Func<SeedSession, CancellationToken, Task> step) => _graph.After(step);
 }
 
@@ -155,8 +153,7 @@ internal interface IParentStep : ISeedStep
     Type ItemType { get; }
 
     IParentStep AddChild<TParent, TChild>(Func<TParent, int> count, Func<TParent, int, TChild> create)
-        where TParent : class
-        where TChild : class;
+        where TParent : class where TChild : class;
 
     IParentStep? FindDescendant(Type type);
 }
@@ -164,10 +161,10 @@ internal interface IParentStep : ISeedStep
 internal sealed class EntityStep<T> : IParentStep
     where T : class
 {
+    private readonly List<IParentStep> _children = [];
     private readonly int _count;
     private readonly Func<int, T>? _create;
     private readonly IReadOnlyList<T>? _items;
-    private readonly List<IParentStep> _children = [];
 
     public EntityStep(int count, Func<int, T> create)
     {
@@ -180,14 +177,13 @@ internal sealed class EntityStep<T> : IParentStep
     public Type ItemType => typeof(T);
 
     public IParentStep AddChild<TParent, TChild>(Func<TParent, int> count, Func<TParent, int, TChild> create)
-        where TParent : class
-        where TChild : class
+        where TParent : class where TChild : class
     {
         if (typeof(TParent) != typeof(T))
             throw new SeedException($"Child parent type {typeof(TParent).Name} does not match {typeof(T).Name}.");
 
-        var typedCount = (Func<T, int>)(object)count;
-        var typedCreate = (Func<T, int, TChild>)(object)create;
+        var typedCount = (Func<T, int>)count;
+        var typedCreate = (Func<T, int, TChild>)create;
         var child = new ForEachStep<T, TChild>(typedCount, typedCreate);
         _children.Add(child);
         return child;
@@ -198,6 +194,7 @@ internal sealed class EntityStep<T> : IParentStep
         foreach (var child in _children) {
             if (child.ItemType == type)
                 return child;
+
             var nested = child.FindDescendant(type);
             if (nested != null)
                 return nested;
@@ -216,6 +213,7 @@ internal sealed class EntityStep<T> : IParentStep
             var list = new List<T>(_count);
             for (var i = 0; i < _count; i++)
                 list.Add(_create(i));
+
             generated = list;
         }
 
@@ -226,12 +224,11 @@ internal sealed class EntityStep<T> : IParentStep
 }
 
 internal sealed class ForEachStep<TParent, TChild> : IParentStep
-    where TParent : class
-    where TChild : class
+    where TParent : class where TChild : class
 {
+    private readonly List<IParentStep> _children = [];
     private readonly Func<TParent, int> _count;
     private readonly Func<TParent, int, TChild> _create;
-    private readonly List<IParentStep> _children = [];
 
     public ForEachStep(Func<TParent, int> count, Func<TParent, int, TChild> create)
     {
@@ -242,14 +239,13 @@ internal sealed class ForEachStep<TParent, TChild> : IParentStep
     public Type ItemType => typeof(TChild);
 
     public IParentStep AddChild<TNestedParent, TNestedChild>(Func<TNestedParent, int> count, Func<TNestedParent, int, TNestedChild> create)
-        where TNestedParent : class
-        where TNestedChild : class
+        where TNestedParent : class where TNestedChild : class
     {
         if (typeof(TNestedParent) != typeof(TChild))
             throw new SeedException($"Child parent type {typeof(TNestedParent).Name} does not match {typeof(TChild).Name}.");
 
-        var typedCount = (Func<TChild, int>)(object)count;
-        var typedCreate = (Func<TChild, int, TNestedChild>)(object)create;
+        var typedCount = (Func<TChild, int>)count;
+        var typedCreate = (Func<TChild, int, TNestedChild>)create;
         var child = new ForEachStep<TChild, TNestedChild>(typedCount, typedCreate);
         _children.Add(child);
         return child;
@@ -260,6 +256,7 @@ internal sealed class ForEachStep<TParent, TChild> : IParentStep
         foreach (var child in _children) {
             if (child.ItemType == type)
                 return child;
+
             var nested = child.FindDescendant(type);
             if (nested != null)
                 return nested;

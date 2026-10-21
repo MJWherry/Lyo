@@ -70,8 +70,8 @@ public interface ICompressionService
     Task<string> DecompressStringFromStreamAsync(Stream inputStream, Encoding? encoding = null, CancellationToken ct = default);
 
     /// <summary>
-    /// Compresses a file on disk. When <paramref name="outputFilePath" /> is null, the output path is derived from <paramref name="inputFilePath" /> and <see cref="FileExtension" />
-    /// .
+    /// Compresses a file on disk. When <paramref name="outputFilePath" /> is null, the output path is derived from <paramref name="inputFilePath" /> and
+    /// <see cref="FileExtension" /> .
     /// </summary>
     FileCompressionInfo CompressFile(string inputFilePath, string? outputFilePath = null);
 
@@ -106,8 +106,8 @@ public interface ICompressionService
     bool IsLikelyCompressed(byte[] data);
 
     /// <summary>
-    /// Detects the compression algorithm from known magic bytes. <see langword="true" /> only when a magic matches AND the corresponding
-    /// <see cref="CompressionAlgorithm" /> is registered (addon algorithm assemblies self-register when loaded). Raw Deflate and Brotli are never detected (no magic bytes).
+    /// Detects the compression algorithm from known magic bytes. <see langword="true" /> only when a magic matches AND the corresponding <see cref="CompressionAlgorithm" /> is
+    /// registered (addon algorithm assemblies self-register when loaded). Raw Deflate and Brotli are never detected (no magic bytes).
     /// </summary>
     bool TryDetectAlgorithm(byte[]? data, out CompressionAlgorithm? algorithm);
 

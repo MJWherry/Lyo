@@ -1,5 +1,4 @@
 using Lyo.Common.Core.Enums;
-using Lyo.Leaderboard;
 using Lyo.Leaderboard.Enums;
 
 namespace Lyo.Leaderboard.Tests;

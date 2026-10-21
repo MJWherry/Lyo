@@ -1,8 +1,8 @@
 namespace Lyo.Job.Postgres;
 
 /// <summary>
-/// Message-queue topology settings for the job system. Worker run queues are declared at host startup (via
-/// <see cref="Events.MqJobEventPublisher.SetupAsync" />) and again by each worker for its own type if the broker is still empty.
+/// Message-queue topology settings for the job system. Worker run queues are declared at host startup (via <see cref="Events.MqJobEventPublisher.SetupAsync" />) and again by
+/// each worker for its own type if the broker is still empty.
 /// </summary>
 public sealed class JobMqOptions
 {

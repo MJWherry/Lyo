@@ -21,8 +21,7 @@ public sealed class SmsNotificationWorkerOptions
     public string? DlqName { get; set; }
 
     /// <summary>Checks the options and returns the list of validation failures (empty when valid).</summary>
-    public IReadOnlyList<string> GetValidationErrors()
-        => string.IsNullOrWhiteSpace(WorkerType) ? [$"{nameof(WorkerType)} is required."] : [];
+    public IReadOnlyList<string> GetValidationErrors() => string.IsNullOrWhiteSpace(WorkerType) ? [$"{nameof(WorkerType)} is required."] : [];
 
     /// <summary>Throws when the options are invalid.</summary>
     /// <exception cref="ValidationException">One or more options are invalid.</exception>

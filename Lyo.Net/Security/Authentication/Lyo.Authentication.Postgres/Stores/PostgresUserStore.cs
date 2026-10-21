@@ -18,11 +18,7 @@ public sealed class PostgresUserStore : IUserStore
     private readonly ILogger<PostgresUserStore> _logger;
 
     /// <summary>Builds a new store.</summary>
-    public PostgresUserStore(
-        IDbContextFactory<UserDbContext> contextFactory,
-        ILogger<PostgresUserStore> logger,
-        EntityRefOptions entityRefOptions,
-        PostgresUserOptions userOptions)
+    public PostgresUserStore(IDbContextFactory<UserDbContext> contextFactory, ILogger<PostgresUserStore> logger, EntityRefOptions entityRefOptions, PostgresUserOptions userOptions)
     {
         ArgumentHelpers.ThrowIfNull(contextFactory);
         ArgumentHelpers.ThrowIfNull(logger);

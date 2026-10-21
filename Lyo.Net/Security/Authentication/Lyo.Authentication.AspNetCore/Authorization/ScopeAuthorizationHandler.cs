@@ -5,10 +5,10 @@ using Microsoft.AspNetCore.Authorization;
 namespace Lyo.Authentication.AspNetCore.Authorization;
 
 /// <summary>
-/// Handles <see cref="ScopeAuthorizationRequirement" />. Walks every <c>scope</c> claim on the principal: (a) one claim per scope (opaque-token shape) and (b) a
-/// single space-delimited entry (legacy JWT; the Lyo JWT validator already splits on issue, but this still accepts the old form for cross-issuer use). When an
-/// <see cref="IScopeRegistry" /> is registered, each held scope expands under <see cref="Scope.TransitiveImplies" /> so a holder of <c>admin</c> also satisfies
-/// <c>people.read</c> when that relationship is declared.
+/// Handles <see cref="ScopeAuthorizationRequirement" />. Walks every <c>scope</c> claim on the principal: (a) one claim per scope (opaque-token shape) and (b) a single
+/// space-delimited entry (legacy JWT; the Lyo JWT validator already splits on issue, but this still accepts the old form for cross-issuer use). When an <see cref="IScopeRegistry" />
+/// is registered, each held scope expands under <see cref="Scope.TransitiveImplies" /> so a holder of <c>admin</c> also satisfies <c>people.read</c> when that relationship is
+/// declared.
 /// </summary>
 public sealed class ScopeAuthorizationHandler : AuthorizationHandler<ScopeAuthorizationRequirement>
 {

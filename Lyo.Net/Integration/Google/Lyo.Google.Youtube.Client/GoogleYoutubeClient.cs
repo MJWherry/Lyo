@@ -18,7 +18,9 @@ public sealed class GoogleYoutubeClient : LyoHttpClient, IYoutubeClient
     private readonly GoogleYoutubeClientOptions _options;
 
     public GoogleYoutubeClient(GoogleYoutubeClientOptions options, ILoggerFactory? loggerFactory = null, HttpClient? httpClient = null)
-        : base(loggerFactory?.CreateLogger<GoogleYoutubeClient>() ?? NullLoggerFactory.Instance.CreateLogger<GoogleYoutubeClient>(), httpClient, new() { PropertyNameCaseInsensitive = true }, options)
+        : base(
+            loggerFactory?.CreateLogger<GoogleYoutubeClient>() ?? NullLoggerFactory.Instance.CreateLogger<GoogleYoutubeClient>(), httpClient,
+            new() { PropertyNameCaseInsensitive = true }, options)
     {
         ArgumentHelpers.ThrowIfNull(options);
         _options = options;
@@ -54,22 +56,25 @@ public sealed class GoogleYoutubeClient : LyoHttpClient, IYoutubeClient
         for (var page = 0; page < MaxPages; page++) {
             var token = pageToken is { Length: > 0 } ? $"&pageToken={Esc(pageToken)}" : "";
             var result = await GetAsAsync<PlaylistItemListWire>(
-                $"playlistItems?part=snippet,contentDetails&maxResults={PageSize}&playlistId={Esc(playlistId)}{token}&key={Esc(_options.ApiKey)}",
-                ct: ct).ConfigureAwait(false);
+                    $"playlistItems?part=snippet,contentDetails&maxResults={PageSize}&playlistId={Esc(playlistId)}{token}&key={Esc(_options.ApiKey)}", ct: ct)
+                .ConfigureAwait(false);
+
             if (result?.Items != null) {
                 foreach (var item in result.Items) {
                     var videoId = item.ContentDetails?.VideoId ?? item.Snippet?.ResourceId?.VideoId;
                     if (videoId is not { Length: > 0 })
                         continue;
-                    items.Add(new YoutubePlaylistItem {
-                        PlaylistId = playlistId,
-                        VideoId = videoId,
-                        Title = item.Snippet?.Title,
-                        Description = item.Snippet?.Description,
-                        PublishedAt = item.Snippet?.PublishedAt,
-                        Position = item.Snippet?.Position ?? 0,
-                        ThumbnailUrl = item.Snippet?.Thumbnails?.High?.Url ?? item.Snippet?.Thumbnails?.Default?.Url
-                    });
+
+                    items.Add(
+                        new() {
+                            PlaylistId = playlistId,
+                            VideoId = videoId,
+                            Title = item.Snippet?.Title,
+                            Description = item.Snippet?.Description,
+                            PublishedAt = item.Snippet?.PublishedAt,
+                            Position = item.Snippet?.Position ?? 0,
+                            ThumbnailUrl = item.Snippet?.Thumbnails?.High?.Url ?? item.Snippet?.Thumbnails?.Default?.Url
+                        });
                 }
             }
 
@@ -98,6 +103,7 @@ public sealed class GoogleYoutubeClient : LyoHttpClient, IYoutubeClient
     {
         if (string.IsNullOrWhiteSpace(value))
             return null;
+
         try {
             return XmlConvert.ToTimeSpan(value);
         }
@@ -111,14 +117,14 @@ public sealed class GoogleYoutubeClient : LyoHttpClient, IYoutubeClient
             "public" => YoutubePrivacy.Public,
             "unlisted" => YoutubePrivacy.Unlisted,
             "private" => YoutubePrivacy.Private,
-            _ => YoutubePrivacy.Unknown
+            var _ => YoutubePrivacy.Unknown
         };
 
     private static YoutubeLiveStatus ParseLive(string? value)
         => value?.ToLower(CultureInfo.InvariantCulture) switch {
             "live" => YoutubeLiveStatus.Live,
             "upcoming" => YoutubeLiveStatus.Upcoming,
-            _ => YoutubeLiveStatus.None
+            var _ => YoutubeLiveStatus.None
         };
 
     private static string Esc(string value) => Uri.EscapeDataString(value);

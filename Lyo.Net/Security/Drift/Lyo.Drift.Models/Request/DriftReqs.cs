@@ -1,3 +1,5 @@
+using Lyo.FileSystemWatcher.Models;
+
 namespace Lyo.Drift.Models.Request;
 
 /// <summary>Upsert payload for a drift agent instance.</summary>
@@ -68,5 +70,5 @@ public sealed class DriftChangeBatchReq
 
     public string? WatchRoot { get; set; }
 
-    public IList<Lyo.FileSystemWatcher.Models.FileSystemChangeDto> Changes { get; set; } = [];
+    public IList<FileSystemChangeDto> Changes { get; set; } = [];
 }

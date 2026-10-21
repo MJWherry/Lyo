@@ -7,18 +7,18 @@ namespace Lyo.RateLimit.Tests;
 public sealed class RedisRateLimitServiceRedisTests : RedisContainerFixtureBase
 {
     private const long Epoch = 1_700_000_000_000L;
-    private IConnectionMultiplexer? _firstMux;
-    private IConnectionMultiplexer? _secondMux;
     private RedisRateLimitService? _first;
+    private IConnectionMultiplexer? _firstMux;
     private RedisRateLimitService? _second;
+    private IConnectionMultiplexer? _secondMux;
 
     protected override async ValueTask OnContainerStartedAsync(string connectionString, CancellationToken cancellationToken)
     {
         _firstMux = await ConnectionMultiplexer.ConnectAsync(connectionString);
         _secondMux = await ConnectionMultiplexer.ConnectAsync(connectionString);
         var options = new RedisRateLimitOptions();
-        _first = new RedisRateLimitService(_firstMux, options);
-        _second = new RedisRateLimitService(_secondMux, options);
+        _first = new(_firstMux, options);
+        _second = new(_secondMux, options);
     }
 
     protected override async ValueTask OnContainerDisposingAsync(CancellationToken cancellationToken)
@@ -84,6 +84,5 @@ public sealed class RedisRateLimitServiceRedisTests : RedisContainerFixtureBase
 
     private RedisRateLimitService Second() => _second ?? throw new InvalidOperationException("Redis is not started.");
 
-    private static RateLimitRequest Req(RateLimitWindow pattern, long now, string policy)
-        => new(policy, "user", 4, TimeSpan.FromSeconds(10), pattern, now);
+    private static RateLimitRequest Req(RateLimitWindow pattern, long now, string policy) => new(policy, "user", 4, TimeSpan.FromSeconds(10), pattern, now);
 }

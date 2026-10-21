@@ -1,10 +1,8 @@
-using System.Data.Common;
 using Lyo.Exceptions.Models;
 using Lyo.Health;
 using Lyo.Idempotency;
 using Lyo.Idempotency.Postgres;
 using Lyo.MessageQueue;
-using Lyo.Metrics;
 using Lyo.Outbox.Postgres;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
@@ -50,7 +48,7 @@ public sealed class OutboxTests(OutboxPostgresFixture fixture) : IClassFixture<O
     [Fact]
     public async Task Enqueue_DifferentPayload_RollsBackBusinessRow_AndScopeOverCapLeavesNoRow()
     {
-        var (store, outbox) = Pair(limits: new IdempotencyOptions { MaxScopeLength = 1024, MaxPayloadBytes = 4 });
+        var (store, outbox) = Pair(new() { MaxScopeLength = 1024, MaxPayloadBytes = 4 });
         var probe = Guid.NewGuid();
         var caller = "caller-" + Guid.NewGuid().ToString("N");
         await using var conn = await OpenAsync();
@@ -60,18 +58,45 @@ public sealed class OutboxTests(OutboxPostgresFixture fixture) : IClassFixture<O
             await insert.ExecuteNonQueryAsync(TestCt);
         }
 
-        await outbox.EnqueueAsync(tx, new OutboxMessage { Destination = "email", Payload = "abcd"u8.ToArray(), CallerScope = caller, Key = "k" }, TestCt);
-        await Assert.ThrowsAsync<ConflictException>(() => outbox.EnqueueAsync(tx, new OutboxMessage { Destination = "email", Payload = "abce"u8.ToArray(), CallerScope = caller, Key = "k" }, TestCt));
+        await outbox.EnqueueAsync(
+            tx, new() {
+                Destination = "email",
+                Payload = "abcd"u8.ToArray(),
+                CallerScope = caller,
+                Key = "k"
+            }, TestCt);
+
+        await Assert.ThrowsAsync<ConflictException>(() => outbox.EnqueueAsync(
+            tx, new() {
+                Destination = "email",
+                Payload = "abce"u8.ToArray(),
+                CallerScope = caller,
+                Key = "k"
+            }, TestCt));
+
         await Assert.ThrowsAnyAsync<Exception>(() => tx.CommitAsync(TestCt));
         Assert.Equal(0, await ProbeCountAsync(probe));
-
         var tooLong = new string('s', 1020);
         await using var tx2 = await conn.BeginTransactionAsync(TestCt);
-        await Assert.ThrowsAsync<ArgumentException>(() => outbox.EnqueueAsync(tx2, new OutboxMessage { Destination = "email", Payload = "ok"u8.ToArray(), CallerScope = tooLong, Key = "k2" }, TestCt));
+        await Assert.ThrowsAsync<ArgumentException>(() => outbox.EnqueueAsync(
+            tx2, new() {
+                Destination = "email",
+                Payload = "ok"u8.ToArray(),
+                CallerScope = tooLong,
+                Key = "k2"
+            }, TestCt));
+
         await tx2.RollbackAsync(TestCt);
         Assert.Equal(0, await CountScopeAsync("outbox/email/" + tooLong));
         await using var tx3 = await conn.BeginTransactionAsync(TestCt);
-        await Assert.ThrowsAsync<ArgumentException>(() => outbox.EnqueueAsync(tx3, new OutboxMessage { Destination = "a/b", Payload = "ok"u8.ToArray(), CallerScope = "c", Key = "k3" }, TestCt));
+        await Assert.ThrowsAsync<ArgumentException>(() => outbox.EnqueueAsync(
+            tx3, new() {
+                Destination = "a/b",
+                Payload = "ok"u8.ToArray(),
+                CallerScope = "c",
+                Key = "k3"
+            }, TestCt));
+
         await tx3.RollbackAsync(TestCt);
         _ = store;
     }
@@ -86,7 +111,7 @@ public sealed class OutboxTests(OutboxPostgresFixture fixture) : IClassFixture<O
         await dispatcher.DispatchOnceAsync(TestCt);
         await dispatcher.DispatchOnceAsync(TestCt);
         Assert.Equal(1, queue.Sends);
-        Assert.Equal("completed", await StateAsync((await IdAsync(message))));
+        Assert.Equal("completed", await StateAsync(await IdAsync(message)));
         _ = store;
     }
 
@@ -94,10 +119,12 @@ public sealed class OutboxTests(OutboxPostgresFixture fixture) : IClassFixture<O
     public async Task Dispatcher_FalseSend_RetriesLater()
     {
         var now = DateTime.UtcNow;
-        var (store, outbox, queue, dispatcher) = Dispatch(() => now, o => {
-            o.Backoff = TimeSpan.FromSeconds(5);
-            o.MaxAttempts = 3;
-        });
+        var (store, outbox, queue, dispatcher) = Dispatch(
+            () => now, o => {
+                o.Backoff = TimeSpan.FromSeconds(5);
+                o.MaxAttempts = 3;
+            });
+
         await ClearOutboxAsync();
         var message = Message("email", "body"u8.ToArray());
         await CommitAsync(outbox, message);
@@ -129,7 +156,6 @@ public sealed class OutboxTests(OutboxPostgresFixture fixture) : IClassFixture<O
         queue.Result = true;
         await dispatcher.DispatchOnceAsync(TestCt);
         Assert.Equal("completed", await StateAsync(id));
-
         var api = await store.TryBeginAsync("api|" + Guid.NewGuid().ToString("N") + "|POST|/x", "k", IdempotencyHash.Of("a"u8.ToArray()), ct: TestCt);
         Assert.True(await store.FailAsync(api.Id, api.LeaseToken!.Value, 500, null, null, TestCt));
         Assert.False(await outbox.ReplayFailedAsync(api.Id, TestCt));
@@ -144,7 +170,7 @@ public sealed class OutboxTests(OutboxPostgresFixture fixture) : IClassFixture<O
         var (store, outbox, queue, dispatcher) = Dispatch();
         await ClearOutboxAsync();
         var otherQueue = new FakeQueue();
-        var other = new OutboxDispatcher(new OutboxDispatcherOptions(), store, otherQueue);
+        var other = new OutboxDispatcher(new(), store, otherQueue);
         var message = Message("email", "body"u8.ToArray());
         await CommitAsync(outbox, message);
         queue.Send = async (_, _) => {
@@ -152,6 +178,7 @@ public sealed class OutboxTests(OutboxPostgresFixture fixture) : IClassFixture<O
             await release.Task;
             return true;
         };
+
         var first = dispatcher.DispatchOnceAsync(TestCt);
         await started.Task.WaitAsync(TestCt);
         await other.DispatchOnceAsync(TestCt);
@@ -168,7 +195,7 @@ public sealed class OutboxTests(OutboxPostgresFixture fixture) : IClassFixture<O
         var (store, outbox, queueA, dispatcherA) = Dispatch(() => now);
         await ClearOutboxAsync();
         var queueB = new FakeQueue { Result = true };
-        var dispatcherB = new OutboxDispatcher(new OutboxDispatcherOptions { Lease = TimeSpan.FromSeconds(30) }, store, queueB, utcNow: () => now);
+        var dispatcherB = new OutboxDispatcher(new() { Lease = TimeSpan.FromSeconds(30) }, store, queueB, utcNow: () => now);
         var message = Message("email", "body"u8.ToArray());
         await CommitAsync(outbox, message);
         queueA.Send = async (_, _) => {
@@ -176,6 +203,7 @@ public sealed class OutboxTests(OutboxPostgresFixture fixture) : IClassFixture<O
             await dispatcherB.DispatchOnceAsync(TestCt);
             return false;
         };
+
         await dispatcherA.DispatchOnceAsync(TestCt);
         var id = await IdAsync(message);
         Assert.Equal("completed", await StateAsync(id));
@@ -223,7 +251,7 @@ public sealed class OutboxTests(OutboxPostgresFixture fixture) : IClassFixture<O
             options.Limits = limits;
 
         var store = new PostgresIdempotencyStore(options);
-        return (store, new PostgresOutbox(store));
+        return (store, new(store));
     }
 
     private (PostgresIdempotencyStore Store, PostgresOutbox Outbox, FakeQueue Queue, OutboxDispatcher Dispatcher) Dispatch(
@@ -286,9 +314,9 @@ public sealed class OutboxTests(OutboxPostgresFixture fixture) : IClassFixture<O
     private async Task<int> CountScopeAsync(string scope, string? key = null)
     {
         await using var conn = await OpenAsync();
-        await using var cmd = new NpgsqlCommand(key is null
-            ? "SELECT COUNT(*) FROM idempotency.entry WHERE scope = @scope"
-            : "SELECT COUNT(*) FROM idempotency.entry WHERE scope = @scope AND key = @key", conn);
+        await using var cmd = new NpgsqlCommand(
+            key is null ? "SELECT COUNT(*) FROM idempotency.entry WHERE scope = @scope" : "SELECT COUNT(*) FROM idempotency.entry WHERE scope = @scope AND key = @key", conn);
+
         cmd.Parameters.AddWithValue("scope", scope);
         if (key is not null)
             cmd.Parameters.AddWithValue("key", key);
@@ -326,6 +354,7 @@ public sealed class OutboxTests(OutboxPostgresFixture fixture) : IClassFixture<O
         await using var conn = await OpenAsync();
         await using (var setup = new NpgsqlCommand("CREATE TABLE IF NOT EXISTS idem_probe (id uuid PRIMARY KEY)", conn))
             await setup.ExecuteNonQueryAsync(TestCt);
+
         await using var cmd = new NpgsqlCommand("SELECT COUNT(*) FROM idem_probe WHERE id = @id", conn);
         cmd.Parameters.AddWithValue("id", id);
         return (int)(long)(await cmd.ExecuteScalarAsync(TestCt))!;
@@ -368,17 +397,32 @@ public sealed class OutboxTests(OutboxPostgresFixture fixture) : IClassFixture<O
 
         public bool IsConnected() => true;
 
-        public Task<bool> CreateQueue(string queueName, bool durable = true, bool exclusive = false, bool autoDelete = false, IDictionary<string, object>? arguments = null, CancellationToken ct = default) => Task.FromResult(true);
+        public Task<bool> CreateQueue(
+            string queueName,
+            bool durable = true,
+            bool exclusive = false,
+            bool autoDelete = false,
+            IDictionary<string, object>? arguments = null,
+            CancellationToken ct = default)
+            => Task.FromResult(true);
 
         public Task<bool> DeleteQueue(string queueName, bool ifUnused = false, bool ifEmpty = false, CancellationToken ct = default) => Task.FromResult(true);
 
         public Task<bool> ClearQueue(string queueName, CancellationToken ct = default) => Task.FromResult(true);
 
-        public Task<IReadOnlyList<QueuePeekMessage>> PeekQueueMessages(string queueName, int maxMessages = 10, CancellationToken ct = default) => Task.FromResult<IReadOnlyList<QueuePeekMessage>>([]);
+        public Task<IReadOnlyList<QueuePeekMessage>> PeekQueueMessages(string queueName, int maxMessages = 10, CancellationToken ct = default)
+            => Task.FromResult<IReadOnlyList<QueuePeekMessage>>([]);
 
         public Task<bool> SubscribeToQueue(string queueName, Func<byte[], Task<bool>> onMessage, CancellationToken ct = default) => Task.FromResult(true);
 
-        public Task<bool> CreateExchange(string exchangeName, string exchangeType = "direct", bool durable = true, bool autoDelete = false, IDictionary<string, object>? arguments = null, CancellationToken ct = default) => Task.FromResult(true);
+        public Task<bool> CreateExchange(
+            string exchangeName,
+            string exchangeType = "direct",
+            bool durable = true,
+            bool autoDelete = false,
+            IDictionary<string, object>? arguments = null,
+            CancellationToken ct = default)
+            => Task.FromResult(true);
 
         public Task<bool> BindQueueToExchange(string queueName, string exchangeName, string routingKey, CancellationToken ct = default) => Task.FromResult(true);
 

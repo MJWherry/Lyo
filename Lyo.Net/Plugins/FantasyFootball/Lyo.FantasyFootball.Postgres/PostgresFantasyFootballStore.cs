@@ -15,14 +15,14 @@ public sealed class PostgresFantasyFootballStore(IDbContextFactory<FantasyFootba
         ArgumentHelpers.ThrowIfNegativeOrZero(league.EspnLeagueId);
         ArgumentHelpers.ThrowIfNegativeOrZero(league.SeasonId);
         await using var db = await contexts.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await db.Leagues
-            .Include(row => row.Members)
+        var entity = await db.Leagues.Include(row => row.Members)
             .Include(row => row.Teams)
             .ThenInclude(team => team.Roster)
             .FirstOrDefaultAsync(row => row.EspnLeagueId == league.EspnLeagueId && row.SeasonId == league.SeasonId, ct)
             .ConfigureAwait(false);
+
         if (entity == null) {
-            entity = new LeagueEntity { Id = league.Id == Guid.Empty ? LyoGuid.CreateV7() : league.Id, EspnLeagueId = league.EspnLeagueId, SeasonId = league.SeasonId };
+            entity = new() { Id = league.Id == Guid.Empty ? LyoGuid.CreateV7() : league.Id, EspnLeagueId = league.EspnLeagueId, SeasonId = league.SeasonId };
             db.Leagues.Add(entity);
         }
 
@@ -44,6 +44,7 @@ public sealed class PostgresFantasyFootballStore(IDbContextFactory<FantasyFootba
             .ThenInclude(team => team.Roster)
             .FirstOrDefaultAsync(row => row.EspnLeagueId == espnLeagueId && row.SeasonId == seasonId, ct)
             .ConfigureAwait(false);
+
         return entity == null ? null : ToLeague(entity);
     }
 
@@ -63,6 +64,7 @@ public sealed class PostgresFantasyFootballStore(IDbContextFactory<FantasyFootba
             .ThenBy(row => row.EspnTopicId)
             .ToListAsync(ct)
             .ConfigureAwait(false);
+
         return rows.Select(ToConversation).ToArray();
     }
 
@@ -71,7 +73,10 @@ public sealed class PostgresFantasyFootballStore(IDbContextFactory<FantasyFootba
     {
         ArgumentHelpers.ThrowIfNull(conversations);
         await using var db = await contexts.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var league = await db.Leagues.Include(row => row.Members).FirstOrDefaultAsync(row => row.EspnLeagueId == espnLeagueId && row.SeasonId == seasonId, ct).ConfigureAwait(false);
+        var league = await db.Leagues.Include(row => row.Members)
+            .FirstOrDefaultAsync(row => row.EspnLeagueId == espnLeagueId && row.SeasonId == seasonId, ct)
+            .ConfigureAwait(false);
+
         OperationHelpers.ThrowIf(league == null, "Save the league before saving conversations.");
         var members = league!.Members.ToDictionary(member => member.EspnMemberId, StringComparer.OrdinalIgnoreCase);
         foreach (var conversation in conversations) {
@@ -79,8 +84,9 @@ public sealed class PostgresFantasyFootballStore(IDbContextFactory<FantasyFootba
             var entity = await db.Conversations.Include(row => row.Members)
                 .FirstOrDefaultAsync(row => row.LeagueId == league.Id && row.EspnTopicId == conversation.EspnTopicId, ct)
                 .ConfigureAwait(false);
+
             if (entity == null) {
-                entity = new ConversationEntity { Id = conversation.Id == Guid.Empty ? LyoGuid.CreateV7() : conversation.Id, LeagueId = league.Id, EspnTopicId = conversation.EspnTopicId };
+                entity = new() { Id = conversation.Id == Guid.Empty ? LyoGuid.CreateV7() : conversation.Id, LeagueId = league.Id, EspnTopicId = conversation.EspnTopicId };
                 db.Conversations.Add(entity);
             }
 
@@ -94,7 +100,7 @@ public sealed class PostgresFantasyFootballStore(IDbContextFactory<FantasyFootba
                 if (string.IsNullOrWhiteSpace(member.EspnMemberId) || !members.TryGetValue(member.EspnMemberId, out var stored))
                     continue;
 
-                entity.Members.Add(new ConversationMemberEntity { ConversationId = entity.Id, MemberId = stored.Id });
+                entity.Members.Add(new() { ConversationId = entity.Id, MemberId = stored.Id });
             }
         }
 
@@ -106,7 +112,7 @@ public sealed class PostgresFantasyFootballStore(IDbContextFactory<FantasyFootba
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(espnTopicId);
         await using var db = await contexts.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var conversation = await FindConversationAsync(db, espnLeagueId, seasonId, espnTopicId, tracking: false, ct).ConfigureAwait(false);
+        var conversation = await FindConversationAsync(db, espnLeagueId, seasonId, espnTopicId, false, ct).ConfigureAwait(false);
         if (conversation == null)
             return [];
 
@@ -117,6 +123,7 @@ public sealed class PostgresFantasyFootballStore(IDbContextFactory<FantasyFootba
             .ThenBy(row => row.EspnMessageId)
             .ToListAsync(ct)
             .ConfigureAwait(false);
+
         return rows.Select(ToMessage).ToArray();
     }
 
@@ -130,7 +137,7 @@ public sealed class PostgresFantasyFootballStore(IDbContextFactory<FantasyFootba
         OperationHelpers.ThrowIf(league == null, "Save the league before saving messages.");
         var conversation = await db.Conversations.FirstOrDefaultAsync(row => row.LeagueId == league!.Id && row.EspnTopicId == espnTopicId, ct).ConfigureAwait(false);
         if (conversation == null) {
-            conversation = new ConversationEntity { Id = LyoGuid.CreateV7(), LeagueId = league!.Id, EspnTopicId = espnTopicId };
+            conversation = new() { Id = LyoGuid.CreateV7(), LeagueId = league!.Id, EspnTopicId = espnTopicId };
             db.Conversations.Add(conversation);
         }
 
@@ -139,8 +146,9 @@ public sealed class PostgresFantasyFootballStore(IDbContextFactory<FantasyFootba
             var entity = await db.Messages.Include(row => row.Players)
                 .FirstOrDefaultAsync(row => row.ConversationId == conversation.Id && row.EspnMessageId == message.EspnMessageId, ct)
                 .ConfigureAwait(false);
+
             if (entity == null) {
-                entity = new MessageEntity { Id = message.Id == Guid.Empty ? LyoGuid.CreateV7() : message.Id, ConversationId = conversation.Id, EspnMessageId = message.EspnMessageId };
+                entity = new() { Id = message.Id == Guid.Empty ? LyoGuid.CreateV7() : message.Id, ConversationId = conversation.Id, EspnMessageId = message.EspnMessageId };
                 db.Messages.Add(entity);
             }
 
@@ -152,16 +160,18 @@ public sealed class PostgresFantasyFootballStore(IDbContextFactory<FantasyFootba
             entity.EspnTransactionId = message.EspnTransactionId;
             db.MessagePlayers.RemoveRange(entity.Players);
             entity.Players.Clear();
-            foreach (var player in message.Players)
-                entity.Players.Add(new MessagePlayerEntity {
-                    Id = LyoGuid.CreateV7(),
-                    MessageId = entity.Id,
-                    Side = player.Side,
-                    EspnTeamId = player.EspnTeamId,
-                    PlayerId = player.PlayerId,
-                    PlayerName = player.PlayerName,
-                    Direction = player.Direction
-                });
+            foreach (var player in message.Players) {
+                entity.Players.Add(
+                    new() {
+                        Id = LyoGuid.CreateV7(),
+                        MessageId = entity.Id,
+                        Side = player.Side,
+                        EspnTeamId = player.EspnTeamId,
+                        PlayerId = player.PlayerId,
+                        PlayerName = player.PlayerName,
+                        Direction = player.Direction
+                    });
+            }
         }
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -195,8 +205,9 @@ public sealed class PostgresFantasyFootballStore(IDbContextFactory<FantasyFootba
             var entity = await db.Trades.Include(row => row.Items)
                 .FirstOrDefaultAsync(row => row.LeagueId == league!.Id && row.EspnTransactionId == trade.EspnTransactionId, ct)
                 .ConfigureAwait(false);
+
             if (entity == null) {
-                entity = new TradeEntity { Id = trade.Id == Guid.Empty ? LyoGuid.CreateV7() : trade.Id, LeagueId = league!.Id, EspnTransactionId = trade.EspnTransactionId };
+                entity = new() { Id = trade.Id == Guid.Empty ? LyoGuid.CreateV7() : trade.Id, LeagueId = league!.Id, EspnTransactionId = trade.EspnTransactionId };
                 db.Trades.Add(entity);
             }
 
@@ -207,15 +218,17 @@ public sealed class PostgresFantasyFootballStore(IDbContextFactory<FantasyFootba
             entity.Comment = trade.Comment;
             db.TradeItems.RemoveRange(entity.Items);
             entity.Items.Clear();
-            foreach (var item in trade.Items)
-                entity.Items.Add(new TradeItemEntity {
-                    Id = LyoGuid.CreateV7(),
-                    TradeId = entity.Id,
-                    FromEspnTeamId = item.FromEspnTeamId,
-                    ToEspnTeamId = item.ToEspnTeamId,
-                    PlayerId = item.PlayerId,
-                    PlayerName = item.PlayerName
-                });
+            foreach (var item in trade.Items) {
+                entity.Items.Add(
+                    new() {
+                        Id = LyoGuid.CreateV7(),
+                        TradeId = entity.Id,
+                        FromEspnTeamId = item.FromEspnTeamId,
+                        ToEspnTeamId = item.ToEspnTeamId,
+                        PlayerId = item.PlayerId,
+                        PlayerName = item.PlayerName
+                    });
+            }
         }
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -229,7 +242,7 @@ public sealed class PostgresFantasyFootballStore(IDbContextFactory<FantasyFootba
 
             var entity = league.Members.FirstOrDefault(row => string.Equals(row.EspnMemberId, member.EspnMemberId, StringComparison.OrdinalIgnoreCase));
             if (entity == null) {
-                entity = new MemberEntity { Id = member.Id == Guid.Empty ? LyoGuid.CreateV7() : member.Id, LeagueId = league.Id, EspnMemberId = member.EspnMemberId };
+                entity = new() { Id = member.Id == Guid.Empty ? LyoGuid.CreateV7() : member.Id, LeagueId = league.Id, EspnMemberId = member.EspnMemberId };
                 league.Members.Add(entity);
                 db.Members.Add(entity);
             }
@@ -245,7 +258,7 @@ public sealed class PostgresFantasyFootballStore(IDbContextFactory<FantasyFootba
         foreach (var team in teams) {
             var entity = league.Teams.FirstOrDefault(row => row.EspnTeamId == team.EspnTeamId);
             if (entity == null) {
-                entity = new TeamEntity { Id = team.Id == Guid.Empty ? LyoGuid.CreateV7() : team.Id, LeagueId = league.Id, EspnTeamId = team.EspnTeamId };
+                entity = new() { Id = team.Id == Guid.Empty ? LyoGuid.CreateV7() : team.Id, LeagueId = league.Id, EspnTeamId = team.EspnTeamId };
                 league.Teams.Add(entity);
                 db.Teams.Add(entity);
             }
@@ -273,15 +286,18 @@ public sealed class PostgresFantasyFootballStore(IDbContextFactory<FantasyFootba
             db.RosterEntries.Remove(row);
 
         foreach (var entry in wanted) {
-            var existing = team.Roster.FirstOrDefault(row => row.ScoringPeriodId == scoringPeriodId && row.PlayerId == entry.PlayerId && db.Entry(row).State != EntityState.Deleted);
+            var existing = team.Roster.FirstOrDefault(row
+                => row.ScoringPeriodId == scoringPeriodId && row.PlayerId == entry.PlayerId && db.Entry(row).State != EntityState.Deleted);
+
             if (existing == null) {
-                team.Roster.Add(new RosterEntryEntity {
-                    Id = LyoGuid.CreateV7(),
-                    TeamId = team.Id,
-                    ScoringPeriodId = scoringPeriodId,
-                    PlayerId = entry.PlayerId,
-                    PlayerName = entry.PlayerName
-                });
+                team.Roster.Add(
+                    new() {
+                        Id = LyoGuid.CreateV7(),
+                        TeamId = team.Id,
+                        ScoringPeriodId = scoringPeriodId,
+                        PlayerId = entry.PlayerId,
+                        PlayerName = entry.PlayerName
+                    });
             }
             else
                 existing.PlayerName = entry.PlayerName;
@@ -296,11 +312,15 @@ public sealed class PostgresFantasyFootballStore(IDbContextFactory<FantasyFootba
             .ConfigureAwait(false);
 
     private static async Task<ConversationEntity?> FindConversationAsync(
-        FantasyFootballDbContext db, int espnLeagueId, int seasonId, string espnTopicId, bool tracking, CancellationToken ct)
+        FantasyFootballDbContext db,
+        int espnLeagueId,
+        int seasonId,
+        string espnTopicId,
+        bool tracking,
+        CancellationToken ct)
     {
         var query = tracking ? db.Conversations : db.Conversations.AsNoTracking();
-        return await query.FirstOrDefaultAsync(
-                row => row.EspnTopicId == espnTopicId && row.League.EspnLeagueId == espnLeagueId && row.League.SeasonId == seasonId, ct)
+        return await query.FirstOrDefaultAsync(row => row.EspnTopicId == espnTopicId && row.League.EspnLeagueId == espnLeagueId && row.League.SeasonId == seasonId, ct)
             .ConfigureAwait(false);
     }
 
@@ -333,11 +353,10 @@ public sealed class PostgresFantasyFootballStore(IDbContextFactory<FantasyFootba
             Location = entity.Location,
             Nickname = entity.Nickname,
             PrimaryOwnerId = entity.PrimaryOwnerId,
-            Roster = entity.Roster.Where(row => row.ScoringPeriodId == scoringPeriodId).OrderBy(row => row.PlayerId).Select(row => new FantasyRosterEntryRecord {
-                ScoringPeriodId = row.ScoringPeriodId,
-                PlayerId = row.PlayerId,
-                PlayerName = row.PlayerName
-            }).ToArray()
+            Roster = entity.Roster.Where(row => row.ScoringPeriodId == scoringPeriodId)
+                .OrderBy(row => row.PlayerId)
+                .Select(row => new FantasyRosterEntryRecord { ScoringPeriodId = row.ScoringPeriodId, PlayerId = row.PlayerId, PlayerName = row.PlayerName })
+                .ToArray()
         };
 
     private static FantasyConversationRecord ToConversation(ConversationEntity entity)
@@ -361,13 +380,17 @@ public sealed class PostgresFantasyFootballStore(IDbContextFactory<FantasyFootba
             Content = entity.Content,
             SentAt = entity.SentAt,
             EspnTransactionId = entity.EspnTransactionId,
-            Players = entity.Players.OrderBy(player => player.Side).ThenBy(player => player.Direction).ThenBy(player => player.PlayerId).Select(player => new FantasyMessagePlayerRecord {
-                Side = player.Side,
-                EspnTeamId = player.EspnTeamId,
-                PlayerId = player.PlayerId,
-                PlayerName = player.PlayerName,
-                Direction = player.Direction
-            }).ToArray()
+            Players = entity.Players.OrderBy(player => player.Side)
+                .ThenBy(player => player.Direction)
+                .ThenBy(player => player.PlayerId)
+                .Select(player => new FantasyMessagePlayerRecord {
+                    Side = player.Side,
+                    EspnTeamId = player.EspnTeamId,
+                    PlayerId = player.PlayerId,
+                    PlayerName = player.PlayerName,
+                    Direction = player.Direction
+                })
+                .ToArray()
         };
 
     private static FantasyTradeRecord ToTrade(TradeEntity entity)
@@ -379,11 +402,13 @@ public sealed class PostgresFantasyFootballStore(IDbContextFactory<FantasyFootba
             ScoringPeriodId = entity.ScoringPeriodId,
             IsPending = entity.IsPending,
             Comment = entity.Comment,
-            Items = entity.Items.OrderBy(item => item.PlayerId).Select(item => new FantasyTradeItemRecord {
-                FromEspnTeamId = item.FromEspnTeamId,
-                ToEspnTeamId = item.ToEspnTeamId,
-                PlayerId = item.PlayerId,
-                PlayerName = item.PlayerName
-            }).ToArray()
+            Items = entity.Items.OrderBy(item => item.PlayerId)
+                .Select(item => new FantasyTradeItemRecord {
+                    FromEspnTeamId = item.FromEspnTeamId,
+                    ToEspnTeamId = item.ToEspnTeamId,
+                    PlayerId = item.PlayerId,
+                    PlayerName = item.PlayerName
+                })
+                .ToArray()
         };
 }

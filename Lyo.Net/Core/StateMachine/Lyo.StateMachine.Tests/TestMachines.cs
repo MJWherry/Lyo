@@ -88,9 +88,7 @@ internal static class TestMachines
         builder.Configure(JobState.Paused).SubstateOf(JobState.Running).Permit(JobTrigger.Resume, JobState.Running);
         builder.Configure(JobState.Throttled).SubstateOf(JobState.Running).Permit(JobTrigger.Complete, JobState.Queued);
         foreach (var state in Enum.GetValues<JobState>()) {
-            builder.Configure(state)
-                .OnEntry(t => t.Context.Log.Add($"enter:{state}"))
-                .OnExit(t => t.Context.Log.Add($"exit:{state}"));
+            builder.Configure(state).OnEntry(t => t.Context.Log.Add($"enter:{state}")).OnExit(t => t.Context.Log.Add($"exit:{state}"));
         }
 
         return builder;

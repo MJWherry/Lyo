@@ -81,16 +81,14 @@ public sealed class ReportHtmlSanitizerTests
     }
 
     [Fact]
-    public void Sanitize_StrayAngleBracket_IsEscaped()
-        => Assert.Equal("1 &lt; 2 &gt; 0", ReportHtmlSanitizer.Sanitize("1 < 2 > 0"));
+    public void Sanitize_StrayAngleBracket_IsEscaped() => Assert.Equal("1 &lt; 2 &gt; 0", ReportHtmlSanitizer.Sanitize("1 < 2 > 0"));
 
     [Fact]
     public void Sanitize_HttpImageSrc_IsKept()
         => Assert.Contains("src=\"https://example.com/a.png\"", ReportHtmlSanitizer.Sanitize("<img src=\"https://example.com/a.png\" alt=\"x\" />"), StringComparison.Ordinal);
 
     [Fact]
-    public void Sanitize_UnclosedDangerousElement_DropsRemainder()
-        => Assert.Equal(string.Empty, ReportHtmlSanitizer.Sanitize("<script>alert(1)"));
+    public void Sanitize_UnclosedDangerousElement_DropsRemainder() => Assert.Equal(string.Empty, ReportHtmlSanitizer.Sanitize("<script>alert(1)"));
 
     [Theory]
     [InlineData(null)]

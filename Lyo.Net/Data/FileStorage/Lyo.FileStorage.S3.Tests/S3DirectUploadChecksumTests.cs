@@ -33,10 +33,7 @@ public sealed class S3DirectUploadChecksumTests : IDisposable
     }
 
     private static GetObjectAttributesResponse ReportSha256(byte[] payload)
-        => new() {
-            ObjectSize = payload.Length,
-            Checksum = new() { ChecksumSHA256 = Convert.ToBase64String(SHA256.HashData(payload)), ChecksumType = ChecksumType.FULL_OBJECT }
-        };
+        => new() { ObjectSize = payload.Length, Checksum = new() { ChecksumSHA256 = Convert.ToBase64String(SHA256.HashData(payload)), ChecksumType = ChecksumType.FULL_OBJECT } };
 
     [Fact]
     public async Task BeginDirectUploadAsync_ExpectedSha256_SignsChecksumHeaderIntoPresignedPut()
@@ -44,7 +41,6 @@ public sealed class S3DirectUploadChecksumTests : IDisposable
         using var service = CreateService(out var fake);
         var sha = SHA256.HashData(TestData.Create(128, 1));
         var begin = await service.BeginDirectUploadAsync(new() { DeclaredMaxSizeBytes = 128, OriginalFileName = "a.bin", ExpectedSha256 = sha }, TestCt);
-
         var presign = Assert.Single(fake.PreSignedUrlRequests);
         Assert.Equal(Convert.ToBase64String(sha), presign.Headers[ChecksumHeader]);
         Assert.NotNull(begin.RequiredPutHeaders);
@@ -61,9 +57,7 @@ public sealed class S3DirectUploadChecksumTests : IDisposable
 
         fake.OnGetObjectAttributes = _ => ReportSha256(payload);
         fake.OnGetObject = _ => throw new InvalidOperationException("Finalize must not download the object.");
-
         var done = await service.CompleteDirectUploadAsync(begin.FileId, ct: TestCt);
-
         Assert.Equal(FileAvailability.Available, done.Availability);
         Assert.Equal(payload.Length, done.OriginalFileSize);
         Assert.Equal(SHA256.HashData(payload), done.OriginalFileHash);
@@ -83,9 +77,7 @@ public sealed class S3DirectUploadChecksumTests : IDisposable
             new() { DeclaredMaxSizeBytes = payload.Length, OriginalFileName = "a.bin", ExpectedSha256 = SHA256.HashData(payload) }, TestCt);
 
         fake.OnGetObjectAttributes = _ => ReportSha256(TestData.Create(4096, 4));
-
         await Assert.ThrowsAsync<InvalidDataException>(() => service.CompleteDirectUploadAsync(begin.FileId, ct: TestCt));
-
         Assert.Equal(FileAvailability.PendingDirectUpload, (await service.GetMetadataAsync(begin.FileId, TestCt)).Availability);
     }
 
@@ -103,7 +95,6 @@ public sealed class S3DirectUploadChecksumTests : IDisposable
         };
 
         var done = await service.CompleteDirectUploadAsync(begin.FileId, ct: TestCt);
-
         Assert.Equal(FileAvailability.Available, done.Availability);
         var get = Assert.Single(fake.GetObjectRequests);
         Assert.Equal(0, get.ByteRange.Start);
@@ -117,9 +108,7 @@ public sealed class S3DirectUploadChecksumTests : IDisposable
         var payload = TestData.Create(4096, 6);
         var begin = await service.BeginDirectUploadAsync(new() { DeclaredMaxSizeBytes = payload.Length, OriginalFileName = "a.bin" }, TestCt);
         fake.OnGetObject = _ => new() { ResponseStream = new MemoryStream(payload), ContentLength = payload.Length };
-
         var done = await service.CompleteDirectUploadAsync(begin.FileId, ct: TestCt);
-
         Assert.Single(fake.GetObjectAttributesRequests);
         Assert.Equal(SHA512.HashData(payload), done.OriginalFileHash);
         Assert.Equal(HashAlgorithm.Sha512, done.HashAlgorithm);
@@ -133,9 +122,7 @@ public sealed class S3DirectUploadChecksumTests : IDisposable
         var begin = await service.BeginDirectUploadAsync(new() { DeclaredMaxSizeBytes = payload.Length, OriginalFileName = "a.bin" }, TestCt);
         fake.OnGetObjectAttributes = _ => new() { ObjectSize = payload.Length, Checksum = new() { ChecksumCRC64NVME = "AAAAAAAAAAA=" } };
         fake.OnGetObject = _ => new() { ResponseStream = new MemoryStream(payload), ContentLength = payload.Length };
-
         var done = await service.CompleteDirectUploadAsync(begin.FileId, ct: TestCt);
-
         Assert.Single(fake.GetObjectAttributesRequests);
         Assert.Equal(SHA512.HashData(payload), done.OriginalFileHash);
     }
@@ -148,9 +135,7 @@ public sealed class S3DirectUploadChecksumTests : IDisposable
         var begin = await service.BeginDirectUploadAsync(new() { DeclaredMaxSizeBytes = payload.Length, OriginalFileName = "a.bin" }, TestCt);
         fake.OnGetObjectAttributes = _ => throw new AmazonS3Exception("Access Denied") { StatusCode = HttpStatusCode.Forbidden, ErrorCode = "AccessDenied" };
         fake.OnGetObject = _ => new() { ResponseStream = new MemoryStream(payload), ContentLength = payload.Length };
-
         var done = await service.CompleteDirectUploadAsync(begin.FileId, ct: TestCt);
-
         Assert.Single(fake.GetObjectAttributesRequests);
         Assert.Equal(SHA512.HashData(payload), done.OriginalFileHash);
     }

@@ -4,9 +4,7 @@ using Lyo.Exceptions.Models;
 
 namespace Lyo.QRCode.Payloads;
 
-/// <summary>
-/// <c>sms:</c> or <c>smsto:</c> URI. Starts as <c>sms:</c> (RFC-style). <c>smsto:</c> can crash Google Messages on Android when paired with a long <c>body</c> query.
-/// </summary>
+/// <summary><c>sms:</c> or <c>smsto:</c> URI. Starts as <c>sms:</c> (RFC-style). <c>smsto:</c> can crash Google Messages on Android when paired with a long <c>body</c> query.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class SmsPayload : IQrPayload
 {

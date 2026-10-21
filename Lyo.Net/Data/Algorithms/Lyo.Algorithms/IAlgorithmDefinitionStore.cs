@@ -1,9 +1,6 @@
 namespace Lyo.Algorithms;
 
-/// <summary>
-/// Persistence for catalog definitions. Memory, Postgres, and SQLite implement this.
-/// Writes are unvalidated; <see cref="IAlgorithmCatalog" /> checks keys and syntax.
-/// </summary>
+/// <summary>Persistence for catalog definitions. Memory, Postgres, and SQLite implement this. Writes are unvalidated; <see cref="IAlgorithmCatalog" /> checks keys and syntax.</summary>
 public interface IAlgorithmDefinitionStore
 {
     /// <summary>Appends a revision and makes it current. Creates the definition on the first call.</summary>

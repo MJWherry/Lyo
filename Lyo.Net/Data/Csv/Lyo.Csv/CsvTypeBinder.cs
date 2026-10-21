@@ -70,11 +70,8 @@ internal static class CsvTypeBinder
             return map.Columns;
 
         return MemberOrderSort.Sort(
-            map.Columns,
-            static column => column.HeaderName,
-            static column => column.Property.GetCustomAttribute<MemberOrderAttribute>()?.Order,
-            order,
-            orderNames).ToArray();
+                map.Columns, static column => column.HeaderName, static column => column.Property.GetCustomAttribute<MemberOrderAttribute>()?.Order, order, orderNames)
+            .ToArray();
     }
 
     public static string[] HeadersFor(IReadOnlyList<ColumnMap> columns)
@@ -298,9 +295,8 @@ internal static class CsvTypeBinder
 
     private static Expression CompileYesNoText(Expression propAccess, Type propType, bool isNullable)
     {
-        if (!isNullable) {
+        if (!isNullable)
             return Expression.Condition(propAccess, Expression.Constant("yes"), Expression.Constant("no"));
-        }
 
         return Expression.Condition(
             Expression.Property(propAccess, nameof(Nullable<bool>.HasValue)),

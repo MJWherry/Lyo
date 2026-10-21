@@ -25,8 +25,8 @@ public sealed record JobWorkflowGraphEdge(string FromName, string ToName, int St
 /// <summary>
 /// Places a workflow's steps left to right by dependency stage and precomputes the arrow between every dependency pair.
 /// <para>
-/// The geometry is arithmetic over fixed box and gap sizes rather than something measured from the DOM, so the graph needs no JavaScript and the layout can be asserted
-/// in tests. <see cref="JobWorkflowDiagram" /> copies it onto a diagram, and the view draws that diagram.
+/// The geometry is arithmetic over fixed box and gap sizes rather than something measured from the DOM, so the graph needs no JavaScript and the layout can be asserted in
+/// tests. <see cref="JobWorkflowDiagram" /> copies it onto a diagram, and the view draws that diagram.
 /// </para>
 /// </summary>
 public sealed class JobWorkflowGraphLayout
@@ -46,15 +46,6 @@ public sealed class JobWorkflowGraphLayout
     /// <summary>Vertical space between siblings sharing a stage.</summary>
     public const int RowGap = 20;
 
-    private JobWorkflowGraphLayout(IReadOnlyList<JobWorkflowGraphNode> nodes, IReadOnlyList<JobWorkflowGraphEdge> edges, IReadOnlyList<string> cyclic)
-    {
-        Nodes = nodes;
-        Edges = edges;
-        Cyclic = cyclic;
-        Width = nodes.Count == 0 ? 0 : nodes.Max(n => n.X) + NodeWidth;
-        Height = nodes.Count == 0 ? 0 : nodes.Max(n => n.Y) + NodeHeight;
-    }
-
     /// <summary>Placed nodes. Steps caught in a cycle are absent: they have no stage, so there is nowhere to draw them.</summary>
     public IReadOnlyList<JobWorkflowGraphNode> Nodes { get; }
 
@@ -70,22 +61,26 @@ public sealed class JobWorkflowGraphLayout
     /// <summary>Canvas height in pixels, covering the lowest node.</summary>
     public int Height { get; }
 
+    private JobWorkflowGraphLayout(IReadOnlyList<JobWorkflowGraphNode> nodes, IReadOnlyList<JobWorkflowGraphEdge> edges, IReadOnlyList<string> cyclic)
+    {
+        Nodes = nodes;
+        Edges = edges;
+        Cyclic = cyclic;
+        Width = nodes.Count == 0 ? 0 : nodes.Max(n => n.X) + NodeWidth;
+        Height = nodes.Count == 0 ? 0 : nodes.Max(n => n.Y) + NodeHeight;
+    }
+
     /// <summary>Lays out <paramref name="steps" />. Unnamed steps are skipped, and a dependency whose draft id is not in the list is ignored rather than invented.</summary>
     public static JobWorkflowGraphLayout Build(IReadOnlyList<JobWorkflowStepDraft> steps)
     {
         ArgumentHelpers.ThrowIfNull(steps);
-        var byId = steps.Where(s => s.Id != Guid.Empty && !string.IsNullOrWhiteSpace(s.StepName))
-            .GroupBy(s => s.Id)
-            .ToDictionary(g => g.Key, g => g.First());
-
+        var byId = steps.Where(s => s.Id != Guid.Empty && !string.IsNullOrWhiteSpace(s.StepName)).GroupBy(s => s.Id).ToDictionary(g => g.Key, g => g.First());
         var (levels, cyclic) = Layer(byId);
         var nodes = Place(levels);
         return new(nodes, BuildEdges(nodes, byId), cyclic);
     }
 
-    /// <summary>
-    /// Kahn-style layering: each pass emits every step whose dependencies are already placed. What is left when nothing can be emitted is exactly the cyclic remainder.
-    /// </summary>
+    /// <summary>Kahn-style layering: each pass emits every step whose dependencies are already placed. What is left when nothing can be emitted is exactly the cyclic remainder.</summary>
     private static (List<List<JobWorkflowStepDraft>> Levels, List<string> Cyclic) Layer(Dictionary<Guid, JobWorkflowStepDraft> byId)
     {
         List<List<JobWorkflowStepDraft>> levels = [];
@@ -141,8 +136,8 @@ public sealed class JobWorkflowGraphLayout
     }
 
     /// <summary>
-    /// Leaves the source's right edge, runs vertically in the gap just left of the target, and enters the target's left edge. Several edges sharing a side are spread down
-    /// that side so they do not draw on top of each other.
+    /// Leaves the source's right edge, runs vertically in the gap just left of the target, and enters the target's left edge. Several edges sharing a side are spread down that
+    /// side so they do not draw on top of each other.
     /// </summary>
     private static JobWorkflowGraphEdge Connect(JobWorkflowGraphNode from, JobWorkflowGraphNode to, int exitIndex, int exitCount, int entryIndex, int entryCount)
     {
@@ -150,8 +145,7 @@ public sealed class JobWorkflowGraphLayout
         var startY = Spread(from.Y, exitCount, exitIndex);
         var endX = to.X;
         var endY = Spread(to.Y, entryCount, entryIndex);
-
-        var channelX = endX - (ColumnGap / 2) - (entryIndex * 8);
+        var channelX = endX - ColumnGap / 2 - entryIndex * 8;
         if (channelX <= startX)
             channelX = startX + Math.Max((endX - startX) / 2, 1);
 
@@ -163,9 +157,9 @@ public sealed class JobWorkflowGraphLayout
     private static int Spread(int origin, int count, int index)
     {
         if (count <= 1)
-            return origin + (NodeHeight / 2);
+            return origin + NodeHeight / 2;
 
-        var span = NodeHeight - (2 * EdgeInset);
+        var span = NodeHeight - 2 * EdgeInset;
         return origin + EdgeInset + (int)Math.Round(span * (index / (double)(count - 1)));
     }
 }

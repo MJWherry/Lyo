@@ -20,17 +20,15 @@ public class FileStoragePhysicalAndReconcileTests
     {
         using var scope = LocalFileStorageTestScope.Create();
         var saved = await scope.Storage.SaveFileAsync("x"u8.ToArray(), "keep.txt", pathPrefix: "reports", ct: TestCt);
-        var physical = ((IFileStoragePhysical)scope.Storage).Physical;
+        var physical = scope.Storage.Physical;
         var metadata = new LocalFileMetadataStore(scope.Options.RootDirectoryPath);
         var both = await FileStorageReconcile.ReconcileAsync(metadata, physical, ct: TestCt);
         Assert.Contains(both, e => e.Presence == FileStoragePresence.Both && e.FileId == saved.Id);
-
         var bothEntry = Assert.Single(both, e => e.Presence == FileStoragePresence.Both && e.FileId == saved.Id);
         Assert.False(string.IsNullOrEmpty(bothEntry.PhysicalKey));
         physical.DeleteFile(Path.Combine(physical.RootPath, bothEntry.PhysicalKey!.Replace('/', Path.DirectorySeparatorChar)));
         var storeOnly = await FileStorageReconcile.ReconcileAsync(metadata, physical, ct: TestCt);
         Assert.Contains(storeOnly, e => e.Presence == FileStoragePresence.Store && e.FileId == saved.Id);
-
         physical.WriteAllBytes(Path.Combine(physical.RootPath, "orphan.bin"), "z"u8.ToArray());
         var after = await FileStorageReconcile.ReconcileAsync(metadata, physical, ct: TestCt);
         Assert.Contains(after, e => e.Presence == FileStoragePresence.Physical);
@@ -41,7 +39,7 @@ public class FileStoragePhysicalAndReconcileTests
     {
         using var scope = LocalFileStorageTestScope.Create();
         var saved = await scope.Storage.SaveFileAsync("x"u8.ToArray(), "keep.txt", pathPrefix: "reports", ct: TestCt);
-        var physical = ((IFileStoragePhysical)scope.Storage).Physical;
+        var physical = scope.Storage.Physical;
         physical.WriteAllBytes(Path.Combine(physical.RootPath, ".lyo-health"), "h"u8.ToArray());
         physical.WriteAllBytes(Path.Combine(physical.RootPath, ".lyo-fs-health-write.tmp"), "p"u8.ToArray());
         physical.WriteAllBytes(Path.Combine(physical.RootPath, saved.Id.ToString("N") + ".meta"), "{}"u8.ToArray());
@@ -68,7 +66,7 @@ public class FileStoragePhysicalAndReconcileTests
     public async Task FolderList_PhysicalOnlyOrphan_AtRoot()
     {
         using var scope = LocalFileStorageTestScope.Create();
-        var physical = ((IFileStoragePhysical)scope.Storage).Physical;
+        var physical = scope.Storage.Physical;
         var fileId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
         physical.WriteAllBytes(Path.Combine(physical.RootPath, fileId.ToString("N") + ".bin"), "z"u8.ToArray());
         var metadata = new LocalFileMetadataStore(scope.Options.RootDirectoryPath);
@@ -81,7 +79,7 @@ public class FileStoragePhysicalAndReconcileTests
     {
         using var scope = LocalFileStorageTestScope.Create();
         var saved = await scope.Storage.SaveFileAsync("x"u8.ToArray(), "gone.txt", pathPrefix: "reports", ct: TestCt);
-        var physical = ((IFileStoragePhysical)scope.Storage).Physical;
+        var physical = scope.Storage.Physical;
         var metadata = new LocalFileMetadataStore(scope.Options.RootDirectoryPath);
         var both = await FileStorageReconcile.ReconcileAsync(metadata, physical, pathPrefix: "reports", ct: TestCt);
         var key = Assert.Single(both, e => e.FileId == saved.Id).PhysicalKey;
@@ -94,7 +92,7 @@ public class FileStoragePhysicalAndReconcileTests
     public async Task FolderList_ChildDirectoryFromPhysicalOrphan_HasNullPhysicalKey()
     {
         using var scope = LocalFileStorageTestScope.Create();
-        var physical = ((IFileStoragePhysical)scope.Storage).Physical;
+        var physical = scope.Storage.Physical;
         physical.CreateDirectory(Path.Combine(physical.RootPath, "reports", "2024"));
         physical.WriteAllBytes(Path.Combine(physical.RootPath, "reports", "2024", "orphan.bin"), "z"u8.ToArray());
         var metadata = new LocalFileMetadataStore(scope.Options.RootDirectoryPath);
@@ -108,7 +106,7 @@ public class FileStoragePhysicalAndReconcileTests
     public async Task PhysicalRead_OpensOrphanWithoutCatalog()
     {
         using var scope = LocalFileStorageTestScope.Create();
-        var physical = ((IFileStoragePhysical)scope.Storage).Physical;
+        var physical = scope.Storage.Physical;
         physical.WriteAllBytes(Path.Combine(physical.RootPath, "orphan.bin"), "hello"u8.ToArray());
         var (stream, fileName) = await FileStoragePhysicalRead.OpenAsync(scope.Storage, "orphan.bin", TestCt);
         await using (stream) {
@@ -123,36 +121,31 @@ public class FileStoragePhysicalAndReconcileTests
     public async Task PhysicalRead_RejectsTraversal()
     {
         using var scope = LocalFileStorageTestScope.Create();
-        await Assert.ThrowsAsync<ArgumentException>(
-            () => FileStoragePhysicalRead.OpenAsync(scope.Storage, "../etc/passwd", TestCt));
+        await Assert.ThrowsAsync<ArgumentException>(() => FileStoragePhysicalRead.OpenAsync(scope.Storage, "../etc/passwd", TestCt));
     }
 
     [Fact]
     public async Task PhysicalRead_MissingFile_Throws()
     {
         using var scope = LocalFileStorageTestScope.Create();
-        await Assert.ThrowsAsync<FileNotFoundException>(
-            () => FileStoragePhysicalRead.OpenAsync(scope.Storage, "nope.bin", TestCt));
+        await Assert.ThrowsAsync<FileNotFoundException>(() => FileStoragePhysicalRead.OpenAsync(scope.Storage, "nope.bin", TestCt));
     }
 
     [Fact]
     public async Task PhysicalMutate_DeleteMoveCopyRename_Orphan()
     {
         using var scope = LocalFileStorageTestScope.Create();
-        var physical = ((IFileStoragePhysical)scope.Storage).Physical;
+        var physical = scope.Storage.Physical;
         physical.WriteAllBytes(Path.Combine(physical.RootPath, "orphan.bin"), "hello"u8.ToArray());
         await FileStoragePhysicalMutate.MoveToPrefixAsync(scope.Storage, "orphan.bin", "archive", TestCt);
         Assert.False(physical.FileExists(Path.Combine(physical.RootPath, "orphan.bin")));
         Assert.True(physical.FileExists(Path.Combine(physical.RootPath, "archive", "orphan.bin")));
-
         var copied = await FileStoragePhysicalMutate.CopyToPrefixAsync(scope.Storage, "archive/orphan.bin", null, TestCt);
         Assert.Equal("orphan.bin", copied);
         Assert.True(physical.FileExists(Path.Combine(physical.RootPath, "orphan.bin")));
-
         var renamed = await FileStoragePhysicalMutate.RenameAsync(scope.Storage, "orphan.bin", "keep.bin", TestCt);
         Assert.Equal("keep.bin", renamed);
         Assert.True(physical.FileExists(Path.Combine(physical.RootPath, "keep.bin")));
-
         await FileStoragePhysicalMutate.DeleteAsync(scope.Storage, "keep.bin", TestCt);
         Assert.False(physical.FileExists(Path.Combine(physical.RootPath, "keep.bin")));
         Assert.True(physical.FileExists(Path.Combine(physical.RootPath, "archive", "orphan.bin")));
@@ -162,10 +155,8 @@ public class FileStoragePhysicalAndReconcileTests
     public async Task PhysicalMutate_RejectsTraversal()
     {
         using var scope = LocalFileStorageTestScope.Create();
-        await Assert.ThrowsAsync<ArgumentException>(
-            () => FileStoragePhysicalMutate.DeleteAsync(scope.Storage, "../etc/passwd", TestCt));
-        await Assert.ThrowsAsync<ArgumentException>(
-            () => FileStoragePhysicalMutate.RenameAsync(scope.Storage, "a.bin", "../x.bin", TestCt));
+        await Assert.ThrowsAsync<ArgumentException>(() => FileStoragePhysicalMutate.DeleteAsync(scope.Storage, "../etc/passwd", TestCt));
+        await Assert.ThrowsAsync<ArgumentException>(() => FileStoragePhysicalMutate.RenameAsync(scope.Storage, "a.bin", "../x.bin", TestCt));
     }
 
     [Fact]

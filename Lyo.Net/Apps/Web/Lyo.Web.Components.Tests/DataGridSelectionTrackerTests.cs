@@ -4,8 +4,6 @@ namespace Lyo.Web.Components.Tests;
 
 public class DataGridSelectionTrackerTests
 {
-    private sealed record Row(int Id);
-
     private static object[] Key(Row row) => [row.Id];
 
     [Fact]
@@ -14,10 +12,8 @@ public class DataGridSelectionTrackerTests
         var tracker = new DataGridSelectionTracker();
         Row[] pageA = [new(1), new(2), new(3)];
         tracker.ReplacePage(pageA, pageA, Key);
-
         Row[] reordered = [new(3), new(1), new(2)];
         var selected = tracker.ItemsOnPage(reordered, Key);
-
         Assert.Equal(3, tracker.Count);
         Assert.Equal(3, selected.Count);
         Assert.All(reordered, row => Assert.Contains(row, selected));
@@ -29,10 +25,8 @@ public class DataGridSelectionTrackerTests
         var tracker = new DataGridSelectionTracker();
         Row[] pageA = [new(1), new(2), new(3)];
         tracker.ReplacePage(pageA, pageA, Key);
-
         Row[] pageB = [new(3), new(4), new(5)];
         var selected = tracker.ItemsOnPage(pageB, Key);
-
         Assert.Equal(3, tracker.Count);
         Assert.Single(selected);
         Assert.Contains(pageB[0], selected);
@@ -48,9 +42,7 @@ public class DataGridSelectionTrackerTests
         Row[] page2 = [new(3), new(4)];
         tracker.ReplacePage(page1, page1, Key);
         tracker.ReplacePage(page2, page2, Key);
-
         tracker.ReplacePage(page1, [], Key);
-
         Assert.Equal(2, tracker.Count);
         Assert.True(tracker.Contains([3]));
         Assert.True(tracker.Contains([4]));
@@ -64,10 +56,8 @@ public class DataGridSelectionTrackerTests
         var tracker = new DataGridSelectionTracker();
         Row[] page1 = [new(1), new(2)];
         tracker.ReplacePage(page1, page1, Key);
-
         Row[] page2 = [new(3), new(4)];
         var selectedOnPage2 = tracker.ItemsOnPage(page2, Key);
-
         Assert.Equal(2, tracker.Count);
         Assert.Empty(selectedOnPage2);
         Assert.Equal(2, tracker.ItemsOnPage<Row>([new(1), new(2)], Key).Count);
@@ -79,9 +69,7 @@ public class DataGridSelectionTrackerTests
         var tracker = new DataGridSelectionTracker();
         Row[] page = [new(1), new(2), new(3)];
         tracker.ReplacePage(page, page, Key);
-
         tracker.Remove([[1], [2], [3]]);
-
         Assert.Equal(0, tracker.Count);
         Assert.Empty(tracker.ItemsOnPage(page, Key));
     }
@@ -102,7 +90,6 @@ public class DataGridSelectionTrackerTests
     {
         var tracker = new DataGridSelectionTracker();
         tracker.ReplaceAll([[1], [9]]);
-
         Assert.Equal(2, tracker.Count);
         Assert.Equal([1, 9], tracker.ItemsOnPage<Row>([new(1), new(2), new(9)], Key).Select(r => r.Id).OrderBy(id => id));
     }
@@ -116,5 +103,6 @@ public class DataGridSelectionTrackerTests
         Assert.Equal(0, tracker.Count);
         Assert.Empty(tracker.Keys);
     }
-}
 
+    private sealed record Row(int Id);
+}

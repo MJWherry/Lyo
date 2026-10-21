@@ -1,18 +1,18 @@
-using Lyo.Exceptions;
 using Lyo.Common.Core.Identifiers;
+using Lyo.Exceptions;
 
 namespace Lyo.Algorithms;
 
 /// <summary>Process-local catalog. No Docker. Postgres and SQLite implement the same <see cref="IAlgorithmDefinitionStore" />.</summary>
 public sealed class MemoryAlgorithmDefinitionStore : IAlgorithmDefinitionStore
 {
+    private readonly Dictionary<string, AlgorithmDefinitionRes> _definitions = new(StringComparer.Ordinal);
     private readonly object _gate = new();
+    private readonly Dictionary<(Guid DefinitionId, string Label), AlgorithmLabelRes> _labels = new();
+    private readonly Dictionary<Guid, List<AlgorithmRevisionRes>> _revisions = new();
 
     /// <summary>How many read methods have run. Tests use this to prove a cache hit skips the store.</summary>
     internal int ReadCount;
-    private readonly Dictionary<string, AlgorithmDefinitionRes> _definitions = new(StringComparer.Ordinal);
-    private readonly Dictionary<Guid, List<AlgorithmRevisionRes>> _revisions = new();
-    private readonly Dictionary<(Guid DefinitionId, string Label), AlgorithmLabelRes> _labels = new();
 
     /// <inheritdoc />
     public Task<AlgorithmDefinitionRes> SaveRevisionAsync(string key, AlgorithmRevisionReq request, CancellationToken ct = default)
@@ -21,11 +21,7 @@ public sealed class MemoryAlgorithmDefinitionStore : IAlgorithmDefinitionStore
         AlgorithmKeys.ThrowIfInvalidKey(key);
         lock (_gate) {
             if (!_definitions.TryGetValue(key, out var definition)) {
-                definition = new AlgorithmDefinitionRes {
-                    Id = LyoGuid.CreateV7(),
-                    Key = key,
-                    CreatedTimestamp = DateTime.UtcNow
-                };
+                definition = new() { Id = LyoGuid.CreateV7(), Key = key, CreatedTimestamp = DateTime.UtcNow };
                 _definitions.Add(key, definition);
                 _revisions.Add(definition.Id, []);
             }
@@ -39,6 +35,7 @@ public sealed class MemoryAlgorithmDefinitionStore : IAlgorithmDefinitionStore
                 Payload = request.Payload,
                 CreatedTimestamp = DateTime.UtcNow
             };
+
             _revisions[definition.Id].Add(revision);
             definition.Kind = request.Kind;
             definition.Name = request.Name ?? definition.Name;
@@ -85,6 +82,7 @@ public sealed class MemoryAlgorithmDefinitionStore : IAlgorithmDefinitionStore
             ReadCount++;
             if (!_definitions.TryGetValue(key, out var definition))
                 return Task.FromResult<AlgorithmRevisionRes?>(null);
+
             var row = _revisions[definition.Id].FirstOrDefault(r => r.Revision == revision);
             return Task.FromResult(row is null ? null : Copy(row));
         }
@@ -95,17 +93,18 @@ public sealed class MemoryAlgorithmDefinitionStore : IAlgorithmDefinitionStore
     {
         ArgumentHelpers.ThrowIfNull(request);
         var existing = AlgorithmHelpers.ThrowIfNull(
-            await GetRevisionAsync(key, request.Revision, ct).ConfigureAwait(false),
-            $"Algorithm '{key}' has no revision {request.Revision}.",
-            "algorithm.revision.missing");
+            await GetRevisionAsync(key, request.Revision, ct).ConfigureAwait(false), $"Algorithm '{key}' has no revision {request.Revision}.", "algorithm.revision.missing");
+
         var definition = await GetByKeyAsync(key, ct).ConfigureAwait(false);
-        return await SaveRevisionAsync(key, new AlgorithmRevisionReq {
-            Kind = existing.Kind,
-            Source = existing.Source,
-            Payload = existing.Payload,
-            Name = definition?.Name,
-            Description = definition?.Description
-        }, ct).ConfigureAwait(false);
+        return await SaveRevisionAsync(
+                key, new() {
+                    Kind = existing.Kind,
+                    Source = existing.Source,
+                    Payload = existing.Payload,
+                    Name = definition?.Name,
+                    Description = definition?.Description
+                }, ct)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -116,9 +115,8 @@ public sealed class MemoryAlgorithmDefinitionStore : IAlgorithmDefinitionStore
         lock (_gate) {
             var definition = Require(key);
             AlgorithmHelpers.ThrowIf(
-                _revisions[definition.Id].All(r => r.Revision != request.Revision),
-                $"Algorithm '{key}' has no revision {request.Revision}.",
-                "algorithm.revision.missing");
+                _revisions[definition.Id].All(r => r.Revision != request.Revision), $"Algorithm '{key}' has no revision {request.Revision}.", "algorithm.revision.missing");
+
             var mapKey = (definition.Id, label);
             if (_labels.TryGetValue(mapKey, out var existing)) {
                 AlgorithmHelpers.ThrowIf(existing.IsMutable != request.IsMutable, $"Label '{label}' on '{key}' mutability cannot change.", "algorithm.label.mutability");
@@ -127,7 +125,13 @@ public sealed class MemoryAlgorithmDefinitionStore : IAlgorithmDefinitionStore
                 return Task.FromResult(Copy(existing));
             }
 
-            var created = new AlgorithmLabelRes { DefinitionId = definition.Id, Label = label, Revision = request.Revision, IsMutable = request.IsMutable };
+            var created = new AlgorithmLabelRes {
+                DefinitionId = definition.Id,
+                Label = label,
+                Revision = request.Revision,
+                IsMutable = request.IsMutable
+            };
+
             _labels.Add(mapKey, created);
             return Task.FromResult(Copy(created));
         }
@@ -140,6 +144,7 @@ public sealed class MemoryAlgorithmDefinitionStore : IAlgorithmDefinitionStore
             ReadCount++;
             if (!_definitions.TryGetValue(key, out var definition))
                 return Task.FromResult<AlgorithmLabelRes?>(null);
+
             return Task.FromResult(_labels.TryGetValue((definition.Id, label), out var row) ? Copy(row) : null);
         }
     }
@@ -150,30 +155,33 @@ public sealed class MemoryAlgorithmDefinitionStore : IAlgorithmDefinitionStore
         return AlgorithmHelpers.ThrowIfNull(definition, $"Algorithm '{key}' was not found.", "algorithm.definition.missing");
     }
 
-    private static AlgorithmDefinitionRes Copy(AlgorithmDefinitionRes source) => new() {
-        Id = source.Id,
-        Key = source.Key,
-        Name = source.Name,
-        Description = source.Description,
-        Kind = source.Kind,
-        CurrentRevision = source.CurrentRevision,
-        CreatedTimestamp = source.CreatedTimestamp,
-        UpdatedTimestamp = source.UpdatedTimestamp
-    };
+    private static AlgorithmDefinitionRes Copy(AlgorithmDefinitionRes source)
+        => new() {
+            Id = source.Id,
+            Key = source.Key,
+            Name = source.Name,
+            Description = source.Description,
+            Kind = source.Kind,
+            CurrentRevision = source.CurrentRevision,
+            CreatedTimestamp = source.CreatedTimestamp,
+            UpdatedTimestamp = source.UpdatedTimestamp
+        };
 
-    private static AlgorithmRevisionRes Copy(AlgorithmRevisionRes source) => new() {
-        DefinitionId = source.DefinitionId,
-        Revision = source.Revision,
-        Kind = source.Kind,
-        Source = source.Source,
-        Payload = source.Payload,
-        CreatedTimestamp = source.CreatedTimestamp
-    };
+    private static AlgorithmRevisionRes Copy(AlgorithmRevisionRes source)
+        => new() {
+            DefinitionId = source.DefinitionId,
+            Revision = source.Revision,
+            Kind = source.Kind,
+            Source = source.Source,
+            Payload = source.Payload,
+            CreatedTimestamp = source.CreatedTimestamp
+        };
 
-    private static AlgorithmLabelRes Copy(AlgorithmLabelRes source) => new() {
-        DefinitionId = source.DefinitionId,
-        Label = source.Label,
-        Revision = source.Revision,
-        IsMutable = source.IsMutable
-    };
+    private static AlgorithmLabelRes Copy(AlgorithmLabelRes source)
+        => new() {
+            DefinitionId = source.DefinitionId,
+            Label = source.Label,
+            Revision = source.Revision,
+            IsMutable = source.IsMutable
+        };
 }

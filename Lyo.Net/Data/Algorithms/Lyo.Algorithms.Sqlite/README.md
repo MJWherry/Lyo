@@ -1,6 +1,7 @@
 # Lyo.Algorithms.Sqlite
 
-IAlgorithmDefinitionStore on a SQLite file. Table names match the Postgres catalog without a schema, including the optional payload column on revisions. A unique revision conflict is retried once. Migrations go through Lyo.Sqlite. The store implements IHealth with SELECT 1. Multi-instance hosts should use Lyo.Algorithms.Postgres instead.
+IAlgorithmDefinitionStore on a SQLite file. Table names match the Postgres catalog without a schema, including the optional payload column on revisions. A unique revision conflict
+is retried once. Migrations go through Lyo.Sqlite. The store implements IHealth with SELECT 1. Multi-instance hosts should use Lyo.Algorithms.Postgres instead.
 
 ## Features
 

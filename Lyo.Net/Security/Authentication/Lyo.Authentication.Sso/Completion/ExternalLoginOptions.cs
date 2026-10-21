@@ -21,8 +21,8 @@ public sealed class ExternalLoginOptions
     /// <summary>
     /// Baseline scopes written onto every newly provisioned user as <c>[user].[scope]</c> rows (and mirrored onto <c>ScopesJson</c>). Use this to give freshly onboarded users a
     /// starting set of self-service permissions (e.g. <c>auth.tokens.read</c> + <c>auth.tokens.write</c> so they can mint their own PATs without an out-of-band admin grant).
-    /// Provider-derived scopes (IdP protocol scopes, Keycloak role maps) are not copied onto issued JWTs. Unused for users that already exist when a fresh OIDC login arrives —
-    /// existing user rows are not granted these automatically.
+    /// Provider-derived scopes (IdP protocol scopes, Keycloak role maps) are not copied onto issued JWTs. Unused for users that already exist when a fresh OIDC login arrives — existing
+    /// user rows are not granted these automatically.
     /// </summary>
     public IList<string> DefaultUserScopes { get; set; } = [];
 }

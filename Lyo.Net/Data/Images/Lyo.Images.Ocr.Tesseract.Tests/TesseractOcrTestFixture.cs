@@ -5,8 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Lyo.Images.Ocr.Tesseract.Tests;
 
 /// <summary>
-/// Loads <c>appsettings.json</c> (plus optional Development and env), registers <see cref="IConfiguration" /> in DI. Materializes options via <see cref="ConfigurationBinder" /> (
-/// <c>Get&lt;T&gt;()</c>).
+/// Loads <c>appsettings.json</c> (plus optional Development and env), registers <see cref="IConfiguration" /> in DI. Materializes options via
+/// <see cref="ConfigurationBinder" /> ( <c>Get&lt;T&gt;()</c>).
 /// </summary>
 public sealed class TesseractOcrTestFixture : IDisposable
 {
@@ -22,7 +22,7 @@ public sealed class TesseractOcrTestFixture : IDisposable
 
     public IServiceProvider Services => _services;
 
-    /// <summary>Current xUnit cancellation token. Reads <see cref="TestContext.Current"/> when accessed, so each test gets that test's token.</summary>
+    /// <summary>Current xUnit cancellation token. Reads <see cref="TestContext.Current" /> when accessed, so each test gets that test's token.</summary>
     public CancellationToken TestCt => TestContext.Current.CancellationToken;
 
     public bool RunNativeIntegration

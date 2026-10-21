@@ -1,18 +1,17 @@
 using Lyo.Compression;
 using Lyo.Exceptions;
-using Lyo.IO.Temp;
-using Lyo.Lock;
 using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.DownloadAccess;
 using Lyo.FileStorage;
-using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.AzureBlob;
 using Lyo.FileStorage.Ftp;
 using Lyo.FileStorage.Models;
 using Lyo.FileStorage.Multipart;
 using Lyo.FileStorage.S3;
 using Lyo.FileStorage.Sftp;
+using Lyo.IO.Temp;
 using Lyo.KeyStore;
+using Lyo.Lock;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -20,13 +19,19 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.FileManager;
 
 /// <summary>
-/// Appsettings stores for the desktop. Each open creates a scope and calls <see cref="IFileStorageFactory.Get" />.
-/// Disposing that connection disposes the scope. A second open of the same name gets its own scope.
+/// Appsettings stores for the desktop. Each open creates a scope and calls <see cref="IFileStorageFactory.Get" />. Disposing that connection disposes the scope. A second
+/// open of the same name gets its own scope.
 /// </summary>
 public sealed class FileManagerConfiguredHost : IDisposable
 {
-    private readonly ServiceProvider _provider;
     private readonly Dictionary<string, FileManagerCatalogPlan> _catalogs;
+    private readonly ServiceProvider _provider;
+
+    /// <summary>Stores that can be opened. Skipped sections are absent.</summary>
+    public IReadOnlyList<FileManagerServer> Servers { get; }
+
+    /// <summary>Sections that were not registered, each message naming the store and the reason.</summary>
+    public IReadOnlyList<string> Skipped { get; }
 
     private FileManagerConfiguredHost(
         ServiceProvider provider,
@@ -40,11 +45,8 @@ public sealed class FileManagerConfiguredHost : IDisposable
         _catalogs = catalogs;
     }
 
-    /// <summary>Stores that can be opened. Skipped sections are absent.</summary>
-    public IReadOnlyList<FileManagerServer> Servers { get; }
-
-    /// <summary>Sections that were not registered, each message naming the store and the reason.</summary>
-    public IReadOnlyList<string> Skipped { get; }
+    /// <inheritdoc />
+    public void Dispose() => _provider.Dispose();
 
     /// <summary>Reads <c>FileStorage:Stores</c>. One bad section is skipped. The rest are still registered.</summary>
     public static FileManagerConfiguredHost Load(IConfiguration configuration, ILoggerFactory? logs = null)
@@ -53,6 +55,7 @@ public sealed class FileManagerConfiguredHost : IDisposable
         var services = new ServiceCollection();
         if (logs != null)
             services.AddSingleton(logs);
+
         services.AddSingleton<ICompressionAlgorithmSelector, UploadCompressionSelector>();
         services.AddCompressionService();
         services.AddIOTempService();
@@ -97,9 +100,6 @@ public sealed class FileManagerConfiguredHost : IDisposable
         }
     }
 
-    /// <inheritdoc />
-    public void Dispose() => _provider.Dispose();
-
     private static void AddStores(
         FileStorageFactoryBuilder factory,
         IConfiguration section,
@@ -112,15 +112,17 @@ public sealed class FileManagerConfiguredHost : IDisposable
             try {
                 if (!TryPrepare(child, skipped, out var plan))
                     continue;
+
                 Register(factory, child, compression, plan, catalogs);
-                servers.Add(new FileManagerServer {
-                    Name = child.Key.Trim(),
-                    Kind = Kind(child["Provider"] ?? ""),
-                    Configured = true,
-                    RootDirectory = child["RootDirectoryPath"]?.Trim() ?? "",
-                    MetadataKind = plan?.Kind ?? FileManagerMetadataKind.Sqlite,
-                    ConnectionString = plan?.ConnectionString
-                });
+                servers.Add(
+                    new() {
+                        Name = child.Key.Trim(),
+                        Kind = Kind(child["Provider"] ?? ""),
+                        Configured = true,
+                        RootDirectory = child["RootDirectoryPath"]?.Trim() ?? "",
+                        MetadataKind = plan?.Kind ?? FileManagerMetadataKind.Sqlite,
+                        ConnectionString = plan?.ConnectionString
+                    });
             }
             catch (Exception ex) {
                 skipped.Add(ex.Message);
@@ -138,6 +140,7 @@ public sealed class FileManagerConfiguredHost : IDisposable
         var provider = section["Provider"]?.Trim() ?? "";
         if (provider.Length == 0)
             throw new InvalidOperationException($"File storage '{name}' is missing Provider.");
+
         if (!Known(provider))
             throw new InvalidOperationException($"File storage '{name}' provider '{provider}' is not registered.");
 
@@ -146,6 +149,7 @@ public sealed class FileManagerConfiguredHost : IDisposable
         if (string.IsNullOrWhiteSpace(connection)) {
             if (disk)
                 return true;
+
             skipped.Add($"File storage '{name}' has no {FileStorageFactoryKeys.CatalogConnectionString}.");
             return false;
         }
@@ -153,13 +157,15 @@ public sealed class FileManagerConfiguredHost : IDisposable
         var kindText = section[FileStorageFactoryKeys.MetadataKind];
         if (string.IsNullOrWhiteSpace(kindText))
             throw new InvalidOperationException($"File storage '{name}' MetadataKind is required with {FileStorageFactoryKeys.CatalogConnectionString}.");
-        if (!Enum.TryParse(kindText.Trim(), ignoreCase: true, out FileManagerMetadataKind kind))
+
+        if (!Enum.TryParse(kindText.Trim(), true, out FileManagerMetadataKind kind))
             throw new InvalidOperationException($"File storage '{name}' MetadataKind '{kindText.Trim()}' is not Sqlite or Postgres.");
 
         var text = connection.Trim();
         if (kind == FileManagerMetadataKind.Sqlite && !text.Contains('='))
             text = "Data Source=" + text;
-        plan = new FileManagerCatalogPlan(kind, text);
+
+        plan = new(kind, text);
         return true;
     }
 
@@ -169,6 +175,7 @@ public sealed class FileManagerConfiguredHost : IDisposable
             var value = section[key];
             if (string.IsNullOrWhiteSpace(value))
                 continue;
+
             skipped.Add($"File storage '{name}' skips {key} '{value.Trim()}'.");
             return true;
         }
@@ -186,6 +193,7 @@ public sealed class FileManagerConfiguredHost : IDisposable
         var name = section.Key.Trim();
         if (plan != null)
             catalogs[name] = plan;
+
         switch (section["Provider"]!.Trim().ToLowerInvariant()) {
             case "disk":
                 var disk = new DiskFileStorageBuilder();
@@ -221,8 +229,7 @@ public sealed class FileManagerConfiguredHost : IDisposable
         string name,
         bool catalog,
         CompressionHolder compression)
-        where TOptions : FileStorageServiceBaseOptions, new()
-        where TBuilder : FileStorageServiceBuilder<TOptions, TBuilder>
+        where TOptions : FileStorageServiceBaseOptions, new() where TBuilder : FileStorageServiceBuilder<TOptions, TBuilder>
     {
         builder.ApplySection(section);
         builder.WithCompression(_ => compression.Service);
@@ -230,18 +237,18 @@ public sealed class FileManagerConfiguredHost : IDisposable
             var keys = services.GetRequiredService<FileManagerOpenKeys>().Store;
             return keys == null ? null! : FileManagerEncryption.Create(keys);
         });
+
         if (!catalog)
             return;
-        builder.WithMetadata(services => services.GetRequiredService<FileManagerCatalogLease>().Store
-            ?? throw new InvalidOperationException($"File storage '{name}' catalog is not open."));
+
+        builder.WithMetadata(services
+            => services.GetRequiredService<FileManagerCatalogLease>().Store ?? throw new InvalidOperationException($"File storage '{name}' catalog is not open."));
     }
 
     private static bool Known(string provider)
-        => provider.Equals("disk", StringComparison.OrdinalIgnoreCase)
-            || provider.Equals("s3", StringComparison.OrdinalIgnoreCase)
-            || provider.Equals("azureblob", StringComparison.OrdinalIgnoreCase)
-            || provider.Equals("ftp", StringComparison.OrdinalIgnoreCase)
-            || provider.Equals("sftp", StringComparison.OrdinalIgnoreCase);
+        => provider.Equals("disk", StringComparison.OrdinalIgnoreCase) || provider.Equals("s3", StringComparison.OrdinalIgnoreCase) ||
+            provider.Equals("azureblob", StringComparison.OrdinalIgnoreCase) || provider.Equals("ftp", StringComparison.OrdinalIgnoreCase) ||
+            provider.Equals("sftp", StringComparison.OrdinalIgnoreCase);
 
     private static FileManagerServerKind Kind(string provider)
         => provider.Trim().ToLowerInvariant() switch {
@@ -249,7 +256,7 @@ public sealed class FileManagerConfiguredHost : IDisposable
             "azureblob" => FileManagerServerKind.AzureBlob,
             "ftp" => FileManagerServerKind.Ftp,
             "sftp" => FileManagerServerKind.Sftp,
-            _ => FileManagerServerKind.Local
+            var _ => FileManagerServerKind.Local
         };
 
     private sealed class CompressionHolder
@@ -276,6 +283,14 @@ internal sealed class FileManagerCatalogLease : IDisposable
 
     public IMultipartUploadSessionStore Sessions { get; private set; } = null!;
 
+    public void Dispose()
+    {
+        _scope?.Dispose();
+        _scope = null;
+        _provider?.Dispose();
+        _provider = null;
+    }
+
     public void Open(FileManagerCatalogPlan plan)
     {
         var services = new ServiceCollection();
@@ -287,14 +302,6 @@ internal sealed class FileManagerCatalogLease : IDisposable
         Access = _scope.ServiceProvider.GetRequiredService<IFileDownloadAccessService>();
         Sessions = _scope.ServiceProvider.GetRequiredService<IMultipartUploadSessionStore>();
     }
-
-    public void Dispose()
-    {
-        _scope?.Dispose();
-        _scope = null;
-        _provider?.Dispose();
-        _provider = null;
-    }
 }
 
 internal sealed class FileManagerUncatalogedAccess : IFileDownloadAccessService
@@ -305,6 +312,10 @@ internal sealed class FileManagerUncatalogedAccess : IFileDownloadAccessService
         => throw new InvalidOperationException("This store has no catalog database.");
 
     public Task<ConsumeFileDownloadAccessLinkResult> ValidateAndConsumeDownloadAsync(
-        string token, string? actorId = null, string? ipAddress = null, DateTime? nowUtc = null, CancellationToken ct = default)
+        string token,
+        string? actorId = null,
+        string? ipAddress = null,
+        DateTime? nowUtc = null,
+        CancellationToken ct = default)
         => throw new InvalidOperationException("This store has no catalog database.");
 }

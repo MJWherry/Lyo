@@ -10,9 +10,8 @@ internal static class SftpTestHost
     {
         var container = await ContainerTestHost.TryStartAsync(
             "atmoz/sftp:alpine",
-            builder => builder.WithPortBinding(22, true)
-                .WithCommand("foo:pass:1001:100:upload")
-                .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged("Server listening")), ct, TimeSpan.FromSeconds(2));
+            builder => builder.WithPortBinding(22, true).WithCommand("foo:pass:1001:100:upload").WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged("Server listening")),
+            ct, TimeSpan.FromSeconds(2));
 
         if (container is null)
             return null;

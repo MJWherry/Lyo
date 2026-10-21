@@ -1,4 +1,3 @@
-using Lyo.Http.Client;
 using Lyo.Http.Client.Session;
 
 namespace Lyo.Http.Client.Tests;
@@ -10,8 +9,22 @@ public sealed class LyoHttpCookieJarTests
     {
         var jar = new LyoHttpCookieJar();
         var uri = new Uri("https://example.test/path");
-        jar.Add(new() { Name = "a", Value = "1", Domain = "example.test", Path = "/" }, uri);
-        jar.Add(new() { Name = "b", Value = "2", Domain = "example.test", Path = "/" }, uri);
+        jar.Add(
+            new() {
+                Name = "a",
+                Value = "1",
+                Domain = "example.test",
+                Path = "/"
+            }, uri);
+
+        jar.Add(
+            new() {
+                Name = "b",
+                Value = "2",
+                Domain = "example.test",
+                Path = "/"
+            }, uri);
+
         Assert.Contains("a=1", jar.ToCookieHeader(uri));
         jar.Remove("a");
         var header = jar.ToCookieHeader(uri);

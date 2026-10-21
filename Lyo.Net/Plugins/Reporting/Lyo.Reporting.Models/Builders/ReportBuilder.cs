@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
 using Lyo.Reporting.Models.Composition;
 using Lyo.Reporting.Models.Enums;
@@ -93,12 +94,13 @@ public sealed class ReportBuilder<T>
         _report.ParameterSpecs.Add(
             new() {
                 Key = key,
-                Type = type ?? Lyo.Common.Metadata.Records.LyoTypeInfo.String.FullName,
+                Type = type ?? LyoTypeInfo.String.FullName,
                 ExampleValue = example,
                 Required = required,
                 Description = description,
                 DefaultValue = defaultValue
             });
+
         return this;
     }
 
@@ -149,17 +151,15 @@ public sealed class ReportBuilder<T>
             ReportDataJson = ReportJson.Serialize(_report),
             IsActive = true,
             DefaultFormat = defaultFormat,
-            CreateParameters = _report.ParameterSpecs
-                .Where(s => !string.IsNullOrWhiteSpace(s.Key))
-                .Select(
-                    s => new ReportDefinitionParameterReq {
-                        Key = s.Key.Trim(),
-                        Type = s.Type,
-                        Value = s.DefaultValue ?? s.ExampleValue,
-                        Description = s.Description,
-                        Required = s.Required,
-                        AllowedValues = s.AllowedValues
-                    })
+            CreateParameters = _report.ParameterSpecs.Where(s => !string.IsNullOrWhiteSpace(s.Key))
+                .Select(s => new ReportDefinitionParameterReq {
+                    Key = s.Key.Trim(),
+                    Type = s.Type,
+                    Value = s.DefaultValue ?? s.ExampleValue,
+                    Description = s.Description,
+                    Required = s.Required,
+                    AllowedValues = s.AllowedValues
+                })
                 .ToList()
         };
     }

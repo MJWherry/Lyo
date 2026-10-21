@@ -1,24 +1,41 @@
-using System.Net.Http.Json;
-using System.Security.Claims;
 using Lyo.Api.Client;
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Web.Components.Models;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Lyo.Authentication.Web.Components.Pages;
 
 public partial class TokensPage
 {
+    private readonly IssueFormModel _form = new();
+
+    private IReadOnlyList<string> _availableScopes = Array.Empty<string>();
+
+    private string? _createError;
+
+    private bool _creating;
+
+    private Guid? _currentUserId;
+
+    private bool _includeRevoked;
+
+    private IReadOnlyList<AuthTokenKindDescriptor>? _kinds;
+
+    private bool _kindsLoading = true;
+
+    private AuthIssuedTokenResult? _lastIssued;
+
+    private bool _listLoading = true;
+
+    private bool _revoking;
+
+    private AuthTokenGrid? _tokenGrid;
+
+    private IReadOnlyList<AuthTokenSummary>? _tokens;
+
     /// <summary>Optional replacement for the root element id consumed by the element-id scheme.</summary>
     [Parameter]
     public string? ElementId { get; set; }
@@ -27,32 +44,6 @@ public partial class TokensPage
     private IServiceProvider Services { get; set; } = null!;
 
     private IApiClient? ApiClient => Services.GetService<IApiClient>();
-
-    private IReadOnlyList<AuthTokenKindDescriptor>? _kinds;
-
-    private IReadOnlyList<AuthTokenSummary>? _tokens;
-
-    private AuthTokenGrid? _tokenGrid;
-
-    private Guid? _currentUserId;
-
-    private AuthIssuedTokenResult? _lastIssued;
-
-    private readonly IssueFormModel _form = new();
-
-    private IReadOnlyList<string> _availableScopes = Array.Empty<string>();
-
-    private bool _kindsLoading = true;
-
-    private bool _listLoading = true;
-
-    private bool _creating;
-
-    private bool _revoking;
-
-    private bool _includeRevoked;
-
-    private string? _createError;
 
     protected override async Task OnInitializedAsync()
     {
@@ -112,7 +103,8 @@ public partial class TokensPage
         _createError = null;
     }
 
-    private void OnScopesChanged(IReadOnlyCollection<string>? selected) => _form.SelectedScopes = selected is null ? new(StringComparer.Ordinal) : new HashSet<string>(selected, StringComparer.Ordinal);
+    private void OnScopesChanged(IReadOnlyCollection<string>? selected)
+        => _form.SelectedScopes = selected is null ? new(StringComparer.Ordinal) : new HashSet<string>(selected, StringComparer.Ordinal);
 
     private AuthTokenKindDescriptor? SelectedKindDescriptor() => _kinds?.FirstOrDefault(k => string.Equals(k.Kind, _form.Kind, StringComparison.Ordinal));
 
@@ -163,9 +155,8 @@ public partial class TokensPage
                 Snackbar.Add($"Revoked '{token.DisplayName}'.", Severity.Success);
                 await ReloadTokensAsync();
             }
-            else {
+            else
                 Snackbar.Add("Revoke failed.", Severity.Error);
-            }
         }
         catch (Exception ex) {
             Snackbar.Add($"Revoke failed: {ex.Message}", Severity.Error);

@@ -1,5 +1,3 @@
-using Lyo.Law.Models.Enums;
-
 namespace Lyo.Law.Postgres.Database;
 
 /// <summary>A US state. <c>US</c> is not a valid key.</summary>

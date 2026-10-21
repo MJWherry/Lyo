@@ -15,16 +15,14 @@ public sealed class GrantStoreTests
     public async Task ExactGrant_Allows_MissingExpiredAndRevoked_Deny()
     {
         var store = Store();
-        await store.SaveAsync(Write("user", "read", "note", "n1"), TestCt);
+        await store.SaveAsync(Write("user", "read", "note"), TestCt);
         Assert.True(await store.IsAllowedAsync(Check("user", "read", "note", "n1"), TestCt));
         Assert.False(await store.IsAllowedAsync(Check("user", "write", "note", "n1"), TestCt));
-
         var expiring = Store();
-        await expiring.SaveAsync(Write("user", "read", "note", "n1", expiresAt: Now), TestCt);
+        await expiring.SaveAsync(Write("user", "read", "note", expiresAt: Now), TestCt);
         Assert.False(await expiring.IsAllowedAsync(Check("user", "read", "note", "n1"), TestCt));
-
         var revoked = Store();
-        var saved = await revoked.SaveAsync(Write("user", "read", "note", "n1"), TestCt);
+        var saved = await revoked.SaveAsync(Write("user", "read", "note"), TestCt);
         await revoked.RevokeAsync(saved.Id, TestCt);
         Assert.False(await revoked.IsAllowedAsync(Check("user", "read", "note", "n1"), TestCt));
     }
@@ -33,41 +31,36 @@ public sealed class GrantStoreTests
     public async Task Wildcards_MatchOnlyInTheDocumentedDirection()
     {
         var store = Store();
-        await store.SaveAsync(Write("user", "read", "note", resourceId: null), TestCt);
+        await store.SaveAsync(Write("user", "read", "note", null), TestCt);
         Assert.True(await store.IsAllowedAsync(Check("user", "read", "note", "n1"), TestCt));
         Assert.False(await store.IsAllowedAsync(Check("other", "read", "note", "n1"), TestCt));
-
         var specific = Store();
-        await specific.SaveAsync(Write("user", "read", "note", "n1"), TestCt);
-        Assert.False(await specific.IsAllowedAsync(Check("user", "read", "note", resourceId: null), TestCt));
-
+        await specific.SaveAsync(Write("user", "read", "note"), TestCt);
+        Assert.False(await specific.IsAllowedAsync(Check("user", "read", "note", null), TestCt));
         var anyTenant = Store();
-        await anyTenant.SaveAsync(Write("user", "read", "note", "n1", tenant: null), TestCt);
-        Assert.True(await anyTenant.IsAllowedAsync(Check("user", "read", "note", "n1", tenant: Guid.NewGuid()), TestCt));
-        Assert.False(await anyTenant.IsAllowedAsync(Check("user", "read", "note", "other", tenant: Guid.NewGuid()), TestCt));
-
+        await anyTenant.SaveAsync(Write("user", "read", "note"), TestCt);
+        Assert.True(await anyTenant.IsAllowedAsync(Check("user", "read", "note", "n1", Guid.NewGuid()), TestCt));
+        Assert.False(await anyTenant.IsAllowedAsync(Check("user", "read", "note", "other", Guid.NewGuid()), TestCt));
         var oneTenant = Guid.NewGuid();
         var tenantWide = Store();
-        await tenantWide.SaveAsync(Write("user", "read", "note", resourceId: null, tenant: oneTenant), TestCt);
+        await tenantWide.SaveAsync(Write("user", "read", "note", null, oneTenant), TestCt);
         Assert.True(await tenantWide.IsAllowedAsync(Check("user", "read", "note", "n1", oneTenant), TestCt));
         Assert.False(await tenantWide.IsAllowedAsync(Check("user", "read", "note", "n1", Guid.NewGuid()), TestCt));
-        Assert.False(await tenantWide.IsAllowedAsync(Check("user", "read", "note", "n1", tenant: null), TestCt));
+        Assert.False(await tenantWide.IsAllowedAsync(Check("user", "read", "note", "n1"), TestCt));
     }
 
     [Fact]
     public async Task Match_IsOrdinal_Trimmed_AndGuidIdsAreLowercase()
     {
         var store = Store();
-        await store.SaveAsync(Write("user", "read", "note", "n1"), TestCt);
+        await store.SaveAsync(Write("user", "read", "note"), TestCt);
         Assert.False(await store.IsAllowedAsync(Check("user", "read", "Note", "n1"), TestCt));
         Assert.True(await store.IsAllowedAsync(Check(" user ", " read ", " note ", " n1 "), TestCt));
-
         var guid = Guid.Parse("AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE");
         var saved = await store.SaveAsync(Write(guid.ToString("D").ToUpperInvariant(), "read", "note", guid.ToString("D").ToUpperInvariant()), TestCt);
         Assert.Equal(guid.ToString("D").ToUpperInvariant(), saved.Subject);
         Assert.Equal(guid.ToString("D"), saved.ResourceId);
         Assert.True(await store.IsAllowedAsync(Check(saved.Subject, "read", "note", guid.ToString("D")), TestCt));
-
         var text = await store.SaveAsync(Write("user", "read", "note", "Not-A-Guid"), TestCt);
         Assert.Equal("Not-A-Guid", text.ResourceId);
         await Assert.ThrowsAsync<ArgumentException>(() => store.SaveAsync(Write("user", "read", "note", " "), TestCt));
@@ -78,31 +71,27 @@ public sealed class GrantStoreTests
     public async Task Duplicate_Conflicts_Supersede_Revoke_AndList()
     {
         var store = Store();
-        await store.SaveAsync(Write("user", "read", "note", "n1"), TestCt);
-        await Assert.ThrowsAsync<ConflictException>(() => store.SaveAsync(Write("user", "read", "note", "n1"), TestCt));
-
+        await store.SaveAsync(Write("user", "read", "note"), TestCt);
+        await Assert.ThrowsAsync<ConflictException>(() => store.SaveAsync(Write("user", "read", "note"), TestCt));
         var clock = Now;
         var expiring = new InMemoryGrantStore(() => clock);
-        var old = await expiring.SaveAsync(Write("user", "read", "note", "n1", expiresAt: Now), TestCt);
+        var old = await expiring.SaveAsync(Write("user", "read", "note", expiresAt: Now), TestCt);
         clock = Now.AddMinutes(1);
-        var again = await expiring.SaveAsync(Write("user", "read", "note", "n1"), TestCt);
+        var again = await expiring.SaveAsync(Write("user", "read", "note"), TestCt);
         var active = await expiring.ListAsync(ct: TestCt);
         Assert.Single(active);
         Assert.Equal(again.Id, active[0].Id);
         Assert.NotEqual(old.Id, again.Id);
-
-        var races = await Task.WhenAll(Enumerable.Range(0, 2).Select(_ => CatchAsync(() => store.SaveAsync(Write("race", "read", "note", "n1"), TestCt))));
+        var races = await Task.WhenAll(Enumerable.Range(0, 2).Select(_ => CatchAsync(() => store.SaveAsync(Write("race", "read", "note"), TestCt))));
         Assert.Single(races, r => r is not null);
-        Assert.Single(await store.ListAsync(new GrantListQuery { Subject = "race" }, TestCt));
-
+        Assert.Single(await store.ListAsync(new() { Subject = "race" }, TestCt));
         var saved = await store.SaveAsync(Write("user", "read", "ledger", "e1"), TestCt);
         await store.RevokeAsync(saved.Id, TestCt);
         var second = await store.RevokeAsync(saved.Id, TestCt);
         Assert.NotNull(second.RevokedAt);
         await store.SaveAsync(Write("user", "read", "ledger", "e1"), TestCt);
         await Assert.ThrowsAsync<NotFoundException>(() => store.RevokeAsync(Guid.NewGuid(), TestCt));
-
-        await store.SaveAsync(Write("hidden", "read", "note", "n1", expiresAt: Now.AddMinutes(-1)), TestCt);
+        await store.SaveAsync(Write("hidden", "read", "note", expiresAt: Now.AddMinutes(-1)), TestCt);
         var listed = await store.ListAsync(ct: TestCt);
         Assert.DoesNotContain(listed, g => g.Subject == "hidden");
         Assert.DoesNotContain(listed, g => g.Id == saved.Id);
@@ -116,14 +105,13 @@ public sealed class GrantStoreTests
         var audit = new ThrowingAudit();
         var store = Store();
         var auth = new ResourceAuthorization(store, metrics, logger, audit);
-        var saved = await auth.SaveAsync(Write("secret-subject", "read", "note", "n1", grantedBy: "editor"), TestCt);
+        var saved = await auth.SaveAsync(Write("secret-subject", "read", "note", grantedBy: "editor"), TestCt);
         Assert.NotEqual(Guid.Empty, saved.Id);
         Assert.True(await auth.IsAllowedAsync(Check("secret-subject", "read", "note", "n1"), TestCt));
         Assert.False(await auth.IsAllowedAsync(Check("secret-subject", "write", "note", "n1"), TestCt));
         Assert.DoesNotContain(metrics.Counters.Values, c => c.Tags?.Values.Any(v => v.Contains("secret-subject", StringComparison.Ordinal)) == true);
         Assert.DoesNotContain(logger.Information, m => m.Contains("secret-subject", StringComparison.Ordinal));
         Assert.Contains(logger.Debug, m => m.Contains("secret-subject", StringComparison.Ordinal));
-
         var broken = new ResourceAuthorization(new ThrowingStore(), metrics, logger, audit);
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => broken.IsAllowedAsync(Check("secret-subject", "read", "note", "n1"), TestCt));
         Assert.Contains("secret-subject", ex.Message, StringComparison.Ordinal);
@@ -132,11 +120,32 @@ public sealed class GrantStoreTests
 
     private static InMemoryGrantStore Store() => new(() => Now);
 
-    private static GrantWrite Write(string subject, string action, string type, string? resourceId = "n1", Guid? tenant = null, DateTime? expiresAt = null, string? grantedBy = null)
-        => new() { Subject = subject, Action = action, ResourceType = type, ResourceId = resourceId, TenantId = tenant, ExpiresAt = expiresAt, GrantedBy = grantedBy };
+    private static GrantWrite Write(
+        string subject,
+        string action,
+        string type,
+        string? resourceId = "n1",
+        Guid? tenant = null,
+        DateTime? expiresAt = null,
+        string? grantedBy = null)
+        => new() {
+            Subject = subject,
+            Action = action,
+            ResourceType = type,
+            ResourceId = resourceId,
+            TenantId = tenant,
+            ExpiresAt = expiresAt,
+            GrantedBy = grantedBy
+        };
 
     private static GrantCheck Check(string subject, string action, string type, string? resourceId, Guid? tenant = null)
-        => new() { Subject = subject, Action = action, ResourceType = type, ResourceId = resourceId, TenantId = tenant };
+        => new() {
+            Subject = subject,
+            Action = action,
+            ResourceType = type,
+            ResourceId = resourceId,
+            TenantId = tenant
+        };
 
     private static async Task<Grant?> CatchAsync(Func<Task<Grant>> call)
     {
@@ -188,7 +197,9 @@ public sealed class GrantStoreTests
 
         public List<string> Debug { get; } = [];
 
-        public IDisposable BeginScope<TState>(TState state) where TState : notnull => NullScope.Instance;
+        public IDisposable BeginScope<TState>(TState state)
+            where TState : notnull
+            => NullScope.Instance;
 
         public bool IsEnabled(LogLevel logLevel) => true;
 
@@ -197,6 +208,7 @@ public sealed class GrantStoreTests
             var text = formatter(state, exception);
             if (logLevel == LogLevel.Information)
                 Information.Add(text);
+
             if (logLevel == LogLevel.Debug)
                 Debug.Add(text);
         }

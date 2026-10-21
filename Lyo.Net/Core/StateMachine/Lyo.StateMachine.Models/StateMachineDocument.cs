@@ -2,8 +2,8 @@ namespace Lyo.StateMachine.Models;
 
 /// <summary>A state machine definition as data: states, transitions, and the names of guards, hooks, and selectors to resolve from a registry at load time.</summary>
 /// <remarks>
-/// States and triggers are strings (converted with <see cref="IStateKeyConverter{TValue}" />). Code cannot be stored, so every guard, hook, action, and dynamic
-/// selector is referenced by name. <see cref="Revision" /> is assigned by <see cref="IStateMachineDefinitionStore" /> when saved.
+/// States and triggers are strings (converted with <see cref="IStateKeyConverter{TValue}" />). Code cannot be stored, so every guard, hook, action, and dynamic selector is
+/// referenced by name. <see cref="Revision" /> is assigned by <see cref="IStateMachineDefinitionStore" /> when saved.
 /// </remarks>
 public sealed record StateMachineDocument
 {

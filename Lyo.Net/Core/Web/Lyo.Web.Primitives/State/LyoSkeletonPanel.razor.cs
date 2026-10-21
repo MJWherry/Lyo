@@ -3,12 +3,10 @@ using Microsoft.AspNetCore.Components;
 namespace Lyo.Web.Primitives;
 
 /// <summary>
-/// Placeholder rows shown while a panel loads, so the layout keeps its height instead of collapsing and then jumping when data arrives. Prefer it over a spinner for
-/// anything list- or table-shaped.
+/// Placeholder rows shown while a panel loads, so the layout keeps its height instead of collapsing and then jumping when data arrives. Prefer it over a spinner for anything
+/// list- or table-shaped.
 /// </summary>
-/// <remarks>
-/// Row widths taper slightly so the block reads as text rather than a solid rectangle. <see cref="LyoResultBoundary{T}" /> renders one of these by default.
-/// </remarks>
+/// <remarks>Row widths taper slightly so the block reads as text rather than a solid rectangle. <see cref="LyoResultBoundary{T}" /> renders one of these by default.</remarks>
 public partial class LyoSkeletonPanel
 {
     /// <summary>Number of placeholder rows. Match the page size the real content will have, roughly.</summary>

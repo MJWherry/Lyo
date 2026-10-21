@@ -10,12 +10,13 @@ namespace Lyo.Query;
 public static class Extensions
 {
     /// <summary>
-    /// Registers IValueConversionService, IPropertyComparisonService, and IWhereClauseService with their stock implementations. CacheService and CacheOptions must already
-    /// be registered, for example through AddFusionCache or AddLocalCache.
+    /// Registers IValueConversionService, IPropertyComparisonService, and IWhereClauseService with their stock implementations. CacheService and CacheOptions must already be
+    /// registered, for example through AddFusionCache or AddLocalCache.
     /// </summary>
     /// <param name="services">Collection to add the query services to.</param>
     /// <param name="registerValueConversion">
-    /// If true (the default), registers ValueConversionService. Pass false when Lyo.Api's TypeConversionService is already bound as IValueConversionService.
+    /// If true (the default), registers ValueConversionService. Pass false when Lyo.Api's TypeConversionService is already bound as
+    /// IValueConversionService.
     /// </param>
     public static IServiceCollection AddLyoQueryServices(this IServiceCollection services, bool registerValueConversion = true)
     {

@@ -1,8 +1,4 @@
 using Lyo.Exceptions;
-using Lyo.Query.Models.Common;
-using Lyo.Story.Enums;
-using Lyo.Story.Models.Request;
-using Lyo.Story.Models.Response;
 
 namespace Lyo.Story.Web.Components;
 
@@ -224,8 +220,13 @@ public static class StoryDraftMap
             Scenes = graph.Scenes.Select(scene => new StorySceneDraft { Key = scene.Key, Title = scene.Title, SortOrder = scene.SortOrder }).ToList(),
             Nodes = graph.Nodes.Select(FromNode).ToList(),
             Variables = graph.Variables.Select(variable => new StoryVariableDraft {
-                Key = variable.Key, Name = variable.Name, Type = variable.Type, DefaultValue = variable.DefaultValue, Description = variable.Description
-            }).ToList(),
+                    Key = variable.Key,
+                    Name = variable.Name,
+                    Type = variable.Type,
+                    DefaultValue = variable.DefaultValue,
+                    Description = variable.Description
+                })
+                .ToList(),
             Actions = graph.Actions.Select(action => new StoryActionDraft { Key = action.Key, Name = action.Name, Effects = action.Effects.Select(FromEffect).ToList() }).ToList(),
             Reactions = graph.Reactions.Select(FromReaction).ToList()
         };
@@ -249,8 +250,13 @@ public static class StoryDraftMap
             Scenes = draft.Scenes.Select(scene => new StoryGraphSceneReq { Key = scene.Key, Title = scene.Title, SortOrder = scene.SortOrder }).ToList(),
             Nodes = draft.Nodes.Select(ToNode).ToList(),
             Variables = draft.Variables.Select(variable => new StoryGraphVariableReq {
-                Key = variable.Key, Name = variable.Name, Type = variable.Type, DefaultValue = variable.DefaultValue, Description = variable.Description
-            }).ToList(),
+                    Key = variable.Key,
+                    Name = variable.Name,
+                    Type = variable.Type,
+                    DefaultValue = variable.DefaultValue,
+                    Description = variable.Description
+                })
+                .ToList(),
             Actions = draft.Actions.Select(action => new StoryGraphActionReq { Key = action.Key, Name = action.Name, Effects = ToEffects(action.Effects) }).ToList(),
             Reactions = draft.Reactions.Select(ToReaction).ToList()
         };
@@ -273,46 +279,54 @@ public static class StoryDraftMap
             CoverImageRef = request.CoverImageRef,
             Scenes = request.Scenes.Select(scene => new StorySceneDraft { Key = scene.Key, Title = scene.Title, SortOrder = scene.SortOrder }).ToList(),
             Nodes = request.Nodes.Select(node => new StoryNodeDraft {
-                Key = node.Key,
-                Title = node.Title,
-                SceneKey = node.SceneKey,
-                IsEnding = node.IsEnding,
-                PresentationKind = node.PresentationKind,
-                Body = node.Body,
-                ContentType = node.ContentType,
-                MediaRef = node.MediaRef,
-                Choices = node.Choices.Select(choice => new StoryChoiceDraft {
-                    Key = choice.Key,
-                    Prompt = choice.Prompt,
-                    SortOrder = choice.SortOrder,
-                    TargetNodeKey = LastGoto(choice.Effects.Select(FromEffectReq)) ?? choice.TargetNodeKey,
-                    VisibleWhen = choice.VisibleWhen,
-                    EnabledWhen = choice.EnabledWhen,
-                    Effects = choice.Effects.Select(effect => new StoryEffectDraft {
-                        Kind = effect.Kind,
-                        SortOrder = effect.SortOrder,
-                        VariableKey = effect.VariableKey,
-                        Value = effect.Value,
-                        TargetNodeKey = effect.TargetNodeKey,
-                        InvokeActionKey = effect.InvokeActionKey
-                    }).ToList()
-                }).ToList()
-            }).ToList(),
+                    Key = node.Key,
+                    Title = node.Title,
+                    SceneKey = node.SceneKey,
+                    IsEnding = node.IsEnding,
+                    PresentationKind = node.PresentationKind,
+                    Body = node.Body,
+                    ContentType = node.ContentType,
+                    MediaRef = node.MediaRef,
+                    Choices = node.Choices.Select(choice => new StoryChoiceDraft {
+                            Key = choice.Key,
+                            Prompt = choice.Prompt,
+                            SortOrder = choice.SortOrder,
+                            TargetNodeKey = LastGoto(choice.Effects.Select(FromEffectReq)) ?? choice.TargetNodeKey,
+                            VisibleWhen = choice.VisibleWhen,
+                            EnabledWhen = choice.EnabledWhen,
+                            Effects = choice.Effects.Select(effect => new StoryEffectDraft {
+                                    Kind = effect.Kind,
+                                    SortOrder = effect.SortOrder,
+                                    VariableKey = effect.VariableKey,
+                                    Value = effect.Value,
+                                    TargetNodeKey = effect.TargetNodeKey,
+                                    InvokeActionKey = effect.InvokeActionKey
+                                })
+                                .ToList()
+                        })
+                        .ToList()
+                })
+                .ToList(),
             Variables = request.Variables.Select(variable => new StoryVariableDraft {
-                Key = variable.Key, Name = variable.Name, Type = variable.Type, DefaultValue = variable.DefaultValue, Description = variable.Description
-            }).ToList(),
-            Actions = request.Actions.Select(action => new StoryActionDraft {
-                Key = action.Key, Name = action.Name, Effects = action.Effects.Select(FromEffectReq).ToList()
-            }).ToList(),
+                    Key = variable.Key,
+                    Name = variable.Name,
+                    Type = variable.Type,
+                    DefaultValue = variable.DefaultValue,
+                    Description = variable.Description
+                })
+                .ToList(),
+            Actions = request.Actions.Select(action => new StoryActionDraft { Key = action.Key, Name = action.Name, Effects = action.Effects.Select(FromEffectReq).ToList() })
+                .ToList(),
             Reactions = request.Reactions.Select(reaction => new StoryReactionDraft {
-                Key = reaction.Key,
-                Trigger = reaction.Trigger,
-                ScopeNodeKey = reaction.ScopeNodeKey,
-                ScopeVariableKey = reaction.ScopeVariableKey,
-                Once = reaction.Once,
-                When = reaction.When,
-                Effects = reaction.Effects.Select(FromEffectReq).ToList()
-            }).ToList()
+                    Key = reaction.Key,
+                    Trigger = reaction.Trigger,
+                    ScopeNodeKey = reaction.ScopeNodeKey,
+                    ScopeVariableKey = reaction.ScopeVariableKey,
+                    Once = reaction.Once,
+                    When = reaction.When,
+                    Effects = reaction.Effects.Select(FromEffectReq).ToList()
+                })
+                .ToList()
         };
     }
 
@@ -331,14 +345,15 @@ public static class StoryDraftMap
             ContentType = node.ContentType,
             MediaRef = node.MediaRef,
             Choices = node.Choices.Select(choice => new StoryChoiceDraft {
-                Key = choice.Key,
-                Prompt = choice.Prompt,
-                SortOrder = choice.SortOrder,
-                TargetNodeKey = choice.TargetNodeKey,
-                VisibleWhen = choice.VisibleWhen,
-                EnabledWhen = choice.EnabledWhen,
-                Effects = choice.Effects.Select(FromEffect).ToList()
-            }).ToList()
+                    Key = choice.Key,
+                    Prompt = choice.Prompt,
+                    SortOrder = choice.SortOrder,
+                    TargetNodeKey = choice.TargetNodeKey,
+                    VisibleWhen = choice.VisibleWhen,
+                    EnabledWhen = choice.EnabledWhen,
+                    Effects = choice.Effects.Select(FromEffect).ToList()
+                })
+                .ToList()
         };
 
     private static StoryReactionDraft FromReaction(StoryGraphReactionRes reaction)
@@ -383,14 +398,15 @@ public static class StoryDraftMap
             ContentType = node.ContentType,
             MediaRef = node.MediaRef,
             Choices = node.Choices.Select((choice, index) => new StoryGraphChoiceReq {
-                Key = choice.Key,
-                Prompt = choice.Prompt,
-                SortOrder = index,
-                TargetNodeKey = LastGoto(choice.Effects),
-                VisibleWhen = choice.VisibleWhen,
-                EnabledWhen = choice.EnabledWhen,
-                Effects = ToEffects(choice.Effects)
-            }).ToList()
+                    Key = choice.Key,
+                    Prompt = choice.Prompt,
+                    SortOrder = index,
+                    TargetNodeKey = LastGoto(choice.Effects),
+                    VisibleWhen = choice.VisibleWhen,
+                    EnabledWhen = choice.EnabledWhen,
+                    Effects = ToEffects(choice.Effects)
+                })
+                .ToList()
         };
 
     private static StoryGraphReactionReq ToReaction(StoryReactionDraft reaction)
@@ -406,11 +422,12 @@ public static class StoryDraftMap
 
     private static List<StoryGraphEffectReq> ToEffects(List<StoryEffectDraft> effects)
         => effects.Select((effect, index) => new StoryGraphEffectReq {
-            Kind = effect.Kind,
-            SortOrder = index,
-            VariableKey = effect.VariableKey,
-            Value = effect.Value,
-            TargetNodeKey = effect.TargetNodeKey,
-            InvokeActionKey = effect.InvokeActionKey
-        }).ToList();
+                Kind = effect.Kind,
+                SortOrder = index,
+                VariableKey = effect.VariableKey,
+                Value = effect.Value,
+                TargetNodeKey = effect.TargetNodeKey,
+                InvokeActionKey = effect.InvokeActionKey
+            })
+            .ToList();
 }

@@ -5,11 +5,11 @@ using Lyo.Query.Models.Enums;
 namespace Lyo.Job.Models.Builders;
 
 /// <summary>
-/// Builds the <see cref="WhereClause" /> that gates a workflow step. Each predicate reads a context path, so a gate can test an upstream step's result, a value the run was
-/// started with, or a field of the workflow itself, and <see cref="All" /> / <see cref="Any" /> nest to express a branch on more than one of them.
+/// Builds the <see cref="WhereClause" /> that gates a workflow step. Each predicate reads a context path, so a gate can test an upstream step's result, a value the run was started
+/// with, or a field of the workflow itself, and <see cref="All" /> / <see cref="Any" /> nest to express a branch on more than one of them.
 /// <para>
-/// <see cref="When" /> names the source step rather than its id, because <see cref="JobWorkflowBuilder" /> mints step ids client-side: writing the gate by name is what lets
-/// a whole conditional graph be expressed before any of it exists server-side.
+/// <see cref="When" /> names the source step rather than its id, because <see cref="JobWorkflowBuilder" /> mints step ids client-side: writing the gate by name is what lets a
+/// whole conditional graph be expressed before any of it exists server-side.
 /// </para>
 /// </summary>
 /// <example>
@@ -28,9 +28,7 @@ public static class JobWorkflowStepCondition
     /// <summary>Path segment between a step name and a result key, matching what <c>JobContextBag.WithUpstreamRun</c> seeds.</summary>
     public const string ResultPathSegment = "Result";
 
-    /// <summary>
-    /// Tests a named result of another step's run. Reads as the sentence it encodes: <c>When("Extract", "RowCount", GreaterThan, "0")</c>.
-    /// </summary>
+    /// <summary>Tests a named result of another step's run. Reads as the sentence it encodes: <c>When("Extract", "RowCount", GreaterThan, "0")</c>.</summary>
     /// <param name="sourceStepName">Step whose run result is tested. Must name a step added to the same builder, and must be a dependency of the gated step.</param>
     /// <param name="resultKey">Result key read from that step's run.</param>
     /// <param name="comparator">Comparison applied to the result value.</param>
@@ -43,8 +41,8 @@ public static class JobWorkflowStepCondition
     }
 
     /// <summary>
-    /// Tests any context path: <c>Input.Env</c> for a value the run was started with, <c>Workflow.Name</c>, or <c>Step.Extract.Parameter.Path</c>. Use
-    /// <see cref="When" /> for the common "result of an upstream step" case.
+    /// Tests any context path: <c>Input.Env</c> for a value the run was started with, <c>Workflow.Name</c>, or <c>Step.Extract.Parameter.Path</c>. Use <see cref="When" /> for
+    /// the common "result of an upstream step" case.
     /// </summary>
     /// <param name="path">Context path the gate reads.</param>
     /// <param name="comparator">Comparison applied to the resolved value.</param>

@@ -10,8 +10,8 @@ public static class FileTagMetadata
     public const string PropertyName = "fileTags";
 
     /// <summary>
-    /// Copies <paramref name="caller" /> when it is a JSON object, drops any previous <c>fileTags</c> property, and writes <paramref name="tags" /> under <see cref="PropertyName" />.
-    /// A null or non-object caller becomes an object that holds only <c>fileTags</c>. Ids are the property names (<c>title</c>, <c>album_artist</c>).
+    /// Copies <paramref name="caller" /> when it is a JSON object, drops any previous <c>fileTags</c> property, and writes <paramref name="tags" /> under
+    /// <see cref="PropertyName" />. A null or non-object caller becomes an object that holds only <c>fileTags</c>. Ids are the property names (<c>title</c>, <c>album_artist</c>).
     /// </summary>
     public static JsonElement Merge(JsonElement? caller, FileTags tags)
     {

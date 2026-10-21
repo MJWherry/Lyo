@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.Text;
+using Lyo.Common.Core.Identifiers;
 using Lyo.IO.Temp.Enums;
 using Lyo.IO.Temp.Models;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.IO.Temp.Tests;
 
@@ -770,7 +770,7 @@ public sealed class IOTempSessionTests : IDisposable
     [Fact]
     public void Overflow_AndFileDeletedFireOnFileCount_Eviction()
     {
-        using var session = _service.CreateSession(new IOTempSessionOptions { MaxFileCount = 1, OverflowStrategy = TempOverflowStrategy.DeleteOldest });
+        using var session = _service.CreateSession(new() { MaxFileCount = 1, OverflowStrategy = TempOverflowStrategy.DeleteOldest });
         var first = session.CreateFile("first");
         var overflow = new List<string>();
         var deleted = new List<string>();

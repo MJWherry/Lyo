@@ -70,47 +70,46 @@ public sealed class SamlResponseSpec
     public string ToXml()
     {
         var inResponseTo = IncludeInResponseTo ? $""" InResponseTo="{RequestId}" """ : " ";
-        var audience = IncludeAudience
-            ? $"""<saml:AudienceRestriction><saml:Audience>{Audience}</saml:Audience></saml:AudienceRestriction>"""
-            : "";
+        var audience = IncludeAudience ? $"""<saml:AudienceRestriction><saml:Audience>{Audience}</saml:Audience></saml:AudienceRestriction>""" : "";
         var encrypted = IncludeEncryptedAssertion ? "<saml:EncryptedAssertion><saml:EncryptedData/></saml:EncryptedAssertion>" : "";
         var duplicate = DuplicateAssertionId ? $"""<saml:Advice ID="{AssertionId}"/>""" : "";
         var attributes = new StringBuilder();
         if (Email.Length > 0)
             attributes.Append($"""<saml:Attribute Name="{EmailAttribute}"><saml:AttributeValue>{Email}</saml:AttributeValue></saml:Attribute>""");
-        foreach (var (name, values) in Attributes)
-        {
+
+        foreach (var (name, values) in Attributes) {
             attributes.Append($"""<saml:Attribute Name="{name}">""");
             foreach (var value in values)
                 attributes.Append($"<saml:AttributeValue>{value}</saml:AttributeValue>");
+
             attributes.Append("</saml:Attribute>");
         }
 
         var decoy = SignDecoy ? """<saml:Advice ID="_decoy"><saml:NameID>decoy-user</saml:NameID></saml:Advice>""" : "";
         var xml = $"""
-            <samlp:Response xmlns:samlp="{SamlConstants.Protocol}" xmlns:saml="{SamlConstants.Assertion}" ID="{ResponseId}" Version="2.0" IssueInstant="{Format(Now)}"{inResponseTo}Destination="{Destination}">
-              <saml:Issuer>{Issuer}</saml:Issuer>
-              <samlp:Status><samlp:StatusCode Value="{Status}"/></samlp:Status>
-              {encrypted}
-              <saml:Assertion ID="{AssertionId}" Version="2.0" IssueInstant="{Format(Now)}">
-                <saml:Issuer>{Issuer}</saml:Issuer>
-                <saml:Subject>
-                  <saml:NameID Format="{NameIdFormat}">{NameId}</saml:NameID>
-                  <saml:SubjectConfirmation Method="{ConfirmationMethod}">
-                    <saml:SubjectConfirmationData InResponseTo="{RequestId}" Recipient="{Recipient}" NotOnOrAfter="{Format(ConfirmationNotOnOrAfter ?? Now.AddMinutes(5))}"/>
-                  </saml:SubjectConfirmation>
-                </saml:Subject>
-                <saml:Conditions NotBefore="{Format(Now.AddMinutes(-1))}" NotOnOrAfter="{Format(ConditionsNotOnOrAfter ?? Now.AddMinutes(5))}">
-                  {audience}
-                </saml:Conditions>
-                <saml:AttributeStatement>
-                  {attributes}
-                </saml:AttributeStatement>
-                {decoy}
-              </saml:Assertion>
-              {duplicate}
-            </samlp:Response>
-            """;
+                   <samlp:Response xmlns:samlp="{SamlConstants.Protocol}" xmlns:saml="{SamlConstants.Assertion}" ID="{ResponseId}" Version="2.0" IssueInstant="{Format(Now)}"{inResponseTo}Destination="{Destination}">
+                     <saml:Issuer>{Issuer}</saml:Issuer>
+                     <samlp:Status><samlp:StatusCode Value="{Status}"/></samlp:Status>
+                     {encrypted}
+                     <saml:Assertion ID="{AssertionId}" Version="2.0" IssueInstant="{Format(Now)}">
+                       <saml:Issuer>{Issuer}</saml:Issuer>
+                       <saml:Subject>
+                         <saml:NameID Format="{NameIdFormat}">{NameId}</saml:NameID>
+                         <saml:SubjectConfirmation Method="{ConfirmationMethod}">
+                           <saml:SubjectConfirmationData InResponseTo="{RequestId}" Recipient="{Recipient}" NotOnOrAfter="{Format(ConfirmationNotOnOrAfter ?? Now.AddMinutes(5))}"/>
+                         </saml:SubjectConfirmation>
+                       </saml:Subject>
+                       <saml:Conditions NotBefore="{Format(Now.AddMinutes(-1))}" NotOnOrAfter="{Format(ConditionsNotOnOrAfter ?? Now.AddMinutes(5))}">
+                         {audience}
+                       </saml:Conditions>
+                       <saml:AttributeStatement>
+                         {attributes}
+                       </saml:AttributeStatement>
+                       {decoy}
+                     </saml:Assertion>
+                     {duplicate}
+                   </samlp:Response>
+                   """;
 
         if (Signature == SamlSignatureKind.None && !SignDecoy)
             return xml;
@@ -124,8 +123,7 @@ public sealed class SamlResponseSpec
         else
             Sign(document, Element(document, "Assertion", SamlConstants.Assertion), ReferenceUri ?? "#" + AssertionId, Signature);
 
-        if (CorruptSignature)
-        {
+        if (CorruptSignature) {
             var value = document.GetElementsByTagName("SignatureValue", SamlConstants.XmlDsig)[0]!;
             var text = value.InnerText;
             value.InnerText = (text[0] == 'A' ? "B" : "A") + text[1..];
@@ -139,20 +137,19 @@ public sealed class SamlResponseSpec
     private static void Sign(XmlDocument document, XmlElement element, string referenceUri, SamlSignatureKind kind)
     {
         var signed = new IdSigningXml(document) { SigningKey = SamlTestCertificate.Signing.GetRSAPrivateKey() };
-        signed.SignedInfo!.CanonicalizationMethod = kind == SamlSignatureKind.InclusiveCanonicalization
-            ? SignedXml.XmlDsigC14NTransformUrl
-            : kind == SamlSignatureKind.CommentsCanonicalization
-                ? "http://www.w3.org/2001/10/xml-exc-c14n#WithComments"
-                : SamlConstants.ExclusiveC14N;
+        signed.SignedInfo!.CanonicalizationMethod = kind == SamlSignatureKind.InclusiveCanonicalization ? SignedXml.XmlDsigC14NTransformUrl :
+            kind == SamlSignatureKind.CommentsCanonicalization ? "http://www.w3.org/2001/10/xml-exc-c14n#WithComments" : SamlConstants.ExclusiveC14N;
+
         signed.SignedInfo.SignatureMethod = kind == SamlSignatureKind.Sha1 ? SignedXml.XmlDsigRSASHA1Url : SignedXml.XmlDsigRSASHA256Url;
         var reference = new Reference(referenceUri) { DigestMethod = kind == SamlSignatureKind.Sha1 ? SignedXml.XmlDsigSHA1Url : SignedXml.XmlDsigSHA256Url };
         reference.AddTransform(new XmlDsigEnvelopedSignatureTransform());
-        reference.AddTransform(kind switch
-        {
-            SamlSignatureKind.InclusiveCanonicalization => new XmlDsigC14NTransform(),
-            SamlSignatureKind.CommentsCanonicalization => new XmlDsigExcC14NTransform(includeComments: true),
-            _ => new XmlDsigExcC14NTransform()
-        });
+        reference.AddTransform(
+            kind switch {
+                SamlSignatureKind.InclusiveCanonicalization => new XmlDsigC14NTransform(),
+                SamlSignatureKind.CommentsCanonicalization => new XmlDsigExcC14NTransform(true),
+                var _ => new XmlDsigExcC14NTransform()
+            });
+
         signed.AddReference(reference);
         var info = new KeyInfo();
         info.AddClause(new KeyInfoX509Data(SamlTestCertificate.Signing));
@@ -161,19 +158,26 @@ public sealed class SamlResponseSpec
         element.AppendChild(document.ImportNode(signed.GetXml(), true));
     }
 
-    private sealed class IdSigningXml(XmlDocument document) : SignedXml(document)
+    private static XmlElement Element(XmlDocument document, string localName, string namespaceUri)
+        => document.GetElementsByTagName(localName, namespaceUri)[0] as XmlElement ?? throw new InvalidOperationException($"Missing {localName}.");
+
+    private static string Format(DateTime value) => value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+
+    private sealed class IdSigningXml(XmlDocument document)
+        : SignedXml(document)
     {
         public override XmlElement? GetIdElement(XmlDocument? document, string idValue)
         {
             if (document?.DocumentElement is null)
                 return null;
+
             var stack = new Stack<XmlNode>();
             stack.Push(document.DocumentElement);
-            while (stack.Count > 0)
-            {
+            while (stack.Count > 0) {
                 var node = stack.Pop();
                 if (node is XmlElement element && element.GetAttribute("ID") == idValue)
                     return element;
+
                 foreach (XmlNode child in node.ChildNodes)
                     stack.Push(child);
             }
@@ -181,17 +185,16 @@ public sealed class SamlResponseSpec
             return null;
         }
     }
-
-    private static XmlElement Element(XmlDocument document, string localName, string namespaceUri)
-        => document.GetElementsByTagName(localName, namespaceUri)[0] as XmlElement ?? throw new InvalidOperationException($"Missing {localName}.");
-
-    private static string Format(DateTime value) => value.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
 }
 
-internal sealed record SamlTestProvider(string Name, string SpEntityId, string AcsUrl, string MetadataUrl, string EmailAttributeName, string? SubjectAttributeName) : ISamlIdentityProvider
+internal sealed record SamlTestProvider(
+    string Name,
+    string SpEntityId,
+    string AcsUrl,
+    string MetadataUrl,
+    string EmailAttributeName,
+    string? SubjectAttributeName) : ISamlIdentityProvider
 {
-    public static SamlTestProvider Default { get; } = new("okta", EntityId, Acs, "https://idp.example/metadata", "email", null);
-
     public const string EntityId = "https://sp.example/saml";
 
     public const string Acs = "https://sp.example/auth/callback/okta";
@@ -199,6 +202,8 @@ internal sealed record SamlTestProvider(string Name, string SpEntityId, string A
     public const string Issuer = "https://idp.example/metadata";
 
     public const string SsoRedirect = "https://idp.example/sso/redirect";
+
+    public static SamlTestProvider Default { get; } = new("okta", EntityId, Acs, "https://idp.example/metadata", "email", null);
 }
 
 internal sealed class StaticSamlMetadata(SamlIdpMetadata metadata) : ISamlMetadataSource

@@ -5,7 +5,10 @@ using Lyo.IO.FileSystem;
 
 namespace Lyo.FileStorage;
 
-/// <summary>Resolves a physical object key to a jailed <see cref="IFileSystem" /> path. Hosts that must not reference <see cref="IFileSystem" /> should call the read/mutate helpers instead.</summary>
+/// <summary>
+/// Resolves a physical object key to a jailed <see cref="IFileSystem" /> path. Hosts that must not reference <see cref="IFileSystem" /> should call the read/mutate helpers
+/// instead.
+/// </summary>
 public static class FileStoragePhysicalPath
 {
     /// <summary>Normalizes <paramref name="physicalKey" /> and combines it under the backend jail. Does not require the file to exist.</summary>
@@ -57,8 +60,7 @@ public static class FileStoragePhysicalPath
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(fileName);
         var trimmed = fileName.Trim();
-        if (trimmed.IndexOf('/') >= 0 || trimmed.IndexOf('\\') >= 0 || trimmed.IndexOf('\0') >= 0
-            || trimmed.IndexOf("..", StringComparison.Ordinal) >= 0)
+        if (trimmed.IndexOf('/') >= 0 || trimmed.IndexOf('\\') >= 0 || trimmed.IndexOf('\0') >= 0 || trimmed.IndexOf("..", StringComparison.Ordinal) >= 0)
             throw new ArgumentException("File name must be a single path segment.", nameof(fileName));
 
         return trimmed;

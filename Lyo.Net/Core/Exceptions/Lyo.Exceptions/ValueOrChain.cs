@@ -3,8 +3,8 @@ using System.Runtime.CompilerServices;
 namespace Lyo.Exceptions;
 
 /// <summary>
-/// Subject plus a result that may be a different type. A chosen result, including a null reference, stays chosen.
-/// An open chain resolves through <see cref="OrDefault(TResult)" /> or <see cref="OrThrow(System.Func{System.Exception})" />.
+/// Subject plus a result that may be a different type. A chosen result, including a null reference, stays chosen. An open chain resolves through
+/// <see cref="OrDefault(TResult)" /> or <see cref="OrThrow(System.Func{System.Exception})" />.
 /// </summary>
 /// <typeparam name="TSubject">Value the checks ran against.</typeparam>
 /// <typeparam name="TResult">Value returned when a check passes.</typeparam>
@@ -12,19 +12,18 @@ public readonly struct ValueOrChain<TSubject, TResult>
 {
     private const string DefaultNotChosen = "A required value was not chosen.";
 
-    private readonly bool _chosen;
     private readonly TResult _result;
 
     private ValueOrChain(TSubject subject, bool chosen, TResult result)
     {
         Subject = subject;
-        _chosen = chosen;
+        IsChosen = chosen;
         _result = result;
     }
 
     internal TSubject Subject { get; }
 
-    internal bool IsChosen => _chosen;
+    internal bool IsChosen { get; }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static ValueOrChain<TSubject, TResult> Chosen(TSubject subject, TResult result) => new(subject, true, result);
@@ -60,13 +59,13 @@ public readonly struct ValueOrChain<TSubject, TResult>
 
     /// <summary>Returns the chosen result, or <paramref name="defaultValue" /> when the chain is still open.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TResult OrDefault(TResult defaultValue) => _chosen ? _result : defaultValue;
+    public TResult OrDefault(TResult defaultValue) => IsChosen ? _result : defaultValue;
 
     /// <summary>Returns the chosen result. Invokes <paramref name="defaultValue" /> only when the chain is still open.</summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public TResult OrDefault(Func<TResult> defaultValue)
     {
-        if (_chosen)
+        if (IsChosen)
             return _result;
 
         ArgumentHelpers.ThrowIfNull(defaultValue);
@@ -77,7 +76,7 @@ public readonly struct ValueOrChain<TSubject, TResult>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public TResult OrThrow(Func<Exception> createException)
     {
-        if (_chosen)
+        if (IsChosen)
             return _result;
 
         ArgumentHelpers.ThrowIfNull(createException);
@@ -89,7 +88,7 @@ public readonly struct ValueOrChain<TSubject, TResult>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public TResult OrThrowInvalidOperation(string? message = null)
     {
-        if (_chosen)
+        if (IsChosen)
             return _result;
 
         throw new InvalidOperationException(message ?? DefaultNotChosen);

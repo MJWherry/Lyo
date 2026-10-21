@@ -26,6 +26,7 @@ public static class PdfMarkup
         foreach (var field in form.GetFields()) {
             if (!string.Equals(field.Information.PartialName, name, StringComparison.Ordinal))
                 continue;
+
             return field.GetFieldValue().Value;
         }
 
@@ -61,7 +62,7 @@ public static class PdfMarkup
         ArgumentHelpers.ThrowIfNull(pdf);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(text);
         var box = FindBox(pdf, text);
-        using var input = new MemoryStream(pdf.ToArray(), writable: false);
+        using var input = new MemoryStream(pdf.ToArray(), false);
         var document = SharpReader.Open(input, PdfDocumentOpenMode.Modify);
         var page = document.Pages[box.PageIndex];
         var content = page.Contents.CreateSingleContent();
@@ -77,7 +78,7 @@ public static class PdfMarkup
         }
 
         using var output = new MemoryStream();
-        document.Save(output, false);
+        document.Save(output);
         return output.ToArray();
     }
 
@@ -86,25 +87,17 @@ public static class PdfMarkup
     {
         ArgumentHelpers.ThrowIfNull(pdf);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(stamp);
-        using var input = new MemoryStream([.. pdf], writable: false);
+        using var input = new MemoryStream([.. pdf], false);
         var document = SharpReader.Open(input, PdfDocumentOpenMode.Modify);
         var page = document.Pages[0];
-        var highlight = new PdfTextAnnotation(document) {
-            Rectangle = new(new(x, y, width, height))
-        };
+        var highlight = new PdfTextAnnotation(document) { Rectangle = new(new(x, y, width, height)) };
         highlight.Elements.SetName("/Subtype", "/Highlight");
         highlight.Elements.Add("/QuadPoints", Quad(document, x, y, width, height));
         page.Annotations.Add(highlight);
-
-        var note = new PdfTextAnnotation(document) {
-            Contents = stamp,
-            Icon = PdfTextAnnotationIcon.Note,
-            Rectangle = new(new(x, y - 24, 18, 18))
-        };
+        var note = new PdfTextAnnotation(document) { Contents = stamp, Icon = PdfTextAnnotationIcon.Note, Rectangle = new(new(x, y - 24, 18, 18)) };
         page.Annotations.Add(note);
-
         using var output = new MemoryStream();
-        document.Save(output, false);
+        document.Save(output);
         return output.ToArray();
     }
 
@@ -138,8 +131,7 @@ public static class PdfMarkup
         return pdf.Length;
     }
 
-    private static string EscapePdfString(string value)
-        => value.Replace("\\", "\\\\").Replace("(", "\\(").Replace(")", "\\)");
+    private static string EscapePdfString(string value) => value.Replace("\\", "\\\\").Replace("(", "\\(").Replace(")", "\\)");
 
     private static int IndexOf(byte[] source, ReadOnlySpan<byte> needle, int start, int end)
     {
@@ -160,6 +152,7 @@ public static class PdfMarkup
             foreach (var word in page.GetWords()) {
                 if (!word.Text.Contains(text, StringComparison.Ordinal))
                     continue;
+
                 var box = word.BoundingBox;
                 return new(pageNumber - 1, box.Left, box.Bottom, box.Right, box.Top);
             }
@@ -177,6 +170,7 @@ public static class PdfMarkup
             for (var j = 0; j < needle.Length; j++) {
                 if (content[i + j] == needle[j])
                     continue;
+
                 match = false;
                 break;
             }

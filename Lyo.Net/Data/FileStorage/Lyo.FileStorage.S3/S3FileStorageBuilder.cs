@@ -30,15 +30,17 @@ public sealed class S3FileStorageBuilder : FileStorageServiceBuilder<S3FileStora
     {
         services.AddS3FileStorageProvider();
         services.TryAddInMemoryMultipartUploadSessionStoreIfMissing();
-        services.AddKeyedScoped<S3MultipartUploadService>(storeName, (provider, _) => {
-            if (provider.GetRequiredService<IFileStorageFactory>().Get(storeName) is not S3FileStorageService storage)
-                throw new InvalidOperationException($"File storage '{storeName}' is not an S3 store.");
+        services.AddKeyedScoped<S3MultipartUploadService>(
+            storeName, (provider, _) => {
+                if (provider.GetRequiredService<IFileStorageFactory>().Get(storeName) is not S3FileStorageService storage)
+                    throw new InvalidOperationException($"File storage '{storeName}' is not an S3 store.");
 
-            var metrics = Options.EnableMetrics ? provider.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
-            return new S3MultipartUploadService(
-                storage, Options, Client(), provider.GetRequiredService<IMultipartUploadSessionStore>(), provider.GetService<IFileContentPolicy>(),
-                provider.GetServices<IFileAuditEventHandler>(), provider.GetService<IFileOperationContextAccessor>(), provider.GetService<ILoggerFactory>(), metrics);
-        });
+                var metrics = Options.EnableMetrics ? provider.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
+                return new(
+                    storage, Options, Client(), provider.GetRequiredService<IMultipartUploadSessionStore>(), provider.GetService<IFileContentPolicy>(),
+                    provider.GetServices<IFileAuditEventHandler>(), provider.GetService<IFileOperationContextAccessor>(), provider.GetService<ILoggerFactory>(), metrics);
+            });
+
         services.AddKeyedScoped<IMultipartUploadService>(storeName, (provider, _) => provider.GetRequiredKeyedService<S3MultipartUploadService>(storeName));
     }
 
@@ -51,10 +53,11 @@ public sealed class S3FileStorageBuilder : FileStorageServiceBuilder<S3FileStora
                 throw new InvalidOperationException("The unkeyed file storage service is not an S3 store.");
 
             var metrics = Options.EnableMetrics ? provider.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
-            return new S3MultipartUploadService(
+            return new(
                 storage, Options, Client(), provider.GetRequiredService<IMultipartUploadSessionStore>(), provider.GetService<IFileContentPolicy>(),
                 provider.GetServices<IFileAuditEventHandler>(), provider.GetService<IFileOperationContextAccessor>(), provider.GetService<ILoggerFactory>(), metrics);
         });
+
         services.AddScoped<IMultipartUploadService>(provider => provider.GetRequiredService<S3MultipartUploadService>());
     }
 

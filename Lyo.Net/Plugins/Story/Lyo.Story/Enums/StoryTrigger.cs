@@ -1,6 +1,6 @@
 namespace Lyo.Story.Enums;
 
-/// <summary>When a <see cref="StoryReaction"/> is eligible. A trigger is a hook, not an outcome.</summary>
+/// <summary>When a <see cref="StoryReaction" /> is eligible. A trigger is a hook, not an outcome.</summary>
 public enum StoryTrigger
 {
     Unknown = 0,

@@ -4,9 +4,7 @@ using Lyo.Exceptions;
 
 namespace Lyo.Cache;
 
-/// <summary>
-/// Lightweight L1 snapshot row for observability: a logical cache key or a tag marker listed in <see cref="ICacheService.Items" />.
-/// </summary>
+/// <summary>Lightweight L1 snapshot row for observability: a logical cache key or a tag marker listed in <see cref="ICacheService.Items" />.</summary>
 /// <remarks>
 /// <see cref="ICacheService.Items" /> is this process's in-memory (L1) list. Other processes can write Redis (L2) keys that never appear here until this process loads them.
 /// <see cref="Encrypted" />, <see cref="Compressed" />, <see cref="SizeBytes" />, <see cref="Expires" />, and <see cref="Tags" /> apply to keys; tag-index rows leave them null.
@@ -31,10 +29,7 @@ public sealed record CacheItem(
     DateTime? Expires = null,
     IReadOnlyList<string>? Tags = null)
 {
-    /// <summary>
-    /// Case-insensitive equality for <see cref="Name" /> with matching <see cref="Type" />. Storage flags and timestamps are ignored so the item can be used as a
-    /// dictionary key.
-    /// </summary>
+    /// <summary>Case-insensitive equality for <see cref="Name" /> with matching <see cref="Type" />. Storage flags and timestamps are ignored so the item can be used as a dictionary key.</summary>
     public bool Equals(CacheItem? other) => other is not null && Type == other.Type && string.Equals(Name, other.Name, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Builds an item for a stored cache key.</summary>
@@ -61,16 +56,15 @@ public sealed record CacheItem(
     public static CacheItem Tag(string name, DateTime? created = null) => new(name, CacheItemTypeEnum.Tag, created ?? DateTime.UtcNow);
 
     /// <summary>
-    /// Builds a key item from the bytes this process stored. Framed <c>LYO1</c> payloads set <see cref="Encrypted" /> / <see cref="Compressed" /> from flags;
-    /// other byte arrays report both as false. <see cref="SizeBytes" /> is always <paramref name="stored" />.Length.
+    /// Builds a key item from the bytes this process stored. Framed <c>LYO1</c> payloads set <see cref="Encrypted" /> / <see cref="Compressed" /> from flags; other byte arrays
+    /// report both as false. <see cref="SizeBytes" /> is always <paramref name="stored" />.Length.
     /// </summary>
     public static CacheItem FromStoredBytes(string name, byte[] stored, DateTime? created = null, DateTime? expires = null, IReadOnlyList<string>? tags = null)
     {
         ArgumentHelpers.ThrowIfNull(stored);
         var encrypted = false;
         var compressed = false;
-
-        if (!CachePayloadFrame.TryInspect(stored, out var flags, out _))
+        if (!CachePayloadFrame.TryInspect(stored, out var flags, out var _))
             return Key(name, created, encrypted, compressed, stored.Length, expires, tags);
 
         encrypted = (flags & CachePayloadFrame.FlagEncrypted) != 0;

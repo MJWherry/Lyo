@@ -22,28 +22,6 @@ internal sealed class CsvWriter : ICsvWriter
         _logger = logger;
     }
 
-    private IDisposable BeginCall() => _calls.Enter();
-
-    private static CsvTypeBinder.ColumnMap[] Columns<T>(CsvOptions options) => CsvTypeBinder.OrderColumns(CsvTypeBinder.GetMap<T>(), options.Order, options.OrderNames);
-
-    private int[] DataTableColumnOrder(DataTable.Models.DataTable dataTable, int maxCol)
-    {
-        var indexes = new int[maxCol];
-        var names = new string[maxCol];
-        for (var i = 0; i < maxCol; i++)
-            indexes[i] = i;
-
-        foreach (var header in dataTable.Headers) {
-            if (header.Key >= 0 && header.Key < maxCol)
-                names[header.Key] = header.Value.DisplayValue ?? "";
-        }
-
-        if (Config.Order == MemberOrder.Defined || maxCol <= 1)
-            return indexes;
-
-        return MemberOrderSort.Sort(indexes, index => names[index] ?? "", static _ => (int?)null, Config.Order, Config.OrderNames).ToArray();
-    }
-
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvWriter.ExportToCsv``1(System.Collections.Generic.IEnumerable{``0},System.String)' />
     public void ExportToCsv<T>(IEnumerable<T> data, string csvFilePath)
     {
@@ -281,6 +259,28 @@ internal sealed class CsvWriter : ICsvWriter
         using var ms = new MemoryStream();
         ExportToCsvStreamFromDataTable(dataTable, ms);
         return ms.ToArray();
+    }
+
+    private IDisposable BeginCall() => _calls.Enter();
+
+    private static CsvTypeBinder.ColumnMap[] Columns<T>(CsvOptions options) => CsvTypeBinder.OrderColumns(CsvTypeBinder.GetMap<T>(), options.Order, options.OrderNames);
+
+    private int[] DataTableColumnOrder(DataTable.Models.DataTable dataTable, int maxCol)
+    {
+        var indexes = new int[maxCol];
+        var names = new string[maxCol];
+        for (var i = 0; i < maxCol; i++)
+            indexes[i] = i;
+
+        foreach (var header in dataTable.Headers) {
+            if (header.Key >= 0 && header.Key < maxCol)
+                names[header.Key] = header.Value.DisplayValue ?? "";
+        }
+
+        if (Config.Order == MemberOrder.Defined || maxCol <= 1)
+            return indexes;
+
+        return MemberOrderSort.Sort(indexes, index => names[index] ?? "", static _ => null, Config.Order, Config.OrderNames).ToArray();
     }
 
     private void WriteDictionaryToCsv(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, TextWriter writer, bool hasHeaderRow, bool hasFooterRow)

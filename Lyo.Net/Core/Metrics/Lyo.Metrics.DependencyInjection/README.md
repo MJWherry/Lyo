@@ -1,6 +1,7 @@
 # Lyo.Metrics.DependencyInjection
 
-Service-collection registration for Lyo.Metrics, split out so the metrics library itself has no NuGet dependencies. Ships `AddLyoMetrics` in four option shapes, `AddLyoMetricsFromConfiguration`, and `AddNullMetrics`.
+Service-collection registration for Lyo.Metrics, split out so the metrics library itself has no NuGet dependencies. Ships `AddLyoMetrics` in four option shapes,
+`AddLyoMetricsFromConfiguration`, and `AddNullMetrics`.
 
 ## Features
 
@@ -8,7 +9,8 @@ Service-collection registration for Lyo.Metrics, split out so the metrics librar
 - **Option shapes.** `Action<MetricsOptions>`, parameterless, `Action<IServiceProvider, MetricsOptions>`, and `Func<IServiceProvider, MetricsOptions>`.
 - **Configuration binding.** On start, `AddLyoMetricsFromConfiguration(IConfiguration, string configSectionName = "MetricsOptions")` binds and validates.
 - **No-op registration.** `AddNullMetrics()` binds `NullMetrics` to `IMetrics` for tests or when recording is off.
-- **Why it is separate.** `Microsoft.Extensions.Configuration.Binder` comes in with `Microsoft.Extensions.Options.ConfigurationExtensions`. Leaving that out of `Lyo.Metrics` lets a package instrument itself for one dependency-free reference.
+- **Why it is separate.** `Microsoft.Extensions.Configuration.Binder` comes in with `Microsoft.Extensions.Options.ConfigurationExtensions`. Leaving that out of `Lyo.Metrics` lets a
+  package instrument itself for one dependency-free reference.
 
 ## Examples
 
@@ -74,11 +76,13 @@ public sealed class MyService(IMetrics metrics)
 
 ## When this package is needed
 
-Host entry points that register `IMetrics` in a container should reference this package. Libraries that only *record* metrics should reference `Lyo.Metrics` alone: take `IMetrics` (or `IMetrics?` defaulting to `NullMetrics.Instance`) as a constructor parameter and let the host choose the bound implementation.
+Host entry points that register `IMetrics` in a container should reference this package. Libraries that only *record* metrics should reference `Lyo.Metrics` alone: take `IMetrics`
+(or `IMetrics?` defaulting to `NullMetrics.Instance`) as a constructor parameter and let the host choose the bound implementation.
 
 ## How it relates to Lyo.Metrics.OpenTelemetry
 
-[Lyo.Metrics.OpenTelemetry](../Lyo.Metrics.OpenTelemetry/README.md) owns `AddLyoMetricsWithOpenTelemetry` and registers its own `IMetrics` implementation. It does not depend on this package; choose one registration path or the other.
+[Lyo.Metrics.OpenTelemetry](../Lyo.Metrics.OpenTelemetry/README.md) owns `AddLyoMetricsWithOpenTelemetry` and registers its own `IMetrics` implementation. It does not depend on
+this package; choose one registration path or the other.
 
 ## Dependencies
 

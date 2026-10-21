@@ -22,13 +22,16 @@ public sealed class ImportJsonConversion
 
     /// <summary>A JSON document the importer can bind.</summary>
     public static ImportJsonConversion Ok(string json, ImportJsonMode jsonMode = ImportJsonMode.Array, string? rowsPath = null)
-        => new() { IsSuccess = true, Json = json, JsonMode = jsonMode, RowsPath = rowsPath };
+        => new() {
+            IsSuccess = true,
+            Json = json,
+            JsonMode = jsonMode,
+            RowsPath = rowsPath
+        };
 
     /// <summary>The file is not a document the importer can read.</summary>
-    public static ImportJsonConversion Fail(string message)
-        => new() { IsSuccess = false, Message = message };
+    public static ImportJsonConversion Fail(string message) => new() { IsSuccess = false, Message = message };
 
     /// <summary>JSON from a text format. A rows path selects wrapped mode. Otherwise the root must be an array.</summary>
-    public static ImportJsonConversion FromTextFormat(string json, string? rowsPath)
-        => string.IsNullOrWhiteSpace(rowsPath) ? Ok(json) : Ok(json, ImportJsonMode.Wrapped, rowsPath);
+    public static ImportJsonConversion FromTextFormat(string json, string? rowsPath) => string.IsNullOrWhiteSpace(rowsPath) ? Ok(json) : Ok(json, ImportJsonMode.Wrapped, rowsPath);
 }

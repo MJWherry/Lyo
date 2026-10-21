@@ -11,8 +11,8 @@ public sealed class IdempotencyDbContextFactory : IDesignTimeDbContextFactory<Id
     public IdempotencyDbContext CreateDbContext(string[] args)
     {
         var options = new DbContextOptionsBuilder<IdempotencyDbContext>().UseNpgsql(
-            "Host=localhost;Database=idempotency",
-            npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", PostgresIdempotencyOptions.Schema));
-        return new IdempotencyDbContext(options.Options);
+            "Host=localhost;Database=idempotency", npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", PostgresIdempotencyOptions.Schema));
+
+        return new(options.Options);
     }
 }

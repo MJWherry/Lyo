@@ -5,12 +5,12 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Lyo.Web.Primitives;
 
 /// <summary>
-/// Read-only code surface with an optional language label, line numbers, and a copy button. Prefer it for SQL, JSON, YAML, and C# instead of a bare
-/// <c>&lt;pre&gt;</c>, which is what <c>WhereClauseViewDialog</c> still does today.
+/// Read-only code surface with an optional language label, line numbers, and a copy button. Prefer it for SQL, JSON, YAML, and C# instead of a bare <c>&lt;pre&gt;</c>, which
+/// is what <c>WhereClauseViewDialog</c> still does today.
 /// </summary>
 /// <remarks>
-/// Highlighting stays with the host theme: this block does not pull in a highlighter package. Line numbers are prepended as text so they copy with the code when
-/// the user selects in the browser; the toolbar copy button always copies the original <see cref="Code" /> without numbers.
+/// Highlighting stays with the host theme: this block does not pull in a highlighter package. Line numbers are prepended as text so they copy with the code when the user
+/// selects in the browser; the toolbar copy button always copies the original <see cref="Code" /> without numbers.
 /// </remarks>
 public partial class LyoCodeBlock
 {

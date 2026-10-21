@@ -15,6 +15,7 @@ internal static partial class X11DesktopWindows
         var display = XOpenDisplay(IntPtr.Zero);
         if (display == IntPtr.Zero)
             throw new InvalidOperationException("Could not open the X11 display.");
+
         try {
             var root = XRootWindow(display, XDefaultScreen(display));
             var ids = WindowIds(display, root);
@@ -38,6 +39,7 @@ internal static partial class X11DesktopWindows
         var display = XOpenDisplay(IntPtr.Zero);
         if (display == IntPtr.Zero)
             throw new InvalidOperationException("Could not open the X11 display.");
+
         try {
             var root = XRootWindow(display, XDefaultScreen(display));
             var window = new IntPtr(id);
@@ -61,7 +63,7 @@ internal static partial class X11DesktopWindows
             Marshal.WriteIntPtr(ev, 32, window);
             Marshal.WriteIntPtr(ev, 40, (IntPtr)(long)atom);
             Marshal.WriteInt32(ev, 48, 32);
-            Marshal.WriteIntPtr(ev, 56, (IntPtr)1);
+            Marshal.WriteIntPtr(ev, 56, 1);
             XSendEvent(display, root, 0, ActiveMask, ev);
         }
         finally {
@@ -73,12 +75,15 @@ internal static partial class X11DesktopWindows
     {
         if (!TryProperty(display, root, "_NET_CLIENT_LIST", out var data, out var format, out var count))
             return [];
+
         try {
             if (format != 32)
                 return [];
+
             var ids = new long[count];
             for (var i = 0; i < count; i++)
                 ids[i] = Marshal.ReadIntPtr(data, i * IntPtr.Size).ToInt64();
+
             return ids;
         }
         finally {
@@ -91,13 +96,16 @@ internal static partial class X11DesktopWindows
         window = default;
         var handle = new IntPtr(id);
         var title = Title(display, handle);
-        if (XGetGeometry(display, handle, out _, out _, out _, out var width, out var height, out _, out _) == 0)
+        if (XGetGeometry(display, handle, out var _, out var _, out var _, out var width, out var height, out var _, out var _) == 0)
             return false;
-        if (XTranslateCoordinates(display, handle, root, 0, 0, out var x, out var y, out _) == 0)
+
+        if (XTranslateCoordinates(display, handle, root, 0, 0, out var x, out var y, out var _) == 0)
             return false;
+
         var bounds = new DesktopRect(x, y, (int)width, (int)height);
         if (TryExtents(display, handle, out var left, out var right, out var top, out var bottom))
             bounds = WindowFrame.Outer(bounds, left, right, top, bottom);
+
         window = new(id, title, bounds);
         return true;
     }
@@ -112,6 +120,7 @@ internal static partial class X11DesktopWindows
     {
         if (!TryProperty(display, window, name, out var data, out var format, out var count) || format != 8)
             return "";
+
         try {
             var bytes = new byte[count];
             Marshal.Copy(data, bytes, 0, count);
@@ -127,9 +136,11 @@ internal static partial class X11DesktopWindows
         left = right = top = bottom = 0;
         if (!TryProperty(display, window, "_NET_FRAME_EXTENTS", out var data, out var format, out var count))
             return false;
+
         try {
             if (format != 32 || count < 4)
                 return false;
+
             left = (int)Marshal.ReadIntPtr(data, 0 * IntPtr.Size);
             right = (int)Marshal.ReadIntPtr(data, 1 * IntPtr.Size);
             top = (int)Marshal.ReadIntPtr(data, 2 * IntPtr.Size);
@@ -149,9 +160,11 @@ internal static partial class X11DesktopWindows
         var atom = XInternAtom(display, name, 1);
         if (atom == 0)
             return false;
-        if (XGetWindowProperty(display, window, atom, 0, 1024, 0, 0, out _, out format, out var items, out _, out data) != 0 || data == IntPtr.Zero) {
+
+        if (XGetWindowProperty(display, window, atom, 0, 1024, 0, 0, out var _, out format, out var items, out var _, out data) != 0 || data == IntPtr.Zero) {
             if (data != IntPtr.Zero)
                 XFree(data);
+
             return false;
         }
 

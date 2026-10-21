@@ -11,9 +11,7 @@ public class ShotScratchTests
         Directory.CreateDirectory(directory);
         File.WriteAllBytes(Path.Combine(directory, "shot.png"), [1, 2, 3]);
         File.WriteAllBytes(Path.Combine(directory, "receipt-abc.bin"), [4, 5]);
-
         ShotScratch.Wipe(directory);
-
         Assert.False(Directory.Exists(directory));
     }
 
@@ -21,9 +19,7 @@ public class ShotScratchTests
     public void Wipe_MissingDirectory_DoesNothing()
     {
         var directory = Path.Combine(Path.GetTempPath(), "lyo-shot-missing-" + LyoGuid.CreateV7().ToString("N"));
-
         ShotScratch.Wipe(directory);
-
         Assert.False(Directory.Exists(directory));
     }
 }

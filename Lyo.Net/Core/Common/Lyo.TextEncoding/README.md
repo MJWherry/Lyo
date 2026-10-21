@@ -1,6 +1,9 @@
 # Lyo.TextEncoding
 
-Span-first binary-to-text codecs and character-set helpers for buffers, streams, and files. Two injectable services — `IBinaryEncodingService` and `ICharsetEncodingService` — sit beside static `BinaryEncoding` / `CharsetEncoding`. The namespace is `Lyo.TextEncoding`, so `System.Text.Encoding` needs no alias. Code pages come from `System.Text.Encoding.CodePages`. Hex casing uses `TextLetterCase` from `Lyo.Common.Core`. A plain hex string, and buffer encode and decode, go through `ByteConvert` in that package.
+Span-first binary-to-text codecs and character-set helpers for buffers, streams, and files. Two injectable services — `IBinaryEncodingService` and `ICharsetEncodingService` — sit
+beside static `BinaryEncoding` / `CharsetEncoding`. The namespace is `Lyo.TextEncoding`, so `System.Text.Encoding` needs no alias. Code pages come from
+`System.Text.Encoding.CodePages`. Hex casing uses `TextLetterCase` from `Lyo.Common.Core`. A plain hex string, and buffer encode and decode, go through `ByteConvert` in that
+package.
 
 ## Features
 

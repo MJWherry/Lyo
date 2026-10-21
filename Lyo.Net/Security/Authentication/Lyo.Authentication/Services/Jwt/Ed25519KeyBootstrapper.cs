@@ -6,6 +6,7 @@ using Lyo.Exceptions;
 using Lyo.KeyStore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+
 namespace Lyo.Authentication.Services.Jwt;
 
 /// <summary>

@@ -2,10 +2,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace Lyo.Web.Components.Media;
 
-/// <summary>
-/// Image viewer. Uses <see cref="Src" /> when it is set; otherwise <see cref="Poster" />.
-/// Both blank renders “No image.”
-/// </summary>
+/// <summary>Image viewer. Uses <see cref="Src" /> when it is set; otherwise <see cref="Poster" />. Both blank renders “No image.”</summary>
 public partial class LyoImage
 {
     /// <summary>Image URL. Blank falls through to <see cref="Poster" />.</summary>

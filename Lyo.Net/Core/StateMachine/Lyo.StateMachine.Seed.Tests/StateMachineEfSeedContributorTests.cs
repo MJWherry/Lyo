@@ -1,6 +1,5 @@
 using Lyo.Seed;
 using Lyo.StateMachine.Postgres.Database;
-using Lyo.StateMachine.Seed;
 
 namespace Lyo.StateMachine.Seed.Tests;
 
@@ -12,15 +11,16 @@ public sealed class StateMachineEfSeedContributorTests
         var transport = await SeedAsync(new StateMachineEfSeedContributor(), 2);
         var definitions = transport.Items.OfType<StateMachineDefinitionEntity>().ToList();
         Assert.Equal(2, definitions.Count);
-        Assert.All(definitions, definition => {
-            Assert.Contains("Idle", definition.Document);
-            var instance = Assert.Single(transport.Items.OfType<StateMachineInstanceEntity>(), row => row.MachineName == definition.Name);
-            Assert.Equal("seed", instance.InstanceKey);
-            var transition = Assert.Single(transport.Items.OfType<StateMachineTransitionEntity>(), row => row.MachineName == definition.Name);
-            Assert.Equal(instance.InstanceKey, transition.InstanceKey);
-            Assert.Equal("Idle", transition.FromState);
-            Assert.Equal("Running", transition.ToState);
-        });
+        Assert.All(
+            definitions, definition => {
+                Assert.Contains("Idle", definition.Document);
+                var instance = Assert.Single(transport.Items.OfType<StateMachineInstanceEntity>(), row => row.MachineName == definition.Name);
+                Assert.Equal("seed", instance.InstanceKey);
+                var transition = Assert.Single(transport.Items.OfType<StateMachineTransitionEntity>(), row => row.MachineName == definition.Name);
+                Assert.Equal(instance.InstanceKey, transition.InstanceKey);
+                Assert.Equal("Idle", transition.FromState);
+                Assert.Equal("Running", transition.ToState);
+            });
     }
 
     private static async Task<RecordingSeedTransport> SeedAsync(SeedContributor contributor, int count)
@@ -46,6 +46,7 @@ public sealed class StateMachineEfSeedContributorTests
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

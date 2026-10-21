@@ -21,6 +21,7 @@ public sealed class JsonExportFormatHandler(IJsonService json) : IExportFormatHa
             await json.ExportFormattedToJsonAsync(items, formatters, stream, ct).ConfigureAwait(false);
         else
             await json.ExportToJsonAsync(items, stream, ct).ConfigureAwait(false);
+
         stream.Position = 0;
         return (stream, Format.FileType.MimeType, Format.DefaultFileName);
     }
@@ -36,6 +37,7 @@ public sealed class JsonExportFormatHandler(IJsonService json) : IExportFormatHa
             await json.ExportColumnsToJsonAsync(items, columns, stream, ct).ConfigureAwait(false);
         else
             await json.ExportToJsonAsync(items, stream, ct).ConfigureAwait(false);
+
         stream.Position = 0;
         return (stream, Format.FileType.MimeType, Format.DefaultFileName);
     }

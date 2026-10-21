@@ -1,11 +1,10 @@
 using Lyo.Exceptions;
-using Lyo.Rfid;
 
 namespace Lyo.Rfid.Tonie;
 
 /// <summary>
-/// Addressed SLIX-L frames, CRC included. The UID argument is display order (<c>E0 04 03 …</c>). On the wire it is sent least-significant byte first.
-/// Flags are <c>0x22</c> (addressed, high data rate). Inventory uses <c>0x26</c> (one slot).
+/// Addressed SLIX-L frames, CRC included. The UID argument is display order (<c>E0 04 03 …</c>). On the wire it is sent least-significant byte first. Flags are <c>0x22</c>
+/// (addressed, high data rate). Inventory uses <c>0x26</c> (one slot).
 /// </summary>
 public static class SlixFrames
 {
@@ -21,7 +20,7 @@ public static class SlixFrames
     /// <summary>GET RANDOM NUMBER for the privacy password.</summary>
     public static byte[] GetRandom(ReadOnlySpan<byte> uid) => Custom(0xB2, uid, [ToniePrivacy.PrivacyIdentifier]);
 
-    /// <summary>SET PASSWORD with <paramref name="xorPassword"/> (already XORed with the tag random).</summary>
+    /// <summary>SET PASSWORD with <paramref name="xorPassword" /> (already XORed with the tag random).</summary>
     public static byte[] SetPassword(ReadOnlySpan<byte> uid, ReadOnlySpan<byte> xorPassword)
     {
         ArgumentHelpers.ThrowIfNotEqual(xorPassword.Length, 4);
@@ -31,7 +30,7 @@ public static class SlixFrames
         return Custom(0xB3, uid, tail);
     }
 
-    /// <summary>ENABLE PRIVACY. <paramref name="xorPassword"/> is the session password from the latest GET RANDOM NUMBER.</summary>
+    /// <summary>ENABLE PRIVACY. <paramref name="xorPassword" /> is the session password from the latest GET RANDOM NUMBER.</summary>
     public static byte[] EnablePrivacy(ReadOnlySpan<byte> uid, ReadOnlySpan<byte> xorPassword)
     {
         ArgumentHelpers.ThrowIfNotEqual(xorPassword.Length, 4);
@@ -41,14 +40,10 @@ public static class SlixFrames
     /// <summary>ISO 15693 READ SINGLE BLOCK.</summary>
     public static byte[] ReadSingleBlock(ReadOnlySpan<byte> uid, byte block) => Iso15693Frames.ReadSingleBlock(uid, block);
 
-    /// <summary>
-    /// ISO 15693 READ MULTIPLE BLOCKS. <paramref name="blockCount"/> is the number of 4-byte blocks.
-    /// The on-air count byte is <paramref name="blockCount"/> minus one.
-    /// </summary>
-    public static byte[] ReadMultipleBlocks(ReadOnlySpan<byte> uid, byte firstBlock, int blockCount) =>
-        Iso15693Frames.ReadMultipleBlocks(uid, firstBlock, blockCount);
+    /// <summary>ISO 15693 READ MULTIPLE BLOCKS. <paramref name="blockCount" /> is the number of 4-byte blocks. The on-air count byte is <paramref name="blockCount" /> minus one.</summary>
+    public static byte[] ReadMultipleBlocks(ReadOnlySpan<byte> uid, byte firstBlock, int blockCount) => Iso15693Frames.ReadMultipleBlocks(uid, firstBlock, blockCount);
 
-    /// <summary>ISO 15693 WRITE SINGLE BLOCK. <paramref name="blockData"/> is 4 bytes.</summary>
+    /// <summary>ISO 15693 WRITE SINGLE BLOCK. <paramref name="blockData" /> is 4 bytes.</summary>
     public static byte[] WriteSingleBlock(ReadOnlySpan<byte> uid, byte block, ReadOnlySpan<byte> blockData)
     {
         ArgumentHelpers.ThrowIfNotEqual(blockData.Length, 4);

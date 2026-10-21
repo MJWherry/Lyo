@@ -1,9 +1,9 @@
 using Lyo.EntityReference.Models;
+using Lyo.Exceptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
-using Lyo.Exceptions;
 
 namespace Lyo.EntityReference.Postgres;
 
@@ -38,8 +38,8 @@ public static class Extensions
             .Bind(configuration.GetSection(section))
             .Validate(o => o.DefaultTenantId != Guid.Empty, $"{section}:{nameof(EntityRefOptions.DefaultTenantId)} cannot be empty.")
             .ValidateOnStart();
-        services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<EntityRefOptions>>().Value);
 
+        services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<EntityRefOptions>>().Value);
         return services;
     }
 }

@@ -1,11 +1,11 @@
 using System.Reflection;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Tests.Postgres;
 
@@ -33,7 +33,7 @@ public class JobMaintenanceSlaTests
                     JobDefinitionId = _fixture.JobDefinitionId,
                     State = JobState.Queued,
                     CreatedBy = "test",
-                    CreatedTimestamp = now.AddMinutes(-10),
+                    CreatedTimestamp = now.AddMinutes(-10)
                 });
 
             await db.SaveChangesAsync(TestCt);
@@ -62,7 +62,7 @@ public class JobMaintenanceSlaTests
                     State = JobState.Running,
                     CreatedBy = "test",
                     CreatedTimestamp = now.AddMinutes(-20),
-                    StartedTimestamp = now.AddMinutes(-15),
+                    StartedTimestamp = now.AddMinutes(-15)
                 });
 
             await db.SaveChangesAsync(TestCt);

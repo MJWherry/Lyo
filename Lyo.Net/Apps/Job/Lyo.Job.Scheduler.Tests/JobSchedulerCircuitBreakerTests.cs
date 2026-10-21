@@ -1,10 +1,9 @@
 using System.Collections;
 using System.Reflection;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Formatter;
 using Lyo.Job.Models.Enums;
-using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Response;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Scheduler.Tests;
 
@@ -17,7 +16,7 @@ public class JobSchedulerCircuitBreakerTests
     [Fact]
     public async Task FailuresBelowTheThreshold_DoNotTripTheBreaker()
     {
-        var definition = BuildDefinition(circuitBreakerThreshold: 3);
+        var definition = BuildDefinition(3);
         var api = new FakeSchedulerApiClient(definition);
         var (scheduler, events) = await CreateSchedulerAsync(api);
         await CompleteFailedRunAsync(scheduler, definition.Id);
@@ -31,12 +30,11 @@ public class JobSchedulerCircuitBreakerTests
     [Fact]
     public async Task ReachingTheThreshold_DisablesTheDefinitionAndAlerts()
     {
-        var definition = BuildDefinition(circuitBreakerThreshold: 2);
+        var definition = BuildDefinition(2);
         var api = new FakeSchedulerApiClient(definition);
         var (scheduler, events) = await CreateSchedulerAsync(api);
         await CompleteFailedRunAsync(scheduler, definition.Id);
         await CompleteFailedRunAsync(scheduler, definition.Id);
-
         var patch = Assert.Single(api.DefinitionPatches);
         Assert.Equal(false, patch.Properties["Enabled"]);
         Assert.True(patch.Properties.ContainsKey("CircuitBreakerTrippedAt"));
@@ -50,7 +48,7 @@ public class JobSchedulerCircuitBreakerTests
     [Fact]
     public async Task WhenTheTripPatchFails_TheCounterIsKeptSoTheNextFailureRetries()
     {
-        var definition = BuildDefinition(circuitBreakerThreshold: 2);
+        var definition = BuildDefinition(2);
         var api = new FakeSchedulerApiClient(definition) { ThrowOnDefinitionPatch = true };
         var (scheduler, events) = await CreateSchedulerAsync(api);
         await CompleteFailedRunAsync(scheduler, definition.Id);
@@ -60,7 +58,6 @@ public class JobSchedulerCircuitBreakerTests
         Assert.Equal(2, FailureCount(scheduler, definition.Id));
         Assert.True(CachedJobs(scheduler).Contains(definition.Id));
         Assert.DoesNotContain(events.Alerts, a => a.AlertType == JobAlertType.CircuitBreakerTripped);
-
         api.ThrowOnDefinitionPatch = false;
         await CompleteFailedRunAsync(scheduler, definition.Id);
         Assert.Single(api.DefinitionPatches);
@@ -70,7 +67,7 @@ public class JobSchedulerCircuitBreakerTests
     [Fact]
     public async Task ASuccessfulRun_ResetsTheFailureCounter()
     {
-        var definition = BuildDefinition(circuitBreakerThreshold: 3);
+        var definition = BuildDefinition(3);
         var api = new FakeSchedulerApiClient(definition);
         var (scheduler, _) = await CreateSchedulerAsync(api);
         await CompleteFailedRunAsync(scheduler, definition.Id);
@@ -83,7 +80,7 @@ public class JobSchedulerCircuitBreakerTests
     [Fact]
     public async Task TimeoutsCountTowardTheBreaker()
     {
-        var definition = BuildDefinition(circuitBreakerThreshold: 2);
+        var definition = BuildDefinition(2);
         var api = new FakeSchedulerApiClient(definition);
         var (scheduler, _) = await CreateSchedulerAsync(api);
         await CompleteRunAsync(scheduler, BuildRun(definition.Id, JobRunResult.Timeout));

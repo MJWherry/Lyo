@@ -23,12 +23,12 @@ internal static class Frames
         return image;
     }
 
-    internal static Rgba32 RowColor(int row) => new((byte)(row % 200), (byte)(40 + (row % 100)), (byte)(row % 80), 255);
+    internal static Rgba32 RowColor(int row) => new((byte)(row % 200), (byte)(40 + row % 100), (byte)(row % 80), 255);
 
     internal static void AssertRows(Image<Rgba32> actual, int actualY, Image<Rgba32> expected, int expectedY, int height)
     {
         for (var y = 0; y < height; y++)
-            for (var x = 0; x < actual.Width; x++)
-                Assert.Equal(expected[x, expectedY + y], actual[x, actualY + y]);
+        for (var x = 0; x < actual.Width; x++)
+            Assert.Equal(expected[x, expectedY + y], actual[x, actualY + y]);
     }
 }

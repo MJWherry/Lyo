@@ -1,6 +1,7 @@
 # Lyo.Api.Authentication
 
-Administrative HTTP endpoints for Lyo Authentication. Maps QueryProject surfaces over `[user]` tables. Hosts supply `EndpointAuth` (default `RequireAuthorization()`). Self-service mint/list/revoke stays on `/tokens` and `/auth/me`.
+Administrative HTTP endpoints for Lyo Authentication. Maps QueryProject surfaces over `[user]` tables. Hosts supply `EndpointAuth` (default `RequireAuthorization()`). Self-service
+mint/list/revoke stays on `/tokens` and `/auth/me`.
 
 Do not map these routes `Anonymous()` on a public host: they QueryProject every user and token, including `SecretHash` denial on Token projections.
 
@@ -23,16 +24,17 @@ app.BuildAuthenticationApi(); // RequireAuthorization on every surface
 
 ## Authorization matrix
 
-| Surface | Options property | Endpoints |
-| --------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| User | `UserAuth` | Query / Get / Patch / Export. No Create (OIDC provisions). |
-| Token | `TokenAuth` | Query / Get / Patch / Delete / DeleteBulk. `SecretHash` is not selectable. Delete hard-removes the row. |
-| Claim | `ClaimAuth` | Default CRUD. Reserved JWT names (`iss`, `sub`, `scope`, `lyo:*`, …) are rejected. |
-| Scope | `ScopeAuth` | Default CRUD. Unique `(UserId, Name)`. Source of truth for JWT `scope`; provider/link scopes are not copied onto tokens. |
-| Linked identity | `LinkedIdentityAuth` | Query / Get (read-only) |
-| Event | `EventAuth` | Query / Get over `[user].[event]` |
+| Surface         | Options property     | Endpoints                                                                                                                |
+|-----------------|----------------------|--------------------------------------------------------------------------------------------------------------------------|
+| User            | `UserAuth`           | Query / Get / Patch / Export. No Create (OIDC provisions).                                                               |
+| Token           | `TokenAuth`          | Query / Get / Patch / Delete / DeleteBulk. `SecretHash` is not selectable. Delete hard-removes the row.                  |
+| Claim           | `ClaimAuth`          | Default CRUD. Reserved JWT names (`iss`, `sub`, `scope`, `lyo:*`, …) are rejected.                                       |
+| Scope           | `ScopeAuth`          | Default CRUD. Unique `(UserId, Name)`. Source of truth for JWT `scope`; provider/link scopes are not copied onto tokens. |
+| Linked identity | `LinkedIdentityAuth` | Query / Get (read-only)                                                                                                  |
+| Event           | `EventAuth`          | Query / Get over `[user].[event]`                                                                                        |
 
-Defaults are `EndpointAuth.RequireAuthorization()`. Prefer `AuthenticationApiOptions.WithAuth(auth)` when every surface shares one policy. Revoke is Patch `RevokedTimestamp`; hard-delete destroys the hash and emits `AuthAuditEventKind.TokenDeleted`.
+Defaults are `EndpointAuth.RequireAuthorization()`. Prefer `AuthenticationApiOptions.WithAuth(auth)` when every surface shares one policy. Revoke is Patch `RevokedTimestamp`;
+hard-delete destroys the hash and emits `AuthAuditEventKind.TokenDeleted`.
 
 ## Dependencies
 

@@ -1,19 +1,19 @@
 using Lyo.Api.Client;
-using Lyo.Api.Models.Common.Response;
-using Lyo.Parameters;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
-using Lyo.Web.Components.DataGrid;
 using Lyo.Web.Components.ParamTable;
 using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Lyo.Reporting.Web.Components;
 
 public partial class ReportParameterView
 {
-    static ReportParameterView() => FormatterLyoType.EnsureRegistered();
+    private bool _dirty;
+
+    // Rebuilt only on edits, not per render: the formatter editor rebuilds its token catalog whenever it is given a new context instance.
+    private object? _formatterContext;
+    private bool _loaded;
+
+    private List<LyoParameterEditRow> _rows = [];
 
     [Parameter]
     public IReadOnlyList<ReportDefinitionParameterRes>? Parameters { get; set; }
@@ -35,22 +35,16 @@ public partial class ReportParameterView
 
     private string ParameterRoute => $"{DefinitionRoute.TrimEnd('/')}/Parameter";
 
-    private List<LyoParameterEditRow> _rows = [];
-    private bool _dirty;
-    private bool _loaded;
-
-    // Rebuilt only on edits, not per render: the formatter editor rebuilds its token catalog whenever it is given a new context instance.
-    private object? _formatterContext;
+    static ReportParameterView() => FormatterLyoType.EnsureRegistered();
 
     protected override void OnParametersSet()
     {
         if (_loaded)
             return;
 
-        _rows = (Parameters ?? []).Select(
-                p => LyoParameterEditRow.FromMasked(
-                    p.Id, p.Key, p.Type, p.Value, p.Description, p.Required, p.EncryptedValue, p.AllowedValues, p.Options, defaultKind: p.DefaultKind,
-                    defaultTemplate: p.DefaultTemplate))
+        _rows = (Parameters ?? []).Select(p => LyoParameterEditRow.FromMasked(
+                p.Id, p.Key, p.Type, p.Value, p.Description, p.Required, p.EncryptedValue, p.AllowedValues, p.Options, defaultKind: p.DefaultKind,
+                defaultTemplate: p.DefaultTemplate))
             .ToList();
 
         _dirty = false;
@@ -64,8 +58,7 @@ public partial class ReportParameterView
         RebuildFormatterContext();
     }
 
-    private void RebuildFormatterContext()
-        => _formatterContext = ReportFormatterContext.Build(Definition, _rows.Select(r => new KeyValuePair<string, string?>(r.Key, r.Value)));
+    private void RebuildFormatterContext() => _formatterContext = ReportFormatterContext.Build(Definition, _rows.Select(r => new KeyValuePair<string, string?>(r.Key, r.Value)));
 
     private ReportDefinitionParameterReq ToRequest(LyoParameterEditRow row)
         => new() {
@@ -87,6 +80,7 @@ public partial class ReportParameterView
         try {
             await LyoParameterEditRowSync.SaveAsync<ReportDefinitionParameterReq, ReportDefinitionParameterRes>(
                 ApiClient, ParameterRoute, _rows, (Parameters ?? []).Select(p => p.Id), ToRequest, p => p.Id);
+
             Snackbar.Add("Parameters saved.", Severity.Success);
             _dirty = false;
         }

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Lyo.Law.Postgres.Database;
 
-/// <summary>Maps <see cref="LawJurisdictionEntity"/> to <c>law.jurisdiction</c>.</summary>
+/// <summary>Maps <see cref="LawJurisdictionEntity" /> to <c>law.jurisdiction</c>.</summary>
 public sealed class LawJurisdictionEntityConfiguration : IEntityTypeConfiguration<LawJurisdictionEntity>
 {
     /// <inheritdoc />

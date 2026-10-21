@@ -12,8 +12,8 @@ public sealed class CorrelationHandlerOptions
     public static readonly string[] DefaultHeaders = LyoHttpHeaders.CorrelationIds;
 
     /// <summary>
-    /// Header names checked on the outbound request. If any are already populated by the caller (for example via the typed-client's <c>before:</c> hook), the handler does nothing.
-    /// Defaults to <see cref="DefaultHeaders" />.
+    /// Header names checked on the outbound request. If any are already populated by the caller (for example via the typed-client's <c>before:</c> hook), the handler does
+    /// nothing. Defaults to <see cref="DefaultHeaders" />.
     /// </summary>
     public string[] DetectHeaderNames { get; set; } = DefaultHeaders;
 

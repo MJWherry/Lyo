@@ -1,6 +1,6 @@
 using System.Text.Json;
-using Lyo.Json;
 using Lyo.Exceptions;
+using Lyo.Json;
 using Lyo.StateMachine.Models;
 
 namespace Lyo.StateMachine;

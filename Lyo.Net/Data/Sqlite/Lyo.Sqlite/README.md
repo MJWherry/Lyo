@@ -1,6 +1,7 @@
 # Lyo.Sqlite
 
-Common SQLite migration host bits for Lyo libraries that own an EF Core schema. When the consumer options opt in, a thin `IHostedService` calls `DbContext.Database.MigrateAsync` as the host starts.
+Common SQLite migration host bits for Lyo libraries that own an EF Core schema. When the consumer options opt in, a thin `IHostedService` calls `DbContext.Database.MigrateAsync` as
+the host starts.
 
 > Out of scope: health checks, design-time `IDesignTimeDbContextFactory` helpers, and connection-string builders stay in consumer libraries when those need them.
 
@@ -24,11 +25,11 @@ services.AddSqliteMigrations<SqliteFileMetadataStoreDbContext, FileStoreSqliteOp
 
 ## Types
 
-| Type | Role |
-| ------------------------------------------------------ | --------------------------------------------------- |
-| `ISqliteMigrationConfig` | `ConnectionString`, `EnableAutoMigrations` |
-| `SqliteMigrationHostedService<TContext, TOptions>` | Calls `MigrateAsync` from `StartAsync` when enabled |
-| `Extensions.AddSqliteMigrations<TContext, TOptions>()` | Adds the hosted service |
+| Type                                                   | Role                                                |
+|--------------------------------------------------------|-----------------------------------------------------|
+| `ISqliteMigrationConfig`                               | `ConnectionString`, `EnableAutoMigrations`          |
+| `SqliteMigrationHostedService<TContext, TOptions>`     | Calls `MigrateAsync` from `StartAsync` when enabled |
+| `Extensions.AddSqliteMigrations<TContext, TOptions>()` | Adds the hosted service                             |
 
 `TContext` is built with `Activator.CreateInstance(typeof(TContext), dbContextOptions)`, so every consumer DbContext **must expose a public constructor that
 takes a single `DbContextOptions<TContext>`**.

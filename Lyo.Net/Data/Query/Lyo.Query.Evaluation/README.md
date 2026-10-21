@@ -1,10 +1,14 @@
 # Lyo.Query.Evaluation
 
-This slice of the query engine turns a `WhereClause` into an expression tree and evaluates it. Every `IWhereClauseService` member is implemented here except caching, which `Lyo.Query` adds by overriding this package's virtual members.
+This slice of the query engine turns a `WhereClause` into an expression tree and evaluates it. Every `IWhereClauseService` member is implemented here except caching, which
+`Lyo.Query` adds by overriding this package's virtual members.
 
-The split exists because `Lyo.Validation` needs exactly this and nothing else. Evaluating a `ValidationSchema` used to mean referencing `Lyo.Query`, which pulled in cache, encryption, hashing, key store, compression, and health. `WhereClauseEvaluator` uses a `ConcurrentDictionary` instead of the shared cache, so a consumer that only wants to know whether an object matches a clause pays for expression building and nothing else.
+The split exists because `Lyo.Validation` needs exactly this and nothing else. Evaluating a `ValidationSchema` used to mean referencing `Lyo.Query`, which pulled in cache,
+encryption, hashing, key store, compression, and health. `WhereClauseEvaluator` uses a `ConcurrentDictionary` instead of the shared cache, so a consumer that only wants to know
+whether an object matches a clause pays for expression building and nothing else.
 
-Metrics are recorded here rather than in `Lyo.Query`, because `Lyo.Metrics` has no NuGet dependencies of its own. `IMetrics` is an optional constructor parameter that defaults to `NullMetrics.Instance`, so the uninstrumented path costs nothing.
+Metrics are recorded here rather than in `Lyo.Query`, because `Lyo.Metrics` has no NuGet dependencies of its own. `IMetrics` is an optional constructor parameter that defaults to
+`NullMetrics.Instance`, so the uninstrumented path costs nothing.
 
 ## Features
 
@@ -14,8 +18,10 @@ Metrics are recorded here rather than in `Lyo.Query`, because `Lyo.Metrics` has 
 - **Path resolution.** Dotted paths, including collection segments, go through `TryValidatePropertyPath` and `SharedEntityMetadataCache`.
 - **FuzzyMatch.** CLR trigram Jaccard for `Fuzzy` / `NotFuzzy`. Postgres hosts rewrite the same call to SQL `similarity()`.
 - **Value conversion.** Filter literals go through `IValueConversionService` / `ValueConversionService`, which delegates to `TypeConversion`.
-- **Metrics.** Durations, success counters, and errors under `Lyo.Query.Constants.Metrics`, tagged `entity_type`. Pass an `IMetrics` to opt in; omit it and nothing is recorded or allocated.
-- **Extension points.** `GetMatcher`, `GetEfPredicate`, `GetIncludePaths`, and `RewriteQueryablePredicate` are virtual so a host can plug in caching or provider-specific rewrites (Postgres Fuzzy → `similarity()`).
+- **Metrics.** Durations, success counters, and errors under `Lyo.Query.Constants.Metrics`, tagged `entity_type`. Pass an `IMetrics` to opt in; omit it and nothing is recorded or
+  allocated.
+- **Extension points.** `GetMatcher`, `GetEfPredicate`, `GetIncludePaths`, and `RewriteQueryablePredicate` are virtual so a host can plug in caching or provider-specific rewrites
+  (Postgres Fuzzy → `similarity()`).
 
 ## Examples
 
@@ -57,13 +63,16 @@ var successes = metrics.GetCounterValue(
 
 ## How this relates to `Lyo.Query`
 
-`Lyo.Query.BaseWhereClauseService` subclasses `WhereClauseEvaluator` and overrides the protected `GetMatcher` / `GetEfPredicate` / `GetIncludePaths` members to go through `ICacheService`. It also forwards the injected `IMetrics` only when `CacheOptions.EnableMetrics` is set, since that flag lives in `Lyo.Cache` and cannot be read from here. `IWhereClauseService` signatures are the same either way, so nothing downstream can tell which one it got.
+`Lyo.Query.BaseWhereClauseService` subclasses `WhereClauseEvaluator` and overrides the protected `GetMatcher` / `GetEfPredicate` / `GetIncludePaths` members to go through
+`ICacheService`. It also forwards the injected `IMetrics` only when `CacheOptions.EnableMetrics` is set, since that flag lives in `Lyo.Cache` and cannot be read from here.
+`IWhereClauseService` signatures are the same either way, so nothing downstream can tell which one it got.
 
 Take this package when the consumer only evaluates clauses. Take `Lyo.Query` when the consumer wants the shared cache and the rest of the request/paging surface.
 
 ## `netstandard2.0` caveat
 
-On `net` targets, `IWhereClauseService.ExplainMatch` ships a default implementation so database-only services need not implement it. `netstandard2.0` has no default interface implementations, so the member is abstract there and implementers must supply it.
+On `net` targets, `IWhereClauseService.ExplainMatch` ships a default implementation so database-only services need not implement it. `netstandard2.0` has no default interface
+implementations, so the member is abstract there and implementers must supply it.
 
 ## Dependencies
 

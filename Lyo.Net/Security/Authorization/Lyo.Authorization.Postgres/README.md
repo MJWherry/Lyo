@@ -1,6 +1,7 @@
 # Lyo.Authorization.Postgres
 
-One active row per subject, action, resource type, resource id, and tenant. The unique index uses NULLS NOT DISTINCT and ignores revoked rows. An expired row still occupies the index until Save revokes it and inserts the replacement. A losing concurrent insert becomes ConflictException. The provider exception is not surfaced.
+One active row per subject, action, resource type, resource id, and tenant. The unique index uses NULLS NOT DISTINCT and ignores revoked rows. An expired row still occupies the
+index until Save revokes it and inserts the replacement. A losing concurrent insert becomes ConflictException. The provider exception is not surfaced.
 
 ## Features
 

@@ -5,16 +5,21 @@ using Lyo.Api.Models.Common.Response;
 using Lyo.Common.Metadata.Records;
 using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 
 namespace Lyo.Web.Components.Dialog;
 
 /// <summary>
-/// Picks one property and a typed value, then PATCHes the selected keys through <see cref="IApiClient" />. Completes the bulk-action toolbar that already ships
-/// export and delete.
+/// Picks one property and a typed value, then PATCHes the selected keys through <see cref="IApiClient" />. Completes the bulk-action toolbar that already ships export and
+/// delete.
 /// </summary>
 public partial class LyoBulkPatchDialog
 {
+    private bool _busy;
+    private string? _error;
+    private string? _json;
+
+    private string? _property;
+
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = null!;
 
@@ -39,24 +44,22 @@ public partial class LyoBulkPatchDialog
     [Inject]
     private ISnackbar Snackbar { get; set; } = null!;
 
-    private string? _property;
-    private string? _json;
-    private bool _busy;
-    private string? _error;
-
-    private FilterPropertyDefinition? SelectedProperty
-        => Properties.FirstOrDefault(property => string.Equals(property.PropertyName, _property, StringComparison.Ordinal));
+    private FilterPropertyDefinition? SelectedProperty => Properties.FirstOrDefault(property => string.Equals(property.PropertyName, _property, StringComparison.Ordinal));
 
     private string TypeName => SelectedProperty?.Type.FullName ?? LyoTypeInfo.String.FullName;
 
     private bool CanApply => Keys.Count > 0 && !string.IsNullOrWhiteSpace(_property) && !string.IsNullOrWhiteSpace(PatchRoute);
 
-    private object DebugPayload => new { Keys, Property = _property, Json = _json, Route = BulkRoute };
+    private object DebugPayload
+        => new {
+            Keys,
+            Property = _property,
+            Json = _json,
+            Route = BulkRoute
+        };
 
-    private string BulkRoute
-    {
-        get
-        {
+    private string BulkRoute {
+        get {
             var route = PatchRoute.TrimEnd('/');
             return route.EndsWith("/Bulk", StringComparison.OrdinalIgnoreCase) ? route : route + "/Bulk";
         }

@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using Lyo.Authentication.Models.Records;
 using Lyo.Common.Core.Extensions;
 using Lyo.Exceptions;
+
 namespace Lyo.Authentication.Client;
 
 /// <summary>Typed <see cref="HttpClient" /> wrapper for the API <c>/auth/handoff/exchange</c>, <c>/auth/refresh</c>, and <c>/auth/logout</c> endpoints.</summary>
@@ -30,14 +31,14 @@ public sealed class LyoAuthApiClient
     }
 
     /// <summary>
-    /// POSTs a handoff code to <c>/auth/handoff/exchange</c> with <paramref name="consumerOrigin" /> on the <c>Origin</c> header. Returns issued tokens on success or
-    /// <c>null</c> on any 4xx/5xx.
+    /// POSTs a handoff code to <c>/auth/handoff/exchange</c> with <paramref name="consumerOrigin" /> on the <c>Origin</c> header. Returns issued tokens on success or <c>null</c>
+    /// on any 4xx/5xx.
     /// </summary>
     /// <param name="handoffCode">Single-use code the API redirected the browser to (the <c>lyo_handoff</c> query value).</param>
     /// <param name="consumerOrigin">
-    /// This consumer's absolute origin (<c>scheme://host[:port]</c>) — the public origin of the host running this handoff middleware. Must match the
-    /// origin the API stamped onto the code at issue (derived from the <c>returnUrl</c> passed to <c>/auth/login/{provider}</c>). Using the API's base URL here is
-    /// wrong and yields <c>400 invalid_or_consumed_code</c>; pass <c>$"{ctx.Request.Scheme}://{ctx.Request.Host.Value}"</c> from the inbound request.
+    /// This consumer's absolute origin (<c>scheme://host[:port]</c>) — the public origin of the host running this handoff middleware. Must match the origin
+    /// the API stamped onto the code at issue (derived from the <c>returnUrl</c> passed to <c>/auth/login/{provider}</c>). Using the API's base URL here is wrong and yields
+    /// <c>400 invalid_or_consumed_code</c>; pass <c>$"{ctx.Request.Scheme}://{ctx.Request.Host.Value}"</c> from the inbound request.
     /// </param>
     /// <param name="ct">Cancellation token.</param>
     public async Task<LyoOAuthTokenResponse?> ExchangeHandoffAsync(string handoffCode, string consumerOrigin, CancellationToken ct = default)

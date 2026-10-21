@@ -34,7 +34,7 @@ public class OrIfNullExtensionsTests
     {
         string? first = null;
         string? second = null;
-        string result = first.OrIfNull(second).OrIfNull("c");
+        var result = first.OrIfNull(second).OrIfNull("c");
         Assert.Equal("c", result);
     }
 
@@ -43,9 +43,9 @@ public class OrIfNullExtensionsTests
     {
         var invoked = false;
         var result = "a".OrIfNull(() => {
-                invoked = true;
-                return "x";
-            });
+            invoked = true;
+            return "x";
+        });
 
         Assert.Equal("a", result);
         Assert.False(invoked);
@@ -57,9 +57,9 @@ public class OrIfNullExtensionsTests
         string? first = null;
         var calls = 0;
         var result = first.OrIfNull(() => {
-                calls++;
-                return "x";
-            });
+            calls++;
+            return "x";
+        });
 
         Assert.Equal("x", result);
         Assert.Equal(1, calls);
@@ -90,11 +90,11 @@ public class OrIfNullExtensionsTests
     public void OrDefault_Func_Present_DoesNotInvoke()
     {
         var invoked = false;
-        string? value = "a";
+        var value = "a";
         var result = value.OrDefault(() => {
-                invoked = true;
-                return "x";
-            });
+            invoked = true;
+            return "x";
+        });
 
         Assert.Equal("a", result);
         Assert.False(invoked);

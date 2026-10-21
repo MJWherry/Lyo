@@ -1,6 +1,5 @@
 using System.Reflection;
 using System.Text;
-using Lyo.Result;
 
 namespace Lyo.Toml;
 
@@ -31,17 +30,15 @@ public interface ITomlWriter
     /// <summary>Writes <see cref="ExportFormattedToTomlString{T}" /> to <paramref name="tomlStream" />. The stream is left open.</summary>
     void ExportFormattedToToml<T>(IEnumerable<T> items, IReadOnlyDictionary<string, Func<T, string>> fields, Stream tomlStream);
 
-    /// <summary>
-    /// Writes one object per item. The key is the field name and the value is the property value, in dictionary order. <c>Order</c> does not reorder these keys.
-    /// </summary>
+    /// <summary>Writes one object per item. The key is the field name and the value is the property value, in dictionary order. <c>Order</c> does not reorder these keys.</summary>
     string ExportColumnsToTomlString<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns);
 
     /// <summary>Writes <see cref="ExportColumnsToTomlString{T}" /> to <paramref name="tomlStream" />. The stream is left open.</summary>
     void ExportColumnsToToml<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns, Stream tomlStream);
 
     /// <summary>
-    /// Writes <paramref name="dataTable" /> as <c>[[items]]</c> under <see cref="TomlOptions.ItemsKey" />. Header text is the key. A blank header is <c>Column{index}</c>. A repeated
-    /// header throws. Empty cells stay empty strings. A footer is the last table.
+    /// Writes <paramref name="dataTable" /> as <c>[[items]]</c> under <see cref="TomlOptions.ItemsKey" />. Header text is the key. A blank header is <c>Column{index}</c>. A
+    /// repeated header throws. Empty cells stay empty strings. A footer is the last table.
     /// </summary>
     string ExportToTomlStringFromDataTable(DataTable.Models.DataTable dataTable);
 

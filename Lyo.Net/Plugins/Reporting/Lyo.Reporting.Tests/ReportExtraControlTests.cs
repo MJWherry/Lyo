@@ -9,10 +9,7 @@ public sealed class ReportExtraControlTests
     [Fact]
     public void Bind_TableOfContents_AutoFillsFromSectionTitles()
     {
-        var report = ReportBuilder<object>.New()
-            .AddSection(s => s.SetTitle("Intro").AddTableOfContents())
-            .AddSection(s => s.SetTitle("Body").AddHeading("Detail", 3))
-            .Build();
+        var report = ReportBuilder<object>.New().AddSection(s => s.SetTitle("Intro").AddTableOfContents()).AddSection(s => s.SetTitle("Body").AddHeading("Detail")).Build();
         var bound = ReportCompositionProcessor.Bind(report, new Dictionary<string, string?>());
         var toc = SectionBody.WalkControls(bound.Sections[0].Controls).OfType<Block>().Single(b => b.ContentType == ContentType.TableOfContents);
         Assert.Contains("Intro", toc.ListItems!);
@@ -32,15 +29,15 @@ public sealed class ReportExtraControlTests
     public void Serialize_ExtraTypes_RoundTrips()
     {
         var report = ReportBuilder<object>.New()
-            .AddSection(
-                s => s.AddBadge("Paid", "success")
-                    .AddSignature("Authorized by", "Ada", "Date")
-                    .AddTimeline(["Start|Kickoff", "End|Done"])
-                    .AddAddress("Bill to", ["Acme", "1 Main"])
-                    .AddTotals(["Subtotal|$10", "Total|$10"])
-                    .AddCheckbox(["Agree"], "Please confirm:")
-                    .AddNotes("Dock hours 8–5", "Notes"))
+            .AddSection(s => s.AddBadge("Paid", "success")
+                .AddSignature("Authorized by", "Ada")
+                .AddTimeline(["Start|Kickoff", "End|Done"])
+                .AddAddress("Bill to", ["Acme", "1 Main"])
+                .AddTotals(["Subtotal|$10", "Total|$10"])
+                .AddCheckbox(["Agree"], "Please confirm:")
+                .AddNotes("Dock hours 8–5"))
             .Build();
+
         var back = ReportJson.Deserialize<object>(ReportJson.Serialize(report));
         var blocks = back.Sections[0].Controls.OfType<Block>().ToList();
         Assert.Equal(ContentType.Badge, blocks[0].ContentType);

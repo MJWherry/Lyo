@@ -7,6 +7,7 @@
             <MudTextField @bind-Value="_req.Notes" Label="Notes" Lines="2" Margin="Margin.Dense"/>
             @if (_usage.Count > 0) {
                 <MudText Typo="Typo.subtitle2">Used in</MudText>
+
                 @foreach (var row in _usage) {
                     <MudText Typo="Typo.body2">
                         @row.RecipeTitle
@@ -18,6 +19,7 @@
             }
             @if (_savedId is Guid ingredientId) {
                 <MudDivider Class="my-1"/>
+
                 <RecipeAttachmentPanel ApiClient="ApiClient"
                                        RecipeClient="RecipeClient"
                                        AttachmentsRoute="@_attachmentsRoute"
@@ -25,7 +27,9 @@
                                        EntityType="@RecipeEntityTypes.Ingredient"
                                        EntityId="ingredientId"
                                        ApiOrigin="@ApiOrigin"/>
+
                 <RecipeNotesPanel RecipeClient="RecipeClient" ParentRoute="@NotesParentRoute" EntityId="ingredientId"/>
+
                 <RecipeTagsPanel RecipeClient="RecipeClient" ParentRoute="@NotesParentRoute" EntityId="ingredientId"/>
             }
         </MudStack>

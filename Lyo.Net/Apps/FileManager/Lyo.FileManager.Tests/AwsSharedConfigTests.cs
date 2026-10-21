@@ -6,21 +6,23 @@ public class AwsSharedConfigTests
     public void Read_MergesTheConfigRegionOntoTheCredentialsProfile()
     {
         const string credentials = """
-            [default]
-            aws_access_key_id = AKIADEFAULT
-            aws_secret_access_key = default-secret
+                                   [default]
+                                   aws_access_key_id = AKIADEFAULT
+                                   aws_secret_access_key = default-secret
 
-            [dev]
-            aws_access_key_id = AKIADEV
-            aws_secret_access_key = dev-secret
-            """;
+                                   [dev]
+                                   aws_access_key_id = AKIADEV
+                                   aws_secret_access_key = dev-secret
+                                   """;
+
         const string config = """
-            [default]
-            region = us-east-1
+                              [default]
+                              region = us-east-1
 
-            [profile dev]
-            region = eu-west-1
-            """;
+                              [profile dev]
+                              region = eu-west-1
+                              """;
+
         var profiles = AwsSharedConfig.Read(credentials, config);
         var def = Assert.Single(profiles, profile => profile.Name == "default");
         Assert.Equal("AKIADEFAULT", def.AccessKeyId);

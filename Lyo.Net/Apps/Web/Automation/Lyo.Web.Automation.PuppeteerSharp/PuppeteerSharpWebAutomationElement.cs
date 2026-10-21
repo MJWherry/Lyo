@@ -50,6 +50,7 @@ internal sealed class PuppeteerSharpWebAutomationElement(IElementHandle handle, 
         var value = await handle.EvaluateFunctionAsync<string>(
                 "(el, label) => { const opt = [...el.options].find(o => (o.textContent || '').trim() === label); return opt ? opt.value : ''; }", text)
             .ConfigureAwait(false);
+
         if (string.IsNullOrEmpty(value) && text.Length > 0)
             throw new InvalidOperationException($"Select option text not found: {text}");
 
@@ -66,9 +67,7 @@ internal sealed class PuppeteerSharpWebAutomationElement(IElementHandle handle, 
     public async Task SelectByIndexAsync(int index, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
-        var value = await handle.EvaluateFunctionAsync<string>(
-                "(el, i) => { const opt = el.options[i]; return opt ? opt.value : ''; }", index)
-            .ConfigureAwait(false);
+        var value = await handle.EvaluateFunctionAsync<string>("(el, i) => { const opt = el.options[i]; return opt ? opt.value : ''; }", index).ConfigureAwait(false);
         await handle.SelectAsync(value).ConfigureAwait(false);
     }
 
@@ -101,8 +100,7 @@ internal sealed class PuppeteerSharpWebAutomationElement(IElementHandle handle, 
     }
 
     /// <inheritdoc />
-    public Task<IWebAutomationElement> PollForDescendantAsync(ElementLocator locator, CancellationToken ct = default)
-        => browser.PollForDescendantElementAsync(handle, locator, ct);
+    public Task<IWebAutomationElement> PollForDescendantAsync(ElementLocator locator, CancellationToken ct = default) => browser.PollForDescendantElementAsync(handle, locator, ct);
 
     /// <inheritdoc />
     public async Task<byte[]> TakeSnapshotPngAsync(CancellationToken ct = default)

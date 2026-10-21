@@ -1,17 +1,19 @@
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 
 namespace Lyo.Web.Components.QueryRequestBuilder;
 
 public partial class AggregatesList
 {
-    private static readonly AggregateFunction[] Functions = [AggregateFunction.Count, AggregateFunction.Sum, AggregateFunction.Average, AggregateFunction.Min, AggregateFunction.Max, AggregateFunction.CountDistinct];
+    private static readonly AggregateFunction[] Functions = [
+        AggregateFunction.Count, AggregateFunction.Sum, AggregateFunction.Average, AggregateFunction.Min, AggregateFunction.Max, AggregateFunction.CountDistinct
+    ];
+
+    private string _field = "";
 
     private AggregateFunction _function = AggregateFunction.Count;
     private string _name = "Count";
-    private string _field = "";
 
     [Parameter]
     public string? ElementId { get; set; }
@@ -48,6 +50,5 @@ public partial class AggregatesList
         ItemsChanged.InvokeAsync(list);
     }
 
-    private static string ChipLabel(AggregateSelect item)
-        => string.IsNullOrWhiteSpace(item.Field) ? item.Name : $"{item.Function}({item.Field}) as {item.Name}";
+    private static string ChipLabel(AggregateSelect item) => string.IsNullOrWhiteSpace(item.Field) ? item.Name : $"{item.Function}({item.Field}) as {item.Name}";
 }

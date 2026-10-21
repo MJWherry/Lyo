@@ -1,5 +1,4 @@
 using Lyo.Geolocation.Postgres.Database;
-using Lyo.Geolocation.Seed;
 using Lyo.Seed;
 
 namespace Lyo.Geolocation.Seed.Tests;
@@ -12,11 +11,12 @@ public sealed class GeolocationEfSeedContributorTests
         var transport = await SeedAsync(new GeolocationEfSeedContributor(), 2);
         var addresses = transport.Items.OfType<AddressEntity>().ToList();
         Assert.Equal(2, addresses.Count);
-        Assert.All(addresses, address => {
-            Assert.False(string.IsNullOrWhiteSpace(address.StreetAddress));
-            Assert.Equal("US", address.CountryCode);
-            Assert.False(string.IsNullOrWhiteSpace(address.FullAddress));
-        });
+        Assert.All(
+            addresses, address => {
+                Assert.False(string.IsNullOrWhiteSpace(address.StreetAddress));
+                Assert.Equal("US", address.CountryCode);
+                Assert.False(string.IsNullOrWhiteSpace(address.FullAddress));
+            });
     }
 
     private static async Task<RecordingSeedTransport> SeedAsync(SeedContributor contributor, int count)
@@ -42,6 +42,7 @@ public sealed class GeolocationEfSeedContributorTests
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

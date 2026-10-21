@@ -8,7 +8,7 @@ public class ScreenEdgeDockTests
         var anchor = ScreenEdgeDock.Place(0, 0, 1920, 1080, 1700, 340, 200, 400, 28, 56);
         Assert.Equal(ScreenEdge.Right, anchor.Edge);
         Assert.Equal(1920 - 28, anchor.X);
-        Assert.Equal(540 - (56 / 2), anchor.Y);
+        Assert.Equal(540 - 56 / 2, anchor.Y);
         Assert.Equal(28, anchor.Width);
         Assert.Equal(56, anchor.Height);
     }
@@ -27,7 +27,7 @@ public class ScreenEdgeDockTests
         var anchor = ScreenEdgeDock.Place(0, 0, 1920, 1080, 800, 10, 320, 40, 28, 56);
         Assert.Equal(ScreenEdge.Top, anchor.Edge);
         Assert.Equal(0, anchor.Y);
-        Assert.Equal(960 - (56 / 2), anchor.X);
+        Assert.Equal(960 - 56 / 2, anchor.X);
         Assert.Equal(56, anchor.Width);
         Assert.Equal(28, anchor.Height);
     }
@@ -38,7 +38,7 @@ public class ScreenEdgeDockTests
         var anchor = ScreenEdgeDock.Place(0, 0, 1920, 1080, 800, 1000, 320, 40, 28, 56);
         Assert.Equal(ScreenEdge.Bottom, anchor.Edge);
         Assert.Equal(1080 - 28, anchor.Y);
-        Assert.Equal(960 - (56 / 2), anchor.X);
+        Assert.Equal(960 - 56 / 2, anchor.X);
     }
 
     [Fact]
@@ -82,8 +82,7 @@ public class ScreenEdgeDockTests
     }
 
     [Fact]
-    public void IconBias_MiddleOfTheEdge_StaysCentered()
-        => Assert.Equal(0, ScreenEdgeDock.IconBias(400, 400, 56, 14));
+    public void IconBias_MiddleOfTheEdge_StaysCentered() => Assert.Equal(0, ScreenEdgeDock.IconBias(400, 400, 56, 14));
 
     [Fact]
     public void IconBias_TurnFromTopToRight_KeepsTheIconOnTheSamePoint()
@@ -99,10 +98,10 @@ public class ScreenEdgeDockTests
         Assert.Equal(ScreenEdge.Right, right.Edge);
         var topBias = ScreenEdgeDock.IconBias(top.X, width - top.X - top.Width, diameter, max);
         var rightBias = ScreenEdgeDock.IconBias(right.Y, height - right.Y - right.Height, diameter, max);
-        var topIconX = top.X + (top.Width / 2d) + topBias;
-        var topIconY = top.Y + (top.Height / 2d);
-        var rightIconX = right.X + (right.Width / 2d);
-        var rightIconY = right.Y + (right.Height / 2d) + rightBias;
+        var topIconX = top.X + top.Width / 2d + topBias;
+        var topIconY = top.Y + top.Height / 2d;
+        var rightIconX = right.X + right.Width / 2d;
+        var rightIconY = right.Y + right.Height / 2d + rightBias;
         Assert.Equal(topIconX, rightIconX);
         Assert.Equal(topIconY, rightIconY);
     }

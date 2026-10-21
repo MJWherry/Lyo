@@ -1,6 +1,6 @@
 namespace Lyo.Recipe;
 
-/// <summary>One ingredient line on a recipe. Requires <see cref="IngredientId"/> or <see cref="IngredientText"/>.</summary>
+/// <summary>One ingredient line on a recipe. Requires <see cref="IngredientId" /> or <see cref="IngredientText" />.</summary>
 public sealed class RecipeIngredientLineRecord
 {
     /// <summary>Row id.</summary>
@@ -21,7 +21,7 @@ public sealed class RecipeIngredientLineRecord
     /// <summary>Amount. Null for "to taste" lines.</summary>
     public decimal? Quantity { get; set; }
 
-    /// <summary>Unit for <see cref="Quantity"/>.</summary>
+    /// <summary>Unit for <see cref="Quantity" />.</summary>
     public string? Unit { get; set; }
 
     /// <summary>How the ingredient is prepared.</summary>

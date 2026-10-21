@@ -55,7 +55,14 @@ public sealed class ToolDockState
         ArgumentHelpers.ThrowIfNull(panes);
         var state = new ToolDockState();
         foreach (var pane in panes)
-            state.Panes.Add(new ToolDockPane { Id = pane.Id, Title = pane.Title, Edge = pane.Edge, Visible = pane.Visible });
+            state.Panes.Add(
+                new() {
+                    Id = pane.Id,
+                    Title = pane.Title,
+                    Edge = pane.Edge,
+                    Visible = pane.Visible
+                });
+
         return state;
     }
 
@@ -97,8 +104,10 @@ public sealed class ToolDockState
         foreach (var pane in Panes) {
             if (!pane.Visible || pane.Edge != edge)
                 continue;
+
             if (!pane.Minimized)
                 return false;
+
             shown = true;
         }
 
@@ -117,10 +126,13 @@ public static class ToolDockHit
     {
         if (y >= height - Band)
             return ToolDockEdge.Bottom;
+
         if (x <= Band)
             return ToolDockEdge.Left;
+
         if (x >= width - Band)
             return ToolDockEdge.Right;
+
         return null;
     }
 }

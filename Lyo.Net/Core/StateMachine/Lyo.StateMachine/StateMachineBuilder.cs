@@ -16,11 +16,10 @@ public enum UnhandledTriggerPolicy
 
 /// <summary>Fluent builder for an immutable <see cref="StateMachineDefinition{TState,TTrigger,TContext}" />.</summary>
 /// <remarks>
-/// Build once at startup (or through <c>AddStateMachine</c>) and share the definition across threads and entities. States are listed in the order they are first
-/// mentioned, which is also the order used by <c>ToMermaid</c>/<c>ToDot</c>. <see cref="Build" /> throws <see cref="StateMachineConfigurationException" /> for
-/// substate cycles, an initial substate that is not a direct child, ambiguous rules (two rules for one trigger where either is unguarded), one trigger used with
-/// different payload types, and timers whose trigger is not permitted or takes a payload. With <see cref="Strict" /> it also throws for unreachable and dead-end
-/// states.
+/// Build once at startup (or through <c>AddStateMachine</c>) and share the definition across threads and entities. States are listed in the order they are first mentioned,
+/// which is also the order used by <c>ToMermaid</c>/<c>ToDot</c>. <see cref="Build" /> throws <see cref="StateMachineConfigurationException" /> for substate cycles, an initial
+/// substate that is not a direct child, ambiguous rules (two rules for one trigger where either is unguarded), one trigger used with different payload types, and timers whose trigger
+/// is not permitted or takes a payload. With <see cref="Strict" /> it also throws for unreachable and dead-end states.
 /// </remarks>
 /// <example>
 /// <code>
@@ -46,6 +45,12 @@ public sealed class StateMachineBuilder<TState, TTrigger, TContext>
     private Action<TContext, TState, TTrigger>? _unhandledCallback;
     private UnhandledTriggerPolicy _unhandledPolicy = UnhandledTriggerPolicy.Reject;
 
+    /// <summary>Machine name.</summary>
+    public string Name { get; }
+
+    /// <summary>State new instances start in.</summary>
+    public TState InitialState { get; }
+
     /// <summary>Starts a machine definition.</summary>
     /// <param name="name">Stable machine name. Stores key saved instances by it, so do not rename a machine that has persisted data.</param>
     /// <param name="initialState">State new instances start in.</param>
@@ -57,12 +62,6 @@ public sealed class StateMachineBuilder<TState, TTrigger, TContext>
         InitialState = initialState;
         GetNode(initialState);
     }
-
-    /// <summary>Machine name.</summary>
-    public string Name { get; }
-
-    /// <summary>State new instances start in.</summary>
-    public TState InitialState { get; }
 
     /// <summary>Returns the configuration for <paramref name="state" />, creating it on first use. Calling it again for the same state adds to it.</summary>
     public StateConfiguration<TState, TTrigger, TContext> Configure(TState state)
@@ -119,8 +118,8 @@ public sealed class StateMachineBuilder<TState, TTrigger, TContext>
     }
 
     /// <summary>
-    /// Throws <see cref="StateMachineReentrancyException" /> when a hook (directly or through awaited calls) fires this definition again for the same context
-    /// object. Off by default because it costs an <see cref="AsyncLocal{T}" /> write per fire.
+    /// Throws <see cref="StateMachineReentrancyException" /> when a hook (directly or through awaited calls) fires this definition again for the same context object. Off by
+    /// default because it costs an <see cref="AsyncLocal{T}" /> write per fire.
     /// </summary>
     public StateMachineBuilder<TState, TTrigger, TContext> GuardReentrancy()
     {
@@ -161,8 +160,9 @@ public sealed class StateMachineBuilder<TState, TTrigger, TContext>
         }
 
         var definition = new StateMachineDefinition<TState, TTrigger, TContext>(
-            new(Name, InitialState, _order.ToArray(), _nodes.ToDictionary(p => p.Key, p => p.Value.Copy()), _transitionHooks.ToArray(), _observers.ToArray(), payloadTypes,
-                _clock, _unhandledPolicy, _unhandledCallback, _guardReentrancy));
+            new(
+                Name, InitialState, _order.ToArray(), _nodes.ToDictionary(p => p.Key, p => p.Value.Copy()), _transitionHooks.ToArray(), _observers.ToArray(), payloadTypes, _clock,
+                _unhandledPolicy, _unhandledCallback, _guardReentrancy));
 
         if (!_strict)
             return definition;
@@ -193,8 +193,7 @@ public sealed class StateMachineBuilder<TState, TTrigger, TContext>
         return node;
     }
 
-    private bool IsDirectChild(TState child, TState parent)
-        => _nodes[child].HasParent && EqualityComparer<TState>.Default.Equals(_nodes[child].Parent, parent);
+    private bool IsDirectChild(TState child, TState parent) => _nodes[child].HasParent && EqualityComparer<TState>.Default.Equals(_nodes[child].Parent, parent);
 
     private void EnsureNoCycle(TState state)
     {

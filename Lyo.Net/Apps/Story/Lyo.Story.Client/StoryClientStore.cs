@@ -5,8 +5,8 @@ using Lyo.Story.Models.Response;
 namespace Lyo.Story.Client;
 
 /// <summary>
-/// <see cref="IStoryStore" /> over the Story HTTP API, so game code written against the store runs unchanged against a remote server. Register an
-/// <see cref="IStoryClient" /> first (see <c>AddStoryClient</c>). Missing stories and playthroughs return null, matching the local stores.
+/// <see cref="IStoryStore" /> over the Story HTTP API, so game code written against the store runs unchanged against a remote server. Register an <see cref="IStoryClient" />
+/// first (see <c>AddStoryClient</c>). Missing stories and playthroughs return null, matching the local stores.
 /// </summary>
 public sealed class StoryClientStore : IStoryStore
 {
@@ -77,6 +77,7 @@ public sealed class StoryClientStore : IStoryStore
         var req = new StorySetVariablesReq();
         foreach (var pair in values)
             req.Values[pair.Key] = pair.Value;
+
         return ToDomain(await _client.SetVariablesAsync(playthroughId, req, ct).ConfigureAwait(false));
     }
 
@@ -105,36 +106,45 @@ public sealed class StoryClientStore : IStoryStore
             CoverImageRef = story.CoverImageRef,
             Scenes = story.Scenes.Select(s => new StoryGraphSceneReq { Key = s.Key, Title = s.Title, SortOrder = s.SortOrder }).ToList(),
             Nodes = story.Nodes.Select(n => new StoryGraphNodeReq {
-                Key = n.Key,
-                Title = n.Title,
-                SceneKey = n.SceneKey,
-                IsEnding = n.IsEnding,
-                PresentationKind = n.PresentationKind,
-                Body = n.Body,
-                ContentType = n.ContentType,
-                MediaRef = n.MediaRef,
-                Choices = n.Choices.Select(c => new StoryGraphChoiceReq {
-                    Key = c.Key,
-                    Prompt = c.Prompt,
-                    SortOrder = c.SortOrder,
-                    TargetNodeKey = c.TargetNodeKey,
-                    VisibleWhen = c.VisibleWhen,
-                    EnabledWhen = c.EnabledWhen,
-                    Effects = c.Effects.Select(ToReq).ToList()
-                }).ToList()
-            }).ToList(),
-            Variables = story.Variables.Select(v => new StoryGraphVariableReq { Key = v.Key, Name = v.Name, Type = v.Type, DefaultValue = v.DefaultValue, Description = v.Description })
+                    Key = n.Key,
+                    Title = n.Title,
+                    SceneKey = n.SceneKey,
+                    IsEnding = n.IsEnding,
+                    PresentationKind = n.PresentationKind,
+                    Body = n.Body,
+                    ContentType = n.ContentType,
+                    MediaRef = n.MediaRef,
+                    Choices = n.Choices.Select(c => new StoryGraphChoiceReq {
+                            Key = c.Key,
+                            Prompt = c.Prompt,
+                            SortOrder = c.SortOrder,
+                            TargetNodeKey = c.TargetNodeKey,
+                            VisibleWhen = c.VisibleWhen,
+                            EnabledWhen = c.EnabledWhen,
+                            Effects = c.Effects.Select(ToReq).ToList()
+                        })
+                        .ToList()
+                })
+                .ToList(),
+            Variables = story.Variables.Select(v => new StoryGraphVariableReq {
+                    Key = v.Key,
+                    Name = v.Name,
+                    Type = v.Type,
+                    DefaultValue = v.DefaultValue,
+                    Description = v.Description
+                })
                 .ToList(),
             Actions = story.Actions.Select(a => new StoryGraphActionReq { Key = a.Key, Name = a.Name, Effects = a.Effects.Select(ToReq).ToList() }).ToList(),
             Reactions = story.Reactions.Select(r => new StoryGraphReactionReq {
-                Key = r.Key,
-                Trigger = r.Trigger,
-                ScopeNodeKey = r.ScopeNodeKey,
-                ScopeVariableKey = r.ScopeVariableKey,
-                Once = r.Once,
-                When = r.When,
-                Effects = r.Effects.Select(ToReq).ToList()
-            }).ToList()
+                    Key = r.Key,
+                    Trigger = r.Trigger,
+                    ScopeNodeKey = r.ScopeNodeKey,
+                    ScopeVariableKey = r.ScopeVariableKey,
+                    Once = r.Once,
+                    When = r.When,
+                    Effects = r.Effects.Select(ToReq).ToList()
+                })
+                .ToList()
         };
 
     private static StoryGraphEffectReq ToReq(StoryEffect effect)
@@ -161,42 +171,63 @@ public sealed class StoryClientStore : IStoryStore
             CoverImageRef = graph.CoverImageRef,
             CreatedTimestamp = graph.CreatedTimestamp,
             UpdatedTimestamp = graph.UpdatedTimestamp,
-            Scenes = graph.Scenes.Select(s => new StoryScene { Id = s.Id, Key = s.Key, Title = s.Title, SortOrder = s.SortOrder }).ToArray(),
+            Scenes = graph.Scenes.Select(s => new StoryScene {
+                    Id = s.Id,
+                    Key = s.Key,
+                    Title = s.Title,
+                    SortOrder = s.SortOrder
+                })
+                .ToArray(),
             Nodes = graph.Nodes.Select(n => new StoryNode {
-                Id = n.Id,
-                Key = n.Key,
-                Title = n.Title,
-                SceneKey = n.SceneKey,
-                IsEnding = n.IsEnding,
-                PresentationKind = n.PresentationKind,
-                Body = n.Body,
-                ContentType = n.ContentType,
-                MediaRef = n.MediaRef,
-                Choices = n.Choices.Select(c => new StoryChoice {
-                    Id = c.Id,
-                    Key = c.Key,
-                    Prompt = c.Prompt,
-                    SortOrder = c.SortOrder,
-                    TargetNodeKey = c.TargetNodeKey,
-                    VisibleWhen = c.VisibleWhen,
-                    EnabledWhen = c.EnabledWhen,
-                    Effects = c.Effects.Select(ToDomain).ToArray()
-                }).ToArray()
-            }).ToArray(),
+                    Id = n.Id,
+                    Key = n.Key,
+                    Title = n.Title,
+                    SceneKey = n.SceneKey,
+                    IsEnding = n.IsEnding,
+                    PresentationKind = n.PresentationKind,
+                    Body = n.Body,
+                    ContentType = n.ContentType,
+                    MediaRef = n.MediaRef,
+                    Choices = n.Choices.Select(c => new StoryChoice {
+                            Id = c.Id,
+                            Key = c.Key,
+                            Prompt = c.Prompt,
+                            SortOrder = c.SortOrder,
+                            TargetNodeKey = c.TargetNodeKey,
+                            VisibleWhen = c.VisibleWhen,
+                            EnabledWhen = c.EnabledWhen,
+                            Effects = c.Effects.Select(ToDomain).ToArray()
+                        })
+                        .ToArray()
+                })
+                .ToArray(),
             Variables = graph.Variables.Select(v => new StoryVariable {
-                Id = v.Id, Key = v.Key, Name = v.Name, Type = v.Type, DefaultValue = v.DefaultValue, Description = v.Description
-            }).ToArray(),
-            Actions = graph.Actions.Select(a => new StoryAction { Id = a.Id, Key = a.Key, Name = a.Name, Effects = a.Effects.Select(ToDomain).ToArray() }).ToArray(),
+                    Id = v.Id,
+                    Key = v.Key,
+                    Name = v.Name,
+                    Type = v.Type,
+                    DefaultValue = v.DefaultValue,
+                    Description = v.Description
+                })
+                .ToArray(),
+            Actions = graph.Actions.Select(a => new StoryAction {
+                    Id = a.Id,
+                    Key = a.Key,
+                    Name = a.Name,
+                    Effects = a.Effects.Select(ToDomain).ToArray()
+                })
+                .ToArray(),
             Reactions = graph.Reactions.Select(r => new StoryReaction {
-                Id = r.Id,
-                Key = r.Key,
-                Trigger = r.Trigger,
-                ScopeNodeKey = r.ScopeNodeKey,
-                ScopeVariableKey = r.ScopeVariableKey,
-                Once = r.Once,
-                When = r.When,
-                Effects = r.Effects.Select(ToDomain).ToArray()
-            }).ToArray()
+                    Id = r.Id,
+                    Key = r.Key,
+                    Trigger = r.Trigger,
+                    ScopeNodeKey = r.ScopeNodeKey,
+                    ScopeVariableKey = r.ScopeVariableKey,
+                    Once = r.Once,
+                    When = r.When,
+                    Effects = r.Effects.Select(ToDomain).ToArray()
+                })
+                .ToArray()
         };
 
     private static StoryEffect ToDomain(StoryGraphEffectRes effect)
@@ -221,7 +252,8 @@ public sealed class StoryClientStore : IStoryStore
                 StartedAt = state.Playthrough.StartedAt,
                 UpdatedAt = state.Playthrough.UpdatedAt,
                 CompletedAt = state.Playthrough.CompletedAt,
-                Variables = state.Playthrough.Variables.Select(v => new StoryPlaythroughVariable { VariableKey = v.VariableKey, Value = v.Value, UpdatedAt = v.UpdatedAt }).ToArray()
+                Variables = state.Playthrough.Variables.Select(v => new StoryPlaythroughVariable { VariableKey = v.VariableKey, Value = v.Value, UpdatedAt = v.UpdatedAt })
+                    .ToArray()
             },
             CurrentNode = state.CurrentNode is null
                 ? null
@@ -234,7 +266,13 @@ public sealed class StoryClientStore : IStoryStore
                     ContentType = state.CurrentNode.ContentType,
                     MediaRef = state.CurrentNode.MediaRef
                 },
-            Moves = state.Moves.Select(m => new StoryMove { Kind = m.Kind, ChoiceKey = m.ChoiceKey, Prompt = m.Prompt, Enabled = m.Enabled }).ToArray()
+            Moves = state.Moves.Select(m => new StoryMove {
+                    Kind = m.Kind,
+                    ChoiceKey = m.ChoiceKey,
+                    Prompt = m.Prompt,
+                    Enabled = m.Enabled
+                })
+                .ToArray()
         };
 
     private static StoryPlaythroughEvent ToDomain(StoryPlaythroughEventRes ev)

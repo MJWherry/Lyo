@@ -37,7 +37,7 @@ public sealed record MediaStreamMap
         if (ById.TryGetValue(key, out var found))
             return found;
 
-        return ById.GetOrAdd(key, static value => new MediaStreamMap(value));
+        return ById.GetOrAdd(key, static value => new(value));
     }
 
     /// <inheritdoc />

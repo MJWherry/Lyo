@@ -5,10 +5,7 @@ using Lyo.Exceptions;
 
 namespace Lyo.Diagnostic.Sanitisation;
 
-/// <summary>
-/// Strips PII-sensitive content (file paths, machine names, server paths) from decoded stack traces before they are exposed in API responses or logs.
-/// Thread-safe singleton.
-/// </summary>
+/// <summary>Strips PII-sensitive content (file paths, machine names, server paths) from decoded stack traces before they are exposed in API responses or logs. Thread-safe singleton.</summary>
 public sealed class TraceSanitiser : ITraceSanitiser
 {
     // Matches Windows absolute paths: C:\Users\..., \\server\share\...

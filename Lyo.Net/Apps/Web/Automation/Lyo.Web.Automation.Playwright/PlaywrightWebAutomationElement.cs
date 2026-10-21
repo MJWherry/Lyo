@@ -108,7 +108,5 @@ internal sealed class PlaywrightWebAutomationElement(ILocator locator, Playwrigh
     }
 
     private static bool IsNamedKey(string keys)
-        => keys is "Enter" or "Tab" or "Escape" or "Backspace" or "Delete"
-            or "ArrowDown" or "ArrowUp" or "ArrowLeft" or "ArrowRight"
-            or "Home" or "End" or "PageUp" or "PageDown";
+        => keys is "Enter" or "Tab" or "Escape" or "Backspace" or "Delete" or "ArrowDown" or "ArrowUp" or "ArrowLeft" or "ArrowRight" or "Home" or "End" or "PageUp" or "PageDown";
 }

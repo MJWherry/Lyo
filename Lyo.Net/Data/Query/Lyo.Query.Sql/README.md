@@ -1,8 +1,10 @@
 # Lyo.Query.Sql
 
-Walks a `QueryConcreteReq`, `ProjectionQueryReq`, or `QueryReq` and returns command text plus positional parameters. Column names come from a caller-supplied `SqlColumnMap`, not from an EF model. The translator does not open a connection.
+Walks a `QueryConcreteReq`, `ProjectionQueryReq`, or `QueryReq` and returns command text plus positional parameters. Column names come from a caller-supplied `SqlColumnMap`, not
+from an EF model. The translator does not open a connection.
 
-String compares use `lower()`. `Contains` / `StartsWith` / `EndsWith` become `LIKE` with bound, escaped patterns. Fuzzy prints `similarity()` and does not require `pg_trgm` to be installed at translate time. Regex, collection paths, sub-clauses, computed fields, includes, and keys throw `SqlTranslationException`.
+String compares use `lower()`. `Contains` / `StartsWith` / `EndsWith` become `LIKE` with bound, escaped patterns. Fuzzy prints `similarity()` and does not require `pg_trgm` to be
+installed at translate time. Regex, collection paths, sub-clauses, computed fields, includes, and keys throw `SqlTranslationException`.
 
 Targets `net10.0`. Depends on `Lyo.Query.Models`.
 

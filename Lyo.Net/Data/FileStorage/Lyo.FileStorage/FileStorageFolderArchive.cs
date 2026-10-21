@@ -9,8 +9,8 @@ namespace Lyo.FileStorage;
 /// <summary>Zips every non-deleted file under a path prefix by listing them, then calling the archive-by-id API.</summary>
 public sealed class FileStorageFolderArchive
 {
-    private readonly IFileMetadataStore _metadata;
     private readonly IFileStorageArchiveService _archives;
+    private readonly IFileMetadataStore _metadata;
 
     /// <summary>Uses <paramref name="metadata" /> to list the folder and <paramref name="archives" /> to zip those ids.</summary>
     public FileStorageFolderArchive(IFileMetadataStore metadata, IFileStorageArchiveService archives)
@@ -42,8 +42,10 @@ public sealed class FileStorageFolderArchive
         var name = string.IsNullOrWhiteSpace(row.OriginalFileName) ? row.Id.ToString("N") : row.OriginalFileName!;
         if (path.Length == 0 || path.Equals(prefix, StringComparison.OrdinalIgnoreCase))
             return name;
+
         if (path.StartsWith(prefix + "/", StringComparison.OrdinalIgnoreCase))
             path = path.Substring(prefix.Length + 1);
+
         return path + "/" + name;
     }
 }

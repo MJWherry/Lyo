@@ -1,9 +1,9 @@
 using Lyo.Exceptions;
 using Lyo.Geolocation.Postgres.Database;
 using Lyo.Postgres;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace Lyo.Geolocation.Postgres;
 
 /// <summary>Helpers that register the PostgreSQL geolocation store.</summary>
@@ -29,7 +29,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresGeolocationOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddGeolocationDbContextFactory(options);
         }
 
@@ -39,7 +38,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPostgresDbContextFactory<GeolocationDbContext, PostgresGeolocationOptions>(options);
-
             return services;
         }
 
@@ -61,7 +59,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresGeolocationOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddPostgresGeolocationStore(options);
         }
 

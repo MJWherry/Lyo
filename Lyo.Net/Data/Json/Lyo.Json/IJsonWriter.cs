@@ -1,6 +1,5 @@
 using System.Reflection;
 using System.Text;
-using Lyo.Result;
 
 namespace Lyo.Json;
 
@@ -43,17 +42,15 @@ public interface IJsonWriter
     /// <summary>Writes <see cref="ExportFormattedToJsonString{T}" /> to <paramref name="jsonStream" />. The stream is left open.</summary>
     void ExportFormattedToJson<T>(IEnumerable<T> items, IReadOnlyDictionary<string, Func<T, string>> fields, Stream jsonStream);
 
-    /// <summary>
-    /// Writes one object per item. The key is the field name and the value is the property value, in dictionary order. <c>Order</c> does not reorder these keys.
-    /// </summary>
+    /// <summary>Writes one object per item. The key is the field name and the value is the property value, in dictionary order. <c>Order</c> does not reorder these keys.</summary>
     string ExportColumnsToJsonString<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns);
 
     /// <summary>Writes <see cref="ExportColumnsToJsonString{T}" /> to <paramref name="jsonStream" />. The stream is left open.</summary>
     void ExportColumnsToJson<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns, Stream jsonStream);
 
     /// <summary>
-    /// Writes <paramref name="dataTable" /> as a JSON array of objects. Header text is the key. A blank header is <c>Column{index}</c>. A repeated header throws. Empty cells stay
-    /// empty strings. A footer is the last object. Naming, member order, and empty-string omission do not apply.
+    /// Writes <paramref name="dataTable" /> as a JSON array of objects. Header text is the key. A blank header is <c>Column{index}</c>. A repeated header throws. Empty cells
+    /// stay empty strings. A footer is the last object. Naming, member order, and empty-string omission do not apply.
     /// </summary>
     string ExportToJsonStringFromDataTable(DataTable.Models.DataTable dataTable);
 

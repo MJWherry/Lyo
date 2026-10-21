@@ -1,8 +1,10 @@
 namespace Lyo.Recipe.Web.Components;
 
-/// <summary>Tabbed household-recipe workbench. Host passes <see cref="ApiClient"/> and <see cref="RecipeClient"/>.</summary>
+/// <summary>Tabbed household-recipe workbench. Host passes <see cref="ApiClient" /> and <see cref="RecipeClient" />.</summary>
 public partial class RecipeManagement
 {
+    private int _tabIndex;
+
     /// <summary>HTTP client for QueryProject and entity CRUD.</summary>
     [Parameter]
     [EditorRequired]
@@ -20,6 +22,4 @@ public partial class RecipeManagement
     /// <summary>FileStorage MapGroup prefix. Gateway uses <c>Workbench/FileStorage</c>; Example hosts use <c>FileStorage</c>.</summary>
     [Parameter]
     public string FileStorageApiRoutePrefix { get; set; } = "FileStorage";
-
-    private int _tabIndex;
 }

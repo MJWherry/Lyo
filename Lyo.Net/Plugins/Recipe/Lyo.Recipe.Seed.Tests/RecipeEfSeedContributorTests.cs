@@ -1,5 +1,4 @@
 using Lyo.Recipe.Postgres.Database;
-using Lyo.Recipe.Seed;
 using Lyo.Seed;
 
 namespace Lyo.Recipe.Seed.Tests;
@@ -26,14 +25,15 @@ public sealed class RecipeEfSeedContributorTests
         Assert.Equal(6, steps.Count);
         Assert.Equal(3, links.Count);
         Assert.Equal(3, attachments.Count);
-        Assert.All(recipes, recipe => {
-            Assert.Equal(2, lines.Count(row => row.RecipeId == recipe.Id));
-            Assert.Equal(2, steps.Count(row => row.RecipeId == recipe.Id));
-            var line = lines.Where(row => row.RecipeId == recipe.Id).OrderBy(row => row.SortOrder).First();
-            var step = steps.Where(row => row.RecipeId == recipe.Id).OrderBy(row => row.SortOrder).First();
-            Assert.Contains(links, link => link.LineId == line.Id && link.StepId == step.Id);
-            Assert.Contains(attachments, row => row.EntityId == recipe.Id);
-        });
+        Assert.All(
+            recipes, recipe => {
+                Assert.Equal(2, lines.Count(row => row.RecipeId == recipe.Id));
+                Assert.Equal(2, steps.Count(row => row.RecipeId == recipe.Id));
+                var line = lines.Where(row => row.RecipeId == recipe.Id).OrderBy(row => row.SortOrder).First();
+                var step = steps.Where(row => row.RecipeId == recipe.Id).OrderBy(row => row.SortOrder).First();
+                Assert.Contains(links, link => link.LineId == line.Id && link.StepId == step.Id);
+                Assert.Contains(attachments, row => row.EntityId == recipe.Id);
+            });
     }
 
     private static async Task<RecordingSeedTransport> SeedAsync(SeedContributor contributor, int count)
@@ -59,6 +59,7 @@ public sealed class RecipeEfSeedContributorTests
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

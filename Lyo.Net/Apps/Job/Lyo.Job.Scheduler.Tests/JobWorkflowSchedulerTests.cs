@@ -1,4 +1,3 @@
-using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Identifiers;
@@ -16,12 +15,15 @@ namespace Lyo.Job.Scheduler.Tests;
 /// </summary>
 public class JobWorkflowSchedulerTests
 {
+    private static JobBlackoutCalendarRes AllDayBlackout { get; } = new(
+        LyoGuid.CreateV7(), "Always", null, true,
+        [new(LyoGuid.CreateV7(), LyoGuid.CreateV7(), "AllDay", DayFlags.EveryDay, new(0, 0), new(23, 59), JobBlackoutPolicy.Defer, true)]);
+
     [Fact]
     public async Task CheckWorkflowSchedulesAsync_DueSlot_StartsWorkflowRunWithSlot()
     {
         var api = new FakeWorkflowSchedulerApiClient(HourlyCron());
         await CreateScheduler(api).CheckWorkflowSchedulesAsync(TestCt);
-
         var started = Assert.Single(api.StartRequests);
         Assert.Equal(api.Schedule.Id, started.Request!.JobScheduleId);
         Assert.Equal(CurrentHourUtc(), started.Request.ScheduledSlotUtc);
@@ -57,8 +59,7 @@ public class JobWorkflowSchedulerTests
     public async Task CheckWorkflowSchedulesAsync_RunAlreadyRunning_SkipsSlot()
     {
         var api = new FakeWorkflowSchedulerApiClient(HourlyCron()) {
-            LatestRun = new(
-                LyoGuid.CreateV7(), Guid.Empty, JobWorkflowRunState.Running, DateTime.UtcNow.AddMinutes(-5), null, DateTime.UtcNow.AddMinutes(-5), null, null)
+            LatestRun = new(LyoGuid.CreateV7(), Guid.Empty, JobWorkflowRunState.Running, DateTime.UtcNow.AddMinutes(-5), null, DateTime.UtcNow.AddMinutes(-5), null)
         };
 
         await CreateScheduler(api).CheckWorkflowSchedulesAsync(TestCt);
@@ -73,8 +74,7 @@ public class JobWorkflowSchedulerTests
         Assert.Empty(api.StartRequests);
     }
 
-    private static JobWorkflowScheduler CreateScheduler(FakeWorkflowSchedulerApiClient api)
-        => new(new() { ApiBaseUrl = "http://localhost/api" }, api);
+    private static JobWorkflowScheduler CreateScheduler(FakeWorkflowSchedulerApiClient api) => new(new() { ApiBaseUrl = "http://localhost/api" }, api);
 
     private static DateTime CurrentHourUtc()
     {
@@ -86,10 +86,6 @@ public class JobWorkflowSchedulerTests
         => new(
             LyoGuid.CreateV7(), null, MonthFlags.EveryMonth, DayFlags.EveryDay, ScheduleType.Cron, null, null, null, null, "hourly", true, null, "0 * * * *",
             JobWorkflowId: LyoGuid.CreateV7());
-
-    private static JobBlackoutCalendarRes AllDayBlackout { get; } = new(
-        LyoGuid.CreateV7(), "Always", null, true,
-        [new(LyoGuid.CreateV7(), LyoGuid.CreateV7(), "AllDay", DayFlags.EveryDay, new(0, 0), new(23, 59), JobBlackoutPolicy.Defer, true)]);
 }
 
 /// <summary>Answers the workflow scheduler's API calls in memory: the workflow-owned schedule query, the latest run per schedule, and the Start post (recorded).</summary>

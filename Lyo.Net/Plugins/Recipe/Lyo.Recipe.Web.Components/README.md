@@ -1,6 +1,7 @@
 # Lyo.Recipe.Web.Components
 
-Drop `RecipeManagement` on a host page for Recipes, Ingredients, Categories, and Units. The recipe editor is a large dialog: reorderable ingredient lines and steps, unit autocomplete, step photos, and a separate cook stepper. Uses `IApiClient` for QueryProject/CRUD and `IRecipeClient` for extra routes. This package has no `AddXxx` DI registration.
+Drop `RecipeManagement` on a host page for Recipes, Ingredients, Categories, and Units. The recipe editor is a large dialog: reorderable ingredient lines and steps, unit
+autocomplete, step photos, and a separate cook stepper. Uses `IApiClient` for QueryProject/CRUD and `IRecipeClient` for extra routes. This package has no `AddXxx` DI registration.
 
 ## Features
 

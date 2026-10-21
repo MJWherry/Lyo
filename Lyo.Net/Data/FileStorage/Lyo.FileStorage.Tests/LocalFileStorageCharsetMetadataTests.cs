@@ -71,7 +71,6 @@ public sealed class LocalFileStorageCharsetMetadataTests
 
         var pending = await scope.Storage.GetMetadataAsync(begin.FileId, TestCt);
         Assert.Equal("utf-8", pending.Charset);
-
         var payload = "hello-direct-upload-plain"u8.ToArray();
         await using (var ms = new MemoryStream(payload))
             await scope.Storage.ReceiveDirectPutAsync(begin.FileId, ms, TestCt);
@@ -89,8 +88,7 @@ public sealed class LocalFileStorageCharsetMetadataTests
         var begin = await multipart.BeginAsync(new() { PartSizeBytes = 16 * 1024, Charset = "utf-16" }, TestCt);
         var payload = "hello multipart"u8.ToArray();
         await multipart.UploadPartAsync(begin.SessionId, 1, new MemoryStream(payload), TestCt);
-        var meta = await multipart.CompleteAsync(
-            new() { SessionId = begin.SessionId, Parts = [new() { PartNumber = 1, ETagOrBlockId = "n/a" }] }, TestCt);
+        var meta = await multipart.CompleteAsync(new() { SessionId = begin.SessionId, Parts = [new() { PartNumber = 1, ETagOrBlockId = "n/a" }] }, TestCt);
         Assert.Equal("utf-16", meta.Charset);
     }
 }

@@ -21,7 +21,7 @@ public sealed class RecipeIngredientLineRes
     /// <summary>Amount. Null for "to taste" lines.</summary>
     public decimal? Quantity { get; set; }
 
-    /// <summary>Unit for <see cref="Quantity"/>.</summary>
+    /// <summary>Unit for <see cref="Quantity" />.</summary>
     public string? Unit { get; set; }
 
     /// <summary>How the ingredient is prepared.</summary>

@@ -6,13 +6,13 @@ namespace Lyo.Espn.Fantasy.Football.Client.Builders;
 /// <summary>Builds a free-agent add/drop, a waiver claim, or a waiver cancellation.</summary>
 public sealed class RosterTransactionBuilder
 {
-    private readonly int _teamId;
-    private readonly int _scoringPeriodId;
-    private readonly string _type;
     private readonly int? _bidAmount;
     private readonly string _executionType;
-    private readonly string? _relatedTransactionId;
     private readonly List<FantasyTransactionItemReq> _items = [];
+    private readonly string? _relatedTransactionId;
+    private readonly int _scoringPeriodId;
+    private readonly int _teamId;
+    private readonly string _type;
 
     private RosterTransactionBuilder(int teamId, int scoringPeriodId, string type, int? bidAmount, string executionType, string? relatedTransactionId)
     {

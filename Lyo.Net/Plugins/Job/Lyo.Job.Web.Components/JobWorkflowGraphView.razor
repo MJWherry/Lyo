@@ -1,5 +1,3 @@
-@using System.Globalization
-@using Lyo.Diagram.Models
 @using Microsoft.AspNetCore.Components.Web
 @using Microsoft.JSInterop
 @inject IJSRuntime Js
@@ -30,7 +28,7 @@
                                 <g class="workflow-graph-edge-label-group">
                                     <title>@edge.Value</title>
                                     <rect x="@Caption(edge).X" y="@Caption(edge).Y" width="@Caption(edge).Width" height="18" rx="3" class="workflow-graph-edge-label-bg"/>
-                                    <text x="@(Caption(edge).X + (Caption(edge).Width / 2))" y="@(Caption(edge).Y + 13)" text-anchor="middle"
+                                    <text x="@(Caption(edge).X + Caption(edge).Width / 2)" y="@(Caption(edge).Y + 13)" text-anchor="middle"
                                           class="workflow-graph-edge-label">@Caption(edge).Text</text>
                                 </g>
                             }

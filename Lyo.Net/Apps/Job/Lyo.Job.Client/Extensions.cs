@@ -90,8 +90,7 @@ public static class Extensions
     {
         services.TryAddSingleton(p => p.GetRequiredService<IOptions<JobMqOptions>>().Value);
         services.AddSingleton<IJobEventPublisher>(sp => new MqJobEventPublisher(
-            sp.GetRequiredService<IMqService>(), sp.GetRequiredService<ILogger<MqJobEventPublisher>>(), sp.GetRequiredService<JobMqOptions>(),
-            sp.GetService<IJobClient>()));
+            sp.GetRequiredService<IMqService>(), sp.GetRequiredService<ILogger<MqJobEventPublisher>>(), sp.GetRequiredService<JobMqOptions>(), sp.GetService<IJobClient>()));
 
         services.AddHostedService<JobEventPublisherStartupService>();
         return services;

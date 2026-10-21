@@ -1,11 +1,9 @@
 using System.Net;
 using Lyo.Api.Middleware;
-using Lyo.Authentication;
 using Lyo.Authentication.Sso.Endpoints;
 using Lyo.Authentication.Sso.Protocol;
 using Lyo.KeyStore;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 

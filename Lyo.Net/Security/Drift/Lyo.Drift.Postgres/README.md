@@ -1,6 +1,8 @@
 # Lyo.Drift.Postgres
 
-Schema `drift` stores agent instances (upserted by InstanceKey), file-tree and system-info structure snapshots, computed diffs, and live change batches. Payloads stay jsonb. Snapshots store content_hash (lowercase hex, varchar 128) plus content_hash_algorithm (Sha256 via Lyo.Hashing). HTTP mapping (`BuildDriftGroup`) lives in `Lyo.Drift.Api`. Identical (algorithm, hash) pairs reuse the latest snapshot in a lineage. Server DiffAgainst uses DTO DetectChanges for file trees and IObjectGraphDiffService on SystemInfoDriftProjection.
+Schema `drift` stores agent instances (upserted by InstanceKey), file-tree and system-info structure snapshots, computed diffs, and live change batches. Payloads stay jsonb.
+Snapshots store content_hash (lowercase hex, varchar 128) plus content_hash_algorithm (Sha256 via Lyo.Hashing). HTTP mapping (`BuildDriftGroup`) lives in `Lyo.Drift.Api`. Identical
+(algorithm, hash) pairs reuse the latest snapshot in a lineage. Server DiffAgainst uses DTO DetectChanges for file trees and IObjectGraphDiffService on SystemInfoDriftProjection.
 
 ## Features
 

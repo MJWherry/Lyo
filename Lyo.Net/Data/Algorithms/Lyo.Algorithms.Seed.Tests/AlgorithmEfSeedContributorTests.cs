@@ -1,5 +1,4 @@
 using Lyo.Algorithms.Postgres.Database;
-using Lyo.Algorithms.Seed;
 using Lyo.Seed;
 
 namespace Lyo.Algorithms.Seed.Tests;
@@ -22,10 +21,11 @@ public sealed class AlgorithmEfSeedContributorTests
         Assert.Equal(1, revision.Revision);
         Assert.Equal(AlgorithmEfSeedContributor.FishingFormula, revision.Source);
         Assert.Contains(labels, row => row.DefinitionId == fishing.Id && row.Label == "latest" && row.Revision == 1);
-        Assert.All(definitions, definition => {
-            Assert.Contains(revisions, row => row.DefinitionId == definition.Id);
-            Assert.Contains(labels, row => row.DefinitionId == definition.Id);
-        });
+        Assert.All(
+            definitions, definition => {
+                Assert.Contains(revisions, row => row.DefinitionId == definition.Id);
+                Assert.Contains(labels, row => row.DefinitionId == definition.Id);
+            });
     }
 
     private static async Task<RecordingSeedTransport> SeedAsync(SeedContributor contributor, int count)
@@ -51,6 +51,7 @@ public sealed class AlgorithmEfSeedContributorTests
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

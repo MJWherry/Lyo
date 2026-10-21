@@ -1,4 +1,3 @@
-using Lyo.Web.Primitives;
 using MudBlazor;
 
 namespace Lyo.Web.Primitives.Tests;
@@ -55,12 +54,10 @@ public sealed class LyoChipHueTests
     public void All_ListsNamedHuesInWheelOrder()
     {
         Assert.Equal(
-            [
-                LyoChipHue.Coral, LyoChipHue.Amber, LyoChipHue.Lime, LyoChipHue.Green,
-                LyoChipHue.Teal, LyoChipHue.Cyan, LyoChipHue.Blue, LyoChipHue.Indigo,
-                LyoChipHue.Violet, LyoChipHue.Purple, LyoChipHue.Magenta, LyoChipHue.Rose
-            ],
-            LyoChipHue.All);
+        [
+            LyoChipHue.Coral, LyoChipHue.Amber, LyoChipHue.Lime, LyoChipHue.Green, LyoChipHue.Teal, LyoChipHue.Cyan, LyoChipHue.Blue, LyoChipHue.Indigo, LyoChipHue.Violet,
+            LyoChipHue.Purple, LyoChipHue.Magenta, LyoChipHue.Rose
+        ], LyoChipHue.All);
 
         var degrees = LyoChipHue.All.Select(hue => hue.Normalized).ToArray();
         for (var i = 1; i < degrees.Length; i++)
@@ -75,12 +72,10 @@ public sealed class LyoChipHueTests
         Assert.Equal(LyoChipHue.Lime.Style, spec.Style);
         Assert.Equal(Color.Default, spec.Color);
         Assert.Equal("event", spec.Icon);
-
         var none = LyoChips.FromEnum<DayOfWeek>("Friday", _ => (LyoChipHue?)null);
         Assert.Equal("Friday", none.Label);
         Assert.Null(none.Style);
         Assert.Equal(Color.Default, none.Color);
-
         var unknown = LyoChips.FromEnum<DayOfWeek>("Notsaday", _ => LyoChipHue.Lime);
         Assert.Equal("Notsaday", unknown.Label);
         Assert.Null(unknown.Style);

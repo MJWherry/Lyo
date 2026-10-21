@@ -1,6 +1,7 @@
 # Lyo.Drift.Api.Example
 
-Runnable example: AddPostgresDriftManagementFromConfiguration, AddDriftRetentionService, and BuildDriftGroup. Demo wiring (local cache, OpenAPI/Scalar). Prefer embedding those calls in another host when composing APIs. Not packed to NuGet. Binds http://localhost:5099 (see Properties/launchSettings.json).
+Runnable example: AddPostgresDriftManagementFromConfiguration, AddDriftRetentionService, and BuildDriftGroup. Demo wiring (local cache, OpenAPI/Scalar). Prefer embedding those
+calls in another host when composing APIs. Not packed to NuGet. Binds http://localhost:5099 (see Properties/launchSettings.json).
 
 ## Examples
 

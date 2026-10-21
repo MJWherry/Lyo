@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
@@ -7,7 +8,6 @@ using Lyo.HomeInventory.Models.Enums;
 using Lyo.HomeInventory.Postgres.Database;
 using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.HomeInventory.Postgres;
 
@@ -35,8 +35,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
     public string HealthCheckName => "home-inventory-postgres";
 
     /// <inheritdoc />
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => PostgresHealth.CheckAsync(_contextFactory, PostgresHomeInventoryOptions.Schema, ct);
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => PostgresHealth.CheckAsync(_contextFactory, PostgresHomeInventoryOptions.Schema, ct);
 
     /// <inheritdoc />
     public async Task SaveItemAsync(HomeItemRecord item, Guid? tenantId, CancellationToken ct = default)
@@ -394,9 +393,7 @@ public sealed class PostgresHomeInventoryStore : IHomeInventoryStore, IHealth
             toRow.UpdatedTimestamp = DateTime.UtcNow;
         }
 
-        context.Movements.Add(
-            CreateMovementEntity(itemId, HomeItemMovementType.StockTransfer, quantity, fromLocationId, toLocationId, referenceNumber, createdBy, resolvedTenant));
-
+        context.Movements.Add(CreateMovementEntity(itemId, HomeItemMovementType.StockTransfer, quantity, fromLocationId, toLocationId, referenceNumber, createdBy, resolvedTenant));
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
         await tx.CommitAsync(ct).ConfigureAwait(false);
     }

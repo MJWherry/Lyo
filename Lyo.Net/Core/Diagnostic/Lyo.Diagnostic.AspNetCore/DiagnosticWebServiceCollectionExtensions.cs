@@ -23,7 +23,6 @@ public static class DiagnosticWebServiceCollectionExtensions
             services.Configure(configure);
 
         services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<DiagnosticWebOptions>>().Value);
-
         services.AddDiagnosticsPackage();
         services.AddSingleton<InMemoryErrorInbox>(sp => {
             var web = sp.GetRequiredService<IOptions<DiagnosticWebOptions>>().Value;
@@ -64,8 +63,8 @@ public static class DiagnosticWebServiceCollectionExtensions
 
     /// <summary>
     /// Chains <see cref="LyoCorrelationDelegatingHandler" /> onto a typed-client pipeline. Register handler dependencies first via <see cref="AddLyoCorrelation" /> (or
-    /// <see cref="AddLyoDiagnosticsWeb" />). When the pipeline also has an auth handler, call this <strong>before</strong> the auth handler so the correlation header is stamped on
-    /// the outermost request and carries through any nested refresh roundtrip.
+    /// <see cref="AddLyoDiagnosticsWeb" />). When the pipeline also has an auth handler, call this <strong>before</strong> the auth handler so the correlation header is stamped on the
+    /// outermost request and carries through any nested refresh roundtrip.
     /// </summary>
     public static IHttpClientBuilder AddLyoCorrelationHandler(this IHttpClientBuilder builder) => builder.AddHttpMessageHandler<LyoCorrelationDelegatingHandler>();
 }

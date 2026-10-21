@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace Lyo.Drift.Web.Components;
 
 /// <summary>MudBlazor chip colors and icons for Drift instance, snapshot, diff, and change vocabularies.</summary>
@@ -60,7 +62,7 @@ public static class DriftColorHelper
         return value switch {
             Guid g => g,
             string s when Guid.TryParse(s, out var parsed) => parsed,
-            System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.String } el when Guid.TryParse(el.GetString(), out var fromJson) => fromJson,
+            JsonElement { ValueKind: JsonValueKind.String } el when Guid.TryParse(el.GetString(), out var fromJson) => fromJson,
             var _ => null
         };
     }

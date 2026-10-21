@@ -5,6 +5,7 @@ using Lyo.Exceptions;
 using Lyo.Schedule.Models;
 #if NET6_0_OR_GREATER
 using TimeOnly = System.TimeOnly;
+
 #else
 using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 #endif
@@ -24,10 +25,15 @@ public static class ScheduleCalendar
     /// <param name="hue">Optional hue copied onto every entry.</param>
     /// <param name="refs">Entity references copied onto every entry. The calendar stores them and does not load the entities.</param>
     /// <param name="keyScope">Optional prefix so two schedules that fire at the same instant keep distinct keys.</param>
-    /// <remarks>
-    /// Each fire is a point. An interval schedule also places its daily start-to-end window as a span. The entry title is the schedule description when one is set.
-    /// </remarks>
-    public static Calendar From(ScheduleDefinition definition, int year, int month, TimeZoneInfo? zone = null, int? hue = null, IReadOnlyList<EntityRef>? refs = null, string? keyScope = null)
+    /// <remarks>Each fire is a point. An interval schedule also places its daily start-to-end window as a span. The entry title is the schedule description when one is set.</remarks>
+    public static Calendar From(
+        ScheduleDefinition definition,
+        int year,
+        int month,
+        TimeZoneInfo? zone = null,
+        int? hue = null,
+        IReadOnlyList<EntityRef>? refs = null,
+        string? keyScope = null)
     {
         ArgumentHelpers.ThrowIfNull(definition);
         var scheduleZone = definition.TimeZone ?? TimeZoneInfo.Utc;
@@ -45,7 +51,14 @@ public static class ScheduleCalendar
         return Calendar.FromTimeFrames(grid.Start, grid.End, displayZone, frames);
     }
 
-    private static IEnumerable<TimeFrame> IntervalWindows(ScheduleDefinition definition, Calendar grid, TimeZoneInfo scheduleZone, string title, int? hue, IReadOnlyList<EntityRef>? refs, string? keyScope)
+    private static IEnumerable<TimeFrame> IntervalWindows(
+        ScheduleDefinition definition,
+        Calendar grid,
+        TimeZoneInfo scheduleZone,
+        string title,
+        int? hue,
+        IReadOnlyList<EntityRef>? refs,
+        string? keyScope)
     {
         if (definition.StartTime is null || definition.EndTime is null)
             yield break;
@@ -61,22 +74,22 @@ public static class ScheduleCalendar
 #else
             var start = local.Add(ToTimeSpan(definition.StartTime));
             var end = local.Add(ToTimeSpan(definition.EndTime));
-#endif        
+#endif
             if (end < start)
                 end = end.AddDays(1);
 
-            yield return new(
-                ToUtc(start, scheduleZone),
-                ToUtc(end, scheduleZone),
-                Scoped(keyScope, $"interval:{date}"),
-                title,
-                Hue: hue,
-                Category: "IntervalWindow",
-                Refs: refs);
+            yield return new(ToUtc(start, scheduleZone), ToUtc(end, scheduleZone), Scoped(keyScope, $"interval:{date}"), title, Hue: hue, Category: "IntervalWindow", Refs: refs);
         }
     }
 
-    private static IEnumerable<TimeFrame> Fires(ScheduleDefinition definition, Calendar grid, TimeZoneInfo displayZone, string title, int? hue, IReadOnlyList<EntityRef>? refs, string? keyScope)
+    private static IEnumerable<TimeFrame> Fires(
+        ScheduleDefinition definition,
+        Calendar grid,
+        TimeZoneInfo displayZone,
+        string title,
+        int? hue,
+        IReadOnlyList<EntityRef>? refs,
+        string? keyScope)
     {
         var rangeStart = ToUtc(grid.Start.ToDateTime(), displayZone);
         var rangeEnd = ToUtc(grid.End.AddDays(1).ToDateTime(), displayZone);

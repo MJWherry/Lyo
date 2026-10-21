@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using Lyo.Common.Core.Identifiers;
 
@@ -6,34 +7,6 @@ namespace Lyo.Json.Tests;
 
 public class JsonOptionsTests
 {
-    private sealed class Person
-    {
-        public string? GivenName { get; set; }
-
-        public int? Age { get; set; }
-
-        public int Years { get; set; }
-
-        public bool Active { get; set; }
-
-        public string? Note { get; set; }
-
-        public string? Code { get; set; }
-
-        public List<string>? Tags { get; set; }
-
-        public Role Role { get; set; }
-
-        public decimal Amount { get; set; }
-
-        public DateTimeOffset When { get; set; }
-    }
-
-    private enum Role
-    {
-        Admin = 0
-    }
-
     [Fact]
     public void ExportToJsonString_SnakeCase_WritesGivenName()
     {
@@ -235,25 +208,28 @@ public class JsonOptionsTests
         var names = new List<string?>();
         await foreach (var person in JsonService.Default.ParseNdjsonStreamAsync<Person>(stream, TestCt))
             names.Add(person.GivenName);
+
         Assert.Equal(["Ada", "Grace"], names);
     }
 
     [Fact]
     public async Task Default_ParallelParseAndExport_ReturnsTheDocument()
     {
-        var tasks = Enumerable.Range(0, 8).Select(_ => Task.Run(() => {
-            var json = JsonService.Default.ExportToJsonString(new Person { GivenName = "Ada", Age = 36 });
-            var person = JsonService.Default.ParseString<Person>(json);
-            Assert.Equal("Ada", person.GivenName);
-            Assert.Equal(36, person.Age);
-        }));
+        var tasks = Enumerable.Range(0, 8)
+            .Select(_ => Task.Run(() => {
+                var json = JsonService.Default.ExportToJsonString(new Person { GivenName = "Ada", Age = 36 });
+                var person = JsonService.Default.ParseString<Person>(json);
+                Assert.Equal("Ada", person.GivenName);
+                Assert.Equal(36, person.Age);
+            }));
+
         await Task.WhenAll(tasks);
     }
 
     [Fact]
     public void Constructor_JsonSerializerOptions_WritesPascalCase()
     {
-        var host = new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = null, WriteIndented = false };
+        var host = new JsonSerializerOptions { PropertyNamingPolicy = null, WriteIndented = false };
         var json = new JsonService(host).ExportToJsonString(new Person { GivenName = "Ada" });
         Assert.Contains("\"GivenName\":\"Ada\"", json, StringComparison.Ordinal);
     }
@@ -263,5 +239,33 @@ public class JsonOptionsTests
     {
         var json = new JsonService(new JsonOptions { Naming = DocumentNaming.SnakeCase }).ExportToJsonString(new Person { GivenName = "Ada" });
         Assert.Contains("\"given_name\":\"Ada\"", json, StringComparison.Ordinal);
+    }
+
+    private sealed class Person
+    {
+        public string? GivenName { get; set; }
+
+        public int? Age { get; set; }
+
+        public int Years { get; set; }
+
+        public bool Active { get; set; }
+
+        public string? Note { get; set; }
+
+        public string? Code { get; set; }
+
+        public List<string>? Tags { get; set; }
+
+        public Role Role { get; set; }
+
+        public decimal Amount { get; set; }
+
+        public DateTimeOffset When { get; set; }
+    }
+
+    private enum Role
+    {
+        Admin = 0
     }
 }

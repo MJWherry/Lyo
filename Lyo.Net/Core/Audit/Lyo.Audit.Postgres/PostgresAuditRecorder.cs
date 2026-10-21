@@ -114,8 +114,7 @@ public sealed class PostgresAuditRecorder : IAuditRecorder, IHealth
     public string HealthCheckName => "audit-postgres";
 
     /// <inheritdoc />
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => PostgresHealth.CheckAsync(_contextFactory, PostgresAuditOptions.Schema, ct);
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => PostgresHealth.CheckAsync(_contextFactory, PostgresAuditOptions.Schema, ct);
 
     private AuditChangeEntity ToEntity(AuditChange change)
         => new() {

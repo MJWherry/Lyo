@@ -2,8 +2,8 @@ namespace Lyo.Resilience;
 
 /// <summary>Runs actions through a named resilience pipeline.</summary>
 /// <remarks>
-/// Use for non-HTTP work (database, SDKs, file I/O). Do not use for code that calls HttpClient when that client already has <c>AddLyoResilienceHandler</c> — resilience should
-/// live on the HttpClient only, or retries nest. When the caller omits a pipeline name, the default is <see cref="PipelineNames.Basic" />.
+/// Use for non-HTTP work (database, SDKs, file I/O). Do not use for code that calls HttpClient when that client already has <c>AddLyoResilienceHandler</c> — resilience
+/// should live on the HttpClient only, or retries nest. When the caller omits a pipeline name, the default is <see cref="PipelineNames.Basic" />.
 /// </remarks>
 public interface IResilientExecutor
 {

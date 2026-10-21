@@ -1,6 +1,7 @@
 # Lyo.Job.Client
 
-Wraps `IApiClient` as a typed client for the Lyo Job API, exposing run-lifecycle methods (`StartAsync`, `LogAsync`, `FinishAsync`, `RequeueAsync`) and worker-instance endpoints from `Lyo.Job.Models.Constants.Rest.Job`.
+Wraps `IApiClient` as a typed client for the Lyo Job API, exposing run-lifecycle methods (`StartAsync`, `LogAsync`, `FinishAsync`, `RequeueAsync`) and worker-instance endpoints
+from `Lyo.Job.Models.Constants.Rest.Job`.
 
 ## Examples
 
@@ -37,7 +38,8 @@ await myClient.Jobs.Runs.ResyncQueuedAsync(); // republish due Queued runs missi
 
 ## Prefix on routes
 
-If `JobClientOptions.RoutePrefix` is set (e.g. `https://localhost:5074`), every route is `{prefix}/Job/Run/...`. An empty prefix keeps routes relative and uses `HttpClient.BaseAddress`.
+If `JobClientOptions.RoutePrefix` is set (e.g. `https://localhost:5074`), every route is `{prefix}/Job/Run/...`. An empty prefix keeps routes relative and uses
+`HttpClient.BaseAddress`.
 
 ## Dependencies
 

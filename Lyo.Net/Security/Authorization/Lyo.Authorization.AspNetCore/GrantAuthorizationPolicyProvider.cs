@@ -1,8 +1,8 @@
+using Lyo.Exceptions;
+
 namespace Lyo.Authorization.AspNetCore;
 
-/// <summary>
-/// Builds <c>grant|…</c> policies and forwards every other name, including the default and fallback policies.
-/// </summary>
+/// <summary>Builds <c>grant|…</c> policies and forwards every other name, including the default and fallback policies.</summary>
 public sealed class GrantAuthorizationPolicyProvider : IAuthorizationPolicyProvider
 {
     private readonly IAuthorizationPolicyProvider _inner;
@@ -10,7 +10,7 @@ public sealed class GrantAuthorizationPolicyProvider : IAuthorizationPolicyProvi
     /// <summary>Wraps the provider that was registered before <c>AddLyoGrantAuthorization</c>.</summary>
     public GrantAuthorizationPolicyProvider(IAuthorizationPolicyProvider inner)
     {
-        Lyo.Exceptions.ArgumentHelpers.ThrowIfNull(inner);
+        ArgumentHelpers.ThrowIfNull(inner);
         _inner = inner;
     }
 

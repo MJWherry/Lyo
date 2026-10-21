@@ -1,10 +1,12 @@
 # Lyo.Billing.Api
 
-Maps QueryProject CRUD on billing clients, charges, invoices, lines, payments, and biller profiles, plus draft/issue/void/pay routes that post journals. Invoices, lines, and payments are ReadOnly. Cipher columns are denied on select. Register Ledger + Billing, then `BuildBillingGroup`. Example host: `Lyo.Billing.Api.Example` (`http://localhost:5105`).
+Maps QueryProject CRUD on billing clients, charges, invoices, lines, payments, and biller profiles, plus draft/issue/void/pay routes that post journals. Invoices, lines, and
+payments are ReadOnly. Cipher columns are denied on select. Register Ledger + Billing, then `BuildBillingGroup`. Example host: `Lyo.Billing.Api.Example` (`http://localhost:5105`).
 
 ## Features
 
-- `BuildBillingGroup` maps billing clients (CRUD), charges (CRUD with billed lock), ReadOnly invoices/lines/payments, from-charges, draft + line CRUD, unbilled charges, summary, issue, void, and pay.
+- `BuildBillingGroup` maps billing clients (CRUD), charges (CRUD with billed lock), ReadOnly invoices/lines/payments, from-charges, draft + line CRUD, unbilled charges, summary,
+  issue, void, and pay.
 - Issue/void/pay pass `tenantId`. Pay `currency` is optional (invoice currency when null). QueryProject denies invoice tax ciphertext and biller remittance/bank columns.
 
 ## Examples

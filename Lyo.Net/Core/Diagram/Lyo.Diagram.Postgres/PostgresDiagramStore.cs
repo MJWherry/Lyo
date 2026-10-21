@@ -34,11 +34,7 @@ public sealed class PostgresDiagramStore : IDiagramStore
         return await context.Diagrams.AsNoTracking()
             .OrderBy(diagram => diagram.Name)
             .ThenBy(diagram => diagram.Id)
-            .Select(diagram => new DiagramSummary {
-                Id = diagram.Id,
-                Name = diagram.Name,
-                UpdatedTimestamp = diagram.UpdatedTimestamp ?? diagram.CreatedTimestamp
-            })
+            .Select(diagram => new DiagramSummary { Id = diagram.Id, Name = diagram.Name, UpdatedTimestamp = diagram.UpdatedTimestamp ?? diagram.CreatedTimestamp })
             .ToArrayAsync(ct)
             .ConfigureAwait(false);
     }

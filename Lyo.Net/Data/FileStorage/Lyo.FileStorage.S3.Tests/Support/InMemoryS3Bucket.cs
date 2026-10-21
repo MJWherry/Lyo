@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Net;
+using System.Text;
 using Amazon.S3;
 using Amazon.S3.Model;
 
@@ -19,32 +20,33 @@ public sealed class InMemoryS3Bucket
             _objects[req.Key] = (data, DateTimeOffset.UtcNow);
             return new();
         };
+
         fake.OnGetObject = req => {
             if (!_objects.TryGetValue(req.Key, out var entry))
                 throw new AmazonS3Exception("Not Found") { StatusCode = HttpStatusCode.NotFound };
 
-            return new GetObjectResponse {
-                ResponseStream = new MemoryStream(entry.Data, writable: false),
-                ContentLength = entry.Data.Length,
-                LastModified = entry.LastModified.UtcDateTime
-            };
+            return new() { ResponseStream = new MemoryStream(entry.Data, false), ContentLength = entry.Data.Length, LastModified = entry.LastModified.UtcDateTime };
         };
+
         fake.OnGetObjectMetadata = req => {
             if (!_objects.TryGetValue(req.Key, out var entry))
                 throw new AmazonS3Exception("Not Found") { StatusCode = HttpStatusCode.NotFound };
 
             return new() { ContentLength = entry.Data.Length, LastModified = entry.LastModified.UtcDateTime };
         };
+
         fake.OnDeleteObject = req => {
-            _objects.TryRemove(req.Key, out _);
+            _objects.TryRemove(req.Key, out var _);
             return new();
         };
+
         fake.OnDeleteObjects = req => {
             foreach (var key in req.Objects)
-                _objects.TryRemove(key.Key, out _);
+                _objects.TryRemove(key.Key, out var _);
 
             return new();
         };
+
         fake.OnCopyObject = req => {
             if (!_objects.TryGetValue(req.SourceKey, out var entry))
                 throw new AmazonS3Exception("Not Found") { StatusCode = HttpStatusCode.NotFound };
@@ -52,6 +54,7 @@ public sealed class InMemoryS3Bucket
             _objects[req.DestinationKey] = (entry.Data.ToArray(), DateTimeOffset.UtcNow);
             return new();
         };
+
         fake.OnListObjectsV2 = List;
         return client;
     }
@@ -95,6 +98,6 @@ public sealed class InMemoryS3Bucket
             return ms.ToArray();
         }
 
-        return req.ContentBody == null ? [] : System.Text.Encoding.UTF8.GetBytes(req.ContentBody);
+        return req.ContentBody == null ? [] : Encoding.UTF8.GetBytes(req.ContentBody);
     }
 }

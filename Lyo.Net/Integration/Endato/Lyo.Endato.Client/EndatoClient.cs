@@ -1,5 +1,5 @@
-using Lyo.Http.Client;
 using Lyo.Exceptions;
+using Lyo.Http.Client;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 

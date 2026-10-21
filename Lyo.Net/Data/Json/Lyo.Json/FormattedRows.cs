@@ -23,6 +23,7 @@ internal static class FormattedRows
             var row = new Dictionary<string, string>(names.Count, StringComparer.Ordinal);
             for (var i = 0; i < names.Count; i++)
                 row[names[i]] = formatters[i](item) ?? string.Empty;
+
             rows.Add(row);
         }
 
@@ -39,6 +40,7 @@ internal static class FormattedRows
             ArgumentHelpers.ThrowIfNull(column.Value);
             if (!column.Value.CanRead)
                 throw new ArgumentException($"Property {column.Value.Name} is not readable.", nameof(columns));
+
             names.Add(column.Key);
             properties.Add(column.Value);
         }
@@ -48,6 +50,7 @@ internal static class FormattedRows
             var row = new Dictionary<string, object?>(names.Count, StringComparer.Ordinal);
             for (var i = 0; i < names.Count; i++)
                 row[names[i]] = item is null ? null : properties[i].GetValue(item);
+
             rows.Add(row);
         }
 

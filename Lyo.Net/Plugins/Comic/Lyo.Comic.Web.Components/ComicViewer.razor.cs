@@ -1,6 +1,6 @@
+using Lyo.Common.Core.Identifiers;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Comic.Web.Components;
 
@@ -42,9 +42,7 @@ public partial class ComicViewer
     [EditorRequired]
     public ComicSeries Series { get; set; } = null!;
 
-    /// <summary>
-    /// Navigation (same language / filter as the reading session). Used to populate the chapter selector and chapter-skip buttons full ordered list of chapters available.
-    /// </summary>
+    /// <summary>Navigation (same language / filter as the reading session). Used to populate the chapter selector and chapter-skip buttons full ordered list of chapters available.</summary>
     [Parameter]
     public IReadOnlyList<ComicChapter> Chapters { get; set; } = [];
 
@@ -60,8 +58,8 @@ public partial class ComicViewer
     public EventCallback<ComicChapter> OnChapterChanged { get; set; }
 
     /// <summary>
-    /// Fired when the reader steps backward across a chapter edge (previous on page 1). The host should change <see cref="CurrentChapter" /> and
-    /// assign <see cref="CurrentPage" /> to that chapter's last page, then invoke <see cref="ReloadPageAsync" />. Uses <see cref="OnChapterChanged" /> when unset.
+    /// Fired when the reader steps backward across a chapter edge (previous on page 1). The host should change <see cref="CurrentChapter" /> and assign
+    /// <see cref="CurrentPage" /> to that chapter's last page, then invoke <see cref="ReloadPageAsync" />. Uses <see cref="OnChapterChanged" /> when unset.
     /// </summary>
     [Parameter]
     public EventCallback<ComicChapter> OnPreviousChapterChanged { get; set; }
@@ -79,8 +77,8 @@ public partial class ComicViewer
     public int TotalPages { get; set; }
 
     /// <summary>
-    /// Invoked when the viewer needs a page image. Gets series, chapter, page number, and a <see cref="CancellationToken" />. Must yield a
-    /// ready-to-show URL or Base-64 data-URI, or <c>null</c> when the page cannot be shown.
+    /// Invoked when the viewer needs a page image. Gets series, chapter, page number, and a <see cref="CancellationToken" />. Must yield a ready-to-show URL or Base-64 data-URI,
+    /// or <c>null</c> when the page cannot be shown.
     /// </summary>
     [Parameter]
     [EditorRequired]
@@ -107,8 +105,8 @@ public partial class ComicViewer
     private bool UseCoverPlaceholderStyle => ShowCoverWhileLoading;
 
     /// <summary>
-    /// Page index in the counter and slider. Fast JS navigation shows the target immediately; after the image loads it uses
-    /// <see cref="CurrentPage" /> (Blazor's source of truth).
+    /// Page index in the counter and slider. Fast JS navigation shows the target immediately; after the image loads it uses <see cref="CurrentPage" /> (Blazor's source of
+    /// truth).
     /// </summary>
     private int DisplayPage => _pendingDisplayPage > 0 ? _pendingDisplayPage : CurrentPage;
 
@@ -188,9 +186,8 @@ public partial class ComicViewer
     }
 
     /// <summary>
-    /// Reloads and shows a page image. Pass <paramref name="forPage" /> right after you change local state — then the
-    /// <see cref="CurrentPage" /> parameter can still hold the old value (Blazor re-renders later). Omit it to keep the current parameter (for example after a chapter change
-    /// that resets the page to 1 when you have not already changed it locally).
+    /// Reloads and shows a page image. Pass <paramref name="forPage" /> right after you change local state — then the <see cref="CurrentPage" /> parameter can still hold the old
+    /// value (Blazor re-renders later). Omit it to keep the current parameter (for example after a chapter change that resets the page to 1 when you have not already changed it locally).
     /// </summary>
     public async Task ReloadPageAsync(int? forPage = null) => await FetchAndDisplayPageAsync(forPage ?? CurrentPage);
 
@@ -204,8 +201,8 @@ public partial class ComicViewer
     }
 
     /// <summary>
-    /// JS calls this after it navigates to a page. When <paramref name="imageAlreadyShown" /> is true, JS already swapped the &lt;img&gt; src so Blazor skips the server
-    /// hop and only updates local state (counter, slider).
+    /// JS calls this after it navigates to a page. When <paramref name="imageAlreadyShown" /> is true, JS already swapped the &lt;img&gt; src so Blazor skips the server hop and
+    /// only updates local state (counter, slider).
     /// </summary>
     [JSInvokable]
     public async Task OnJsPageChanged(int page, bool imageAlreadyShown)
@@ -312,8 +309,8 @@ public partial class ComicViewer
     }
 
     /// <summary>
-    /// Pushes the current page and total to JS so it can detect chapter edges. Does not register this page's URL — only upcoming pages enter JS urlMap
-    /// (through PrefetchPagesAsync) so the visible image is not forced through another browser cache revalidation.
+    /// Pushes the current page and total to JS so it can detect chapter edges. Does not register this page's URL — only upcoming pages enter JS urlMap (through
+    /// PrefetchPagesAsync) so the visible image is not forced through another browser cache revalidation.
     /// </summary>
     private async Task SyncJsStateAsync(int page)
     {

@@ -1,17 +1,18 @@
 using Lyo.EntityReference.Models;
+using Lyo.HomeInventory.Models;
 using Lyo.HomeInventory.Models.Enums;
 
 namespace Lyo.HomeInventory;
 
 /// <summary>FileStorage file linked to an inventory subject (item, location, or category).</summary>
-[EntityRefLogicalType(Models.HomeInventoryEntityTypes.Attachment)]
+[EntityRefLogicalType(HomeInventoryEntityTypes.Attachment)]
 public sealed class HomeAttachmentRecord
 {
     /// <summary>Row id.</summary>
     public Guid Id { get; set; }
 
     /// <summary>Subject type (<see cref="Models.HomeInventoryEntityTypes" />).</summary>
-    public string EntityType { get; set; } = Models.HomeInventoryEntityTypes.Item;
+    public string EntityType { get; set; } = HomeInventoryEntityTypes.Item;
 
     /// <summary>Subject id.</summary>
     public Guid EntityId { get; set; }

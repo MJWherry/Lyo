@@ -1,37 +1,22 @@
-using System.Net.Http.Json;
 using System.Text.Json;
-using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Common.Core.Conversion;
-using Lyo.Common.Metadata.Records;
-using Lyo.Images;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common.Request;
-using Lyo.TestGateway;
-using Lyo.TestGateway.Components;
 using Lyo.TestGateway.Models;
 using Lyo.Web.Components.DataGrid;
 using Lyo.Web.Components.Dialog;
 using Lyo.Web.Components.Models;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.Web.Virtualization;
-using Microsoft.JSInterop;
 using MudBlazor;
-using static Microsoft.AspNetCore.Components.Web.RenderMode;
 
 namespace Lyo.TestGateway.Components.Pages.People;
 
 public partial class PersonGrid
 {
+    private static readonly string[] PersonIncludes = ["ContactAddresses.Address", "ContactPhoneNumbers.PhoneNumber", "ContactEmailAddresses.EmailAddress"];
     private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("FirstName"), FilterPropertyDefinition.FromDatabase("LastName", "last_name", "person", "people")];
 
     private LyoDataGridProjected? _dataGrid;
-
-    private static readonly string[] PersonIncludes = ["ContactAddresses.Address", "ContactPhoneNumbers.PhoneNumber", "ContactEmailAddresses.EmailAddress"];
 
     private static void AddMostRecentAddressSelects(ProjectionQueryReqBuilder query)
         => query.AddSelects("ContactAddresses.Address.UpdatedTimestamp", "ContactAddresses.Address.CreatedTimestamp");
@@ -76,8 +61,8 @@ public partial class PersonGrid
             return null;
 
         var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<PersonRes>>(
-            $"{Lyo.TestGateway.Models.Constants.Person.Route}/QueryConcrete",
-            new() { Keys = [[id]], Amount = 1, Include = [..PersonIncludes] });
-        return res?.Items?.FirstOrDefault() ?? await ApiClient.GetAsAsync<PersonRes>($"{Lyo.TestGateway.Models.Constants.Person.Route}/{id}");
+            $"{Models.Constants.Person.Route}/QueryConcrete", new() { Keys = [[id]], Amount = 1, Include = [.. PersonIncludes] });
+
+        return res?.Items?.FirstOrDefault() ?? await ApiClient.GetAsAsync<PersonRes>($"{Models.Constants.Person.Route}/{id}");
     }
 }

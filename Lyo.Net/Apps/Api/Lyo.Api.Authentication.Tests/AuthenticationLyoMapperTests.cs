@@ -19,6 +19,7 @@ public sealed class AuthenticationLyoMapperTests
             ScopesJson = """["people.read"]""",
             DisabledReason = null
         };
+
         var entity = _mapper.Map<UserEntity>(req);
         entity.Id = LyoGuid.CreateV7();
         entity.CreatedTimestamp = DateTime.UtcNow;
@@ -41,6 +42,7 @@ public sealed class AuthenticationLyoMapperTests
             ScopesJson = "[]",
             CreatedTimestamp = DateTime.UtcNow
         };
+
         var res = _mapper.Map<AuthTokenRes>(entity);
         Assert.Equal("abcdefghjkm", res.Id);
         Assert.Equal("ci", res.DisplayName);

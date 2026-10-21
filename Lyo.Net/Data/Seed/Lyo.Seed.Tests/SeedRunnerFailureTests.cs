@@ -10,9 +10,7 @@ public sealed class SeedRunnerFailureTests
     public async Task SeedAsync_DbUpdateException_IncludesInnerConstraintMessage()
     {
         var inner = new InvalidOperationException("duplicate key value violates unique constraint \"ix_favorite_actor\"");
-        var transport = new ThrowingTransport(new DbUpdateException(
-            "An error occurred while saving the entity changes. See the inner exception for details.",
-            inner));
+        var transport = new ThrowingTransport(new DbUpdateException("An error occurred while saving the entity changes. See the inner exception for details.", inner));
         var result = await new SeedRunner().SeedAsync(new OneRowContributor(), transport, new() { Count = 1 }, TestCt);
         Assert.False(result.Success);
         var text = string.Join(" ", result.Errors);
@@ -30,18 +28,10 @@ public sealed class SeedRunnerFailureTests
         var row = new ParentRow { Id = Guid.NewGuid(), Name = "x" };
         db.Add(row);
         var postgres = new PostgresException(
-            "duplicate key value violates unique constraint \"ix_favorite_actor\"",
-            "ERROR",
-            "ERROR",
-            "23505",
-            detail: "Key (actor_entity_id)=(seed) already exists.",
-            tableName: "favorite",
-            columnName: "actor_entity_id",
-            constraintName: "ix_favorite_actor");
-        var update = new DbUpdateException(
-            "An error occurred while saving the entity changes. See the inner exception for details.",
-            postgres,
-            [db.Entry(row)]);
+            "duplicate key value violates unique constraint \"ix_favorite_actor\"", "ERROR", "ERROR", "23505", "Key (actor_entity_id)=(seed) already exists.",
+            tableName: "favorite", columnName: "actor_entity_id", constraintName: "ix_favorite_actor");
+
+        var update = new DbUpdateException("An error occurred while saving the entity changes. See the inner exception for details.", postgres, [db.Entry(row)]);
         var result = await new SeedRunner().SeedAsync(new OneRowContributor(), new ThrowingTransport(update), new() { Count = 1 }, TestCt);
         Assert.False(result.Success);
         var text = string.Join('\n', result.Errors);
@@ -57,8 +47,7 @@ public sealed class SeedRunnerFailureTests
     public async Task SeedAsync_OperationCanceled_Propagates()
     {
         var transport = new ThrowingTransport(new OperationCanceledException());
-        await Assert.ThrowsAsync<OperationCanceledException>(() =>
-            new SeedRunner().SeedAsync(new OneRowContributor(), transport, new() { Count = 1 }, TestCt));
+        await Assert.ThrowsAsync<OperationCanceledException>(() => new SeedRunner().SeedAsync(new OneRowContributor(), transport, new() { Count = 1 }, TestCt));
     }
 
     private sealed class Row

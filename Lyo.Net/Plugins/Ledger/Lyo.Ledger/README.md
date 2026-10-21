@@ -1,6 +1,7 @@
 # Lyo.Ledger
 
-Double-entry books used by Billing. `ILedgerStore` posts balanced journals and voids by writing a reversing journal. Posted rows are immutable. `GetClientArBalance` reads posted AR lines (account 1100) and excludes reversing journals, not a column on the client.
+Double-entry books used by Billing. `ILedgerStore` posts balanced journals and voids by writing a reversing journal. Posted rows are immutable. `GetClientArBalance` reads posted AR
+lines (account 1100) and excludes reversing journals, not a column on the client.
 
 ## Features
 

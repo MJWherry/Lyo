@@ -2,9 +2,7 @@ using Lyo.Api.Client;
 
 namespace Lyo.Web.Components.DataGrid;
 
-/// <summary>
-/// One <c>LyoIdColumn</c> registration: parent FK field, related QueryProject route, result CLR type, and Select paths for the related fetch.
-/// </summary>
+/// <summary>One <c>LyoIdColumn</c> registration: parent FK field, related QueryProject route, result CLR type, and Select paths for the related fetch.</summary>
 public sealed class RelatedColumnDescriptor
 {
     /// <summary>Parent-row field (or property path) that holds the related entity's primary key.</summary>

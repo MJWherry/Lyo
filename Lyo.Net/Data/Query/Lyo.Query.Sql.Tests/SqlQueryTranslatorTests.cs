@@ -2,7 +2,6 @@ using Lyo.Common.Core.Enums;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
-using Lyo.Query.Sql;
 
 namespace Lyo.Query.Sql.Tests;
 
@@ -16,7 +15,7 @@ public class SqlQueryTranslatorTests
         var request = new QueryConcreteReq { WhereClause = new ConditionClause("Status", ComparisonOperatorEnum.Equals, "Active") };
         var sql = _translator.Translate(request, Map(("Status", "status")));
         Assert.Equal("""SELECT "status" FROM "people"."person" WHERE lower("status") = lower($1)""", sql.Text);
-        Assert.Equal([new SqlParameter("$1", "Active")], sql.Parameters);
+        Assert.Equal([new("$1", "Active")], sql.Parameters);
     }
 
     [Fact]
@@ -31,19 +30,19 @@ public class SqlQueryTranslatorTests
     [Fact]
     public void Translate_AndOr_ParenthesizesGroups()
     {
-        var where = new GroupClause(GroupOperatorEnum.Or, [
-            new GroupClause(GroupOperatorEnum.And, [
-                new ConditionClause("Status", ComparisonOperatorEnum.Equals, "Active"),
-                new ConditionClause("Age", ComparisonOperatorEnum.GreaterThan, 18)
-            ]),
-            new ConditionClause("Name", ComparisonOperatorEnum.Equals, "Bob")
-        ]);
+        var where = new GroupClause(
+            GroupOperatorEnum.Or,
+            [
+                new GroupClause(
+                    GroupOperatorEnum.And,
+                    [new ConditionClause("Status", ComparisonOperatorEnum.Equals, "Active"), new ConditionClause("Age", ComparisonOperatorEnum.GreaterThan, 18)]),
+                new ConditionClause("Name", ComparisonOperatorEnum.Equals, "Bob")
+            ]);
+
         var request = new QueryConcreteReq { WhereClause = where };
         var sql = _translator.Translate(request, Map(("Status", "status"), ("Age", "age"), ("Name", "name")));
-        Assert.Equal(
-            """SELECT "status", "age", "name" FROM "people"."person" WHERE ((lower("status") = lower($1)) AND ("age" > $2)) OR (lower("name") = lower($3))""",
-            sql.Text);
-        Assert.Equal([new SqlParameter("$1", "Active"), new SqlParameter("$2", 18), new SqlParameter("$3", "Bob")], sql.Parameters);
+        Assert.Equal("""SELECT "status", "age", "name" FROM "people"."person" WHERE ((lower("status") = lower($1)) AND ("age" > $2)) OR (lower("name") = lower($3))""", sql.Text);
+        Assert.Equal([new("$1", "Active"), new("$2", 18), new("$3", "Bob")], sql.Parameters);
     }
 
     [Fact]
@@ -62,7 +61,7 @@ public class SqlQueryTranslatorTests
         var request = new QueryConcreteReq { WhereClause = new ConditionClause("Age", ComparisonOperatorEnum.In, new[] { 1, 2 }) };
         var sql = _translator.Translate(request, Map(("Age", "age")));
         Assert.Equal("""SELECT "age" FROM "people"."person" WHERE "age" IN ($1, $2)""", sql.Text);
-        Assert.Equal([new SqlParameter("$1", 1), new SqlParameter("$2", 2)], sql.Parameters);
+        Assert.Equal([new("$1", 1), new("$2", 2)], sql.Parameters);
     }
 
     [Fact]
@@ -78,11 +77,7 @@ public class SqlQueryTranslatorTests
     [Fact]
     public void Translate_SortAndPage_EmitsOrderByOffsetLimit()
     {
-        var request = new QueryConcreteReq {
-            SortBy = [new SortBy("Name", SortDirection.Asc), new SortBy("Id", SortDirection.Desc)],
-            Start = 20,
-            Amount = 10
-        };
+        var request = new QueryConcreteReq { SortBy = [new("Name", SortDirection.Asc), new("Id", SortDirection.Desc)], Start = 20, Amount = 10 };
         var sql = _translator.Translate(request, Map(("Id", "id"), ("Name", "name")));
         Assert.Equal("""SELECT "id", "name" FROM "people"."person" ORDER BY "name" ASC, "id" DESC OFFSET 20 LIMIT 10""", sql.Text);
         Assert.Empty(sql.Parameters);
@@ -123,22 +118,19 @@ public class SqlQueryTranslatorTests
     [Fact]
     public void Translate_Projection_Aggregates_EmitsGroupBy()
     {
-        var count = _translator.Translate(
-            new ProjectionQueryReq { Aggregates = [new AggregateSelect(AggregateFunction.Count, "count")] },
-            Map(("Status", "status")));
+        var count = _translator.Translate(new ProjectionQueryReq { Aggregates = [new(AggregateFunction.Count, "count")] }, Map(("Status", "status")));
         Assert.Equal("SELECT COUNT(*) AS \"count\" FROM \"people\".\"person\"", count.Text);
         Assert.DoesNotContain("GROUP BY", count.Text);
-
         var sum = _translator.Translate(
-            new ProjectionQueryReq { Select = ["Status"], Aggregates = [new AggregateSelect(AggregateFunction.Sum, "total", "Amount")] },
-            Map(("Status", "status"), ("Amount", "amount")));
+            new ProjectionQueryReq { Select = ["Status"], Aggregates = [new(AggregateFunction.Sum, "total", "Amount")] }, Map(("Status", "status"), ("Amount", "amount")));
+
         Assert.Equal("SELECT \"status\", SUM(\"amount\") AS \"total\" FROM \"people\".\"person\" GROUP BY \"status\"", sum.Text);
     }
 
     [Fact]
     public void Translate_Projection_ComputedField_Throws()
     {
-        var request = new ProjectionQueryReq { Select = ["Name"], ComputedFields = [new ComputedField("label", "{Name}")] };
+        var request = new ProjectionQueryReq { Select = ["Name"], ComputedFields = [new("label", "{Name}")] };
         var ex = Assert.Throws<SqlTranslationException>(() => _translator.Translate(request, Map(("Name", "name"))));
         Assert.Contains("Computed", ex.Message);
     }
@@ -149,19 +141,19 @@ public class SqlQueryTranslatorTests
         var request = new QueryReq {
             From = new() { Alias = "o", EntityType = "OrderEntity" },
             Joins = [
-                new JoinClause {
+                new() {
                     Alias = "p",
                     EntityType = "PersonEntity",
                     Type = JoinType.Left,
-                    On = [new JoinOn { From = "o.PersonId", To = "p.Id" }]
+                    On = [new() { From = "o.PersonId", To = "p.Id" }]
                 }
             ],
             Select = ["o.Id", "p.Name"]
         };
+
         var sql = _translator.Translate(request, Catalog());
         Assert.Equal(
-            "SELECT \"o\".\"id\", \"p\".\"name\" FROM \"sales\".\"order\" AS \"o\" LEFT JOIN \"people\".\"person\" AS \"p\" ON \"o\".\"person_id\" = \"p\".\"id\"",
-            sql.Text);
+            "SELECT \"o\".\"id\", \"p\".\"name\" FROM \"sales\".\"order\" AS \"o\" LEFT JOIN \"people\".\"person\" AS \"p\" ON \"o\".\"person_id\" = \"p\".\"id\"", sql.Text);
     }
 
     [Fact]

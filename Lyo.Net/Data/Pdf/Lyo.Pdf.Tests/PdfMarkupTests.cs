@@ -47,23 +47,21 @@ public class PdfMarkupTests
     }
 
     private static byte[] Form(string fieldName)
-        => Document([
-            "<< /Type /Catalog /Pages 2 0 R /AcroForm << /Fields [5 0 R] >> >>",
-            "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Annots [5 0 R] >>",
-            "<< /Length 0 >>\nstream\nendstream",
+        => Document(
+        [
+            "<< /Type /Catalog /Pages 2 0 R /AcroForm << /Fields [5 0 R] >> >>", "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Annots [5 0 R] >>", "<< /Length 0 >>\nstream\nendstream",
             $"<< /Type /Annot /Subtype /Widget /FT /Tx /T ({fieldName}) /Rect [72 680 250 700] /P 3 0 R >>"
         ]);
 
     private static byte[] PageWithText()
     {
         const string stream = "BT /F1 18 Tf 72 700 Td (SECRET) Tj 0 -40 Td (KEEP) Tj ET";
-        return Document([
-            "<< /Type /Catalog /Pages 2 0 R >>",
-            "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        return Document(
+        [
+            "<< /Type /Catalog /Pages 2 0 R >>", "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
             "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
-            $"<< /Length {stream.Length} >>\nstream\n{stream}\nendstream",
-            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"
+            $"<< /Length {stream.Length} >>\nstream\n{stream}\nendstream", "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"
         ]);
     }
 
@@ -82,6 +80,7 @@ public class PdfMarkupTests
         builder.Append("0000000000 65535 f \n");
         for (var i = 1; i <= bodies.Count; i++)
             builder.Append(offsets[i].ToString("D10")).Append(" 00000 n \n");
+
         builder.Append("trailer\n<< /Size ").Append(bodies.Count + 1).Append(" /Root 1 0 R >>\nstartxref\n");
         builder.Append(startxref).Append("\n%%EOF\n");
         return Encoding.ASCII.GetBytes(builder.ToString());

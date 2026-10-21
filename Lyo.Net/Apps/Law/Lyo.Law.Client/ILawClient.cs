@@ -3,7 +3,7 @@ using Lyo.Law.Models.Response;
 
 namespace Lyo.Law.Client;
 
-/// <summary>Typed HTTP client for Law routes that are not generic CRUD. Jurisdiction, code, node, annotation, and revision queries stay on <see cref="Lyo.Api.Client.IApiClient"/>.</summary>
+/// <summary>Typed HTTP client for Law routes that are not generic CRUD. Jurisdiction, code, node, annotation, and revision queries stay on <see cref="Lyo.Api.Client.IApiClient" />.</summary>
 public interface ILawClient
 {
     /// <summary>Creates or updates a node by jurisdiction, code, and source key.</summary>

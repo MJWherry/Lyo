@@ -1,6 +1,9 @@
 # Lyo.Story
 
-Domain contracts for a quest-style play graph. The system of record is nodes, choices, named actions, and trigger/condition/response reactions. Presentation (text, cutscene, or none) is optional on a node. Scenes are optional groups, not the play cursor. Conditions persist as Lyo.Query `WhereClause` trees (`var.*` / `chose.*` / `visited.*` field prefixes) and are evaluated by `StoryPlayEngine` against the play bag — not `WhereClauseEvaluator`. Consequence tracking is the play log (`CausedByEventId`), not an authoring table. Persistence facade is `IStoryStore`.
+Domain contracts for a quest-style play graph. The system of record is nodes, choices, named actions, and trigger/condition/response reactions. Presentation (text, cutscene, or
+none) is optional on a node. Scenes are optional groups, not the play cursor. Conditions persist as Lyo.Query `WhereClause` trees (`var.*` / `chose.*` / `visited.*` field prefixes)
+and are evaluated by `StoryPlayEngine` against the play bag — not `WhereClauseEvaluator`. Consequence tracking is the play log (`CausedByEventId`), not an authoring table.
+Persistence facade is `IStoryStore`.
 
 ## Features
 
@@ -8,7 +11,8 @@ Domain contracts for a quest-style play graph. The system of record is nodes, ch
 - **Builders.** `StoryBuilder` with `WhenAll` / `WhenOneOf` and `.Do` response lists. `StorySamples.TheHeist()` is the canonical sample.
 - **Engine.** `StoryPlayEngine` is pure: start, available moves, take choice, advance, get causes. No EF.
 - **Query conditions.** Reuses `WhereClause` / `GroupClause` (And = All, Or = OneOf). Story sugar (`Flag`, `Chose`, `Visited`) emits those nodes.
-- **Tenancy.** `Story.TenantId` and `Story.GameKey` scope a graph to a tenant and a game. `IStoryStore.ListStoriesAsync(tenantId, gameKey)` lists headers ordered by title; a null tenant lists only stories with no tenant. Slugs stay globally unique.
+- **Tenancy.** `Story.TenantId` and `Story.GameKey` scope a graph to a tenant and a game. `IStoryStore.ListStoriesAsync(tenantId, gameKey)` lists headers ordered by title; a null
+  tenant lists only stories with no tenant. Slugs stay globally unique.
 
 ## Examples
 
@@ -33,14 +37,14 @@ var story = StoryBuilder.New("The Heist")
 
 ## Layering map
 
-| Assembly | Responsibility |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `Lyo.Story` (this) | POCOs, builders, `StoryPlayEngine`, `IStoryStore` (`netstandard2.0;net10.0`). Text MIME defaults use `MimeTypeInfo`. |
-| `Lyo.Story.Models` | Req/Res pairs and route constants. No `StoryQuery`. |
-| `Lyo.Story.Postgres` | EF `StoryDbContext` schema `story`, `PostgresStoryStore`, `StoryLyoMapper`, `AddLyoCrudServices`. |
-| `Lyo.Story.Api` | `AddStoryApi` + `BuildStoryGroup` (Req/Res CRUD, Query, graph, play). |
-| `Lyo.Story.Client` | Typed HTTP client for graph and play. Query stays on `IApiClient`. |
-| `Lyo.Story.Web.Components` | Blazor story builder: library, computed graph, editors, and play. The host registers `IStoryClient`. |
+| Assembly                   | Responsibility                                                                                                       |
+|----------------------------|----------------------------------------------------------------------------------------------------------------------|
+| `Lyo.Story` (this)         | POCOs, builders, `StoryPlayEngine`, `IStoryStore` (`netstandard2.0;net10.0`). Text MIME defaults use `MimeTypeInfo`. |
+| `Lyo.Story.Models`         | Req/Res pairs and route constants. No `StoryQuery`.                                                                  |
+| `Lyo.Story.Postgres`       | EF `StoryDbContext` schema `story`, `PostgresStoryStore`, `StoryLyoMapper`, `AddLyoCrudServices`.                    |
+| `Lyo.Story.Api`            | `AddStoryApi` + `BuildStoryGroup` (Req/Res CRUD, Query, graph, play).                                                |
+| `Lyo.Story.Client`         | Typed HTTP client for graph and play. Query stays on `IApiClient`.                                                   |
+| `Lyo.Story.Web.Components` | Blazor story builder: library, computed graph, editors, and play. The host registers `IStoryClient`.                 |
 
 ## Dependencies
 

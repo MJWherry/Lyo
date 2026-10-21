@@ -266,11 +266,7 @@ public class LocalFileMetadataStore : IFileMetadataStore
             }
         }
 
-        return results
-            .OrderBy(static r => r.PathPrefix, StringComparer.Ordinal)
-            .ThenBy(static r => r.Id)
-            .Take(maxKeys)
-            .ToList();
+        return results.OrderBy(static r => r.PathPrefix, StringComparer.Ordinal).ThenBy(static r => r.Id).Take(maxKeys).ToList();
     }
 
     /// <inheritdoc />

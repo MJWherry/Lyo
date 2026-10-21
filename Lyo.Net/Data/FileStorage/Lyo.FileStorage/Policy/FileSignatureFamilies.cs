@@ -6,8 +6,7 @@ namespace Lyo.FileStorage.Policy;
 internal static class FileSignatureFamilies
 {
     /// <summary>True when <paramref name="type" /> is a signature this package can require, including family members the sniffer reports as the container.</summary>
-    public static bool HasRequiredSignature(FileTypeInfo type)
-        => type != FileTypeInfo.Unknown && (type.HeaderSignatures.Count > 0 || type.SignatureFamily != null);
+    public static bool HasRequiredSignature(FileTypeInfo type) => type != FileTypeInfo.Unknown && (type.HeaderSignatures.Count > 0 || type.SignatureFamily != null);
 
     /// <summary>True when the sniffed row is the claimed row, or both sit in one shared-signature family.</summary>
     public static bool Agrees(FileTypeInfo sniffed, FileTypeInfo claimed) => sniffed == claimed || SameFamily(sniffed, claimed);

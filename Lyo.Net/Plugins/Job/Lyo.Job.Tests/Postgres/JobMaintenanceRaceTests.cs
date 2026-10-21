@@ -11,8 +11,8 @@ using JobRunResultEnum = Lyo.Job.Models.Enums.JobRunResult;
 namespace Lyo.Job.Tests.Postgres;
 
 /// <summary>
-/// Regression checks for the maintenance-versus-finish race: dead-job detection re-reads the heartbeat inside a guarded update, the orphan ceiling bounds runs whose definition
-/// sets no timeout, and <c>job_run</c> carries an <c>xmin</c> concurrency token so a read-modify-write pass cannot clobber a worker's concurrent finish.
+/// Regression checks for the maintenance-versus-finish race: dead-job detection re-reads the heartbeat inside a guarded update, the orphan ceiling bounds runs whose
+/// definition sets no timeout, and <c>job_run</c> carries an <c>xmin</c> concurrency token so a read-modify-write pass cannot clobber a worker's concurrent finish.
 /// </summary>
 [Trait("Category", "Integration")]
 [Collection(JobMaintenanceCollection.Name)]
@@ -122,8 +122,7 @@ public class JobMaintenanceRaceTests
 
         var cutoff = DateTime.UtcNow.AddMinutes(-5);
         await using (var refresher = await CreateDbContextAsync()) {
-            await refresher.JobRuns.Where(r => r.Id == runId)
-                .ExecuteUpdateAsync(s => s.SetProperty(r => r.LastHeartbeatUtc, DateTime.UtcNow), TestCt);
+            await refresher.JobRuns.Where(r => r.Id == runId).ExecuteUpdateAsync(s => s.SetProperty(r => r.LastHeartbeatUtc, DateTime.UtcNow), TestCt);
         }
 
         await using var db = await CreateDbContextAsync();
@@ -141,10 +140,8 @@ public class JobMaintenanceRaceTests
     {
         var definitionId = await CreateDefinitionAsync(d => d.TimeoutMinutes = 5);
         var runId = await SeedRunAsync(definitionId, JobState.Running, r => r.StartedTimestamp = DateTime.UtcNow);
-
         await using var stale = await CreateDbContextAsync();
         var staleRun = await stale.JobRuns.FirstAsync(r => r.Id == runId, TestCt);
-
         await using (var winner = await CreateDbContextAsync()) {
             var run = await winner.JobRuns.FirstAsync(r => r.Id == runId, TestCt);
             run.State = JobState.Finished;
@@ -157,7 +154,6 @@ public class JobMaintenanceRaceTests
         staleRun.State = JobState.Finished;
         staleRun.Result = JobRunResultEnum.Timeout;
         await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => stale.SaveChangesAsync(TestCt));
-
         var persisted = await GetRunAsync(runId);
         Assert.Equal(JobRunResultEnum.Success, persisted.Result);
     }
@@ -208,7 +204,7 @@ public class JobMaintenanceRaceTests
             JobDefinitionId = definitionId,
             State = state,
             CreatedBy = "test",
-            CreatedTimestamp = DateTime.UtcNow,
+            CreatedTimestamp = DateTime.UtcNow
         };
 
         configure?.Invoke(run);

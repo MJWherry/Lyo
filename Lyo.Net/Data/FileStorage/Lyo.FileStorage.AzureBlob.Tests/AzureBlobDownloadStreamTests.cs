@@ -6,7 +6,7 @@ public sealed class AzureBlobDownloadStreamTests
     [Fact]
     public void Dispose_DisposesBackingStreamAndOwner_Once()
     {
-        var inner = new MemoryStream([1, 2, 3, 4], writable: false);
+        var inner = new MemoryStream([1, 2, 3, 4], false);
         var owner = new TrackingDisposable();
         var wrapper = new AzureBlobDownloadStream(inner, owner);
         var buffer = new byte[4];
@@ -23,7 +23,7 @@ public sealed class AzureBlobDownloadStreamTests
     [Fact]
     public async Task DisposeAsync_DisposesBackingStreamAndOwner()
     {
-        var inner = new MemoryStream([7, 8, 9], writable: false);
+        var inner = new MemoryStream([7, 8, 9], false);
         var owner = new TrackingDisposable();
         var wrapper = new AzureBlobDownloadStream(inner, owner);
         var buffer = new byte[3];
@@ -39,7 +39,7 @@ public sealed class AzureBlobDownloadStreamTests
     [Fact]
     public void Write_OnReadOnlyWrapper_Throws()
     {
-        using var inner = new MemoryStream([0], writable: false);
+        using var inner = new MemoryStream([0], false);
         using var wrapper = new AzureBlobDownloadStream(inner, new TrackingDisposable());
         Assert.Throws<NotSupportedException>(() => wrapper.Write([1, 2], 0, 2));
         Assert.Throws<NotSupportedException>(() => wrapper.SetLength(10));

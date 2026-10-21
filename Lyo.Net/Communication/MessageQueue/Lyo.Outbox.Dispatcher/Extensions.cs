@@ -22,12 +22,9 @@ public static class Extensions
             configured.Validate();
             services.AddSingleton(configured);
             services.AddHostedService(sp => new OutboxDispatcher(
-                configured,
-                sp.GetRequiredService<PostgresIdempotencyStore>(),
-                sp.GetRequiredService<IMqService>(),
-                sp.GetService<IMetrics>(),
-                sp.GetService<ILoggerFactory>()?.CreateLogger<OutboxDispatcher>(),
-                utcNow));
+                configured, sp.GetRequiredService<PostgresIdempotencyStore>(), sp.GetRequiredService<IMqService>(), sp.GetService<IMetrics>(),
+                sp.GetService<ILoggerFactory>()?.CreateLogger<OutboxDispatcher>(), utcNow));
+
             return services;
         }
 

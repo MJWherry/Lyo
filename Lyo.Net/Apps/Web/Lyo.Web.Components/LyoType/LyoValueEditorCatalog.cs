@@ -4,8 +4,8 @@ using Lyo.Exceptions;
 namespace Lyo.Web.Components.LyoType;
 
 /// <summary>
-/// Value editors contributed by other packages, keyed by <see cref="LyoTypeEditorKind" />. Resolved optionally by <see cref="LyoTypeValueInput" />, so a host that
-/// registers nothing keeps the included editors.
+/// Value editors contributed by other packages, keyed by <see cref="LyoTypeEditorKind" />. Resolved optionally by <see cref="LyoTypeValueInput" />, so a host that registers
+/// nothing keeps the included editors.
 /// </summary>
 public sealed class LyoValueEditorCatalog
 {

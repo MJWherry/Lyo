@@ -20,11 +20,12 @@ public sealed class SeleniumBrowserOptionsTests
     {
         var options = new SeleniumBrowserOptions {
             RandomizeViewportOnSessionStart = true,
-            ViewportSizes = [new DesktopDisplaySize(1366, 768)],
+            ViewportSizes = [new(1366, 768)],
             BrowserWindowWidth = 800,
             BrowserWindowHeight = 600
         };
-        options.ApplySessionViewport(new Random(1));
+
+        options.ApplySessionViewport(new(1));
         Assert.Equal(1366, options.BrowserWindowWidth);
         Assert.Equal(768, options.BrowserWindowHeight);
     }

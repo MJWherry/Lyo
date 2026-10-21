@@ -24,9 +24,7 @@ public sealed class SmsEfSeedContributor : SeedContributor, IEfSeedSource
     public DbContext CreateContext(string connectionString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        var options = new DbContextOptionsBuilder<SmsDbContext>()
-            .UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<SmsDbContext>().UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema)).Options;
         return new SmsDbContext(options);
     }
 
@@ -36,18 +34,19 @@ public sealed class SmsEfSeedContributor : SeedContributor, IEfSeedSource
         graph.OnClear(ClearAsync);
         var faker = options.RandomSeed is { } seed ? new Faker { Random = new(seed) } : new Faker();
         var now = DateTime.UtcNow;
-        graph.Entity(options.Count, i => new SmsLogEntity {
-            Id = LyoGuid.CreateV7(),
-            To = $"+1412{5550100 + i}",
-            From = "+14125550199",
-            Body = faker.Lorem.Sentence(),
-            IsSuccess = true,
-            Message = "accepted",
-            Status = "sent",
-            MessageId = $"sms-{i}",
-            DateSent = now,
-            CreatedAt = now
-        });
+        graph.Entity(
+            options.Count, i => new SmsLogEntity {
+                Id = LyoGuid.CreateV7(),
+                To = $"+1412{5550100 + i}",
+                From = "+14125550199",
+                Body = faker.Lorem.Sentence(),
+                IsSuccess = true,
+                Message = "accepted",
+                Status = "sent",
+                MessageId = $"sms-{i}",
+                DateSent = now,
+                CreatedAt = now
+            });
     }
 
     private static async Task ClearAsync(SeedSession session, CancellationToken ct)

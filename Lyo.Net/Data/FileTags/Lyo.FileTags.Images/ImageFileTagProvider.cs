@@ -6,20 +6,23 @@ using SixLabors.ImageSharp.Metadata.Profiles.Exif;
 namespace Lyo.FileTags.Images;
 
 /// <summary>
-/// Reads and writes picture tags through EXIF. Width, height, and format stay on <c>IImageService.GetMetadataAsync</c>.
-/// Mapped tags are artist, date, description, and copyright. Any other EXIF name is <see cref="FileTagKey.Custom" />.
+/// Reads and writes picture tags through EXIF. Width, height, and format stay on <c>IImageService.GetMetadataAsync</c>. Mapped tags are artist, date, description, and
+/// copyright. Any other EXIF name is <see cref="FileTagKey.Custom" />.
 /// </summary>
 public sealed class ImageFileTagProvider : IFileTagReader, IFileTagWriter
 {
     private static readonly HashSet<string> Extensions = new(StringComparer.OrdinalIgnoreCase) {
-        ".jpg", ".jpeg", ".png", ".webp", ".gif", ".tif", ".tiff"
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".webp",
+        ".gif",
+        ".tif",
+        ".tiff"
     };
 
     /// <inheritdoc />
     public bool CanRead(string path) => HasExtension(path);
-
-    /// <inheritdoc />
-    public bool CanWrite(string path) => HasExtension(path);
 
     /// <inheritdoc />
     public async Task<Result<FileTags>> ReadAsync(string path, CancellationToken ct = default)
@@ -27,12 +30,15 @@ public sealed class ImageFileTagProvider : IFileTagReader, IFileTagWriter
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(path);
         try {
             using var image = await Image.LoadAsync(path, ct).ConfigureAwait(false);
-            return Result<FileTags>.Success(new FileTags(Map(image.Metadata.ExifProfile)));
+            return Result<FileTags>.Success(new(Map(image.Metadata.ExifProfile)));
         }
         catch (Exception ex) when (ex is not OperationCanceledException) {
             return Result<FileTags>.Failure(ex, "FileTagImageReadFailed");
         }
     }
+
+    /// <inheritdoc />
+    public bool CanWrite(string path) => HasExtension(path);
 
     /// <inheritdoc />
     public async Task<Result<FileTags>> WriteAsync(string path, FileTagWriteRequest request, CancellationToken ct = default)
@@ -49,23 +55,26 @@ public sealed class ImageFileTagProvider : IFileTagReader, IFileTagWriter
         try {
             using (var image = await Image.LoadAsync(full, ct).ConfigureAwait(false)) {
                 if (request.ClearExisting || image.Metadata.ExifProfile == null)
-                    image.Metadata.ExifProfile = new ExifProfile();
+                    image.Metadata.ExifProfile = new();
 
                 var profile = image.Metadata.ExifProfile;
                 if (mapped.TryGetValue(FileTagKey.Artist, out var artist))
                     profile.SetValue(ExifTag.Artist, artist);
+
                 if (mapped.TryGetValue(FileTagKey.Description, out var description))
                     profile.SetValue(ExifTag.ImageDescription, description);
+
                 if (mapped.TryGetValue(FileTagKey.Copyright, out var copyright))
                     profile.SetValue(ExifTag.Copyright, copyright);
+
                 if (mapped.TryGetValue(FileTagKey.Date, out var date))
                     profile.SetValue(ExifTag.DateTimeOriginal, date);
 
                 await image.SaveAsync(temp, ct).ConfigureAwait(false);
             }
 
-            File.Move(temp, full, overwrite: true);
-            return Result<FileTags>.Success(new FileTags(mapped));
+            File.Move(temp, full, true);
+            return Result<FileTags>.Success(new(mapped));
         }
         catch (Exception ex) when (ex is not OperationCanceledException) {
             return Result<FileTags>.Failure(ex, "FileTagImageWriteFailed");
@@ -130,20 +139,21 @@ public sealed class ImageFileTagProvider : IFileTagReader, IFileTagWriter
         return mapped;
     }
 
-    private static FileTagKey MapName(string name) => name.ToLowerInvariant() switch {
-        "artist" => FileTagKey.Artist,
-        "imagedescription" => FileTagKey.Description,
-        "copyright" => FileTagKey.Copyright,
-        _ => FileTagKey.TryFromId(name) ?? FileTagKey.Custom(name)
-    };
+    private static FileTagKey MapName(string name)
+        => name.ToLowerInvariant() switch {
+            "artist" => FileTagKey.Artist,
+            "imagedescription" => FileTagKey.Description,
+            "copyright" => FileTagKey.Copyright,
+            var _ => FileTagKey.TryFromId(name) ?? FileTagKey.Custom(name)
+        };
 
-    private static int DateRank(string name) => name.ToLowerInvariant() switch {
-        "datetimeoriginal" => 3,
-        "datetime" => 2,
-        "datetimedigitized" => 1,
-        _ => 0
-    };
+    private static int DateRank(string name)
+        => name.ToLowerInvariant() switch {
+            "datetimeoriginal" => 3,
+            "datetime" => 2,
+            "datetimedigitized" => 1,
+            var _ => 0
+        };
 
-    private static bool HasExtension(string path)
-        => !string.IsNullOrWhiteSpace(path) && Extensions.Contains(Path.GetExtension(path));
+    private static bool HasExtension(string path) => !string.IsNullOrWhiteSpace(path) && Extensions.Contains(Path.GetExtension(path));
 }

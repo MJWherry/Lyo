@@ -84,7 +84,7 @@ public class JobDefinitionDeleteTests(JobPostgresFixture fixture) : IClassFixtur
                     JobScheduleId = scheduleId,
                     State = JobState.Finished,
                     CreatedBy = "test",
-                    CreatedTimestamp = DateTime.UtcNow,
+                    CreatedTimestamp = DateTime.UtcNow
                 });
 
             await db.SaveChangesAsync(TestCt);

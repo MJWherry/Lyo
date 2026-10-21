@@ -21,11 +21,11 @@ public sealed class InMemoryDiagramStore : IDiagramStore
     public Task<IReadOnlyList<DiagramSummary>> ListAsync(CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
-        IReadOnlyList<DiagramSummary> listed = _diagrams.Values
-            .OrderBy(entry => entry.Document.Name, StringComparer.Ordinal)
+        IReadOnlyList<DiagramSummary> listed = _diagrams.Values.OrderBy(entry => entry.Document.Name, StringComparer.Ordinal)
             .ThenBy(entry => entry.Document.Id)
             .Select(entry => new DiagramSummary { Id = entry.Document.Id, Name = entry.Document.Name, UpdatedTimestamp = entry.UpdatedTimestamp })
             .ToArray();
+
         return Task.FromResult(listed);
     }
 
@@ -46,17 +46,14 @@ public sealed class InMemoryDiagramStore : IDiagramStore
     {
         ArgumentHelpers.ThrowIfEmpty(id);
         ct.ThrowIfCancellationRequested();
-        return Task.FromResult(_diagrams.TryRemove(id, out _));
+        return Task.FromResult(_diagrams.TryRemove(id, out var _));
     }
 
-    private static DiagramDocument Copy(DiagramDocument diagram)
-        => diagram with { Pages = [.. diagram.Pages.Select(Copy)] };
+    private static DiagramDocument Copy(DiagramDocument diagram) => diagram with { Pages = [.. diagram.Pages.Select(Copy)] };
 
-    private static DiagramPage Copy(DiagramPage page)
-        => page with { Cells = [.. (page.Cells ?? []).Select(Copy)] };
+    private static DiagramPage Copy(DiagramPage page) => page with { Cells = [.. (page.Cells ?? []).Select(Copy)] };
 
-    private static DiagramCell Copy(DiagramCell cell)
-        => cell with { Geometry = cell.Geometry == null ? null : cell.Geometry with { Points = [.. cell.Geometry.Points ?? []] } };
+    private static DiagramCell Copy(DiagramCell cell) => cell with { Geometry = cell.Geometry == null ? null : cell.Geometry with { Points = [.. cell.Geometry.Points ?? []] } };
 
     private sealed record Entry(DiagramDocument Document, DateTime UpdatedTimestamp);
 }

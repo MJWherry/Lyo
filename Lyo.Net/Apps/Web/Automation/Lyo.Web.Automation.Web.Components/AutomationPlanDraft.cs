@@ -6,12 +6,19 @@ using Lyo.Web.Automation.Models.Enums;
 
 namespace Lyo.Web.Automation.Web.Components;
 
-/// <summary>
-/// Edits an <see cref="AutomationPlan" /> in memory. Steps the form does not know, such as <c>httpRequest</c>, stay in the document when the JSON is parsed and written back.
-/// </summary>
+/// <summary>Edits an <see cref="AutomationPlan" /> in memory. Steps the form does not know, such as <c>httpRequest</c>, stay in the document when the JSON is parsed and written back.</summary>
 public static class AutomationPlanDraft
 {
-    private static readonly JsonSerializerOptions Json = LyoJsonSerializerOptions.Create();
+    /// <summary>JSON <c>type</c> values the workbench dropdown can insert. This is every runner step.</summary>
+    public static IReadOnlyList<string> FormStepTypes { get; } = [
+        "navigate", "findElement", "findDescendant", "elementAction", "findAndAct", "findElementChain", "findAndActChain", "delay", "captureNetwork", "reload",
+        "setViewportSize", "randomizeViewport", "switchTabByIndex", "switchTabByKey", "openNewTab", "closeCurrentTab", "findElementsChain", "extractElementData",
+        "extractElementsListData", "writeStringListToFile", "downloadUrlsToDirectory", "storeLiteral", "storeStringList", "storeTemplate", "storeStringListFromTemplate",
+        "storePageUrl", "storePageTitle", "httpRequest", "downloadFile", "extractSources", "upsertJsonRecords", "uploadDirectoryToFileStorage", "invokeDiMethod"
+    ];
+
+    /// <summary>JSON options used by <see cref="ToJson" /> and <see cref="Parse" />.</summary>
+    public static JsonSerializerOptions JsonOptions { get; } = LyoJsonSerializerOptions.Create();
 
     /// <summary>Appends a navigate step and returns a new plan. The previous step list is left unchanged.</summary>
     public static AutomationPlan InsertNavigate(AutomationPlan plan, string url)
@@ -40,8 +47,8 @@ public static class AutomationPlanDraft
     public static string RoundTrip(string json)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(json);
-        var plan = JsonSerializer.Deserialize<AutomationPlan>(json, Json) ?? throw new InvalidOperationException("Invalid plan JSON.");
-        return JsonSerializer.Serialize(plan, Json);
+        var plan = JsonSerializer.Deserialize<AutomationPlan>(json, JsonOptions) ?? throw new InvalidOperationException("Invalid plan JSON.");
+        return JsonSerializer.Serialize(plan, JsonOptions);
     }
 
     /// <summary>A named plan with no steps.</summary>
@@ -87,52 +94,11 @@ public static class AutomationPlanDraft
             "upsertJsonRecords" => "Upsert JSON records",
             "uploadDirectoryToFileStorage" => "Upload directory",
             "invokeDiMethod" => "Invoke method",
-            _ => type
+            var _ => type
         };
 
-    /// <summary>JSON <c>type</c> values the workbench dropdown can insert. This is every runner step.</summary>
-    public static IReadOnlyList<string> FormStepTypes { get; } = [
-        "navigate",
-        "findElement",
-        "findDescendant",
-        "elementAction",
-        "findAndAct",
-        "findElementChain",
-        "findAndActChain",
-        "delay",
-        "captureNetwork",
-        "reload",
-        "setViewportSize",
-        "randomizeViewport",
-        "switchTabByIndex",
-        "switchTabByKey",
-        "openNewTab",
-        "closeCurrentTab",
-        "findElementsChain",
-        "extractElementData",
-        "extractElementsListData",
-        "writeStringListToFile",
-        "downloadUrlsToDirectory",
-        "storeLiteral",
-        "storeStringList",
-        "storeTemplate",
-        "storeStringListFromTemplate",
-        "storePageUrl",
-        "storePageTitle",
-        "httpRequest",
-        "downloadFile",
-        "extractSources",
-        "upsertJsonRecords",
-        "uploadDirectoryToFileStorage",
-        "invokeDiMethod"
-    ];
-
-    /// <summary>JSON options used by <see cref="ToJson" /> and <see cref="Parse" />.</summary>
-    public static JsonSerializerOptions JsonOptions => Json;
-
     /// <summary>True when the workbench has fields for <paramref name="step" />. Other steps stay in the plan and are edited as JSON.</summary>
-    public static bool HasForm(AutomationStepDefinition step)
-        => FormStepTypes.Contains(StepType(step));
+    public static bool HasForm(AutomationStepDefinition step) => FormStepTypes.Contains(StepType(step));
 
     /// <summary>JSON <c>type</c> discriminator for a step the form can insert.</summary>
     public static string StepType(AutomationStepDefinition step)
@@ -170,7 +136,7 @@ public static class AutomationPlanDraft
             UpsertJsonRecordsAutomationStep => "upsertJsonRecords",
             UploadDirectoryToFileStorageAutomationStep => "uploadDirectoryToFileStorage",
             InvokeDiMethodAutomationStep => "invokeDiMethod",
-            _ => step.GetType().Name
+            var _ => step.GetType().Name
         };
 
     /// <summary>A new step of <paramref name="type" /> with empty fields the form can fill in.</summary>
@@ -179,24 +145,24 @@ public static class AutomationPlanDraft
             "navigate" => new NavigateAutomationStep("https://example.com/"),
             "reload" => new ReloadAutomationStep(),
             "delay" => new DelayAutomationStep(500),
-            "findElement" => new FindElementAutomationStep("element", new ElementLocator(ElementLocatorKind.CssSelector, "#main")),
-            "findAndAct" => new FindAndActAutomationStep("element", new ElementLocator(ElementLocatorKind.CssSelector, "button"), new ClickElementAction()),
+            "findElement" => new FindElementAutomationStep("element", new(ElementLocatorKind.CssSelector, "#main")),
+            "findAndAct" => new FindAndActAutomationStep("element", new(ElementLocatorKind.CssSelector, "button"), new ClickElementAction()),
             "extractElementData" => new ExtractElementDataAutomationStep("element", "value", ElementDataExtractKind.Text),
             "storeLiteral" => new StoreLiteralAutomationStep("value", ""),
             "storeTemplate" => new StoreTemplateAutomationStep("summary", "{strings.value}"),
             "storePageUrl" => new StorePageUrlAutomationStep("pageUrl"),
             "storePageTitle" => new StorePageTitleAutomationStep("pageTitle"),
-            "captureNetwork" => new CaptureNetworkAutomationStep("urls", "", 3000),
+            "captureNetwork" => new CaptureNetworkAutomationStep("urls", ""),
             "storeStringList" => new StoreStringListAutomationStep("urls", []),
             "extractSources" => new ExtractSourcesAutomationStep("elements", "images", ["src", "data-src", "data-lazy-src", "srcset"]),
             "downloadUrlsToDirectory" => new DownloadUrlsToDirectoryAutomationStep("urls", "downloads"),
-            "findDescendant" => new FindDescendantAutomationStep("parent", "child", new ElementLocator(ElementLocatorKind.CssSelector, ".item")),
+            "findDescendant" => new FindDescendantAutomationStep("parent", "child", new(ElementLocatorKind.CssSelector, ".item")),
             "elementAction" => new ElementActionAutomationStep("element", new ClickElementAction()),
-            "findElementChain" => new FindElementChainAutomationStep("element", new ElementLocatorChain(new ElementLocator(ElementLocatorKind.CssSelector, "#main"))),
-            "findAndActChain" => new FindAndActChainAutomationStep("element", new ElementLocatorChain(new ElementLocator(ElementLocatorKind.CssSelector, "button")), new ClickElementAction()),
-            "findElementsChain" => new FindElementsChainAutomationStep("elements", new ElementLocatorChain(new ElementLocator(ElementLocatorKind.CssSelector, "a"))),
+            "findElementChain" => new FindElementChainAutomationStep("element", new(new ElementLocator(ElementLocatorKind.CssSelector, "#main"))),
+            "findAndActChain" => new FindAndActChainAutomationStep("element", new(new ElementLocator(ElementLocatorKind.CssSelector, "button")), new ClickElementAction()),
+            "findElementsChain" => new FindElementsChainAutomationStep("elements", new(new ElementLocator(ElementLocatorKind.CssSelector, "a"))),
             "setViewportSize" => new SetViewportSizeAutomationStep(1280, 720),
-            "randomizeViewport" => new RandomizeViewportAutomationStep([new DesktopDisplaySize(1280, 720)], 0),
+            "randomizeViewport" => new RandomizeViewportAutomationStep([new(1280, 720)]),
             "switchTabByIndex" => new SwitchToTabByIndexAutomationStep(0),
             "switchTabByKey" => new SwitchToTabByKeyAutomationStep(""),
             "openNewTab" => new OpenNewTabAutomationStep("https://example.com/", "tabKey"),
@@ -209,20 +175,20 @@ public static class AutomationPlanDraft
             "upsertJsonRecords" => new UpsertJsonRecordsAutomationStep("records", "target"),
             "uploadDirectoryToFileStorage" => new UploadDirectoryToFileStorageAutomationStep("downloads", "automation/uploads"),
             "invokeDiMethod" => new InvokeDiMethodAutomationStep("Service", "Run"),
-            _ => throw new ArgumentOutOfRangeException(nameof(type), type, "This step type is edited as JSON.")
+            var _ => throw new ArgumentOutOfRangeException(nameof(type), type, "This step type is edited as JSON.")
         };
 
     /// <summary>Serializes <paramref name="plan" /> with the same JSON options the run API uses.</summary>
     public static string ToJson(AutomationPlan plan)
     {
         ArgumentHelpers.ThrowIfNull(plan);
-        return JsonSerializer.Serialize(plan, Json);
+        return JsonSerializer.Serialize(plan, JsonOptions);
     }
 
     /// <summary>Parses plan JSON written by <see cref="ToJson" /> or a recorded plan file.</summary>
     public static AutomationPlan Parse(string json)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(json);
-        return JsonSerializer.Deserialize<AutomationPlan>(json, Json) ?? throw new InvalidOperationException("Invalid plan JSON.");
+        return JsonSerializer.Deserialize<AutomationPlan>(json, JsonOptions) ?? throw new InvalidOperationException("Invalid plan JSON.");
     }
 }

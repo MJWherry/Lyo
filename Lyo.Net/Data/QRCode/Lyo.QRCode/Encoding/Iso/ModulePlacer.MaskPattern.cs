@@ -4,9 +4,7 @@ internal sealed partial class QRIsoEncoder
 {
     private static partial class ModulePlacer
     {
-        /// <summary>
-        /// Mask-pattern helpers for QR generation. Patterns break up regular runs in the data matrix that can confuse scanners.
-        /// </summary>
+        /// <summary>Mask-pattern helpers for QR generation. Patterns break up regular runs in the data matrix that can confuse scanners.</summary>
         private static class MaskPattern
         {
             /// <summary>Mask-pattern index mapped to a function that decides whether a module is masked.</summary>
@@ -45,9 +43,7 @@ internal sealed partial class QRIsoEncoder
             /// <summary>Mask pattern 8: (((x + y) % 2) + ((x * y) % 3) % 2) == 0. Checker plus multiplicative mask.</summary>
             public static bool Pattern8(int x, int y) => ((x + y) % 2 + x * y % 3) % 2 == 0;
 
-            /// <summary>
-            /// Penalty score for a Micro QR mask. Lower scores are easier for decoders to read accurately.
-            /// </summary>
+            /// <summary>Penalty score for a Micro QR mask. Lower scores are easier for decoders to read accurately.</summary>
             /// <param name="qrCode">QR data to score.</param>
             /// <returns>Total penalty score.</returns>
             public static int ScoreMicro(QRIsoMatrix qrCode)
@@ -67,9 +63,7 @@ internal sealed partial class QRIsoEncoder
                 return -total; // negate so lower is better
             }
 
-            /// <summary>
-            /// Penalty score for a QR mask. Lower scores are easier for decoders to read accurately. Sum of the four penalty rules.
-            /// </summary>
+            /// <summary>Penalty score for a QR mask. Lower scores are easier for decoders to read accurately. Sum of the four penalty rules.</summary>
             /// <param name="qrCode">QR data to score.</param>
             /// <returns>Total penalty score.</returns>
             public static int Score(QRIsoMatrix qrCode)

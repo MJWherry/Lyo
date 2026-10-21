@@ -1,10 +1,7 @@
-using Lyo.Billing;
+using Lyo.Billing.Postgres.Database;
 using Lyo.Encryption;
-using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
-using Lyo.Health;
-using Lyo.Billing.Postgres.Database;
 using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -30,9 +27,7 @@ public static class Extensions
         }
 
         /// <summary>Registers the Billing context factory from configuration.</summary>
-        public IServiceCollection AddBillingDbContextFactoryFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresBillingOptions.SectionName)
+        public IServiceCollection AddBillingDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresBillingOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
@@ -46,7 +41,7 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
-            services.AddPostgresDbContextFactory<Database.BillingDbContext, PostgresBillingOptions>(options);
+            services.AddPostgresDbContextFactory<BillingDbContext, PostgresBillingOptions>(options);
             services.AddEntityRefOptions();
             return services;
         }
@@ -59,6 +54,7 @@ public static class Extensions
                 var encryption = sp.GetKeyedService<IEncryptionService>(keyName) ?? sp.GetService<IEncryptionService>();
                 return new BillingFieldEncryptionService(encryption, keyName, sp.GetService<ILogger<BillingFieldEncryptionService>>());
             });
+
             return services;
         }
 
@@ -72,9 +68,7 @@ public static class Extensions
         }
 
         /// <summary>Registers the Billing Postgres store from configuration.</summary>
-        public IServiceCollection AddPostgresBillingStoreFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresBillingOptions.SectionName)
+        public IServiceCollection AddPostgresBillingStoreFromConfiguration(IConfiguration configuration, string configSectionName = PostgresBillingOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);

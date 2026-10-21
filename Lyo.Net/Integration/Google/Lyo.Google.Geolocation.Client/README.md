@@ -2,9 +2,11 @@
 
 REST client for Google Maps plus an `IGeolocationService` implementation.
 
-**Archetype C.** Lives in `Integration/Google/` (vendor folder). Geolocation does not belong under Communication. The shape follows `Lyo.Endato.Client` plus a Core store, not `Lyo.Translation.Google`. Path is confirmed in [package layout](../../../docs/package-layout.md) (Phase 1).
+**Archetype C.** Lives in `Integration/Google/` (vendor folder). Geolocation does not belong under Communication. The shape follows `Lyo.Endato.Client` plus a Core store, not
+`Lyo.Translation.Google`. Path is confirmed in [package layout](../../../docs/package-layout.md) (Phase 1).
 
-Depends on [`Lyo.Geolocation`](../../../Core/Geolocation/Lyo.Geolocation/README.md) and [`Lyo.Geolocation.Models`](../../../Core/Geolocation/Lyo.Geolocation.Models/README.md) only — not `Lyo.Geolocation.Postgres`. The host composes this client with the store.
+Depends on [`Lyo.Geolocation`](../../../Core/Geolocation/Lyo.Geolocation/README.md) and [`Lyo.Geolocation.Models`](../../../Core/Geolocation/Lyo.Geolocation.Models/README.md)
+only — not `Lyo.Geolocation.Postgres`. The host composes this client with the store.
 
 ## Examples
 
@@ -22,11 +24,11 @@ await geolocationStore.SaveAddressAsync(result.Address, ct);
 
 ## At a glance
 
-| Type | Role |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| `GoogleMapsClient` | Geocoding, directions, and time zone APIs |
-| `GoogleMapsGeolocationService` | `IGeolocationService` |
-| `GoogleMapsMapper` | Google JSON → `Address` + `EntitySourceRecord.From(...)` (`GoogleGeolocationSourceTypes.GoogleMapsPlace` on `source_entity_*`) |
+| Type                           | Role                                                                                                                           |
+|--------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| `GoogleMapsClient`             | Geocoding, directions, and time zone APIs                                                                                      |
+| `GoogleMapsGeolocationService` | `IGeolocationService`                                                                                                          |
+| `GoogleMapsMapper`             | Google JSON → `Address` + `EntitySourceRecord.From(...)` (`GoogleGeolocationSourceTypes.GoogleMapsPlace` on `source_entity_*`) |
 
 ## Dependencies
 

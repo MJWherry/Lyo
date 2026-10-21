@@ -6,11 +6,11 @@ public interface ISeedTransport
     /// <summary>EF persist or HTTP bulk.</summary>
     SeedTransportKind Kind { get; }
 
-    /// <summary>True when no rows of <typeparamref name="T"/> exist (EF <c>AnyAsync</c>, or API QueryConcrete with amount 1).</summary>
+    /// <summary>True when no rows of <typeparamref name="T" /> exist (EF <c>AnyAsync</c>, or API QueryConcrete with amount 1).</summary>
     Task<bool> IsEmptyAsync<T>(CancellationToken ct = default)
         where T : class;
 
-    /// <summary>Inserts <paramref name="items"/>. An empty list does nothing.</summary>
+    /// <summary>Inserts <paramref name="items" />. An empty list does nothing.</summary>
     Task PersistAsync<T>(IReadOnlyList<T> items, CancellationToken ct = default)
         where T : class;
 }

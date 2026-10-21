@@ -14,8 +14,8 @@ public sealed record StackTraceDecoderOptions
     public IReadOnlyList<string> UserCodePrefixes { get; init; } = [];
 
     /// <summary>
-    /// Extra namespace prefixes to treat as system / third-party frames. Use for NuGet and vendor SDKs you do not own (or load from application config / database). Apart
-    /// from the decoder’s small fixed BCL / Microsoft list, nothing else is hard-coded.
+    /// Extra namespace prefixes to treat as system / third-party frames. Use for NuGet and vendor SDKs you do not own (or load from application config / database). Apart from
+    /// the decoder’s small fixed BCL / Microsoft list, nothing else is hard-coded.
     /// </summary>
     public IReadOnlyList<string> ExtraSystemPrefixes { get; init; } = [];
 

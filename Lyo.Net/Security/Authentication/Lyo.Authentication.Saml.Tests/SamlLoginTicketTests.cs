@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using System.Text;
+using System.Xml;
 using Lyo.Authentication.Audit;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Sso.Completion;
@@ -17,14 +18,12 @@ public class SamlLoginTicketTests
         var protocol = SamlProtocolFactory.Create().Protocol;
         var start = await protocol.StartAsync("okta", "https://app.example/done", "browser", TestCt);
         var (xml, relay) = SamlRedirect.Read(start.RedirectUrl);
-
         Assert.Contains(SamlTestProvider.EntityId, xml);
         Assert.Contains(SamlTestProvider.Acs, xml);
         Assert.Contains(SamlTestProvider.SsoRedirect, xml);
         Assert.InRange(Encoding.UTF8.GetByteCount(relay), 1, 80);
         Assert.DoesNotContain("://", relay);
         Assert.Null(start.StateCookieValue);
-
         var raw = Convert.FromBase64String(QueryHelpers.ParseQuery(new Uri(start.RedirectUrl).Query)["SAMLRequest"].ToString());
         Assert.NotEqual(0x78, raw[0]);
     }
@@ -36,7 +35,6 @@ public class SamlLoginTicketTests
         var start = await protocol.StartAsync("okta", "/done", "browser", TestCt);
         var (xml, _) = SamlRedirect.Read(start.RedirectUrl);
         var request = SamlRedirect.Authn(xml);
-
         Assert.Equal(SamlTestProvider.EntityId, request.Issuer);
         Assert.Equal(SamlTestProvider.Acs, request.Acs);
         Assert.Equal(SamlTestProvider.SsoRedirect, request.Destination);
@@ -50,7 +48,6 @@ public class SamlLoginTicketTests
         var protocol = SamlProtocolFactory.Create().Protocol;
         var start = await protocol.StartAsync("okta", "/done", "api", TestCt);
         var relay = QueryHelpers.ParseQuery(new Uri(start.RedirectUrl).Query)["RelayState"].ToString();
-
         Assert.True(Encoding.UTF8.GetByteCount(relay) <= 80);
         Assert.DoesNotContain("/", relay);
         Assert.DoesNotContain(":", relay);
@@ -65,7 +62,6 @@ public class SamlLoginTicketTests
         var start = await protocol.StartAsync("okta", "/done", "browser", TestCt);
         var relay = QueryHelpers.ParseQuery(new Uri(start.RedirectUrl).Query)["RelayState"].ToString();
         clock = now.AddMinutes(16);
-
         var ex = await Assert.ThrowsAsync<ExternalLoginRejectedException>(() => protocol.CompleteAsync(Callback(relay, "YQ=="), TestCt));
         Assert.Equal("SamlTicket", ex.Reason);
     }
@@ -79,7 +75,7 @@ public class SamlResponseValidatorTests
     [Fact]
     public void Complete_SignedAssertion_MapsNameIdAndEmail()
     {
-        var assertion = Validate(new SamlResponseSpec());
+        var assertion = Validate(new());
         Assert.Equal("okta", assertion.Provider);
         Assert.Equal("00uuser", assertion.Subject);
         Assert.Equal("a@example.com", assertion.Email);
@@ -115,33 +111,33 @@ public class SamlResponseValidatorTests
         var xml = spec.ToXml().Replace("URI=\"#_assert\"", "URI=\"#_other\"", StringComparison.Ordinal);
         var ticket = new SamlLoginTicket("ticket", "okta", "_req", "/done", "browser", spec.Now.AddMinutes(10));
         Assert.Throws<ExternalLoginRejectedException>(() => new SamlResponseValidator().Validate(
-            Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(xml)), ticket, SamlTestProvider.Default,
-            new SamlIdpMetadata(SamlTestProvider.Issuer, SamlTestProvider.SsoRedirect, [SamlTestCertificate.Signing.RawData]), spec.Now, new InMemorySamlAssertionReplayCache()));
+            Convert.ToBase64String(Encoding.UTF8.GetBytes(xml)), ticket, SamlTestProvider.Default,
+            new(SamlTestProvider.Issuer, SamlTestProvider.SsoRedirect, [SamlTestCertificate.Signing.RawData]), spec.Now, new InMemorySamlAssertionReplayCache()));
     }
 
     [Fact]
     public void Complete_CertNotInMetadata_Rejects()
     {
         var metadata = new SamlIdpMetadata(SamlTestProvider.Issuer, SamlTestProvider.SsoRedirect, [SamlTestCertificate.Rollover.RawData]);
-        Assert.Throws<ExternalLoginRejectedException>(() => Validate(new SamlResponseSpec(), metadata: metadata));
+        Assert.Throws<ExternalLoginRejectedException>(() => Validate(new(), metadata: metadata));
     }
 
     [Fact]
     public void Complete_RolloverCert_Accepts()
     {
         var metadata = new SamlIdpMetadata(SamlTestProvider.Issuer, SamlTestProvider.SsoRedirect, [SamlTestCertificate.Rollover.RawData, SamlTestCertificate.Signing.RawData]);
-        var assertion = Validate(new SamlResponseSpec(), metadata: metadata);
+        var assertion = Validate(new(), metadata: metadata);
         Assert.Equal("00uuser", assertion.Subject);
     }
 
     [Fact]
-    public void Complete_IssuerMismatch_Rejects() => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new SamlResponseSpec { Issuer = "https://other.example" }));
+    public void Complete_IssuerMismatch_Rejects() => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new() { Issuer = "https://other.example" }));
 
     [Fact]
-    public void Complete_AudienceMismatch_Rejects() => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new SamlResponseSpec { Audience = "https://other.example" }));
+    public void Complete_AudienceMismatch_Rejects() => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new() { Audience = "https://other.example" }));
 
     [Fact]
-    public void Complete_MissingAudience_Rejects() => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new SamlResponseSpec { IncludeAudience = false }));
+    public void Complete_MissingAudience_Rejects() => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new() { IncludeAudience = false }));
 
     [Fact]
     public void Complete_ExpiredConditions_Rejects()
@@ -160,16 +156,16 @@ public class SamlResponseValidatorTests
     }
 
     [Fact]
-    public void Complete_DestinationMismatch_Rejects() => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new SamlResponseSpec { Destination = "https://evil.example/acs" }));
+    public void Complete_DestinationMismatch_Rejects() => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new() { Destination = "https://evil.example/acs" }));
 
     [Fact]
-    public void Complete_RecipientMismatch_Rejects() => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new SamlResponseSpec { Recipient = "https://evil.example/acs" }));
+    public void Complete_RecipientMismatch_Rejects() => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new() { Recipient = "https://evil.example/acs" }));
 
     [Fact]
-    public void Complete_InResponseToMismatch_Rejects() => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new SamlResponseSpec { RequestId = "_other" }));
+    public void Complete_InResponseToMismatch_Rejects() => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new() { RequestId = "_other" }));
 
     [Fact]
-    public void Complete_MissingInResponseTo_Rejects() => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new SamlResponseSpec { IncludeInResponseTo = false }));
+    public void Complete_MissingInResponseTo_Rejects() => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new() { IncludeInResponseTo = false }));
 
     [Fact]
     public async Task Complete_ReplayedRelayState_Rejects()
@@ -179,7 +175,8 @@ public class SamlResponseValidatorTests
         var start = await protocol.StartAsync("okta", "/done", "browser", TestCt);
         var (xml, relay) = SamlRedirect.Read(start.RedirectUrl);
         var spec = new SamlResponseSpec { RequestId = SamlRedirect.RequestId(xml), Now = DateTime.UtcNow };
-        var callback = new SsoCallback("okta", "POST", new Dictionary<string, string?>(), new Dictionary<string, string?> { ["RelayState"] = relay, ["SAMLResponse"] = spec.ToBase64() }, null);
+        var callback = new SsoCallback(
+            "okta", "POST", new Dictionary<string, string?>(), new Dictionary<string, string?> { ["RelayState"] = relay, ["SAMLResponse"] = spec.ToBase64() }, null);
 
         await protocol.CompleteAsync(callback, TestCt);
         var ex = await Assert.ThrowsAsync<ExternalLoginRejectedException>(() => protocol.CompleteAsync(callback, TestCt));
@@ -188,26 +185,27 @@ public class SamlResponseValidatorTests
     }
 
     [Fact]
-    public void Complete_StatusNotSuccess_Rejects() => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new SamlResponseSpec { Status = "urn:oasis:names:tc:SAML:2.0:status:Responder" }));
+    public void Complete_StatusNotSuccess_Rejects()
+        => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new() { Status = "urn:oasis:names:tc:SAML:2.0:status:Responder" }));
 
     [Fact]
-    public void Complete_HolderOfKey_Rejects() => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new SamlResponseSpec { ConfirmationMethod = "urn:oasis:names:tc:SAML:2.0:cm:holder-of-key" }));
+    public void Complete_HolderOfKey_Rejects()
+        => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new() { ConfirmationMethod = "urn:oasis:names:tc:SAML:2.0:cm:holder-of-key" }));
 
     [Fact]
     public void Complete_EncryptedAssertion_Rejects()
     {
-        var ex = Assert.Throws<ExternalLoginRejectedException>(() => Validate(new SamlResponseSpec { IncludeEncryptedAssertion = true }));
+        var ex = Assert.Throws<ExternalLoginRejectedException>(() => Validate(new() { IncludeEncryptedAssertion = true }));
         Assert.Equal("SamlEncrypted", ex.Reason);
     }
 
     [Fact]
-    public void Complete_TransientNameId_Rejects()
-        => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new SamlResponseSpec { NameIdFormat = SamlConstants.TransientNameId }));
+    public void Complete_TransientNameId_Rejects() => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new() { NameIdFormat = SamlConstants.TransientNameId }));
 
     [Fact]
     public void Complete_UnmappedEmailAttribute_DoesNotVerify()
     {
-        var assertion = Validate(new SamlResponseSpec { EmailAttribute = "mail" });
+        var assertion = Validate(new() { EmailAttribute = "mail" });
         Assert.Null(assertion.Email);
         Assert.False(assertion.EmailVerified);
     }
@@ -220,18 +218,17 @@ public class SamlResponseValidatorTests
         var assertion = Validate(spec);
         var groups = Assert.IsAssignableFrom<IReadOnlyList<string>>(assertion.RawClaims["groups"]);
         Assert.Equal(["admins", "editors"], groups);
-
         var completion = new AllowEditorsCompletion();
         var issued = await completion.CompleteAsync(assertion, TestCt);
         Assert.Equal("editors", issued.AccessToken);
     }
 
     [Fact]
-    public void Complete_Sha1Signature_Rejects() => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new SamlResponseSpec { Signature = SamlSignatureKind.Sha1 }));
+    public void Complete_Sha1Signature_Rejects() => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new() { Signature = SamlSignatureKind.Sha1 }));
 
     [Fact]
     public void Complete_InclusiveCanonicalization_Rejects()
-        => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new SamlResponseSpec { Signature = SamlSignatureKind.InclusiveCanonicalization }));
+        => Assert.Throws<ExternalLoginRejectedException>(() => Validate(new() { Signature = SamlSignatureKind.InclusiveCanonicalization }));
 
     [Fact]
     public void Complete_DeflatedBody_Rejects()
@@ -245,11 +242,11 @@ public class SamlResponseValidatorTests
     private static ExternalLoginAssertion Validate(SamlResponseSpec spec, ISamlIdentityProvider? provider = null, SamlIdpMetadata? metadata = null)
     {
         var ticket = new SamlLoginTicket("ticket", provider?.Name ?? "okta", "_req", "/done", "browser", spec.Now.AddMinutes(10));
-        return new SamlResponseValidator().Validate(spec.ToBase64(), ticket, provider ?? SamlTestProvider.Default, metadata ?? SigningMetadata(), spec.Now, new InMemorySamlAssertionReplayCache());
+        return new SamlResponseValidator().Validate(
+            spec.ToBase64(), ticket, provider ?? SamlTestProvider.Default, metadata ?? SigningMetadata(), spec.Now, new InMemorySamlAssertionReplayCache());
     }
 
-    private static SamlIdpMetadata SigningMetadata()
-        => new(SamlTestProvider.Issuer, SamlTestProvider.SsoRedirect, [SamlTestCertificate.Signing.RawData]);
+    private static SamlIdpMetadata SigningMetadata() => new(SamlTestProvider.Issuer, SamlTestProvider.SsoRedirect, [SamlTestCertificate.Signing.RawData]);
 }
 
 internal static class SamlProtocolFactory
@@ -258,15 +255,10 @@ internal static class SamlProtocolFactory
     {
         var tickets = clock is null ? new InMemorySamlLoginTicketStore() : new InMemorySamlLoginTicketStore(clock);
         var protocol = new SamlSsoProtocol(
-            [SamlTestProvider.Default],
-            new StaticSamlMetadata(new SamlIdpMetadata(SamlTestProvider.Issuer, SamlTestProvider.SsoRedirect, [SamlTestCertificate.Signing.RawData])),
-            tickets,
-            new InMemorySamlAssertionReplayCache(),
-            new SamlResponseValidator(),
-            completion ?? new CountingCompletion(),
-            new NullAuthAuditRecorder(),
-            new NullAuthAuditContextAccessor(),
+            [SamlTestProvider.Default], new StaticSamlMetadata(new(SamlTestProvider.Issuer, SamlTestProvider.SsoRedirect, [SamlTestCertificate.Signing.RawData])), tickets,
+            new InMemorySamlAssertionReplayCache(), new(), completion ?? new CountingCompletion(), new NullAuthAuditRecorder(), new NullAuthAuditContextAccessor(),
             NullLogger<SamlSsoProtocol>.Instance);
+
         return (protocol, tickets);
     }
 }
@@ -287,7 +279,7 @@ internal static class SamlRedirect
 
     public static (string Id, string Issuer, string Acs, string Destination, string ProtocolBinding) Authn(string xml)
     {
-        var document = new System.Xml.XmlDocument();
+        var document = new XmlDocument();
         document.LoadXml(xml);
         var root = document.DocumentElement!;
         var issuer = root.GetElementsByTagName("Issuer", SamlConstants.Assertion)[0]?.InnerText ?? "";
@@ -312,6 +304,7 @@ internal sealed class AllowEditorsCompletion : IExternalLoginCompletion
     {
         if (assertion.RawClaims["groups"] is not IReadOnlyList<string> groups || !groups.Contains("editors"))
             throw new ExternalLoginRejectedException("UserNotProvisioned", "claim outside allowed set");
+
         return Task.FromResult(new IssuedLyoJwt("editors", "jti", DateTime.UtcNow.AddMinutes(5), null, null));
     }
 }

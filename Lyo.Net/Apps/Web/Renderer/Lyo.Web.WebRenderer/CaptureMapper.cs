@@ -17,17 +17,25 @@ internal static class CaptureMapper
             PreferCSSPageSize = request.PreferCssPageSize,
             PrintBackground = true
         };
+
         if (request.Scale is double scale)
             pdf.Scale = (decimal)scale;
+
         if (!string.IsNullOrWhiteSpace(request.Margin))
-            pdf.MarginOptions = new() { Top = request.Margin, Right = request.Margin, Bottom = request.Margin, Left = request.Margin };
+            pdf.MarginOptions = new() {
+                Top = request.Margin,
+                Right = request.Margin,
+                Bottom = request.Margin,
+                Left = request.Margin
+            };
+
         return pdf;
     }
 
     internal static ScreenshotOptions BuildScreenshotOptions(WebRenderReq request)
     {
         ArgumentHelpers.ThrowIfNull(request);
-        return new ScreenshotOptions {
+        return new() {
             Type = request.Format switch {
                 WebRenderFormat.Jpeg => ScreenshotType.Jpeg,
                 WebRenderFormat.WebP => ScreenshotType.Webp,
@@ -45,7 +53,8 @@ internal static class CaptureMapper
         var args = new List<string> { "--disable-dev-shm-usage" };
         if (options.NoSandbox)
             args.Add("--no-sandbox");
-        return new LaunchOptions { Headless = true, ExecutablePath = options.BrowserExePath, Args = [.. args] };
+
+        return new() { Headless = true, ExecutablePath = options.BrowserExePath, Args = [.. args] };
     }
 
     private static PaperFormat? ResolvePaper(string? paper)

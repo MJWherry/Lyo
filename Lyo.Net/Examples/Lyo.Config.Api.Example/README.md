@@ -1,6 +1,7 @@
 # Lyo.Config.Api.Example
 
-Runnable example that invokes `AddConfigApi` and `MapConfigApiEndpoints` from [`Lyo.Config.Api`](../../Apps/Config/Lyo.Config.Api/README.md). Demo wiring (OpenAPI/Scalar, JWKS/auth next to `/api/config`). Prefer embedding those extensions in another API (Gateway, for example) over running this host. Not packed to NuGet.
+Runnable example that invokes `AddConfigApi` and `MapConfigApiEndpoints` from [`Lyo.Config.Api`](../../Apps/Config/Lyo.Config.Api/README.md). Demo wiring (OpenAPI/Scalar, JWKS/auth
+next to `/api/config`). Prefer embedding those extensions in another API (Gateway, for example) over running this host. Not packed to NuGet.
 
 ## Features
 

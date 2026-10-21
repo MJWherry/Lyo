@@ -1,6 +1,7 @@
 # Lyo.Web.Automation.Client
 
-Wraps `IApiClient` for the automation routes in `Lyo.Web.Automation.Core.Constants.Rest`. The browser stays on the API host. This client lists, creates, reads, and saves plans, then posts a run and reads status, finished steps, the transcript, viewport snapshots, and one step screenshot.
+Wraps `IApiClient` for the automation routes in `Lyo.Web.Automation.Core.Constants.Rest`. The browser stays on the API host. This client lists, creates, reads, and saves plans,
+then posts a run and reads status, finished steps, the transcript, viewport snapshots, and one step screenshot.
 
 ## Examples
 
@@ -19,7 +20,8 @@ var accepted = await client.StartAsync(new AutomationRunReq {
 
 ## Prefix on routes
 
-If `AutomationPlanClientOptions.RoutePrefix` is set, every route is `{prefix}/Automation/...`, including `Plan` and `Run`. An empty prefix keeps routes relative and uses `HttpClient.BaseAddress`.
+If `AutomationPlanClientOptions.RoutePrefix` is set, every route is `{prefix}/Automation/...`, including `Plan` and `Run`. An empty prefix keeps routes relative and uses
+`HttpClient.BaseAddress`.
 
 ## Dependencies
 

@@ -18,8 +18,7 @@ public static class Extensions
         /// <summary>
         /// Registers <see cref="LyoAuthWebComponentsOptions" /> and the default <see cref="IAuthProviderCatalog" />. Does not register the host-specific
         /// <see cref="IAuthSignInLauncher" /> / <see cref="IAuthUserClient" /> / <see cref="IAuthSessionAccessor" /> — call <c>AddLyoAuthWebComponentsServer</c> or
-        /// <c>AddLyoAuthWebComponentsWasm</c> for those. <see cref="IAuthPasswordSignIn" /> stays opt-in: register your own impl if you want the password card on the
-        /// login page.
+        /// <c>AddLyoAuthWebComponentsWasm</c> for those. <see cref="IAuthPasswordSignIn" /> stays opt-in: register your own impl if you want the password card on the login page.
         /// </summary>
         public IServiceCollection AddLyoAuthWebComponents(IConfiguration configuration, string sectionName = LyoAuthWebComponentsOptions.SectionName)
         {

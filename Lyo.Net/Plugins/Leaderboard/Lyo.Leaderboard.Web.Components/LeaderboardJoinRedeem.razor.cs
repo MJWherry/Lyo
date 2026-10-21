@@ -3,6 +3,12 @@ namespace Lyo.Leaderboard.Web.Components;
 /// <summary>Redeems an invite token through <see cref="ILeaderboardApiClient.RedeemInviteAsync" />.</summary>
 public partial class LeaderboardJoinRedeem
 {
+    private bool _asGuest = true;
+    private bool _busy;
+    private MemberRecord? _member;
+
+    private string _token = "";
+
     /// <summary>Typed Leaderboard API client.</summary>
     [Parameter]
     [EditorRequired]
@@ -11,11 +17,6 @@ public partial class LeaderboardJoinRedeem
     /// <summary>Raised after a successful redeem.</summary>
     [Parameter]
     public EventCallback OnRedeemed { get; set; }
-
-    private string _token = "";
-    private bool _asGuest = true;
-    private bool _busy;
-    private MemberRecord? _member;
 
     private async Task RedeemAsync()
     {

@@ -10,10 +10,10 @@ internal static class GlobalHotkeyHost
 /// <summary>Start, stop, and optional Escape on top of <see cref="GlobalHotkeys" />. Escape is best-effort: if it is already grabbed, start and stop stay registered.</summary>
 internal sealed class ShotHotkeys : IGlobalHotkeys
 {
-    private readonly Lyo.Desktop.IGlobalHotkeys _keys = GlobalHotkeys.Create();
+    private readonly Desktop.IGlobalHotkeys _keys = GlobalHotkeys.Create();
+    private bool _escape;
     private HotkeyChord _start = HotkeyChord.Parse("Ctrl+Shift+S");
     private HotkeyChord _stop = HotkeyChord.Parse("Ctrl+Shift+X");
-    private bool _escape;
 
     public event Action? StartPressed;
 
@@ -30,6 +30,7 @@ internal sealed class ShotHotkeys : IGlobalHotkeys
     {
         if (_escape == enabled)
             return;
+
         _escape = enabled;
         Apply();
     }
@@ -38,10 +39,7 @@ internal sealed class ShotHotkeys : IGlobalHotkeys
 
     private void Apply()
     {
-        var core = new List<HotkeyBinding> {
-            new(_start, () => StartPressed?.Invoke()),
-            new(_stop, () => StopPressed?.Invoke())
-        };
+        var core = new List<HotkeyBinding> { new(_start, () => StartPressed?.Invoke()), new(_stop, () => StopPressed?.Invoke()) };
         if (!_escape || IsBareEscape(_stop)) {
             _keys.Bind(core);
             return;
@@ -56,6 +54,5 @@ internal sealed class ShotHotkeys : IGlobalHotkeys
         }
     }
 
-    private static bool IsBareEscape(HotkeyChord chord)
-        => chord.Key.Equals("Escape", StringComparison.OrdinalIgnoreCase) && chord.Modifiers == HotkeyModifiers.None;
+    private static bool IsBareEscape(HotkeyChord chord) => chord.Key.Equals("Escape", StringComparison.OrdinalIgnoreCase) && chord.Modifiers == HotkeyModifiers.None;
 }

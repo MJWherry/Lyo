@@ -36,6 +36,5 @@ public sealed class EdgeDockPlacement
     }
 
     /// <summary>The same fields <see cref="Apply" /> reads, with the edge as an int.</summary>
-    public (bool Docked, int Edge, int X, int Y, int RestX, int RestY) Values()
-        => (Docked, (int)Edge, X, Y, RestX, RestY);
+    public (bool Docked, int Edge, int X, int Y, int RestX, int RestY) Values() => (Docked, (int)Edge, X, Y, RestX, RestY);
 }

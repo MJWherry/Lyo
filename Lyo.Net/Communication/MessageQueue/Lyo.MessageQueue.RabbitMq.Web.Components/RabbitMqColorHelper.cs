@@ -1,6 +1,4 @@
 using Lyo.Common.Core.Conversion;
-using Lyo.MessageQueue.RabbitMq;
-using Lyo.Web.Components;
 using Lyo.Web.Primitives;
 using MudBlazor;
 
@@ -14,9 +12,7 @@ public static class RabbitMqColorHelper
 
     /// <summary>Color for a broker queue state (<c>running</c> is success).</summary>
     public static Color ForState(string? state)
-        => string.Equals(state, "running", StringComparison.OrdinalIgnoreCase) ? Color.Success
-            : string.IsNullOrWhiteSpace(state) ? Color.Default
-            : Color.Warning;
+        => string.Equals(state, "running", StringComparison.OrdinalIgnoreCase) ? Color.Success : string.IsNullOrWhiteSpace(state) ? Color.Default : Color.Warning;
 
     /// <summary>Identity hue for an exchange type (direct, topic, fanout, headers). Unknown types stay uncolored.</summary>
     public static LyoChipHue? ForExchangeType(string? type)
@@ -39,32 +35,25 @@ public static class RabbitMqColorHelper
         => LyoChips.FromBool(ReadBool(properties, Constants.QueueInfoProperties.Durable), "Durable", "Transient", Color.Success, Color.Default);
 
     /// <summary>Durable versus transient chip.</summary>
-    public static LyoChipSpec DurableChip(bool durable)
-        => LyoChips.FromBool(durable, "Durable", "Transient", Color.Success, Color.Default);
+    public static LyoChipSpec DurableChip(bool durable) => LyoChips.FromBool(durable, "Durable", "Transient", Color.Success, Color.Default);
 
     /// <summary>Exclusive chip from additional properties, or null when the queue is shared.</summary>
-    public static LyoChipSpec? ExclusiveChip(IReadOnlyDictionary<string, object>? properties)
-        => ExclusiveChip(ReadBool(properties, Constants.QueueInfoProperties.Exclusive));
+    public static LyoChipSpec? ExclusiveChip(IReadOnlyDictionary<string, object>? properties) => ExclusiveChip(ReadBool(properties, Constants.QueueInfoProperties.Exclusive));
 
     /// <summary>Exclusive chip, or null if the queue is shared.</summary>
-    public static LyoChipSpec? ExclusiveChip(bool exclusive)
-        => exclusive ? LyoChips.Of("Exclusive", Color.Warning) : null;
+    public static LyoChipSpec? ExclusiveChip(bool exclusive) => exclusive ? LyoChips.Of("Exclusive", Color.Warning) : null;
 
     /// <summary>Auto-delete chip from additional properties, or null when the object is not auto-deleted.</summary>
-    public static LyoChipSpec? AutoDeleteChip(IReadOnlyDictionary<string, object>? properties)
-        => AutoDeleteChip(ReadBool(properties, Constants.QueueInfoProperties.AutoDelete));
+    public static LyoChipSpec? AutoDeleteChip(IReadOnlyDictionary<string, object>? properties) => AutoDeleteChip(ReadBool(properties, Constants.QueueInfoProperties.AutoDelete));
 
     /// <summary>Auto-delete chip, or null if the object is not auto-deleted.</summary>
-    public static LyoChipSpec? AutoDeleteChip(bool autoDelete)
-        => autoDelete ? LyoChips.Of("Auto-delete", Color.Warning) : null;
+    public static LyoChipSpec? AutoDeleteChip(bool autoDelete) => autoDelete ? LyoChips.Of("Auto-delete", Color.Warning) : null;
 
     /// <summary>Internal-exchange chip, or null when the exchange is public.</summary>
-    public static LyoChipSpec? InternalChip(bool isInternal)
-        => isInternal ? LyoChips.Of("Internal", Color.Default) : null;
+    public static LyoChipSpec? InternalChip(bool isInternal) => isInternal ? LyoChips.Of("Internal") : null;
 
     /// <summary>Queue-state chip, or null when the broker did not report a state.</summary>
-    public static LyoChipSpec? StateChip(string? state)
-        => string.IsNullOrWhiteSpace(state) ? null : LyoChips.Of(state, ForState(state));
+    public static LyoChipSpec? StateChip(string? state) => string.IsNullOrWhiteSpace(state) ? null : LyoChips.Of(state, ForState(state));
 
     /// <summary>Classic, quorum, or stream type chip, or null when type is missing. Any other reported type is cyan.</summary>
     public static LyoChipSpec? QueueTypeChip(string? type)
@@ -78,6 +67,7 @@ public static class RabbitMqColorHelper
             "stream" => LyoChipHue.Teal,
             var _ => LyoChipHue.Cyan
         };
+
         return LyoChips.Of(type, hue, variant: Variant.Outlined);
     }
 
@@ -92,8 +82,7 @@ public static class RabbitMqColorHelper
     }
 
     /// <summary>DLQ chip when additional properties include <c>x-dead-letter-routing-key</c>.</summary>
-    public static LyoChipSpec? DlqChip(IReadOnlyDictionary<string, object>? properties)
-        => DeadLetterRoutingKey(properties) is null ? null : LyoChips.Of("DLQ", Color.Tertiary);
+    public static LyoChipSpec? DlqChip(IReadOnlyDictionary<string, object>? properties) => DeadLetterRoutingKey(properties) is null ? null : LyoChips.Of("DLQ", Color.Tertiary);
 
     /// <summary>Priority chip when <c>x-max-priority</c> is greater than zero.</summary>
     public static LyoChipSpec? MaxPriorityChip(IReadOnlyDictionary<string, object>? properties)
@@ -121,8 +110,7 @@ public static class RabbitMqColorHelper
     }
 
     /// <summary>Whether this is the unnamed default exchange or a broker-reserved <c>amq.*</c> name.</summary>
-    public static bool IsDefaultExchange(string? name)
-        => string.IsNullOrEmpty(name) || name.StartsWith("amq.", StringComparison.Ordinal);
+    public static bool IsDefaultExchange(string? name) => string.IsNullOrEmpty(name) || name.StartsWith("amq.", StringComparison.Ordinal);
 
     private static bool ReadBool(IReadOnlyDictionary<string, object>? properties, string key)
         => properties is not null && properties.TryGetValue(key, out var value) && value is true;

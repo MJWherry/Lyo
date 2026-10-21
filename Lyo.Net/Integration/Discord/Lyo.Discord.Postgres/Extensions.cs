@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace Lyo.Discord.Postgres;
 
 /// <summary>DI helpers for PostgreSQL Discord database context registration and API mapping.</summary>
@@ -210,7 +211,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresDiscordOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddDiscordDbContextFactory(options);
         }
 
@@ -220,13 +220,12 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPostgresDbContextFactory<DiscordDbContext, PostgresDiscordOptions>(options);
-
             return services;
         }
 
         /// <summary>
-        /// Adds Discord PostgreSQL persistence: <see cref="IDbContextFactory{TContext}" />, optional migrations, and CRUD/query services. Requires <c>AddLyoQueryServices</c>,
-        /// cache, plus <see cref="MapsterMapper.IMapper" /> (wire mappings with <see cref="ConfigureDiscordMappings" />).
+        /// Adds Discord PostgreSQL persistence: <see cref="IDbContextFactory{TContext}" />, optional migrations, and CRUD/query services. Requires <c>AddLyoQueryServices</c>, cache,
+        /// plus <see cref="MapsterMapper.IMapper" /> (wire mappings with <see cref="ConfigureDiscordMappings" />).
         /// </summary>
         public IServiceCollection AddPostgresDiscord(Action<PostgresDiscordOptions> configure)
         {
@@ -243,7 +242,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(configuration);
             var options = new PostgresDiscordOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddPostgresDiscord(options);
         }
 

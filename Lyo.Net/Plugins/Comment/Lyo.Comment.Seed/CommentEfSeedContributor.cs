@@ -12,11 +12,11 @@ namespace Lyo.Comment.Seed;
 /// <summary>EF seed of comments on different posts, each from a different person and with one like. No replies.</summary>
 public sealed class CommentEfSeedContributor : SeedContributor, IEfSeedSource
 {
-    /// <summary>Tenant id written on every seeded row.</summary>
-    public static readonly Guid TenantId = new("11111111-1111-7111-8111-111111111111");
-
     /// <summary>Subject type written on every seeded row.</summary>
     public const string SubjectType = "post";
+
+    /// <summary>Tenant id written on every seeded row.</summary>
+    public static readonly Guid TenantId = new("11111111-1111-7111-8111-111111111111");
 
     /// <inheritdoc />
     public override string Name => "Comment";
@@ -31,9 +31,7 @@ public sealed class CommentEfSeedContributor : SeedContributor, IEfSeedSource
     public DbContext CreateContext(string connectionString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        var options = new DbContextOptionsBuilder<CommentDbContext>()
-            .UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<CommentDbContext>().UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema)).Options;
         return new CommentDbContext(options);
     }
 
@@ -42,26 +40,29 @@ public sealed class CommentEfSeedContributor : SeedContributor, IEfSeedSource
     {
         graph.OnClear(ClearAsync);
         var faker = options.RandomSeed is { } seed ? new Faker { Random = new(seed) } : new Faker();
-        graph.Entity(options.Count, i => new CommentEntity {
-            Id = LyoGuid.CreateV7(),
-            TenantId = TenantId,
-            SubjectEntityType = SubjectType,
-            SubjectEntityId = $"post-{i}",
-            ActorEntityType = "person",
-            ActorEntityId = $"person-{i}",
-            Visibility = EntityRefVisibility.Public,
-            CreatedAt = DateTime.UtcNow,
-            Content = faker.Lorem.Sentence()
-        }).ForEach(_ => 1, (comment, _) => new CommentReactionEntity {
-            Id = LyoGuid.CreateV7(),
-            ReactionType = (int)CommentReactionType.Like,
-            TenantId = comment.TenantId,
-            SubjectEntityType = comment.SubjectEntityType,
-            SubjectEntityId = comment.SubjectEntityId,
-            ActorEntityType = comment.ActorEntityType,
-            ActorEntityId = comment.ActorEntityId,
-            CreatedTimestamp = DateTime.UtcNow
-        });
+        graph.Entity(
+                options.Count, i => new CommentEntity {
+                    Id = LyoGuid.CreateV7(),
+                    TenantId = TenantId,
+                    SubjectEntityType = SubjectType,
+                    SubjectEntityId = $"post-{i}",
+                    ActorEntityType = "person",
+                    ActorEntityId = $"person-{i}",
+                    Visibility = EntityRefVisibility.Public,
+                    CreatedAt = DateTime.UtcNow,
+                    Content = faker.Lorem.Sentence()
+                })
+            .ForEach(
+                _ => 1, (comment, _) => new CommentReactionEntity {
+                    Id = LyoGuid.CreateV7(),
+                    ReactionType = (int)CommentReactionType.Like,
+                    TenantId = comment.TenantId,
+                    SubjectEntityType = comment.SubjectEntityType,
+                    SubjectEntityId = comment.SubjectEntityId,
+                    ActorEntityType = comment.ActorEntityType,
+                    ActorEntityId = comment.ActorEntityId,
+                    CreatedTimestamp = DateTime.UtcNow
+                });
     }
 
     private static async Task ClearAsync(SeedSession session, CancellationToken ct)

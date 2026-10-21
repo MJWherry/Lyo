@@ -1,5 +1,3 @@
-using Lyo.Leaderboard;
-
 namespace Lyo.Leaderboard.Api.Models;
 
 /// <summary>Submit a scored event.</summary>

@@ -108,8 +108,8 @@ public static class RootQueryValidator
 
     /// <summary>
     /// A nested scope carries a where clause evaluated directly against its own entity, so its fields are entity-relative: an alias prefix or an unknown property means the
-    /// caller is filtering something other than what they think. <see cref="SourceQueryScope.Keys" /> is rejected outright because execution ignores it, which would otherwise
-    /// widen the scope silently.
+    /// caller is filtering something other than what they think. <see cref="SourceQueryScope.Keys" /> is rejected outright because execution ignores it, which would otherwise widen the
+    /// scope silently.
     /// </summary>
     private static void ValidateSourceScope(SourceQueryScope? scope, RootQueryEntityEntry? entry, string prefix, List<ApiError> errors)
     {
@@ -228,8 +228,8 @@ public static class RootQueryValidator
     }
 
     /// <summary>
-    /// Mirrors how the where-clause evaluator resolves a dotted path: each segment is a property on the current type, on its collection element type, or one navigation hop
-    /// below it. Deliberately permissive — this exists to turn a query-time failure into a 400, not to narrow what the evaluator accepts.
+    /// Mirrors how the where-clause evaluator resolves a dotted path: each segment is a property on the current type, on its collection element type, or one navigation hop below
+    /// it. Deliberately permissive — this exists to turn a query-time failure into a 400, not to narrow what the evaluator accepts.
     /// </summary>
     private static bool PathResolves(Type root, string path)
     {

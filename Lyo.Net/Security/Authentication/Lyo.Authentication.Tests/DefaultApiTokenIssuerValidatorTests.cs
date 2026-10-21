@@ -4,8 +4,8 @@ using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Options;
 using Lyo.Authentication.Services.Opaque;
 using Lyo.Authentication.Services.Users;
-using Microsoft.Extensions.Logging.Abstractions;
 using Lyo.Common.Core.Identifiers;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.Authentication.Tests;
 
@@ -100,5 +100,6 @@ public class DefaultApiTokenIssuerValidatorTests
         return (issuer, validator, store, users);
     }
 
-    private static LyoUser NewUser() => new(LyoGuid.CreateV7(), "Test", $"u-{LyoGuid.CreateV7():N}@example.com", true, null, null, [], null, null, DateTime.UtcNow, null, null, null, null);
+    private static LyoUser NewUser()
+        => new(LyoGuid.CreateV7(), "Test", $"u-{LyoGuid.CreateV7():N}@example.com", true, null, null, [], null, null, DateTime.UtcNow, null, null, null, null);
 }

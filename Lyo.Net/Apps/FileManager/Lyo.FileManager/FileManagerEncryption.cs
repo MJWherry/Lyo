@@ -12,8 +12,8 @@ namespace Lyo.FileManager;
 /// <summary>Picks AES-SIV, AES-GCM, or ChaCha20-Poly1305 for one local store. An upload can override the algorithm for that save.</summary>
 internal sealed class FileManagerEncryption : ITwoKeyEncryptionService
 {
-    private readonly ITwoKeyEncryptionService _aesSiv;
     private readonly ITwoKeyEncryptionService _aesGcm;
+    private readonly ITwoKeyEncryptionService _aesSiv;
     private readonly ITwoKeyEncryptionService _chaCha;
 
     private FileManagerEncryption(IKeyStore store)
@@ -21,13 +21,6 @@ internal sealed class FileManagerEncryption : ITwoKeyEncryptionService
         _aesSiv = Wrap(new AesSivEncryptionService(store), store);
         _aesGcm = Wrap(new AesGcmEncryptionService(store), store);
         _chaCha = Wrap(new ChaCha20Poly1305EncryptionService(store), store);
-    }
-
-    /// <summary>Builds a switcher over <paramref name="store" />.</summary>
-    public static FileManagerEncryption Create(IKeyStore store)
-    {
-        ArgumentHelpers.ThrowIfNull(store);
-        return new(store);
     }
 
     /// <inheritdoc />
@@ -69,7 +62,14 @@ internal sealed class FileManagerEncryption : ITwoKeyEncryptionService
         => Current().EncryptString(text, keyId, kek, encoding);
 
     /// <inheritdoc />
-    public string DecryptString(byte[] encryptedData, byte[] encryptedDataEncryptionKey, string? keyId = null, Encoding? encoding = null, byte[]? kek = null, string? keyVersion = null, byte[]? salt = null)
+    public string DecryptString(
+        byte[] encryptedData,
+        byte[] encryptedDataEncryptionKey,
+        string? keyId = null,
+        Encoding? encoding = null,
+        byte[]? kek = null,
+        string? keyVersion = null,
+        byte[]? salt = null)
         => Current().DecryptString(encryptedData, encryptedDataEncryptionKey, keyId, encoding, kek, keyVersion, salt);
 
     /// <inheritdoc />
@@ -93,6 +93,7 @@ internal sealed class FileManagerEncryption : ITwoKeyEncryptionService
             var n = await prefix.ReadAsync(head.AsMemory(read, head.Length - read), ct).ConfigureAwait(false);
             if (n == 0)
                 break;
+
             read += n;
         }
 
@@ -122,6 +123,7 @@ internal sealed class FileManagerEncryption : ITwoKeyEncryptionService
             var n = await input.ReadAsync(head.AsMemory(read, head.Length - read), ct).ConfigureAwait(false);
             if (n == 0)
                 break;
+
             read += n;
         }
 
@@ -146,8 +148,21 @@ internal sealed class FileManagerEncryption : ITwoKeyEncryptionService
         => _aesSiv.ReEncryptDek(encryptedDek, sourceKeyId, sourceKeyVersion, targetKeyId, targetKeyVersion);
 
     /// <inheritdoc />
-    public Task<byte[]> ReEncryptDekAsync(byte[] encryptedDek, string sourceKeyId, string sourceKeyVersion, string? targetKeyId = null, string? targetKeyVersion = null, CancellationToken ct = default)
+    public Task<byte[]> ReEncryptDekAsync(
+        byte[] encryptedDek,
+        string sourceKeyId,
+        string sourceKeyVersion,
+        string? targetKeyId = null,
+        string? targetKeyVersion = null,
+        CancellationToken ct = default)
         => _aesSiv.ReEncryptDekAsync(encryptedDek, sourceKeyId, sourceKeyVersion, targetKeyId, targetKeyVersion, ct);
+
+    /// <summary>Builds a switcher over <paramref name="store" />.</summary>
+    public static FileManagerEncryption Create(IKeyStore store)
+    {
+        ArgumentHelpers.ThrowIfNull(store);
+        return new(store);
+    }
 
     private ITwoKeyEncryptionService Current()
     {
@@ -155,21 +170,22 @@ internal sealed class FileManagerEncryption : ITwoKeyEncryptionService
         return string.IsNullOrWhiteSpace(name) ? _aesSiv : ServiceFor(Parse(name));
     }
 
-    private ITwoKeyEncryptionService ServiceFor(EncryptionAlgorithm? algorithm) => algorithm switch {
-        EncryptionAlgorithm.AesGcm => _aesGcm,
-        EncryptionAlgorithm.ChaCha20Poly1305 => _chaCha,
-        _ => _aesSiv
-    };
+    private ITwoKeyEncryptionService ServiceFor(EncryptionAlgorithm? algorithm)
+        => algorithm switch {
+            EncryptionAlgorithm.AesGcm => _aesGcm,
+            EncryptionAlgorithm.ChaCha20Poly1305 => _chaCha,
+            var _ => _aesSiv
+        };
 
-    private static EncryptionAlgorithm? Parse(string name)
-        => Enum.TryParse<EncryptionAlgorithm>(name, ignoreCase: true, out var algorithm) ? algorithm : null;
+    private static EncryptionAlgorithm? Parse(string name) => Enum.TryParse<EncryptionAlgorithm>(name, true, out var algorithm) ? algorithm : null;
 
-    private static ITwoKeyEncryptionService Wrap(IEncryptionService service, IKeyStore store) => service switch {
-        AesSivEncryptionService aes => new TwoKeyEncryptionService<AesSivEncryptionService, AesSivEncryptionService>(aes, store),
-        AesGcmEncryptionService gcm => new TwoKeyEncryptionService<AesGcmEncryptionService, AesGcmEncryptionService>(gcm, store),
-        ChaCha20Poly1305EncryptionService chacha => new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, ChaCha20Poly1305EncryptionService>(chacha, store),
-        _ => throw new InvalidOperationException("Unsupported encryption service.")
-    };
+    private static ITwoKeyEncryptionService Wrap(IEncryptionService service, IKeyStore store)
+        => service switch {
+            AesSivEncryptionService aes => new TwoKeyEncryptionService<AesSivEncryptionService, AesSivEncryptionService>(aes, store),
+            AesGcmEncryptionService gcm => new TwoKeyEncryptionService<AesGcmEncryptionService, AesGcmEncryptionService>(gcm, store),
+            ChaCha20Poly1305EncryptionService chacha => new TwoKeyEncryptionService<ChaCha20Poly1305EncryptionService, ChaCha20Poly1305EncryptionService>(chacha, store),
+            var _ => throw new InvalidOperationException("Unsupported encryption service.")
+        };
 
     private sealed class PrefixStream(byte[] prefix, int count, Stream rest) : Stream
     {
@@ -183,7 +199,10 @@ internal sealed class FileManagerEncryption : ITwoKeyEncryptionService
 
         public override long Length => throw new NotSupportedException();
 
-        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+        public override long Position {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
 
         public override void Flush() { }
 
@@ -192,6 +211,7 @@ internal sealed class FileManagerEncryption : ITwoKeyEncryptionService
             var copied = CopyPrefix(buffer.AsSpan(offset, count));
             if (copied == count)
                 return copied;
+
             return copied + rest.Read(buffer, offset + copied, count - copied);
         }
 
@@ -200,6 +220,7 @@ internal sealed class FileManagerEncryption : ITwoKeyEncryptionService
             var copied = CopyPrefix(buffer.Span);
             if (copied == buffer.Length)
                 return copied;
+
             return copied + await rest.ReadAsync(buffer[copied..], cancellationToken).ConfigureAwait(false);
         }
 
@@ -214,6 +235,7 @@ internal sealed class FileManagerEncryption : ITwoKeyEncryptionService
             var n = Math.Min(buffer.Length, count - _pos);
             if (n <= 0)
                 return 0;
+
             prefix.AsSpan(_pos, n).CopyTo(buffer);
             _pos += n;
             return n;

@@ -13,10 +13,7 @@ namespace Lyo.Tts.Typecast;
 
 /// <summary>Typecast API-backed TTS that turns text into speech.</summary>
 /// <remarks>
-/// <para>
-/// Thread-safe: instance fields are readonly, and bulk work uses the base class's thread-safe collections and synchronization
-/// primitives.
-/// </para>
+/// <para>Thread-safe: instance fields are readonly, and bulk work uses the base class's thread-safe collections and synchronization primitives.</para>
 /// </remarks>
 public sealed class TypecastTtsService : TtsServiceBase<TypecastTtsRequest>
 {

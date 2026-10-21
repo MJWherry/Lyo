@@ -20,12 +20,12 @@ public enum EdgeDockTap
 public sealed class EdgeDockGesture
 {
     private bool _down;
-    private bool _moved;
-    private int _originX;
-    private int _originY;
     private int _lastClickMs = int.MinValue;
     private int _lastX;
     private int _lastY;
+    private bool _moved;
+    private int _originX;
+    private int _originY;
 
     /// <summary>Movement, in pixels, that turns a press into a drag.</summary>
     public int Slop { get; init; } = 4;
@@ -47,10 +47,12 @@ public sealed class EdgeDockGesture
     {
         if (!_down)
             return false;
+
         var dx = x - _originX;
         var dy = y - _originY;
-        if ((dx * dx) + (dy * dy) >= Slop * Slop)
+        if (dx * dx + dy * dy >= Slop * Slop)
             _moved = true;
+
         return _moved;
     }
 
@@ -59,12 +61,14 @@ public sealed class EdgeDockGesture
     {
         if (!_down)
             return EdgeDockTap.None;
+
         _down = false;
         if (_moved)
             return EdgeDockTap.Drag;
+
         var dx = x - _lastX;
         var dy = y - _lastY;
-        var repeat = timeMs - _lastClickMs <= DoubleClickMs && (dx * dx) + (dy * dy) <= Slop * Slop;
+        var repeat = timeMs - _lastClickMs <= DoubleClickMs && dx * dx + dy * dy <= Slop * Slop;
         _lastClickMs = timeMs;
         _lastX = x;
         _lastY = y;

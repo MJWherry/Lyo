@@ -11,7 +11,9 @@ public sealed class StartupAlgorithmStore : IAlgorithmStartupStore
         _algorithms = new();
         foreach (var registration in registrations) {
             var key = new StartupKey(registration.Key, registration.ContextType, registration.ResultType);
-            AlgorithmHelpers.ThrowIf(_algorithms.ContainsKey(key), $"Startup algorithm '{registration.Key}' is already registered for {registration.ContextType.Name}, {registration.ResultType.Name}.");
+            AlgorithmHelpers.ThrowIf(
+                _algorithms.ContainsKey(key), $"Startup algorithm '{registration.Key}' is already registered for {registration.ContextType.Name}, {registration.ResultType.Name}.");
+
             _algorithms.Add(key, registration.Algorithm);
         }
     }

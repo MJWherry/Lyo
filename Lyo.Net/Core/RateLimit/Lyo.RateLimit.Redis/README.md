@@ -1,6 +1,7 @@
 # Lyo.RateLimit.Redis
 
-AddRedisRateLimit replaces an in-memory IRateLimitService. Use it only when more than one host must share a quota. A missing Redis connection string fails registration instead of falling back to memory.
+AddRedisRateLimit replaces an in-memory IRateLimitService. Use it only when more than one host must share a quota. A missing Redis connection string fails registration instead of
+falling back to memory.
 
 ## Features
 

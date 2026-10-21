@@ -1,6 +1,6 @@
 using Lyo.EntityReference.Models;
-using Lyo.Exceptions.Models;
 using Lyo.Exceptions;
+using Lyo.Exceptions.Models;
 
 namespace Lyo.EntityReference.Postgres;
 
@@ -16,9 +16,7 @@ public abstract class EntityRefPostgresStoreBase
     /// <summary>Interceptors registered for this store (invoked in registration order).</summary>
     protected IReadOnlyList<IEntityRefActionInterceptor> Interceptors { get; }
 
-    /// <summary>
-    /// When <see langword="true" /> the underlying entity column is non-nullable, so <see cref="TenancyMode.SystemOnly" /> is invalid and the ctor will reject it.
-    /// </summary>
+    /// <summary>When <see langword="true" /> the underlying entity column is non-nullable, so <see cref="TenancyMode.SystemOnly" /> is invalid and the ctor will reject it.</summary>
     /// <remarks>
     /// Stores derived from <see cref="Database.EntityRelationEntityBase" /> leave the default; subclasses on a nullable-tenant entity should pass <see langword="false" /> to the
     /// base ctor.
@@ -66,9 +64,7 @@ public abstract class EntityRefPostgresStoreBase
         return resolved ?? throw new InvalidOperationException($"Store {GetType().Name} resolved a null tenant but is mapped to a non-null TenantId column.");
     }
 
-    /// <summary>
-    /// Resolves a nullable caller tenant under the feature/global policy, returning <see langword="null" /> when the mode is <see cref="TenancyMode.SystemOnly" />.
-    /// </summary>
+    /// <summary>Resolves a nullable caller tenant under the feature/global policy, returning <see langword="null" /> when the mode is <see cref="TenancyMode.SystemOnly" />.</summary>
     /// <param name="tenantId">Caller-supplied tenant, if any.</param>
     /// <returns>Resolved tenant id or <see langword="null" /> for system rows.</returns>
     /// <exception cref="ArgumentNullException">Mode is <see cref="TenancyMode.MultiTenantStrict" /> and the caller did not supply a non-empty tenant.</exception>

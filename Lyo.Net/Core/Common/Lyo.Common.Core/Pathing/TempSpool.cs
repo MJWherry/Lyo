@@ -1,5 +1,5 @@
-using Lyo.Exceptions;
 using Lyo.Common.Core.Identifiers;
+using Lyo.Exceptions;
 
 namespace Lyo.Common.Core.Pathing;
 
@@ -8,8 +8,10 @@ namespace Lyo.Common.Core.Pathing;
 /// short-lived scratch files inside one method; use <c>Lyo.IO.Temp.IIOTempService</c> when a caller needs a tracked, session-scoped temp directory.
 /// </summary>
 /// <remarks>
-/// <para>Every path is unique, so <see cref="FileMode.CreateNew" /> is safe. Pair <see cref="CreatePath(string)" /> with <see cref="TryDelete" /> in a
-/// <c>finally</c> block, or prefer <see cref="CreateStream" /> which deletes on close.</para>
+/// <para>
+/// Every path is unique, so <see cref="FileMode.CreateNew" /> is safe. Pair <see cref="CreatePath(string)" /> with <see cref="TryDelete" /> in a <c>finally</c> block, or prefer
+/// <see cref="CreateStream" /> which deletes on close.
+/// </para>
 /// </remarks>
 public static class TempSpool
 {
@@ -25,12 +27,11 @@ public static class TempSpool
     /// <summary>Builds a unique temp path named <c>lyo-{name}-{guid}{extension}</c>. Does not create the file.</summary>
     /// <param name="name">Short scope tag identifying the caller, for example <c>fs-scan</c>. Must be non-empty.</param>
     /// <param name="extension">Extension including the leading dot.</param>
-    public static string CreatePath(string name, string extension = DefaultExtension)
-        => CreatePath(name, LyoGuid.CreateV7(), extension);
+    public static string CreatePath(string name, string extension = DefaultExtension) => CreatePath(name, LyoGuid.CreateV7(), extension);
 
     /// <summary>
-    /// Builds a temp path named <c>lyo-{name}-{id}{extension}</c> from a caller-supplied correlation id (file id, session id, stage id). Callers must keep the id
-    /// unique across concurrent operations.
+    /// Builds a temp path named <c>lyo-{name}-{id}{extension}</c> from a caller-supplied correlation id (file id, session id, stage id). Callers must keep the id unique across
+    /// concurrent operations.
     /// </summary>
     /// <param name="name">Short scope tag identifying the caller, for example <c>fs-scan</c>. Must be non-empty.</param>
     /// <param name="id">Correlation id rendered without dashes.</param>

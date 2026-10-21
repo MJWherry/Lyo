@@ -18,9 +18,11 @@ internal static partial class WindowsClipboard
             var handle = GetClipboardData(CfUnicodeText);
             if (handle == IntPtr.Zero)
                 return "";
+
             var locked = GlobalLock(handle);
             if (locked == IntPtr.Zero)
                 return "";
+
             try {
                 return Marshal.PtrToStringUni(locked) ?? "";
             }
@@ -38,11 +40,13 @@ internal static partial class WindowsClipboard
         var format = RegisterClipboardFormat("PNG");
         if (format == 0)
             throw new InvalidOperationException("Could not register the PNG clipboard format.");
+
         var dib = PngBitmap.ToDib(png);
         Open();
         try {
             if (EmptyClipboard() == 0)
                 throw new InvalidOperationException("Could not empty the clipboard.");
+
             Give(format, png);
             Give(CfDib, dib);
         }
@@ -62,6 +66,7 @@ internal static partial class WindowsClipboard
         var memory = GlobalAlloc(GmemMoveable, (nuint)bytes.Length);
         if (memory == IntPtr.Zero)
             throw new InvalidOperationException("Could not allocate clipboard memory.");
+
         var locked = GlobalLock(memory);
         if (locked == IntPtr.Zero) {
             GlobalFree(memory);
@@ -72,6 +77,7 @@ internal static partial class WindowsClipboard
         GlobalUnlock(memory);
         if (SetClipboardData(format, memory) != IntPtr.Zero)
             return;
+
         GlobalFree(memory);
         throw new InvalidOperationException("Could not set clipboard data.");
     }

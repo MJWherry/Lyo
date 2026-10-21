@@ -20,8 +20,8 @@ namespace Lyo.Job.Scheduler;
 
 /// <summary>
 /// Starts workflow runs on a cron. Workflow schedules are ordinary <c>JobSchedule</c> rows whose owner is a workflow instead of a definition, so this reuses
-/// <see cref="JobScheduleSlotCalculator" /> and <see cref="JobScheduleReference" /> and the blackout calendars unchanged — cron, DST, misfire, and blackout behave the same
-/// whichever kind of schedule you write.
+/// <see cref="JobScheduleSlotCalculator" /> and <see cref="JobScheduleReference" /> and the blackout calendars unchanged — cron, DST, misfire, and blackout behave the same whichever
+/// kind of schedule you write.
 /// <para>
 /// <see cref="JobScheduler" /> is untouched by this: it walks <c>definition.JobSchedules</c>, which a workflow-owned schedule never populates. Dedupe is the workflow run's
 /// <c>(JobScheduleId, ScheduledSlotUtc)</c> unique index, so two hosts polling the same slot converge on one run rather than starting two.
@@ -42,11 +42,9 @@ public sealed class JobWorkflowScheduler : BackgroundService, IHealth
     private readonly JobWorkflowSchedulerOptions _options;
     private DateTime? _lastCheckUtc;
 
-    public JobWorkflowScheduler(
-        JobWorkflowSchedulerOptions options,
-        IApiClient apiClient,
-        ILogger<JobWorkflowScheduler>? logger = null,
-        IMetrics? metrics = null)
+    public bool IsRunning => !ExecuteTask?.IsCompleted ?? false;
+
+    public JobWorkflowScheduler(JobWorkflowSchedulerOptions options, IApiClient apiClient, ILogger<JobWorkflowScheduler>? logger = null, IMetrics? metrics = null)
     {
         ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNull(apiClient);
@@ -59,8 +57,6 @@ public sealed class JobWorkflowScheduler : BackgroundService, IHealth
 
     /// <inheritdoc />
     public string HealthCheckName => "job-workflow-scheduler";
-
-    public bool IsRunning => !ExecuteTask?.IsCompleted ?? false;
 
     /// <inheritdoc />
     public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
@@ -122,16 +118,15 @@ public sealed class JobWorkflowScheduler : BackgroundService, IHealth
             .AddWhere(w => w.NotEquals("JobWorkflowId", null))
             .Build();
 
-        var result = await _apiClient
-            .PostAsAsync<QueryConcreteReq, QueryRes<JobScheduleRes>>(BuildUri($"{Constants.Rest.Job.Schedules}/QueryConcrete"), query, ct: ct)
+        var result = await _apiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobScheduleRes>>(BuildUri($"{Constants.Rest.Job.Schedules}/QueryConcrete"), query, ct: ct)
             .ConfigureAwait(false);
 
         return result.Items ?? [];
     }
 
     /// <summary>
-    /// The slot this schedule is due for, or null when nothing is due. Mirrors the definition scheduler's gating, but the "already running" and "already covered" checks read
-    /// the workflow run rather than the job run.
+    /// The slot this schedule is due for, or null when nothing is due. Mirrors the definition scheduler's gating, but the "already running" and "already covered" checks read the
+    /// workflow run rather than the job run.
     /// </summary>
     private async Task<DateTime?> GetDueScheduledSlotAsync(JobScheduleRes schedule, CancellationToken ct)
     {
@@ -177,8 +172,7 @@ public sealed class JobWorkflowScheduler : BackgroundService, IHealth
             .First()
             .Build();
 
-        var result = await _apiClient
-            .PostAsAsync<QueryConcreteReq, QueryRes<JobWorkflowRunRes>>(BuildUri($"{Constants.Rest.Job.WorkflowRuns}/QueryConcrete"), query, ct: ct)
+        var result = await _apiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobWorkflowRunRes>>(BuildUri($"{Constants.Rest.Job.WorkflowRuns}/QueryConcrete"), query, ct: ct)
             .ConfigureAwait(false);
 
         return result.Items?.FirstOrDefault();

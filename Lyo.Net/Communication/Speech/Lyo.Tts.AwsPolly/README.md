@@ -1,6 +1,7 @@
 # Lyo.Tts.AwsPolly
 
-[Amazon Polly](https://docs.aws.amazon.com/polly/) TTS. `AwsPollyTtsService` subclasses `TtsServiceBase<AwsPollyTtsRequest>` with voice selection, output formats, bulk synthesis, metrics, and DI helpers.
+[Amazon Polly](https://docs.aws.amazon.com/polly/) TTS. `AwsPollyTtsService` subclasses `TtsServiceBase<AwsPollyTtsRequest>` with voice selection, output formats, bulk synthesis,
+metrics, and DI helpers.
 
 **Target frameworks:** `netstandard2.0`, `net10.0`
 
@@ -64,12 +65,12 @@ Use **IAM roles**, environment credentials, or the shared credentials file rathe
 
 ## Runtime notes
 
-| Area | Detail |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Voices | `AwsPollyVoiceId` maps onto Polly [`VoiceId`](https://docs.aws.amazon.com/polly/latest/dg/voicelist.html) values |
-| Language | `LanguageCode` on `AwsPollyTtsRequest` is mainly for selection; a fixed `VoiceId` determines spoken language |
-| Metrics | `Constants.Metrics` uses `tts.awspolly.*` keys (separate from [`Lyo.Tts`](../Lyo.Tts/README.md)) |
-| Adapter | `AwsPollyTtsAppService` adapts `AwsPollyTtsService` to `ITtsService.SynthesizeAsync(text, voiceId)`. Failure returns the first error message; success returns audio bytes. |
+| Area     | Detail                                                                                                                                                                     |
+|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Voices   | `AwsPollyVoiceId` maps onto Polly [`VoiceId`](https://docs.aws.amazon.com/polly/latest/dg/voicelist.html) values                                                           |
+| Language | `LanguageCode` on `AwsPollyTtsRequest` is mainly for selection; a fixed `VoiceId` determines spoken language                                                               |
+| Metrics  | `Constants.Metrics` uses `tts.awspolly.*` keys (separate from [`Lyo.Tts`](../Lyo.Tts/README.md))                                                                           |
+| Adapter  | `AwsPollyTtsAppService` adapts `AwsPollyTtsService` to `ITtsService.SynthesizeAsync(text, voiceId)`. Failure returns the first error message; success returns audio bytes. |
 
 ## Dependencies
 

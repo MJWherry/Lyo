@@ -44,7 +44,6 @@ public static class Extensions
             configure(options);
             options.Validate();
             services.AddSingleton(options);
-
             services.AddSingleton<PdfService>(provider => {
                 var metrics = provider.GetService<IMetrics>();
                 var options = provider.GetRequiredService<PdfServiceOptions>();
@@ -70,7 +69,6 @@ public static class Extensions
             configuration.GetSection(configSectionName).Bind(options);
             options.Validate();
             services.AddSingleton(options);
-
             services.AddSingleton<PdfService>(provider => {
                 var metrics = provider.GetService<IMetrics>();
                 var options = provider.GetRequiredService<PdfServiceOptions>();
@@ -143,7 +141,6 @@ public static class Extensions
             configure?.Invoke(options);
             options.Validate();
             services.AddKeyedSingleton(keyedServiceName, options);
-
             services.AddKeyedSingleton<PdfService>(
                 keyedServiceName, (provider, _) => {
                     var metrics = provider.GetService<IMetrics>();

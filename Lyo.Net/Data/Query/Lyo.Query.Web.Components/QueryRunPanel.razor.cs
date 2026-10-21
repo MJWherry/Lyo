@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Globalization;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using Lyo.Api.Models.Common;
@@ -17,6 +16,7 @@ namespace Lyo.Query.Web.Components;
 public partial class QueryRunPanel : IAsyncDisposable
 {
     private const string SplitterModuleUrl = "/_content/Lyo.Query.Web.Components/scripts/queryWorkbenchSplitter.js";
+    private BusyKind _busy;
 
     private string? _error;
     private List<HostEndpointRow> _hostRows = [];
@@ -24,7 +24,6 @@ public partial class QueryRunPanel : IAsyncDisposable
     private long? _lastResponseElapsedMs;
     private int? _lastResponseSizeBytes;
     private int _lastRestoreKey = int.MinValue;
-    private BusyKind _busy;
     private string? _requestEditorParseError;
     private int _requestEditorRenderKey;
     private string _requestEditorSearchText = string.Empty;
@@ -114,7 +113,7 @@ public partial class QueryRunPanel : IAsyncDisposable
         await RunChanged.InvokeAsync(next);
     }
 
-    private string GetRequestUri() => TryBuildUri(GetEndpointSegment(), out var uri, out _) ? uri : "(not configured)";
+    private string GetRequestUri() => TryBuildUri(GetEndpointSegment(), out var uri, out var _) ? uri : "(not configured)";
 
     private Task RunQuery() => SendAsync(GetEndpointSegment(), BusyKind.Run);
 
@@ -166,9 +165,7 @@ public partial class QueryRunPanel : IAsyncDisposable
             var httpClient = HttpClientFactory.CreateClient();
             var body = GetActiveRequestBody();
             // QuerySql on an entity route deserializes QueryRequestBase, which needs the $type discriminator.
-            var json = segment == "QuerySql" && body is QueryRequestBase query
-                ? JsonSerializer.Serialize(query, JsonOptions)
-                : JsonSerializer.Serialize(body, JsonOptions);
+            var json = segment == "QuerySql" && body is QueryRequestBase query ? JsonSerializer.Serialize(query, JsonOptions) : JsonSerializer.Serialize(body, JsonOptions);
             using var request = new HttpRequestMessage(HttpMethod.Post, uri) { Content = new StringContent(json, Encoding.UTF8, FileTypeInfo.Json.MimeType) };
             ApplyAuth(request, Run);
             using var response = await httpClient.SendAsync(request);
@@ -396,7 +393,7 @@ public partial class QueryRunPanel : IAsyncDisposable
                     token = token["Bearer ".Length..].Trim();
 
                 if (token.Length > 0)
-                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    request.Headers.Authorization = new("Bearer", token);
 
                 break;
             }
@@ -411,14 +408,11 @@ public partial class QueryRunPanel : IAsyncDisposable
         }
     }
 
-    private Task OnAuthModeChanged(QueryWorkbenchAuthMode mode)
-        => NotifyRunChangedAsync(Run with { AuthMode = mode });
+    private Task OnAuthModeChanged(QueryWorkbenchAuthMode mode) => NotifyRunChangedAsync(Run with { AuthMode = mode });
 
-    private Task OnAuthHeaderNameChanged(string? name)
-        => NotifyRunChangedAsync(Run with { AuthHeaderName = string.IsNullOrWhiteSpace(name) ? null : name.Trim() });
+    private Task OnAuthHeaderNameChanged(string? name) => NotifyRunChangedAsync(Run with { AuthHeaderName = string.IsNullOrWhiteSpace(name) ? null : name.Trim() });
 
-    private Task OnAuthHeaderValueChanged(string? value)
-        => NotifyRunChangedAsync(Run with { AuthHeaderValue = string.IsNullOrWhiteSpace(value) ? null : value });
+    private Task OnAuthHeaderValueChanged(string? value) => NotifyRunChangedAsync(Run with { AuthHeaderValue = string.IsNullOrWhiteSpace(value) ? null : value });
 
     private async Task OnSelectedHostChanged(string? host)
     {

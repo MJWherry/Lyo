@@ -14,7 +14,8 @@ public sealed class SearchManager(TraktClient client)
     }
 
     /// <summary>
-    /// Looks up an id with <c>GET /search/{idType}/{id}</c>. IMDb ids keep the <c>tt</c> prefix. <paramref name="idType" /> is <c>trakt</c>, <c>imdb</c>, <c>tmdb</c>, or <c>tvdb</c>.
+    /// Looks up an id with <c>GET /search/{idType}/{id}</c>. IMDb ids keep the <c>tt</c> prefix. <paramref name="idType" /> is <c>trakt</c>, <c>imdb</c>, <c>tmdb</c>, or
+    /// <c>tvdb</c>.
     /// </summary>
     public Task<TraktPage<TraktSearchResult>> LookupAsync(string idType, string id, CancellationToken ct = default)
     {

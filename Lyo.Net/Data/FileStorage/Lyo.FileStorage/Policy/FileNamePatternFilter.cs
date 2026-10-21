@@ -11,9 +11,7 @@ public static class FileNamePatternFilter
     /// <summary>Match timeout so a hostile pattern cannot stall an upload.</summary>
     public static readonly TimeSpan MatchTimeout = TimeSpan.FromMilliseconds(100);
 
-    /// <summary>
-    /// Rejects <paramref name="originalFileName" /> when a file-name list is configured and the name is missing or fails that list. Null lists allow every name.
-    /// </summary>
+    /// <summary>Rejects <paramref name="originalFileName" /> when a file-name list is configured and the name is missing or fails that list. Null lists allow every name.</summary>
     /// <param name="options">Storage options that carry the patterns.</param>
     /// <param name="originalFileName">Name supplied by the caller.</param>
     /// <exception cref="FilePolicyRejectedException">The name is missing or does not satisfy the configured list.</exception>

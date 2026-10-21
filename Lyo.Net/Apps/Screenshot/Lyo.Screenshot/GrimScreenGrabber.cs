@@ -22,6 +22,7 @@ internal sealed class GrimScreenGrabber : IScreenGrabber
             UseShellExecute = false,
             CreateNoWindow = true
         };
+
         if (region.Width > 0 && region.Height > 0) {
             start.ArgumentList.Add("-g");
             start.ArgumentList.Add($"{region.X},{region.Y} {region.Width}x{region.Height}");
@@ -50,9 +51,7 @@ internal sealed class GrimScreenGrabber : IScreenGrabber
         return ReadPpm(copy.ToArray());
     }
 
-    public void Dispose()
-    {
-    }
+    public void Dispose() { }
 
     private static Image<Rgba32> ReadPpm(byte[] data)
     {
@@ -65,15 +64,16 @@ internal sealed class GrimScreenGrabber : IScreenGrabber
         OperationHelpers.ThrowIf(max != 255, "grim PPM max value must be 255.");
         if (index < data.Length && data[index] is (byte)' ' or (byte)'\n' or (byte)'\r' or (byte)'\t')
             index++;
+
         var needed = width * height * 3;
         OperationHelpers.ThrowIf(index + needed > data.Length, "grim returned a short PPM.");
         var pixels = new Rgba32[width * height];
         for (var i = 0; i < pixels.Length; i++) {
-            var offset = index + (i * 3);
+            var offset = index + i * 3;
             pixels[i] = new(data[offset], data[offset + 1], data[offset + 2], 255);
         }
 
-        return Image.LoadPixelData<Rgba32>(pixels, width, height);
+        return Image.LoadPixelData(pixels, width, height);
     }
 
     private static string NextToken(byte[] data, ref int index)
@@ -82,6 +82,7 @@ internal sealed class GrimScreenGrabber : IScreenGrabber
             if (data[index] == (byte)'#') {
                 while (index < data.Length && data[index] != (byte)'\n')
                     index++;
+
                 continue;
             }
 
@@ -93,6 +94,7 @@ internal sealed class GrimScreenGrabber : IScreenGrabber
             var start = index;
             while (index < data.Length && data[index] is not ((byte)' ' or (byte)'\n' or (byte)'\r' or (byte)'\t'))
                 index++;
+
             return Encoding.ASCII.GetString(data, start, index - start);
         }
 
@@ -104,9 +106,12 @@ internal sealed class GrimScreenGrabber : IScreenGrabber
         var pathEnv = Environment.GetEnvironmentVariable("PATH");
         if (string.IsNullOrEmpty(pathEnv))
             return false;
-        foreach (var dir in pathEnv.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
+
+        foreach (var dir in pathEnv.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)) {
             if (File.Exists(Path.Combine(dir, name)))
                 return true;
+        }
+
         return false;
     }
 }

@@ -7,10 +7,4 @@ namespace Lyo.RateLimit;
 /// <param name="Window">Restore period. Must be at least one millisecond.</param>
 /// <param name="Pattern">Window rule.</param>
 /// <param name="NowUnixMilliseconds">Unix milliseconds. Zero uses the store clock (Redis <c>TIME</c> when the store is Redis).</param>
-public readonly record struct RateLimitRequest(
-    string Policy,
-    string PartitionKey,
-    int PermitLimit,
-    TimeSpan Window,
-    RateLimitWindow Pattern,
-    long NowUnixMilliseconds = 0);
+public readonly record struct RateLimitRequest(string Policy, string PartitionKey, int PermitLimit, TimeSpan Window, RateLimitWindow Pattern, long NowUnixMilliseconds = 0);

@@ -7,8 +7,8 @@ public interface IHtmlService
     string VisibleText(string html);
 
     /// <summary>
-    /// Keeps allowlisted elements (<c>a</c>, <c>p</c>, <c>br</c>, <c>strong</c>, <c>em</c>, <c>ul</c>, <c>ol</c>, <c>li</c>) and safe <c>href</c> values.
-    /// Drops <c>script</c>, event-handler attributes, and <c>javascript:</c> URLs. Other elements are unwrapped so their text remains.
+    /// Keeps allowlisted elements (<c>a</c>, <c>p</c>, <c>br</c>, <c>strong</c>, <c>em</c>, <c>ul</c>, <c>ol</c>, <c>li</c>) and safe <c>href</c> values. Drops <c>script</c>,
+    /// event-handler attributes, and <c>javascript:</c> URLs. Other elements are unwrapped so their text remains.
     /// </summary>
     string Sanitize(string html);
 }

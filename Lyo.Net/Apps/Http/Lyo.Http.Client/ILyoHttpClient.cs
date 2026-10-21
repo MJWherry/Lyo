@@ -8,17 +8,17 @@ namespace Lyo.Http.Client;
 /// <summary>Generic HTTP client: JSON verbs, files, plans, and a session cookie jar. Non-success throws <see cref="LyoHttpException" /> (no problem-details).</summary>
 public interface ILyoHttpClient : IDisposable
 {
-    /// <summary>Effective JSON options for this client.</summary>
-    JsonSerializerOptions GetSerializerOptions();
-
-    /// <summary>Underlying <see cref="HttpClient" />. Do not dispose it when the client came from <c>IHttpClientFactory</c>.</summary>
-    HttpClient GetClient();
-
     /// <summary>Logical session (cookies, pinned UA, items).</summary>
     ILyoHttpSession Session { get; }
 
     /// <summary>Optional compose-without-subclassing hooks.</summary>
     LyoHttpClientHooks Hooks { get; }
+
+    /// <summary>Effective JSON options for this client.</summary>
+    JsonSerializerOptions GetSerializerOptions();
+
+    /// <summary>Underlying <see cref="HttpClient" />. Do not dispose it when the client came from <c>IHttpClientFactory</c>.</summary>
+    HttpClient GetClient();
 
     /// <summary>Starts an unnamed plan with GET <paramref name="uri" />.</summary>
     HttpClientPlanBuilder Get(string uri);

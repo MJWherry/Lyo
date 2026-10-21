@@ -6,11 +6,7 @@ public sealed class FantasyFootballUiTests
     public void TopicTitle_DirectMessage_UsesTheOtherMember()
     {
         var conversation = new FantasyConversationRecord {
-            Type = "CHAT_DIRECT_MESSAGE",
-            Members = [
-                new FantasyMemberRecord { EspnMemberId = "ann", DisplayName = "Ann" },
-                new FantasyMemberRecord { EspnMemberId = "bob", DisplayName = "Bob" }
-            ]
+            Type = "CHAT_DIRECT_MESSAGE", Members = [new() { EspnMemberId = "ann", DisplayName = "Ann" }, new() { EspnMemberId = "bob", DisplayName = "Bob" }]
         };
 
         Assert.Equal("Bob", FantasyFootballUi.TopicTitle(conversation, "ann"));
@@ -19,8 +15,7 @@ public sealed class FantasyFootballUiTests
     [Fact]
     public void TopicTitle_AllMembers_IsLeagueChat()
     {
-        var conversation = new FantasyConversationRecord { Type = "CHAT_ALL_MEMBERS", Members = [new FantasyMemberRecord { EspnMemberId = "ann", DisplayName = "Ann" }] };
-
+        var conversation = new FantasyConversationRecord { Type = "CHAT_ALL_MEMBERS", Members = [new() { EspnMemberId = "ann", DisplayName = "Ann" }] };
         Assert.Equal("League chat", FantasyFootballUi.TopicTitle(conversation, "ann"));
     }
 
@@ -29,8 +24,18 @@ public sealed class FantasyFootballUiTests
     {
         var trade = new FantasyTradeRecord {
             Items = [
-                new FantasyTradeItemRecord { FromEspnTeamId = 1, ToEspnTeamId = 2, PlayerId = 100, PlayerName = "Alpha" },
-                new FantasyTradeItemRecord { FromEspnTeamId = 2, ToEspnTeamId = 1, PlayerId = 200, PlayerName = "Beta" }
+                new() {
+                    FromEspnTeamId = 1,
+                    ToEspnTeamId = 2,
+                    PlayerId = 100,
+                    PlayerName = "Alpha"
+                },
+                new() {
+                    FromEspnTeamId = 2,
+                    ToEspnTeamId = 1,
+                    PlayerId = 200,
+                    PlayerName = "Beta"
+                }
             ]
         };
 

@@ -15,12 +15,12 @@ public static class FileSystemPath
     }
 
     /// <summary>
-    /// Resolves <paramref name="path" /> under <paramref name="normalizedRoot" /> and returns the normalized full path. A relative path resolves against the root; an
-    /// absolute path is used as-is. Throws <see cref="InvalidFormatException" /> when the result escapes the root.
+    /// Resolves <paramref name="path" /> under <paramref name="normalizedRoot" /> and returns the normalized full path. A relative path resolves against the root; an absolute
+    /// path is used as-is. Throws <see cref="InvalidFormatException" /> when the result escapes the root.
     /// </summary>
     /// <remarks>
-    /// <paramref name="normalizedRoot" /> must already be the output of <see cref="NormalizeRoot" />. This is the hot path — every <see cref="IFileSystem" /> operation
-    /// calls it at least once — so it normalizes exactly one path per call.
+    /// <paramref name="normalizedRoot" /> must already be the output of <see cref="NormalizeRoot" />. This is the hot path — every <see cref="IFileSystem" /> operation calls it
+    /// at least once — so it normalizes exactly one path per call.
     /// </remarks>
     public static string Jail(PathStyle style, string normalizedRoot, string path)
     {

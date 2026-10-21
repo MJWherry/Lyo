@@ -12,15 +12,14 @@ public static class Extensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Uses <see cref="IAlgorithmRegistry" /> for <c>{Algo("key")}</c> and <c>{score("key")}</c>.
-        /// Register <c>AddAlgorithms</c> first. <c>AddFormatterService</c> stays free of an Algorithms reference until this is called.
+        /// Uses <see cref="IAlgorithmRegistry" /> for <c>{Algo("key")}</c> and <c>{score("key")}</c>. Register <c>AddAlgorithms</c> first. <c>AddFormatterService</c> stays free of
+        /// an Algorithms reference until this is called.
         /// </summary>
         /// <returns>Service collection for chaining.</returns>
         public IServiceCollection AddFormatterAlgorithms()
         {
             ArgumentHelpers.ThrowIfNull(services);
-            services.TryAddSingleton<IFormatterExpressionEvaluator>(provider =>
-                new AlgorithmFormatterExpressionEvaluator(provider.GetRequiredService<IAlgorithmRegistry>()));
+            services.TryAddSingleton<IFormatterExpressionEvaluator>(provider => new AlgorithmFormatterExpressionEvaluator(provider.GetRequiredService<IAlgorithmRegistry>()));
             return services;
         }
     }

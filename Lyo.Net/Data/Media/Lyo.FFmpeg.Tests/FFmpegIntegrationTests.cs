@@ -1,17 +1,18 @@
+using System.Text;
 using CliWrap;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Core.Records;
 using Lyo.Media.Models;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.FFmpeg.Tests;
 
 public class FFmpegIntegrationTests
 {
+    private static readonly Lazy<string> EncoderList = new(LoadEncoderList);
+
     private static bool HasFfmpeg { get; } = ProbeCli("ffmpeg");
 
     private static bool HasFfprobe { get; } = ProbeCli("ffprobe");
-
-    private static readonly Lazy<string> EncoderList = new(LoadEncoderList);
 
     [Fact]
     [Trait("Category", "Integration")]
@@ -70,6 +71,7 @@ public class FFmpegIntegrationTests
             DropAudio = true,
             PixelFormat = PixelFormat.Yuv420p
         };
+
         var result = await converter.ConvertFileToFileAsync("testsrc=duration=1:size=160x120:rate=10", dst, opts, TestCt);
         Assert.True(result.IsSuccess, string.Join("; ", result.Errors?.Select(e => e.Message) ?? []));
         Assert.True(new FileInfo(dst).Length > 0);
@@ -87,7 +89,8 @@ public class FFmpegIntegrationTests
         var converter = new FFmpegVideoConverter();
         var opts = HasEncoder("libx264")
             ? VideoConversionOptions.ForCompressVideo()
-            : new VideoConversionOptions { Encoder = FirstVideoEncoder(), VideoBitRate = MediaBitRate.Custom("200k"), Format = MediaContainer.Mp4 };
+            : new() { Encoder = FirstVideoEncoder(), VideoBitRate = MediaBitRate.Custom("200k"), Format = MediaContainer.Mp4 };
+
         var result = await converter.ConvertFileToFileAsync(src, dst, opts, TestCt);
         Assert.True(result.IsSuccess, string.Join("; ", result.Errors?.Select(e => e.Message) ?? []));
         Assert.True(new FileInfo(dst).Length > 0);
@@ -105,6 +108,7 @@ public class FFmpegIntegrationTests
         var opts = HasEncoder("libmp3lame")
             ? AudioConversionOptions.ForCompressAudio()
             : AudioConversionOptions.ForCompressAudio(MediaBitRate.Custom("64k"), AudioEncoder.Aac, MediaContainer.Mp4);
+
         var dst = Path.Combine(dir, HasEncoder("libmp3lame") ? "out.mp3" : "out.m4a");
         var result = await converter.ConvertFileToFileAsync(src, dst, opts, TestCt);
         Assert.True(result.IsSuccess, string.Join("; ", result.Errors?.Select(e => e.Message) ?? []));
@@ -344,12 +348,11 @@ public class FFmpegIntegrationTests
             .WithArguments(["-y", "-f", "lavfi", "-i", "sine=frequency=440:duration=3", "-f", "wav", wav])
             .WithValidation(CommandResultValidation.None)
             .ExecuteAsync(TestCt);
+
         Assert.Equal(0, generated.ExitCode);
         var loud = await new FFmpegAudioConverter().ConvertFileToFileAsync(
-            wav,
-            Path.Combine(dir, "loud.wav"),
-            AudioConversionOptions.ForAudio() with { Loudness = LoudnessTarget.Streaming },
-            TestCt);
+            wav, Path.Combine(dir, "loud.wav"), AudioConversionOptions.ForAudio() with { Loudness = LoudnessTarget.Streaming }, TestCt);
+
         Assert.True(loud.IsSuccess, string.Join("; ", loud.Errors?.Select(e => e.Message) ?? []));
         Assert.True(new FileInfo(Path.Combine(dir, "loud.wav")).Length > 0);
     }
@@ -363,16 +366,14 @@ public class FFmpegIntegrationTests
         var src = Path.Combine(dir, "clip.mp4");
         await GenerateTestsrcMp4Async(src);
         var two = await new FFmpegVideoConverter().ConvertFileToFileAsync(
-            src,
-            Path.Combine(dir, "two.mp4"),
-            new VideoConversionOptions {
+            src, Path.Combine(dir, "two.mp4"), new() {
                 Encoder = VideoEncoder.H264,
                 VideoBitRate = MediaBitRate.Custom("200k"),
                 Format = MediaContainer.Mp4,
                 Preset = EncoderPreset.Ultrafast,
                 TwoPass = true
-            },
-            TestCt);
+            }, TestCt);
+
         Assert.True(two.IsSuccess, string.Join("; ", two.Errors?.Select(e => e.Message) ?? []));
         Assert.True(new FileInfo(Path.Combine(dir, "two.mp4")).Length > 0);
     }
@@ -380,9 +381,7 @@ public class FFmpegIntegrationTests
     private static bool ProbeCli(string name)
     {
         try {
-            var result = Cli.Wrap(name).WithArguments("-version").WithValidation(CommandResultValidation.None).ExecuteAsync()
-                .GetAwaiter()
-                .GetResult();
+            var result = Cli.Wrap(name).WithArguments("-version").WithValidation(CommandResultValidation.None).ExecuteAsync().GetAwaiter().GetResult();
             return result.ExitCode == 0;
         }
         catch {
@@ -400,9 +399,25 @@ public class FFmpegIntegrationTests
     private static async Task GenerateTestsrcMp4Async(string path)
     {
         var args = new[] {
-            "-y", "-f", "lavfi", "-i", "testsrc=duration=1:size=160x120:rate=10", "-f", "lavfi", "-i", "sine=duration=1", "-shortest", "-c:v",
-            FFmpegCodecMap.ToFfmpegVideo(FirstVideoEncoder().Id), "-c:a", FFmpegCodecMap.ToFfmpegAudio(FirstAudioEncoder().Id), "-pix_fmt", "yuv420p", path
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            "testsrc=duration=1:size=160x120:rate=10",
+            "-f",
+            "lavfi",
+            "-i",
+            "sine=duration=1",
+            "-shortest",
+            "-c:v",
+            FFmpegCodecMap.ToFfmpegVideo(FirstVideoEncoder().Id),
+            "-c:a",
+            FFmpegCodecMap.ToFfmpegAudio(FirstAudioEncoder().Id),
+            "-pix_fmt",
+            "yuv420p",
+            path
         };
+
         var result = await Cli.Wrap("ffmpeg").WithArguments(args).WithValidation(CommandResultValidation.None).ExecuteAsync();
         Assert.Equal(0, result.ExitCode);
     }
@@ -412,9 +427,27 @@ public class FFmpegIntegrationTests
         var video = HasEncoder("libvpx-vp9") ? "libvpx-vp9" : HasEncoder("libvpx") ? "libvpx" : "libvpx-vp9";
         var audio = HasEncoder("libopus") ? "libopus" : FFmpegCodecMap.ToFfmpegAudio(FirstAudioEncoder().Id);
         var args = new[] {
-            "-y", "-f", "lavfi", "-i", "testsrc=duration=1:size=160x120:rate=10", "-f", "lavfi", "-i", "sine=duration=1", "-shortest", "-c:v", video, "-c:a", audio,
-            "-pix_fmt", "yuv420p", "-f", "webm", path
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            "testsrc=duration=1:size=160x120:rate=10",
+            "-f",
+            "lavfi",
+            "-i",
+            "sine=duration=1",
+            "-shortest",
+            "-c:v",
+            video,
+            "-c:a",
+            audio,
+            "-pix_fmt",
+            "yuv420p",
+            "-f",
+            "webm",
+            path
         };
+
         var result = await Cli.Wrap("ffmpeg").WithArguments(args).WithValidation(CommandResultValidation.None).ExecuteAsync();
         Assert.Equal(0, result.ExitCode);
     }
@@ -448,7 +481,7 @@ public class FFmpegIntegrationTests
     private static string LoadEncoderList()
     {
         try {
-            var stdout = new System.Text.StringBuilder();
+            var stdout = new StringBuilder();
             Cli.Wrap("ffmpeg")
                 .WithArguments(["-hide_banner", "-encoders"])
                 .WithValidation(CommandResultValidation.None)
@@ -457,6 +490,7 @@ public class FFmpegIntegrationTests
                 .ExecuteAsync()
                 .GetAwaiter()
                 .GetResult();
+
             return stdout.ToString();
         }
         catch {
@@ -471,6 +505,5 @@ public class FFmpegIntegrationTests
         return dir;
     }
 
-    private static int CountSpoolFiles()
-        => Directory.GetFiles(Path.GetTempPath(), "lyo-ffmpeg-*").Length;
+    private static int CountSpoolFiles() => Directory.GetFiles(Path.GetTempPath(), "lyo-ffmpeg-*").Length;
 }

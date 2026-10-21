@@ -1,15 +1,24 @@
 # Lyo.Pdf.Models
 
-PDF stack contracts and value types. [`Lyo.Pdf`](../Lyo.Pdf/README.md) implements them, so you can take `IPdfService`, `IPdfReader`, `IPdfWriter`, and `ITextExtractor` without a direct PdfPig or PDFsharp reference.
+PDF stack contracts and value types. [`Lyo.Pdf`](../Lyo.Pdf/README.md) implements them, so you can take `IPdfService`, `IPdfReader`, `IPdfWriter`, and `ITextExtractor` without a
+direct PdfPig or PDFsharp reference.
 
 ## Service contracts
 
-- `IPdfService`. Open PDFs (`OpenFromFile/Bytes/Stream` plus `…Async` and batch variants), open URLs (`OpenFromUrlAsync` / `OpenFromUrlsAsync`, async only), create empty docs or open for edit (`CreateEmpty`, `OpenForEdit` / `OpenForEditAsync`), and merge (`MergePdfs`, `MergePdfsToFile`, `MergePdfsToStream`, `MergePdfFiles`, `MergePdfBytes`, all sync + async).
-- `IPdfReader` (`IDisposable`, `IAsyncDisposable`). Open PDF: `SourceBytes` (immutable buffer for merges / `OpenForEdit`), `Metrics`, `Text` (`ITextExtractor`), `GetInfo()`, and `GetPageSizePoints(pageNumber1Based)`. Not safe across threads.
-- `IPdfWriter` (`IDisposable`). PdfSharp editor with `PageCount`, `ImportPagesFrom(IPdfReader)` / `ImportPagesFrom(ReadOnlySpan<byte>)`, `RemovePage`, `InsertBlankPage`, `ReorderPages`, `ToBytes`, `Save` / `SaveAsync`, and `CopyTo` / `CopyToAsync`. Page indices are zero-based. Not thread-safe.
+- `IPdfService`. Open PDFs (`OpenFromFile/Bytes/Stream` plus `…Async` and batch variants), open URLs (`OpenFromUrlAsync` / `OpenFromUrlsAsync`, async only), create empty docs or
+  open for edit (`CreateEmpty`, `OpenForEdit` / `OpenForEditAsync`), and merge (`MergePdfs`, `MergePdfsToFile`, `MergePdfsToStream`, `MergePdfFiles`, `MergePdfBytes`, all sync +
+  async).
+- `IPdfReader` (`IDisposable`, `IAsyncDisposable`). Open PDF: `SourceBytes` (immutable buffer for merges / `OpenForEdit`), `Metrics`, `Text` (`ITextExtractor`), `GetInfo()`, and
+  `GetPageSizePoints(pageNumber1Based)`. Not safe across threads.
+- `IPdfWriter` (`IDisposable`). PdfSharp editor with `PageCount`, `ImportPagesFrom(IPdfReader)` / `ImportPagesFrom(ReadOnlySpan<byte>)`, `RemovePage`, `InsertBlankPage`,
+  `ReorderPages`, `ToBytes`, `Save` / `SaveAsync`, and `CopyTo` / `CopyToAsync`. Page indices are zero-based. Not thread-safe.
 - `ITextExtractor`. `IPdfDocumentText` + `IPdfDocumentSections` composed together, reached as `IPdfReader.Text`.
-- `IPdfDocumentText`. Words / lines (`GetWords`, `GetLines`, `GetWordsBetween`, `GetLinesBetween`), bounding-box and columnar reads (`GetLinesInBoundingBox`, `GetColumnarTextInBoundingBox`, `GetColumnarText`), key/value extraction (`ExtractKeyValuePairs` with page, word-list, `PdfSection`, and section-name overloads, plus `InferKeyValuePairsFromFormatting`), table extraction (`ExtractTable` / `ExtractDataTable` with the same overload shapes plus `ParseBytesAsDataTable`), and inference helpers (`InferTableHeadersFromFormatting`). Each method has matching sync and async variants.
-- `IPdfDocumentSections`. Slice by section: `GetWordsBetweenSections`, `GetLinesBetweenSections` / `GetLinesBetweenSectionsAsync`, `GetSection` / `GetSectionAsync`. Navigation is anchored by ordered section labels with optional `defaultEndSection`, `startPage`, `endPage`, and `yTolerance`.
+- `IPdfDocumentText`. Words / lines (`GetWords`, `GetLines`, `GetWordsBetween`, `GetLinesBetween`), bounding-box and columnar reads (`GetLinesInBoundingBox`,
+  `GetColumnarTextInBoundingBox`, `GetColumnarText`), key/value extraction (`ExtractKeyValuePairs` with page, word-list, `PdfSection`, and section-name overloads, plus
+  `InferKeyValuePairsFromFormatting`), table extraction (`ExtractTable` / `ExtractDataTable` with the same overload shapes plus `ParseBytesAsDataTable`), and inference helpers
+  (`InferTableHeadersFromFormatting`). Each method has matching sync and async variants.
+- `IPdfDocumentSections`. Slice by section: `GetWordsBetweenSections`, `GetLinesBetweenSections` / `GetLinesBetweenSectionsAsync`, `GetSection` / `GetSectionAsync`. Navigation is
+  anchored by ordered section labels with optional `defaultEndSection`, `startPage`, `endPage`, and `yTolerance`.
 
 ## Value types
 
@@ -26,7 +35,10 @@ PDF stack contracts and value types. [`Lyo.Pdf`](../Lyo.Pdf/README.md) implement
 
 ## Options
 
-- `PdfServiceOptions`. `AddPdfService(...)` registers this as a singleton: `DefaultYTolerance` (5.0), `DefaultKeyValueGap` (0.0), `TableHeaderMergeThreshold` (20.0), `TableHeaderMatchThreshold` (0.75), `TableColumnXTolerance` (5.0), `BoundingBoxOverlapThreshold` (0.8), `MaxContinuationYGap` (10.0), `MaxContinuationXDistance` (100.0), `ValueColumnXTolerance` (20.0), `KeyValueStackedMaxFirstGap` (120.0), `MaxPdfSizeBytes` (falls back to `SuggestedMaxPdfSizeBytes = 25 MiB`), `EnableMetrics` (default `false`), and configuration `SectionName = "PdfServiceOptions"`. There is no shared catalog and no total-loaded-bytes cap; the caller owns each `IPdfReader`.
+- `PdfServiceOptions`. `AddPdfService(...)` registers this as a singleton: `DefaultYTolerance` (5.0), `DefaultKeyValueGap` (0.0), `TableHeaderMergeThreshold` (20.0),
+  `TableHeaderMatchThreshold` (0.75), `TableColumnXTolerance` (5.0), `BoundingBoxOverlapThreshold` (0.8), `MaxContinuationYGap` (10.0), `MaxContinuationXDistance` (100.0),
+  `ValueColumnXTolerance` (20.0), `KeyValueStackedMaxFirstGap` (120.0), `MaxPdfSizeBytes` (falls back to `SuggestedMaxPdfSizeBytes = 25 MiB`), `EnableMetrics` (default `false`),
+  and configuration `SectionName = "PdfServiceOptions"`. There is no shared catalog and no total-loaded-bytes cap; the caller owns each `IPdfReader`.
 
 ## TFMs
 

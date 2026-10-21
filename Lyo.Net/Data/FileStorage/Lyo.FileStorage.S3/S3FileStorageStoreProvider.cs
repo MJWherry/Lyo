@@ -8,13 +8,13 @@ namespace Lyo.FileStorage.S3;
 public sealed class S3FileStorageStoreProvider : IFileStorageStoreProvider, IFileStorageProviderServices
 {
     /// <inheritdoc />
+    public Func<IServiceProvider, IFileStorageService> Create(IServiceCollection services, string storeName, IConfiguration section) => Build(services, storeName, section);
+
+    /// <inheritdoc />
     public string ProviderName => "S3";
 
     /// <inheritdoc />
     public Func<IServiceProvider, IFileStorageService> Create(string storeName, IConfiguration section) => Build(null, storeName, section);
-
-    /// <inheritdoc />
-    public Func<IServiceProvider, IFileStorageService> Create(IServiceCollection services, string storeName, IConfiguration section) => Build(services, storeName, section);
 
     private static Func<IServiceProvider, IFileStorageService> Build(IServiceCollection? services, string storeName, IConfiguration section)
     {

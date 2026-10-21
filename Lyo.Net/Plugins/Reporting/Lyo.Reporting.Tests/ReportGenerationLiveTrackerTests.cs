@@ -1,5 +1,5 @@
-using Lyo.Reporting.Postgres;
 using Lyo.Common.Core.Identifiers;
+using Lyo.Reporting.Postgres;
 
 namespace Lyo.Reporting.Tests;
 
@@ -15,11 +15,9 @@ public class ReportGenerationLiveTrackerTests
         var tracker = new ReportGenerationLiveTracker();
         var id = LyoGuid.CreateV7();
         Assert.False(tracker.IsLive(id));
-
         var scope = tracker.Track(id);
         Assert.True(tracker.IsLive(id));
         Assert.Contains(id, tracker.LiveIds);
-
         scope.Dispose();
         Assert.False(tracker.IsLive(id));
         Assert.Empty(tracker.LiveIds);
@@ -31,11 +29,9 @@ public class ReportGenerationLiveTrackerTests
         var tracker = new ReportGenerationLiveTracker();
         var first = LyoGuid.CreateV7();
         var second = LyoGuid.CreateV7();
-
         using var firstScope = tracker.Track(first);
         var secondScope = tracker.Track(second);
         Assert.Equal(2, tracker.LiveIds.Count);
-
         secondScope.Dispose();
         Assert.True(tracker.IsLive(first));
         Assert.False(tracker.IsLive(second));

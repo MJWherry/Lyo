@@ -11,9 +11,7 @@ public static class AudiobookIdentifierSchemes
 
     public const string Custom = "custom";
 
-    /// <summary>
-    /// Trims the value. <see cref="Isbn" /> keeps digits and a trailing X. <see cref="Asin" /> and <see cref="Custom" /> stay trim-only, so a different case does not match.
-    /// </summary>
+    /// <summary>Trims the value. <see cref="Isbn" /> keeps digits and a trailing X. <see cref="Asin" /> and <see cref="Custom" /> stay trim-only, so a different case does not match.</summary>
     public static string Normalize(string scheme, string value)
     {
         if (value is null)
@@ -45,6 +43,7 @@ public static class AudiobookIdentifierSchemes
             var c = trimmed[i];
             if (c is '-' or ' ')
                 continue;
+
             return c;
         }
 

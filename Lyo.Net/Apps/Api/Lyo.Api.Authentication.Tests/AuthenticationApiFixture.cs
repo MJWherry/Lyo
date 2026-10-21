@@ -1,4 +1,3 @@
-using Lyo.Api;
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.Mapping;
 using Lyo.Api.Middleware;
@@ -8,7 +7,6 @@ using Lyo.Cache;
 using Lyo.Json;
 using Lyo.Testing.Containers;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,6 +33,7 @@ public sealed class AuthenticationApiFixture : PostgresContainerFixtureBase
             o.ConnectionString = connectionString;
             o.EnableAutoMigrations = true;
         });
+
         builder.Services.AddLyoApiAuthentication();
         builder.Services.AddScoped<ILyoMapper>(sp => sp.GetRequiredService<AuthenticationLyoMapper>());
         var app = builder.Build();

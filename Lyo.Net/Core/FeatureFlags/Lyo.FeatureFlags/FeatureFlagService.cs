@@ -5,15 +5,15 @@ namespace Lyo.FeatureFlags;
 
 /// <summary>
 /// Evaluates <see cref="FeatureFlagOptions" /> from an immutable snapshot. Changing the registered options instance does not change answers.
-/// <see cref="IFeatureFlagUpdater.TryApply" /> and a configuration reload replace that snapshot. Readers see the old set or the new set.
-/// Register it with <c>AddFeatureFlags</c>. Apps pass a <see cref="FeatureFlagContext" />; the ASP.NET package builds one from the request.
+/// <see cref="IFeatureFlagUpdater.TryApply" /> and a configuration reload replace that snapshot. Readers see the old set or the new set. Register it with <c>AddFeatureFlags</c>. Apps
+/// pass a <see cref="FeatureFlagContext" />; the ASP.NET package builds one from the request.
 /// </summary>
 public sealed class FeatureFlagService : IFeatureFlagService, IFeatureFlagUpdater, IOptionsMonitor<FeatureFlagOptions>
 {
     private readonly object _gate = new();
     private readonly List<Action<FeatureFlagOptions, string?>> _listeners = [];
-    private volatile Dictionary<string, Snapshot> _flags;
     private volatile FeatureFlagOptions _current;
+    private volatile Dictionary<string, Snapshot> _flags;
 
     /// <summary>Copies <paramref name="options" /> after <see cref="FeatureFlagOptions.Validate" />.</summary>
     public FeatureFlagService(FeatureFlagOptions options)
@@ -24,9 +24,6 @@ public sealed class FeatureFlagService : IFeatureFlagService, IFeatureFlagUpdate
         _flags = Copy(options);
     }
 
-    /// <summary>The snapshot <see cref="TryApply" /> last accepted. This follows reloads. <see cref="IOptions{FeatureFlagOptions}" /> does not.</summary>
-    public FeatureFlagOptions CurrentValue => _current;
-
     /// <inheritdoc />
     public bool IsEnabled(string name, FeatureFlagContext? context = null)
     {
@@ -35,14 +32,41 @@ public sealed class FeatureFlagService : IFeatureFlagService, IFeatureFlagUpdate
         if (!flags.TryGetValue(name, out var flag))
             return false;
 
-        return flag.Mode switch
-        {
+        return flag.Mode switch {
             FeatureFlagMode.On => true,
             FeatureFlagMode.Percentage => Percentage(flag, context),
             FeatureFlagMode.Rules => Rules(flag, context),
-            _ => false
+            var _ => false
         };
     }
+
+    /// <inheritdoc />
+    public bool TryApply(FeatureFlagOptions options)
+    {
+        ArgumentHelpers.ThrowIfNull(options);
+        try {
+            options.Validate();
+        }
+        catch (ArgumentException) {
+            return false;
+        }
+
+        var next = Copy(options);
+        Action<FeatureFlagOptions, string?>[] listeners;
+        lock (_gate) {
+            _flags = next;
+            _current = options;
+            listeners = _listeners.ToArray();
+        }
+
+        foreach (var listener in listeners)
+            listener(options, Options.DefaultName);
+
+        return true;
+    }
+
+    /// <summary>The snapshot <see cref="TryApply" /> last accepted. This follows reloads. <see cref="IOptions{FeatureFlagOptions}" /> does not.</summary>
+    public FeatureFlagOptions CurrentValue => _current;
 
     /// <inheritdoc />
     public FeatureFlagOptions Get(string? name)
@@ -63,34 +87,6 @@ public sealed class FeatureFlagService : IFeatureFlagService, IFeatureFlagUpdate
         return new ChangeRegistration(this, listener);
     }
 
-    /// <inheritdoc />
-    public bool TryApply(FeatureFlagOptions options)
-    {
-        ArgumentHelpers.ThrowIfNull(options);
-        try
-        {
-            options.Validate();
-        }
-        catch (ArgumentException)
-        {
-            return false;
-        }
-
-        var next = Copy(options);
-        Action<FeatureFlagOptions, string?>[] listeners;
-        lock (_gate)
-        {
-            _flags = next;
-            _current = options;
-            listeners = _listeners.ToArray();
-        }
-
-        foreach (var listener in listeners)
-            listener(options, Options.DefaultName);
-
-        return true;
-    }
-
     private static Dictionary<string, Snapshot> Copy(FeatureFlagOptions options)
     {
         var flags = new Dictionary<string, Snapshot>(StringComparer.OrdinalIgnoreCase);
@@ -104,6 +100,7 @@ public sealed class FeatureFlagService : IFeatureFlagService, IFeatureFlagUpdate
     {
         if (flag.Percentage is 0)
             return false;
+
         if (flag.Percentage is 100)
             return true;
 
@@ -119,11 +116,10 @@ public sealed class FeatureFlagService : IFeatureFlagService, IFeatureFlagUpdate
         if (context?.StickinessKey is not null)
             return context.StickinessKey;
 
-        return flag.Stickiness switch
-        {
+        return flag.Stickiness switch {
             FeatureFlagStickiness.Tenant => context?.TenantId,
             FeatureFlagStickiness.Attribute => AttributeValue(context, flag.StickinessAttribute),
-            _ => context?.UserId
+            var _ => context?.UserId
         };
     }
 
@@ -132,8 +128,7 @@ public sealed class FeatureFlagService : IFeatureFlagService, IFeatureFlagUpdate
         if (context is null || string.IsNullOrEmpty(key))
             return null;
 
-        foreach (var attribute in context.Attributes)
-        {
+        foreach (var attribute in context.Attributes) {
             if (string.Equals(attribute.Key, key, StringComparison.Ordinal))
                 return attribute.Value;
         }
@@ -146,8 +141,7 @@ public sealed class FeatureFlagService : IFeatureFlagService, IFeatureFlagUpdate
         if (context is null)
             return false;
 
-        foreach (var rule in flag.Rules)
-        {
+        foreach (var rule in flag.Rules) {
             if (Matches(rule, context))
                 return true;
         }
@@ -159,17 +153,16 @@ public sealed class FeatureFlagService : IFeatureFlagService, IFeatureFlagUpdate
     {
         if (rule.UserId is not null && !string.Equals(rule.UserId, context.UserId, StringComparison.Ordinal))
             return false;
+
         if (rule.TenantId is not null && !string.Equals(rule.TenantId, context.TenantId, StringComparison.Ordinal))
             return false;
 
-        foreach (var claim in rule.Claims)
-        {
+        foreach (var claim in rule.Claims) {
             if (!HasClaim(context, claim))
                 return false;
         }
 
-        foreach (var attribute in rule.Attributes)
-        {
+        foreach (var attribute in rule.Attributes) {
             if (!HasAttribute(context, attribute))
                 return false;
         }
@@ -179,8 +172,7 @@ public sealed class FeatureFlagService : IFeatureFlagService, IFeatureFlagUpdate
 
     private static bool HasClaim(FeatureFlagContext context, FeatureFlagClaim required)
     {
-        foreach (var claim in context.Claims)
-        {
+        foreach (var claim in context.Claims) {
             if (string.Equals(claim.Type, required.Type, StringComparison.Ordinal) && string.Equals(claim.Value, required.Value, StringComparison.Ordinal))
                 return true;
         }
@@ -190,8 +182,7 @@ public sealed class FeatureFlagService : IFeatureFlagService, IFeatureFlagUpdate
 
     private static bool HasAttribute(FeatureFlagContext context, FeatureFlagAttribute required)
     {
-        foreach (var attribute in context.Attributes)
-        {
+        foreach (var attribute in context.Attributes) {
             if (string.Equals(attribute.Key, required.Key, StringComparison.Ordinal) && string.Equals(attribute.Value, required.Value, StringComparison.Ordinal))
                 return true;
         }
@@ -211,10 +202,15 @@ public sealed class FeatureFlagService : IFeatureFlagService, IFeatureFlagUpdate
     private sealed class Snapshot
     {
         public required string Name { get; init; }
+
         public required FeatureFlagMode Mode { get; init; }
+
         public int? Percentage { get; init; }
+
         public FeatureFlagStickiness Stickiness { get; init; }
+
         public string? StickinessAttribute { get; init; }
+
         public required IReadOnlyList<Rule> Rules { get; init; }
 
         public static Snapshot Copy(FeatureFlagDefinition definition)
@@ -223,8 +219,7 @@ public sealed class FeatureFlagService : IFeatureFlagService, IFeatureFlagUpdate
             for (var i = 0; i < definition.Rules.Count; i++)
                 rules[i] = Rule.Copy(definition.Rules[i]);
 
-            return new Snapshot
-            {
+            return new() {
                 Name = definition.Name,
                 Mode = definition.Mode,
                 Percentage = definition.Percentage,
@@ -238,23 +233,27 @@ public sealed class FeatureFlagService : IFeatureFlagService, IFeatureFlagUpdate
     private sealed class Rule
     {
         public string? UserId { get; init; }
+
         public string? TenantId { get; init; }
+
         public required IReadOnlyList<FeatureFlagClaim> Claims { get; init; }
+
         public required IReadOnlyList<FeatureFlagAttribute> Attributes { get; init; }
 
-        public static Rule Copy(FeatureFlagRule rule) => new()
-        {
-            UserId = rule.UserId,
-            TenantId = rule.TenantId,
-            Claims = CopyClaims(rule.Claims),
-            Attributes = CopyAttributes(rule.Attributes)
-        };
+        public static Rule Copy(FeatureFlagRule rule)
+            => new() {
+                UserId = rule.UserId,
+                TenantId = rule.TenantId,
+                Claims = CopyClaims(rule.Claims),
+                Attributes = CopyAttributes(rule.Attributes)
+            };
 
         private static FeatureFlagClaim[] CopyClaims(List<FeatureFlagClaim> claims)
         {
             var copy = new FeatureFlagClaim[claims.Count];
             for (var i = 0; i < claims.Count; i++)
-                copy[i] = new FeatureFlagClaim { Type = claims[i].Type, Value = claims[i].Value };
+                copy[i] = new() { Type = claims[i].Type, Value = claims[i].Value };
+
             return copy;
         }
 
@@ -262,7 +261,8 @@ public sealed class FeatureFlagService : IFeatureFlagService, IFeatureFlagUpdate
         {
             var copy = new FeatureFlagAttribute[attributes.Count];
             for (var i = 0; i < attributes.Count; i++)
-                copy[i] = new FeatureFlagAttribute { Key = attributes[i].Key, Value = attributes[i].Value };
+                copy[i] = new() { Key = attributes[i].Key, Value = attributes[i].Value };
+
             return copy;
         }
     }

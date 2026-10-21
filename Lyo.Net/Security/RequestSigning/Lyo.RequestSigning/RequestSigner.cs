@@ -11,6 +11,9 @@ public sealed class RequestSigner
     private readonly RequestSignatureOptions _options;
     private readonly Func<DateTime> _utcNow;
 
+    /// <summary>Header name from options.</summary>
+    public string HeaderName => _options.HeaderName;
+
     /// <summary>Builds a signer. <paramref name="options" /> is validated here.</summary>
     public RequestSigner(IHashingService hashing, RequestSignatureOptions options, Func<DateTime>? utcNow = null)
     {
@@ -21,9 +24,6 @@ public sealed class RequestSigner
         _options = options;
         _utcNow = utcNow ?? (() => DateTime.UtcNow);
     }
-
-    /// <summary>Header name from options.</summary>
-    public string HeaderName => _options.HeaderName;
 
     /// <summary>Writes a header for <paramref name="input" /> using <see cref="RequestSignatureOptions.Key" /> and the current unix time.</summary>
     public string CreateHeader(RequestSignatureInput input)
@@ -40,8 +40,10 @@ public sealed class RequestSigner
         ArgumentHelpers.ThrowIfNull(input);
         if (string.IsNullOrWhiteSpace(header))
             return RequestSignatureStatus.Missing;
+
         if (!RequestSignature.TryParse(header, out var unix, out var macHex))
             return RequestSignatureStatus.Malformed;
+
         byte[] presented;
         try {
             presented = _hashing.ParseHex(macHex);
@@ -58,6 +60,7 @@ public sealed class RequestSigner
         var matched = Matches(_options.Key, input, unix, presented);
         if (!string.IsNullOrEmpty(_options.PreviousKey))
             matched |= Matches(_options.PreviousKey, input, unix, presented);
+
         return matched ? RequestSignatureStatus.Valid : RequestSignatureStatus.Invalid;
     }
 
@@ -72,6 +75,7 @@ public sealed class RequestSigner
         var now = _utcNow();
         if (now.Kind == DateTimeKind.Local)
             throw new InvalidOperationException("The request signer clock must return UTC.");
+
         return now.Kind == DateTimeKind.Utc ? now : DateTime.SpecifyKind(now, DateTimeKind.Utc);
     }
 

@@ -1,5 +1,4 @@
 using Lyo.Note.Postgres.Database;
-using Lyo.Note.Seed;
 using Lyo.Seed;
 
 namespace Lyo.Note.Seed.Tests;
@@ -10,11 +9,7 @@ public sealed class NoteEfSeedContributorTests
     public async Task NoteEfSeedContributor_Replace_ClearsBeforeInsert()
     {
         var transport = new RecordingSeedTransport();
-        var result = await new SeedRunner().SeedAsync(
-            new NoteEfSeedContributor(),
-            transport,
-            new() { Count = 2, Conflict = SeedConflictMode.Replace, RandomSeed = 1 },
-            TestCt);
+        var result = await new SeedRunner().SeedAsync(new NoteEfSeedContributor(), transport, new() { Count = 2, Conflict = SeedConflictMode.Replace, RandomSeed = 1 }, TestCt);
         Assert.True(result.Success, string.Join("; ", result.Errors));
         Assert.Equal(["clear", "persist"], transport.Log);
         var notes = transport.Items.OfType<NoteEntity>().ToList();
@@ -47,6 +42,7 @@ public sealed class NoteEfSeedContributorTests
             Log.Add("persist");
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

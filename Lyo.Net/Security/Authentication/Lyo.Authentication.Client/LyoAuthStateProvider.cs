@@ -2,12 +2,13 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
+
 namespace Lyo.Authentication.Client;
 
 /// <summary>
-/// Blazor Server <see cref="AuthenticationStateProvider" /> that re-projects the consumer session-cookie principal into Blazor auth state. Thin adapter —
-/// cookie unsealing and session lookup happen in <see cref="LyoAuthCookieAuthenticationHandler" />; this just returns whatever ASP.NET already established for
-/// the current circuit's <see cref="HttpContext" />.
+/// Blazor Server <see cref="AuthenticationStateProvider" /> that re-projects the consumer session-cookie principal into Blazor auth state. Thin adapter — cookie unsealing
+/// and session lookup happen in <see cref="LyoAuthCookieAuthenticationHandler" />; this just returns whatever ASP.NET already established for the current circuit's
+/// <see cref="HttpContext" />.
 /// </summary>
 public sealed class LyoAuthStateProvider : AuthenticationStateProvider
 {

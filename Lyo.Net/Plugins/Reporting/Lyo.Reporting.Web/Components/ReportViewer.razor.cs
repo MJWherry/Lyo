@@ -1,4 +1,4 @@
-using Lyo.Reporting.Models.Composition;
+using Lyo.Reporting.Models;
 using Lyo.Reporting.Models.Controls;
 using Lyo.Reporting.Models.Models;
 using Microsoft.AspNetCore.Components;
@@ -12,11 +12,11 @@ public partial class ReportViewer<T>
     public Report<T> Report { get; set; } = null!;
 
     /// <summary>
-    /// Chart.js bundle used to draw <see cref="ContentType.Chart" /> blocks. Defaults to the copy this package ships as a static web asset, so charts render
-    /// with no outbound network. Set <see cref="Lyo.Reporting.Models.Constants.Charts.CdnScriptUrl" /> (or any host-served URL) to override. Empty suppresses the script and leaves canvases blank.
+    /// Chart.js bundle used to draw <see cref="ContentType.Chart" /> blocks. Defaults to the copy this package ships as a static web asset, so charts render with no outbound
+    /// network. Set <see cref="Lyo.Reporting.Models.Constants.Charts.CdnScriptUrl" /> (or any host-served URL) to override. Empty suppresses the script and leaves canvases blank.
     /// </summary>
     [Parameter]
-    public string ChartScriptUrl { get; set; } = Lyo.Reporting.Models.Constants.Charts.DefaultScriptUrl;
+    public string ChartScriptUrl { get; set; } = Constants.Charts.DefaultScriptUrl;
 
     /// <summary>
     /// Emit the Chart.js bundle inline instead of as a <c>src</c> reference. Set by the HTML and PDF renderers, whose output is a standalone document where a relative asset URL
@@ -43,11 +43,11 @@ public partial class ReportViewer<T>
 
     private bool HasChartBlocks => ReportChartBootstrap.ReportHasChart(Report.Sections);
 
+    private string? PageRuleCss => Paint.PageRuleCss;
+
     private string GetRootStyles() => Paint.GetRootStyles();
 
     private string GetWatermarkStyles() => Paint.GetWatermarkStyles();
-
-    private string? PageRuleCss => Paint.PageRuleCss;
 
     private RenderFragment RenderSection(Section section, int depth) => Paint.RenderSection(section, depth);
 

@@ -1,6 +1,7 @@
 # Lyo.Web.Host
 
-App bar, drawer, dark-mode toggle, reconnect modal, and `AddLyoWebShell()` for the client-side services every Lyo Blazor host needs. The host still owns auth and domain navigation through render fragments. TestGateway now wraps `LyoAppShell` instead of owning the chrome.
+App bar, drawer, dark-mode toggle, reconnect modal, and `AddLyoWebShell()` for the client-side services every Lyo Blazor host needs. The host still owns auth and domain navigation
+through render fragments. TestGateway now wraps `LyoAppShell` instead of owning the chrome.
 
 ## Features
 

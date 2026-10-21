@@ -93,8 +93,7 @@ public sealed class WatchableLocalFileSystem : IFileSystem
     public void CopyFile(string source, string dest, bool overwrite = false) => _inner.CopyFile(source, dest, overwrite);
 
     /// <inheritdoc />
-    public Task CopyFileAsync(string source, string dest, bool overwrite = false, CancellationToken ct = default)
-        => _inner.CopyFileAsync(source, dest, overwrite, ct);
+    public Task CopyFileAsync(string source, string dest, bool overwrite = false, CancellationToken ct = default) => _inner.CopyFileAsync(source, dest, overwrite, ct);
 
     /// <inheritdoc />
     public Stream OpenRead(string path) => _inner.OpenRead(path);
@@ -161,9 +160,10 @@ public sealed class WatchableLocalFileSystem : IFileSystem
                 ChangeTypeEnum.Changed => FileSystemChangeKind.Changed,
                 ChangeTypeEnum.Moved => FileSystemChangeKind.Moved,
                 ChangeTypeEnum.Renamed => FileSystemChangeKind.Renamed,
-                _ => FileSystemChangeKind.Changed
+                var _ => FileSystemChangeKind.Changed
             };
-            Changed?.Invoke(this, new FileSystemChange(kind, info.IsDirectory, info.OldPath, info.NewPath));
+
+            Changed?.Invoke(this, new(kind, info.IsDirectory, info.OldPath, info.NewPath));
         }
     }
 }

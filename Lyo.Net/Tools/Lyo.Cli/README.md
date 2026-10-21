@@ -1,6 +1,8 @@
 # Lyo.Cli
 
-A `PackAsTool` dotnet tool (command name `lyo`) over Lyo libraries. **crypt** handles encryption (Lyo.Encryption); **enc** handles binary/charset encoding (Lyo.TextEncoding). The remaining verbs are **compress**/**decompress**, **hash**/**checksum**, **id**, **query build|exec**, **csv**/**xlsx**, **json**/**yaml**/**xml**/**toml**, **nfc**, and **rfid**. No dedicated CLI test project exists. System.CommandLine parses arguments; package tests cover library behavior.
+A `PackAsTool` dotnet tool (command name `lyo`) over Lyo libraries. **crypt** handles encryption (Lyo.Encryption); **enc** handles binary/charset encoding (Lyo.TextEncoding). The
+remaining verbs are **compress**/ **decompress**, **hash**/ **checksum**, **id**, **query build|exec**, **csv**/ **xlsx**, **json**/ **yaml**/ **xml**/ **toml**, **nfc**, and
+**rfid**. No dedicated CLI test project exists. System.CommandLine parses arguments; package tests cover library behavior.
 
 ## Features
 
@@ -70,11 +72,13 @@ lyo crypt encrypt secret.bin -o - --key 'passphrase' | lyo crypt decrypt - --key
 
 ## Pack and install
 
-The library pack (`scripts/nuget/build_nuget.py`) skips `Tools/`. Pack the tool with `dotnet pack Lyo.Net/Tools/Lyo.Cli/Lyo.Cli.csproj -c Release -o artifacts/cli` then `dotnet tool install -g Lyo.Cli --add-source artifacts/cli`, or use `python3 scripts/cli/pack_install.py pack-install`.
+The library pack (`scripts/nuget/build_nuget.py`) skips `Tools/`. Pack the tool with `dotnet pack Lyo.Net/Tools/Lyo.Cli/Lyo.Cli.csproj -c Release -o artifacts/cli` then
+`dotnet tool install -g Lyo.Cli --add-source artifacts/cli`, or use `python3 scripts/cli/pack_install.py pack-install`.
 
 ## Copy to clipboard (`-c/--copy`)
 
-Works on `id` and `hash`/`checksum` text results. Talks to native OS tools through Process stdin: Windows `clip`, macOS `pbcopy`, Linux `wl-copy` / `xclip` / `xsel`. No TextCopy package. For bulk IDs: `-n/--count N` (one ID per line; all copied together when using `-c`).
+Works on `id` and `hash`/`checksum` text results. Talks to native OS tools through Process stdin: Windows `clip`, macOS `pbcopy`, Linux `wl-copy` / `xclip` / `xsel`. No TextCopy
+package. For bulk IDs: `-n/--count N` (one ID per line; all copied together when using `-c`).
 
 ## Dependencies
 

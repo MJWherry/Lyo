@@ -35,8 +35,8 @@ public sealed class S3FileSystem : IFileSystem
 
     /// <inheritdoc />
     public FileSystemCapabilities Capabilities
-        => FileSystemCapabilities.Read | FileSystemCapabilities.Write | FileSystemCapabilities.CreateDirectory | FileSystemCapabilities.Delete
-           | FileSystemCapabilities.Move | FileSystemCapabilities.Copy;
+        => FileSystemCapabilities.Read | FileSystemCapabilities.Write | FileSystemCapabilities.CreateDirectory | FileSystemCapabilities.Delete | FileSystemCapabilities.Move |
+            FileSystemCapabilities.Copy;
 
     /// <inheritdoc />
     public IFileSystemWatch? Watch(string path, bool recursive = true) => null;
@@ -52,7 +52,7 @@ public sealed class S3FileSystem : IFileSystem
             return true;
 
         var prefix = ObjectStoreVfs.DirectoryPrefix(jailed);
-        var listed = await ListPageAsync(prefix, delimiter: "/", maxKeys: 2, ct).ConfigureAwait(false);
+        var listed = await ListPageAsync(prefix, "/", 2, ct).ConfigureAwait(false);
         return listed.Objects.Count > 0 || listed.CommonPrefixes.Count > 0;
     }
 
@@ -80,7 +80,7 @@ public sealed class S3FileSystem : IFileSystem
         var jailed = Jail(path);
         var prefix = ObjectStoreVfs.DirectoryPrefix(jailed);
         if (!recursive) {
-            var page = await ListPageAsync(prefix, delimiter: "/", maxKeys: 10, ct).ConfigureAwait(false);
+            var page = await ListPageAsync(prefix, "/", 10, ct).ConfigureAwait(false);
             var extras = page.Objects.Where(o => !string.Equals(o.Key, prefix, StringComparison.Ordinal)).ToList();
             if (extras.Count > 0 || page.CommonPrefixes.Count > 0)
                 throw new IOException($"Directory is not empty: {path}");
@@ -93,7 +93,7 @@ public sealed class S3FileSystem : IFileSystem
 
         string? token = null;
         do {
-            var page = await ListPageAsync(prefix, delimiter: null, maxKeys: 1000, ct, token).ConfigureAwait(false);
+            var page = await ListPageAsync(prefix, null, 1000, ct, token).ConfigureAwait(false);
             if (page.Objects.Count > 0) {
                 // One DeleteObjects call per page instead of one DeleteObject per key: a thousand-object directory costs one round trip, not a thousand.
                 var keys = page.Objects.Select(o => new KeyVersion { Key = o.Key }).ToList();
@@ -115,7 +115,7 @@ public sealed class S3FileSystem : IFileSystem
         List<FileSystemEntry> entries = [];
         string? token = null;
         do {
-            var page = await ListPageAsync(prefix, delimiter: "/", maxKeys: 1000, ct, token).ConfigureAwait(false);
+            var page = await ListPageAsync(prefix, "/", 1000, ct, token).ConfigureAwait(false);
             entries.AddRange(MapPage(page, prefix));
             token = page.NextToken;
         } while (token != null);
@@ -124,8 +124,7 @@ public sealed class S3FileSystem : IFileSystem
     }
 
     /// <inheritdoc />
-    public async IAsyncEnumerable<FileSystemEntry> EnumerateDirectoryAsync(
-        string path, bool recursive = false, [EnumeratorCancellation] CancellationToken ct = default)
+    public async IAsyncEnumerable<FileSystemEntry> EnumerateDirectoryAsync(string path, bool recursive = false, [EnumeratorCancellation] CancellationToken ct = default)
     {
         var pending = new Queue<string>();
         pending.Enqueue(path);
@@ -136,10 +135,11 @@ public sealed class S3FileSystem : IFileSystem
             var prefix = jailed == "/" ? "" : ObjectStoreVfs.DirectoryPrefix(jailed);
             string? token = null;
             do {
-                var page = await ListPageAsync(prefix, delimiter: "/", maxKeys: 1000, ct, token).ConfigureAwait(false);
+                var page = await ListPageAsync(prefix, "/", 1000, ct, token).ConfigureAwait(false);
                 foreach (var entry in MapPage(page, prefix)) {
                     ct.ThrowIfCancellationRequested();
                     yield return entry;
+
                     if (recursive && entry.IsDirectory)
                         pending.Enqueue(entry.Path);
                 }
@@ -153,8 +153,7 @@ public sealed class S3FileSystem : IFileSystem
     public bool FileExists(string path) => FileSystemSync.Wait(FileExistsAsync(path));
 
     /// <inheritdoc />
-    public async Task<bool> FileExistsAsync(string path, CancellationToken ct = default)
-        => await HeadOrNullAsync(Jail(path), ct).ConfigureAwait(false) is not null;
+    public async Task<bool> FileExistsAsync(string path, CancellationToken ct = default) => await HeadOrNullAsync(Jail(path), ct).ConfigureAwait(false) is not null;
 
     /// <inheritdoc />
     public FileSystemEntry? GetEntry(string path) => FileSystemSync.Wait(GetEntryAsync(path));
@@ -214,7 +213,12 @@ public sealed class S3FileSystem : IFileSystem
             throw new IOException($"Destination already exists: {dest}");
 
         await _client.CopyObjectAsync(
-                new() { SourceBucket = _bucket, SourceKey = src, DestinationBucket = _bucket, DestinationKey = dst }, ct)
+                new() {
+                    SourceBucket = _bucket,
+                    SourceKey = src,
+                    DestinationBucket = _bucket,
+                    DestinationKey = dst
+                }, ct)
             .ConfigureAwait(false);
     }
 
@@ -242,10 +246,11 @@ public sealed class S3FileSystem : IFileSystem
     {
         ct.ThrowIfCancellationRequested();
         var key = ObjectStoreVfs.ToObjectKey(Jail(path));
-        return Task.FromResult<Stream>(new CommitOnCloseStream(async bytes => {
-            using var ms = new MemoryStream(bytes);
-            await _client.PutObjectAsync(new() { BucketName = _bucket, Key = key, InputStream = ms }, ct).ConfigureAwait(false);
-        }));
+        return Task.FromResult<Stream>(
+            new CommitOnCloseStream(async bytes => {
+                using var ms = new MemoryStream(bytes);
+                await _client.PutObjectAsync(new() { BucketName = _bucket, Key = key, InputStream = ms }, ct).ConfigureAwait(false);
+            }));
     }
 
     /// <inheritdoc />
@@ -259,8 +264,7 @@ public sealed class S3FileSystem : IFileSystem
     public long GetLength(string path) => FileSystemSync.Wait(GetLengthAsync(path));
 
     /// <inheritdoc />
-    public async Task<long> GetLengthAsync(string path, CancellationToken ct = default)
-        => (await HeadOrThrowAsync(path, ct).ConfigureAwait(false)).ContentLength;
+    public async Task<long> GetLengthAsync(string path, CancellationToken ct = default) => (await HeadOrThrowAsync(path, ct).ConfigureAwait(false)).ContentLength;
 
     /// <inheritdoc />
     public DateTimeOffset GetCreationTimeUtc(string path) => GetLastWriteTimeUtc(path);

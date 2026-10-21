@@ -1,14 +1,11 @@
-using Lyo.Api.Services.Crud.Read.Query;
-using Lyo.Api;
+using System.Diagnostics.CodeAnalysis;
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.Export;
-using Lyo.Api.Mapping;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Error;
+using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Cache;
 using Lyo.Common.Core.Identifiers;
-using Lyo.Encryption;
-using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Request;
@@ -16,12 +13,10 @@ using Lyo.Job.Models.Response;
 using Lyo.Job.Models.Security;
 using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
-using Lyo.Job.Postgres.Events;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Constants = Lyo.Job.Models.Constants;
 using JobRunResult = Lyo.Job.Postgres.Database.JobRunResult;
@@ -48,7 +43,6 @@ public static class Extensions
                         }
 
                         JobDefinitionWriteValidator.ValidateParameters(ctx.Entity.JobParameters);
-
                         foreach (var schedule in ctx.Entity.JobSchedules) {
                             if (schedule.Id == default)
                                 schedule.Id = LyoGuid.CreateCombPostgres();
@@ -84,7 +78,9 @@ public static class Extensions
                     BeforeDelete = ctx => JobDefinitionCascadeDelete.RemoveDependents(ctx.DbContext, ctx.Entity.Id),
                     AfterDelete = ctx => {
                         app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.Id).GetAwaiter().GetResult();
-                        QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<JobRun, JobDefinition>(ctx.Services.GetService<ICacheService>()).GetAwaiter().GetResult();
+                        QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<JobRun, JobDefinition>(ctx.Services.GetService<ICacheService>())
+                            .GetAwaiter()
+                            .GetResult();
                     }
                 })
             .Build();
@@ -188,12 +184,14 @@ public static class Extensions
             .WithGet()
             .WithDelete(
                 ctx => RemoveJobRunDependents(ctx.DbContext, ctx.Entity),
-                ctx => QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<JobRun, JobDefinition>(ctx.Services.GetService<ICacheService>()).GetAwaiter().GetResult(),
-                ["JobRunLogs", "JobRunParameters", "JobRunResults", "InverseReRanFromJobRun", "InverseParentJobRun"])
+                ctx => QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<JobRun, JobDefinition>(ctx.Services.GetService<ICacheService>())
+                    .GetAwaiter()
+                    .GetResult(), ["JobRunLogs", "JobRunParameters", "JobRunResults", "InverseReRanFromJobRun", "InverseParentJobRun"])
             .WithDeleteBulk(
                 ctx => RemoveJobRunDependents(ctx.DbContext, ctx.Entity),
-                ctx => QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<JobRun, JobDefinition>(ctx.Services.GetService<ICacheService>()).GetAwaiter().GetResult(),
-                ["JobRunLogs", "JobRunParameters", "JobRunResults", "InverseReRanFromJobRun", "InverseParentJobRun"])
+                ctx => QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<JobRun, JobDefinition>(ctx.Services.GetService<ICacheService>())
+                    .GetAwaiter()
+                    .GetResult(), ["JobRunLogs", "JobRunParameters", "JobRunResults", "InverseReRanFromJobRun", "InverseParentJobRun"])
             .WithExport()
             .Build();
 
@@ -251,8 +249,7 @@ public static class Extensions
 
         app.CreateBuilder<JobContext, JobBlackoutWindow, JobBlackoutWindowReq, JobBlackoutWindowRes, Guid>(Constants.Rest.Job.BlackoutWindows, "Job")
             .WithCrud(
-                ApiFeatureSet.DefaultCrud,
-                new() {
+                ApiFeatureSet.DefaultCrud, new() {
                     BeforeCreate = ctx => {
                         ctx.Entity.Id = LyoGuid.CreateCombPostgres();
                         JobBlackoutWindowWriteValidator.ValidateAndNormalize(ctx.Entity);
@@ -339,13 +336,13 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Maps <c>POST /Job/Workflow/{id}/Start</c>, the only way to get a workflow running. The generic CRUD create on <c>/Job/Workflow/Run</c> writes a run row but leaves it
-    /// with no steps and no created-event, so it would never execute. Invoked by <see cref="BuildJobGroup" />.
+    /// Maps <c>POST /Job/Workflow/{id}/Start</c>, the only way to get a workflow running. The generic CRUD create on <c>/Job/Workflow/Run</c> writes a run row but leaves it with
+    /// no steps and no created-event, so it would never execute. Invoked by <see cref="BuildJobGroup" />.
     /// </summary>
     private static void MapWorkflowStartEndpoint(WebApplication app)
         => app.MapPost(
-                $"/{Constants.Rest.Job.Workflows}/{{id:guid}}/Start",
-                async (Guid id, [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] JobWorkflowStartReq? req, JobWorkflowService workflowService, CancellationToken ct) => {
+                $"/{Constants.Rest.Job.Workflows}/{{id:guid}}/Start", async (
+                    Guid id, [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] JobWorkflowStartReq? req, JobWorkflowService workflowService, CancellationToken ct) => {
                     var result = await workflowService.StartWorkflowAsync(id, req, ct).ConfigureAwait(false);
                     // Return CreateResult so ApiClient deserializers receive IsSuccess/Data, matching the run-create endpoint.
                     return result.IsSuccess ? Results.Created($"/{Constants.Rest.Job.WorkflowRuns}/{result.Data!.Id}", result) : ProblemResult(result.Error);
@@ -359,7 +356,9 @@ public static class Extensions
                 $"/{Constants.Rest.Job.Definitions}/{{id:guid}}/Stats", async (Guid id, int days, JobService jobService, CancellationToken ct) => {
                     days = days > 0 ? days : 30;
                     var stats = await jobService.GetDefinitionStats(id, days, ct).ConfigureAwait(false);
-                    return stats is null ? throw ApiErrorException.From(LyoProblemDetailsBuilder.CreateWithActivity().NotFound("Job definition", id.ToString()).Build()) : Results.Ok(stats);
+                    return stats is null
+                        ? throw ApiErrorException.From(LyoProblemDetailsBuilder.CreateWithActivity().NotFound("Job definition", id.ToString()).Build())
+                        : Results.Ok(stats);
                 })
             .WithTags("Job")
             .WithName("GetJobDefinitionStats");
@@ -401,8 +400,8 @@ public static class Extensions
             .WithName("CreateJobRun");
 
         app.MapPost(
-                $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Started",
-                async (Guid id, [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] JobRunStartedReq? req, JobService jobService, CancellationToken ct) => {
+                $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Started", async (
+                    Guid id, [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] JobRunStartedReq? req, JobService jobService, CancellationToken ct) => {
                     var (run, error) = await jobService.StartedJobRun(id, req, ct).ConfigureAwait(false);
                     return error is null ? Results.Ok(run) : ProblemResult(error);
                 })
@@ -480,7 +479,7 @@ public static class Extensions
     }
 
     /// <summary>Throws <see cref="ApiErrorException" /> so LoggingMiddleware writes and logs the problem. Uses a generic 400 when no problem was produced.</summary>
-    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
+    [DoesNotReturn]
     private static IResult ProblemResult(LyoProblemDetails? error)
     {
         error ??= LyoProblemDetailsBuilder.CreateWithActivity()

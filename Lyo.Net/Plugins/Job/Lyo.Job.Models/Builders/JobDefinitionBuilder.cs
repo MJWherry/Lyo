@@ -1,15 +1,14 @@
-using Lyo.Common.Core.Enums;
-using Lyo.Common.Metadata.Records;
-using Lyo.Exceptions;
-using Lyo.Job.Models.Enums;
-using Lyo.Job.Models.Request;
-using Lyo.Query.Models.Enums;
-using Lyo.Schedule.Models;
 #if NET6_0_OR_GREATER
 using TimeOnly = System.TimeOnly;
 #else
 using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 #endif
+using Lyo.Common.Core.Enums;
+using Lyo.Common.Metadata.Records;
+using Lyo.Exceptions;
+using Lyo.Job.Models.Enums;
+using Lyo.Job.Models.Request;
+using Lyo.Schedule.Models;
 
 namespace Lyo.Job.Models.Builders;
 
@@ -171,6 +170,7 @@ public class JobDefinitionBuilder(JobDefinitionReq? request = null)
                 Value = value is null ? null : type.ToJson(value),
                 Required = required
             });
+
         return this;
     }
 
@@ -183,6 +183,7 @@ public class JobDefinitionBuilder(JobDefinitionReq? request = null)
                 Type = type.FullName,
                 EncryptedValue = value
             });
+
         return this;
     }
 
@@ -195,10 +196,7 @@ public class JobDefinitionBuilder(JobDefinitionReq? request = null)
     public JobDefinitionBuilder AddPaginationAmount(int pageAmount, bool required = false)
         => AddJobParameter(Constants.Data.JobRunParameterKey.PaginationAmount, LyoTypeInfo.Int, pageAmount, required: required);
 
-    /// <summary>
-    /// Sets automatic retries: <paramref name="maxRetryCount" /> attempts with a <paramref name="backoffSeconds" /> base delay that grows per
-    /// <paramref name="backoffType" />.
-    /// </summary>
+    /// <summary>Sets automatic retries: <paramref name="maxRetryCount" /> attempts with a <paramref name="backoffSeconds" /> base delay that grows per <paramref name="backoffType" />.</summary>
     public JobDefinitionBuilder WithRetries(int maxRetryCount, int backoffSeconds = 0, JobRetryBackoffType backoffType = JobRetryBackoffType.Linear)
     {
         _request.MaxRetryCount = maxRetryCount;
@@ -221,10 +219,7 @@ public class JobDefinitionBuilder(JobDefinitionReq? request = null)
         return this;
     }
 
-    /// <summary>
-    /// Turns on the circuit breaker: auto-disable after <paramref name="threshold" /> consecutive failures, auto-reset after
-    /// <paramref name="resetMinutes" /> minutes.
-    /// </summary>
+    /// <summary>Turns on the circuit breaker: auto-disable after <paramref name="threshold" /> consecutive failures, auto-reset after <paramref name="resetMinutes" /> minutes.</summary>
     public JobDefinitionBuilder WithCircuitBreaker(int threshold, int resetMinutes = 0)
     {
         _request.CircuitBreakerThreshold = threshold;

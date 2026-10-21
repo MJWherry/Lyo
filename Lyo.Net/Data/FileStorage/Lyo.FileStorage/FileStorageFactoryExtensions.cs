@@ -15,15 +15,12 @@ public static class FileStorageFactoryExtensions
         ArgumentHelpers.ThrowIfNull(services);
         ArgumentHelpers.ThrowIfNull(configure);
         var catalog = Catalog(services);
-        configure(new FileStorageFactoryBuilder(services, catalog));
+        configure(new(services, catalog));
         return services;
     }
 
     /// <summary>Binds <c>Default</c> and <c>Stores</c> from <paramref name="sectionName" />. Disk is available without an extra provider call.</summary>
-    public static IServiceCollection AddFileStorageFactoryFromConfiguration(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        string sectionName = "FileStorage")
+    public static IServiceCollection AddFileStorageFactoryFromConfiguration(this IServiceCollection services, IConfiguration configuration, string sectionName = "FileStorage")
     {
         ArgumentHelpers.ThrowIfNull(services);
         ArgumentHelpers.ThrowIfNull(configuration);
@@ -70,7 +67,7 @@ public static class FileStorageFactoryExtensions
         if (existing?.ImplementationInstance is FileStorageFactoryCatalog catalog)
             return catalog;
 
-        catalog = new FileStorageFactoryCatalog();
+        catalog = new();
         services.AddSingleton(catalog);
         services.AddScoped<IFileStorageFactory, FileStorageFactory>();
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IFileStorageStoreProvider, DiskFileStorageStoreProvider>());

@@ -6,9 +6,9 @@ using Lyo.Streams;
 namespace Lyo.Encryption.Rsa;
 
 /// <summary>
-/// Recreates the legacy per-chunk stream frame (<c>[formatVersion:1][algorithmId:1][reserved:2]</c> then length-prefixed ciphertext chunks) used by the RSA
-/// encrypt/decrypt services so on-disk <c>.rsa</c> streams/files stay byte-compatible after the split from <see cref="EncryptionServiceBase" />. The caller supplies the
-/// per-chunk transform (RSA encrypt/decrypt of a buffer slice).
+/// Recreates the legacy per-chunk stream frame (<c>[formatVersion:1][algorithmId:1][reserved:2]</c> then length-prefixed ciphertext chunks) used by the RSA encrypt/decrypt
+/// services so on-disk <c>.rsa</c> streams/files stay byte-compatible after the split from <see cref="EncryptionServiceBase" />. The caller supplies the per-chunk transform (RSA
+/// encrypt/decrypt of a buffer slice).
 /// </summary>
 internal static class RsaStreamCodec
 {

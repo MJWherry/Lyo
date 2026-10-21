@@ -1,6 +1,5 @@
 using Lyo.Seed;
 using Lyo.ShortUrl.Postgres.Database;
-using Lyo.ShortUrl.Seed;
 
 namespace Lyo.ShortUrl.Seed.Tests;
 
@@ -14,11 +13,12 @@ public sealed class ShortUrlEfSeedContributorTests
         var clicks = transport.Items.OfType<UrlClickEntity>().ToList();
         Assert.Equal(3, urls.Count);
         Assert.Equal(3, clicks.Count);
-        Assert.All(urls, url => {
-            Assert.True(url.IsActive);
-            Assert.False(string.IsNullOrWhiteSpace(url.LongUrl));
-            Assert.Contains(clicks, click => click.ShortUrlId == url.Id);
-        });
+        Assert.All(
+            urls, url => {
+                Assert.True(url.IsActive);
+                Assert.False(string.IsNullOrWhiteSpace(url.LongUrl));
+                Assert.Contains(clicks, click => click.ShortUrlId == url.Id);
+            });
     }
 
     private static async Task<RecordingSeedTransport> SeedAsync(SeedContributor contributor, int count)
@@ -44,6 +44,7 @@ public sealed class ShortUrlEfSeedContributorTests
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

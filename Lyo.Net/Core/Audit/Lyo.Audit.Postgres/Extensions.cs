@@ -1,11 +1,11 @@
 using Lyo.Audit.Postgres.Database;
-using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
 using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace Lyo.Audit.Postgres;
 
 /// <summary>DI helpers that register the PostgreSQL audit context.</summary>
@@ -48,7 +48,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresAuditOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddAuditDbContextFactory(options);
         }
 
@@ -60,7 +59,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPostgresDbContextFactory<AuditDbContext, PostgresAuditOptions>(options);
-
             return services;
         }
 
@@ -87,7 +85,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresAuditOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddPostgresAuditRecorder(options);
         }
 

@@ -28,9 +28,7 @@ public static class ReportLayoutCss
         return string.IsNullOrEmpty(shorthand) ? DefaultPadding(compact) : shorthand;
     }
 
-    /// <summary>
-    /// <c>@page</c> rule for print/PDF, or empty when size and margin are all default-auto. Values are sanitized.
-    /// </summary>
+    /// <summary><c>@page</c> rule for print/PDF, or empty when size and margin are all default-auto. Values are sanitized.</summary>
     public static string ResolvePageRule(Layout layout)
     {
         var size = ResolvePageSize(layout);
@@ -41,6 +39,7 @@ public static class ReportLayoutCss
         var parts = new List<string>();
         if (!string.IsNullOrEmpty(size))
             parts.Add($"size: {size}");
+
         if (!string.IsNullOrEmpty(margin))
             parts.Add($"margin: {margin}");
 
@@ -60,6 +59,7 @@ public static class ReportLayoutCss
             "tabloid" => "tabloid",
             var _ => null
         };
+
         if (token is null)
             return string.Empty;
 

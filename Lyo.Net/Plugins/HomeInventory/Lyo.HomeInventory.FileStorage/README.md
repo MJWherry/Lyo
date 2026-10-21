@@ -1,6 +1,7 @@
 # Lyo.HomeInventory.FileStorage
 
-Optional composition of `IFileStorageService` and `IHomeInventoryStore`. `AddHomeInventoryFileStorage` registers `IHomeInventoryAttachmentFiles` when the host already has `IFileStorageService`. Path prefixes come from `HomeInventoryFilePaths`.
+Optional composition of `IFileStorageService` and `IHomeInventoryStore`. `AddHomeInventoryFileStorage` registers `IHomeInventoryAttachmentFiles` when the host already has
+`IFileStorageService`. Path prefixes come from `HomeInventoryFilePaths`.
 
 ## Features
 

@@ -5,8 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Lyo.FileStorage;
 
 /// <summary>
-/// Optional companion to <see cref="IFileStorageStoreProvider" />. Implement this when a configuration section must also register keyed services, such as multipart, that close
-/// over the same options and client as the store.
+/// Optional companion to <see cref="IFileStorageStoreProvider" />. Implement this when a configuration section must also register keyed services, such as multipart, that
+/// close over the same options and client as the store.
 /// </summary>
 public interface IFileStorageProviderServices
 {

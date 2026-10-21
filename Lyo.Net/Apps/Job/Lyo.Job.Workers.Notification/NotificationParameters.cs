@@ -1,7 +1,7 @@
 using Lyo.Job.Worker;
-using Microsoft.Extensions.Logging;
-using Lyo.Result;
 using Lyo.Parameters;
+using Lyo.Result;
+using Microsoft.Extensions.Logging;
 
 namespace Lyo.Job.Workers.Notification;
 
@@ -35,6 +35,5 @@ internal static class NotificationParameters
         => [.. value.Split([',', ';'], StringSplitOptions.RemoveEmptyEntries).Select(part => part.Trim()).Where(part => part.Length > 0)];
 
     /// <summary>Flattens the errors on a failed send into one line for the run's failure reason.</summary>
-    public static string FormatErrors(IReadOnlyList<Error>? errors)
-        => errors is null || errors.Count == 0 ? "unknown error" : string.Join("; ", errors.Select(e => e.Message));
+    public static string FormatErrors(IReadOnlyList<Error>? errors) => errors is null || errors.Count == 0 ? "unknown error" : string.Join("; ", errors.Select(e => e.Message));
 }

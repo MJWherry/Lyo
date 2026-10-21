@@ -8,11 +8,14 @@ internal static class AlgorithmCallScope
 
     public static bool HasFrame => _frame is not null;
 
+    public static Func<string, double>? Invoker => _frame?.Invoke;
+
     public static bool Begin(int maxDepth)
     {
         if (_frame is not null)
             return false;
-        _frame = new Frame(maxDepth);
+
+        _frame = new(maxDepth);
         return true;
     }
 
@@ -30,6 +33,7 @@ internal static class AlgorithmCallScope
     {
         if (_frame is null)
             return;
+
         _frame.Keys.Remove(key);
         _frame.Depth--;
     }
@@ -40,8 +44,6 @@ internal static class AlgorithmCallScope
         var invoke = AlgorithmHelpers.ThrowIfNull(frame.Invoke, $"Algorithm '{key}' is not compiled.");
         return invoke(key);
     }
-
-    public static Func<string, double>? Invoker => _frame?.Invoke;
 
     public static void SetInvoker(Func<string, double>? invoke)
     {

@@ -3,8 +3,8 @@ using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Services.Opaque;
 using Lyo.Authentication.Services.Users;
-using Lyo.Exceptions.Models;
 using Lyo.Common.Core.Identifiers;
+using Lyo.Exceptions.Models;
 
 namespace Lyo.Authentication.Tests;
 
@@ -117,6 +117,6 @@ public class InMemoryStoreTests
 
     private static LyoUser NewUser()
         => new(
-            LyoGuid.CreateV7(), "Test " + LyoGuid.CreateV7().ToString("N").Substring(0, 8), $"user-{LyoGuid.CreateV7():N}@example.com", true, null, null, [], null, null, DateTime.UtcNow, null,
-            null, null, null);
+            LyoGuid.CreateV7(), "Test " + LyoGuid.CreateV7().ToString("N").Substring(0, 8), $"user-{LyoGuid.CreateV7():N}@example.com", true, null, null, [], null, null,
+            DateTime.UtcNow, null, null, null, null);
 }

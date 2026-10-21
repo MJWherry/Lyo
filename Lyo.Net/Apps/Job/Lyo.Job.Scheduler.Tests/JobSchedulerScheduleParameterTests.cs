@@ -3,7 +3,6 @@ using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Formatter;
-using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.Parameters;
@@ -13,8 +12,7 @@ namespace Lyo.Job.Scheduler.Tests;
 
 /// <summary>
 /// Schedule-level parameters must be merged into the run request when a schedule fires: they override definition defaults by key (case-insensitive), disabled parameters are
-/// ignored, and String/Json values go through the same template formatting as definition/trigger parameters. Regression coverage for required definition parameters with null
-/// defaults
+/// ignored, and String/Json values go through the same template formatting as definition/trigger parameters. Regression coverage for required definition parameters with null defaults
 /// whose values live on the schedule (per-client schedules).
 /// </summary>
 public class JobSchedulerScheduleParameterTests
@@ -135,7 +133,6 @@ public class JobSchedulerScheduleParameterTests
         var definitionId = LyoGuid.CreateV7();
         var schedule = BuildSchedule(definitionId);
         var definition = BuildDefinition(definitionId, schedule, YesterdayParameter(definitionId));
-
         var runReq = await BuildRunRequestAsync(definition, schedule, FrozenClock);
         var asOfDate = Assert.Single(runReq.JobRunParameters, p => p.Key == "AsOfDate");
 
@@ -162,8 +159,7 @@ public class JobSchedulerScheduleParameterTests
 
     private static JobParameterRes YesterdayParameter(Guid definitionId)
         => BuildDefinitionParameter(definitionId, "AsOfDate", LyoTypeInfo.DateTime.FullName, null, false) with {
-            DefaultKind = LyoParameterDefaultKind.Expression,
-            DefaultTemplate = "{DateTime.UtcNow.AddDays(-1):yyyy-MM-dd}"
+            DefaultKind = LyoParameterDefaultKind.Expression, DefaultTemplate = "{DateTime.UtcNow.AddDays(-1):yyyy-MM-dd}"
         };
 
     /// <summary>Loads the definition into the scheduler cache via the fake API, then invokes the private BuildRunRequest as CreateScheduledRunAsync does for a due slot.</summary>

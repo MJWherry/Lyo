@@ -1,4 +1,6 @@
+using System.Collections;
 using System.Text;
+using System.Text.Json;
 using Lyo.Common.Core.Enums;
 using Lyo.Exceptions;
 using Lyo.Query.Models.Common;
@@ -7,10 +9,7 @@ using Lyo.Query.Models.Enums;
 
 namespace Lyo.Query.Sql;
 
-/// <summary>
-/// Prints a concrete, projection, or root query request as one parameterized Postgres statement. Does not open a connection and does not build an
-/// <c>IQueryable</c>.
-/// </summary>
+/// <summary>Prints a concrete, projection, or root query request as one parameterized Postgres statement. Does not open a connection and does not build an <c>IQueryable</c>.</summary>
 public sealed class SqlQueryTranslator
 {
     /// <summary>Prints <paramref name="request" /> as <c>SELECT</c> of every mapped column.</summary>
@@ -184,7 +183,7 @@ public sealed class SqlQueryTranslator
             AggregateFunction.Average => $"AVG({column})",
             AggregateFunction.Min => $"MIN({column})",
             AggregateFunction.Max => $"MAX({column})",
-            _ => throw new SqlTranslationException($"Aggregate '{aggregate.Function}' is not translated to SQL.")
+            var _ => throw new SqlTranslationException($"Aggregate '{aggregate.Function}' is not translated to SQL.")
         };
     }
 
@@ -197,7 +196,7 @@ public sealed class SqlQueryTranslator
         return clause switch {
             ConditionClause condition => Condition(condition, column, parameters),
             GroupClause group => Group(group, column, parameters),
-            _ => throw new SqlTranslationException($"Where clause '{clause.GetType().Name}' is not translated to SQL.")
+            var _ => throw new SqlTranslationException($"Where clause '{clause.GetType().Name}' is not translated to SQL.")
         };
     }
 
@@ -224,8 +223,9 @@ public sealed class SqlQueryTranslator
         var op = group.Operator switch {
             GroupOperatorEnum.And => "AND",
             GroupOperatorEnum.Or => "OR",
-            _ => throw new SqlTranslationException($"Group operator '{group.Operator}' is not translated to SQL.")
+            var _ => throw new SqlTranslationException($"Group operator '{group.Operator}' is not translated to SQL.")
         };
+
         return string.Join($" {op} ", parts.Select(part => $"({part})"));
     }
 
@@ -242,7 +242,7 @@ public sealed class SqlQueryTranslator
             return condition.Comparison switch {
                 ComparisonOperatorEnum.Equals => $"{target} IS NULL",
                 ComparisonOperatorEnum.NotEquals => $"{target} IS NOT NULL",
-                _ => throw new SqlTranslationException($"Comparison '{condition.Comparison}' cannot compare null.")
+                var _ => throw new SqlTranslationException($"Comparison '{condition.Comparison}' cannot compare null.")
             };
         }
 
@@ -272,8 +272,9 @@ public sealed class SqlQueryTranslator
             ComparisonOperatorEnum.GreaterThanOrEqual => ">=",
             ComparisonOperatorEnum.LessThan => "<",
             ComparisonOperatorEnum.LessThanOrEqual => "<=",
-            _ => throw new SqlTranslationException($"Comparison '{condition.Comparison}' is not translated to SQL.")
+            var _ => throw new SqlTranslationException($"Comparison '{condition.Comparison}' is not translated to SQL.")
         };
+
         return $"{left} {op} {right}";
     }
 
@@ -285,6 +286,7 @@ public sealed class SqlQueryTranslator
             var parameter = parameters.Add(value);
             return folded ? $"lower({parameter})" : parameter;
         });
+
         var left = folded ? $"lower({target})" : target;
         var list = $"{left} IN ({string.Join(", ", placeholders)})";
         return condition.Comparison == ComparisonOperatorEnum.NotIn ? $"NOT ({list})" : list;
@@ -305,12 +307,12 @@ public sealed class SqlQueryTranslator
                 }
 
                 break;
-            case System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.Array } array:
+            case JsonElement { ValueKind: JsonValueKind.Array } array:
                 foreach (var item in array.EnumerateArray())
                     list.Add(Unwrap(item));
 
                 break;
-            case System.Collections.IEnumerable enumerable:
+            case IEnumerable enumerable:
                 foreach (var item in enumerable)
                     list.Add(Unwrap(item));
 
@@ -332,7 +334,7 @@ public sealed class SqlQueryTranslator
         return comparison switch {
             ComparisonOperatorEnum.StartsWith or ComparisonOperatorEnum.NotStartsWith => escaped + "%",
             ComparisonOperatorEnum.EndsWith or ComparisonOperatorEnum.NotEndsWith => "%" + escaped,
-            _ => "%" + escaped + "%"
+            var _ => "%" + escaped + "%"
         };
     }
 
@@ -458,7 +460,7 @@ public sealed class SqlQueryTranslator
             JoinType.Left => "LEFT JOIN",
             JoinType.Right => "RIGHT JOIN",
             JoinType.FullOuter => "FULL OUTER JOIN",
-            _ => throw new SqlTranslationException($"Join type '{type}' is not translated to SQL.")
+            var _ => throw new SqlTranslationException($"Join type '{type}' is not translated to SQL.")
         };
 
     private static string Quote(string identifier)
@@ -484,23 +486,22 @@ public sealed class SqlQueryTranslator
             throw new SqlTranslationException($"Computed field '{fields[0].Name}' is not translated to SQL.");
     }
 
-    private static bool IsNull(object? value)
-        => value is null || value is System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.Null or System.Text.Json.JsonValueKind.Undefined };
+    private static bool IsNull(object? value) => value is null || value is JsonElement { ValueKind: JsonValueKind.Null or JsonValueKind.Undefined };
 
     private static object? Unwrap(object? value)
     {
-        if (value is not System.Text.Json.JsonElement element)
+        if (value is not JsonElement element)
             return value;
 
         return element.ValueKind switch {
-            System.Text.Json.JsonValueKind.Null or System.Text.Json.JsonValueKind.Undefined => null,
-            System.Text.Json.JsonValueKind.String => element.GetString(),
-            System.Text.Json.JsonValueKind.True => true,
-            System.Text.Json.JsonValueKind.False => false,
-            System.Text.Json.JsonValueKind.Number when element.TryGetInt64(out var whole) => whole,
-            System.Text.Json.JsonValueKind.Number when element.TryGetDecimal(out var number) => number,
-            System.Text.Json.JsonValueKind.Number => element.GetDouble(),
-            _ => element
+            JsonValueKind.Null or JsonValueKind.Undefined => null,
+            JsonValueKind.String => element.GetString(),
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.Number when element.TryGetInt64(out var whole) => whole,
+            JsonValueKind.Number when element.TryGetDecimal(out var number) => number,
+            JsonValueKind.Number => element.GetDouble(),
+            var _ => element
         };
     }
 

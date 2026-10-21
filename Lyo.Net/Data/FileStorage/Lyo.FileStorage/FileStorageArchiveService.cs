@@ -6,7 +6,6 @@ using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Models;
 using Lyo.IO.Temp;
 using Lyo.IO.Temp.Enums;
-using Lyo.IO.Temp.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -26,15 +25,11 @@ public sealed class FileStorageArchiveService(
     private readonly IIOTempService _temp = ArgumentHelpers.ThrowIfNullReturn(temp);
 
     /// <inheritdoc />
-    public async Task<FileStorageArchive> CreateArchiveAsync(
-        IReadOnlyList<FileStorageArchiveEntry> entries,
-        string? fileName = null,
-        CancellationToken ct = default)
+    public async Task<FileStorageArchive> CreateArchiveAsync(IReadOnlyList<FileStorageArchiveEntry> entries, string? fileName = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(entries);
         OperationHelpers.ThrowIf(entries.Count == 0, "At least one file is required.");
         _options.Validate();
-
         var unique = Deduplicate(entries);
         if (unique.Count > _options.MaxFileCount)
             throw new FileStorageArchiveLimitException($"Archive allows at most {_options.MaxFileCount} file(s); requested {unique.Count}.");
@@ -59,12 +54,11 @@ public sealed class FileStorageArchiveService(
             }
 
             totalBytes += metadata.OriginalFileSize;
-            if (totalBytes > _options.MaxTotalUncompressedBytes)
-                throw new FileStorageArchiveLimitException(
-                    $"Archive uncompressed size {totalBytes:N0} bytes exceeds the limit of {_options.MaxTotalUncompressedBytes:N0} bytes.");
+            if (totalBytes > _options.MaxTotalUncompressedBytes) {
+                throw new FileStorageArchiveLimitException($"Archive uncompressed size {totalBytes:N0} bytes exceeds the limit of {_options.MaxTotalUncompressedBytes:N0} bytes.");
+            }
 
-            var zipPath = FileStorageArchivePath.EnsureExtension(
-                FileStorageArchivePath.NormalizeZipPath(entry.ZipPath, entry.Id, metadata.OriginalFileName), metadata);
+            var zipPath = FileStorageArchivePath.EnsureExtension(FileStorageArchivePath.NormalizeZipPath(entry.ZipPath, entry.Id, metadata.OriginalFileName), metadata);
             zipPath = EnsureUniquePath(zipPath, usedPaths, entry.Id);
             resolved.Add((entry.Id, zipPath, metadata));
         }
@@ -73,12 +67,7 @@ public sealed class FileStorageArchiveService(
             throw new FileNotFoundException("None of the requested files are available to archive.");
 
         var downloadName = FileStorageArchivePath.SanitizeZipFileName(fileName);
-        var session = _temp.CreateSession(
-            new() {
-                MaxTotalSizeBytes = checked(_options.MaxTotalUncompressedBytes * 2),
-                OverflowStrategy = TempOverflowStrategy.ThrowException
-            });
-
+        var session = _temp.CreateSession(new() { MaxTotalSizeBytes = checked(_options.MaxTotalUncompressedBytes * 2), OverflowStrategy = TempOverflowStrategy.ThrowException });
         try {
             var payloadDir = session.CreateDirectory(PayloadDirectoryName);
             foreach (var (id, zipPath, _) in resolved) {
@@ -152,7 +141,7 @@ public sealed class FileStorageArchiveService(
     private static async Task CreateZipAsync(string payloadDir, string zipPath, CancellationToken ct)
     {
         using var zipStream = new FileStream(zipPath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous);
-        using var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: false);
+        using var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, false);
         foreach (var file in Directory.EnumerateFiles(payloadDir, "*", SearchOption.AllDirectories)) {
             ct.ThrowIfCancellationRequested();
             var relative = file.Substring(payloadDir.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);

@@ -1,5 +1,4 @@
 using System.IO.Compression;
-using System.Text;
 using Lyo.Common.Core.Archives;
 using Lyo.Exceptions.Models;
 using Lyo.IO.Temp.Models;
@@ -11,11 +10,7 @@ public class ZipFileBuilderTests
     [Fact]
     public void Build_BytesAndText_RoundTripsEntryBytes()
     {
-        var bytes = ZipFileBuilder.Create()
-            .AddFile("file1.bin", [1, 2, 3])
-            .AddFile("file2.txt", "Content 2")
-            .Build();
-
+        var bytes = ZipFileBuilder.Create().AddFile("file1.bin", [1, 2, 3]).AddFile("file2.txt", "Content 2").Build();
         using var archive = Open(bytes);
         Assert.Equal([1, 2, 3], Read(archive, "file1.bin"));
         Assert.Equal("Content 2"u8.ToArray(), Read(archive, "file2.txt"));
@@ -26,11 +21,7 @@ public class ZipFileBuilderTests
     {
         var payload = new byte[400];
         Array.Fill(payload, (byte)'a');
-        var bytes = ZipFileBuilder.Create()
-            .WithCompressionLevel(CompressionLevel.NoCompression)
-            .AddFile("a.txt", payload)
-            .Build();
-
+        var bytes = ZipFileBuilder.Create().WithCompressionLevel(CompressionLevel.NoCompression).AddFile("a.txt", payload).Build();
         using var archive = Open(bytes);
         var entry = Assert.Single(archive.Entries);
         Assert.Equal(entry.Length, entry.CompressedLength);
@@ -39,11 +30,7 @@ public class ZipFileBuilderTests
     [Fact]
     public void WithComment_RoundTripsOnArchive()
     {
-        var bytes = ZipFileBuilder.Create()
-            .WithComment("bundle")
-            .AddFile("a.txt", [1])
-            .Build();
-
+        var bytes = ZipFileBuilder.Create().WithComment("bundle").AddFile("a.txt", [1]).Build();
         using var archive = Open(bytes);
         Assert.Equal("bundle", archive.Comment);
     }
@@ -51,11 +38,11 @@ public class ZipFileBuilderTests
     [Fact]
     public void AddFile_EntryOptions_SetsLevelTimeAndComment()
     {
-        var stamp = new DateTimeOffset(2024, 3, 4, 5, 6, 8, TimeZoneInfo.Local.GetUtcOffset(new DateTime(2024, 3, 4, 5, 6, 8)));
+        var stamp = new DateTimeOffset(2024, 3, 4, 5, 6, 8, TimeZoneInfo.Local.GetUtcOffset(new(2024, 3, 4, 5, 6, 8)));
         var payload = new byte[400];
         Array.Fill(payload, (byte)'b');
         var bytes = ZipFileBuilder.Create()
-            .AddFile("note.txt", payload, new ZipEntryOptions { CompressionLevel = CompressionLevel.NoCompression, LastWriteTime = stamp, Comment = "note" })
+            .AddFile("note.txt", payload, new() { CompressionLevel = CompressionLevel.NoCompression, LastWriteTime = stamp, Comment = "note" })
             .Build();
 
         using var archive = Open(bytes);
@@ -72,7 +59,6 @@ public class ZipFileBuilderTests
         var path = session.CreateFile(new byte[] { 9, 8, 7 }, "stamp.bin");
         var local = new DateTime(2020, 6, 15, 12, 30, 0, DateTimeKind.Local);
         File.SetLastWriteTime(path, local);
-
         var bytes = ZipFileBuilder.Create().AddFileFromPath(path, "stamp.bin").Build();
         using var archive = Open(bytes);
         var entry = archive.GetEntry("stamp.bin");
@@ -89,11 +75,7 @@ public class ZipFileBuilderTests
         session.CreateFile("keep"u8.ToArray(), "tree/keep.txt");
         session.CreateFile("skip"u8.ToArray(), "tree/skip.txt");
         var root = session.GetDirectoryPath("tree");
-
-        var bytes = ZipFileBuilder.Create()
-            .AddDirectory(root, "docs", relative => relative != "skip.txt")
-            .Build();
-
+        var bytes = ZipFileBuilder.Create().AddDirectory(root, "docs", relative => relative != "skip.txt").Build();
         using var archive = Open(bytes);
         var names = archive.Entries.Select(entry => entry.FullName).ToHashSet();
         Assert.Contains("docs/keep.txt", names);
@@ -140,11 +122,7 @@ public class ZipFileBuilderTests
     {
         var payload = new byte[1024 * 1024];
         var sink = new MaxWriteStream();
-        ZipFileBuilder.Create()
-            .WithCompressionLevel(CompressionLevel.NoCompression)
-            .AddFile("blob.bin", payload)
-            .BuildTo(sink);
-
+        ZipFileBuilder.Create().WithCompressionLevel(CompressionLevel.NoCompression).AddFile("blob.bin", payload).BuildTo(sink);
         Assert.True(sink.Length > payload.Length);
         Assert.True(sink.MaxWrite < sink.Length);
     }
@@ -155,7 +133,6 @@ public class ZipFileBuilderTests
         using var session = new IOTempSession();
         var zipPath = session.GetFilePath("out.zip");
         ZipFileBuilder.Create().AddFile("a.txt", [1, 2, 3]).BuildToFile(zipPath);
-
         using var archive = new ZipArchive(File.OpenRead(zipPath), ZipArchiveMode.Read);
         Assert.Equal([1, 2, 3], Read(archive, "a.txt"));
     }
@@ -163,10 +140,7 @@ public class ZipFileBuilderTests
     [Fact]
     public void AddFile_UnixMode_RoundTripsPermissionBits()
     {
-        var bytes = ZipFileBuilder.Create()
-            .AddFile("run.sh", [1], new() { UnixMode = 0x1ED })
-            .Build();
-
+        var bytes = ZipFileBuilder.Create().AddFile("run.sh", [1], new() { UnixMode = 0x1ED }).Build();
         using var archive = Open(bytes);
         var entry = Assert.Single(archive.Entries);
         Assert.Equal(0x1ED, entry.ExternalAttributes >> 16);
@@ -177,11 +151,11 @@ public class ZipFileBuilderTests
     {
         if (OperatingSystem.IsWindows())
             return;
+
         using var session = new IOTempSession();
         var path = session.CreateFile(new byte[] { 1 }, "tool.sh");
         var mode = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute;
         File.SetUnixFileMode(path, mode);
-
         var bytes = ZipFileBuilder.Create().AddFileFromPath(path).Build();
         using var archive = Open(bytes);
         var entry = Assert.Single(archive.Entries);
@@ -191,13 +165,9 @@ public class ZipFileBuilderTests
     [Fact]
     public void Open_RemoveAndAdd_KeepsUntouchedEntryBytes()
     {
-        var original = ZipFileBuilder.Create()
-            .AddFile("a.txt", [1, 2, 3])
-            .AddFile("b.txt", [4])
-            .Build();
+        var original = ZipFileBuilder.Create().AddFile("a.txt", [1, 2, 3]).AddFile("b.txt", [4]).Build();
         using var session = new IOTempSession();
         var path = session.CreateFile(original, "base.zip");
-
         var updated = ZipFileBuilder.Open(path).Remove("b.txt").AddFile("c.txt", [9]).Build();
         using var archive = Open(updated);
         Assert.Equal([1, 2, 3], Read(archive, "a.txt"));

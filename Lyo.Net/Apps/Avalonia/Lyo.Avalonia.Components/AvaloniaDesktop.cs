@@ -6,6 +6,7 @@ namespace Lyo.Desktop.Components;
 public static class AvaloniaDesktop
 {
     /// <summary>Platform detection, the Inter font, and trace logging. The app still adds <c>FluentTheme</c> in its application XAML.</summary>
-    public static AppBuilder Configure<TApp>() where TApp : Application, new()
+    public static AppBuilder Configure<TApp>()
+        where TApp : Application, new()
         => AppBuilder.Configure<TApp>().UsePlatformDetect().WithInterFont().LogToTrace();
 }

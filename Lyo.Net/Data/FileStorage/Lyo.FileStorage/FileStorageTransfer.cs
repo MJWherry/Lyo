@@ -22,7 +22,7 @@ public enum FileStorageTransferScope
 /// <summary>How destination ciphertext is keyed.</summary>
 public enum FileStorageKeyMode
 {
-    /// <summary>Copy ciphertext and the same key-encryption keys. Requires <see cref="IFileStoragePhysical"/> on both services.</summary>
+    /// <summary>Copy ciphertext and the same key-encryption keys. Requires <see cref="IFileStoragePhysical" /> on both services.</summary>
     PreserveKeys = 0,
 
     /// <summary>Mint one new key on the destination and re-save every file under it.</summary>
@@ -77,9 +77,9 @@ public enum FileStorageTransferItemOutcome
 /// <summary>Inputs for <c>FileStorageTransfer.TransferAsync</c>.</summary>
 /// <param name="Scope">Keys only, or keys plus objects.</param>
 /// <param name="KeyMode">Preserve ciphertext, mint a key, or reuse a destination key.</param>
-/// <param name="TargetKeyId">Required for <see cref="FileStorageKeyMode.NewKey"/> and <see cref="FileStorageKeyMode.ExistingKey"/>.</param>
+/// <param name="TargetKeyId">Required for <see cref="FileStorageKeyMode.NewKey" /> and <see cref="FileStorageKeyMode.ExistingKey" />.</param>
 /// <param name="TargetKeyVersion">Destination version. New keys default to <c>1</c>. Existing keys default to the destination current version.</param>
-/// <param name="ListCap">Maximum catalog rows when <paramref name="FileIds"/> is null. A full page is treated as truncated and throws before any write.</param>
+/// <param name="ListCap">Maximum catalog rows when <paramref name="FileIds" /> is null. A full page is treated as truncated and throws before any write.</param>
 /// <param name="ProgressByteInterval">Minimum new bytes between mid-file progress snapshots. Must be at least 1.</param>
 /// <param name="Disposition">Copy leaves the source. Move tombstones it after the destination hashes match.</param>
 /// <param name="FileIds">Ids to transfer. Null selects the catalog. Empty throws before any write.</param>
@@ -104,13 +104,13 @@ public sealed record FileStorageTransferEndpoint(IFileStorageService Storage, IF
 /// <param name="Message">Exception message.</param>
 public sealed record FileStorageTransferFileError(Guid? FileId, string Message);
 
-/// <summary>Counts from one transfer run. <see cref="FilesFailed"/> greater than zero means the run did not fully succeed.</summary>
+/// <summary>Counts from one transfer run. <see cref="FilesFailed" /> greater than zero means the run did not fully succeed.</summary>
 /// <param name="FilesCopied">Objects whose destination hashes matched after a write.</param>
 /// <param name="FilesSkipped">Rows left unwritten because the recomputed destination hashes already matched.</param>
 /// <param name="FilesFailed">Rows that failed. Their destination objects are not rolled back, and they stay on the source.</param>
 /// <param name="KeysCopied">Key versions written on the destination, or one when a new key was minted.</param>
 /// <param name="Errors">Per-file failures. Empty when every row succeeded or was skipped.</param>
-/// <param name="FilesRemoved">Source files tombstoned after a verified copy or skip. Zero for <see cref="FileStorageTransferDisposition.Copy"/>.</param>
+/// <param name="FilesRemoved">Source files tombstoned after a verified copy or skip. Zero for <see cref="FileStorageTransferDisposition.Copy" />.</param>
 public sealed record FileStorageTransferResult(
     int FilesCopied,
     int FilesSkipped,
@@ -153,14 +153,14 @@ public sealed record FileStorageTransferProgress(
     int FilesRemoved);
 
 /// <summary>
-/// Copies or moves files from one storage service onto another. Move tombstones a source file only after the destination hashes match. A later file failure does not roll back
-/// earlier destination files, and it leaves the failed file on the source.
+/// Copies or moves files from one storage service onto another. Move tombstones a source file only after the destination hashes match. A later file failure does not roll
+/// back earlier destination files, and it leaves the failed file on the source.
 /// </summary>
 public static class FileStorageTransfer
 {
     /// <summary>
-    /// Transfers <paramref name="source"/> onto <paramref name="destination"/> using <paramref name="request"/>.
-    /// Invalid mode combinations and a truncated catalog throw before any destination write.
+    /// Transfers <paramref name="source" /> onto <paramref name="destination" /> using <paramref name="request" />. Invalid mode combinations and a truncated catalog throw
+    /// before any destination write.
     /// </summary>
     /// <param name="source">Service being copied. Move tombstones files that land on the destination. Copy does not modify it.</param>
     /// <param name="destination">Service that receives keys and, when the scope includes objects, files.</param>
@@ -170,12 +170,10 @@ public static class FileStorageTransfer
         FileStorageTransferEndpoint source,
         FileStorageTransferEndpoint destination,
         FileStorageTransferRequest request,
-        CancellationToken ct = default) =>
-        TransferAsync(source, destination, request, progress: null, ct);
+        CancellationToken ct = default)
+        => TransferAsync(source, destination, request, null, ct);
 
-    /// <summary>
-    /// Transfers <paramref name="source"/> onto <paramref name="destination"/> and reports progress.
-    /// </summary>
+    /// <summary>Transfers <paramref name="source" /> onto <paramref name="destination" /> and reports progress.</summary>
     /// <param name="source">Service being copied. Move tombstones files that land on the destination. Copy does not modify it.</param>
     /// <param name="destination">Service that receives keys and, when the scope includes objects, files.</param>
     /// <param name="request">Scope, key mode, disposition, and limits.</param>
@@ -234,11 +232,10 @@ public static class FileStorageTransfer
         var rows = await SelectRowsAsync(source.Metadata, request, ct).ConfigureAwait(false);
         var copyingFiles = request.Scope == FileStorageTransferScope.Everything;
         var state = new RunState(request.ProgressByteInterval) {
-            FilesTotal = copyingFiles ? rows.Count : 0,
-            BytesTotal = copyingFiles ? rows.Sum(row => ProgressBytes(request, row)) : 0
+            FilesTotal = copyingFiles ? rows.Count : 0, BytesTotal = copyingFiles ? rows.Sum(row => ProgressBytes(request, row)) : 0
         };
-        Report(progress, state, FileStorageTransferPhase.Listing, null, null, 0, 0);
 
+        Report(progress, state, FileStorageTransferPhase.Listing, null, null, 0, 0);
         var keysCopied = 0;
         if (request.KeyMode == FileStorageKeyMode.PreserveKeys)
             keysCopied = await CopyReferencedKeysAsync(source, destination, rows, state, progress, ct).ConfigureAwait(false);
@@ -251,8 +248,9 @@ public static class FileStorageTransfer
         var targetVersion = request.KeyMode switch {
             FileStorageKeyMode.NewKey => request.TargetKeyVersion ?? "1",
             FileStorageKeyMode.ExistingKey => existingVersion!,
-            _ => null
+            var _ => null
         };
+
         var errors = new List<FileStorageTransferFileError>();
         foreach (var row in rows) {
             ct.ThrowIfCancellationRequested();
@@ -265,10 +263,11 @@ public static class FileStorageTransfer
     private static async Task<List<FileStoreResult>> SelectRowsAsync(IFileMetadataStore metadata, FileStorageTransferRequest request, CancellationToken ct)
     {
         if (request.FileIds is null) {
-            var listed = await metadata.ListByPathPrefixAsync(null, includeDescendants: true, request.ListCap, ct).ConfigureAwait(false);
-            if (listed.Count == request.ListCap)
+            var listed = await metadata.ListByPathPrefixAsync(null, true, request.ListCap, ct).ConfigureAwait(false);
+            if (listed.Count == request.ListCap) {
                 throw new InvalidOperationException(
                     $"Catalog returned {listed.Count} rows, which is the list cap. Raise ListCap or the listing was truncated. Nothing was written.");
+            }
 
             return listed.Where(static row => row.Availability != FileAvailability.PendingDirectUpload).ToList();
         }
@@ -320,20 +319,20 @@ public static class FileStorageTransfer
         IProgress<FileStorageTransferProgress>? progress,
         CancellationToken ct)
     {
-        var keyIds = rows
-            .Where(static row => row.IsEncrypted && !string.IsNullOrWhiteSpace(row.DataEncryptionKeyId))
+        var keyIds = rows.Where(static row => row.IsEncrypted && !string.IsNullOrWhiteSpace(row.DataEncryptionKeyId))
             .Select(static row => row.DataEncryptionKeyId!)
             .Distinct(StringComparer.Ordinal)
             .ToList();
+
         if (keyIds.Count == 0)
             return 0;
 
-        var keyProgress = new Progress<KeyStoreMigrationProgress>(snapshot =>
-        {
+        var keyProgress = new Progress<KeyStoreMigrationProgress>(snapshot => {
             state.KeysCompleted = snapshot.KeysCompleted;
             state.KeysTotal = snapshot.KeysTotal;
             Report(progress, state, FileStorageTransferPhase.Keys, null, null, 0, 0);
         });
+
         var copied = await KeyStoreMigrator.CopyAsync(source.Keys, destination.Keys, keyIds, keyProgress, ct).ConfigureAwait(false);
         return copied.VersionsCopied;
     }
@@ -346,7 +345,7 @@ public static class FileStorageTransfer
         IProgress<FileStorageTransferProgress>? progress,
         CancellationToken ct)
     {
-        var material = SecureKeyGenerator.GenerateKey(32);
+        var material = SecureKeyGenerator.GenerateKey();
         await keys.AddKeyAsync(keyId, version, material, ct).ConfigureAwait(false);
         var stored = await keys.GetKeyAsync(keyId, version, ct).ConfigureAwait(false);
         if (stored is null || !HashingService.Shared.FixedTimeEquals(material, stored))
@@ -386,6 +385,7 @@ public static class FileStorageTransfer
             var wrote = request.KeyMode == FileStorageKeyMode.PreserveKeys
                 ? await CopyPreservedBytesAsync(source, destination, row, state, progress, ct).ConfigureAwait(false)
                 : await ReencryptAsync(source, destination, row, request, targetVersion!, state, progress, ct).ConfigureAwait(false);
+
             accounted = true;
             if (wrote) {
                 state.FilesCopied++;
@@ -428,18 +428,17 @@ public static class FileStorageTransfer
         var key = ObjectKey(row);
         var objectSize = ObjectSize(row);
         var sharedCatalog = ReferenceEquals(source.Metadata, destination.Metadata);
-        if (!sharedCatalog && await DestinationMetadataAsync(destination.Metadata, row.Id, ct).ConfigureAwait(false) is { } existing
-            && !HashesEqual(existing.OriginalFileHash, row.OriginalFileHash))
+        if (!sharedCatalog && await DestinationMetadataAsync(destination.Metadata, row.Id, ct).ConfigureAwait(false) is { } existing &&
+            !HashesEqual(existing.OriginalFileHash, row.OriginalFileHash))
             throw new InvalidOperationException($"Destination file {row.Id} exists with a different OriginalFileHash. It was not overwritten.");
 
-        if (await DestinationAlreadyMatchesAsync(destination, row, preserveBytes: true, ct).ConfigureAwait(false)) {
+        if (await DestinationAlreadyMatchesAsync(destination, row, true, ct).ConfigureAwait(false)) {
             NoteSkipped(state, progress, row);
             return false;
         }
 
         var nextReport = (long)state.ProgressByteInterval;
-        var copyProgress = new Progress<long>(copied =>
-        {
+        var copyProgress = new Progress<long>(copied => {
             state.CurrentFileBytesCopied = copied;
             if (copied < nextReport && copied != objectSize)
                 return;
@@ -447,6 +446,7 @@ public static class FileStorageTransfer
             nextReport = copied + state.ProgressByteInterval;
             Report(progress, state, FileStorageTransferPhase.Files, row.Id, FileStorageTransferItemOutcome.Started, copied, state.CurrentFileBytesTotal);
         });
+
         var input = await sourcePhysical.Physical.OpenReadAsync(key, ct).ConfigureAwait(false);
         var output = await destinationPhysical.Physical.OpenCreateAsync(key, ct).ConfigureAwait(false);
         try {
@@ -467,7 +467,7 @@ public static class FileStorageTransfer
         if (!sharedCatalog && source.Storage is FileStorageServiceBase sourceStorage && destination.Storage is FileStorageServiceBase destinationStorage)
             await destinationStorage.CopyCatalogTagsAsync(sourceStorage, row, ct).ConfigureAwait(false);
 
-        await VerifyDestinationAsync(destination, row, preserveBytes: true, ct).ConfigureAwait(false);
+        await VerifyDestinationAsync(destination, row, true, ct).ConfigureAwait(false);
         return true;
     }
 
@@ -485,7 +485,7 @@ public static class FileStorageTransfer
         if (await DestinationMetadataAsync(destination.Metadata, row.Id, ct).ConfigureAwait(false) is { } existing && !HashesEqual(existing.OriginalFileHash, row.OriginalFileHash))
             throw new InvalidOperationException($"Destination file {row.Id} exists with a different OriginalFileHash. It was not overwritten.");
 
-        if (await DestinationAlreadyMatchesAsync(destination, row, preserveBytes: false, ct).ConfigureAwait(false)) {
+        if (await DestinationAlreadyMatchesAsync(destination, row, false, ct).ConfigureAwait(false)) {
             NoteSkipped(state, progress, row);
             return false;
         }
@@ -507,8 +507,7 @@ public static class FileStorageTransfer
                 throw new InvalidOperationException($"Source file {row.Id} did not return a stream.");
 
             var nextReport = (long)state.ProgressByteInterval;
-            var readProgress = new Progress<long>(copied =>
-            {
+            var readProgress = new Progress<long>(copied => {
                 state.CurrentFileBytesCopied = copied;
                 if (copied < nextReport && copied != row.OriginalFileSize)
                     return;
@@ -516,26 +515,14 @@ public static class FileStorageTransfer
                 nextReport = copied + state.ProgressByteInterval;
                 Report(progress, state, FileStorageTransferPhase.Files, row.Id, FileStorageTransferItemOutcome.Started, copied, progressTotal);
             });
+
             var reporting = new ProgressStream(input, readProgress);
             FileStoreResult saved;
             try {
                 saved = await destination.Storage.SaveFromStreamAsync(
-                    reporting,
-                    row.OriginalFileSize,
-                    row.OriginalFileName,
-                    row.IsCompressed,
-                    row.IsEncrypted,
-                    row.IsEncrypted ? targetKeyId : null,
-                    row.PathPrefix,
-                    chunkSize: null,
-                    row.ContentType,
-                    row.Charset,
-                    row.TenantId,
-                    row.Availability,
-                    row.Id,
-                    row.Metadata,
-                    ct)
-                .ConfigureAwait(false);
+                        reporting, row.OriginalFileSize, row.OriginalFileName, row.IsCompressed, row.IsEncrypted, row.IsEncrypted ? targetKeyId : null, row.PathPrefix, null,
+                        row.ContentType, row.Charset, row.TenantId, row.Availability, row.Id, row.Metadata, ct)
+                    .ConfigureAwait(false);
             }
             finally {
                 await DisposeStreamAsync(reporting).ConfigureAwait(false);
@@ -550,7 +537,7 @@ public static class FileStorageTransfer
                 await destination.Metadata.SaveMetadataAsync(saved.Id, current with { OwnerId = row.OwnerId }, ct).ConfigureAwait(false);
             }
 
-            await VerifyDestinationAsync(destination, row, preserveBytes: false, ct).ConfigureAwait(false);
+            await VerifyDestinationAsync(destination, row, false, ct).ConfigureAwait(false);
             return true;
         }
         finally {
@@ -578,8 +565,7 @@ public static class FileStorageTransfer
         catch (FileNotFoundException) {
             return false;
         }
-        catch (FileNotAvailableException) when (preserveBytes) {
-        }
+        catch (FileNotAvailableException) when (preserveBytes) { }
         finally {
             if (plain is not null)
                 await DisposeStreamAsync(plain).ConfigureAwait(false);
@@ -626,8 +612,7 @@ public static class FileStorageTransfer
 
             plainChecked = true;
         }
-        catch (FileNotAvailableException) when (preserveBytes) {
-        }
+        catch (FileNotAvailableException) when (preserveBytes) { }
         finally {
             if (plain is not null)
                 await DisposeStreamAsync(plain).ConfigureAwait(false);
@@ -723,21 +708,8 @@ public static class FileStorageTransfer
         try {
             progress.Report(
                 new(
-                    phase,
-                    state.FilesCompleted,
-                    state.FilesTotal,
-                    state.FilesCopied,
-                    state.FilesSkipped,
-                    state.FilesFailed,
-                    bytesCopied,
-                    state.BytesTotal,
-                    fileId ?? state.CurrentFileId,
-                    currentBytes,
-                    currentTotal,
-                    state.KeysCompleted,
-                    state.KeysTotal,
-                    outcome,
-                    state.FilesRemoved));
+                    phase, state.FilesCompleted, state.FilesTotal, state.FilesCopied, state.FilesSkipped, state.FilesFailed, bytesCopied, state.BytesTotal,
+                    fileId ?? state.CurrentFileId, currentBytes, currentTotal, state.KeysCompleted, state.KeysTotal, outcome, state.FilesRemoved));
         }
         catch {
             state.ProgressFailed = true;

@@ -1,9 +1,7 @@
 using Lyo.Authentication.AspNetCore.Authorization;
 using Lyo.Authentication.Services.Users;
 using Lyo.Email;
-using Lyo.Leaderboard;
 using Lyo.Email.Builders;
-using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 using Lyo.Leaderboard.Api.Models;
 using Lyo.Leaderboard.Enums;
@@ -12,7 +10,6 @@ using Lyo.QRCode.Models;
 using Lyo.ShortUrl;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -85,25 +82,14 @@ internal static class LeaderboardEndpoints
             .AllowAnonymous()
             .WithTags("ShortUrl");
 
-    private static async Task<IResult> CreateBoard(
-        CreateBoardRequest req,
-        ILeaderboardStore store,
-        IUserStore users,
-        HttpContext http,
-        CancellationToken ct)
+    private static async Task<IResult> CreateBoard(CreateBoardRequest req, ILeaderboardStore store, IUserStore users, HttpContext http, CancellationToken ct)
     {
         var actor = await LeaderboardActorResolver.ResolveAsync(http, users, ct).ConfigureAwait(false);
         var saved = await store.SaveBoardAsync(ToBoard(req, Guid.Empty), actor, ct).ConfigureAwait(false);
         return Results.Created($"/api/leaderboard/boards/{saved.Id}", saved);
     }
 
-    private static async Task<IResult> UpdateBoard(
-        Guid boardId,
-        CreateBoardRequest req,
-        ILeaderboardStore store,
-        IUserStore users,
-        HttpContext http,
-        CancellationToken ct)
+    private static async Task<IResult> UpdateBoard(Guid boardId, CreateBoardRequest req, ILeaderboardStore store, IUserStore users, HttpContext http, CancellationToken ct)
     {
         var actor = await LeaderboardActorResolver.ResolveAsync(http, users, ct).ConfigureAwait(false);
         var existing = await store.GetBoardByIdAsync(boardId, actor, ct).ConfigureAwait(false);
@@ -136,13 +122,7 @@ internal static class LeaderboardEndpoints
         return board == null ? Results.NotFound() : Results.Ok(board);
     }
 
-    private static async Task<IResult> SaveProperty(
-        Guid boardId,
-        ScoringPropertyRecord property,
-        ILeaderboardStore store,
-        IUserStore users,
-        HttpContext http,
-        CancellationToken ct)
+    private static async Task<IResult> SaveProperty(Guid boardId, ScoringPropertyRecord property, ILeaderboardStore store, IUserStore users, HttpContext http, CancellationToken ct)
     {
         var actor = await LeaderboardActorResolver.ResolveAsync(http, users, ct).ConfigureAwait(false);
         property.BoardId = boardId;
@@ -195,8 +175,7 @@ internal static class LeaderboardEndpoints
         }
 
         var created = await store.CreateInviteAsync(
-                boardId,
-                new() {
+                boardId, new() {
                     ShareKind = req.ShareKind,
                     Role = req.Role,
                     Email = req.Email,
@@ -206,9 +185,9 @@ internal static class LeaderboardEndpoints
                     ExpiresAt = req.ExpiresAt
                 }, actor, ct)
             .ConfigureAwait(false);
+
         var board = await store.GetBoardByIdAsync(boardId, actor, ct).ConfigureAwait(false);
         var joinUrl = LeaderboardJoinUrl.BuildAbsolute(options.Value.PublicBaseUrl, board?.Slug ?? boardId.ToString("N"), created.Token);
-
         string? shortUrl = null;
         if (shorts != null) {
             var shortened = await shorts.ShortenAsync(joinUrl, expirationDate: created.Invite.ExpiresAt, ct: ct).ConfigureAwait(false);
@@ -232,14 +211,15 @@ internal static class LeaderboardEndpoints
                 .ConfigureAwait(false);
         }
 
-        return Results.Ok(new InviteCreatedResponse {
-            Invite = created.Invite,
-            Token = created.Token,
-            JoinPath = created.JoinPath,
-            JoinUrl = joinUrl,
-            ShortUrl = shortUrl,
-            Member = created.Member
-        });
+        return Results.Ok(
+            new InviteCreatedResponse {
+                Invite = created.Invite,
+                Token = created.Token,
+                JoinPath = created.JoinPath,
+                JoinUrl = joinUrl,
+                ShortUrl = shortUrl,
+                Member = created.Member
+            });
     }
 
     private static async Task<IResult> RevokeInvite(Guid inviteId, ILeaderboardStore store, IUserStore users, HttpContext http, CancellationToken ct)
@@ -274,7 +254,8 @@ internal static class LeaderboardEndpoints
 
         if (string.IsNullOrWhiteSpace(payload))
             throw new BadRequestException("Invite has no short URL to encode. Create the invite with ShortUrl configured.");
-        var generated = await qr.GenerateAsync(payload, new QRCodeOptions { Format = QRCodeFormat.Png, Size = 12 }, ct).ConfigureAwait(false);
+
+        var generated = await qr.GenerateAsync(payload, new() { Format = QRCodeFormat.Png, Size = 12 }, ct).ConfigureAwait(false);
         if (generated is not QRCodeResult qrResult || qrResult.ImageBytes == null)
             throw new BadRequestException("QR generation failed.");
 
@@ -287,13 +268,7 @@ internal static class LeaderboardEndpoints
         return Results.Ok(await store.RedeemInviteAsync(req.Token, actor, ct).ConfigureAwait(false));
     }
 
-    private static async Task<IResult> CreateEntry(
-        Guid boardId,
-        CreateEntryRequest req,
-        ILeaderboardStore store,
-        IUserStore users,
-        HttpContext http,
-        CancellationToken ct)
+    private static async Task<IResult> CreateEntry(Guid boardId, CreateEntryRequest req, ILeaderboardStore store, IUserStore users, HttpContext http, CancellationToken ct)
     {
         var actor = await LeaderboardActorResolver.ResolveAsync(http, users, ct).ConfigureAwait(false);
         var entry = new EntryRecord {
@@ -304,6 +279,7 @@ internal static class LeaderboardEndpoints
             OccurredAt = req.OccurredAt,
             Values = req.Values
         };
+
         return Results.Ok(await store.SaveEntryAsync(entry, actor, ct).ConfigureAwait(false));
     }
 
@@ -320,30 +296,25 @@ internal static class LeaderboardEndpoints
         return Results.Ok(await store.ListEntriesAsync(boardId, actor, ct).ConfigureAwait(false));
     }
 
-    private static async Task<IResult> SetEntryStatus(
-        Guid entryId,
-        EntryStatusChange change,
-        ILeaderboardStore store,
-        IUserStore users,
-        HttpContext http,
-        CancellationToken ct)
+    private static async Task<IResult> SetEntryStatus(Guid entryId, EntryStatusChange change, ILeaderboardStore store, IUserStore users, HttpContext http, CancellationToken ct)
     {
         var actor = await LeaderboardActorResolver.ResolveAsync(http, users, ct).ConfigureAwait(false);
         return Results.Ok(await store.SetEntryStatusAsync(entryId, change, actor, ct).ConfigureAwait(false));
     }
 
-    private static async Task<IResult> AddAdjustment(
-        Guid boardId,
-        CreateAdjustmentRequest req,
-        ILeaderboardStore store,
-        IUserStore users,
-        HttpContext http,
-        CancellationToken ct)
+    private static async Task<IResult> AddAdjustment(Guid boardId, CreateAdjustmentRequest req, ILeaderboardStore store, IUserStore users, HttpContext http, CancellationToken ct)
     {
         var actor = await LeaderboardActorResolver.ResolveAsync(http, users, ct).ConfigureAwait(false);
         var saved = await store.AddAdjustmentAsync(
-                new() { BoardId = boardId, MemberId = req.MemberId, EntryId = req.EntryId, Delta = req.Delta, Reason = req.Reason }, actor, ct)
+                new() {
+                    BoardId = boardId,
+                    MemberId = req.MemberId,
+                    EntryId = req.EntryId,
+                    Delta = req.Delta,
+                    Reason = req.Reason
+                }, actor, ct)
             .ConfigureAwait(false);
+
         return Results.Ok(saved);
     }
 

@@ -25,6 +25,40 @@ public sealed class WebRendererService(
     private readonly IMetrics _metrics = options?.EnableMetrics == true && metrics != null ? metrics : NullMetrics.Instance;
     private BrowserSession? _ownedSession;
 
+    private BrowserSession Session => browser ?? (_ownedSession ??= new(options ?? new WebRenderOptions(), null, _metrics));
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        if (_ownedSession is not null)
+            await _ownedSession.DisposeAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>Closes a browser this service launched for itself. A shared <see cref="BrowserSession" /> is left to its owner.</summary>
+    public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
+
+    /// <inheritdoc />
+    public async Task<WebRenderRes> GenerateAsync(WebRenderReq request, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(request);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(request.Html);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(request.OutputFilePath);
+        var directory = Path.GetDirectoryName(Path.GetFullPath(request.OutputFilePath));
+        if (!string.IsNullOrEmpty(directory))
+            Directory.CreateDirectory(directory);
+
+        await using var stream = new FileStream(request.OutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
+        await CopyCaptureToAsync(request.Html, stream, request, ct).ConfigureAwait(false);
+        await stream.FlushAsync(ct).ConfigureAwait(false);
+        return new() {
+            Success = true,
+            ContentType = ContentType(request.Format),
+            FileName = Path.GetFileName(request.OutputFilePath),
+            OutputPath = request.OutputFilePath,
+            ByteLength = stream.Length
+        };
+    }
+
     /// <summary>Raised after a component is rendered to HTML.</summary>
     public event EventHandler<ComponentRenderedResult>? ComponentRendered;
 
@@ -76,7 +110,7 @@ public sealed class WebRendererService(
             var htmlBytes = Encoding.UTF8.GetBytes(html);
             _metrics.RecordGauge(Constants.Metrics.RenderToHtmlBytesSizeBytes, htmlBytes.Length, tags);
             _metrics.IncrementCounter(Constants.Metrics.RenderToHtmlBytesSuccess, tags: tags);
-            Raise(ComponentRenderedToBytes, new ComponentRenderedToBytesResult(componentType, htmlBytes, html, parameterDictionary, ReadOptions(parameterDictionary)));
+            Raise(ComponentRenderedToBytes, new(componentType, htmlBytes, html, parameterDictionary, ReadOptions(parameterDictionary)));
             return htmlBytes;
         }
         catch (Exception ex) {
@@ -114,7 +148,7 @@ public sealed class WebRendererService(
             var html = await RenderHtmlCoreAsync(typeof(T), parameterDictionary, ct).ConfigureAwait(false);
             await File.WriteAllTextAsync(filePath, html, Encoding.UTF8, ct).ConfigureAwait(false);
             _metrics.IncrementCounter(Constants.Metrics.RenderToFileSuccess, tags: tags);
-            Raise(ComponentSavedToFile, new ComponentSavedToFileResult(typeof(T), filePath, html, parameterDictionary, ReadOptions(parameterDictionary)));
+            Raise(ComponentSavedToFile, new(typeof(T), filePath, html, parameterDictionary, ReadOptions(parameterDictionary)));
         }
         catch (Exception ex) {
             _metrics.RecordError(Constants.Metrics.RenderToFileDuration, ex, tags);
@@ -163,13 +197,12 @@ public sealed class WebRendererService(
     public async Task<byte[]> ConvertHtmlToPdfAsync(string htmlContent, CancellationToken ct = default)
     {
         using var buffer = new MemoryStream();
-        await CopyCaptureToAsync(htmlContent, buffer, new WebRenderReq { Format = WebRenderFormat.Pdf }, ct).ConfigureAwait(false);
+        await CopyCaptureToAsync(htmlContent, buffer, new() { Format = WebRenderFormat.Pdf }, ct).ConfigureAwait(false);
         return buffer.ToArray();
     }
 
     /// <summary>Copies a PDF capture of <paramref name="html" /> into <paramref name="destination" />. CSS <c>@page</c> size wins over A4.</summary>
-    public Task CopyCaptureToAsync(string html, Stream destination, CancellationToken ct = default)
-        => CopyCaptureToAsync(html, destination, new WebRenderReq(), ct);
+    public Task CopyCaptureToAsync(string html, Stream destination, CancellationToken ct = default) => CopyCaptureToAsync(html, destination, new(), ct);
 
     /// <summary>Copies a capture of <paramref name="html" /> into <paramref name="destination" /> using <paramref name="request" />.</summary>
     public async Task CopyCaptureToAsync(string html, Stream destination, WebRenderReq request, CancellationToken ct = default)
@@ -185,6 +218,7 @@ public sealed class WebRendererService(
             await Session.CopyAsync(html, destination, request, ct).ConfigureAwait(false);
             if (destination.CanSeek)
                 _metrics.RecordGauge(Constants.Metrics.CaptureSizeBytes, destination.Length, tags);
+
             _metrics.IncrementCounter(Constants.Metrics.CaptureSuccess, tags: tags);
         }
         catch (Exception ex) {
@@ -192,41 +226,9 @@ public sealed class WebRendererService(
             _metrics.IncrementCounter(Constants.Metrics.CaptureFailure, tags: tags);
             if (ex is not OperationCanceledException)
                 logger?.LogWarning(ex, "Capture {Format} failed", request.Format);
+
             throw;
         }
-    }
-
-    /// <inheritdoc />
-    public async Task<WebRenderRes> GenerateAsync(WebRenderReq request, CancellationToken ct = default)
-    {
-        ArgumentHelpers.ThrowIfNull(request);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(request.Html);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(request.OutputFilePath);
-        var directory = Path.GetDirectoryName(Path.GetFullPath(request.OutputFilePath));
-        if (!string.IsNullOrEmpty(directory))
-            Directory.CreateDirectory(directory);
-
-        await using var stream = new FileStream(request.OutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read);
-        await CopyCaptureToAsync(request.Html, stream, request, ct).ConfigureAwait(false);
-        await stream.FlushAsync(ct).ConfigureAwait(false);
-        return new WebRenderRes {
-            Success = true,
-            ContentType = ContentType(request.Format),
-            FileName = Path.GetFileName(request.OutputFilePath),
-            OutputPath = request.OutputFilePath,
-            ByteLength = stream.Length
-        };
-    }
-
-    /// <summary>Closes a browser this service launched for itself. A shared <see cref="BrowserSession" /> is left to its owner.</summary>
-    public void Dispose()
-        => DisposeAsync().AsTask().GetAwaiter().GetResult();
-
-    /// <inheritdoc />
-    public async ValueTask DisposeAsync()
-    {
-        if (_ownedSession is not null)
-            await _ownedSession.DisposeAsync().ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -281,8 +283,7 @@ public sealed class WebRendererService(
     }
 
     /// <inheritdoc />
-    public void ConvertHtmlFileToPdfFile(string htmlFilePath, string? pdfFilePath = null)
-        => ConvertHtmlFileToPdfFileAsync(htmlFilePath, pdfFilePath).GetAwaiter().GetResult();
+    public void ConvertHtmlFileToPdfFile(string htmlFilePath, string? pdfFilePath = null) => ConvertHtmlFileToPdfFileAsync(htmlFilePath, pdfFilePath).GetAwaiter().GetResult();
 
     private async Task<string> RenderHtmlAsync(Type componentType, Dictionary<string, object>? parameterDictionary, CancellationToken ct)
     {
@@ -293,7 +294,7 @@ public sealed class WebRendererService(
             var html = await RenderHtmlCoreAsync(componentType, parameterDictionary, ct).ConfigureAwait(false);
             _metrics.RecordGauge(Constants.Metrics.RenderToHtmlSizeBytes, Encoding.UTF8.GetByteCount(html), tags);
             _metrics.IncrementCounter(Constants.Metrics.RenderToHtmlSuccess, tags: tags);
-            Raise(ComponentRendered, new ComponentRenderedResult(componentType, html, parameterDictionary, ReadOptions(parameterDictionary)));
+            Raise(ComponentRendered, new(componentType, html, parameterDictionary, ReadOptions(parameterDictionary)));
             return html;
         }
         catch (Exception ex) {
@@ -332,19 +333,17 @@ public sealed class WebRendererService(
     }
 
     private static void EnsureComponentType(Type componentType)
-        => ArgumentHelpers.ThrowIf(
-            !typeof(IComponent).IsAssignableFrom(componentType),
-            $"Type '{componentType.FullName}' is not an IComponent.",
-            nameof(componentType));
+        => ArgumentHelpers.ThrowIf(!typeof(IComponent).IsAssignableFrom(componentType), $"Type '{componentType.FullName}' is not an IComponent.", nameof(componentType));
 
     private static MethodInfo BindRenderComponent(Type componentType)
-        => RenderMethods.GetOrAdd(componentType, static type => {
-            var open = typeof(HtmlRenderer).FindMethod(nameof(HtmlRenderer.RenderComponentAsync), [typeof(ParameterView)]);
-            if (open is null || !open.IsGenericMethodDefinition)
-                throw new InvalidOperationException("HtmlRenderer.RenderComponentAsync<T>(ParameterView) was not found.");
+        => RenderMethods.GetOrAdd(
+            componentType, static type => {
+                var open = typeof(HtmlRenderer).FindMethod(nameof(HtmlRenderer.RenderComponentAsync), typeof(ParameterView));
+                if (open is null || !open.IsGenericMethodDefinition)
+                    throw new InvalidOperationException("HtmlRenderer.RenderComponentAsync<T>(ParameterView) was not found.");
 
-            return open.MakeGenericMethod(type);
-        });
+                return open.MakeGenericMethod(type);
+            });
 
     private static (string, string)[] HtmlTags(Type componentType, string operation)
         => [(Constants.Metrics.Tags.ComponentType, componentType.Name), (Constants.Metrics.Tags.Operation, operation)];
@@ -359,9 +358,6 @@ public sealed class WebRendererService(
 
         logger?.LogWarning(ex, "Render {ComponentType} failed", componentType?.Name ?? "html");
     }
-
-    private BrowserSession Session
-        => browser ?? (_ownedSession ??= new BrowserSession(options ?? new WebRenderOptions(), null, _metrics));
 
     private static string ContentType(WebRenderFormat format)
         => format switch {

@@ -1,6 +1,5 @@
 @page "/auth/login"
 @page "/auth/login/{*ReturnUrl}"
-@using Lyo.Authentication.Models.Records
 
 @inject IAuthSignInLauncher SignInLauncher
 @inject IAuthProviderCatalog ProviderCatalog
@@ -69,6 +68,7 @@
                                            OnClick="@(() => StartProviderSignInAsync(provider.Name))">
                                     @if (thisBusy) {
                                         <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
+
                                         <span>Signing in...</span>
                                     }
                                     else {
@@ -126,6 +126,7 @@
                                                StartIcon="@(_passwordBusy ? null : Icons.Material.Filled.Login)">
                                         @if (_passwordBusy) {
                                             <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
+
                                             <span>Signing in...</span>
                                         }
                                         else {

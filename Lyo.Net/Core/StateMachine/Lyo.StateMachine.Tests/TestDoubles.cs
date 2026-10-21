@@ -24,8 +24,7 @@ internal sealed class RecordingMetrics : IMetrics
 
     public void RecordEvent(string name, IConvertible? value = null, IEnumerable<(string, string)>? tags = null) => Add("event", name, tags);
 
-    private void Add(string kind, string name, IEnumerable<(string Key, string Value)>? tags)
-        => Calls.Add((kind, name, (tags ?? []).ToDictionary(t => t.Key, t => t.Value)));
+    private void Add(string kind, string name, IEnumerable<(string Key, string Value)>? tags) => Calls.Add((kind, name, (tags ?? []).ToDictionary(t => t.Key, t => t.Value)));
 }
 
 internal sealed class ListLogger<T> : ILogger<T>

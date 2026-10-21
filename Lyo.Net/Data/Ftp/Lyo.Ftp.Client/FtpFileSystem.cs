@@ -25,8 +25,8 @@ public sealed class FtpFileSystem : IFileSystem
 
     /// <inheritdoc />
     public FileSystemCapabilities Capabilities
-        => FileSystemCapabilities.Read | FileSystemCapabilities.Write | FileSystemCapabilities.CreateDirectory | FileSystemCapabilities.Delete
-           | FileSystemCapabilities.Move | FileSystemCapabilities.Copy | FileSystemCapabilities.Append;
+        => FileSystemCapabilities.Read | FileSystemCapabilities.Write | FileSystemCapabilities.CreateDirectory | FileSystemCapabilities.Delete | FileSystemCapabilities.Move |
+            FileSystemCapabilities.Copy | FileSystemCapabilities.Append;
 
     /// <inheritdoc />
     public IFileSystemWatch? Watch(string path, bool recursive = true) => null;
@@ -80,8 +80,7 @@ public sealed class FtpFileSystem : IFileSystem
     }
 
     /// <inheritdoc />
-    public async IAsyncEnumerable<FileSystemEntry> EnumerateDirectoryAsync(
-        string path, bool recursive = false, [EnumeratorCancellation] CancellationToken ct = default)
+    public async IAsyncEnumerable<FileSystemEntry> EnumerateDirectoryAsync(string path, bool recursive = false, [EnumeratorCancellation] CancellationToken ct = default)
     {
         var pending = new Queue<string>();
         pending.Enqueue(path);
@@ -90,6 +89,7 @@ public sealed class FtpFileSystem : IFileSystem
             foreach (var entry in await ListDirectoryAsync(pending.Dequeue(), ct).ConfigureAwait(false)) {
                 ct.ThrowIfCancellationRequested();
                 yield return entry;
+
                 if (recursive && entry.IsDirectory)
                     pending.Enqueue(entry.Path);
             }
@@ -147,7 +147,7 @@ public sealed class FtpFileSystem : IFileSystem
                 throw new IOException($"Destination already exists: {dest}");
 
             if (destIsDirectory)
-                _client.DeleteDirectory(dest, true);
+                _client.DeleteDirectory(dest);
             else
                 _client.DeleteFile(dest);
         }
@@ -309,9 +309,10 @@ public sealed class FtpFileSystem : IFileSystem
     private static IReadOnlyList<FileSystemEntry> Map(IReadOnlyList<FtpEntryInfo> entries)
     {
         List<FileSystemEntry> mapped = new(entries.Count);
-        mapped.AddRange(entries.Select(
-            e => new FileSystemEntry(e.FullPath, PathHelpers.GetFileName(PathStyle.Posix, e.FullPath), 
-                e.IsDirectory, e.Length, e.LastWriteTimeUtc, e.LastWriteTimeUtc)));
+        mapped.AddRange(
+            entries.Select(e => new FileSystemEntry(
+                e.FullPath, PathHelpers.GetFileName(PathStyle.Posix, e.FullPath), e.IsDirectory, e.Length, e.LastWriteTimeUtc, e.LastWriteTimeUtc)));
+
         return mapped;
     }
 }

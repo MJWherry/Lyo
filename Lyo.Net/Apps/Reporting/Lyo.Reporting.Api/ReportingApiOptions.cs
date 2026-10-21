@@ -22,15 +22,15 @@ public sealed class ReportingApiOptions
     public EndpointAuth? DownloadAuth { get; init; } = EndpointAuth.RequireAuthorization();
 
     /// <summary>
-    /// Host factory that opens a readable stream for a generation's stored output (for example FileStorage lookup by <see cref="ReportGeneration.OutputFileId" />). The
-    /// Download route is mapped only when this is set. Return null if the output is gone.
+    /// Host factory that opens a readable stream for a generation's stored output (for example FileStorage lookup by <see cref="ReportGeneration.OutputFileId" />). The Download
+    /// route is mapped only when this is set. Return null if the output is gone.
     /// </summary>
     public Func<ReportDownloadContext, CancellationToken, Task<Stream?>>? DownloadStreamFactory { get; init; }
 
     /// <summary>
     /// Whether an unauthenticated caller may set <c>CreatedBy</c> on a generate request. Defaults to false: the field is audit data, and trusting it from an anonymous request
-    /// lets a caller pin a generation on anyone. Authenticated requests always use the signed-in identity, whatever this flag is. Turn it on only for trusted
-    /// service-to-service callers that have no user identity.
+    /// lets a caller pin a generation on anyone. Authenticated requests always use the signed-in identity, whatever this flag is. Turn it on only for trusted service-to-service callers
+    /// that have no user identity.
     /// </summary>
     public bool AllowAnonymousCreatedBy { get; init; }
 

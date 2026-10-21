@@ -14,8 +14,8 @@ using Microsoft.Extensions.Options;
 namespace Lyo.Authentication;
 
 /// <summary>
-/// Top-level container helpers for <c>Lyo.Authentication</c>. Compose with <see cref="ScopeRegistrationExtensions.AddScope" />, <c>AddInMemoryAuthenticationStores</c>, and (in
-/// ASP.NET) <c>AddLyoApiTokenAuthentication</c>.
+/// Top-level container helpers for <c>Lyo.Authentication</c>. Compose with <see cref="ScopeRegistrationExtensions.AddScope" />, <c>AddInMemoryAuthenticationStores</c>, and
+/// (in ASP.NET) <c>AddLyoApiTokenAuthentication</c>.
 /// </summary>
 public static class Extensions
 {
@@ -24,8 +24,8 @@ public static class Extensions
     {
         /// <summary>
         /// Registers the base authentication services: <see cref="AuthenticationOptions" />, <see cref="LyoJwtOptions" />, <see cref="ScopeRegistry" /> (as both
-        /// <see cref="IScopeRegistry" /> and concrete), opaque issuer + validator, JWT issuer + validator, refresh issuer + exchange, and the JWKS builder. Does not register
-        /// stores — call <see cref="AddInMemoryAuthenticationStores" /> or use <c>Lyo.Authentication.Postgres</c>.
+        /// <see cref="IScopeRegistry" /> and concrete), opaque issuer + validator, JWT issuer + validator, refresh issuer + exchange, and the JWKS builder. Does not register stores — call
+        /// <see cref="AddInMemoryAuthenticationStores" /> or use <c>Lyo.Authentication.Postgres</c>.
         /// </summary>
         public IServiceCollection AddLyoAuthentication()
         {

@@ -364,8 +364,8 @@ public sealed class TestGatewayFileTransformer
     }
 
     /// <summary>
-    /// Best-effort label for common stream magics at offset 0, using <see cref="CompressionAlgorithm.Detectable" /> so this diagnostic stays aligned with the
-    /// signatures the compressors advertise.
+    /// Best-effort label for common stream magics at offset 0, using <see cref="CompressionAlgorithm.Detectable" /> so this diagnostic stays aligned with the signatures the
+    /// compressors advertise.
     /// </summary>
     private static string DescribeCompressionMagicExtended(byte[] d)
     {

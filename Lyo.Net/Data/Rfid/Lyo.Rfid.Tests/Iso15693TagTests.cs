@@ -8,7 +8,6 @@ public sealed class Iso15693TagTests
     public async Task OpenAsync_SystemInformation_SetsUidAndBlockSize()
     {
         await using var tag = await Iso15693Tag.OpenAsync(new ScriptedTransceiver(), TestCt);
-
         Assert.Equal("E004035012345678", tag.UidHex);
         Assert.Equal(4, tag.BlockSize);
         Assert.Equal(8, tag.BlockCount);
@@ -22,9 +21,7 @@ public sealed class Iso15693TagTests
         user.CopyTo(transceiver.UserMemory, 0);
         await using var tag = await Iso15693Tag.OpenAsync(transceiver, TestCt);
         transceiver.Sent.Clear();
-
         var read = await tag.ReadBlocksAsync(0, 8, TestCt);
-
         Assert.Equal(user, read);
         Assert.Single(transceiver.Sent, frame => frame[1] == 0x23);
     }
@@ -36,9 +33,7 @@ public sealed class Iso15693TagTests
         await using var tag = await Iso15693Tag.OpenAsync(transceiver, TestCt);
         transceiver.Sent.Clear();
         var four = new byte[] { 0xAA, 0xBB, 0xCC, 0xDD };
-
         await tag.WriteBlockAsync(2, four, TestCt);
-
         var write = Assert.Single(transceiver.Sent, frame => frame[1] == 0x21);
         Assert.Equal(2, write[10]);
         Assert.Equal(four, write.AsSpan(11, 4).ToArray());
@@ -49,7 +44,6 @@ public sealed class Iso15693TagTests
     {
         var transceiver = new ScriptedTransceiver { ErrorOnRead = true };
         await using var tag = await Iso15693Tag.OpenAsync(transceiver, TestCt);
-
         await Assert.ThrowsAsync<RfidException>(() => tag.ReadBlocksAsync(0, 1, TestCt));
     }
 
@@ -73,7 +67,7 @@ public sealed class Iso15693TagTests
                 return Task.FromResult(Respond(SystemInfoPayload()));
 
             if (command == 0x23)
-                return Task.FromResult(ErrorOnRead ? Respond([], error: true) : Respond(UserMemory));
+                return Task.FromResult(ErrorOnRead ? Respond([], true) : Respond(UserMemory));
 
             return Task.FromResult(Respond([]));
         }

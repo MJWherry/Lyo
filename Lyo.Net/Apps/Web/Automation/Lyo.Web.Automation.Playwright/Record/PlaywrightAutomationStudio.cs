@@ -3,7 +3,6 @@ using Lyo.Exceptions;
 using Lyo.Web.Automation.Models;
 using Lyo.Web.Automation.Models.Enums;
 using Lyo.Web.Automation.Plan;
-using Lyo.Web.Automation.Playwright;
 using Lyo.Web.Automation.Playwright.Browser;
 using Lyo.Web.Automation.Playwright.Service;
 using Microsoft.Extensions.Logging;
@@ -15,22 +14,19 @@ namespace Lyo.Web.Automation.Playwright.Record;
 public sealed class PlaywrightAutomationStudio(IPlaywrightBrowserService browsers, IAutomationPlanRunner? runner = null)
 {
     private const string HighlightSource = """
-        el => {
-          if (window.__lyoTool && window.__lyoTool.mark)
-            window.__lyoTool.mark(el);
-        }
-        """;
+                                           el => {
+                                             if (window.__lyoTool && window.__lyoTool.mark)
+                                               window.__lyoTool.mark(el);
+                                           }
+                                           """;
 
-    private static readonly JsonSerializerOptions MessageOptions = new() {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        PropertyNameCaseInsensitive = true
-    };
+    private static readonly JsonSerializerOptions MessageOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true };
 
     /// <summary>Starts the browser and installs capture. The page stays the site.</summary>
     public async Task<IPlaywrightAutomationStudio> StartAsync(PlaywrightAutomationStudioOptions? options = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(browsers);
-        options ??= new PlaywrightAutomationStudioOptions();
+        options ??= new();
         var session = browsers.CreateSession(browser => {
             browser.Headless = options.Headless;
             options.ConfigureBrowser?.Invoke(browser);
@@ -49,29 +45,27 @@ public sealed class PlaywrightAutomationStudio(IPlaywrightBrowserService browser
 
     private sealed class Recording : IPlaywrightAutomationStudio
     {
-        private readonly IPlaywrightBrowserSession _session;
-        private readonly RecordedEventMapper _mapper;
         private readonly SemaphoreSlim _gate = new(1, 1);
-        private readonly TaskCompletionSource<bool> _stopped = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        private readonly string _outputDir;
-        private readonly IAutomationPlanRunner? _runner;
         private readonly List<NetworkHit> _hits = [];
         private readonly List<IPage> _hookedPages = [];
-        private AutomationPlan? _plan;
-        private string? _loadedPlanJson;
-        private bool _paused;
-        private bool _capturing;
-        private int _playing;
+        private readonly RecordedEventMapper _mapper;
+        private readonly string _outputDir;
         private readonly List<IPage> _replayPages = [];
+        private readonly IAutomationPlanRunner? _runner;
+        private readonly IPlaywrightBrowserSession _session;
+        private readonly TaskCompletionSource<bool> _stopped = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private int _armReplay;
-        private int _nextHitId;
-        private int _sessionDisposed;
-        private int _playStep;
+        private bool _capturing;
         private bool _grabber;
-        private bool _recording;
-        private int _recordBinding;
-        private AutomationPlanRunGate? _playGate;
+        private string? _loadedPlanJson;
+        private int _nextHitId;
+        private AutomationPlan? _plan;
         private CancellationTokenSource? _playCts;
+        private AutomationPlanRunGate? _playGate;
+        private int _playStep;
+        private int _playing;
+        private int _recordBinding;
+        private int _sessionDisposed;
 
         internal Recording(IPlaywrightBrowserSession session, string? planName, string outputDirectory, IAutomationPlanRunner? runner)
         {
@@ -86,8 +80,7 @@ public sealed class PlaywrightAutomationStudio(IPlaywrightBrowserService browser
 
         public Task Completion => _stopped.Task;
 
-        public AutomationPlan Plan
-        {
+        public AutomationPlan Plan {
             get {
                 _gate.Wait();
                 try {
@@ -99,25 +92,24 @@ public sealed class PlaywrightAutomationStudio(IPlaywrightBrowserService browser
             }
         }
 
-        public bool RecordingPaused => _paused;
+        public bool RecordingPaused { get; private set; }
 
-        public bool IsRecording => _recording;
+        public bool IsRecording { get; private set; }
 
         public event EventHandler? PlanChanged;
 
         public async Task StartRecordingAsync(CancellationToken ct = default)
         {
-            _recording = true;
+            IsRecording = true;
             await EnsureRecordBindingAsync().ConfigureAwait(false);
             var page = Browser.Page;
             if (page != null)
                 await InstallRecorderAsync(page).ConfigureAwait(false);
         }
 
-        public void StopRecording() => _recording = false;
+        public void StopRecording() => IsRecording = false;
 
-        public AutomationPlan? LoadedPlan
-        {
+        public AutomationPlan? LoadedPlan {
             get {
                 var json = _loadedPlanJson;
                 if (string.IsNullOrWhiteSpace(json))
@@ -137,9 +129,9 @@ public sealed class PlaywrightAutomationStudio(IPlaywrightBrowserService browser
         /// <summary>Runner log. When set, play writes here in addition to <see cref="StepNotice" />.</summary>
         public ILogger? PlayLogger { get; set; }
 
-        public void PauseRecording() => _paused = true;
+        public void PauseRecording() => RecordingPaused = true;
 
-        public void ResumeRecording() => _paused = false;
+        public void ResumeRecording() => RecordingPaused = false;
 
         public void InsertStep(RecordedInsert insert)
         {
@@ -200,11 +192,14 @@ public sealed class PlaywrightAutomationStudio(IPlaywrightBrowserService browser
             _playGate = new();
             _playCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
             var logger = new StudioStepLogger(PlayLogger, line => Raise(new() { Phase = "log", LogLine = line, StepIndex = _playStep }));
-            var instrumentation = new StudioPlayInstrumentation(runDirectory, notice => {
-                if (notice.Phase == "start")
-                    _playStep = notice.StepIndex;
-                Raise(notice);
-            });
+            var instrumentation = new StudioPlayInstrumentation(
+                runDirectory, notice => {
+                    if (notice.Phase == "start")
+                        _playStep = notice.StepIndex;
+
+                    Raise(notice);
+                });
+
             var options = new AutomationPlanRuntimeOptions {
                 StartStepIndex = startStepIndex,
                 EndStepIndex = endStepIndex,
@@ -212,6 +207,7 @@ public sealed class PlaywrightAutomationStudio(IPlaywrightBrowserService browser
                 Instrumentation = instrumentation,
                 PlanRunDirectory = new() { RootDirectory = runDirectory }
             };
+
             try {
                 return await _runner.RunWithResultAsync(_session, plan, options, logger, _playCts.Token).ConfigureAwait(false);
             }
@@ -240,10 +236,17 @@ public sealed class PlaywrightAutomationStudio(IPlaywrightBrowserService browser
 
         public IReadOnlyList<AutomationStudioNetworkRow> NetworkRows(string? urlPattern)
         {
-            lock (_hits)
+            lock (_hits) {
                 return _hits.Where(hit => NetworkUrlMatcher.Matches(urlPattern, hit.Url))
-                    .Select(hit => new AutomationStudioNetworkRow { Id = hit.Id, Method = hit.Method, Url = hit.Url, Status = hit.Status, ResourceType = hit.ResourceType })
+                    .Select(hit => new AutomationStudioNetworkRow {
+                        Id = hit.Id,
+                        Method = hit.Method,
+                        Url = hit.Url,
+                        Status = hit.Status,
+                        ResourceType = hit.ResourceType
+                    })
                     .ToList();
+            }
         }
 
         public AutomationStudioNetworkDetail? ReadNetwork(int id)
@@ -368,8 +371,9 @@ public sealed class PlaywrightAutomationStudio(IPlaywrightBrowserService browser
             string? json;
             try {
                 json = await page.EvaluateAsync<string>(
-                    "({ tool, variable }) => { const row = window.__lyoTool && window.__lyoTool.grab(tool, variable); return row ? JSON.stringify(row) : null; }",
-                    new Dictionary<string, object?> { ["tool"] = tool, ["variable"] = variableName }).ConfigureAwait(false);
+                        "({ tool, variable }) => { const row = window.__lyoTool && window.__lyoTool.grab(tool, variable); return row ? JSON.stringify(row) : null; }",
+                        new Dictionary<string, object?> { ["tool"] = tool, ["variable"] = variableName })
+                    .ConfigureAwait(false);
             }
             catch (PlaywrightException) {
                 return "The info grabber is not on this page.";
@@ -386,10 +390,10 @@ public sealed class PlaywrightAutomationStudio(IPlaywrightBrowserService browser
             var parent = ToLocator(pick.ParentLocator);
             _gate.Wait(ct);
             try {
-                _mapper.Apply(new(
-                    RecordedDomEventKind.Pick,
-                    Locator: locator,
-                    Pick: new(parsed, pick.Repeating, parent, pick.DescendantTag, locator, pick.VariableName ?? variableName, pick.AttributeName)));
+                _mapper.Apply(
+                    new(
+                        RecordedDomEventKind.Pick, Locator: locator,
+                        Pick: new(parsed, pick.Repeating, parent, pick.DescendantTag, locator, pick.VariableName ?? variableName, pick.AttributeName)));
             }
             finally {
                 _gate.Release();
@@ -397,6 +401,24 @@ public sealed class PlaywrightAutomationStudio(IPlaywrightBrowserService browser
 
             return null;
         }
+
+        public async Task<AutomationPlan> StopAsync(CancellationToken ct = default)
+        {
+            CancelPlay();
+            await _gate.WaitAsync(ct).ConfigureAwait(false);
+            try {
+                _plan ??= _mapper.Build();
+            }
+            finally {
+                _gate.Release();
+            }
+
+            SignalStopped();
+            await DisposeSessionAsync().ConfigureAwait(false);
+            return _plan;
+        }
+
+        public async ValueTask DisposeAsync() => await StopAsync().ConfigureAwait(false);
 
         private async Task EnsureRecordBindingAsync()
         {
@@ -419,7 +441,7 @@ public sealed class PlaywrightAutomationStudio(IPlaywrightBrowserService browser
 
         private void OnRecorded(string payload)
         {
-            if (!_recording || Volatile.Read(ref _playing) == 1 || string.IsNullOrWhiteSpace(payload))
+            if (!IsRecording || Volatile.Read(ref _playing) == 1 || string.IsNullOrWhiteSpace(payload))
                 return;
 
             RecordedPayload? message;
@@ -434,10 +456,11 @@ public sealed class PlaywrightAutomationStudio(IPlaywrightBrowserService browser
                 return;
 
             ElementLocator? locator = null;
-            if (message.Locator is { Kind: { } kindName, Value: { } value } && Enum.TryParse<ElementLocatorKind>(kindName, out var locatorKind) && !string.IsNullOrWhiteSpace(value))
+            if (message.Locator is { Kind: { } kindName, Value: { } value } && Enum.TryParse<ElementLocatorKind>(kindName, out var locatorKind) &&
+                !string.IsNullOrWhiteSpace(value))
                 locator = new(locatorKind, value);
 
-            ApplyRecorded(new(kind, message.Key, locator, Text: message.Text, Value: message.Value, Url: message.Url));
+            ApplyRecorded(new(kind, message.Key, locator, message.Text, message.Value, message.Url));
         }
 
         private void ApplyRecorded(RecordedDomEvent evt)
@@ -488,24 +511,6 @@ public sealed class PlaywrightAutomationStudio(IPlaywrightBrowserService browser
             HookPage(page);
         }
 
-        public async Task<AutomationPlan> StopAsync(CancellationToken ct = default)
-        {
-            CancelPlay();
-            await _gate.WaitAsync(ct).ConfigureAwait(false);
-            try {
-                _plan ??= _mapper.Build();
-            }
-            finally {
-                _gate.Release();
-            }
-
-            SignalStopped();
-            await DisposeSessionAsync().ConfigureAwait(false);
-            return _plan;
-        }
-
-        public async ValueTask DisposeAsync() => await StopAsync().ConfigureAwait(false);
-
         private static string WritePlan(string directory, AutomationPlan plan)
         {
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(directory);
@@ -536,7 +541,7 @@ public sealed class PlaywrightAutomationStudio(IPlaywrightBrowserService browser
             if (page == null || IsReplay(page))
                 return;
 
-            if (_recording) {
+            if (IsRecording) {
                 _ = InstallRecorderAsync(page);
                 if (!string.IsNullOrWhiteSpace(frame.Url))
                     ApplyRecorded(new(RecordedDomEventKind.Navigate, Url: frame.Url));
@@ -789,22 +794,22 @@ public sealed class PlaywrightAutomationStudio(IPlaywrightBrowserService browser
 
                 await page.SetContentAsync("<pre id=\"lyo-replay\"></pre>").ConfigureAwait(false);
                 await page.EvaluateAsync(
-                    """
-                    async ({url, method, contentType, body}) => {
-                      const headers = {};
-                      if (contentType) headers["content-type"] = contentType;
-                      const response = await fetch(url, { method, headers, body: body || undefined, credentials: "include" });
-                      const text = await response.text();
-                      const node = document.getElementById("lyo-replay");
-                      if (node) node.textContent = response.status + " " + response.statusText + "\n\n" + text;
-                    }
-                    """,
-                    new Dictionary<string, object?> {
-                        ["url"] = replay.Url,
-                        ["method"] = replay.Method,
-                        ["contentType"] = replay.ContentType,
-                        ["body"] = replay.Body
-                    }).ConfigureAwait(false);
+                        """
+                        async ({url, method, contentType, body}) => {
+                          const headers = {};
+                          if (contentType) headers["content-type"] = contentType;
+                          const response = await fetch(url, { method, headers, body: body || undefined, credentials: "include" });
+                          const text = await response.text();
+                          const node = document.getElementById("lyo-replay");
+                          if (node) node.textContent = response.status + " " + response.statusText + "\n\n" + text;
+                        }
+                        """, new Dictionary<string, object?> {
+                            ["url"] = replay.Url,
+                            ["method"] = replay.Method,
+                            ["contentType"] = replay.ContentType,
+                            ["body"] = replay.Body
+                        })
+                    .ConfigureAwait(false);
             }
             catch (Exception ex) when (ex is PlaywrightException or ObjectDisposedException) {
                 // The new tab can be closed while the resent request is still running.
@@ -829,22 +834,8 @@ public sealed class PlaywrightAutomationStudio(IPlaywrightBrowserService browser
                 var requestType = HeaderValue(hit.RequestHeaders, "content-type");
                 var requestBody = NetworkBodyFormatter.FormatText(requestType, hit.PostData);
                 return new(
-                    hit.Id,
-                    hit.Method,
-                    hit.Url,
-                    hit.ResourceType,
-                    hit.Status,
-                    hit.ContentType,
-                    hit.BodyBytes,
-                    hit.BodyReady,
-                    hit.BodyTruncated,
-                    requestBody.Kind,
-                    requestBody.Text,
-                    hit.ResponseKind,
-                    hit.ResponseText,
-                    hit.ImageDataUrl,
-                    hit.RequestHeaders,
-                    hit.ResponseHeaders);
+                    hit.Id, hit.Method, hit.Url, hit.ResourceType, hit.Status, hit.ContentType, hit.BodyBytes, hit.BodyReady, hit.BodyTruncated, requestBody.Kind, requestBody.Text,
+                    hit.ResponseKind, hit.ResponseText, hit.ImageDataUrl, hit.RequestHeaders, hit.ResponseHeaders);
             }
         }
 
@@ -906,7 +897,13 @@ public sealed class PlaywrightAutomationStudio(IPlaywrightBrowserService browser
             public override void OnRunStarted(in AutomationPlanRunStartedEvent e) => _runId = e.RunId;
 
             public override void OnStepStarting(in AutomationPlanStepStartingEvent e)
-                => raise(new() { Phase = "start", StepIndex = e.StepIndex, StepExecutionId = e.StepExecutionId, Label = e.Step.ToString() });
+                => raise(
+                    new() {
+                        Phase = "start",
+                        StepIndex = e.StepIndex,
+                        StepExecutionId = e.StepExecutionId,
+                        Label = e.Step.ToString()
+                    });
 
             public override void OnStepOutcome(in AutomationPlanStepOutcomeRecord e)
             {
@@ -914,24 +911,26 @@ public sealed class PlaywrightAutomationStudio(IPlaywrightBrowserService browser
                 var shot = e.Outcome switch {
                     AutomationPlanStepOutcome.Success => "after",
                     AutomationPlanStepOutcome.Failed or AutomationPlanStepOutcome.TimedOut => "failed",
-                    _ => null
+                    var _ => null
                 };
+
                 if (shot != null) {
                     var path = Path.Combine(runDirectory, _runId.ToString("N"), "snapshots", $"{e.StepIndex:000}_{e.StepExecutionId:N}_{shot}.png");
                     if (File.Exists(path))
                         screenshot = path;
                 }
 
-                raise(new() {
-                    Phase = "outcome",
-                    StepIndex = e.StepIndex,
-                    StepExecutionId = e.StepExecutionId,
-                    Outcome = e.Outcome,
-                    Error = e.Error?.Message,
-                    Duration = e.Duration,
-                    ScreenshotPath = screenshot,
-                    Context = e.Context
-                });
+                raise(
+                    new() {
+                        Phase = "outcome",
+                        StepIndex = e.StepIndex,
+                        StepExecutionId = e.StepExecutionId,
+                        Outcome = e.Outcome,
+                        Error = e.Error?.Message,
+                        Duration = e.Duration,
+                        ScreenshotPath = screenshot,
+                        Context = e.Context
+                    });
             }
         }
 

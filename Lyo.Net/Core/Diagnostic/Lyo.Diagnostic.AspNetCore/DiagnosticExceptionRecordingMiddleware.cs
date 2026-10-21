@@ -5,11 +5,12 @@ using Lyo.Diagnostic.Logging;
 using Lyo.Diagnostic.Sanitisation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+
 namespace Lyo.Diagnostic.AspNetCore;
 
 /// <summary>
-/// Catches exceptions from later middleware, writes an <see cref="ErrorOccurrenceRecord" />, optionally logs via <see cref="IStructuredLogEnricher" />, then rethrows. Register
-/// <b>after</b> outer middleware such as <c>LoggingMiddleware</c> so this sits closer to route handlers and runs first on unwind.
+/// Catches exceptions from later middleware, writes an <see cref="ErrorOccurrenceRecord" />, optionally logs via <see cref="IStructuredLogEnricher" />, then rethrows.
+/// Register <b>after</b> outer middleware such as <c>LoggingMiddleware</c> so this sits closer to route handlers and runs first on unwind.
 /// </summary>
 public sealed class DiagnosticExceptionRecordingMiddleware(RequestDelegate next)
 {

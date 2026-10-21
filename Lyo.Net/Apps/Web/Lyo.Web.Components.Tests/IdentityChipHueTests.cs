@@ -1,9 +1,9 @@
 using Lyo.Api.Models.Enums;
-using MudBlazor;
 using Lyo.Common.Metadata.Records;
 using Lyo.Web.Components.Cache;
 using Lyo.Web.Components.LyoType;
 using Lyo.Web.Primitives;
+using MudBlazor;
 
 namespace Lyo.Web.Components.Tests;
 
@@ -23,11 +23,9 @@ public sealed class IdentityChipHueTests
         var integer = LyoTypeUi.ForType(LyoTypeInfo.Int.FullName);
         Assert.Equal(LyoChipHue.Teal.Style, integer.Style);
         Assert.Equal(Color.Default, integer.Color);
-
         var regex = LyoTypeUi.ForType(LyoTypeInfo.Regex.FullName);
         Assert.Equal(Color.Warning, regex.Color);
         Assert.Null(regex.Style);
-
         var unknown = LyoTypeUi.ForType("Not.A.Type");
         Assert.Null(unknown.Style);
         Assert.Equal(Color.Default, unknown.Color);

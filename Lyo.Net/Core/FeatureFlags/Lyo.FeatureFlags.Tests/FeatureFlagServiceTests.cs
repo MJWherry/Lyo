@@ -1,5 +1,3 @@
-using Lyo.FeatureFlags;
-
 namespace Lyo.FeatureFlags.Tests;
 
 public sealed class FeatureFlagServiceTests
@@ -14,7 +12,7 @@ public sealed class FeatureFlagServiceTests
     [Fact]
     public void IsEnabled_ModeOff_ReturnsFalse()
     {
-        var service = Service(o => o.Flags["off"] = new FeatureFlagDefinition { Mode = FeatureFlagMode.Off });
+        var service = Service(o => o.Flags["off"] = new() { Mode = FeatureFlagMode.Off });
         Assert.False(service.IsEnabled("off", User("user-a")));
     }
 
@@ -53,7 +51,6 @@ public sealed class FeatureFlagServiceTests
         Assert.True(Service(o => o.Add("billing").Percentage(51)).IsEnabled("billing", user));
         Assert.False(Service(o => o.Add("billing").Percentage(50)).IsEnabled("billing", user));
         Assert.False(Service(o => o.Add("billing").Percentage(51)).IsEnabled("billing"));
-
         var stable = Service(o => o.Add("billing").Percentage(51));
         Assert.True(stable.IsEnabled("billing", user));
         Assert.True(stable.IsEnabled("billing", user));
@@ -89,10 +86,8 @@ public sealed class FeatureFlagServiceTests
     public void IsEnabled_Rules_UserTenantClaimAttribute_Match()
     {
         var service = Service(o => o.Flags["gate"] = RuleFlag(
-            new FeatureFlagRule { UserId = "u1" },
-            new FeatureFlagRule { TenantId = "acme" },
-            new FeatureFlagRule { Claims = [new FeatureFlagClaim { Type = "role", Value = "admin" }] },
-            new FeatureFlagRule { Attributes = [new FeatureFlagAttribute { Key = "plan", Value = "pro" }] }));
+            new FeatureFlagRule { UserId = "u1" }, new FeatureFlagRule { TenantId = "acme" }, new FeatureFlagRule { Claims = [new() { Type = "role", Value = "admin" }] },
+            new FeatureFlagRule { Attributes = [new() { Key = "plan", Value = "pro" }] }));
 
         Assert.True(service.IsEnabled("gate", User("u1")));
         Assert.False(service.IsEnabled("gate", User("other")));
@@ -116,9 +111,7 @@ public sealed class FeatureFlagServiceTests
     [Fact]
     public void IsEnabled_Rules_OrAcrossRules_AnyMatch()
     {
-        var service = Service(o => o.Flags["either"] = RuleFlag(
-            new FeatureFlagRule { UserId = "u1" },
-            new FeatureFlagRule { TenantId = "acme" }));
+        var service = Service(o => o.Flags["either"] = RuleFlag(new FeatureFlagRule { UserId = "u1" }, new FeatureFlagRule { TenantId = "acme" }));
         Assert.True(service.IsEnabled("either", User("u1")));
         Assert.True(service.IsEnabled("either", FeatureFlagContext.Create().WithTenant("acme").Build()));
         Assert.False(service.IsEnabled("either", User("other")));
@@ -152,14 +145,10 @@ public sealed class FeatureFlagServiceTests
     {
         var options = new FeatureFlagOptions();
         configure(options);
-        return new FeatureFlagService(options);
+        return new(options);
     }
 
     private static FeatureFlagContext User(string id) => FeatureFlagContext.Create().WithUser(id).Build();
 
-    private static FeatureFlagDefinition RuleFlag(params FeatureFlagRule[] rules) => new()
-    {
-        Mode = FeatureFlagMode.Rules,
-        Rules = [.. rules]
-    };
+    private static FeatureFlagDefinition RuleFlag(params FeatureFlagRule[] rules) => new() { Mode = FeatureFlagMode.Rules, Rules = [.. rules] };
 }

@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -69,7 +70,7 @@ public sealed class FormatterService : IFormatterService
     public string Format(string template, object? context)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(template);
-        return FormatCore(template, context, extra: null);
+        return FormatCore(template, context, null);
     }
 
     /// <inheritdoc />
@@ -78,14 +79,16 @@ public sealed class FormatterService : IFormatterService
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(template);
         ArgumentHelpers.ThrowIfNull(contextItems);
         if (contextItems.Length == 0)
-            return FormatCore(template, null, extra: null);
+            return FormatCore(template, null, null);
+
         if (contextItems.Length == 1)
-            return FormatCore(template, contextItems[0], extra: null);
+            return FormatCore(template, contextItems[0], null);
 
         var bag = new FormatterContextBag();
         foreach (var item in contextItems)
             bag.AddContext(item);
-        return FormatCore(template, bag, extra: contextItems);
+
+        return FormatCore(template, bag, contextItems);
     }
 
     /// <inheritdoc />
@@ -93,7 +96,7 @@ public sealed class FormatterService : IFormatterService
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(template);
         ArgumentHelpers.ThrowIfNull(context);
-        return FormatCore(template, context, extra: null);
+        return FormatCore(template, context, null);
     }
 
     /// <inheritdoc />
@@ -115,7 +118,7 @@ public sealed class FormatterService : IFormatterService
             return false;
 
         try {
-            result = FormatCore(template, context, extra: null);
+            result = FormatCore(template, context, null);
             return true;
         }
         catch {
@@ -144,9 +147,11 @@ public sealed class FormatterService : IFormatterService
         foreach (var token in tokens) {
             if (token.Kind != FormatterTokenKind.Expression)
                 continue;
+
             var exprError = _expressions.TryValidate(token.Inner);
             if (exprError is null)
                 continue;
+
             errorMessage = exprError;
             return false;
         }
@@ -175,10 +180,12 @@ public sealed class FormatterService : IFormatterService
         foreach (var token in tokens) {
             if (token.Kind == FormatterTokenKind.Literal)
                 continue;
+
             if (token.Kind == FormatterTokenKind.SmartFormat) {
                 var key = SmartFormatPlaceholderKey(token.Inner);
                 if (key.Length > 0)
                     placeholders.Add(key);
+
                 continue;
             }
 
@@ -202,11 +209,14 @@ public sealed class FormatterService : IFormatterService
         foreach (var token in FormatterTemplateScanner.Scan(template)) {
             if (token.Kind == FormatterTokenKind.Literal)
                 continue;
+
             if (formattedOutput.IndexOf(token.Raw, StringComparison.Ordinal) < 0)
                 continue;
+
             var key = token.Kind == FormatterTokenKind.Expression ? token.Inner.Trim() : SmartFormatPlaceholderKey(token.Inner);
             if (key.Length == 0)
                 key = token.Raw;
+
             unresolved.Add(key);
         }
 
@@ -236,6 +246,7 @@ public sealed class FormatterService : IFormatterService
                 var text = UnescapeLiteral(token.Raw);
                 if (text.Length == 0)
                     continue;
+
                 segments.Add(new(FormatterSegmentKind.Literal, text, null, token.Raw));
                 continue;
             }
@@ -267,6 +278,7 @@ public sealed class FormatterService : IFormatterService
     {
         if (context is ContextBag callerBag)
             context = callerBag.Copy();
+
         var provider = Culture ?? CultureInfo.CurrentCulture;
         var tokens = FormatterTemplateScanner.Scan(template);
         if (IsUnmatchedBrace(template, tokens))
@@ -289,6 +301,7 @@ public sealed class FormatterService : IFormatterService
     {
         if (string.IsNullOrWhiteSpace(token.Inner))
             return token.Raw;
+
         if (token.Kind == FormatterTokenKind.SmartFormat) {
             var formatted = FormatSmart(Culture ?? CultureInfo.CurrentCulture, token.Raw, context, extra);
             var key = SmartFormatPlaceholderKey(token.Inner);
@@ -298,11 +311,12 @@ public sealed class FormatterService : IFormatterService
             var bag = context as FormatterContextBag ?? new FormatterContextBag(context);
             if (!bag.TryResolve(key, out var resolved) || resolved is null)
                 return formatted;
+
             return FormatExpressionValue(resolved, SmartFormatFormatSpec(token.Inner));
         }
 
         var exprBag = context as FormatterContextBag ?? new FormatterContextBag(context);
-        if (!_expressions.TryEvaluate(token.Inner, exprBag, out var value, out _))
+        if (!_expressions.TryEvaluate(token.Inner, exprBag, out var value, out var _))
             return token.Raw;
 
         return FormatExpressionValue(value, token.FormatSpec);
@@ -312,6 +326,7 @@ public sealed class FormatterService : IFormatterService
     {
         if (extra is { Length: > 0 })
             return Formatter.Format(provider, template, extra);
+
         return context is null ? Formatter.Format(provider, template) : Formatter.Format(provider, template, context);
     }
 
@@ -329,12 +344,15 @@ public sealed class FormatterService : IFormatterService
 
         if (value is string text)
             return text;
+
         if (value is IFormattable formattable)
             return formattable.ToString(null, Culture ?? CultureInfo.CurrentCulture) ?? string.Empty;
-        if (value is System.Collections.IEnumerable enumerable and not string) {
+
+        if (value is IEnumerable enumerable and not string) {
             var parts = new List<string>();
             foreach (var item in enumerable)
                 parts.Add(item is null ? string.Empty : Convert.ToString(item, Culture ?? CultureInfo.CurrentCulture) ?? string.Empty);
+
             return string.Join(", ", parts);
         }
 
@@ -350,10 +368,7 @@ public sealed class FormatterService : IFormatterService
     }
 
     private static bool IsUnmatchedBrace(string template, IReadOnlyList<FormatterToken> tokens)
-        => tokens.Count == 1
-           && tokens[0].Kind == FormatterTokenKind.Literal
-           && tokens[0].Raw == template
-           && template.IndexOf('{') >= 0;
+        => tokens.Count == 1 && tokens[0].Kind == FormatterTokenKind.Literal && tokens[0].Raw == template && template.IndexOf('{') >= 0;
 
     private static string SmartFormatPlaceholderKey(string inner)
     {
@@ -368,11 +383,14 @@ public sealed class FormatterService : IFormatterService
         var colon = inner.IndexOf(':');
         if (colon < 0)
             return null;
+
         var spec = inner[(colon + 1)..].Trim();
         if (spec.Length == 0 || spec.IndexOfAny(['{', '|']) >= 0)
             return null;
+
         if (spec.StartsWith("list", StringComparison.OrdinalIgnoreCase) || spec.StartsWith("plural", StringComparison.OrdinalIgnoreCase))
             return null;
+
         return spec;
     }
 
@@ -382,6 +400,7 @@ public sealed class FormatterService : IFormatterService
     {
         if (string.IsNullOrEmpty(placeholder))
             return output.Contains('{');
+
         var escaped = Regex.Escape(placeholder);
         return Regex.IsMatch(output, @"\{" + escaped + @"(?:\:[^{}]*)?\}");
     }

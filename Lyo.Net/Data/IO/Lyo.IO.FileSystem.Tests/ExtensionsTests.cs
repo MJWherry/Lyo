@@ -12,7 +12,6 @@ public sealed class ExtensionsTests
         var services = new ServiceCollection();
         services.AddSingleton(new LocalFileSystemOptions { RootPath = TempRoot("other") });
         services.AddLocalFileSystem(o => o.RootPath = wanted);
-
         using var provider = services.BuildServiceProvider();
         using var scope = provider.CreateScope();
         var fileSystem = scope.ServiceProvider.GetRequiredService<IFileSystem>();
@@ -24,7 +23,6 @@ public sealed class ExtensionsTests
     {
         var services = new ServiceCollection();
         services.AddMemoryFileSystem();
-
         using var provider = services.BuildServiceProvider();
         Assert.IsType<MemoryFileSystem>(provider.GetRequiredService<IFileSystem>());
     }
@@ -35,11 +33,9 @@ public sealed class ExtensionsTests
         var services = new ServiceCollection();
         services.AddMemoryFileSystem();
         services.AddFileTreeSource();
-
         using var provider = services.BuildServiceProvider();
         Assert.IsType<FileSystemTreeSource>(provider.GetRequiredService<IFileTreeSource>());
     }
 
-    private static string TempRoot(string label)
-        => Path.Combine(Path.GetTempPath(), $"lyo-vfs-di-{label}-{LyoGuid.CreateV7():N}");
+    private static string TempRoot(string label) => Path.Combine(Path.GetTempPath(), $"lyo-vfs-di-{label}-{LyoGuid.CreateV7():N}");
 }

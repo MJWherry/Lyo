@@ -17,6 +17,7 @@ public partial class PodcastShowDetail
     {
         if (seconds is not int value || value < 0)
             return "";
+
         return $"{value / 60} min";
     }
 }

@@ -1,17 +1,18 @@
 using Lyo.Exceptions;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Enums;
+using Lyo.Story.Enums;
 
 namespace Lyo.Story.Builders;
 
-/// <summary>Builds a <see cref="StoryChoice"/> with All/OneOf conditions and a <c>Do</c> response list.</summary>
+/// <summary>Builds a <see cref="StoryChoice" /> with All/OneOf conditions and a <c>Do</c> response list.</summary>
 public sealed class StoryChoiceBuilder
 {
     private readonly StoryChoice _choice;
     private readonly StoryResponseBuilder _responses = new();
     private WhereClause? _enabledWhen;
-    private WhereClause? _visibleWhen;
     private bool _usedDo;
+    private WhereClause? _visibleWhen;
 
     internal StoryChoiceBuilder(string key, string? prompt)
     {
@@ -19,7 +20,7 @@ public sealed class StoryChoiceBuilder
         _choice = new() { Key = key, Prompt = prompt };
     }
 
-    /// <summary>Enabled-to-take: every nested leaf must match. Further <see cref="WhenAll"/> calls AND onto the tree.</summary>
+    /// <summary>Enabled-to-take: every nested leaf must match. Further <see cref="WhenAll" /> calls AND onto the tree.</summary>
     public StoryChoiceBuilder WhenAll(Action<StoryConditionBuilder> configure) => MergeEnabled(GroupOperatorEnum.And, configure);
 
     /// <summary>Enabled-to-take: at least one nested leaf must match. Combined with existing conditions via AND.</summary>
@@ -47,14 +48,14 @@ public sealed class StoryChoiceBuilder
         return this;
     }
 
-    /// <summary>Sugar that appends a Set step. Same list as <see cref="Do"/>.</summary>
+    /// <summary>Sugar that appends a Set step. Same list as <see cref="Do" />.</summary>
     public StoryChoiceBuilder Set(string key, object? value)
     {
         _responses.Set(key, value);
         return this;
     }
 
-    /// <summary>Sugar that appends a Goto step. Same list as <see cref="Do"/>.</summary>
+    /// <summary>Sugar that appends a Goto step. Same list as <see cref="Do" />.</summary>
     public StoryChoiceBuilder GoesTo(string nodeKey)
     {
         _responses.GoesTo(nodeKey);
@@ -74,7 +75,7 @@ public sealed class StoryChoiceBuilder
         _choice.EnabledWhen = _enabledWhen;
         _choice.VisibleWhen = _visibleWhen;
         _choice.Effects = _responses.Build();
-        var gotoKey = _choice.Effects.LastOrDefault(e => e.Kind == Enums.StoryEffectKind.GotoNode)?.TargetNodeKey;
+        var gotoKey = _choice.Effects.LastOrDefault(e => e.Kind == StoryEffectKind.GotoNode)?.TargetNodeKey;
         _choice.TargetNodeKey = gotoKey;
         _ = _usedDo;
         return _choice;

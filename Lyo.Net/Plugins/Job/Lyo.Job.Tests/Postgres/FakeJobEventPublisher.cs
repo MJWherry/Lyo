@@ -4,8 +4,8 @@ using Lyo.Job.Models.Events;
 namespace Lyo.Job.Tests.Postgres;
 
 /// <summary>
-/// In-memory <see cref="IJobEventPublisher" /> for integration checks. Captures every publish call so checks can assert what was sent, and exposes <see cref="SetConnected" />
-/// to simulate a disconnected transport.
+/// In-memory <see cref="IJobEventPublisher" /> for integration checks. Captures every publish call so checks can assert what was sent, and exposes
+/// <see cref="SetConnected" /> to simulate a disconnected transport.
 /// </summary>
 public sealed class FakeJobEventPublisher : IJobEventPublisher
 {
@@ -69,8 +69,7 @@ public sealed class FakeJobEventPublisher : IJobEventPublisher
 
     public Task SubscribeToRunCompletionsAsync(Func<byte[], Task<bool>> handler, CancellationToken ct = default) => Task.CompletedTask;
 
-    public Task SubscribeToRunCancellationsAsync(string workerType, Func<Guid, Task> handler, CancellationToken ct = default, string? instanceSuffix = null)
-        => Task.CompletedTask;
+    public Task SubscribeToRunCancellationsAsync(string workerType, Func<Guid, Task> handler, CancellationToken ct = default, string? instanceSuffix = null) => Task.CompletedTask;
 
     public void SetConnected(bool value) => _connected = value;
 }

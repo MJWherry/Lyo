@@ -7,9 +7,9 @@ namespace Lyo.Story.Web.Components;
 public partial class StoryManagement
 {
     private static readonly JsonSerializerOptions JsonOptions = LyoJsonSerializerOptions.Create();
+    private StoryDraft? _open;
 
     private List<StoryGraphRes> _stories = [];
-    private StoryDraft? _open;
 
     /// <summary>Client for graph list, save, and delete.</summary>
     [Parameter]
@@ -48,7 +48,14 @@ public partial class StoryManagement
     }
 
     private void Create()
-        => _open = new() { Title = "Untitled", Status = StoryStatus.Draft, TenantId = TenantId, GameKey = GameKey, StartNodeKey = "start", Nodes = [new() { Key = "start" }] };
+        => _open = new() {
+            Title = "Untitled",
+            Status = StoryStatus.Draft,
+            TenantId = TenantId,
+            GameKey = GameKey,
+            StartNodeKey = "start",
+            Nodes = [new() { Key = "start" }]
+        };
 
     private async Task OpenAsync(Guid id)
     {
@@ -72,6 +79,7 @@ public partial class StoryManagement
             var graph = await StoryClient.GetGraphAsync(id);
             if (graph is null)
                 return;
+
             var draft = StoryDraftMap.FromGraph(graph);
             draft.Id = Guid.Empty;
             draft.Title += " copy";
@@ -103,6 +111,7 @@ public partial class StoryManagement
     {
         if (_open is not null)
             _open.Id = saved.Id;
+
         await ClientStore.SetStoryBuilderStateAsync(JsonSerializer.Serialize(StoryDraftMap.ToRequest(_open!), JsonOptions));
         await ReloadAsync();
     }

@@ -1,6 +1,8 @@
 # Lyo.HomeInventory.Api
 
-Maps HomeInventory Req/Res CRUD via `Lyo.Api` `CreateBuilder` (categories, locations, items, attachments) plus read-only movements, stock adjust/transfer, nested notes/tags, and optional multipart upload when `IHomeInventoryAttachmentFiles` is registered. Register with `AddHomeInventoryApiFromConfiguration`, then call `BuildHomeInventoryGroup`. Example host: `Lyo.HomeInventory.Api.Example`.
+Maps HomeInventory Req/Res CRUD via `Lyo.Api` `CreateBuilder` (categories, locations, items, attachments) plus read-only movements, stock adjust/transfer, nested notes/tags, and
+optional multipart upload when `IHomeInventoryAttachmentFiles` is registered. Register with `AddHomeInventoryApiFromConfiguration`, then call `BuildHomeInventoryGroup`. Example
+host: `Lyo.HomeInventory.Api.Example`.
 
 ## Features
 

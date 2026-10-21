@@ -55,8 +55,7 @@ public sealed class BillingClient : IBillingClient
 
     /// <inheritdoc />
     public async Task<BillingSummaryRecord> GetSummaryAsync(Guid? tenantId = null, CancellationToken ct = default)
-        => await _api.GetAsAsync<BillingSummaryRecord>(WithTenant("Billing/Summary", tenantId), ct: ct).ConfigureAwait(false)
-           ?? new BillingSummaryRecord();
+        => await _api.GetAsAsync<BillingSummaryRecord>(WithTenant("Billing/Summary", tenantId), ct: ct).ConfigureAwait(false) ?? new BillingSummaryRecord();
 
     /// <inheritdoc />
     public Task<InvoiceRecord?> GetInvoiceAsync(Guid invoiceId, Guid? tenantId = null, CancellationToken ct = default)

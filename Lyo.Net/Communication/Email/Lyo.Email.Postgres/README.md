@@ -1,6 +1,8 @@
 # Lyo.Email.Postgres
 
-PostgreSQL EF Core store for email mailbox logs (`EmailLogEntity` / `EmailAttachmentLogEntity`). The package never sends or fetches mail. It wires `EmailDbContext` so workers or gateways can persist send and receive outcomes after [`Lyo.Email`](../Lyo.Email/README.md) (outbound) or a host IMAP/POP client (inbound). There is no FileStorage id on the schema; hosts that save HTML write their own file and record the path.
+PostgreSQL EF Core store for email mailbox logs (`EmailLogEntity` / `EmailAttachmentLogEntity`). The package never sends or fetches mail. It wires `EmailDbContext` so workers or
+gateways can persist send and receive outcomes after [`Lyo.Email`](../Lyo.Email/README.md) (outbound) or a host IMAP/POP client (inbound). There is no FileStorage id on the schema;
+hosts that save HTML write their own file and record the path.
 
 ## Features
 
@@ -63,10 +65,12 @@ emailService.EmailSent += async (_, args) =>
 
 ## Types
 
-- `EmailDbContext`. EF Core context exposing `DbSet<EmailLogEntity>` (`email_logs`) and `DbSet<EmailAttachmentLogEntity>` (`email_attachment_logs`). Default schema is `email`. `SaveChanges` and `SaveChangesAsync` stamp `CreatedTimestamp` on insert and `UpdatedTimestamp` on update for both entities.
+- `EmailDbContext`. EF Core context exposing `DbSet<EmailLogEntity>` (`email_logs`) and `DbSet<EmailAttachmentLogEntity>` (`email_attachment_logs`). Default schema is `email`.
+  `SaveChanges` and `SaveChangesAsync` stamp `CreatedTimestamp` on insert and `UpdatedTimestamp` on update for both entities.
 - `EmailDbContextFactory`. Design-time factory for EF Core tools.
 - `EmailDirection`. `Outbound` (default) or `Inbound`.
-- `EmailLogEntity`. Direction, sender, recipients (jsonb), subject, `TextBody`, host-owned `HtmlFileName` / `HtmlFilePath`, success flag, SMTP or fetch note, error message, MIME `MessageId`, `SentTimestamp` / `ReceivedTimestamp`, and audit timestamps. Attachment bytes and HTML content are not stored on this row.
+- `EmailLogEntity`. Direction, sender, recipients (jsonb), subject, `TextBody`, host-owned `HtmlFileName` / `HtmlFilePath`, success flag, SMTP or fetch note, error message, MIME
+  `MessageId`, `SentTimestamp` / `ReceivedTimestamp`, and audit timestamps. Attachment bytes and HTML content are not stored on this row.
 - `EmailAttachmentLogEntity`. Attachment metadata only (file name, `ContentType`, `SizeBytes`, `MetadataJson`, `SortOrder`) linked back to an `EmailLogEntity`. No FileStorage id.
 - `PostgresEmailOptions`. An `IPostgresMigrationConfig` implementation. Section name is `PostgresEmail`. Default schema is `email`. `EnableAutoMigrations` defaults to `false`.
 
@@ -74,12 +78,12 @@ emailService.EmailSent += async (_, args) =>
 
 Every extension hangs off `IServiceCollection`. Hosts map and insert; this package does not subscribe to send events.
 
-| Extension | Description |
-| -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `AddEmailDbContext(string connectionString)` | Wires an `IDbContextFactory<EmailDbContext>` plus a scoped `EmailDbContext` taken from the factory. |
-| `AddEmailDbContextFactory(PostgresEmailOptions options)` | Registers `IDbContextFactory<EmailDbContext>` against `options.ConnectionString` with the `email` migrations history schema, plus support for the `Lyo.Postgres` migration runner. |
-| `AddEmailDbContextFactory(Action<PostgresEmailOptions> configure)` | Same as above, using an inline configuration callback. |
-| `AddEmailDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresEmailOptions.SectionName)` | Reads `PostgresEmailOptions` from configuration (section defaults to `PostgresEmail`) and wires the factory. |
+| Extension                                                                                                                              | Description                                                                                                                                                                        |
+|----------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AddEmailDbContext(string connectionString)`                                                                                           | Wires an `IDbContextFactory<EmailDbContext>` plus a scoped `EmailDbContext` taken from the factory.                                                                                |
+| `AddEmailDbContextFactory(PostgresEmailOptions options)`                                                                               | Registers `IDbContextFactory<EmailDbContext>` against `options.ConnectionString` with the `email` migrations history schema, plus support for the `Lyo.Postgres` migration runner. |
+| `AddEmailDbContextFactory(Action<PostgresEmailOptions> configure)`                                                                     | Same as above, using an inline configuration callback.                                                                                                                             |
+| `AddEmailDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresEmailOptions.SectionName)` | Reads `PostgresEmailOptions` from configuration (section defaults to `PostgresEmail`) and wires the factory.                                                                       |
 
 ## Supported frameworks
 

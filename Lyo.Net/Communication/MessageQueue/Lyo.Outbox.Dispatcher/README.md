@@ -1,6 +1,7 @@
 # Lyo.Outbox.Dispatcher
 
-AddOutboxDispatcher claims due rows, commits the lease, then calls SendToQueue. It does not reference a RabbitMQ package. A crash after a successful send and before complete publishes again after the lease expires. Consumers dedupe on the row id.
+AddOutboxDispatcher claims due rows, commits the lease, then calls SendToQueue. It does not reference a RabbitMQ package. A crash after a successful send and before complete
+publishes again after the lease expires. Consumers dedupe on the row id.
 
 ## Features
 

@@ -6,12 +6,12 @@ using Microsoft.AspNetCore.Components;
 namespace Lyo.Web.Primitives;
 
 /// <summary>
-/// Renders the four states a loaded panel can be in — loading, failed, empty, and populated — from one <see cref="IResult{T}" />, so components stop hand-writing the
-/// same <c>if (loading) … else if (error) …</c> ladder around each fetch.
+/// Renders the four states a loaded panel can be in — loading, failed, empty, and populated — from one <see cref="IResult{T}" />, so components stop hand-writing the same
+/// <c>if (loading) … else if (error) …</c> ladder around each fetch.
 /// </summary>
 /// <remarks>
-/// Pass the result straight from the store or API client and put the success markup in <c>ChildContent</c>, which receives the non-null data. Each branch has an
-/// override for the cases where the defaults do not fit.
+/// Pass the result straight from the store or API client and put the success markup in <c>ChildContent</c>, which receives the non-null data. Each branch has an override for the
+/// cases where the defaults do not fit.
 /// <code>
 /// &lt;LyoResultBoundary T="IReadOnlyList&lt;Schedule&gt;" Result="@_result" Loading="@_reloading" OnRetry="LoadAsync"
 ///                    EmptyTitle="No schedules yet"&gt;
@@ -51,8 +51,8 @@ public partial class LyoResultBoundary<T>
     public RenderFragment<IReadOnlyList<Error>>? ErrorContent { get; set; }
 
     /// <summary>
-    /// Decides whether successful data counts as empty. Defaults to null data and, for collections, zero items — so a custom predicate is only needed for a wrapper
-    /// type such as a paged envelope.
+    /// Decides whether successful data counts as empty. Defaults to null data and, for collections, zero items — so a custom predicate is only needed for a wrapper type such as
+    /// a paged envelope.
     /// </summary>
     [Parameter]
     public Func<T, bool>? IsEmpty { get; set; }
@@ -83,17 +83,13 @@ public partial class LyoResultBoundary<T>
 
     /// <summary>Branch currently being rendered. Exposed so a parent can mirror the state in a toolbar or header.</summary>
     public LyoResultPhase Phase
-        => Loading || Result is null ? LyoResultPhase.Loading
-            : !Result.IsSuccess ? LyoResultPhase.Error
-            : ChildContent is null || Result.Data is null || IsDataEmpty(Result.Data) ? LyoResultPhase.Empty
-            : LyoResultPhase.Content;
+        => Loading || Result is null ? LyoResultPhase.Loading :
+            !Result.IsSuccess ? LyoResultPhase.Error :
+            ChildContent is null || Result.Data is null || IsDataEmpty(Result.Data) ? LyoResultPhase.Empty : LyoResultPhase.Content;
 
     private IReadOnlyList<Error> Errors => Result?.Errors ?? [];
 
     private string ErrorText => LyoResultErrorFormatter.FormatErrors(Result?.Errors);
 
-    private bool IsDataEmpty(T data)
-        => IsEmpty is not null
-            ? IsEmpty(data)
-            : data is string text ? text.Length == 0 : data is ICollection collection && collection.Count == 0;
+    private bool IsDataEmpty(T data) => IsEmpty is not null ? IsEmpty(data) : data is string text ? text.Length == 0 : data is ICollection collection && collection.Count == 0;
 }

@@ -51,7 +51,7 @@ public sealed class BoardRecord
     /// <summary>N for <see cref="AggregationKind.BestN" />.</summary>
     public int? AggregationN { get; set; }
 
-    /// <summary>High score wins (<see cref="SortDirection.Desc" />) or low score wins.</summary>
+    /// <summary>High score wins (<see cref="Common.Core.Enums.SortDirection.Desc" />) or low score wins.</summary>
     public SortDirection SortDirection { get; set; } = SortDirection.Desc;
 
     /// <summary>How equal totals are ordered.</summary>

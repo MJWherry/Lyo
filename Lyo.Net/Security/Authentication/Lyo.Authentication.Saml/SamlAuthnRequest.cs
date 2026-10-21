@@ -12,8 +12,7 @@ public static class SamlAuthnRequest
     {
         using var buffer = new StringWriter();
         var settings = new XmlWriterSettings { OmitXmlDeclaration = true, Encoding = Encoding.UTF8 };
-        using (var writer = XmlWriter.Create(buffer, settings))
-        {
+        using (var writer = XmlWriter.Create(buffer, settings)) {
             writer.WriteStartElement("samlp", "AuthnRequest", SamlConstants.Protocol);
             writer.WriteAttributeString("xmlns", "saml", null, SamlConstants.Assertion);
             writer.WriteAttributeString("ID", id);
@@ -36,8 +35,9 @@ public static class SamlAuthnRequest
     {
         var bytes = Encoding.UTF8.GetBytes(xml);
         using var output = new MemoryStream();
-        using (var deflate = new DeflateStream(output, CompressionLevel.SmallestSize, leaveOpen: true))
+        using (var deflate = new DeflateStream(output, CompressionLevel.SmallestSize, true))
             deflate.Write(bytes);
+
         return Convert.ToBase64String(output.ToArray());
     }
 

@@ -55,10 +55,9 @@ public class FormatterExpressionTests
     public void Format_NestedDictionaryPath_InComparisonAndTernary()
     {
         var ctx = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) {
-            ["Order"] = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) {
-                ["Total"] = 99.50m
-            }
+            ["Order"] = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) { ["Total"] = 99.50m }
         };
+
         Assert.Equal("True", _service.Format("{Order.Total > 10}", ctx));
         Assert.Equal("0", _service.Format("{Order.Total > 100 ? 1 : 0}", ctx));
         Assert.Equal("True", _service.Format("{(Order.Total > 10 ? true : false)}", ctx));
@@ -72,6 +71,7 @@ public class FormatterExpressionTests
                 ["Address"] = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase) { ["City"] = "London" }
             }
         };
+
         Assert.Equal("True", _service.Format("{User.Address.City == \"London\"}", ctx));
     }
 

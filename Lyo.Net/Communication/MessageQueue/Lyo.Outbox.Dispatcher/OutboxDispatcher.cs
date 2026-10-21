@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Lyo.Exceptions;
 using Lyo.Idempotency.Postgres;
 using Lyo.Json;
 using Lyo.MessageQueue;
@@ -10,21 +11,22 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Lyo.Outbox.Dispatcher;
 
 /// <summary>
-/// Claims due outbox rows, publishes them through <see cref="IMqService.SendToQueue" />, and finishes the row with the lease token.
-/// Delivery is at-least-once. A crash after a successful send and before complete publishes again after the lease expires.
+/// Claims due outbox rows, publishes them through <see cref="IMqService.SendToQueue" />, and finishes the row with the lease token. Delivery is at-least-once. A crash after
+/// a successful send and before complete publishes again after the lease expires.
 /// </summary>
 public sealed class OutboxDispatcher : BackgroundService
 {
     /// <summary>Fixed <see cref="IMetrics.RecordError" /> message.</summary>
     public const string StoreFailedMessage = "outbox.store_failed";
 
-    private readonly OutboxDispatcherOptions _options;
-    private readonly PostgresIdempotencyStore _store;
-    private readonly IMqService _queue;
-    private readonly IMetrics _metrics;
-    private readonly ILogger _logger;
-    private readonly Func<DateTime> _utcNow;
     private readonly JsonSerializerOptions _json;
+    private readonly ILogger _logger;
+    private readonly IMetrics _metrics;
+
+    private readonly OutboxDispatcherOptions _options;
+    private readonly IMqService _queue;
+    private readonly PostgresIdempotencyStore _store;
+    private readonly Func<DateTime> _utcNow;
 
     /// <summary>Builds a dispatcher. <paramref name="utcNow" /> defaults to <see cref="DateTime.UtcNow" />.</summary>
     public OutboxDispatcher(
@@ -35,9 +37,9 @@ public sealed class OutboxDispatcher : BackgroundService
         ILogger? logger = null,
         Func<DateTime>? utcNow = null)
     {
-        Lyo.Exceptions.ArgumentHelpers.ThrowIfNull(options);
-        Lyo.Exceptions.ArgumentHelpers.ThrowIfNull(store);
-        Lyo.Exceptions.ArgumentHelpers.ThrowIfNull(queue);
+        ArgumentHelpers.ThrowIfNull(options);
+        ArgumentHelpers.ThrowIfNull(store);
+        ArgumentHelpers.ThrowIfNull(queue);
         options.Validate();
         _options = options;
         _store = store;

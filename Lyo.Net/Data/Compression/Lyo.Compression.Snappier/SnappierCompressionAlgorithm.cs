@@ -9,8 +9,8 @@ public sealed record SnappierCompressionAlgorithm : CompressionAlgorithm
     public static readonly SnappierCompressionAlgorithm Instance = new();
 
     /// <summary>
-    /// Snappy's raw block format (EasyCompressor's binary API) cannot be read by its framed stream format, and EasyCompressor has no stream-compatible binary mode, so
-    /// byte[] compression has to go through the stream path.
+    /// Snappy's raw block format (EasyCompressor's binary API) cannot be read by its framed stream format, and EasyCompressor has no stream-compatible binary mode, so byte[]
+    /// compression has to go through the stream path.
     /// </summary>
     public override bool BinaryCompressMatchesStreamFormat => false;
 

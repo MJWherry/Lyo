@@ -13,16 +13,13 @@ public static class FileManagerPaths
     }
 
     /// <summary>Folder that holds <see cref="DefaultSqliteFile" />. <c>/data/photos</c> becomes <c>/data</c>.</summary>
-    public static string DefaultSqliteDirectory(string rootDirectory)
-        => Path.GetDirectoryName(DefaultSqliteFile(rootDirectory)) ?? "";
+    public static string DefaultSqliteDirectory(string rootDirectory) => Path.GetDirectoryName(DefaultSqliteFile(rootDirectory)) ?? "";
 
     /// <summary>File name of <see cref="DefaultSqliteFile" />. <c>/data/photos</c> becomes <c>photos.file-metadata.db</c>.</summary>
-    public static string DefaultSqliteFileName(string rootDirectory)
-        => Path.GetFileName(DefaultSqliteFile(rootDirectory));
+    public static string DefaultSqliteFileName(string rootDirectory) => Path.GetFileName(DefaultSqliteFile(rootDirectory));
 
     /// <summary>Full SQLite path from a catalog folder and a file name.</summary>
-    public static string CombineSqliteFile(string directory, string fileName)
-        => Path.Combine(directory.Trim(), fileName.Trim());
+    public static string CombineSqliteFile(string directory, string fileName) => Path.Combine(directory.Trim(), fileName.Trim());
 
     /// <summary>Error when <paramref name="database" /> is inside the file folder. A <c>Data Source=</c> connection string is accepted. Null when the file sits outside.</summary>
     public static string? RejectDatabaseInsideRoot(string rootDirectory, string database)
@@ -30,6 +27,7 @@ public static class FileManagerPaths
         var file = SqliteFile(database);
         if (file.Length == 0)
             return null;
+
         var root = Path.GetFullPath(rootDirectory).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
         var full = Path.GetFullPath(file);
         return full.StartsWith(root, StringComparison.OrdinalIgnoreCase) ? "The database file must sit outside the file folder." : null;
@@ -41,6 +39,7 @@ public static class FileManagerPaths
         const string prefix = "Data Source=";
         if (text.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
             text = text[prefix.Length..].Trim().Trim('"');
+
         var semi = text.IndexOf(';');
         return (semi < 0 ? text : text[..semi]).Trim();
     }

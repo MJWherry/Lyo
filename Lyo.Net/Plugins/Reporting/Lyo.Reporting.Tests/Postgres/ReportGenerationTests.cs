@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.FileStorage.Abstractions;
 using Lyo.Reporting.Models.Builders;
 using Lyo.Reporting.Models.Composition;
@@ -7,7 +8,6 @@ using Lyo.Reporting.Postgres;
 using Lyo.Reporting.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Reporting.Tests.Postgres;
 
@@ -69,9 +69,7 @@ public sealed class ReportGenerationTests(ReportingPostgresFixture fixture) : IC
         var report = ReportBuilder<object>.New().SetTitle("Adhoc").AddSection(s => s.AddTable("G", t => t.AddColumn("A").AddRow("1"))).Build();
         using var scope = fixture.CreateScope();
         var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
-        var result = await reportService.GenerateAsync(
-            new() { ReportDataJson = ReportJson.Serialize(report), Format = ReportFormat.Csv }, ct: TestCt);
-
+        var result = await reportService.GenerateAsync(new() { ReportDataJson = ReportJson.Serialize(report), Format = ReportFormat.Csv }, ct: TestCt);
         Assert.Equal(ReportGenerationStatus.Succeeded, result.Status);
         Assert.Null(result.OutputFileId);
         Assert.Null(result.ReportDefinitionId);

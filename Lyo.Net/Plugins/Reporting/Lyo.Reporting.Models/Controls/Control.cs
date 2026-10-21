@@ -21,9 +21,7 @@ public abstract class Control
     /// <summary>How many grid rows this control spans when it is a <see cref="Grid" /> child.</summary>
     public int RowSpan { get; set; } = 1;
 
-    /// <summary>
-    /// When true, print/PDF keeps this control on one page. Null uses the type default (on for cards, blocks, and grids; off for tables).
-    /// </summary>
+    /// <summary>When true, print/PDF keeps this control on one page. Null uses the type default (on for cards, blocks, and grids; off for tables).</summary>
     public bool? KeepTogether { get; set; }
 
     /// <summary>Custom CSS styles for this control.</summary>

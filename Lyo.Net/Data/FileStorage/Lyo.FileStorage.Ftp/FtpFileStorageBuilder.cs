@@ -29,8 +29,8 @@ public sealed class FtpFileStorageBuilder : FileStorageServiceBuilder<FtpFileSto
         var loggerFactory = services.GetService<ILoggerFactory>();
         var client = new FtpClient(Options.Ftp, loggerFactory, metrics);
         return new FtpFileStorageService(
-            Options, ResolveRequiredMetadata(services, storeName), client, loggerFactory, ResolveCompression(services, storeName), ResolveEncryption(services, storeName),
-            metrics, services.GetService<IFileOperationContextAccessor>(), services.GetServices<IFileAuditEventHandler>(), services.GetService<IFileContentPolicy>(),
-            services.GetService<IFileTypeSniffer>(), ownsClient: true);
+            Options, ResolveRequiredMetadata(services, storeName), client, loggerFactory, ResolveCompression(services, storeName), ResolveEncryption(services, storeName), metrics,
+            services.GetService<IFileOperationContextAccessor>(), services.GetServices<IFileAuditEventHandler>(), services.GetService<IFileContentPolicy>(),
+            services.GetService<IFileTypeSniffer>(), true);
     }
 }

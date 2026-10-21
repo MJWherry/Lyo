@@ -3,7 +3,6 @@ using Lyo.Api.Client;
 using Lyo.Api.FileStorage.Models;
 using Lyo.FileStorage.Web.Components.Services;
 using Lyo.IO.Temp;
-using Lyo.Web.Components;
 using Lyo.Web.Primitives;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -54,18 +53,14 @@ public partial class FileStorageManagement : ComponentBase
     public string Title { get; set; } = "File Storage";
 
     [Parameter]
-    public string Description { get; set; } =
-        "Upload files, migrate or rotate DEKs, and browse metadata through the file-storage HTTP API.";
+    public string Description { get; set; } = "Upload files, migrate or rotate DEKs, and browse metadata through the file-storage HTTP API.";
 
     /// <summary>
-    /// Public origin for browser-opened URLs (download, access links). No trailing slash.
-    /// When omitted, uses <see cref="IApiClient" /> <c>BaseAddress</c> (Docker DNS name in production).
+    /// Public origin for browser-opened URLs (download, access links). No trailing slash. When omitted, uses <see cref="IApiClient" /> <c>BaseAddress</c> (Docker DNS name in
+    /// production).
     /// </summary>
     [Parameter]
     public string? PublicBaseUrl { get; set; }
-
-    /// <summary>Fired after file mutations so the Browser and Tree tabs can reload.</summary>
-    public event Func<Task>? FilesChanged;
 
     /// <summary>Stores returned by <c>GET {prefix}/stores</c>. Empty when that call failed or the host has no factory.</summary>
     public IReadOnlyList<FileStorageStoreResponse> Stores { get; private set; } = [];
@@ -84,6 +79,9 @@ public partial class FileStorageManagement : ComponentBase
 
     /// <summary>Readable API health line (base URL plus check message or error).</summary>
     public string ApiHealthDescription { get; private set; } = "Checking file storage API…";
+
+    /// <summary>Fired after file mutations so the Browser and Tree tabs can reload.</summary>
+    public event Func<Task>? FilesChanged;
 
     public void SetStatus(string message, Severity severity) => Snackbar.Add(message, severity);
 
@@ -122,8 +120,8 @@ public partial class FileStorageManagement : ComponentBase
     }
 
     /// <summary>
-    /// Absolute browser URL for an API-relative path such as <c>FileStorage/files/...</c>.
-    /// Prefers <see cref="PublicBaseUrl" />; otherwise <see cref="IApiClient" /> <c>BaseAddress</c>.
+    /// Absolute browser URL for an API-relative path such as <c>FileStorage/files/...</c>. Prefers <see cref="PublicBaseUrl" />; otherwise <see cref="IApiClient" />
+    /// <c>BaseAddress</c>.
     /// </summary>
     public string? GetApiAbsoluteUrl(string apiRelativePath)
     {
@@ -232,9 +230,7 @@ public partial class FileStorageManagement : ComponentBase
             var health = await ApiClient.GetAsAsync<FileStorageHealthResponse>(FilesApi("health")).ConfigureAwait(false);
             ApiHealthy = true;
             StorageHealthy = health?.IsHealthy == true;
-            var detail = string.IsNullOrWhiteSpace(health?.Message)
-                ? (StorageHealthy ? "storage healthy" : "storage unhealthy")
-                : health!.Message;
+            var detail = string.IsNullOrWhiteSpace(health?.Message) ? StorageHealthy ? "storage healthy" : "storage unhealthy" : health!.Message;
             ApiHealthDescription = StorageHealthy ? $"{apiBase}: {detail}" : $"{apiBase}: storage {detail}";
             if (!StorageHealthy)
                 SetStatus($"File storage backend reported unhealthy ({apiBase}): {detail}", Severity.Warning);

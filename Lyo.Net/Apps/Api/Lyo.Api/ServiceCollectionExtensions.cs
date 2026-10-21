@@ -14,11 +14,11 @@ using Lyo.Diff;
 using Lyo.Json;
 using Lyo.Query;
 using Lyo.Query.Services.ValueConversion;
-using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using JsonOptions = Microsoft.AspNetCore.Http.Json.JsonOptions;
 
 namespace Lyo.Api;
 
@@ -26,13 +26,13 @@ namespace Lyo.Api;
 /// Registers Lyo.Api query services including TypeConversionService, EntityLoaderService, and Lyo.Query services. Requires CacheService and CacheOptions to be registered
 /// (for example via AddFusionCache or AddLocalCache).
 /// </summary>
-public static partial class ServiceCollectionExtensions
+public static class ServiceCollectionExtensions
 {
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers ITypeConversionService, IEntityLoaderService, IValueConversionService (via TypeConversionService), IPropertyComparisonService, and IWhereClauseService.
-        /// Use this when hosting Lyo.Api with EF Core.
+        /// Registers ITypeConversionService, IEntityLoaderService, IValueConversionService (via TypeConversionService), IPropertyComparisonService, and IWhereClauseService. Use this
+        /// when hosting Lyo.Api with EF Core.
         /// </summary>
         public IServiceCollection AddLyoQueryServices()
         {
@@ -76,9 +76,10 @@ public static partial class ServiceCollectionExtensions
         public IServiceCollection AddBuiltInExportFormatHandlers()
         {
             services.TryAddSingleton<IJsonService>(static sp => {
-                var serializerOptions = sp.GetService<IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>>()?.Value.SerializerOptions;
-                return serializerOptions is null ? new JsonService() : new JsonService(serializerOptions: serializerOptions);
+                var serializerOptions = sp.GetService<IOptions<JsonOptions>>()?.Value.SerializerOptions;
+                return serializerOptions is null ? new JsonService() : new JsonService(serializerOptions);
             });
+
             services.TryAddSingleton<IJsonReader>(static sp => sp.GetRequiredService<IJsonService>().Reader);
             services.TryAddSingleton<IJsonWriter>(static sp => sp.GetRequiredService<IJsonService>().Writer);
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IExportFormatHandler, JsonExportFormatHandler>());
@@ -113,7 +114,7 @@ public static partial class ServiceCollectionExtensions
         /// </summary>
         private static void AddApiHostCachePayloadSerializer(IServiceCollection serviceCollection)
             => serviceCollection.AddSingleton<ICachePayloadSerializer>(static sp => {
-                var opts = sp.GetService<IOptions<Microsoft.AspNetCore.Http.Json.JsonOptions>>()?.Value.SerializerOptions ?? CachePayloadSerializerRegistration.DefaultJsonOptions;
+                var opts = sp.GetService<IOptions<JsonOptions>>()?.Value.SerializerOptions ?? CachePayloadSerializerRegistration.DefaultJsonOptions;
                 return new SystemTextJsonCachePayloadSerializer(opts);
             });
     }

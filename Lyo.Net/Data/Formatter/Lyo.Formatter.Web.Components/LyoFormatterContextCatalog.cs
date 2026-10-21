@@ -20,8 +20,8 @@ public sealed record LyoFormatterContextEntry(string Path, string Preview, bool 
 public readonly record struct LyoFormatterPlaceholderSpan(int BraceIndex, int EndIndex, string Prefix, string Key, bool Closed);
 
 /// <summary>
-/// Walks a SmartFormat context (dictionary or POCO) into dotted paths for template-editor autocomplete.
-/// Strings and primitives are leaves; nested dictionaries and public readable properties become child paths.
+/// Walks a SmartFormat context (dictionary or POCO) into dotted paths for template-editor autocomplete. Strings and primitives are leaves; nested dictionaries and public
+/// readable properties become child paths.
 /// </summary>
 public static class LyoFormatterContextCatalog
 {
@@ -36,13 +36,16 @@ public static class LyoFormatterContextCatalog
 
     /// <summary>Clock expressions listed in the editor even when the session context has no DateTime values.</summary>
     public static readonly IReadOnlyList<LyoFormatterContextEntry> ExpressionSuggestions = [
-        new("DateTime.Now", "local now", HasChildren: false),
-        new("DateTime.UtcNow", "UTC now", HasChildren: false),
-        new("DateTime.Now.AddDays(-1)", "yesterday", HasChildren: false)
+        new("DateTime.Now", "local now", false), new("DateTime.UtcNow", "UTC now", false), new("DateTime.Now.AddDays(-1)", "yesterday", false)
     ];
 
     private static readonly HashSet<string> DateTimePropertyNames = new(StringComparer.Ordinal) {
-        "Year", "Month", "Day", "Hour", "Minute", "Second"
+        "Year",
+        "Month",
+        "Day",
+        "Hour",
+        "Minute",
+        "Second"
     };
 
     /// <summary>Builds the full path list for <paramref name="context" />, plus clock-expression shortcuts. Clock rows remain when context is null or a leaf.</summary>
@@ -53,10 +56,11 @@ public static class LyoFormatterContextCatalog
         var items = new List<LyoFormatterContextEntry>(ExpressionSuggestions);
         if (items.Count > maxItems)
             return items[..Math.Max(maxItems, 0)];
+
         if (context is null || IsLeaf(context))
             return items;
 
-        Walk(context, path: string.Empty, depth: 0, items, new HashSet<object>(ReferenceEqualityComparer.Instance), maxItems);
+        Walk(context, string.Empty, 0, items, new(ReferenceEqualityComparer.Instance), maxItems);
         return items;
     }
 
@@ -64,7 +68,11 @@ public static class LyoFormatterContextCatalog
     /// Narrows <paramref name="catalog" /> to paths that match <paramref name="prefix" /> (ordinal ignore-case): the full path or any dotted segment starts with the prefix.
     /// Empty prefix keeps top-level keys plus one nested level unless <paramref name="listAllWhenEmpty" /> is true (click-to-replace on a closed <c>{key}</c> with nothing typed yet).
     /// </summary>
-    public static IReadOnlyList<LyoFormatterContextEntry> Filter(IReadOnlyList<LyoFormatterContextEntry> catalog, string prefix, int limit = DefaultSuggestLimit, bool listAllWhenEmpty = false)
+    public static IReadOnlyList<LyoFormatterContextEntry> Filter(
+        IReadOnlyList<LyoFormatterContextEntry> catalog,
+        string prefix,
+        int limit = DefaultSuggestLimit,
+        bool listAllWhenEmpty = false)
     {
         ArgumentHelpers.ThrowIfNull(catalog);
         prefix ??= string.Empty;
@@ -76,28 +84,25 @@ public static class LyoFormatterContextCatalog
             if (!listAllWhenEmpty)
                 query = query.Where(e => DotCount(e.Path) <= 1);
         }
-        else {
+        else
             query = query.Where(e => PathMatchesPrefix(e.Path, prefix));
-        }
 
-        return query
-            .OrderBy(e => DotCount(e.Path))
-            .ThenBy(e => e.Path, StringComparer.OrdinalIgnoreCase)
-            .Take(limit)
-            .ToList();
+        return query.OrderBy(e => DotCount(e.Path)).ThenBy(e => e.Path, StringComparer.OrdinalIgnoreCase).Take(limit).ToList();
     }
 
     /// <summary>
-    /// Dropdown rows for the placeholder at the caret. Always filters by <see cref="LyoFormatterPlaceholderSpan.Prefix"/> — including inside an already-closed <c>{key}</c>.
-    /// An empty prefix on a closed token lists every path so the user can pick a replacement without typing.
+    /// Dropdown rows for the placeholder at the caret. Always filters by <see cref="LyoFormatterPlaceholderSpan.Prefix" /> — including inside an already-closed <c>{key}</c>. An
+    /// empty prefix on a closed token lists every path so the user can pick a replacement without typing.
     /// </summary>
-    public static IReadOnlyList<LyoFormatterContextEntry> Suggest(IReadOnlyList<LyoFormatterContextEntry> catalog, in LyoFormatterPlaceholderSpan span, int limit = DefaultSuggestLimit)
-        => Filter(catalog, span.Prefix, limit, listAllWhenEmpty: span.Closed && span.Prefix.Length == 0);
+    public static IReadOnlyList<LyoFormatterContextEntry> Suggest(
+        IReadOnlyList<LyoFormatterContextEntry> catalog,
+        in LyoFormatterPlaceholderSpan span,
+        int limit = DefaultSuggestLimit)
+        => Filter(catalog, span.Prefix, limit, span.Closed && span.Prefix.Length == 0);
 
     /// <summary>
-    /// Caret index after inserting <c>{path}</c> at <paramref name="braceIndex"/>.
-    /// Nested values (list, dictionary, object) leave the caret before <c>}</c> so the user can type <c>.</c> and continue into a child.
-    /// Leaves put the caret after <c>}</c>.
+    /// Caret index after inserting <c>{path}</c> at <paramref name="braceIndex" />. Nested values (list, dictionary, object) leave the caret before <c>}</c> so the user can type
+    /// <c>.</c> and continue into a child. Leaves put the caret after <c>}</c>.
     /// </summary>
     public static int CaretAfterInsert(int braceIndex, string path, bool hasChildren)
     {
@@ -107,8 +112,8 @@ public static class LyoFormatterContextCatalog
     }
 
     /// <summary>
-    /// True when <paramref name="caret" /> sits inside a <c>{...}</c> token (open or already closed).
-    /// <paramref name="prefix" /> is the selector text after <c>{</c> up to the caret (format specifiers stripped).
+    /// True when <paramref name="caret" /> sits inside a <c>{...}</c> token (open or already closed). <paramref name="prefix" /> is the selector text after <c>{</c> up to the
+    /// caret (format specifiers stripped).
     /// </summary>
     public static bool TryGetOpenPlaceholder(string template, int caret, out int braceIndex, out string prefix)
     {
@@ -124,8 +129,8 @@ public static class LyoFormatterContextCatalog
     }
 
     /// <summary>
-    /// Finds the <c>{...}</c> token that contains <paramref name="caret" />, including a closed token such as <c>{Name}</c>.
-    /// <see cref="LyoFormatterPlaceholderSpan.EndIndex" /> is exclusive and includes the closing <c>}</c> when present, so insert/replace can swap the whole token.
+    /// Finds the <c>{...}</c> token that contains <paramref name="caret" />, including a closed token such as <c>{Name}</c>. <see cref="LyoFormatterPlaceholderSpan.EndIndex" />
+    /// is exclusive and includes the closing <c>}</c> when present, so insert/replace can swap the whole token.
     /// </summary>
     public static bool TryGetPlaceholderAtCaret(string template, int caret, out LyoFormatterPlaceholderSpan span)
     {
@@ -197,10 +202,10 @@ public static class LyoFormatterContextCatalog
         var inner = template[(lastOpen + 1)..keyLimit];
         var spec = inner.IndexOfAny([':', ',', '(', ')']);
         var key = spec >= 0 ? inner[..spec] : inner;
-
         var prefixLimit = Math.Min(caret, keyLimit) - (lastOpen + 1);
         if (prefixLimit < 0)
             prefixLimit = 0;
+
         if (prefixLimit > inner.Length)
             prefixLimit = inner.Length;
 
@@ -234,7 +239,7 @@ public static class LyoFormatterContextCatalog
             if (value is ICollection collection) {
                 var countPath = Combine(path, "Count");
                 if (countPath.Length > 0 && items.Count < maxItems)
-                    items.Add(new(countPath, collection.Count.ToString(CultureInfo.InvariantCulture), HasChildren: false));
+                    items.Add(new(countPath, collection.Count.ToString(CultureInfo.InvariantCulture), false));
             }
 
             return;
@@ -262,6 +267,7 @@ public static class LyoFormatterContextCatalog
             foreach (var entry in typed) {
                 if (items.Count >= maxItems)
                     return true;
+
                 if (string.IsNullOrEmpty(entry.Key))
                     continue;
 
@@ -293,10 +299,13 @@ public static class LyoFormatterContextCatalog
     {
         if (depth >= MaxDepth || value is null || IsLeaf(value))
             return false;
+
         if (value is IDictionary { Count: > 0 })
             return true;
+
         if (value is IEnumerable and not IDictionary)
             return value is ICollection;
+
         return GetReadableProperties(value.GetType(), value).Count > 0;
     }
 
@@ -312,7 +321,7 @@ public static class LyoFormatterContextCatalog
     private static List<PropertyInfo> GetReadableProperties(Type type, object instance)
     {
         var flags = BindingFlags.Public | BindingFlags.Instance;
-        IEnumerable<PropertyInfo> props = type.GetProperties(flags).Where(p => p.CanRead && p.GetIndexParameters().Length == 0);
+        var props = type.GetProperties(flags).Where(p => p.CanRead && p.GetIndexParameters().Length == 0);
         if (instance is DateTime or DateTimeOffset)
             props = props.Where(p => DateTimePropertyNames.Contains(p.Name));
 
@@ -330,8 +339,10 @@ public static class LyoFormatterContextCatalog
         for (var i = 0; i < path.Length; i++) {
             if (path[i] != '.')
                 continue;
+
             if (start < i && path.AsSpan(start, i - start).StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                 return true;
+
             start = i + 1;
         }
 
@@ -353,14 +364,19 @@ public static class LyoFormatterContextCatalog
     {
         if (value is null)
             return "null";
+
         if (value is string text)
             return Truncate(text);
+
         if (value is IDictionary dictionary)
             return dictionary.Count == 0 ? "{}" : dictionary.Count.ToString(CultureInfo.InvariantCulture) + " keys";
+
         if (value is DateTime date)
             return date.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
+
         if (value is DateTimeOffset offset)
             return offset.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture);
+
         if (value is IFormattable formattable)
             return Truncate(formattable.ToString(null, CultureInfo.InvariantCulture) ?? string.Empty);
 

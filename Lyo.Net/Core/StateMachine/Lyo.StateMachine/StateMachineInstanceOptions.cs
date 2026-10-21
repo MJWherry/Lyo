@@ -6,8 +6,8 @@ namespace Lyo.StateMachine;
 public sealed class StateMachineInstanceOptions
 {
     /// <summary>
-    /// How many times to reload and fire again after a concurrency conflict. Default 0 (return the conflict). Hooks run again on every retry, so only raise this
-    /// when hooks are idempotent.
+    /// How many times to reload and fire again after a concurrency conflict. Default 0 (return the conflict). Hooks run again on every retry, so only raise this when hooks are
+    /// idempotent.
     /// </summary>
     public int MaxConflictRetries { get; set; }
 

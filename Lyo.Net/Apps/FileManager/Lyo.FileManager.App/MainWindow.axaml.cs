@@ -7,6 +7,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Lyo.Desktop.Components;
 using Lyo.FileStorage;
@@ -16,66 +17,68 @@ namespace Lyo.FileManager.App;
 
 public partial class MainWindow : Window
 {
-    private readonly FileManagerSession _session = new();
-    private readonly ObservableCollection<FolderNode> _roots = [];
-    private readonly LogSink _logs = new();
-    private readonly List<FileRow> _rows = [];
-    private FileManagerLayout _layout = FileManagerLayout.CreateDefault();
-    private readonly ToolDockState _dock = new();
-    private readonly List<(StackPanel Body, TextBlock Mark)> _accordion = [];
-    private FolderNode? _current;
     private static readonly DataFormat<FileDragPayload> DragFormat = DataFormat.CreateInProcessFormat<FileDragPayload>("lyo.file-manager.entries");
+    private readonly List<(StackPanel Body, TextBlock Mark)> _accordion = [];
+    private readonly FileManagerDockBubble _bubble = new();
+    private readonly ToolDockState _dock = new();
+    private readonly EdgeDockWindow _edge;
+    private readonly LogSink _logs = new();
+    private readonly ObservableCollection<FolderNode> _roots = [];
+    private readonly List<FileRow> _rows = [];
+    private readonly FileManagerSession _session = new();
+    private readonly List<OpenTab> _tabs = [];
+    private readonly Dictionary<(Guid ServerId, Guid? KeyStoreId), TreeSnapshot> _trees = [];
+    private bool _applyingExpand;
+    private Guid? _boundServer;
+    private bool _connected;
+    private FolderNode? _current;
     private FileManagerTool? _drag;
-    private Point? _itemPress;
+    private bool _fillingList;
+    private bool _fillingServers;
+    private bool _fillingTree;
+    private bool _fromTree;
+    private bool _headerMoved;
+    private Point _headerPress;
+    private bool _itemDrag;
     private PointerPressedEventArgs? _itemEvent;
     private Control? _itemHost;
-    private bool _itemDrag;
-    private bool _connected;
-    private bool _query;
-    private bool _fillingServers;
-    private Guid? _boundServer;
-    private bool _syncingTabs;
-    private readonly List<OpenTab> _tabs = [];
-    private bool _fillingTree;
-    private bool _syncingView;
-    private bool _treeFiles;
-    private bool _fromTree;
-    private bool _fillingList;
-    private Guid? _treeServer;
-    private Guid? _treeKey;
-    private bool _applyingExpand;
-    private bool _pressKeepsSelection;
-    private object? _pressedRow;
+    private Point? _itemPress;
     private List<FileRow>? _keptFiles;
     private List<FolderNode>? _keptNodes;
-    private readonly Dictionary<(Guid ServerId, Guid? KeyStoreId), TreeSnapshot> _trees = [];
-    private Point _headerPress;
-    private bool _headerMoved;
-    private FileManagerDockBubble _bubble = new();
-    private readonly EdgeDockWindow _edge;
+    private FileManagerLayout _layout = FileManagerLayout.CreateDefault();
+    private bool _pressKeepsSelection;
+    private object? _pressedRow;
+    private bool _query;
+    private bool _syncingTabs;
+    private bool _syncingView;
+    private bool _treeFiles;
+    private Guid? _treeKey;
+    private Guid? _treeServer;
 
     public MainWindow()
     {
         InitializeComponent();
-        _edge = new EdgeDockWindow(this, DockBar, Shell, new EdgeDockRest(1100, 720, false));
+        _edge = new(this, DockBar, Shell, new(1100, 720, false));
         var document = FileManagerSettingsStore.LoadDocument(FileManagerSettingsStore.ConfigPath());
         if (document.Layout.Tools.Count == 3)
             _layout = document.Layout;
+
         _bubble = document.Bubble ?? new();
         ConfigureDock();
         _treeFiles = document.ShowTreeFiles;
         _logs.Written += line => FileManagerLog.Write(line.Message);
         AppLog.Sink = _logs;
-        _session.Logs = new LogSinkLoggerFactory(new LogSinkLoggerProvider(_logs));
+        _session.Logs = new LogSinkLoggerFactory(new(_logs));
         _session.ReplaceServers(document.Servers);
         _session.ReplaceKeyStores(document.KeyStores ?? []);
-        var configuration = new ConfigurationBuilder().SetBasePath(AppContext.BaseDirectory).AddJsonFile("appsettings.json", optional: true).Build();
+        var configuration = new ConfigurationBuilder().SetBasePath(AppContext.BaseDirectory).AddJsonFile("appsettings.json", true).Build();
         var configured = FileManagerConfiguredHost.Load(configuration, _session.Logs);
         foreach (var note in configured.Skipped)
             Log(note);
+
         _session.UseConfiguredStores(configured);
         BindServers();
-        BindKeyStores(resetToServer: true);
+        BindKeyStores(true);
         Folders.ItemsSource = _roots;
         DragDrop.SetAllowDrop(Files, true);
         DragDrop.SetAllowDrop(Folders, true);
@@ -96,6 +99,7 @@ public partial class MainWindow : Window
         Folders.ContainerPrepared += (_, e) => {
             if (e.Container is not TreeViewItem item)
                 return;
+
             DragDrop.SetAllowDrop(item, true);
             item.PropertyChanged -= OnTreeItemProperty;
             item.PropertyChanged += OnTreeItemProperty;
@@ -103,11 +107,13 @@ public partial class MainWindow : Window
                 var canonical = prepared.Source ?? prepared;
                 if (item.IsExpanded == canonical.IsExpanded)
                     return;
+
                 _applyingExpand = true;
                 item.IsExpanded = canonical.IsExpanded;
                 _applyingExpand = false;
             }
         };
+
         Connections.SelectionChanged += (_, _) => OnConnectionSelected();
         Connections.TabClosed += (_, index) => OnConnectionClosed(index);
         ApplyLayout();
@@ -131,11 +137,7 @@ public partial class MainWindow : Window
     }
 
     private Dictionary<string, Control> Panes()
-        => new() {
-            [nameof(FileManagerTool.Tree)] = TreePanel,
-            [nameof(FileManagerTool.Metadata)] = MetadataPanel,
-            [nameof(FileManagerTool.Log)] = AppLog
-        };
+        => new() { [nameof(FileManagerTool.Tree)] = TreePanel, [nameof(FileManagerTool.Metadata)] = MetadataPanel, [nameof(FileManagerTool.Log)] = AppLog };
 
     private void CopyLayoutToDock()
     {
@@ -144,12 +146,13 @@ public partial class MainWindow : Window
         _dock.Bottom = _layout.Bottom;
         _dock.Panes.Clear();
         foreach (var tool in _layout.Tools) {
-            _dock.Panes.Add(new ToolDockPane {
-                Id = tool.Tool.ToString(),
-                Title = tool.Tool.ToString(),
-                Edge = ToDockEdge(tool.Edge),
-                Visible = tool.Visible
-            });
+            _dock.Panes.Add(
+                new() {
+                    Id = tool.Tool.ToString(),
+                    Title = tool.Tool.ToString(),
+                    Edge = ToDockEdge(tool.Edge),
+                    Visible = tool.Visible
+                });
         }
     }
 
@@ -165,17 +168,19 @@ public partial class MainWindow : Window
         }
     }
 
-    private static ToolDockEdge ToDockEdge(FileManagerDockEdge edge) => edge switch {
-        FileManagerDockEdge.Left => ToolDockEdge.Left,
-        FileManagerDockEdge.Right => ToolDockEdge.Right,
-        _ => ToolDockEdge.Bottom
-    };
+    private static ToolDockEdge ToDockEdge(FileManagerDockEdge edge)
+        => edge switch {
+            FileManagerDockEdge.Left => ToolDockEdge.Left,
+            FileManagerDockEdge.Right => ToolDockEdge.Right,
+            var _ => ToolDockEdge.Bottom
+        };
 
-    private static FileManagerDockEdge FromDockEdge(ToolDockEdge edge) => edge switch {
-        ToolDockEdge.Left => FileManagerDockEdge.Left,
-        ToolDockEdge.Right => FileManagerDockEdge.Right,
-        _ => FileManagerDockEdge.Bottom
-    };
+    private static FileManagerDockEdge FromDockEdge(ToolDockEdge edge)
+        => edge switch {
+            ToolDockEdge.Left => FileManagerDockEdge.Left,
+            ToolDockEdge.Right => FileManagerDockEdge.Right,
+            var _ => FileManagerDockEdge.Bottom
+        };
 
     private void SyncViewChecks()
     {
@@ -202,7 +207,7 @@ public partial class MainWindow : Window
         ServerBox.SelectedItem = _session.Active;
         _fillingServers = false;
         if (_boundServer != _session.Active?.Id)
-            BindKeyStores(resetToServer: true);
+            BindKeyStores(true);
     }
 
     private void BindKeyStores(bool resetToServer)
@@ -211,6 +216,7 @@ public partial class MainWindow : Window
         var items = new List<KeyStoreChoice> { new() { Label = "(None)" } };
         foreach (var store in _session.KeyStores)
             items.Add(new() { Id = store.Id, Label = string.IsNullOrWhiteSpace(store.Name) ? "Key store" : store.Name });
+
         KeyStoreBox.ItemsSource = items;
         KeyStoreBox.SelectedItem = items.FirstOrDefault(item => item.Id == selectedId) ?? items[0];
         KeyStoreBox.IsEnabled = _session.Active == null || _session.Active.Kind != FileManagerServerKind.Remote;
@@ -223,7 +229,7 @@ public partial class MainWindow : Window
             return;
 
         _session.Select(server.Id);
-        BindKeyStores(resetToServer: true);
+        BindKeyStores(true);
         if (_treeServer == server.Id && _treeKey == OpenKey(server)) {
             ApplyCapabilities();
             return;
@@ -244,6 +250,7 @@ public partial class MainWindow : Window
             var server = await Dialogs.AddServerAsync(this, Log);
             if (server == null)
                 return;
+
             _session.Add(server);
             SaveSettings();
             BindServers();
@@ -258,9 +265,11 @@ public partial class MainWindow : Window
     {
         if (_session.Active == null)
             return;
+
         var name = await PromptDialog.AskAsync(this, "Rename server", "Name", _session.Active.Name);
         if (string.IsNullOrWhiteSpace(name))
             return;
+
         _session.Rename(_session.Active.Id, name);
         SaveSettings();
         BindServers();
@@ -271,6 +280,7 @@ public partial class MainWindow : Window
     {
         if (_session.Active == null)
             return;
+
         _session.Remove(_session.Active.Id);
         SaveSettings();
         BindServers();
@@ -289,6 +299,7 @@ public partial class MainWindow : Window
         var auth = await Dialogs.AuthenticateAsync(this, server);
         if (auth == null)
             return;
+
         _session.SetAuth(auth.Value.Kind, auth.Value.Secret);
         SaveSettings();
         Log("Credential saved on " + server.Name + ".");
@@ -302,9 +313,10 @@ public partial class MainWindow : Window
             var saved = await Dialogs.KeyStoresAsync(this, _session.KeyStores);
             if (saved == null)
                 return;
+
             _session.ReplaceKeyStores(saved);
             SaveSettings();
-            BindKeyStores(resetToServer: false);
+            BindKeyStores(false);
             Log("Key stores saved. Connect to use the selected store.");
         }
         catch (Exception ex) {
@@ -317,6 +329,7 @@ public partial class MainWindow : Window
         var server = _session.Active;
         if (server != null && server.Kind != FileManagerServerKind.Remote)
             server.KeyStoreId = (KeyStoreBox.SelectedItem as KeyStoreChoice)?.Id;
+
         var id = server?.Id;
         try {
             await _session.ConnectAsync(CancellationToken.None);
@@ -324,6 +337,7 @@ public partial class MainWindow : Window
                 Log(_session.Error);
                 if (_treeServer != id || _treeKey != OpenKey(server))
                     ClearBrowser();
+
                 ApplyCapabilities();
                 return;
             }
@@ -358,6 +372,7 @@ public partial class MainWindow : Window
         EmptyState.IsVisible = false;
         if (restore && TryRestoreTree(_session.Active!.Id, key))
             return;
+
         _trees.Remove((_session.Active!.Id, key));
         ResetTree();
         await OpenNode(_roots[0]);
@@ -367,17 +382,20 @@ public partial class MainWindow : Window
     {
         if (_treeServer is not Guid server || _roots.Count == 0)
             return;
-        _trees[(server, _treeKey)] = new([.._roots], _current);
+
+        _trees[(server, _treeKey)] = new([.. _roots], _current);
     }
 
     private bool TryRestoreTree(Guid serverId, Guid? keyStoreId)
     {
         if (!_trees.TryGetValue((serverId, keyStoreId), out var snapshot) || snapshot.Roots.Count == 0)
             return false;
+
         _fillingTree = true;
         _roots.Clear();
         foreach (var root in snapshot.Roots)
             _roots.Add(root);
+
         Folders.ItemsSource = _roots;
         _fillingTree = false;
         var current = snapshot.Current ?? _roots[0];
@@ -442,7 +460,7 @@ public partial class MainWindow : Window
         _tabs.RemoveAt(index);
         _session.CloseConnection(tab.ServerId, tab.KeyStoreId);
         BindServers();
-        BindKeyStores(resetToServer: true);
+        BindKeyStores(true);
     }
 
     private void OnConnectionSelected()
@@ -454,6 +472,7 @@ public partial class MainWindow : Window
         if (index < 0 || index >= _tabs.Count) {
             if (_session.Connections.Count == 0)
                 _ = ShowActiveAsync();
+
             return;
         }
 
@@ -461,27 +480,18 @@ public partial class MainWindow : Window
         var server = _session.Servers.FirstOrDefault(item => item.Id == tab.ServerId);
         if (server != null && server.Kind != FileManagerServerKind.Remote)
             server.KeyStoreId = tab.KeyStoreId;
+
         if (_session.Active?.Id == tab.ServerId && _treeServer == tab.ServerId && _treeKey == tab.KeyStoreId)
             return;
 
         CaptureTree();
         _session.Select(tab.ServerId);
         BindServers();
-        BindKeyStores(resetToServer: true);
-        _ = ShowActiveAsync(restore: true);
+        BindKeyStores(true);
+        _ = ShowActiveAsync(true);
     }
 
-    private static Guid? OpenKey(FileManagerServer? server)
-        => server == null || server.Kind == FileManagerServerKind.Remote ? null : server.KeyStoreId;
-
-    private readonly record struct OpenTab(Guid ServerId, Guid? KeyStoreId);
-
-    private sealed class TreeSnapshot(List<FolderNode> roots, FolderNode? current)
-    {
-        public List<FolderNode> Roots { get; } = roots;
-
-        public FolderNode? Current { get; } = current;
-    }
+    private static Guid? OpenKey(FileManagerServer? server) => server == null || server.Kind == FileManagerServerKind.Remote ? null : server.KeyStoreId;
 
     private void ApplyCapabilities()
     {
@@ -522,25 +532,28 @@ public partial class MainWindow : Window
     {
         if (_syncingView)
             return;
-        _treeFiles = ViewTreeFiles.IsChecked == true;
+
+        _treeFiles = ViewTreeFiles.IsChecked;
         SaveSettings();
         if (_roots.Count == 0)
             return;
+
         await ReloadTree(_roots[0]);
     }
 
     private void OnViewOpened(object? sender, RoutedEventArgs e) => SyncViewChecks();
 
-    private void OnToggleTree(object? sender, RoutedEventArgs e) => Toggle(FileManagerTool.Tree, ViewTree.IsChecked == true);
+    private void OnToggleTree(object? sender, RoutedEventArgs e) => Toggle(FileManagerTool.Tree, ViewTree.IsChecked);
 
-    private void OnToggleMetadata(object? sender, RoutedEventArgs e) => Toggle(FileManagerTool.Metadata, ViewMetadata.IsChecked == true);
+    private void OnToggleMetadata(object? sender, RoutedEventArgs e) => Toggle(FileManagerTool.Metadata, ViewMetadata.IsChecked);
 
-    private void OnToggleLog(object? sender, RoutedEventArgs e) => Toggle(FileManagerTool.Log, ViewLog.IsChecked == true);
+    private void OnToggleLog(object? sender, RoutedEventArgs e) => Toggle(FileManagerTool.Log, ViewLog.IsChecked);
 
     private void Toggle(FileManagerTool tool, bool visible)
     {
         if (_syncingView)
             return;
+
         _layout.SetVisible(tool, visible);
         ApplyLayout();
         SaveSettings();
@@ -557,14 +570,17 @@ public partial class MainWindow : Window
     {
         if (_fillingTree)
             return;
+
         var nodes = SelectedTreeNodes();
         if (nodes.Count == 0)
             return;
+
         _fromTree = true;
         if (nodes.Count == 1 && nodes[0].Entry is { IsDirectory: true })
             await OpenNode(nodes[0]);
         else if (nodes.Count == 1 && nodes[0].Entry == null)
             await OpenNode(nodes[0]);
+
         await ShowMetadata();
     }
 
@@ -572,15 +588,19 @@ public partial class MainWindow : Window
     {
         if (e.Property != TreeViewItem.IsExpandedProperty || sender is not TreeViewItem { DataContext: FolderNode node })
             return;
+
         var canonical = node.Source ?? node;
         if (canonical.IsPlaceholder)
             return;
+
         var expanded = e.NewValue is true;
         canonical.IsExpanded = expanded;
         if (!ReferenceEquals(node, canonical))
             node.IsExpanded = expanded;
+
         if (!expanded || _applyingExpand || canonical.Entry is { IsDirectory: false })
             return;
+
         await OpenNode(canonical);
     }
 
@@ -605,9 +625,11 @@ public partial class MainWindow : Window
         try {
             if (_current != null)
                 _current.Loaded = false;
+
             await _session.RefreshAsync(CancellationToken.None);
             if (_current != null)
                 await EnsureChildren(_current);
+
             ShowRows(_session.Entries.Select(FileRow.FromEntry));
             BreadcrumbText();
         }
@@ -619,9 +641,10 @@ public partial class MainWindow : Window
     private async void OnUpload(object? sender, RoutedEventArgs e)
     {
         try {
-            var picked = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { AllowMultiple = true, Title = "Upload" });
+            var picked = await StorageProvider.OpenFilePickerAsync(new() { AllowMultiple = true, Title = "Upload" });
             if (picked.Count == 0)
                 return;
+
             IReadOnlyList<string> keys = [];
             try {
                 keys = await _session.ListKeyIdsAsync(CancellationToken.None);
@@ -636,6 +659,7 @@ public partial class MainWindow : Window
             var options = await Dialogs.UploadOptionsAsync(this, keys, canEncrypt, Log);
             if (options == null)
                 return;
+
             await UploadPaths(picked.Select(file => file.TryGetLocalPath()).Where(path => path != null)!, options);
         }
         catch (Exception ex) {
@@ -655,6 +679,7 @@ public partial class MainWindow : Window
 
         if (!OverBrowser(e))
             return;
+
         var payload = e.DataTransfer.TryGetValue(DragFormat);
         if (payload != null) {
             var plan = FileManagerDrop.Plan(payload.Entries, DropTarget(e));
@@ -666,6 +691,7 @@ public partial class MainWindow : Window
 
         if (LocalPaths(e).Count == 0)
             return;
+
         e.DragEffects = DragDropEffects.Copy;
         e.Handled = true;
     }
@@ -678,12 +704,14 @@ public partial class MainWindow : Window
             var carried = e.DataTransfer.TryGetValue(DragFormat);
             if (carried == null || carried.Entries.Count == 0 || IsCurrentTab(tab))
                 return;
-            await MoveOrCopy(move: true, dragged: carried.Entries, connectionId: _tabs[tab].ServerId);
+
+            await MoveOrCopy(true, carried.Entries, _tabs[tab].ServerId);
             return;
         }
 
         if (!OverBrowser(e))
             return;
+
         try {
             var payload = e.DataTransfer.TryGetValue(DragFormat);
             if (payload != null) {
@@ -694,7 +722,8 @@ public partial class MainWindow : Window
             var paths = LocalPaths(e);
             if (paths.Count == 0)
                 return;
-            await UploadPaths(paths, new FileManagerUploadOptions(), DropTarget(e));
+
+            await UploadPaths(paths, new(), DropTarget(e));
         }
         catch (Exception ex) {
             Log(ex.Message);
@@ -706,11 +735,14 @@ public partial class MainWindow : Window
         var plan = FileManagerDrop.Plan(entries, destination);
         if (plan.Rejected.Count > 0)
             Log("Cannot move " + string.Join(", ", plan.Rejected) + " into itself.");
+
         if (!plan.HasWork) {
             if (plan.Rejected.Count == 0)
                 Log("Already in that folder.");
+
             return;
         }
+
         foreach (var folder in plan.Folders) {
             var prefix = plan.FolderPrefix(folder);
             if (copy)
@@ -737,10 +769,13 @@ public partial class MainWindow : Window
         List<string?> prefixes = [plan.Destination];
         foreach (var folder in plan.Folders)
             prefixes.Add(PrefixRewrite.Parent(folder.PathPrefix));
+
         foreach (var file in plan.Files)
             prefixes.Add(file.PathPrefix);
+
         foreach (var file in plan.Physical)
             prefixes.Add(file.PathPrefix);
+
         await RefreshPrefixes(prefixes);
         Log(copy ? "Copied." : "Moved.");
     }
@@ -775,6 +810,7 @@ public partial class MainWindow : Window
 
             if (uploaded == 0)
                 return;
+
             await ReloadCurrent();
             await RefreshPrefixes([prefix]);
             Log("Uploaded.");
@@ -789,6 +825,7 @@ public partial class MainWindow : Window
         var row = FindAncestor<DataGridRow>(e.Source);
         if (row?.DataContext is FileRow file && file.Entry != null)
             return FileManagerDrop.Target(file.Entry, _session.Prefix);
+
         var current = e.Source as Visual;
         while (current != null) {
             if (current is TreeViewItem item && item.DataContext is FolderNode node) {
@@ -809,6 +846,7 @@ public partial class MainWindow : Window
     {
         if (serverId is not Guid id)
             return [];
+
         try {
             return await _session.FolderPrefixesAsync(id, CancellationToken.None);
         }
@@ -822,6 +860,7 @@ public partial class MainWindow : Window
     {
         if (index < 0 || index >= _tabs.Count)
             return false;
+
         var tab = _tabs[index];
         return tab.ServerId == _session.Active?.Id && tab.KeyStoreId == OpenKey(_session.Active);
     }
@@ -842,10 +881,13 @@ public partial class MainWindow : Window
     {
         if (_itemDrag || sender is not Control host || e.Source is Button or TextBox)
             return;
+
         if (e.KeyModifiers.HasFlag(KeyModifiers.Control) || e.KeyModifiers.HasFlag(KeyModifiers.Shift))
             return;
+
         if (!e.GetCurrentPoint(host).Properties.IsLeftButtonPressed)
             return;
+
         _pressKeepsSelection = false;
         _pressedRow = null;
         _keptFiles = null;
@@ -879,6 +921,7 @@ public partial class MainWindow : Window
     {
         if (!_pressKeepsSelection || _itemDrag)
             return;
+
         _pressKeepsSelection = false;
         _keptFiles = null;
         _keptNodes = null;
@@ -898,6 +941,7 @@ public partial class MainWindow : Window
     {
         if (_itemDrag || _itemPress == null || _itemEvent == null || sender is not Control host || !ReferenceEquals(host, _itemHost))
             return;
+
         if (!e.GetCurrentPoint(host).Properties.IsLeftButtonPressed) {
             _itemPress = null;
             _itemEvent = null;
@@ -907,6 +951,7 @@ public partial class MainWindow : Window
         var delta = e.GetPosition(host) - _itemPress.Value;
         if (Math.Abs(delta.X) < 8 && Math.Abs(delta.Y) < 8)
             return;
+
         var origin = _itemPress.Value;
         var press = _itemEvent;
         _itemPress = null;
@@ -916,6 +961,7 @@ public partial class MainWindow : Window
         var entries = Collect(host, origin);
         if (entries.Count == 0 || !_connected)
             return;
+
         _itemDrag = true;
         e.Handled = true;
         try {
@@ -938,6 +984,7 @@ public partial class MainWindow : Window
             Files.SelectedItems.Clear();
             foreach (var row in _keptFiles)
                 Files.SelectedItems.Add(row);
+
             _fillingList = false;
         }
 
@@ -946,6 +993,7 @@ public partial class MainWindow : Window
             Folders.SelectedItems.Clear();
             foreach (var node in _keptNodes)
                 Folders.SelectedItems.Add(Shown(node));
+
             _fillingTree = false;
         }
 
@@ -960,6 +1008,7 @@ public partial class MainWindow : Window
             var row = FindAncestor<DataGridRow>(hit);
             if (row?.DataContext is not FileRow file || file.Entry == null)
                 return [];
+
             var selected = Files.SelectedItems?.OfType<FileRow>().Select(item => item.Entry).OfType<FileManagerEntry>().ToList() ?? [];
             return selected.Any(entry => SameEntry(entry, file.Entry)) ? selected : [file.Entry];
         }
@@ -967,9 +1016,11 @@ public partial class MainWindow : Window
         var item = FindAncestor<TreeViewItem>(hit);
         if (item?.DataContext is not FolderNode node)
             return [];
+
         node = node.Source ?? node;
         if (node.IsPlaceholder || node.Entry == null)
             return [];
+
         var picked = SelectedTreeNodes().Select(row => row.Entry).OfType<FileManagerEntry>().ToList();
         return picked.Any(entry => SameEntry(entry, node.Entry)) ? picked : [node.Entry];
     }
@@ -978,14 +1029,12 @@ public partial class MainWindow : Window
     {
         if (left.FileId != null && left.FileId == right.FileId)
             return true;
-        return left.IsDirectory == right.IsDirectory
-            && left.Name == right.Name
-            && SameText(left.PathPrefix, right.PathPrefix)
-            && (left.PhysicalKey ?? "") == (right.PhysicalKey ?? "");
+
+        return left.IsDirectory == right.IsDirectory && left.Name == right.Name && SameText(left.PathPrefix, right.PathPrefix) &&
+            (left.PhysicalKey ?? "") == (right.PhysicalKey ?? "");
     }
 
-    private static bool SameText(string? left, string? right)
-        => string.Equals(left?.Trim().Trim('/') ?? "", right?.Trim().Trim('/') ?? "", StringComparison.Ordinal);
+    private static bool SameText(string? left, string? right) => string.Equals(left?.Trim().Trim('/') ?? "", right?.Trim().Trim('/') ?? "", StringComparison.Ordinal);
 
     private async Task RefreshPrefixes(IEnumerable<string?> prefixes)
     {
@@ -993,17 +1042,20 @@ public partial class MainWindow : Window
             var node = prefix == null ? _roots[0] : FindByPrefix(_roots, prefix);
             if (node == null)
                 continue;
+
             node.Loaded = false;
             await EnsureChildren(node);
         }
     }
 
-    private static T? FindAncestor<T>(object? source) where T : Visual
+    private static T? FindAncestor<T>(object? source)
+        where T : Visual
     {
         var current = source as Visual;
         while (current != null) {
             if (current is T match)
                 return match;
+
             current = current.GetVisualParent();
         }
 
@@ -1016,24 +1068,11 @@ public partial class MainWindow : Window
         while (current != null) {
             if (ReferenceEquals(current, host))
                 return true;
+
             current = current.GetVisualParent();
         }
 
         return false;
-    }
-
-    private sealed class KeyStoreChoice
-    {
-        public Guid? Id { get; init; }
-
-        public string Label { get; init; } = "";
-
-        public override string ToString() => Label;
-    }
-
-    private sealed class FileDragPayload
-    {
-        public required IReadOnlyList<FileManagerEntry> Entries { get; init; }
     }
 
     private async void OnDownload(object? sender, RoutedEventArgs e)
@@ -1045,10 +1084,11 @@ public partial class MainWindow : Window
         }
 
         if (entries.Count == 1 && !entries[0].IsDirectory) {
-            var picked = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions { SuggestedFileName = entries[0].Name, Title = "Download" });
+            var picked = await StorageProvider.SaveFilePickerAsync(new() { SuggestedFileName = entries[0].Name, Title = "Download" });
             var path = picked?.TryGetLocalPath();
             if (string.IsNullOrWhiteSpace(path))
                 return;
+
             try {
                 await _session.DownloadAsync(entries[0], path, CancellationToken.None);
                 Log("Saved " + path);
@@ -1067,6 +1107,7 @@ public partial class MainWindow : Window
     {
         if (Files.SelectedItem is not FileRow { Entry: { } entry })
             return;
+
         await OpenShown(entry);
     }
 
@@ -1075,9 +1116,11 @@ public partial class MainWindow : Window
         var item = FindAncestor<TreeViewItem>(e.Source);
         if (item?.DataContext is not FolderNode node)
             return;
+
         node = node.Source ?? node;
         if (node.Entry is not { IsDirectory: false } entry)
             return;
+
         e.Handled = true;
         await OpenShown(entry);
     }
@@ -1087,6 +1130,7 @@ public partial class MainWindow : Window
         var entry = SelectedEntries().FirstOrDefault();
         if (entry == null)
             return;
+
         await OpenShown(entry);
     }
 
@@ -1118,6 +1162,7 @@ public partial class MainWindow : Window
         var name = await PromptDialog.AskAsync(this, "Rename", "New name", entries[0].Name);
         if (string.IsNullOrWhiteSpace(name))
             return;
+
         try {
             var result = await _session.RenameAsync(entries[0], name, CancellationToken.None);
             await ReloadCurrent();
@@ -1128,9 +1173,9 @@ public partial class MainWindow : Window
         }
     }
 
-    private async void OnMove(object? sender, RoutedEventArgs e) => await MoveOrCopy(move: true);
+    private async void OnMove(object? sender, RoutedEventArgs e) => await MoveOrCopy(true);
 
-    private async void OnCopy(object? sender, RoutedEventArgs e) => await MoveOrCopy(move: false);
+    private async void OnCopy(object? sender, RoutedEventArgs e) => await MoveOrCopy(false);
 
     private async Task MoveOrCopy(bool move, IReadOnlyList<FileManagerEntry>? dragged = null, Guid? connectionId = null)
     {
@@ -1142,28 +1187,34 @@ public partial class MainWindow : Window
 
         var destinations = _session.TransferDestinations();
         var names = destinations.Select(server => {
-            var title = _session.Connections.FirstOrDefault(connection => connection.ServerId == server.Id)?.Title;
-            return string.IsNullOrWhiteSpace(title) ? server.Name : title;
-        }).ToArray();
+                var title = _session.Connections.FirstOrDefault(connection => connection.ServerId == server.Id)?.Title;
+                return string.IsNullOrWhiteSpace(title) ? server.Name : title;
+            })
+            .ToArray();
+
         var localFolders = await FolderNames(_session.Active?.Id);
         var connectionFolders = new Dictionary<Guid, IReadOnlyList<string>>();
         foreach (var server in destinations)
             connectionFolders[server.Id] = await FolderNames(server.Id);
+
         var choice = await Dialogs.MoveOrCopyAsync(this, move, destinations, names, localFolders, connectionFolders, connectionId);
         if (choice == null)
             return;
+
         try {
             if (choice.ToConnection) {
-                var progress = new Progress<FileStorageTransferProgress>(snapshot =>
-                    Avalonia.Threading.Dispatcher.UIThread.Post(() => Log(TransferLine(snapshot))));
+                var progress = new Progress<FileStorageTransferProgress>(snapshot => Dispatcher.UIThread.Post(() => Log(TransferLine(snapshot))));
                 var disposition = move ? FileStorageTransferDisposition.Move : FileStorageTransferDisposition.Copy;
                 var result = await _session.TransferAsync(
                     choice.DestinationId, entries, disposition, choice.KeyMode, choice.TargetKeyId, choice.TargetKeyVersion, progress, CancellationToken.None, choice.Prefix);
+
                 SyncTabs();
                 await ShowActiveAsync();
-                Log(result.FilesFailed == 0
-                    ? $"Transferred {result.FilesCopied}, skipped {result.FilesSkipped}, removed {result.FilesRemoved}."
-                    : $"Transferred {result.FilesCopied}, failed {result.FilesFailed}.");
+                Log(
+                    result.FilesFailed == 0
+                        ? $"Transferred {result.FilesCopied}, skipped {result.FilesSkipped}, removed {result.FilesRemoved}."
+                        : $"Transferred {result.FilesCopied}, failed {result.FilesFailed}.");
+
                 return;
             }
 
@@ -1214,15 +1265,19 @@ public partial class MainWindow : Window
 
         if (!await PromptDialog.ConfirmAsync(this, "Delete", "Delete the selection?", "Delete"))
             return;
+
         try {
             foreach (var folder in entries.Where(entry => entry.IsDirectory))
                 await _session.DeleteFolderAsync(folder, CancellationToken.None);
+
             var files = entries.Where(entry => !entry.IsDirectory && entry.FileId != null).ToList();
             if (files.Count > 0)
                 await _session.DeleteAsync(files, CancellationToken.None);
+
             var physical = entries.Where(entry => !entry.IsDirectory && entry.FileId == null).ToList();
             if (physical.Count > 0)
                 await _session.DeletePhysicalAsync(physical, CancellationToken.None);
+
             await ReloadCurrent();
             Log("Deleted.");
         }
@@ -1236,19 +1291,23 @@ public partial class MainWindow : Window
         var name = await PromptDialog.AskAsync(this, "New folder", "Folder name");
         if (string.IsNullOrWhiteSpace(name))
             return;
+
         _session.NewFolder(name);
         var created = _session.Entries.LastOrDefault(entry => entry.Pending && entry.Name == name.Trim().Trim('/'));
         var parent = _current ?? _roots[0];
         if (created != null) {
             if (!parent.Loaded)
                 await EnsureChildren(parent);
+
             var child = new FolderNode { Name = created.Name, Prefix = created.PathPrefix, Entry = created };
             child.Children.Add(Placeholder());
             if (parent.Children.All(node => node.Prefix != child.Prefix))
                 parent.Children.Add(child);
+
             var shownParent = Shown(parent);
             if (shownParent != null && Folders.ContainerFromItem(shownParent) is TreeViewItem item)
                 item.IsExpanded = true;
+
             await OpenNode(child);
         }
 
@@ -1264,10 +1323,11 @@ public partial class MainWindow : Window
             return;
         }
 
-        var picked = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions { SuggestedFileName = "files.zip", Title = "Zip" });
+        var picked = await StorageProvider.SaveFilePickerAsync(new() { SuggestedFileName = "files.zip", Title = "Zip" });
         var path = picked?.TryGetLocalPath();
         if (string.IsNullOrWhiteSpace(path))
             return;
+
         try {
             await _session.DownloadArchiveAsync(entries, path, CancellationToken.None);
             Log("Saved " + path);
@@ -1288,6 +1348,7 @@ public partial class MainWindow : Window
         var max = await PromptDialog.AskAsync(this, "Access link", "Max downloads (optional)");
         if (max == null)
             return;
+
         int? cap = int.TryParse(max, out var parsed) ? parsed : null;
         try {
             var url = await _session.CreateAccessLinkAsync(id.Value, DateTime.UtcNow.AddDays(1), cap, CancellationToken.None);
@@ -1326,6 +1387,7 @@ public partial class MainWindow : Window
         var key = await PromptDialog.AskAsync(this, "Rotate DEKs", "Target key id (optional)");
         if (key == null)
             return;
+
         try {
             var result = await _session.RotateAsync(entries, string.IsNullOrWhiteSpace(key) ? null : key, null, CancellationToken.None);
             await ReloadCurrent();
@@ -1341,9 +1403,11 @@ public partial class MainWindow : Window
         var source = await PromptDialog.AskAsync(this, "Migrate keys", "Source key id");
         if (string.IsNullOrWhiteSpace(source))
             return;
+
         var target = await PromptDialog.AskAsync(this, "Migrate keys", "Target key id (optional)");
         if (target == null)
             return;
+
         try {
             var result = await _session.MigrateAsync(source, null, string.IsNullOrWhiteSpace(target) ? null : target, null, CancellationToken.None);
             await ReloadCurrent();
@@ -1374,6 +1438,7 @@ public partial class MainWindow : Window
     {
         if (_fillingList)
             return;
+
         _fromTree = false;
         await ShowMetadata();
     }
@@ -1384,10 +1449,12 @@ public partial class MainWindow : Window
         try {
             if (!_connected)
                 return;
+
             if (node.Entry != null)
                 await _session.EnterAsync(node.Entry, CancellationToken.None);
             else
                 await _session.OpenAsync(node.Prefix, CancellationToken.None);
+
             ShowRows(_session.Entries.Select(FileRow.FromEntry));
             BreadcrumbText();
             await EnsureChildren(node);
@@ -1404,9 +1471,10 @@ public partial class MainWindow : Window
         var parent = _current ?? _roots[0];
         if (!parent.Loaded)
             await EnsureChildren(parent);
+
         var child = parent.Children.FirstOrDefault(node => node.Prefix == entry.PathPrefix && !node.IsPlaceholder);
         if (child == null) {
-            child = new FolderNode { Name = entry.Name, Prefix = entry.PathPrefix, Entry = entry };
+            child = new() { Name = entry.Name, Prefix = entry.PathPrefix, Entry = entry };
             child.Children.Add(Placeholder());
             parent.Children.Add(child);
         }
@@ -1414,6 +1482,7 @@ public partial class MainWindow : Window
         var shownParent = Shown(parent);
         if (shownParent != null && Folders.ContainerFromItem(shownParent) is TreeViewItem item)
             item.IsExpanded = true;
+
         await OpenNode(child);
         _fillingTree = true;
         Folders.SelectedItem = Shown(child);
@@ -1425,6 +1494,7 @@ public partial class MainWindow : Window
         node = node.Source ?? node;
         if (node.Loaded || node.IsPlaceholder || !_connected)
             return;
+
         try {
             var listing = await _session.ListAsync(node.Prefix, CancellationToken.None);
             node.Children.Clear();
@@ -1436,7 +1506,13 @@ public partial class MainWindow : Window
 
             if (_treeFiles) {
                 foreach (var file in listing.Entries.Where(entry => !entry.IsDirectory))
-                    node.Children.Add(new FolderNode { Name = file.Name, Prefix = file.PathPrefix, Entry = file, Loaded = true });
+                    node.Children.Add(
+                        new() {
+                            Name = file.Name,
+                            Prefix = file.PathPrefix,
+                            Entry = file,
+                            Loaded = true
+                        });
             }
 
             node.Loaded = true;
@@ -1452,9 +1528,11 @@ public partial class MainWindow : Window
     {
         if (_current != null)
             _current.Loaded = false;
+
         await _session.OpenAsync(_session.Prefix, CancellationToken.None);
         if (_current != null)
             await EnsureChildren(_current);
+
         if (!_query)
             ShowRows(_session.Entries.Select(FileRow.FromEntry));
     }
@@ -1492,8 +1570,7 @@ public partial class MainWindow : Window
         return Pair(list, filtered);
     }
 
-    private static FolderTreeNode ToModel(FolderNode node)
-        => new() { Name = node.Name, Children = node.Children.Where(child => !child.IsPlaceholder).Select(ToModel).ToList() };
+    private static FolderTreeNode ToModel(FolderNode node) => new() { Name = node.Name, Children = node.Children.Where(child => !child.IsPlaceholder).Select(ToModel).ToList() };
 
     private static List<FolderNode> Pair(List<FolderNode> sources, IReadOnlyList<FolderTreeNode> filtered)
     {
@@ -1502,11 +1579,22 @@ public partial class MainWindow : Window
             var source = sources.FirstOrDefault(node => node.Name == item.Name);
             if (source == null)
                 continue;
-            var copy = new FolderNode { Name = source.Name, Prefix = source.Prefix, Entry = source.Entry, Loaded = source.Loaded, IsExpanded = source.IsExpanded, Source = source };
+
+            var copy = new FolderNode {
+                Name = source.Name,
+                Prefix = source.Prefix,
+                Entry = source.Entry,
+                Loaded = source.Loaded,
+                IsExpanded = source.IsExpanded,
+                Source = source
+            };
+
             foreach (var child in Pair(source.Children.Where(node => !node.IsPlaceholder).ToList(), item.Children))
                 copy.Children.Add(child);
+
             if (!source.Loaded)
                 copy.Children.Add(Placeholder());
+
             result.Add(copy);
         }
 
@@ -1517,14 +1605,16 @@ public partial class MainWindow : Window
     {
         if (Folders.ItemsSource is not IEnumerable<FolderNode> nodes)
             return canonical;
+
         return FindShown(nodes, canonical) ?? canonical;
     }
 
     private static FolderNode? FindShown(IEnumerable<FolderNode> nodes, FolderNode canonical)
     {
         foreach (var node in nodes) {
-            if (ReferenceEquals(node, canonical) || ReferenceEquals(node.Source, canonical) || node.Prefix == canonical.Prefix && node.Name == canonical.Name)
+            if (ReferenceEquals(node, canonical) || ReferenceEquals(node.Source, canonical) || (node.Prefix == canonical.Prefix && node.Name == canonical.Name))
                 return node;
+
             var nested = FindShown(node.Children, canonical);
             if (nested != null)
                 return nested;
@@ -1537,6 +1627,7 @@ public partial class MainWindow : Window
     {
         if (node == null)
             return null;
+
         return FindParent(_roots, node.Source ?? node);
     }
 
@@ -1545,6 +1636,7 @@ public partial class MainWindow : Window
         foreach (var node in nodes) {
             if (node.Children.Any(item => ReferenceEquals(item, child) || item.Prefix == child.Prefix))
                 return node;
+
             var nested = FindParent(node.Children, child);
             if (nested != null)
                 return nested;
@@ -1560,6 +1652,7 @@ public partial class MainWindow : Window
         var prefix = _session.Prefix;
         if (string.IsNullOrEmpty(prefix))
             return;
+
         var built = "";
         foreach (var segment in prefix.Split('/', StringSplitOptions.RemoveEmptyEntries)) {
             built = built.Length == 0 ? segment : built + "/" + segment;
@@ -1570,7 +1663,7 @@ public partial class MainWindow : Window
 
     private void AddCrumb(string label, string? prefix)
     {
-        var button = new Button { Content = label, Padding = new Thickness(4, 0), Background = Brushes.Transparent };
+        var button = new Button { Content = label, Padding = new(4, 0), Background = Brushes.Transparent };
         button.Click += async (_, _) => {
             var node = prefix == null ? _roots[0] : FindByPrefix(_roots, prefix) ?? _roots[0];
             await OpenNode(node);
@@ -1578,6 +1671,7 @@ public partial class MainWindow : Window
             Folders.SelectedItem = Shown(node);
             _fillingTree = false;
         };
+
         Breadcrumb.Children.Add(button);
     }
 
@@ -1586,6 +1680,7 @@ public partial class MainWindow : Window
         foreach (var node in nodes) {
             if (node.Prefix == prefix)
                 return node.Source ?? node;
+
             var nested = FindByPrefix(node.Children, prefix);
             if (nested != null)
                 return nested;
@@ -1613,28 +1708,29 @@ public partial class MainWindow : Window
         if (entry.FileId is Guid id) {
             try {
                 var metadata = await _session.GetMetadataAsync(id, true, CancellationToken.None);
-                AddAccordion("Details", true, [
-                    ("Name", metadata.OriginalFileName ?? "", false),
-                    ("Size", metadata.OriginalFileSize + " bytes", false),
-                    ("Path", metadata.PathPrefix ?? "/", false),
-                    ("Content type", metadata.ContentType ?? "", false),
-                    ("Id", metadata.Id.ToString(), true),
-                    ("Hash", HashText(metadata.HashAlgorithm?.ToString(), metadata.OriginalFileHash), true),
-                    ("Stored hash", HashText(null, metadata.SourceFileHash), true)
-                ]);
-                AddAccordion("Compression", false, [
-                    ("Algorithm", metadata.IsCompressed ? metadata.CompressionAlgorithm?.ToString() ?? "Yes" : "None", false),
-                    ("Compressed size", metadata.CompressedFileSize?.ToString() ?? "-", false),
-                    ("Compressed hash", HashText(null, metadata.CompressedFileHash), true)
-                ]);
-                AddAccordion("Encryption", false, [
-                    ("Algorithm", metadata.IsEncrypted ? metadata.DataEncryptionKeyAlgorithm?.ToString() ?? "Yes" : "None", false),
-                    ("Key", metadata.IsEncrypted ? $"{metadata.DataEncryptionKeyId} / {metadata.DataEncryptionKeyVersion}" : "-", false),
-                    ("Key encryption", metadata.KeyEncryptionKeyAlgorithm?.ToString() ?? "-", false),
-                    ("Encrypted size", metadata.EncryptedFileSize?.ToString() ?? "-", false),
-                    ("Encrypted hash", HashText(null, metadata.EncryptedFileHash), true),
-                    ("KEK salt", HashText(null, metadata.KeyEncryptionKeySalt), true)
-                ]);
+                AddAccordion(
+                    "Details", true,
+                    [
+                        ("Name", metadata.OriginalFileName ?? "", false), ("Size", metadata.OriginalFileSize + " bytes", false), ("Path", metadata.PathPrefix ?? "/", false),
+                        ("Content type", metadata.ContentType ?? "", false), ("Id", metadata.Id.ToString(), true),
+                        ("Hash", HashText(metadata.HashAlgorithm?.ToString(), metadata.OriginalFileHash), true), ("Stored hash", HashText(null, metadata.SourceFileHash), true)
+                    ]);
+
+                AddAccordion(
+                    "Compression", false,
+                    [
+                        ("Algorithm", metadata.IsCompressed ? metadata.CompressionAlgorithm?.ToString() ?? "Yes" : "None", false),
+                        ("Compressed size", metadata.CompressedFileSize?.ToString() ?? "-", false), ("Compressed hash", HashText(null, metadata.CompressedFileHash), true)
+                    ]);
+
+                AddAccordion(
+                    "Encryption", false,
+                    [
+                        ("Algorithm", metadata.IsEncrypted ? metadata.DataEncryptionKeyAlgorithm?.ToString() ?? "Yes" : "None", false),
+                        ("Key", metadata.IsEncrypted ? $"{metadata.DataEncryptionKeyId} / {metadata.DataEncryptionKeyVersion}" : "-", false),
+                        ("Key encryption", metadata.KeyEncryptionKeyAlgorithm?.ToString() ?? "-", false), ("Encrypted size", metadata.EncryptedFileSize?.ToString() ?? "-", false),
+                        ("Encrypted hash", HashText(null, metadata.EncryptedFileHash), true), ("KEK salt", HashText(null, metadata.KeyEncryptionKeySalt), true)
+                    ]);
             }
             catch (Exception ex) {
                 Log(ex.Message);
@@ -1645,43 +1741,52 @@ public partial class MainWindow : Window
         }
 
         var folder = new List<(string Label, string Value, bool Id)> {
-            ("Name", entry.Name, false),
-            ("Path", entry.PathPrefix ?? "/", false),
-            ("Kind", entry.IsDirectory ? "Folder" : "Physical", false)
+            ("Name", entry.Name, false), ("Path", entry.PathPrefix ?? "/", false), ("Kind", entry.IsDirectory ? "Folder" : "Physical", false)
         };
+
         if (!string.IsNullOrWhiteSpace(entry.PhysicalKey))
             folder.Add(("Physical key", entry.PhysicalKey, true));
+
         AddAccordion("Details", true, folder);
     }
 
     private void AddAccordion(string title, bool expanded, IReadOnlyList<(string Label, string Value, bool Id)> rows)
     {
-        var body = new StackPanel { Spacing = 6, Margin = new Thickness(8, 6, 8, 8), IsVisible = expanded, HorizontalAlignment = HorizontalAlignment.Stretch };
+        var body = new StackPanel {
+            Spacing = 6,
+            Margin = new(8, 6, 8, 8),
+            IsVisible = expanded,
+            HorizontalAlignment = HorizontalAlignment.Stretch
+        };
+
         foreach (var row in rows)
             body.Children.Add(row.Id ? IdLine(row.Label, row.Value) : Plain(row.Label, row.Value));
-        var mark = new TextBlock { Text = expanded ? "▾" : "▸", VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(8, 0, 0, 0) };
+
+        var mark = new TextBlock { Text = expanded ? "▾" : "▸", VerticalAlignment = VerticalAlignment.Center, Margin = new(8, 0, 0, 0) };
         var heading = new TextBlock { Text = title, VerticalAlignment = VerticalAlignment.Center };
         var rowBar = new Grid { HorizontalAlignment = HorizontalAlignment.Stretch };
-        rowBar.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
-        rowBar.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        rowBar.ColumnDefinitions.Add(new(GridLength.Star));
+        rowBar.ColumnDefinitions.Add(new(GridLength.Auto));
         rowBar.Children.Add(heading);
         Grid.SetColumn(mark, 1);
         rowBar.Children.Add(mark);
         var header = new Border {
             Background = new SolidColorBrush(Color.Parse("#2A3140")),
             BorderBrush = new SolidColorBrush(Color.Parse("#5C677A")),
-            BorderThickness = new Thickness(0, 0, 0, 1),
-            Padding = new Thickness(8, 8),
+            BorderThickness = new(0, 0, 0, 1),
+            Padding = new(8, 8),
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            Cursor = new Cursor(StandardCursorType.Hand),
+            Cursor = new(StandardCursorType.Hand),
             Child = rowBar
         };
+
         var index = _accordion.Count;
         _accordion.Add((body, mark));
         header.PointerPressed += (_, e) => {
             e.Handled = true;
             ToggleAccordion(index);
         };
+
         var section = new StackPanel { HorizontalAlignment = HorizontalAlignment.Stretch };
         section.Children.Add(header);
         section.Children.Add(body);
@@ -1718,6 +1823,7 @@ public partial class MainWindow : Window
     {
         if (bytes == null || bytes.Length == 0)
             return "-";
+
         var hex = Convert.ToHexString(bytes);
         return string.IsNullOrWhiteSpace(algorithm) ? hex : algorithm + " " + hex;
     }
@@ -1730,6 +1836,7 @@ public partial class MainWindow : Window
     {
         if (Folders.SelectedItems == null)
             return [];
+
         return Folders.SelectedItems.OfType<FolderNode>().Select(node => node.Source ?? node).Where(node => !node.IsPlaceholder).ToList();
     }
 
@@ -1749,8 +1856,10 @@ public partial class MainWindow : Window
     {
         if (_fromTree)
             return SelectedTreeNodes().Select(node => node.Entry).OfType<FileManagerEntry>().ToList();
+
         if (Files.SelectedItems == null)
             return [];
+
         return Files.SelectedItems.OfType<FileRow>().Select(row => row.Entry).OfType<FileManagerEntry>().ToList();
     }
 
@@ -1791,9 +1900,11 @@ public partial class MainWindow : Window
     {
         if (e.Source is TextBox || InsideButton(e.Source as StyledElement))
             return;
+
         var tool = HeaderTool(e.Source as StyledElement);
         if (tool == null)
             return;
+
         _drag = tool;
         _headerPress = e.GetPosition(this);
         _headerMoved = false;
@@ -1804,10 +1915,12 @@ public partial class MainWindow : Window
     {
         if (_drag == null)
             return;
+
         if (!_headerMoved) {
             var delta = e.GetPosition(this) - _headerPress;
-            if ((delta.X * delta.X) + (delta.Y * delta.Y) < 16)
+            if (delta.X * delta.X + delta.Y * delta.Y < 16)
                 return;
+
             _headerMoved = true;
         }
 
@@ -1821,6 +1934,7 @@ public partial class MainWindow : Window
     {
         if (_drag == null)
             return;
+
         var tool = _drag.Value;
         var moved = _headerMoved;
         var edge = EdgeAt(e.GetPosition(DockArea));
@@ -1832,27 +1946,31 @@ public partial class MainWindow : Window
         DropBottom.IsVisible = false;
         if (!moved || edge == null || FromDockEdge(edge.Value) == _layout.Edge(tool))
             return;
+
         _layout.Move(tool, FromDockEdge(edge.Value));
         ApplyLayout();
         SaveSettings();
     }
 
-    private ToolDockEdge? EdgeAt(Point point)
-        => ToolDockHit.EdgeAt(point.X, point.Y, DockArea.Bounds.Width, DockArea.Bounds.Height);
+    private ToolDockEdge? EdgeAt(Point point) => ToolDockHit.EdgeAt(point.X, point.Y, DockArea.Bounds.Width, DockArea.Bounds.Height);
 
     private static bool InsideButton(StyledElement? source)
     {
-        for (var node = source; node != null; node = node.Parent)
+        for (var node = source; node != null; node = node.Parent) {
             if (node is Button)
                 return true;
+        }
+
         return false;
     }
 
     private static FileManagerTool? HeaderTool(StyledElement? source)
     {
-        for (var node = source; node != null; node = node.Parent)
+        for (var node = source; node != null; node = node.Parent) {
             if (node is Border { Tag: string id } && Enum.TryParse<FileManagerTool>(id, out var tool))
                 return tool;
+        }
+
         return null;
     }
 
@@ -1860,6 +1978,7 @@ public partial class MainWindow : Window
     {
         if (FocusManager?.GetFocusedElement() is TextBox)
             return;
+
         if (e.Key == Key.F2)
             OnRename(sender, e);
         else if (e.Key == Key.Delete)
@@ -1872,6 +1991,7 @@ public partial class MainWindow : Window
             TreeSearch.Focus();
         else
             return;
+
         e.Handled = true;
     }
 
@@ -1879,6 +1999,7 @@ public partial class MainWindow : Window
     {
         if (string.IsNullOrWhiteSpace(message))
             return;
+
         _logs.Write(message);
     }
 
@@ -1886,5 +2007,28 @@ public partial class MainWindow : Window
     {
         _session.Dispose();
         base.OnClosed(e);
+    }
+
+    private readonly record struct OpenTab(Guid ServerId, Guid? KeyStoreId);
+
+    private sealed class TreeSnapshot(List<FolderNode> roots, FolderNode? current)
+    {
+        public List<FolderNode> Roots { get; } = roots;
+
+        public FolderNode? Current { get; } = current;
+    }
+
+    private sealed class KeyStoreChoice
+    {
+        public Guid? Id { get; init; }
+
+        public string Label { get; init; } = "";
+
+        public override string ToString() => Label;
+    }
+
+    private sealed class FileDragPayload
+    {
+        public required IReadOnlyList<FileManagerEntry> Entries { get; init; }
     }
 }

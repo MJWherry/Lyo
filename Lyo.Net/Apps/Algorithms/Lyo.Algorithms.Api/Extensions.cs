@@ -1,4 +1,3 @@
-using Lyo.Algorithms;
 using Lyo.Algorithms.Models;
 using Lyo.Algorithms.Models.Request;
 using Lyo.Algorithms.Postgres;
@@ -52,15 +51,13 @@ public static class Extensions
     {
         var tag = Constants.Rest.Algorithms.Route;
         app.MapGet(
-                "/" + Constants.Rest.Algorithms.Route,
-                async (IAlgorithmDefinitionStore store, CancellationToken ct) => Results.Ok(await store.ListAsync(ct).ConfigureAwait(false)))
+                "/" + Constants.Rest.Algorithms.Route, async (IAlgorithmDefinitionStore store, CancellationToken ct) => Results.Ok(await store.ListAsync(ct).ConfigureAwait(false)))
             .WithTags(tag)
             .WithName("ListAlgorithms")
             .AllowAnonymous();
 
         app.MapGet(
-                "/" + Constants.Rest.Algorithms.Route + "/{key}",
-                async (string key, IAlgorithmDefinitionStore store, CancellationToken ct) => {
+                "/" + Constants.Rest.Algorithms.Route + "/{key}", async (string key, IAlgorithmDefinitionStore store, CancellationToken ct) => {
                     var row = await store.GetByKeyAsync(key, ct).ConfigureAwait(false);
                     return row is null ? Results.NotFound() : Results.Ok(row);
                 })
@@ -76,8 +73,7 @@ public static class Extensions
             .AllowAnonymous();
 
         app.MapPost(
-                "/" + Constants.Rest.Algorithms.Route + "/{key}/revisions",
-                async (string key, AlgorithmRevisionReq req, IAlgorithmCatalog catalog, CancellationToken ct) => {
+                "/" + Constants.Rest.Algorithms.Route + "/{key}/revisions", async (string key, AlgorithmRevisionReq req, IAlgorithmCatalog catalog, CancellationToken ct) => {
                     ArgumentHelpers.ThrowIfNull(req);
                     return ToHttp(await catalog.SaveRevisionAsync(key, req, ct).ConfigureAwait(false));
                 })
@@ -86,8 +82,7 @@ public static class Extensions
             .AllowAnonymous();
 
         app.MapPost(
-                "/" + Constants.Rest.Algorithms.Route + "/{key}/revert",
-                async (string key, AlgorithmRevertReq req, IAlgorithmCatalog catalog, CancellationToken ct) => {
+                "/" + Constants.Rest.Algorithms.Route + "/{key}/revert", async (string key, AlgorithmRevertReq req, IAlgorithmCatalog catalog, CancellationToken ct) => {
                     ArgumentHelpers.ThrowIfNull(req);
                     return ToHttp(await catalog.RevertToRevisionAsync(key, req, ct).ConfigureAwait(false));
                 })
@@ -96,8 +91,7 @@ public static class Extensions
             .AllowAnonymous();
 
         app.MapGet(
-                "/" + Constants.Rest.Algorithms.Route + "/{key}/labels/{label}",
-                async (string key, string label, IAlgorithmDefinitionStore store, CancellationToken ct) => {
+                "/" + Constants.Rest.Algorithms.Route + "/{key}/labels/{label}", async (string key, string label, IAlgorithmDefinitionStore store, CancellationToken ct) => {
                     var row = await store.GetLabelAsync(key, label, ct).ConfigureAwait(false);
                     return row is null ? Results.NotFound() : Results.Ok(row);
                 })
@@ -106,8 +100,8 @@ public static class Extensions
             .AllowAnonymous();
 
         app.MapPut(
-                "/" + Constants.Rest.Algorithms.Route + "/{key}/labels/{label}",
-                async (string key, string label, AlgorithmLabelReq req, IAlgorithmCatalog catalog, CancellationToken ct) => {
+                "/" + Constants.Rest.Algorithms.Route + "/{key}/labels/{label}", async (
+                    string key, string label, AlgorithmLabelReq req, IAlgorithmCatalog catalog, CancellationToken ct) => {
                     ArgumentHelpers.ThrowIfNull(req);
                     return ToHttp(await catalog.SetLabelAsync(key, label, req, ct).ConfigureAwait(false));
                 })
@@ -117,10 +111,12 @@ public static class Extensions
 
         return app;
 
-        static IResult ToHttp<T>(Result<T> result) where T : class
+        static IResult ToHttp<T>(Result<T> result)
+            where T : class
         {
             if (!result.IsSuccess || result.Data is null)
                 return Results.BadRequest(result.Errors?.FirstOrDefault()?.Message ?? "Request failed.");
+
             return Results.Ok(result.Data);
         }
     }

@@ -5,15 +5,14 @@ using Lyo.Web.Components.ParamTable;
 namespace Lyo.Job.Web.Components;
 
 /// <summary>
-/// Edits one <see cref="JobWorkflowStepDraft" />: which definition it runs, what it depends on, its failure policy, its parameter overrides, and the predicate tree that
-/// gates it.
+/// Edits one <see cref="JobWorkflowStepDraft" />: which definition it runs, what it depends on, its failure policy, its parameter overrides, and the predicate tree that gates it.
 /// <para>
-/// Dependencies are picked by draft id, and the list of choices excludes this step, so the editor cannot express a self-reference. The remaining ways to build an
-/// invalid graph (a longer cycle, a gate reading a step this one does not depend on) are caught by the builder when the workbench assembles the request.
+/// Dependencies are picked by draft id, and the list of choices excludes this step, so the editor cannot express a self-reference. The remaining ways to build an invalid graph
+/// (a longer cycle, a gate reading a step this one does not depend on) are caught by the builder when the workbench assembles the request.
 /// </para>
 /// <para>
-/// Parameter templates and condition fields are both offered from one <see cref="JobWorkflowFormatterContext" /> bag, which is the same shape the engine seeds when it
-/// starts the step. Neither list is written by hand, so the editor cannot advertise a path the runtime does not resolve.
+/// Parameter templates and condition fields are both offered from one <see cref="JobWorkflowFormatterContext" /> bag, which is the same shape the engine seeds when it starts
+/// the step. Neither list is written by hand, so the editor cannot advertise a path the runtime does not resolve.
 /// </para>
 /// </summary>
 public partial class JobWorkflowStepEditor
@@ -71,14 +70,14 @@ public partial class JobWorkflowStepEditor
     protected override void OnParametersSet()
     {
         _inheritRows = [
-            .. (SelectedDefinition?.JobParameters ?? []).OrderBy(p => p.Order).Select(
-                p => new LyoParameterEditRow {
-                    Key = p.Key,
-                    Type = p.Type,
-                    Options = p.Options,
-                    AllowedValues = p.AllowedValues,
-                    Description = p.Description
-                })
+            .. (SelectedDefinition?.JobParameters ?? []).OrderBy(p => p.Order)
+            .Select(p => new LyoParameterEditRow {
+                Key = p.Key,
+                Type = p.Type,
+                Options = p.Options,
+                AllowedValues = p.AllowedValues,
+                Description = p.Description
+            })
         ];
 
         BuildStepContext();
@@ -94,13 +93,12 @@ public partial class JobWorkflowStepEditor
     }
 
     /// <summary>
-    /// The bag both the template editor and the condition field picker read. Walking it into dotted paths is what removes the hand-written path list: whatever the engine
-    /// seeds is what the editor offers, down to <see cref="LyoFormatterContextCatalog.MaxDepth" /> levels.
+    /// The bag both the template editor and the condition field picker read. Walking it into dotted paths is what removes the hand-written path list: whatever the engine seeds
+    /// is what the editor offers, down to <see cref="LyoFormatterContextCatalog.MaxDepth" /> levels.
     /// </summary>
     private void BuildStepContext()
     {
-        var dependencies = Step.DependsOn
-            .Select(id => OtherSteps.FirstOrDefault(s => s.Id == id))
+        var dependencies = Step.DependsOn.Select(id => OtherSteps.FirstOrDefault(s => s.Id == id))
             .Where(s => s is not null)
             .Select(s => (s!.StepName, Definitions.FirstOrDefault(d => d.Id == s.JobDefinitionId)));
 
@@ -122,17 +120,15 @@ public partial class JobWorkflowStepEditor
 
     private Task OnDependsOnChanged(IReadOnlyCollection<Guid>? values) => Apply(() => Step.DependsOn = [.. values ?? []]);
 
-    private static string DependsOnSummary(IReadOnlyList<string?>? selected)
-        => selected is null || selected.Count == 0 ? "No dependencies" : string.Join(", ", selected);
+    private static string DependsOnSummary(IReadOnlyList<string?>? selected) => selected is null || selected.Count == 0 ? "No dependencies" : string.Join(", ", selected);
 
     private Task OnConditionChanged(WhereClause? value) => Apply(() => Step.Condition = value);
 
     /// <summary>The editor owns <see cref="_paramRows" /> in place, so a change means projecting them back onto the draft. Blank keys are rows the user has not named yet.</summary>
     private Task OnParametersChanged()
-        => Apply(
-            () => Step.Parameters = _paramRows.Where(r => !string.IsNullOrWhiteSpace(r.Key))
-                .GroupBy(r => r.Key, StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(g => g.Key, g => g.First().ValueForSave ?? "", StringComparer.OrdinalIgnoreCase));
+        => Apply(() => Step.Parameters = _paramRows.Where(r => !string.IsNullOrWhiteSpace(r.Key))
+            .GroupBy(r => r.Key, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().ValueForSave ?? "", StringComparer.OrdinalIgnoreCase));
 
     private async Task Apply(Action edit)
     {

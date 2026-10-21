@@ -1,11 +1,11 @@
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
-using Lyo.Json;
 using Lyo.Common.Core.Extensions;
 using Lyo.Common.Metadata.Extensions;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
+using Lyo.Json;
 using Lyo.Metrics;
 using Lyo.Translation.Models;
 using Microsoft.Extensions.Logging;
@@ -16,10 +16,7 @@ namespace Lyo.Translation.Google;
 
 /// <summary>Google Cloud Translation API-backed implementation of text translation between languages.</summary>
 /// <remarks>
-/// <para>
-/// Thread-safe: instance fields are readonly, and bulk work uses the base class's thread-safe collections and synchronization
-/// primitives.
-/// </para>
+/// <para>Thread-safe: instance fields are readonly, and bulk work uses the base class's thread-safe collections and synchronization primitives.</para>
 /// </remarks>
 public sealed class GoogleTranslationService : TranslationServiceBase
 {

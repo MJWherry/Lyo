@@ -1,13 +1,13 @@
-using Lyo.Common.Core.Enums;
-using Lyo.DateAndTime;
-using Lyo.Exceptions;
-using Lyo.Job.Models.Response;
-using Lyo.Schedule.Models;
 #if NET6_0_OR_GREATER
 using TimeOnly = System.TimeOnly;
 #else
 using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 #endif
+using Lyo.Common.Core.Enums;
+using Lyo.DateAndTime;
+using Lyo.Exceptions;
+using Lyo.Job.Models.Response;
+using Lyo.Schedule.Models;
 
 namespace Lyo.Job.Models;
 
@@ -47,7 +47,8 @@ public static class JobBlackoutCalendar
     }
 
     /// <summary>
-    /// Marks fires <see cref="JobBlackoutCalendarEvaluator" /> would skip as <see cref="CalendarEntry.Muted" />, and moves a deferred fire to the end of its window. Blackout spans are not added here.
+    /// Marks fires <see cref="JobBlackoutCalendarEvaluator" /> would skip as <see cref="CalendarEntry.Muted" />, and moves a deferred fire to the end of its window. Blackout
+    /// spans are not added here.
     /// </summary>
     /// <param name="schedule">Placed schedule. A disabled blackout returns this calendar unchanged.</param>
     /// <param name="blackout">Calendar whose enabled windows are applied. Window clocks are in <paramref name="zone" />.</param>

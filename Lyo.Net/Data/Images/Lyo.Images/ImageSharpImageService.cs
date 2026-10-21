@@ -6,8 +6,8 @@ namespace Lyo.Images;
 
 /// <summary>ImageSharp-backed <see cref="IImageService" />. Extracts full EXIF (location, device, date taken, and related tags).</summary>
 /// <remarks>
-/// DI via <c>Lyo.Images.Extensions</c> (<c>AddImageSharpImageService</c>) also registers <see cref="IImageDecorationService" /> when missing, so callers can
-/// resolve overlay/frame/caption/padding primitives without a second registration.
+/// DI via <c>Lyo.Images.Extensions</c> (<c>AddImageSharpImageService</c>) also registers <see cref="IImageDecorationService" /> when missing, so callers can resolve
+/// overlay/frame/caption/padding primitives without a second registration.
 /// </remarks>
 public class ImageSharpImageService : ImageServiceBase
 {

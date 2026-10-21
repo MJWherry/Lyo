@@ -3,8 +3,8 @@ using Lyo.Job.Models.Enums;
 namespace Lyo.Job.Scheduler.Tests;
 
 /// <summary>
-/// One classification feeds retry scheduling, the circuit breaker, alerting, and batch aggregation. These pin the two decisions that were inconsistent before it existed:
-/// a timeout is a failure, and a cancellation is not.
+/// One classification feeds retry scheduling, the circuit breaker, alerting, and batch aggregation. These pin the two decisions that were inconsistent before it existed: a
+/// timeout is a failure, and a cancellation is not.
 /// </summary>
 public class JobRunOutcomeTests
 {

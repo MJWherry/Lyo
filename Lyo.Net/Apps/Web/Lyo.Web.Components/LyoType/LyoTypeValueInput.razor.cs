@@ -12,12 +12,27 @@ namespace Lyo.Web.Components.LyoType;
 
 public partial class LyoTypeValueInput
 {
-    private enum EditorMode
-    {
-        Scalar,
-        Collection,
-        JsonTree
-    }
+    private static readonly JsonSerializerOptions EditorJsonOptions = new() { WriteIndented = true, PropertyNameCaseInsensitive = true };
+    private bool _boolValue;
+    private string? _chipMessage;
+    private string? _chipPattern;
+    private IReadOnlyList<string> _chips = [];
+    private DateTime? _dateValue;
+    private decimal? _decimalValue;
+    private int _editorKey;
+    private LyoTypeEditorKind _editorKind = LyoTypeEditorKind.Text;
+    private string? _enumHelper;
+    private string[] _enumNames = [];
+    private Type? _enumType;
+    private string? _lastJson;
+    private string? _lastType;
+    private long? _longValue;
+    private EditorMode _mode = EditorMode.Scalar;
+
+    private JsonNode? _node;
+    private string? _scalarError;
+    private string _textValue = "";
+    private TimeSpan? _timeValue;
 
     /// <summary>Stored CLR FullName for the JSON payload.</summary>
     [Parameter]
@@ -45,9 +60,7 @@ public partial class LyoTypeValueInput
     [Parameter]
     public bool Required { get; set; }
 
-    /// <summary>
-    /// If true, empty JSON stays unset (definition defaults). Numeric/date/chip editors can clear back to null instead of type zeros / <c>[]</c>.
-    /// </summary>
+    /// <summary>If true, empty JSON stays unset (definition defaults). Numeric/date/chip editors can clear back to null instead of type zeros / <c>[]</c>.</summary>
     [Parameter]
     public bool AllowUnset { get; set; }
 
@@ -60,8 +73,8 @@ public partial class LyoTypeValueInput
     public EventCallback<bool> ParseErrorChanged { get; set; }
 
     /// <summary>
-    /// Sample data a registered formatter editor uses for autocomplete and live preview: a dictionary or DTO whose paths mirror what the template will resolve
-    /// against at run time. Ignored when the type is not formatter-typed or no formatter editor is registered.
+    /// Sample data a registered formatter editor uses for autocomplete and live preview: a dictionary or DTO whose paths mirror what the template will resolve against at run
+    /// time. Ignored when the type is not formatter-typed or no formatter editor is registered.
     /// </summary>
     [Parameter]
     public object? FormatterContext { get; set; }
@@ -70,38 +83,14 @@ public partial class LyoTypeValueInput
     [Inject]
     private IServiceProvider Services { get; set; } = null!;
 
-    private static readonly JsonSerializerOptions EditorJsonOptions = new() { WriteIndented = true, PropertyNameCaseInsensitive = true };
-
-    private JsonNode? _node;
-    private string? _lastJson;
-    private string? _lastType;
-    private int _editorKey;
-    private bool _hasParseError;
-    private EditorMode _mode = EditorMode.Scalar;
-    private LyoTypeEditorKind _editorKind = LyoTypeEditorKind.Text;
-    private bool _boolValue;
-    private long? _longValue;
-    private decimal? _decimalValue;
-    private DateTime? _dateValue;
-    private TimeSpan? _timeValue;
-    private string _textValue = "";
-    private IReadOnlyList<string> _chips = [];
-    private string? _chipPattern;
-    private string? _chipMessage;
-    private string? _scalarError;
-    private Type? _enumType;
-    private string[] _enumNames = [];
-    private string? _enumHelper;
-
     /// <summary>True when the JSON editor currently has a parse error.</summary>
-    public bool HasParseError => _hasParseError;
+    public bool HasParseError { get; private set; }
 
     private string ResolvedLabel => string.IsNullOrWhiteSpace(Label) ? "Value" : Label;
 
     private Type? FormatterEditorType
-        => _editorKind == LyoTypeEditorKind.Formatter
-            && Services.GetService<LyoValueEditorCatalog>() is { } catalog
-            && catalog.TryGet(LyoTypeEditorKind.Formatter, out var component)
+        => _editorKind == LyoTypeEditorKind.Formatter && Services.GetService<LyoValueEditorCatalog>() is { } catalog &&
+            catalog.TryGet(LyoTypeEditorKind.Formatter, out var component)
                 ? component
                 : null;
 
@@ -187,11 +176,13 @@ public partial class LyoTypeValueInput
     {
         var runtime = LyoTypeInfo.TryResolveClrType(typeName);
         _enumType = runtime?.IsEnum == true ? runtime : null;
-        _enumNames = _enumType != null ? System.Enum.GetNames(_enumType) : [];
+        _enumNames = _enumType != null ? Enum.GetNames(_enumType) : [];
         _enumHelper = _enumType != null
             ? null
-            : string.Equals(typeName?.Trim(), LyoTypeInfo.Enum.FullName, StringComparison.Ordinal) || string.IsNullOrWhiteSpace(typeName)
-                ? "Enter a concrete enum CLR FullName to pick a member."
+            :
+            string.Equals(typeName?.Trim(), LyoTypeInfo.Enum.FullName, StringComparison.Ordinal) || string.IsNullOrWhiteSpace(typeName)
+                ?
+                "Enter a concrete enum CLR FullName to pick a member."
                 : "Type is not loaded in this app. Enter a member name.";
     }
 
@@ -243,19 +234,19 @@ public partial class LyoTypeValueInput
                     _timeValue = deserialized is TimeOnly timeOnly ? timeOnly.ToTimeSpan() : null;
                     break;
                 case LyoTypeEditorKind.Enum:
-                    _textValue = deserialized != null && type.IsEnum
-                        ? System.Enum.GetName(type, deserialized) ?? deserialized.ToString() ?? ""
-                        : UnwrapJsonString(json);
+                    _textValue = deserialized != null && type.IsEnum ? Enum.GetName(type, deserialized) ?? deserialized.ToString() ?? "" : UnwrapJsonString(json);
                     break;
                 case LyoTypeEditorKind.Guid:
                     _textValue = deserialized is Guid g ? g.ToString() : UnwrapJsonString(json);
                     if (!AllowUnset || !string.IsNullOrWhiteSpace(_textValue))
                         _scalarError = LyoTypeInfo.IsValidGuidText(_textValue) && !string.IsNullOrWhiteSpace(_textValue) ? null : "Enter a GUID.";
+
                     break;
                 case LyoTypeEditorKind.Uri:
                     _textValue = deserialized as Uri is { } uri ? uri.ToString() : UnwrapJsonString(json);
                     if (!AllowUnset || !string.IsNullOrWhiteSpace(_textValue))
                         _scalarError = LyoTypeInfo.IsValidUriText(_textValue) && !string.IsNullOrWhiteSpace(_textValue) ? null : "Enter an absolute URI or a path with /.";
+
                     break;
                 default:
                     _textValue = deserialized as string ?? deserialized?.ToString() ?? UnwrapJsonString(json);
@@ -270,7 +261,7 @@ public partial class LyoTypeValueInput
                 _scalarError = "Enter an absolute URI or a path with /.";
         }
 
-        _hasParseError = !string.IsNullOrEmpty(_scalarError);
+        HasParseError = !string.IsNullOrEmpty(_scalarError);
     }
 
     private static string UnwrapJsonString(string? json)
@@ -311,10 +302,10 @@ public partial class LyoTypeValueInput
     {
         var hasError = !string.IsNullOrEmpty(error);
         _scalarError = error;
-        if (_hasParseError == hasError)
+        if (HasParseError == hasError)
             return;
 
-        _hasParseError = hasError;
+        HasParseError = hasError;
         await ParseErrorChanged.InvokeAsync(hasError);
     }
 
@@ -430,23 +421,19 @@ public partial class LyoTypeValueInput
     private Task OnDateOnlyChanged(DateTime? date)
     {
         _dateValue = date;
-        return date == null
-            ? CommitUnsetOrNullJson()
-            : CommitJson(JsonSerializer.Serialize(DateOnly.FromDateTime(date.Value), EditorJsonOptions));
+        return date == null ? CommitUnsetOrNullJson() : CommitJson(JsonSerializer.Serialize(DateOnly.FromDateTime(date.Value), EditorJsonOptions));
     }
 
     private Task OnTimeOnlyChanged(TimeSpan? time)
     {
         _timeValue = time;
-        return time == null
-            ? CommitUnsetOrNullJson()
-            : CommitJson(JsonSerializer.Serialize(TimeOnly.FromTimeSpan(time.Value), EditorJsonOptions));
+        return time == null ? CommitUnsetOrNullJson() : CommitJson(JsonSerializer.Serialize(TimeOnly.FromTimeSpan(time.Value), EditorJsonOptions));
     }
 
     private async Task OnNodeChanged(JsonNode? node)
     {
         _node = node;
-        await CommitJson(node == null ? (AllowUnset ? null : "null") : node.ToJsonString(EditorJsonOptions));
+        await CommitJson(node == null ? AllowUnset ? null : "null" : node.ToJsonString(EditorJsonOptions));
     }
 
     private Task OnChipsChanged(IEnumerable<string> values)
@@ -458,10 +445,17 @@ public partial class LyoTypeValueInput
     private async Task OnParseErrorChanged(string? error)
     {
         var hasError = !string.IsNullOrWhiteSpace(error);
-        if (_hasParseError == hasError)
+        if (HasParseError == hasError)
             return;
 
-        _hasParseError = hasError;
+        HasParseError = hasError;
         await ParseErrorChanged.InvokeAsync(hasError);
+    }
+
+    private enum EditorMode
+    {
+        Scalar,
+        Collection,
+        JsonTree
     }
 }

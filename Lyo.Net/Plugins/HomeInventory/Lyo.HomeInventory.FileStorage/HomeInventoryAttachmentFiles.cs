@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Lyo.Exceptions;
-using Lyo.FileStorage;
 using Lyo.FileStorage.Abstractions;
 using Lyo.HomeInventory.Models;
 using Lyo.HomeInventory.Models.Enums;
@@ -63,14 +62,10 @@ public sealed class HomeInventoryAttachmentFiles : IHomeInventoryAttachmentFiles
             throw new ArgumentException("Entity id is required.", nameof(entityId));
 
         var prefix = HomeInventoryFilePaths.ForEntity(entityType, entityId);
-        var metadata = JsonSerializer.SerializeToElement(new Dictionary<string, string> {
-            ["entityType"] = entityType,
-            ["entityId"] = entityId.ToString("D"),
-            ["role"] = role.ToString()
-        });
-        var stored = await _files.SaveFromStreamAsync(
-                content, length, fileName, pathPrefix: prefix, metadata: metadata, ct: ct)
-            .ConfigureAwait(false);
+        var metadata = JsonSerializer.SerializeToElement(
+            new Dictionary<string, string> { ["entityType"] = entityType, ["entityId"] = entityId.ToString("D"), ["role"] = role.ToString() });
+
+        var stored = await _files.SaveFromStreamAsync(content, length, fileName, pathPrefix: prefix, metadata: metadata, ct: ct).ConfigureAwait(false);
         var row = new HomeAttachmentRecord {
             EntityType = entityType,
             EntityId = entityId,
@@ -79,6 +74,7 @@ public sealed class HomeInventoryAttachmentFiles : IHomeInventoryAttachmentFiles
             Caption = caption,
             IsPrimary = isPrimary
         };
+
         await _store.SaveAttachmentAsync(row, tenantId, ct).ConfigureAwait(false);
         var listed = await _store.ListAttachmentsAsync(entityType, entityId, tenantId, ct).ConfigureAwait(false);
         return listed.FirstOrDefault(a => a.FileId == stored.Id) ?? row;
@@ -104,8 +100,8 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             services.TryAddScoped<IHomeInventoryAttachmentFiles>(sp => new HomeInventoryAttachmentFiles(
-                sp.GetRequiredService<IFileStorageService>(),
-                sp.GetRequiredService<IHomeInventoryStore>()));
+                sp.GetRequiredService<IFileStorageService>(), sp.GetRequiredService<IHomeInventoryStore>()));
+
             return services;
         }
     }

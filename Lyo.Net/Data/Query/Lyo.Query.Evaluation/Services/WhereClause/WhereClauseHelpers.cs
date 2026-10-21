@@ -93,7 +93,6 @@ public static class WhereClauseHelpers
                 return;
         }
 #endif
-
         if (value is IEnumerable enumerable) {
             AppendEnumerable(enumerable, sb);
             return;
@@ -242,6 +241,7 @@ public static class WhereClauseHelpers
         switch (node) {
             case ConditionClause c:
                 yield return c;
+
                 if (c.SubClause != null) {
                     foreach (var nested in EnumerateConditions(c.SubClause, depth + 1))
                         yield return nested;
@@ -317,5 +317,5 @@ public static class WhereClauseHelpers
 #if NET
             or Int128 or UInt128
 #endif
-            ;
+    ;
 }

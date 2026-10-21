@@ -1,7 +1,7 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Web.Primitives.DataGrid;
 using MudBlazor;
 using MudBlazor.Services;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Web.Components.Tests;
 
@@ -14,7 +14,6 @@ public class LyoViewportWatcherTests
     public void IsAtOrBelow_BeforeTheFirstReport_IsFalse()
     {
         var watcher = new LyoViewportWatcher();
-
         Assert.False(watcher.IsAtOrBelow(Breakpoint.Sm));
         Assert.False(watcher.IsAtOrBelow(Breakpoint.Xl));
     }
@@ -30,7 +29,6 @@ public class LyoViewportWatcherTests
     public async Task IsAtOrBelow_ComparesTheReportedBreakpointWithTheReference(Breakpoint reported, Breakpoint reference, bool expected)
     {
         var watcher = await WatchingAsync(reported);
-
         Assert.Equal(expected, watcher.IsAtOrBelow(reference));
     }
 
@@ -41,7 +39,6 @@ public class LyoViewportWatcherTests
     public async Task IsAtOrBelow_TreatsAndDownBreakpointsAsTheirUpperBound(Breakpoint reported, Breakpoint reference, bool expected)
     {
         var watcher = await WatchingAsync(reported);
-
         Assert.Equal(expected, watcher.IsAtOrBelow(reference));
     }
 
@@ -49,7 +46,6 @@ public class LyoViewportWatcherTests
     public async Task IsAtOrBelow_UnrankedReference_IsFalse()
     {
         var watcher = await WatchingAsync(Breakpoint.Xs);
-
         Assert.False(watcher.IsAtOrBelow(Breakpoint.Always));
         Assert.False(watcher.IsAtOrBelow(Breakpoint.None));
     }
@@ -59,7 +55,6 @@ public class LyoViewportWatcherTests
     {
         var watcher = new LyoViewportWatcher();
         var notified = false;
-
         await watcher.StartAsync(
             null, () => {
                 notified = true;
@@ -76,14 +71,13 @@ public class LyoViewportWatcherTests
         var service = new FakeBrowserViewportService(Breakpoint.Lg);
         var watcher = new LyoViewportWatcher();
         var notifications = 0;
-
         await watcher.StartAsync(
             service, () => {
                 notifications++;
                 return Task.CompletedTask;
             });
-        await service.ReportAsync(Breakpoint.Xs);
 
+        await service.ReportAsync(Breakpoint.Xs);
         Assert.Equal(Breakpoint.Xs, watcher.Current);
         Assert.True(watcher.IsAtOrBelow(Breakpoint.Sm));
         Assert.Equal(2, notifications);
@@ -95,10 +89,8 @@ public class LyoViewportWatcherTests
         var first = new FakeBrowserViewportService(Breakpoint.Xs);
         var second = new FakeBrowserViewportService(Breakpoint.Xl);
         var watcher = new LyoViewportWatcher();
-
         await watcher.StartAsync(first, () => Task.CompletedTask);
         await watcher.StartAsync(second, () => Task.CompletedTask);
-
         Assert.Equal(Breakpoint.Xs, watcher.Current);
         Assert.Equal(0, second.SubscriberCount);
     }
@@ -107,9 +99,7 @@ public class LyoViewportWatcherTests
     public async Task StartAsync_ServiceThatThrows_DoesNotBubbleUp()
     {
         var watcher = new LyoViewportWatcher();
-
         await watcher.StartAsync(new ThrowingBrowserViewportService(), () => Task.CompletedTask);
-
         Assert.Equal(Breakpoint.None, watcher.Current);
     }
 
@@ -118,10 +108,8 @@ public class LyoViewportWatcherTests
     {
         var service = new FakeBrowserViewportService(Breakpoint.Md);
         var watcher = new LyoViewportWatcher();
-
         await watcher.StartAsync(service, () => Task.CompletedTask);
         await watcher.DisposeAsync();
-
         Assert.Equal(0, service.SubscriberCount);
     }
 
@@ -141,16 +129,10 @@ public class LyoViewportWatcherTests
 
         public ResizeOptions ResizeOptions { get; } = new();
 
-        public async Task ReportAsync(Breakpoint breakpoint)
-        {
-            foreach (var observer in _observers.Values.ToList())
-                await observer(new BrowserViewportEventArgs(LyoGuid.CreateV7(), new BrowserWindowSize(), breakpoint, false));
-        }
-
         public Task SubscribeAsync(Guid observerId, Func<BrowserViewportEventArgs, Task> lambda, ResizeOptions? options = null, bool fireImmediately = true)
         {
             _observers[observerId] = lambda;
-            return fireImmediately ? lambda(new BrowserViewportEventArgs(observerId, new BrowserWindowSize(), initial, true)) : Task.CompletedTask;
+            return fireImmediately ? lambda(new(observerId, new(), initial, true)) : Task.CompletedTask;
         }
 
         public Task SubscribeAsync(Guid observerId, Action<BrowserViewportEventArgs> lambda, ResizeOptions? options = null, bool fireImmediately = true)
@@ -182,6 +164,12 @@ public class LyoViewportWatcherTests
         public Task<bool> IsMediaQueryMatchAsync(string mediaQuery) => Task.FromResult(false);
 
         public Task<Breakpoint> GetCurrentBreakpointAsync() => Task.FromResult(initial);
+
+        public async Task ReportAsync(Breakpoint breakpoint)
+        {
+            foreach (var observer in _observers.Values.ToList())
+                await observer(new(LyoGuid.CreateV7(), new(), breakpoint));
+        }
     }
 
     /// <summary>Stand-in for a circuit where JS interop is unavailable, so every subscription attempt throws.</summary>

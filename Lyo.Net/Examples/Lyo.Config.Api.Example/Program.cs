@@ -2,8 +2,8 @@ using Lyo.Api;
 using Lyo.Api.Middleware;
 using Lyo.Authentication.AspNetCore.Endpoints;
 using Lyo.Authentication.Sso.Endpoints;
-using Lyo.Json;
 using Lyo.Config.Api;
+using Lyo.Json;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);

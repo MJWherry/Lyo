@@ -1,26 +1,19 @@
 using Lyo.Endato.Client.Models.Enrichment.Request;
-using Lyo.Endato.Client.Models.Enrichment.Response;
-using Lyo.Endato.Client.Models.Person.Response;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
-using MudBlazor;
 
 namespace Lyo.Endato.Web.Components;
 
 public partial class EndatoEnrichmentSearchForm
 {
+    private string? _addressLine1;
+    private string? _addressLine2;
+
     [Parameter]
     [EditorRequired]
     public EnrichmentQuery Query { get; set; } = new();
 
     [Parameter]
     public EventCallback<EnrichmentQuery> QueryChanged { get; set; }
-
-    private string? _addressLine1;
-    private string? _addressLine2;
 
     private int IdentifierCount {
         get {

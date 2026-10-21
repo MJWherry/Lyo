@@ -40,6 +40,7 @@ public sealed class HtmlPdfReportRenderer(IWebRendererService webRenderer) : IRe
             var parameters = new Dictionary<string, object> { ["Report"] = report, ["InlineChartScript"] = true };
             html = await webRenderer.RenderToHtmlAsync<ReportViewer<object>>(parameters, ct).ConfigureAwait(false);
         }
+
         var fileName = request.SuggestedFileName;
         if (request.Format == ReportFormat.Html) {
             fileName ??= "report" + ReportFormat.Html.Extension;
@@ -55,6 +56,7 @@ public sealed class HtmlPdfReportRenderer(IWebRendererService webRenderer) : IRe
         fileName ??= "report" + ReportFormat.Pdf.Extension;
         await using (var stream = new FileStream(request.OutputFilePath, FileMode.Create, FileAccess.Write, FileShare.None))
             await webRenderer.CopyCaptureToAsync(html, stream, ct).ConfigureAwait(false);
+
         return new() {
             FilePath = request.OutputFilePath,
             ContentType = ReportFormat.Pdf.ContentType,

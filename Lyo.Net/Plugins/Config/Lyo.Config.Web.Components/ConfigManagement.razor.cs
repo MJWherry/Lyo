@@ -1,16 +1,21 @@
-using Lyo.Common.Metadata.Records;
-using Lyo.Query.Models.Builders;
-using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 
 namespace Lyo.Config.Web.Components;
 
 public partial class ConfigManagement
 {
-    /// <summary>
-    /// Store used for all definition, binding, resolve, and revision writes. Required. Hosts inject the store (in-process Postgres or HTTP <c>ConfigApiStore</c>) and pass it in.
-    /// </summary>
+    private int _dataVersion;
+    private string _idDraft = "";
+    private bool _initialized;
+    private Guid? _selectedBindingId;
+    private Guid? _selectedDefinitionId;
+    private string _subjectEntityId = "";
+    private string _subjectEntityType = AppConfigEntity.AppEntityType;
+    private int _tabIndex;
+
+    private string _typeDraft = AppConfigEntity.AppEntityType;
+
+    /// <summary>Store used for all definition, binding, resolve, and revision writes. Required. Hosts inject the store (in-process Postgres or HTTP <c>ConfigApiStore</c>) and pass it in.</summary>
     [Parameter]
     [EditorRequired]
     public IConfigStore Store { get; set; } = null!;
@@ -30,16 +35,6 @@ public partial class ConfigManagement
     /// <summary>Starting subject entity id (string; app routes use <c>kind:id</c>).</summary>
     [Parameter]
     public string? InitialSubjectEntityId { get; set; }
-
-    private string _typeDraft = AppConfigEntity.AppEntityType;
-    private string _idDraft = "";
-    private string _subjectEntityType = AppConfigEntity.AppEntityType;
-    private string _subjectEntityId = "";
-    private int _tabIndex;
-    private int _dataVersion;
-    private Guid? _selectedBindingId;
-    private Guid? _selectedDefinitionId;
-    private bool _initialized;
 
     protected override void OnParametersSet()
     {

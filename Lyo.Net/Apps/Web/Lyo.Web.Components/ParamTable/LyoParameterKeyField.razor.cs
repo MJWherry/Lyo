@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Components;
 namespace Lyo.Web.Components.ParamTable;
 
 /// <summary>
-/// Key editor for one parameter row, shared by the table and card layouts of <see cref="LyoParameterEditor" />. Draws a free-text field normally and a select
-/// when <see cref="InheritFrom" /> declares the keys an override may use.
+/// Key editor for one parameter row, shared by the table and card layouts of <see cref="LyoParameterEditor" />. Draws a free-text field normally and a select when
+/// <see cref="InheritFrom" /> declares the keys an override may use.
 /// </summary>
 public partial class LyoParameterKeyField
 {
@@ -24,8 +24,7 @@ public partial class LyoParameterKeyField
     [Parameter]
     public string? Label { get; set; }
 
-    private bool HasUnlistedKey
-        => !string.IsNullOrEmpty(Key) && InheritFrom?.All(p => !string.Equals(p.Key, Key, StringComparison.OrdinalIgnoreCase)) == true;
+    private bool HasUnlistedKey => !string.IsNullOrEmpty(Key) && InheritFrom?.All(p => !string.Equals(p.Key, Key, StringComparison.OrdinalIgnoreCase)) == true;
 
     private Task OnKeyChanged(string? value) => KeyChanged.InvokeAsync(value);
 }

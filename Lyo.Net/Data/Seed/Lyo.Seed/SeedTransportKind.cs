@@ -1,6 +1,6 @@
 namespace Lyo.Seed;
 
-/// <summary>Persist backends a <see cref="SeedContributor"/> can write to. Flags, so one contributor can support both.</summary>
+/// <summary>Persist backends a <see cref="SeedContributor" /> can write to. Flags, so one contributor can support both.</summary>
 [Flags]
 public enum SeedTransportKind
 {

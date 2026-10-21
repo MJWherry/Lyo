@@ -15,9 +15,8 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.Job.Tests.Postgres;
 
 /// <summary>
-/// A manual run supplies only the parameters the caller cares about, so <c>CreateJobRun</c> back-fills the rest from the definition. Expression defaults are resolved on the way
-/// in,
-/// which is what lets a <c>System.DateTime</c> parameter default to "yesterday" and still satisfy the type check that follows.
+/// A manual run supplies only the parameters the caller cares about, so <c>CreateJobRun</c> back-fills the rest from the definition. Expression defaults are resolved on the
+/// way in, which is what lets a <c>System.DateTime</c> parameter default to "yesterday" and still satisfy the type check that follows.
 /// </summary>
 [Trait("Category", "Integration")]
 public class JobRunParameterBackFillTests
@@ -34,9 +33,7 @@ public class JobRunParameterBackFillTests
         using var sp = BuildServiceProvider(_ => "2026-08-25");
         using var scope = sp.CreateScope();
         var definitionId = await CreateDefinitionAsync(sp, ExpressionParameter, LiteralParameter);
-        var created = await scope.ServiceProvider.GetRequiredService<JobService>()
-            .CreateJobRun(new(definitionId, "test-user"), TestCt);
-
+        var created = await scope.ServiceProvider.GetRequiredService<JobService>().CreateJobRun(new(definitionId, "test-user"), TestCt);
         Assert.True(created.IsSuccess, created.Error?.Detail ?? "create failed");
         var asOfDate = Assert.Single(created.Data!.JobRunParameters!, p => p.Key == "AsOfDate");
         Assert.Equal(LyoTypeInfo.DateTime.FullName, asOfDate.Type);
@@ -75,9 +72,7 @@ public class JobRunParameterBackFillTests
         using var sp = BuildServiceProvider(null, services => services.AddFormatterService());
         using var scope = sp.CreateScope();
         var definitionId = await CreateDefinitionAsync(sp, ExpressionParameter);
-        var created = await scope.ServiceProvider.GetRequiredService<JobService>()
-            .CreateJobRun(new(definitionId, "test-user"), TestCt);
-
+        var created = await scope.ServiceProvider.GetRequiredService<JobService>().CreateJobRun(new(definitionId, "test-user"), TestCt);
         Assert.True(created.IsSuccess, created.Error?.Detail ?? "create failed");
         var expected = $"\"{DateTime.UtcNow.AddDays(-1):yyyy-MM-dd}\"";
         Assert.Equal(expected, Assert.Single(created.Data!.JobRunParameters!, p => p.Key == "AsOfDate").Value);
@@ -89,8 +84,7 @@ public class JobRunParameterBackFillTests
         using var sp = BuildServiceProvider();
         using var scope = sp.CreateScope();
         var definitionId = await CreateDefinitionAsync(sp, ExpressionParameter);
-        var created = await scope.ServiceProvider.GetRequiredService<JobService>()
-            .CreateJobRun(new(definitionId, "test-user"), TestCt);
+        var created = await scope.ServiceProvider.GetRequiredService<JobService>().CreateJobRun(new(definitionId, "test-user"), TestCt);
 
         // Silently dropping the parameter would hand the worker a null date; the caller needs to know the host is missing the formatter.
         Assert.False(created.IsSuccess);
@@ -103,9 +97,7 @@ public class JobRunParameterBackFillTests
         using var sp = BuildServiceProvider(_ => "not a date");
         using var scope = sp.CreateScope();
         var definitionId = await CreateDefinitionAsync(sp, ExpressionParameter);
-        var created = await scope.ServiceProvider.GetRequiredService<JobService>()
-            .CreateJobRun(new(definitionId, "test-user"), TestCt);
-
+        var created = await scope.ServiceProvider.GetRequiredService<JobService>().CreateJobRun(new(definitionId, "test-user"), TestCt);
         Assert.False(created.IsSuccess);
         Assert.Contains("not a valid System.DateTime", created.Error!.GetFullMessage());
     }

@@ -1,5 +1,6 @@
 using Lyo.Algorithms.Postgres.Database;
 using Lyo.Exceptions;
+using Lyo.Health;
 using Lyo.Postgres;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -70,7 +71,7 @@ public static class Extensions
             services.AddAlgorithmDbContextFactory(options);
             services.AddSingleton<PostgresAlgorithmDefinitionStore>();
             services.AddSingleton<IAlgorithmDefinitionStore>(sp => sp.GetRequiredService<PostgresAlgorithmDefinitionStore>());
-            services.AddSingleton<Lyo.Health.IHealth>(sp => sp.GetRequiredService<PostgresAlgorithmDefinitionStore>());
+            services.AddSingleton<IHealth>(sp => sp.GetRequiredService<PostgresAlgorithmDefinitionStore>());
             return services;
         }
     }

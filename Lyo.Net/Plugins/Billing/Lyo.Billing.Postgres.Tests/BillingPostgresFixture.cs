@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using System.Text;
-using Lyo.Billing;
 using Lyo.Billing.Postgres.Database;
 using Lyo.Encryption.Extensions;
 using Lyo.KeyStore;
@@ -26,7 +25,7 @@ public sealed class BillingPostgresFixture : PostgresServiceFixtureBase<BillingD
         services.AddPostgresBillingStore(new PostgresBillingOptions { ConnectionString = connectionString, EnableAutoMigrations = true });
         AddKey(services, BillingEncryptionKeys.Fields, "lyo-billing-fields-test-key/v1");
         services.AddEncryptionServiceKeyed(BillingEncryptionKeys.Fields, BillingEncryptionKeys.Fields);
-        services.AddBillingFieldEncryption(BillingEncryptionKeys.Fields);
+        services.AddBillingFieldEncryption();
     }
 
     /// <inheritdoc />

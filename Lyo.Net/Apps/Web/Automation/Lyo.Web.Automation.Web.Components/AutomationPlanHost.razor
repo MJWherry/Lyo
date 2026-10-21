@@ -1,8 +1,7 @@
-@namespace Lyo.Web.Automation.Web.Components
-@using Lyo.Api.Client
 @using Lyo.Web.Automation.Core
 @using Lyo.Web.Components.DataGrid
 @using Microsoft.AspNetCore.Components.Forms
+@namespace Lyo.Web.Automation.Web.Components
 
 <MudStack Spacing="3">
     @if (_error != null) {
@@ -37,7 +36,8 @@
         <MudTabPanel Text="Editor">
             @if (_plan is null) {
                 <MudAlert Severity="Severity.Info">Open a plan from the grid or load a file.</MudAlert>
-            } else {
+            }
+            else {
                 <AutomationPlanWorkbench Plan="_plan" PlanChanged="OnEdited"/>
             }
         </MudTabPanel>

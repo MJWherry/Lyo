@@ -1,13 +1,13 @@
+using Lyo.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Lyo.Exceptions;
 
 namespace Lyo.Api.EntityFramework;
 
-public static partial class ServiceCollectionExtensions
+public static class ServiceCollectionExtensions
 {
     private static void ApplyLyoNavigations<TContext>(IServiceProvider sp, DbContextOptionsBuilder builder)
         where TContext : DbContext

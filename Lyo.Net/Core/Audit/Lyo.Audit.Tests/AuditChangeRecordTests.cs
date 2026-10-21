@@ -1,5 +1,5 @@
-using Lyo.EntityReference.Models;
 using Lyo.Common.Core.Identifiers;
+using Lyo.EntityReference.Models;
 
 namespace Lyo.Audit.Tests;
 

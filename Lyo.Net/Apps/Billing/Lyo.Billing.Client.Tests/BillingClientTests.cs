@@ -1,13 +1,11 @@
 using System.Text.Json;
 using Lyo.Api.Client;
-using Lyo.Billing;
-using Lyo.Billing.Client;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Http.Client;
 using Lyo.Http.Client.Plan;
 using Lyo.Http.Client.Session;
 using Lyo.Query.Models.Common.Request;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Billing.Client.Tests;
 
@@ -17,7 +15,7 @@ public sealed class BillingClientTests
     [Fact]
     public void InvoicePdfHref_WhenBaseAddressSet_CombinesHostAndPath()
     {
-        var api = new RecordingApiClient(new Uri("http://localhost:5251/"));
+        var api = new RecordingApiClient(new("http://localhost:5251/"));
         var client = new BillingClient(api);
         var id = Guid.Parse("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee");
         Assert.Equal("http://localhost:5251/Reporting/Invoices/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee/pdf", client.InvoicePdfHref(id));
@@ -26,8 +24,8 @@ public sealed class BillingClientTests
     [Fact]
     public void InvoicePdfHref_WhenRoutePrefix_IncludesPrefix()
     {
-        var api = new RecordingApiClient(new Uri("http://localhost:5251/"));
-        var client = new BillingClient(api, new BillingClientOptions { RoutePrefix = "api" });
+        var api = new RecordingApiClient(new("http://localhost:5251/"));
+        var client = new BillingClient(api, new() { RoutePrefix = "api" });
         var id = Guid.Parse("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee");
         Assert.Equal("http://localhost:5251/api/Reporting/Invoices/aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee/pdf", client.InvoicePdfHref(id));
     }
@@ -66,15 +64,15 @@ internal sealed class RecordingApiClient : IApiClient
 {
     private readonly HttpClient _http = new();
 
+    public string? LastUri { get; private set; }
+
+    public object? LastBody { get; private set; }
+
     public RecordingApiClient(Uri? baseAddress = null)
     {
         if (baseAddress != null)
             _http.BaseAddress = baseAddress;
     }
-
-    public string? LastUri { get; private set; }
-
-    public object? LastBody { get; private set; }
 
     public void Dispose() => _http.Dispose();
 

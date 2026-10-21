@@ -12,10 +12,7 @@ public static class ConfigApiHostingRegistrationExtensions
     extension(IServiceCollection services)
     {
         /// <summary>Adds singleton <see cref="ConfigApiResolvedLedger" /> and <see cref="ConfigApiPollingHostedService" />.</summary>
-        /// <remarks>
-        /// First register <see cref="IConfigApiClient" /> with
-        /// <c>Lyo.Config.Api.Client.ConfigApiHttpClientRegistration.AddConfigApiClientFromConfiguration</c>.
-        /// </remarks>
+        /// <remarks>First register <see cref="IConfigApiClient" /> with <c>Lyo.Config.Api.Client.ConfigApiHttpClientRegistration.AddConfigApiClientFromConfiguration</c>.</remarks>
         public IServiceCollection AddConfigApiPolling(IConfiguration configuration, string sectionName = ConfigApiPollingOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -27,8 +24,8 @@ public static class ConfigApiHostingRegistrationExtensions
                     o.ThrowIfMisconfiguredWhenEnabled();
                     return true;
                 });
-            services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<ConfigApiPollingOptions>>().Value);
 
+            services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<ConfigApiPollingOptions>>().Value);
             services.AddHostedService<ConfigApiPollingHostedService>();
             return services;
         }

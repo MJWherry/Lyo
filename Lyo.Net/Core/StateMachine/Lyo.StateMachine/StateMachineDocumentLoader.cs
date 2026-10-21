@@ -7,8 +7,8 @@ namespace Lyo.StateMachine;
 /// <summary>Builds a <see cref="StateMachineDefinition{TState,TTrigger,TContext}" /> from a <see cref="StateMachineDocument" />, resolving names through a registry.</summary>
 /// <remarks>
 /// Every problem in the document (unknown states or triggers, missing guard/action/selector names, payload mismatches) is collected and reported together in one
-/// <see cref="StateMachineConfigurationException" />, then the normal <c>Build</c> validation runs. Loading is not cheap; cache the result
-/// (<see cref="StateMachineDefinitionCache{TState,TTrigger,TContext}" /> does).
+/// <see cref="StateMachineConfigurationException" />, then the normal <c>Build</c> validation runs. Loading is not cheap; cache the result (
+/// <see cref="StateMachineDefinitionCache{TState,TTrigger,TContext}" /> does).
 /// </remarks>
 public static class StateMachineDocumentLoader
 {
@@ -133,12 +133,12 @@ public static class StateMachineDocumentLoader
                     TransitionDocumentKind.Reentry => RuleKind.Reentry,
                     TransitionDocumentKind.Internal => RuleKind.Internal,
                     TransitionDocumentKind.Ignore => RuleKind.Ignore,
-                    _ => RuleKind.Dynamic
+                    var _ => RuleKind.Dynamic
                 },
                 Destination = transition.Kind switch {
                     TransitionDocumentKind.Permit => State(transition.Destination, $"destination of {where}"),
                     TransitionDocumentKind.Reentry => source,
-                    _ => default!
+                    var _ => default!
                 },
                 Destinations = transition.Kind == TransitionDocumentKind.Dynamic ? transition.Destinations.Select(d => State(d, $"destination of {where}")).ToArray() : [],
                 Guard = guard,

@@ -17,6 +17,7 @@ public partial class MusicReleaseDetail
     {
         if (seconds is not int value || value < 0)
             return "";
+
         return $"{value / 60}:{value % 60:00}";
     }
 }

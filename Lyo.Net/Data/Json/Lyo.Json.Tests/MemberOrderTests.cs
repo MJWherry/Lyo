@@ -5,26 +5,6 @@ namespace Lyo.Json.Tests;
 
 public class MemberOrderTests
 {
-    private sealed class Person
-    {
-        public string? GivenName { get; set; }
-
-        public int? Age { get; set; }
-
-        public string? Note { get; set; }
-    }
-
-    private sealed class OrderedPerson
-    {
-        [MemberOrder(1)]
-        public string? GivenName { get; set; }
-
-        public int? Age { get; set; }
-
-        [MemberOrder(0)]
-        public string? Note { get; set; }
-    }
-
     [Fact]
     public void ExportToJsonString_OrderDefined_WritesGivenNameBeforeAge()
     {
@@ -56,6 +36,7 @@ public class MemberOrderTests
             o.OrderNames.Add("note");
             o.OrderNames.Add("givenName");
         }).ExportToJsonString(Sample());
+
         Assert.True(Index(json, "note") < Index(json, "givenName"));
         Assert.True(Index(json, "givenName") < Index(json, "age"));
     }
@@ -63,4 +44,24 @@ public class MemberOrderTests
     private static Person Sample() => new() { GivenName = "Ada", Age = 36, Note = "hi" };
 
     private static int Index(string json, string name) => json.IndexOf("\"" + name + "\"", StringComparison.Ordinal);
+
+    private sealed class Person
+    {
+        public string? GivenName { get; set; }
+
+        public int? Age { get; set; }
+
+        public string? Note { get; set; }
+    }
+
+    private sealed class OrderedPerson
+    {
+        [MemberOrder(1)]
+        public string? GivenName { get; set; }
+
+        public int? Age { get; set; }
+
+        [MemberOrder(0)]
+        public string? Note { get; set; }
+    }
 }

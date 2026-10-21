@@ -7,25 +7,29 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Lyo.Http.Client;
 
 /// <summary>
-/// Builds one long-lived <see cref="ILyoHttpClient" /> per site key. The quota policy is the key. A missing key returns the default client.
-/// These clients are not recycled by <c>IHttpClientFactory</c>.
+/// Builds one long-lived <see cref="ILyoHttpClient" /> per site key. The quota policy is the key. A missing key returns the default client. These clients are not recycled by
+/// <c>IHttpClientFactory</c>.
 /// </summary>
 public sealed class LyoHttpClientFactory : ILyoHttpClientFactory, IDisposable
 {
     /// <summary>Policy name of the default client.</summary>
     public const string DefaultPolicy = "default";
 
-    private readonly IServiceProvider _services;
-    private readonly ILogger _logger;
     private readonly IRateLimitService? _limiter;
-    private readonly object _sync = new();
-    private readonly Dictionary<string, SiteEntry> _sites = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ILogger _logger;
     private readonly Dictionary<string, LyoHttpClientSiteConfiguration> _pending = new(StringComparer.OrdinalIgnoreCase);
+
+    private readonly IServiceProvider _services;
+    private readonly Dictionary<string, SiteEntry> _sites = new(StringComparer.OrdinalIgnoreCase);
+    private readonly object _sync = new();
     private readonly HashSet<string> _warned = new(StringComparer.OrdinalIgnoreCase);
-    private LyoHttpClientSiteConfiguration? _pendingDefault;
     private SiteEntry? _default;
     private bool _defaultRegistered;
     private bool _materialized;
+    private LyoHttpClientSiteConfiguration? _pendingDefault;
+
+    /// <summary>Primary handler for tests. Production builds <see cref="LyoHttpClientHandler" />.</summary>
+    internal Func<HttpMessageHandler>? PrimaryHandler { get; set; }
 
     /// <summary>Creates the factory. <paramref name="limiter" /> is required only for a site whose quota is enabled.</summary>
     public LyoHttpClientFactory(IServiceProvider services, ILogger<LyoHttpClientFactory>? logger = null, IRateLimitService? limiter = null)
@@ -36,8 +40,18 @@ public sealed class LyoHttpClientFactory : ILyoHttpClientFactory, IDisposable
         _limiter = limiter;
     }
 
-    /// <summary>Primary handler for tests. Production builds <see cref="LyoHttpClientHandler" />.</summary>
-    internal Func<HttpMessageHandler>? PrimaryHandler { get; set; }
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        lock (_sync) {
+            foreach (var site in _sites.Values)
+                site.Dispose();
+
+            _sites.Clear();
+            _default?.Dispose();
+            _default = null;
+        }
+    }
 
     /// <inheritdoc />
     public void Register(string key, Action<LyoHttpClientOptions> configure)
@@ -138,25 +152,12 @@ public sealed class LyoHttpClientFactory : ILyoHttpClientFactory, IDisposable
         }
     }
 
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        lock (_sync) {
-            foreach (var site in _sites.Values)
-                site.Dispose();
-
-            _sites.Clear();
-            _default?.Dispose();
-            _default = null;
-        }
-    }
-
     private SiteEntry DefaultClient()
     {
         if (_default is not null)
             return _default;
 
-        _default = Build(DefaultPolicy, new LyoHttpClientOptions());
+        _default = Build(DefaultPolicy, new());
         _defaultRegistered = true;
         return _default;
     }
@@ -165,14 +166,19 @@ public sealed class LyoHttpClientFactory : ILyoHttpClientFactory, IDisposable
     {
         if (!string.IsNullOrWhiteSpace(site.BaseUrl))
             options.WithBaseUrl(site.BaseUrl!);
+
         if (site.RequestCompression != LyoHttpRequestCompressionType.None)
             options.CompressRequests(site.RequestCompression, site.RequestCompressionMinBytes);
+
         if (!string.IsNullOrWhiteSpace(site.Accept))
             options.Accept(site.Accept!);
+
         if (!string.IsNullOrWhiteSpace(site.ApiKey))
             options.UseApiKey(site.ApiKey!);
+
         if (!string.IsNullOrWhiteSpace(site.BearerToken))
             options.UseBearer(site.BearerToken!);
+
         if (site.RateLimit.Enabled)
             options.RateLimit = site.RateLimit;
     }
@@ -183,7 +189,7 @@ public sealed class LyoHttpClientFactory : ILyoHttpClientFactory, IDisposable
             throw new InvalidOperationException("Rate limiting is enabled but IRateLimitService is not registered. Call AddLocalRateLimit or AddRedisRateLimit.");
 
         options.Validate();
-        HttpMessageHandler inner = PrimaryHandler?.Invoke() ?? new LyoHttpClientHandler(options);
+        var inner = PrimaryHandler?.Invoke() ?? new LyoHttpClientHandler(options);
         DelegatingHandler chain = new LyoHttpTimingHandler(options.Timing) { InnerHandler = inner };
         if (options.RateLimit.Enabled) {
             var gate = new LyoHttpRateLimitGate(options.RateLimit);
@@ -193,9 +199,9 @@ public sealed class LyoHttpClientFactory : ILyoHttpClientFactory, IDisposable
         chain = new LyoHttpHeaderHandler(options, _services) { InnerHandler = chain };
         chain = new LyoHttpMetricsHandler { InnerHandler = chain };
         var outer = new LyoHttpObserveHandler { InnerHandler = chain };
-        var http = new HttpClient(outer, disposeHandler: true);
+        var http = new HttpClient(outer, true);
         var client = new LyoHttpClient(http, options);
-        return new SiteEntry(client, http);
+        return new(client, http);
     }
 
     private sealed class SiteEntry(ILyoHttpClient client, HttpClient http) : IDisposable

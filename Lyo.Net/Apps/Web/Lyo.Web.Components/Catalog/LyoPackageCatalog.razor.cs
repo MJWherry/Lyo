@@ -5,11 +5,20 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.Web.Components.Catalog;
 
 /// <summary>
-/// Browse shell over the pre-rendered <c>wwwroot/catalog</c> assets: search, area facets, package docs, and a dependency graph. <see cref="PackageDoc" /> already
-/// draws one package; this is the missing index.
+/// Browse shell over the pre-rendered <c>wwwroot/catalog</c> assets: search, area facets, package docs, and a dependency graph. <see cref="PackageDoc" /> already draws one
+/// package; this is the missing index.
 /// </summary>
 public partial class LyoPackageCatalog
 {
+    private string? _area;
+    private string? _error;
+    private List<CatalogIndexPackage> _filtered = [];
+
+    private CatalogIndex? _index;
+    private bool _loading = true;
+    private string? _search;
+    private CatalogIndexPackage? _selected;
+
     /// <summary>Base path of the catalog static assets. Default is the RCL content root.</summary>
     [Parameter]
     public string CatalogBasePath { get; set; } = "_content/Lyo.Web.Components/catalog";
@@ -23,19 +32,15 @@ public partial class LyoPackageCatalog
     [Inject]
     private ILogger<LyoPackageCatalog> Logger { get; set; } = null!;
 
-    private CatalogIndex? _index;
-    private List<CatalogIndexPackage> _filtered = [];
-    private CatalogIndexPackage? _selected;
-    private string? _search;
-    private string? _area;
-    private bool _loading = true;
-    private string? _error;
-
     private IReadOnlyList<string> Areas
-        => _index?.Packages.Select(package => package.Area).Where(area => !string.IsNullOrWhiteSpace(area)).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(area => area, StringComparer.OrdinalIgnoreCase).ToArray()
-            ?? [];
+        => _index?.Packages.Select(package => package.Area)
+            .Where(area => !string.IsNullOrWhiteSpace(area))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(area => area, StringComparer.OrdinalIgnoreCase)
+            .ToArray() ?? [];
 
-    private string HeaderDescription => _index is null ? "Loading catalog…" : $"{_index.PackageCount} packages generated {(_index.GeneratedAt?.ToLocalTime().ToString("g") ?? "recently")}.";
+    private string HeaderDescription
+        => _index is null ? "Loading catalog…" : $"{_index.PackageCount} packages generated {_index.GeneratedAt?.ToLocalTime().ToString("g") ?? "recently"}.";
 
     /// <inheritdoc />
     protected override async Task OnInitializedAsync()
@@ -70,11 +75,8 @@ public partial class LyoPackageCatalog
 
         if (!string.IsNullOrWhiteSpace(_search)) {
             var term = _search.Trim();
-            rows = rows.Where(package =>
-                package.Name.Contains(term, StringComparison.OrdinalIgnoreCase)
-                || package.Id.Contains(term, StringComparison.OrdinalIgnoreCase)
-                || package.Tagline.Contains(term, StringComparison.OrdinalIgnoreCase)
-                || package.Topic.Contains(term, StringComparison.OrdinalIgnoreCase));
+            rows = rows.Where(package => package.Name.Contains(term, StringComparison.OrdinalIgnoreCase) || package.Id.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                package.Tagline.Contains(term, StringComparison.OrdinalIgnoreCase) || package.Topic.Contains(term, StringComparison.OrdinalIgnoreCase));
         }
 
         _filtered = rows.OrderBy(package => package.Name, StringComparer.OrdinalIgnoreCase).ToList();

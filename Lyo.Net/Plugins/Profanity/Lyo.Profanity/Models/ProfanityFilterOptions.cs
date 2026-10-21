@@ -10,8 +10,8 @@ public class ProfanityFilterOptions
     public const string SectionName = "ProfanityFilter";
 
     /// <summary>
-    /// Language used while filtering. Picks the WordsByLanguage list when that map is set. Accepts BCP 47 (for example "en-US"), ISO 639-1 (for example "en"), or ISO
-    /// 639-3 (for example "eng"). Default: "en-US".
+    /// Language used while filtering. Picks the WordsByLanguage list when that map is set. Accepts BCP 47 (for example "en-US"), ISO 639-1 (for example "en"), or ISO 639-3 (for
+    /// example "eng"). Default: "en-US".
     /// </summary>
     public string Language { get; set; } = "en-US";
 
@@ -39,6 +39,9 @@ public class ProfanityFilterOptions
     /// <summary>Flag: to enable metrics collection. Default is false. When enabled, requires IMetrics to be provided via constructor.</summary>
     public bool EnableMetrics { get; set; }
 
+    /// <summary>Matching. Derived from CaseSensitive string comparison used.</summary>
+    public StringComparison StringComparison => CaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+
     /// <summary>Throws when language or replacement settings are invalid.</summary>
     public virtual void Validate()
     {
@@ -48,9 +51,6 @@ public class ProfanityFilterOptions
         ArgumentHelpers.ThrowIfNull(AdditionalWords);
         ArgumentHelpers.ThrowIfNull(ExcludedWords);
     }
-
-    /// <summary>Matching. Derived from CaseSensitive string comparison used.</summary>
-    public StringComparison StringComparison => CaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
 
     /// <summary>Looks up the configured Language string to a LanguageCodeInfo. Falls back to EnUs when unknown.</summary>
     public LanguageCodeInfo GetLanguageCode() => ResolveLanguageCode(Language);

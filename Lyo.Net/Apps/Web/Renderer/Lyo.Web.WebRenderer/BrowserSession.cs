@@ -12,8 +12,25 @@ public sealed class BrowserSession(WebRenderOptions options, ILogger<BrowserSess
     private readonly SemaphoreSlim _gate = new(Math.Max(1, options.MaxConcurrentPages), Math.Max(1, options.MaxConcurrentPages));
     private readonly SemaphoreSlim _launch = new(1, 1);
     private IBrowser? _browser;
-    private int _pages;
     private int _disposed;
+    private int _pages;
+
+    /// <summary>Closes the shared browser.</summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            return;
+
+        if (_browser is not null) {
+            logger?.LogInformation("Web renderer browser shut down");
+            await _browser.CloseAsync().ConfigureAwait(false);
+            await _browser.DisposeAsync().ConfigureAwait(false);
+            _browser = null;
+        }
+
+        _gate.Dispose();
+        _launch.Dispose();
+    }
 
     /// <summary>Copies one capture into <paramref name="destination" /> and releases the page.</summary>
     /// <param name="html">HTML document.</param>
@@ -29,7 +46,10 @@ public sealed class BrowserSession(WebRenderOptions options, ILogger<BrowserSess
         try {
             var browser = await GetBrowserAsync(ct).ConfigureAwait(false);
             page = await browser.NewPageAsync().ConfigureAwait(false);
-            using var cancel = ct.Register(() => { _ = page.CloseAsync(); });
+            using var cancel = ct.Register(() => {
+                _ = page.CloseAsync();
+            });
+
             var timeoutMs = (int)Math.Clamp(options.ContentTimeout.TotalMilliseconds, 1, int.MaxValue);
             if (request.ViewportWidth is int width && request.ViewportHeight is int height)
                 await page.SetViewportAsync(new() { Width = width, Height = height }).ConfigureAwait(false);
@@ -49,26 +69,10 @@ public sealed class BrowserSession(WebRenderOptions options, ILogger<BrowserSess
         finally {
             if (page is not null)
                 await page.CloseAsync().ConfigureAwait(false);
+
             Interlocked.Decrement(ref _pages);
             _gate.Release();
         }
-    }
-
-    /// <summary>Closes the shared browser.</summary>
-    public async ValueTask DisposeAsync()
-    {
-        if (Interlocked.Exchange(ref _disposed, 1) != 0)
-            return;
-
-        if (_browser is not null) {
-            logger?.LogInformation("Web renderer browser shut down");
-            await _browser.CloseAsync().ConfigureAwait(false);
-            await _browser.DisposeAsync().ConfigureAwait(false);
-            _browser = null;
-        }
-
-        _gate.Dispose();
-        _launch.Dispose();
     }
 
     private async Task<IBrowser> GetBrowserAsync(CancellationToken ct)

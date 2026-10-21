@@ -1,15 +1,14 @@
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 using System.Text;
-using Lyo.Common.Core.Extensions;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Core.Pathing;
 using Lyo.Exceptions;
-using Lyo.IO.Temp.Enums;
 using Lyo.IO.FileSystem;
+using Lyo.IO.Temp.Enums;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Lyo.Common.Core.Identifiers;
 #if !NET5_0_OR_GREATER
 using System.Runtime.InteropServices;
 #endif
@@ -364,6 +363,7 @@ public sealed class IOTempSession : IIOTempSession
             CopyHostFile(sourcePath, dest);
             File.Delete(sourcePath);
         }
+
         _files.Add(dest);
         Interlocked.Add(ref _totalBytesUsed, size);
         FileCreated?.Invoke(dest);
@@ -383,6 +383,7 @@ public sealed class IOTempSession : IIOTempSession
             _storage.DeleteDirectory(sourcePath);
         else
             Directory.Delete(sourcePath, true);
+
         _directories.Add(dest);
         DirectoryCreated?.Invoke(dest);
         return dest;
@@ -764,6 +765,7 @@ public sealed class IOTempSession : IIOTempSession
             _storage.CopyFile(sourcePath, dest);
         else
             CopyHostFile(sourcePath, dest);
+
         _files.Add(dest);
         Interlocked.Add(ref _totalBytesUsed, size);
         FileCreated?.Invoke(dest);
@@ -801,6 +803,7 @@ public sealed class IOTempSession : IIOTempSession
             await _storage.CopyFileAsync(sourcePath, dest, ct: ct).ConfigureAwait(false);
         else
             await CopyHostFileAsync(sourcePath, dest, ct).ConfigureAwait(false);
+
         _files.Add(dest);
         Interlocked.Add(ref _totalBytesUsed, size);
         FileCreated?.Invoke(dest);
@@ -1136,8 +1139,8 @@ public sealed class IOTempSession : IIOTempSession
 #region Disposal
 
     /// <summary>
-    /// Removes <see cref="SessionDirectory" /> with retries on short-lived I/O errors, records metrics, and runs the construction-time <c>onDispose</c> callback. Delete
-    /// failures are logged; the session is still treated as disposed.
+    /// Removes <see cref="SessionDirectory" /> with retries on short-lived I/O errors, records metrics, and runs the construction-time <c>onDispose</c> callback. Delete failures
+    /// are logged; the session is still treated as disposed.
     /// </summary>
     public void Dispose()
     {
@@ -1352,8 +1355,7 @@ public sealed class IOTempSession : IIOTempSession
                 freed += entry.Length;
                 Overflow?.Invoke(entry.Path);
                 FileDeleted?.Invoke(entry.Path);
-                _logger.LogInformation(
-                    "Deleted {FilePath} ({Size:N0} bytes) to make room for overflow in session {SessionDirectory}", entry.Path, entry.Length, SessionDirectory);
+                _logger.LogInformation("Deleted {FilePath} ({Size:N0} bytes) to make room for overflow in session {SessionDirectory}", entry.Path, entry.Length, SessionDirectory);
             }
             catch (Exception ex) {
                 _logger.LogWarning(ex, "Failed to delete {FilePath} during overflow cleanup in session {SessionDirectory}", entry.Path, SessionDirectory);

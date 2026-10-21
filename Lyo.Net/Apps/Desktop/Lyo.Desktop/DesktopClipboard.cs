@@ -15,6 +15,7 @@ public static class DesktopClipboard
         var route = ClipboardCommand.TextWrite(CurrentOs(), CommandExists);
         if (route is not ClipboardRoute.Tool tool)
             throw new InvalidOperationException("Text write on this desktop uses a clipboard tool.");
+
         await WriteToolAsync(tool, Encoding.UTF8.GetBytes(text), ct).ConfigureAwait(false);
     }
 
@@ -25,13 +26,17 @@ public static class DesktopClipboard
         if (route is ClipboardRoute.Native) {
             if (!OperatingSystem.IsWindows())
                 throw new InvalidOperationException("Native clipboard text is only available on Windows.");
+
             return WindowsClipboard.GetText();
         }
 
         return await ReadToolAsync((ClipboardRoute.Tool)route, ct).ConfigureAwait(false);
     }
 
-    /// <summary>Writes a PNG. On Wayland, <c>wl-copy --type image/png</c> is preferred. Otherwise Linux uses <c>xclip</c> with <c>image/png</c>, then <c>wl-copy</c>. Windows places a bitmap on the clipboard.</summary>
+    /// <summary>
+    /// Writes a PNG. On Wayland, <c>wl-copy --type image/png</c> is preferred. Otherwise Linux uses <c>xclip</c> with <c>image/png</c>, then <c>wl-copy</c>. Windows places a
+    /// bitmap on the clipboard.
+    /// </summary>
     public static async Task SetPngAsync(byte[] png, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(png);
@@ -39,6 +44,7 @@ public static class DesktopClipboard
         if (route is ClipboardRoute.Native) {
             if (!OperatingSystem.IsWindows())
                 throw new InvalidOperationException("Native clipboard images are only available on Windows.");
+
             WindowsClipboard.SetPng(png);
             return;
         }
@@ -62,8 +68,10 @@ public static class DesktopClipboard
     {
         if (OperatingSystem.IsWindows())
             return DesktopOs.Windows;
+
         if (OperatingSystem.IsMacOS())
             return DesktopOs.Mac;
+
         return DesktopOs.Linux;
     }
 
@@ -71,26 +79,29 @@ public static class DesktopClipboard
 
     private static async Task WriteToolAsync(ClipboardRoute.Tool tool, byte[] payload, CancellationToken ct)
     {
-        using var process = Start(tool, redirectInput: true, redirectOutput: false);
+        using var process = Start(tool, true, false);
         await process.StandardInput.BaseStream.WriteAsync(payload, ct).ConfigureAwait(false);
         await process.StandardInput.FlushAsync(ct).ConfigureAwait(false);
         process.StandardInput.Close();
         var exited = await Task.Run(() => process.WaitForExit(2000), ct).ConfigureAwait(false);
         if (!exited)
             return;
+
         if (process.ExitCode == 0)
             return;
+
         var err = await process.StandardError.ReadToEndAsync(ct).ConfigureAwait(false);
         throw new InvalidOperationException($"Clipboard tool '{tool.FileName}' exited with code {process.ExitCode}.{(string.IsNullOrWhiteSpace(err) ? "" : " " + err.Trim())}");
     }
 
     private static async Task<string> ReadToolAsync(ClipboardRoute.Tool tool, CancellationToken ct)
     {
-        using var process = Start(tool, redirectInput: false, redirectOutput: true);
+        using var process = Start(tool, false, true);
         var text = await process.StandardOutput.ReadToEndAsync(ct).ConfigureAwait(false);
         await process.WaitForExitAsync(ct).ConfigureAwait(false);
         if (process.ExitCode == 0)
             return text;
+
         var err = await process.StandardError.ReadToEndAsync(ct).ConfigureAwait(false);
         throw new InvalidOperationException($"Clipboard tool '{tool.FileName}' exited with code {process.ExitCode}.{(string.IsNullOrWhiteSpace(err) ? "" : " " + err.Trim())}");
     }
@@ -108,6 +119,7 @@ public static class DesktopClipboard
                 CreateNoWindow = true
             }
         };
+
         try {
             if (!process.Start())
                 throw new InvalidOperationException($"Failed to start clipboard tool '{tool.FileName}'.");

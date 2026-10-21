@@ -8,7 +8,7 @@ public class FileManagerSessionTests
     [Fact]
     public void AddServer_ThenSelect_UsesThatBaseUrlAndRoute()
     {
-        var session = Session(out _);
+        var session = Session(out var _);
         var added = session.AddRemote("home", "http://localhost:5000", "Workbench/FileStorage", "Workbench/FileStorage/FileMetadata");
         session.Select(added.Id);
         Assert.Equal("http://localhost:5000", session.Active!.BaseUrl);
@@ -237,19 +237,15 @@ public class FileManagerSessionTests
     public async Task FolderPrefixes_WalksDirectories()
     {
         var session = Session(out var api);
-        api.Folders[""] = new([
-            RecordingFileManagerApi.Dir("ttt", "ttt"),
-            RecordingFileManagerApi.Dir("docs", "docs"),
-            RecordingFileManagerApi.Stored("note.txt", null, LyoGuid.CreateV7())
-        ], false);
+        api.Folders[""] = new(
+            [RecordingFileManagerApi.Dir("ttt", "ttt"), RecordingFileManagerApi.Dir("docs", "docs"), RecordingFileManagerApi.Stored("note.txt", null, LyoGuid.CreateV7())], false);
+
         api.Folders["docs"] = new([RecordingFileManagerApi.Dir("archive", "docs/archive")], false);
         api.Folders["ttt"] = new([], false);
         api.Folders["docs/archive"] = new([], false);
         var server = session.AddRemote("home", "http://localhost");
         await session.ConnectAsync(TestCt);
-
         var folders = await session.FolderPrefixesAsync(server.Id, TestCt);
-
         Assert.Contains("ttt", folders);
         Assert.Contains("docs", folders);
         Assert.Contains("docs/archive", folders);

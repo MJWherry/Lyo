@@ -1,8 +1,8 @@
 namespace Lyo.Job.Scheduler.Tests;
 
 /// <summary>
-/// The reference instant is the anchor every next-run calculation begins from, and the misfire scan now shares it with due-slot evaluation. These pin the later-of-success-or-slot
-/// cursor and the never-run fallback, since anchoring a never-run schedule at <c>DateTime.MinValue</c> would make its whole history look missed.
+/// The reference instant is the anchor every next-run calculation begins from, and the misfire scan now shares it with due-slot evaluation. These pin the
+/// later-of-success-or-slot cursor and the never-run fallback, since anchoring a never-run schedule at <c>DateTime.MinValue</c> would make its whole history look missed.
 /// </summary>
 public class JobScheduleReferenceTests
 {
@@ -54,8 +54,5 @@ public class JobScheduleReferenceTests
     }
 
     [Fact]
-    public void Resolve_TreatsANegativeLookbackAsZero()
-    {
-        Assert.Equal(Now, JobScheduleReference.Resolve(null, null, null, null, null, Now, -60));
-    }
+    public void Resolve_TreatsANegativeLookbackAsZero() => Assert.Equal(Now, JobScheduleReference.Resolve(null, null, null, null, null, Now, -60));
 }

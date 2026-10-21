@@ -13,9 +13,10 @@ public static class HttpClientPlanInterpolation
         if (string.IsNullOrEmpty(template))
             return template ?? "";
 
-        return Placeholder.Replace(template, m => {
-            var key = m.Groups[1].Value.Trim();
-            return bindings.TryGetValue(key, out var value) ? value : m.Value;
-        });
+        return Placeholder.Replace(
+            template, m => {
+                var key = m.Groups[1].Value.Trim();
+                return bindings.TryGetValue(key, out var value) ? value : m.Value;
+            });
     }
 }

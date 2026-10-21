@@ -8,8 +8,8 @@ namespace Lyo.Web.Automation.Playwright.Record;
 
 /// <summary>
 /// Folds recorded browser events into an <see cref="AutomationPlan" />. Clicks that only focus a field are dropped once typing arrives. Typing on one field stays a single
-/// step until another element, a key such as Enter, navigation, or <see cref="Build" />. A blur does not cut a new step. A navigation flagged as caused by the preceding
-/// action does not become its own step.
+/// step until another element, a key such as Enter, navigation, or <see cref="Build" />. A blur does not cut a new step. A navigation flagged as caused by the preceding action does
+/// not become its own step.
 /// </summary>
 public sealed class RecordedEventMapper
 {
@@ -18,13 +18,12 @@ public sealed class RecordedEventMapper
     private PendingClick? _click;
     private PendingInput? _input;
     private int _refs;
-    private string? _name;
-
-    /// <summary>Starts an empty plan with an optional display name.</summary>
-    public RecordedEventMapper(string? planName = null) => _name = planName;
 
     /// <summary>Plan name written into <see cref="Build" />.</summary>
-    public string? PlanName => _name;
+    public string? PlanName { get; private set; }
+
+    /// <summary>Starts an empty plan with an optional display name.</summary>
+    public RecordedEventMapper(string? planName = null) => PlanName = planName;
 
     /// <summary>Drops the current steps and starts again. A URL that is not blank and not <c>about:</c> becomes the first navigate step.</summary>
     public void Reset(string? url)
@@ -84,7 +83,7 @@ public sealed class RecordedEventMapper
 
         _steps.Clear();
         _steps.AddRange(finalized);
-        return new(_name, finalized);
+        return new(PlanName, finalized);
     }
 
     /// <summary>Steps currently committed, plus any held click or input, as the panel shows them.</summary>
@@ -93,17 +92,15 @@ public sealed class RecordedEventMapper
         var next = _refs;
         var steps = new List<AutomationStepDefinition>(_steps);
         if (_input != null)
-            steps.Add(new FindAndActAutomationStep($"el{++next}", _input.Locator, new InputTextElementAction(_input.Text, true)));
+            steps.Add(new FindAndActAutomationStep($"el{++next}", _input.Locator, new InputTextElementAction(_input.Text)));
 
         if (_click != null)
             steps.Add(new FindAndActAutomationStep($"el{++next}", _click.Locator, new ClickElementAction()));
 
-        return new(_name, steps);
+        return new(PlanName, steps);
     }
 
-    /// <summary>
-    /// Replaces the step list when <paramref name="json" /> parses. Invalid JSON leaves the current steps in place and returns the parser error.
-    /// </summary>
+    /// <summary>Replaces the step list when <paramref name="json" /> parses. Invalid JSON leaves the current steps in place and returns the parser error.</summary>
     public RecordedPlanEdit ApplyJson(string json)
     {
         ArgumentHelpers.ThrowIfNull(json);
@@ -111,7 +108,7 @@ public sealed class RecordedEventMapper
             var plan = AutomationPlanJson.Deserialize(json);
             _steps.Clear();
             _steps.AddRange(plan.Steps);
-            _name = plan.Name;
+            PlanName = plan.Name;
             _click = null;
             _input = null;
             _refs = _steps.Count;
@@ -122,9 +119,7 @@ public sealed class RecordedEventMapper
         }
     }
 
-    /// <summary>
-    /// Moves the step at <paramref name="fromIndex" /> so it lands at <paramref name="toIndex" />. Pending typing is committed first, so the indexes match the drawer list.
-    /// </summary>
+    /// <summary>Moves the step at <paramref name="fromIndex" /> so it lands at <paramref name="toIndex" />. Pending typing is committed first, so the indexes match the drawer list.</summary>
     public void Move(int fromIndex, int toIndex)
     {
         FlushPending();
@@ -231,7 +226,7 @@ public sealed class RecordedEventMapper
         if (pick.Repeating && pick.ParentLocator != null) {
             var tag = string.IsNullOrWhiteSpace(pick.DescendantTag) ? DefaultTag(pick.Tool) : pick.DescendantTag ?? DefaultTag(pick.Tool);
             var listRef = NextRef();
-            _steps.Add(new FindElementsChainAutomationStep(listRef, new ElementLocatorChain(pick.ParentLocator, ElementLocator.TagName(tag))));
+            _steps.Add(new FindElementsChainAutomationStep(listRef, new(pick.ParentLocator, ElementLocator.TagName(tag))));
             _steps.Add(new ExtractSourcesAutomationStep(listRef, pick.VariableName, AttributesFor(pick)));
             return;
         }
@@ -315,12 +310,13 @@ public sealed class RecordedEventMapper
         return new(kind, insert.Value);
     }
 
-    private static ElementAction? ActionOf(RecordedInsert insert) => insert.Action switch {
-        "click" => new ClickElementAction(),
-        "input" => new InputTextElementAction(insert.Text ?? "", true),
-        "clear" => new ClearElementAction(),
-        _ => null
-    };
+    private static ElementAction? ActionOf(RecordedInsert insert)
+        => insert.Action switch {
+            "click" => new ClickElementAction(),
+            "input" => new InputTextElementAction(insert.Text ?? ""),
+            "clear" => new ClearElementAction(),
+            var _ => null
+        };
 
     private static (int Width, int Height)? ViewportOf(RecordedInsert insert)
     {
@@ -367,7 +363,7 @@ public sealed class RecordedEventMapper
         _click = null;
     }
 
-    private FindAndActAutomationStep MakeInput(PendingInput input) => new(NextRef(), input.Locator, new InputTextElementAction(input.Text, true));
+    private FindAndActAutomationStep MakeInput(PendingInput input) => new(NextRef(), input.Locator, new InputTextElementAction(input.Text));
 
     private FindAndActAutomationStep MakeClick(PendingClick click) => new(NextRef(), click.Locator, new ClickElementAction());
 
@@ -375,18 +371,20 @@ public sealed class RecordedEventMapper
 
     private static string DefaultTag(RecordedPickTool tool) => tool == RecordedPickTool.Links ? "a" : "img";
 
-    private static IReadOnlyList<string> AttributesFor(RecordedPick pick) => pick.Tool switch {
-        RecordedPickTool.Links => ["href"],
-        RecordedPickTool.Attribute when pick.AttributeName is string attribute && !string.IsNullOrWhiteSpace(attribute) => [attribute],
-        RecordedPickTool.Text => ["text"],
-        var _ => ImageAttributes
-    };
+    private static IReadOnlyList<string> AttributesFor(RecordedPick pick)
+        => pick.Tool switch {
+            RecordedPickTool.Links => ["href"],
+            RecordedPickTool.Attribute when pick.AttributeName is string attribute && !string.IsNullOrWhiteSpace(attribute) => [attribute],
+            RecordedPickTool.Text => ["text"],
+            var _ => ImageAttributes
+        };
 
-    private static string AttributeForSingle(RecordedPick pick) => pick.Tool switch {
-        RecordedPickTool.Links => "href",
-        RecordedPickTool.Attribute when pick.AttributeName is string attribute && !string.IsNullOrWhiteSpace(attribute) => attribute,
-        var _ => "src"
-    };
+    private static string AttributeForSingle(RecordedPick pick)
+        => pick.Tool switch {
+            RecordedPickTool.Links => "href",
+            RecordedPickTool.Attribute when pick.AttributeName is string attribute && !string.IsNullOrWhiteSpace(attribute) => attribute,
+            var _ => "src"
+        };
 
     private sealed record PendingClick(string Key, ElementLocator Locator);
 

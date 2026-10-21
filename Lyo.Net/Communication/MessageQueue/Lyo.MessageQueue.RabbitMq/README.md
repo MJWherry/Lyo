@@ -1,10 +1,12 @@
 # Lyo.MessageQueue.RabbitMq
 
-`IMqService` implementation (`RabbitMqService`) on `RabbitMQ.Client`. Also wired as `IRabbitMqService` when RabbitMQ-specific methods are needed (exchanges) that sit outside the shared contract.
+`IMqService` implementation (`RabbitMqService`) on `RabbitMQ.Client`. Also wired as `IRabbitMqService` when RabbitMQ-specific methods are needed (exchanges) that sit outside the
+shared contract.
 
 ## Features
 
-- `RabbitMqOptions` singleton (registered via an explicit `Action<RabbitMqOptions>` or bound from configuration). Default section: `RabbitMqOptions.SectionName = "RabbitMqOptions"`.
+- `RabbitMqOptions` singleton (registered via an explicit `Action<RabbitMqOptions>` or bound from configuration). Default section:
+  `RabbitMqOptions.SectionName = "RabbitMqOptions"`.
 - `IConnectionFactory` singleton built from those options, with:
 - Host, virtual host, port, and credentials from options.
 - `ClientProvidedName` set to `MachineName - ApplicationName (EnvironmentName)` so the RabbitMQ management UI can identify the connection.
@@ -35,7 +37,8 @@ services.SetupRabbitMqService(
 
 ## Registration
 
-- `RabbitMqOptions` singleton (registered via an explicit `Action<RabbitMqOptions>` or bound from configuration). Default section: `RabbitMqOptions.SectionName = "RabbitMqOptions"`.
+- `RabbitMqOptions` singleton (registered via an explicit `Action<RabbitMqOptions>` or bound from configuration). Default section:
+  `RabbitMqOptions.SectionName = "RabbitMqOptions"`.
 - `IConnectionFactory` singleton built from those options, with:
 - Host, virtual host, port, and credentials from options.
 - `ClientProvidedName` set to `MachineName - ApplicationName (EnvironmentName)` so the RabbitMQ management UI can identify the connection.
@@ -44,24 +47,24 @@ services.SetupRabbitMqService(
 
 ## `RabbitMqOptions`
 
-| Property | Type | Default | Purpose |
-| ------------------------- | ------------------------------------ | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Host` | `string` | required | AMQP hostname. |
-| `Port` | `int` | `5672` | AMQP port. |
-| `VirtualHost` | `string` | `/` | RabbitMQ virtual host. |
-| `Username` / `Password` | `string` | required | Credentials for AMQP and the Management API. |
-| `AdminUrl` | `string` | required | Base URL of the RabbitMQ Management HTTP API (e.g. `http://host:15672`). Used when constructing `HttpClient.BaseAddress = "{AdminUrl}/api/"`; `ClearQueue`, `PeekQueueMessages`, and the queue-statistics APIs call into it. |
-| `EnableMetrics` | `bool` | `false` | When `false`, the injected `IMetrics` is swapped for `NullMetrics.Instance`. |
-| `ProcessingLimit` | `int` | `0` | Global maximum concurrent messages per queue. `0` means unlimited. Enforced as broker prefetch + channel dispatch concurrency + in-process semaphore (see below). |
-| `QueueProcessingLimits` | `Dictionary<string, int>?` | `null` | Per-queue overrides for `ProcessingLimit` (queue name → limit). Example: `{ "job.run.cs": 1, "job.run.reports": 10 }`. |
-| `PersistentMessages` | `bool` | `true` | Publish with delivery mode 2 so messages survive a broker restart on durable queues. |
-| `PublisherConfirms` | `bool` | `false` | Confirm mode on the publish channel: `SendToQueue`/`SendToExchange` return `true` only after broker confirmation and `false` on nack (metric `mq.publish.unconfirmed`). Each publish pays an extra round-trip. |
-| `AutomaticRecovery` | `bool` | `true` | RabbitMQ client automatic connection plus topology recovery (restores channels and consumers after a network drop). |
-| `NetworkRecoveryInterval` | `TimeSpan` | `5s` | Pause between automatic recovery attempts. |
-| `ConnectRetryCount` | `int` | `3` | Extra connect attempts inside `ConnectAsync` cover startup races (broker not accepting connections yet). `0` fails on the first error. |
-| `ConnectRetryDelay` | `TimeSpan` | `2s` | Pause between connect attempts. |
-| `DefinedQueues` | `IReadOnlyList<string>?` | `null` | Queues declared during `ConnectAsync`. |
-| `ExceptionHandling` | `MessageProcessingExceptionHandling` | `RequeueOnException` | Strategy used when a subscribed handler throws. `ThrowAndRemoveFromQueue` acks the message and rethrows the exception (routed to the client's callback exception handler). |
+| Property                  | Type                                 | Default              | Purpose                                                                                                                                                                                                                      |
+|---------------------------|--------------------------------------|----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Host`                    | `string`                             | required             | AMQP hostname.                                                                                                                                                                                                               |
+| `Port`                    | `int`                                | `5672`               | AMQP port.                                                                                                                                                                                                                   |
+| `VirtualHost`             | `string`                             | `/`                  | RabbitMQ virtual host.                                                                                                                                                                                                       |
+| `Username` / `Password`   | `string`                             | required             | Credentials for AMQP and the Management API.                                                                                                                                                                                 |
+| `AdminUrl`                | `string`                             | required             | Base URL of the RabbitMQ Management HTTP API (e.g. `http://host:15672`). Used when constructing `HttpClient.BaseAddress = "{AdminUrl}/api/"`; `ClearQueue`, `PeekQueueMessages`, and the queue-statistics APIs call into it. |
+| `EnableMetrics`           | `bool`                               | `false`              | When `false`, the injected `IMetrics` is swapped for `NullMetrics.Instance`.                                                                                                                                                 |
+| `ProcessingLimit`         | `int`                                | `0`                  | Global maximum concurrent messages per queue. `0` means unlimited. Enforced as broker prefetch + channel dispatch concurrency + in-process semaphore (see below).                                                            |
+| `QueueProcessingLimits`   | `Dictionary<string, int>?`           | `null`               | Per-queue overrides for `ProcessingLimit` (queue name → limit). Example: `{ "job.run.cs": 1, "job.run.reports": 10 }`.                                                                                                       |
+| `PersistentMessages`      | `bool`                               | `true`               | Publish with delivery mode 2 so messages survive a broker restart on durable queues.                                                                                                                                         |
+| `PublisherConfirms`       | `bool`                               | `false`              | Confirm mode on the publish channel: `SendToQueue`/`SendToExchange` return `true` only after broker confirmation and `false` on nack (metric `mq.publish.unconfirmed`). Each publish pays an extra round-trip.               |
+| `AutomaticRecovery`       | `bool`                               | `true`               | RabbitMQ client automatic connection plus topology recovery (restores channels and consumers after a network drop).                                                                                                          |
+| `NetworkRecoveryInterval` | `TimeSpan`                           | `5s`                 | Pause between automatic recovery attempts.                                                                                                                                                                                   |
+| `ConnectRetryCount`       | `int`                                | `3`                  | Extra connect attempts inside `ConnectAsync` cover startup races (broker not accepting connections yet). `0` fails on the first error.                                                                                       |
+| `ConnectRetryDelay`       | `TimeSpan`                           | `2s`                 | Pause between connect attempts.                                                                                                                                                                                              |
+| `DefinedQueues`           | `IReadOnlyList<string>?`             | `null`               | Queues declared during `ConnectAsync`.                                                                                                                                                                                       |
+| `ExceptionHandling`       | `MessageProcessingExceptionHandling` | `RequeueOnException` | Strategy used when a subscribed handler throws. `ThrowAndRemoveFromQueue` acks the message and rethrows the exception (routed to the client's callback exception handler).                                                   |
 
 ## Concurrency per queue
 
@@ -94,7 +97,10 @@ flowchart LR
 
 ## Recovering connections
 
-When `AutomaticRecovery` is on (the default), the RabbitMQ client reconnects after a network drop, re-opens channels, re-declares topology, and restores consumers. The service keeps its consumer bookkeeping across the drop and logs/metrics the transition (`mq.connection.lost` then `mq.connection.recovered`). With recovery disabled, a lost connection clears all consumers. The process must reconnect and resubscribe itself. `DisconnectAsync` no longer poisons the instance: connect, disconnect, connect on the same `RabbitMqService` works. Disposal (`DisposeAsync`) is final.
+When `AutomaticRecovery` is on (the default), the RabbitMQ client reconnects after a network drop, re-opens channels, re-declares topology, and restores consumers. The service
+keeps its consumer bookkeeping across the drop and logs/metrics the transition (`mq.connection.lost` then `mq.connection.recovered`). With recovery disabled, a lost connection
+clears all consumers. The process must reconnect and resubscribe itself. `DisconnectAsync` no longer poisons the instance: connect, disconnect, connect on the same
+`RabbitMqService` works. Disposal (`DisposeAsync`) is final.
 
 ## Deferred delivery
 
@@ -111,28 +117,35 @@ when its `RequeueDelay` is set (see the [Lyo.MessageQueue README](../Lyo.Message
 
 ## Broker DLQ wiring
 
-`CreateQueueWithDlq(queueName, durable, dlqName, arguments, ct)` declares `{queue}.dlq` (durable) plus the main queue with `x-dead-letter-exchange: ""` / `x-dead-letter-routing-key: {queue}.dlq`. This catches broker-side rejections the application never sees: nack without requeue, per-queue TTL expiry, and queue overflow. It complements (and does not replace) `QueueWorkerBase`'s application-level DLQ routing. > **Caveat:** RabbitMQ cannot change arguments on an existing queue. Declaring over an existing queue with different arguments fails with `PRECONDITION_FAILED`. The helper logs a clear error that tells you to delete and recreate the queue.
+`CreateQueueWithDlq(queueName, durable, dlqName, arguments, ct)` declares `{queue}.dlq` (durable) plus the main queue with `x-dead-letter-exchange: ""` /
+`x-dead-letter-routing-key: {queue}.dlq`. This catches broker-side rejections the application never sees: nack without requeue, per-queue TTL expiry, and queue overflow. It
+complements (and does not replace) `QueueWorkerBase`'s application-level DLQ routing. > **Caveat:** RabbitMQ cannot change arguments on an existing queue. Declaring over an
+existing queue with different arguments fails with `PRECONDITION_FAILED`. The helper logs a clear error that tells you to delete and recreate the queue.
 
 ## Queue stats
 
-`GetQueueInfoAsync(queueName, ct)` and `GetAllQueuesInfoAsync(ct)` (on `IRabbitMqService`) hit the Management API (`GET /api/queues/{vhost}[/{name}]`) and return the shared `MessageQueueInfo` record. Message counts, ready/unacked, consumer count, and state are first-class. AMQP flags (`durable`, `exclusive`, `auto_delete`), `x-*` arguments (DLQ, max-priority), and publish/deliver rates land in `AdditionalProperties` (see `Constants.QueueInfoProperties`). `GetExchangeInfoAsync` / `GetAllExchangesInfoAsync` do the same for exchanges (`GET /api/exchanges/{vhost}[/{name}]`). The `RabbitMqWorkbench` Blazor component lists queues and exchanges with these flags as chips. Statistics refresh on the management emission interval (~5s), so counts can lag slightly behind broker state.
+`GetQueueInfoAsync(queueName, ct)` and `GetAllQueuesInfoAsync(ct)` (on `IRabbitMqService`) hit the Management API (`GET /api/queues/{vhost}[/{name}]`) and return the shared
+`MessageQueueInfo` record. Message counts, ready/unacked, consumer count, and state are first-class. AMQP flags (`durable`, `exclusive`, `auto_delete`), `x-*` arguments (DLQ,
+max-priority), and publish/deliver rates land in `AdditionalProperties` (see `Constants.QueueInfoProperties`). `GetExchangeInfoAsync` / `GetAllExchangesInfoAsync` do the same for
+exchanges (`GET /api/exchanges/{vhost}[/{name}]`). The `RabbitMqWorkbench` Blazor component lists queues and exchanges with these flags as chips. Statistics refresh on the
+management emission interval (~5s), so counts can lag slightly behind broker state.
 
 ## Capabilities
 
-| Abstract call | RabbitMQ behavior |
-| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CreateQueue` | Declares queues with durability / exclusivity / auto-delete flags and a broker `arguments` dictionary. |
-| `DeleteQueue` | Deletes a queue, optionally gated by `ifUnused` / `ifEmpty`. |
-| `ClearQueue` | Purges first via the Management API (`DELETE /api/queues/{vhost}/{name}/contents`), then falls back to `QueuePurgeAsync` on the publish channel. |
-| `BindQueueToExchange` | Binds a queue to an exchange with a routing key. |
-| `SendToQueue` / `SendToExchange` | Publish on the shared publish channel with `BasicProperties` (persistence per `PersistentMessages`, generated `MessageId`, UTC timestamp); waits for broker confirmation when `PublisherConfirms` is on. |
-| `SubscribeToQueue` | Opens one dedicated channel per subscriber (prefetch + dispatch concurrency from the per-queue limit), declares the queue, creates an `AsyncEventingBasicConsumer`, and bridges `ack/nack/requeue` onto the `Func<byte[], Task<bool>>` contract (`true` → requeue, `false` → ack). |
-| `PeekQueueMessages` | Non-destructive read through the Management API (`POST /api/queues/{vhost}/{name}/get` with `ackmode=ack_requeue_true`). |
-| `CreateExchange` / `DeleteExchange` | `CreateExchange` is on `IMqService` (every broker). `DeleteExchange` stays RabbitMQ-only on `IRabbitMqService`. |
-| `SendToQueueDelayed` (RabbitMQ only) | Deferred delivery through TTL + dead-letter wait queues (see below). |
-| `CreateQueueWithDlq` (RabbitMQ only) | Declares `{queue}.dlq` and attaches the main queue's dead-letter arguments (see below). |
-| `GetQueueInfoAsync` / `GetAllQueuesInfoAsync` (RabbitMQ only) | Live queue statistics through the Management API. AMQP flags and `x-*` arguments land in `AdditionalProperties` (see below). |
-| `GetExchangeInfoAsync` / `GetAllExchangesInfoAsync` (RabbitMQ only) | Live exchange listing through the Management API (`GET /api/exchanges/{vhost}[/{name}]`). |
+| Abstract call                                                       | RabbitMQ behavior                                                                                                                                                                                                                                                                  |
+|---------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `CreateQueue`                                                       | Declares queues with durability / exclusivity / auto-delete flags and a broker `arguments` dictionary.                                                                                                                                                                             |
+| `DeleteQueue`                                                       | Deletes a queue, optionally gated by `ifUnused` / `ifEmpty`.                                                                                                                                                                                                                       |
+| `ClearQueue`                                                        | Purges first via the Management API (`DELETE /api/queues/{vhost}/{name}/contents`), then falls back to `QueuePurgeAsync` on the publish channel.                                                                                                                                   |
+| `BindQueueToExchange`                                               | Binds a queue to an exchange with a routing key.                                                                                                                                                                                                                                   |
+| `SendToQueue` / `SendToExchange`                                    | Publish on the shared publish channel with `BasicProperties` (persistence per `PersistentMessages`, generated `MessageId`, UTC timestamp); waits for broker confirmation when `PublisherConfirms` is on.                                                                           |
+| `SubscribeToQueue`                                                  | Opens one dedicated channel per subscriber (prefetch + dispatch concurrency from the per-queue limit), declares the queue, creates an `AsyncEventingBasicConsumer`, and bridges `ack/nack/requeue` onto the `Func<byte[], Task<bool>>` contract (`true` → requeue, `false` → ack). |
+| `PeekQueueMessages`                                                 | Non-destructive read through the Management API (`POST /api/queues/{vhost}/{name}/get` with `ackmode=ack_requeue_true`).                                                                                                                                                           |
+| `CreateExchange` / `DeleteExchange`                                 | `CreateExchange` is on `IMqService` (every broker). `DeleteExchange` stays RabbitMQ-only on `IRabbitMqService`.                                                                                                                                                                    |
+| `SendToQueueDelayed` (RabbitMQ only)                                | Deferred delivery through TTL + dead-letter wait queues (see below).                                                                                                                                                                                                               |
+| `CreateQueueWithDlq` (RabbitMQ only)                                | Declares `{queue}.dlq` and attaches the main queue's dead-letter arguments (see below).                                                                                                                                                                                            |
+| `GetQueueInfoAsync` / `GetAllQueuesInfoAsync` (RabbitMQ only)       | Live queue statistics through the Management API. AMQP flags and `x-*` arguments land in `AdditionalProperties` (see below).                                                                                                                                                       |
+| `GetExchangeInfoAsync` / `GetAllExchangesInfoAsync` (RabbitMQ only) | Live exchange listing through the Management API (`GET /api/exchanges/{vhost}[/{name}]`).                                                                                                                                                                                          |
 
 Rabbit features evolve quickly, so (streams, quorum queues), advanced work tends to go through
 `CreateQueue`'s `arguments` bag. Check `RabbitMqService` for the defaults you rely on before you upgrade
@@ -140,7 +153,9 @@ Rabbit features evolve quickly, so (streams, quorum queues), advanced work tends
 
 ## Workers and hosted services
 
-Use alongside `QueueWorkerBase` from [`Lyo.MessageQueue`](../Lyo.MessageQueue/README.md). Workers deserialize JSON payloads, reuse the envelope helpers, integrate DLQ / `maxRequeueCount`, and drain on `IHostedService` shutdown. Publish typed payloads with `IMqService.SendToQueueWithEnvelopeAsync` when a `QueueWorkerBase` consumer is on the other end. Schedulers (`Lyo.Job.Scheduler`) commonly publish triggers here while separate worker processes consume.
+Use alongside `QueueWorkerBase` from [`Lyo.MessageQueue`](../Lyo.MessageQueue/README.md). Workers deserialize JSON payloads, reuse the envelope helpers, integrate DLQ /
+`maxRequeueCount`, and drain on `IHostedService` shutdown. Publish typed payloads with `IMqService.SendToQueueWithEnvelopeAsync` when a `QueueWorkerBase` consumer is on the other
+end. Schedulers (`Lyo.Job.Scheduler`) commonly publish triggers here while separate worker processes consume.
 
 ## Blazor UI
 
@@ -148,7 +163,9 @@ Use alongside `QueueWorkerBase` from [`Lyo.MessageQueue`](../Lyo.MessageQueue/RE
 
 ## Testing
 
-`Lyo.MessageQueue.RabbitMq.Tests` exercises the service against a real broker using the `RabbitMqTestContainer` helper from [`Lyo.Testing.Containers`](../../../Core/Testing/Lyo.Testing.Containers/README.md) (management-enabled image, Docker required): connect/disconnect/reconnect, queue lifecycle + peek, publish→subscribe roundtrips, requeue/ack semantics, per-queue concurrency enforcement, publisher confirms, delayed delivery, DLQ auto-wiring, and queue statistics.
+`Lyo.MessageQueue.RabbitMq.Tests` exercises the service against a real broker using the `RabbitMqTestContainer` helper from [
+`Lyo.Testing.Containers`](../../../Core/Testing/Lyo.Testing.Containers/README.md) (management-enabled image, Docker required): connect/disconnect/reconnect, queue lifecycle + peek,
+publish→subscribe roundtrips, requeue/ack semantics, per-queue concurrency enforcement, publisher confirms, delayed delivery, DLQ auto-wiring, and queue statistics.
 
 ## Dependencies
 

@@ -1,6 +1,7 @@
 # Lyo.Translation.Aws
 
-[Amazon Translate](https://docs.aws.amazon.com/translate/) that implements [`ITranslationService`](../Lyo.Translation/README.md). Translates text, runs bounded bulk translation, infers language via a Translate call, and probes connectivity with `ListLanguages`.
+[Amazon Translate](https://docs.aws.amazon.com/translate/) that implements [`ITranslationService`](../Lyo.Translation/README.md). Translates text, runs bounded bulk translation,
+infers language via a Translate call, and probes connectivity with `ListLanguages`.
 
 **Target frameworks:** `netstandard2.0`, `net10.0`
 
@@ -46,22 +47,22 @@ The service constructor accepts an optional `IAmazonTranslate` and resolves one 
 
 Inherits all of [`TranslationServiceOptions`](../Lyo.Translation/README.md). and adds:
 
-| Property | Type | Default | Purpose |
-| ----------------- | --------- | ----------- | --------------------------------------------- |
-| `AccessKeyId` | `string?` | `null` | Static AWS access key id (prefer IAM roles). |
-| `SecretAccessKey` | `string?` | `null` | Static AWS secret key (prefer IAM roles). |
-| `Region` | `string` | `us-east-1` | AWS region the Translate client uses. |
-| `ServiceUrl` | `string?` | `null` | Override endpoint (useful for local testing). |
+| Property          | Type      | Default     | Purpose                                       |
+|-------------------|-----------|-------------|-----------------------------------------------|
+| `AccessKeyId`     | `string?` | `null`      | Static AWS access key id (prefer IAM roles).  |
+| `SecretAccessKey` | `string?` | `null`      | Static AWS secret key (prefer IAM roles).     |
+| `Region`          | `string`  | `us-east-1` | AWS region the Translate client uses.         |
+| `ServiceUrl`      | `string?` | `null`      | Override endpoint (useful for local testing). |
 
 Configuration section name: `AwsTranslationOptions.SectionName = "AwsTranslationOptions"`.
 
 ## Runtime notes
 
-| Feature | Detail |
-| --------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Language codes | Target/source are mapped to ISO 639-1 (and BCP-47 prefixes) that Translate expects |
-| `DetectLanguageAsync` | Uses `TranslateText` with `auto` source and English target to infer the source language |
-| Metrics | Provider keys in `Constants.Metrics` remap the base keys from [`Lyo.Translation`](../Lyo.Translation/README.md) |
+| Feature               | Detail                                                                                                          |
+|-----------------------|-----------------------------------------------------------------------------------------------------------------|
+| Language codes        | Target/source are mapped to ISO 639-1 (and BCP-47 prefixes) that Translate expects                              |
+| `DetectLanguageAsync` | Uses `TranslateText` with `auto` source and English target to infer the source language                         |
+| Metrics               | Provider keys in `Constants.Metrics` remap the base keys from [`Lyo.Translation`](../Lyo.Translation/README.md) |
 
 ## Dependencies
 

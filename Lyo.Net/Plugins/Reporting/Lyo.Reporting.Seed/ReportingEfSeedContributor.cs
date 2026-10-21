@@ -11,9 +11,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Lyo.Reporting.Seed;
 
 /// <summary>
-/// EF seed of <see cref="ReportDesignTemplates.Samples"/> as report definitions, including parameters,
-/// plus one succeeded generation and its parameter values per definition.
-/// <see cref="SeedOptions.Count"/> is ignored. Schema <c>reporting</c>.
+/// EF seed of <see cref="ReportDesignTemplates.Samples" /> as report definitions, including parameters, plus one succeeded generation and its parameter values per
+/// definition. <see cref="SeedOptions.Count" /> is ignored. Schema <c>reporting</c>.
 /// </summary>
 public sealed class ReportingEfSeedContributor : SeedContributor, IEfSeedSource
 {
@@ -30,9 +29,7 @@ public sealed class ReportingEfSeedContributor : SeedContributor, IEfSeedSource
     public DbContext CreateContext(string connectionString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        var options = new DbContextOptionsBuilder<ReportingContext>()
-            .UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<ReportingContext>().UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema)).Options;
         return new ReportingContext(options);
     }
 
@@ -42,18 +39,20 @@ public sealed class ReportingEfSeedContributor : SeedContributor, IEfSeedSource
         graph.OnClear(ClearAsync);
         var mapper = new ReportingLyoMapper();
         var now = DateTime.UtcNow;
-        graph.Entity(ReportDesignTemplates.Samples.Select(sample => {
-            var entity = mapper.Map<ReportDefinition>(sample.ToDefinitionReq());
-            entity.Id = LyoGuid.CreateV7();
-            entity.CreatedTimestamp = now;
-            foreach (var parameter in entity.Parameters) {
-                parameter.Id = LyoGuid.CreateV7();
-                parameter.ReportDefinitionId = entity.Id;
-                parameter.CreatedTimestamp = now;
-            }
+        graph.Entity(
+            ReportDesignTemplates.Samples.Select(sample => {
+                var entity = mapper.Map<ReportDefinition>(sample.ToDefinitionReq());
+                entity.Id = LyoGuid.CreateV7();
+                entity.CreatedTimestamp = now;
+                foreach (var parameter in entity.Parameters) {
+                    parameter.Id = LyoGuid.CreateV7();
+                    parameter.ReportDefinitionId = entity.Id;
+                    parameter.CreatedTimestamp = now;
+                }
 
-            return entity;
-        }));
+                return entity;
+            }));
+
         graph.After(async (session, ct) => {
             var generations = new List<ReportGeneration>();
             var parameters = new List<ReportGenerationParameter>();
@@ -69,16 +68,18 @@ public sealed class ReportingEfSeedContributor : SeedContributor, IEfSeedSource
                     StartedTimestamp = now,
                     FinishedTimestamp = now
                 };
+
                 generations.Add(generation);
                 foreach (var parameter in definition.Parameters) {
-                    parameters.Add(new ReportGenerationParameter {
-                        Id = LyoGuid.CreateV7(),
-                        ReportGenerationId = generation.Id,
-                        Key = parameter.Key,
-                        Type = parameter.Type,
-                        Value = parameter.Value,
-                        Description = parameter.Description
-                    });
+                    parameters.Add(
+                        new() {
+                            Id = LyoGuid.CreateV7(),
+                            ReportGenerationId = generation.Id,
+                            Key = parameter.Key,
+                            Type = parameter.Type,
+                            Value = parameter.Value,
+                            Description = parameter.Description
+                        });
                 }
             }
 

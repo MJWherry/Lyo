@@ -32,8 +32,8 @@ public sealed record DirectUploadBeginRequest
     public double? UrlExpirationHours { get; init; }
 
     /// <summary>
-    /// Optional SHA-256 of the bytes the client will PUT, base64 in JSON (32 bytes). S3 signs it into the URL and rejects a mismatched body, and finalize then trusts
-    /// the stored checksum instead of downloading the object. Send every header in the begin response's <c>RequiredPutHeaders</c>.
+    /// Optional SHA-256 of the bytes the client will PUT, base64 in JSON (32 bytes). S3 signs it into the URL and rejects a mismatched body, and finalize then trusts the stored
+    /// checksum instead of downloading the object. Send every header in the begin response's <c>RequiredPutHeaders</c>.
     /// </summary>
     public byte[]? ExpectedSha256 { get; init; }
 

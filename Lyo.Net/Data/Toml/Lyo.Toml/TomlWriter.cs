@@ -2,7 +2,6 @@ using System.Reflection;
 using System.Text;
 using Lyo.Exceptions;
 using Lyo.Json;
-using Lyo.Result;
 
 namespace Lyo.Toml;
 
@@ -83,8 +82,7 @@ public sealed class TomlWriter : ITomlWriter
     }
 
     /// <inheritdoc />
-    public void ExportToTomlFromDataTable(DataTable.Models.DataTable dataTable, Stream tomlStream)
-        => Write(ExportToTomlStringFromDataTable(dataTable), tomlStream);
+    public void ExportToTomlFromDataTable(DataTable.Models.DataTable dataTable, Stream tomlStream) => Write(ExportToTomlStringFromDataTable(dataTable), tomlStream);
 
     /// <inheritdoc />
     public byte[] ExportToTomlBytesFromDataTable(DataTable.Models.DataTable dataTable, Encoding? encoding = null)
@@ -128,11 +126,7 @@ public sealed class TomlWriter : ITomlWriter
     }
 
     /// <inheritdoc />
-    public async Task ExportFormattedToTomlAsync<T>(
-        IEnumerable<T> items,
-        IReadOnlyDictionary<string, Func<T, string>> fields,
-        Stream tomlStream,
-        CancellationToken ct = default)
+    public async Task ExportFormattedToTomlAsync<T>(IEnumerable<T> items, IReadOnlyDictionary<string, Func<T, string>> fields, Stream tomlStream, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(tomlStream);
         var bytes = _engine.Encoding.GetBytes(ExportFormattedToTomlString(items, fields));
@@ -140,11 +134,7 @@ public sealed class TomlWriter : ITomlWriter
     }
 
     /// <inheritdoc />
-    public async Task ExportColumnsToTomlAsync<T>(
-        IEnumerable<T> items,
-        IReadOnlyDictionary<string, PropertyInfo> columns,
-        Stream tomlStream,
-        CancellationToken ct = default)
+    public async Task ExportColumnsToTomlAsync<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns, Stream tomlStream, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(tomlStream);
         var bytes = _engine.Encoding.GetBytes(ExportColumnsToTomlString(items, columns));

@@ -2,12 +2,13 @@ using System.Text;
 using System.Text.Json;
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Identifiers;
-using Lyo.Json;
 using Lyo.Exceptions;
 using Lyo.FileSystemWatcher.Models;
 using Lyo.FileSystemWatcher.Postgres.Database;
 using Lyo.Hashing;
+using Lyo.Json;
 using Microsoft.EntityFrameworkCore;
+
 namespace Lyo.FileSystemWatcher.Postgres;
 
 /// <summary>PostgreSQL implementation of <see cref="IFileSystemWatcherStore" />.</summary>
@@ -19,10 +20,7 @@ public sealed class PostgresFileSystemWatcherStore : IFileSystemWatcherStore
     private readonly PostgresFileSystemWatcherOptions _options;
 
     /// <summary>Builds a store over <paramref name="factory" />.</summary>
-    public PostgresFileSystemWatcherStore(
-        IDbContextFactory<FileSystemWatcherDbContext> factory,
-        IHashingService hashing,
-        PostgresFileSystemWatcherOptions options)
+    public PostgresFileSystemWatcherStore(IDbContextFactory<FileSystemWatcherDbContext> factory, IHashingService hashing, PostgresFileSystemWatcherOptions options)
     {
         ArgumentHelpers.ThrowIfNull(factory);
         ArgumentHelpers.ThrowIfNull(hashing);
@@ -44,6 +42,7 @@ public sealed class PostgresFileSystemWatcherStore : IFileSystemWatcherStore
             OptionsJson = JsonSerializer.Serialize(options, Json),
             CreatedTimestamp = DateTime.UtcNow
         };
+
         db.Watches.Add(entity);
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         return entity.Id;
@@ -58,14 +57,9 @@ public sealed class PostgresFileSystemWatcherStore : IFileSystemWatcherStore
         var algorithmName = algorithm.ToString();
         var hash = Hash(treeJson, algorithm);
         await using var db = await _factory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var latest = await db.Snapshots.AsNoTracking()
-            .Where(s => s.WatchId == watchId)
-            .OrderByDescending(s => s.TakenAtUtc)
-            .FirstOrDefaultAsync(ct)
-            .ConfigureAwait(false);
-        if (latest != null
-            && string.Equals(latest.ContentHash, hash, StringComparison.Ordinal)
-            && string.Equals(latest.ContentHashAlgorithm, algorithmName, StringComparison.Ordinal))
+        var latest = await db.Snapshots.AsNoTracking().Where(s => s.WatchId == watchId).OrderByDescending(s => s.TakenAtUtc).FirstOrDefaultAsync(ct).ConfigureAwait(false);
+        if (latest != null && string.Equals(latest.ContentHash, hash, StringComparison.Ordinal) &&
+            string.Equals(latest.ContentHashAlgorithm, algorithmName, StringComparison.Ordinal))
             return latest.Id;
 
         var entity = new FileSystemSnapshotEntity {
@@ -78,6 +72,7 @@ public sealed class PostgresFileSystemWatcherStore : IFileSystemWatcherStore
             ContentHashAlgorithm = algorithmName,
             TreeJson = treeJson
         };
+
         db.Snapshots.Add(entity);
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         return entity.Id;
@@ -119,6 +114,7 @@ public sealed class PostgresFileSystemWatcherStore : IFileSystemWatcherStore
             .Select(s => s.TreeJson)
             .FirstOrDefaultAsync(ct)
             .ConfigureAwait(false);
+
         return json is null ? null : JsonSerializer.Deserialize<FileSystemSnapshotTreeDto>(json, Json);
     }
 
@@ -134,6 +130,7 @@ public sealed class PostgresFileSystemWatcherStore : IFileSystemWatcherStore
             .Select(c => c.ChangeJson)
             .ToListAsync(ct)
             .ConfigureAwait(false);
+
         var list = new List<FileSystemChangeDto>(rows.Count);
         foreach (var json in rows) {
             var dto = JsonSerializer.Deserialize<FileSystemChangeDto>(json, Json);
@@ -150,6 +147,5 @@ public sealed class PostgresFileSystemWatcherStore : IFileSystemWatcherStore
         return _hashing.ToHex(digest, TextLetterCase.Lower);
     }
 
-    private static string? Truncate(string? value, int max)
-        => value is null || value.Length <= max ? value : value.Substring(0, max);
+    private static string? Truncate(string? value, int max) => value is null || value.Length <= max ? value : value.Substring(0, max);
 }

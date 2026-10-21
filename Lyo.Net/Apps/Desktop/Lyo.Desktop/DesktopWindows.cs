@@ -10,8 +10,10 @@ public static class DesktopWindows
     {
         if (OperatingSystem.IsWindows())
             return WindowsDesktopWindows.List();
+
         if (HasX11())
             return X11DesktopWindows.List();
+
         throw new InvalidOperationException("Window list needs an X11 DISPLAY or Windows.");
     }
 
@@ -23,6 +25,7 @@ public static class DesktopWindows
         foreach (var window in windows) {
             if (string.IsNullOrWhiteSpace(window.Title))
                 continue;
+
             if (window.Title.Contains(title, StringComparison.OrdinalIgnoreCase))
                 return window;
         }

@@ -9,9 +9,7 @@ namespace Lyo.Algorithms;
 public static class AlgorithmPayload
 {
     internal static readonly JsonSerializerOptions Json = new() {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter() }
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true, Converters = { new JsonStringEnumConverter() }
     };
 
     /// <summary>Checks <paramref name="payload" /> for <paramref name="kind" />. Expression and named revisions do not use this.</summary>
@@ -19,6 +17,7 @@ public static class AlgorithmPayload
     {
         if (string.IsNullOrWhiteSpace(payload))
             return Result<Unit>.Failure("Algorithm payload is required.", "algorithm.payload.missing");
+
         try {
             switch (kind) {
                 case AlgorithmKind.DiscreteMap:
@@ -55,7 +54,8 @@ public static class AlgorithmPayload
 
     internal static CompositeBody ParseComposite(string payload) => Require(JsonSerializer.Deserialize<CompositeBody>(payload, Json), "Composite payload is invalid.");
 
-    private static T Require<T>(T? value, string message) where T : class, ICheckedPayload
+    private static T Require<T>(T? value, string message)
+        where T : class, ICheckedPayload
     {
         var body = AlgorithmHelpers.ThrowIfNull(value, message, "algorithm.payload.invalid");
         body.Check();
@@ -207,8 +207,14 @@ public sealed class CompositeBody : ICheckedPayload
             AlgorithmHelpers.ThrowIf(hasRef && !AlgorithmKeys.IsKey(child.Ref!), $"Composite ref '{child.Ref}' is not a catalog key.", "algorithm.payload.invalid");
             if (!hasInline)
                 continue;
-            AlgorithmHelpers.ThrowIf(string.IsNullOrWhiteSpace(child.Key) || !AlgorithmContextBag.IsIdentifier(child.Key!), "Inline composite child key must be an identifier.", "algorithm.payload.invalid");
-            AlgorithmHelpers.ThrowIf(child.Payload.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null, "Inline composite child payload is required.", "algorithm.payload.missing");
+
+            AlgorithmHelpers.ThrowIf(
+                string.IsNullOrWhiteSpace(child.Key) || !AlgorithmContextBag.IsIdentifier(child.Key!), "Inline composite child key must be an identifier.",
+                "algorithm.payload.invalid");
+
+            AlgorithmHelpers.ThrowIf(
+                child.Payload.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null, "Inline composite child payload is required.", "algorithm.payload.missing");
+
             var validated = AlgorithmPayload.Validate(child.Kind!.Value, child.Payload.GetRawText());
             if (!validated.IsSuccess)
                 AlgorithmHelpers.Throw(validated.Errors![0].Message, validated.Errors[0].Code);
@@ -255,6 +261,7 @@ internal static class AlgorithmCalls
     {
         if (source is not { Length: > 0 })
             yield break;
+
         var index = 0;
         while (index < source.Length) {
             var algo = source.IndexOf("Algo(\"", index, StringComparison.Ordinal);
@@ -262,11 +269,14 @@ internal static class AlgorithmCalls
             var start = Next(algo, score);
             if (start < 0)
                 yield break;
+
             var quote = source.IndexOf('"', start);
             var end = quote < 0 ? -1 : source.IndexOf('"', quote + 1);
             if (end < 0)
                 yield break;
+
             yield return source.Substring(quote + 1, end - quote - 1);
+
             index = end + 1;
         }
     }
@@ -275,8 +285,10 @@ internal static class AlgorithmCalls
     {
         if (algo < 0)
             return score;
+
         if (score < 0)
             return algo;
+
         return Math.Min(algo, score);
     }
 
@@ -284,8 +296,10 @@ internal static class AlgorithmCalls
     {
         if (value is double number)
             return number;
+
         if (value is null)
             return 0;
+
         return Convert.ToDouble(value, CultureInfo.InvariantCulture);
     }
 }

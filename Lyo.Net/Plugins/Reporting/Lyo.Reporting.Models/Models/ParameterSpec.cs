@@ -4,8 +4,8 @@ using Lyo.Common.Metadata.Records;
 namespace Lyo.Reporting.Models.Models;
 
 /// <summary>
-/// Design-time parameter declared on a report composition. The workbench uses this for the schema and example values; generation still
-/// persists the same keys on the definition / generation rows.
+/// Design-time parameter declared on a report composition. The workbench uses this for the schema and example values; generation still persists the same keys on the
+/// definition / generation rows.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class ParameterSpec

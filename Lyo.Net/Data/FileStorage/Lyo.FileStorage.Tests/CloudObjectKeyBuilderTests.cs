@@ -42,8 +42,7 @@ public sealed class CloudObjectKeyBuilderTests
     }
 
     [Fact]
-    public void InferTrailingSuffixAfterFileId_UnrelatedName_ReturnsEmpty()
-        => Assert.Equal("", CloudObjectKeyBuilder.InferTrailingSuffixAfterFileId(FileId, "photo.jpg"));
+    public void InferTrailingSuffixAfterFileId_UnrelatedName_ReturnsEmpty() => Assert.Equal("", CloudObjectKeyBuilder.InferTrailingSuffixAfterFileId(FileId, "photo.jpg"));
 
     [Fact]
     public void FromMetadata_WithStoragePrefix_PrependsRoot()

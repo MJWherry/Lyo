@@ -9,7 +9,10 @@ public static class Extensions
 {
     extension(IServiceCollection services)
     {
-        /// <summary>Adds <see cref="JsonImportFormatHandler" /> and <see cref="ImportService" />. YAML, XML, TOML, CSV, and XLSX handlers are added by their addon packages. Options are validated at registration.</summary>
+        /// <summary>
+        /// Adds <see cref="JsonImportFormatHandler" /> and <see cref="ImportService" />. YAML, XML, TOML, CSV, and XLSX handlers are added by their addon packages. Options are
+        /// validated at registration.
+        /// </summary>
         public IServiceCollection AddLyoApiImport(ImportOptions? options = null)
         {
             var importOptions = options ?? new ImportOptions();
@@ -18,9 +21,8 @@ public static class Extensions
             services.TryAddEnumerable(ServiceDescriptor.Singleton<IImportFormatHandler, JsonImportFormatHandler>());
             services.TryAddSingleton(importOptions);
             services.TryAddSingleton<IImportService>(provider => new ImportService(
-                provider.GetServices<IImportFormatHandler>(),
-                provider.GetRequiredService<ImportOptions>(),
-                provider.GetService<IImportCommitter>()));
+                provider.GetServices<IImportFormatHandler>(), provider.GetRequiredService<ImportOptions>(), provider.GetService<IImportCommitter>()));
+
             return services;
         }
     }

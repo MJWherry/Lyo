@@ -18,11 +18,9 @@ public class DirectUploadTests
         });
 
         var begin = await scope.Storage.BeginDirectUploadAsync(new() { DeclaredMaxSizeBytes = 8, OriginalFileName = "tiny.bin" }, TestCt);
-
         var oversized = new byte[32];
         await using var ms = new MemoryStream(oversized);
-        await Assert.ThrowsAnyAsync<FilePolicyRejectedException>(async ()
-            => await scope.Storage.ReceiveDirectPutAsync(begin.FileId, ms, TestCt));
+        await Assert.ThrowsAnyAsync<FilePolicyRejectedException>(async () => await scope.Storage.ReceiveDirectPutAsync(begin.FileId, ms, TestCt));
     }
 
     [Fact]

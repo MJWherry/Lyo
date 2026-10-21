@@ -1,3 +1,5 @@
+using Lyo.Leaderboard.Enums;
+
 namespace Lyo.Leaderboard;
 
 /// <summary>Persistence and policy for boards, scoring properties, members, invites, entries, and standings.</summary>
@@ -77,7 +79,7 @@ public interface ILeaderboardStore
 public sealed class EntryStatusChange
 {
     /// <summary>Target status.</summary>
-    public Enums.EntryStatus Status { get; set; }
+    public EntryStatus Status { get; set; }
 
     /// <summary>Required when rejecting.</summary>
     public string? RejectionReason { get; set; }

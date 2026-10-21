@@ -6,7 +6,8 @@ namespace Lyo.OpenSubtitles.Client;
 public sealed class SubtitleManager(OpenSubtitlesClient client)
 {
     /// <summary>
-    /// Searches subtitles. When <paramref name="session" /> is set, the call uses that login hostname. <see cref="SubtitleSearchQuery.ImdbId" /> is sent as a number without a <c>tt</c> prefix.
+    /// Searches subtitles. When <paramref name="session" /> is set, the call uses that login hostname. <see cref="SubtitleSearchQuery.ImdbId" /> is sent as a number without a
+    /// <c>tt</c> prefix.
     /// </summary>
     public Task<SubtitleSearchResponse?> SearchAsync(SubtitleSearchQuery query, OpenSubtitlesSession? session = null, CancellationToken ct = default)
     {
@@ -20,7 +21,7 @@ public sealed class SubtitleManager(OpenSubtitlesClient client)
     public Task<SubtitleDownload> DownloadAsync(int fileId, OpenSubtitlesSession session, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(session);
-        return client.PostAsAsync<DownloadRequest, SubtitleDownload>(client.Url(session, "download"), new DownloadRequest { FileId = fileId }, OpenSubtitlesClient.Bearer(session), ct);
+        return client.PostAsAsync<DownloadRequest, SubtitleDownload>(client.Url(session, "download"), new() { FileId = fileId }, OpenSubtitlesClient.Bearer(session), ct);
     }
 
     private static int? NormalizeImdb(string? imdbId)
@@ -42,8 +43,7 @@ public sealed class SubtitleManager(OpenSubtitlesClient client)
         return id;
     }
 
-    private static string? JoinLanguages(IReadOnlyList<string>? languages)
-        => languages is { Count: > 0 } ? string.Join(",", languages) : null;
+    private static string? JoinLanguages(IReadOnlyList<string>? languages) => languages is { Count: > 0 } ? string.Join(",", languages) : null;
 
     internal sealed class SearchWire
     {

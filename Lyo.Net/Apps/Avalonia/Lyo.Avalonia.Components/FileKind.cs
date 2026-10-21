@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Path = Avalonia.Controls.Shapes.Path;
 
 namespace Lyo.Desktop.Components;
 
@@ -43,39 +44,23 @@ public enum FileGlyph
 public static class FileKind
 {
     private static readonly (FileGlyph Glyph, string[] Extensions)[] Glyphs = [
-        (FileGlyph.Pdf, [".pdf"]),
-        (FileGlyph.Table, [".csv", ".xls", ".xlsx"]),
-        (FileGlyph.Image, [".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"]),
-        (FileGlyph.Document, [".doc", ".docx", ".txt", ".rtf"]),
-        (FileGlyph.Code, [".cs", ".ts", ".tsx", ".js", ".jsx", ".json", ".xml", ".yaml", ".yml", ".html", ".htm", ".css", ".py", ".java", ".go", ".rs"]),
-        (FileGlyph.Audio, [".mp3", ".wav"]),
-        (FileGlyph.Video, [".mp4"]),
-        (FileGlyph.Archive, [".zip", ".gz", ".tgz", ".7z"])
+        (FileGlyph.Pdf, [".pdf"]), (FileGlyph.Table, [".csv", ".xls", ".xlsx"]), (FileGlyph.Image, [".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"]),
+        (FileGlyph.Document, [".doc", ".docx", ".txt", ".rtf"]), (FileGlyph.Code, [
+            ".cs", ".ts", ".tsx", ".js", ".jsx", ".json", ".xml", ".yaml", ".yml", ".html",
+            ".htm", ".css", ".py", ".java", ".go", ".rs"
+        ]),
+        (FileGlyph.Audio, [".mp3", ".wav"]), (FileGlyph.Video, [".mp4"]), (FileGlyph.Archive, [".zip", ".gz", ".tgz", ".7z"])
     ];
 
     private static readonly (string Name, string[] Mimes, string[] Extensions)[] Types = [
-        ("PDF", ["application/pdf"], [".pdf"]),
-        ("DOC", ["application/msword"], [".doc"]),
-        ("DOCX", ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"], [".docx"]),
-        ("XLS", ["application/vnd.ms-excel"], [".xls"]),
-        ("XLSX", ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"], [".xlsx"]),
-        ("CSV", ["text/csv"], [".csv"]),
-        ("TXT", ["text/plain"], [".txt"]),
-        ("JSON", ["application/json"], [".json"]),
-        ("XML", ["application/xml", "text/xml"], [".xml"]),
-        ("YAML", ["application/yaml", "text/yaml", "text/x-yaml"], [".yaml", ".yml"]),
-        ("HTML", ["text/html"], [".html", ".htm"]),
-        ("JavaScript", ["text/javascript", "application/javascript"], [".js", ".mjs"]),
-        ("PNG", ["image/png"], [".png"]),
-        ("JPEG", ["image/jpeg"], [".jpg", ".jpeg"]),
-        ("GIF", ["image/gif"], [".gif"]),
-        ("SVG", ["image/svg+xml"], [".svg"]),
-        ("WEBP", ["image/webp"], [".webp"]),
-        ("ZIP", ["application/zip"], [".zip"]),
-        ("GZ", ["application/gzip"], [".gz"]),
-        ("MP3", ["audio/mpeg"], [".mp3"]),
-        ("MP4", ["video/mp4"], [".mp4"]),
-        ("WAV", ["audio/wav"], [".wav"])
+        ("PDF", ["application/pdf"], [".pdf"]), ("DOC", ["application/msword"], [".doc"]),
+        ("DOCX", ["application/vnd.openxmlformats-officedocument.wordprocessingml.document"], [".docx"]), ("XLS", ["application/vnd.ms-excel"], [".xls"]),
+        ("XLSX", ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"], [".xlsx"]), ("CSV", ["text/csv"], [".csv"]), ("TXT", ["text/plain"], [".txt"]),
+        ("JSON", ["application/json"], [".json"]), ("XML", ["application/xml", "text/xml"], [".xml"]),
+        ("YAML", ["application/yaml", "text/yaml", "text/x-yaml"], [".yaml", ".yml"]), ("HTML", ["text/html"], [".html", ".htm"]),
+        ("JavaScript", ["text/javascript", "application/javascript"], [".js", ".mjs"]), ("PNG", ["image/png"], [".png"]), ("JPEG", ["image/jpeg"], [".jpg", ".jpeg"]),
+        ("GIF", ["image/gif"], [".gif"]), ("SVG", ["image/svg+xml"], [".svg"]), ("WEBP", ["image/webp"], [".webp"]), ("ZIP", ["application/zip"], [".zip"]),
+        ("GZ", ["application/gzip"], [".gz"]), ("MP3", ["audio/mpeg"], [".mp3"]), ("MP4", ["video/mp4"], [".mp4"]), ("WAV", ["audio/wav"], [".wav"])
     ];
 
     /// <summary>Icon for a tree or grid row. Directories are folders. Files follow the extension.</summary>
@@ -83,9 +68,11 @@ public static class FileKind
     {
         if (isDirectory)
             return FileGlyph.Folder;
+
         var ext = Extension(name);
         if (ext == null)
             return FileGlyph.File;
+
         foreach (var (glyph, extensions) in Glyphs) {
             if (extensions.Contains(ext))
                 return glyph;
@@ -99,9 +86,11 @@ public static class FileKind
     {
         if (isDirectory)
             return new("Folder", ChipHues.Amber);
+
         var name = TypeName(contentType, fileName);
         if (name == null)
             return new(string.IsNullOrWhiteSpace(contentType) ? "File" : MediaType(contentType), -1);
+
         return new(name, HueFor(name));
     }
 
@@ -110,8 +99,10 @@ public static class FileKind
     {
         if (isDirectory)
             return null;
+
         if (!compressed)
             return new("None", -1);
+
         var label = string.IsNullOrWhiteSpace(algorithm) ? "Yes" : algorithm.Trim();
         return new(label, CompressionHue(label));
     }
@@ -121,8 +112,10 @@ public static class FileKind
     {
         if (isDirectory)
             return null;
+
         if (!encrypted)
             return new("None", -1);
+
         var label = string.IsNullOrWhiteSpace(algorithm) ? "Yes" : algorithm.Trim();
         return new(label, EncryptionHue(label));
     }
@@ -132,7 +125,8 @@ public static class FileKind
         var sum = 0;
         foreach (var ch in name)
             sum += ch;
-        return ChipHues.List[(sum * 5) % ChipHues.List.Length];
+
+        return ChipHues.List[sum * 5 % ChipHues.List.Length];
     }
 
     private static int CompressionHue(string algorithm)
@@ -141,7 +135,7 @@ public static class FileKind
             "GZIP" => ChipHues.Amber,
             "DEFLATE" or "ZLIB" => ChipHues.Cyan,
             "LZ4" => ChipHues.Coral,
-            _ => -1
+            var _ => -1
         };
 
     private static int EncryptionHue(string algorithm)
@@ -149,7 +143,7 @@ public static class FileKind
             "AESGCM" or "AESGCMRSA" or "AESCCM" or "AESSIV" => ChipHues.Blue,
             "CHACHA20POLY1305" or "XCHACHA20POLY1305" => ChipHues.Teal,
             "RSA" => ChipHues.Violet,
-            _ => -1
+            var _ => -1
         };
 
     private static string Normalize(string value)
@@ -159,10 +153,11 @@ public static class FileKind
         foreach (var ch in value) {
             if (ch is '-' or '_')
                 continue;
+
             buffer[count++] = char.ToUpperInvariant(ch);
         }
 
-        return new string(buffer[..count]);
+        return new(buffer[..count]);
     }
 
     private static string? TypeName(string? contentType, string? fileName)
@@ -178,6 +173,7 @@ public static class FileKind
         var ext = Extension(fileName);
         if (ext == null)
             return null;
+
         foreach (var type in Types) {
             if (type.Extensions.Contains(ext))
                 return type.Name;
@@ -190,6 +186,7 @@ public static class FileKind
     {
         if (string.IsNullOrWhiteSpace(contentType))
             return "";
+
         var semi = contentType.IndexOf(';');
         return (semi < 0 ? contentType : contentType[..semi]).Trim();
     }
@@ -198,13 +195,16 @@ public static class FileKind
     {
         if (string.IsNullOrWhiteSpace(fileName))
             return null;
+
         var baseName = fileName.Replace('\\', '/');
         var slash = baseName.LastIndexOf('/');
         if (slash >= 0)
             baseName = baseName[(slash + 1)..];
+
         var dot = baseName.LastIndexOf('.');
         if (dot <= 0)
             return null;
+
         return baseName[dot..].ToLowerInvariant();
     }
 }
@@ -213,8 +213,13 @@ public static class FileKind
 public class FileGlyphView : UserControl
 {
     /// <summary>Which icon to draw.</summary>
-    public static readonly Avalonia.StyledProperty<FileGlyph> GlyphProperty =
-        Avalonia.AvaloniaProperty.Register<FileGlyphView, FileGlyph>(nameof(Glyph));
+    public static readonly StyledProperty<FileGlyph> GlyphProperty = AvaloniaProperty.Register<FileGlyphView, FileGlyph>(nameof(Glyph));
+
+    /// <summary>Which icon to draw.</summary>
+    public FileGlyph Glyph {
+        get => GetValue(GlyphProperty);
+        set => SetValue(GlyphProperty, value);
+    }
 
     public FileGlyphView()
     {
@@ -233,26 +238,19 @@ public class FileGlyphView : UserControl
     /// <inheritdoc />
     protected override Size MeasureOverride(Size available)
     {
-        base.MeasureOverride(new Size(16, 16));
-        return new Size(16, 16);
+        base.MeasureOverride(new(16, 16));
+        return new(16, 16);
     }
 
     /// <inheritdoc />
     protected override Size ArrangeOverride(Size finalSize)
     {
-        base.ArrangeOverride(new Size(16, 16));
-        return new Size(16, 16);
-    }
-
-    /// <summary>Which icon to draw.</summary>
-    public FileGlyph Glyph
-    {
-        get => GetValue(GlyphProperty);
-        set => SetValue(GlyphProperty, value);
+        base.ArrangeOverride(new(16, 16));
+        return new(16, 16);
     }
 
     /// <inheritdoc />
-    protected override void OnPropertyChanged(Avalonia.AvaloniaPropertyChangedEventArgs change)
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
         if (change.Property == GlyphProperty)
@@ -260,18 +258,12 @@ public class FileGlyphView : UserControl
     }
 
     private void Redraw()
-    {
-        Content = new Viewbox {
+        => Content = new Viewbox {
             Width = 16,
             Height = 16,
             Stretch = Stretch.Uniform,
-            Child = new Avalonia.Controls.Shapes.Path {
-                Stretch = Stretch.Uniform,
-                Fill = new SolidColorBrush(Fill(Glyph)),
-                Data = Geometry.Parse(Data(Glyph))
-            }
+            Child = new Path { Stretch = Stretch.Uniform, Fill = new SolidColorBrush(Fill(Glyph)), Data = Geometry.Parse(Data(Glyph)) }
         };
-    }
 
     private static Color Fill(FileGlyph glyph)
         => glyph switch {
@@ -282,7 +274,7 @@ public class FileGlyphView : UserControl
             FileGlyph.Archive => Color.Parse("#F5B041"),
             FileGlyph.Audio or FileGlyph.Video => Color.Parse("#AF7AC5"),
             FileGlyph.Table => Color.Parse("#48C9B0"),
-            _ => Color.Parse("#AED6F1")
+            var _ => Color.Parse("#AED6F1")
         };
 
     private static string Data(FileGlyph glyph)
@@ -290,6 +282,6 @@ public class FileGlyphView : UserControl
             FileGlyph.Folder => "M1,4 H7 L9,6 H15 V14 H1 Z",
             FileGlyph.Image => "M2,2 H14 V14 H2 Z M4,10 L7,7 L9,9 L12,6 L14,8 V12 H2 V10 Z",
             FileGlyph.Archive => "M4,1 H12 V15 H4 Z M6,3 H10 V5 H6 Z M6,7 H10 V9 H6 Z",
-            _ => "M4,1 H10 L14,5 V15 H4 Z M10,1 V5 H14"
+            var _ => "M4,1 H10 L14,5 V15 H4 Z M10,1 V5 H14"
         };
 }

@@ -1,11 +1,10 @@
-using Lyo.Json;
+using System.Text.Json;
 using Lyo.Drift.Models;
-using Lyo.Drift.Models.Request;
 using Lyo.Drift.Postgres;
 using Lyo.FileSystemWatcher.Models;
+using Lyo.Json;
 using Lyo.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using System.Text.Json;
 
 namespace Lyo.Drift.Tests;
 
@@ -46,6 +45,7 @@ public sealed class DriftServiceTests
                 TakenAtUtc = DateTime.UtcNow,
                 TreeJson = json
             }, ct);
+
         var second = await drift.SaveSnapshotAsync(
             new() {
                 InstanceId = instance.Id,
@@ -54,6 +54,7 @@ public sealed class DriftServiceTests
                 TakenAtUtc = DateTime.UtcNow.AddSeconds(1),
                 TreeJson = json
             }, ct);
+
         second.Id.ShouldBe(first.Id);
         second.Deduped.ShouldBeTrue();
     }
@@ -66,11 +67,7 @@ public sealed class DriftServiceTests
         var drift = scope.ServiceProvider.GetRequiredService<DriftService>();
         var instance = await drift.UpsertInstanceAsync(new() { InstanceKey = "svc-diff", MachineName = "a", ProcessId = 1 }, ct);
         var oldTree = new FileSystemSnapshotTreeDto { RootPath = "/tmp/x", Root = new() };
-        var newTree = new FileSystemSnapshotTreeDto {
-            RootPath = "/tmp/x",
-            FileCount = 1,
-            Root = new() { Files = { ["n.txt"] = new() { Path = "n.txt", Hash = "ab" } } }
-        };
+        var newTree = new FileSystemSnapshotTreeDto { RootPath = "/tmp/x", FileCount = 1, Root = new() { Files = { ["n.txt"] = new() { Path = "n.txt", Hash = "ab" } } } };
         var a = await drift.SaveSnapshotAsync(
             new() {
                 InstanceId = instance.Id,
@@ -79,6 +76,7 @@ public sealed class DriftServiceTests
                 TakenAtUtc = DateTime.UtcNow,
                 TreeJson = JsonSerializer.Serialize(oldTree, Json)
             }, ct);
+
         var b = await drift.SaveSnapshotAsync(
             new() {
                 InstanceId = instance.Id,
@@ -87,6 +85,7 @@ public sealed class DriftServiceTests
                 TakenAtUtc = DateTime.UtcNow.AddSeconds(1),
                 TreeJson = JsonSerializer.Serialize(newTree, Json)
             }, ct);
+
         var diff = await drift.DiffAgainstAsync(a.Id, b.Id, ct);
         diff.Source.ShouldBe(DriftDiffSource.Server);
         diff.FileChangesJson.ShouldNotBeNull();
@@ -108,6 +107,7 @@ public sealed class DriftServiceTests
                 TakenAtUtc = DateTime.UtcNow.AddDays(-10),
                 TreeJson = "{\"rootPath\":\"/tmp/p\",\"fileCount\":0}"
             }, ct);
+
         var latest = await drift.SaveSnapshotAsync(
             new() {
                 InstanceId = instance.Id,
@@ -116,6 +116,7 @@ public sealed class DriftServiceTests
                 TakenAtUtc = DateTime.UtcNow.AddDays(-9),
                 TreeJson = "{\"rootPath\":\"/tmp/p\",\"fileCount\":1}"
             }, ct);
+
         var deleted = await drift.PruneAsync(ct);
         deleted.ShouldBeGreaterThan(0);
         var kept = await drift.GetSnapshotAsync(latest.Id, ct);

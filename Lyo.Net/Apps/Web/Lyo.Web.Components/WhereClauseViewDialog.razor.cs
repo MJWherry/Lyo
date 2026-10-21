@@ -10,12 +10,12 @@ public partial class WhereClauseViewDialog
 
     private int _activeTab;
 
-    private string _readableText = string.Empty;
-
     private string _jsonText = string.Empty;
 
+    private string _readableText = string.Empty;
+
     [CascadingParameter]
-    IMudDialogInstance MudDialog { get; set; } = default!;
+    private IMudDialogInstance MudDialog { get; set; } = default!;
 
     [Parameter]
     public string? ElementId { get; set; }

@@ -10,7 +10,7 @@ public class LogSinkTests
         var sink = new LogSink();
         LogLine? line = null;
         sink.Written += text => line = text;
-        var logger = new LogSinkLoggerFactory(new LogSinkLoggerProvider(sink)).CreateLogger("test");
+        var logger = new LogSinkLoggerFactory(new(sink)).CreateLogger("test");
         logger.LogInformation("Connected.");
         Assert.NotNull(line);
         Assert.Equal("Connected.", line.Message);
@@ -24,7 +24,7 @@ public class LogSinkTests
         var sink = new LogSink();
         LogLine? line = null;
         sink.Written += text => line = text;
-        var logger = new LogSinkLoggerFactory(new LogSinkLoggerProvider(sink)).CreateLogger("test");
+        var logger = new LogSinkLoggerFactory(new(sink)).CreateLogger("test");
         logger.LogWarning("Disk full.");
         Assert.NotNull(line);
         Assert.Equal(LogLevel.Warning, line.Level);
@@ -37,7 +37,7 @@ public class LogSinkTests
         var sink = new LogSink();
         LogLine? line = null;
         sink.Written += text => line = text;
-        var logger = new LogSinkLoggerFactory(new LogSinkLoggerProvider(sink)).CreateLogger("studio");
+        var logger = new LogSinkLoggerFactory(new(sink)).CreateLogger("studio");
         InvalidOperationException error;
         try {
             throw new InvalidOperationException("Navigation failed");
@@ -65,7 +65,7 @@ public class LogSinkTests
         var sink = new LogSink();
         LogLine? line = null;
         sink.Written += text => line = text;
-        var logger = new LogSinkLoggerFactory(new LogSinkLoggerProvider(sink)).CreateLogger("test");
+        var logger = new LogSinkLoggerFactory(new(sink)).CreateLogger("test");
         logger.LogError(new InvalidOperationException("boom"), "Failed.");
         Assert.NotNull(line);
         Assert.Equal("Failed. boom", line.Message);
@@ -79,7 +79,7 @@ public class LogSinkTests
         var sink = new LogSink();
         var count = 0;
         sink.Written += _ => count++;
-        var logger = new LogSinkLoggerFactory(new LogSinkLoggerProvider(sink)).CreateLogger("test");
+        var logger = new LogSinkLoggerFactory(new(sink)).CreateLogger("test");
         logger.LogDebug("hidden");
         Assert.Equal(0, count);
         Assert.Empty(sink.Snapshot());

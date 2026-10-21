@@ -1,5 +1,4 @@
 using Lyo.Ledger.Postgres.Database;
-using Lyo.Ledger.Seed;
 using Lyo.Seed;
 
 namespace Lyo.Ledger.Seed.Tests;
@@ -15,11 +14,12 @@ public sealed class LedgerEfSeedContributorTests
         var lines = transport.Items.OfType<LedgerJournalLineEntity>().ToList();
         Assert.Equal(2, accounts.Count);
         Assert.Equal(3, journals.Count);
-        Assert.All(journals, journal => {
-            var journalLines = lines.Where(line => line.JournalId == journal.Id).ToList();
-            Assert.Equal(2, journalLines.Count);
-            Assert.Equal(journalLines.Sum(line => line.Debit), journalLines.Sum(line => line.Credit));
-        });
+        Assert.All(
+            journals, journal => {
+                var journalLines = lines.Where(line => line.JournalId == journal.Id).ToList();
+                Assert.Equal(2, journalLines.Count);
+                Assert.Equal(journalLines.Sum(line => line.Debit), journalLines.Sum(line => line.Credit));
+            });
     }
 
     private static async Task<RecordingSeedTransport> SeedAsync(SeedContributor contributor, int count)
@@ -45,6 +45,7 @@ public sealed class LedgerEfSeedContributorTests
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

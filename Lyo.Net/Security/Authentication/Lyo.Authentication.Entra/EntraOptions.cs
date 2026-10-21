@@ -4,8 +4,8 @@ using Lyo.Exceptions;
 namespace Lyo.Authentication.Entra;
 
 /// <summary>
-/// Microsoft Entra SAML app settings. The Identifier (Entity ID) and Reply URL must match <see cref="EntityId" /> and <see cref="AcsUrl" /> exactly.
-/// Leave request verification and assertion encryption off.
+/// Microsoft Entra SAML app settings. The Identifier (Entity ID) and Reply URL must match <see cref="EntityId" /> and <see cref="AcsUrl" /> exactly. Leave request
+/// verification and assertion encryption off.
 /// </summary>
 public sealed class EntraOptions
 {

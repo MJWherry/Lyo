@@ -1,17 +1,24 @@
 # Lyo.StateMachine.Models
 
-Dependency-free contracts shared by [`Lyo.StateMachine`](../Lyo.StateMachine/README.md) and its stores such as [`Lyo.StateMachine.Postgres`](../Lyo.StateMachine.Postgres/README.md). Reference this package when you only need to pass snapshots around or implement a store.
+Dependency-free contracts shared by [`Lyo.StateMachine`](../Lyo.StateMachine/README.md) and its stores such as [
+`Lyo.StateMachine.Postgres`](../Lyo.StateMachine.Postgres/README.md). Reference this package when you only need to pass snapshots around or implement a store.
 
 ## Features
 
-- **`StateSnapshot<TState>`.** Immutable saved state: current state, version, entry time, optional timer due time, and optional instance data JSON. All times are UTC. New instances start at version 0.
-- **`TransitionResult<TState>`.** `Succeeded`, `Changed`, `Kind` (`Transition`, `Reentry`, `Internal`, `Ignored`), `From`, `To`, and the `Snapshot`. Invalid transitions return a `TransitionRejection` (`NoTransition`, `GuardFailed`, `ConcurrencyConflict`) instead of throwing.
+- **`StateSnapshot<TState>`.** Immutable saved state: current state, version, entry time, optional timer due time, and optional instance data JSON. All times are UTC. New instances
+  start at version 0.
+- **`TransitionResult<TState>`.** `Succeeded`, `Changed`, `Kind` (`Transition`, `Reentry`, `Internal`, `Ignored`), `From`, `To`, and the `Snapshot`. Invalid transitions return a
+  `TransitionRejection` (`NoTransition`, `GuardFailed`, `ConcurrencyConflict`) instead of throwing.
 - **`TransitionRecord<TState>`.** History entry (from, to, trigger name, version, time) written by stores next to the snapshot.
-- **`IStateStore<TState>`.** `LoadAsync` returns null for unsaved instances. `SaveAsync` writes only when the stored version equals `expectedVersion` (0 for a new instance) and returns false otherwise.
-- **`IStateInstanceQuery<TState>`.** List instances filtered by states, due time (for timer polling), or update time; count by state; page history; delete with an optional version check.
+- **`IStateStore<TState>`.** `LoadAsync` returns null for unsaved instances. `SaveAsync` writes only when the stored version equals `expectedVersion` (0 for a new instance) and
+  returns false otherwise.
+- **`IStateInstanceQuery<TState>`.** List instances filtered by states, due time (for timer polling), or update time; count by state; page history; delete with an optional version
+  check.
 - **`IStateKeyConverter<T>`.** Turns states and triggers into stable string keys. `EnumStateKeyConverter<TEnum>` (member names) and `StringStateKeyConverter` ship here.
-- **`StateMachineDocument` and `IStateMachineDefinitionStore`.** A machine as data (states, parents, initial substates, final flags, timers, hook names, and Permit/Reentry/Internal/Ignore/Dynamic rules) saved as append-only revisions.
-- **Exceptions.** `StateMachineConfigurationException` (invalid definition), `UnhandledTriggerException`, `StateMachineHookException` (wraps guard/hook failures), and `StateMachineReentrancyException`.
+- **`StateMachineDocument` and `IStateMachineDefinitionStore`.** A machine as data (states, parents, initial substates, final flags, timers, hook names, and
+  Permit/Reentry/Internal/Ignore/Dynamic rules) saved as append-only revisions.
+- **Exceptions.** `StateMachineConfigurationException` (invalid definition), `UnhandledTriggerException`, `StateMachineHookException` (wraps guard/hook failures), and
+  `StateMachineReentrancyException`.
 
 ## Examples
 

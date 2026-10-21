@@ -55,12 +55,10 @@ public sealed class RequireRateLimitTests
         using var first = new HttpRequestMessage(HttpMethod.Get, "/identity");
         first.Headers.TryAddWithoutValidation("X-Ip", "10.0.0.8");
         Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(first, TestCt)).StatusCode);
-
         using var named = new HttpRequestMessage(HttpMethod.Get, "/identity");
         named.Headers.TryAddWithoutValidation("X-Ip", "10.0.0.8");
         named.Headers.TryAddWithoutValidation("X-Sub", "user-1");
         Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(named, TestCt)).StatusCode);
-
         using var again = new HttpRequestMessage(HttpMethod.Get, "/identity");
         again.Headers.TryAddWithoutValidation("X-Ip", "10.9.9.9");
         again.Headers.TryAddWithoutValidation("X-Sub", "user-1");
@@ -105,30 +103,31 @@ public sealed class RequireRateLimitTests
                 })
                 .Configure(app => {
                     app.UseMiddleware<LoggingMiddleware>();
-                    app.Use(async (HttpContext context, Func<Task> next) => {
+                    app.Use(async (context, next) => {
                         var ip = context.Request.Headers.TryGetValue("X-Ip", out var rawIp) ? rawIp.ToString() : "10.0.0.8";
-                        context.Connection.RemoteIpAddress = System.Net.IPAddress.Parse(ip);
+                        context.Connection.RemoteIpAddress = IPAddress.Parse(ip);
                         if (context.Request.Headers.TryGetValue("X-Sub", out var sub) && !string.IsNullOrWhiteSpace(sub))
-                            context.User = new ClaimsPrincipal(new ClaimsIdentity([new Claim("sub", sub.ToString())], "test"));
+                            context.User = new(new ClaimsIdentity([new("sub", sub.ToString())], "test"));
 
                         await next();
                     });
+
                     app.UseRouting();
                     app.UseEndpoints(endpoints => {
                         endpoints.MapGet("/under", () => Results.Ok()).RequireRateLimit("under", 4, TimeSpan.FromSeconds(10), RateLimitWindow.Fixed);
                         endpoints.MapGet("/over", () => Results.Ok()).RequireRateLimit("over", 4, TimeSpan.FromSeconds(10), RateLimitWindow.Fixed);
                         endpoints.MapGet("/open", () => Results.Ok());
                         endpoints.MapGet("/identity", () => Results.Ok()).RequireRateLimit("identity", 1, TimeSpan.FromSeconds(10), RateLimitWindow.Fixed);
-                        endpoints.MapGet("/named", () => Results.Ok()).WithName("GetPerson")
+                        endpoints.MapGet("/named", () => Results.Ok())
+                            .WithName("GetPerson")
                             .RequireRateLimit("named", 1, TimeSpan.FromSeconds(10), RateLimitWindow.Fixed, whitelist: ["GetPerson"]);
-                        endpoints.MapGet("/named-sibling", () => Results.Ok())
-                            .RequireRateLimit("named", 1, TimeSpan.FromSeconds(10), RateLimitWindow.Fixed);
+
+                        endpoints.MapGet("/named-sibling", () => Results.Ok()).RequireRateLimit("named", 1, TimeSpan.FromSeconds(10), RateLimitWindow.Fixed);
                         endpoints.MapPost("/person/{id}", () => Results.Ok())
                             .RequireRateLimit("people", 1, TimeSpan.FromSeconds(10), RateLimitWindow.Fixed, whitelist: ["POST /person/{id}"]);
-                        endpoints.MapPost("/person-other", () => Results.Ok())
-                            .RequireRateLimit("people", 1, TimeSpan.FromSeconds(10), RateLimitWindow.Fixed);
-                        endpoints.MapGet("/empty-list", () => Results.Ok())
-                            .RequireRateLimit("empty", 1, TimeSpan.FromSeconds(10), RateLimitWindow.Fixed, whitelist: []);
+
+                        endpoints.MapPost("/person-other", () => Results.Ok()).RequireRateLimit("people", 1, TimeSpan.FromSeconds(10), RateLimitWindow.Fixed);
+                        endpoints.MapGet("/empty-list", () => Results.Ok()).RequireRateLimit("empty", 1, TimeSpan.FromSeconds(10), RateLimitWindow.Fixed, whitelist: []);
                     });
                 }))
             .StartAsync(TestCt);

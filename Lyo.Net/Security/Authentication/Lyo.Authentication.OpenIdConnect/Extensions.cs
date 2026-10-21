@@ -20,8 +20,8 @@ public static class Extensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers the OpenID Connect protocol on top of <c>AddLyoSso</c>: discovery, JWKS, PKCE, token exchange, id_token validation, and
-        /// <see cref="OidcSsoProtocol" />. Does not bind BFF options; <c>AddLyoSso(IConfiguration)</c> does that.
+        /// Registers the OpenID Connect protocol on top of <c>AddLyoSso</c>: discovery, JWKS, PKCE, token exchange, id_token validation, and <see cref="OidcSsoProtocol" />. Does not
+        /// bind BFF options; <c>AddLyoSso(IConfiguration)</c> does that.
         /// </summary>
         public IServiceCollection AddLyoOpenIdConnect()
         {

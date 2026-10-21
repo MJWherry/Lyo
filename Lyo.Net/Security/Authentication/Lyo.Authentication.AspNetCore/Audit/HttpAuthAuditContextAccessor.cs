@@ -7,10 +7,9 @@ using Microsoft.AspNetCore.Http;
 namespace Lyo.Authentication.AspNetCore.Audit;
 
 /// <summary>
-/// ASP.NET Core <see cref="IAuthAuditContextAccessor" />. IP and User-Agent come from the ambient <see cref="HttpContext" /> through
-/// <see cref="IHttpContextAccessor" />; the correlation id comes from <see cref="ICorrelationIdResolver" /> so the audit row matches outbound
-/// HTTP stamps, structured logs, and diagnostic request metadata. Any missing field is <c>null</c> (no inbound request, absent header, and so on) so the recorder
-/// still writes a row instead of empty strings.
+/// ASP.NET Core <see cref="IAuthAuditContextAccessor" />. IP and User-Agent come from the ambient <see cref="HttpContext" /> through <see cref="IHttpContextAccessor" />; the
+/// correlation id comes from <see cref="ICorrelationIdResolver" /> so the audit row matches outbound HTTP stamps, structured logs, and diagnostic request metadata. Any missing field
+/// is <c>null</c> (no inbound request, absent header, and so on) so the recorder still writes a row instead of empty strings.
 /// </summary>
 public sealed class HttpAuthAuditContextAccessor : IAuthAuditContextAccessor
 {
@@ -28,8 +27,8 @@ public sealed class HttpAuthAuditContextAccessor : IAuthAuditContextAccessor
 
     /// <inheritdoc />
     /// <remarks>
-    /// Returns <see cref="ConnectionInfo.RemoteIpAddress" /> unchanged. Hosts behind a reverse proxy should turn on <c>UseForwardedHeaders</c> so this is the client IP
-    /// rather than the proxy.
+    /// Returns <see cref="ConnectionInfo.RemoteIpAddress" /> unchanged. Hosts behind a reverse proxy should turn on <c>UseForwardedHeaders</c> so this is the client IP rather
+    /// than the proxy.
     /// </remarks>
     public string? IpAddress => _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
 
@@ -47,9 +46,9 @@ public sealed class HttpAuthAuditContextAccessor : IAuthAuditContextAccessor
 
     /// <inheritdoc />
     /// <remarks>
-    /// Forwards to the injected <see cref="ICorrelationIdResolver" />. With <c>Lyo.Diagnostic.AspNetCore</c> wired, this walks
-    /// <c>DiagnosticWebOptions.CorrelationIdHeaders</c> on the inbound request, then <c>HttpContext.TraceIdentifier</c>, <c>Activity.Current</c>'s id, and last a
-    /// new GUID. Hosts without the diagnostics package get the ambient fallback from <c>AddLyoBearerAuthentication</c>.
+    /// Forwards to the injected <see cref="ICorrelationIdResolver" />. With <c>Lyo.Diagnostic.AspNetCore</c> wired, this walks <c>DiagnosticWebOptions.CorrelationIdHeaders</c>
+    /// on the inbound request, then <c>HttpContext.TraceIdentifier</c>, <c>Activity.Current</c>'s id, and last a new GUID. Hosts without the diagnostics package get the ambient fallback
+    /// from <c>AddLyoBearerAuthentication</c>.
     /// </remarks>
     public string? CorrelationId {
         get {

@@ -18,12 +18,7 @@ internal static class IdempotencyDecision
         return Result(IdempotencyOutcome.Replay, live);
     }
 
-    public static IdempotencyBeginResult Began(IdempotencyEntry entry)
-        => new() {
-            Outcome = IdempotencyOutcome.Began,
-            Id = entry.Id,
-            LeaseToken = entry.LeaseToken
-        };
+    public static IdempotencyBeginResult Began(IdempotencyEntry entry) => new() { Outcome = IdempotencyOutcome.Began, Id = entry.Id, LeaseToken = entry.LeaseToken };
 
     private static IdempotencyBeginResult Result(IdempotencyOutcome outcome, IdempotencyEntry live)
         => new() {

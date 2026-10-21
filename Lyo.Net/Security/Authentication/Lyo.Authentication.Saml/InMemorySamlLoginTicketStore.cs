@@ -15,9 +15,7 @@ public sealed class InMemorySamlLoginTicketStore : ISamlLoginTicketStore
 
     /// <summary>Creates a store that reads <see cref="DateTime.UtcNow" />.</summary>
     public InMemorySamlLoginTicketStore()
-        : this(() => DateTime.UtcNow)
-    {
-    }
+        : this(() => DateTime.UtcNow) { }
 
     /// <summary>Creates a store that reads <paramref name="utcNow" />. Tests use this to expire a ticket.</summary>
     public InMemorySamlLoginTicketStore(Func<DateTime> utcNow)
@@ -32,7 +30,6 @@ public sealed class InMemorySamlLoginTicketStore : ISamlLoginTicketStore
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(provider);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(requestId);
         ArgumentHelpers.ThrowIfNull(returnUrl);
-
         var id = Base64Url.Encode(CryptographicRandom.GetBytes(16));
         if (Encoding.UTF8.GetByteCount(id) > 80)
             throw new InvalidOperationException("SAML RelayState ticket id exceeds 80 bytes.");

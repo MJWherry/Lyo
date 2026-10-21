@@ -24,8 +24,8 @@ public sealed class AuthenticationPostgresFixture : PostgresServiceFixtureBase<U
 
     protected override LogLevel MinimumLogLevel => LogLevel.Warning;
 
-    protected override void ConfigureServices(IServiceCollection services, string connectionString) =>
-        services.AddPostgresAuthenticationStores(o => {
+    protected override void ConfigureServices(IServiceCollection services, string connectionString)
+        => services.AddPostgresAuthenticationStores(o => {
             o.ConnectionString = connectionString;
             o.EnableAutoMigrations = true;
         });

@@ -11,7 +11,6 @@ public sealed class CalendarMonthSummaryTests
     {
         var seven = new DateTime(2026, 9, 15, 7, 0, 0, DateTimeKind.Utc);
         var result = CalendarMonthSummary.Build([(seven, seven), (seven, seven), (seven, seven)], Day, TimeZoneInfo.Utc);
-
         Assert.Single(result.Rows);
         Assert.Equal(0, result.MoreRows);
         Assert.False(result.Rows[0].AllDay);
@@ -22,11 +21,7 @@ public sealed class CalendarMonthSummaryTests
     [Fact]
     public void Build_MoreThanThreeHours_KeepsThreeAndCountsTheRest()
     {
-        var result = CalendarMonthSummary.Build(
-            [(At(7), At(7)), (At(7), At(7)), (At(12), At(12)), (At(13), At(13)), (At(16), At(16))],
-            Day,
-            TimeZoneInfo.Utc);
-
+        var result = CalendarMonthSummary.Build([(At(7), At(7)), (At(7), At(7)), (At(12), At(12)), (At(13), At(13)), (At(16), At(16))], Day, TimeZoneInfo.Utc);
         Assert.Equal(3, result.Rows.Count);
         Assert.Equal(1, result.MoreRows);
         Assert.Equal([7, 12, 13], result.Rows.Select(row => row.Hour).ToArray());
@@ -39,7 +34,6 @@ public sealed class CalendarMonthSummaryTests
         var start = new DateTime(2026, 9, 15, 0, 0, 0, DateTimeKind.Utc);
         var end = new DateTime(2026, 9, 16, 0, 0, 0, DateTimeKind.Utc);
         var result = CalendarMonthSummary.Build([(start, end), (At(9), At(9))], Day, TimeZoneInfo.Utc);
-
         Assert.Equal(2, result.Rows.Count);
         Assert.Equal(0, result.MoreRows);
         Assert.True(result.Rows[0].AllDay);

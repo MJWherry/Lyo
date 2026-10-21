@@ -65,7 +65,7 @@ public class JsonOptions
     public DocumentCommentHandling CommentHandling { get; set; } = DocumentCommentHandling.Disallow;
 
     /// <summary>Text encoding for file, stream, and byte I/O. Starts as UTF-8 without a BOM. A BOM on read still wins.</summary>
-    public Encoding Encoding { get; set; } = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
+    public Encoding Encoding { get; set; } = new UTF8Encoding(false);
 
     /// <summary>Property order for a typed object and for a <see cref="System.Text.Json.Nodes.JsonObject" />. Starts as declaration order, which does not sort.</summary>
     public MemberOrder Order { get; set; } = MemberOrder.Defined;
@@ -78,8 +78,10 @@ public class JsonOptions
     {
         if (Encoding is null)
             throw new ArgumentNullException(nameof(Encoding));
+
         if (Culture is null)
             throw new ArgumentNullException(nameof(Culture));
+
         if (MaxDepth < 1)
             throw new ArgumentOutOfRangeException(nameof(MaxDepth), "MaxDepth must be at least 1.");
     }

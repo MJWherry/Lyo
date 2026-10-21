@@ -1,6 +1,5 @@
-using Lyo.Favorite;
-using Microsoft.Extensions.DependencyInjection;
 using Lyo.Common.Core.Identifiers;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Favorite.Postgres.Tests;
 
@@ -19,8 +18,9 @@ public sealed class FavoritePostgresStoreTests(FavoritePostgresFixture fixture)
             SubjectEntityType = "thing",
             SubjectEntityId = subject.ToString(),
             ActorEntityType = "person",
-            ActorEntityId = actor.ToString(),
+            ActorEntityId = actor.ToString()
         };
+
         await store.SaveAsync(row, ct: ct);
         Assert.NotEqual(Guid.Empty, row.Id);
         var loaded = await store.GetByIdAsync(row.Id, ct: ct);
@@ -28,6 +28,5 @@ public sealed class FavoritePostgresStoreTests(FavoritePostgresFixture fixture)
         Assert.Equal(row.Id, loaded.Id);
         Assert.Equal("thing", loaded.SubjectEntityType);
         Assert.Equal(subject.ToString(), loaded.SubjectEntityId);
-
     }
 }

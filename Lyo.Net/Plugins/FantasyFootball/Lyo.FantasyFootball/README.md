@@ -1,6 +1,7 @@
 # Lyo.FantasyFootball
 
-League, member, team, roster, conversation, message, and trade records, plus `IFantasyFootballStore`. No Entity Framework and no ESPN types. The HTTP API maps ESPN into these records.
+League, member, team, roster, conversation, message, and trade records, plus `IFantasyFootballStore`. No Entity Framework and no ESPN types. The HTTP API maps ESPN into these
+records.
 
 ## Features
 

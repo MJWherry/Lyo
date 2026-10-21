@@ -16,8 +16,8 @@ internal static class NfcCommands
         return nfc;
     }
 
-    private static void Bind(Command cmd, Func<ParseResult, CancellationToken, Task> body) =>
-        cmd.SetAction(async (pr, ct) => {
+    private static void Bind(Command cmd, Func<ParseResult, CancellationToken, Task> body)
+        => cmd.SetAction(async (pr, ct) => {
             try {
                 await body(pr, ct).ConfigureAwait(false);
                 return 0;
@@ -31,14 +31,16 @@ internal static class NfcCommands
     private static Command CreateReaders()
     {
         var cmd = new Command("readers", "List PC/SC reader names");
-        Bind(cmd, (pr, ct) => {
-            ct.ThrowIfCancellationRequested();
-            using var reader = new PcscNfcReader();
-            foreach (var name in reader.ListReaders())
-                Console.WriteLine(name);
+        Bind(
+            cmd, (pr, ct) => {
+                ct.ThrowIfCancellationRequested();
+                using var reader = new PcscNfcReader();
+                foreach (var name in reader.ListReaders())
+                    Console.WriteLine(name);
 
-            return Task.CompletedTask;
-        });
+                return Task.CompletedTask;
+            });
+
         return cmd;
     }
 
@@ -68,10 +70,12 @@ internal static class NfcCommands
         cmd.Arguments.Add(textArg);
         cmd.Options.Add(langOpt);
         cmd.Options.Add(readerOpt);
-        Bind(cmd, async (pr, ct) => {
-            var message = NdefMessage.Of(NdefTextRecord.Create(pr.GetValue(langOpt) ?? "en", pr.GetValue(textArg)!));
-            await WriteType2Async(pr.GetValue(readerOpt), message, ct).ConfigureAwait(false);
-        });
+        Bind(
+            cmd, async (pr, ct) => {
+                var message = NdefMessage.Of(NdefTextRecord.Create(pr.GetValue(langOpt) ?? "en", pr.GetValue(textArg)!));
+                await WriteType2Async(pr.GetValue(readerOpt), message, ct).ConfigureAwait(false);
+            });
+
         return cmd;
     }
 
@@ -82,10 +86,12 @@ internal static class NfcCommands
         var readerOpt = ReaderOption();
         cmd.Arguments.Add(uriArg);
         cmd.Options.Add(readerOpt);
-        Bind(cmd, async (pr, ct) => {
-            var message = NdefMessage.Of(NdefUriRecord.Create(pr.GetValue(uriArg)!));
-            await WriteType2Async(pr.GetValue(readerOpt), message, ct).ConfigureAwait(false);
-        });
+        Bind(
+            cmd, async (pr, ct) => {
+                var message = NdefMessage.Of(NdefUriRecord.Create(pr.GetValue(uriArg)!));
+                await WriteType2Async(pr.GetValue(readerOpt), message, ct).ConfigureAwait(false);
+            });
+
         return cmd;
     }
 
@@ -135,7 +141,7 @@ internal static class NfcCommands
     private static void PrintRaw(NtagLayout layout, byte[] user)
     {
         for (var offset = 0; offset < user.Length; offset += 4) {
-            var page = layout.UserStartPage + (offset / 4);
+            var page = layout.UserStartPage + offset / 4;
             Console.WriteLine($"{page:X2}: {ByteConvert.ToHex(user.AsSpan(offset, 4))}");
         }
     }

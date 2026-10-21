@@ -3,8 +3,8 @@ using System.Collections.Concurrent;
 namespace Lyo.Media.Models;
 
 /// <summary>
-/// Extensible video codec identifier. Lookups are thread-safe. Use <see cref="Custom" /> for a codec that is not listed.
-/// Ids are codec tokens (<c>h264</c>, <c>vp9</c>), not a specific backend's encoder binary name.
+/// Extensible video codec identifier. Lookups are thread-safe. Use <see cref="Custom" /> for a codec that is not listed. Ids are codec tokens (<c>h264</c>, <c>vp9</c>), not
+/// a specific backend's encoder binary name.
 /// </summary>
 public sealed record VideoEncoder
 {
@@ -66,7 +66,7 @@ public sealed record VideoEncoder
     public static VideoEncoder Custom(string id)
     {
         _ = BuiltIns;
-        return NamedCatalog.GetOrCustom(ById, id, key => new VideoEncoder(key, key));
+        return NamedCatalog.GetOrCustom(ById, id, key => new(key, key));
     }
 
     /// <inheritdoc />

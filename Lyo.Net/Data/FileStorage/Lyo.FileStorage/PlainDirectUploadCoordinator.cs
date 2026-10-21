@@ -1,7 +1,6 @@
 using Lyo.Common.Core.Extensions;
 using Lyo.Common.Core.Pathing;
 using Lyo.Exceptions;
-using Lyo.Exceptions.Models;
 using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Abstractions;
@@ -14,14 +13,18 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.FileStorage;
 
 /// <summary>
-/// Owns the metadata side of plain-object direct uploads plus server-side copy, move, and rename bookkeeping, so storage drivers share one policy, audit, and hash
-/// finalize path.
+/// Owns the metadata side of plain-object direct uploads plus server-side copy, move, and rename bookkeeping, so storage drivers share one policy, audit, and hash finalize
+/// path.
 /// </summary>
 internal sealed class PlainDirectUploadCoordinator
 {
+    /// <summary>URL lifetime every backend applies when <see cref="DirectUploadBeginRequest.UrlExpiration" /> is unset.</summary>
+    private static readonly TimeSpan DefaultUrlExpiration = TimeSpan.FromHours(1);
+
     private readonly IFileAuditPublisher _auditPublisher;
     private readonly IFileContentPolicy _contentPolicy;
     private readonly int _copyToBufferSizeBytes;
+    private readonly IFileTypeSniffer _fileTypeSniffer;
     private readonly ILogger _logger;
     private readonly IFileStorageMetadataLookup _metadataLookup;
     private readonly IFileStorageMetadataNormalization _metadataNormalization;
@@ -29,15 +32,9 @@ internal sealed class PlainDirectUploadCoordinator
     private readonly IFileOperationContextAccessor _operationContextAccessor;
     private readonly FileStorageServiceBaseOptions _options;
     private readonly IFileStoragePhysicalIO _physicalIO;
-    private readonly IFileTypeSniffer _fileTypeSniffer;
     private readonly IDirectUploadVerification? _verification;
 
-    /// <summary>URL lifetime every backend applies when <see cref="DirectUploadBeginRequest.UrlExpiration" /> is unset.</summary>
-    private static readonly TimeSpan DefaultUrlExpiration = TimeSpan.FromHours(1);
-
-    /// <summary>
-    /// Builds a coordinator with shared policy, metadata store, blob I/O, auditing, and field normalization supplied by the concrete storage backend.
-    /// </summary>
+    /// <summary>Builds a coordinator with shared policy, metadata store, blob I/O, auditing, and field normalization supplied by the concrete storage backend.</summary>
     internal PlainDirectUploadCoordinator(
         IFileContentPolicy contentPolicy,
         IFileMetadataStore metadataService,
@@ -70,8 +67,7 @@ internal sealed class PlainDirectUploadCoordinator
     /// <param name="id"><see cref="FileStoreResult.Id" /> used when matching prefixed filenames.</param>
     /// <param name="sourceFileName">Upstream filename that may start with the file id in <c>N</c> (no hyphens) or default <c>D</c> (with hyphens) format.</param>
     /// <returns>Suffix after the GUID prefix, or an empty string when it cannot be determined.</returns>
-    internal static string InferTrailingSuffixAfterFileId(Guid id, string? sourceFileName)
-        => CloudObjectKeyBuilder.InferTrailingSuffixAfterFileId(id, sourceFileName);
+    internal static string InferTrailingSuffixAfterFileId(Guid id, string? sourceFileName) => CloudObjectKeyBuilder.InferTrailingSuffixAfterFileId(id, sourceFileName);
 
     /// <summary>
     /// Checks declarative upload metadata, clamps tenant and content-type fields, writes a <see cref="FileAvailability.PendingDirectUpload" /> row, and emits a begin audit
@@ -82,8 +78,8 @@ internal sealed class PlainDirectUploadCoordinator
     /// <param name="normalizedPathPrefix">Canonical prefix that matches downstream object keys.</param>
     /// <param name="ct">Cancellation token passed into policy and persistence.</param>
     /// <param name="verifiedChecksumAlgorithm">
-    /// Algorithm the backend verifies on write (SHA-256 for S3, MD5 for Azure). Picks which client-declared digest is recorded on the pending row for finalize to
-    /// compare against. Null means the service's configured <see cref="FileStorageServiceBaseOptions.HashAlgorithm" />, which is what the download-and-hash path uses.
+    /// Algorithm the backend verifies on write (SHA-256 for S3, MD5 for Azure). Picks which client-declared digest is recorded on the pending row
+    /// for finalize to compare against. Null means the service's configured <see cref="FileStorageServiceBaseOptions.HashAlgorithm" />, which is what the download-and-hash path uses.
     /// </param>
     /// <returns>The newly persisted metadata snapshot.</returns>
     internal async Task<FileStoreResult> PersistPendingPlainDirectUploadMetadataAsync(
@@ -140,21 +136,19 @@ internal sealed class PlainDirectUploadCoordinator
         return algorithm switch {
             HashAlgorithm.Sha256 => request.ExpectedSha256 ?? [],
             HashAlgorithm.Md5 => request.ExpectedContentMd5 ?? [],
-            _ => []
+            var _ => []
         };
     }
 
     /// <summary>
-    /// Takes size and checksum from the backend when it reports them (reading at most the header prefix), otherwise downloads and hashes the object. Checks the
-    /// client-declared digest and optional expected length, then sets availability.
+    /// Takes size and checksum from the backend when it reports them (reading at most the header prefix), otherwise downloads and hashes the object. Checks the client-declared
+    /// digest and optional expected length, then sets availability.
     /// </summary>
     /// <param name="fileId">Pending upload id.</param>
     /// <param name="completeRequest">Optional client overrides for filenames and asserted byte counts.</param>
     /// <param name="ct">Cancellation token passed through hashing.</param>
     /// <returns>Updated metadata for the persisted object plus the availability outcome.</returns>
-    /// <exception cref="InvalidOperationException">
-    /// Raised when metadata is not awaiting finalize, encryption is unexpectedly on, the payload is empty, or the length mismatches.
-    /// </exception>
+    /// <exception cref="InvalidOperationException">Raised when metadata is not awaiting finalize, encryption is unexpectedly on, the payload is empty, or the length mismatches.</exception>
     /// <exception cref="FileNotFoundException">Raised when the backing blob is missing.</exception>
     /// <exception cref="FilePolicyRejectedException">Raised when the payload is over the size policy.</exception>
     internal async Task<FileStoreResult> FinalizePendingPlainDirectUploadCoreAsync(Guid fileId, DirectUploadCompleteRequest? completeRequest, CancellationToken ct)
@@ -243,8 +237,8 @@ internal sealed class PlainDirectUploadCoordinator
     }
 
     /// <summary>
-    /// Fallback for backends that cannot report a checksum: spools the object to a temp file so hashing stays in bounded RAM, then hashes with the declared-checksum
-    /// algorithm when one was recorded at begin, otherwise the configured one.
+    /// Fallback for backends that cannot report a checksum: spools the object to a temp file so hashing stays in bounded RAM, then hashes with the declared-checksum algorithm
+    /// when one was recorded at begin, otherwise the configured one.
     /// </summary>
     private async Task<DirectUploadObjectAttributes> SpoolAndHashAsync(FileStoreResult meta, string finalName, DirectUploadCompleteRequest? completeRequest, CancellationToken ct)
     {
@@ -291,8 +285,8 @@ internal sealed class PlainDirectUploadCoordinator
     }
 
     /// <summary>
-    /// Applies the name and header guards (deleting the object when policy rejects it), then the size limits. <paramref name="readPrefix" /> runs only when header
-    /// inspection is configured.
+    /// Applies the name and header guards (deleting the object when policy rejects it), then the size limits. <paramref name="readPrefix" /> runs only when header inspection is
+    /// configured.
     /// </summary>
     private async Task ValidateUploadedObjectAsync(
         FileStoreResult meta,
@@ -340,8 +334,8 @@ internal sealed class PlainDirectUploadCoordinator
     }
 
     /// <summary>
-    /// Clones <paramref name="sourceMeta" /> onto a destination id, applies optional path-prefix overrides from <paramref name="request" />, keeps cryptographic
-    /// hashes, and writes a correlated copy audit anchored on <paramref name="sourceFileId" />.
+    /// Clones <paramref name="sourceMeta" /> onto a destination id, applies optional path-prefix overrides from <paramref name="request" />, keeps cryptographic hashes, and
+    /// writes a correlated copy audit anchored on <paramref name="sourceFileId" />.
     /// </summary>
     /// <param name="sourceFileId">Original object id used as the audit correlation payload.</param>
     /// <param name="sourceMeta">Baseline metadata mirrored onto the cloned record.</param>

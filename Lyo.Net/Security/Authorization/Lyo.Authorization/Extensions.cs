@@ -14,8 +14,8 @@ public static class Extensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers <see cref="InMemoryGrantStore" />, <see cref="IGrantStore" />, and <see cref="IResourceAuthorization" />.
-        /// A missing metrics, logger, or audit recorder does not fail startup.
+        /// Registers <see cref="InMemoryGrantStore" />, <see cref="IGrantStore" />, and <see cref="IResourceAuthorization" />. A missing metrics, logger, or audit recorder does not
+        /// fail startup.
         /// </summary>
         public IServiceCollection AddInMemoryAuthorization(Func<DateTime>? utcNow = null)
         {
@@ -23,10 +23,9 @@ public static class Extensions
             services.AddSingleton(sp => new InMemoryGrantStore(utcNow));
             services.AddSingleton<IGrantStore>(sp => sp.GetRequiredService<InMemoryGrantStore>());
             services.TryAddSingleton<IResourceAuthorization>(sp => new ResourceAuthorization(
-                sp.GetRequiredService<IGrantStore>(),
-                sp.GetService<IMetrics>(),
-                sp.GetService<ILoggerFactory>()?.CreateLogger<ResourceAuthorization>(),
+                sp.GetRequiredService<IGrantStore>(), sp.GetService<IMetrics>(), sp.GetService<ILoggerFactory>()?.CreateLogger<ResourceAuthorization>(),
                 sp.GetService<IAuditRecorder>()));
+
             return services;
         }
     }

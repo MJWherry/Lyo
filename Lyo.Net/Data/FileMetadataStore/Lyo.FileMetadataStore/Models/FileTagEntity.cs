@@ -15,6 +15,5 @@ public sealed class FileTagEntity
 
     public bool Automatic { get; set; }
 
-    public FileTag ToFileTag()
-        => new(Id, Guid.Parse(FileId), TagType, Value, Slug, Automatic);
+    public FileTag ToFileTag() => new(Id, Guid.Parse(FileId), TagType, Value, Slug, Automatic);
 }

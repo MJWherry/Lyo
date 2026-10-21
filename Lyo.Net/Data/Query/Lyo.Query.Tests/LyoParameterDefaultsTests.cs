@@ -5,8 +5,8 @@ using Lyo.Parameters;
 namespace Lyo.Query.Tests;
 
 /// <summary>
-/// Covers the split between what a parameter's value <em>is</em> and how its default is <em>authored</em>. The split exists so a <c>System.DateTime</c> parameter can
-/// default to a template and still be validated as a date, so most cases here check that the rendered text lands in a spelling the validator accepts.
+/// Covers the split between what a parameter's value <em>is</em> and how its default is <em>authored</em>. The split exists so a <c>System.DateTime</c> parameter can default
+/// to a template and still be validated as a date, so most cases here check that the rendered text lands in a spelling the validator accepts.
 /// </summary>
 public sealed class LyoParameterDefaultsTests
 {
@@ -52,7 +52,7 @@ public sealed class LyoParameterDefaultsTests
     [InlineData("System.Boolean", "true", "true")]
     public void TryResolve_NormalizesPerDeclaredType(string type, string rendered, string expected)
     {
-        Assert.True(LyoParameterDefaults.TryResolve(ExpressionSpec(type, "{t}"), null, _ => rendered, out var value, out _));
+        Assert.True(LyoParameterDefaults.TryResolve(ExpressionSpec(type, "{t}"), null, _ => rendered, out var value, out var _));
         Assert.Equal(expected, value);
     }
 
@@ -127,7 +127,7 @@ public sealed class LyoParameterDefaultsTests
     public void TryResolve_FractionalTextForAnIntegerParameter_IsRejectedRatherThanTruncated()
     {
         // Truncating would store a number the template never rendered, worse than telling the author their format is wrong.
-        Assert.False(LyoParameterDefaults.TryResolve(ExpressionSpec(LyoTypeInfo.Int.FullName, "{t}"), null, _ => "1,234.56", out _, out var error));
+        Assert.False(LyoParameterDefaults.TryResolve(ExpressionSpec(LyoTypeInfo.Int.FullName, "{t}"), null, _ => "1,234.56", out var _, out var error));
         Assert.Contains("not a valid System.Int32", error);
     }
 
@@ -136,7 +136,7 @@ public sealed class LyoParameterDefaultsTests
     public void TryResolve_PercentFormattedText_IsRejected()
     {
         // {Rate:P} renders "12.34 %" for a stored 0.1234; accepting it would store a value 100 times too large.
-        Assert.False(LyoParameterDefaults.TryResolve(ExpressionSpec(LyoTypeInfo.Decimal.FullName, "{t}"), null, _ => "12.34 %", out _, out var error));
+        Assert.False(LyoParameterDefaults.TryResolve(ExpressionSpec(LyoTypeInfo.Decimal.FullName, "{t}"), null, _ => "12.34 %", out var _, out var error));
         Assert.Contains("not a valid System.Decimal", error);
     }
 
@@ -145,7 +145,7 @@ public sealed class LyoParameterDefaultsTests
     public void TryResolve_TextThatIsNoDateAtAll_StillFails()
     {
         // Parsing must not become a licence to accept anything: the type check is why the declared type survives an expression default.
-        Assert.False(LyoParameterDefaults.TryResolve(ExpressionSpec(LyoTypeInfo.DateTime.FullName, "{t}"), null, _ => "last tuesday", out _, out var error));
+        Assert.False(LyoParameterDefaults.TryResolve(ExpressionSpec(LyoTypeInfo.DateTime.FullName, "{t}"), null, _ => "last tuesday", out var _, out var error));
         Assert.Contains("not a valid System.DateTime", error);
     }
 
@@ -172,11 +172,11 @@ public sealed class LyoParameterDefaultsTests
     public void TryResolve_ResolverThatThrowsOrRendersNothing_IsReported()
     {
         Assert.False(
-            LyoParameterDefaults.TryResolve(ExpressionSpec(LyoTypeInfo.DateTime.FullName, "{t}"), null, _ => throw new InvalidOperationException("bad token"), out _, out var thrown));
+            LyoParameterDefaults.TryResolve(
+                ExpressionSpec(LyoTypeInfo.DateTime.FullName, "{t}"), null, _ => throw new InvalidOperationException("bad token"), out var _, out var thrown));
 
         Assert.Contains("bad token", thrown);
-
-        Assert.False(LyoParameterDefaults.TryResolve(ExpressionSpec(LyoTypeInfo.DateTime.FullName, "{t}"), null, _ => "", out _, out var empty));
+        Assert.False(LyoParameterDefaults.TryResolve(ExpressionSpec(LyoTypeInfo.DateTime.FullName, "{t}"), null, _ => "", out var _, out var empty));
         Assert.Contains("rendered an empty value", empty);
     }
 
@@ -198,11 +198,9 @@ public sealed class LyoParameterDefaultsTests
         var errors = new List<string>();
         LyoParameterValidator.ValidateSpec(ExpressionSpec(LyoTypeInfo.DateTime.FullName, "   "), errors);
         Assert.Contains(errors, e => e.Contains("DefaultTemplate is empty", StringComparison.OrdinalIgnoreCase));
-
         errors.Clear();
         LyoParameterValidator.ValidateSpec(new("AsOfDate", LyoTypeInfo.DateTime.FullName, DefaultTemplate: "{t}"), errors);
         Assert.Contains(errors, e => e.Contains("DefaultKind is Literal", StringComparison.OrdinalIgnoreCase));
-
         errors.Clear();
         LyoParameterValidator.ValidateSpec(ExpressionSpec(LyoTypeInfo.DateTime.FullName, "{t}"), errors);
         Assert.Empty(errors);

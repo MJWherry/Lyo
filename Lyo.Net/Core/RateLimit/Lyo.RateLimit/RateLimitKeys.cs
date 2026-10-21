@@ -1,10 +1,12 @@
+using System.Globalization;
+
 namespace Lyo.RateLimit;
 
 /// <summary>Redis and in-memory key. The hash tag is <c>{policy:partition}</c> so a quota stays on one cluster slot.</summary>
 internal static class RateLimitKeys
 {
     internal static string Build(string policy, string partition, RateLimitWindow pattern, long windowMs)
-        => $"lyo:rl:{{{Sanitize(policy)}:{Sanitize(partition)}}}:{pattern}:{windowMs.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        => $"lyo:rl:{{{Sanitize(policy)}:{Sanitize(partition)}}}:{pattern}:{windowMs.ToString(CultureInfo.InvariantCulture)}";
 
     private static string Sanitize(string value)
     {

@@ -4,14 +4,17 @@ using Lyo.Exceptions;
 namespace Lyo.Espn.Fantasy.Football.Client;
 
 /// <summary>
-/// In-memory directory of one league. Ids on the wire stay ids; <see cref="Member" />, <see cref="Team" />, and <see cref="TeamByOwner" /> turn them into the records from the last
-/// <see cref="FantasyFootballClient.Remember" /> call. Author <c>LM</c> is the league manager, not a member.
+/// In-memory directory of one league. Ids on the wire stay ids; <see cref="Member" />, <see cref="Team" />, and <see cref="TeamByOwner" /> turn them into the records from
+/// the last <see cref="FantasyFootballClient.Remember" /> call. Author <c>LM</c> is the league manager, not a member.
 /// </summary>
 public sealed class LeagueIndex
 {
     private readonly Dictionary<string, MemberRes> _members;
-    private readonly Dictionary<int, TeamRes> _teams;
     private readonly Dictionary<string, TeamRes> _owners;
+    private readonly Dictionary<int, TeamRes> _teams;
+
+    /// <summary>Scoring period on the league this index was built from.</summary>
+    public int ScoringPeriodId { get; }
 
     /// <summary>Indexes <paramref name="league" /> by member id, team id, and primary owner.</summary>
     public LeagueIndex(LeagueRes league)
@@ -32,9 +35,6 @@ public sealed class LeagueIndex
                 _owners[owner] = team;
         }
     }
-
-    /// <summary>Scoring period on the league this index was built from.</summary>
-    public int ScoringPeriodId { get; }
 
     /// <summary>True when <paramref name="author" /> is the league-manager marker <c>LM</c>.</summary>
     public static bool IsLeagueManager(string? author) => string.Equals(author, "LM", StringComparison.Ordinal);

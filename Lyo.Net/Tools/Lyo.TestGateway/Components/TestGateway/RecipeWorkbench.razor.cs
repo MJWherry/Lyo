@@ -1,6 +1,4 @@
-using Lyo.Api.Client;
 using Lyo.Recipe.Client;
-using Microsoft.AspNetCore.Components;
 
 namespace Lyo.TestGateway.Components.TestGateway;
 

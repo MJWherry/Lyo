@@ -4,8 +4,8 @@ namespace Lyo.Drift.Client;
 public sealed class DriftClientOptions
 {
     /// <summary>
-    /// Optional absolute or root URL prefix put in front of every drift route (for example <c>https://api.example.com</c>). When empty, routes are relative and use
-    /// the inner client's base address.
+    /// Optional absolute or root URL prefix put in front of every drift route (for example <c>https://api.example.com</c>). When empty, routes are relative and use the inner
+    /// client's base address.
     /// </summary>
     public string? RoutePrefix { get; set; }
 }

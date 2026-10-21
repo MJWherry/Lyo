@@ -24,9 +24,7 @@ public sealed class StateMachineEfSeedContributor : SeedContributor, IEfSeedSour
     public DbContext CreateContext(string connectionString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        var options = new DbContextOptionsBuilder<StateMachineDbContext>()
-            .UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<StateMachineDbContext>().UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema)).Options;
         return new StateMachineDbContext(options);
     }
 
@@ -36,31 +34,36 @@ public sealed class StateMachineEfSeedContributor : SeedContributor, IEfSeedSour
         graph.OnClear(ClearAsync);
         var faker = options.RandomSeed is { } seed ? new Faker { Random = new(seed) } : new Faker();
         var now = DateTime.UtcNow;
-        var definitions = graph.Entity(options.Count, i => new StateMachineDefinitionEntity {
-            Name = $"{faker.Hacker.Noun()}-{i}",
-            Revision = 1,
-            Document = """{"initial":"Idle"}""",
-            CreatedTimestamp = now
-        });
-        definitions.ForEach(_ => 1, (definition, _) => new StateMachineInstanceEntity {
-            MachineName = definition.Name,
-            InstanceKey = "seed",
-            State = "Running",
-            Version = 1,
-            EnteredTimestamp = now,
-            UpdatedTimestamp = now,
-            DataJson = "{}"
-        });
-        definitions.ForEach(_ => 1, (definition, _) => new StateMachineTransitionEntity {
-            Id = LyoGuid.CreateV7(),
-            MachineName = definition.Name,
-            InstanceKey = "seed",
-            FromState = "Idle",
-            ToState = "Running",
-            Trigger = "Start",
-            Version = 1,
-            OccurredTimestamp = now
-        });
+        var definitions = graph.Entity(
+            options.Count, i => new StateMachineDefinitionEntity {
+                Name = $"{faker.Hacker.Noun()}-{i}",
+                Revision = 1,
+                Document = """{"initial":"Idle"}""",
+                CreatedTimestamp = now
+            });
+
+        definitions.ForEach(
+            _ => 1, (definition, _) => new StateMachineInstanceEntity {
+                MachineName = definition.Name,
+                InstanceKey = "seed",
+                State = "Running",
+                Version = 1,
+                EnteredTimestamp = now,
+                UpdatedTimestamp = now,
+                DataJson = "{}"
+            });
+
+        definitions.ForEach(
+            _ => 1, (definition, _) => new StateMachineTransitionEntity {
+                Id = LyoGuid.CreateV7(),
+                MachineName = definition.Name,
+                InstanceKey = "seed",
+                FromState = "Idle",
+                ToState = "Running",
+                Trigger = "Start",
+                Version = 1,
+                OccurredTimestamp = now
+            });
     }
 
     private static async Task ClearAsync(SeedSession session, CancellationToken ct)

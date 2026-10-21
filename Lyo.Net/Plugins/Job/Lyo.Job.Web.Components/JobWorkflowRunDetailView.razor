@@ -7,6 +7,7 @@
                 <MudText Typo="Typo.h6">@(Run?.JobWorkflow?.Name ?? "Workflow run")</MudText>
                 @if (Run is { } run) {
                     <LyoChip Spec="@(LyoChips.FromEnum<JobWorkflowRunState>(run.State.ToString(), JobColorHelper.ForWorkflowRunState, JobColorHelper.WorkflowRunStateIcon))"/>
+
                     @if (run.ScheduledSlotUtc is { } slot) {
                         <LyoChip Label="@($"Slot {slot:u}")"/>
                     }
@@ -40,7 +41,8 @@
                 <RowTemplate Context="runStep">
                     <MudTd DataLabel="Step">@StepName(runStep)</MudTd>
                     <MudTd DataLabel="State">
-                        <LyoChip Spec="@(LyoChips.FromEnum<JobWorkflowStepState>(runStep.State.ToString(), JobColorHelper.ForWorkflowStepState, JobColorHelper.WorkflowStepStateIcon))"/>
+                        <LyoChip
+                            Spec="@(LyoChips.FromEnum<JobWorkflowStepState>(runStep.State.ToString(), JobColorHelper.ForWorkflowStepState, JobColorHelper.WorkflowStepStateIcon))"/>
                     </MudTd>
                     <MudTd DataLabel="Job run">@(runStep.JobRunId?.ToString()[..8] ?? "—")</MudTd>
                     <MudTd>

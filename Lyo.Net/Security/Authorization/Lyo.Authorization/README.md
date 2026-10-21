@@ -1,6 +1,7 @@
 # Lyo.Authorization
 
-A grant is a subject, an action, a resource type, an optional resource id, and an optional tenant. It does not sign anyone in and it does not parse tokens. A null resource id covers every id of that type. A set id matches only that id. The same split applies to tenant. There are no deny rows.
+A grant is a subject, an action, a resource type, an optional resource id, and an optional tenant. It does not sign anyone in and it does not parse tokens. A null resource id
+covers every id of that type. A set id matches only that id. The same split applies to tenant. There are no deny rows.
 
 ## Features
 

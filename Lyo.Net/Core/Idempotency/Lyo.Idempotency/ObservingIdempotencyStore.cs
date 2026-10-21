@@ -8,8 +8,8 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Lyo.Idempotency;
 
 /// <summary>
-/// Counts outcomes and records store failures with a fixed error message. <see cref="IMetrics.RecordError" /> copies
-/// <see cref="Exception.Message" /> into a tag, so the provider exception is not passed through.
+/// Counts outcomes and records store failures with a fixed error message. <see cref="IMetrics.RecordError" /> copies <see cref="Exception.Message" /> into a tag, so the
+/// provider exception is not passed through.
 /// </summary>
 public sealed class ObservingIdempotencyStore : IIdempotencyStore
 {
@@ -17,8 +17,8 @@ public sealed class ObservingIdempotencyStore : IIdempotencyStore
     public const string StoreFailedMessage = "idempotency.store_failed";
 
     private readonly IIdempotencyStore _inner;
-    private readonly IMetrics _metrics;
     private readonly ILogger _logger;
+    private readonly IMetrics _metrics;
 
     /// <summary>Wraps <paramref name="inner" />. Missing metrics and logger become no-ops.</summary>
     public ObservingIdempotencyStore(IIdempotencyStore inner, IMetrics? metrics = null, ILogger? logger = null)
@@ -40,11 +40,12 @@ public sealed class ObservingIdempotencyStore : IIdempotencyStore
         DateTime? expiresAt = null,
         DbTransaction? transaction = null,
         CancellationToken ct = default)
-        => Observe("idempotency.begin", scope, () => _inner.TryBeginAsync(scope, key, requestHash, expiresAt, transaction, ct), result => {
-            _metrics.IncrementCounter("idempotency.begin", tags: [("outcome", OutcomeTag(result.Outcome))]);
-            _logger.LogInformation("Idempotency {Outcome}", OutcomeTag(result.Outcome));
-            _logger.LogDebug("Idempotency {Outcome} {Scope}", OutcomeTag(result.Outcome), scope);
-        });
+        => Observe(
+            "idempotency.begin", scope, () => _inner.TryBeginAsync(scope, key, requestHash, expiresAt, transaction, ct), result => {
+                _metrics.IncrementCounter("idempotency.begin", tags: [("outcome", OutcomeTag(result.Outcome))]);
+                _logger.LogInformation("Idempotency {Outcome}", OutcomeTag(result.Outcome));
+                _logger.LogDebug("Idempotency {Outcome} {Scope}", OutcomeTag(result.Outcome), scope);
+            });
 
     /// <inheritdoc />
     public Task<bool> CompleteAsync(Guid id, Guid leaseToken, int status, byte[]? body, string? contentType, CancellationToken ct = default)
@@ -64,11 +65,7 @@ public sealed class ObservingIdempotencyStore : IIdempotencyStore
     /// <inheritdoc />
     public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => _inner.CheckHealthAsync(ct);
 
-    private async Task<IdempotencyBeginResult> Observe(
-        string timer,
-        string scope,
-        Func<Task<IdempotencyBeginResult>> call,
-        Action<IdempotencyBeginResult> onSuccess)
+    private async Task<IdempotencyBeginResult> Observe(string timer, string scope, Func<Task<IdempotencyBeginResult>> call, Action<IdempotencyBeginResult> onSuccess)
     {
         using var _ = _metrics.StartTimer(timer);
         try {
@@ -117,10 +114,11 @@ public sealed class ObservingIdempotencyStore : IIdempotencyStore
             _logger.LogDebug(ex, "Idempotency store failed for {Scope}", scope);
     }
 
-    private static string OutcomeTag(IdempotencyOutcome outcome) => outcome switch {
-        IdempotencyOutcome.Began => "began",
-        IdempotencyOutcome.Replay => "replay",
-        IdempotencyOutcome.InProgress => "in_progress",
-        _ => "conflict"
-    };
+    private static string OutcomeTag(IdempotencyOutcome outcome)
+        => outcome switch {
+            IdempotencyOutcome.Began => "began",
+            IdempotencyOutcome.Replay => "replay",
+            IdempotencyOutcome.InProgress => "in_progress",
+            var _ => "conflict"
+        };
 }

@@ -1,7 +1,6 @@
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Enums;
 using Lyo.Story.Enums;
-using Lyo.Story.Web.Components;
 
 namespace Lyo.Story.Web.Components.Tests;
 
@@ -13,10 +12,7 @@ internal static class StoryDraftFixtures
             Slug = "door",
             StartNodeKey = "vault_door",
             Nodes = [
-                new() {
-                    Key = "vault_door",
-                    Choices = [new() { Key = "go", Effects = [new() { Kind = StoryEffectKind.GotoNode, TargetNodeKey = target }] }]
-                },
+                new() { Key = "vault_door", Choices = [new() { Key = "go", Effects = [new() { Kind = StoryEffectKind.GotoNode, TargetNodeKey = target }] }] },
                 new() { Key = "inside" }
             ]
         };
@@ -27,12 +23,8 @@ internal static class StoryDraftFixtures
             Slug = "the-heist",
             StartNodeKey = "vault_door",
             Nodes = [
-                new() {
-                    Key = "vault_door",
-                    Choices = [new() { Key = "pick_lock", Effects = [new() { Kind = StoryEffectKind.GotoNode, TargetNodeKey = "inside" }] }]
-                },
-                new() { Key = "inside" },
-                new() { Key = "loose" }
+                new() { Key = "vault_door", Choices = [new() { Key = "pick_lock", Effects = [new() { Kind = StoryEffectKind.GotoNode, TargetNodeKey = "inside" }] }] },
+                new() { Key = "inside" }, new() { Key = "loose" }
             ]
         };
 
@@ -41,14 +33,8 @@ internal static class StoryDraftFixtures
             Title = "Loop",
             StartNodeKey = "a",
             Nodes = [
-                new() {
-                    Key = "a",
-                    Choices = [new() { Key = "to_b", Effects = [new() { Kind = StoryEffectKind.GotoNode, TargetNodeKey = "b" }] }]
-                },
-                new() {
-                    Key = "b",
-                    Choices = [new() { Key = "to_a", Effects = [new() { Kind = StoryEffectKind.GotoNode, TargetNodeKey = "a" }] }]
-                }
+                new() { Key = "a", Choices = [new() { Key = "to_b", Effects = [new() { Kind = StoryEffectKind.GotoNode, TargetNodeKey = "b" }] }] },
+                new() { Key = "b", Choices = [new() { Key = "to_a", Effects = [new() { Kind = StoryEffectKind.GotoNode, TargetNodeKey = "a" }] }] }
             ]
         };
 
@@ -65,9 +51,8 @@ internal static class StoryDraftFixtures
                         new() {
                             Key = "pick_lock",
                             Prompt = "Pick the lock",
-                            EnabledWhen = new GroupClause(GroupOperatorEnum.And, [
-                                new ConditionClause(StoryConditionFields.Var("has_lockpick"), ComparisonOperatorEnum.Equals, true)
-                            ])
+                            EnabledWhen = new GroupClause(
+                                GroupOperatorEnum.And, [new ConditionClause(StoryConditionFields.Var("has_lockpick"), ComparisonOperatorEnum.Equals, true)])
                         }
                     ]
                 }

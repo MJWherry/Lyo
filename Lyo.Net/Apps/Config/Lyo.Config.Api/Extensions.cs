@@ -6,15 +6,12 @@ using Lyo.Authentication.AspNetCore.Authorization;
 using Lyo.Authentication.Postgres;
 using Lyo.Authentication.Scopes;
 using Lyo.Cache;
-using Lyo.Config;
 using Lyo.Config.Api.Endpoints;
 using Lyo.Config.Api.Security;
 using Lyo.Config.Postgres;
 using Lyo.Encryption.Extensions;
 using Lyo.KeyStore;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 
 namespace Lyo.Config.Api;
 
@@ -22,8 +19,8 @@ namespace Lyo.Config.Api;
 public static class Extensions
 {
     /// <summary>
-    /// Registers <see cref="IConfigStore" />, security and hosting options, and Lyo auth (opaque tokens, JWT, scope policies, Postgres user/token/audit
-    /// stores). Also hooks query services and encrypts config values on the API.
+    /// Registers <see cref="IConfigStore" />, security and hosting options, and Lyo auth (opaque tokens, JWT, scope policies, Postgres user/token/audit stores). Also hooks query
+    /// services and encrypts config values on the API.
     /// </summary>
     public static IServiceCollection AddConfigApi(this IServiceCollection services, IConfiguration configuration)
     {
@@ -40,15 +37,16 @@ public static class Extensions
             ks.AddKey("lyo-sig", "v1", seed);
             ks.SetCurrentVersion("lyo-sig", "v1");
         });
+
         services.AddKeyedLocalKeyStore(
             ConfigQueryRoutes.EncryptionKeyName, ks => {
                 var seed = SHA256.HashData(Encoding.UTF8.GetBytes("lyo-config-values-dev-key/v1"));
                 ks.AddKey(ConfigQueryRoutes.EncryptionKeyName, "v1", seed);
                 ks.SetCurrentVersion(ConfigQueryRoutes.EncryptionKeyName, "v1");
             });
-        services.AddEncryptionServiceKeyed(ConfigQueryRoutes.EncryptionKeyName, ConfigQueryRoutes.EncryptionKeyName);
-        services.AddConfigValueEncryption(ConfigQueryRoutes.EncryptionKeyName);
 
+        services.AddEncryptionServiceKeyed(ConfigQueryRoutes.EncryptionKeyName, ConfigQueryRoutes.EncryptionKeyName);
+        services.AddConfigValueEncryption();
         services.AddLyoAuthentication(configuration);
         services.AddPostgresAuthenticationStoresFromConfiguration(configuration);
         services.AddLyoApiTokenAuthentication();
@@ -60,9 +58,9 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Maps the central config group at <paramref name="prefix" />. With <paramref name="requireAuthentication" /> on, reads need
-    /// <c>config.read</c>, writes need <c>config.write</c>, and delete/revert need <c>config.admin</c>. Query, get, and export for definitions and bindings are mapped too.
-    /// TestApi sets <c>false</c> so the Gateway workbench can hit manage routes without scopes. Encryption still runs in-process.
+    /// Maps the central config group at <paramref name="prefix" />. With <paramref name="requireAuthentication" /> on, reads need <c>config.read</c>, writes need
+    /// <c>config.write</c>, and delete/revert need <c>config.admin</c>. Query, get, and export for definitions and bindings are mapped too. TestApi sets <c>false</c> so the Gateway
+    /// workbench can hit manage routes without scopes. Encryption still runs in-process.
     /// </summary>
     public static RouteGroupBuilder MapConfigApiEndpoints(this WebApplication app, string prefix = "/api/config", bool requireAuthentication = true)
     {

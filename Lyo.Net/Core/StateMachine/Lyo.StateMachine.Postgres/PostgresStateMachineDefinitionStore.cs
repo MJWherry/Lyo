@@ -30,12 +30,13 @@ public sealed class PostgresStateMachineDefinitionStore : IStateMachineDefinitio
             return false;
 
         var revision = expectedRevision + 1;
-        context.Definitions.Add(new() {
-            Name = document.Name,
-            Revision = revision,
-            Document = StateMachineDocumentJson.Serialize(document with { Revision = revision }),
-            CreatedTimestamp = DateTime.UtcNow
-        });
+        context.Definitions.Add(
+            new() {
+                Name = document.Name,
+                Revision = revision,
+                Document = StateMachineDocumentJson.Serialize(document with { Revision = revision }),
+                CreatedTimestamp = DateTime.UtcNow
+            });
 
         try {
             await context.SaveChangesAsync(ct).ConfigureAwait(false);

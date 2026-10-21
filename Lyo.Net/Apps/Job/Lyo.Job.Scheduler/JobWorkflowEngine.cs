@@ -4,6 +4,7 @@ using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Common.Core.Identifiers;
+using Lyo.Exceptions;
 using Lyo.Formatter;
 using Lyo.Job.Models;
 using Lyo.Job.Models.Context;
@@ -20,7 +21,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Constants = Lyo.Job.Models.Constants;
-using Lyo.Exceptions;
 
 namespace Lyo.Job.Scheduler;
 
@@ -74,8 +74,7 @@ public sealed class JobWorkflowEngine : BackgroundService
         await _mqService.CreateQueue(FinishedEventsQueue, true, false, false, null, stoppingToken).ConfigureAwait(false);
         await _mqService.BindQueueToExchange(FinishedEventsQueue, Constants.Mq.JobEventExchange, Constants.Mq.JobRunFinishedRoutingKey, stoppingToken).ConfigureAwait(false);
         await _mqService.CreateQueue(CreatedEventsQueue, true, false, false, null, stoppingToken).ConfigureAwait(false);
-        await _mqService.BindQueueToExchange(CreatedEventsQueue, Constants.Mq.JobEventExchange, Constants.Mq.JobWorkflowRunCreatedRoutingKey, stoppingToken)
-            .ConfigureAwait(false);
+        await _mqService.BindQueueToExchange(CreatedEventsQueue, Constants.Mq.JobEventExchange, Constants.Mq.JobWorkflowRunCreatedRoutingKey, stoppingToken).ConfigureAwait(false);
 
         // Typed subscribe handles both enveloped retries (republished below) and the raw-Guid exchange messages.
         await _mqService.SubscribeToQueueAsync<Guid>(FinishedEventsQueue, OnRunFinishedAsync, ct: stoppingToken).ConfigureAwait(false);
@@ -120,8 +119,8 @@ public sealed class JobWorkflowEngine : BackgroundService
     }
 
     /// <summary>
-    /// Dispatches the root steps of a freshly materialized workflow run. A run is created with every step <c>Pending</c> and nothing has completed yet, so this is the only
-    /// thing that gets a workflow moving. Runs that are no longer <c>Pending</c> are ignored, which makes a redelivered created-event harmless.
+    /// Dispatches the root steps of a freshly materialized workflow run. A run is created with every step <c>Pending</c> and nothing has completed yet, so this is the only thing
+    /// that gets a workflow moving. Runs that are no longer <c>Pending</c> are ignored, which makes a redelivered created-event harmless.
     /// </summary>
     internal async Task ProcessWorkflowRunCreatedAsync(Guid workflowRunId)
     {
@@ -219,8 +218,8 @@ public sealed class JobWorkflowEngine : BackgroundService
     }
 
     /// <summary>
-    /// Raises <see cref="JobAlertType.Failure" /> for a failed step, attributed to the step's own definition and run so the existing consumer routing still applies. This is
-    /// the only producer of that alert type: <c>JobDefinition.AlertOnFailure</c> was removed when workflows took over failure notification.
+    /// Raises <see cref="JobAlertType.Failure" /> for a failed step, attributed to the step's own definition and run so the existing consumer routing still applies. This is the
+    /// only producer of that alert type: <c>JobDefinition.AlertOnFailure</c> was removed when workflows took over failure notification.
     /// </summary>
     private async Task PublishStepFailureAlertAsync(JobWorkflowRunRes workflowRun, JobWorkflowStepRes? failedStep, JobRunRes run)
     {
@@ -230,8 +229,7 @@ public sealed class JobWorkflowEngine : BackgroundService
         var workflowName = workflowRun.JobWorkflow?.Name ?? workflowRun.JobWorkflowId.ToString();
         var stepName = failedStep?.StepName ?? "step";
         try {
-            await _eventPublisher
-                .PublishAlertAsync(run.JobDefinitionId, run.Id, JobAlertType.Failure, $"Workflow '{workflowName}' step '{stepName}' failed (run {run.Id})")
+            await _eventPublisher.PublishAlertAsync(run.JobDefinitionId, run.Id, JobAlertType.Failure, $"Workflow '{workflowName}' step '{stepName}' failed (run {run.Id})")
                 .ConfigureAwait(false);
         }
         catch (Exception ex) {
@@ -272,7 +270,6 @@ public sealed class JobWorkflowEngine : BackgroundService
         var stepDefinitions = await LoadStepDefinitionsAsync(pending).ConfigureAwait(false);
         var scopes = pending.ToDictionary(s => s.Id, s => BuildStepScope(runScope, s, definitions, runSteps, upstreamRuns, stepDefinitions));
         await ApplyConditionsAsync(definitions, runSteps, scopes).ConfigureAwait(false);
-
         var ready = definitions.Where(s => s.Enabled)
             .OrderBy(s => s.StepOrder)
             .Select(s => (Step: s, RunStep: runSteps.FirstOrDefault(rs => rs.JobWorkflowStepId == s.Id)))
@@ -281,9 +278,7 @@ public sealed class JobWorkflowEngine : BackgroundService
 
         var started = workflowRun.State == JobWorkflowRunState.Pending;
         foreach (var (step, runStep) in ready) {
-            var stepScope = scopes.TryGetValue(step.Id, out var existing)
-                ? existing
-                : BuildStepScope(runScope, step, definitions, runSteps, upstreamRuns, stepDefinitions);
+            var stepScope = scopes.TryGetValue(step.Id, out var existing) ? existing : BuildStepScope(runScope, step, definitions, runSteps, upstreamRuns, stepDefinitions);
 
             // When a publisher is available, create the run with dispatch suppressed, link it to the run step, and only then dispatch.
             // Otherwise a fast worker could finish the run before the JobRunId patch lands and the completion handler would not find
@@ -351,10 +346,7 @@ public sealed class JobWorkflowEngine : BackgroundService
     /// Marks every pending step whose gate does not open as <see cref="JobWorkflowStepState.ConditionNotMet" />, repeating until nothing changes. A step is gated either by its
     /// own condition or by a dependency that itself never ran — the second case is what makes the skip cascade down the graph instead of deadlocking its tail.
     /// </summary>
-    private async Task ApplyConditionsAsync(
-        IReadOnlyList<JobWorkflowStepRes> definitions,
-        List<JobWorkflowRunStepRes> runSteps,
-        IReadOnlyDictionary<Guid, JobContextBag> scopes)
+    private async Task ApplyConditionsAsync(IReadOnlyList<JobWorkflowStepRes> definitions, List<JobWorkflowRunStepRes> runSteps, IReadOnlyDictionary<Guid, JobContextBag> scopes)
     {
         var changed = true;
         while (changed) {
@@ -401,7 +393,7 @@ public sealed class JobWorkflowEngine : BackgroundService
     /// <returns>true when the graph is executable.</returns>
     private async Task<bool> ValidateDependencyGraphAsync(JobWorkflowRunRes workflowRun, IReadOnlyList<JobWorkflowStepRes> definitions)
     {
-        var malformed = definitions.Where(s => !JobWorkflowGraph.TryParseDependencies(s.DependsOnStepIds, out _)).Select(s => s.StepName).ToList();
+        var malformed = definitions.Where(s => !JobWorkflowGraph.TryParseDependencies(s.DependsOnStepIds, out var _)).Select(s => s.StepName).ToList();
         if (malformed.Count > 0) {
             _logger.LogError(
                 "Workflow run {WorkflowRunId} has step(s) with malformed DependsOnStepIds: {Steps}. Failing the run — the configuration must be corrected", workflowRun.Id,
@@ -479,7 +471,7 @@ public sealed class JobWorkflowEngine : BackgroundService
             _logger.LogWarning("Definition {DefinitionId} for workflow step {StepName} could not be loaded; the step runs without parameters", step.JobDefinitionId, step.StepName);
 
         var req = definition is null
-            ? new JobRunReq { JobDefinitionId = step.JobDefinitionId, CreatedBy = _options.CreatedBy, JobRunParameters = [] }
+            ? new() { JobDefinitionId = step.JobDefinitionId, CreatedBy = _options.CreatedBy, JobRunParameters = [] }
             : _requestFactory.BuildForWorkflowStep(definition, step, stepScope);
 
         req.SuppressDispatch = suppressDispatch;
@@ -487,7 +479,6 @@ public sealed class JobWorkflowEngine : BackgroundService
         // Deduplicate step starts across concurrent sibling completions and redelivered completion messages: the same workflow run
         // step always maps to the same key, so a duplicate create resolves to the existing run instead of starting the step twice.
         req.IdempotencyKey = $"workflow:{workflowRunId:N}:{runStepId:N}";
-
         var created = await _apiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(BuildUri(Constants.Rest.Job.RunsCreate), req).ConfigureAwait(false);
         if (!created.IsSuccess || created.Data is null) {
             _logger.LogWarning("Failed to create workflow step run for step {StepName}", step.StepName);
@@ -515,19 +506,18 @@ public sealed class JobWorkflowEngine : BackgroundService
     }
 
     /// <summary>
-    /// Whether a run outcome lets a workflow step count as <see cref="JobWorkflowStepState.Finished" />. Anything else — including
-    /// <see cref="JobRunResult.Timeout" /> and a missing result — marks the step failed, so a timed-out step cannot silently advance the DAG or finalize the workflow as
-    /// successful.
+    /// Whether a run outcome lets a workflow step count as <see cref="JobWorkflowStepState.Finished" />. Anything else — including <see cref="JobRunResult.Timeout" /> and a
+    /// missing result — marks the step failed, so a timed-out step cannot silently advance the DAG or finalize the workflow as successful.
     /// </summary>
     private static bool IsSuccessOutcome(JobRunResult? result)
         => result is JobRunResult.Success or JobRunResult.SuccessWithWarnings or JobRunResult.PartialSuccess or JobRunResult.Skipped;
 
     /// <summary>
-    /// Whether every dependency of <paramref name="step" /> has reached a state that permits the step to start. A dependency in
-    /// <see cref="JobWorkflowStepState.Failed" /> satisfies the dependency only when that dependency's own failure policy is
-    /// <see cref="JobWorkflowFailurePolicy.Continue" /> — otherwise a <c>Continue</c> failure would leave every dependent step <c>Pending</c> forever and the workflow run would
-    /// never finalize. <see cref="JobWorkflowStepState.ConditionNotMet" /> satisfies it too, but only so the dependent is reachable: the condition pass then marks that dependent
-    /// <c>ConditionNotMet</c> as well rather than running it. <see cref="JobWorkflowStepState.Skipped" /> never satisfies a dependency: the upstream work did not run.
+    /// Whether every dependency of <paramref name="step" /> has reached a state that permits the step to start. A dependency in <see cref="JobWorkflowStepState.Failed" />
+    /// satisfies the dependency only when that dependency's own failure policy is <see cref="JobWorkflowFailurePolicy.Continue" /> — otherwise a <c>Continue</c> failure would leave every
+    /// dependent step <c>Pending</c> forever and the workflow run would never finalize. <see cref="JobWorkflowStepState.ConditionNotMet" /> satisfies it too, but only so the dependent is
+    /// reachable: the condition pass then marks that dependent <c>ConditionNotMet</c> as well rather than running it. <see cref="JobWorkflowStepState.Skipped" /> never satisfies a
+    /// dependency: the upstream work did not run.
     /// </summary>
     private static bool DependenciesSatisfied(JobWorkflowStepRes step, IReadOnlyList<JobWorkflowRunStepRes> runSteps, IReadOnlyList<JobWorkflowStepRes> definitions)
     {
@@ -542,7 +532,7 @@ public sealed class JobWorkflowEngine : BackgroundService
             return dependencyRun?.State switch {
                 JobWorkflowStepState.Finished or JobWorkflowStepState.ConditionNotMet => true,
                 JobWorkflowStepState.Failed => definitions.FirstOrDefault(d => d.Id == depId)?.FailurePolicy == JobWorkflowFailurePolicy.Continue,
-                _ => false
+                var _ => false
             };
         });
     }

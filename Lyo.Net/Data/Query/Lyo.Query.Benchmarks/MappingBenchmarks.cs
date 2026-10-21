@@ -1,9 +1,9 @@
 using BenchmarkDotNet.Attributes;
 using Lyo.Api.Mapping;
 using Lyo.Benchmark;
+using Lyo.Common.Core.Identifiers;
 using Mapster;
 using MapsterMapper;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Query.Benchmarks;
 

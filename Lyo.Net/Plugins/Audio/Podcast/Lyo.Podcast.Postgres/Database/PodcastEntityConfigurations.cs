@@ -60,7 +60,7 @@ public sealed class PodcastEpisodeEntityConfiguration : IEntityTypeConfiguration
         builder.Property(e => e.AudioFileRef).HasMaxLength(512).HasColumnName("audio_file_ref");
         builder.Property(e => e.Description).HasMaxLength(8192).HasColumnName("description");
         builder.Property(e => e.Transcript).HasColumnType("text").HasColumnName("transcript");
-        builder.Property(e => e.SearchVector).HasColumnName("search_vector").HasColumnType("tsvector").HasComputedColumnSql(SearchVectorSql, stored: true);
+        builder.Property(e => e.SearchVector).HasColumnName("search_vector").HasColumnType("tsvector").HasComputedColumnSql(SearchVectorSql, true);
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
         builder.HasIndex(e => new { e.SeasonId, e.EpisodeNumber }).IsUnique().HasDatabaseName("ix_podcast_episode_number");

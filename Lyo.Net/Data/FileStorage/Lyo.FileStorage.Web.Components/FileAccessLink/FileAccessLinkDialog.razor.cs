@@ -9,21 +9,21 @@ namespace Lyo.FileStorage.Web.Components.FileAccessLink;
 /// <summary>Issues a download access link with <c>POST {ApiRoutePrefix}/files/{fileId}/access-links</c> and shows copyable public URLs.</summary>
 public partial class FileAccessLinkDialog
 {
-    private DateTime? _notBeforeDate;
-    private TimeSpan? _notBeforeTime;
+    private bool _busy;
+    private string? _downloadAbsoluteUrl;
+    private string? _error;
     private DateTime? _expiresDate;
     private TimeSpan? _expiresTime;
-    private DateTime? _windowStartDate;
-    private TimeSpan? _windowStartTime;
+    private int? _maxDownloads;
+    private DateTime? _notBeforeDate;
+    private TimeSpan? _notBeforeTime;
+    private string? _presignedReadAbsoluteUrl;
+    private DownloadAccessLinkResponse? _response;
+    private string? _tenantId;
     private DateTime? _windowEndDate;
     private TimeSpan? _windowEndTime;
-    private int? _maxDownloads;
-    private string? _tenantId;
-    private bool _busy;
-    private string? _error;
-    private DownloadAccessLinkResponse? _response;
-    private string? _downloadAbsoluteUrl;
-    private string? _presignedReadAbsoluteUrl;
+    private DateTime? _windowStartDate;
+    private TimeSpan? _windowStartTime;
 
     [Inject]
     private IApiClient ApiClient { get; set; } = null!;
@@ -50,9 +50,7 @@ public partial class FileAccessLinkDialog
     [Parameter]
     public string ApiRoutePrefix { get; set; } = "FileStorage";
 
-    /// <summary>
-    /// Public origin for copyable URLs (no trailing slash). When null, uses <see cref="IApiClient" /> <c>BaseAddress</c>.
-    /// </summary>
+    /// <summary>Public origin for copyable URLs (no trailing slash). When null, uses <see cref="IApiClient" /> <c>BaseAddress</c>.</summary>
     [Parameter]
     public string? PublicBaseUrl { get; set; }
 
@@ -139,10 +137,12 @@ public partial class FileAccessLinkDialog
         _busy = true;
         try {
             var response = await ApiClient.PostAsAsync<CreateDownloadAccessLinkRequest, DownloadAccessLinkResponse>(
-                uri, new(notBefore, expires, winStart, winEnd, _maxDownloads, tenant), req => {
-                    if (!string.IsNullOrWhiteSpace(tenant))
-                        req.Headers.TryAddWithoutValidation("X-Tenant-Id", tenant);
-                }).ConfigureAwait(true);
+                    uri, new(notBefore, expires, winStart, winEnd, _maxDownloads, tenant), req => {
+                        if (!string.IsNullOrWhiteSpace(tenant))
+                            req.Headers.TryAddWithoutValidation("X-Tenant-Id", tenant);
+                    })
+                .ConfigureAwait(true);
+
             if (response == null) {
                 _error = "The API did not return an access link.";
                 return;

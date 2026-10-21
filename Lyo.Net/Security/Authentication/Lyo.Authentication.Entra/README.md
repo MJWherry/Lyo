@@ -18,9 +18,11 @@ services.AddEntraProvider(o =>
 
 ## Metadata and subject
 
-- The metadata URL is `https://login.microsoftonline.com/{tenantId}/federationmetadata/2007-06/federationmetadata.xml?appid={applicationId}`. The `appid` query selects that app's token-signing certificate.
+- The metadata URL is `https://login.microsoftonline.com/{tenantId}/federationmetadata/2007-06/federationmetadata.xml?appid={applicationId}`. The `appid` query selects that app's
+  token-signing certificate.
 - The expected issuer is `https://sts.windows.net/{tenantId}/` with the trailing slash.
-- The subject is `http://schemas.microsoft.com/identity/claims/objectidentifier` when that attribute is present. The email attribute is exactly `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress`.
+- The subject is `http://schemas.microsoft.com/identity/claims/objectidentifier` when that attribute is present. The email attribute is exactly
+  `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress`.
 - In the Entra enterprise app, the Identifier must match `EntityId` and the Reply URL must match `AcsUrl`. Leave request verification off and assertion encryption off.
 
 ## Dependencies

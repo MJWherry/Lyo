@@ -21,7 +21,7 @@ internal sealed class PuppeteerSharpCookieJar : IBrowserCookies
         ct.ThrowIfCancellationRequested();
         var cookies = string.IsNullOrWhiteSpace(url)
             ? await context.GetCookiesAsync().ConfigureAwait(false)
-            : await _browser.GetRequiredPage().GetCookiesAsync([url]).ConfigureAwait(false);
+            : await _browser.GetRequiredPage().GetCookiesAsync(url).ConfigureAwait(false);
 
         return cookies.Select(c => new BrowserCookie {
                 Name = c.Name,

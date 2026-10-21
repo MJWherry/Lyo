@@ -1,8 +1,17 @@
-
 namespace Lyo.Job.Web.Components;
 
 public partial class JobRunGrid
 {
+    private static readonly string[] _keySelectFields = ["Id", "StartedTimestamp", "FinishedTimestamp", "WorkerInstanceId", "WorkerProcessId", "WorkerMachineName"];
+
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [
+        new("JobDefinition.Name", "Definition"), new("State"), new("Result"), new("WorkerMachineName", "Worker"), new("WorkerInstanceId", "Worker ID")
+    ];
+
+    private Guid? _appliedDefinitionId;
+
+    private LyoDataGridProjected? _dataGrid;
+
     [Parameter]
     [EditorRequired]
     public IApiClient ApiClient { get; set; } = null!;
@@ -11,8 +20,7 @@ public partial class JobRunGrid
     [EditorRequired]
     public string BaseRoute { get; set; } = "Job";
 
-    /// <summary>When set, the grid only shows runs of this definition and displays a removable filter chip. Supports two-way binding so the chip's close button clears host
-    /// state.</summary>
+    /// <summary>When set, the grid only shows runs of this definition and displays a removable filter chip. Supports two-way binding so the chip's close button clears host state.</summary>
     [Parameter]
     public Guid? DefinitionId { get; set; }
 
@@ -26,16 +34,6 @@ public partial class JobRunGrid
     private string _runRoute => $"{BaseRoute.TrimEnd('/')}/Run";
 
     private string _definitionRoute => $"{BaseRoute.TrimEnd('/')}/Definition";
-
-    private LyoDataGridProjected? _dataGrid;
-
-    private Guid? _appliedDefinitionId;
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [
-        new("JobDefinition.Name", "Definition"), new("State"), new("Result"), new("WorkerMachineName", "Worker"), new("WorkerInstanceId", "Worker ID")
-    ];
-
-    private static readonly string[] _keySelectFields = ["Id", "StartedTimestamp", "FinishedTimestamp", "WorkerInstanceId", "WorkerProcessId", "WorkerMachineName"];
 
     protected override async Task OnParametersSetAsync()
     {
@@ -71,7 +69,6 @@ public partial class JobRunGrid
         return string.IsNullOrWhiteSpace(value) || string.Equals(value, "null", StringComparison.OrdinalIgnoreCase) ? "" : value;
     }
 
-
     /// <summary>Cancel is accepted only for <c>Running</c> and <c>Queued</c> runs; offering it on a finished row produced a guaranteed HTTP 400.</summary>
     private static bool CanCancel(object? item)
         => Enum.TryParse<JobState>(ProjectedValueHelper.GetDisplayValue(item, "State"), out var state) && state is JobState.Running or JobState.Queued;
@@ -100,7 +97,9 @@ public partial class JobRunGrid
 
     private async Task OpenCreateRunDialog()
     {
-        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobDefinitionRes>>($"{_definitionRoute}/QueryConcrete", new() { Amount = 200, Include = ["JobParameters"] });
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobDefinitionRes>>(
+            $"{_definitionRoute}/QueryConcrete", new() { Amount = 200, Include = ["JobParameters"] });
+
         var parameters = new DialogParameters<RunJobDialog> { { d => d.JobDefinitions, res?.Items ?? [] }, { d => d.RunRoute, _runRoute } };
         var dialog = await DialogService.ShowAsync<RunJobDialog>("Create Job Run", parameters, LyoDialogPresets.Medium);
         var result = await dialog.Result;
@@ -117,7 +116,9 @@ public partial class JobRunGrid
         if (id == null)
             return;
 
-        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobRunRes>>($"{_runRoute}/QueryConcrete", new() { Keys = [[id]], Amount = 1, Include = ["JobDefinition", "JobRunLogs", "JobRunResults", "JobRunParameters", "JobSchedule"] });
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobRunRes>>(
+            $"{_runRoute}/QueryConcrete", new() { Keys = [[id]], Amount = 1, Include = ["JobDefinition", "JobRunLogs", "JobRunResults", "JobRunParameters", "JobSchedule"] });
+
         var run = res?.Items?.FirstOrDefault();
         if (run == null)
             return;

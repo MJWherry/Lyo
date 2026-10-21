@@ -9,9 +9,7 @@ namespace Lyo.Images;
 /// <summary>DI helpers that register the ImageSharp image service.</summary>
 public static class Extensions
 {
-    /// <summary>
-    /// Registers <see cref="IImageDecorationService" /> if missing (overlay/frame/caption/padding can be used without <see cref="IImageService" />).
-    /// </summary>
+    /// <summary>Registers <see cref="IImageDecorationService" /> if missing (overlay/frame/caption/padding can be used without <see cref="IImageService" />).</summary>
     private static void TryAddImageDecorationService(IServiceCollection services)
     {
         if (!services.Any(s => s.ServiceType == typeof(IImageDecorationService)))

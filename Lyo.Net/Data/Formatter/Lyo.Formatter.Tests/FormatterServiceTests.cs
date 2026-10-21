@@ -35,10 +35,11 @@ public class FormatterServiceTests : IDisposable, IAsyncDisposable
     {
         var calls = 0;
         var bag = new ContextBag();
-        bag.Set("Name", () => {
-            calls++;
-            return "Ada";
-        });
+        bag.Set(
+            "Name", () => {
+                calls++;
+                return "Ada";
+            });
 
         Assert.Equal("Hello, Ada!", _service.Format("Hello, {Name}!", bag));
         Assert.Equal(1, calls);
@@ -52,11 +53,12 @@ public class FormatterServiceTests : IDisposable, IAsyncDisposable
     public void Format_BuilderFactory_FillsPlaceholder()
     {
         var calls = 0;
-
-        var result = _service.Format("Hello, {Name}!", ctx => ctx.Add("Name", () => {
-            calls++;
-            return "Ada";
-        }));
+        var result = _service.Format(
+            "Hello, {Name}!", ctx => ctx.Add(
+                "Name", () => {
+                    calls++;
+                    return "Ada";
+                }));
 
         Assert.Equal("Hello, Ada!", result);
         Assert.Equal(1, calls);

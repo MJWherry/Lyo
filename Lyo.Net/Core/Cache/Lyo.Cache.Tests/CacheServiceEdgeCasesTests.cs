@@ -271,8 +271,7 @@ public class CacheServiceEdgeCasesTests : IDisposable
 
         // FusionCache or our wrapper throws when the factory is null.
         // May be ArgumentNullException or NullReferenceException, depending on the check site.
-        await Assert.ThrowsAnyAsync<Exception>(async () => await service.GetOrSetAsync(
-            key, (Func<CancellationToken, Task<string?>>)null!, null, TestCt));
+        await Assert.ThrowsAnyAsync<Exception>(async () => await service.GetOrSetAsync(key, (Func<CancellationToken, Task<string?>>)null!, null, TestCt));
     }
 
     [Fact]

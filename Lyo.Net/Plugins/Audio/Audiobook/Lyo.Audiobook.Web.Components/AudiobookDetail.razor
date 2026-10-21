@@ -2,7 +2,8 @@
 
 @if (Work is null) {
     <MudText Typo="Typo.body2">No audiobook selected.</MudText>
-} else {
+}
+else {
     <MudStack Spacing="3">
         <MudStack Row="true" Spacing="3">
             @if (!string.IsNullOrWhiteSpace(CoverImageUrl)) {
@@ -22,7 +23,8 @@
         <MudText Typo="Typo.subtitle1">Credits</MudText>
         @if (Work.Credits.Count == 0) {
             <MudText Typo="Typo.body2">None</MudText>
-        } else {
+        }
+        else {
             <MudSimpleTable Dense="true" Hover="true">
                 <thead>
                 <tr>
@@ -43,7 +45,8 @@
         <MudText Typo="Typo.subtitle1">Chapters</MudText>
         @if (Work.Chapters.Count == 0) {
             <MudText Typo="Typo.body2">No chapters.</MudText>
-        } else {
+        }
+        else {
             <MudSimpleTable Dense="true" Hover="true">
                 <thead>
                 <tr>

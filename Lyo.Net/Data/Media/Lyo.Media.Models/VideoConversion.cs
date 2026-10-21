@@ -9,12 +9,7 @@ public static class VideoConversion
     public static VideoConversionBuilder From(string inputPath) => VideoConversionBuilder.From(inputPath);
 
     /// <summary>Transcodes <paramref name="inputPath" /> into <paramref name="outputPath" />.</summary>
-    public static VideoConversionBuilder Transcode(
-        string inputPath,
-        string outputPath,
-        MediaContainer format,
-        AudioEncoder? audioEncoder = null,
-        VideoEncoder? videoEncoder = null)
+    public static VideoConversionBuilder Transcode(string inputPath, string outputPath, MediaContainer format, AudioEncoder? audioEncoder = null, VideoEncoder? videoEncoder = null)
         => VideoConversionBuilder.Seed(VideoConversionOptions.ForTranscode(format, audioEncoder, videoEncoder), inputPath, outputPath, null, false);
 
     /// <summary>Compresses <paramref name="inputPath" /> into <paramref name="outputPath" />.</summary>
@@ -39,5 +34,5 @@ public static class VideoConversion
 
     /// <summary>Concatenates <paramref name="inputs" /> into <paramref name="outputPath" />. Call <see cref="VideoConversionBuilder.BuildConcat" />.</summary>
     public static VideoConversionBuilder Concat(IReadOnlyList<string> inputs, string outputPath)
-        => VideoConversionBuilder.Seed(new VideoConversionOptions { CopyCodecs = true }, null, outputPath, inputs, true);
+        => VideoConversionBuilder.Seed(new() { CopyCodecs = true }, null, outputPath, inputs, true);
 }

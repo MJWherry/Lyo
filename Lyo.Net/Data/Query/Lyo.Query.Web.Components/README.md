@@ -2,18 +2,27 @@
 
 Blazor / MudBlazor UI that edits and runs [`Lyo.Query.Models`](../Lyo.Query.Models/README.md) requests against any Lyo.Api host.
 
-Razor SDK targeting `net10.0`. Needs `MudBlazor` 9.3+ and [`Lyo.Web.Components`](../../../Apps/Web/Lyo.Web.Components/README.md) for the shared JSON editor, filter widgets, and client storage.
+Razor SDK targeting `net10.0`. Needs `MudBlazor` 9.3+ and [`Lyo.Web.Components`](../../../Apps/Web/Lyo.Web.Components/README.md) for the shared JSON editor, filter widgets, and
+client storage.
 
 ## Components
 
-- `QueryBuilderWorkbench.razor` (`QueryBuilderWorkbench.razor.cs`). Full-screen workbench that pairs a query editor with a runner panel. Holds the current `QueryConcreteReq` (`/QueryConcrete`), `ProjectionQueryReq` (`/QueryProject`), and `QueryReq` (root `/Query` From/Joins), plus shared bookkeeping (`Include`, `Select`, `Keys`). Persists state to the browser via `ClientStore.GetQueryWorkbenchStateAsync` / `SetQueryWorkbenchStateAsync` with a 450 ms debounce. Dispose also flushes the final state.
+- `QueryBuilderWorkbench.razor` (`QueryBuilderWorkbench.razor.cs`). Full-screen workbench that pairs a query editor with a runner panel. Holds the current `QueryConcreteReq`
+  (`/QueryConcrete`), `ProjectionQueryReq` (`/QueryProject`), and `QueryReq` (root `/Query` From/Joins), plus shared bookkeeping (`Include`, `Select`, `Keys`). Persists state to
+  the browser via `ClientStore.GetQueryWorkbenchStateAsync` / `SetQueryWorkbenchStateAsync` with a 450 ms debounce. Dispose also flushes the final state.
 - `QueryBuilderSettings.razor` (`QueryBuilderSettings.razor.cs`). Host / endpoint / run-mode selector inside the workbench.
-- `QueryRunPanel.razor` (`QueryRunPanel.razor.cs`). Sends HTTP for the current query, shows the response in a JSON editor, and reports latency / size. **Show SQL** posts the same body to `QuerySql` (`{route}/QuerySql` for concrete and projection, `{prefix}QuerySql` for root) and does not execute the query. Optional auth header on the runner: none, `Authorization: Bearer {token}`, or a custom name/value. Splitter behavior comes from `_content/Lyo.Query.Web.Components/scripts/queryWorkbenchSplitter.js`. Endpoint segments: `QueryConcrete`, `QueryProject`, or `Query` (root).
+- `QueryRunPanel.razor` (`QueryRunPanel.razor.cs`). Sends HTTP for the current query, shows the response in a JSON editor, and reports latency / size. **Show SQL** posts the same
+  body to `QuerySql` (`{route}/QuerySql` for concrete and projection, `{prefix}QuerySql` for root) and does not execute the query. Optional auth header on the runner: none,
+  `Authorization: Bearer {token}`, or a custom name/value. Splitter behavior comes from `_content/Lyo.Query.Web.Components/scripts/queryWorkbenchSplitter.js`. Endpoint segments:
+  `QueryConcrete`, `QueryProject`, or `Query` (root).
 
 ## State types
 
-- `QueryWorkbenchPersistedState`. `EntityQuery` (`QueryConcreteReq?`), `QueryRequest` (`ProjectionQueryReq`), `RootQuery` (`QueryReq?`), `IncludeAll`, `SelectAll`, `KeysAll`, and `Run` (`QueryWorkbenchRunConfiguration`).
-- `QueryWorkbenchRunConfiguration`. `HostEndpoints` (host → list of route templates), `SelectedHost`, `Route`, `RunMode` (`QueryWorkbenchRunMode`), `LeftPanePercent`, `RequestEditorViewMode` (`Lyo.Web.Components.JsonEditor.JsonEditorViewMode`), `AuthMode` (`QueryWorkbenchAuthMode`: None / Bearer / Header), `AuthHeaderName`, `AuthHeaderValue` (kept in browser state), plus `CloneHostEndpoints(...)`.
+- `QueryWorkbenchPersistedState`. `EntityQuery` (`QueryConcreteReq?`), `QueryRequest` (`ProjectionQueryReq`), `RootQuery` (`QueryReq?`), `IncludeAll`, `SelectAll`, `KeysAll`, and
+  `Run` (`QueryWorkbenchRunConfiguration`).
+- `QueryWorkbenchRunConfiguration`. `HostEndpoints` (host → list of route templates), `SelectedHost`, `Route`, `RunMode` (`QueryWorkbenchRunMode`), `LeftPanePercent`,
+  `RequestEditorViewMode` (`Lyo.Web.Components.JsonEditor.JsonEditorViewMode`), `AuthMode` (`QueryWorkbenchAuthMode`: None / Bearer / Header), `AuthHeaderName`, `AuthHeaderValue`
+  (kept in browser state), plus `CloneHostEndpoints(...)`.
 - `QueryWorkbenchRunMode`. Enum (`Query` → `/QueryConcrete`, `QueryProject`, `RootQuery` → `/Query`) serialized with the bundled `QueryWorkbenchRunModeJsonConverter`.
 - `QueryWorkbenchHostNormalization`. Static helpers that normalize at load/persist time.
 

@@ -1,42 +1,51 @@
 # Lyo.KeyStore.Aws
 
-`AwsKeyStore` takes an `IAmazonSecretsManager` client and a secret-name prefix. It implements `Lyo.KeyStore.IKeyStore` and `Lyo.KeyStore.IKeyInventoryStore`, so admin UIs and key-rotation jobs can encrypt against it and list `keyId`s and versions.
+`AwsKeyStore` takes an `IAmazonSecretsManager` client and a secret-name prefix. It implements `Lyo.KeyStore.IKeyStore` and `Lyo.KeyStore.IKeyInventoryStore`, so admin UIs and
+key-rotation jobs can encrypt against it and list `keyId`s and versions.
 
-The backing secret is stored as JSON (`{ "<keyId>": "<material>", ... }`) under a single secret per prefix. Logical version strings map onto AWS `VersionId` values, including short labels such as `"1"` and `"2025-01"`. `AddKey` stores raw key bytes with the prefix `lyo-kek-raw:v1:`. `GetKey` returns those bytes unchanged. A secret value with no prefix still goes through derive-on-read, so secrets already in AWS keep their meaning. `AddKeyFromString` derives once, the same way `LocalKeyStore` does, then stores the derived bytes as raw. `GetCurrentVersion` only reads. `AddKey` sets the logical version as current when none is set.
+The backing secret is stored as JSON (`{ "<keyId>": "<material>", ... }`) under a single secret per prefix. Logical version strings map onto AWS `VersionId` values, including short
+labels such as `"1"` and `"2025-01"`. `AddKey` stores raw key bytes with the prefix `lyo-kek-raw:v1:`. `GetKey` returns those bytes unchanged. A secret value with no prefix still
+goes through derive-on-read, so secrets already in AWS keep their meaning. `AddKeyFromString` derives once, the same way `LocalKeyStore` does, then stores the derived bytes as raw.
+`GetCurrentVersion` only reads. `AddKey` sets the logical version as current when none is set.
 
 ## AwsKeyStore methods
 
 - `IKeyStore.` `GetKey`, `GetCurrentKey`, `GetCurrentVersion`, `AddKey`, `UpdateKey`, `HasKey`, metadata, salt-for-version. Sync and async variants.
-- `IKeyInventoryStore.` `GetAvailableKeyIdsAsync(CancellationToken)`, `GetAvailableVersionsAsync(string keyId, CancellationToken)` so listings, rotation reports, and DEK migrations can pivot off the live store rather than a local index.
+- `IKeyInventoryStore.` `GetAvailableKeyIdsAsync(CancellationToken)`, `GetAvailableVersionsAsync(string keyId, CancellationToken)` so listings, rotation reports, and DEK migrations
+  can pivot off the live store rather than a local index.
 
 ## AwsKeyStoreOptions
 
-| Property | Default | Notes |
-| --------------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SectionName` | `AwsKeyStore` | Default appsettings subsection. |
-| `AccessKeyId` / `SecretAccessKey` | unset | Static credentials. When both are set they win over `Profile`. Omit to use `Profile` or the AWS default credential chain (IAM role, env vars, `default` profile). |
-| `Profile` | unset | Named profile from `~/.aws/credentials` / `~/.aws/config`. Used when static keys are omitted. If set but missing, registration fails rather than falling back to `default`. |
-| `Region` | `us-east-2` (when unspecified) | Resolved via `RegionEndpoint.GetBySystemName`. |
-| `SecretNamePrefix` | `lyo/kek` fallback | Logical secret prefix used to scope keys across environments (`dev/MyApp/KeyStore`, `prod/MyApp/KeyStore`, …). |
+| Property                          | Default                        | Notes                                                                                                                                                                       |
+|-----------------------------------|--------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `SectionName`                     | `AwsKeyStore`                  | Default appsettings subsection.                                                                                                                                             |
+| `AccessKeyId` / `SecretAccessKey` | unset                          | Static credentials. When both are set they win over `Profile`. Omit to use `Profile` or the AWS default credential chain (IAM role, env vars, `default` profile).           |
+| `Profile`                         | unset                          | Named profile from `~/.aws/credentials` / `~/.aws/config`. Used when static keys are omitted. If set but missing, registration fails rather than falling back to `default`. |
+| `Region`                          | `us-east-2` (when unspecified) | Resolved via `RegionEndpoint.GetBySystemName`.                                                                                                                              |
+| `SecretNamePrefix`                | `lyo/kek` fallback             | Logical secret prefix used to scope keys across environments (`dev/MyApp/KeyStore`, `prod/MyApp/KeyStore`, …).                                                              |
 
 ## Dependency injection
 
-| Extension | Purpose |
-| -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `services.AddAwsKeyStore(Func<IServiceProvider,string> resolvePrefix)` | Resolve the prefix from DI (multi-tenant hosts), register `AwsKeyStore` as a singleton. |
-| `services.AddAwsKeyStoreFromConfiguration(IConfiguration, configSectionName = "AwsKeyStore")` | Bind `AwsKeyStoreOptions` + register `IAmazonSecretsManager` (when missing) + register `AwsKeyStore` and `IKeyStore`. |
-| `services.AddAmazonSecretsManagerFromConfiguration(IConfiguration, configSectionName = "AwsKeyStore")` | Standalone `IAmazonSecretsManager` registration (no keystore). Honours static keys, then `Profile`, then the default credential chain; also honours region. |
-| `services.AddTwoKeyEncryptionServiceKeyed(keyedServiceName, secretNamePrefix)` / `<TKeyStore>` | Register a keyed `ITwoKeyEncryptionService` stack using `AwsKeyStore` plus paired `AesGcmEncryptionService` for both DEK and KEK. |
-| `services.AddTwoKeyEncryptionServiceKeyed(keyedServiceName, secretNamePrefix, AwsKeyStoreOptions?)` | Same, but with explicit AWS options (region/credentials) rather than configuration binding. |
-| `services.AddTwoKeyEncryptionFromConfiguration(IConfiguration, keyedServiceName, configSectionName)` / `<TKeyStore>` | Bind `AwsKeyStoreOptions` from configuration and wire the keyed two-key stack in one call. |
+| Extension                                                                                                            | Purpose                                                                                                                                                     |
+|----------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `services.AddAwsKeyStore(Func<IServiceProvider,string> resolvePrefix)`                                               | Resolve the prefix from DI (multi-tenant hosts), register `AwsKeyStore` as a singleton.                                                                     |
+| `services.AddAwsKeyStoreFromConfiguration(IConfiguration, configSectionName = "AwsKeyStore")`                        | Bind `AwsKeyStoreOptions` + register `IAmazonSecretsManager` (when missing) + register `AwsKeyStore` and `IKeyStore`.                                       |
+| `services.AddAmazonSecretsManagerFromConfiguration(IConfiguration, configSectionName = "AwsKeyStore")`               | Standalone `IAmazonSecretsManager` registration (no keystore). Honours static keys, then `Profile`, then the default credential chain; also honours region. |
+| `services.AddTwoKeyEncryptionServiceKeyed(keyedServiceName, secretNamePrefix)` / `<TKeyStore>`                       | Register a keyed `ITwoKeyEncryptionService` stack using `AwsKeyStore` plus paired `AesGcmEncryptionService` for both DEK and KEK.                           |
+| `services.AddTwoKeyEncryptionServiceKeyed(keyedServiceName, secretNamePrefix, AwsKeyStoreOptions?)`                  | Same, but with explicit AWS options (region/credentials) rather than configuration binding.                                                                 |
+| `services.AddTwoKeyEncryptionFromConfiguration(IConfiguration, keyedServiceName, configSectionName)` / `<TKeyStore>` | Bind `AwsKeyStoreOptions` from configuration and wire the keyed two-key stack in one call.                                                                  |
 
-`AddAwsKeyStore(Func<...>)` registers `AwsKeyStore` as a concrete singleton only, no `IKeyStore` indirection. `AddAwsKeyStoreFromConfiguration` and the two-key extensions also register `IKeyStore` so `Lyo.Encryption` can resolve it.
+`AddAwsKeyStore(Func<...>)` registers `AwsKeyStore` as a concrete singleton only, no `IKeyStore` indirection. `AddAwsKeyStoreFromConfiguration` and the two-key extensions also
+register `IKeyStore` so `Lyo.Encryption` can resolve it.
 
 ## Raw key bytes and short versions
 
-`AwsKeyStore.RawKeyPrefix` is `lyo-kek-raw:v1:`. `AddKey` writes that prefix plus base64. `GetKey` strips it and returns the bytes, so a key copied from `LocalKeyStore` decrypts the same ciphertext. Values without the prefix still run through PBKDF2 on read.
+`AwsKeyStore.RawKeyPrefix` is `lyo-kek-raw:v1:`. `AddKey` writes that prefix plus base64. `GetKey` strips it and returns the bytes, so a key copied from `LocalKeyStore` decrypts
+the same ciphertext. Values without the prefix still run through PBKDF2 on read.
 
-Any non-empty logical version is resolved through the version map first. Only when that map has no entry, and the string is at least 32 characters, is it tried as an AWS `VersionId`. Short current versions are stored and returned as written. `GetCurrentVersion` does not write. One prefix is one Secrets Manager secret, and every `AddKey` stores a new version of that whole JSON document, so a large copy can hit AWS version retention. `KeyStoreMigrator` surfaces that exception and does not hide it.
+Any non-empty logical version is resolved through the version map first. Only when that map has no entry, and the string is at least 32 characters, is it tried as an AWS
+`VersionId`. Short current versions are stored and returned as written. `GetCurrentVersion` does not write. One prefix is one Secrets Manager secret, and every `AddKey` stores a
+new version of that whole JSON document, so a large copy can hit AWS version retention. `KeyStoreMigrator` surfaces that exception and does not hide it.
 
 ## See also
 

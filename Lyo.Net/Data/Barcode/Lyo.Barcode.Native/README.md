@@ -1,6 +1,7 @@
 # Lyo.Barcode.Native
 
-Lyo.Barcode `IBarcodeService` with no third-party barcode generator. Encodes Code 128 (subset B, ASCII 32 to 127), rasterizes to BMP (SixLabors.ImageSharp) or SVG, can draw a human-readable caption under the bars, and decodes images through ReadFromImageAsync via BarcodeZxingRead (ZXing.Net and ImageSharp).
+Lyo.Barcode `IBarcodeService` with no third-party barcode generator. Encodes Code 128 (subset B, ASCII 32 to 127), rasterizes to BMP (SixLabors.ImageSharp) or SVG, can draw a
+human-readable caption under the bars, and decodes images through ReadFromImageAsync via BarcodeZxingRead (ZXing.Net and ImageSharp).
 
 ## Features
 
@@ -8,9 +9,11 @@ Lyo.Barcode `IBarcodeService` with no third-party barcode generator. Encodes Cod
 - BMP (BarcodeFormat.Bmp) and SVG (BarcodeFormat.Svg) from BarcodeImageRenderer.
 - Quiet zone is never smaller than the ISO minimum of 10 modules.
 - If BarcodeOptions.ShowHumanReadableTextBelow is set, BMP output paints the payload under the bars with BarcodeBmpCaptionRenderer (SixLabors.Fonts / SixLabors.ImageSharp.Drawing).
-- A frame comes from BarcodeOptions.ShowBorder, BorderWidthPixels, and BorderColorHex. Each axis grows by 2 × BorderWidthPixels. SVG uses an outer fill plus an inner background rect. BMP composites strips. Width stays between BarcodeServiceOptions.MinBorderWidthPixels and MaxBorderWidthPixels (defaults 1 to 64). BorderColorHex must be #RGB or #RRGGBB.
-- ReadFromImageAsync(byte[]) calls BarcodeZxingRead.Decode (Code 128, Code 39, EAN, UPC, ITF, Codabar, PDF 417, Data Matrix).
-- If BarcodeServiceOptions.EnableMetrics is true and an IMetrics is registered, generation timings plus success, failure, and cancellation counters under Lyo.Barcode.Constants.Metrics are emitted.
+- A frame comes from BarcodeOptions.ShowBorder, BorderWidthPixels, and BorderColorHex. Each axis grows by 2 × BorderWidthPixels. SVG uses an outer fill plus an inner background
+  rect. BMP composites strips. Width stays between BarcodeServiceOptions.MinBorderWidthPixels and MaxBorderWidthPixels (defaults 1 to 64). BorderColorHex must be #RGB or #RRGGBB.
+- ReadFromImageAsync (byte[]) calls BarcodeZxingRead.Decode (Code 128, Code 39, EAN, UPC, ITF, Codabar, PDF 417, Data Matrix).
+- If BarcodeServiceOptions.EnableMetrics is true and an IMetrics is registered, generation timings plus success, failure, and cancellation counters under
+  Lyo.Barcode.Constants.Metrics are emitted.
 
 ## Examples
 
@@ -55,8 +58,9 @@ var read = await barcodes.ReadFromImageAsync(File.ReadAllBytes("photo.png"));
 
 ## Container helpers
 
-- AddNativeBarcodeService(BarcodeServiceOptions options). Pass an options instance.
-- AddNativeBarcodeServiceFromConfiguration(IConfiguration, sectionName?). Binds BarcodeServiceOptions from the BarcodeService section by default (BarcodeServiceOptions.SectionName). No-op if the options were already registered.
+- AddNativeBarcodeService (BarcodeServiceOptions options). Pass an options instance.
+- AddNativeBarcodeServiceFromConfiguration (IConfiguration, sectionName?). Binds BarcodeServiceOptions from the BarcodeService section by default
+  (BarcodeServiceOptions.SectionName). No-op if the options were already registered.
 
 ## Dependencies
 

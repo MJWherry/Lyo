@@ -66,7 +66,7 @@ public sealed record VideoFrameRate
         _ = BuiltIns;
         ArgumentHelpers.ThrowIfLessThanOrEqual(value, 0, message: "Frame rate must be positive.");
         var key = value.ToString("G", CultureInfo.InvariantCulture);
-        return NamedCatalog.GetOrCustom(ById, key, _ => new VideoFrameRate(key, value));
+        return NamedCatalog.GetOrCustom(ById, key, _ => new(key, value));
     }
 
     /// <inheritdoc />

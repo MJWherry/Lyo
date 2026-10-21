@@ -13,8 +13,6 @@ namespace Lyo.Api.Tests.Services.Export;
 
 public class YamlExportFormatHandlerTests
 {
-    private sealed record Person(string GivenName);
-
     [Fact]
     public async Task WriteTypedAsync_People_EmitsDocument()
     {
@@ -39,12 +37,12 @@ public class YamlExportFormatHandlerTests
             Assert.Contains("Ada Lovelace", text, StringComparison.Ordinal);
         }
     }
+
+    private sealed record Person(string GivenName);
 }
 
 public class XmlExportFormatHandlerTests
 {
-    private sealed record Person(string GivenName);
-
     [Fact]
     public async Task WriteTypedAsync_People_EmitsDocument()
     {
@@ -69,12 +67,12 @@ public class XmlExportFormatHandlerTests
             Assert.Contains("Ada Lovelace", text, StringComparison.Ordinal);
         }
     }
+
+    private sealed record Person(string GivenName);
 }
 
 public class TomlExportFormatHandlerTests
 {
-    private sealed record Person(string GivenName);
-
     [Fact]
     public async Task WriteTypedAsync_People_EmitsDocument()
     {
@@ -99,12 +97,12 @@ public class TomlExportFormatHandlerTests
             Assert.Contains("Ada Lovelace", text, StringComparison.Ordinal);
         }
     }
+
+    private sealed record Person(string GivenName);
 }
 
 public class JsonExportFormatHandlerTests
 {
-    private sealed record Person(string GivenName, int Age);
-
     [Fact]
     public async Task WriteProjectedAsync_Formatters_KeepsCallerOrder()
     {
@@ -120,9 +118,7 @@ public class JsonExportFormatHandlerTests
     [Fact]
     public async Task WriteTypedAsync_Columns_KeepsHeaderOrderAndDropsUnlistedProperties()
     {
-        var columns = new Dictionary<string, PropertyInfo>(StringComparer.Ordinal) {
-            ["label"] = typeof(Person).GetProperty(nameof(Person.GivenName))!
-        };
+        var columns = new Dictionary<string, PropertyInfo>(StringComparer.Ordinal) { ["label"] = typeof(Person).GetProperty(nameof(Person.GivenName))! };
         var service = new JsonService(o => o.Order = MemberOrder.Alphabetical);
         var (stream, _, _) = await new JsonExportFormatHandler(service).WriteTypedAsync<Person>([new("Ada", 36)], columns, TestCt);
         await using (stream) {
@@ -131,6 +127,8 @@ public class JsonExportFormatHandlerTests
             Assert.DoesNotContain("36", text, StringComparison.Ordinal);
         }
     }
+
+    private sealed record Person(string GivenName, int Age);
 }
 
 file static class FormattedExportRows
@@ -138,10 +136,7 @@ file static class FormattedExportRows
     public static object?[] Rows() => [new PersonRow("Ada", "Lovelace")];
 
     public static Dictionary<string, Func<object?, string>> Formatters()
-        => new(StringComparer.Ordinal) {
-            ["note"] = _ => "hi",
-            ["fullName"] = row => row is PersonRow person ? person.GivenName + " " + person.FamilyName : ""
-        };
+        => new(StringComparer.Ordinal) { ["note"] = _ => "hi", ["fullName"] = row => row is PersonRow person ? person.GivenName + " " + person.FamilyName : "" };
 
     private sealed record PersonRow(string GivenName, string FamilyName);
 }

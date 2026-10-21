@@ -3,8 +3,8 @@ using Lyo.Compression.Models;
 namespace Lyo.Compression.Lz4;
 
 /// <summary>
-/// LZ4 block compression. Very fast, moderate ratio. Registers with <see cref="CompressionAlgorithm.TryFromExtension" /> and
-/// <see cref="CompressionAlgorithm.TryFromName" /> the first time <see cref="Instance" /> is touched, usually via <c>services.AddLz4Compressor()</c>.
+/// LZ4 block compression. Very fast, moderate ratio. Registers with <see cref="CompressionAlgorithm.TryFromExtension" /> and <see cref="CompressionAlgorithm.TryFromName" />
+/// the first time <see cref="Instance" /> is touched, usually via <c>services.AddLz4Compressor()</c>.
 /// </summary>
 public sealed record Lz4CompressionAlgorithm : CompressionAlgorithm
 {

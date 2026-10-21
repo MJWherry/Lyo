@@ -7,8 +7,8 @@ namespace Lyo.Http.Client.Pipeline;
 /// <summary>Waits <see cref="LyoHttpTimingOptions.DelayBeforeSendMin" />–<see cref="LyoHttpTimingOptions.DelayBeforeSendMax" /> (plus jitter) after a rate-limit permit is acquired.</summary>
 public sealed class LyoHttpTimingHandler : DelegatingHandler
 {
-    private readonly LyoHttpTimingOptions _options;
     private readonly ILogger _logger;
+    private readonly LyoHttpTimingOptions _options;
     private readonly Random _rng = new();
 
     /// <summary>Creates the handler.</summary>
@@ -38,7 +38,7 @@ public sealed class LyoHttpTimingHandler : DelegatingHandler
 
         var sample = min >= max ? min : min + _rng.NextDouble() * (max - min);
         if (_options.Jitter > 0)
-            sample *= 1 + ((_options.Jitter * 2) * _rng.NextDouble() - _options.Jitter);
+            sample *= 1 + (_options.Jitter * 2 * _rng.NextDouble() - _options.Jitter);
 
         var delay = TimeSpan.FromMilliseconds(Math.Max(0, sample));
         if (delay <= TimeSpan.Zero)

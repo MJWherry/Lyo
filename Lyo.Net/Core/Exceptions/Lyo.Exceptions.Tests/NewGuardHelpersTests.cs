@@ -1,5 +1,5 @@
-using Lyo.Exceptions.Models;
 using Lyo.Common.Core.Identifiers;
+using Lyo.Exceptions.Models;
 
 namespace Lyo.Exceptions.Tests;
 

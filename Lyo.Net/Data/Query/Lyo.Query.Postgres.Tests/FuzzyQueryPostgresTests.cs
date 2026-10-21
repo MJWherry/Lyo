@@ -1,8 +1,7 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Enums;
-using Lyo.Query.Services.WhereClause;
 using Microsoft.EntityFrameworkCore;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Query.Postgres.Tests;
 
@@ -29,7 +28,6 @@ public class FuzzyQueryPostgresTests(FuzzyQueryPostgresFixture fixture) : IClass
         var query = fixture.WhereClause.ApplyWhereClause(db.People.AsNoTracking(), where);
         var sql = query.ToQueryString();
         Assert.Contains("similarity", sql, StringComparison.OrdinalIgnoreCase);
-
         var sqlNames = (await query.Select(p => p.Name).ToListAsync(TestCt)).OrderBy(n => n, StringComparer.Ordinal).ToArray();
         var clrNames = fixture.WhereClause.ApplyWhereClause(rows.AsQueryable(), where).Select(p => p.Name).OrderBy(n => n, StringComparer.Ordinal).ToArray();
         Assert.Equal(clrNames, sqlNames);
@@ -40,11 +38,7 @@ public class FuzzyQueryPostgresTests(FuzzyQueryPostgresFixture fixture) : IClass
     [Fact]
     public async Task ApplyWhereClause_FuzzyThreshold_ChangesMatches()
     {
-        var rows = new[] {
-            new FuzzyPersonEntity { Id = LyoGuid.CreateV7(), Name = "Alice" },
-            new FuzzyPersonEntity { Id = LyoGuid.CreateV7(), Name = "Alicia" }
-        };
-
+        var rows = new[] { new FuzzyPersonEntity { Id = LyoGuid.CreateV7(), Name = "Alice" }, new FuzzyPersonEntity { Id = LyoGuid.CreateV7(), Name = "Alicia" } };
         await using (var seed = await fixture.ContextFactory.CreateDbContextAsync(TestCt)) {
             seed.People.RemoveRange(seed.People);
             seed.People.AddRange(rows);

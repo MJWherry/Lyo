@@ -1,6 +1,7 @@
 # Lyo.Billing.Postgres
 
-PostgreSQL storage for Lyo.Billing. Issue/pay/void wrap `ILedgerStore` in a `TransactionScope`. Bill-to clients live in `billing.client`. Cipher columns hold client/invoice tax snapshots and biller remittance. Schema constant: `PostgresBillingOptions.Schema = "billing"`.
+PostgreSQL storage for Lyo.Billing. Issue/pay/void wrap `ILedgerStore` in a `TransactionScope`. Bill-to clients live in `billing.client`. Cipher columns hold client/invoice tax
+snapshots and biller remittance. Schema constant: `PostgresBillingOptions.Schema = "billing"`.
 
 ## Examples
 

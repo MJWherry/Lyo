@@ -54,7 +54,7 @@ public class JobRetentionPurgeTests
                     Result = JobRunResult.Success,
                     CreatedBy = "test",
                     CreatedTimestamp = DateTime.UtcNow,
-                    FinishedTimestamp = DateTime.UtcNow,
+                    FinishedTimestamp = DateTime.UtcNow
                 });
 
             await db.SaveChangesAsync(TestCt);
@@ -99,7 +99,7 @@ public class JobRetentionPurgeTests
                 Result = JobRunResult.Success,
                 CreatedBy = "test",
                 CreatedTimestamp = DateTime.UtcNow.AddDays(-10),
-                FinishedTimestamp = DateTime.UtcNow.AddDays(-10),
+                FinishedTimestamp = DateTime.UtcNow.AddDays(-10)
             });
 
         await db.SaveChangesAsync(TestCt);

@@ -1,6 +1,8 @@
 # Lyo.Video
 
-Domain contracts for a video catalog. A movie is a `VideoTitle` with no seasons. A series is a title with seasons and episodes. Credits use an opaque `PersonRef`. `CoverImageRef` and `VideoFileRef` are opaque file refs. An optional `YoutubeVideoLink` from `Lyo.Google.Youtube.Models` can sit on a movie or an episode. The store does not call the YouTube client. Favorite and Tag attach via `VideoEntityTypes`.
+Domain contracts for a video catalog. A movie is a `VideoTitle` with no seasons. A series is a title with seasons and episodes. Credits use an opaque `PersonRef`. `CoverImageRef`
+and `VideoFileRef` are opaque file refs. An optional `YoutubeVideoLink` from `Lyo.Google.Youtube.Models` can sit on a movie or an episode. The store does not call the YouTube
+client. Favorite and Tag attach via `VideoEntityTypes`.
 
 ## Features
 

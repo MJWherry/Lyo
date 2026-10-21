@@ -64,10 +64,7 @@ public partial class LyoChip
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
-    private string ResolvedLabel
-        => !string.IsNullOrWhiteSpace(Label) ? Label
-            : !string.IsNullOrWhiteSpace(Text) ? Text
-            : Spec?.Label ?? "—";
+    private string ResolvedLabel => !string.IsNullOrWhiteSpace(Label) ? Label : !string.IsNullOrWhiteSpace(Text) ? Text : Spec?.Label ?? "—";
 
     private Color ResolvedColor => Color ?? Spec?.Color ?? MudBlazor.Color.Default;
 
@@ -75,26 +72,22 @@ public partial class LyoChip
 
     private Variant ResolvedVariant => Variant ?? Spec?.Variant ?? MudBlazor.Variant.Filled;
 
-    private string? ResolvedStyle
-    {
-        get
-        {
-            var style = string.IsNullOrWhiteSpace(Style)
-                ? Spec?.Style
-                : string.IsNullOrWhiteSpace(Spec?.Style) ? Style : Spec.Style + ";" + Style;
+    private string? ResolvedStyle {
+        get {
+            var style = string.IsNullOrWhiteSpace(Style) ? Spec?.Style : string.IsNullOrWhiteSpace(Spec?.Style) ? Style : Spec.Style + ";" + Style;
             if (Hue is null)
                 return style;
+
             return string.IsNullOrWhiteSpace(style) ? Hue.Style : style + ";" + Hue.Style;
         }
     }
 
-    private string? ResolvedClass
-    {
-        get
-        {
+    private string? ResolvedClass {
+        get {
             var hue = ResolvedStyle is not null && ResolvedStyle.Contains(LyoChipHue.CssVariable, StringComparison.Ordinal);
             if (!hue)
                 return Class;
+
             return string.IsNullOrWhiteSpace(Class) ? LyoChipHue.CssClass : Class + " " + LyoChipHue.CssClass;
         }
     }

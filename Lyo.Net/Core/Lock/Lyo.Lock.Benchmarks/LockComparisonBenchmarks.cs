@@ -1,11 +1,11 @@
 using BenchmarkDotNet.Attributes;
 using Lyo.Benchmark;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Lock.Abstractions;
 using Lyo.Lock.Redis;
 using Microsoft.Extensions.Logging.Abstractions;
 using StackExchange.Redis;
 using Testcontainers.Redis;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Lock.Benchmarks;
 

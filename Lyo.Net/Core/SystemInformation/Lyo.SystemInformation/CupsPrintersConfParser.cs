@@ -28,7 +28,7 @@ internal static class CupsPrintersConfParser
             if (line.Equals("</Printer>", StringComparison.Ordinal)) {
                 if (name is { Length: > 0 }) {
                     var isDefault = defaultName is not null && string.Equals(name, defaultName, StringComparison.Ordinal);
-                    printers.Add(new PrinterInfo(name, null, port, isDefault, status));
+                    printers.Add(new(name, null, port, isDefault, status));
                 }
 
                 name = null;

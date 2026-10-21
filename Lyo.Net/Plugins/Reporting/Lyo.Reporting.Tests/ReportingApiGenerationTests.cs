@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Lyo.Api.Models.Error;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Reporting.Api;
 using Lyo.Reporting.Models;
 using Lyo.Reporting.Models.Enums;
@@ -7,7 +8,6 @@ using Lyo.Reporting.Models.Request;
 using Lyo.Reporting.Models.Response;
 using Microsoft.AspNetCore.Http;
 using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Reporting.Tests;
 
@@ -21,9 +21,7 @@ public sealed class ReportingApiGenerationTests
     public async Task MapException_GenerationTimeout_Returns504()
     {
         // The request is still alive; only the service-side GenerationTimeout fired.
-        var error = await Assert.ThrowsAsync<ApiErrorException>(
-            () => Extensions.ExecuteGenerationAsync(() => throw new OperationCanceledException(), CancellationToken.None));
-
+        var error = await Assert.ThrowsAsync<ApiErrorException>(() => Extensions.ExecuteGenerationAsync(() => throw new OperationCanceledException(), CancellationToken.None));
         Assert.Equal(504, error.Status);
         Assert.Equal(ApiErrorCodes.GatewayTimeout, error.ProblemDetails.Errors[0].Code);
     }
@@ -33,9 +31,7 @@ public sealed class ReportingApiGenerationTests
     {
         using var aborted = new CancellationTokenSource();
         await aborted.CancelAsync();
-        var error = await Assert.ThrowsAsync<ApiErrorException>(
-            () => Extensions.ExecuteGenerationAsync(() => throw new OperationCanceledException(), aborted.Token));
-
+        var error = await Assert.ThrowsAsync<ApiErrorException>(() => Extensions.ExecuteGenerationAsync(() => throw new OperationCanceledException(), aborted.Token));
         Assert.Equal(499, error.Status);
         Assert.Equal(ApiErrorCodes.Cancelled, error.ProblemDetails.Errors[0].Code);
     }
@@ -43,20 +39,17 @@ public sealed class ReportingApiGenerationTests
     [Fact]
     public async Task MapException_ValidationAndBusy_Returns400And503()
     {
-        var validation = await Assert.ThrowsAsync<ApiErrorException>(
-            () => Extensions.ExecuteGenerationAsync(() => throw new ReportValidationException("bad parameter"), CancellationToken.None));
+        var validation = await Assert.ThrowsAsync<ApiErrorException>(() => Extensions.ExecuteGenerationAsync(
+            () => throw new ReportValidationException("bad parameter"), CancellationToken.None));
 
-        var busy = await Assert.ThrowsAsync<ApiErrorException>(
-            () => Extensions.ExecuteGenerationAsync(() => throw new ReportBusyException("saturated"), CancellationToken.None));
-
+        var busy = await Assert.ThrowsAsync<ApiErrorException>(() => Extensions.ExecuteGenerationAsync(() => throw new ReportBusyException("saturated"), CancellationToken.None));
         Assert.Equal(400, validation.Status);
         Assert.Equal(503, busy.Status);
     }
 
     [Fact]
     public async Task MapException_Unexpected_Bubbles()
-        => await Assert.ThrowsAsync<InvalidOperationException>(
-            () => Extensions.ExecuteGenerationAsync(() => throw new InvalidOperationException("boom"), CancellationToken.None));
+        => await Assert.ThrowsAsync<InvalidOperationException>(() => Extensions.ExecuteGenerationAsync(() => throw new InvalidOperationException("boom"), CancellationToken.None));
 
     [Fact]
     public async Task ExecuteAsync_Success_ReturnsGeneration()
@@ -101,9 +94,5 @@ public sealed class ReportingApiGenerationTests
     }
 
     private static DefaultHttpContext HttpContextFor(string? name)
-        => new() {
-            User = name is null
-                ? new ClaimsPrincipal(new ClaimsIdentity())
-                : new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Name, name)], "TestAuth"))
-        };
+        => new() { User = name is null ? new(new ClaimsIdentity()) : new ClaimsPrincipal(new ClaimsIdentity([new(ClaimTypes.Name, name)], "TestAuth")) };
 }

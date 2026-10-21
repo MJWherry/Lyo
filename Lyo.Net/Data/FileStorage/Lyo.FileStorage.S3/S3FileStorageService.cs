@@ -4,6 +4,7 @@ using System.Text.Json;
 using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Core.Pathing;
 using Lyo.Common.Metadata.Records;
 using Lyo.Compression;
@@ -23,7 +24,6 @@ using Lyo.IO.FileSystem;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.FileStorage.S3;
 
@@ -33,6 +33,11 @@ public sealed class S3FileStorageService : FileStorageServiceBase, IFileStorageD
     private readonly S3FileStorageOptions _options;
     private readonly bool _ownsS3Client;
     private readonly IAmazonS3 _s3Client;
+
+    private IFileSystem? _physicalFs;
+
+    /// <inheritdoc />
+    public override bool SupportsPlainByteRange => true;
 
     public S3FileStorageService(
         S3FileStorageOptions options,
@@ -68,16 +73,47 @@ public sealed class S3FileStorageService : FileStorageServiceBase, IFileStorageD
         MetricNames[nameof(FileStorage.Constants.Metrics.FileStoragePreSignedUrlGenerationFailed)] = Constants.Metrics.FileStoragePreSignedUrlGenerationFailed;
     }
 
-    /// <inheritdoc />
-    public IFileSystem Physical => _physicalFs ??= new S3FileSystem(_s3Client, _options.BucketName, _options.KeyPrefix);
-
-    private IFileSystem? _physicalFs;
-
     /// <summary>Releases the S3 client only when this service created it; otherwise same as <see cref="Dispose()" />.</summary>
     public ValueTask DisposeAsync()
     {
         Dispose();
         return ValueTask.CompletedTask;
+    }
+
+    /// <remarks>
+    /// Only a full-object SHA-256 is usable; S3 stores one when the PUT carried <c>x-amz-checksum-sha256</c>. Endpoints without GetObjectAttributes (some S3-compatible stores)
+    /// and IAM policies that deny <c>s3:GetObjectAttributes</c> fall back to download-and-hash.
+    /// </remarks>
+    async Task<DirectUploadObjectAttributes?> IDirectUploadVerification.GetDirectUploadAttributesAsync(Guid fileId, string? pathPrefix, CancellationToken ct)
+    {
+        GetObjectAttributesResponse response;
+        try {
+            response = await _s3Client.GetObjectAttributesAsync(
+                    new() {
+                        BucketName = _options.BucketName, Key = GetObjectKey(fileId, "", pathPrefix), ObjectAttributes = [ObjectAttributes.Checksum, ObjectAttributes.ObjectSize]
+                    },
+                    ct)
+                .ConfigureAwait(false);
+        }
+        catch (AmazonS3Exception ex) when (IsMissingObject(ex) || ex.StatusCode is HttpStatusCode.NotImplemented or HttpStatusCode.Forbidden) {
+            Logger.LogDebug(ex, "GetObjectAttributes unavailable for direct upload {FileId}; finalize will download and hash", fileId);
+            return null;
+        }
+
+        if (response.Checksum is not { ChecksumSHA256.Length: > 0 } checksum || checksum.ChecksumType == ChecksumType.COMPOSITE || response.ObjectSize is not { } size)
+            return null;
+
+        var sha256 = checksum.ChecksumSHA256;
+        return new(size, Convert.FromBase64String(sha256), HashAlgorithm.Sha256);
+    }
+
+    async Task<byte[]> IDirectUploadVerification.ReadDirectUploadPrefixAsync(Guid fileId, string? pathPrefix, int maxBytes, CancellationToken ct)
+    {
+        var request = new GetObjectRequest { BucketName = _options.BucketName, Key = GetObjectKey(fileId, "", pathPrefix), ByteRange = new(0, maxBytes - 1) };
+        using var response = await _s3Client.GetObjectAsync(request, ct).ConfigureAwait(false);
+        using var buffer = new MemoryStream(maxBytes);
+        await response.ResponseStream.CopyToAsync(buffer, ct).ConfigureAwait(false);
+        return buffer.ToArray();
     }
 
     /// <inheritdoc />
@@ -117,6 +153,9 @@ public sealed class S3FileStorageService : FileStorageServiceBase, IFileStorageD
         return list;
     }
 
+    /// <inheritdoc />
+    public IFileSystem Physical => _physicalFs ??= new S3FileSystem(_s3Client, _options.BucketName, _options.KeyPrefix);
+
     protected override async Task<HealthResult> CheckHealthLightweightAsync(CancellationToken ct)
     {
         var sw = Stopwatch.StartNew();
@@ -125,8 +164,7 @@ public sealed class S3FileStorageService : FileStorageServiceBase, IFileStorageD
             // (same grant as streamed downloads); 404 means the bucket answered.
             var probeKey = GetObjectKey(Guid.Empty, "", ".lyo-health");
             try {
-                using var response = await _s3Client.GetObjectAsync(
-                    new GetObjectRequest { BucketName = _options.BucketName, Key = probeKey, ByteRange = new ByteRange(0, 0) }, ct).ConfigureAwait(false);
+                using var response = await _s3Client.GetObjectAsync(new() { BucketName = _options.BucketName, Key = probeKey, ByteRange = new(0, 0) }, ct).ConfigureAwait(false);
             }
             catch (AmazonS3Exception ex) when (IsMissingObject(ex)) { }
 
@@ -140,50 +178,12 @@ public sealed class S3FileStorageService : FileStorageServiceBase, IFileStorageD
     }
 
     private static bool IsMissingObject(AmazonS3Exception ex)
-        => string.Equals(ex.ErrorCode, "NoSuchKey", StringComparison.OrdinalIgnoreCase)
-            || (ex.StatusCode == HttpStatusCode.NotFound && !string.Equals(ex.ErrorCode, "NoSuchBucket", StringComparison.OrdinalIgnoreCase));
+        => string.Equals(ex.ErrorCode, "NoSuchKey", StringComparison.OrdinalIgnoreCase) ||
+            (ex.StatusCode == HttpStatusCode.NotFound && !string.Equals(ex.ErrorCode, "NoSuchBucket", StringComparison.OrdinalIgnoreCase));
 
     /// <inheritdoc />
     public override Task<FileStoreResult> CompleteDirectUploadAsync(Guid fileId, DirectUploadCompleteRequest? completeRequest = null, CancellationToken ct = default)
         => FinalizePendingPlainDirectUploadCoreAsync(fileId, completeRequest, ct);
-
-    /// <remarks>
-    /// Only a full-object SHA-256 is usable; S3 stores one when the PUT carried <c>x-amz-checksum-sha256</c>. Endpoints without GetObjectAttributes (some S3-compatible
-    /// stores) and IAM policies that deny <c>s3:GetObjectAttributes</c> fall back to download-and-hash.
-    /// </remarks>
-    async Task<DirectUploadObjectAttributes?> IDirectUploadVerification.GetDirectUploadAttributesAsync(Guid fileId, string? pathPrefix, CancellationToken ct)
-    {
-        GetObjectAttributesResponse response;
-        try {
-            response = await _s3Client.GetObjectAttributesAsync(
-                    new() {
-                        BucketName = _options.BucketName,
-                        Key = GetObjectKey(fileId, "", pathPrefix),
-                        ObjectAttributes = [ObjectAttributes.Checksum, ObjectAttributes.ObjectSize]
-                    }, ct)
-                .ConfigureAwait(false);
-        }
-        catch (AmazonS3Exception ex) when (IsMissingObject(ex) || ex.StatusCode is HttpStatusCode.NotImplemented or HttpStatusCode.Forbidden) {
-            Logger.LogDebug(ex, "GetObjectAttributes unavailable for direct upload {FileId}; finalize will download and hash", fileId);
-            return null;
-        }
-
-        if (response.Checksum is not { ChecksumSHA256.Length: > 0 } checksum || checksum.ChecksumType == ChecksumType.COMPOSITE || response.ObjectSize is not { } size)
-            return null;
-
-        var sha256 = checksum.ChecksumSHA256;
-
-        return new(size, Convert.FromBase64String(sha256), HashAlgorithm.Sha256);
-    }
-
-    async Task<byte[]> IDirectUploadVerification.ReadDirectUploadPrefixAsync(Guid fileId, string? pathPrefix, int maxBytes, CancellationToken ct)
-    {
-        var request = new GetObjectRequest { BucketName = _options.BucketName, Key = GetObjectKey(fileId, "", pathPrefix), ByteRange = new(0, maxBytes - 1) };
-        using var response = await _s3Client.GetObjectAsync(request, ct).ConfigureAwait(false);
-        using var buffer = new MemoryStream(maxBytes);
-        await response.ResponseStream.CopyToAsync(buffer, ct).ConfigureAwait(false);
-        return buffer.ToArray();
-    }
 
     /// <summary>Presigned read, direct upload, copy, move, and physical listing are supported.</summary>
     public override FileStorageCapabilities GetCapabilities() => new(true, true, true, true, true);
@@ -379,9 +379,6 @@ public sealed class S3FileStorageService : FileStorageServiceBase, IFileStorageD
         }
     }
 
-    /// <inheritdoc />
-    public override bool SupportsPlainByteRange => true;
-
     protected override async Task<Stream?> ReadFromStorageAsync(Guid fileId, string? pathPrefix, CancellationToken ct)
     {
         var objectKey = await FindObjectKeyAsync(fileId, pathPrefix, ct).ConfigureAwait(false);
@@ -416,10 +413,7 @@ public sealed class S3FileStorageService : FileStorageServiceBase, IFileStorageD
         if (objectKey == null)
             return null;
 
-        var getRequest = new GetObjectRequest {
-            BucketName = _options.BucketName, Key = objectKey, ByteRange = new(startInclusive, endInclusive)
-        };
-
+        var getRequest = new GetObjectRequest { BucketName = _options.BucketName, Key = objectKey, ByteRange = new(startInclusive, endInclusive) };
         var response = await _s3Client.GetObjectAsync(getRequest, ct).ConfigureAwait(false);
         return new S3GetObjectResponseStream(response);
     }
@@ -575,9 +569,9 @@ public sealed class S3FileStorageService : FileStorageServiceBase, IFileStorageD
     }
 
     /// <summary>
-    /// Completes a multipart staging object with S3 server-side <c>CopyObject</c> instead of pulling bytes through the client. Hash still
-    /// download the staging object once to a local temp file; the upload that <see cref="FileStorageServiceBase.SaveFromStreamAsync" /> would have done is an
-    /// in-bucket copy. Only the no-compress/no-encrypt finalize path; use the streaming pipeline when transforms are required.
+    /// Completes a multipart staging object with S3 server-side <c>CopyObject</c> instead of pulling bytes through the client. Hash still download the staging object once to a
+    /// local temp file; the upload that <see cref="FileStorageServiceBase.SaveFromStreamAsync" /> would have done is an in-bucket copy. Only the no-compress/no-encrypt finalize path; use
+    /// the streaming pipeline when transforms are required.
     /// </summary>
     internal async Task<FileStoreResult> FinalizeMultipartFromStagingAsync(
         string stagingKey,
@@ -679,7 +673,6 @@ public sealed class S3FileStorageService : FileStorageServiceBase, IFileStorageD
         ArgumentHelpers.ThrowIfNotInRange(expirationTime, TimeSpan.Zero, TimeSpan.FromDays(7));
         var resolvedPrefix = pathPrefix ?? meta.PathPrefix;
         var objectKey = CloudObjectKeyBuilder.FromMetadata(fileId, meta.SourceFileName, resolvedPrefix, _options.KeyPrefix);
-
         try {
             var request = new GetPreSignedUrlRequest {
                 BucketName = _options.BucketName,
@@ -767,8 +760,8 @@ public sealed class S3FileStorageService : FileStorageServiceBase, IFileStorageD
     }
 
     /// <summary>
-    /// Storage suffix stored in metadata <c>SourceFileName</c> for <paramref name="fileId" />, or <see langword="null" /> when metadata is unreachable, the file-id
-    /// prefix is missing, or the row is absent. Lets <see cref="FindObjectKeyAsync" /> skip the N+1 HEAD probes.
+    /// Storage suffix stored in metadata <c>SourceFileName</c> for <paramref name="fileId" />, or <see langword="null" /> when metadata is unreachable, the file-id prefix is
+    /// missing, or the row is absent. Lets <see cref="FindObjectKeyAsync" /> skip the N+1 HEAD probes.
     /// </summary>
     private async Task<string?> TryGetSuffixHintFromMetadataAsync(Guid fileId, CancellationToken ct)
     {

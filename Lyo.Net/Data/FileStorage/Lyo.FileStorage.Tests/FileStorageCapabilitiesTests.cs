@@ -20,7 +20,7 @@ public sealed class FileStorageCapabilitiesTests : IDisposable
     [Fact]
     public void GetCapabilities_LocalWithoutFileUriOrDirectUpload_ReportsCopyMoveAndPhysicalOnly()
     {
-        using var service = new LocalFileStorageService(new DiskFileStorageOptions { RootDirectoryPath = _root });
+        using var service = new LocalFileStorageService(new() { RootDirectoryPath = _root });
         var caps = service.GetCapabilities();
         Assert.False(caps.PresignedRead);
         Assert.False(caps.DirectUpload);
@@ -32,11 +32,7 @@ public sealed class FileStorageCapabilitiesTests : IDisposable
     [Fact]
     public void GetCapabilities_LocalWithFileUriAndDirectUpload_ReportsPresignedReadAndDirectUpload()
     {
-        using var service = new LocalFileStorageService(new DiskFileStorageOptions {
-            RootDirectoryPath = _root,
-            AllowFileUriPresignedUrls = true,
-            DirectUploadReceiveBaseUri = "http://localhost:9"
-        });
+        using var service = new LocalFileStorageService(new() { RootDirectoryPath = _root, AllowFileUriPresignedUrls = true, DirectUploadReceiveBaseUri = "http://localhost:9" });
         var caps = service.GetCapabilities();
         Assert.True(caps.PresignedRead);
         Assert.True(caps.DirectUpload);
@@ -48,7 +44,7 @@ public sealed class FileStorageCapabilitiesTests : IDisposable
     [Fact]
     public void GetCapabilities_Base_ReportsPresignDirectCopyAndMoveFalse()
     {
-        using var service = new BareStorage(new DiskFileStorageOptions { RootDirectoryPath = _root });
+        using var service = new BareStorage(new() { RootDirectoryPath = _root });
         var caps = service.GetCapabilities();
         Assert.False(caps.PresignedRead);
         Assert.False(caps.DirectUpload);
@@ -60,11 +56,9 @@ public sealed class FileStorageCapabilitiesTests : IDisposable
     private sealed class BareStorage : FileStorageServiceBase
     {
         public BareStorage(DiskFileStorageOptions options)
-            : base(options, new LocalFileMetadataStore(options.RootDirectoryPath))
-        {
-        }
+            : base(options, new LocalFileMetadataStore(options.RootDirectoryPath)) { }
 
-        protected override Task<HealthResult> CheckHealthLightweightAsync(CancellationToken ct) => Task.FromResult(HealthResult.Healthy(TimeSpan.Zero, null, null));
+        protected override Task<HealthResult> CheckHealthLightweightAsync(CancellationToken ct) => Task.FromResult(HealthResult.Healthy(TimeSpan.Zero));
 
         protected override Task<Stream> CreateOutputStreamAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct) => throw new NotSupportedException();
 

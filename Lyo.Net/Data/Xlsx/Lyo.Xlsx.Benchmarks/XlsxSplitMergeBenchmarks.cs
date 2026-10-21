@@ -2,8 +2,8 @@ using System.Text;
 using BenchmarkDotNet.Attributes;
 using Lyo.Benchmark;
 using Lyo.Benchmark.Data;
-using Lyo.Xlsx.Models;
 using Lyo.Common.Core.Identifiers;
+using Lyo.Xlsx.Models;
 
 namespace Lyo.Xlsx.Benchmarks;
 

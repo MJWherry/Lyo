@@ -4,7 +4,8 @@ namespace Lyo.Exceptions;
 
 public static partial class ValueWhenExtensions
 {
-    extension<T>(T? value) where T : class
+    extension<T>(T? value)
+        where T : class
     {
         /// <summary>Chooses <paramref name="result" /> when <paramref name="value" /> is null.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -23,7 +24,8 @@ public static partial class ValueWhenExtensions
         public ValueOrChain<T?, TResult> IfNotNull<TResult>(Func<TResult> result) => ValueOrChain<T?, TResult>.From(value, value is not null, result);
     }
 
-    extension<TSubject, TResult>(ValueOrChain<TSubject?, TResult> chain) where TSubject : class
+    extension<TSubject, TResult>(ValueOrChain<TSubject?, TResult> chain)
+        where TSubject : class
     {
         /// <summary>When the chain is still open and the subject is null, chooses <paramref name="result" />. This result type is not the subject type.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -42,7 +44,8 @@ public static partial class ValueWhenExtensions
         public ValueOrChain<TSubject?, TResult> OrIfNotNull(Func<TResult> result) => chain.IsChosen ? chain : chain.Choose(chain.Subject is not null, result);
     }
 
-    extension<T>(T? value) where T : struct
+    extension<T>(T? value)
+        where T : struct
     {
         /// <summary>Chooses <paramref name="result" /> when <paramref name="value" /> is null.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -61,7 +64,8 @@ public static partial class ValueWhenExtensions
         public ValueOrChain<T?, TResult> IfNotNull<TResult>(Func<TResult> result) => ValueOrChain<T?, TResult>.From(value, value.HasValue, result);
     }
 
-    extension<T, TResult>(ValueOrChain<T?, TResult> chain) where T : struct
+    extension<T, TResult>(ValueOrChain<T?, TResult> chain)
+        where T : struct
     {
         /// <summary>When the chain is still open and the subject is null, chooses <paramref name="result" />.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -80,12 +84,12 @@ public static partial class ValueWhenExtensions
         public ValueOrChain<T?, TResult> OrIfNotNull(Func<TResult> result) => chain.IsChosen ? chain : chain.Choose(chain.Subject.HasValue, result);
     }
 
-    extension<T>(T value) where T : struct
+    extension<T>(T value)
+        where T : struct
     {
         /// <summary>Chooses <paramref name="result" /> when <paramref name="value" /> equals <c>default</c>. For <see cref="DateTime" /> that is an unset timestamp.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ValueOrChain<T, TResult> IfDefault<TResult>(TResult result)
-            => ValueOrChain<T, TResult>.From(value, EqualityComparer<T>.Default.Equals(value, default), result);
+        public ValueOrChain<T, TResult> IfDefault<TResult>(TResult result) => ValueOrChain<T, TResult>.From(value, EqualityComparer<T>.Default.Equals(value, default), result);
 
         /// <summary>Factory form of IfDefault. The factory runs only when <paramref name="value" /> equals <c>default</c>.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -94,8 +98,7 @@ public static partial class ValueWhenExtensions
 
         /// <summary>Chooses <paramref name="result" /> when <paramref name="value" /> is not <c>default</c>.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ValueOrChain<T, TResult> IfNotDefault<TResult>(TResult result)
-            => ValueOrChain<T, TResult>.From(value, !EqualityComparer<T>.Default.Equals(value, default), result);
+        public ValueOrChain<T, TResult> IfNotDefault<TResult>(TResult result) => ValueOrChain<T, TResult>.From(value, !EqualityComparer<T>.Default.Equals(value, default), result);
 
         /// <summary>Factory form of IfNotDefault. The factory runs only when <paramref name="value" /> is not <c>default</c>.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -103,12 +106,12 @@ public static partial class ValueWhenExtensions
             => ValueOrChain<T, TResult>.From(value, !EqualityComparer<T>.Default.Equals(value, default), result);
     }
 
-    extension<T, TResult>(ValueOrChain<T, TResult> chain) where T : struct
+    extension<T, TResult>(ValueOrChain<T, TResult> chain)
+        where T : struct
     {
         /// <summary>When the chain is still open, chooses <paramref name="result" /> when the subject equals <c>default</c>.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ValueOrChain<T, TResult> OrIfDefault(TResult result)
-            => chain.IsChosen ? chain : chain.Choose(EqualityComparer<T>.Default.Equals(chain.Subject, default), result);
+        public ValueOrChain<T, TResult> OrIfDefault(TResult result) => chain.IsChosen ? chain : chain.Choose(EqualityComparer<T>.Default.Equals(chain.Subject, default), result);
 
         /// <summary>When the chain is still open, invokes <paramref name="result" /> when the subject equals <c>default</c>.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -164,7 +167,8 @@ public static partial class ValueWhenExtensions
         public ValueOrChain<Guid, TResult> OrIfNotEmpty(Func<TResult> result) => chain.IsChosen ? chain : chain.Choose(chain.Subject != Guid.Empty, result);
     }
 
-    extension<TEnum>(TEnum value) where TEnum : struct, Enum
+    extension<TEnum>(TEnum value)
+        where TEnum : struct, Enum
     {
         /// <summary>Chooses <paramref name="result" /> when <paramref name="value" /> is a defined member of <typeparamref name="TEnum" />.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -183,7 +187,8 @@ public static partial class ValueWhenExtensions
         public ValueOrChain<TEnum, TResult> IfNotDefined<TResult>(Func<TResult> result) => ValueOrChain<TEnum, TResult>.From(value, !ValueWhenChecks.IsDefined(value), result);
     }
 
-    extension<TEnum, TResult>(ValueOrChain<TEnum, TResult> chain) where TEnum : struct, Enum
+    extension<TEnum, TResult>(ValueOrChain<TEnum, TResult> chain)
+        where TEnum : struct, Enum
     {
         /// <summary>When the chain is still open, chooses <paramref name="result" /> when the subject is a defined enum member.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -214,8 +219,7 @@ public static partial class ValueWhenExtensions
 
         /// <summary>Chooses <paramref name="result" /> when <paramref name="value" /> is null, empty, or whitespace.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ValueOrChain<string?, TResult> IfNullOrWhiteSpace<TResult>(TResult result)
-            => ValueOrChain<string?, TResult>.From(value, string.IsNullOrWhiteSpace(value), result);
+        public ValueOrChain<string?, TResult> IfNullOrWhiteSpace<TResult>(TResult result) => ValueOrChain<string?, TResult>.From(value, string.IsNullOrWhiteSpace(value), result);
 
         /// <summary>Factory form of IfNullOrWhiteSpace. The factory runs only when <paramref name="value" /> is null, empty, or whitespace.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -256,13 +260,11 @@ public static partial class ValueWhenExtensions
 
         /// <summary>When the chain is still open, chooses <paramref name="result" /> when the subject is null, empty, or whitespace.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ValueOrChain<string?, TResult> OrIfNullOrWhiteSpace(TResult result)
-            => chain.IsChosen ? chain : chain.Choose(string.IsNullOrWhiteSpace(chain.Subject), result);
+        public ValueOrChain<string?, TResult> OrIfNullOrWhiteSpace(TResult result) => chain.IsChosen ? chain : chain.Choose(string.IsNullOrWhiteSpace(chain.Subject), result);
 
         /// <summary>When the chain is still open, invokes <paramref name="result" /> when the subject is null, empty, or whitespace.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ValueOrChain<string?, TResult> OrIfNullOrWhiteSpace(Func<TResult> result)
-            => chain.IsChosen ? chain : chain.Choose(string.IsNullOrWhiteSpace(chain.Subject), result);
+        public ValueOrChain<string?, TResult> OrIfNullOrWhiteSpace(Func<TResult> result) => chain.IsChosen ? chain : chain.Choose(string.IsNullOrWhiteSpace(chain.Subject), result);
 
         /// <summary>When the chain is still open, chooses <paramref name="result" /> when the subject's length is inside the inclusive range.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -2,8 +2,8 @@ namespace Lyo.Authentication.Sso.Handoff;
 
 /// <summary>
 /// Persistence contract for short-TTL, single-use <see cref="LyoHandoffCode" /> values. Implementations MUST enforce single-use atomically: a concurrent
-/// <see cref="ConsumeAsync" /> for the same id must return <c>null</c> for the loser. The contract is kept small so it can be backed by an in-memory cache for
-/// single-instance hosts or a Redis/Postgres store for multi-instance deployments.
+/// <see cref="ConsumeAsync" /> for the same id must return <c>null</c> for the loser. The contract is kept small so it can be backed by an in-memory cache for single-instance hosts
+/// or a Redis/Postgres store for multi-instance deployments.
 /// </summary>
 public interface IHandoffCodeStore
 {

@@ -1,9 +1,9 @@
 using System.Diagnostics;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Diagnostic.Context;
+using Lyo.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
-using Lyo.Exceptions;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Diagnostic.AspNetCore;
 
@@ -29,8 +29,8 @@ public static class DiagnosticHttpContextExtensions
 
     /// <summary>
     /// Walks <paramref name="options" />.<see cref="DiagnosticWebOptions.CorrelationIdHeaders" /> against the inbound <paramref name="context" />, then falls back to
-    /// <see cref="HttpContext.TraceIdentifier" />, then <see cref="Activity.Current" />'s id, then a fresh hex GUID. Shared with <c>HttpContextCorrelationIdResolver</c> so the
-    /// diagnostic enricher, the auth audit, and outbound stamping all agree on which header is authoritative.
+    /// <see cref="HttpContext.TraceIdentifier" />, then <see cref="Activity.Current" />'s id, then a fresh hex GUID. Shared with <c>HttpContextCorrelationIdResolver</c> so the diagnostic
+    /// enricher, the auth audit, and outbound stamping all agree on which header is authoritative.
     /// </summary>
     internal static string ResolveCorrelationId(HttpContext context, DiagnosticWebOptions options)
     {

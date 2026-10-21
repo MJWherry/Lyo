@@ -1,6 +1,7 @@
 using Lyo.Api;
 using Lyo.Api.Services.Crud.Create;
 using Lyo.Cache;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
@@ -12,7 +13,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Constants = Lyo.Job.Models.Constants;
 using JobRunResultEnum = Lyo.Job.Models.Enums.JobRunResult;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Tests.Postgres;
 
@@ -123,18 +123,17 @@ public class JobServiceIntegrationTests
                 LastHeartbeatUtc = now,
                 Metadata = new Dictionary<string, string?> { ["os"] = "test" }
             }, ctx => ctx.Entity.Id = LyoGuid.CreateV7(), ct: TestCt);
-        Assert.True(workerResult.IsSuccess);
 
+        Assert.True(workerResult.IsSuccess);
         var runResult = await _fixture.CreateService.CreateAsync<JobRunReq, JobRun, JobRunRes>(
-            new JobRunReq(_fixture.JobDefinitionId, "test-user"),
-            ctx => {
+            new(_fixture.JobDefinitionId, "test-user"), ctx => {
                 ctx.Entity.Id = LyoGuid.CreateV7();
                 ctx.Entity.State = JobState.Queued;
                 ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
             }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestCt);
-        Assert.True(runResult.IsSuccess);
 
-        var (result, error) = await _fixture.JobService.StartedJobRun(runResult.Data!.Id, new JobRunStartedReq { WorkerInstanceId = workerResult.Data!.Id });
+        Assert.True(runResult.IsSuccess);
+        var (result, error) = await _fixture.JobService.StartedJobRun(runResult.Data!.Id, new() { WorkerInstanceId = workerResult.Data!.Id });
         Assert.Null(error);
         Assert.NotNull(result);
         Assert.Equal(workerResult.Data.Id, result.WorkerInstanceId);
@@ -146,16 +145,14 @@ public class JobServiceIntegrationTests
     public async Task StartedJobRun_WhenMachineAndPidProvidedWithoutInstance_SnapshotsThose()
     {
         var runResult = await _fixture.CreateService.CreateAsync<JobRunReq, JobRun, JobRunRes>(
-            new JobRunReq(_fixture.JobDefinitionId, "test-user"),
-            ctx => {
+            new(_fixture.JobDefinitionId, "test-user"), ctx => {
                 ctx.Entity.Id = LyoGuid.CreateV7();
                 ctx.Entity.State = JobState.Queued;
                 ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
             }, ctx => ctx.DbContext.Entry(ctx.Entity).Navigation("JobDefinition").Load(), null, TestCt);
-        Assert.True(runResult.IsSuccess);
 
-        var (result, error) = await _fixture.JobService.StartedJobRun(
-            runResult.Data!.Id, new JobRunStartedReq { MachineName = "direct-host", ProcessId = 77 });
+        Assert.True(runResult.IsSuccess);
+        var (result, error) = await _fixture.JobService.StartedJobRun(runResult.Data!.Id, new() { MachineName = "direct-host", ProcessId = 77 });
         Assert.Null(error);
         Assert.NotNull(result);
         Assert.Null(result.WorkerInstanceId);

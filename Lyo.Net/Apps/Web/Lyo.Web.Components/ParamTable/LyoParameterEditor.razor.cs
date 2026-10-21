@@ -3,18 +3,29 @@ using Lyo.Common.Metadata.Records;
 using Lyo.Web.Components.LyoType;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace Lyo.Web.Components.ParamTable;
 
 /// <summary>
-/// Parameter editor shared by job definitions, job schedules, and report definitions. Hosts own persistence; this component edits <see cref="LyoParameterEditRow" />
-/// in place and reports every change through <see cref="OnChanged" />.
+/// Parameter editor shared by job definitions, job schedules, and report definitions. Hosts own persistence; this component edits <see cref="LyoParameterEditRow" /> in place
+/// and reports every change through <see cref="OnChanged" />.
 /// </summary>
 /// <remarks>
-/// Rows draw either as a dense table or as one card each, see <see cref="LyoParameterLayout" />. The host sets the starting layout through
-/// <c>AddLyoParameterEditor</c>, and the user's own choice is remembered in local storage from then on.
+/// Rows draw either as a dense table or as one card each, see <see cref="LyoParameterLayout" />. The host sets the starting layout through <c>AddLyoParameterEditor</c>, and
+/// the user's own choice is remembered in local storage from then on.
 /// </remarks>
 public partial class LyoParameterEditor : IDisposable
 {
+    private readonly HashSet<LyoParameterEditRow> _expanded = [];
+
+    private readonly LyoViewportWatcher _viewport = new();
+    private int? _dragOverIndex;
+
+    private int? _dragSourceIndex;
+
+    private LyoParameterLayout? _layout;
+    private LyoParameterLayout? _storedLayout;
+
     /// <summary>Heading shown above the editor (for example "Job Parameters", "Schedule Parameters").</summary>
     [Parameter]
     public string Title { get; set; } = "Parameters";
@@ -46,8 +57,8 @@ public partial class LyoParameterEditor : IDisposable
 
     /// <summary>
     /// Offer the Literal / Expression choice for the default (definition parameters). Expression defaults keep the declared <see cref="LyoParameterEditRow.Type" /> and author
-    /// the default as a template instead, so a <c>DateTime</c> parameter can default to yesterday. Off for schedule and trigger overrides, which supply values rather than
-    /// declare defaults.
+    /// the default as a template instead, so a <c>DateTime</c> parameter can default to yesterday. Off for schedule and trigger overrides, which supply values rather than declare
+    /// defaults.
     /// </summary>
     [Parameter]
     public bool ShowDefaultKind { get; set; }
@@ -65,8 +76,8 @@ public partial class LyoParameterEditor : IDisposable
     public IApiClient? ApiClient { get; set; }
 
     /// <summary>
-    /// Parameters whose Options / AllowedValues are copied onto a row when its Key matches. If set, the Key cell is a select of those keys so schedule
-    /// overrides pick up the same Static / root-query picker.
+    /// Parameters whose Options / AllowedValues are copied onto a row when its Key matches. If set, the Key cell is a select of those keys so schedule overrides pick up the same
+    /// Static / root-query picker.
     /// </summary>
     [Parameter]
     public IReadOnlyList<LyoParameterEditRow>? InheritFrom { get; set; }
@@ -80,8 +91,8 @@ public partial class LyoParameterEditor : IDisposable
     public bool AllowReorder { get; set; }
 
     /// <summary>
-    /// Sample data for autocomplete and live preview on formatter-typed parameters. Hosts pass a dictionary or DTO whose paths mirror what a template resolves against
-    /// at run time, so the user does not have to remember the token names.
+    /// Sample data for autocomplete and live preview on formatter-typed parameters. Hosts pass a dictionary or DTO whose paths mirror what a template resolves against at run
+    /// time, so the user does not have to remember the token names.
     /// </summary>
     [Parameter]
     public object? FormatterContext { get; set; }
@@ -94,27 +105,14 @@ public partial class LyoParameterEditor : IDisposable
     [Inject]
     private IServiceProvider Services { get; set; } = null!;
 
-    private readonly HashSet<LyoParameterEditRow> _expanded = [];
-
-    private readonly LyoViewportWatcher _viewport = new();
-
-    private LyoParameterLayout? _layout;
-    private LyoParameterLayout? _storedLayout;
-
-    private int? _dragSourceIndex;
-    private int? _dragOverIndex;
-
     private LyoParameterEditorOptions EditorOptions => Services.GetService<LyoParameterEditorOptions>() ?? new LyoParameterEditorOptions();
 
     private LyoDataGridOptions GridOptions => Services.GetService<LyoDataGridOptions>() ?? new LyoDataGridOptions();
 
     /// <summary>A layout picked from the toggle wins; otherwise narrow viewports get cards because the table does not fit, then the stored and host defaults apply.</summary>
     private LyoParameterLayout Layout
-        => _layout
-           ?? (_viewport.IsAtOrBelow(GridOptions.CardBreakpoint) ? LyoParameterLayout.Cards : (LyoParameterLayout?)null)
-           ?? _storedLayout
-           ?? InitialLayout
-           ?? EditorOptions.Layout;
+        => _layout ?? (_viewport.IsAtOrBelow(GridOptions.CardBreakpoint) ? LyoParameterLayout.Cards : (LyoParameterLayout?)null) ??
+            _storedLayout ?? InitialLayout ?? EditorOptions.Layout;
 
     private bool ShowLayoutToggle => EditorOptions.AllowLayoutToggle && Items.Count > 0;
 
@@ -133,7 +131,6 @@ public partial class LyoParameterEditor : IDisposable
             return;
 
         await _viewport.StartAsync(Services.GetService<IBrowserViewportService>(), () => InvokeAsync(StateHasChanged));
-
         if (Services.GetService<ClientStore>() is not { } store)
             return;
 
@@ -186,6 +183,7 @@ public partial class LyoParameterEditor : IDisposable
             row.Type = type;
             if (LyoTypeUi.ShouldResetValue(previous, type))
                 row.Value = null;
+
             ExpandIfNeeded(row);
         });
 
@@ -222,6 +220,7 @@ public partial class LyoParameterEditor : IDisposable
         row.AllowedValues = src.AllowedValues;
         if (string.IsNullOrWhiteSpace(row.Description))
             row.Description = src.Description;
+
         ExpandIfNeeded(row);
     }
 
@@ -236,10 +235,10 @@ public partial class LyoParameterEditor : IDisposable
             Required = DefaultRequired,
             Order = Items.Count == 0 ? 0 : Items.Max(r => r.Order) + 1
         };
+
         ApplyInherit(row);
         Items.Add(row);
         _expanded.Add(row);
-
         if (OnChanged.HasDelegate)
             await OnChanged.InvokeAsync();
     }

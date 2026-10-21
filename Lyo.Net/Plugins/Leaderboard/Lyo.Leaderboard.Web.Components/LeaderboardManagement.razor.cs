@@ -5,6 +5,15 @@ namespace Lyo.Leaderboard.Web.Components;
 /// <summary>Tabbed leaderboard dashboard. Hosts inject <see cref="ILeaderboardApiClient" /> and pass it in.</summary>
 public partial class LeaderboardManagement
 {
+    private BoardRecord? _board;
+    private int _dataVersion;
+    private string? _error;
+
+    private string _idDraft = "";
+    private bool _initialized;
+    private string _slugDraft = "";
+    private int _tabIndex;
+
     /// <summary>Typed Leaderboard API client. Required. Hosts inject the client and pass it in — this package has no <c>AddXxx</c> DI.</summary>
     [Parameter]
     [EditorRequired]
@@ -18,14 +27,6 @@ public partial class LeaderboardManagement
     [Parameter]
     public string? InitialSlug { get; set; }
 
-    private string _idDraft = "";
-    private string _slugDraft = "";
-    private BoardRecord? _board;
-    private int _tabIndex;
-    private int _dataVersion;
-    private bool _initialized;
-    private string? _error;
-
     /// <inheritdoc />
     protected override async Task OnParametersSetAsync()
     {
@@ -35,7 +36,7 @@ public partial class LeaderboardManagement
         _idDraft = InitialBoardId is { } id && id != Guid.Empty ? id.ToString("D") : "";
         _slugDraft = InitialSlug?.Trim() ?? "";
         _initialized = true;
-        if (InitialBoardId is { } loadId && loadId != Guid.Empty || !string.IsNullOrWhiteSpace(InitialSlug))
+        if ((InitialBoardId is { } loadId && loadId != Guid.Empty) || !string.IsNullOrWhiteSpace(InitialSlug))
             await LoadAsync();
     }
 

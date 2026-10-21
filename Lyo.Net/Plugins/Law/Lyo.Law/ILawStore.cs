@@ -4,8 +4,8 @@ using Lyo.Law.Models.Response;
 namespace Lyo.Law;
 
 /// <summary>
-/// Stores US state statutes: jurisdictions, named codes, and a node tree with official notes.
-/// Listing and search belong in the query layer. Node text changes go through <see cref="UpsertNodeBySourceKeyAsync"/> so a prior revision is kept.
+/// Stores US state statutes: jurisdictions, named codes, and a node tree with official notes. Listing and search belong in the query layer. Node text changes go through
+/// <see cref="UpsertNodeBySourceKeyAsync" /> so a prior revision is kept.
 /// </summary>
 public interface ILawStore
 {
@@ -22,8 +22,8 @@ public interface ILawStore
     Task<LawCodeRes?> GetCodeAsync(string jurisdictionKey, string codeKey, CancellationToken ct = default);
 
     /// <summary>
-    /// Inserts or updates a node by jurisdiction, code, and source key.
-    /// An unchanged content hash leaves the row and its notes alone. A changed hash stores the previous text, then replaces heading, body, and notes.
+    /// Inserts or updates a node by jurisdiction, code, and source key. An unchanged content hash leaves the row and its notes alone. A changed hash stores the previous text,
+    /// then replaces heading, body, and notes.
     /// </summary>
     Task<LawNodeUpsertRes> UpsertNodeBySourceKeyAsync(LawNodeUpsertReq request, CancellationToken ct = default);
 

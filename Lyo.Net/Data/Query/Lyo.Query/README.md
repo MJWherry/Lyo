@@ -1,10 +1,14 @@
 # Lyo.Query
 
-Execution engine for [`Lyo.Query.Models`](../Lyo.Query.Models/README.md) filter trees. `IWhereClauseService` / `BaseWhereClauseService` turns polymorphic `WhereClause` ASTs (`condition` / `group`, optional `SubClause`) into LINQ expression trees on `IQueryable<T>`, applies multi-key `SortBy`, and can evaluate / explain the same AST against a loaded entity in memory.
+Execution engine for [`Lyo.Query.Models`](../Lyo.Query.Models/README.md) filter trees. `IWhereClauseService` / `BaseWhereClauseService` turns polymorphic `WhereClause` ASTs
+(`condition` / `group`, optional `SubClause`) into LINQ expression trees on `IQueryable<T>`, applies multi-key `SortBy`, and can evaluate / explain the same AST against a loaded
+entity in memory.
 
-**What this package is.** AST → expression / matcher. **What it is not.** HTTP endpoints, `QueryConcreteReq` / `ProjectionQueryReq` / `QueryReq` builders, or query-*result* caching. Those live in Models + [`Lyo.Api`](../../../Apps/Api/Lyo.Api/README.md).
+**What this package is.** AST → expression / matcher. **What it is not.** HTTP endpoints, `QueryConcreteReq` / `ProjectionQueryReq` / `QueryReq` builders, or query- *result*
+caching. Those live in Models + [`Lyo.Api`](../../../Apps/Api/Lyo.Api/README.md).
 
-EF-agnostic at the boundary (works on any `IQueryable`, including EF `DbSet` and in-memory). Needs `ICacheService` + `CacheOptions` for compiled predicate / matcher / metadata caches.
+EF-agnostic at the boundary (works on any `IQueryable`, including EF `DbSet` and in-memory). Needs `ICacheService` + `CacheOptions` for compiled predicate / matcher / metadata
+caches.
 
 Targets `net10.0`.
 
@@ -21,7 +25,9 @@ Targets `net10.0`.
 - **Contains→Regex coalesce.** Adjacent `Contains` leaves on the same string field can merge into a single `Regex` alternation.
 - **Property diffing.** `IPropertyComparisonService` for patch and update pipelines.
 - **Value coercion.** `IValueConversionService` maps JSON literals → CLR property types (suppressible when `Lyo.Api` owns conversion).
-- **QueryProject aggregates.** `AggregateQuery` groups an `IQueryable` by `Select` and projects `Count`, `CountDistinct`, `Sum`, `Average`, `Min`, and `Max`. Empty `Select` is one summary row. `Count` with no field counts rows in the group. A collection field, or a path ending in `.count`, totals that collection. Select and aggregate paths accept `[n]`, `[start:]`, `[:end]`, `[start:end]`, and `[:]` on a string or a collection.
+- **QueryProject aggregates.** `AggregateQuery` groups an `IQueryable` by `Select` and projects `Count`, `CountDistinct`, `Sum`, `Average`, `Min`, and `Max`. Empty `Select` is one
+  summary row. `Count` with no field counts rows in the group. A collection field, or a path ending in `.count`, totals that collection. Select and aggregate paths accept `[n]`,
+  `[start:]`, `[:end]`, `[start:end]`, and `[:]` on a string or a collection.
 
 ## Examples
 
@@ -138,22 +144,28 @@ var diffs = propertyComparisonService.GetPropertyDifferences(entity, patchDto);
 
 ## Package map
 
-| Package | Responsibility |
-| --- | --- |
-| **`Lyo.Query` (this)** | `WhereClause` → LINQ / matcher; sort; explain; path metadata; `AggregateQuery` group-by; `ICache` for compiled trees |
-| [`Lyo.Query.Models`](../Lyo.Query.Models/README.md) | AST types, `QueryConcreteReq` / `ProjectionQueryReq` / `QueryReq`, builders, enums |
-| [`Lyo.Api`](../../../Apps/Api/Lyo.Api/README.md) | `POST …/QueryConcrete`, `/QueryProject`, root `/Query`; **query result** caching; projection SQL |
-| [`Lyo.Query.Web.Components`](../Lyo.Query.Web.Components/README.md) | Blazor query workbench |
+| Package                                                             | Responsibility                                                                                                       |
+|---------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
+| **`Lyo.Query` (this)**                                              | `WhereClause` → LINQ / matcher; sort; explain; path metadata; `AggregateQuery` group-by; `ICache` for compiled trees |
+| [`Lyo.Query.Models`](../Lyo.Query.Models/README.md)                 | AST types, `QueryConcreteReq` / `ProjectionQueryReq` / `QueryReq`, builders, enums                                   |
+| [`Lyo.Api`](../../../Apps/Api/Lyo.Api/README.md)                    | `POST …/QueryConcrete`, `/QueryProject`, root `/Query`; **query result** caching; projection SQL                     |
+| [`Lyo.Query.Web.Components`](../Lyo.Query.Web.Components/README.md) | Blazor query workbench                                                                                               |
 
 Builders and endpoint payloads are documented on Models / Api. This doc covers the runtime translator.
 
 ## QueryProject aggregates
 
-`AggregateQuery` groups an `IQueryable<T>` when `ProjectionQueryReq.Aggregates` is non-empty. `Select` is the group key. An empty `Select` is one summary row over the filtered set. `WhereClause` filters rows before grouping. `SortBy` may name a select path or an aggregate output name. `Start` / `Amount` page groups, and an exact total is the number of groups.
+`AggregateQuery` groups an `IQueryable<T>` when `ProjectionQueryReq.Aggregates` is non-empty. `Select` is the group key. An empty `Select` is one summary row over the filtered set.
+`WhereClause` filters rows before grouping. `SortBy` may name a select path or an aggregate output name. `Start` / `Amount` page groups, and an exact total is the number of groups.
 
-`Count` with no field is `COUNT(*)` (every row in the group). `Count` of a collection, or of a path ending in `.count`, totals that collection's elements in the group. `Count` of a scalar skips nulls and keeps duplicates. `CountDistinct` counts distinct values of a scalar field and skips nulls. `Sum` and `Average` take a numeric field; `Average` of an integral field is `double`, and `decimal` stays `decimal`. `Min` and `Max` take a scalar field. An empty ungrouped source returns one row: `Count` and `CountDistinct` are 0, a non-nullable `Sum` is 0, and a nullable `Sum` / `Average` / `Min` / `Max` is null. A grouped query over no rows returns no items.
+`Count` with no field is `COUNT(*)` (every row in the group). `Count` of a collection, or of a path ending in `.count`, totals that collection's elements in the group. `Count` of a
+scalar skips nulls and keeps duplicates. `CountDistinct` counts distinct values of a scalar field and skips nulls. `Sum` and `Average` take a numeric field; `Average` of an
+integral field is `double`, and `decimal` stays `decimal`. `Min` and `Max` take a scalar field. An empty ungrouped source returns one row: `Count` and `CountDistinct` are 0, a
+non-nullable `Sum` is 0, and a nullable `Sum` / `Average` / `Min` / `Max` is null. A grouped query over no rows returns no items.
 
-A path segment may end with `[n]`, `[start:]`, `[:end]`, `[start:end]`, or `[:]`. `start` is inclusive and `end` is exclusive. On a string the window is still a string, so it can be a group key. On a collection, entity elements order by a single `[Key]` or `Id`, and scalar elements order by their value. A one-element window is a scalar. A longer collection window is a select list and is rejected as a group key.
+A path segment may end with `[n]`, `[start:]`, `[:end]`, `[start:end]`, or `[:]`. `start` is inclusive and `end` is exclusive. On a string the window is still a string, so it can
+be a group key. On a collection, entity elements order by a single `[Key]` or `Id`, and scalar elements order by their value. A one-element window is a scalar. A longer collection
+window is a select list and is rejected as a group key.
 
 `Lyo.Api` runs this before the entity projection. If the provider cannot translate the grouping, the call fails instead of grouping a loaded page.
 
@@ -161,15 +173,15 @@ A path segment may end with `[n]`, `[start:]`, `[:end]`, `[start:end]`, or `[:]`
 
 `BaseWhereClauseService` is the default implementation in DI.
 
-| Member | Behavior |
-| --- | --- |
-| `ApplyWhereClause<T>(source, where, includeSubClauses = true)` | Compiles AST → `Expression<Func<T,bool>>`, caches under `filter_ef_predicate:…`, applies `.Where`. `includeSubClauses: false` skips `SubClause` chains (SQL phase). |
-| `SortByProperty<T>(source, propertyName, direction?)` | Single dotted path `OrderBy` / `OrderByDescending` (default Desc when null). Collections order by **count**. |
-| `ApplyOrdering<T>(…, sortByProps, defaultOrder, defaultSortDirection)` | Multi-key sort by `SortBy.Priority` then list order; always attaches default tie-break for stable paging. |
-| `MatchesWhereClause<T>(entity, where)` | Compiled in-memory matcher (`filter_matcher:…` cache). |
-| `ExplainMatch<T>(entity, where)` | `WhereClauseExplainResult`. Per-node pass/fail, `BlockingPath`, OR-branch outcomes, `SubClause` chains. In-memory only (default interface throws). |
-| `GetCollectionIncludePathsForWhereClause<T>(where)` | Distinct navigation prefixes that cross collections (for EF `Include` before sub-clause match). |
-| `TryValidatePropertyPath<T>(name, out error)` | Preflight for sort / filter fields. |
+| Member                                                                 | Behavior                                                                                                                                                            |
+|------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ApplyWhereClause<T>(source, where, includeSubClauses = true)`         | Compiles AST → `Expression<Func<T,bool>>`, caches under `filter_ef_predicate:…`, applies `.Where`. `includeSubClauses: false` skips `SubClause` chains (SQL phase). |
+| `SortByProperty<T>(source, propertyName, direction?)`                  | Single dotted path `OrderBy` / `OrderByDescending` (default Desc when null). Collections order by **count**.                                                        |
+| `ApplyOrdering<T>(…, sortByProps, defaultOrder, defaultSortDirection)` | Multi-key sort by `SortBy.Priority` then list order; always attaches default tie-break for stable paging.                                                           |
+| `MatchesWhereClause<T>(entity, where)`                                 | Compiled in-memory matcher (`filter_matcher:…` cache).                                                                                                              |
+| `ExplainMatch<T>(entity, where)`                                       | `WhereClauseExplainResult`. Per-node pass/fail, `BlockingPath`, OR-branch outcomes, `SubClause` chains. In-memory only (default interface throws).                  |
+| `GetCollectionIncludePathsForWhereClause<T>(where)`                    | Distinct navigation prefixes that cross collections (for EF `Include` before sub-clause match).                                                                     |
+| `TryValidatePropertyPath<T>(name, out error)`                          | Preflight for sort / filter fields.                                                                                                                                 |
 
 Invalid paths / operators → `InvalidQueryException` (`Lyo.Query.Models.Exceptions`).
 
@@ -177,14 +189,14 @@ Invalid paths / operators → `InvalidQueryException` (`Lyo.Query.Models.Excepti
 
 Operators come from `ComparisonOperatorEnum` on each `ConditionClause`:
 
-| Operator | Notes |
-| --- | --- |
-| `Equals` / `NotEquals` | Simple comparison; null-safe rules enforced |
-| `GreaterThan` / `GreaterThanOrEqual` / `LessThan` / `LessThanOrEqual` | On scalars: value compare. On **collection** navigations: compare against **collection count** |
-| `Contains` / `NotContains` / `StartsWith` / `EndsWith` / negations | String methods when the target type supports them |
-| `In` / `NotIn` | Value may be a list or CSV string |
-| `Regex` / `NotRegex` | String regex; trivial patterns like `.*` short-circuit to `true` |
-| `Fuzzy` / `NotFuzzy` | Trigram Jaccard (`FuzzyMatch.Similarity`); optional `Threshold` (default `0.3`). Postgres emits `similarity()` via `Lyo.Query.Postgres` |
+| Operator                                                              | Notes                                                                                                                                   |
+|-----------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| `Equals` / `NotEquals`                                                | Simple comparison; null-safe rules enforced                                                                                             |
+| `GreaterThan` / `GreaterThanOrEqual` / `LessThan` / `LessThanOrEqual` | On scalars: value compare. On **collection** navigations: compare against **collection count**                                          |
+| `Contains` / `NotContains` / `StartsWith` / `EndsWith` / negations    | String methods when the target type supports them                                                                                       |
+| `In` / `NotIn`                                                        | Value may be a list or CSV string                                                                                                       |
+| `Regex` / `NotRegex`                                                  | String regex; trivial patterns like `.*` short-circuit to `true`                                                                        |
+| `Fuzzy` / `NotFuzzy`                                                  | Trigram Jaccard (`FuzzyMatch.Similarity`); optional `Threshold` (default `0.3`). Postgres emits `similarity()` via `Lyo.Query.Postgres` |
 
 **Dotted paths**
 
@@ -192,7 +204,8 @@ Operators come from `ComparisonOperatorEnum` on each `ConditionClause`:
 - Into collection: `Lines.Quantity` → `lines.Any(e => e.Quantity …)`
 - Collection count: path metadata `IsCountPath` builds `Enumerable.Count` then compares
 
-**Group optimization:** within an AND/OR group, multiple `Contains` leaves on the same string field may be coalesced into a single case-insensitive `Regex` alternation before expression build.
+**Group optimization:** within an AND/OR group, multiple `Contains` leaves on the same string field may be coalesced into a single case-insensitive `Regex` alternation before
+expression build.
 
 ## Two-phase SubClause
 
@@ -217,24 +230,27 @@ var where = WhereClauseBuilder.And()
 
 ## How ICache holds predicates
 
-`AddLyoQueryServices` requires `ICacheService` + `CacheOptions` (e.g. `AddLocalCache` / `AddFusionCache`). That is not the same as `Lyo.Api` query-*result* caching (`QueryOptions.CacheQueryResultsAsUtf8Payload`).
+`AddLyoQueryServices` requires `ICacheService` + `CacheOptions` (e.g. `AddLocalCache` / `AddFusionCache`). That is not the same as `Lyo.Api` query- *result* caching
+(`QueryOptions.CacheQueryResultsAsUtf8Payload`).
 
-| Cache key prefix / pattern | Stores |
-| --- | --- |
-| `filter_ef_predicate:…` | Compiled `Expression` / predicate for `ApplyWhereClause` (keyed by entity + tree + `includeSubClauses`) |
-| `filter_matcher:…` | Compiled in-memory matcher for `MatchesWhereClause` |
-| Sort-key lambdas | Per `(TEntity, propertyName)` order key selectors |
-| Property-path metadata | Resolved dotted-path segments, collection indexes, final CLR types |
-| `SubQueryIncludePaths_…` | Include-path lists for a where tree |
-| Property-comparison strategies | Per-property equality strategy for `IPropertyComparisonService` |
+| Cache key prefix / pattern     | Stores                                                                                                  |
+|--------------------------------|---------------------------------------------------------------------------------------------------------|
+| `filter_ef_predicate:…`        | Compiled `Expression` / predicate for `ApplyWhereClause` (keyed by entity + tree + `includeSubClauses`) |
+| `filter_matcher:…`             | Compiled in-memory matcher for `MatchesWhereClause`                                                     |
+| Sort-key lambdas               | Per `(TEntity, propertyName)` order key selectors                                                       |
+| Property-path metadata         | Resolved dotted-path segments, collection indexes, final CLR types                                      |
+| `SubQueryIncludePaths_…`       | Include-path lists for a where tree                                                                     |
+| Property-comparison strategies | Per-property equality strategy for `IPropertyComparisonService`                                         |
 
 Tags typically include the entity CLR type so hosts can invalidate by type when schemas change.
 
-**Api result cache** (optional UTF-8 payload entries for `/QueryConcrete` + `/QueryProject`) is documented under [Lyo.Api query result caching](../../../Apps/Api/Lyo.Api/README.md#query-result-caching).
+**Api result cache** (optional UTF-8 payload entries for `/QueryConcrete` + `/QueryProject`) is documented
+under [Lyo.Api query result caching](../../../Apps/Api/Lyo.Api/README.md#query-result-caching).
 
 ## IPropertyComparisonService
 
-`GetPropertyDifferences<TEntity, TOther>(entity, newData)` walks public **writable** properties on `TEntity` that have a same-named **readable** property on `TOther`, compares with an inferred strategy (direct equality, enum/string coercion, or `Convert.ChangeType`), and returns `Dictionary<string, object?>` of **changed** property → proposed new value.
+`GetPropertyDifferences<TEntity, TOther>(entity, newData)` walks public **writable** properties on `TEntity` that have a same-named **readable** property on `TOther`, compares with
+an inferred strategy (direct equality, enum/string coercion, or `Convert.ChangeType`), and returns `Dictionary<string, object?>` of **changed** property → proposed new value.
 
 Patch/update pipelines (e.g. `Lyo.Api`) use this to build minimal diffs. Strategies are cached via `ICacheService`.
 
@@ -269,19 +285,20 @@ Optional: `IMetrics` is taken from DI when present and forwarded only if `CacheO
 
 ## Metrics
 
-Recording lives on `WhereClauseEvaluator` in [`Lyo.Query.Evaluation`](../Lyo.Query.Evaluation/README.md), so these fire whichever implementation you use. `BaseWhereClauseService` forwards the container's `IMetrics` only when `CacheOptions.EnableMetrics` is true; otherwise nothing is recorded. Names come from `Lyo.Query.Constants.Metrics`:
+Recording lives on `WhereClauseEvaluator` in [`Lyo.Query.Evaluation`](../Lyo.Query.Evaluation/README.md), so these fire whichever implementation you use. `BaseWhereClauseService`
+forwards the container's `IMetrics` only when `CacheOptions.EnableMetrics` is true; otherwise nothing is recorded. Names come from `Lyo.Query.Constants.Metrics`:
 
-| Name | Kind |
-| ------------------------------------------ | --------------- |
-| `query.filter.apply_query_node.duration` | histogram/timer |
-| `query.filter.apply_query_node.success` | counter |
-| `query.filter.sort_by_property.duration` | histogram/timer |
-| `query.filter.sort_by_property.success` | counter |
-| `query.filter.apply_ordering.duration` | histogram/timer |
-| `query.filter.apply_ordering.success` | counter |
+| Name                                       | Kind            |
+|--------------------------------------------|-----------------|
+| `query.filter.apply_query_node.duration`   | histogram/timer |
+| `query.filter.apply_query_node.success`    | counter         |
+| `query.filter.sort_by_property.duration`   | histogram/timer |
+| `query.filter.sort_by_property.success`    | counter         |
+| `query.filter.apply_ordering.duration`     | histogram/timer |
+| `query.filter.apply_ordering.success`      | counter         |
 | `query.filter.matches_query_node.duration` | histogram/timer |
-| `query.filter.matches_query_node.success` | counter |
-| `query.filter.sort_by_count` | gauge |
+| `query.filter.matches_query_node.success`  | counter         |
+| `query.filter.sort_by_count`               | gauge           |
 
 Each is tagged `entity_type` (`Constants.Metrics.Tags.EntityType`).
 

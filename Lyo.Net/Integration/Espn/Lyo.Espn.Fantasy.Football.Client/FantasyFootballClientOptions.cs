@@ -3,8 +3,8 @@ using Lyo.Http.Client;
 namespace Lyo.Espn.Fantasy.Football.Client;
 
 /// <summary>
-/// Settings that control the ESPN fantasy football client. Inherits <see cref="LyoHttpClientOptions" />; use <see cref="LyoHttpClientOptions.BaseUrl" /> for the ESPN fantasy API
-/// host root.
+/// Settings that control the ESPN fantasy football client. Inherits <see cref="LyoHttpClientOptions" />; use <see cref="LyoHttpClientOptions.BaseUrl" /> for the ESPN fantasy
+/// API host root.
 /// </summary>
 public class FantasyFootballClientOptions : LyoHttpClientOptions
 {

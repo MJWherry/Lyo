@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Reflection;
 
 namespace Lyo.Query;
@@ -40,10 +39,10 @@ public static class FuzzyMatch
         return union == 0 ? 0 : (double)intersection / union;
     }
 
-    /// <summary>True when <see cref="Similarity(string,string)" /> is at least <paramref name="threshold"/>.</summary>
+    /// <summary>True when <see cref="Similarity(string,string)" /> is at least <paramref name="threshold" />.</summary>
     /// <param name="a">Left string.</param>
     /// <param name="b">Right string.</param>
-    /// <param name="threshold">Cutoff in <c>[0, 1]</c>. Defaults to <see cref="DefaultThreshold"/>.</param>
+    /// <param name="threshold">Cutoff in <c>[0, 1]</c>. Defaults to <see cref="DefaultThreshold" />.</param>
     public static bool IsSimilar(string? a, string? b, double threshold = DefaultThreshold) => Similarity(a, b) >= threshold;
 
     private static HashSet<string> ExtractTrigrams(string value)

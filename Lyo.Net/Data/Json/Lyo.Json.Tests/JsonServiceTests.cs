@@ -4,15 +4,6 @@ namespace Lyo.Json.Tests;
 
 public class JsonServiceTests
 {
-    private sealed class Person
-    {
-        public string? GivenName { get; set; }
-
-        public int? Age { get; set; }
-
-        public string? Note { get; set; }
-    }
-
     [Fact]
     public void ParseString_Person_BindsCamelCase()
     {
@@ -87,5 +78,14 @@ public class JsonServiceTests
         var person = await svc.ParseStreamAsync<Person>(stream, TestCt);
         Assert.Equal("Ada", person.GivenName);
         Assert.Equal(36, person.Age);
+    }
+
+    private sealed class Person
+    {
+        public string? GivenName { get; set; }
+
+        public int? Age { get; set; }
+
+        public string? Note { get; set; }
     }
 }

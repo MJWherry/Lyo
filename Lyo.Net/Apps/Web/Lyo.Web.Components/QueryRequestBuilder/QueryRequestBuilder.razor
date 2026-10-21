@@ -131,7 +131,8 @@
                 <MudPaper Elevation="1" Class="pa-3 h-100">
                     <MudText Typo="Typo.subtitle1" Class="mb-2">Aggregates</MudText>
                     <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
-                        Count with no field counts rows in the group. A collection field, or a path ending in .count, totals that collection. A scalar field counts non-null values. CountDistinct, Sum, Average, Min, and Max require a field.
+                        Count with no field counts rows in the group. A collection field, or a path ending in .count, totals that collection. A scalar field counts non-null values.
+                        CountDistinct, Sum, Average, Min, and Max require a field.
                     </MudText>
                     <AggregatesList Items="@(Request.Aggregates ?? [])"
                                     ItemsChanged="@OnAggregatesChanged"/>

@@ -4,6 +4,7 @@ using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace Lyo.People.Postgres;
 
 /// <summary>DI helpers that register the PostgreSQL People <c>DbContext</c>.</summary>
@@ -46,7 +47,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresPeopleOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddPeopleDbContextFactory(options);
         }
 
@@ -58,7 +58,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPostgresDbContextFactory<PeopleDbContext, PostgresPeopleOptions>(options);
-
             return services;
         }
 

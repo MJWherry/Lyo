@@ -5,14 +5,6 @@ namespace Lyo.Algorithms;
 /// <summary>Points at one catalog algorithm. Exactly one of latest, a revision number, or a label.</summary>
 public sealed record AlgorithmRef
 {
-    private AlgorithmRef(string key, AlgorithmAddress address, int? revision, string? label)
-    {
-        Key = key;
-        Address = address;
-        RevisionNumber = revision;
-        LabelName = label;
-    }
-
     /// <summary>Catalog key.</summary>
     public string Key { get; }
 
@@ -24,6 +16,14 @@ public sealed record AlgorithmRef
 
     /// <summary>Set when <see cref="Address" /> is <see cref="AlgorithmAddress.Label" />.</summary>
     public string? LabelName { get; }
+
+    private AlgorithmRef(string key, AlgorithmAddress address, int? revision, string? label)
+    {
+        Key = key;
+        Address = address;
+        RevisionNumber = revision;
+        LabelName = label;
+    }
 
     /// <summary>Follow the current revision. Hot-updates when a new revision is saved.</summary>
     public static AlgorithmRef Latest(string key)

@@ -1,8 +1,8 @@
 using System.Text.Json;
-using Lyo.Json;
 using Lyo.Common.Core.Conversion;
 using Lyo.Common.Core.Enums;
 using Lyo.Exceptions;
+using Lyo.Json;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
@@ -236,8 +236,8 @@ internal static class CliQueryBuilder
     }
 
     /// <summary>
-    /// Coerces a CLI filter value to the most specific type it will parse, so <c>--where age:gt:30</c> is a number compare instead of a string compare. If nothing matches, the original
-    /// string is kept. Booleans accept <c>yes</c>, <c>on</c>, and <c>1</c> because those show up on the command line.
+    /// Coerces a CLI filter value to the most specific type it will parse, so <c>--where age:gt:30</c> is a number compare instead of a string compare. If nothing matches, the
+    /// original string is kept. Booleans accept <c>yes</c>, <c>on</c>, and <c>1</c> because those show up on the command line.
     /// </summary>
     private static object? Coerce(string value)
     {

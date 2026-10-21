@@ -2,6 +2,7 @@ using Lyo.Config.Api.Client;
 using Lyo.Config.Api.Models;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+
 namespace Lyo.Config.Api.Hosting;
 
 public sealed class ConfigApiPollingHostedService : BackgroundService

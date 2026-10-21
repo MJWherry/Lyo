@@ -8,9 +8,9 @@ public class FileManagerWindowTests
     [Fact]
     public void DragPress_OnSelectedRow_KeepsTheOtherRows()
     {
-        Assert.True(FileManagerDragSelection.Keeps(3, pressedIsSelected: true));
-        Assert.False(FileManagerDragSelection.Keeps(3, pressedIsSelected: false));
-        Assert.False(FileManagerDragSelection.Keeps(1, pressedIsSelected: true));
+        Assert.True(FileManagerDragSelection.Keeps(3, true));
+        Assert.False(FileManagerDragSelection.Keeps(3, false));
+        Assert.False(FileManagerDragSelection.Keeps(1, true));
     }
 
     [Fact]
@@ -21,11 +21,11 @@ public class FileManagerWindowTests
         Assert.Equal("Base URL is required.", FileManagerServerCheck.Validate("remote", FileManagerServerKind.Remote, " ", null));
         Assert.Null(FileManagerServerCheck.Validate("remote", FileManagerServerKind.Remote, "http://localhost", null));
         Assert.Equal(
-            "Bucket is required.",
-            FileManagerServerCheck.ValidateStore(FileManagerServerKind.S3, " ", null, null, null, null, null, null, null, "/tmp/catalog.db", false));
+            "Bucket is required.", FileManagerServerCheck.ValidateStore(FileManagerServerKind.S3, " ", null, null, null, null, null, null, null, "/tmp/catalog.db", false));
+
         Assert.Equal(
-            "Catalog database is required.",
-            FileManagerServerCheck.ValidateStore(FileManagerServerKind.S3, "bucket", null, null, null, null, null, null, null, " ", false));
+            "Catalog database is required.", FileManagerServerCheck.ValidateStore(FileManagerServerKind.S3, "bucket", null, null, null, null, null, null, null, " ", false));
+
         Assert.Null(FileManagerServerCheck.ValidateStore(FileManagerServerKind.S3, "bucket", null, null, null, null, null, null, null, "/tmp/catalog.db", false));
         Assert.Equal(
             "Host key fingerprint is required.",
@@ -73,7 +73,13 @@ public class FileManagerWindowTests
         await File.WriteAllTextAsync(source, "hello", TestCt);
         var database = FileManagerPaths.DefaultSqliteFile(root);
         try {
-            var server = new FileManagerServer { Kind = FileManagerServerKind.Local, Name = "local", RootDirectory = root, MetadataKind = FileManagerMetadataKind.Sqlite };
+            var server = new FileManagerServer {
+                Kind = FileManagerServerKind.Local,
+                Name = "local",
+                RootDirectory = root,
+                MetadataKind = FileManagerMetadataKind.Sqlite
+            };
+
             using var host = FileStorageLocalHost.Open(server);
             var error = await Assert.ThrowsAsync<InvalidOperationException>(() => host.UploadAsync(source, "docs", new() { Encrypt = true }, TestCt));
             Assert.Equal("No key is configured.", error.Message);
@@ -81,8 +87,10 @@ public class FileManagerWindowTests
         finally {
             if (File.Exists(source))
                 File.Delete(source);
+
             if (File.Exists(database))
                 File.Delete(database);
+
             if (Directory.Exists(root))
                 Directory.Delete(root, true);
         }
@@ -157,13 +165,7 @@ public class FileManagerWindowTests
     [Fact]
     public void TreeFilter_HidesNonMatchingBranches()
     {
-        var root = new FolderTreeNode {
-            Name = "/",
-            Children = [
-                new() { Name = "photos" },
-                new() { Name = "reports" }
-            ]
-        };
+        var root = new FolderTreeNode { Name = "/", Children = [new() { Name = "photos" }, new() { Name = "reports" }] };
         var filtered = FolderTreeFilter.Apply([root], "rep");
         var kept = Assert.Single(filtered);
         Assert.Equal("/", kept.Name);
@@ -182,15 +184,13 @@ public class FileManagerWindowTests
         Assert.Equal(FileManagerDockEdge.Bottom, layout.Edge(FileManagerTool.Log));
         Assert.False(layout.IsVisible(FileManagerTool.Log));
         Assert.Equal(3, layout.Tools.Count);
-
         layout.Move(FileManagerTool.Log, FileManagerDockEdge.Right);
         Assert.Equal(FileManagerTool.Log, layout.Window(FileManagerTool.Log).Tool);
         Assert.Equal(FileManagerDockEdge.Right, layout.Edge(FileManagerTool.Log));
         Assert.Equal(3, layout.Tools.Count);
-
         var path = Path.Combine(Path.GetTempPath(), "lyo-fm-settings-" + LyoGuid.CreateV7().ToString("N") + ".json");
         try {
-            FileManagerSettingsStore.Save(path, [new FileManagerServer { Name = "home", BaseUrl = "http://localhost" }], layout);
+            FileManagerSettingsStore.Save(path, [new() { Name = "home", BaseUrl = "http://localhost" }], layout);
             var loaded = FileManagerSettingsStore.LoadDocument(path);
             Assert.Equal("home", loaded.Servers[0].Name);
             Assert.Equal(FileManagerDockEdge.Right, loaded.Layout.Edge(FileManagerTool.Log));

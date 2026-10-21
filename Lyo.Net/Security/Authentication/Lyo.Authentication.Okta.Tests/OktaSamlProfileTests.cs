@@ -1,4 +1,3 @@
-using Lyo.Authentication;
 using Lyo.Authentication.Saml;
 using Lyo.Authentication.Sso.Completion;
 using Lyo.Authentication.Sso.Protocol;
@@ -20,7 +19,6 @@ public class OktaSamlProfileTests
         services.AddInMemoryAuthenticationStores();
         services.AddOktaProvider(options => Apply(options, "exkabc123"));
         using var provider = services.BuildServiceProvider();
-
         var okta = provider.GetServices<ISamlIdentityProvider>().Single(item => item.Name == "okta");
         Assert.Equal("https://lyo.okta.com/app/exkabc123/sso/saml/metadata", okta.MetadataUrl);
         var protocol = provider.GetRequiredService<SsoProtocolRegistry>().Get("okta");
@@ -31,14 +29,16 @@ public class OktaSamlProfileTests
     [Fact]
     public void AddOktaProviderFromConfiguration_BindsExternalLoginPolicy()
     {
-        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
-        {
-            ["OktaAuth:Domain"] = "lyo.okta.com",
-            ["OktaAuth:AppId"] = "exkabc123",
-            ["OktaAuth:EntityId"] = "https://sp.example/saml",
-            ["OktaAuth:AcsUrl"] = "https://sp.example/auth/callback/okta",
-            ["LyoExternalLogin:Policy"] = "RequireExistingUser"
-        }).Build();
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(
+                new Dictionary<string, string?> {
+                    ["OktaAuth:Domain"] = "lyo.okta.com",
+                    ["OktaAuth:AppId"] = "exkabc123",
+                    ["OktaAuth:EntityId"] = "https://sp.example/saml",
+                    ["OktaAuth:AcsUrl"] = "https://sp.example/auth/callback/okta",
+                    ["LyoExternalLogin:Policy"] = "RequireExistingUser"
+                })
+            .Build();
+
         var services = new ServiceCollection();
         services.AddOktaProviderFromConfiguration(configuration);
         using var provider = services.BuildServiceProvider();

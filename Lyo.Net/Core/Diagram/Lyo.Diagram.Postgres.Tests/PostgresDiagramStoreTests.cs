@@ -34,7 +34,12 @@ public class PostgresDiagramStoreTests(DiagramPostgresFixture fixture)
                             Value = "Start",
                             Style = "rounded=0;whiteSpace=wrap;html=1;",
                             IsVertex = true,
-                            Geometry = new() { X = 40, Y = 40, Width = 120, Height = 60 }
+                            Geometry = new() {
+                                X = 40,
+                                Y = 40,
+                                Width = 120,
+                                Height = 60
+                            }
                         },
                         new() {
                             Id = "go",
@@ -61,7 +66,6 @@ public class PostgresDiagramStoreTests(DiagramPostgresFixture fixture)
         var summary = listed.Single(item => item.Id == diagram.Id);
         Assert.Equal(diagram.Name, summary.Name);
         Assert.NotEqual(default, summary.UpdatedTimestamp);
-
         var loaded = await store.GetAsync(diagram.Id, TestCt);
         Assert.NotNull(loaded);
         Assert.Equal(2, loaded.Pages.Count);
@@ -71,19 +75,13 @@ public class PostgresDiagramStoreTests(DiagramPostgresFixture fixture)
         Assert.Equal(80d, loaded.Pages[0].Cells.Single(cell => cell.Id == "go").Geometry!.Points[0].X);
         Assert.Equal(600d, loaded.Pages[1].PageWidth);
         Assert.Equal("Later", loaded.Pages[1].Cells[0].Value);
-
         var updated = loaded with {
-            Pages = [
-                loaded.Pages[0] with {
-                    Cells = loaded.Pages[0].Cells.Select(cell => cell.Id == "start" ? cell with { Value = "Started" } : cell).ToArray()
-                },
-                loaded.Pages[1]
-            ]
+            Pages = [loaded.Pages[0] with { Cells = loaded.Pages[0].Cells.Select(cell => cell.Id == "start" ? cell with { Value = "Started" } : cell).ToArray() }, loaded.Pages[1]]
         };
+
         await store.SaveAsync(updated, TestCt);
         var reloaded = await store.GetAsync(diagram.Id, TestCt);
         Assert.Equal("Started", reloaded!.Pages[0].Cells.Single(cell => cell.Id == "start").Value);
-
         Assert.True(await store.DeleteAsync(diagram.Id, TestCt));
         Assert.Null(await store.GetAsync(diagram.Id, TestCt));
         Assert.False(await store.DeleteAsync(diagram.Id, TestCt));

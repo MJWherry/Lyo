@@ -5,9 +5,9 @@ namespace Lyo.Common.Tests;
 public class AlsaProcParserTests
 {
     private const string Cards = """
-         0 [PCH            ]: HDA-Intel - HDA Intel PCH
-                              Realtek ALC287 at 0x1234 irq 17
-        """;
+                                  0 [PCH            ]: HDA-Intel - HDA Intel PCH
+                                                       Realtek ALC287 at 0x1234 irq 17
+                                 """;
 
     [Fact]
     public void Parse_DuplexPcm_ReturnsOneDeviceWithCardName()

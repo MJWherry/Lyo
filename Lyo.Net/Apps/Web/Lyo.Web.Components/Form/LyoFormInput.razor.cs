@@ -59,8 +59,8 @@ public partial class LyoFormInput<TModel, TValue>
     public bool AllowMultiline { get; set; }
 
     /// <summary>
-    /// Visible line count for multiline string fields. If set, the input is treated as multiline even if <see cref="AllowMultiline" /> is false.
-    /// Unset uses the default of 8 lines (rich text uses 10).
+    /// Visible line count for multiline string fields. If set, the input is treated as multiline even if <see cref="AllowMultiline" /> is false. Unset uses the default of 8
+    /// lines (rich text uses 10).
     /// </summary>
     [Parameter]
     public int? Lines { get; set; }

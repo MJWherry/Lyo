@@ -5,15 +5,6 @@ namespace Lyo.Yaml.Tests;
 
 public class YamlOptionsTests
 {
-    private sealed class Person
-    {
-        public string? GivenName { get; set; }
-
-        public int? Age { get; set; }
-
-        public string? Note { get; set; }
-    }
-
     [Fact]
     public void ExportToYamlString_SnakeCase_WritesGivenNameKey()
     {
@@ -56,19 +47,25 @@ public class YamlOptionsTests
     public void ParseString_MultiDocument_ReadsEachDocument()
     {
         const string yaml = """
-            ---
-            givenName: Ada
-            age: 36
-            ---
-            givenName: Grace
-            age: 37
-            """;
+                            ---
+                            givenName: Ada
+                            age: 36
+                            ---
+                            givenName: Grace
+                            age: 37
+                            """;
+
         var people = new YamlService(o => o.MultiDocument = true).ParseString<List<Person>>(yaml);
         Assert.Equal(2, people.Count);
         Assert.Equal("Grace", people[1].GivenName);
         var single = false;
-        try { single = YamlService.Default.ParseString<List<Person>>(yaml).Count == 2; }
-        catch { single = false; }
+        try {
+            single = YamlService.Default.ParseString<List<Person>>(yaml).Count == 2;
+        }
+        catch {
+            single = false;
+        }
+
         Assert.False(single);
     }
 
@@ -76,9 +73,10 @@ public class YamlOptionsTests
     public void ParseString_Alias_ThrowsUnlessAllowed()
     {
         const string yaml = """
-            givenName: &name Ada
-            note: *name
-            """;
+                            givenName: &name Ada
+                            note: *name
+                            """;
+
         Assert.ThrowsAny<Exception>(() => YamlService.Default.ParseString<Person>(yaml));
         var person = new YamlService(o => o.AllowAliases = true).ParseString<Person>(yaml);
         Assert.Equal("Ada", person.Note);
@@ -101,7 +99,9 @@ public class YamlOptionsTests
             var back = service.ParseFile<Person>(path);
             Assert.Equal("José", back.GivenName);
         }
-        finally { File.Delete(path); }
+        finally {
+            File.Delete(path);
+        }
     }
 
     [Fact]
@@ -119,15 +119,28 @@ public class YamlOptionsTests
     public void Default_ParallelRoundTrip_ReturnsTheDocument()
     {
         var errors = 0;
-        Parallel.For(0, 32, _ => {
-            try {
-                var yaml = YamlService.Default.ExportToYamlString(new Person { GivenName = "Ada", Age = 36 });
-                var person = YamlService.Default.ParseString<Person>(yaml);
-                if (person.GivenName != "Ada" || person.Age != 36)
+        Parallel.For(
+            0, 32, _ => {
+                try {
+                    var yaml = YamlService.Default.ExportToYamlString(new Person { GivenName = "Ada", Age = 36 });
+                    var person = YamlService.Default.ParseString<Person>(yaml);
+                    if (person.GivenName != "Ada" || person.Age != 36)
+                        Interlocked.Increment(ref errors);
+                }
+                catch {
                     Interlocked.Increment(ref errors);
-            }
-            catch { Interlocked.Increment(ref errors); }
-        });
+                }
+            });
+
         Assert.Equal(0, errors);
+    }
+
+    private sealed class Person
+    {
+        public string? GivenName { get; set; }
+
+        public int? Age { get; set; }
+
+        public string? Note { get; set; }
     }
 }

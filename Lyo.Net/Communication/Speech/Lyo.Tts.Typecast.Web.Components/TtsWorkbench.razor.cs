@@ -1,35 +1,28 @@
-using System.Net.Http.Json;
 using Lyo.Common.Metadata.Records;
 using Lyo.Typecast.Client.Enums;
 using Lyo.Typecast.Client.Models.TextToSpeech.Request;
 using Lyo.Typecast.Client.Models.Voices.Response;
-using Lyo.Web.Components;
 using Lyo.Web.Primitives;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Lyo.Tts.Typecast.Web.Components;
 
 public partial class TtsWorkbench
 {
-    private bool _busy;
-    private string _audioFormat = "mp3";
     private byte[]? _audioBytes;
+    private string _audioFormat = "mp3";
     private string? _audioSource;
+    private bool _busy;
+    private string _nextText = string.Empty;
     private int _pitch;
     private string _previousText = string.Empty;
-    private string _nextText = string.Empty;
+    private int? _seed;
     private string _selectedModel = TypecastModel.SsfmV30;
     private string? _selectedVoiceId;
-    private int? _seed;
-    private string _text = "Hello from the test gateway.";
     private double _tempo = 1.0;
-    private int _volume = 100;
+    private string _text = "Hello from the test gateway.";
     private bool _voicesLoaded;
+    private int _volume = 100;
 
     private IEnumerable<Voice> AvailableVoices => TtsService.GetVoicesForModel(_selectedModel).OrderBy(i => i.VoiceName);
 
@@ -81,14 +74,14 @@ public partial class TtsWorkbench
         _busy = true;
         try {
             var builder = TypecastTtsRequestBuilder.Create(_selectedVoiceId!, _text)
-            .WithModel(_selectedModel)
-            .WithOutput(
-                new OutputSettings {
-                    AudioFormat = _audioFormat,
-                    Volume = _volume,
-                    AudioPitch = _pitch,
-                    AudioTempo = _tempo
-                });
+                .WithModel(_selectedModel)
+                .WithOutput(
+                    new OutputSettings {
+                        AudioFormat = _audioFormat,
+                        Volume = _volume,
+                        AudioPitch = _pitch,
+                        AudioTempo = _tempo
+                    });
 
             if (_seed.HasValue)
                 builder.WithSeed(_seed.Value);

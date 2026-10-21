@@ -22,6 +22,7 @@ public sealed class XmlExportFormatHandler(IXmlService xml) : IExportFormatHandl
             await xml.ExportFormattedToXmlAsync(items, formatters, stream, ct).ConfigureAwait(false);
         else
             await xml.ExportToXmlAsync(items, stream, ct).ConfigureAwait(false);
+
         stream.Position = 0;
         return (stream, Format.FileType.MimeType, Format.DefaultFileName);
     }
@@ -37,6 +38,7 @@ public sealed class XmlExportFormatHandler(IXmlService xml) : IExportFormatHandl
             await xml.ExportColumnsToXmlAsync(items, columns, stream, ct).ConfigureAwait(false);
         else
             await xml.ExportToXmlAsync(items, stream, ct).ConfigureAwait(false);
+
         stream.Position = 0;
         return (stream, Format.FileType.MimeType, Format.DefaultFileName);
     }

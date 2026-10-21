@@ -6,6 +6,7 @@ using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace Lyo.Note.Postgres;
 
 /// <summary>DI helpers for PostgreSQL note store registration.</summary>
@@ -31,7 +32,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresNoteOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddNoteDbContextFactory(options);
         }
 
@@ -42,7 +42,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPostgresDbContextFactory<NoteDbContext, PostgresNoteOptions>(options);
             services.AddEntityRefOptions();
-
             return services;
         }
 
@@ -64,7 +63,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresNoteOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddPostgresNoteStore(options);
         }
 
@@ -75,8 +73,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(options);
             services.AddNoteDbContextFactory(options);
             services.AddSingleton<INoteStore>(sp => new PostgresNoteStore(
-                sp.GetRequiredService<IDbContextFactory<NoteDbContext>>(), sp.GetRequiredService<EntityRefOptions>(),
-                sp.GetRequiredService<PostgresNoteOptions>(), sp.GetServices<IEntityRefActionInterceptor>()));
+                sp.GetRequiredService<IDbContextFactory<NoteDbContext>>(), sp.GetRequiredService<EntityRefOptions>(), sp.GetRequiredService<PostgresNoteOptions>(),
+                sp.GetServices<IEntityRefActionInterceptor>()));
 
             return services;
         }

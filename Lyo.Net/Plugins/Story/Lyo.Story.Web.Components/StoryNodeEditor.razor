@@ -13,6 +13,7 @@
     </MudSelect>
     @if (Node.PresentationKind == StoryPresentationKind.Text) {
         <MudTextField T="string" Label="Body" Value="@Node.Body" ValueChanged="OnBody" Lines="4" Margin="Margin.Dense" Variant="Variant.Outlined"/>
+
         <MudTextField T="string" Label="Content type" Value="@Node.ContentType" ValueChanged="OnContentType" Margin="Margin.Dense" Variant="Variant.Outlined"/>
     }
     @if (Node.PresentationKind == StoryPresentationKind.Cutscene) {

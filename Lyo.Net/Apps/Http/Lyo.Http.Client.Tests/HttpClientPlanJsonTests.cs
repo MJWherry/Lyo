@@ -1,8 +1,5 @@
-using System.Net;
+using System.Text.Json;
 using Lyo.Common.Metadata.Records;
-using Lyo.Exceptions.Models;
-using Lyo.Http.Client;
-using Lyo.Http.Client.Pipeline;
 using Lyo.Http.Client.Plan;
 
 namespace Lyo.Http.Client.Tests;
@@ -23,8 +20,8 @@ public sealed class HttpClientPlanJsonTests
             .DownloadUrls("imageUrls", "{{downloadDir}}/img", "img")
             .Build();
 
-        var json = System.Text.Json.JsonSerializer.Serialize(plan);
-        var restored = System.Text.Json.JsonSerializer.Deserialize<HttpClientPlan>(json);
+        var json = JsonSerializer.Serialize(plan);
+        var restored = JsonSerializer.Deserialize<HttpClientPlan>(json);
         Assert.NotNull(restored);
         Assert.Equal("roundtrip", restored.Name);
         Assert.Contains(restored.Steps, s => s is HttpRequestPlanStep);
@@ -38,6 +35,6 @@ public sealed class HttpClientPlanJsonTests
 
     [Fact]
     public void Interpolation_ReplacesBindings()
-        => Assert.Equal("https://x.test/a/b", HttpClientPlanInterpolation.Interpolate("https://x.test/{{slug}}/{{id}}", new Dictionary<string, string> { ["slug"] = "a", ["id"] = "b" }));
+        => Assert.Equal(
+            "https://x.test/a/b", HttpClientPlanInterpolation.Interpolate("https://x.test/{{slug}}/{{id}}", new Dictionary<string, string> { ["slug"] = "a", ["id"] = "b" }));
 }
-

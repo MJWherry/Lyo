@@ -1,5 +1,4 @@
 @using Lyo.Formatter
-@using Lyo.Formatter.Web.Components
 @using Constants = Constants
 @attribute [Route("/" + Constants.Page.Formatter)]
 @inherits AuthorizedPage
@@ -10,7 +9,8 @@
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
     <MudText Typo="Typo.h4" Class="mb-2">Formatter</MudText>
     <MudText Typo="Typo.body2" Class="mb-4" Color="Color.Secondary">
-        Edit the template on the left. Type <code>{</code> to pick a context key (object values also list their properties). The preview on the right updates after a short pause. Matching colors — and hover — link template keys to the values that replaced them.
+        Edit the template on the left. Type <code>{</code> to pick a context key (object values also list their properties). The preview on the right updates after a short pause.
+        Matching colors — and hover — link template keys to the values that replaced them.
     </MudText>
     <MudGrid>
         <MudItem xs="12" md="6">

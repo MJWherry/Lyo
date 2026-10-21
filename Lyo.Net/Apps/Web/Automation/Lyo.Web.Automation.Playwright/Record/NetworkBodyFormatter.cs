@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Xml;
 using System.Xml.Linq;
 
 namespace Lyo.Web.Automation.Playwright.Record;
@@ -84,7 +85,7 @@ internal static class NetworkBodyFormatter
         try {
             using var document = JsonDocument.Parse(text);
             using var stream = new MemoryStream();
-            using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true }))
+            using (var writer = new Utf8JsonWriter(stream, new() { Indented = true }))
                 document.WriteTo(writer);
 
             return Encoding.UTF8.GetString(stream.ToArray());
@@ -99,7 +100,7 @@ internal static class NetworkBodyFormatter
         try {
             return XDocument.Parse(text).ToString();
         }
-        catch (System.Xml.XmlException) {
+        catch (XmlException) {
             return text;
         }
     }

@@ -30,8 +30,8 @@ public class JobRun
     public Models.Enums.JobRunResult? Result { get; set; }
 
     /// <summary>
-    /// Scheduled slot that caused this run to be created. Combined with <see cref="JobScheduleId" />, this forms a unique constraint that prevents duplicate runs when
-    /// multiple scheduler instances fire concurrently.
+    /// Scheduled slot that caused this run to be created. Combined with <see cref="JobScheduleId" />, this forms a unique constraint that prevents duplicate runs when multiple
+    /// scheduler instances fire concurrently.
     /// </summary>
     public DateTime? ScheduledSlotUtc { get; set; }
 

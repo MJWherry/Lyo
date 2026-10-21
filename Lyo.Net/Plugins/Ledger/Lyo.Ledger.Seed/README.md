@@ -1,6 +1,7 @@
 # Lyo.Ledger.Seed
 
-`LedgerEfSeedContributor` writes a cash account and a revenue account, then `options.Count` posted journals. Each journal debits cash and credits revenue for the same amount. `OnClear` deletes lines, journals, then accounts so `--replace` can run.
+`LedgerEfSeedContributor` writes a cash account and a revenue account, then `options.Count` posted journals. Each journal debits cash and credits revenue for the same amount.
+`OnClear` deletes lines, journals, then accounts so `--replace` can run.
 
 ## Features
 

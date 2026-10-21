@@ -1,4 +1,3 @@
-using Lyo.Query;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Enums;
@@ -13,11 +12,8 @@ public class FuzzyWhereClauseTests : WhereClauseServiceTests
     public void Fuzzy_SimilarNames_MatchAtDefaultThreshold()
     {
         var svc = CreateService();
-        var people = new List<Person> {
-            new PersonBuilder().WithName("Alice").Build(),
-            new PersonBuilder().WithName("Alicia").Build(),
-            new PersonBuilder().WithName("Bob").Build()
-        }.AsQueryable();
+        var people = new List<Person> { new PersonBuilder().WithName("Alice").Build(), new PersonBuilder().WithName("Alicia").Build(), new PersonBuilder().WithName("Bob").Build() }
+            .AsQueryable();
 
         var node = WhereClauseBuilder.And().Fuzzy("Name", "Alice").Build();
         var res = svc.ApplyWhereClause(people, node).Select(p => p.Name).ToList();
@@ -29,11 +25,7 @@ public class FuzzyWhereClauseTests : WhereClauseServiceTests
     public void NotFuzzy_ExcludesCloseMatches()
     {
         var svc = CreateService();
-        var people = new List<Person> {
-            new PersonBuilder().WithName("Alice").Build(),
-            new PersonBuilder().WithName("Bob").Build()
-        }.AsQueryable();
-
+        var people = new List<Person> { new PersonBuilder().WithName("Alice").Build(), new PersonBuilder().WithName("Bob").Build() }.AsQueryable();
         var node = WhereClauseBuilder.And().NotFuzzy("Name", "Alice").Build();
         var res = svc.ApplyWhereClause(people, node).Select(p => p.Name).ToList();
         Assert.DoesNotContain("Alice", res);
@@ -44,11 +36,7 @@ public class FuzzyWhereClauseTests : WhereClauseServiceTests
     public void Fuzzy_ExplicitHighThreshold_DropsWeakerMatch()
     {
         var svc = CreateService();
-        var people = new List<Person> {
-            new PersonBuilder().WithName("Alice").Build(),
-            new PersonBuilder().WithName("Alicia").Build()
-        }.AsQueryable();
-
+        var people = new List<Person> { new PersonBuilder().WithName("Alice").Build(), new PersonBuilder().WithName("Alicia").Build() }.AsQueryable();
         var node = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Fuzzy, "Alice", threshold: 0.99);
         var res = svc.ApplyWhereClause(people, node).Select(p => p.Name).ToList();
         Assert.Equal("Alice", Assert.Single(res));

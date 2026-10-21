@@ -5,8 +5,8 @@ using Lyo.Exceptions;
 namespace Lyo.Diagnostic.Context;
 
 /// <summary>
-/// Combines <see cref="IStackTraceDecoder" /> and <see cref="IExceptionClassifier" /> into one structured <see cref="DiagnosticContext" />. Register as Scoped or
-/// Singleton depending on whether you inject scoped services.
+/// Combines <see cref="IStackTraceDecoder" /> and <see cref="IExceptionClassifier" /> into one structured <see cref="DiagnosticContext" />. Register as Scoped or Singleton
+/// depending on whether you inject scoped services.
 /// </summary>
 public sealed class DiagnosticContextBuilder(IStackTraceDecoder decoder, IExceptionClassifier classifier, DiagnosticContextOptions? options = null) : IDiagnosticContextBuilder
 {

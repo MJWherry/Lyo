@@ -1,6 +1,5 @@
-@namespace Lyo.Web.Primitives
-@using Lyo.EntityReference.Models
 @using Lyo.Schedule.Models
+@namespace Lyo.Web.Primitives
 
 <MudStack Spacing="2">
     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Wrap="Wrap.Wrap">
@@ -128,13 +127,17 @@
                         }
                         else {
                             <MudText Typo="Typo.subtitle1" Style="overflow-wrap: anywhere;">@selected.Title</MudText>
+
                             <MudText Typo="Typo.caption">@Clock(selected)</MudText>
+
                             @if (!string.IsNullOrWhiteSpace(selected.Description)) {
                                 <MudText Typo="Typo.body2" Style="overflow-wrap: anywhere; white-space: pre-wrap;">@selected.Description</MudText>
                             }
+
                             @if (selected.Muted) {
                                 <MudText Typo="Typo.body2">This time is inside a blackout.</MudText>
                             }
+
                             @if (selected.Refs.Count > 0) {
                                 <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
                                     @foreach (var entity in selected.Refs) {
@@ -157,61 +160,66 @@
 }
 
 @code {
-    private RenderFragment Hourly(IReadOnlyList<CalendarDay> days) => @<div>
-        @{
-            var columns = days.Count;
-        }
-        <div class="lyo-cal-timehead" style="@($"--lyo-cal-cols:{columns}")">
-            <div></div>
-            @foreach (var day in days) {
-                <button type="button" class="lyo-cal-colhead" @onclick="@(() => OpenDay(day.Date))">
-                    @WeekdayLabel(day.Date) @day.Date.Day
-                </button>
-            }
-        </div>
-        @if (HasAllDay(days)) {
-            <div class="lyo-cal-allday" style="@($"--lyo-cal-cols:{columns}")">
-                <div class="lyo-cal-allday-label">All day</div>
-                @foreach (var day in days) {
-                    <div class="lyo-cal-allday-col">
-                        @foreach (var block in BlocksFor(day)) {
-                            if (!block.AllDay)
-                                continue;
-                            var entry = day.Entries[block.Index];
-                            <button type="button" class="@EventClass(entry)" style="@EventStyle(entry)" title="@EventTooltip(entry)"
-                                    aria-label="@EventLabel(entry)" @onclick:stopPropagation="true" @onclick="@(() => OpenEntry(entry))">
-                                <span class="lyo-cal-event-title">@entry.Title</span>
-                            </button>
-                        }
-                    </div>
-                }
-            </div>
-        }
-        <div class="lyo-cal-scroll">
-            <div class="lyo-cal-time" style="@($"--lyo-cal-cols:{columns}")">
-                <div>
-                    @for (var hour = 0; hour < 24; hour++) {
-                        <div class="lyo-cal-hour">@HourLabel(hour)</div>
-                    }
-                </div>
-                @foreach (var day in days) {
-                    <div class="lyo-cal-col" @onclick="@(() => OpenDay(day.Date))">
-                        @for (var hour = 0; hour < 24; hour++) {
-                            <div class="lyo-cal-slot"></div>
-                        }
-                        @foreach (var block in BlocksFor(day)) {
-                            if (block.AllDay)
-                                continue;
-                            var entry = day.Entries[block.Index];
-                            <button type="button" class="@BlockClass(entry)" style="@BlockStyle(block, entry)" title="@EventTooltip(entry)"
-                                    aria-label="@EventLabel(entry)" @onclick:stopPropagation="true" @onclick="@(() => OpenEntry(entry))">
-                                <span class="lyo-cal-event-time">@Clock(entry)</span>
-                                <span class="lyo-cal-event-title">@entry.Title</span>
-                            </button>
-                        }
-                    </div>
-                }
-            </div>
-        </div>
-    </div>;
+
+    private RenderFragment Hourly(IReadOnlyList<CalendarDay> days)
+        => @<div>
+               @{
+                   var columns = days.Count;
+               }
+               <div class="lyo-cal-timehead" style="@($"--lyo-cal-cols:{columns}")">
+                   <div></div>
+                   @foreach (var day in days) {
+                       <button type="button" class="lyo-cal-colhead" @onclick="@(() => OpenDay(day.Date))">
+                           @WeekdayLabel(day.Date) @day.Date.Day
+                       </button>
+                   }
+               </div>
+               @if (HasAllDay(days)) {
+                   <div class="lyo-cal-allday" style="@($"--lyo-cal-cols:{columns}")">
+                       <div class="lyo-cal-allday-label">All day</div>
+                       @foreach (var day in days) {
+                           <div class="lyo-cal-allday-col">
+                               @foreach (var block in BlocksFor(day)) {
+                                   if (!block.AllDay)
+                                       continue;
+
+                                   var entry = day.Entries[block.Index];
+                                   <button type="button" class="@EventClass(entry)" style="@EventStyle(entry)" title="@EventTooltip(entry)"
+                                           aria-label="@EventLabel(entry)" @onclick:stopPropagation="true" @onclick="@(() => OpenEntry(entry))">
+                                       <span class="lyo-cal-event-title">@entry.Title</span>
+                                   </button>
+                               }
+                           </div>
+                       }
+                   </div>
+               }
+               <div class="lyo-cal-scroll">
+                   <div class="lyo-cal-time" style="@($"--lyo-cal-cols:{columns}")">
+                       <div>
+                           @for (var hour = 0; hour < 24; hour++) {
+                               <div class="lyo-cal-hour">@HourLabel(hour)</div>
+                           }
+                       </div>
+                       @foreach (var day in days) {
+                           <div class="lyo-cal-col" @onclick="@(() => OpenDay(day.Date))">
+                               @for (var hour = 0; hour < 24; hour++) {
+                                   <div class="lyo-cal-slot"></div>
+                               }
+                               @foreach (var block in BlocksFor(day)) {
+                                   if (block.AllDay)
+                                       continue;
+
+                                   var entry = day.Entries[block.Index];
+                                   <button type="button" class="@BlockClass(entry)" style="@BlockStyle(block, entry)" title="@EventTooltip(entry)"
+                                           aria-label="@EventLabel(entry)" @onclick:stopPropagation="true" @onclick="@(() => OpenEntry(entry))">
+                                       <span class="lyo-cal-event-time">@Clock(entry)</span>
+                                       <span class="lyo-cal-event-title">@entry.Title</span>
+                                   </button>
+                               }
+                           </div>
+                       }
+                   </div>
+               </div>
+           </div>;
+
 }

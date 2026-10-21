@@ -2,12 +2,12 @@ using Lyo.Api;
 using Lyo.Api.FileStorage;
 using Lyo.Api.Middleware;
 using Lyo.Cache;
-using Lyo.Json;
 using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Postgres;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.FileStorage;
 using Lyo.FileStorage.Abstractions;
+using Lyo.Json;
 using Lyo.Recipe.Api;
 using Lyo.Recipe.FileStorage;
 using Lyo.Recipe.Postgres;
@@ -28,14 +28,10 @@ builder.Services.AddPostgresFileMetadataStoreKeyed("FileStorage")
         o.EnableAutoMigrations = recipe.EnableAutoMigrations;
     })
     .Build();
+
 builder.Services.AddLyoCrudServices<FileMetadataStoreDbContext>();
-var diskRoot = builder.Configuration["DiskFileStorage:RootDirectoryPath"]
-    ?? Path.Combine(builder.Environment.ContentRootPath, "filestorage");
-builder.Services.AddFileStorageServiceKeyed(
-    "FileStorage",
-    o => o.RootDirectoryPath = diskRoot,
-    sp => sp.GetRequiredKeyedService<IFileMetadataStore>("FileStorage"),
-    "FileStorage");
+var diskRoot = builder.Configuration["DiskFileStorage:RootDirectoryPath"] ?? Path.Combine(builder.Environment.ContentRootPath, "filestorage");
+builder.Services.AddFileStorageServiceKeyed("FileStorage", o => o.RootDirectoryPath = diskRoot, sp => sp.GetRequiredKeyedService<IFileMetadataStore>("FileStorage"), "FileStorage");
 builder.Services.AddScoped<IFileStorageService>(sp => sp.GetRequiredKeyedService<IFileStorageService>("FileStorage"));
 builder.Services.AddRecipeFileStorage();
 var application = builder.Build();
@@ -54,4 +50,5 @@ application.BuildFileStorageApi(
         FileMetadataRoute = "FileStorage/FileMetadata",
         DirectUploadPath = ""
     });
+
 application.Run();

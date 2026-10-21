@@ -2,7 +2,7 @@ using Lyo.Exceptions;
 
 namespace Lyo.Story.Builders;
 
-/// <summary>Builds a named <see cref="StoryAction"/>.</summary>
+/// <summary>Builds a named <see cref="StoryAction" />.</summary>
 public sealed class StoryActionBuilder
 {
     private readonly StoryAction _action;

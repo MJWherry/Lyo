@@ -3,10 +3,10 @@ using Lyo.Algorithms.Models;
 using Lyo.Algorithms.Models.Request;
 using Lyo.Algorithms.Models.Response;
 using Lyo.Algorithms.Sqlite.Database;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Health;
 using Microsoft.EntityFrameworkCore;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Algorithms.Sqlite;
 
@@ -23,24 +23,6 @@ public sealed class SqliteAlgorithmDefinitionStore : IAlgorithmDefinitionStore, 
     }
 
     /// <inheritdoc />
-    public string HealthCheckName => "algorithms-sqlite";
-
-    /// <inheritdoc />
-    public async Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-    {
-        var started = DateTime.UtcNow;
-        var watch = Stopwatch.StartNew();
-        try {
-            await using var ctx = await _factory.CreateDbContextAsync(ct).ConfigureAwait(false);
-            _ = await ctx.Database.ExecuteSqlRawAsync("SELECT 1", ct).ConfigureAwait(false);
-            return new HealthResult(true, watch.Elapsed, started);
-        }
-        catch (Exception ex) {
-            return new HealthResult(false, watch.Elapsed, started, ex.Message, exception: ex);
-        }
-    }
-
-    /// <inheritdoc />
     public async Task<AlgorithmDefinitionRes> SaveRevisionAsync(string key, AlgorithmRevisionReq request, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(request);
@@ -49,49 +31,10 @@ public sealed class SqliteAlgorithmDefinitionStore : IAlgorithmDefinitionStore, 
             try {
                 return await SaveRevisionCoreAsync(key, request, ct).ConfigureAwait(false);
             }
-            catch (DbUpdateException ex) when (attempt == 0 && IsUniqueViolation(ex)) {
-            }
+            catch (DbUpdateException ex) when (attempt == 0 && IsUniqueViolation(ex)) { }
         }
 
         return AlgorithmHelpers.Throw<AlgorithmDefinitionRes>($"Algorithm '{key}' could not allocate a revision.");
-    }
-
-    private async Task<AlgorithmDefinitionRes> SaveRevisionCoreAsync(string key, AlgorithmRevisionReq request, CancellationToken ct)
-    {
-        await using var ctx = await _factory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        await using var tx = await ctx.Database.BeginTransactionAsync(ct).ConfigureAwait(false);
-        var entity = await ctx.Definitions.FirstOrDefaultAsync(x => x.Key == key, ct).ConfigureAwait(false);
-        if (entity is null) {
-            entity = new AlgorithmDefinitionEntity { Id = LyoGuid.CreateV7(), Key = key, CreatedTimestamp = DateTime.UtcNow };
-            ctx.Definitions.Add(entity);
-        }
-
-        var max = await ctx.Revisions.Where(r => r.DefinitionId == entity.Id).Select(r => (int?)r.Revision).MaxAsync(ct).ConfigureAwait(false) ?? 0;
-        var now = DateTime.UtcNow;
-        ctx.Revisions.Add(new AlgorithmRevisionEntity {
-            DefinitionId = entity.Id,
-            Revision = max + 1,
-            Kind = request.Kind.ToString(),
-            Source = request.Source,
-            Payload = request.Payload,
-            CreatedTimestamp = now
-        });
-        entity.Kind = request.Kind.ToString();
-        entity.CurrentRevision = max + 1;
-        entity.UpdatedTimestamp = now;
-        if (request.Name is not null)
-            entity.Name = request.Name;
-        if (request.Description is not null)
-            entity.Description = request.Description;
-        await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
-        await tx.CommitAsync(ct).ConfigureAwait(false);
-        return ToDefinition(entity);
-    }
-
-    private static bool IsUniqueViolation(DbUpdateException ex)
-    {
-        var text = ex.InnerException?.Message ?? ex.Message;
-        return text.Contains("UNIQUE", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <inheritdoc />
@@ -127,6 +70,7 @@ public sealed class SqliteAlgorithmDefinitionStore : IAlgorithmDefinitionStore, 
         var definition = await ctx.Definitions.AsNoTracking().FirstOrDefaultAsync(x => x.Key == key, ct).ConfigureAwait(false);
         if (definition is null)
             return null;
+
         var row = await ctx.Revisions.AsNoTracking().FirstOrDefaultAsync(r => r.DefinitionId == definition.Id && r.Revision == revision, ct).ConfigureAwait(false);
         return row is null ? null : ToRevision(row);
     }
@@ -136,17 +80,18 @@ public sealed class SqliteAlgorithmDefinitionStore : IAlgorithmDefinitionStore, 
     {
         ArgumentHelpers.ThrowIfNull(request);
         var existing = AlgorithmHelpers.ThrowIfNull(
-            await GetRevisionAsync(key, request.Revision, ct).ConfigureAwait(false),
-            $"Algorithm '{key}' has no revision {request.Revision}.",
-            "algorithm.revision.missing");
+            await GetRevisionAsync(key, request.Revision, ct).ConfigureAwait(false), $"Algorithm '{key}' has no revision {request.Revision}.", "algorithm.revision.missing");
+
         var definition = await GetByKeyAsync(key, ct).ConfigureAwait(false);
-        return await SaveRevisionAsync(key, new AlgorithmRevisionReq {
-            Kind = existing.Kind,
-            Source = existing.Source,
-            Payload = existing.Payload,
-            Name = definition?.Name,
-            Description = definition?.Description
-        }, ct).ConfigureAwait(false);
+        return await SaveRevisionAsync(
+                key, new() {
+                    Kind = existing.Kind,
+                    Source = existing.Source,
+                    Payload = existing.Payload,
+                    Name = definition?.Name,
+                    Description = definition?.Description
+                }, ct)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -156,14 +101,19 @@ public sealed class SqliteAlgorithmDefinitionStore : IAlgorithmDefinitionStore, 
         AlgorithmKeys.ThrowIfInvalidLabel(label);
         await using var ctx = await _factory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var definition = AlgorithmHelpers.ThrowIfNull(
-            await ctx.Definitions.FirstOrDefaultAsync(x => x.Key == key, ct).ConfigureAwait(false),
-            $"Algorithm '{key}' was not found.",
-            "algorithm.definition.missing");
+            await ctx.Definitions.FirstOrDefaultAsync(x => x.Key == key, ct).ConfigureAwait(false), $"Algorithm '{key}' was not found.", "algorithm.definition.missing");
+
         var exists = await ctx.Revisions.AnyAsync(r => r.DefinitionId == definition.Id && r.Revision == request.Revision, ct).ConfigureAwait(false);
         AlgorithmHelpers.ThrowIf(!exists, $"Algorithm '{key}' has no revision {request.Revision}.", "algorithm.revision.missing");
         var row = await ctx.Labels.FirstOrDefaultAsync(l => l.DefinitionId == definition.Id && l.Label == label, ct).ConfigureAwait(false);
         if (row is null) {
-            row = new AlgorithmLabelEntity { DefinitionId = definition.Id, Label = label, Revision = request.Revision, IsMutable = request.IsMutable };
+            row = new() {
+                DefinitionId = definition.Id,
+                Label = label,
+                Revision = request.Revision,
+                IsMutable = request.IsMutable
+            };
+
             ctx.Labels.Add(row);
         }
         else {
@@ -183,34 +133,98 @@ public sealed class SqliteAlgorithmDefinitionStore : IAlgorithmDefinitionStore, 
         var definition = await ctx.Definitions.AsNoTracking().FirstOrDefaultAsync(x => x.Key == key, ct).ConfigureAwait(false);
         if (definition is null)
             return null;
+
         var row = await ctx.Labels.AsNoTracking().FirstOrDefaultAsync(l => l.DefinitionId == definition.Id && l.Label == label, ct).ConfigureAwait(false);
         return row is null ? null : ToLabel(row);
     }
 
-    private static AlgorithmDefinitionRes ToDefinition(AlgorithmDefinitionEntity entity) => new() {
-        Id = entity.Id,
-        Key = entity.Key,
-        Name = entity.Name,
-        Description = entity.Description,
-        Kind = Enum.Parse<AlgorithmKind>(entity.Kind),
-        CurrentRevision = entity.CurrentRevision,
-        CreatedTimestamp = entity.CreatedTimestamp,
-        UpdatedTimestamp = entity.UpdatedTimestamp
-    };
+    /// <inheritdoc />
+    public string HealthCheckName => "algorithms-sqlite";
 
-    private static AlgorithmRevisionRes ToRevision(AlgorithmRevisionEntity entity) => new() {
-        DefinitionId = entity.DefinitionId,
-        Revision = entity.Revision,
-        Kind = Enum.Parse<AlgorithmKind>(entity.Kind),
-        Source = entity.Source,
-        Payload = entity.Payload,
-        CreatedTimestamp = entity.CreatedTimestamp
-    };
+    /// <inheritdoc />
+    public async Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
+    {
+        var started = DateTime.UtcNow;
+        var watch = Stopwatch.StartNew();
+        try {
+            await using var ctx = await _factory.CreateDbContextAsync(ct).ConfigureAwait(false);
+            _ = await ctx.Database.ExecuteSqlRawAsync("SELECT 1", ct).ConfigureAwait(false);
+            return new(true, watch.Elapsed, started);
+        }
+        catch (Exception ex) {
+            return new(false, watch.Elapsed, started, ex.Message, exception: ex);
+        }
+    }
 
-    private static AlgorithmLabelRes ToLabel(AlgorithmLabelEntity entity) => new() {
-        DefinitionId = entity.DefinitionId,
-        Label = entity.Label,
-        Revision = entity.Revision,
-        IsMutable = entity.IsMutable
-    };
+    private async Task<AlgorithmDefinitionRes> SaveRevisionCoreAsync(string key, AlgorithmRevisionReq request, CancellationToken ct)
+    {
+        await using var ctx = await _factory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        await using var tx = await ctx.Database.BeginTransactionAsync(ct).ConfigureAwait(false);
+        var entity = await ctx.Definitions.FirstOrDefaultAsync(x => x.Key == key, ct).ConfigureAwait(false);
+        if (entity is null) {
+            entity = new() { Id = LyoGuid.CreateV7(), Key = key, CreatedTimestamp = DateTime.UtcNow };
+            ctx.Definitions.Add(entity);
+        }
+
+        var max = await ctx.Revisions.Where(r => r.DefinitionId == entity.Id).Select(r => (int?)r.Revision).MaxAsync(ct).ConfigureAwait(false) ?? 0;
+        var now = DateTime.UtcNow;
+        ctx.Revisions.Add(
+            new() {
+                DefinitionId = entity.Id,
+                Revision = max + 1,
+                Kind = request.Kind.ToString(),
+                Source = request.Source,
+                Payload = request.Payload,
+                CreatedTimestamp = now
+            });
+
+        entity.Kind = request.Kind.ToString();
+        entity.CurrentRevision = max + 1;
+        entity.UpdatedTimestamp = now;
+        if (request.Name is not null)
+            entity.Name = request.Name;
+
+        if (request.Description is not null)
+            entity.Description = request.Description;
+
+        await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
+        await tx.CommitAsync(ct).ConfigureAwait(false);
+        return ToDefinition(entity);
+    }
+
+    private static bool IsUniqueViolation(DbUpdateException ex)
+    {
+        var text = ex.InnerException?.Message ?? ex.Message;
+        return text.Contains("UNIQUE", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static AlgorithmDefinitionRes ToDefinition(AlgorithmDefinitionEntity entity)
+        => new() {
+            Id = entity.Id,
+            Key = entity.Key,
+            Name = entity.Name,
+            Description = entity.Description,
+            Kind = Enum.Parse<AlgorithmKind>(entity.Kind),
+            CurrentRevision = entity.CurrentRevision,
+            CreatedTimestamp = entity.CreatedTimestamp,
+            UpdatedTimestamp = entity.UpdatedTimestamp
+        };
+
+    private static AlgorithmRevisionRes ToRevision(AlgorithmRevisionEntity entity)
+        => new() {
+            DefinitionId = entity.DefinitionId,
+            Revision = entity.Revision,
+            Kind = Enum.Parse<AlgorithmKind>(entity.Kind),
+            Source = entity.Source,
+            Payload = entity.Payload,
+            CreatedTimestamp = entity.CreatedTimestamp
+        };
+
+    private static AlgorithmLabelRes ToLabel(AlgorithmLabelEntity entity)
+        => new() {
+            DefinitionId = entity.DefinitionId,
+            Label = entity.Label,
+            Revision = entity.Revision,
+            IsMutable = entity.IsMutable
+        };
 }

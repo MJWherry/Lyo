@@ -1,10 +1,10 @@
 using System.Collections.Concurrent;
-using Lyo.Common.Core.Pathing;
 using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Text.Json;
 using Lyo.Common.Core.Extensions;
 using Lyo.Common.Core.Identifiers;
+using Lyo.Common.Core.Pathing;
 using Lyo.Common.Metadata.Records;
 using Lyo.Compression;
 using Lyo.Compression.Models;
@@ -37,8 +37,8 @@ namespace Lyo.FileStorage;
 /// <remarks>
 /// <para>
 /// Members sit in <c>#region</c> slices (core wiring, save, retrieve, delete/metadata, DEK, direct upload/copy façade) in this one compilation unit. Heavy work is delegated to
-/// types wired in the ctor: <see cref="FileStorageStreamingPipelines" />, <see cref="FileStorageDekOperations" />, and <see cref="PlainDirectUploadCoordinator" />. Those types
-/// talk to the narrow internal interfaces this class implements explicitly (<see cref="IFileStoragePhysicalIO" />, <see cref="IFileAuditPublisher" />, and similar).
+/// types wired in the ctor: <see cref="FileStorageStreamingPipelines" />, <see cref="FileStorageDekOperations" />, and <see cref="PlainDirectUploadCoordinator" />. Those types talk
+/// to the narrow internal interfaces this class implements explicitly (<see cref="IFileStoragePhysicalIO" />, <see cref="IFileAuditPublisher" />, and similar).
 /// </para>
 /// </remarks>
 public abstract class FileStorageServiceBase
@@ -61,6 +61,7 @@ public abstract class FileStorageServiceBase
 
     /// <summary>Catalog used by save, get, delete, and folder listing. Same instance the service was constructed with.</summary>
     public IFileMetadataStore MetadataStore => MetadataService;
+
     protected readonly IMetrics Metrics;
     protected readonly IFileOperationContextAccessor OperationContextAccessor;
     protected readonly FileStorageServiceBaseOptions Options;
@@ -138,13 +139,13 @@ public abstract class FileStorageServiceBase
     public virtual string HealthCheckName => "filestorage";
 
     /// <summary>
-    /// Probes the backend. Lightweight mode calls <see cref="CheckHealthLightweightAsync" />. Full mode round-trips a throwaway payload through the physical I/O seam
-    /// (<see cref="CreateOutputStreamAsync" /> / <see cref="ReadFromStorageAsync" /> / <see cref="DeleteFromStorageAsync" />) under the <c>.lyo-health</c> prefix.
+    /// Probes the backend. Lightweight mode calls <see cref="CheckHealthLightweightAsync" />. Full mode round-trips a throwaway payload through the physical I/O seam (
+    /// <see cref="CreateOutputStreamAsync" /> / <see cref="ReadFromStorageAsync" /> / <see cref="DeleteFromStorageAsync" />) under the <c>.lyo-health</c> prefix.
     /// </summary>
     /// <remarks>
-    /// The probe skips <see cref="SaveFileAsync(byte[], string?, bool, bool, string?, string?, int?, string?, string?, string?, JsonElement?, CancellationToken)" /> and the other public save APIs on
-    /// purpose. Sending it through those methods wrote a metadata row, ran content policy (a configured <c>AllowedContentTypes</c> that omitted the probe type would mark the
-    /// service permanently unhealthy), joined duplicate detection, and emitted three audit events.
+    /// The probe skips <see cref="SaveFileAsync(byte[], string?, bool, bool, string?, string?, int?, string?, string?, string?, JsonElement?, CancellationToken)" /> and the
+    /// other public save APIs on purpose. Sending it through those methods wrote a metadata row, ran content policy (a configured <c>AllowedContentTypes</c> that omitted the probe type
+    /// would mark the service permanently unhealthy), joined duplicate detection, and emitted three audit events.
     /// </remarks>
     public virtual async Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
     {
@@ -152,7 +153,7 @@ public abstract class FileStorageServiceBase
             return await CheckHealthLightweightAsync(ct).ConfigureAwait(false);
 
         var sw = Stopwatch.StartNew();
-        var fileId =LyoGuid.CreateV7();
+        var fileId = LyoGuid.CreateV7();
         const string healthPrefix = ".lyo-health";
         try {
             var probeData = fileId.ToByteArray();
@@ -245,11 +246,10 @@ public abstract class FileStorageServiceBase
         => FileRenamed?.Invoke(this, new(fileId, snapshot, previousOriginalFileName));
 
     /// <summary>
-    /// Reports presigned read, direct upload, copy, move, and physical listing for this backend. The base reports presign, direct upload, copy, and move unsupported.
-    /// Physical listing is reported when this instance implements <see cref="IFileStoragePhysical" />. Hosts add multipart, encryption, archive, and access-link flags separately.
+    /// Reports presigned read, direct upload, copy, move, and physical listing for this backend. The base reports presign, direct upload, copy, and move unsupported. Physical
+    /// listing is reported when this instance implements <see cref="IFileStoragePhysical" />. Hosts add multipart, encryption, archive, and access-link flags separately.
     /// </summary>
-    public virtual FileStorageCapabilities GetCapabilities()
-        => new(false, false, false, false, this is IFileStoragePhysical);
+    public virtual FileStorageCapabilities GetCapabilities() => new(false, false, false, false, this is IFileStoragePhysical);
 
     public virtual Task<string> GetPreSignedReadUrlAsync(Guid fileId, TimeSpan? expiration = null, string? pathPrefix = null, CancellationToken ct = default)
         => GetPreSignedReadUrlAsync(fileId, expiration, pathPrefix, null, ct);
@@ -265,8 +265,7 @@ public abstract class FileStorageServiceBase
         => Task.FromException<FileStoreResult>(new NotSupportedException("Direct uploads are not supported by this backend."));
 
     /// <inheritdoc />
-    public Task<int> SweepExpiredDirectUploadsAsync(int maxUploads = 1000, CancellationToken ct = default)
-        => _plainDirectUpload.SweepExpiredDirectUploadsAsync(maxUploads, ct);
+    public Task<int> SweepExpiredDirectUploadsAsync(int maxUploads = 1000, CancellationToken ct = default) => _plainDirectUpload.SweepExpiredDirectUploadsAsync(maxUploads, ct);
 
     public virtual Task<FileStoreResult> CopyFileAsync(Guid sourceFileId, CopyFileRequest? request = null, CancellationToken ct = default)
         => Task.FromException<FileStoreResult>(new NotSupportedException("Server-side copies are not supported by this backend."));
@@ -327,8 +326,8 @@ public abstract class FileStorageServiceBase
 
     /// <summary>
     /// Sends a file audit event to registered handlers and the <see cref="FileAuditOccurred" /> event. <see cref="FileAuditEvent.Error" /> is cleaned by
-    /// <see cref="SanitizeAuditError" />, and the operation-context correlation id is filled in when the caller omitted one, so raw exception text never leaks
-    /// newlines or oversized payloads into audit sinks and downstream consumers always see a correlation id when one is in scope.
+    /// <see cref="SanitizeAuditError" />, and the operation-context correlation id is filled in when the caller omitted one, so raw exception text never leaks newlines or oversized
+    /// payloads into audit sinks and downstream consumers always see a correlation id when one is in scope.
     /// </summary>
     protected Task RaiseFileAuditAsync(FileAuditEvent auditEvent, CancellationToken ct)
     {
@@ -376,14 +375,14 @@ public abstract class FileStorageServiceBase
     protected abstract Task<Stream?> ReadFromStorageAsync(Guid fileId, string? pathPrefix, CancellationToken ct);
 
     /// <summary>
-    /// True when this backend can read a byte slice of a stored object without downloading the preceding bytes. FTP and SFTP stay false. Local disk, S3, and Azure Blob
-    /// override this.
+    /// True when this backend can read a byte slice of a stored object without downloading the preceding bytes. FTP and SFTP stay false. Local disk, S3, and Azure Blob override
+    /// this.
     /// </summary>
     public virtual bool SupportsPlainByteRange => false;
 
     /// <summary>
-    /// Opens the stored object at <paramref name="startInclusive" /> through <paramref name="endInclusive" /> using <paramref name="metadata" /> for the object
-    /// name, so the read does not look up metadata or probe extensions again. The default calls <see cref="ReadPlainByteRangeAsync(Guid, string?, long, long, CancellationToken)" />.
+    /// Opens the stored object at <paramref name="startInclusive" /> through <paramref name="endInclusive" /> using <paramref name="metadata" /> for the object name, so the read
+    /// does not look up metadata or probe extensions again. The default calls <see cref="ReadPlainByteRangeAsync(Guid, string?, long, long, CancellationToken)" />.
     /// </summary>
     protected virtual Task<Stream?> ReadPlainByteRangeAsync(FileStoreResult metadata, long startInclusive, long endInclusive, CancellationToken ct)
         => ReadPlainByteRangeAsync(metadata.Id, metadata.PathPrefix, startInclusive, endInclusive, ct);
@@ -405,8 +404,8 @@ public abstract class FileStorageServiceBase
     protected abstract Task UpdateFileHeaderAsync(Guid fileId, string? pathPrefix, string targetKeyId, string targetKeyVersion, byte[] newEncryptedDek, CancellationToken ct);
 
     /// <summary>
-    /// Cleans a tenant or logical prefix for storage keys. Calls <see cref="FileHelpers.NormalizePathPrefix" /> and turns an empty result back into
-    /// <see langword="null" /> so persisted metadata can tell "no prefix supplied" from "explicit empty string".
+    /// Cleans a tenant or logical prefix for storage keys. Calls <see cref="FileHelpers.NormalizePathPrefix" /> and turns an empty result back into <see langword="null" /> so
+    /// persisted metadata can tell "no prefix supplied" from "explicit empty string".
     /// </summary>
     protected static string? NormalizePathPrefix(string? pathPrefix)
     {
@@ -415,8 +414,8 @@ public abstract class FileStorageServiceBase
     }
 
     /// <summary>
-    /// Shared path-prefix safety check. Calls <see cref="FileHelpers.ThrowIfPathPrefixTraversal" /> so every save and direct-upload entry point uses the same
-    /// traversal rejection rules (segments equal to <c>..</c>, doubled separators, embedded <c>\0</c>) instead of each backend re-implementing them.
+    /// Shared path-prefix safety check. Calls <see cref="FileHelpers.ThrowIfPathPrefixTraversal" /> so every save and direct-upload entry point uses the same traversal rejection
+    /// rules (segments equal to <c>..</c>, doubled separators, embedded <c>\0</c>) instead of each backend re-implementing them.
     /// </summary>
     /// <exception cref="ArgumentException">When the prefix contains a traversal pattern.</exception>
     public static void ValidatePathPrefix(string? pathPrefix) => FileHelpers.ThrowIfPathPrefixTraversal(pathPrefix);
@@ -449,8 +448,8 @@ public abstract class FileStorageServiceBase
 
         var trimmed = charset.Trim();
         ArgumentHelpers.ThrowIfGreaterThan(
-            trimmed.Length, FileStoreResult.MaxCharsetLength, nameof(charset),
-            $"Charset must be at most {FileStoreResult.MaxCharsetLength} characters.");
+            trimmed.Length, FileStoreResult.MaxCharsetLength, nameof(charset), $"Charset must be at most {FileStoreResult.MaxCharsetLength} characters.");
+
         return trimmed;
     }
 
@@ -528,8 +527,8 @@ public abstract class FileStorageServiceBase
 
     /// <inheritdoc />
     /// <remarks>
-    /// Thin wrapper around <see cref="SaveFromStreamAsync" /> that keeps the byte[] surface for older callers and tests. Hashing, dedup, compression,
-    /// encryption, audit, and cleanup all live in the stream path so the two entry points cannot drift.
+    /// Thin wrapper around <see cref="SaveFromStreamAsync" /> that keeps the byte[] surface for older callers and tests. Hashing, dedup, compression, encryption, audit, and
+    /// cleanup all live in the stream path so the two entry points cannot drift.
     /// </remarks>
     public async Task<FileStoreResult> SaveFileAsync(
         byte[] data,
@@ -695,7 +694,6 @@ public abstract class FileStorageServiceBase
                 createdFileId = id;
                 var timestamp = DateTime.UtcNow;
                 var effectiveChunkSize = chunkSize ?? StreamChunkSizeHelper.DetermineChunkSize(declaredLength);
-
                 var availability = availabilityOverride ?? Options.DefaultAvailability;
                 result = await ProcessAndSaveStreamAsync(
                         body, id, originalFileName ?? id.ToString(), declaredLength, compress, encrypt, keyId, normalizedPathPrefix, timestamp, effectiveChunkSize, contentType,
@@ -906,7 +904,7 @@ public abstract class FileStorageServiceBase
             }
             else {
                 // Single pass, no compression: hash the plaintext as the stage below pulls it through.
-                undrainedPlaintext = new HashingStream(processingStream, originalHashAlgo);
+                undrainedPlaintext = new(processingStream, originalHashAlgo);
                 processingStream = undrainedPlaintext;
             }
 
@@ -1006,8 +1004,8 @@ public abstract class FileStorageServiceBase
     }
 
     /// <summary>
-    /// Returns the byte count actually consumed from the upload and warns when it disagrees with what the caller declared. Does not throw on purpose: staged and multipart commits
-    /// pass a declared length they may not know (<c>ObservedSizeBytes ?? 0</c>), so a strict check would break those flows.
+    /// Returns the byte count actually consumed from the upload and warns when it disagrees with what the caller declared. Does not throw on purpose: staged and multipart
+    /// commits pass a declared length they may not know (<c>ObservedSizeBytes ?? 0</c>), so a strict check would break those flows.
     /// </summary>
     private long ResolveActualOriginalSize(Guid fileId, long declaredSize, long actualSize)
     {
@@ -1017,9 +1015,7 @@ public abstract class FileStorageServiceBase
         return actualSize;
     }
 
-    /// <summary>
-    /// Buffer for the sequential compress/hash/encrypt path. Large or compressed payloads use a temp file so the full plaintext or compressed blob is not held in memory.
-    /// </summary>
+    /// <summary>Buffer for the sequential compress/hash/encrypt path. Large or compressed payloads use a temp file so the full plaintext or compressed blob is not held in memory.</summary>
     private static Stream CreateSequentialStagingStream(long originalSize, bool compress)
     {
         const long largePlainThresholdBytes = 64L * 1024 * 1024;
@@ -1109,7 +1105,7 @@ public abstract class FileStorageServiceBase
 
         // Decode through the same pipeline GetFileStreamAsync uses, so encrypted and compressed payloads stay bounded by pipe backpressure instead of being staged in a
         // MemoryStream per transform. HashVerifyingReadStream checks integrity inline, which also removes the second linear pass over the payload.
-        Stream decoded = storageStream;
+        var decoded = storageStream;
         if (metadata.IsEncrypted || metadata.IsCompressed) {
             int? chunkSize = metadata.CompressedFileSize.HasValue ? StreamChunkSizeHelper.DetermineChunkSize(metadata.CompressedFileSize.Value) : null;
             var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -1151,9 +1147,9 @@ public abstract class FileStorageServiceBase
     }
 
     /// <summary>
-    /// Drains <paramref name="source" /> into a single array sized from <paramref name="expectedLength" />, so a payload that matches its metadata costs one allocation.
-    /// Always reads through to EOF: a hash-verifying source only checks integrity once the stream is fully drained. Tampered objects that are shorter or longer than the
-    /// recorded length still come back in full, which is what makes the mismatch visible to the caller.
+    /// Drains <paramref name="source" /> into a single array sized from <paramref name="expectedLength" />, so a payload that matches its metadata costs one allocation. Always
+    /// reads through to EOF: a hash-verifying source only checks integrity once the stream is fully drained. Tampered objects that are shorter or longer than the recorded length still
+    /// come back in full, which is what makes the mismatch visible to the caller.
     /// </summary>
     private static async Task<byte[]> ReadAllBytesAsync(Stream source, long expectedLength, CancellationToken ct)
     {
@@ -1190,8 +1186,8 @@ public abstract class FileStorageServiceBase
 
     /// <summary>
     /// Opens a byte slice of an uncompressed object. Returns null when <see cref="SupportsPlainByteRange" /> is false, or when the object is missing and
-    /// <see cref="FileStorageServiceBaseOptions.ThrowOnFileNotFound" /> is false. Encrypted objects are decrypted from the chunk that holds
-    /// <paramref name="startInclusive" />. Compressed objects throw. The slice is not hash-verified. The caller disposes the stream.
+    /// <see cref="FileStorageServiceBaseOptions.ThrowOnFileNotFound" /> is false. Encrypted objects are decrypted from the chunk that holds <paramref name="startInclusive" />. Compressed
+    /// objects throw. The slice is not hash-verified. The caller disposes the stream.
     /// </summary>
     /// <param name="fileId">Id of the file to read.</param>
     /// <param name="pathPrefix">Prefix stored on the file. Null uses the prefix on metadata.</param>
@@ -1199,7 +1195,7 @@ public abstract class FileStorageServiceBase
     /// <param name="endInclusive">Last plaintext byte, inclusive.</param>
     /// <param name="ct">Cancellation token.</param>
     public Task<Stream?> OpenPlainByteRangeAsync(Guid fileId, string? pathPrefix, long startInclusive, long endInclusive, CancellationToken ct = default)
-        => OpenPlainByteRangeAsync(fileId, pathPrefix, metadata: null, startInclusive, endInclusive, ct);
+        => OpenPlainByteRangeAsync(fileId, pathPrefix, null, startInclusive, endInclusive, ct);
 
     /// <summary>
     /// Opens a byte slice using metadata the caller already loaded. Does not read metadata again. Same rules as
@@ -1290,7 +1286,7 @@ public abstract class FileStorageServiceBase
         var length = endInclusive - startInclusive + 1;
         var chunkIndex = startInclusive / layout.ChunkSize;
         var skip = (int)(startInclusive % layout.ChunkSize);
-        var cipherStart = layout.HeaderLength + chunkIndex * (long)layout.FrameSize;
+        var cipherStart = layout.HeaderLength + chunkIndex * layout.FrameSize;
         var encryptedSize = metadata.EncryptedFileSize ?? 0;
         if (encryptedSize <= 0 || cipherStart >= encryptedSize)
             throw new InvalidDataException($"File {metadata.Id} has no ciphertext at plaintext offset {startInclusive}.");
@@ -1334,16 +1330,9 @@ public abstract class FileStorageServiceBase
         return stored;
     }
 
-    private async Task DecryptRangeIntoAsync(
-        Stream cipher,
-        PipeWriter writer,
-        EncryptedStreamLayout layout,
-        long chunkIndex,
-        int skip,
-        long length,
-        CancellationToken ct)
+    private async Task DecryptRangeIntoAsync(Stream cipher, PipeWriter writer, EncryptedStreamLayout layout, long chunkIndex, int skip, long length, CancellationToken ct)
     {
-        var plainOut = writer.AsStream(leaveOpen: true);
+        var plainOut = writer.AsStream(true);
         try {
             try {
                 await TwoKeyEncryptionService!.DecryptFromChunkAsync(layout.Header, cipher, plainOut, chunkIndex, skip, length, layout.Dek, ct).ConfigureAwait(false);
@@ -1381,12 +1370,10 @@ public abstract class FileStorageServiceBase
         var task = RaiseFileAuditAsync(
             new(
                 FileAuditEventType.Read, DateTime.UtcNow, metadata.Id, metadata.TenantId, OperationContextAccessor.Current?.ActorId, metadata.DataEncryptionKeyId,
-                metadata.DataEncryptionKeyVersion, FileAuditOutcome.Success),
-            CancellationToken.None);
+                metadata.DataEncryptionKeyVersion, FileAuditOutcome.Success), CancellationToken.None);
+
         _ = task.ContinueWith(
-            t => Logger.LogWarning(t.Exception, "File read audit failed for {FileId}", metadata.Id),
-            CancellationToken.None,
-            TaskContinuationOptions.OnlyOnFaulted,
+            t => Logger.LogWarning(t.Exception, "File read audit failed for {FileId}", metadata.Id), CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted,
             TaskScheduler.Default);
     }
 
@@ -1671,9 +1658,7 @@ public abstract class FileStorageServiceBase
         return stored;
     }
 
-    /// <summary>
-    /// Matches stored <see cref="FileStoreResult.SourceFileName" /> suffix rules (plaintext uses <see cref="Guid.ToString()" />; hashed paths append extensions).
-    /// </summary>
+    /// <summary>Matches stored <see cref="FileStoreResult.SourceFileName" /> suffix rules (plaintext uses <see cref="Guid.ToString()" />; hashed paths append extensions).</summary>
     protected static string InferTrailingSuffixAfterFileId(Guid id, string? sourceFileName) => PlainDirectUploadCoordinator.InferTrailingSuffixAfterFileId(id, sourceFileName);
 
     /// <inheritdoc cref="PlainDirectUploadCoordinator.RecordCopyMetadataAsync" />
@@ -1701,9 +1686,7 @@ public abstract class FileStorageServiceBase
         return stored;
     }
 
-    /// <summary>
-    /// Copies every tag onto the destination catalog for a byte-preserving transfer that keeps <paramref name="row" />'s id, then fills <c>imported</c> when the source had none.
-    /// </summary>
+    /// <summary>Copies every tag onto the destination catalog for a byte-preserving transfer that keeps <paramref name="row" />'s id, then fills <c>imported</c> when the source had none.</summary>
     internal async Task CopyCatalogTagsAsync(FileStorageServiceBase source, FileStoreResult row, CancellationToken ct)
     {
         ArgumentHelpers.ThrowIfNull(source);
@@ -1757,10 +1740,7 @@ public abstract class FileStorageServiceBase
     }
 
     /// <inheritdoc />
-    public Task<IReadOnlyList<FileTag>> GetTagsAsync(Guid fileId, CancellationToken ct = default)
-    {
-        return MetadataService.ListFileTagsAsync(fileId, ct);
-    }
+    public Task<IReadOnlyList<FileTag>> GetTagsAsync(Guid fileId, CancellationToken ct = default) => MetadataService.ListFileTagsAsync(fileId, ct);
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<FileTagTypeInfo>> GetTagTypesAsync(CancellationToken ct = default)
@@ -1770,6 +1750,7 @@ public abstract class FileStorageServiceBase
             new(FileTagTypes.FileType, true, FileTagValueKind.String, FileTagSort.Ordinal, [FileTagGrain.Value]),
             new(FileTagTypes.Imported, true, FileTagValueKind.DateTime, FileTagSort.Chronological, [FileTagGrain.Year, FileTagGrain.Month, FileTagGrain.Day])
         };
+
         foreach (var name in manual.OrderBy(static n => n, StringComparer.OrdinalIgnoreCase)) {
             if (!FileTagTypes.IsReserved(name))
                 types.Add(new(name, false, FileTagValueKind.String, FileTagSort.Ordinal, [FileTagGrain.Value]));
@@ -1804,10 +1785,9 @@ public abstract class FileStorageServiceBase
         ArgumentHelpers.ThrowIfNull(groupBy);
         var page = await MetadataService.ListTagGroupAsync(groupBy, path, maxKeys, ct).ConfigureAwait(false);
         var entries = new List<FileStorageFolderEntry>(page.Entries.Count);
-        foreach (var entry in page.Entries)
-            entries.Add(
-                new(
-                    entry.Name, entry.IsDirectory, entry.VirtualPath, entry.FileId, FileStoragePresence.Store, entry.OriginalFileName, entry.OriginalFileSize, null));
+        foreach (var entry in page.Entries) {
+            entries.Add(new(entry.Name, entry.IsDirectory, entry.VirtualPath, entry.FileId, FileStoragePresence.Store, entry.OriginalFileName, entry.OriginalFileSize, null));
+        }
 
         return (entries, page.Truncated);
     }

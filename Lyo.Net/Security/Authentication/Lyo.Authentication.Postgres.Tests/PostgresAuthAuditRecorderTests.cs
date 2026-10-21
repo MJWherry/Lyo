@@ -2,10 +2,10 @@ using Lyo.Authentication.Audit;
 using Lyo.Authentication.Models.Audit;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Postgres.Stores;
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Authentication.Postgres.Tests;
 
@@ -98,9 +98,7 @@ public sealed class PostgresAuthAuditRecorderTests
     {
         var recorder = NewRecorder();
         var ctxAccessor = new FakeAccessor("203.0.113.7", "ua/postgres-test", "trace-" + LyoGuid.CreateV7().ToString("N"));
-        await recorder.RecordAsync(
-            ctxAccessor, NullLogger.Instance, AuthAuditEventKind.SignedOut, outcome: "success", reason: "user_initiated", ct: TestCt);
-
+        await recorder.RecordAsync(ctxAccessor, NullLogger.Instance, AuthAuditEventKind.SignedOut, outcome: "success", reason: "user_initiated", ct: TestCt);
         await using var ctx = await _fixture.ContextFactory.CreateDbContextAsync(TestCt);
         var row = await ctx.Events.AsNoTracking().Where(e => e.CorrelationId == ctxAccessor.CorrelationId).FirstOrDefaultAsync(TestCt);
         Assert.NotNull(row);
@@ -126,8 +124,7 @@ public sealed class PostgresAuthAuditRecorderTests
     public async Task RecordAsync_SystemOnlyMode_PersistsNullTenant()
     {
         var recorder = new PostgresAuthAuditRecorder(
-            _fixture.ContextFactory, NullLogger<PostgresAuthAuditRecorder>.Instance, new EntityRefOptions(),
-            new PostgresUserOptions { Tenancy = new() { Mode = TenancyMode.SystemOnly } });
+            _fixture.ContextFactory, NullLogger<PostgresAuthAuditRecorder>.Instance, new(), new() { Tenancy = new() { Mode = TenancyMode.SystemOnly } });
 
         var evt = NewEvent(AuthAuditEventKind.JwtIssued, tenantId: LyoGuid.CreateV7());
         await recorder.RecordAsync(evt, TestCt);
@@ -140,8 +137,7 @@ public sealed class PostgresAuthAuditRecorderTests
     public async Task RecordAsync_MultiTenantStrictMode_SwallowsErrorWhenCallerOmitsTenant()
     {
         var recorder = new PostgresAuthAuditRecorder(
-            _fixture.ContextFactory, NullLogger<PostgresAuthAuditRecorder>.Instance, new EntityRefOptions(),
-            new PostgresUserOptions { Tenancy = new() { Mode = TenancyMode.MultiTenantStrict } });
+            _fixture.ContextFactory, NullLogger<PostgresAuthAuditRecorder>.Instance, new(), new() { Tenancy = new() { Mode = TenancyMode.MultiTenantStrict } });
 
         var evt = NewEvent(AuthAuditEventKind.JwtIssued);
         await recorder.RecordAsync(evt, TestCt);
@@ -168,10 +164,7 @@ public sealed class PostgresAuthAuditRecorderTests
         }
     }
 
-    private PostgresAuthAuditRecorder NewRecorder()
-        => new(
-            _fixture.ContextFactory, NullLogger<PostgresAuthAuditRecorder>.Instance, new EntityRefOptions(),
-            new PostgresUserOptions());
+    private PostgresAuthAuditRecorder NewRecorder() => new(_fixture.ContextFactory, NullLogger<PostgresAuthAuditRecorder>.Instance, new(), new());
 
     private static AuthAuditEvent NewEvent(
         AuthAuditEventKind kind,
@@ -186,7 +179,9 @@ public sealed class PostgresAuthAuditRecorderTests
 
     private async Task<LyoUser> CreateUserAsync()
     {
-        var user = new LyoUser(LyoGuid.CreateV7(), "Audit User", $"audit-{LyoGuid.CreateV7():N}@example.com", true, null, null, [], null, null, DateTime.UtcNow, null, null, null, null);
+        var user = new LyoUser(
+            LyoGuid.CreateV7(), "Audit User", $"audit-{LyoGuid.CreateV7():N}@example.com", true, null, null, [], null, null, DateTime.UtcNow, null, null, null, null);
+
         return await _fixture.UserStore.CreateAsync(user, null, TestCt);
     }
 

@@ -1,29 +1,24 @@
-using System.Net.Http.Json;
 using Lyo.Diagnostic.StackTrace;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Lyo.Diagnostic.Web.Components;
 
 public partial class StackTraceDecodePanel
 {
+    private List<string> _prefixChips = [];
+
+    private string _raw = string.Empty;
+
+    private bool _restrictUserPrefixes = true;
+
+    private List<string> _thirdPartyChips = [];
+
     [Parameter]
     public EventCallback<DecodedStackTrace> OnDecoded { get; set; }
 
     [Parameter]
     public int RawTraceLines { get; set; } = 12;
-
-    private List<string> _prefixChips = [];
-
-    private List<string> _thirdPartyChips = [];
-
-    private bool _restrictUserPrefixes = true;
-
-    private string _raw = string.Empty;
 
     private Task OnPrefixChipsChanged(IEnumerable<string> values)
     {
@@ -42,7 +37,11 @@ public partial class StackTraceDecodePanel
     private async Task DecodeAsync()
     {
         try {
-            var decoder = new StackTraceDecoder(new() { UserCodePrefixes = TrimmedChips(_prefixChips), ExtraSystemPrefixes = TrimmedChips(_thirdPartyChips), RestrictUserCodeToListedPrefixes = _restrictUserPrefixes });
+            var decoder = new StackTraceDecoder(
+                new() {
+                    UserCodePrefixes = TrimmedChips(_prefixChips), ExtraSystemPrefixes = TrimmedChips(_thirdPartyChips), RestrictUserCodeToListedPrefixes = _restrictUserPrefixes
+                });
+
             var decoded = await decoder.DecodeAsync(_raw);
             await OnDecoded.InvokeAsync(decoded);
         }

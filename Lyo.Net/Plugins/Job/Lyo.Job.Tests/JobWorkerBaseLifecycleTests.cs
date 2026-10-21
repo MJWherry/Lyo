@@ -1,5 +1,6 @@
 using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Request;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Job.Client;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
@@ -9,7 +10,6 @@ using Lyo.Job.Worker;
 using Lyo.MessageQueue;
 using Lyo.Result;
 using Microsoft.Extensions.Logging.Abstractions;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Tests;
 
@@ -163,10 +163,7 @@ public class JobWorkerBaseLifecycleTests
                 await Task.Delay(TimeSpan.FromMilliseconds(250), ctx.CancellationToken);
             }, TimeSpan.FromMilliseconds(25));
 
-        await Task.WhenAll(
-            worker.InvokeDoWorkAsync(runA, TestCt),
-            worker.InvokeDoWorkAsync(runB, TestCt));
-
+        await Task.WhenAll(worker.InvokeDoWorkAsync(runA, TestCt), worker.InvokeDoWorkAsync(runB, TestCt));
         Assert.NotEmpty(api.ProgressPatches);
         Assert.All(api.ProgressPatches, patch => Assert.Equal(expected[patch.RunId], patch.Percent));
     }
@@ -174,12 +171,7 @@ public class JobWorkerBaseLifecycleTests
     private static TestJobWorker CreateWorker(ControllableJobRunApiClient api, Func<IJobWorkerContext, Task> execute, TimeSpan? heartbeatInterval = null)
         => new(new FakeMqService(), new JobClient(api), new FakeJobEventPublisher(), execute, heartbeatInterval ?? TimeSpan.FromHours(1));
 
-    private sealed class TestJobWorker(
-        IMqService mq,
-        IJobClient jobClient,
-        IJobEventPublisher events,
-        Func<IJobWorkerContext, Task> execute,
-        TimeSpan heartbeatInterval)
+    private sealed class TestJobWorker(IMqService mq, IJobClient jobClient, IJobEventPublisher events, Func<IJobWorkerContext, Task> execute, TimeSpan heartbeatInterval)
         : JobWorkerBase(mq, jobClient, events, "cs", NullLogger.Instance)
     {
         protected override TimeSpan HeartbeatInterval => heartbeatInterval;
@@ -244,7 +236,11 @@ public class JobWorkerBaseLifecycleTests
             throw new NotImplementedException(uri);
         }
 
-        public override Task<TResult> PostAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        public override Task<TResult> PostAsAsync<TRequest, TResult>(
+            string uri,
+            TRequest? request = default,
+            Action<HttpRequestMessage>? before = null,
+            CancellationToken ct = default)
             where TRequest : default
         {
             if (uri.Contains("/Started", StringComparison.OrdinalIgnoreCase)) {
@@ -270,7 +266,11 @@ public class JobWorkerBaseLifecycleTests
             return Task.FromResult(default(TResult)!);
         }
 
-        public override Task<TResult> PatchAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        public override Task<TResult> PatchAsAsync<TRequest, TResult>(
+            string uri,
+            TRequest? request = default,
+            Action<HttpRequestMessage>? before = null,
+            CancellationToken ct = default)
             where TRequest : default
         {
             if (request is PatchRequest patch && patch.Properties.TryGetValue("ProgressPercent", out var raw) && raw is int percent) {

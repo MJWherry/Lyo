@@ -1,5 +1,4 @@
 using Lyo.Exceptions;
-using Lyo.Lock;
 
 namespace Lyo.Lock.Redis;
 

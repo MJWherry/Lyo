@@ -1,10 +1,8 @@
-using Lyo.Leaderboard;
-
 namespace Lyo.Leaderboard.Api.Models;
 
 /// <summary>
-/// Stable actors used when Leaderboard routes are mapped with <c>requireAuthentication: false</c> (TestApi workbench).
-/// Send <see cref="HeaderName" /> = <see cref="Guest" /> to act as the second workbench user (redeem / contributor submit).
+/// Stable actors used when Leaderboard routes are mapped with <c>requireAuthentication: false</c> (TestApi workbench). Send <see cref="HeaderName" /> = <see cref="Guest" />
+/// to act as the second workbench user (redeem / contributor submit).
 /// </summary>
 public static class LeaderboardAnonymousActor
 {

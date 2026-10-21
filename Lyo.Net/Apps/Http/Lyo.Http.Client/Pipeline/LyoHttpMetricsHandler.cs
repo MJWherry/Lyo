@@ -10,17 +10,13 @@ public sealed class LyoHttpMetricsHandler : DelegatingHandler
     private readonly IMetrics _metrics;
 
     /// <summary>Creates the handler. Uses <see cref="NullMetrics" /> when <paramref name="metrics" /> is null.</summary>
-    public LyoHttpMetricsHandler(IMetrics? metrics = null)
-        => _metrics = metrics ?? NullMetrics.Instance;
+    public LyoHttpMetricsHandler(IMetrics? metrics = null) => _metrics = metrics ?? NullMetrics.Instance;
 
     /// <inheritdoc />
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
     {
         ArgumentHelpers.ThrowIfNull(request);
-        var tags = new (string, string)[] {
-            ("method", request.Method.Method),
-            ("host", request.RequestUri?.Host ?? "unknown")
-        };
+        var tags = new[] { ("method", request.Method.Method), ("host", request.RequestUri?.Host ?? "unknown") };
         var sw = Stopwatch.StartNew();
         try {
             var response = await base.SendAsync(request, ct).ConfigureAwait(false);

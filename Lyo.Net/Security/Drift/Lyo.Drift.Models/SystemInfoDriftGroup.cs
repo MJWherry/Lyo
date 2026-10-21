@@ -1,8 +1,8 @@
 namespace Lyo.Drift.Models;
 
 /// <summary>
-/// Named field groups for <see cref="SystemInfoDriftProjection" />. Identity groups are the default; extra groups are opt-in.
-/// Volatile facts (uptime, free disk, memory used, process lifetime) are never included.
+/// Named field groups for <see cref="SystemInfoDriftProjection" />. Identity groups are the default; extra groups are opt-in. Volatile facts (uptime, free disk, memory used,
+/// process lifetime) are never included.
 /// </summary>
 public enum SystemInfoDriftGroup
 {
@@ -48,18 +48,11 @@ public static class SystemInfoDriftGroups
 {
     /// <summary>Default identity set: OS, CPU, RAM total, host, drives, NIC names.</summary>
     public static IReadOnlyList<SystemInfoDriftGroup> Identity { get; } = [
-        SystemInfoDriftGroup.Os,
-        SystemInfoDriftGroup.Cpu,
-        SystemInfoDriftGroup.MemoryTotal,
-        SystemInfoDriftGroup.Host,
-        SystemInfoDriftGroup.Drives,
+        SystemInfoDriftGroup.Os, SystemInfoDriftGroup.Cpu, SystemInfoDriftGroup.MemoryTotal, SystemInfoDriftGroup.Host, SystemInfoDriftGroup.Drives,
         SystemInfoDriftGroup.InterfaceNames
     ];
 
-    /// <summary>
-    /// Parses configured group names. Null, empty, or all-whitespace lists return <see cref="Identity" />.
-    /// Unknown names throw <see cref="ArgumentException" />.
-    /// </summary>
+    /// <summary>Parses configured group names. Null, empty, or all-whitespace lists return <see cref="Identity" />. Unknown names throw <see cref="ArgumentException" />.</summary>
     public static IReadOnlyList<SystemInfoDriftGroup> Parse(IEnumerable<string>? names)
     {
         if (names is null)
@@ -69,8 +62,10 @@ public static class SystemInfoDriftGroups
         foreach (var raw in names) {
             if (string.IsNullOrWhiteSpace(raw))
                 continue;
-            if (!Enum.TryParse<SystemInfoDriftGroup>(raw.Trim(), ignoreCase: true, out var group))
+
+            if (!Enum.TryParse<SystemInfoDriftGroup>(raw.Trim(), true, out var group))
                 throw new ArgumentException($"Unknown system-info include group '{raw.Trim()}'.", nameof(names));
+
             if (!parsed.Contains(group))
                 parsed.Add(group);
         }

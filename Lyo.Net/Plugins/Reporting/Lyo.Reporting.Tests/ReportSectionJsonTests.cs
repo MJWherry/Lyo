@@ -34,13 +34,9 @@ public sealed class ReportSectionJsonTests
     {
         var report = ReportBuilder<object>.New()
             .SetTitle("Mixed")
-            .AddSection(
-                s => s.AddGrid(
-                    g => g.SetTemplateColumns("1fr 2fr")
-                        .AddCard("KPI", 9)
-                        .AddText("hello")
-                        .AddTable(t => t.SetTitle("Lines").AddColumn("Name").AddRow("Ada"))))
+            .AddSection(s => s.AddGrid(g => g.SetTemplateColumns("1fr 2fr").AddCard("KPI", 9).AddText("hello").AddTable(t => t.SetTitle("Lines").AddColumn("Name").AddRow("Ada"))))
             .Build();
+
         var back = ReportJson.Deserialize<object>(ReportJson.Serialize(report));
         var grid = Assert.Single(back.Sections[0].Controls.OfType<Grid>());
         Assert.Equal("1fr 2fr", grid.TemplateColumns);
@@ -58,16 +54,17 @@ public sealed class ReportSectionJsonTests
     public void Deserialize_GridsWithoutControls_LeavesControlsEmpty()
     {
         const string json = """
-            {
-              "title": "Layout",
-              "sections": [
-                {
-                  "title": "S",
-                  "grids": [{ "title": "kpi", "columnCount": 3, "templateColumns": "1fr 1fr 1fr" }]
-                }
-              ]
-            }
-            """;
+                            {
+                              "title": "Layout",
+                              "sections": [
+                                {
+                                  "title": "S",
+                                  "grids": [{ "title": "kpi", "columnCount": 3, "templateColumns": "1fr 1fr 1fr" }]
+                                }
+                              ]
+                            }
+                            """;
+
         var report = ReportJson.Deserialize<object>(json);
         Assert.Empty(report.Sections[0].Controls);
     }

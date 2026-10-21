@@ -1,10 +1,12 @@
-using Lyo.Api.Client;
 using Microsoft.AspNetCore.Components;
 
 namespace Lyo.Billing.Web.Components.Components.Widgets;
 
 public partial class ArBalanceChip
 {
+    private decimal _balance;
+    private bool _loading = true;
+
     [Parameter]
     [EditorRequired]
     public IApiClient ApiClient { get; set; } = null!;
@@ -14,9 +16,6 @@ public partial class ArBalanceChip
 
     [Parameter]
     public string Currency { get; set; } = "USD";
-
-    private decimal _balance;
-    private bool _loading = true;
 
     protected override async Task OnParametersSetAsync()
     {

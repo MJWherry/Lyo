@@ -88,8 +88,8 @@ public class ProjectionQueryReqBuilder(ProjectionQueryReq? baseQuery = null)
     public ProjectionQueryReqBuilder AddCount(string name = "Count") => AddAggregate(AggregateFunction.Count, name, null);
 
     /// <summary>
-    /// Adds a <see cref="AggregateFunction.Count" /> of <paramref name="field" />. A collection, or a path ending in <c>.count</c>, totals the elements in the group. A scalar skips
-    /// nulls and keeps duplicates. <paramref name="name" /> is the output key. <see cref="Select" /> is the group key.
+    /// Adds a <see cref="AggregateFunction.Count" /> of <paramref name="field" />. A collection, or a path ending in <c>.count</c>, totals the elements in the group. A scalar
+    /// skips nulls and keeps duplicates. <paramref name="name" /> is the output key. <see cref="Select" /> is the group key.
     /// </summary>
     public ProjectionQueryReqBuilder AddCount(string name, string field)
     {

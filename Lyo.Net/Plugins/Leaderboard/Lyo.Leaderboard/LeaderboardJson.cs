@@ -13,6 +13,5 @@ public static class LeaderboardJson
     public static string? Serialize<T>(T? value) => value == null ? null : JsonSerializer.Serialize(value, Options);
 
     /// <summary>Deserializes JSON or returns <paramref name="fallback" /> when empty.</summary>
-    public static T Deserialize<T>(string? json, T fallback)
-        => string.IsNullOrWhiteSpace(json) ? fallback : JsonSerializer.Deserialize<T>(json!, Options) ?? fallback;
+    public static T Deserialize<T>(string? json, T fallback) => string.IsNullOrWhiteSpace(json) ? fallback : JsonSerializer.Deserialize<T>(json!, Options) ?? fallback;
 }

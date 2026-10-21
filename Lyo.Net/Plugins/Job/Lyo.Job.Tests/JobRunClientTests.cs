@@ -1,8 +1,8 @@
 using Lyo.Api.Models.Common.Request;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Job.Client;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Tests;
 
@@ -39,7 +39,7 @@ public class JobRunClientTests
     {
         var runId = LyoGuid.CreateV7();
         var instanceId = LyoGuid.CreateV7();
-        await _relativeClient.StartAsync(runId, request: new JobRunStartedReq { WorkerInstanceId = instanceId }, ct: TestCt);
+        await _relativeClient.StartAsync(runId, request: new() { WorkerInstanceId = instanceId }, ct: TestCt);
         Assert.Equal($"Job/Run/{runId}/Started", _api.LastUri);
         var body = Assert.IsType<JobRunStartedReq>(_api.LastBody);
         Assert.Equal(instanceId, body.WorkerInstanceId);
@@ -49,8 +49,7 @@ public class JobRunClientTests
     public async Task StartAsync_WhenMachineAndPidProvided_PostsThoseFields()
     {
         var runId = LyoGuid.CreateV7();
-        await _relativeClient.StartAsync(
-            runId, request: new JobRunStartedReq { MachineName = "box-a", ProcessId = 99 }, ct: TestCt);
+        await _relativeClient.StartAsync(runId, request: new() { MachineName = "box-a", ProcessId = 99 }, ct: TestCt);
         var body = Assert.IsType<JobRunStartedReq>(_api.LastBody);
         Assert.Equal("box-a", body.MachineName);
         Assert.Equal(99, body.ProcessId);
@@ -83,4 +82,3 @@ public class JobRunClientTests
         Assert.IsType<PatchRequest>(_api.LastBody);
     }
 }
-

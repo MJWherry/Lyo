@@ -2,14 +2,14 @@ using Lyo.Json;
 
 namespace Lyo.Yaml;
 
-/// <summary>Options for <see cref="YamlService" />. The JSON contract fields control names, numbers, and omission. <see cref="JsonOptions.WriteIndented" /> selects block YAML when true and flow YAML when false.</summary>
+/// <summary>
+/// Options for <see cref="YamlService" />. The JSON contract fields control names, numbers, and omission. <see cref="JsonOptions.WriteIndented" /> selects block YAML when
+/// true and flow YAML when false.
+/// </summary>
 public sealed class YamlOptions : JsonOptions
 {
     /// <summary>Configuration section name. Nothing in this package binds it.</summary>
     public new const string SectionName = "Lyo:Yaml";
-
-    /// <summary>Builds options. YAML starts indented, which means a block document.</summary>
-    public YamlOptions() => WriteIndented = true;
 
     /// <summary>When true, a document starts with <c>---</c> and ends with <c>...</c>. Starts false.</summary>
     public bool ExplicitMarkers { get; set; }
@@ -22,6 +22,9 @@ public sealed class YamlOptions : JsonOptions
 
     /// <summary>How strings are quoted. Starts as plain.</summary>
     public YamlQuoteStyle QuoteStrings { get; set; } = YamlQuoteStyle.Plain;
+
+    /// <summary>Builds options. YAML starts indented, which means a block document.</summary>
+    public YamlOptions() => WriteIndented = true;
 }
 
 /// <summary>Quoting for YAML strings.</summary>

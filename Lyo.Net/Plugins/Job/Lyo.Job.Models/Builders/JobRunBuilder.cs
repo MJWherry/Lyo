@@ -28,6 +28,7 @@ public class JobRunBuilder(Guid jobDefinitionId, string createdBy, Guid? schedul
                 Value = value,
                 Description = description
             });
+
         return this;
     }
 
@@ -40,6 +41,7 @@ public class JobRunBuilder(Guid jobDefinitionId, string createdBy, Guid? schedul
                 EncryptedValue = encryptedValue,
                 Description = description
             });
+
         return this;
     }
 

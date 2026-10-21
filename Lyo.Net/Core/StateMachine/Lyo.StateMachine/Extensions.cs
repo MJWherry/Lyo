@@ -11,8 +11,8 @@ public static class Extensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers a <see cref="StateMachineDefinition{TState,TTrigger,TContext}" /> singleton. The configuration is validated here, so a bad definition fails at
-        /// startup. Every <see cref="IStateMachineObserver{TState,TTrigger}" /> registered in DI is attached when the definition is first resolved.
+        /// Registers a <see cref="StateMachineDefinition{TState,TTrigger,TContext}" /> singleton. The configuration is validated here, so a bad definition fails at startup. Every
+        /// <see cref="IStateMachineObserver{TState,TTrigger}" /> registered in DI is attached when the definition is first resolved.
         /// </summary>
         /// <exception cref="StateMachineConfigurationException">The configuration is invalid.</exception>
         public IServiceCollection AddStateMachine<TState, TTrigger, TContext>(string name, TState initialState, Action<StateMachineBuilder<TState, TTrigger, TContext>> configure)

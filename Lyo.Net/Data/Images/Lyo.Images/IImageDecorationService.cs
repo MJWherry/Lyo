@@ -11,8 +11,8 @@ namespace Lyo.Images;
 public interface IImageDecorationService
 {
     /// <summary>
-    /// Composites <paramref name="overlayStream" /> onto <paramref name="backgroundStream" /> at the position in <paramref name="options" />. When
-    /// <paramref name="format" /> is <see cref="ImageFormat.Svg" />, the background is SVG text and the overlay is a base64 PNG image element. Otherwise ImageSharp runs on a raster.
+    /// Composites <paramref name="overlayStream" /> onto <paramref name="backgroundStream" /> at the position in <paramref name="options" />. When <paramref name="format" /> is
+    /// <see cref="ImageFormat.Svg" />, the background is SVG text and the overlay is a base64 PNG image element. Otherwise ImageSharp runs on a raster.
     /// </summary>
     Task<Result<bool>> OverlayAsync(
         Stream backgroundStream,

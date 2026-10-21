@@ -1,6 +1,6 @@
 using System.Security.Cryptography;
-using Bogus;
 using System.Text;
+using Bogus;
 using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.FileSystemWatcher.Postgres;
@@ -26,9 +26,7 @@ public sealed class FileSystemWatcherEfSeedContributor : SeedContributor, IEfSee
     public DbContext CreateContext(string connectionString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        var options = new DbContextOptionsBuilder<FileSystemWatcherDbContext>()
-            .UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<FileSystemWatcherDbContext>().UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema)).Options;
         return new FileSystemWatcherDbContext(options);
     }
 
@@ -38,30 +36,35 @@ public sealed class FileSystemWatcherEfSeedContributor : SeedContributor, IEfSee
         graph.OnClear(ClearAsync);
         var faker = options.RandomSeed is { } seed ? new Faker { Random = new(seed) } : new Faker();
         var now = DateTime.UtcNow;
-        var watches = graph.Entity(options.Count, i => new FileSystemWatchEntity {
-            Id = LyoGuid.CreateV7(),
-            RootPath = $"/var/watch/{faker.Internet.DomainWord()}-{i}",
-            OptionsJson = "{}",
-            CreatedTimestamp = now
-        });
-        watches.ForEach(_ => 1, (watch, _) => new FileSystemSnapshotEntity {
-            Id = LyoGuid.CreateV7(),
-            WatchId = watch.Id,
-            TakenAtUtc = now,
-            FileCount = 1,
-            DirectoryCount = 1,
-            ContentHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(watch.RootPath))).ToLowerInvariant(),
-            ContentHashAlgorithm = "Sha256",
-            TreeJson = $"{{\"name\":\"{watch.RootPath.Split('/')[^1]}\"}}"
-        }).ForEach(_ => 1, (snapshot, _) => new FileSystemChangeEntity {
-            Id = LyoGuid.CreateV7(),
-            WatchId = snapshot.WatchId,
-            SnapshotId = snapshot.Id,
-            OccurredAtUtc = now,
-            ChangeType = "Created",
-            NewPath = snapshot.WatchId.ToString("N") + "/seed.txt",
-            ChangeJson = "{}"
-        });
+        var watches = graph.Entity(
+            options.Count, i => new FileSystemWatchEntity {
+                Id = LyoGuid.CreateV7(),
+                RootPath = $"/var/watch/{faker.Internet.DomainWord()}-{i}",
+                OptionsJson = "{}",
+                CreatedTimestamp = now
+            });
+
+        watches.ForEach(
+                _ => 1, (watch, _) => new FileSystemSnapshotEntity {
+                    Id = LyoGuid.CreateV7(),
+                    WatchId = watch.Id,
+                    TakenAtUtc = now,
+                    FileCount = 1,
+                    DirectoryCount = 1,
+                    ContentHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(watch.RootPath))).ToLowerInvariant(),
+                    ContentHashAlgorithm = "Sha256",
+                    TreeJson = $"{{\"name\":\"{watch.RootPath.Split('/')[^1]}\"}}"
+                })
+            .ForEach(
+                _ => 1, (snapshot, _) => new FileSystemChangeEntity {
+                    Id = LyoGuid.CreateV7(),
+                    WatchId = snapshot.WatchId,
+                    SnapshotId = snapshot.Id,
+                    OccurredAtUtc = now,
+                    ChangeType = "Created",
+                    NewPath = snapshot.WatchId.ToString("N") + "/seed.txt",
+                    ChangeJson = "{}"
+                });
     }
 
     private static async Task ClearAsync(SeedSession session, CancellationToken ct)

@@ -2,9 +2,12 @@
 
 Decode stack traces, classify exceptions, keep breadcrumb trails, hold an in-memory error inbox, sanitise output, and write structured logs.
 
-Source is grouped by feature folder. Namespaces match, for example `StackTrace/` maps to `Lyo.Diagnostic.StackTrace`. The root `Lyo.Diagnostic` namespace holds `AddDiagnosticsPackage` in `Registration/`. Package metadata DTOs and `IPackageMetadataStore` live in [`Lyo.PackageMetadata`](../PackageMetadata/Lyo.PackageMetadata).
+Source is grouped by feature folder. Namespaces match, for example `StackTrace/` maps to `Lyo.Diagnostic.StackTrace`. The root `Lyo.Diagnostic` namespace holds
+`AddDiagnosticsPackage` in `Registration/`. Package metadata DTOs and `IPackageMetadataStore` live in [`Lyo.PackageMetadata`](../PackageMetadata/Lyo.PackageMetadata).
 
-| Folder | Namespace | |-------------------|---------------------------------| | `StackTrace/` | `Lyo.Diagnostic.StackTrace` | | `Classification/` | `Lyo.Diagnostic.Classification` | | `Context/` | `Lyo.Diagnostic.Context` | | `Breadcrumbs/` | `Lyo.Diagnostic.Breadcrumbs` | | `Inbox/` | `Lyo.Diagnostic.Inbox` | | `Logging/` | `Lyo.Diagnostic.Logging` | | `Sanitisation/` | `Lyo.Diagnostic.Sanitisation` | | `Registration/` | `Lyo.Diagnostic` |
+| Folder | Namespace | |-------------------|---------------------------------| | `StackTrace/` | `Lyo.Diagnostic.StackTrace` | | `Classification/` |
+`Lyo.Diagnostic.Classification` | | `Context/` | `Lyo.Diagnostic.Context` | | `Breadcrumbs/` | `Lyo.Diagnostic.Breadcrumbs` | | `Inbox/` | `Lyo.Diagnostic.Inbox` | | `Logging/` |
+`Lyo.Diagnostic.Logging` | | `Sanitisation/` | `Lyo.Diagnostic.Sanitisation` | | `Registration/` | `Lyo.Diagnostic` |
 
 ## Examples
 
@@ -37,13 +40,17 @@ services.AddDiagnosticsPackage(packageMetadataStore: store);
 
 ## What ships in the package
 
-- **Stack trace decoding** (`IStackTraceDecoder`). Frames, crash site, fingerprint (stable hash of user-frame method signatures). Optional `IPackageMetadataStore` from `Lyo.PackageMetadata` enriches frames with `PackageMetadata` (`Id` + `Name`, …). With a configured store, `IDiagnosticContextBuilder.BuildAsync` / `DecodeAsync` perform one bulk metadata resolve for the entire exception/textual inner stack-tree (embedded inner blocks and chained `InnerException`), not once per subtree. Sync `Build` / `Decode` throw when a store is set.
+- **Stack trace decoding** (`IStackTraceDecoder`). Frames, crash site, fingerprint (stable hash of user-frame method signatures). Optional `IPackageMetadataStore` from
+  `Lyo.PackageMetadata` enriches frames with `PackageMetadata` (`Id` + `Name`, …). With a configured store, `IDiagnosticContextBuilder.BuildAsync` / `DecodeAsync` perform one bulk
+  metadata resolve for the entire exception/textual inner stack-tree (embedded inner blocks and chained `InnerException`), not once per subtree. Sync `Build` / `Decode` throw when
+  a store is set.
 - **Classification** (`IExceptionClassifier`). Severity, kind, labels.
 - **Diagnostic context** (`IDiagnosticContextBuilder`). One payload for a single failure.
 - **Structured logging** (`IStructuredLogEnricher`). `ILogger` scopes with `diag.*` properties.
 - **Trace sanitisation** (`ITraceSanitiser`). Redact PII/paths before API responses or logs.
 - **Breadcrumbs** (`RingBufferBreadcrumbTrail`, `IBreadcrumbTrail`). Bounded FIFO trail of short events for triage. Cap per scope, for example an HTTP request.
-- **Error inbox** (`IErrorInboxReader`, `IErrorOccurrenceSink`, `InMemoryErrorInbox`). Record and query grouped occurrences by fingerprint + exception kind + service. Single-process. Not shared across instances.
+- **Error inbox** (`IErrorInboxReader`, `IErrorOccurrenceSink`, `InMemoryErrorInbox`). Record and query grouped occurrences by fingerprint + exception kind + service.
+  Single-process. Not shared across instances.
 
 ## Optional package metadata store (`IPackageMetadataStore`)
 
@@ -57,15 +64,18 @@ For ASP.NET Core (scoped breadcrumbs + automatic recording), use `Lyo.Diagnostic
 
 ## PII and breadcrumbs
 
-Call `IBreadcrumbTrail.Add` at meaningful steps (downstream call started, cache miss, etc.). Keep `Data` and `Message` values small. Avoid tokens, secrets, full query strings, emails, and raw URLs. Prefer coarse categories and opaque IDs. Optional `IBreadcrumbRedactor` can strip known keys on each add.
+Call `IBreadcrumbTrail.Add` at meaningful steps (downstream call started, cache miss, etc.). Keep `Data` and `Message` values small. Avoid tokens, secrets, full query strings,
+emails, and raw URLs. Prefer coarse categories and opaque IDs. Optional `IBreadcrumbRedactor` can strip known keys on each add.
 
 ## Limits of the in-memory inbox
 
-When over `MaxOccurrences`, `InMemoryErrorInbox` drops the oldest occurrences. Data is lost on restart and is not visible across multiple server processes. For durable aggregation, implement `IErrorInboxReader` / `IErrorOccurrenceSink` with Postgres or an external product such as Sentry.
+When over `MaxOccurrences`, `InMemoryErrorInbox` drops the oldest occurrences. Data is lost on restart and is not visible across multiple server processes. For durable aggregation,
+implement `IErrorInboxReader` / `IErrorOccurrenceSink` with Postgres or an external product such as Sentry.
 
 ## Fingerprint
 
-Only user stack-frame method names enter the fingerprint hash — line numbers do not. Minor edits often keep the same key when the defect shape is unchanged. `StackTraceDecoder` has the details.
+Only user stack-frame method names enter the fingerprint hash — line numbers do not. Minor edits often keep the same key when the defect shape is unchanged. `StackTraceDecoder` has
+the details.
 
 ## Related / deferred work
 

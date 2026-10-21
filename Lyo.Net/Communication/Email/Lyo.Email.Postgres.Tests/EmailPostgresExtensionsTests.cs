@@ -1,7 +1,7 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Email.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Email.Postgres.Tests;
 
@@ -22,7 +22,7 @@ public class EmailPostgresExtensionsTests
     public void AddEmailDbContext_WithNullConnectionString_ThrowsArgumentNullException()
     {
         var services = new ServiceCollection();
-        var ex = Assert.Throws<ArgumentNullException>(() => services.AddEmailDbContext((string)null!));
+        var ex = Assert.Throws<ArgumentNullException>(() => services.AddEmailDbContext(null!));
         Assert.Equal("connectionString", ex.ParamName);
     }
 
@@ -89,7 +89,7 @@ public class EmailPostgresExtensionsTests
             MessageId = "<id@example.com>",
             SentTimestamp = sent,
             Attachments = {
-                new EmailAttachmentLogEntity {
+                new() {
                     FileName = "invoice.pdf",
                     ContentType = "application/pdf",
                     SizeBytes = 1024,
@@ -105,8 +105,7 @@ public class EmailPostgresExtensionsTests
         }
 
         await using (var context = await factory.CreateDbContextAsync(TestCt)) {
-            var retrieved = await context.EmailLogs.Include(e => e.Attachments).AsNoTracking()
-                .SingleAsync(e => e.Id == id, TestCt);
+            var retrieved = await context.EmailLogs.Include(e => e.Attachments).AsNoTracking().SingleAsync(e => e.Id == id, TestCt);
             Assert.Equal(EmailDirection.Outbound, retrieved.Direction);
             Assert.Equal("sender@example.com", retrieved.FromAddress);
             Assert.Equal("Plain text body", retrieved.TextBody);

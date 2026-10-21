@@ -1,12 +1,23 @@
 using System.Text.Json.Nodes;
-using Lyo.Common.Metadata.Records;
 
 namespace Lyo.Config.Web.Components;
 
 public partial class ConfigDefinitionView
 {
+    private ConfigDefinitionRecord _edit = new();
+
+    private LyoForm<ConfigDefinitionRecord>? _form;
+    private bool _formHasChanges;
+    private int _historyVersion;
+    private bool _includeDefault;
+    private bool _initialized;
+    private bool _jsonParseError;
+    private bool _saving;
+    private bool _typeDirty;
+    private bool _valueDirty;
+
     [CascadingParameter]
-    IMudDialogInstance MudDialog { get; set; } = null!;
+    private IMudDialogInstance MudDialog { get; set; } = null!;
 
     /// <summary>Store used to save the definition.</summary>
     [Parameter]
@@ -20,17 +31,6 @@ public partial class ConfigDefinitionView
     /// <summary>Seed values for new definitions (the toolbar entity type).</summary>
     [Parameter]
     public string SubjectEntityType { get; set; } = AppConfigEntity.AppEntityType;
-
-    private LyoForm<ConfigDefinitionRecord>? _form;
-    private ConfigDefinitionRecord _edit = new();
-    private bool _formHasChanges;
-    private bool _valueDirty;
-    private bool _typeDirty;
-    private bool _jsonParseError;
-    private bool _includeDefault;
-    private bool _saving;
-    private bool _initialized;
-    private int _historyVersion;
 
     private bool IsNew => Definition == null || Definition.Id == default;
 
@@ -66,8 +66,7 @@ public partial class ConfigDefinitionView
             UpdatedTimestamp = src.UpdatedTimestamp
         };
 
-    private static ConfigValue? CloneValue(ConfigValue? src)
-        => src == null ? null : new() { TypeName = src.TypeName, Json = src.Json };
+    private static ConfigValue? CloneValue(ConfigValue? src) => src == null ? null : new() { TypeName = src.TypeName, Json = src.Json };
 
     private object DebugModel()
     {
@@ -77,6 +76,7 @@ public partial class ConfigDefinitionView
         var clone = Clone(_edit);
         if (clone.DefaultValue != null)
             clone.DefaultValue.Json = ConfigDisplay.Masked;
+
         return clone;
     }
 

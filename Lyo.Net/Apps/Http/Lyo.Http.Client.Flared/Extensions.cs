@@ -1,6 +1,5 @@
 using FlareSolverrSharp;
 using Lyo.Exceptions;
-using Lyo.Http.Client;
 using Lyo.Http.Client.Session;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,11 +34,9 @@ public static class Extensions
             services.TryAddSingleton(options);
             services.TryAddScoped<IFlareSession, FlareSession>();
             services.TryAddScoped<ILyoHttpSession>(sp => sp.GetRequiredService<IFlareSession>());
-
             var builder = services.AddLyoHttpClient<LyoHttpClient, FlaredHttpOptions>(
                 options,
-                (sp, http, resolved) => new LyoHttpClient(
-                    http, resolved, sp.GetService<ILogger<LyoHttpClient>>(), session: sp.GetService<IFlareSession>() ?? sp.GetService<ILyoHttpSession>()),
+                (sp, http, resolved) => new(http, resolved, sp.GetService<ILogger<LyoHttpClient>>(), session: sp.GetService<IFlareSession>() ?? sp.GetService<ILyoHttpSession>()),
                 FlaredHttpOptions.HttpClientName);
 
             if (options.FetchMode == FlaredFetchMode.ReplayWithClearanceHandler) {
@@ -47,6 +44,7 @@ public static class Extensions
                     var clearance = new ClearanceHandler(options.FlareSolverrUrl) { MaxTimeout = options.MaxTimeoutMs };
                     if (!string.IsNullOrWhiteSpace(options.ProxyUrl))
                         clearance.ProxyUrl = options.ProxyUrl;
+
                     clearance.ProxyUsername = options.ProxyUsername;
                     clearance.ProxyPassword = options.ProxyPassword;
                     clearance.InnerHandler = new LyoHttpClientHandler(options);

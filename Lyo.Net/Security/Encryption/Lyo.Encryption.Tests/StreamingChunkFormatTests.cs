@@ -12,8 +12,8 @@ using Lyo.Testing;
 namespace Lyo.Encryption.Tests;
 
 /// <summary>
-/// Covers the compact stream chunk layout (<c>[lengthAndFinalFlag:4][ciphertext][tag:16]</c>, nonces derived from the header prefix) used by the
-/// low-allocation streaming AEAD path: round-trips across chunk edges, tamper detection, unique per-chunk nonces, and decrypt across instances/algorithms.
+/// Covers the compact stream chunk layout (<c>[lengthAndFinalFlag:4][ciphertext][tag:16]</c>, nonces derived from the header prefix) used by the low-allocation streaming
+/// AEAD path: round-trips across chunk edges, tamper detection, unique per-chunk nonces, and decrypt across instances/algorithms.
 /// </summary>
 public class StreamingChunkFormatTests
 {
@@ -375,8 +375,8 @@ public class StreamingChunkFormatTests
     }
 
     /// <summary>
-    /// Breaks a ciphertext stream into raw frames (<c>[lengthAndFinalFlag:4][ciphertext][tag:16]</c>) so tests can reorder, replay, or drop whole frames.
-    /// Expects a 12-byte-nonce algorithm and a raw-key stream (empty keyId/keyVersion in the header).
+    /// Breaks a ciphertext stream into raw frames (<c>[lengthAndFinalFlag:4][ciphertext][tag:16]</c>) so tests can reorder, replay, or drop whole frames. Expects a 12-byte-nonce
+    /// algorithm and a raw-key stream (empty keyId/keyVersion in the header).
     /// </summary>
     private static List<byte[]> ParseChunkFrames(byte[] encrypted, out int headerLength)
     {
@@ -414,8 +414,8 @@ public class StreamingChunkFormatTests
     }
 
     /// <summary>
-    /// Reads the stream header (per-stream nonce prefix) then walks compact frames (<c>[lengthAndFinalFlag:4][ciphertext][tag]</c>), deriving
-    /// each chunk nonce as <c>prefix || counter</c> the same way the codec does — the wire stores no nonces.
+    /// Reads the stream header (per-stream nonce prefix) then walks compact frames (<c>[lengthAndFinalFlag:4][ciphertext][tag]</c>), deriving each chunk nonce as
+    /// <c>prefix || counter</c> the same way the codec does — the wire stores no nonces.
     /// </summary>
     private static List<byte[]> ExtractChunkNonces(byte[] encrypted, out int finalFlagCount)
     {

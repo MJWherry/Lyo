@@ -1,9 +1,9 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.PackageMetadata.Postgres;
 using Lyo.PackageMetadata.Postgres.Database;
 using Lyo.Testing.Containers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.PackageMetadata.Tests;
 
@@ -12,9 +12,9 @@ public sealed class PackageMetadataPostgresFixture : PostgresServiceFixtureBase<
     private static readonly string LongRowSha512 =
         "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f";
 
-    protected override void ConfigureServices(IServiceCollection services, string connectionString) =>
-        services.AddDbContextFactory<PackageMetadataDbContext>(
-            opts => opts.UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", PostgresPackageMetadataOptions.Schema)));
+    protected override void ConfigureServices(IServiceCollection services, string connectionString)
+        => services.AddDbContextFactory<PackageMetadataDbContext>(opts => opts.UseNpgsql(
+            connectionString, npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", PostgresPackageMetadataOptions.Schema)));
 
     protected override async ValueTask OnMigratedAsync(CancellationToken cancellationToken)
     {

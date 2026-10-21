@@ -64,8 +64,7 @@ public sealed class StoryLyoMapper : ILyoMapper
         }
     }
 
-    private static InvalidOperationException Unmapped(Type source, Type dest)
-        => new($"No mapping configured from {source.Name} to {dest.Name}.");
+    private static InvalidOperationException Unmapped(Type source, Type dest) => new($"No mapping configured from {source.Name} to {dest.Name}.");
 
     private static StoryEntity ReqToNew(StoryReq req)
     {
@@ -223,7 +222,13 @@ public sealed class StoryLyoMapper : ILyoMapper
         };
 
     private static StorySceneRes ToRes(StorySceneEntity e)
-        => new() { Id = e.Id, StoryId = e.StoryId, Key = e.Key, Title = e.Title, SortOrder = e.SortOrder };
+        => new() {
+            Id = e.Id,
+            StoryId = e.StoryId,
+            Key = e.Key,
+            Title = e.Title,
+            SortOrder = e.SortOrder
+        };
 
     private static StoryNodeRes ToRes(StoryNodeEntity e)
         => new() {
@@ -251,7 +256,12 @@ public sealed class StoryLyoMapper : ILyoMapper
         };
 
     private static StoryActionRes ToRes(StoryActionEntity e)
-        => new() { Id = e.Id, StoryId = e.StoryId, Key = e.Key, Name = e.Name };
+        => new() {
+            Id = e.Id,
+            StoryId = e.StoryId,
+            Key = e.Key,
+            Name = e.Name
+        };
 
     private static StoryChoiceRes ToRes(StoryChoiceEntity e)
         => new() {

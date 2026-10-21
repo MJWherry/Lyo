@@ -23,16 +23,13 @@ public static class LyoParameterValidator
     public static readonly TimeSpan RegexMatchTimeout = TimeSpan.FromSeconds(1);
 
     /// <summary>
-    /// Validates supplied values against the declared parameters. Returns an empty list when everything passes, so the result can be tested with <c>Count == 0</c> instead of
-    /// a null check.
+    /// Validates supplied values against the declared parameters. Returns an empty list when everything passes, so the result can be tested with <c>Count == 0</c> instead of a
+    /// null check.
     /// </summary>
     /// <param name="specs">Parameters declared on the definition. An empty list means only <paramref name="rejectUnknownKeys" /> can produce an error.</param>
     /// <param name="values">Values supplied by the caller. Repeated keys are all checked.</param>
     /// <param name="rejectUnknownKeys">When true, keys the definition never declared are an error instead of being ignored.</param>
-    public static IReadOnlyList<string> Validate(
-        IReadOnlyList<LyoParameterSpec> specs,
-        IReadOnlyList<LyoParameterValueSpec> values,
-        bool rejectUnknownKeys = false)
+    public static IReadOnlyList<string> Validate(IReadOnlyList<LyoParameterSpec> specs, IReadOnlyList<LyoParameterValueSpec> values, bool rejectUnknownKeys = false)
     {
         var errors = new List<string>();
         var byKey = values.GroupBy(p => p.Key, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
@@ -133,7 +130,6 @@ public static class LyoParameterValidator
 
         // Length and pattern checks read the string a user typed, not its JSON encoding, so a quoted string is unwrapped first.
         var checkValue = LyoParameterValueJson.Unwrap(spec.Type, value);
-
         if (spec.MinLength.HasValue && checkValue.Length < spec.MinLength.Value)
             errors.Add($"Parameter '{spec.Key}' must be at least {spec.MinLength} characters.");
 
@@ -176,5 +172,4 @@ public static class LyoParameterValidator
             errors.Add($"Parameter '{key}' has an invalid validation pattern.");
         }
     }
-
 }

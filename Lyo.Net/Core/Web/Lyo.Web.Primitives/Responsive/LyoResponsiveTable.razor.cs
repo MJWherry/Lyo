@@ -1,15 +1,16 @@
 using Lyo.Web.Primitives.DataGrid;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace Lyo.Web.Primitives;
 
 /// <summary>
-/// Shows a table on wide viewports and cards on narrow ones. Use it around hand-rolled tables (<c>MudSimpleTable</c>, <c>MudTable</c>) that cannot get the card
-/// layout the shared data grids build in; pair <see cref="CardContent" /> with <see cref="LyoRecordCard" /> so the cards match the ones the grids already render.
+/// Shows a table on wide viewports and cards on narrow ones. Use it around hand-rolled tables (<c>MudSimpleTable</c>, <c>MudTable</c>) that cannot get the card layout the
+/// shared data grids build in; pair <see cref="CardContent" /> with <see cref="LyoRecordCard" /> so the cards match the ones the grids already render.
 /// </summary>
 /// <remarks>
-/// Follows the same preferences as the data grids: the host default from <c>AddLyoDataGrid</c>, then whatever layout the user last chose from a grid toolbar, then
-/// the viewport. Hosts that register neither <c>AddLyoDataGrid</c> nor <see cref="ILyoLayoutPreferences" /> still work and simply follow the viewport.
+/// Follows the same preferences as the data grids: the host default from <c>AddLyoDataGrid</c>, then whatever layout the user last chose from a grid toolbar, then the
+/// viewport. Hosts that register neither <c>AddLyoDataGrid</c> nor <see cref="ILyoLayoutPreferences" /> still work and simply follow the viewport.
 /// </remarks>
 public partial class LyoResponsiveTable : IDisposable
 {
@@ -50,7 +51,6 @@ public partial class LyoResponsiveTable : IDisposable
             return;
 
         await _viewport.StartAsync(Services.GetService<IBrowserViewportService>(), () => InvokeAsync(StateHasChanged));
-
         if (Services.GetService<ILyoLayoutPreferences>() is not { } preferences)
             return;
 

@@ -1,5 +1,4 @@
 using Lyo.Exceptions;
-using Lyo.Story.Enums;
 
 namespace Lyo.Story.Web.Components;
 
@@ -16,9 +15,9 @@ public static class StoryGraphChecks
         Keys(draft.Variables.Select(variable => variable.Key), "variable", issues);
         var actionKeys = Keys(draft.Actions.Select(action => action.Key), "action", issues);
         Keys(draft.Reactions.Select(reaction => reaction.Key), "reaction", issues);
-
         if (draft.Nodes.Count == 0)
             issues.Add("A story requires at least one node.");
+
         if (draft.StartNodeKey is { } start && !nodeKeys.Contains(start))
             issues.Add($"Start node '{start}' is not defined.");
 
@@ -30,6 +29,7 @@ public static class StoryGraphChecks
 
         foreach (var action in draft.Actions)
             CheckEffects(action.Effects, nodeKeys, actionKeys, issues);
+
         foreach (var reaction in draft.Reactions)
             CheckEffects(reaction.Effects, nodeKeys, actionKeys, issues);
 
@@ -57,6 +57,7 @@ public static class StoryGraphChecks
         foreach (var effect in effects) {
             if (effect.Kind == StoryEffectKind.GotoNode && !string.IsNullOrWhiteSpace(effect.TargetNodeKey) && !nodeKeys.Contains(effect.TargetNodeKey))
                 issues.Add($"Goto targets unknown node '{effect.TargetNodeKey}'.");
+
             if (effect.Kind == StoryEffectKind.InvokeAction && !string.IsNullOrWhiteSpace(effect.InvokeActionKey) && !actionKeys.Contains(effect.InvokeActionKey))
                 issues.Add($"Invoke targets unknown action '{effect.InvokeActionKey}'.");
         }

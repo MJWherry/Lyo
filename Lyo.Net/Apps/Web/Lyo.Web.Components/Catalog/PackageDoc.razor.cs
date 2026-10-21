@@ -7,19 +7,23 @@ namespace Lyo.Web.Components.Catalog;
 
 public partial class PackageDoc : IDisposable
 {
+    private readonly CatalogLoadGate _gate = new();
+
+    private CatalogPackageDoc? _doc;
+    private string? _error;
+    private bool _loading = true;
+
     /// <summary>Package id (for example <c>Lyo.Cache</c>). Loads <c>_content/Lyo.Web.Components/catalog/packages/{id}.json</c>.</summary>
-    [Parameter][EditorRequired]
+    [Parameter]
+    [EditorRequired]
     public string PackageId { get; set; } = "";
 
     /// <summary>Optional base path override. Default uses RCL static assets: <c>_content/Lyo.Web.Components/catalog</c>.</summary>
     [Parameter]
     public string CatalogBasePath { get; set; } = "_content/Lyo.Web.Components/catalog";
 
-    private readonly CatalogLoadGate _gate = new();
-
-    private CatalogPackageDoc? _doc;
-    private bool _loading = true;
-    private string? _error;
+    /// <inheritdoc />
+    public void Dispose() => _gate.Dispose();
 
     /// <inheritdoc />
     protected override Task OnParametersSetAsync()
@@ -30,9 +34,6 @@ public partial class PackageDoc : IDisposable
 
         return LoadAsync(key);
     }
-
-    /// <inheritdoc />
-    public void Dispose() => _gate.Dispose();
 
     private async Task LoadAsync(string key)
     {
@@ -50,9 +51,7 @@ public partial class PackageDoc : IDisposable
 
             _doc = doc;
         }
-        catch (OperationCanceledException) when (ct.IsCancellationRequested) {
-            return;
-        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
         catch (Exception ex) {
             if (!_gate.IsCurrent(requestId))
                 return;

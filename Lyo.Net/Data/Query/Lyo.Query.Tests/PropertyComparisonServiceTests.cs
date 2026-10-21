@@ -1,8 +1,8 @@
 using Lyo.Cache;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Query.Services.PropertyComparison;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Query.Tests;
 

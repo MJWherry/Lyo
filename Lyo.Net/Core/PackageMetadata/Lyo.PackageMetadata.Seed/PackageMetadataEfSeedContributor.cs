@@ -1,6 +1,5 @@
 using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
-using Lyo.PackageMetadata;
 using Lyo.PackageMetadata.Postgres;
 using Lyo.PackageMetadata.Postgres.Database;
 using Lyo.Seed;
@@ -24,9 +23,7 @@ public sealed class PackageMetadataEfSeedContributor : SeedContributor, IEfSeedS
     public DbContext CreateContext(string connectionString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        var options = new DbContextOptionsBuilder<PackageMetadataDbContext>()
-            .UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<PackageMetadataDbContext>().UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema)).Options;
         return new PackageMetadataDbContext(options);
     }
 
@@ -35,20 +32,18 @@ public sealed class PackageMetadataEfSeedContributor : SeedContributor, IEfSeedS
     {
         graph.OnClear(ClearAsync);
         var now = DateTime.UtcNow;
-        graph.Entity(options.Count, i => new PackageMetadataEntity {
-            Id = LyoGuid.CreateV7(),
-            Ecosystem = PackageEcosystem.NuGet,
-            Name = $"Lyo.Sample.Library.{i}",
-            Version = "1.0.0",
-            ArtifactDigestAlgorithm = ArtifactDigestAlgorithm.None,
-            Title = $"Sample library {i}",
-            CreatedAt = now,
-            UpdatedAt = now
-        }).ForEach(_ => 1, (package, _) => new PackageStackPrefixEntity {
-            Id = LyoGuid.CreateV7(),
-            PackageMetadataId = package.Id,
-            NormalizedPrefix = package.Name + "."
-        });
+        graph.Entity(
+                options.Count, i => new PackageMetadataEntity {
+                    Id = LyoGuid.CreateV7(),
+                    Ecosystem = PackageEcosystem.NuGet,
+                    Name = $"Lyo.Sample.Library.{i}",
+                    Version = "1.0.0",
+                    ArtifactDigestAlgorithm = ArtifactDigestAlgorithm.None,
+                    Title = $"Sample library {i}",
+                    CreatedAt = now,
+                    UpdatedAt = now
+                })
+            .ForEach(_ => 1, (package, _) => new PackageStackPrefixEntity { Id = LyoGuid.CreateV7(), PackageMetadataId = package.Id, NormalizedPrefix = package.Name + "." });
     }
 
     private static async Task ClearAsync(SeedSession session, CancellationToken ct)

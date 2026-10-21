@@ -28,7 +28,7 @@ public static class FileMediaPreview
             FileTypeCategory.Images => FileMediaPreviewKind.Image,
             FileTypeCategory.Audio => FileMediaPreviewKind.Audio,
             FileTypeCategory.Video => FileMediaPreviewKind.Video,
-            _ => null
+            var _ => null
         };
     }
 

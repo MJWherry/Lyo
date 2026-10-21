@@ -33,9 +33,7 @@ public sealed class ConfigDefinitionEntity
     [MaxLength(8192)]
     public string? DefaultValueJson { get; set; }
 
-    /// <summary>
-    /// Encrypted bytes for <see cref="DefaultValueJson" /> when <see cref="IsEncrypted" />. Empty array is the Job-style “encrypt this plaintext” marker on write.
-    /// </summary>
+    /// <summary>Encrypted bytes for <see cref="DefaultValueJson" /> when <see cref="IsEncrypted" />. Empty array is the Job-style “encrypt this plaintext” marker on write.</summary>
     public byte[]? EncryptedDefaultValue { get; set; }
 
     [Required]

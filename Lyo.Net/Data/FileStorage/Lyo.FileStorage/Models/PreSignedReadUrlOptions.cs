@@ -13,6 +13,5 @@ public sealed record PreSignedReadUrlOptions
     public string? ContentType { get; init; }
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"PreSignedReadUrlOptions: ContentType={ContentType ?? "(none)"}, ContentDisposition={ContentDisposition ?? "(none)"}";
+    public override string ToString() => $"PreSignedReadUrlOptions: ContentType={ContentType ?? "(none)"}, ContentDisposition={ContentDisposition ?? "(none)"}";
 }

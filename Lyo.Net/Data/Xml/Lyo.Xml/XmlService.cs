@@ -8,12 +8,12 @@ namespace Lyo.Xml;
 /// <summary>Facade over <see cref="XmlReader" /> and <see cref="XmlWriter" />, plus JSON conversion. One instance is safe for concurrent calls.</summary>
 public sealed class XmlService : IXmlService
 {
-    /// <summary>Shared service with the default options. Do not change it.</summary>
-    public static XmlService Default { get; } = new();
-
     private readonly XmlEngine _engine;
     private readonly XmlReader _reader;
     private readonly XmlWriter _writer;
+
+    /// <summary>Shared service with the default options. Do not change it.</summary>
+    public static XmlService Default { get; } = new();
 
     static XmlService() => Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
@@ -68,16 +68,14 @@ public sealed class XmlService : IXmlService
     public bool TryExport<T>(T value, Span<byte> destination, out int bytesWritten, Encoding? encoding = null) => _writer.TryExport(value, destination, out bytesWritten, encoding);
 
     /// <inheritdoc />
-    public string ExportFormattedToXmlString<T>(IEnumerable<T> items, IReadOnlyDictionary<string, Func<T, string>> fields)
-        => _writer.ExportFormattedToXmlString(items, fields);
+    public string ExportFormattedToXmlString<T>(IEnumerable<T> items, IReadOnlyDictionary<string, Func<T, string>> fields) => _writer.ExportFormattedToXmlString(items, fields);
 
     /// <inheritdoc />
     public void ExportFormattedToXml<T>(IEnumerable<T> items, IReadOnlyDictionary<string, Func<T, string>> fields, Stream xmlStream)
         => _writer.ExportFormattedToXml(items, fields, xmlStream);
 
     /// <inheritdoc />
-    public string ExportColumnsToXmlString<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns)
-        => _writer.ExportColumnsToXmlString(items, columns);
+    public string ExportColumnsToXmlString<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns) => _writer.ExportColumnsToXmlString(items, columns);
 
     /// <inheritdoc />
     public void ExportColumnsToXml<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns, Stream xmlStream)
@@ -106,8 +104,7 @@ public sealed class XmlService : IXmlService
     public void ExportToXmlFromDataTable(DataTable.Models.DataTable dataTable, Stream xmlStream) => _writer.ExportToXmlFromDataTable(dataTable, xmlStream);
 
     /// <inheritdoc />
-    public byte[] ExportToXmlBytesFromDataTable(DataTable.Models.DataTable dataTable, Encoding? encoding = null)
-        => _writer.ExportToXmlBytesFromDataTable(dataTable, encoding);
+    public byte[] ExportToXmlBytesFromDataTable(DataTable.Models.DataTable dataTable, Encoding? encoding = null) => _writer.ExportToXmlBytesFromDataTable(dataTable, encoding);
 
     /// <inheritdoc />
     public void ConvertToJson(string xmlFilePath, string jsonFilePath)
@@ -173,7 +170,7 @@ public sealed class XmlService : IXmlService
 
     private static string Read(Stream stream)
     {
-        using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, 1024, leaveOpen: true);
+        using var reader = new StreamReader(stream, Encoding.UTF8, true, 1024, true);
         return reader.ReadToEnd();
     }
 
@@ -215,7 +212,11 @@ public sealed class XmlService : IXmlService
         => _reader.ParseStringAsDataTableAsync(xml, hasFooterRow, ct);
 
     /// <inheritdoc />
-    public Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(byte[] xmlBytes, bool hasFooterRow = false, Encoding? encoding = null, CancellationToken ct = default)
+    public Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(
+        byte[] xmlBytes,
+        bool hasFooterRow = false,
+        Encoding? encoding = null,
+        CancellationToken ct = default)
         => _reader.ParseBytesAsDataTableAsync(xmlBytes, hasFooterRow, encoding, ct);
 
     /// <inheritdoc />

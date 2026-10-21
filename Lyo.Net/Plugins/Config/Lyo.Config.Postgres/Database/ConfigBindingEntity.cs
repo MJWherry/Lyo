@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations;
 namespace Lyo.Config.Postgres.Database;
 
 /// <summary>
-/// Ties a <see cref="ConfigDefinitionEntity" /> to one entity instance. JSON lives on <see cref="ConfigBindingRevisionEntity" />; <see cref="ValueType" />
-/// copies <see cref="ConfigDefinitionEntity.ForValueType" /> so queries stay simple.
+/// Ties a <see cref="ConfigDefinitionEntity" /> to one entity instance. JSON lives on <see cref="ConfigBindingRevisionEntity" />; <see cref="ValueType" /> copies
+/// <see cref="ConfigDefinitionEntity.ForValueType" /> so queries stay simple.
 /// </summary>
 public sealed class ConfigBindingEntity
 {

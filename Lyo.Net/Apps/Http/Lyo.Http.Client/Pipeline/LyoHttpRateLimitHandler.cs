@@ -9,17 +9,17 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Lyo.Http.Client.Pipeline;
 
 /// <summary>
-/// Acquires a quota permit, then on HTTP 429 honors <c>Retry-After</c> (capped, jittered) up to <see cref="LyoHttpRateLimitOptions.MaxRetriesOn429" />.
-/// Sits outside the timing handler: acquire, then delay, then send. A whitelisted path skips the quota and still honors the concurrency cap.
+/// Acquires a quota permit, then on HTTP 429 honors <c>Retry-After</c> (capped, jittered) up to <see cref="LyoHttpRateLimitOptions.MaxRetriesOn429" />. Sits outside the
+/// timing handler: acquire, then delay, then send. A whitelisted path skips the quota and still honors the concurrency cap.
 /// </summary>
 public sealed class LyoHttpRateLimitHandler : DelegatingHandler
 {
-    private readonly LyoHttpRateLimitOptions _options;
-    private readonly IRateLimitService? _limiter;
-    private readonly string _policyName;
     private readonly LyoHttpRateLimitGate _gate;
-    private readonly IMetrics _metrics;
+    private readonly IRateLimitService? _limiter;
     private readonly ILogger _logger;
+    private readonly IMetrics _metrics;
+    private readonly LyoHttpRateLimitOptions _options;
+    private readonly string _policyName;
     private readonly Random _rng = new();
 
     /// <summary>Creates the handler. <paramref name="limiter" /> is required when <paramref name="options" /> are enabled.</summary>
@@ -52,7 +52,7 @@ public sealed class LyoHttpRateLimitHandler : DelegatingHandler
         if (wait <= TimeSpan.Zero || _options.Jitter <= 0)
             return wait;
 
-        var factor = 1 + ((_options.Jitter * 2) * rng.NextDouble() - _options.Jitter);
+        var factor = 1 + (_options.Jitter * 2 * rng.NextDouble() - _options.Jitter);
         var ms = Math.Max(0, wait.TotalMilliseconds * factor);
         return TimeSpan.FromMilliseconds(ms);
     }
@@ -64,7 +64,7 @@ public sealed class LyoHttpRateLimitHandler : DelegatingHandler
         var concurrency = await AcquireConcurrencyAsync(ct).ConfigureAwait(false);
         try {
             if (!_options.Enabled || IsWhitelisted(request))
-                return await SendWithRetriesAsync(request, acquire: false, ct).ConfigureAwait(false);
+                return await SendWithRetriesAsync(request, false, ct).ConfigureAwait(false);
 
             if (!await _gate.TryEnterAsync(ct).ConfigureAwait(false)) {
                 _metrics.IncrementCounter("http.client.rate_limit.rejected", tags: [("reason", "queue")]);
@@ -72,7 +72,7 @@ public sealed class LyoHttpRateLimitHandler : DelegatingHandler
             }
 
             try {
-                return await SendWithRetriesAsync(request, acquire: true, ct).ConfigureAwait(false);
+                return await SendWithRetriesAsync(request, true, ct).ConfigureAwait(false);
             }
             finally {
                 _gate.Exit();
@@ -131,9 +131,9 @@ public sealed class LyoHttpRateLimitHandler : DelegatingHandler
         var partition = _options.PartitionByHost ? host : "default";
         while (true) {
             ct.ThrowIfCancellationRequested();
-            var decision = await _limiter!.TryAcquireAsync(
-                    new RateLimitRequest(_policyName, partition, _options.PermitLimit, _options.Window, RateLimitWindow.TokenBucket), ct)
+            var decision = await _limiter!.TryAcquireAsync(new(_policyName, partition, _options.PermitLimit, _options.Window, RateLimitWindow.TokenBucket), ct)
                 .ConfigureAwait(false);
+
             if (decision.Allowed)
                 return;
 

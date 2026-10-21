@@ -28,7 +28,7 @@ internal static class RateLimitMath
 
     internal static bool SlidingAllows(long previous, long current, long elapsedMs, long windowMs, int permitLimit)
     {
-        var used = SlidingUsedMilli(previous, elapsedMs, windowMs) + (current * 1000L);
+        var used = SlidingUsedMilli(previous, elapsedMs, windowMs) + current * 1000L;
         return used + 1000L <= permitLimit * 1000L;
     }
 
@@ -77,7 +77,7 @@ internal static class RateLimitMath
         if (elapsed > windowMs)
             elapsed = windowMs;
 
-        var add = (elapsed * permitLimit * 1000L) / windowMs;
+        var add = elapsed * permitLimit * 1000L / windowMs;
         if (add <= 0)
             return false;
 
@@ -102,7 +102,7 @@ internal static class RateLimitMath
         long lo = 0;
         var hi = windowMs - 1;
         while (lo < hi) {
-            var mid = lo + ((hi - lo) / 2);
+            var mid = lo + (hi - lo) / 2;
             if (SlidingAllows(previous, current, mid, windowMs, permitLimit))
                 hi = mid;
             else

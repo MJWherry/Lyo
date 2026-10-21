@@ -21,6 +21,7 @@
     </MudStack>
     @if (_boardId == null) {
         <MudAlert Severity="Severity.Info" Dense="true">Load a board to see standings.</MudAlert>
+
         return;
     }
     @if (_loading) {

@@ -9,8 +9,8 @@ using Lyo.Query.Models.Enums;
 namespace Lyo.Query.Models.Builders;
 
 /// <summary>
-/// Fluent builder for <see cref="WhereClause" /> trees: combines <see cref="ConditionClause" /> leaves with <see cref="GroupOperatorEnum" />, nested groups,
-/// sub-clauses for two-phase filtering, and typed expression paths via <see cref="WhereClauseBuilderFor{T}" />.
+/// Fluent builder for <see cref="WhereClause" /> trees: combines <see cref="ConditionClause" /> leaves with <see cref="GroupOperatorEnum" />, nested groups, sub-clauses for
+/// two-phase filtering, and typed expression paths via <see cref="WhereClauseBuilderFor{T}" />.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public class WhereClauseBuilder
@@ -41,7 +41,7 @@ public class WhereClauseBuilder
         _children.Add(new ConditionClause(field, op, value, description));
         return this;
     }
-    
+
     /// <summary>Adds a <see cref="ConditionClause" /> using the given dotted field path and operator.</summary>
     public WhereClauseBuilder AddCondition<TProp>(string field, ComparisonOperatorEnum op, TProp? value, string? description = null)
     {
@@ -201,14 +201,14 @@ public class WhereClauseBuilder
         return this;
     }
 
-    /// <summary>Adds a trigram-similarity condition. <paramref name="threshold"/> omitted uses <see cref="ConditionClause.DefaultFuzzyThreshold"/>.</summary>
+    /// <summary>Adds a trigram-similarity condition. <paramref name="threshold" /> omitted uses <see cref="ConditionClause.DefaultFuzzyThreshold" />.</summary>
     public WhereClauseBuilder Fuzzy(string field, object? value, double? threshold = null, string? description = null)
     {
         _children.Add(new ConditionClause(field, ComparisonOperatorEnum.Fuzzy, value, description, threshold));
         return this;
     }
 
-    /// <summary>Adds the negation of <see cref="Fuzzy"/>. <paramref name="threshold"/> omitted uses <see cref="ConditionClause.DefaultFuzzyThreshold"/>.</summary>
+    /// <summary>Adds the negation of <see cref="Fuzzy" />. <paramref name="threshold" /> omitted uses <see cref="ConditionClause.DefaultFuzzyThreshold" />.</summary>
     public WhereClauseBuilder NotFuzzy(string field, object? value, double? threshold = null, string? description = null)
     {
         _children.Add(new ConditionClause(field, ComparisonOperatorEnum.NotFuzzy, value, description, threshold));

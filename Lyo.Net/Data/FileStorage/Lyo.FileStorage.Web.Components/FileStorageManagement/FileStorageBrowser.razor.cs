@@ -27,7 +27,7 @@ public partial class FileStorageBrowser : ComponentBase, IDisposable
 
     protected override async Task OnInitializedAsync()
     {
-        _actions = new FileStorageBrowserActions(Host, RefreshAsync);
+        _actions = new(Host, RefreshAsync);
         Host.FilesChanged += RefreshAsync;
         await LoadStorageKeysAsync();
     }
@@ -61,9 +61,7 @@ public partial class FileStorageBrowser : ComponentBase, IDisposable
         }
     }
 
-    private bool KeyExists(string? expected)
-        => FileStorageGridRowHelper.StorageKeyExists(_existingKeys, expected);
+    private bool KeyExists(string? expected) => FileStorageGridRowHelper.StorageKeyExists(_existingKeys, expected);
 
-    private IReadOnlyList<object?> SelectedRows(LyoDataGridProjected? grid)
-        => ProjectedGridKeys.RowsFromKeys(grid?.SelectedKeys);
+    private IReadOnlyList<object?> SelectedRows(LyoDataGridProjected? grid) => ProjectedGridKeys.RowsFromKeys(grid?.SelectedKeys);
 }

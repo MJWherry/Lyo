@@ -42,17 +42,17 @@ public static class Constants
             /// <summary>Aggregate graph save.</summary>
             public const string Graph = "Story/graph";
 
-            /// <summary>Aggregate graph by id.</summary>
-            public static string GraphById(Guid id) => $"{Graph}/{id:D}";
-
-            /// <summary>Aggregate graph by slug.</summary>
-            public static string GraphBySlug(string slug) => $"{Graph}/by-slug/{slug}";
-
             /// <summary>List story headers for a tenant and game.</summary>
             public const string GraphList = "Story/graph/list";
 
             /// <summary>Start a playthrough.</summary>
             public const string PlayStart = "Story/playthrough/start";
+
+            /// <summary>Aggregate graph by id.</summary>
+            public static string GraphById(Guid id) => $"{Graph}/{id:D}";
+
+            /// <summary>Aggregate graph by slug.</summary>
+            public static string GraphBySlug(string slug) => $"{Graph}/by-slug/{slug}";
 
             /// <summary>Playthrough snapshot.</summary>
             public static string Play(Guid id) => $"Story/playthrough/{id:D}";

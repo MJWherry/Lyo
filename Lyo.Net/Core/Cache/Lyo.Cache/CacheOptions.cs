@@ -35,9 +35,9 @@ public class CacheOptions
     public CachePayloadOptions Payload { get; set; } = new();
 
     /// <summary>
-    /// Soft byte budget for the backing <see cref="Microsoft.Extensions.Caching.Memory.IMemoryCache" />, applied by <c>AddLocalCache</c>. Serialized payloads count their
-    /// real length; a live object is charged <see cref="NonPayloadEntrySizeBytes" />, because walking an arbitrary graph is not worth the cost. Set to
-    /// <c>null</c> to leave the cache unbounded, which lets a query-result cache grow until the process is OOM-killed.
+    /// Soft byte budget for the backing <see cref="Microsoft.Extensions.Caching.Memory.IMemoryCache" />, applied by <c>AddLocalCache</c>. Serialized payloads count their real
+    /// length; a live object is charged <see cref="NonPayloadEntrySizeBytes" />, because walking an arbitrary graph is not worth the cost. Set to <c>null</c> to leave the cache
+    /// unbounded, which lets a query-result cache grow until the process is OOM-killed.
     /// </summary>
     public long? MaxSizeBytes { get; set; } = 256L * 1024 * 1024;
 
@@ -54,23 +54,22 @@ public class CacheOptions
     public TimeSpan FailSafeThrottleDuration { get; set; } = TimeSpan.FromSeconds(30);
 
     /// <summary>
-    /// When a bulk mutation touches more than this many distinct primary keys, list-query invalidation falls back to tag <c>entity:&lt;type&gt;</c> instead of per-id tags.
-    /// Used by Lyo.Api CRUD invalidation helpers. Ignored when <see cref="QueryCacheTagGranularity" /> is <see cref="QueryCacheTagGranularity.Broad" /> (invalidation is always
-    /// type-wide).
+    /// When a bulk mutation touches more than this many distinct primary keys, list-query invalidation falls back to tag <c>entity:&lt;type&gt;</c> instead of per-id tags. Used
+    /// by Lyo.Api CRUD invalidation helpers. Ignored when <see cref="QueryCacheTagGranularity" /> is <see cref="QueryCacheTagGranularity.Broad" /> (invalidation is always type-wide).
     /// </summary>
     public int MaxBulkQueryInvalidationByIdCount { get; set; } = 20;
 
     /// <summary>
-    /// How <c>Lyo.Api</c> tags query/GET results. <see cref="QueryCacheTagGranularity.Broad" /> uses only <c>entity:&lt;typename&gt;</c>-style tags (and
-    /// scope/shape tags), reducing tag CPU at the cost of coarser invalidation. Default is <see cref="QueryCacheTagGranularity.Broad" /> (non-granular). Set
-    /// <see cref="QueryCacheTagGranularity.Granular" /> for per-row instance tags and finer invalidation at higher tagging cost.
+    /// How <c>Lyo.Api</c> tags query/GET results. <see cref="QueryCacheTagGranularity.Broad" /> uses only <c>entity:&lt;typename&gt;</c>-style tags (and scope/shape tags),
+    /// reducing tag CPU at the cost of coarser invalidation. Default is <see cref="QueryCacheTagGranularity.Broad" /> (non-granular). Set <see cref="QueryCacheTagGranularity.Granular" />
+    /// for per-row instance tags and finer invalidation at higher tagging cost.
     /// </summary>
     public QueryCacheTagGranularity QueryCacheTagGranularity { get; set; } = QueryCacheTagGranularity.Broad;
 
     /// <summary>Per-type TTLs. Key is a full type name (for example "My.Lib.Class") or pattern (for example "My.Lib.*"); value is minutes.</summary>
     /// <remarks>
-    /// Exact and wildcard keys are both accepted: "My.Lib.Class" matches only that name; "My.Lib.*" matches "My.Lib.Class", "My.Lib.Other", and so on.
-    /// When several patterns match, the more specific (longer) pattern wins.
+    /// Exact and wildcard keys are both accepted: "My.Lib.Class" matches only that name; "My.Lib.*" matches "My.Lib.Class", "My.Lib.Other", and so on. When several patterns
+    /// match, the more specific (longer) pattern wins.
     /// </remarks>
     public Dictionary<string, int> TypeExpirations { get; set; } = new();
 
@@ -78,8 +77,8 @@ public class CacheOptions
     /// <param name="fullTypeName">Full type name (for example "My.Lib.Class") or a wildcard (for example "My.Lib.*").</param>
     /// <returns>Configured TTL, or <see cref="DefaultExpiration" /> when none matches.</returns>
     /// <remarks>
-    /// Exact and wildcard keys are both accepted: "My.Lib.Class" matches only that name; "My.Lib.*" matches "My.Lib.Class", "My.Lib.Other", and so on.
-    /// When several patterns match, the more specific (longer) pattern wins.
+    /// Exact and wildcard keys are both accepted: "My.Lib.Class" matches only that name; "My.Lib.*" matches "My.Lib.Class", "My.Lib.Other", and so on. When several patterns
+    /// match, the more specific (longer) pattern wins.
     /// </remarks>
     public TimeSpan GetExpirationForType(string fullTypeName)
     {
@@ -129,6 +128,7 @@ public class CacheOptions
         ArgumentHelpers.ThrowIfNotDefined(QueryCacheTagGranularity);
         if (MaxSizeBytes is { } limit)
             ArgumentHelpers.ThrowIfLessThan(limit, 1);
+
         ArgumentHelpers.ThrowIfNull(TypeExpirations);
         foreach (var minutes in TypeExpirations.Values)
             ArgumentHelpers.ThrowIfNegativeOrZero(minutes);

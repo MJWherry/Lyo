@@ -1,4 +1,3 @@
-using Lyo.FileMetadataStore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -17,7 +16,7 @@ public class FileMetadataStorePostgresExtensionsTests
     public void AddFileMetadataStoreDbContext_WithNullConnectionString_ThrowsArgumentNullException()
     {
         var services = new ServiceCollection();
-        var ex = Assert.Throws<ArgumentNullException>(() => services.AddFileMetadataStoreDbContext((string)null!));
+        var ex = Assert.Throws<ArgumentNullException>(() => services.AddFileMetadataStoreDbContext(null!));
         Assert.Equal("connectionString", ex.ParamName);
     }
 
@@ -153,5 +152,4 @@ public class FileMetadataStorePostgresExtensionsTests
         var ex = Assert.Throws<ArgumentException>(() => services.AddPostgresFileMetadataStoreKeyed(""));
         Assert.Equal("keyName", ex.ParamName);
     }
-
 }

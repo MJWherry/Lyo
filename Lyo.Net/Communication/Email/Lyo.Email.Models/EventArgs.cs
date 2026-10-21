@@ -46,7 +46,7 @@ public sealed record EmailSentEventArgs(EmailResult EmailResult)
 }
 
 /// <summary>Raised after a bulk send finishes.</summary>
-    /// <param name="BulkEmailResult">Aggregate outcome of the batch.</param>
+/// <param name="BulkEmailResult">Aggregate outcome of the batch.</param>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record BulkEmailSentEventArgs(BulkResult<EmailRequest> BulkEmailResult)
 {

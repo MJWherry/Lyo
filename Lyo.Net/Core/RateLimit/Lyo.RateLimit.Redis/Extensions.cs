@@ -1,6 +1,5 @@
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
-using Lyo.RateLimit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -52,6 +51,7 @@ public static class RedisRateLimitServiceExtensions
                 configureRedis?.Invoke(redis);
                 return ConnectionMultiplexer.Connect(redis);
             });
+
             return services.AddRedisRateLimit(configureOptions);
         }
 
@@ -76,20 +76,19 @@ public static class RedisRateLimitServiceExtensions
             var redisSection = configuration.GetSection(redisSectionName);
             var connectionString = redisSection["ConnectionString"] ?? redisSection.Value ?? "";
             if (string.IsNullOrWhiteSpace(connectionString)) {
-                throw new ConfigurationException(
-                    $"Redis connection string not found in configuration section '{redisSectionName}'.",
-                    redisSectionName);
+                throw new ConfigurationException($"Redis connection string not found in configuration section '{redisSectionName}'.", redisSectionName);
             }
 
-            return services.AddRedisRateLimit(connectionString, bound => {
-                bound.FailOpen = options.FailOpen;
-                bound.MaxEntries = options.MaxEntries;
-                bound.Clock = options.Clock;
-            }, redis => {
-                var password = redisSection["Password"];
-                if (!string.IsNullOrEmpty(password))
-                    redis.Password = password;
-            });
+            return services.AddRedisRateLimit(
+                connectionString, bound => {
+                    bound.FailOpen = options.FailOpen;
+                    bound.MaxEntries = options.MaxEntries;
+                    bound.Clock = options.Clock;
+                }, redis => {
+                    var password = redisSection["Password"];
+                    if (!string.IsNullOrEmpty(password))
+                        redis.Password = password;
+                });
         }
     }
 

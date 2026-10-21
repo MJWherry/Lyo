@@ -1,22 +1,22 @@
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Lyo.Common.Core.Identifiers;
+using Lyo.Story.Api.Tests;
 using Lyo.Story.Sqlite;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-[assembly: AssemblyFixture(typeof(Lyo.Story.Api.Tests.StoryApiFixture))]
+[assembly: AssemblyFixture(typeof(StoryApiFixture))]
 
 namespace Lyo.Story.Api.Tests;
 
 /// <summary>
-/// Test host serving <c>MapStoryRoutes</c> over a SQLite story store. The player ref is <c>player:{sub}</c> and the tenant is the <c>tenant_id</c> claim, as a Game
-/// server binds them.
+/// Test host serving <c>MapStoryRoutes</c> over a SQLite story store. The player ref is <c>player:{sub}</c> and the tenant is the <c>tenant_id</c> claim, as a Game server
+/// binds them.
 /// </summary>
 public sealed class StoryApiFixture : IAsyncLifetime
 {
@@ -42,7 +42,7 @@ public sealed class StoryApiFixture : IAsyncLifetime
         _app.MapGroup(string.Empty)
             .RequireAuthorization()
             .MapStoryRoutes(
-                new StoryRouteOptions {
+                new() {
                     AuthorPolicy = AuthorPolicy,
                     PlayerRef = http => http.User.FindFirst("sub")?.Value is { } sub ? "player:" + sub : null,
                     TenantId = http => Guid.TryParse(http.User.FindFirst("tenant_id")?.Value, out var tenant) ? tenant : null
@@ -50,6 +50,14 @@ public sealed class StoryApiFixture : IAsyncLifetime
 
         await _app.StartAsync();
         _server = _app.GetTestServer();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _app.StopAsync();
+        await _app.DisposeAsync();
+        if (Directory.Exists(_directory))
+            Directory.Delete(_directory, true);
     }
 
     /// <summary>Client authenticated as <paramref name="subject" /> with optional comma-separated <paramref name="roles" /> and a <c>tenant_id</c> claim.</summary>
@@ -64,14 +72,6 @@ public sealed class StoryApiFixture : IAsyncLifetime
             http.DefaultRequestHeaders.Add(StoryTestAuthHandler.TenantHeader, tenant.Value.ToString());
 
         return http;
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await _app.StopAsync();
-        await _app.DisposeAsync();
-        if (Directory.Exists(_directory))
-            Directory.Delete(_directory, true);
     }
 }
 

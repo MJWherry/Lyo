@@ -6,10 +6,7 @@ namespace Lyo.QRCode.Encoding.Iso;
 
 internal sealed partial class QRIsoEncoder
 {
-    /// <summary>
-    /// Segment that picks Numeric, Alphanumeric, or Byte mode from character runs to shrink total bit length.
-    /// Follows ISO/IEC 18004:2015 Annex J.2. Kanji mode is not supported.
-    /// </summary>
+    /// <summary>Segment that picks Numeric, Alphanumeric, or Byte mode from character runs to shrink total bit length. Follows ISO/IEC 18004:2015 Annex J.2. Kanji mode is not supported.</summary>
     private sealed class OptimizedLatin1DataSegment : DataSegment
     {
         /// <summary>Encoding mode. Used only for DataTooLongException.</summary>

@@ -21,32 +21,32 @@ public sealed class AudiobookCatalogHttpTests(AudiobookPostgresFixture fixture)
         builder.Services.AddSingleton(store);
         builder.WebHost.UseUrls("http://127.0.0.1:0");
         var app = builder.Build();
-        app.MapPost("/Audiobook/search", async (AudiobookQuery query, IAudiobookStore audiobooks, CancellationToken token) => Results.Ok(await audiobooks.SearchWorksAsync(query, token)));
-        app.MapPost("/Audiobook/transcripts/search", async (AudiobookTranscriptQuery query, IAudiobookStore audiobooks, CancellationToken token) => Results.Ok(await audiobooks.SearchTranscriptsAsync(query, token)));
-        app.MapPut("/Audiobook/chapter/{id:guid}/transcript", async (Guid id, CatalogText text, IAudiobookStore audiobooks, CancellationToken token) => {
-            await audiobooks.SaveChapterTranscriptAsync(id, text.Text, token);
-            return Results.NoContent();
-        });
+        app.MapPost(
+            "/Audiobook/search", async (AudiobookQuery query, IAudiobookStore audiobooks, CancellationToken token) => Results.Ok(await audiobooks.SearchWorksAsync(query, token)));
+
+        app.MapPost(
+            "/Audiobook/transcripts/search",
+            async (AudiobookTranscriptQuery query, IAudiobookStore audiobooks, CancellationToken token) => Results.Ok(await audiobooks.SearchTranscriptsAsync(query, token)));
+
+        app.MapPut(
+            "/Audiobook/chapter/{id:guid}/transcript", async (Guid id, CatalogText text, IAudiobookStore audiobooks, CancellationToken token) => {
+                await audiobooks.SaveChapterTranscriptAsync(id, text.Text, token);
+                return Results.NoContent();
+            });
+
         await app.StartAsync(ct);
         try {
-            using var client = new HttpClient { BaseAddress = new Uri(app.Urls.First()) };
-
+            using var client = new HttpClient { BaseAddress = new(app.Urls.First()) };
             var empty = await client.PostAsJsonAsync("/Audiobook/search", new AudiobookQuery { FilterIds = [] }, ct);
             empty.EnsureSuccessStatusCode();
             var none = await empty.Content.ReadFromJsonAsync<Audiobook[]>(ct);
             Assert.NotNull(none);
             Assert.Empty(none);
-
             var tokenText = $"httpchapter{LyoGuid.CreateV7():N}";
-            var work = new Audiobook {
-                Title = tokenText,
-                Slug = $"http-{LyoGuid.CreateV7():N}",
-                Chapters = [new AudiobookChapter { Number = 1, Title = "Open" }]
-            };
+            var work = new Audiobook { Title = tokenText, Slug = $"http-{LyoGuid.CreateV7():N}", Chapters = [new() { Number = 1, Title = "Open" }] };
             await store.SaveWorkAsync(work, ct);
             var put = await client.PutAsJsonAsync($"/Audiobook/chapter/{work.Chapters[0].Id}/transcript", new CatalogText { Text = $"line about {tokenText}" }, ct);
             Assert.Equal(HttpStatusCode.NoContent, put.StatusCode);
-
             var found = await client.PostAsJsonAsync("/Audiobook/transcripts/search", new AudiobookTranscriptQuery { FullText = tokenText }, ct);
             found.EnsureSuccessStatusCode();
             var hits = await found.Content.ReadFromJsonAsync<AudiobookTranscriptHit[]>(ct);

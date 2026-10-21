@@ -3,9 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace Lyo.Common.Core.Identifiers;
 
-/// <summary>
-/// Thread-safe incrementing IDs for int, long, uint, and ulong. Each step takes a single lock; an unsupported generic argument throws at construction.
-/// </summary>
+/// <summary>Thread-safe incrementing IDs for int, long, uint, and ulong. Each step takes a single lock; an unsupported generic argument throws at construction.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class AutoIncrementIdGenerator<T>
     where T : struct

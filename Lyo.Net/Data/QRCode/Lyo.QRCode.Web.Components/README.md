@@ -1,14 +1,15 @@
 # Lyo.QRCode.Web.Components
 
-Blazor / MudBlazor UI that generates and previews QR codes. The main component is `QrCodeWorkbench`: three columns (output and styling, typed payload, result), wired to `IQRCodeService`, `IImageDecorationService` (overlay / frame / caption / padding primitives from `Lyo.Images`), and `Lyo.Web.Components.FileUpload.LyoFileUpload` for logo files.
+Blazor / MudBlazor UI that generates and previews QR codes. The main component is `QrCodeWorkbench`: three columns (output and styling, typed payload, result), wired to
+`IQRCodeService`, `IImageDecorationService` (overlay / frame / caption / padding primitives from `Lyo.Images`), and `Lyo.Web.Components.FileUpload.LyoFileUpload` for logo files.
 
 ## `QrCodeWorkbench`
 
-| Column | Contents |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Column             | Contents                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+|--------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Output and styling | Format (optional `AllowedFormats` parameter limits the dropdown, e.g. PNG+SVG only), error correction, output size preset (and custom pixels per module), quiet zone, dark/light module colors, logo upload (`LyoFileUpload` with `ChipFileNameMaxLength` / `ChipMaxWidthCss` for long names in narrow layouts), logo size slider, logo border, PNG badge preset and caption options (font, min header, auto-size header), frame colors. |
-| Payload | `QrPayloadKind` selector plus fields for plain text, URL, Wi-Fi, mailto, tel, SMS, geo, vCard/meCard, WhatsApp, Telegram, Signal. Encoded preview and generate. |
-| Result | Format, file size, frame label; module scale and dimensions; raster/SVG preview (SVG uses an `<img>` with `object-fit: contain` so large matrices stay in the box). Click the preview to open the image in a new tab (raster: data URL; SVG: blob URL so browsers allow a new tab. `data:image/svg+xml` navigations are often blocked). Download streams bytes via JS. |
+| Payload            | `QrPayloadKind` selector plus fields for plain text, URL, Wi-Fi, mailto, tel, SMS, geo, vCard/meCard, WhatsApp, Telegram, Signal. Encoded preview and generate.                                                                                                                                                                                                                                                                          |
+| Result             | Format, file size, frame label; module scale and dimensions; raster/SVG preview (SVG uses an `<img>` with `object-fit: contain` so large matrices stay in the box). Click the preview to open the image in a new tab (raster: data URL; SVG: blob URL so browsers allow a new tab. `data:image/svg+xml` navigations are often blocked). Download streams bytes via JS.                                                                   |
 
 **Decoration pipeline.** Once the QR exists, the workbench builds an `IImageDecorationPipeline` and queues stages from user input:
 

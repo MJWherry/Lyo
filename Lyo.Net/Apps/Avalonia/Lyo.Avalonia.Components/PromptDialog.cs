@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -19,15 +18,13 @@ public static class PromptDialog
             SizeToContent = SizeToContent.Height,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
             Content = Stack(
-                new TextBlock { Text = label },
-                box,
-                Buttons(
+                new TextBlock { Text = label }, box, Buttons(
                     () => {
                         ok = true;
                         return true;
-                    },
-                    "OK"))
+                    }, "OK"))
         };
+
         ApplyChrome(window);
         await window.ShowDialog(owner);
         return ok ? box.Text : null;
@@ -44,6 +41,7 @@ public static class PromptDialog
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
             Content = Stack(new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap }, Buttons(() => ok = true, accept))
         };
+
         ApplyChrome(window);
         await window.ShowDialog(owner);
         return ok;
@@ -52,7 +50,13 @@ public static class PromptDialog
     /// <summary>Shows <paramref name="text" /> in a read-only box.</summary>
     public static async Task ShowTextAsync(Window owner, string title, string text)
     {
-        var box = new TextBox { Text = text, AcceptsReturn = true, IsReadOnly = true, Height = 160 };
+        var box = new TextBox {
+            Text = text,
+            AcceptsReturn = true,
+            IsReadOnly = true,
+            Height = 160
+        };
+
         var window = new Window {
             Title = title,
             Width = 520,
@@ -60,6 +64,7 @@ public static class PromptDialog
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
             Content = Stack(box, Buttons(() => true, "Close"))
         };
+
         ApplyChrome(window);
         await window.ShowDialog(owner);
     }
@@ -72,9 +77,10 @@ public static class PromptDialog
         window.TransparencyLevelHint = [WindowTransparencyLevel.None];
         if (window.Content is not Control content)
             return;
+
         window.Content = null;
         window.Content = new Border {
-            BorderThickness = new Thickness(1),
+            BorderThickness = new(1),
             BorderBrush = new SolidColorBrush(Color.Parse("#5C677A")),
             Background = background,
             Child = content
@@ -93,9 +99,10 @@ public static class PromptDialog
     /// <summary>A vertical stack with the dialog margin.</summary>
     public static StackPanel Stack(params Control[] children)
     {
-        var panel = new StackPanel { Margin = new Thickness(12), Spacing = 8 };
+        var panel = new StackPanel { Margin = new(12), Spacing = 8 };
         foreach (var child in children)
             panel.Children.Add(child);
+
         return panel;
     }
 
@@ -107,6 +114,7 @@ public static class PromptDialog
             if (accept())
                 Close(button);
         };
+
         return button;
     }
 

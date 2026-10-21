@@ -9,6 +9,8 @@ namespace Lyo.Sms.Web.Components;
 /// <summary>MudBlazor chip colors for Twilio SMS log status, direction, and success flags.</summary>
 public static class SmsColorHelper
 {
+    private static readonly Direction[] OutboundDirections = [Direction.OutboundApi, Direction.OutboundCall, Direction.OutboundReply];
+
     /// <summary>Chip color for a Twilio or log status (delivered, failed, received, queued, and similar).</summary>
     public static Color ForStatus(string? status)
     {
@@ -26,8 +28,7 @@ public static class SmsColorHelper
     }
 
     /// <summary>Identity hue for inbound versus outbound (including Twilio outbound-api, call, and reply). Unknown directions stay uncolored.</summary>
-    public static LyoChipHue? ForDirection(string? direction)
-        => IsInbound(direction) ? LyoChipHue.Teal : IsOutbound(direction) ? LyoChipHue.Blue : null;
+    public static LyoChipHue? ForDirection(string? direction) => IsInbound(direction) ? LyoChipHue.Teal : IsOutbound(direction) ? LyoChipHue.Blue : null;
 
     /// <summary>Chip color for a successful send or receive.</summary>
     public static Color ForSuccess(bool? success)
@@ -47,11 +48,9 @@ public static class SmsColorHelper
         return key == "outbound" || OutboundDirections.Any(d => Tokens(d).Contains(key));
     }
 
-    private static readonly Direction[] OutboundDirections = [Direction.OutboundApi, Direction.OutboundCall, Direction.OutboundReply];
-
     /// <summary>
-    /// All stored spellings that mean <paramref name="direction" />: the enum name, its <c>[StringValue]</c> wire form, that form without hyphens, and the numeric ordinal.
-    /// These come from the enum so a new <see cref="Direction" /> member is picked up without editing this file.
+    /// All stored spellings that mean <paramref name="direction" />: the enum name, its <c>[StringValue]</c> wire form, that form without hyphens, and the numeric ordinal. These
+    /// come from the enum so a new <see cref="Direction" /> member is picked up without editing this file.
     /// </summary>
     private static string[] Tokens(Direction direction)
         => [Normalize(direction.ToString()), Normalize(direction.GetStringValue()), Normalize(direction.GetStringValue()).Replace("-", ""), ((int)direction).ToString()];
@@ -70,6 +69,5 @@ public static class SmsColorHelper
             var _ => null
         };
 
-    private static string Normalize(string? value)
-        => string.IsNullOrWhiteSpace(value) ? "" : value.Trim().Replace('_', '-').ToLowerInvariant();
+    private static string Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? "" : value.Trim().Replace('_', '-').ToLowerInvariant();
 }

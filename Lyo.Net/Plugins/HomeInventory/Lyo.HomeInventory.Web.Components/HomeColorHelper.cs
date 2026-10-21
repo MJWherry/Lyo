@@ -1,6 +1,5 @@
 using Lyo.HomeInventory.Models.Enums;
 using Lyo.Web.Primitives;
-using MudBlazor;
 
 namespace Lyo.HomeInventory.Web.Components;
 
@@ -17,8 +16,7 @@ public static class HomeColorHelper
         };
 
     /// <summary>Color for a status enum name or numeric string.</summary>
-    public static Color ForStatus(string? text)
-        => Enum.TryParse<HomeItemStatus>(text, true, out var status) ? ForStatus(status) : Color.Default;
+    public static Color ForStatus(string? text) => Enum.TryParse<HomeItemStatus>(text, true, out var status) ? ForStatus(status) : Color.Default;
 
     /// <summary>Color for physical/commercial condition.</summary>
     public static Color ForCondition(HomeItemCondition condition)
@@ -33,8 +31,7 @@ public static class HomeColorHelper
         };
 
     /// <summary>Color for a condition enum name or numeric string.</summary>
-    public static Color ForCondition(string? text)
-        => Enum.TryParse<HomeItemCondition>(text, true, out var condition) ? ForCondition(condition) : Color.Default;
+    public static Color ForCondition(string? text) => Enum.TryParse<HomeItemCondition>(text, true, out var condition) ? ForCondition(condition) : Color.Default;
 
     /// <summary>Identity hue for an attachment role. Unknown roles stay uncolored.</summary>
     public static LyoChipHue? ForRole(HomeAttachmentRole role)

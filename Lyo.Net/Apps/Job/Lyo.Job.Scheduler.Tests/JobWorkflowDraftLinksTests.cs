@@ -20,12 +20,9 @@ public class JobWorkflowDraftLinksTests
         var extract = new JobWorkflowStepDraft { StepName = "Extract", JobDefinitionId = Guid.NewGuid() };
         var load = new JobWorkflowStepDraft { StepName = "Load", JobDefinitionId = Guid.NewGuid(), DependsOn = [extract.Id] };
         List<JobWorkflowStepDraft> steps = [extract, load];
-
         JobWorkflowDraftLinks.Rename(steps, extract, "Sync Twilio");
-
         Assert.Equal("Sync Twilio", extract.StepName);
         Assert.Equal(extract.Id, Assert.Single(load.DependsOn));
-
         var req = JobWorkflowBuilder.New("Nightly")
             .AddStep(extract.StepName, extract.JobDefinitionId)
             .AddStep(load.StepName, load.JobDefinitionId, JobWorkflowDraftLinks.DependencyNames(steps, load))
@@ -48,7 +45,6 @@ public class JobWorkflowDraftLinksTests
         };
 
         JobWorkflowDraftLinks.Rename([extract, load], extract, "Sync Twilio");
-
         var condition = Assert.IsType<ConditionClause>(load.Condition);
         Assert.Equal("Step.Sync Twilio.Result.RowCount", condition.Field);
         Assert.Equal("{Step.Sync Twilio.Result.RowCount}", load.Parameters["Rows"]);
@@ -59,13 +55,12 @@ public class JobWorkflowDraftLinksTests
     public void Load_NameDependencies_AreNotResolvedToIds()
     {
         const string json = """
-            {"steps":[{"stepName":"Extract","dependsOn":[]},{"stepName":"Load","dependsOn":["Extract"]}]}
-            """;
+                            {"steps":[{"stepName":"Extract","dependsOn":[]},{"stepName":"Load","dependsOn":["Extract"]}]}
+                            """;
 
         var state = JobWorkflowDraftLinks.Load(json, CamelCase);
         var extract = state.Steps.Single(s => s.StepName == "Extract");
         var load = state.Steps.Single(s => s.StepName == "Load");
-
         Assert.NotEqual(Guid.Empty, extract.Id);
         Assert.Empty(load.DependsOn);
     }

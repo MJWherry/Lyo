@@ -1,8 +1,10 @@
 # Lyo.Favorite.Postgres
 
-Entity Framework Core store for `Lyo.Favorite` on PostgreSQL. Rows live in `favorite.favorite` (`PostgresFavoriteOptions.Schema = "favorite"`), and the package includes migrations. Favorites carry **subject** / **actor** (`for_entity_*` / `from_entity_*`). `SaveAsync` blocks a second active row for the same `(tenant, ForEntity, FromEntity, context)` tuple.
+Entity Framework Core store for `Lyo.Favorite` on PostgreSQL. Rows live in `favorite.favorite` (`PostgresFavoriteOptions.Schema = "favorite"`), and the package includes migrations.
+Favorites carry **subject** / **actor** (`for_entity_*` / `from_entity_*`). `SaveAsync` blocks a second active row for the same `(tenant, ForEntity, FromEntity, context)` tuple.
 
-`PostgresFavoriteStore` implements `IFavoriteStore` and `Lyo.Health.IHealth` (`HealthCheckName = "favorite-postgres"`). Registering the store also exposes a database liveness probe.
+`PostgresFavoriteStore` implements `IFavoriteStore` and `Lyo.Health.IHealth` (`HealthCheckName = "favorite-postgres"`). Registering the store also exposes a database liveness
+probe.
 
 ## Examples
 
@@ -64,8 +66,10 @@ dotnet ef migrations add MigrationName --project Plugins/Favorite/Lyo.Favorite.P
 ## Service registration
 
 - `AddFavoriteDbContextFactory(Action<PostgresFavoriteOptions>)` / `AddFavoriteDbContextFactory(PostgresFavoriteOptions)` register the `IDbContextFactory<FavoriteDbContext>` only.
-- `AddFavoriteDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresFavoriteOptions.SectionName)` does the same, bound from configuration. Default section: `PostgresFavorite`.
-- `AddPostgresFavoriteStore(Action<PostgresFavoriteOptions>)` / `AddPostgresFavoriteStore(PostgresFavoriteOptions)` register the DbContext factory **and** the `IFavoriteStore` singleton.
+- `AddFavoriteDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresFavoriteOptions.SectionName)` does the same, bound from configuration. Default section:
+  `PostgresFavorite`.
+- `AddPostgresFavoriteStore(Action<PostgresFavoriteOptions>)` / `AddPostgresFavoriteStore(PostgresFavoriteOptions)` register the DbContext factory **and** the `IFavoriteStore`
+  singleton.
 - `AddPostgresFavoriteStoreFromConfiguration(IConfiguration, string sectionName = PostgresFavoriteOptions.SectionName)` registers the store by binding configuration.
 
 ## From configuration
@@ -88,7 +92,10 @@ var fromEntity = EntityRef.ForKey("User", "123");
 
 ## Tenant isolation
 
-Every read and write on `PostgresFavoriteStore` takes an optional `Guid? tenantId`. `TenancyResolver` applies the policy in `PostgresFavoriteOptions.Tenancy`. When that is unset, it inherits `EntityRefOptions.Mode`. Because `tenant_id` is non-null, only `SingleTenantDefault` and `MultiTenantStrict` are valid. Construction rejects `SystemOnly`. Every query gets a `WhereTenant` filter, so one tenant's favorites cannot appear in another. The policy matrix and an `appsettings.json` snippet live in [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy).
+Every read and write on `PostgresFavoriteStore` takes an optional `Guid? tenantId`. `TenancyResolver` applies the policy in `PostgresFavoriteOptions.Tenancy`. When that is unset,
+it inherits `EntityRefOptions.Mode`. Because `tenant_id` is non-null, only `SingleTenantDefault` and `MultiTenantStrict` are valid. Construction rejects `SystemOnly`. Every query
+gets a `WhereTenant` filter, so one tenant's favorites cannot appear in another. The policy matrix and an `appsettings.json` snippet live in [
+`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy).
 
 ```json
 {
@@ -101,7 +108,8 @@ Every read and write on `PostgresFavoriteStore` takes an optional `Guid? tenantI
 
 ## Database schema
 
-- **favorite.favorite.** `EntityRelationEntityBase`: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id`, nullable varchar 128/256), `tenant_id`, `context`, `visibility`, `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`, `deleted_by_id`, and `metadata` (jsonb).
+- **favorite.favorite.** `EntityRelationEntityBase`: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id`, nullable varchar
+  128/256), `tenant_id`, `context`, `visibility`, `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`, `deleted_by_id`, and `metadata` (jsonb).
 
 ## Dependencies
 

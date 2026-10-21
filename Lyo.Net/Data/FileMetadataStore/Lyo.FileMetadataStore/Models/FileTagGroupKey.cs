@@ -1,5 +1,4 @@
 using Lyo.Exceptions;
-using Lyo.FileMetadataStore;
 
 namespace Lyo.FileMetadataStore.Models;
 
@@ -13,13 +12,11 @@ public readonly record struct FileTagGroupKey(string TagType, FileTagValueKind K
     /// <param name="tagType">Tag dimension.</param>
     /// <param name="grain">Folder component. <see cref="FileTagGrain.Value" /> is a string.</param>
     public FileTagGroupKey(string tagType, FileTagGrain grain)
-        : this(tagType, FileTagValueKinds.KindForGrain(grain), grain)
-    {
-    }
+        : this(tagType, FileTagValueKinds.KindForGrain(grain), grain) { }
 
     /// <summary>
-    /// Parses <c>client</c>, <c>imported:year</c>, <c>amount:decimal</c>, or <c>sla:timespan:hours</c>.
-    /// A known grain with no kind is a date-time for year, month, and day, a time of day for hour, minute, and second, and a duration for days, hours, minutes, and seconds.
+    /// Parses <c>client</c>, <c>imported:year</c>, <c>amount:decimal</c>, or <c>sla:timespan:hours</c>. A known grain with no kind is a date-time for year, month, and day, a
+    /// time of day for hour, minute, and second, and a duration for days, hours, minutes, and seconds.
     /// </summary>
     /// <param name="text">Query token.</param>
     /// <returns>A group key.</returns>
@@ -80,8 +77,7 @@ public readonly record struct FileTagGroupKey(string TagType, FileTagValueKind K
         return key;
     }
 
-    private static bool TryParseGrain(string text, out FileTagGrain grain)
-        => Enum.TryParse(text, true, out grain);
+    private static bool TryParseGrain(string text, out FileTagGrain grain) => Enum.TryParse(text, true, out grain);
 
     private static void ThrowIfIllegal(FileTagGroupKey key, string text)
     {

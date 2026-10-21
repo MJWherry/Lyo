@@ -22,7 +22,7 @@ public abstract class RabbitMqContainerFixtureBase : IAsyncLifetime
 
     public string Password => Container.Password;
 
-    /// <summary>Current xUnit cancellation token. Reads <see cref="TestContext.Current"/> when accessed, so each test gets that test's token.</summary>
+    /// <summary>Current xUnit cancellation token. Reads <see cref="TestContext.Current" /> when accessed, so each test gets that test's token.</summary>
     public CancellationToken TestCt => TestContext.Current.CancellationToken;
 
     protected RabbitMqContainerFixtureBase()

@@ -1,21 +1,15 @@
-using System.Net.Http.Json;
 using Lyo.Result;
 using Lyo.Sms.Builders;
 using Lyo.Sms.Models;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Lyo.Sms.Web.Components;
 
 public partial class SmsWorkbench
 {
-    private bool _busy;
     private readonly string _phoneValidationPattern = RegexPatterns.PhoneNumberRegex.ToString();
     private readonly string _publicMediaUrlValidationPattern = @"^https?:\/\/[^\s]+$";
+    private bool _busy;
     private BulkResult<SmsRequest>? _lastSmsBulkResult;
     private List<Result<SmsRequest>> _lastSmsResults = [];
     private string _lastSmsSummary = string.Empty;
@@ -45,7 +39,10 @@ public partial class SmsWorkbench
 
             _lastSmsBulkResult = await SmsService.SendBulkAsync(bulkBuilder);
             _lastSmsResults = _lastSmsBulkResult.Results.ToList();
-            _lastSmsSummary = _lastSmsBulkResult.IsCompleteSuccess ? $"SMS completed: {_lastSmsBulkResult.SuccessCount}/{_lastSmsBulkResult.TotalCount} succeeded." : string.Join(Environment.NewLine, _lastSmsBulkResult.ErrorMessages);
+            _lastSmsSummary = _lastSmsBulkResult.IsCompleteSuccess
+                ? $"SMS completed: {_lastSmsBulkResult.SuccessCount}/{_lastSmsBulkResult.TotalCount} succeeded."
+                : string.Join(Environment.NewLine, _lastSmsBulkResult.ErrorMessages);
+
             SetStatus(_lastSmsSummary, _lastSmsBulkResult.IsCompleteSuccess ? Severity.Success : Severity.Error);
         }
         catch (Exception ex) {

@@ -9,59 +9,34 @@ namespace Lyo.Json;
 /// <summary>Facade over <see cref="JsonReader" /> and <see cref="JsonWriter" />. One instance, including <see cref="Default" />, is safe for concurrent parse and export.</summary>
 public sealed class JsonService : IJsonService
 {
-    /// <summary>Service with the Lyo JSON defaults: camelCase, nulls omitted, compact output, UTF-8 without a BOM.</summary>
-    public static JsonService Default { get; } = new();
-
     private readonly JsonReader _reader;
     private readonly JsonWriter _writer;
+
+    /// <summary>Service with the Lyo JSON defaults: camelCase, nulls omitted, compact output, UTF-8 without a BOM.</summary>
+    public static JsonService Default { get; } = new();
 
     static JsonService() => Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
     /// <summary>Builds a service with the Lyo JSON defaults.</summary>
-    public JsonService() : this(new JsonOptions())
-    {
-    }
+    public JsonService()
+        : this(new JsonOptions()) { }
 
     /// <summary>Builds a service from a fresh <see cref="JsonOptions" /> edited by <paramref name="configure" />.</summary>
-    public JsonService(Action<JsonOptions> configure) : this(Runtime(configure))
-    {
-    }
+    public JsonService(Action<JsonOptions> configure)
+        : this(Runtime(configure)) { }
 
     /// <summary>Builds a service from <paramref name="options" />. Naming, omission, encoding, and comments come from that instance.</summary>
-    public JsonService(JsonOptions options) : this(Runtime(options))
-    {
-    }
+    public JsonService(JsonOptions options)
+        : this(Runtime(options)) { }
 
     /// <summary>Builds a service from <paramref name="serializerOptions" />. The instance is copied and used as-is, so a host contract is not wrapped in <see cref="JsonOptions" />.</summary>
-    public JsonService(JsonSerializerOptions serializerOptions) : this(Runtime(serializerOptions))
-    {
-    }
+    public JsonService(JsonSerializerOptions serializerOptions)
+        : this(Runtime(serializerOptions)) { }
 
     private JsonService(JsonRuntime runtime)
     {
         _reader = new(runtime);
         _writer = new(runtime);
-    }
-
-    private static JsonRuntime Runtime(Action<JsonOptions> configure)
-    {
-        ArgumentHelpers.ThrowIfNull(configure);
-        var options = new JsonOptions();
-        configure(options);
-        return Runtime(options);
-    }
-
-    private static JsonRuntime Runtime(JsonOptions options)
-    {
-        ArgumentHelpers.ThrowIfNull(options);
-        options.Validate();
-        return JsonRuntime.FromOptions(options);
-    }
-
-    private static JsonRuntime Runtime(JsonSerializerOptions serializerOptions)
-    {
-        ArgumentHelpers.ThrowIfNull(serializerOptions);
-        return JsonRuntime.FromHost(serializerOptions);
     }
 
     /// <inheritdoc />
@@ -132,8 +107,7 @@ public sealed class JsonService : IJsonService
     public byte[] ExportToJsonBytes<T>(T value, Encoding? encoding = null) => _writer.ExportToJsonBytes(value, encoding);
 
     /// <inheritdoc />
-    public bool TryExport<T>(T value, Span<byte> destination, out int bytesWritten, Encoding? encoding = null)
-        => _writer.TryExport(value, destination, out bytesWritten, encoding);
+    public bool TryExport<T>(T value, Span<byte> destination, out int bytesWritten, Encoding? encoding = null) => _writer.TryExport(value, destination, out bytesWritten, encoding);
 
     /// <inheritdoc />
     public void ExportNdjson<T>(IEnumerable<T> values, string jsonFilePath) => _writer.ExportNdjson(values, jsonFilePath);
@@ -148,16 +122,14 @@ public sealed class JsonService : IJsonService
     public byte[] ExportNdjsonBytes<T>(IEnumerable<T> values) => _writer.ExportNdjsonBytes(values);
 
     /// <inheritdoc />
-    public string ExportFormattedToJsonString<T>(IEnumerable<T> items, IReadOnlyDictionary<string, Func<T, string>> fields)
-        => _writer.ExportFormattedToJsonString(items, fields);
+    public string ExportFormattedToJsonString<T>(IEnumerable<T> items, IReadOnlyDictionary<string, Func<T, string>> fields) => _writer.ExportFormattedToJsonString(items, fields);
 
     /// <inheritdoc />
     public void ExportFormattedToJson<T>(IEnumerable<T> items, IReadOnlyDictionary<string, Func<T, string>> fields, Stream jsonStream)
         => _writer.ExportFormattedToJson(items, fields, jsonStream);
 
     /// <inheritdoc />
-    public string ExportColumnsToJsonString<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns)
-        => _writer.ExportColumnsToJsonString(items, columns);
+    public string ExportColumnsToJsonString<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns) => _writer.ExportColumnsToJsonString(items, columns);
 
     /// <inheritdoc />
     public void ExportColumnsToJson<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns, Stream jsonStream)
@@ -174,6 +146,27 @@ public sealed class JsonService : IJsonService
 
     /// <inheritdoc />
     public byte[] ExportToJsonBytesFromDataTable(DataTable.Models.DataTable dataTable, Encoding? encoding = null) => _writer.ExportToJsonBytesFromDataTable(dataTable, encoding);
+
+    private static JsonRuntime Runtime(Action<JsonOptions> configure)
+    {
+        ArgumentHelpers.ThrowIfNull(configure);
+        var options = new JsonOptions();
+        configure(options);
+        return Runtime(options);
+    }
+
+    private static JsonRuntime Runtime(JsonOptions options)
+    {
+        ArgumentHelpers.ThrowIfNull(options);
+        options.Validate();
+        return JsonRuntime.FromOptions(options);
+    }
+
+    private static JsonRuntime Runtime(JsonSerializerOptions serializerOptions)
+    {
+        ArgumentHelpers.ThrowIfNull(serializerOptions);
+        return JsonRuntime.FromHost(serializerOptions);
+    }
 
     internal string ExportPreservingKeyOrder<T>(T value) => _writer.ExportPreservingKeyOrder(value);
 
@@ -237,7 +230,11 @@ public sealed class JsonService : IJsonService
         => _reader.ParseStringAsDataTableAsync(json, hasFooterRow, ct);
 
     /// <inheritdoc />
-    public Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(byte[] jsonBytes, bool hasFooterRow = false, Encoding? encoding = null, CancellationToken ct = default)
+    public Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(
+        byte[] jsonBytes,
+        bool hasFooterRow = false,
+        Encoding? encoding = null,
+        CancellationToken ct = default)
         => _reader.ParseBytesAsDataTableAsync(jsonBytes, hasFooterRow, encoding, ct);
 
     /// <inheritdoc />

@@ -122,6 +122,14 @@ public interface IXlsxReader
     /// <summary>Parses every worksheet of workbook bytes with formatting.</summary>
     IReadOnlyDictionary<string, DataTable.Models.DataTable> ParseXlsxBytesAsAllSheetsWithFormatting(byte[] xlsxBytes, bool? useHeaderRow = null, bool useFooterRow = false);
 
+    /// <summary>
+    /// Parses a worksheet into good rows and per-row errors. A null <paramref name="sheetName" /> uses the first sheet. A missing sheet or a missing required header fails the
+    /// document. A bad cell omits that row. <see cref="XlsxParseError.RowNumber" /> is the 1-based worksheet row.
+    /// </summary>
+    /// <typeparam name="T">Row type. Needs a public parameterless constructor.</typeparam>
+    XlsxParseResult<T> ParseBytesAsResult<T>(byte[] xlsxBytes, string? sheetName = null, IReadOnlyCollection<string>? requiredHeaders = null)
+        where T : new();
+
 #if !NETSTANDARD2_0
     /// <summary>Asynchronously parses the first worksheet from a file into a nested dictionary.</summary>
     Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseXlsxFileAsDictionaryAsync(string xlsxFilePath, CancellationToken ct = default);
@@ -130,27 +138,42 @@ public interface IXlsxReader
     Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseXlsxStreamAsDictionaryAsync(Stream xlsxStream, CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the first worksheet into a Lyo data table (values + spans only).</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableAsync(string xlsxFilePath, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct =
- default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableAsync(
+        string xlsxFilePath,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the first worksheet with formatting.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableWithFormattingAsync(string xlsxFilePath, bool? useHeaderRow = null, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableWithFormattingAsync(
+        string xlsxFilePath,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the first worksheet from a stream into a Lyo data table (values + spans only).</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableAsync(Stream xlsxStream, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct =
- default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableAsync(
+        Stream xlsxStream,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the first worksheet from a stream with formatting.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableWithFormattingAsync(Stream xlsxStream, bool? useHeaderRow = null, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableWithFormattingAsync(
+        Stream xlsxStream,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the first worksheet from bytes into a Lyo data table (values + spans only).</summary>
     Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableAsync(byte[] xlsxBytes, bool? useHeaderRow = null, bool useFooterRow = false, CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the first worksheet from bytes with formatting.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableWithFormattingAsync(byte[] xlsxBytes, bool? useHeaderRow = null, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableWithFormattingAsync(
+        byte[] xlsxBytes,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the first worksheet from bytes into a nested dictionary.</summary>
     Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseXlsxBytesAsDictionaryAsync(byte[] xlsxBytes, CancellationToken ct = default);
@@ -183,76 +206,142 @@ public interface IXlsxReader
     Task<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>> ParseXlsxBytesAsDictionaryAsync(byte[] xlsxBytes, int sheetIndex, CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the named worksheet from a file into a Lyo data table (values + spans only).</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableAsync(string xlsxFilePath, string sheetName, bool? useHeaderRow = null, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableAsync(
+        string xlsxFilePath,
+        string sheetName,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the named worksheet from a file with formatting.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableWithFormattingAsync(string xlsxFilePath, string sheetName, bool? useHeaderRow = null, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableWithFormattingAsync(
+        string xlsxFilePath,
+        string sheetName,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the worksheet at the given zero-based index from a file into a Lyo data table (values + spans only).</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableAsync(string xlsxFilePath, int sheetIndex, bool? useHeaderRow = null, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableAsync(
+        string xlsxFilePath,
+        int sheetIndex,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the worksheet at the given zero-based index from a file with formatting.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableWithFormattingAsync(string xlsxFilePath, int sheetIndex, bool? useHeaderRow = null, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxFileAsDataTableWithFormattingAsync(
+        string xlsxFilePath,
+        int sheetIndex,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the named worksheet from a stream into a Lyo data table (values + spans only).</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableAsync(Stream xlsxStream, string sheetName, bool? useHeaderRow = null, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableAsync(
+        Stream xlsxStream,
+        string sheetName,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the named worksheet from a stream with formatting.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableWithFormattingAsync(Stream xlsxStream, string sheetName, bool? useHeaderRow = null, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableWithFormattingAsync(
+        Stream xlsxStream,
+        string sheetName,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the worksheet at the given zero-based index from a stream into a Lyo data table (values + spans only).</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableAsync(Stream xlsxStream, int sheetIndex, bool? useHeaderRow = null, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableAsync(
+        Stream xlsxStream,
+        int sheetIndex,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the worksheet at the given zero-based index from a stream with formatting.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableWithFormattingAsync(Stream xlsxStream, int sheetIndex, bool? useHeaderRow = null, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxStreamAsDataTableWithFormattingAsync(
+        Stream xlsxStream,
+        int sheetIndex,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the named worksheet from bytes into a Lyo data table (values + spans only).</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableAsync(byte[] xlsxBytes, string sheetName, bool? useHeaderRow = null, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableAsync(
+        byte[] xlsxBytes,
+        string sheetName,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the named worksheet from bytes with formatting.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableWithFormattingAsync(byte[] xlsxBytes, string sheetName, bool? useHeaderRow = null, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableWithFormattingAsync(
+        byte[] xlsxBytes,
+        string sheetName,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the worksheet at the given zero-based index from bytes into a Lyo data table (values + spans only).</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableAsync(byte[] xlsxBytes, int sheetIndex, bool? useHeaderRow = null, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableAsync(
+        byte[] xlsxBytes,
+        int sheetIndex,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses the worksheet at the given zero-based index from bytes with formatting.</summary>
-    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableWithFormattingAsync(byte[] xlsxBytes, int sheetIndex, bool? useHeaderRow = null, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<Result<DataTable.Models.DataTable>> ParseXlsxBytesAsDataTableWithFormattingAsync(
+        byte[] xlsxBytes,
+        int sheetIndex,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses every worksheet into Lyo data tables (values + spans only), keyed by sheet name.</summary>
-    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxFileAsAllSheetsAsync(string xlsxFilePath, bool? useHeaderRow = null, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxFileAsAllSheetsAsync(
+        string xlsxFilePath,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses every worksheet with formatting, keyed by sheet name.</summary>
-    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxFileAsAllSheetsWithFormattingAsync(string xlsxFilePath, bool? useHeaderRow = null, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxFileAsAllSheetsWithFormattingAsync(
+        string xlsxFilePath,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses every worksheet of a workbook stream into Lyo data tables (values + spans only).</summary>
-    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxStreamAsAllSheetsAsync(Stream xlsxStream, bool? useHeaderRow = null, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxStreamAsAllSheetsAsync(
+        Stream xlsxStream,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses every worksheet of a workbook stream with formatting.</summary>
-    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxStreamAsAllSheetsWithFormattingAsync(Stream xlsxStream, bool? useHeaderRow = null, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxStreamAsAllSheetsWithFormattingAsync(
+        Stream xlsxStream,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses every worksheet of workbook bytes into Lyo data tables (values + spans only).</summary>
-    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxBytesAsAllSheetsAsync(byte[] xlsxBytes, bool? useHeaderRow = null, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxBytesAsAllSheetsAsync(
+        byte[] xlsxBytes,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously parses every worksheet of workbook bytes with formatting.</summary>
-    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxBytesAsAllSheetsWithFormattingAsync(byte[] xlsxBytes, bool? useHeaderRow = null, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<IReadOnlyDictionary<string, DataTable.Models.DataTable>> ParseXlsxBytesAsAllSheetsWithFormattingAsync(
+        byte[] xlsxBytes,
+        bool? useHeaderRow = null,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Streams worksheet rows as string cells (forward-only via ExcelDataReader). Does not materialize the full sheet.</summary>
     IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxFileRowsStreamingAsync(string xlsxFilePath, CancellationToken ct = default);
@@ -273,16 +362,11 @@ public interface IXlsxReader
     IAsyncEnumerable<IReadOnlyList<string>> ParseXlsxStreamRowsStreamingAsync(Stream xlsxStream, int sheetIndex, CancellationToken ct = default);
 
     /// <summary>Streams typed rows by mapping header names to public writable properties (first row = headers when configuration <c>UseHeaderRow</c> is true).</summary>
-    IAsyncEnumerable<T> ParseXlsxFileStreamingAsync<T>(string xlsxFilePath, CancellationToken ct = default) where T : new();
+    IAsyncEnumerable<T> ParseXlsxFileStreamingAsync<T>(string xlsxFilePath, CancellationToken ct = default)
+        where T : new();
 
     /// <summary>Streams typed rows from a stream by mapping header names to public writable properties.</summary>
-    IAsyncEnumerable<T> ParseXlsxStreamStreamingAsync<T>(Stream xlsxStream, CancellationToken ct = default) where T : new();
+    IAsyncEnumerable<T> ParseXlsxStreamStreamingAsync<T>(Stream xlsxStream, CancellationToken ct = default)
+        where T : new();
 #endif
-
-    /// <summary>
-    /// Parses a worksheet into good rows and per-row errors. A null <paramref name="sheetName" /> uses the first sheet. A missing sheet or a missing required header fails the
-    /// document. A bad cell omits that row. <see cref="XlsxParseError.RowNumber" /> is the 1-based worksheet row.
-    /// </summary>
-    /// <typeparam name="T">Row type. Needs a public parameterless constructor.</typeparam>
-    XlsxParseResult<T> ParseBytesAsResult<T>(byte[] xlsxBytes, string? sheetName = null, IReadOnlyCollection<string>? requiredHeaders = null) where T : new();
 }

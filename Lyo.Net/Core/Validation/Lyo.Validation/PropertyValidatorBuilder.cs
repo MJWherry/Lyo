@@ -300,10 +300,10 @@ public sealed class PropertyValidatorBuilder<T, TProperty>
     public ValidatorBuilder<T> IncludeSchema(ValidationSchema schema, IValidationClauseEvaluator evaluator) => _builder.IncludeSchema(schema, evaluator);
 
     /// <summary>
-    /// Loads <paramref name="key" /> from <paramref name="store" /> on the calling thread and includes it. Prefer <see cref="IValidationSchemaCompiler.GetAsync{T}" /> in async hosts.
+    /// Loads <paramref name="key" /> from <paramref name="store" /> on the calling thread and includes it. Prefer <see cref="IValidationSchemaCompiler.GetAsync{T}" /> in async
+    /// hosts.
     /// </summary>
-    public ValidatorBuilder<T> IncludeStore(IValidationSchemaStore store, string key, IValidationClauseEvaluator evaluator)
-        => _builder.IncludeStore(store, key, evaluator);
+    public ValidatorBuilder<T> IncludeStore(IValidationSchemaStore store, string key, IValidationClauseEvaluator evaluator) => _builder.IncludeStore(store, key, evaluator);
 
     /// <summary>Begins another property rule chain.</summary>
     public PropertyValidatorBuilder<T, TNextProperty> RuleFor<TNextProperty>(Expression<Func<T, TNextProperty>> selector, string? propertyName = null)

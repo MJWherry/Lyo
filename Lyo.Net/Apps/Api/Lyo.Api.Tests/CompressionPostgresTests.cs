@@ -6,13 +6,13 @@ using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Enums;
 using Lyo.Api.Tests.Fixtures;
-using Lyo.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Job.Models.Response;
+using Lyo.Json;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Api.Tests;
 
@@ -85,6 +85,7 @@ public class CompressionPostgresTests : IDisposable
                     Query = new() { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, name) }, Format = ExportFormat.Csv
                 }, options: JsonOptions)
         };
+
         request.Headers.AcceptEncoding.Add(new("br"));
         using var response = await _client.SendAsync(request, TestCt);
         response.EnsureSuccessStatusCode();
@@ -104,6 +105,7 @@ public class CompressionPostgresTests : IDisposable
                     Query = new() { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, name) }, Format = ExportFormat.Xlsx
                 }, options: JsonOptions)
         };
+
         request.Headers.AcceptEncoding.Add(new("br"));
         using var response = await _client.SendAsync(request, TestCt);
         response.EnsureSuccessStatusCode();

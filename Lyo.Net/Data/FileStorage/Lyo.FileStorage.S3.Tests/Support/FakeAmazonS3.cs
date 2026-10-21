@@ -7,8 +7,8 @@ namespace Lyo.FileStorage.S3.Tests.Support;
 
 /// <summary>
 /// Lightweight <see cref="DispatchProxy" />-based stub for <see cref="IAmazonS3" />. Records the requests issued by <c>S3UploadStream</c>-style call sites and lets each
-/// handler return a custom response without a mocking framework. Any method not explicitly handled returns a default-shaped <see cref="Task" />/
-/// <see cref="Task{TResult}" /> instead of throwing, so tests stay focused on the methods that matter.
+/// handler return a custom response without a mocking framework. Any method not explicitly handled returns a default-shaped <see cref="Task" />/ <see cref="Task{TResult}" /> instead
+/// of throwing, so tests stay focused on the methods that matter.
 /// </summary>
 public class FakeAmazonS3 : DispatchProxy
 {
@@ -189,8 +189,8 @@ public class FakeAmazonS3 : DispatchProxy
     }
 
     /// <summary>
-    /// Default fallback: returns a <see cref="Task" />-shaped value for async methods, a default-constructed response otherwise. Override <c>OnX</c> for any method
-    /// whose behavior matters.
+    /// Default fallback: returns a <see cref="Task" />-shaped value for async methods, a default-constructed response otherwise. Override <c>OnX</c> for any method whose
+    /// behavior matters.
     /// </summary>
     private static object? DefaultReturnValue(MethodInfo method)
     {

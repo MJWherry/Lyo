@@ -4,8 +4,8 @@ using Lyo.Exceptions;
 namespace Lyo.Common.Core.Net;
 
 /// <summary>
-/// Builds one desktop User-Agent for a browser grammar. The OS token comes from <see cref="RuntimeInformation" /> and <see cref="Environment.OSVersion" />.
-/// Callers pass the grammar and browser version only.
+/// Builds one desktop User-Agent for a browser grammar. The OS token comes from <see cref="RuntimeInformation" /> and <see cref="Environment.OSVersion" />. Callers pass the
+/// grammar and browser version only.
 /// </summary>
 public static class UserAgentGenerator
 {
@@ -35,15 +35,16 @@ public static class UserAgentGenerator
         };
     }
 
-    private static string Chromium(string os, string version)
-        => $"Mozilla/5.0 ({os}) {ChromiumEngine} Chrome/{version} Safari/537.36";
+    private static string Chromium(string os, string version) => $"Mozilla/5.0 ({os}) {ChromiumEngine} Chrome/{version} Safari/537.36";
 
     private static string PlatformToken()
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             return WindowsToken();
+
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             return "Macintosh; Intel Mac OS X 10_15_7";
+
         return LinuxToken();
     }
 
@@ -65,6 +66,7 @@ public static class UserAgentGenerator
             Architecture.X86 => "i686",
             var _ => "x86_64"
         };
+
         return $"X11; Linux {arch}";
     }
 }

@@ -1,11 +1,13 @@
 # Lyo.Recipe.Api
 
-Maps Recipe Req/Res CRUD via `Lyo.Api` `CreateBuilder` (categories, ingredients, recipes, attachments) plus ingredient-line and step GET/PUT, nested notes/tags, and optional multipart upload when `IRecipeAttachmentFiles` is registered. Register with `AddRecipeApiFromConfiguration`, then call `BuildRecipeGroup`. Example host: `Lyo.Recipe.Api.Example`.
+Maps Recipe Req/Res CRUD via `Lyo.Api` `CreateBuilder` (categories, ingredients, recipes, attachments) plus ingredient-line and step GET/PUT, nested notes/tags, and optional
+multipart upload when `IRecipeAttachmentFiles` is registered. Register with `AddRecipeApiFromConfiguration`, then call `BuildRecipeGroup`. Example host: `Lyo.Recipe.Api.Example`.
 
 ## Features
 
 - `BuildRecipeGroup` maps Req/Res CRUD for categories, ingredients, recipes, and attachments.
-- Ingredient lines and steps under `Recipe/Recipes/{id}/IngredientLines` and `…/Steps` (GET list, PUT replace, ids preserved). `GET/PUT/DELETE Recipe/Units` and `GET Recipe/Ingredients/{id}/Usage`.
+- Ingredient lines and steps under `Recipe/Recipes/{id}/IngredientLines` and `…/Steps` (GET list, PUT replace, ids preserved). `GET/PUT/DELETE Recipe/Units` and
+  `GET Recipe/Ingredients/{id}/Usage`.
 - Nested `Notes` and `Tags` on categories, ingredients, and recipes; delete cascades those rows.
 - `POST Recipe/Attachments/upload` accepts any file role (`Document`, `Scan`, `Card`, `Image`, `Other`) and returns 501 when the FileStorage helper is missing.
 - `AddRecipeApiFromConfiguration` registers the Postgres store, Note/Tag stores on the same connection, and CRUD services.

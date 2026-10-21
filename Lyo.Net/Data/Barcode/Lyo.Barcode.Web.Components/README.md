@@ -15,8 +15,8 @@ services.AddNativeBarcodeService(o => o.DefaultFormat = BarcodeFormat.Svg);
 
 ## Components
 
-| Component | Purpose |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Component            | Purpose                                                                                                                                                                                                                                                             |
+|----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | <BarcodeWorkbench /> | Build Code 128 barcodes as BMP or SVG. Controls cover module width, bar height, quiet zone, bar/background/border colors, an optional human-readable caption (font, gap, padding, color override), and live preview/download through IBarcodeService.GenerateAsync. |
 
 ## Services the host must register

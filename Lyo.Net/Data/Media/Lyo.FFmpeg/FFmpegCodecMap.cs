@@ -3,9 +3,7 @@ using Lyo.Media.Models;
 
 namespace Lyo.FFmpeg;
 
-/// <summary>
-/// Maps generic codec ids onto ffmpeg encoder names. Unknown ids pass through so <c>Custom("libx265")</c> still works.
-/// </summary>
+/// <summary>Maps generic codec ids onto ffmpeg encoder names. Unknown ids pass through so <c>Custom("libx265")</c> still works.</summary>
 internal static class FFmpegCodecMap
 {
     public static string ToFfmpegAudio(string id) => MapAudio(Normalize(id));
@@ -26,8 +24,9 @@ internal static class FFmpegCodecMap
             "qsv" => Qsv(codec),
             "vaapi" => Vaapi(codec),
             "videotoolbox" => VideoToolbox(codec),
-            _ => null
+            var _ => null
         };
+
         if (mapped == null)
             throw new ArgumentException($"{hardware.Name} has no encoder for '{codec}'.", nameof(hardware));
 
@@ -40,7 +39,7 @@ internal static class FFmpegCodecMap
             "qsv" => "qsv",
             "vaapi" => "vaapi",
             "videotoolbox" => "videotoolbox",
-            _ => hardware.Id
+            var _ => hardware.Id
         };
 
     public static string FromFfmpegAudio(string encoderName) => UnmapAudio(Normalize(encoderName));
@@ -52,7 +51,7 @@ internal static class FFmpegCodecMap
             "h264" => "h264_nvenc",
             "hevc" => "hevc_nvenc",
             "av1" => "av1_nvenc",
-            _ => null
+            var _ => null
         };
 
     private static string? Qsv(string codec)
@@ -61,7 +60,7 @@ internal static class FFmpegCodecMap
             "hevc" => "hevc_qsv",
             "av1" => "av1_qsv",
             "vp9" => "vp9_qsv",
-            _ => null
+            var _ => null
         };
 
     private static string? Vaapi(string codec)
@@ -70,14 +69,14 @@ internal static class FFmpegCodecMap
             "hevc" => "hevc_vaapi",
             "vp8" => "vp8_vaapi",
             "vp9" => "vp9_vaapi",
-            _ => null
+            var _ => null
         };
 
     private static string? VideoToolbox(string codec)
         => codec switch {
             "h264" => "h264_videotoolbox",
             "hevc" => "hevc_videotoolbox",
-            _ => null
+            var _ => null
         };
 
     private static string MapAudio(string id)

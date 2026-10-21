@@ -7,8 +7,8 @@ using Org.BouncyCastle.Crypto.Parameters;
 namespace Lyo.Encryption.AesCcm;
 
 /// <summary>
-/// Per-stream AES-CCM cipher reused for every chunk (see <see cref="IAeadStreamCryptor" />). Each chunk is encrypted on its own with the
-/// stream-supplied nonce (BouncyCastle on every target, matching the single-shot wire format). The cipher and grow-once scratch buffers are reused per chunk.
+/// Per-stream AES-CCM cipher reused for every chunk (see <see cref="IAeadStreamCryptor" />). Each chunk is encrypted on its own with the stream-supplied nonce (BouncyCastle
+/// on every target, matching the single-shot wire format). The cipher and grow-once scratch buffers are reused per chunk.
 /// </summary>
 internal sealed class AesCcmStreamCryptor(ReadOnlySpan<byte> key) : IAeadStreamCryptor
 {

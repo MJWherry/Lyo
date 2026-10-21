@@ -14,10 +14,7 @@ public sealed class OutboxPostgresFixture : PostgresServiceFixtureBase<Idempoten
 {
     protected override void ConfigureServices(IServiceCollection services, string connectionString)
     {
-        services.AddPostgresIdempotency(new PostgresIdempotencyOptions {
-            ConnectionString = connectionString,
-            EnableAutoMigrations = true
-        });
+        services.AddPostgresIdempotency(new() { ConnectionString = connectionString, EnableAutoMigrations = true });
         services.AddPostgresOutbox();
     }
 

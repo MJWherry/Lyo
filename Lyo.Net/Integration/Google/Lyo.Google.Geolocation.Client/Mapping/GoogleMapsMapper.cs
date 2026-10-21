@@ -1,12 +1,12 @@
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Extensions;
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 using Lyo.Geolocation.Models;
 using Lyo.Geolocation.Models.Addresses;
 using Lyo.Geolocation.Models.Coordinates;
 using Lyo.Geolocation.Models.Enums;
 using Lyo.Google.Geolocation.Client.Models;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Google.Geolocation.Client.Mapping;
 

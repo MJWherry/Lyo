@@ -1,14 +1,7 @@
 using Lyo.Endato.Client.Models.Enrichment.Response;
-using Lyo.Endato.Client.Models.Person.Response;
 using Lyo.Web.Components;
-using Lyo.Web.Primitives;
-using Lyo.Web.Components.DataGrid;
 using Lyo.Web.Components.Dialog;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 using MudBlazor;
 using EnrichmentPerson = Lyo.Endato.Client.Models.Enrichment.Response.Person;
 
@@ -31,8 +24,7 @@ public partial class EndatoEnrichmentPersonView
 
     private IReadOnlyList<string> PhoneTypes => EndatoViewHelpers.PhoneTypeOptions(null, Person.Phones.Select(p => p.Type));
 
-    private string TitleName
-    {
+    private string TitleName {
         get {
             var name = string.Join(" ", new[] { Person.Name.FirstName, Person.Name.MiddleName, Person.Name.LastName }.Where(static s => !string.IsNullOrWhiteSpace(s)));
             return string.IsNullOrWhiteSpace(name) ? "Enriched person" : name;

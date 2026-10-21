@@ -5,8 +5,8 @@ using Lyo.Encryption.TwoKey;
 namespace Lyo.FileStorage.Tests.Support;
 
 /// <summary>
-/// Delegates every operation to <paramref name="inner" /> except <see cref="EncryptToStreamAsync" />, which writes a prefix of the real ciphertext and then throws. Lets a test
-/// drive a save or DEK rewrite that fails after bytes have already been written to the storage output stream.
+/// Delegates every operation to <paramref name="inner" /> except <see cref="EncryptToStreamAsync" />, which writes a prefix of the real ciphertext and then throws. Lets a
+/// test drive a save or DEK rewrite that fails after bytes have already been written to the storage output stream.
 /// </summary>
 public sealed class FailingEncryptToStreamTwoKeyEncryptionService(ITwoKeyEncryptionService inner) : ITwoKeyEncryptionService
 {
@@ -55,13 +55,7 @@ public sealed class FailingEncryptToStreamTwoKeyEncryptionService(ITwoKeyEncrypt
     public Task DecryptStreamAsync(TwoKeyEncryptionResult result, Stream output, string? keyId = null, byte[]? kek = null) => inner.DecryptStreamAsync(result, output, keyId, kek);
 
     /// <summary>Encrypts into a buffer, writes the first half to <paramref name="output" />, then throws without a flush.</summary>
-    public async Task EncryptToStreamAsync(
-        Stream input,
-        Stream output,
-        string? keyId = null,
-        byte[]? kek = null,
-        int chunkSize = 1024 * 1024,
-        CancellationToken ct = default)
+    public async Task EncryptToStreamAsync(Stream input, Stream output, string? keyId = null, byte[]? kek = null, int chunkSize = 1024 * 1024, CancellationToken ct = default)
     {
         using var buffer = new MemoryStream();
         await inner.EncryptToStreamAsync(input, buffer, keyId, kek, chunkSize, ct).ConfigureAwait(false);
@@ -73,8 +67,7 @@ public sealed class FailingEncryptToStreamTwoKeyEncryptionService(ITwoKeyEncrypt
     public Task DecryptToStreamAsync(Stream input, Stream output, string? keyId = null, byte[]? kek = null, CancellationToken ct = default)
         => inner.DecryptToStreamAsync(input, output, keyId, kek, ct);
 
-    public Task<EncryptedStreamLayout> ReadEncryptedStreamLayoutAsync(Stream prefix, CancellationToken ct = default)
-        => inner.ReadEncryptedStreamLayoutAsync(prefix, ct);
+    public Task<EncryptedStreamLayout> ReadEncryptedStreamLayoutAsync(Stream prefix, CancellationToken ct = default) => inner.ReadEncryptedStreamLayoutAsync(prefix, ct);
 
     public Task DecryptFromChunkAsync(
         ReadOnlyMemory<byte> header,

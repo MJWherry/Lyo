@@ -1,6 +1,7 @@
 # Lyo.Music.Web.Components
 
-Blazor components for browsing a music catalog. `MusicReleaseSearch` asks the host to search. `MusicReleaseDetail` shows credits and tracks for a release the host already loaded. Cover URLs and tag lists come from the host. Components do not take a database context.
+Blazor components for browsing a music catalog. `MusicReleaseSearch` asks the host to search. `MusicReleaseDetail` shows credits and tracks for a release the host already loaded.
+Cover URLs and tag lists come from the host. Components do not take a database context.
 
 ## Features
 

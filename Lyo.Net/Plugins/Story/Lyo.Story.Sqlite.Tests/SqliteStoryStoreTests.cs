@@ -1,6 +1,7 @@
+using Lyo.Story.Sqlite.Tests;
 using Lyo.Story.Tests;
 
-[assembly: AssemblyFixture(typeof(Lyo.Story.Sqlite.Tests.StorySqliteFixture))]
+[assembly: AssemblyFixture(typeof(StorySqliteFixture))]
 
 namespace Lyo.Story.Sqlite.Tests;
 

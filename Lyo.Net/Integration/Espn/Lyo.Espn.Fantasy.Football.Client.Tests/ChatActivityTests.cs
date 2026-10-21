@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using Lyo.Espn.Fantasy.Football.Client.Models.Response;
 
 namespace Lyo.Espn.Fantasy.Football.Client.Tests;
@@ -13,8 +14,7 @@ public sealed class ChatActivityTests
     public async Task ChatActivity_TradeMessage_ReadsBothSides()
     {
         var message = await Bind(
-            271, "4dede841-88e4-40ec-bff1-e50d960295db",
-            new Dictionary<string, string> {
+            271, "4dede841-88e4-40ec-bff1-e50d960295db", new() {
                 ["team2addP1"] = "4887558",
                 ["team1"] = "4",
                 ["team2"] = "9",
@@ -38,8 +38,7 @@ public sealed class ChatActivityTests
     [Fact]
     public async Task ChatActivity_AddDropMessage_ReadsAddAndDrop()
     {
-        var message = await Bind(266, "77426f21-f1db-4d97-8e2d-b1a242686a17", new Dictionary<string, string> { ["team1"] = "1", ["addP1"] = "-16029", ["dropP1"] = "-16034" });
-
+        var message = await Bind(266, "77426f21-f1db-4d97-8e2d-b1a242686a17", new() { ["team1"] = "1", ["addP1"] = "-16029", ["dropP1"] = "-16034" });
         Assert.Equal(ChatMessageKind.AddDrop, message.Kind);
         Assert.Equal(1, message.Side1!.TeamId);
         Assert.Equal(-16029, Assert.Single(message.Side1.Added).PlayerId);
@@ -50,7 +49,14 @@ public sealed class ChatActivityTests
     [Fact]
     public async Task ChatActivity_MultiPlayerAddDrop_KeepsEveryPlayer()
     {
-        var message = await Bind(266, "add-many", new Dictionary<string, string> { ["team1"] = "1", ["addP3"] = "33", ["dropP2"] = "22", ["addP1"] = "11", ["dropP1"] = "21" });
+        var message = await Bind(
+            266, "add-many", new() {
+                ["team1"] = "1",
+                ["addP3"] = "33",
+                ["dropP2"] = "22",
+                ["addP1"] = "11",
+                ["dropP1"] = "21"
+            });
 
         Assert.Equal(ChatMessageKind.AddDrop, message.Kind);
         Assert.Equal([11, 33], message.Side1!.Added.Select(player => player.PlayerId).ToArray());
@@ -63,9 +69,7 @@ public sealed class ChatActivityTests
     {
         var handler = new RecordingHandler { Respond = _ => Json(Conversation(270, "recap", content: "What a matchup! Check out your league's recap in the Fantasy app.")) };
         var client = Client(handler);
-
         var conversation = await client.Communication.GetConversationAsync(LeagueId, SeasonId, "topic", ct: TestCt);
-
         var message = Assert.Single(conversation!.Messages!);
         Assert.Equal(ChatMessageKind.Text, message.Kind);
         Assert.Equal("What a matchup! Check out your league's recap in the Fantasy app.", message.Content);
@@ -80,8 +84,7 @@ public sealed class ChatActivityTests
     public async Task ChatActivity_MultiPlayerTrade_KeepsEveryPlayer()
     {
         var message = await Bind(
-            271, "trade-many",
-            new Dictionary<string, string> {
+            271, "trade-many", new() {
                 ["team1"] = "4",
                 ["team2"] = "9",
                 ["team1addP3"] = "3",
@@ -108,15 +111,14 @@ public sealed class ChatActivityTests
 
     private static string Conversation(int typeId, string id, Dictionary<string, string>? attributes = null, string? content = null)
     {
-        var contentJson = content == null ? "" : $",\"content\":{System.Text.Json.JsonSerializer.Serialize(content)}";
+        var contentJson = content == null ? "" : $",\"content\":{JsonSerializer.Serialize(content)}";
         var attributeJson = attributes == null ? "" : $",\"attributes\":{{{string.Join(",", attributes.Select(pair => $"\"{pair.Key}\":\"{pair.Value}\""))}}}";
         var message = $$"""{"id":"{{id}}","author":"LM","date":1,"isDeleted":false,"messageTypeId":{{typeId}},"topicId":"topic"{{contentJson}}{{attributeJson}}}""";
-        return $$"""{"id":"topic","author":"LM","date":1,"isDeleted":false,"isEdited":false,"messages":[{{message}}],"totalMessageCount":1,"type":"CHAT_ALL_MEMBERS","unreadMessageCount":0}""";
+        return
+            $$"""{"id":"topic","author":"LM","date":1,"isDeleted":false,"isEdited":false,"messages":[{{message}}],"totalMessageCount":1,"type":"CHAT_ALL_MEMBERS","unreadMessageCount":0}""";
     }
 
-    private static FantasyFootballClient Client(HttpMessageHandler handler)
-        => new(new FantasyFootballClientOptions { EspnS2 = "s2-token", Swid = "{SWID-1}" }, httpClient: new HttpClient(handler));
+    private static FantasyFootballClient Client(HttpMessageHandler handler) => new(new() { EspnS2 = "s2-token", Swid = "{SWID-1}" }, httpClient: new(handler));
 
-    private static HttpResponseMessage Json(string json)
-        => new(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
+    private static HttpResponseMessage Json(string json) => new(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
 }

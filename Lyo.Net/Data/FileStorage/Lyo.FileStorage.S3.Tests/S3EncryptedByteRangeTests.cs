@@ -1,4 +1,5 @@
-using Amazon.S3.Model;
+using System.Net;
+using Amazon.S3;
 using Lyo.Encryption;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.TwoKey;
@@ -27,15 +28,18 @@ public sealed class S3EncryptedByteRangeTests : IDisposable
         var options = new S3FileStorageOptions { BucketName = "bucket", HashAlgorithm = HashAlgorithm.Sha256 };
         using var service = new S3FileStorageService(
             options, new LocalFileMetadataStore(_temp.SessionDirectory), twoKeyEncryptionService: encryption, s3Client: FakeAmazonS3.Create(out var fake));
+
         fake.OnPutObject = req => {
             using var ms = new MemoryStream();
             req.InputStream.CopyTo(ms);
             objects[req.Key] = ms.ToArray();
             return new();
         };
+
         fake.OnGetObjectMetadata = req => objects.TryGetValue(req.Key, out var data)
             ? new() { ContentLength = data.Length }
-            : throw new Amazon.S3.AmazonS3Exception("Not Found") { StatusCode = System.Net.HttpStatusCode.NotFound };
+            : throw new AmazonS3Exception("Not Found") { StatusCode = HttpStatusCode.NotFound };
+
         fake.OnGetObject = req => {
             var data = objects[req.Key];
             if (req.ByteRange is null)
@@ -54,11 +58,9 @@ public sealed class S3EncryptedByteRangeTests : IDisposable
         const long start = chunkIndex * 32 + 4;
         const long end = start + 7;
         fake.GetObjectRequests.Clear();
-
         await using var slice = await service.OpenPlainByteRangeAsync(saved, start, end, TestCt);
         using var buffered = new MemoryStream();
         await slice!.CopyToAsync(buffered, TestCt);
-
         Assert.Equal(payload[(int)start..((int)end + 1)], buffered.ToArray());
         var dataRead = fake.GetObjectRequests.Last();
         Assert.Equal(layout.HeaderLength + chunkIndex * layout.FrameSize, dataRead.ByteRange.Start);

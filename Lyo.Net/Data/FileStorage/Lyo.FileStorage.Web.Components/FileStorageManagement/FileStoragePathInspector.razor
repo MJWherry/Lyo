@@ -1,167 +1,187 @@
 @namespace Lyo.FileStorage.Web.Components.FileStorageManagement
 @using Lyo.Api.FileStorage.Models
-@using Lyo.Common.Metadata.Records;
 @using Lyo.IO.FileSystem
 @using Lyo.Web.Components.FileUpload
 @implements IAsyncDisposable
 
 <MudPaper Outlined="true" Class="pa-4 d-flex flex-column overflow-hidden" Style="height:100%;min-height:0;">
     <div class="file-storage-tree-panel">
-    @if (Selected == null) {
-        <MudText Typo="Typo.body2" Color="Color.Secondary">Select a folder or file in the tree.</MudText>
-    }
-    else if (Selected.IsDirectory) {
-        <div class="file-storage-tree-toolbar">
-            <MudStack Spacing="2">
-                <MudStack Spacing="1">
-                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
-                        @for (var i = 0; i < Breadcrumbs.Count; i++) {
-                            var crumb = Breadcrumbs[i];
-                            <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => SelectPrefixAsync(crumb.Prefix))">@crumb.Label</MudButton>
-                            @if (i < Breadcrumbs.Count - 1) {
-                                <MudText Typo="Typo.caption" Color="Color.Secondary">/</MudText>
+        @if (Selected == null) {
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Select a folder or file in the tree.</MudText>
+        }
+        else if (Selected.IsDirectory) {
+            <div class="file-storage-tree-toolbar">
+                <MudStack Spacing="2">
+                    <MudStack Spacing="1">
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                            @for (var i = 0; i < Breadcrumbs.Count; i++) {
+                                var crumb = Breadcrumbs[i];
+                                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => SelectPrefixAsync(crumb.Prefix))">@crumb.Label</MudButton>
+
+                                @if (i < Breadcrumbs.Count - 1) {
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">/</MudText>
+                                }
                             }
+                        </MudStack>
+                        @if (Selected.IsPending) {
+                            <MudAlert Severity="Severity.Info" Dense="true">This folder exists only in the browser until you upload a file into it.</MudAlert>
                         }
                     </MudStack>
-                    @if (Selected.IsPending) {
-                        <MudAlert Severity="Severity.Info" Dense="true">This folder exists only in the browser until you upload a file into it.</MudAlert>
+
+                    @if (AllowPrefixChanges) {
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.End">
+                            <MudTextField T="string"
+                                          Class="flex-grow-1"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Label="Folder name"
+                                          Placeholder="single segment"
+                                          @bind-Value="_newFolderName"/>
+                            <MudButton Variant="Variant.Outlined" OnClick="AddFolderAsync">Add</MudButton>
+                        </MudStack>
+                    }
+
+                    @if (AllowPrefixChanges) {
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       OnClick="SaveFilesAsync"
+                                       Disabled="@(_fileBusy || _staged.Count == 0)">
+                                @(_fileBusy ? "Uploading..." : "Upload")
+                            </MudButton>
+                            <LyoFileUpload @ref="_fileUpload"
+                                           MaxFiles="20"
+                                           ButtonText="Browse"
+                                           ButtonVariant="Variant.Outlined"
+                                           InlineLayout="true"
+                                           ShowFiles="false"
+                                           ClientFileDisplay="ClientFileDisplayMode.ExternalList"
+                                           TempSession="_stagingSession"
+                                           OnClientFilePathReady="OnClientFilePathReadyAsync"
+                                           OnClientFilePathRemoved="OnClientFilePathRemovedAsync"
+                                           OnUploadStarted="OnUploadStartedAsync"
+                                           OnUploadProgress="OnUploadProgressAsync"
+                                           OnUploadCompleted="OnUploadCompletedAsync"
+                                           OnUploadCancelled="OnUploadCancelledAsync"
+                                           OnUploadFailed="OnUploadFailedAsync"/>
+                            @foreach (var staged in _staged) {
+                                var chip = staged;
+                                <MudChip T="string"
+                                         Color="@(ReferenceEquals(_selectedStaged, chip) ? Color.Primary : Color.Default)"
+                                         Variant="@(ReferenceEquals(_selectedStaged, chip) ? Variant.Filled : Variant.Outlined)"
+                                         OnClick="@(() => SelectStaged(chip))"
+                                         OnClose="@(() => RemoveStagedAsync(chip))">
+                                    @chip.OriginalFileName
+                                </MudChip>
+                            }
+                        </MudStack>
+
+                        @if (_selectedStaged == null) {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@_uploadStatus</MudText>
+                        }
+                        else {
+                            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                                <MudTextField T="string"
+                                              Class="flex-grow-1"
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              Label="Original file name"
+                                              @bind-Value="_selectedStaged.OriginalFileName"/>
+                                <MudSwitch T="bool" @bind-Value="_selectedStaged.Compress" Color="Color.Primary" Label="Compress"/>
+                                <MudSwitch T="bool" @bind-Value="_selectedStaged.Encrypt" Color="Color.Primary" Label="Encrypt"/>
+                                @if (_selectedStaged.Encrypt) {
+                                    <FileStoreKeyIdField Label="Key id" AutoSelectSingle="true" @bind-Value="_selectedStaged.KeyId"/>
+                                }
+                            </MudStack>
+
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@_uploadStatus</MudText>
+                        }
                     }
                 </MudStack>
-
-                @if (AllowPrefixChanges) {
-                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.End">
-                        <MudTextField T="string"
-                                      Class="flex-grow-1"
-                                      Variant="Variant.Outlined"
-                                      Margin="Margin.Dense"
-                                      Label="Folder name"
-                                      Placeholder="single segment"
-                                      @bind-Value="_newFolderName"/>
-                        <MudButton Variant="Variant.Outlined" OnClick="AddFolderAsync">Add</MudButton>
-                    </MudStack>
+            </div>
+            <div class="file-storage-tree-scroll">
+                <MudText Typo="Typo.subtitle2">Contents</MudText>
+                @if (_contentsBusy) {
+                    <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>
                 }
-
-                @if (AllowPrefixChanges) {
-                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Primary"
-                               OnClick="SaveFilesAsync"
-                               Disabled="@(_fileBusy || _staged.Count == 0)">
-                        @(_fileBusy ? "Uploading..." : "Upload")
-                    </MudButton>
-                    <LyoFileUpload @ref="_fileUpload"
-                                   MaxFiles="20"
-                                   ButtonText="Browse"
-                                   ButtonVariant="Variant.Outlined"
-                                   InlineLayout="true"
-                                   ShowFiles="false"
-                                   ClientFileDisplay="ClientFileDisplayMode.ExternalList"
-                                   TempSession="_stagingSession"
-                                   OnClientFilePathReady="OnClientFilePathReadyAsync"
-                                   OnClientFilePathRemoved="OnClientFilePathRemovedAsync"
-                                   OnUploadStarted="OnUploadStartedAsync"
-                                   OnUploadProgress="OnUploadProgressAsync"
-                                   OnUploadCompleted="OnUploadCompletedAsync"
-                                   OnUploadCancelled="OnUploadCancelledAsync"
-                                   OnUploadFailed="OnUploadFailedAsync"/>
-                    @foreach (var staged in _staged) {
-                        var chip = staged;
-                        <MudChip T="string"
-                                 Color="@(ReferenceEquals(_selectedStaged, chip) ? Color.Primary : Color.Default)"
-                                 Variant="@(ReferenceEquals(_selectedStaged, chip) ? Variant.Filled : Variant.Outlined)"
-                                 OnClick="@(() => SelectStaged(chip))"
-                                 OnClose="@(() => RemoveStagedAsync(chip))">
-                            @chip.OriginalFileName
-                        </MudChip>
-                    }
-                </MudStack>
-
-                @if (_selectedStaged == null) {
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">@_uploadStatus</MudText>
+                else if (_contents.Count == 0) {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">Empty.</MudText>
                 }
                 else {
-                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
-                        <MudTextField T="string"
-                                      Class="flex-grow-1"
-                                      Variant="Variant.Outlined"
-                                      Margin="Margin.Dense"
-                                      Label="Original file name"
-                                      @bind-Value="_selectedStaged.OriginalFileName"/>
-                        <MudSwitch T="bool" @bind-Value="_selectedStaged.Compress" Color="Color.Primary" Label="Compress"/>
-                        <MudSwitch T="bool" @bind-Value="_selectedStaged.Encrypt" Color="Color.Primary" Label="Encrypt"/>
-                        @if (_selectedStaged.Encrypt) {
-                            <FileStoreKeyIdField Label="Key id" AutoSelectSingle="true" @bind-Value="_selectedStaged.KeyId"/>
+                    <MudList T="FileSystemEntry" Dense="true">
+                        @foreach (var child in _contents) {
+                            var entry = child;
+                            <MudListItem T="FileSystemEntry"
+                                         Value="@entry"
+                                         Icon="@(entry.IsDirectory ? Icons.Material.Filled.Folder : Icons.Material.Filled.InsertDriveFile)"
+                                         OnClick="@(() => SelectEntryAsync(entry))">
+                                @entry.Name
+                                @if (!entry.IsDirectory && entry.Length > 0) {
+                                    <span class="mud-text-secondary"> (@FileSizeUnitInfo.FormatBestFitAbbreviation(entry.Length))</span>
+                                }
+                            </MudListItem>
                         }
+                    </MudList>
+                }
+            </div>
+        }
+        else {
+            <div class="file-storage-tree-toolbar">
+                <MudStack Spacing="2">
+                    <MudStack Spacing="1">
+                        <MudText Typo="Typo.h6">@Selected.Name</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@(Selected.PathPrefix ?? FileStoragePathTreeBuilder.RootDisplayName)</MudText>
                     </MudStack>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">@_uploadStatus</MudText>
-                }
-                }
-            </MudStack>
-        </div>
-        <div class="file-storage-tree-scroll">
-            <MudText Typo="Typo.subtitle2">Contents</MudText>
-            @if (_contentsBusy) {
-                <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>
-            }
-            else if (_contents.Count == 0) {
-                <MudText Typo="Typo.caption" Color="Color.Secondary">Empty.</MudText>
-            }
-            else {
-                <MudList T="FileSystemEntry" Dense="true">
-                    @foreach (var child in _contents) {
-                        var entry = child;
-                        <MudListItem T="FileSystemEntry"
-                                     Value="@entry"
-                                     Icon="@(entry.IsDirectory ? Icons.Material.Filled.Folder : Icons.Material.Filled.InsertDriveFile)"
-                                     OnClick="@(() => SelectEntryAsync(entry))">
-                            @entry.Name
-                            @if (!entry.IsDirectory && entry.Length > 0) {
-                                <span class="mud-text-secondary"> (@FileSizeUnitInfo.FormatBestFitAbbreviation(entry.Length))</span>
-                            }
-                        </MudListItem>
+                    @if (Selected.Presence == FileStoragePresence.Physical) {
+                        <MudAlert Severity="Severity.Info" Dense="true">
+                            On @BackendLabel only — not in the catalog. Download, move, copy, rename, and delete act on the raw object (not decrypted).
+                        </MudAlert>
                     }
-                </MudList>
-            }
-        </div>
-    }
-    else {
-        <div class="file-storage-tree-toolbar">
-            <MudStack Spacing="2">
-                <MudStack Spacing="1">
-                    <MudText Typo="Typo.h6">@Selected.Name</MudText>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">@(Selected.PathPrefix ?? FileStoragePathTreeBuilder.RootDisplayName)</MudText>
+                    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Info" Disabled="@(!InCatalog)" OnClick="ViewMetadataAsync">View
+                            metadata
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.PlayCircle" Disabled="@(!CanPreview)" OnClick="PreviewAsync">
+                            Preview
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Link" Disabled="@(!CatalogActionsEnabled)"
+                                   OnClick="AccessLinkAsync">Access link…
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.FileDownload" Disabled="@(!CanDownload)" OnClick="DownloadAsync">
+                            Download
+                        </MudButton>
+                        @if (AllowPrefixChanges) {
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileMove" Disabled="@(!ObjectActionsEnabled)"
+                                       OnClick="MoveAsync">Move…
+                            </MudButton>
+
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.ContentCopy" Disabled="@(!ObjectActionsEnabled)"
+                                       OnClick="CopyAsync">Copy…
+                            </MudButton>
+                        }
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileRenameOutline" Disabled="@(!ObjectActionsEnabled)"
+                                   OnClick="RenameAsync">Rename…
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.VpnKey" Disabled="@(!CatalogActionsEnabled)"
+                                   OnClick="RotateDekAsync">Rotate DEK…
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" Disabled="@(!ObjectActionsEnabled)"
+                                   OnClick="DeleteAsync">Delete
+                        </MudButton>
+                    </MudStack>
                 </MudStack>
-                @if (Selected.Presence == FileStoragePresence.Physical) {
-                    <MudAlert Severity="Severity.Info" Dense="true">
-                        On @BackendLabel only — not in the catalog. Download, move, copy, rename, and delete act on the raw object (not decrypted).
-                    </MudAlert>
+            </div>
+            <div class="file-storage-tree-scroll">
+                @if (_metadataBusy) {
+                    <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>
                 }
-                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Info" Disabled="@(!InCatalog)" OnClick="ViewMetadataAsync">View metadata</MudButton>
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.PlayCircle" Disabled="@(!CanPreview)" OnClick="PreviewAsync">Preview</MudButton>
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Link" Disabled="@(!CatalogActionsEnabled)" OnClick="AccessLinkAsync">Access link…</MudButton>
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.FileDownload" Disabled="@(!CanDownload)" OnClick="DownloadAsync">Download</MudButton>
-                    @if (AllowPrefixChanges) {
-                        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileMove" Disabled="@(!ObjectActionsEnabled)" OnClick="MoveAsync">Move…</MudButton>
-                        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.ContentCopy" Disabled="@(!ObjectActionsEnabled)" OnClick="CopyAsync">Copy…</MudButton>
-                    }
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileRenameOutline" Disabled="@(!ObjectActionsEnabled)" OnClick="RenameAsync">Rename…</MudButton>
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.VpnKey" Disabled="@(!CatalogActionsEnabled)" OnClick="RotateDekAsync">Rotate DEK…</MudButton>
-                    <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" Disabled="@(!ObjectActionsEnabled)" OnClick="DeleteAsync">Delete</MudButton>
-                </MudStack>
-            </MudStack>
-        </div>
-        <div class="file-storage-tree-scroll">
-            @if (_metadataBusy) {
-                <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>
-            }
-            else if (_metadata != null) {
-                <FileStoreMetadataTable Metadata="_metadata"/>
-            }
-            else {
-                <MudText Typo="Typo.caption" Color="Color.Secondary">@_metadataStatus</MudText>
-            }
-        </div>
-    }
+                else if (_metadata != null) {
+                    <FileStoreMetadataTable Metadata="_metadata"/>
+                }
+                else {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@_metadataStatus</MudText>
+                }
+            </div>
+        }
     </div>
 </MudPaper>

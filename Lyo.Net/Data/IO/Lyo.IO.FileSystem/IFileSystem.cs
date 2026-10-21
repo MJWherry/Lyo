@@ -12,16 +12,16 @@ namespace Lyo.IO.FileSystem;
 /// escapes the root after normalization throws <see cref="Lyo.Exceptions.Models.InvalidFormatException" />.
 /// </para>
 /// <para>
-/// <b>Errors.</b> Implementations translate backend-specific failures into BCL types so callers can be written once: a missing file is
-/// <see cref="FileNotFoundException" />, an existing destination with <c>overwrite: false</c> is <see cref="IOException" />, and an operation the backend cannot perform is
-/// <see cref="NotSupportedException" />. Check <see cref="Capabilities" /> before relying on append or directory move.
+/// <b>Errors.</b> Implementations translate backend-specific failures into BCL types so callers can be written once: a missing file is <see cref="FileNotFoundException" />, an
+/// existing destination with <c>overwrite: false</c> is <see cref="IOException" />, and an operation the backend cannot perform is <see cref="NotSupportedException" />. Check
+/// <see cref="Capabilities" /> before relying on append or directory move.
 /// </para>
 /// </remarks>
 public interface IFileSystem : IDisposable
 {
     /// <summary>
-    /// Root jail. Every path passed in resolves under this directory. This is a path-containment guard applied after normalization, not a symlink-proof sandbox: on
-    /// backends with real links, a link stored inside the root may still point outside it.
+    /// Root jail. Every path passed in resolves under this directory. This is a path-containment guard applied after normalization, not a symlink-proof sandbox: on backends with
+    /// real links, a link stored inside the root may still point outside it.
     /// </summary>
     string RootPath { get; }
 
@@ -62,8 +62,8 @@ public interface IFileSystem : IDisposable
     Task<IReadOnlyList<FileSystemEntry>> ListDirectoryAsync(string path, CancellationToken ct = default);
 
     /// <summary>
-    /// Streams entries under <paramref name="path" /> without materializing the whole listing. Set <paramref name="recursive" /> to walk descendants; directories are
-    /// yielded before their contents. Empty when the directory is missing.
+    /// Streams entries under <paramref name="path" /> without materializing the whole listing. Set <paramref name="recursive" /> to walk descendants; directories are yielded
+    /// before their contents. Empty when the directory is missing.
     /// </summary>
     IAsyncEnumerable<FileSystemEntry> EnumerateDirectoryAsync(string path, bool recursive = false, CancellationToken ct = default);
 
@@ -77,8 +77,8 @@ public interface IFileSystem : IDisposable
     FileSystemEntry? GetEntry(string path);
 
     /// <summary>
-    /// Metadata for <paramref name="path" /> in one call, or null when nothing is there. Prefer this over chaining <see cref="FileExistsAsync" />,
-    /// <see cref="GetLengthAsync" />, and <see cref="GetLastWriteTimeUtcAsync" />, which costs one round trip each on remote backends.
+    /// Metadata for <paramref name="path" /> in one call, or null when nothing is there. Prefer this over chaining <see cref="FileExistsAsync" />, <see cref="GetLengthAsync" />,
+    /// and <see cref="GetLastWriteTimeUtcAsync" />, which costs one round trip each on remote backends.
     /// </summary>
     Task<FileSystemEntry?> GetEntryAsync(string path, CancellationToken ct = default);
 
@@ -122,9 +122,7 @@ public interface IFileSystem : IDisposable
     /// <summary>Opens <paramref name="path" /> for append. Blocks. Prefer <see cref="OpenAppendAsync" />.</summary>
     Stream OpenAppend(string path);
 
-    /// <summary>
-    /// Opens <paramref name="path" /> for append. Requires <see cref="FileSystemCapabilities.Append" />; backends without it throw <see cref="NotSupportedException" />.
-    /// </summary>
+    /// <summary>Opens <paramref name="path" /> for append. Requires <see cref="FileSystemCapabilities.Append" />; backends without it throw <see cref="NotSupportedException" />.</summary>
     Task<Stream> OpenAppendAsync(string path, CancellationToken ct = default);
 
     /// <summary>Byte length of the file at <paramref name="path" />. Blocks. Prefer <see cref="GetLengthAsync" />.</summary>

@@ -1,4 +1,5 @@
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
@@ -6,7 +7,6 @@ using Lyo.Health;
 using Lyo.Postgres;
 using Lyo.Tag.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Tag.Postgres;
 
@@ -33,8 +33,7 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
     public string HealthCheckName => "tag-postgres";
 
     /// <inheritdoc />
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => PostgresHealth.CheckAsync(_contextFactory, PostgresTagOptions.Schema, ct);
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => PostgresHealth.CheckAsync(_contextFactory, PostgresTagOptions.Schema, ct);
 
     /// <inheritdoc />
     public async Task AddTagAsync(
@@ -116,7 +115,11 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
         var forEntityId = EntityRefPersistedGuid.PersistedEntityId(forEntity);
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var query = context.Tags.AsNoTracking().WhereActive().WhereTenant(resolvedTenant).Where(t => t.SubjectEntityType == forEntity.EntityType && t.SubjectEntityId == forEntityId);
+        var query = context.Tags.AsNoTracking()
+            .WhereActive()
+            .WhereTenant(resolvedTenant)
+            .Where(t => t.SubjectEntityType == forEntity.EntityType && t.SubjectEntityId == forEntityId);
+
         if (!string.IsNullOrWhiteSpace(tagType))
             query = query.Where(t => t.TagType == tagType);
 
@@ -188,8 +191,7 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
         if (!string.IsNullOrWhiteSpace(name))
             query = query.Where(t => t.Name == name);
 
-        if (!string.IsNullOrWhiteSpace(text))
-        {
+        if (!string.IsNullOrWhiteSpace(text)) {
             var term = text.Trim().ToLowerInvariant();
             query = query.Where(t => t.Name.ToLower().Contains(term) || t.TagType.ToLower().Contains(term));
         }
@@ -199,7 +201,7 @@ public sealed class PostgresTagStore : EntityRefPostgresStoreBase, ITagStore, IH
             (TagSort.Count, SortDirection.Desc) => grouped.OrderByDescending(t => t.Count).ThenBy(t => t.Name).ThenBy(t => t.TagType),
             (TagSort.Count, SortDirection.Asc) => grouped.OrderBy(t => t.Count).ThenBy(t => t.Name).ThenBy(t => t.TagType),
             (TagSort.Name, SortDirection.Desc) => grouped.OrderByDescending(t => t.Name).ThenBy(t => t.TagType),
-            _ => grouped.OrderBy(t => t.Name).ThenBy(t => t.TagType)
+            var _ => grouped.OrderBy(t => t.Name).ThenBy(t => t.TagType)
         };
 
         var rows = await ordered.Skip(skip).Take(take).ToListAsync(ct).ConfigureAwait(false);

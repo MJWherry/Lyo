@@ -12,13 +12,12 @@ namespace Lyo.DateAndTime;
 /// <summary>US-state time-zone conversions and weekday scheduling helpers, all anchored in each state's local civil time.</summary>
 /// <remarks>
 /// <para>
-/// Time zones resolve through <see cref="Lyo.Common.Core.Enums.GeographicInfo.FromState" /> (IANA ids such as <c>America/New_York</c>). When the OS cannot resolve an id, conversion
-/// members return <see langword="null" /> instead of throwing.
+/// Time zones resolve through <see cref="Lyo.Common.Core.Enums.GeographicInfo.FromState" /> (IANA ids such as <c>America/New_York</c>). When the OS cannot resolve an id,
+/// conversion members return <see langword="null" /> instead of throwing.
 /// </para>
 /// <para>
-/// Scheduling reads <see cref="DayFlags" /> as one bit per weekday. Next-run search looks at most seven local midnights ahead; discrete <c>IsPastDue</c> scans cap
-/// backward history the same way. The interval-based <c>IsPastDue</c> overload only looks at <em>today's</em> local window — the discrete-times overload walks multiple
-/// days.
+/// Scheduling reads <see cref="DayFlags" /> as one bit per weekday. Next-run search looks at most seven local midnights ahead; discrete <c>IsPastDue</c> scans cap backward
+/// history the same way. The interval-based <c>IsPastDue</c> overload only looks at <em>today's</em> local window — the discrete-times overload walks multiple days.
 /// </para>
 /// <para>On .NET 6+, APIs use <see cref="TimeOnly" />; on .NET Standard 2.0 use <see cref="TimeOnlyModel" /> instead (this library aliases the type internally).</para>
 /// </remarks>

@@ -40,18 +40,21 @@ internal static partial class WindowsDesktopInput
         var top = GetSystemMetrics(77);
         var width = Math.Max(GetSystemMetrics(78) - 1, 1);
         var height = Math.Max(GetSystemMetrics(79) - 1, 1);
-        return new() {
-            X = (x - left) * 65535 / width,
-            Y = (y - top) * 65535 / height,
-            Flags = flags
-        };
+        return new() { X = (x - left) * 65535 / width, Y = (y - top) * 65535 / height, Flags = flags };
     }
 
-    private static uint ButtonFlag(DesktopMouseButton button, bool down) => button switch {
-        DesktopMouseButton.Right => down ? 0x0008u : 0x0010u,
-        DesktopMouseButton.Middle => down ? 0x0020u : 0x0040u,
-        _ => down ? 0x0002u : 0x0004u
-    };
+    private static uint ButtonFlag(DesktopMouseButton button, bool down)
+        => button switch {
+            DesktopMouseButton.Right => down ? 0x0008u : 0x0010u,
+            DesktopMouseButton.Middle => down ? 0x0020u : 0x0040u,
+            var _ => down ? 0x0002u : 0x0004u
+        };
+
+    [LibraryImport("user32.dll")]
+    private static partial uint SendInput(uint count, ref Input input, int size);
+
+    [LibraryImport("user32.dll")]
+    private static partial int GetSystemMetrics(int index);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct Input
@@ -63,8 +66,11 @@ internal static partial class WindowsDesktopInput
     [StructLayout(LayoutKind.Explicit)]
     private struct InputUnion
     {
-        [FieldOffset(0)] public MouseInput Mouse;
-        [FieldOffset(0)] public KeyInput Key;
+        [FieldOffset(0)]
+        public MouseInput Mouse;
+
+        [FieldOffset(0)]
+        public KeyInput Key;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -87,10 +93,4 @@ internal static partial class WindowsDesktopInput
         public uint Time;
         public nint Extra;
     }
-
-    [LibraryImport("user32.dll")]
-    private static partial uint SendInput(uint count, ref Input input, int size);
-
-    [LibraryImport("user32.dll")]
-    private static partial int GetSystemMetrics(int index);
 }

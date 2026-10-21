@@ -1,13 +1,9 @@
-@using System.Text
-@using Lyo.Common.Metadata.Records
+@inject TestGatewayFileTransformer Transformer
+@inject IJsInterop Js
 @using Lyo.Compression.Models
 @using Lyo.Encryption
 @using Lyo.Encryption.AesSiv
-@using Lyo.Web.Components
 @using Lyo.Web.Components.FileUpload
-@using Lyo.Web.Components.Models
-@inject TestGatewayFileTransformer Transformer
-@inject IJsInterop Js
 @inherits LyoWorkbenchBase
 
 <MudPaper Class="pa-4">

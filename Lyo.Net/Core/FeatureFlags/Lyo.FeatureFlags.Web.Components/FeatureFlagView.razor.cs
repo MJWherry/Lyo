@@ -1,12 +1,11 @@
-using Lyo.FeatureFlags;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.FeatureFlags.Web.Components;
 
 /// <summary>
-/// Renders <see cref="ChildContent" /> when <see cref="IFeatureFlagService.IsEnabled" /> is true for <see cref="Name" />.
-/// A missing service or a disabled flag renders nothing. Pass <see cref="Context" /> when the flag uses rules or a partial percentage.
+/// Renders <see cref="ChildContent" /> when <see cref="IFeatureFlagService.IsEnabled" /> is true for <see cref="Name" />. A missing service or a disabled flag renders
+/// nothing. Pass <see cref="Context" /> when the flag uses rules or a partial percentage.
 /// </summary>
 public partial class FeatureFlagView
 {
@@ -26,10 +25,8 @@ public partial class FeatureFlagView
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
-    private bool Enabled
-    {
-        get
-        {
+    private bool Enabled {
+        get {
             if (string.IsNullOrWhiteSpace(Name))
                 return false;
 

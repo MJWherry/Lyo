@@ -11,12 +11,12 @@ public partial class AutomationPlanRunnerView : ComponentBase, IDisposable
 {
     private readonly CancellationTokenSource _lifetime = new();
     private readonly List<AutomationRunStepRes> _steps = [];
-    private string _status = "";
-    private string? _error;
     private bool _busy;
-    private int _selected = -1;
+    private string? _error;
     private string? _image;
     private Guid? _runId;
+    private int _selected = -1;
+    private string _status = "";
 
     /// <summary>Client that posts the plan and reads step screenshots.</summary>
     [Parameter]
@@ -46,7 +46,7 @@ public partial class AutomationPlanRunnerView : ComponentBase, IDisposable
         _image = null;
         _status = AutomationRunStatus.Queued;
         try {
-            var accepted = await Client.StartAsync(new AutomationRunReq { Plan = Plan, Headless = true }, _lifetime.Token);
+            var accepted = await Client.StartAsync(new() { Plan = Plan, Headless = true }, _lifetime.Token);
             _runId = accepted.RunId;
             var run = await PollAsync(accepted.RunId);
             _status = run.Status;
@@ -104,6 +104,5 @@ public partial class AutomationPlanRunnerView : ComponentBase, IDisposable
         }
     }
 
-    private static string ContextJson(AutomationPlanContextSnapshot? context)
-        => context is null ? "" : JsonSerializer.Serialize(context, AutomationPlanDraft.JsonOptions);
+    private static string ContextJson(AutomationPlanContextSnapshot? context) => context is null ? "" : JsonSerializer.Serialize(context, AutomationPlanDraft.JsonOptions);
 }

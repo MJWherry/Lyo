@@ -33,6 +33,9 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
     /// <summary>Root resolved once. Every traversal guard compares against it, and <c>FindFilePath</c> probes several candidates per read.</summary>
     private readonly string _storageRootFull;
 
+    /// <inheritdoc />
+    public override bool SupportsPlainByteRange => true;
+
     public LocalFileStorageService(
         DiskFileStorageOptions options,
         ILoggerFactory? loggerFactory = null,
@@ -45,10 +48,8 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
         IFileContentPolicy? contentPolicy = null,
         IFileTypeSniffer? fileTypeSniffer = null)
         : this(
-            ArgumentHelpers.ThrowIfNullReturn(options), loggerFactory, compressionService, twoKeyEncryptionService, metrics, operationContextAccessor, auditHandlers,
-            contentPolicy, fileTypeSniffer, OpenCatalog(options, loggerFactory, metadataService))
-    {
-    }
+            ArgumentHelpers.ThrowIfNullReturn(options), loggerFactory, compressionService, twoKeyEncryptionService, metrics, operationContextAccessor, auditHandlers, contentPolicy,
+            fileTypeSniffer, OpenCatalog(options, loggerFactory, metadataService)) { }
 
     private LocalFileStorageService(
         DiskFileStorageOptions options,
@@ -62,8 +63,7 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
         IFileTypeSniffer? fileTypeSniffer,
         LocalCatalog catalog)
         : base(
-            options, catalog.Metadata,
-            (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<LocalFileStorageService>(), compressionService, twoKeyEncryptionService,
+            options, catalog.Metadata, (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<LocalFileStorageService>(), compressionService, twoKeyEncryptionService,
             options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance, operationContextAccessor, auditHandlers, contentPolicy, fileTypeSniffer)
     {
         _options = options;
@@ -79,19 +79,6 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
         Logger.LogInformation("Created root directory: {RootPath}", _options.RootDirectoryPath);
     }
 
-    private readonly record struct LocalCatalog(IFileMetadataStore Metadata, bool OwnsMetadata);
-
-    private static LocalCatalog OpenCatalog(DiskFileStorageOptions options, ILoggerFactory? loggerFactory, IFileMetadataStore? metadataService)
-    {
-        if (metadataService != null)
-            return new(metadataService, false);
-
-        return new(new LocalFileMetadataStore(options.RootDirectoryPath, loggerFactory), true);
-    }
-
-    /// <inheritdoc />
-    public IFileSystem Physical => field ??= new LocalFileSystem(_options.RootDirectoryPath);
-
     /// <inheritdoc />
     Task<IReadOnlyList<string>> IFileStorageDiagnosticsService.ListStorageKeysAsync(string? prefix, int maxKeys, CancellationToken ct)
     {
@@ -105,6 +92,17 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
             list.Add(ToStorageKeyRelativeToRoot(storageRootFull, absolute));
 
         return Task.FromResult<IReadOnlyList<string>>(list);
+    }
+
+    /// <inheritdoc />
+    public IFileSystem Physical => field ??= new LocalFileSystem(_options.RootDirectoryPath);
+
+    private static LocalCatalog OpenCatalog(DiskFileStorageOptions options, ILoggerFactory? loggerFactory, IFileMetadataStore? metadataService)
+    {
+        if (metadataService != null)
+            return new(metadataService, false);
+
+        return new(new LocalFileMetadataStore(options.RootDirectoryPath, loggerFactory), true);
     }
 
     protected override async Task<HealthResult> CheckHealthLightweightAsync(CancellationToken ct)
@@ -161,9 +159,7 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
     }
 
     /// <summary>Accepts a raw HTTP PUT body for a pending plaintext direct upload. Pair with a trusted cooperating HTTP host.</summary>
-    /// <remarks>
-    /// Enforces <see cref="FileStorageServiceBaseOptions.MaxUploadSizeBytes" /> during the copy so an attacker cannot fill the disk before finalize re-checks the size.
-    /// </remarks>
+    /// <remarks>Enforces <see cref="FileStorageServiceBaseOptions.MaxUploadSizeBytes" /> during the copy so an attacker cannot fill the disk before finalize re-checks the size.</remarks>
     public async Task ReceiveDirectPutAsync(Guid fileId, Stream body, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(body);
@@ -318,8 +314,8 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
     }
 
     /// <summary>
-    /// Opens the write side for <paramref name="fileId" /> as an <see cref="AtomicReplaceFileStream" />. Bytes land in a sibling temp file and only replace the real path once the
-    /// caller flushes. A caller that faults mid-write therefore leaves any pre-existing content intact instead of truncating it.
+    /// Opens the write side for <paramref name="fileId" /> as an <see cref="AtomicReplaceFileStream" />. Bytes land in a sibling temp file and only replace the real path once
+    /// the caller flushes. A caller that faults mid-write therefore leaves any pre-existing content intact instead of truncating it.
     /// </summary>
     protected override Task<Stream> CreateOutputStreamAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct)
     {
@@ -336,9 +332,6 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
         var filePath = GetFilePath(fileId, extension, pathPrefix);
         return File.Exists(filePath) ? Task.FromResult(new FileInfo(filePath).Length) : Task.FromResult<long>(0);
     }
-
-    /// <inheritdoc />
-    public override bool SupportsPlainByteRange => true;
 
     protected override Task<Stream?> ReadFromStorageAsync(Guid fileId, string? pathPrefix, CancellationToken ct)
     {
@@ -549,101 +542,6 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
         base.Dispose();
     }
 
-    /// <summary>
-    /// Write stream that buffers into a sibling temp file and moves it over the real path only after the caller has flushed, so a write that faults partway leaves the previous
-    /// contents of the target untouched.
-    /// </summary>
-    /// <remarks>
-    /// The commit signal is an explicit <see cref="Stream.Flush()" /> or <see cref="Stream.FlushAsync(CancellationToken)" />. Every save path in
-    /// <see cref="FileStorageServiceBase" />, the compress-encrypt pipeline, and the DEK rewrite flushes before disposing. A path that throws mid-write never reaches its flush, so
-    /// disposal discards the temp file instead of promoting a truncated payload. New callers of <see cref="CreateOutputStreamAsync" /> must flush to persist anything.
-    /// </remarks>
-    private sealed class AtomicReplaceFileStream : FileStream
-    {
-        private readonly ILogger _logger;
-
-        private readonly string _targetPath;
-
-        private readonly string _tempPath;
-
-        private bool _committedOrDiscarded;
-
-        private bool _flushed;
-
-        private AtomicReplaceFileStream(string tempPath, string targetPath, ILogger logger)
-            : base(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous)
-        {
-            _tempPath = tempPath;
-            _targetPath = targetPath;
-            _logger = logger;
-        }
-
-        internal static AtomicReplaceFileStream Create(string targetPath, ILogger logger)
-            => new(targetPath + ".partial-" + LyoGuid.CreateV7().ToString("N") + ".tmp", targetPath, logger);
-
-        public override void Flush()
-        {
-            base.Flush();
-            _flushed = true;
-        }
-
-        public override async Task FlushAsync(CancellationToken ct)
-        {
-            await base.FlushAsync(ct).ConfigureAwait(false);
-            _flushed = true;
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            base.Dispose(disposing);
-            if (disposing)
-                CommitOrDiscard();
-        }
-
-#if !NETSTANDARD2_0
-        public override async ValueTask DisposeAsync()
-        {
-            await base.DisposeAsync().ConfigureAwait(false);
-            CommitOrDiscard();
-        }
-#endif
-
-        private void CommitOrDiscard()
-        {
-            if (_committedOrDiscarded)
-                return;
-
-            _committedOrDiscarded = true;
-            if (!_flushed) {
-                _logger.LogDebug("Discarding unflushed partial write {TempPath}; leaving {TargetPath} untouched", _tempPath, _targetPath);
-                TryDeleteTemp();
-                return;
-            }
-
-            try {
-                if (File.Exists(_targetPath))
-                    File.Replace(_tempPath, _targetPath, null);
-                else
-                    File.Move(_tempPath, _targetPath);
-            }
-            catch {
-                TryDeleteTemp();
-                throw;
-            }
-        }
-
-        private void TryDeleteTemp()
-        {
-            try {
-                if (File.Exists(_tempPath))
-                    File.Delete(_tempPath);
-            }
-            catch (Exception ex) {
-                _logger.LogDebug(ex, "Best-effort delete of partial write temp file failed: {TempPath}", _tempPath);
-            }
-        }
-    }
-
     /// <summary>Moves a file and replaces an existing destination. Uses delete-then-move so the path works on netstandard2.0 (no <c>File.Move</c> overwrite overload).</summary>
     private static void MoveFileReplace(string sourcePath, string destinationPath)
     {
@@ -825,5 +723,102 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
             throw new UnauthorizedAccessException($"Path '{absoluteFile}' is outside storage root.");
 
         return candTrim.Substring(rootWithSep.Length).Replace(Path.DirectorySeparatorChar, '/');
+    }
+
+    private readonly record struct LocalCatalog(IFileMetadataStore Metadata, bool OwnsMetadata);
+
+    /// <summary>
+    /// Write stream that buffers into a sibling temp file and moves it over the real path only after the caller has flushed, so a write that faults partway leaves the previous
+    /// contents of the target untouched.
+    /// </summary>
+    /// <remarks>
+    /// The commit signal is an explicit <see cref="Stream.Flush()" /> or <see cref="Stream.FlushAsync(CancellationToken)" />. Every save path in
+    /// <see cref="FileStorageServiceBase" />, the compress-encrypt pipeline, and the DEK rewrite flushes before disposing. A path that throws mid-write never reaches its flush, so
+    /// disposal discards the temp file instead of promoting a truncated payload. New callers of <see cref="CreateOutputStreamAsync" /> must flush to persist anything.
+    /// </remarks>
+    private sealed class AtomicReplaceFileStream : FileStream
+    {
+        private readonly ILogger _logger;
+
+        private readonly string _targetPath;
+
+        private readonly string _tempPath;
+
+        private bool _committedOrDiscarded;
+
+        private bool _flushed;
+
+        private AtomicReplaceFileStream(string tempPath, string targetPath, ILogger logger)
+            : base(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous)
+        {
+            _tempPath = tempPath;
+            _targetPath = targetPath;
+            _logger = logger;
+        }
+
+        internal static AtomicReplaceFileStream Create(string targetPath, ILogger logger)
+            => new(targetPath + ".partial-" + LyoGuid.CreateV7().ToString("N") + ".tmp", targetPath, logger);
+
+        public override void Flush()
+        {
+            base.Flush();
+            _flushed = true;
+        }
+
+        public override async Task FlushAsync(CancellationToken ct)
+        {
+            await base.FlushAsync(ct).ConfigureAwait(false);
+            _flushed = true;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+            if (disposing)
+                CommitOrDiscard();
+        }
+
+#if !NETSTANDARD2_0
+        public override async ValueTask DisposeAsync()
+        {
+            await base.DisposeAsync().ConfigureAwait(false);
+            CommitOrDiscard();
+        }
+#endif
+
+        private void CommitOrDiscard()
+        {
+            if (_committedOrDiscarded)
+                return;
+
+            _committedOrDiscarded = true;
+            if (!_flushed) {
+                _logger.LogDebug("Discarding unflushed partial write {TempPath}; leaving {TargetPath} untouched", _tempPath, _targetPath);
+                TryDeleteTemp();
+                return;
+            }
+
+            try {
+                if (File.Exists(_targetPath))
+                    File.Replace(_tempPath, _targetPath, null);
+                else
+                    File.Move(_tempPath, _targetPath);
+            }
+            catch {
+                TryDeleteTemp();
+                throw;
+            }
+        }
+
+        private void TryDeleteTemp()
+        {
+            try {
+                if (File.Exists(_tempPath))
+                    File.Delete(_tempPath);
+            }
+            catch (Exception ex) {
+                _logger.LogDebug(ex, "Best-effort delete of partial write temp file failed: {TempPath}", _tempPath);
+            }
+        }
     }
 }

@@ -4,8 +4,8 @@ using Lyo.Streams;
 namespace Lyo.Testing;
 
 /// <summary>
-/// Seeded, reproducible byte payloads for xUnit suites. Prefer this over an unseeded <see cref="Random" /> or <see cref="System.Security.Cryptography.RandomNumberGenerator" />
-/// so tests stay consistent across runs.
+/// Seeded, reproducible byte payloads for xUnit suites. Prefer this over an unseeded <see cref="Random" /> or
+/// <see cref="System.Security.Cryptography.RandomNumberGenerator" /> so tests stay consistent across runs.
 /// </summary>
 /// <remarks><see cref="Seed" /> matches <c>Lyo.Benchmark.Data.BenchmarkData.PayloadSeed</c> and <see cref="DeterministicPayloadStream.DefaultSeed" />.</remarks>
 public static class TestData

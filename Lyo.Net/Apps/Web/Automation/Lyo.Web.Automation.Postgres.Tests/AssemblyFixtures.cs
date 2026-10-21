@@ -1,1 +1,3 @@
-[assembly: AssemblyFixture(typeof(Lyo.Web.Automation.Postgres.Tests.AutomationPlanPostgresFixture))]
+using Lyo.Web.Automation.Postgres.Tests;
+
+[assembly: AssemblyFixture(typeof(AutomationPlanPostgresFixture))]

@@ -18,9 +18,7 @@ public static class StoryGraphDiagram
     {
         ArgumentHelpers.ThrowIfNull(draft);
         var layout = StoryGraphLayout.Build(draft);
-        var document = new DiagramBuilder(string.IsNullOrWhiteSpace(name) ? "Story" : name)
-            .Page("flow", "Flow", page => Write(page, layout))
-            .Build();
+        var document = new DiagramBuilder(string.IsNullOrWhiteSpace(name) ? "Story" : name).Page("flow", "Flow", page => Write(page, layout)).Build();
         return new(document, layout.Cyclic);
     }
 
@@ -50,8 +48,8 @@ public static class StoryGraphDiagram
             return [];
 
         return [
-            new DiagramPoint { X = int.Parse(tokens[4], CultureInfo.InvariantCulture), Y = int.Parse(tokens[5], CultureInfo.InvariantCulture) },
-            new DiagramPoint { X = int.Parse(tokens[7], CultureInfo.InvariantCulture), Y = int.Parse(tokens[8], CultureInfo.InvariantCulture) }
+            new() { X = int.Parse(tokens[4], CultureInfo.InvariantCulture), Y = int.Parse(tokens[5], CultureInfo.InvariantCulture) },
+            new() { X = int.Parse(tokens[7], CultureInfo.InvariantCulture), Y = int.Parse(tokens[8], CultureInfo.InvariantCulture) }
         ];
     }
 }

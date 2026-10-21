@@ -40,9 +40,9 @@ public static class Constants
         public const string ConfigAttribute = "data-lyo-chart";
 
         /// <summary>
-        /// Default Chart.js source used by the viewer: the copy shipped as a static web asset of <c>Lyo.Reporting.Web</c>. Server-side PDF rendering has no outbound network
-        /// access in most deployments, and a CDN reference is also a live supply-chain dependency for every rendered report, so the bundle is vendored. Hosts that would
-        /// rather use a CDN can set <see cref="CdnScriptUrl" /> on the viewer.
+        /// Default Chart.js source used by the viewer: the copy shipped as a static web asset of <c>Lyo.Reporting.Web</c>. Server-side PDF rendering has no outbound network access
+        /// in most deployments, and a CDN reference is also a live supply-chain dependency for every rendered report, so the bundle is vendored. Hosts that would rather use a CDN can set
+        /// <see cref="CdnScriptUrl" /> on the viewer.
         /// </summary>
         public const string DefaultScriptUrl = "_content/Lyo.Reporting.Web/scripts/chart.umd.min.js";
 

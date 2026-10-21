@@ -3,8 +3,8 @@ using System.Diagnostics;
 namespace Lyo.Exceptions.Models;
 
 /// <summary>
-/// Thrown when required configuration is missing or wrong (for example a required connection string, key material, or service registration is
-/// absent). This is a server-side fault rather than a client error, so it intentionally does not derive from <see cref="HttpException" />.
+/// Thrown when required configuration is missing or wrong (for example a required connection string, key material, or service registration is absent). This is a server-side
+/// fault rather than a client error, so it intentionally does not derive from <see cref="HttpException" />.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public class ConfigurationException : Exception

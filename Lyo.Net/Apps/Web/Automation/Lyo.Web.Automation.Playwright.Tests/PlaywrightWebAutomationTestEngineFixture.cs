@@ -1,7 +1,6 @@
 using Lyo.Testing;
 using Lyo.Web.Automation.Abstractions;
 using Lyo.Web.Automation.Models;
-using Lyo.Web.Automation.Playwright.Configuration;
 using Lyo.Web.Automation.Playwright.Service;
 using Lyo.Web.Automation.Tests.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,6 +13,9 @@ public sealed class PlaywrightWebAutomationTestEngineFixture : IWebAutomationTes
     private readonly string _root;
     private ILoggerFactory _loggerFactory;
     private ServiceProvider _provider;
+
+    /// <summary>Current xUnit cancellation token. Reads <see cref="TestContext.Current" /> when accessed, so each test gets that test's token.</summary>
+    public CancellationToken TestCt => TestContext.Current.CancellationToken;
 
     public PlaywrightWebAutomationTestEngineFixture()
     {
@@ -30,9 +32,6 @@ public sealed class PlaywrightWebAutomationTestEngineFixture : IWebAutomationTes
     }
 
     public string EngineName => "Playwright";
-
-    /// <summary>Current xUnit cancellation token. Reads <see cref="TestContext.Current"/> when accessed, so each test gets that test's token.</summary>
-    public CancellationToken TestCt => TestContext.Current.CancellationToken;
 
     public Task<IWebAutomationSession> CreateSessionAsync(CancellationToken ct = default)
     {

@@ -13,6 +13,7 @@ public readonly record struct EdgeDockRest(double Width, double Height, bool Hei
         var width = Math.Max(1, (int)Math.Round(Width * factor));
         if (HeightToContent || Height <= 0)
             return (width, 0);
+
         return (width, Math.Max(1, (int)Math.Round(Height * factor)));
     }
 }

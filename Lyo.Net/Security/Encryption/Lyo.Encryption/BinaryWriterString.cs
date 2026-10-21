@@ -4,8 +4,8 @@ using Lyo.Exceptions;
 namespace Lyo.Encryption;
 
 /// <summary>
-/// Span reader/writer for the length-prefixed string <see cref="BinaryWriter.Write(string)" /> emits: 7-bit encoded UTF-8 length, then the bytes.
-/// Envelope framing uses this so a header can be measured and written without a <see cref="BinaryWriter" /> over a stream.
+/// Span reader/writer for the length-prefixed string <see cref="BinaryWriter.Write(string)" /> emits: 7-bit encoded UTF-8 length, then the bytes. Envelope framing uses this
+/// so a header can be measured and written without a <see cref="BinaryWriter" /> over a stream.
 /// </summary>
 public static class BinaryWriterString
 {

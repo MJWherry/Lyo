@@ -6,10 +6,10 @@ using Lyo.Authentication.Options;
 using Lyo.Authentication.Services.Jwt;
 using Lyo.Authentication.Services.Users;
 using Lyo.Common.Core.Extensions;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Core.Security;
 using Lyo.KeyStore;
 using Microsoft.Extensions.Logging.Abstractions;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Authentication.Tests;
 
@@ -52,7 +52,7 @@ public class Ed25519LyoJwtTests
         var issueOpts = new LyoJwtOptions { Issuer = "https://evil", Audience = "lyo-api" };
         var validateOpts = new LyoJwtOptions { Issuer = "https://auth.lyo", Audience = "lyo-api" };
         var issuer = new Ed25519LyoJwtIssuer(keys, issueOpts, NullLogger<Ed25519LyoJwtIssuer>.Instance);
-        var validator = new Ed25519LyoJwtValidator(keys, users, validateOpts, new AuthenticationOptions(), NullLogger<Ed25519LyoJwtValidator>.Instance);
+        var validator = new Ed25519LyoJwtValidator(keys, users, validateOpts, new(), NullLogger<Ed25519LyoJwtValidator>.Instance);
         var user = await users.CreateAsync(NewUser(), null, TestCt);
         var issued = await issuer.IssueAsync(user, [], "local", null, false, TestCt);
         Assert.Null(await validator.ValidateAsync(issued.AccessToken, TestCt));
@@ -67,7 +67,7 @@ public class Ed25519LyoJwtTests
         var users = new InMemoryUserStore();
         var jwtOpts = new LyoJwtOptions { AccessTokenLifetime = TimeSpan.FromMilliseconds(1), ClockSkew = TimeSpan.Zero };
         var issuer = new Ed25519LyoJwtIssuer(keys, jwtOpts, NullLogger<Ed25519LyoJwtIssuer>.Instance);
-        var validator = new Ed25519LyoJwtValidator(keys, users, jwtOpts, new AuthenticationOptions(), NullLogger<Ed25519LyoJwtValidator>.Instance);
+        var validator = new Ed25519LyoJwtValidator(keys, users, jwtOpts, new(), NullLogger<Ed25519LyoJwtValidator>.Instance);
         var user = await users.CreateAsync(NewUser(), null, TestCt);
         var issued = await issuer.IssueAsync(user, [], "local", null, false, TestCt);
         await Task.Delay(1100, TestCt);
@@ -89,7 +89,7 @@ public class Ed25519LyoJwtTests
     public async Task JwkSetBuilder_PublishesPublicKey()
     {
         var (_, _, _, keys) = await Build();
-        var builder = new JwkSetBuilder(keys, new LyoJwtOptions());
+        var builder = new JwkSetBuilder(keys, new());
         var jwks = await builder.BuildAsync(TestCt);
         var keyList = (IEnumerable<Dictionary<string, object>>)jwks["keys"];
         using var enumerator = keyList.GetEnumerator();
@@ -116,13 +116,12 @@ public class Ed25519LyoJwtTests
         await claims.CreateAsync(new(LyoGuid.CreateV7(), user.Id, "department", "engineering", DateTime.UtcNow, null), null, TestCt);
         await claims.CreateAsync(new(LyoGuid.CreateV7(), user.Id, LyoJwtClaims.Scope, "should-not-appear", DateTime.UtcNow, null), null, TestCt);
         await claims.CreateAsync(new(LyoGuid.CreateV7(), user.Id, "lyo:user", "should-not-overwrite", DateTime.UtcNow, null), null, TestCt);
-
         var issued = await issuer.IssueAsync(user, ["people.read"], "local", null, false, TestCt);
         var payload = DecodePayload(issued.AccessToken);
         Assert.Equal("engineering", payload.GetProperty("department").GetString());
         Assert.Equal("people.read", payload.GetProperty("scope").GetString());
         Assert.Equal(user.Id.ToString("D"), payload.GetProperty(LyoJwtClaims.LyoUser).GetString());
-        Assert.False(payload.TryGetProperty("should-not-appear", out _));
+        Assert.False(payload.TryGetProperty("should-not-appear", out var _));
     }
 
     [Fact]
@@ -137,7 +136,6 @@ public class Ed25519LyoJwtTests
         var issuer = new Ed25519LyoJwtIssuer(keys, jwtOpts, NullLogger<Ed25519LyoJwtIssuer>.Instance, scopes: scopes);
         var user = await users.CreateAsync(NewUser(), null, TestCt);
         await scopes.CreateAsync(new(LyoGuid.CreateV7(), user.Id, "auth.tokens.read", DateTime.UtcNow, null), null, TestCt);
-
         var issued = await issuer.IssueAsync(user, ["people.read"], "local", null, false, TestCt);
         var payload = DecodePayload(issued.AccessToken);
         Assert.Equal("auth.tokens.read", payload.GetProperty("scope").GetString());
@@ -164,5 +162,6 @@ public class Ed25519LyoJwtTests
         return (issuer, validator, users, keys);
     }
 
-    private static LyoUser NewUser() => new(LyoGuid.CreateV7(), "Test", $"u-{LyoGuid.CreateV7():N}@example.com", true, null, null, [], null, null, DateTime.UtcNow, null, null, null, null);
+    private static LyoUser NewUser()
+        => new(LyoGuid.CreateV7(), "Test", $"u-{LyoGuid.CreateV7():N}@example.com", true, null, null, [], null, null, DateTime.UtcNow, null, null, null, null);
 }

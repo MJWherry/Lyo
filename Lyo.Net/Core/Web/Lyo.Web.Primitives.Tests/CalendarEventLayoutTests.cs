@@ -11,7 +11,6 @@ public sealed class CalendarEventLayoutTests
     {
         var at = new DateTime(2026, 9, 15, 9, 0, 0, DateTimeKind.Utc);
         var blocks = CalendarEventLayout.Place([(at, at), (at, at)], Day, TimeZoneInfo.Utc);
-
         Assert.Equal(2, blocks.Count);
         Assert.All(blocks, block => Assert.False(block.AllDay));
         Assert.Equal(0, blocks[0].Lane);
@@ -27,7 +26,6 @@ public sealed class CalendarEventLayoutTests
         var morning = new DateTime(2026, 9, 15, 9, 0, 0, DateTimeKind.Utc);
         var afternoon = new DateTime(2026, 9, 15, 15, 0, 0, DateTimeKind.Utc);
         var blocks = CalendarEventLayout.Place([(morning, morning), (afternoon, afternoon)], Day, TimeZoneInfo.Utc);
-
         Assert.All(blocks, block => Assert.Equal(0, block.Lane));
         Assert.All(blocks, block => Assert.Equal(1, block.LaneCount));
         Assert.True(blocks[1].TopPercent > blocks[0].TopPercent);
@@ -41,7 +39,6 @@ public sealed class CalendarEventLayoutTests
         var secondStart = new DateTime(2026, 9, 15, 10, 0, 0, DateTimeKind.Utc);
         var secondEnd = new DateTime(2026, 9, 15, 12, 0, 0, DateTimeKind.Utc);
         var blocks = CalendarEventLayout.Place([(firstStart, firstEnd), (secondStart, secondEnd)], Day, TimeZoneInfo.Utc);
-
         Assert.False(blocks[0].AllDay);
         Assert.Equal(0, blocks[0].Lane);
         Assert.Equal(1, blocks[1].Lane);
@@ -55,7 +52,6 @@ public sealed class CalendarEventLayoutTests
         var start = new DateTime(2026, 9, 15, 0, 0, 0, DateTimeKind.Utc);
         var end = new DateTime(2026, 9, 16, 0, 0, 0, DateTimeKind.Utc);
         var blocks = CalendarEventLayout.Place([(start, end)], Day, TimeZoneInfo.Utc);
-
         Assert.True(blocks[0].AllDay);
     }
 }

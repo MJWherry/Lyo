@@ -28,12 +28,10 @@ public class PostgresStateStoreTests(StateMachinePostgresFixture fixture)
     public async Task SaveAsync_RoundTripsEnumStateAndVersion()
     {
         var key = NewKey();
-
         Assert.True(await Store.SaveAsync(Machine, key, new(OrderState.Paid, 1, EnteredAt), 0, ct: TestCt));
         Assert.True(await Store.SaveAsync(Machine, key, new(OrderState.Shipped, 2, EnteredAt.AddMinutes(5)), 1, ct: TestCt));
-
         var loaded = await Store.LoadAsync(Machine, key, TestCt);
-        Assert.Equal(new StateSnapshot<OrderState>(OrderState.Shipped, 2, EnteredAt.AddMinutes(5)), loaded);
+        Assert.Equal(new(OrderState.Shipped, 2, EnteredAt.AddMinutes(5)), loaded);
         await using var context = await fixture.ContextFactory.CreateDbContextAsync(TestCt);
         var row = await context.Instances.AsNoTracking().SingleAsync(i => i.MachineName == Machine && i.InstanceKey == key, TestCt);
         Assert.Equal("Shipped", row.State);
@@ -44,13 +42,11 @@ public class PostgresStateStoreTests(StateMachinePostgresFixture fixture)
     {
         var key = NewKey();
         Assert.True(await Store.SaveAsync(Machine, key, new(OrderState.Paid, 1, EnteredAt), 0, ct: TestCt));
-
         var duplicateInsert = await Store.SaveAsync(Machine, key, new(OrderState.Shipped, 1, EnteredAt), 0, ct: TestCt);
         var staleUpdate = await Store.SaveAsync(Machine, key, new(OrderState.Shipped, 6, EnteredAt), 5, ct: TestCt);
-
         Assert.False(duplicateInsert);
         Assert.False(staleUpdate);
-        Assert.Equal(new StateSnapshot<OrderState>(OrderState.Paid, 1, EnteredAt), await Store.LoadAsync(Machine, key, TestCt));
+        Assert.Equal(new(OrderState.Paid, 1, EnteredAt), await Store.LoadAsync(Machine, key, TestCt));
     }
 
     [Fact]
@@ -58,10 +54,8 @@ public class PostgresStateStoreTests(StateMachinePostgresFixture fixture)
     {
         var key = NewKey();
         var record = new TransitionRecord<OrderState>(OrderState.Pending, OrderState.Paid, "Pay", 1, EnteredAt);
-
         await Store.SaveAsync(Machine, key, new(OrderState.Paid, 1, EnteredAt), 0, record, TestCt);
         await Store.SaveAsync(Machine, key, new(OrderState.Shipped, 1, EnteredAt), 0, record with { To = OrderState.Shipped }, TestCt);
-
         await using var context = await fixture.ContextFactory.CreateDbContextAsync(TestCt);
         var rows = await context.Transitions.AsNoTracking().Where(t => t.MachineName == Machine && t.InstanceKey == key).ToListAsync(TestCt);
         var row = Assert.Single(rows);
@@ -75,9 +69,7 @@ public class PostgresStateStoreTests(StateMachinePostgresFixture fixture)
         var snapshot = new StateSnapshot<OrderState>(OrderState.Paid, 1, EnteredAt, EnteredAt.AddMinutes(10), """{"percent":40,"notes":["a"]}""");
         Assert.True(await Store.SaveAsync(Machine, key, snapshot, 0, ct: TestCt));
         Assert.True(await Store.SaveAsync(Machine, key, snapshot with { Version = 2, DueAtUtc = null }, 1, ct: TestCt));
-
         var loaded = await Store.LoadAsync(Machine, key, TestCt);
-
         Assert.Equal((OrderState.Paid, 2L, EnteredAt, (DateTime?)null), (loaded!.State, loaded.Version, loaded.EnteredAtUtc, loaded.DueAtUtc));
         Assert.True(JsonNode.DeepEquals(JsonNode.Parse(snapshot.DataJson!), JsonNode.Parse(loaded.DataJson!)));
     }
@@ -87,7 +79,6 @@ public class PostgresStateStoreTests(StateMachinePostgresFixture fixture)
     {
         var unspecified = new StateSnapshot<OrderState>(OrderState.Paid, 1, new(2026, 1, 1, 0, 0, 0, DateTimeKind.Unspecified));
         var localDue = new StateSnapshot<OrderState>(OrderState.Paid, 1, EnteredAt, new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Local));
-
         await Assert.ThrowsAsync<ArgumentException>(() => Store.SaveAsync(Machine, NewKey(), unspecified, 0, ct: TestCt));
         await Assert.ThrowsAsync<ArgumentException>(() => Store.SaveAsync(Machine, NewKey(), localDue, 0, ct: TestCt));
     }
@@ -101,7 +92,6 @@ public class PostgresStateStoreTests(StateMachinePostgresFixture fixture)
 
         var services = new ServiceCollection().AddStateMachinePostgresFromConfiguration(configuration);
         using var provider = services.BuildServiceProvider();
-
         var options = provider.GetRequiredService<PostgresStateMachineOptions>();
         Assert.Equal("Host=localhost", options.ConnectionString);
         Assert.False(options.EnableAutoMigrations);

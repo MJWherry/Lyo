@@ -3,19 +3,19 @@ using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Text.Json;
-using Lyo.Json;
 using Lyo.Common.Core.Conversion;
 using Lyo.Common.Core.Extensions;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
 using Lyo.Health;
+using Lyo.Json;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.MessageQueue.RabbitMq;
 
@@ -657,9 +657,8 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
     }
 
     /// <summary>
-    /// Publishes a message that appears on <paramref name="queueName" /> only after <paramref name="delay" />. Uses a companion wait queue
-    /// (<c>{queueName}.wait</c>) whose dead-letter target is the destination: the payload is published there with a per-message TTL, then the broker
-    /// dead-letters it when the TTL expires. Needs no broker plugin.
+    /// Publishes a message that appears on <paramref name="queueName" /> only after <paramref name="delay" />. Uses a companion wait queue (<c>{queueName}.wait</c>) whose
+    /// dead-letter target is the destination: the payload is published there with a per-message TTL, then the broker dead-letters it when the TTL expires. Needs no broker plugin.
     /// </summary>
     public async Task<bool> SendToQueueDelayed(string queueName, byte[] data, TimeSpan delay, CancellationToken ct = default)
     {
@@ -921,12 +920,8 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
     /// <summary>Converts a management API exchange object into <see cref="MessageExchangeInfo" />.</summary>
     private static MessageExchangeInfo ParseExchangeInfo(JsonElement el)
         => new(
-            el.TryGetProperty("name", out var name) ? name.GetString() ?? string.Empty : string.Empty,
-            el.TryGetProperty("type", out var type) ? type.GetString() : null,
-            ReadBool(el, "durable"),
-            ReadBool(el, "auto_delete"),
-            ReadBool(el, "internal"),
-            ReadArguments(el) ?? new Dictionary<string, object>());
+            el.TryGetProperty("name", out var name) ? name.GetString() ?? string.Empty : string.Empty, el.TryGetProperty("type", out var type) ? type.GetString() : null,
+            ReadBool(el, "durable"), ReadBool(el, "auto_delete"), ReadBool(el, "internal"), ReadArguments(el) ?? new Dictionary<string, object>());
 
     private static bool ReadBool(JsonElement el, string propertyName)
         => el.TryGetProperty(propertyName, out var value) && TypeConversion.TryFromJsonElement<bool>(in value, out var parsed) && parsed;

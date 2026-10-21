@@ -23,9 +23,7 @@ public sealed class DiscordEfSeedContributor : SeedContributor, IEfSeedSource
     public DbContext CreateContext(string connectionString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        var options = new DbContextOptionsBuilder<DiscordDbContext>()
-            .UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<DiscordDbContext>().UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema)).Options;
         return new DiscordDbContext(options);
     }
 
@@ -43,94 +41,113 @@ public sealed class DiscordEfSeedContributor : SeedContributor, IEfSeedSource
         var messageIds = Ids(options.Count, 6);
         var interactionIds = Ids(options.Count, 7);
         var attachmentIds = Ids(options.Count, 8);
-        graph.Entity(options.Count, i => new DiscordUser {
-            Id = userIds[i],
-            Username = Fit($"{faker.Internet.UserName()}{i}", 32),
-            Discriminator = 0,
-            IsBot = false,
-            UserCreatedDate = now,
-            CreatedTimestamp = now,
-            UpdatedTimestamp = now
-        });
-        graph.Entity(options.Count, i => new DiscordGuild {
-            Id = guildIds[i],
-            OwnerId = userIds[i],
-            Name = Fit(faker.Company.CompanyName(), 100),
-            MemberCount = 1,
-            GuildCreatedDate = now,
-            JoinedDate = now,
-            CreatedTimestamp = now,
-            UpdatedTimestamp = now
-        });
-        graph.Entity(options.Count, i => new DiscordEmoji {
-            Id = emojiIds[i],
-            GuildId = guildIds[i],
-            Name = "wave",
-            IsAvailable = true,
-            EmojiCreatedDate = now,
-            CreatedTimestamp = now,
-            UpdatedTimestamp = now
-        });
-        graph.Entity(options.Count, i => new DiscordRole {
-            Id = roleIds[i],
-            GuildId = guildIds[i],
-            EmojiId = emojiIds[i],
-            Name = "Moderator",
-            Color = "#3366cc",
-            RoleCreatedDate = now,
-            CreatedTimestamp = now,
-            UpdatedTimestamp = now
-        });
-        graph.Entity(options.Count, i => new DiscordChannel {
-            Id = channelIds[i],
-            GuildId = guildIds[i],
-            Name = "general",
-            ChannelType = "text",
-            ChannelCreated = now,
-            CreatedTimestamp = now,
-            UpdatedTimestamp = now
-        });
-        graph.Entity(options.Count, i => new DiscordMember {
-            UserId = userIds[i],
-            GuildId = guildIds[i],
-            JoinedAtUtc = now,
-            Nickname = faker.Name.FirstName()
-        });
-        graph.Entity(options.Count, i => new DiscordMessage {
-            Id = messageIds[i],
-            AuthorId = userIds[i],
-            ChannelId = channelIds[i],
-            GuildId = guildIds[i],
-            Content = faker.Lorem.Sentence(),
-            MessageCreatedDate = now,
-            CreatedTimestamp = now,
-            UpdatedTimestamp = now
-        });
-        graph.Entity(options.Count, i => new DiscordInteraction {
-            Id = interactionIds[i],
-            AuthorId = userIds[i],
-            ChannelId = channelIds[i],
-            GuildId = guildIds[i],
-            Content = faker.Hacker.Phrase(),
-            InteractionCreatedDate = now
-        });
-        graph.Entity(options.Count, i => new DiscordAttachment {
-            Id = attachmentIds[i],
-            MessageId = messageIds[i],
-            InteractionId = interactionIds[i],
-            Filename = "notes.txt",
-            FileSize = 4,
-            MediaType = "text/plain",
-            ProxyUrl = "https://cdn.example.com/notes.txt",
-            Url = "https://cdn.example.com/notes.txt",
-            AttachmentCreatedDate = now
-        });
-        graph.Entity(options.Count, i => new DiscordReaction {
-            MessageId = messageIds[i],
-            ReactorId = userIds[i],
-            EmojiId = emojiIds[i],
-            CreatedDate = now
-        });
+        graph.Entity(
+            options.Count, i => new DiscordUser {
+                Id = userIds[i],
+                Username = Fit($"{faker.Internet.UserName()}{i}", 32),
+                Discriminator = 0,
+                IsBot = false,
+                UserCreatedDate = now,
+                CreatedTimestamp = now,
+                UpdatedTimestamp = now
+            });
+
+        graph.Entity(
+            options.Count, i => new DiscordGuild {
+                Id = guildIds[i],
+                OwnerId = userIds[i],
+                Name = Fit(faker.Company.CompanyName(), 100),
+                MemberCount = 1,
+                GuildCreatedDate = now,
+                JoinedDate = now,
+                CreatedTimestamp = now,
+                UpdatedTimestamp = now
+            });
+
+        graph.Entity(
+            options.Count, i => new DiscordEmoji {
+                Id = emojiIds[i],
+                GuildId = guildIds[i],
+                Name = "wave",
+                IsAvailable = true,
+                EmojiCreatedDate = now,
+                CreatedTimestamp = now,
+                UpdatedTimestamp = now
+            });
+
+        graph.Entity(
+            options.Count, i => new DiscordRole {
+                Id = roleIds[i],
+                GuildId = guildIds[i],
+                EmojiId = emojiIds[i],
+                Name = "Moderator",
+                Color = "#3366cc",
+                RoleCreatedDate = now,
+                CreatedTimestamp = now,
+                UpdatedTimestamp = now
+            });
+
+        graph.Entity(
+            options.Count, i => new DiscordChannel {
+                Id = channelIds[i],
+                GuildId = guildIds[i],
+                Name = "general",
+                ChannelType = "text",
+                ChannelCreated = now,
+                CreatedTimestamp = now,
+                UpdatedTimestamp = now
+            });
+
+        graph.Entity(
+            options.Count, i => new DiscordMember {
+                UserId = userIds[i],
+                GuildId = guildIds[i],
+                JoinedAtUtc = now,
+                Nickname = faker.Name.FirstName()
+            });
+
+        graph.Entity(
+            options.Count, i => new DiscordMessage {
+                Id = messageIds[i],
+                AuthorId = userIds[i],
+                ChannelId = channelIds[i],
+                GuildId = guildIds[i],
+                Content = faker.Lorem.Sentence(),
+                MessageCreatedDate = now,
+                CreatedTimestamp = now,
+                UpdatedTimestamp = now
+            });
+
+        graph.Entity(
+            options.Count, i => new DiscordInteraction {
+                Id = interactionIds[i],
+                AuthorId = userIds[i],
+                ChannelId = channelIds[i],
+                GuildId = guildIds[i],
+                Content = faker.Hacker.Phrase(),
+                InteractionCreatedDate = now
+            });
+
+        graph.Entity(
+            options.Count, i => new DiscordAttachment {
+                Id = attachmentIds[i],
+                MessageId = messageIds[i],
+                InteractionId = interactionIds[i],
+                Filename = "notes.txt",
+                FileSize = 4,
+                MediaType = "text/plain",
+                ProxyUrl = "https://cdn.example.com/notes.txt",
+                Url = "https://cdn.example.com/notes.txt",
+                AttachmentCreatedDate = now
+            });
+
+        graph.Entity(
+            options.Count, i => new DiscordReaction {
+                MessageId = messageIds[i],
+                ReactorId = userIds[i],
+                EmojiId = emojiIds[i],
+                CreatedDate = now
+            });
     }
 
     private static long[] Ids(int count, int band) => Enumerable.Range(0, count).Select(i => band * 1_000_000L + i + 1).ToArray();

@@ -4,13 +4,13 @@ using System.IO.Compression;
 using System.Text;
 using System.Xml.Linq;
 using Lyo.Common.Core.Extensions;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Core.Pathing;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
 using Lyo.IO.FileSystem;
 using Lyo.IO.Temp.Enums;
 using Microsoft.Extensions.Logging;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.IO.Temp.Models;
 
@@ -116,6 +116,9 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         _ctx.RegisterFile(path, sizeBytes);
         return path;
     }
+
+    /// <summary>Metric names and log label for one artifact type, so timing and counters share one record.</summary>
+    private sealed record ArtifactMetrics(string Artifact, string Duration, string Success, string Failure);
 
 #region Random-bytes files
 
@@ -764,7 +767,4 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     }
 
 #endregion
-
-    /// <summary>Metric names and log label for one artifact type, so timing and counters share one record.</summary>
-    private sealed record ArtifactMetrics(string Artifact, string Duration, string Success, string Failure);
 }

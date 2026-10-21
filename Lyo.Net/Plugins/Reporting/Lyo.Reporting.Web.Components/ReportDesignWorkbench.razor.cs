@@ -3,7 +3,6 @@ using System.Text.Json;
 using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
-using Lyo.Common.Metadata.Records;
 using Lyo.Parameters;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Parameters;
@@ -11,7 +10,6 @@ using Lyo.Reporting.Models.Composition;
 using Lyo.Reporting.Models.Controls;
 using Lyo.Reporting.Models.Models;
 using Lyo.Reporting.Models.Sanitization;
-using Lyo.Reporting.Web;
 using Lyo.Web.Components.Dialog;
 using Lyo.Web.Components.ParamTable;
 using Microsoft.AspNetCore.Components;
@@ -26,17 +24,45 @@ namespace Lyo.Reporting.Web.Components;
 /// <summary>Visual composition designer: structure, parameter schema, example values, live HTML preview, and optional generate-via-API.</summary>
 public partial class ReportDesignWorkbench : IDisposable
 {
-    private enum DesignTarget
-    {
-        Report,
-        Section,
-        Card,
-        Block,
-        Table,
-        Grid,
-        TableColumn,
-        TableRow
-    }
+    private static readonly ContentType[] BlockTypes = Enum.GetValues<ContentType>().OrderBy(t => t.ToString(), StringComparer.OrdinalIgnoreCase).ToArray();
+
+    private static readonly string[] CommonStyleKeys = ["color", "background", "font-size", "font-family", "max-width", "padding", "margin"];
+    private readonly HashSet<string> _expanded = new(StringComparer.Ordinal);
+    private readonly List<string> _redo = [];
+    private readonly List<string> _undo = [];
+    private Block? _block;
+    private List<DesignBodyDrop> _bodyDrops = [];
+    private bool _busy;
+    private Card? _card;
+    private Control? _control;
+    private string? _definitionDescription;
+    private string _definitionName = "Untitled report";
+    private IReadOnlyList<ReportDefinitionRes> _definitions = [];
+    private IJSObjectReference? _designJs;
+    private bool _dirty;
+    private MudDropContainer<DesignBodyDrop>? _dropContainer;
+    private int _editorTab;
+    private List<LyoParameterEntry> _exampleEntries = [];
+    private bool _fromCanvas;
+    private ReportFormat _generateFormat = ReportFormat.Html;
+    private Grid? _grid;
+    private string _jsonDraft = "{}";
+    private bool _loaded;
+    private Guid? _loadedDefinitionId;
+    private IDisposable? _navHandler;
+    private List<LyoParameterEditRow> _paramRows = [];
+    private string? _pendingScrollKey;
+    private string? _pendingScrollPane;
+    private string? _previewError;
+
+    private Report<object> _report = ReportDesignTemplates.Blank();
+    private bool _restoring;
+    private Section? _section;
+    private string _snapshot = "{}";
+    private Table? _table;
+    private TableColumn? _tableColumn;
+    private TableRow? _tableRow;
+    private DesignTarget _target = DesignTarget.Report;
 
     [Parameter]
     [EditorRequired]
@@ -71,58 +97,41 @@ public partial class ReportDesignWorkbench : IDisposable
 
     private string GenerateRoute => $"{BaseRoute.TrimEnd('/')}/Generation/Generate";
 
-    private Report<object> _report = ReportDesignTemplates.Blank();
-    private List<LyoParameterEditRow> _paramRows = [];
-    private List<LyoParameterEntry> _exampleEntries = [];
-    private DesignTarget _target = DesignTarget.Report;
-    private Section? _section;
-    private Control? _control;
-    private Card? _card;
-    private Block? _block;
-    private Table? _table;
-    private Grid? _grid;
-    private TableColumn? _tableColumn;
-    private TableRow? _tableRow;
-    private Guid? _loadedDefinitionId;
-    private string _definitionName = "Untitled report";
-    private string? _definitionDescription;
-    private ReportFormat _generateFormat = ReportFormat.Html;
-    private bool _busy;
-    private bool _loaded;
-    private int _editorTab;
-    private string? _previewError;
-    private string _jsonDraft = "{}";
-    private IReadOnlyList<ReportDefinitionRes> _definitions = [];
-    private List<DesignBodyDrop> _bodyDrops = [];
-    private MudDropContainer<DesignBodyDrop>? _dropContainer;
-    private readonly HashSet<string> _expanded = new(StringComparer.Ordinal);
-    private bool _fromCanvas;
-    private string? _pendingScrollPane;
-    private string? _pendingScrollKey;
-    private IJSObjectReference? _designJs;
-    private IDisposable? _navHandler;
-    private readonly List<string> _undo = [];
-    private readonly List<string> _redo = [];
-    private string _snapshot = "{}";
-    private bool _dirty;
-    private bool _restoring;
-
-    private sealed class DesignBodyDrop
-    {
-        public string ZoneId { get; set; } = "";
-        public Section Section { get; set; } = null!;
-        public SectionBodyItem Item { get; set; } = null!;
-    }
-
     private Layout Layout => _report.Layout ??= new();
 
-    private static readonly ContentType[] BlockTypes =
-        Enum.GetValues<ContentType>().OrderBy(t => t.ToString(), StringComparer.OrdinalIgnoreCase).ToArray();
+    private bool CanRelocateSelected
+        => _target is DesignTarget.Card or DesignTarget.Block or DesignTarget.Table or DesignTarget.Grid or DesignTarget.Section && _section is not null &&
+            SelectedBodyItem() is not null;
 
-    protected override void OnInitialized()
-        => _navHandler = Navigation.RegisterLocationChangingHandler(OnLocationChanging);
+    private bool SelectedControlIsInGrid
+        => _control is not null && _section is not null && SectionBody.TryOwner(_section, _control, out var owner) && owner is not null &&
+            !ReferenceEquals(owner, _section.Controls);
+
+    private Grid? AddTargetGrid => _target == DesignTarget.Grid ? _grid : null;
+
+    private int TableColumnCount => _table?.Columns.Count ?? 1;
+
+    private int TableRowCount => _table?.Rows.Count ?? 0;
+
+    private bool TableRowsEditable => _table is { DataSourceKind: DataSourceKind.Static };
+
+    private bool CanDuplicate => _target is not DesignTarget.Report;
+
+    private string InspectorTitle
+        => _target switch {
+            DesignTarget.Section => _section?.Title ?? "Section",
+            DesignTarget.Card => _card?.Label ?? "Card",
+            DesignTarget.Block => _block?.ContentType.ToString() ?? "Block",
+            DesignTarget.Table => _table?.Title ?? "Table",
+            DesignTarget.Grid => _grid?.Title ?? "Grid",
+            DesignTarget.TableColumn => _tableColumn?.Header ?? "Column",
+            DesignTarget.TableRow => "Row",
+            var _ => "Report"
+        };
 
     public void Dispose() => _navHandler?.Dispose();
+
+    protected override void OnInitialized() => _navHandler = Navigation.RegisterLocationChangingHandler(OnLocationChanging);
 
     protected override async Task OnParametersSetAsync()
     {
@@ -179,43 +188,41 @@ public partial class ReportDesignWorkbench : IDisposable
 
     private void LoadRowsFromSpecs()
     {
-        _paramRows = _report.ParameterSpecs.Select(
-                s => new LyoParameterEditRow {
-                    Key = s.Key,
-                    Type = string.IsNullOrWhiteSpace(s.Type) ? LyoTypeInfo.String.FullName : s.Type,
-                    Value = s.DefaultValue,
-                    Description = s.Description,
-                    Required = s.Required,
-                    AllowedValues = s.AllowedValues,
-                    IsNew = true
-                })
+        _paramRows = _report.ParameterSpecs.Select(s => new LyoParameterEditRow {
+                Key = s.Key,
+                Type = string.IsNullOrWhiteSpace(s.Type) ? LyoTypeInfo.String.FullName : s.Type,
+                Value = s.DefaultValue,
+                Description = s.Description,
+                Required = s.Required,
+                AllowedValues = s.AllowedValues,
+                IsNew = true
+            })
             .ToList();
 
-        RebuildExampleEntries(preserveByKey: _report.ParameterSpecs.ToDictionary(s => s.Key, s => s.ExampleValue ?? s.DefaultValue, StringComparer.OrdinalIgnoreCase));
+        RebuildExampleEntries(_report.ParameterSpecs.ToDictionary(s => s.Key, s => s.ExampleValue ?? s.DefaultValue, StringComparer.OrdinalIgnoreCase));
     }
 
     private void LoadRowsFromDefinition(ReportDefinitionRes def)
     {
         if (_report.ParameterSpecs.Count == 0 && def.Parameters is { Count: > 0 }) {
-            _report.ParameterSpecs = def.Parameters.Select(
-                    p => new ParameterSpec {
-                        Key = p.Key,
-                        Type = p.Type,
-                        Description = p.Description,
-                        Required = p.Required,
-                        DefaultValue = p.Value,
-                        ExampleValue = p.Value,
-                        AllowedValues = p.AllowedValues
-                    })
+            _report.ParameterSpecs = def.Parameters.Select(p => new ParameterSpec {
+                    Key = p.Key,
+                    Type = p.Type,
+                    Description = p.Description,
+                    Required = p.Required,
+                    DefaultValue = p.Value,
+                    ExampleValue = p.Value,
+                    AllowedValues = p.AllowedValues
+                })
                 .ToList();
         }
 
         if (def.Parameters is { Count: > 0 }) {
-            _paramRows = def.Parameters.Select(
-                    p => LyoParameterEditRow.FromMasked(
-                        p.Id, p.Key, p.Type, p.Value, p.Description, p.Required, p.EncryptedValue, p.AllowedValues, p.Options, defaultKind: p.DefaultKind,
-                        defaultTemplate: p.DefaultTemplate))
+            _paramRows = def.Parameters.Select(p => LyoParameterEditRow.FromMasked(
+                    p.Id, p.Key, p.Type, p.Value, p.Description, p.Required, p.EncryptedValue, p.AllowedValues, p.Options, defaultKind: p.DefaultKind,
+                    defaultTemplate: p.DefaultTemplate))
                 .ToList();
+
             var examples = _report.ParameterSpecs.ToDictionary(s => s.Key, s => s.ExampleValue ?? s.DefaultValue, StringComparer.OrdinalIgnoreCase);
             foreach (var p in def.Parameters)
                 examples.TryAdd(p.Key, p.Value);
@@ -231,16 +238,15 @@ public partial class ReportDesignWorkbench : IDisposable
     {
         var examples = _exampleEntries.ToDictionary(e => e.Definition.Key, e => e.SubmitValue, StringComparer.OrdinalIgnoreCase);
         _report.ParameterSpecs = _paramRows.Where(r => !string.IsNullOrWhiteSpace(r.Key))
-            .Select(
-                r => new ParameterSpec {
-                    Key = r.Key.Trim(),
-                    Type = r.Type,
-                    Description = r.Description,
-                    Required = r.Required,
-                    DefaultValue = r.ValueForSave,
-                    ExampleValue = examples.GetValueOrDefault(r.Key) ?? r.ValueForSave,
-                    AllowedValues = r.AllowedValues
-                })
+            .Select(r => new ParameterSpec {
+                Key = r.Key.Trim(),
+                Type = r.Type,
+                Description = r.Description,
+                Required = r.Required,
+                DefaultValue = r.ValueForSave,
+                ExampleValue = examples.GetValueOrDefault(r.Key) ?? r.ValueForSave,
+                AllowedValues = r.AllowedValues
+            })
             .ToList();
     }
 
@@ -254,19 +260,19 @@ public partial class ReportDesignWorkbench : IDisposable
     private void RebuildExampleEntries(IReadOnlyDictionary<string, string?>? preserveByKey)
     {
         var drafts = _paramRows.Where(r => !string.IsNullOrWhiteSpace(r.Key))
-            .Select(
-                r => {
-                    var draft = new DraftParam {
-                        Key = r.Key.Trim(),
-                        Type = r.Type,
-                        Description = r.Description,
-                        Required = r.Required,
-                        AllowedValues = r.AllowedValues,
-                        Options = r.Options,
-                        Value = preserveByKey is not null && preserveByKey.TryGetValue(r.Key, out var kept) && kept is not null ? kept : r.Value ?? r.ValueForSave
-                    };
-                    return draft;
-                })
+            .Select(r => {
+                var draft = new DraftParam {
+                    Key = r.Key.Trim(),
+                    Type = r.Type,
+                    Description = r.Description,
+                    Required = r.Required,
+                    AllowedValues = r.AllowedValues,
+                    Options = r.Options,
+                    Value = preserveByKey is not null && preserveByKey.TryGetValue(r.Key, out var kept) && kept is not null ? kept : r.Value ?? r.ValueForSave
+                };
+
+                return draft;
+            })
             .ToList();
 
         _exampleEntries = LyoParameterEntry.From(drafts);
@@ -281,6 +287,7 @@ public partial class ReportDesignWorkbench : IDisposable
         try {
             var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<ReportDefinitionRes>>(
                 $"{DefinitionRoute}/QueryConcrete", new() { Amount = 200, Include = ["Parameters"] });
+
             _definitions = res?.Items ?? [];
         }
         catch (Exception ex) {
@@ -296,6 +303,7 @@ public partial class ReportDesignWorkbench : IDisposable
         try {
             var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<ReportDefinitionRes>>(
                 $"{DefinitionRoute}/QueryConcrete", new() { Keys = [[id]], Amount = 1, Include = ["Parameters"] });
+
             var def = res?.Items?.FirstOrDefault();
             if (def is null) {
                 Snackbar.Add("Definition not found.", Severity.Warning);
@@ -328,7 +336,7 @@ public partial class ReportDesignWorkbench : IDisposable
 
         _busy = true;
         try {
-            if (!await PersistDefinitionAsync(createNew: false))
+            if (!await PersistDefinitionAsync(false))
                 return;
 
             Snackbar.Add(_loadedDefinitionId is not null ? "Definition saved." : "Definition created.", Severity.Success);
@@ -352,7 +360,7 @@ public partial class ReportDesignWorkbench : IDisposable
 
         _busy = true;
         try {
-            if (!await PersistDefinitionAsync(createNew: true))
+            if (!await PersistDefinitionAsync(true))
                 return;
 
             Snackbar.Add("Saved as a new definition.", Severity.Success);
@@ -381,8 +389,7 @@ public partial class ReportDesignWorkbench : IDisposable
         };
 
         if (!createNew && _loadedDefinitionId is { } id) {
-            var updated = await ApiClient.PostAsAsync<UpdateRequest<ReportDefinitionReq>, UpdateResult<ReportDefinitionRes>>(
-                $"{DefinitionRoute}/Update", new(req, id));
+            var updated = await ApiClient.PostAsAsync<UpdateRequest<ReportDefinitionReq>, UpdateResult<ReportDefinitionRes>>($"{DefinitionRoute}/Update", new(req, id));
             if (updated.Error is not null) {
                 Snackbar.Add(updated.Error.Detail ?? "Save failed.", Severity.Error);
                 return false;
@@ -399,33 +406,33 @@ public partial class ReportDesignWorkbench : IDisposable
         }
 
         _loadedDefinitionId = created.Data.Id;
-        await LoadDefinitionAsync(created.Data.Id, notify: false);
+        await LoadDefinitionAsync(created.Data.Id, false);
         return true;
     }
 
     private List<ReportDefinitionParameterReq> ToCreateParameters()
         => _paramRows.Where(r => !string.IsNullOrWhiteSpace(r.Key))
-            .Select(
-                r => new ReportDefinitionParameterReq {
-                    Key = r.Key.Trim(),
-                    Type = r.Type,
-                    Value = r.ValueForSave,
-                    Description = r.Description,
-                    Required = r.Required,
-                    AllowedValues = r.AllowedValues,
-                    Options = r.Options,
-                    DefaultKind = r.DefaultKind,
-                    DefaultTemplate = r.DefaultTemplateForSave
-                })
+            .Select(r => new ReportDefinitionParameterReq {
+                Key = r.Key.Trim(),
+                Type = r.Type,
+                Value = r.ValueForSave,
+                Description = r.Description,
+                Required = r.Required,
+                AllowedValues = r.AllowedValues,
+                Options = r.Options,
+                DefaultKind = r.DefaultKind,
+                DefaultTemplate = r.DefaultTemplateForSave
+            })
             .ToList();
 
     private async Task SyncDefinitionParametersAsync(Guid definitionId)
     {
         var existing = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<ReportDefinitionRes>>(
             $"{DefinitionRoute}/QueryConcrete", new() { Keys = [[definitionId]], Amount = 1, Include = ["Parameters"] });
+
         var owned = existing?.Items?.FirstOrDefault()?.Parameters ?? [];
         await LyoParameterEditRowSync.SaveAsync<ReportDefinitionParameterReq, ReportDefinitionParameterRes>(
-            ApiClient, $"{DefinitionRoute}/Parameter", _paramRows, owned.Select(p => p.Id), row => new ReportDefinitionParameterReq {
+            ApiClient, $"{DefinitionRoute}/Parameter", _paramRows, owned.Select(p => p.Id), row => new() {
                 ReportDefinitionId = definitionId,
                 Key = row.Key,
                 Type = row.Type,
@@ -449,12 +456,17 @@ public partial class ReportDesignWorkbench : IDisposable
 
         _busy = true;
         try {
-            if (!await PersistDefinitionAsync(createNew: false))
+            if (!await PersistDefinitionAsync(false))
                 return;
 
             _dirty = false;
             var parameters = _exampleEntries.Where(p => p.ShouldSubmit)
-                .Select(p => new ReportGenerationParameterReq { Key = p.Definition.Key, Type = p.Definition.Type, Value = p.SubmitValue, Description = p.Definition.Description })
+                .Select(p => new ReportGenerationParameterReq {
+                    Key = p.Definition.Key,
+                    Type = p.Definition.Type,
+                    Value = p.SubmitValue,
+                    Description = p.Definition.Description
+                })
                 .ToList();
 
             var req = new GenerateReportReq {
@@ -477,6 +489,7 @@ public partial class ReportDesignWorkbench : IDisposable
                 { d => d.LoadReportDataAsync, ReportGenerationDataLoader.Create(ApiClient, $"{BaseRoute.TrimEnd('/')}/Generation") },
                 { d => d.OpenOutput, true }
             };
+
             await DialogService.ShowAsync<ReportGenerationView>("Report Generation", dialogParams, LyoDialogPresets.Medium);
         }
         catch (Exception ex) {
@@ -563,28 +576,17 @@ public partial class ReportDesignWorkbench : IDisposable
         StateHasChanged();
     }
 
-    private bool CanRelocateSelected
-        => _target is DesignTarget.Card or DesignTarget.Block or DesignTarget.Table or DesignTarget.Grid or DesignTarget.Section
-            && _section is not null
-            && SelectedBodyItem() is not null;
-
-    private bool SelectedControlIsInGrid
-        => _control is not null
-            && _section is not null
-            && SectionBody.TryOwner(_section, _control, out var owner)
-            && owner is not null
-            && !ReferenceEquals(owner, _section.Controls);
-
     private SectionBodyItem? SelectedBodyItem()
     {
         if (_section is null)
             return null;
 
         return _target switch {
-            DesignTarget.Card or DesignTarget.Block or DesignTarget.Table or DesignTarget.Grid when _control is not null
-                => new() { Kind = SectionBodyKind.Control, Section = _section, Control = _control },
+            DesignTarget.Card or DesignTarget.Block or DesignTarget.Table or DesignTarget.Grid when _control is not null => new() {
+                Kind = SectionBodyKind.Control, Section = _section, Control = _control
+            },
             DesignTarget.Section => FindSubsectionItem(_section),
-            _ => null
+            var _ => null
         };
     }
 
@@ -603,13 +605,14 @@ public partial class ReportDesignWorkbench : IDisposable
     private IEnumerable<Section> AllSections()
     {
         foreach (var section in _report.Sections)
-            foreach (var found in Walk(section))
-                yield return found;
+        foreach (var found in Walk(section))
+            yield return found;
     }
 
     private static IEnumerable<Section> Walk(Section section)
     {
         yield return section;
+
         foreach (var child in section.Subsections) {
             foreach (var found in Walk(child))
                 yield return found;
@@ -742,7 +745,7 @@ public partial class ReportDesignWorkbench : IDisposable
             DesignTarget.Grid when _grid is not null => ReportDesignTreeExpand.GridKey(_section, _grid),
             DesignTarget.TableColumn when _table is not null && _tableColumn is not null => ReportDesignTreeExpand.TableColumnKey(_section, _table, _tableColumn),
             DesignTarget.TableRow when _table is not null && _tableRow is not null => ReportDesignTreeExpand.TableRowKey(_section, _table, _tableRow),
-            _ => ReportDesignTreeExpand.SectionKey(_section)
+            var _ => ReportDesignTreeExpand.SectionKey(_section)
         };
     }
 
@@ -752,8 +755,7 @@ public partial class ReportDesignWorkbench : IDisposable
         _pendingScrollPane = _fromCanvas ? ".lyo-report-design-left" : ".lyo-report-design-canvas";
     }
 
-    private string TreeRowClass(bool selected)
-        => selected ? "lyo-design-tree-row lyo-design-tree-selected" : "lyo-design-tree-row";
+    private string TreeRowClass(bool selected) => selected ? "lyo-design-tree-row lyo-design-tree-selected" : "lyo-design-tree-row";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -768,10 +770,8 @@ public partial class ReportDesignWorkbench : IDisposable
             _designJs ??= await JsRuntime.InvokeAsync<IJSObjectReference>("import", "./_content/Lyo.Reporting.Web.Components/scripts/report-design.js");
             await _designJs.InvokeVoidAsync("scrollIntoView", pane, key);
         }
-        catch (JSDisconnectedException) {
-        }
-        catch (JSException) {
-        }
+        catch (JSDisconnectedException) { }
+        catch (JSException) { }
     }
 
     private void OnCanvasHit(ReportDesignHit hit)
@@ -878,21 +878,21 @@ public partial class ReportDesignWorkbench : IDisposable
                 SelectGrid(request.Section, request.Grid);
 
             switch (request.Kind) {
-            case ReportDesignAddKind.Subsection:
-                AddSubsection();
-                break;
-            case ReportDesignAddKind.Card:
-                AddCard();
-                break;
-            case ReportDesignAddKind.Table:
-                AddTable();
-                break;
-            case ReportDesignAddKind.Grid:
-                AddGrid();
-                break;
-            case ReportDesignAddKind.Block when request.BlockType is { } type:
-                AddBlock(type);
-                break;
+                case ReportDesignAddKind.Subsection:
+                    AddSubsection();
+                    break;
+                case ReportDesignAddKind.Card:
+                    AddCard();
+                    break;
+                case ReportDesignAddKind.Table:
+                    AddTable();
+                    break;
+                case ReportDesignAddKind.Grid:
+                    AddGrid();
+                    break;
+                case ReportDesignAddKind.Block when request.BlockType is { } type:
+                    AddBlock(type);
+                    break;
             }
         }
         finally {
@@ -1055,8 +1055,6 @@ public partial class ReportDesignWorkbench : IDisposable
         QueuePeerScroll();
     }
 
-    private Grid? AddTargetGrid => _target == DesignTarget.Grid ? _grid : null;
-
     private void AddSection()
     {
         var section = new Section { Title = "New section", Order = _report.Sections.Count + 1 };
@@ -1119,7 +1117,13 @@ public partial class ReportDesignWorkbench : IDisposable
         if (_section is null)
             return;
 
-        var table = new Table { Title = "New table", ShowHeaders = true, Striped = true, Bordered = true };
+        var table = new Table {
+            Title = "New table",
+            ShowHeaders = true,
+            Striped = true,
+            Bordered = true
+        };
+
         table.SetColumnCount(2);
         table.SetRowCount(1);
         if (!TryPlaceControl(table))
@@ -1257,12 +1261,6 @@ public partial class ReportDesignWorkbench : IDisposable
 
         AfterStructureChanged();
     }
-
-    private int TableColumnCount => _table?.Columns.Count ?? 1;
-
-    private int TableRowCount => _table?.Rows.Count ?? 0;
-
-    private bool TableRowsEditable => _table is { DataSourceKind: DataSourceKind.Static };
 
     private void SetTableColumnCount(int count)
     {
@@ -1469,13 +1467,11 @@ public partial class ReportDesignWorkbench : IDisposable
             ContentType.Totals => "Totals (label|amount per line; last row emphasized)",
             ContentType.Checkbox => "Terms (one per line)",
             ContentType.KeyValue => "List items (one per line; key|value for KeyValue)",
-            _ => "List items (one per line; key|value for KeyValue)"
+            var _ => "List items (one per line; key|value for KeyValue)"
         };
 
     private static void SetListItems(Block block, string? text)
-        => block.ListItems = string.IsNullOrWhiteSpace(text)
-            ? []
-            : text.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries).Select(s => s.TrimEnd()).ToList();
+        => block.ListItems = string.IsNullOrWhiteSpace(text) ? [] : text.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries).Select(s => s.TrimEnd()).ToList();
 
     private void OnComponentTypeChanged(string? typeName)
     {
@@ -1491,7 +1487,7 @@ public partial class ReportDesignWorkbench : IDisposable
         if (_block is null || string.IsNullOrWhiteSpace(_block.ComponentType))
             return;
 
-        var type = ReportEmbedBinder.TryResolveComponent(_block.ComponentType, out _);
+        var type = ReportEmbedBinder.TryResolveComponent(_block.ComponentType, out var _);
         if (type is null)
             return;
 
@@ -1543,7 +1539,7 @@ public partial class ReportDesignWorkbench : IDisposable
                 continue;
 
             var typeName = LyoTypeInfo.String.FullName;
-            var resolved = ReportEmbedBinder.TryResolveComponent(_block.ComponentType, out _);
+            var resolved = ReportEmbedBinder.TryResolveComponent(_block.ComponentType, out var _);
             var prop = resolved is null ? null : ReportEmbedBinder.ParameterProperties(resolved).FirstOrDefault(p => p.Name == kvp.Key);
             if (prop is not null)
                 typeName = prop.PropertyType.FullName ?? typeName;
@@ -1553,8 +1549,6 @@ public partial class ReportDesignWorkbench : IDisposable
 
         OnSchemaChanged();
     }
-
-    private static readonly string[] CommonStyleKeys = ["color", "background", "font-size", "font-family", "max-width", "padding", "margin"];
 
     private void AddStyle(string key)
     {
@@ -1635,8 +1629,6 @@ public partial class ReportDesignWorkbench : IDisposable
         }
     }
 
-    private bool CanDuplicate => _target is not DesignTarget.Report;
-
     private void DuplicateSelected()
     {
         switch (_target) {
@@ -1703,8 +1695,7 @@ public partial class ReportDesignWorkbench : IDisposable
         SelectControl(_section, clone);
     }
 
-    private static T CloneNode<T>(T value)
-        => JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(value, ReportJson.Options), ReportJson.Options)!;
+    private static T CloneNode<T>(T value) => JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(value, ReportJson.Options), ReportJson.Options)!;
 
     private void OnCanvasCardDrop(ReportDesignCardDrop drop)
     {
@@ -1751,38 +1742,45 @@ public partial class ReportDesignWorkbench : IDisposable
     }
 
     private bool ShowBlockContent(ContentType type)
-        => type is ContentType.Text or ContentType.Heading or ContentType.Callout or ContentType.Quote
-            or ContentType.Code or ContentType.Html or ContentType.Badge or ContentType.Checkbox
-            or ContentType.Notes or ContentType.Signature;
+        => type is ContentType.Text or ContentType.Heading or ContentType.Callout or ContentType.Quote or ContentType.Code or ContentType.Html or ContentType.Badge
+            or ContentType.Checkbox or ContentType.Notes or ContentType.Signature;
 
     private bool ShowBlockCaption(ContentType type)
-        => type is ContentType.Image or ContentType.Chart or ContentType.TableOfContents or ContentType.Address
-            or ContentType.Notes or ContentType.Signature or ContentType.Progress;
+        => type is ContentType.Image or ContentType.Chart or ContentType.TableOfContents or ContentType.Address or ContentType.Notes or ContentType.Signature
+            or ContentType.Progress;
 
-    private bool ShowBlockSource(ContentType type)
-        => type is ContentType.Image or ContentType.Signature;
+    private bool ShowBlockSource(ContentType type) => type is ContentType.Image or ContentType.Signature;
 
     private bool ShowBlockAlt(ContentType type) => type is ContentType.Image;
 
     private bool ShowBlockTone(ContentType type) => type is ContentType.Callout or ContentType.Badge;
 
-    private bool ShowBlockLevel(ContentType type)
-        => type is ContentType.Heading or ContentType.Progress or ContentType.Spacer;
+    private bool ShowBlockLevel(ContentType type) => type is ContentType.Heading or ContentType.Progress or ContentType.Spacer;
 
     private bool ShowBlockListItems(ContentType type)
-        => type is ContentType.List or ContentType.NumberedList or ContentType.KeyValue or ContentType.Timeline
-            or ContentType.Address or ContentType.Totals or ContentType.Checkbox or ContentType.TableOfContents;
+        => type is ContentType.List or ContentType.NumberedList or ContentType.KeyValue or ContentType.Timeline or ContentType.Address or ContentType.Totals or ContentType.Checkbox
+            or ContentType.TableOfContents;
 
-    private string InspectorTitle => _target switch {
-        DesignTarget.Section => _section?.Title ?? "Section",
-        DesignTarget.Card => _card?.Label ?? "Card",
-        DesignTarget.Block => _block?.ContentType.ToString() ?? "Block",
-        DesignTarget.Table => _table?.Title ?? "Table",
-        DesignTarget.Grid => _grid?.Title ?? "Grid",
-        DesignTarget.TableColumn => _tableColumn?.Header ?? "Column",
-        DesignTarget.TableRow => "Row",
-        _ => "Report"
-    };
+    private enum DesignTarget
+    {
+        Report,
+        Section,
+        Card,
+        Block,
+        Table,
+        Grid,
+        TableColumn,
+        TableRow
+    }
+
+    private sealed class DesignBodyDrop
+    {
+        public string ZoneId { get; set; } = "";
+
+        public Section Section { get; set; } = null!;
+
+        public SectionBodyItem Item { get; set; } = null!;
+    }
 
     private sealed class DraftParam : LyoParameterDefinitionBase;
 }

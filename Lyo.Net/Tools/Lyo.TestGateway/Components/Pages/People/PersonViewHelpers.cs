@@ -66,6 +66,7 @@ internal static class PersonViewHelpers
         foreach (var type in extras.Append(current)) {
             if (string.IsNullOrWhiteSpace(type))
                 continue;
+
             if (types.All(t => !string.Equals(t, type, StringComparison.OrdinalIgnoreCase)))
                 types.Add(type);
         }

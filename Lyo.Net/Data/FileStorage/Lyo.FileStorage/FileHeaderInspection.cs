@@ -28,8 +28,8 @@ internal static class FileHeaderInspection
     }
 
     /// <summary>
-    /// Reads the prefix. When <paramref name="input" /> can seek, rewinds it and returns that same stream. Otherwise returns a stream that yields the prefix and then
-    /// the unread remainder. Dispose <see cref="HeaderPeek.Owned" /> after the save; it does not dispose <paramref name="input" />.
+    /// Reads the prefix. When <paramref name="input" /> can seek, rewinds it and returns that same stream. Otherwise returns a stream that yields the prefix and then the unread
+    /// remainder. Dispose <see cref="HeaderPeek.Owned" /> after the save; it does not dispose <paramref name="input" />.
     /// </summary>
     public static async Task<HeaderPeek> PeekAsync(Stream input, CancellationToken ct)
     {
@@ -41,7 +41,7 @@ internal static class FileHeaderInspection
         }
 
         var prefix = await ReadPrefixAsync(input, ct).ConfigureAwait(false);
-        var head = new MemoryStream(prefix, writable: false);
+        var head = new MemoryStream(prefix, false);
         var combined = new ConcatenatedStream([head, input]);
         return new(prefix, combined, new HeaderReplay(combined, head));
     }

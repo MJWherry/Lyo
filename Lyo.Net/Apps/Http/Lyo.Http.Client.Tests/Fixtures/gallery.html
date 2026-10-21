@@ -1,24 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <base href="https://cdn.example.test/gallery/">
-  <meta property="og:image" content="/img/og.png">
-  <meta name="description" content="Gallery">
-  <link rel="canonical" href="https://cdn.example.test/gallery">
-  <script type="application/ld+json">{"@type":"ImageObject","url":"https://cdn.example.test/ld.jpg"}</script>
+    <base href="https://cdn.example.test/gallery/">
+    <meta content="/img/og.png" property="og:image">
+    <meta content="Gallery" name="description">
+    <link href="https://cdn.example.test/gallery" rel="canonical">
+    <script type="application/ld+json">{
+        "@type": "ImageObject",
+        "url": "https://cdn.example.test/ld.jpg"
+    }</script>
 </head>
 <body>
-  <img src="relative.jpg" alt="rel">
-  <img srcset="a.jpg 1x, b.jpg 2x" alt="srcset">
-  <img data-src="lazy.webp">
-  <img src="sprite.png">
-  <a href="/dl/a.zip">zip</a>
-  <a href="/dl/notes.pdf">pdf</a>
-  <a href="/page">html</a>
-  <script>var u = "https://cdn.example.test/script-url.bin";</script>
-  <table>
-    <tr><th>Name</th><th>Url</th></tr>
-    <tr><td>one</td><td>/t/1</td></tr>
-  </table>
+<img alt="rel" src="relative.jpg">
+<img alt="srcset" srcset="a.jpg 1x, b.jpg 2x">
+<img data-src="lazy.webp">
+<img src="sprite.png">
+<a href="/dl/a.zip">zip</a>
+<a href="/dl/notes.pdf">pdf</a>
+<a href="/page">html</a>
+<script>var u = "https://cdn.example.test/script-url.bin";</script>
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Url</th>
+    </tr>
+    <tr>
+        <td>one</td>
+        <td>/t/1</td>
+    </tr>
+</table>
 </body>
 </html>

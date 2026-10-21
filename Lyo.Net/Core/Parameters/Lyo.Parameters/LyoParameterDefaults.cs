@@ -3,8 +3,8 @@ using Lyo.Exceptions;
 namespace Lyo.Parameters;
 
 /// <summary>
-/// Renders a parameter default template to text. Hosts that reference <c>Lyo.Formatter</c> implement this over <c>IFormatterService</c>; declared here so Core stays free of the
-/// formatter dependency.
+/// Renders a parameter default template to text. Hosts that reference <c>Lyo.Formatter</c> implement this over <c>IFormatterService</c>; declared here so Core stays free of
+/// the formatter dependency.
 /// </summary>
 /// <param name="template">Template as declared on the parameter, for example <c>{DateTime.UtcNow.AddDays(-1):yyyy-MM-dd}</c>.</param>
 /// <returns>Rendered text, or null when the template produced nothing.</returns>
@@ -55,7 +55,6 @@ public static class LyoParameterDefaults
     {
         ArgumentHelpers.ThrowIfNull(spec);
         error = null;
-
         if (!IsExpression(spec)) {
             value = literalValue;
             return true;

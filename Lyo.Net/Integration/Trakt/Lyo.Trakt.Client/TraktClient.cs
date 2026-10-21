@@ -6,10 +6,25 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Lyo.Trakt.Client;
 
 /// <summary>
-/// Trakt catalog client. Every catalog request sends <c>trakt-api-version: 2</c> and <c>trakt-api-key</c>. OAuth calls go to <c>https://auth.trakt.tv</c> and do not store a user bearer.
+/// Trakt catalog client. Every catalog request sends <c>trakt-api-version: 2</c> and <c>trakt-api-key</c>. OAuth calls go to <c>https://auth.trakt.tv</c> and do not store a
+/// user bearer.
 /// </summary>
 public class TraktClient : LyoHttpClient
 {
+    /// <summary>OAuth on <c>https://auth.trakt.tv</c>.</summary>
+    public AuthManager Auth { get; }
+
+    /// <summary>Text search and id lookup.</summary>
+    public SearchManager Search { get; }
+
+    /// <summary>Movie catalog calls.</summary>
+    public MovieManager Movies { get; }
+
+    /// <summary>Show catalog calls.</summary>
+    public ShowManager Shows { get; }
+
+    internal TraktClientOptions Settings { get; }
+
     /// <summary>Creates a client. <paramref name="httpClient" /> is supplied by <c>IHttpClientFactory</c> when the client is resolved from DI.</summary>
     public TraktClient(TraktClientOptions options, ILoggerFactory? loggerFactory = null, HttpClient? httpClient = null)
         : base(loggerFactory?.CreateLogger<TraktClient>() ?? NullLoggerFactory.Instance.CreateLogger<TraktClient>(), httpClient, TraktJson.Create(), options)
@@ -26,26 +41,12 @@ public class TraktClient : LyoHttpClient
         Shows = new(this);
     }
 
-    /// <summary>OAuth on <c>https://auth.trakt.tv</c>.</summary>
-    public AuthManager Auth { get; }
-
-    /// <summary>Text search and id lookup.</summary>
-    public SearchManager Search { get; }
-
-    /// <summary>Movie catalog calls.</summary>
-    public MovieManager Movies { get; }
-
-    /// <summary>Show catalog calls.</summary>
-    public ShowManager Shows { get; }
-
-    internal TraktClientOptions Settings { get; }
-
     internal async Task<TraktPage<T>> GetPageAsync<T>(string relativeUri, CancellationToken ct)
     {
         using var request = CreateRequest(HttpMethod.Get, relativeUri);
         using var response = await SendAsync(request, null, ct).ConfigureAwait(false);
         var items = await DeserializeAsync<List<T>>(response, ct).ConfigureAwait(false);
-        return new TraktPage<T> {
+        return new() {
             Items = items ?? [],
             Page = ReadHeader(response, "X-Pagination-Page"),
             Limit = ReadHeader(response, "X-Pagination-Limit"),

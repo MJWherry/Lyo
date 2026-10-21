@@ -21,92 +21,88 @@ namespace Lyo.Reporting.Api;
 public static class InvoicePdfExtensions
 {
     /// <summary>
-    /// Maps <c>GET /Reporting/Invoices/{id}/pdf</c>. Generates the Invoice composition as PDF when <see cref="IBillingStore" /> is registered.
-    /// When a download factory is configured and generation stored an output file, the PDF bytes are streamed; otherwise the generation JSON is returned.
+    /// Maps <c>GET /Reporting/Invoices/{id}/pdf</c>. Generates the Invoice composition as PDF when <see cref="IBillingStore" /> is registered. When a download factory is
+    /// configured and generation stored an output file, the PDF bytes are streamed; otherwise the generation JSON is returned.
     /// </summary>
     public static WebApplication MapBillingInvoicePdf(this WebApplication app, ReportingApiOptions? options = null)
     {
         options ??= new();
         var endpoint = app.MapGet(
-            "/Reporting/Invoices/{id:guid}/pdf",
-            async (Guid id, HttpContext http, IServiceProvider services, CancellationToken ct) => {
-                var billing = services.GetService<IBillingStore>();
-                if (billing is null)
-                    return Results.StatusCode(StatusCodes.Status501NotImplemented);
+                "/Reporting/Invoices/{id:guid}/pdf", async (Guid id, HttpContext http, IServiceProvider services, CancellationToken ct) => {
+                    var billing = services.GetService<IBillingStore>();
+                    if (billing is null)
+                        return Results.StatusCode(StatusCodes.Status501NotImplemented);
 
-                var invoice = await billing.GetInvoiceByIdAsync(id, ct: ct).ConfigureAwait(false);
-                if (invoice is null)
-                    return Results.NotFound();
-                if (invoice.Status is InvoiceStatus.Draft or InvoiceStatus.Void)
-                    return Results.BadRequest("Draft and void invoices cannot be rendered.");
+                    var invoice = await billing.GetInvoiceByIdAsync(id, ct: ct).ConfigureAwait(false);
+                    if (invoice is null)
+                        return Results.NotFound();
 
-                var reports = services.GetRequiredService<ReportService>();
-                var req = InvoicePdfComposition.CreateRequest(invoice);
-                Extensions.StampCreatedBy(req, http, options);
+                    if (invoice.Status is InvoiceStatus.Draft or InvoiceStatus.Void)
+                        return Results.BadRequest("Draft and void invoices cannot be rendered.");
 
-                try {
-                    var result = await reports.GenerateAsync(req, ct: ct).ConfigureAwait(false);
-                    if (options.DownloadStreamFactory is { } downloadFactory
-                        && result.OutputFileId is Guid outputFileId
-                        && result.Status == ReportGenerationStatus.Succeeded) {
-                        var stream = await downloadFactory(
-                                new() {
-                                    GenerationId = result.Id,
-                                    OutputFileId = outputFileId,
-                                    ContentType = result.ContentType,
-                                    FileName = result.OriginalFileName,
-                                    PathPrefix = result.PathPrefix,
-                                    Services = services
-                                }, ct)
-                            .ConfigureAwait(false);
-                        if (stream is not null)
-                            return Results.Stream(stream, result.ContentType ?? FileTypeInfo.Pdf.MimeType, result.OriginalFileName);
+                    var reports = services.GetRequiredService<ReportService>();
+                    var req = InvoicePdfComposition.CreateRequest(invoice);
+                    Extensions.StampCreatedBy(req, http, options);
+                    try {
+                        var result = await reports.GenerateAsync(req, ct: ct).ConfigureAwait(false);
+                        if (options.DownloadStreamFactory is { } downloadFactory && result.OutputFileId is Guid outputFileId && result.Status == ReportGenerationStatus.Succeeded) {
+                            var stream = await downloadFactory(
+                                    new() {
+                                        GenerationId = result.Id,
+                                        OutputFileId = outputFileId,
+                                        ContentType = result.ContentType,
+                                        FileName = result.OriginalFileName,
+                                        PathPrefix = result.PathPrefix,
+                                        Services = services
+                                    }, ct)
+                                .ConfigureAwait(false);
+
+                            if (stream is not null)
+                                return Results.Stream(stream, result.ContentType ?? FileTypeInfo.Pdf.MimeType, result.OriginalFileName);
+                        }
+
+                        return Results.Ok(result);
                     }
-
-                    return Results.Ok(result);
-                }
-                catch (ReportValidationException ex) {
-                    throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, ex.Message));
-                }
-                catch (ReportBusyException ex) {
-                    throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.ServiceUnavailable, ex.Message));
-                }
-                catch (OperationCanceledException) when (!ct.IsCancellationRequested) {
-                    throw ApiErrorException.From(
-                        LyoProblemDetails.FromCode(ApiErrorCodes.GatewayTimeout, "Report generation exceeded the configured GenerationTimeout and was cancelled."));
-                }
-                catch (OperationCanceledException) {
-                    throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.Cancelled, "The report generation request was cancelled by the caller."));
-                }
-            }).WithTags("Reporting").WithName("GenerateInvoicePdf");
+                    catch (ReportValidationException ex) {
+                        throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, ex.Message));
+                    }
+                    catch (ReportBusyException ex) {
+                        throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.ServiceUnavailable, ex.Message));
+                    }
+                    catch (OperationCanceledException) when (!ct.IsCancellationRequested) {
+                        throw ApiErrorException.From(
+                            LyoProblemDetails.FromCode(ApiErrorCodes.GatewayTimeout, "Report generation exceeded the configured GenerationTimeout and was cancelled."));
+                    }
+                    catch (OperationCanceledException) {
+                        throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.Cancelled, "The report generation request was cancelled by the caller."));
+                    }
+                })
+            .WithTags("Reporting")
+            .WithName("GenerateInvoicePdf");
 
         endpoint.ApplyEndpointAuth(options.GenerateAuth);
         return app;
     }
 }
 
-/// <summary>Binds a live <see cref="InvoiceRecord"/> onto the Invoice composition (formatted money, real totals, no designer sample copy).</summary>
+/// <summary>Binds a live <see cref="InvoiceRecord" /> onto the Invoice composition (formatted money, real totals, no designer sample copy).</summary>
 internal static class InvoicePdfComposition
 {
-    /// <summary>Builds the generate request: live line items, bill-to, and totals (tax omitted when <see cref="InvoiceRecord.TaxAmount"/> is 0).</summary>
+    /// <summary>Builds the generate request: live line items, bill-to, and totals (tax omitted when <see cref="InvoiceRecord.TaxAmount" /> is 0).</summary>
     public static GenerateReportReq CreateRequest(InvoiceRecord invoice)
     {
         ArgumentNullException.ThrowIfNull(invoice);
         var report = ReportDesignTemplates.Invoice();
         ApplyLiveValues(report, invoice);
         var lineItems = JsonSerializer.Serialize(invoice.Lines.OrderBy(l => l.LineNumber).Select(l => LineRow(l, invoice.Currency)));
-        return new GenerateReportReq {
+        return new() {
             ReportDataJson = ReportJson.Serialize(report),
             Format = ReportFormat.Pdf,
             FileName = invoice.Number ?? "invoice",
-            Parameters =
-            [
-                new ReportGenerationParameterReq("InvoiceNo", LyoTypeInfo.String, invoice.Number ?? invoice.Id.ToString()),
-                new ReportGenerationParameterReq("Period", LyoTypeInfo.String, invoice.IssuedAt?.ToString("yyyy-MM") ?? ""),
-                new ReportGenerationParameterReq("Customer", LyoTypeInfo.String, invoice.BillToName ?? invoice.BillToContactName ?? ""),
-                new ReportGenerationParameterReq("IssuedAt", LyoTypeInfo.String, FormatDate(invoice.IssuedAt)),
-                new ReportGenerationParameterReq("DueAt", LyoTypeInfo.String, FormatDate(invoice.DueAt)),
-                new ReportGenerationParameterReq("LineItems", LyoTypeInfo.JsonArray, lineItems)
+            Parameters = [
+                new("InvoiceNo", LyoTypeInfo.String, invoice.Number ?? invoice.Id.ToString()), new("Period", LyoTypeInfo.String, invoice.IssuedAt?.ToString("yyyy-MM") ?? ""),
+                new("Customer", LyoTypeInfo.String, invoice.BillToName ?? invoice.BillToContactName ?? ""), new("IssuedAt", LyoTypeInfo.String, FormatDate(invoice.IssuedAt)),
+                new("DueAt", LyoTypeInfo.String, FormatDate(invoice.DueAt)), new("LineItems", LyoTypeInfo.JsonArray, lineItems)
             ]
         };
     }
@@ -122,18 +118,15 @@ internal static class InvoicePdfComposition
                 block.Content = string.IsNullOrWhiteSpace(invoice.Notes) ? null : invoice.Notes;
         }
 
-        foreach (var section in report.Sections) {
+        foreach (var section in report.Sections)
             section.Controls.RemoveAll(c => c is Block { ContentType: ContentType.Notes, Content: null or "" });
-        }
     }
 
     internal static Dictionary<string, object?> LineRow(InvoiceLineRecord line, string? currency)
     {
         var title = string.IsNullOrWhiteSpace(line.Title) ? line.Description : line.Title;
-        var description = string.IsNullOrWhiteSpace(line.Description) || string.Equals(line.Description, title, StringComparison.Ordinal)
-            ? ""
-            : line.Description;
-        return new Dictionary<string, object?> {
+        var description = string.IsNullOrWhiteSpace(line.Description) || string.Equals(line.Description, title, StringComparison.Ordinal) ? "" : line.Description;
+        return new() {
             ["title"] = title,
             ["description"] = description,
             ["qty"] = FormatQty(line.Quantity),
@@ -147,6 +140,7 @@ internal static class InvoicePdfComposition
         var rows = new List<string> { $"Subtotal|{FormatMoney(invoice.Subtotal, currency)}" };
         if (invoice.TaxAmount != 0m)
             rows.Add($"Tax|{FormatMoney(invoice.TaxAmount, currency)}");
+
         rows.Add($"Total|{FormatMoney(invoice.Total, currency)}");
         return rows;
     }
@@ -157,11 +151,10 @@ internal static class InvoicePdfComposition
         Add(invoice.BillToName);
         if (!string.Equals(invoice.BillToContactName, invoice.BillToName, StringComparison.OrdinalIgnoreCase))
             Add(invoice.BillToContactName);
+
         Add(invoice.BillToLine1);
         Add(invoice.BillToLine2);
-        var city = string.Join(
-            ", ",
-            new[] { invoice.BillToCity, CombineRegionPostal(invoice.BillToRegion, invoice.BillToPostalCode) }.Where(s => !string.IsNullOrWhiteSpace(s)));
+        var city = string.Join(", ", new[] { invoice.BillToCity, CombineRegionPostal(invoice.BillToRegion, invoice.BillToPostalCode) }.Where(s => !string.IsNullOrWhiteSpace(s)));
         Add(city);
         Add(invoice.BillToCountry);
         return lines;
@@ -181,16 +174,15 @@ internal static class InvoicePdfComposition
             : string.Create(CultureInfo.InvariantCulture, $"{amount:N2} {code}");
     }
 
-    internal static string FormatQty(decimal quantity)
-        => quantity.ToString("0.##", CultureInfo.InvariantCulture);
+    internal static string FormatQty(decimal quantity) => quantity.ToString("0.##", CultureInfo.InvariantCulture);
 
-    private static string FormatDate(DateTime? value)
-        => value is { } d ? d.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : "";
+    private static string FormatDate(DateTime? value) => value is { } d ? d.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) : "";
 
     private static string? CombineRegionPostal(string? region, string? postal)
     {
         if (string.IsNullOrWhiteSpace(region))
             return string.IsNullOrWhiteSpace(postal) ? null : postal.Trim();
+
         return string.IsNullOrWhiteSpace(postal) ? region.Trim() : $"{region.Trim()} {postal.Trim()}";
     }
 }

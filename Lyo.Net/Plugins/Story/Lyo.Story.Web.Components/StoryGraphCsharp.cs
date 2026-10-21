@@ -1,10 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Lyo.Exceptions;
-using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Enums;
-using Lyo.Story;
-using Lyo.Story.Enums;
 
 namespace Lyo.Story.Web.Components;
 
@@ -19,14 +16,25 @@ public static class StoryGraphCsharp
         builder.Append("var story = StoryBuilder.New(").Append(Quote(draft.Title)).AppendLine(")");
         if (!string.IsNullOrWhiteSpace(draft.Slug))
             builder.Append("    .Slug(").Append(Quote(draft.Slug)).AppendLine(")");
+
         if (!string.IsNullOrWhiteSpace(draft.Description))
             builder.Append("    .Description(").Append(Quote(draft.Description)).AppendLine(")");
+
         if (!string.IsNullOrWhiteSpace(draft.Language))
             builder.Append("    .Language(").Append(Quote(draft.Language)).AppendLine(")");
+
         foreach (var variable in draft.Variables)
-            builder.Append("    .Variable(").Append(Quote(variable.Key)).Append(", StoryVariableType.").Append(variable.Type).Append(", ").Append(DefaultLiteral(variable)).AppendLine(")");
+            builder.Append("    .Variable(")
+                .Append(Quote(variable.Key))
+                .Append(", StoryVariableType.")
+                .Append(variable.Type)
+                .Append(", ")
+                .Append(DefaultLiteral(variable))
+                .AppendLine(")");
+
         foreach (var scene in draft.Scenes)
             builder.Append("    .Scene(").Append(Quote(scene.Key)).Append(", ").Append(Quote(scene.Title)).AppendLine(")");
+
         foreach (var action in draft.Actions) {
             builder.Append("    .Action(").Append(Quote(action.Key)).AppendLine(", a => a");
             AppendDo(builder, "        ", action.Effects);
@@ -49,16 +57,22 @@ public static class StoryGraphCsharp
         builder.Append("    .").Append(start ? "StartNode" : "Node").Append('(').Append(Quote(node.Key)).AppendLine(", n => n");
         if (!string.IsNullOrWhiteSpace(node.Title))
             builder.Append("        .Titled(").Append(Quote(node.Title)).AppendLine(")");
+
         if (!string.IsNullOrWhiteSpace(node.SceneKey))
             builder.Append("        .InScene(").Append(Quote(node.SceneKey)).AppendLine(")");
+
         if (node.IsEnding)
             builder.AppendLine("        .Ending()");
+
         if (node.PresentationKind == StoryPresentationKind.Text && node.Body is not null)
             builder.Append("        .Text(").Append(Quote(node.Body)).AppendLine(")");
+
         if (node.PresentationKind == StoryPresentationKind.Cutscene && !string.IsNullOrWhiteSpace(node.MediaRef))
             builder.Append("        .Cutscene(").Append(Quote(node.MediaRef)).AppendLine(")");
+
         foreach (var choice in node.Choices)
             AppendChoice(builder, choice);
+
         builder.AppendLine(")");
     }
 
@@ -69,6 +83,7 @@ public static class StoryGraphCsharp
         AppendWhen(builder, "            ", ".VisibleWhenAll", ".VisibleWhenOneOf", choice.VisibleWhen);
         if (choice.Effects.Count > 0)
             AppendDo(builder, "            ", choice.Effects);
+
         builder.AppendLine(")");
     }
 
@@ -79,12 +94,15 @@ public static class StoryGraphCsharp
         var scope = reaction.ScopeVariableKey ?? reaction.ScopeNodeKey;
         if (!string.IsNullOrWhiteSpace(scope))
             builder.Append(", ").Append(Quote(scope));
+
         builder.AppendLine(")");
         if (reaction.Once)
             builder.AppendLine("        .Once()");
+
         AppendWhen(builder, "        ", ".WhenAll", ".WhenOneOf", reaction.When);
         if (reaction.Effects.Count > 0)
             AppendDo(builder, "        ", reaction.Effects);
+
         builder.AppendLine(")");
     }
 
@@ -92,9 +110,11 @@ public static class StoryGraphCsharp
     {
         if (effects.Count == 0)
             return;
+
         builder.Append(indent).AppendLine(".Do(d => d");
         foreach (var effect in effects)
             builder.Append(indent).Append("    ").AppendLine(EffectCall(effect));
+
         builder.Append(indent).Append(')');
     }
 
@@ -116,6 +136,7 @@ public static class StoryGraphCsharp
     {
         if (clause is null)
             return;
+
         var method = clause is GroupClause { Operator: GroupOperatorEnum.Or } ? one : all;
         builder.Append(indent).Append(method).Append("(w => w");
         if (clause is GroupClause group) {
@@ -132,6 +153,7 @@ public static class StoryGraphCsharp
     {
         if (clause is not ConditionClause condition || condition.Comparison != ComparisonOperatorEnum.Equals)
             return;
+
         var field = condition.Field ?? "";
         if (field.StartsWith(StoryConditionFields.VarPrefix, StringComparison.Ordinal)) {
             var key = Quote(field[StoryConditionFields.VarPrefix.Length..]);
@@ -141,6 +163,7 @@ public static class StoryGraphCsharp
                 builder.AppendLine().Append("                .NotFlag(").Append(key).Append(')');
             else
                 builder.AppendLine().Append("                .Eq(").Append(key).Append(", ").Append(ValueLiteral(condition.Value)).Append(')');
+
             return;
         }
 
@@ -163,23 +186,26 @@ public static class StoryGraphCsharp
     {
         if (value is null)
             return "null";
+
         if (IsTrue(value))
             return "true";
+
         if (IsFalse(value))
             return "false";
+
         if (value is int or long)
             return Convert.ToString(value, CultureInfo.InvariantCulture) ?? "0";
+
         if (int.TryParse(Convert.ToString(value, CultureInfo.InvariantCulture), NumberStyles.Integer, CultureInfo.InvariantCulture, out var number) && value is not string)
             return number.ToString(CultureInfo.InvariantCulture);
+
         return Quote(Convert.ToString(value, CultureInfo.InvariantCulture));
     }
 
-    private static bool IsTrue(object? value)
-        => value is true || string.Equals(Convert.ToString(value, CultureInfo.InvariantCulture), "true", StringComparison.OrdinalIgnoreCase);
+    private static bool IsTrue(object? value) => value is true || string.Equals(Convert.ToString(value, CultureInfo.InvariantCulture), "true", StringComparison.OrdinalIgnoreCase);
 
     private static bool IsFalse(object? value)
         => value is false || string.Equals(Convert.ToString(value, CultureInfo.InvariantCulture), "false", StringComparison.OrdinalIgnoreCase);
 
-    private static string Quote(string? value)
-        => "\"" + (value ?? "").Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal) + "\"";
+    private static string Quote(string? value) => "\"" + (value ?? "").Replace("\\", "\\\\", StringComparison.Ordinal).Replace("\"", "\\\"", StringComparison.Ordinal) + "\"";
 }

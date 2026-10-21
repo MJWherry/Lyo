@@ -25,9 +25,7 @@ public static class Extensions
             return services.AddRecipeDbContextFactory(options);
         }
 
-        public IServiceCollection AddRecipeDbContextFactoryFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresRecipeOptions.SectionName)
+        public IServiceCollection AddRecipeDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresRecipeOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
@@ -55,9 +53,7 @@ public static class Extensions
             return services.AddPostgresRecipeStore(options);
         }
 
-        public IServiceCollection AddPostgresRecipeStoreFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresRecipeOptions.SectionName)
+        public IServiceCollection AddPostgresRecipeStoreFromConfiguration(IConfiguration configuration, string configSectionName = PostgresRecipeOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

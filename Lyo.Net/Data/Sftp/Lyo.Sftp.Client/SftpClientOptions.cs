@@ -31,9 +31,7 @@ public sealed class SftpClientOptions
     /// <summary>Passphrase for an encrypted private key.</summary>
     public string? PrivateKeyPassphrase { get; set; }
 
-    /// <summary>
-    /// Allowed host-key fingerprints (SHA256 base64 or hex). Required when <see cref="HostKeyPolicy" /> is <see cref="SftpHostKeyPolicy.FingerprintAllowList" />.
-    /// </summary>
+    /// <summary>Allowed host-key fingerprints (SHA256 base64 or hex). Required when <see cref="HostKeyPolicy" /> is <see cref="SftpHostKeyPolicy.FingerprintAllowList" />.</summary>
     public List<string> AllowedHostKeyFingerprints { get; set; } = [];
 
     /// <summary>How the remote host key is checked.</summary>
@@ -65,9 +63,8 @@ public sealed class SftpClientOptions
         var hasPassword = !string.IsNullOrEmpty(Password);
         var hasPem = !string.IsNullOrWhiteSpace(PrivateKeyPem);
         var hasKeyPath = !string.IsNullOrWhiteSpace(PrivateKeyPath);
-        if (!hasPassword && !hasPem && !hasKeyPath) {
+        if (!hasPassword && !hasPem && !hasKeyPath)
             throw new InvalidFormatException("SFTP authentication requires Password, PrivateKeyPem, or PrivateKeyPath.", nameof(Password), null, "password or private key");
-        }
 
         if (HostKeyPolicy == SftpHostKeyPolicy.FingerprintAllowList && (AllowedHostKeyFingerprints is null || AllowedHostKeyFingerprints.Count == 0)) {
             throw new InvalidFormatException(

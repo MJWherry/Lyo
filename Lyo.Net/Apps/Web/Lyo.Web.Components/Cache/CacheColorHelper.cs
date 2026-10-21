@@ -14,8 +14,7 @@ public static class CacheColorHelper
         };
 
     /// <summary>Identity hue for a projected type name. Unknown names return null.</summary>
-    public static LyoChipHue? ForType(string? text)
-        => Enum.TryParse<CacheItemTypeEnum>(text, ignoreCase: true, out var type) ? ForType(type) : null;
+    public static LyoChipHue? ForType(string? text) => Enum.TryParse<CacheItemTypeEnum>(text, true, out var type) ? ForType(type) : null;
 
     /// <summary>Material icon for a cache row type.</summary>
     public static string TypeIcon(CacheItemTypeEnum type)
@@ -26,10 +25,8 @@ public static class CacheColorHelper
         };
 
     /// <summary>Lock icon when the payload is encrypted; open lock otherwise.</summary>
-    public static string EncryptedIcon(bool? encrypted)
-        => encrypted == true ? Icons.Material.Filled.Lock : Icons.Material.Filled.LockOpen;
+    public static string EncryptedIcon(bool? encrypted) => encrypted == true ? Icons.Material.Filled.Lock : Icons.Material.Filled.LockOpen;
 
     /// <summary>Compress icon when the payload is compressed.</summary>
-    public static string CompressedIcon(bool? compressed)
-        => compressed == true ? Icons.Material.Filled.Compress : Icons.Material.Filled.DataObject;
+    public static string CompressedIcon(bool? compressed) => compressed == true ? Icons.Material.Filled.Compress : Icons.Material.Filled.DataObject;
 }

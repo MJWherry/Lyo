@@ -145,7 +145,6 @@ public record GeographicInfo(USState? State, string? Province, CountryCode Count
     static GeographicInfo()
     {
         var fields = typeof(GeographicInfo).PublicStaticFields<GeographicInfo>();
-
         foreach (var location in fields) {
             if (location == Unknown)
                 continue;

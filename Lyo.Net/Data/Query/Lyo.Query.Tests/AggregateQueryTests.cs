@@ -5,7 +5,6 @@ using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
 using Lyo.Query.Models.Exceptions;
 using Lyo.Query.Services.Aggregate;
-using Lyo.Query.Tests.Models;
 
 namespace Lyo.Query.Tests;
 
@@ -14,13 +13,8 @@ public class AggregateQueryTests : WhereClauseServiceTests
     [Fact]
     public void Execute_GroupByNameAndAge_ReturnsCountPerGroup()
     {
-        var people = People(
-            new() { Name = "F", Age = 30 },
-            new() { Name = "F", Age = 30 },
-            new() { Name = "M", Age = 30 });
-
+        var people = People(new() { Name = "F", Age = 30 }, new() { Name = "F", Age = 30 }, new() { Name = "M", Age = 30 });
         var page = AggregateQuery.Execute(people, Request(["Name", "Age"], new AggregateSelect(AggregateFunction.Count, "Count")));
-
         Assert.Equal(2, page.Items.Count);
         Assert.Equal(2, page.Total);
         var female = Row(page, "Name", "F");
@@ -33,19 +27,14 @@ public class AggregateQueryTests : WhereClauseServiceTests
     public void Execute_SumAndAverage_SkipsNulls_AverageOfIntsIsDouble()
     {
         var people = People(
-            new() { Name = "F", Age = 10, AgeNullable = 10 },
-            new() { Name = "F", Age = 30, AgeNullable = null },
-            new() { Name = "F", Age = 30, AgeNullable = 30 },
+            new() { Name = "F", Age = 10, AgeNullable = 10 }, new() { Name = "F", Age = 30, AgeNullable = null }, new() { Name = "F", Age = 30, AgeNullable = 30 },
             new() { Name = "M", Age = 30, AgeNullable = 30 });
 
         var page = AggregateQuery.Execute(
             people,
             Request(
-                ["Name"],
-                new AggregateSelect(AggregateFunction.Sum, "AgeSum", "Age"),
-                new AggregateSelect(AggregateFunction.Average, "AgeAvg", "Age"),
-                new AggregateSelect(AggregateFunction.Sum, "NullableSum", "AgeNullable"),
-                new AggregateSelect(AggregateFunction.Average, "NullableAvg", "AgeNullable")));
+                ["Name"], new AggregateSelect(AggregateFunction.Sum, "AgeSum", "Age"), new AggregateSelect(AggregateFunction.Average, "AgeAvg", "Age"),
+                new AggregateSelect(AggregateFunction.Sum, "NullableSum", "AgeNullable"), new AggregateSelect(AggregateFunction.Average, "NullableAvg", "AgeNullable")));
 
         var female = Row(page, "Name", "F");
         Assert.Equal(70, female["AgeSum"]);
@@ -59,8 +48,7 @@ public class AggregateQueryTests : WhereClauseServiceTests
     {
         var people = People(new() { Name = "F", Age = 10 }, new() { Name = "F", Age = 30 }, new() { Name = "M", Age = 30 });
         var page = AggregateQuery.Execute(
-            people,
-            Request(["Name"], new AggregateSelect(AggregateFunction.Min, "Youngest", "Age"), new AggregateSelect(AggregateFunction.Max, "Oldest", "Age")));
+            people, Request(["Name"], new AggregateSelect(AggregateFunction.Min, "Youngest", "Age"), new AggregateSelect(AggregateFunction.Max, "Oldest", "Age")));
 
         var female = Row(page, "Name", "F");
         Assert.Equal(10, female["Youngest"]);
@@ -73,8 +61,7 @@ public class AggregateQueryTests : WhereClauseServiceTests
     {
         var people = People(new() { Name = "F", Age = 10 }, new() { Name = "F", Age = 30 });
         var page = AggregateQuery.Execute(
-            people,
-            Request(["Name"], new AggregateSelect(AggregateFunction.Count, "Count"), new AggregateSelect(AggregateFunction.Sum, "AgeSum", "Age")));
+            people, Request(["Name"], new AggregateSelect(AggregateFunction.Count, "Count"), new AggregateSelect(AggregateFunction.Sum, "AgeSum", "Age")));
 
         var row = Assert.Single(page.Items);
         Assert.Equal(2, row["Count"]);
@@ -86,7 +73,8 @@ public class AggregateQueryTests : WhereClauseServiceTests
     {
         var people = People(new() { Name = "F", Age = 10 }, new() { Name = "F", Age = 30 }, new() { Name = "M", Age = 30 });
         var filtered = CreateService().ApplyWhereClause(people, WhereClauseBuilder.And(b => b.GreaterThan("Age", 20)));
-        var page = AggregateQuery.Execute(filtered, Request(["Name"], new AggregateSelect(AggregateFunction.Count, "Count"), new AggregateSelect(AggregateFunction.Sum, "AgeSum", "Age")));
+        var page = AggregateQuery.Execute(
+            filtered, Request(["Name"], new AggregateSelect(AggregateFunction.Count, "Count"), new AggregateSelect(AggregateFunction.Sum, "AgeSum", "Age")));
 
         Assert.Equal(2, page.Items.Count);
         Assert.Equal(1, Row(page, "Name", "F")["Count"]);
@@ -100,9 +88,7 @@ public class AggregateQueryTests : WhereClauseServiceTests
         var people = People(new() { Name = "M", Age = 30 }, new() { Name = "F", Age = 30 }, new() { Name = "F", Age = 31 });
         var request = Request(["Name"], new AggregateSelect(AggregateFunction.Count, "Count"));
         request.SortBy = [new("Count", SortDirection.Desc)];
-
         var page = AggregateQuery.Execute(people, request);
-
         Assert.Equal("F", page.Items[0]["Name"]);
         Assert.Equal(2, page.Items[0]["Count"]);
         Assert.Equal("M", page.Items[1]["Name"]);
@@ -117,9 +103,7 @@ public class AggregateQueryTests : WhereClauseServiceTests
         request.Amount = 1;
         request.SortBy = [new("Name", SortDirection.Asc)];
         request.Options.TotalCountMode = QueryTotalCountMode.Exact;
-
         var page = AggregateQuery.Execute(people, request);
-
         var row = Assert.Single(page.Items);
         Assert.Equal("B", row["Name"]);
         Assert.Equal(3, page.Total);
@@ -130,7 +114,6 @@ public class AggregateQueryTests : WhereClauseServiceTests
     {
         var people = People(new Person { Name = null!, Age = 1 }, new Person { Name = null!, Age = 2 }, new Person { Name = "A", Age = 3 });
         var page = AggregateQuery.Execute(people, Request(["Name"], new AggregateSelect(AggregateFunction.Count, "Count")));
-
         Assert.Equal(2, page.Items.Count);
         Assert.Equal(2, page.Items.Single(r => r["Name"] is null)["Count"]);
         Assert.Equal(1, Row(page, "Name", "A")["Count"]);
@@ -144,19 +127,14 @@ public class AggregateQueryTests : WhereClauseServiceTests
         var row = Assert.Single(count.Items);
         Assert.Equal(0, row["Count"]);
         Assert.Equal(1, count.Total);
-
         var sum = AggregateQuery.Execute(empty, Request([], new AggregateSelect(AggregateFunction.Sum, "AgeSum", "Age")));
         Assert.Equal(0, Assert.Single(sum.Items)["AgeSum"]);
-
         var nullableSum = AggregateQuery.Execute(empty, Request([], new AggregateSelect(AggregateFunction.Sum, "AgeSum", "AgeNullable")));
         Assert.Null(Assert.Single(nullableSum.Items)["AgeSum"]);
-
         var average = AggregateQuery.Execute(empty, Request([], new AggregateSelect(AggregateFunction.Average, "AgeAvg", "Age")));
         Assert.Null(Assert.Single(average.Items)["AgeAvg"]);
-
         var min = AggregateQuery.Execute(empty, Request([], new AggregateSelect(AggregateFunction.Min, "Youngest", "Age")));
         Assert.Null(Assert.Single(min.Items)["Youngest"]);
-
         var max = AggregateQuery.Execute(empty, Request([], new AggregateSelect(AggregateFunction.Max, "Oldest", "Age")));
         Assert.Null(Assert.Single(max.Items)["Oldest"]);
     }
@@ -167,7 +145,6 @@ public class AggregateQueryTests : WhereClauseServiceTests
         var people = People(new Person { Name = "A", Age = 1 });
         var filtered = CreateService().ApplyWhereClause(people, WhereClauseBuilder.And(b => b.Equals("Name", "nope")));
         var page = AggregateQuery.Execute(filtered, Request(["Name"], new AggregateSelect(AggregateFunction.Count, "Count")));
-
         Assert.Empty(page.Items);
         Assert.Equal(0, page.Total);
     }
@@ -177,11 +154,7 @@ public class AggregateQueryTests : WhereClauseServiceTests
     {
         var people = People(new() { Name = "Z", AgeNullable = null }, new() { Name = "Z", AgeNullable = null });
         var page = AggregateQuery.Execute(
-            people,
-            Request(
-                ["Name"],
-                new AggregateSelect(AggregateFunction.Min, "Youngest", "AgeNullable"),
-                new AggregateSelect(AggregateFunction.Max, "Oldest", "AgeNullable")));
+            people, Request(["Name"], new AggregateSelect(AggregateFunction.Min, "Youngest", "AgeNullable"), new AggregateSelect(AggregateFunction.Max, "Oldest", "AgeNullable")));
 
         var row = Assert.Single(page.Items);
         Assert.Null(row["Youngest"]);
@@ -194,15 +167,18 @@ public class AggregateQueryTests : WhereClauseServiceTests
         var keys = Request(["Name"], new AggregateSelect(AggregateFunction.Count, "Count"));
         keys.Keys = [[1]];
         AssertRejected(keys, "keys");
-
         var computed = Request(["Name"], new AggregateSelect(AggregateFunction.Count, "Count"));
         computed.ComputedFields = [new("Label", "{Name}")];
         AssertRejected(computed, "computed");
-
         var sub = Request(["Name"], new AggregateSelect(AggregateFunction.Count, "Count"));
-        sub.WhereClause = new ConditionClause { Field = "Name", Comparison = ComparisonOperatorEnum.Equals, Value = "A", SubClause = new ConditionClause() };
-        AssertRejected(sub, "sub-clause");
+        sub.WhereClause = new ConditionClause {
+            Field = "Name",
+            Comparison = ComparisonOperatorEnum.Equals,
+            Value = "A",
+            SubClause = new ConditionClause()
+        };
 
+        AssertRejected(sub, "sub-clause");
         var matched = Request(["Name"], new AggregateSelect(AggregateFunction.Count, "Count"));
         matched.Options.IncludeFilterMode = QueryIncludeFilterMode.MatchedOnly;
         AssertRejected(matched, "matched-only");
@@ -215,10 +191,10 @@ public class AggregateQueryTests : WhereClauseServiceTests
         AssertRejected(Request(["*"], new AggregateSelect(AggregateFunction.Count, "Count")), "wildcard");
         AssertRejected(Request(["Name"], new AggregateSelect(AggregateFunction.Sum, "AgeSum")), "field");
         AssertRejected(Request(["Name"], new AggregateSelect(AggregateFunction.Sum, "AgeSum", "Name")), "numeric");
-
         var counted = AggregateQuery.Execute(
             People(new() { Name = "A", Age = 1 }, new() { Name = "A", Age = 2 }),
             Request(["Name"], new AggregateSelect(AggregateFunction.Count, "Rows"), new AggregateSelect(AggregateFunction.Count, "Ages", "Age")));
+
         var row = Row(counted, "Name", "A");
         Assert.Equal(2, row["Rows"]);
         Assert.Equal(2, row["Ages"]);
@@ -227,13 +203,8 @@ public class AggregateQueryTests : WhereClauseServiceTests
     [Fact]
     public void Execute_LastNameIndex_GroupsByFirstCharacter()
     {
-        var rows = Rows(
-            new() { LastName = "Smith" },
-            new() { LastName = "Song" },
-            new() { LastName = "song" });
-
+        var rows = Rows(new() { LastName = "Smith" }, new() { LastName = "Song" }, new() { LastName = "song" });
         var page = AggregateQuery.Execute(rows, IndexedRequest(["LastName[0]"], new AggregateSelect(AggregateFunction.Count, "Count")));
-
         Assert.Equal(2, page.Items.Count);
         Assert.Equal(2, Row(page, "LastName[0]", "S")["Count"]);
         Assert.Equal(1, Row(page, "LastName[0]", "s")["Count"]);
@@ -243,12 +214,10 @@ public class AggregateQueryTests : WhereClauseServiceTests
     public void Execute_LastNameRange_GroupsByPrefix()
     {
         var rows = Rows(new() { LastName = "Smith" }, new() { LastName = "Smile" }, new() { LastName = "Sm" });
-
         var closed = AggregateQuery.Execute(rows, IndexedRequest(["LastName[0:3]"], new AggregateSelect(AggregateFunction.Count, "Count")));
         var open = AggregateQuery.Execute(rows, IndexedRequest(["LastName[:3]"], new AggregateSelect(AggregateFunction.Count, "Count")));
         var one = AggregateQuery.Execute(rows, IndexedRequest(["LastName[0]"], new AggregateSelect(AggregateFunction.Count, "Count")));
         var same = AggregateQuery.Execute(rows, IndexedRequest(["LastName[0:1]"], new AggregateSelect(AggregateFunction.Count, "Count")));
-
         Assert.Equal(2, Row(closed, "LastName[0:3]", "Smi")["Count"]);
         Assert.Equal(1, Row(closed, "LastName[0:3]", "Sm")["Count"]);
         Assert.Equal(2, Row(open, "LastName[:3]", "Smi")["Count"]);
@@ -262,7 +231,6 @@ public class AggregateQueryTests : WhereClauseServiceTests
         var rows = Rows(new() { LastName = "Smith" }, new() { LastName = "S" });
         var suffix = AggregateQuery.Execute(rows, IndexedRequest(["LastName[2:]"], new AggregateSelect(AggregateFunction.Count, "Count")));
         var whole = AggregateQuery.Execute(rows, IndexedRequest(["LastName[0:]"], new AggregateSelect(AggregateFunction.Count, "Count")));
-
         Assert.Equal(1, Row(suffix, "LastName[2:]", "ith")["Count"]);
         Assert.Equal(1, suffix.Items.Count(r => r["LastName[2:]"] is null));
         Assert.Equal(1, Row(whole, "LastName[0:]", "Smith")["Count"]);
@@ -292,9 +260,8 @@ public class AggregateQueryTests : WhereClauseServiceTests
     public void Execute_AddressIndex_GroupsByCityOfLowestId()
     {
         var rows = Rows(
-            new IndexedRow { Addresses = [new IndexedAddress { Id = 2, City = "B" }, new IndexedAddress { Id = 1, City = "A" }] },
-            new IndexedRow { Addresses = [new IndexedAddress { Id = 5, City = "A" }] },
-            new IndexedRow { Addresses = [new IndexedAddress { Id = 1, City = "C" }] });
+            new IndexedRow { Addresses = [new() { Id = 2, City = "B" }, new() { Id = 1, City = "A" }] }, new IndexedRow { Addresses = [new() { Id = 5, City = "A" }] },
+            new IndexedRow { Addresses = [new() { Id = 1, City = "C" }] });
 
         var page = AggregateQuery.Execute(rows, IndexedRequest(["Addresses[0].City"], new AggregateSelect(AggregateFunction.Count, "Count")));
         Assert.Equal(2, Row(page, "Addresses[0].City", "A")["Count"]);
@@ -307,8 +274,7 @@ public class AggregateQueryTests : WhereClauseServiceTests
         AssertRejected<IndexedRow>(IndexedRequest(["Addresses[0:3].City"], new AggregateSelect(AggregateFunction.Count, "Count")), "cannot be grouped");
         AssertRejected<IndexedRow>(IndexedRequest(["Addresses[:3].City"], new AggregateSelect(AggregateFunction.Count, "Count")), "cannot be grouped");
         AssertRejected<IndexedRow>(IndexedRequest(["Addresses[0:].City"], new AggregateSelect(AggregateFunction.Count, "Count")), "cannot be grouped");
-
-        var rows = Rows(new IndexedRow { Addresses = [new IndexedAddress { Id = 2, City = "B" }, new IndexedAddress { Id = 1, City = "A" }] });
+        var rows = Rows(new IndexedRow { Addresses = [new() { Id = 2, City = "B" }, new() { Id = 1, City = "A" }] });
         var page = AggregateQuery.Execute(rows, IndexedRequest(["Addresses[:1].City"], new AggregateSelect(AggregateFunction.Count, "Count")));
         Assert.Equal("A", Assert.Single(page.Items)["Addresses[:1].City"]);
     }
@@ -342,13 +308,10 @@ public class AggregateQueryTests : WhereClauseServiceTests
     public void Execute_CollectionCount_GroupsByCountAndSumsIt()
     {
         var rows = Rows(
-            new() { LastName = "Angel", Tags = ["a"] },
-            new() { LastName = "Angel", Tags = ["a"] },
-            new() { LastName = "Angel", Tags = ["a", "b"] },
+            new() { LastName = "Angel", Tags = ["a"] }, new() { LastName = "Angel", Tags = ["a"] }, new() { LastName = "Angel", Tags = ["a", "b"] },
             new() { LastName = "Bo", Tags = [] });
 
         var page = AggregateQuery.Execute(rows, IndexedRequest(["LastName", "Tags.count"], new AggregateSelect(AggregateFunction.Sum, "Count", "Tags.count")));
-
         Assert.Equal(3, page.Items.Count);
         var one = page.Items.Single(r => Equals(r["LastName"], "Angel") && Equals(r["Tags.count"], 1));
         Assert.Equal(2, one["Count"]);
@@ -374,9 +337,7 @@ public class AggregateQueryTests : WhereClauseServiceTests
         var page = AggregateQuery.Execute(
             rows,
             IndexedRequest(
-                ["LastName"],
-                new AggregateSelect(AggregateFunction.Count, "Tags", "Tags"),
-                new AggregateSelect(AggregateFunction.Count, "TagsCount", "Tags.count"),
+                ["LastName"], new AggregateSelect(AggregateFunction.Count, "Tags", "Tags"), new AggregateSelect(AggregateFunction.Count, "TagsCount", "Tags.count"),
                 new AggregateSelect(AggregateFunction.Count, "Addresses", "Addresses")));
 
         var angel = Row(page, "LastName", "Angel");
@@ -392,14 +353,12 @@ public class AggregateQueryTests : WhereClauseServiceTests
     [Fact]
     public void Execute_CountScalar_SkipsNullsNotDuplicates()
     {
-        var people = People(
-            new() { Name = "A", AgeNullable = 10 },
-            new() { Name = "A", AgeNullable = 10 },
-            new() { Name = "A", AgeNullable = null });
-
+        var people = People(new() { Name = "A", AgeNullable = 10 }, new() { Name = "A", AgeNullable = 10 }, new() { Name = "A", AgeNullable = null });
         var page = AggregateQuery.Execute(
             people,
-            Request(["Name"], new AggregateSelect(AggregateFunction.Count, "Ages", "AgeNullable"), new AggregateSelect(AggregateFunction.CountDistinct, "DistinctAges", "AgeNullable")));
+            Request(
+                ["Name"], new AggregateSelect(AggregateFunction.Count, "Ages", "AgeNullable"),
+                new AggregateSelect(AggregateFunction.CountDistinct, "DistinctAges", "AgeNullable")));
 
         var row = Row(page, "Name", "A");
         Assert.Equal(2, row["Ages"]);
@@ -414,15 +373,11 @@ public class AggregateQueryTests : WhereClauseServiceTests
     public void Execute_CountDistinct_SkipsNulls()
     {
         var people = People(
-            new() { Name = "A", AgeNullable = 10 },
-            new() { Name = "A", AgeNullable = 10 },
-            new() { Name = "A", AgeNullable = null },
-            new() { Name = "B", AgeNullable = null });
+            new() { Name = "A", AgeNullable = 10 }, new() { Name = "A", AgeNullable = 10 }, new() { Name = "A", AgeNullable = null }, new() { Name = "B", AgeNullable = null });
 
         var page = AggregateQuery.Execute(people, Request(["Name"], new AggregateSelect(AggregateFunction.CountDistinct, "Ages", "AgeNullable")));
         Assert.Equal(1, Row(page, "Name", "A")["Ages"]);
         Assert.Equal(0, Row(page, "Name", "B")["Ages"]);
-
         var empty = AggregateQuery.Execute(People(), Request([], new AggregateSelect(AggregateFunction.CountDistinct, "Ages", "Age")));
         Assert.Equal(0, Assert.Single(empty.Items)["Ages"]);
     }
@@ -466,17 +421,12 @@ public class AggregateQueryTests : WhereClauseServiceTests
         Assert.Contains(fragment, ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static Dictionary<string, object?> Row(AggregateQueryPage page, string key, string value)
-        => page.Items.Single(r => Equals(r[key], value));
+    private static Dictionary<string, object?> Row(AggregateQueryPage page, string key, string value) => page.Items.Single(r => Equals(r[key], value));
 
     private static IQueryable<Person> People(params Person[] people) => people.AsQueryable();
 
     private static ProjectionQueryReq Request(IEnumerable<string> select, params AggregateSelect[] aggregates)
-        => new() {
-            Select = [.. select],
-            Aggregates = [.. aggregates],
-            Options = new() { TotalCountMode = QueryTotalCountMode.Exact }
-        };
+        => new() { Select = [.. select], Aggregates = [.. aggregates], Options = new() { TotalCountMode = QueryTotalCountMode.Exact } };
 
     private static ProjectionQueryReq IndexedRequest(IEnumerable<string> select, params AggregateSelect[] aggregates) => Request(select, aggregates);
 

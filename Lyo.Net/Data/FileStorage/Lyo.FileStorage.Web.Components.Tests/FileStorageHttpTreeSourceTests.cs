@@ -77,7 +77,6 @@ public sealed class FileStorageHttpTreeSourceTests
         Assert.Null(root.PathPrefix);
         Assert.Equal(FileStoragePathTreeBuilder.RootDisplayName, root.Name);
         Assert.Equal("/", FileStorageHttpTreeSource.DirectoryVfsPath(null));
-
         var nested = FileStorageHttpTreeSource.DirectoryNode("reports/2024");
         Assert.True(nested.IsDirectory);
         Assert.Equal("reports/2024", nested.PathPrefix);
@@ -109,7 +108,6 @@ public sealed class FileStorageHttpTreeSourceTests
         Assert.Contains("groupBy=client", grouped);
         Assert.Contains("groupBy=imported:year", grouped);
         Assert.Contains("path=clienta/2026", grouped);
-
         api.Uris.Clear();
         source.UseBlobStructure();
         await source.ListChildrenAsync("/clienta/2026", TestCt);
@@ -149,19 +147,30 @@ public sealed class FileStorageHttpTreeSourceTests
         }
 
         public Task<TResult?> GetAsAsync<TRequest, TResult>(
-            string uri, TRequest? query = default, string? enumerableDelimiter = null, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+            string uri,
+            TRequest? query = default,
+            string? enumerableDelimiter = null,
+            Action<HttpRequestMessage>? before = null,
+            CancellationToken ct = default)
             => throw new NotImplementedException(uri);
 
         public Task<byte[]> GetFileAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default) => throw new NotImplementedException(uri);
 
-        public Task<(Stream Content, string? FileName, long? ContentLength)> GetFileStreamAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        public Task<(Stream Content, string? FileName, long? ContentLength)> GetFileStreamAsync(
+            string uri,
+            Action<HttpRequestMessage>? before = null,
+            CancellationToken ct = default)
             => throw new NotImplementedException(uri);
 
         public Task<(byte[] Content, FileTypeInfo FileType)> GetFileWithTypeAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
             => throw new NotImplementedException(uri);
 
         public Task<string> DownloadToFileAsync(
-            string uri, string destinationPath, IProgress<LyoHttpDownloadProgress>? progress = null, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+            string uri,
+            string destinationPath,
+            IProgress<LyoHttpDownloadProgress>? progress = null,
+            Action<HttpRequestMessage>? before = null,
+            CancellationToken ct = default)
             => throw new NotImplementedException(uri);
 
         public Task<TResult> PutAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
@@ -173,21 +182,30 @@ public sealed class FileStorageHttpTreeSourceTests
         public Task<TResult> PostAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
             => throw new NotImplementedException(uri);
 
-        public Task<TResult> PostAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
-            => throw new NotImplementedException(uri);
+        public Task<TResult> PostAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default) => throw new NotImplementedException(uri);
 
         public Task<byte[]> PostAsBinaryAsync<TRequest>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
             => throw new NotImplementedException(uri);
 
         public Task<TResult> PostFileAsAsync<TResult>(
-            string uri, Stream stream, FileTypeInfo fileType, string? fileName = null, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+            string uri,
+            Stream stream,
+            FileTypeInfo fileType,
+            string? fileName = null,
+            Action<HttpRequestMessage>? before = null,
+            CancellationToken ct = default)
             => throw new NotImplementedException(uri);
 
         public Task<TResult> PostFileAsAsync<TResult>(string uri, Stream stream, string fileName, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
             => throw new NotImplementedException(uri);
 
         public Task<TResult> PostFileAsAsync<TResult>(
-            string uri, byte[] data, FileTypeInfo fileType, string? fileName = null, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+            string uri,
+            byte[] data,
+            FileTypeInfo fileType,
+            string? fileName = null,
+            Action<HttpRequestMessage>? before = null,
+            CancellationToken ct = default)
             => throw new NotImplementedException(uri);
 
         public Task<TResult> PostFileAsAsync<TResult>(string uri, byte[] data, string fileName, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)

@@ -1,5 +1,4 @@
 using System.Net;
-using Lyo.Http.Client;
 
 namespace Lyo.Http.Client.Tests;
 
@@ -39,7 +38,7 @@ public sealed class LyoHttpClientHandlerTests
         using var handler = new LyoHttpClientHandler(new() { ProxyUrl = "http://127.0.0.1:8888", ProxyUsername = "u", ProxyPassword = "p" });
         Assert.True(handler.UseProxy);
         var proxy = Assert.IsType<WebProxy>(handler.Proxy);
-        Assert.Equal(new Uri("http://127.0.0.1:8888/"), proxy.Address);
+        Assert.Equal(new("http://127.0.0.1:8888/"), proxy.Address);
         var creds = Assert.IsType<NetworkCredential>(proxy.Credentials);
         Assert.Equal("u", creds.UserName);
         Assert.Equal("p", creds.Password);

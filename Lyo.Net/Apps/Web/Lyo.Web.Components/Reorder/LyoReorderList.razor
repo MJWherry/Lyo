@@ -8,6 +8,7 @@
         @if (ShowSection(itemIndex)) {
             <MudText Typo="Typo.subtitle2">@SectionLabel!(Items[itemIndex])</MudText>
         }
+
         <div class="@RowClass(itemIndex)"
              @ondragover:preventDefault
              @ondragenter="@(() => OnDragEnter(itemIndex))"

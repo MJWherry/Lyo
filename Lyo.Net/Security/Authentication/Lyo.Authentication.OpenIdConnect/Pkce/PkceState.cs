@@ -9,11 +9,11 @@ namespace Lyo.Authentication.OpenIdConnect.Pkce;
 /// <c>/</c>.
 /// </param>
 /// <param name="State">
-/// Opaque <c>state</c> value sent to the IdP and required to be echoed back. Constant-time compared against the callback <c>state</c> query parameter to
-/// bind the callback to this exact login session.
+/// Opaque <c>state</c> value sent to the IdP and required to be echoed back. Constant-time compared against the callback <c>state</c> query parameter to bind the
+/// callback to this exact login session.
 /// </param>
 /// <param name="Mode">
-/// How the callback should deliver issued tokens to the caller. <c>browser</c> (default) drops a single-use handoff code in the redirect URL; <c>api</c>
-/// returns tokens as JSON with no redirect.
+/// How the callback should deliver issued tokens to the caller. <c>browser</c> (default) drops a single-use handoff code in the redirect URL; <c>api</c> returns
+/// tokens as JSON with no redirect.
 /// </param>
 public sealed record PkceState(string Verifier, string Nonce, string Provider, string ReturnUrl, string State, string Mode = "browser");

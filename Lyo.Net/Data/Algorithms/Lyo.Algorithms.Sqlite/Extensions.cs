@@ -1,5 +1,6 @@
 using Lyo.Algorithms.Sqlite.Database;
 using Lyo.Exceptions;
+using Lyo.Health;
 using Lyo.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -77,7 +78,7 @@ public static class Extensions
             services.AddSqliteAlgorithmDbContextFactory(options);
             services.AddSingleton<SqliteAlgorithmDefinitionStore>();
             services.AddSingleton<IAlgorithmDefinitionStore>(sp => sp.GetRequiredService<SqliteAlgorithmDefinitionStore>());
-            services.AddSingleton<Lyo.Health.IHealth>(sp => sp.GetRequiredService<SqliteAlgorithmDefinitionStore>());
+            services.AddSingleton<IHealth>(sp => sp.GetRequiredService<SqliteAlgorithmDefinitionStore>());
             return services;
         }
     }

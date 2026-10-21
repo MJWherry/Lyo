@@ -6,15 +6,14 @@ using Lyo.Api.Models.Enums;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Update;
 using Lyo.Api.Tests.Fixtures;
-using Lyo.Common.Core.Enums;
 using Lyo.Cache;
-using Lyo.Json;
+using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres.Database;
+using Lyo.Json;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common.Request;
-using Lyo.Query.Models.Enums;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Api.Tests;
 
@@ -27,9 +26,7 @@ public sealed class QueryCacheInvalidationGapPostgresTests(ApiPostgresFixture fi
 {
     private static readonly JsonSerializerOptions JsonOptions = LyoJsonSerializerOptions.Create();
 
-    /// <summary>
-    /// A query whose only mention of <c>JobRun</c> is in the where clause tagged itself with <c>JobDefinition</c> alone, so patching the run it filtered on never busted it.
-    /// </summary>
+    /// <summary>A query whose only mention of <c>JobRun</c> is in the where clause tagged itself with <c>JobDefinition</c> alone, so patching the run it filtered on never busted it.</summary>
     [Fact]
     public async Task Query_FilteringOnRelatedType_InvalidatesWhenThatTypeIsPatched()
     {
@@ -42,10 +39,7 @@ public sealed class QueryCacheInvalidationGapPostgresTests(ApiPostgresFixture fi
 
         // No Include and no Select touching JobRun: the relationship exists only inside the filter.
         var request = new QueryConcreteReq {
-            Start = 0,
-            Amount = 10,
-            WhereClause = WhereClauseBuilder.And(
-                b => b.Equals("Id", defId).Equals("JobRuns.CreatedBy", $"match-{suffix}"))
+            Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.And(b => b.Equals("Id", defId).Equals("JobRuns.CreatedBy", $"match-{suffix}"))
         };
 
         async Task<int> MatchCount()
@@ -62,9 +56,7 @@ public sealed class QueryCacheInvalidationGapPostgresTests(ApiPostgresFixture fi
         Assert.Equal(0, await MatchCount());
     }
 
-    /// <summary>
-    /// Root <c>/Query</c> pages carried only type tags, so under granular tagging. where a patch fires the row's instance tag instead of the type tag. nothing busted them.
-    /// </summary>
+    /// <summary>Root <c>/Query</c> pages carried only type tags, so under granular tagging. where a patch fires the row's instance tag instead of the type tag. nothing busted them.</summary>
     [Fact]
     public async Task RootQuery_UnderGranularTagging_InvalidatesWhenARowIsPatched()
     {
@@ -74,12 +66,7 @@ public sealed class QueryCacheInvalidationGapPostgresTests(ApiPostgresFixture fi
 
         using var client = granularFactory.CreateClient();
         var defId = await fixture.SeedJobDefinitionAsync($"RootGran_{suffix}");
-        var request = QueryReqBuilder.New()
-            .From("d", "JobDefinition")
-            .AddSelects("d.Name")
-            .AddWhere(w => w.Equals("d.Id", defId))
-            .SetPagination(0, 5)
-            .Build();
+        var request = QueryReqBuilder.New().From("d", "JobDefinition").AddSelects("d.Name").AddWhere(w => w.Equals("d.Id", defId)).SetPagination(0, 5).Build();
 
         async Task<string?> NameFromRootQuery()
         {
@@ -91,11 +78,8 @@ public sealed class QueryCacheInvalidationGapPostgresTests(ApiPostgresFixture fi
             var row = Assert.Single(result.Items!);
 
             // A single-field root select projects to the scalar itself instead of a one-property object.
-            return row.ValueKind == JsonValueKind.String
-                ? row.GetString()
-                : row.TryGetProperty("Name", out var name) || row.TryGetProperty("name", out name)
-                    ? name.GetString()
-                    : null;
+            return row.ValueKind == JsonValueKind.String ? row.GetString() :
+                row.TryGetProperty("Name", out var name) || row.TryGetProperty("name", out name) ? name.GetString() : null;
         }
 
         Assert.Equal($"RootGran_{suffix}", await NameFromRootQuery());

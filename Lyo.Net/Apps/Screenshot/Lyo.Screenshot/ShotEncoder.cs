@@ -1,6 +1,5 @@
 using Lyo.Exceptions;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.PixelFormats;
 
 namespace Lyo.Screenshot;
@@ -18,8 +17,8 @@ public static class ShotEncoder
     }
 
     /// <summary>
-    /// Encodes <paramref name="frames" /> as a GIF that loops forever. Each frame is indexed and written before the next one is read.
-    /// Frame delay follows <paramref name="framesPerSecond" /> (GIF delay is in centiseconds).
+    /// Encodes <paramref name="frames" /> as a GIF that loops forever. Each frame is indexed and written before the next one is read. Frame delay follows
+    /// <paramref name="framesPerSecond" /> (GIF delay is in centiseconds).
     /// </summary>
     public static Task<byte[]> EncodeGifAsync(IReadOnlyList<Image<Rgba32>> frames, int framesPerSecond, CancellationToken cancellationToken = default)
     {
@@ -65,7 +64,7 @@ public static class ShotEncoder
     {
         ArgumentHelpers.ThrowIfNullOrEmpty(gif);
         byte[] png;
-        using (var image = Image.Load<Rgba32>(new DecoderOptions { MaxFrames = 1 }, gif)) {
+        using (var image = Image.Load<Rgba32>(new() { MaxFrames = 1 }, gif)) {
             using var stream = new MemoryStream();
             image.SaveAsPng(stream);
             png = stream.ToArray();

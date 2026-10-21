@@ -3,9 +3,12 @@
         <MudText Typo="Typo.h6">@(string.IsNullOrWhiteSpace(Draft.Title) ? "Untitled story" : Draft.Title)</MudText>
         <MudSpacer/>
         <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" OnClick="AddNode">Add node</MudButton>
-        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.CallSplit" Disabled="@(Selected is null)" OnClick="AddChoice">Add choice</MudButton>
+        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.CallSplit" Disabled="@(Selected is null)" OnClick="AddChoice">Add choice
+        </MudButton>
         <MudButton Variant="Variant.Outlined" Size="Size.Small" Disabled="@(Selected is null)" OnClick="MakeStart">Set start</MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Save" Disabled="@(_saving || _issues.Count > 0)" OnClick="SaveAsync">Save</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Save" Disabled="@(_saving || _issues.Count > 0)"
+                   OnClick="SaveAsync">Save
+        </MudButton>
     </MudStack>
     <MudStack Row Spacing="2">
         <MudTextField T="string" Label="Title" Value="@Draft.Title" ValueChanged="OnTitle" Margin="Margin.Dense" Variant="Variant.Outlined" Style="min-width: 220px;"/>
@@ -37,8 +40,11 @@
                     <MudStack Spacing="2">
                         @if (Selected is { } node) {
                             <MudText Typo="Typo.subtitle1">Node</MudText>
+
                             <StoryNodeEditor Node="node" Scenes="Draft.Scenes" OnChanged="Touch"/>
+
                             <MudText Typo="Typo.subtitle2">Choices</MudText>
+
                             @if (node.Choices.Count == 0) {
                                 <MudText Typo="Typo.body2" Class="mud-text-secondary">This node has no choices.</MudText>
                             }
@@ -50,11 +56,15 @@
                                         <MudSelectItem T="int" Value="captured">@(choice.Prompt ?? choice.Key)</MudSelectItem>
                                     }
                                 </MudSelect>
+
                                 @if (_choiceIndex >= 0 && _choiceIndex < node.Choices.Count) {
-                                    <StoryChoiceEditor Choice="node.Choices[_choiceIndex]" Fields="_fields" Variables="Draft.Variables" Nodes="Draft.Nodes" Actions="Draft.Actions" OnChanged="Touch"/>
+                                    <StoryChoiceEditor Choice="node.Choices[_choiceIndex]" Fields="_fields" Variables="Draft.Variables" Nodes="Draft.Nodes" Actions="Draft.Actions"
+                                                       OnChanged="Touch"/>
+
                                     <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" OnClick="RemoveChoice">Remove choice</MudButton>
                                 }
                             }
+
                             <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" OnClick="RemoveNode">Remove node</MudButton>
                         }
                         else {
@@ -76,7 +86,8 @@
                                 <StoryActionEditor Actions="Draft.Actions" Variables="Draft.Variables" Nodes="Draft.Nodes" OnChanged="Touch"/>
                             </MudExpansionPanel>
                             <MudExpansionPanel Text="Reactions">
-                                <StoryReactionEditor Reactions="Draft.Reactions" Fields="_fields" Variables="Draft.Variables" Nodes="Draft.Nodes" Actions="Draft.Actions" OnChanged="Touch"/>
+                                <StoryReactionEditor Reactions="Draft.Reactions" Fields="_fields" Variables="Draft.Variables" Nodes="Draft.Nodes" Actions="Draft.Actions"
+                                                     OnChanged="Touch"/>
                             </MudExpansionPanel>
                         </MudExpansionPanels>
                     </MudStack>

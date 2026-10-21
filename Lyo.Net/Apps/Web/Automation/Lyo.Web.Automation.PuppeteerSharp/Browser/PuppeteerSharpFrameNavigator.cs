@@ -59,7 +59,7 @@ public sealed class PuppeteerSharpFrameNavigator
 
     internal async Task<IFrame> CurrentFrameAsync(CancellationToken ct)
     {
-        IFrame frame = _browser.GetRequiredPage().MainFrame;
+        var frame = _browser.GetRequiredPage().MainFrame;
         foreach (var sel in _iframeSelectors) {
             ct.ThrowIfCancellationRequested();
             var handle = await frame.WaitForSelectorAsync(sel, Wait(ct)).ConfigureAwait(false);
@@ -76,8 +76,7 @@ public sealed class PuppeteerSharpFrameNavigator
         return frame;
     }
 
-    private WaitForSelectorOptions Wait(CancellationToken ct)
-        => new() { Timeout = _browser.LocatorTimeoutMs, CancellationToken = ct };
+    private WaitForSelectorOptions Wait(CancellationToken ct) => new() { Timeout = _browser.LocatorTimeoutMs, CancellationToken = ct };
 
     private void RunFrameOp(string operation, Action action)
     {

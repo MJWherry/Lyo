@@ -16,31 +16,27 @@ public sealed class PostgresReportingOptions : PostgresOptionsBase
 
     /// <summary>
     /// When false, generate requires a saved <c>ReportDefinitionId</c> and rejects ad-hoc <c>ReportDataJson</c> / <c>OverrideReportDataJson</c> payloads. Defaults to false.
-    /// Composition JSON drives rendering, so accepting it from a request means anyone authorized to generate can author report markup. Hosts that intentionally offer ad-hoc
-    /// generation must opt in.
+    /// Composition JSON drives rendering, so accepting it from a request means anyone authorized to generate can author report markup. Hosts that intentionally offer ad-hoc generation
+    /// must opt in.
     /// </summary>
     public bool AllowAdHocGeneration { get; set; }
 
     /// <summary>
     /// Filesystem roots that a data provider's <c>PreRenderedFilePath</c> may live under. Generation copies that path into its staging session, so without confinement a
-    /// compromised or careless provider could stage any file the host can read. Empty falls back to the OS temp directory, where providers normally stage output. Symlinks are
-    /// resolved before the check, and traversal outside a root is rejected.
+    /// compromised or careless provider could stage any file the host can read. Empty falls back to the OS temp directory, where providers normally stage output. Symlinks are resolved
+    /// before the check, and traversal outside a root is rejected.
     /// </summary>
     public IList<string> PreRenderedFileRoots { get; set; } = [];
 
-    /// <summary>
-    /// Most report generations running concurrently per host. 0 (default) means unlimited. When the limit is reached, generate waits briefly and then fails with a "busy" error.
-    /// </summary>
+    /// <summary>Most report generations running concurrently per host. 0 (default) means unlimited. When the limit is reached, generate waits briefly and then fails with a "busy" error.</summary>
     public int MaxConcurrentGenerations { get; set; }
 
-    /// <summary>
-    /// Age after which terminal (Succeeded/Failed) generations become eligible for <see cref="ReportRetentionService" /> cleanup. Null (default) disables retention cleanup.
-    /// </summary>
+    /// <summary>Age after which terminal (Succeeded/Failed) generations become eligible for <see cref="ReportRetentionService" /> cleanup. Null (default) disables retention cleanup.</summary>
     public TimeSpan? GenerationRetention { get; set; }
 
     /// <summary>
-    /// Wall-clock limit for one generation (data provider, render, and hooks). When exceeded, the run is cancelled and persisted as Failed. Null disables the limit. Default
-    /// 10 minutes.
+    /// Wall-clock limit for one generation (data provider, render, and hooks). When exceeded, the run is cancelled and persisted as Failed. Null disables the limit. Default 10
+    /// minutes.
     /// </summary>
     public TimeSpan? GenerationTimeout { get; set; } = TimeSpan.FromMinutes(10);
 
@@ -50,9 +46,7 @@ public sealed class PostgresReportingOptions : PostgresOptionsBase
     /// </summary>
     public TimeSpan? StuckGenerationTimeout { get; set; } = TimeSpan.FromHours(1);
 
-    /// <summary>
-    /// How often the opt-in maintenance worker (<c>AddReportingMaintenanceWorker</c>) runs retention cleanup and stuck-generation recovery. Defaults to 15 minutes.
-    /// </summary>
+    /// <summary>How often the opt-in maintenance worker (<c>AddReportingMaintenanceWorker</c>) runs retention cleanup and stuck-generation recovery. Defaults to 15 minutes.</summary>
     public TimeSpan MaintenanceInterval { get; set; } = TimeSpan.FromMinutes(15);
 
     /// <inheritdoc />
@@ -61,7 +55,6 @@ public sealed class PostgresReportingOptions : PostgresOptionsBase
     public override void Validate()
     {
         base.Validate();
-
         if (MaxReportDataJsonBytes <= 0)
             throw new ArgumentException($"{nameof(MaxReportDataJsonBytes)} must be positive.", nameof(MaxReportDataJsonBytes));
 

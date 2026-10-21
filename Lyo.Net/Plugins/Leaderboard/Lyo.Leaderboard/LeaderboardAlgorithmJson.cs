@@ -8,8 +8,6 @@ public static class LeaderboardAlgorithmJson
 {
     /// <summary>Camel case, case-insensitive, string enums.</summary>
     public static JsonSerializerOptions Options { get; } = new() {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter() }
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase, PropertyNameCaseInsensitive = true, Converters = { new JsonStringEnumConverter() }
     };
 }

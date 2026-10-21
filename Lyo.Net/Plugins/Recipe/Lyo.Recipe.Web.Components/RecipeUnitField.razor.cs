@@ -22,13 +22,14 @@ public partial class RecipeUnitField
     private Task<IEnumerable<string>> Search(string? value, CancellationToken ct)
     {
         IEnumerable<UnitRes> matches = Units;
-        if (!string.IsNullOrWhiteSpace(value))
-            matches = Units.Where(u =>
-                u.Abbreviation.Contains(value, StringComparison.OrdinalIgnoreCase)
-                || u.Name.Contains(value, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(value)) {
+            matches = Units.Where(u => u.Abbreviation.Contains(value, StringComparison.OrdinalIgnoreCase) || u.Name.Contains(value, StringComparison.OrdinalIgnoreCase));
+        }
+
         var abbreviations = matches.Select(u => u.Abbreviation).Distinct(StringComparer.OrdinalIgnoreCase);
         if (!string.IsNullOrWhiteSpace(value) && abbreviations.All(a => !string.Equals(a, value, StringComparison.OrdinalIgnoreCase)))
             abbreviations = abbreviations.Prepend(value);
+
         return Task.FromResult(abbreviations);
     }
 }

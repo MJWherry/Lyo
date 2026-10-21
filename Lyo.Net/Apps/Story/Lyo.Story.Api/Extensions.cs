@@ -1,4 +1,3 @@
-using Lyo.Api;
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.ApiEndpoint.Config;
 using Lyo.Common.Core.Identifiers;
@@ -50,43 +49,50 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Maps Story Req/Res CRUD, graph save and load, and playthrough routes. Invoke after <c>AddStoryApi</c>. The graph and playthrough routes require an
-    /// authenticated caller and use <paramref name="routeOptions" /> for ownership and tenant binding. Pass <paramref name="allowAnonymous" /> only on a trusted
-    /// local workbench.
+    /// Maps Story Req/Res CRUD, graph save and load, and playthrough routes. Invoke after <c>AddStoryApi</c>. The graph and playthrough routes require an authenticated caller
+    /// and use <paramref name="routeOptions" /> for ownership and tenant binding. Pass <paramref name="allowAnonymous" /> only on a trusted local workbench.
     /// </summary>
     public static WebApplication BuildStoryGroup(this WebApplication app, StoryRouteOptions? routeOptions = null, bool allowAnonymous = false)
     {
         var tag = Constants.Rest.Story.Route;
         app.CreateBuilder<StoryDbContext, StoryEntity, StoryReq, StoryRes, Guid>(Constants.Rest.Story.Stories, tag)
-            .WithCrud(ApiFeatureSet.DefaultCrud, new() {
-                BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateCombPostgres() : ctx.Entity.Id,
-                BeforeDeleteAsync = ClearStartNodeAsync
-            })
+            .WithCrud(
+                ApiFeatureSet.DefaultCrud,
+                new() { BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateCombPostgres() : ctx.Entity.Id, BeforeDeleteAsync = ClearStartNodeAsync })
             .Build();
+
         app.CreateBuilder<StoryDbContext, StorySceneEntity, StorySceneReq, StorySceneRes, Guid>(Constants.Rest.Story.Scenes, tag)
             .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateCombPostgres() : ctx.Entity.Id })
             .Build();
+
         app.CreateBuilder<StoryDbContext, StoryNodeEntity, StoryNodeReq, StoryNodeRes, Guid>(Constants.Rest.Story.Nodes, tag)
             .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateCombPostgres() : ctx.Entity.Id })
             .Build();
+
         app.CreateBuilder<StoryDbContext, StoryVariableEntity, StoryVariableReq, StoryVariableRes, Guid>(Constants.Rest.Story.Variables, tag)
             .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateCombPostgres() : ctx.Entity.Id })
             .Build();
+
         app.CreateBuilder<StoryDbContext, StoryActionEntity, StoryActionReq, StoryActionRes, Guid>(Constants.Rest.Story.Actions, tag)
             .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateCombPostgres() : ctx.Entity.Id })
             .Build();
+
         app.CreateBuilder<StoryDbContext, StoryChoiceEntity, StoryChoiceReq, StoryChoiceRes, Guid>(Constants.Rest.Story.Choices, tag)
             .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateCombPostgres() : ctx.Entity.Id })
             .Build();
+
         app.CreateBuilder<StoryDbContext, StoryReactionEntity, StoryReactionReq, StoryReactionRes, Guid>(Constants.Rest.Story.Reactions, tag)
             .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateCombPostgres() : ctx.Entity.Id })
             .Build();
+
         app.CreateBuilder<StoryDbContext, StoryEffectEntity, StoryEffectReq, StoryEffectRes, Guid>(Constants.Rest.Story.Effects, tag)
             .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateCombPostgres() : ctx.Entity.Id })
             .Build();
+
         app.CreateReadOnlyBuilder<StoryDbContext, StoryPlaythroughEntity, StoryPlaythroughRes, Guid>(Constants.Rest.Story.Playthroughs, tag)
             .WithCrud(ApiFeatureSet.ReadOnly, new())
             .Build();
+
         var group = app.MapGroup(string.Empty);
         if (allowAnonymous)
             group.AllowAnonymous();
@@ -104,10 +110,9 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Maps the graph (save, get, by slug, list) and playthrough routes over any registered <see cref="IStoryStore" /> (Postgres, SQLite, or a client store), without
-    /// the Req/Res CRUD routes and without group authorization: apply the host's policy to <paramref name="routes" />. <see cref="StoryRouteOptions" /> sets the author
-    /// policy for graph save, list, and variable writes, and binds the player and tenant from the caller so players only reach their own playthroughs and their
-    /// tenant's stories. Errors are problem details.
+    /// Maps the graph (save, get, by slug, list) and playthrough routes over any registered <see cref="IStoryStore" /> (Postgres, SQLite, or a client store), without the Req/Res
+    /// CRUD routes and without group authorization: apply the host's policy to <paramref name="routes" />. <see cref="StoryRouteOptions" /> sets the author policy for graph save, list,
+    /// and variable writes, and binds the player and tenant from the caller so players only reach their own playthroughs and their tenant's stories. Errors are problem details.
     /// </summary>
     public static IEndpointRouteBuilder MapStoryRoutes(this IEndpointRouteBuilder routes, StoryRouteOptions? options = null)
     {
@@ -115,8 +120,7 @@ public static class Extensions
         options ??= new();
         var tag = Constants.Rest.Story.Route;
         routes.MapPost(
-                "/" + Constants.Rest.Story.Graph,
-                async (StoryGraphReq req, HttpContext http, IStoryStore store, CancellationToken ct) => {
+                "/" + Constants.Rest.Story.Graph, async (StoryGraphReq req, HttpContext http, IStoryStore store, CancellationToken ct) => {
                     ArgumentHelpers.ThrowIfNull(req);
                     if (options.TenantId != null && req.TenantId != options.TenantId(http))
                         return Problem(StatusCodes.Status403Forbidden, "The story belongs to another tenant.");
@@ -135,8 +139,7 @@ public static class Extensions
             .RequireAuthorizationWhen(options.AuthorPolicy);
 
         routes.MapGet(
-                "/" + Constants.Rest.Story.Graph + "/{id:guid}",
-                async (Guid id, HttpContext http, IStoryStore store, CancellationToken ct) => {
+                "/" + Constants.Rest.Story.Graph + "/{id:guid}", async (Guid id, HttpContext http, IStoryStore store, CancellationToken ct) => {
                     var story = await store.GetStoryByIdAsync(id, ct).ConfigureAwait(false);
                     return story is null || !Visible(story, http, options) ? Results.NotFound() : Results.Ok(StoryGraphMapping.ToRes(story));
                 })
@@ -144,8 +147,7 @@ public static class Extensions
             .WithName("GetStoryGraph");
 
         routes.MapGet(
-                "/" + Constants.Rest.Story.Graph + "/by-slug/{slug}",
-                async (string slug, HttpContext http, IStoryStore store, CancellationToken ct) => {
+                "/" + Constants.Rest.Story.Graph + "/by-slug/{slug}", async (string slug, HttpContext http, IStoryStore store, CancellationToken ct) => {
                     var story = await store.GetStoryBySlugAsync(slug, ct).ConfigureAwait(false);
                     return story is null || !Visible(story, http, options) ? Results.NotFound() : Results.Ok(StoryGraphMapping.ToRes(story));
                 })
@@ -153,8 +155,7 @@ public static class Extensions
             .WithName("GetStoryGraphBySlug");
 
         routes.MapPost(
-                "/" + Constants.Rest.Story.GraphList,
-                async (StoryListReq req, HttpContext http, IStoryStore store, CancellationToken ct) => {
+                "/" + Constants.Rest.Story.GraphList, async (StoryListReq req, HttpContext http, IStoryStore store, CancellationToken ct) => {
                     ArgumentHelpers.ThrowIfNull(req);
                     var tenant = options.TenantId != null ? options.TenantId(http) : req.TenantId;
                     var stories = await store.ListStoriesAsync(tenant, req.GameKey, ct).ConfigureAwait(false);
@@ -165,14 +166,14 @@ public static class Extensions
             .RequireAuthorizationWhen(options.AuthorPolicy);
 
         routes.MapPost(
-                "/" + Constants.Rest.Story.PlayStart,
-                async (StoryStartPlaythroughReq req, HttpContext http, IStoryStore store, CancellationToken ct) => {
+                "/" + Constants.Rest.Story.PlayStart, async (StoryStartPlaythroughReq req, HttpContext http, IStoryStore store, CancellationToken ct) => {
                     ArgumentHelpers.ThrowIfNull(req);
                     var playerRef = req.PlayerRef;
                     if (options.PlayerRef != null && (playerRef = options.PlayerRef(http)) == null)
                         return Problem(StatusCodes.Status401Unauthorized, "The caller has no player identity.");
 
-                    if (options.TenantId != null && await store.GetStoryByIdAsync(req.StoryId, ct).ConfigureAwait(false) is var story && (story is null || !Visible(story, http, options)))
+                    if (options.TenantId != null && await store.GetStoryByIdAsync(req.StoryId, ct).ConfigureAwait(false) is var story &&
+                        (story is null || !Visible(story, http, options)))
                         return Results.NotFound();
 
                     try {
@@ -187,8 +188,7 @@ public static class Extensions
             .WithName("StartStoryPlaythrough");
 
         routes.MapGet(
-                "/Story/playthrough/{id:guid}",
-                async (Guid id, HttpContext http, IStoryStore store, CancellationToken ct) => {
+                "/Story/playthrough/{id:guid}", async (Guid id, HttpContext http, IStoryStore store, CancellationToken ct) => {
                     var state = await store.GetPlaythroughAsync(id, ct).ConfigureAwait(false);
                     if (state is null)
                         return Results.NotFound();
@@ -199,39 +199,43 @@ public static class Extensions
             .WithName("GetStoryPlayState");
 
         routes.MapGet(
-                "/Story/playthrough/{id:guid}/moves",
-                async (Guid id, HttpContext http, IStoryStore store, CancellationToken ct) => {
+                "/Story/playthrough/{id:guid}/moves", async (Guid id, HttpContext http, IStoryStore store, CancellationToken ct) => {
                     var state = await store.GetPlaythroughAsync(id, ct).ConfigureAwait(false);
                     if (state is null)
                         return Results.NotFound();
 
                     return Owns(state, http, options)
-                        ? Results.Ok(state.Moves.Select(m => new StoryMoveRes { Kind = m.Kind, ChoiceKey = m.ChoiceKey, Prompt = m.Prompt, Enabled = m.Enabled }).ToArray())
+                        ? Results.Ok(
+                            state.Moves.Select(m => new StoryMoveRes {
+                                    Kind = m.Kind,
+                                    ChoiceKey = m.ChoiceKey,
+                                    Prompt = m.Prompt,
+                                    Enabled = m.Enabled
+                                })
+                                .ToArray())
                         : NotYours();
                 })
             .WithTags(tag)
             .WithName("GetStoryPlaythroughMoves");
 
         routes.MapPost(
-                "/Story/playthrough/{id:guid}/choose",
-                async (Guid id, StoryChooseReq req, HttpContext http, IStoryStore store, CancellationToken ct) => {
+                "/Story/playthrough/{id:guid}/choose", async (Guid id, StoryChooseReq req, HttpContext http, IStoryStore store, CancellationToken ct) => {
                     ArgumentHelpers.ThrowIfNull(req);
-                    return await DenyAsync(id, http, store, options, ct).ConfigureAwait(false)
-                        ?? await PlayAsync(() => store.TakeChoiceAsync(id, req.ChoiceKey, ct)).ConfigureAwait(false);
+                    return await DenyAsync(id, http, store, options, ct).ConfigureAwait(false) ??
+                        await PlayAsync(() => store.TakeChoiceAsync(id, req.ChoiceKey, ct)).ConfigureAwait(false);
                 })
             .WithTags(tag)
             .WithName("TakeStoryChoice");
 
         routes.MapPost(
                 "/Story/playthrough/{id:guid}/advance",
-                async (Guid id, HttpContext http, IStoryStore store, CancellationToken ct)
-                    => await DenyAsync(id, http, store, options, ct).ConfigureAwait(false) ?? await PlayAsync(() => store.AdvanceAsync(id, ct)).ConfigureAwait(false))
+                async (Guid id, HttpContext http, IStoryStore store, CancellationToken ct) => await DenyAsync(id, http, store, options, ct).ConfigureAwait(false) ??
+                    await PlayAsync(() => store.AdvanceAsync(id, ct)).ConfigureAwait(false))
             .WithTags(tag)
             .WithName("AdvanceStoryPlaythrough");
 
         routes.MapPost(
-                "/Story/playthrough/{id:guid}/variables",
-                async (Guid id, StorySetVariablesReq req, IStoryStore store, CancellationToken ct) => {
+                "/Story/playthrough/{id:guid}/variables", async (Guid id, StorySetVariablesReq req, IStoryStore store, CancellationToken ct) => {
                     ArgumentHelpers.ThrowIfNull(req);
                     return await PlayAsync(() => store.SetVariablesAsync(id, req.Values, ct)).ConfigureAwait(false);
                 })
@@ -241,17 +245,19 @@ public static class Extensions
 
         routes.MapGet(
                 "/Story/playthrough/{id:guid}/events",
-                async (Guid id, HttpContext http, IStoryStore store, CancellationToken ct) => await DenyAsync(id, http, store, options, ct).ConfigureAwait(false)
-                    ?? Results.Ok((await store.GetEventsAsync(id, ct).ConfigureAwait(false)).Select(StoryGraphMapping.ToRes).ToArray()))
+                async (Guid id, HttpContext http, IStoryStore store, CancellationToken ct) => await DenyAsync(id, http, store, options, ct).ConfigureAwait(false) ??
+                    Results.Ok((await store.GetEventsAsync(id, ct).ConfigureAwait(false)).Select(StoryGraphMapping.ToRes).ToArray()))
             .WithTags(tag)
             .WithName("GetStoryPlaythroughEvents");
 
         routes.MapGet(
                 "/Story/playthrough/{id:guid}/causes/{variableKey}",
-                async (Guid id, string variableKey, HttpContext http, IStoryStore store, CancellationToken ct) => await DenyAsync(id, http, store, options, ct).ConfigureAwait(false)
-                    ?? Results.Ok((await store.GetCausesAsync(id, variableKey, ct).ConfigureAwait(false)).Select(StoryGraphMapping.ToRes).ToArray()))
+                async (Guid id, string variableKey, HttpContext http, IStoryStore store, CancellationToken ct)
+                    => await DenyAsync(id, http, store, options, ct).ConfigureAwait(false) ??
+                    Results.Ok((await store.GetCausesAsync(id, variableKey, ct).ConfigureAwait(false)).Select(StoryGraphMapping.ToRes).ToArray()))
             .WithTags(tag)
             .WithName("GetStoryPlaythroughCauses");
+
         return routes;
     }
 
@@ -284,7 +290,7 @@ public static class Extensions
 
     private static IResult NotYours() => Problem(StatusCodes.Status403Forbidden, "The playthrough belongs to another player.");
 
-    private static IResult Problem(int status, string detail) => Results.Problem(detail: detail, statusCode: status);
+    private static IResult Problem(int status, string detail) => Results.Problem(detail, statusCode: status);
 
     private static RouteHandlerBuilder RequireAuthorizationWhen(this RouteHandlerBuilder builder, string? policy)
         => policy == null ? builder : builder.RequireAuthorization(policy);

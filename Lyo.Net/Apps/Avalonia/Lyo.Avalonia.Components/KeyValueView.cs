@@ -55,9 +55,7 @@ public sealed class KeyValueEntry
         => FromControl(key, new Chip { Text = label, Hue = hue }, copyText ?? label);
 }
 
-/// <summary>
-/// Key and value rows. A value is selectable text, an image, or any control. Text can be selected, and a Copy button writes <see cref="KeyValueEntry.ClipboardText" />.
-/// </summary>
+/// <summary>Key and value rows. A value is selectable text, an image, or any control. Text can be selected, and a Copy button writes <see cref="KeyValueEntry.ClipboardText" />.</summary>
 public class KeyValueView : UserControl
 {
     private static readonly FontFamily Mono = new("Consolas, Menlo, DejaVu Sans Mono");
@@ -65,19 +63,17 @@ public class KeyValueView : UserControl
     private static readonly IBrush Line = new SolidColorBrush(Color.FromRgb(0x2A, 0x30, 0x3A));
 
     /// <summary>Rows to show. Null or empty draws nothing.</summary>
-    public static readonly StyledProperty<IReadOnlyList<KeyValueEntry>?> EntriesProperty =
-        AvaloniaProperty.Register<KeyValueView, IReadOnlyList<KeyValueEntry>?>(nameof(Entries));
+    public static readonly StyledProperty<IReadOnlyList<KeyValueEntry>?> EntriesProperty = AvaloniaProperty.Register<KeyValueView, IReadOnlyList<KeyValueEntry>?>(nameof(Entries));
 
     private readonly StackPanel _rows = new();
 
-    public KeyValueView() => Content = _rows;
-
     /// <summary>Rows to show.</summary>
-    public IReadOnlyList<KeyValueEntry>? Entries
-    {
+    public IReadOnlyList<KeyValueEntry>? Entries {
         get => GetValue(EntriesProperty);
         set => SetValue(EntriesProperty, value);
     }
+
+    public KeyValueView() => Content = _rows;
 
     /// <summary>Tab-separated key and copy text, one row per line. A row with nothing to copy writes only the key.</summary>
     public static string Format(IEnumerable<KeyValueEntry> entries)
@@ -89,6 +85,7 @@ public class KeyValueView : UserControl
             builder.Append(entry.Key);
             if (entry.ClipboardText is { } value)
                 builder.Append('\t').Append(value);
+
             builder.AppendLine();
         }
 
@@ -116,31 +113,31 @@ public class KeyValueView : UserControl
     private Control Row(KeyValueEntry entry)
     {
         var grid = new Grid { ColumnSpacing = 8 };
-        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
-        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        grid.ColumnDefinitions.Add(new(GridLength.Star));
+        grid.ColumnDefinitions.Add(new(GridLength.Auto));
         var body = new StackPanel { Spacing = 2 };
-        if (!string.IsNullOrWhiteSpace(entry.Key)) {
-            body.Children.Add(Selectable(entry.Key, 11, Dim, mono: false));
-        }
+        if (!string.IsNullOrWhiteSpace(entry.Key))
+            body.Children.Add(Selectable(entry.Key, 11, Dim, false));
 
         body.Children.Add(Value(entry));
         grid.Children.Add(body);
         if (entry.ClipboardText is { } copy) {
             var button = new Button {
                 Content = "Copy",
-                Padding = new Thickness(8, 0),
+                Padding = new(8, 0),
                 Height = 22,
                 FontSize = 11,
                 VerticalAlignment = VerticalAlignment.Top
             };
+
             button.Click += async (_, _) => await CopyAsync(copy);
             Grid.SetColumn(button, 1);
             grid.Children.Add(button);
         }
 
         return new Border {
-            Padding = new Thickness(0, 6),
-            BorderThickness = new Thickness(0, 0, 0, 1),
+            Padding = new(0, 6),
+            BorderThickness = new(0, 0, 0, 1),
             BorderBrush = Line,
             Child = grid
         };
@@ -150,6 +147,7 @@ public class KeyValueView : UserControl
     {
         if (entry.View != null)
             return entry.View;
+
         if (entry.Image != null) {
             return new Image {
                 Source = entry.Image,
@@ -159,7 +157,7 @@ public class KeyValueView : UserControl
             };
         }
 
-        return Selectable(string.IsNullOrWhiteSpace(entry.Text) ? "—" : entry.Text, 12, null, mono: true);
+        return Selectable(string.IsNullOrWhiteSpace(entry.Text) ? "—" : entry.Text, 12, null, true);
     }
 
     private static SelectableTextBlock Selectable(string text, double size, IBrush? foreground, bool mono)
@@ -177,6 +175,7 @@ public class KeyValueView : UserControl
         var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
         if (clipboard == null)
             return;
+
         var transfer = new DataTransfer();
         var item = new DataTransferItem();
         item.SetText(text);

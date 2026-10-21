@@ -1,24 +1,15 @@
 using System.Collections.Concurrent;
+using System.Text;
 using Lyo.Authentication.Sso.Completion;
 using Lyo.Exceptions;
 
 namespace Lyo.Authentication.Saml;
 
-/// <summary>
-/// Fetches and caches IdP metadata. HTTPS only. A redirect to another host or to HTTP is refused.
-/// A failed fetch leaves the last good entry in place.
-/// </summary>
+/// <summary>Fetches and caches IdP metadata. HTTPS only. A redirect to another host or to HTTP is refused. A failed fetch leaves the last good entry in place.</summary>
 public sealed class SamlMetadataCache(HttpClient http) : ISamlMetadataSource
 {
     private readonly ConcurrentDictionary<string, Entry> _entries = new(StringComparer.Ordinal);
     private Func<DateTime> _utcNow = () => DateTime.UtcNow;
-
-    /// <summary>Replaces the clock. Tests use this to expire a cached entry.</summary>
-    internal void UseClock(Func<DateTime> utcNow)
-    {
-        ArgumentHelpers.ThrowIfNull(utcNow);
-        _utcNow = utcNow;
-    }
 
     /// <inheritdoc />
     public async Task<SamlIdpMetadata> GetAsync(ISamlIdentityProvider provider, CancellationToken ct = default)
@@ -29,16 +20,21 @@ public sealed class SamlMetadataCache(HttpClient http) : ISamlMetadataSource
         if (cached is not null && cached.ExpiresAt > now)
             return cached.Metadata;
 
-        try
-        {
+        try {
             var fresh = await FetchAsync(provider.MetadataUrl, ct).ConfigureAwait(false);
-            _entries[provider.Name] = new Entry(fresh, now.AddHours(1));
+            _entries[provider.Name] = new(fresh, now.AddHours(1));
             return fresh;
         }
-        catch (Exception ex) when (ex is not OperationCanceledException && cached is not null)
-        {
+        catch (Exception ex) when (ex is not OperationCanceledException && cached is not null) {
             return cached.Metadata;
         }
+    }
+
+    /// <summary>Replaces the clock. Tests use this to expire a cached entry.</summary>
+    internal void UseClock(Func<DateTime> utcNow)
+    {
+        ArgumentHelpers.ThrowIfNull(utcNow);
+        _utcNow = utcNow;
     }
 
     private async Task<SamlIdpMetadata> FetchAsync(string metadataUrl, CancellationToken ct)
@@ -70,8 +66,10 @@ public sealed class SamlMetadataCache(HttpClient http) : ISamlMetadataSource
         var location = response.Headers.Location;
         if (location is null)
             return true;
+
         if (!location.IsAbsoluteUri)
-            location = new Uri(requested, location);
+            location = new(requested, location);
+
         return location.Scheme != Uri.UriSchemeHttps || !location.Host.Equals(requested.Host, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -81,18 +79,19 @@ public sealed class SamlMetadataCache(HttpClient http) : ISamlMetadataSource
         using var limited = new MemoryStream();
         var buffer = new byte[8192];
         var total = 0;
-        while (true)
-        {
+        while (true) {
             var read = await stream.ReadAsync(buffer, ct).ConfigureAwait(false);
             if (read == 0)
                 break;
+
             total += read;
             if (total > SamlConstants.MaxDocumentBytes)
                 throw new ExternalLoginRejectedException("SamlMetadata", "IdP metadata exceeds the size cap.");
+
             limited.Write(buffer, 0, read);
         }
 
-        return System.Text.Encoding.UTF8.GetString(limited.ToArray());
+        return Encoding.UTF8.GetString(limited.ToArray());
     }
 
     private sealed record Entry(SamlIdpMetadata Metadata, DateTime ExpiresAt);

@@ -4,26 +4,25 @@
 
 <LyoElementRoot ElementId="@ElementId" DefaultId="lyo-id-field">
     @{
-        RenderFragment valueRow =
-            @<div class="lyo-id-field-row">
-                @if (HasValue) {
-                    <MudIconButton Icon="@Icons.Material.Filled.ContentCopy"
-                                   Size="Size.Small"
-                                   Class="lyo-id-field-icon"
-                                   title="Copy ID"
-                                   aria-label="Copy ID"
-                                   OnClick="CopyAsync"/>
-                }
-                <MudText Typo="Typo.body2" Class="lyo-id-field-value">@DisplayValue</MudText>
-                @if (ShowsToggle) {
-                    <MudIconButton Icon="@ToggleIcon"
-                                   Size="Size.Small"
-                                   Class="lyo-id-field-icon"
-                                   title="@ToggleTitle"
-                                   aria-label="@ToggleTitle"
-                                   OnClick="ToggleFull"/>
-                }
-            </div>;
+        RenderFragment valueRow = @<div class="lyo-id-field-row">
+                                          @if (HasValue) {
+                                              <MudIconButton Icon="@Icons.Material.Filled.ContentCopy"
+                                                             Size="Size.Small"
+                                                             Class="lyo-id-field-icon"
+                                                             title="Copy ID"
+                                                             aria-label="Copy ID"
+                                                             OnClick="CopyAsync"/>
+                                          }
+                                          <MudText Typo="Typo.body2" Class="lyo-id-field-value">@DisplayValue</MudText>
+                                          @if (ShowsToggle) {
+                                              <MudIconButton Icon="@ToggleIcon"
+                                                             Size="Size.Small"
+                                                             Class="lyo-id-field-icon"
+                                                             title="@ToggleTitle"
+                                                             aria-label="@ToggleTitle"
+                                                             OnClick="ToggleFull"/>
+                                          }
+                                      </div>;
     }
     @if (Compact) {
         @valueRow

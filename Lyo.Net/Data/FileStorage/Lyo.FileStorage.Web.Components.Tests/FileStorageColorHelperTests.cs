@@ -55,7 +55,6 @@ public sealed class FileStorageColorHelperTests
         var aes = FileStorageColorHelper.EncryptionChip("AES-GCM");
         Assert.Equal(LyoChipHue.Blue.Style, aes.Style);
         Assert.Equal("AES-GCM", aes.Label);
-
         var none = FileStorageColorHelper.EncryptionChip(" ");
         Assert.Equal("None", none.Label);
         Assert.Null(none.Style);
@@ -67,7 +66,6 @@ public sealed class FileStorageColorHelperTests
         var brotli = FileStorageColorHelper.CompressionChip("brotli");
         Assert.Equal(LyoChipHue.Lime.Style, brotli.Style);
         Assert.Equal("brotli", brotli.Label);
-
         var none = FileStorageColorHelper.CompressionChip(null);
         Assert.Equal("None", none.Label);
         Assert.Null(none.Style);

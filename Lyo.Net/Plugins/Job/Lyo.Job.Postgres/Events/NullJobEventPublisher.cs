@@ -32,6 +32,5 @@ internal sealed class NullJobEventPublisher : IJobEventPublisher
 
     public Task SubscribeToRunCompletionsAsync(Func<byte[], Task<bool>> handler, CancellationToken ct = default) => Task.CompletedTask;
 
-    public Task SubscribeToRunCancellationsAsync(string workerType, Func<Guid, Task> handler, CancellationToken ct = default, string? instanceSuffix = null)
-        => Task.CompletedTask;
+    public Task SubscribeToRunCancellationsAsync(string workerType, Func<Guid, Task> handler, CancellationToken ct = default, string? instanceSuffix = null) => Task.CompletedTask;
 }

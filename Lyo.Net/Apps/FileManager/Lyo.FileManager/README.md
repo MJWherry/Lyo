@@ -1,15 +1,37 @@
 # Lyo.FileManager
 
-`FileManagerSession` keeps a server list, the open connections, and the file, folder, transfer, and key actions. Several connections stay open. The selected one is the tree and the actions. A remote server uses `FileStorageHttpApi` (`Lyo.Http.Client` against `Lyo.Api.FileStorage.Models`). An in-process server uses `FileStorageLocalHost`: local disk, S3, Azure Blob, FTP, or SFTP, plus SQLite or Postgres for the catalog. A local SQLite file defaults to beside the folder (`/data/photos.file-metadata.db`). A path inside that folder is rejected. S3, Azure Blob, FTP, and SFTP ask for a catalog path because they have no local folder to sit beside. The session talks to `IFileManagerApi`. Transfer uses `IFileManagerTransfer`, which only an in-process store exposes. Settings, including bearer tokens, API keys, and the dock layout, persist at `$XDG_CONFIG_HOME/lyo/file-manager.json` or `%AppData%\Lyo\file-manager.json`. The log is `file-manager.log` beside that file and is also written to the console. The desktop window is `lyo-files` in `Lyo.FileManager.App`. Appsettings stores are `FileManagerConfiguredHost`. Opening one creates a scope and calls `IFileStorageFactory.Get(name)`. Saved servers stay on `FileStorageLocalHost.Open`.
+`FileManagerSession` keeps a server list, the open connections, and the file, folder, transfer, and key actions. Several connections stay open. The selected one is the tree and the
+actions. A remote server uses `FileStorageHttpApi` (`Lyo.Http.Client` against `Lyo.Api.FileStorage.Models`). An in-process server uses `FileStorageLocalHost`: local disk, S3, Azure
+Blob, FTP, or SFTP, plus SQLite or Postgres for the catalog. A local SQLite file defaults to beside the folder (`/data/photos.file-metadata.db`). A path inside that folder is
+rejected. S3, Azure Blob, FTP, and SFTP ask for a catalog path because they have no local folder to sit beside. The session talks to `IFileManagerApi`. Transfer uses
+`IFileManagerTransfer`, which only an in-process store exposes. Settings, including bearer tokens, API keys, and the dock layout, persist at
+`$XDG_CONFIG_HOME/lyo/file-manager.json` or `%AppData%\Lyo\file-manager.json`. The log is `file-manager.log` beside that file and is also written to the console. The desktop window
+is `lyo-files` in `Lyo.FileManager.App`. Appsettings stores are `FileManagerConfiguredHost`. Opening one creates a scope and calls `IFileStorageFactory.Get(name)`. Saved servers
+stay on `FileStorageLocalHost.Open`.
 
 ## Features
 
-- **Servers.** Add, rename, and remove a remote API, a local folder, or an in-process S3, Azure Blob, FTP, or SFTP store. Each successful connect stays open, once per key store for an in-process server. Selecting a connection shows that folder. Closing it disposes the client and keeps the saved server. Authenticate stores a bearer token or an `X-Api-Key` value on a remote server. Connect calls `GET {route}/health`, or migrates the metadata database and opens the store with the key store named by `KeyStoreId`. A remote server ignores that id. A failed connect sets that connection's error and leaves its tree.
-- **Catalog.** SQLite or a Postgres connection string. The default SQLite file for a local folder sits beside it (`/data/photos.file-metadata.db`). A path inside the folder is rejected. S3, Azure Blob, FTP, and SFTP require a catalog path. The selected key store supplies the passphrase or AWS Secrets Manager settings. With no key store, upload stays plaintext and encrypt or rotate reports that no key is configured. A server that still has a passphrase or AWS key fields and no `KeyStoreId` becomes a named key store on load. Query filters the metadata store by name and path prefix and returns the same row shape as remote `QueryProject`.
-- **Tree and query.** List a prefix, expand a directory, and keep a new folder as a pending prefix until refresh. Entering that folder and going back up still shows it. A truncated list stays visible. `FolderTreeFilter` hides loaded branches that do not match. Remote query posts `ProjectionQueryReq` to `{FileMetadataRoute}/QueryProject`.
-- **Files and folders.** Metadata, rename, move, copy, delete, access links, and presigned read for catalog files. Physical-only objects use the physical routes. A folder command lists catalog descendants and calls the file route once per id, rewriting nested prefixes (`docs/a` becomes `archive/a`). Upload can compress, encrypt, and set a key id. Files larger than 8 MiB use multipart on a local folder. Download one file, or zip many through `files/archive`.
-- **Transfer.** `TransferAsync` copies or moves selected catalog files from the active connection onto another open in-process store with `FileStorageTransfer`. Move tombstones the source only after the destination hashes match. Key mode defaults to `PreserveKeys`. `NewKey` and `ExistingKey` re-save, which FTP and SFTP need because they are not a byte copy. A remote API connection throws before any write. An optional destination prefix places the copies in that folder; blank keeps each file's current prefix. Same-server prefix move and copy stay on that connection.
-- **Keys.** Saved key stores live beside the servers. Each one is local keys or AWS Secrets Manager. Connect opens an in-process server with the one selected in the toolbar. `ReadLocal` loads a key file whose `key` values are raw key bytes and whose metadata keeps the salt. `GET key-ids` fills the key picker. Rotate the selection with `files/rotate-deks`. Migrate every file on a source key with `files/migrate-deks`. A partial failure reports how many succeeded and how many failed, then reloads when anything succeeded.
+- **Servers.** Add, rename, and remove a remote API, a local folder, or an in-process S3, Azure Blob, FTP, or SFTP store. Each successful connect stays open, once per key store for
+  an in-process server. Selecting a connection shows that folder. Closing it disposes the client and keeps the saved server. Authenticate stores a bearer token or an `X-Api-Key`
+  value on a remote server. Connect calls `GET {route}/health`, or migrates the metadata database and opens the store with the key store named by `KeyStoreId`. A remote server
+  ignores that id. A failed connect sets that connection's error and leaves its tree.
+- **Catalog.** SQLite or a Postgres connection string. The default SQLite file for a local folder sits beside it (`/data/photos.file-metadata.db`). A path inside the folder is
+  rejected. S3, Azure Blob, FTP, and SFTP require a catalog path. The selected key store supplies the passphrase or AWS Secrets Manager settings. With no key store, upload stays
+  plaintext and encrypt or rotate reports that no key is configured. A server that still has a passphrase or AWS key fields and no `KeyStoreId` becomes a named key store on load.
+  Query filters the metadata store by name and path prefix and returns the same row shape as remote `QueryProject`.
+- **Tree and query.** List a prefix, expand a directory, and keep a new folder as a pending prefix until refresh. Entering that folder and going back up still shows it. A truncated
+  list stays visible. `FolderTreeFilter` hides loaded branches that do not match. Remote query posts `ProjectionQueryReq` to `{FileMetadataRoute}/QueryProject`.
+- **Files and folders.** Metadata, rename, move, copy, delete, access links, and presigned read for catalog files. Physical-only objects use the physical routes. A folder command
+  lists catalog descendants and calls the file route once per id, rewriting nested prefixes (`docs/a` becomes `archive/a`). Upload can compress, encrypt, and set a key id. Files
+  larger than 8 MiB use multipart on a local folder. Download one file, or zip many through `files/archive`.
+- **Transfer.** `TransferAsync` copies or moves selected catalog files from the active connection onto another open in-process store with `FileStorageTransfer`. Move tombstones the
+  source only after the destination hashes match. Key mode defaults to `PreserveKeys`. `NewKey` and `ExistingKey` re-save, which FTP and SFTP need because they are not a byte copy.
+  A remote API connection throws before any write. An optional destination prefix places the copies in that folder; blank keeps each file's current prefix. Same-server prefix move
+  and copy stay on that connection.
+- **Keys.** Saved key stores live beside the servers. Each one is local keys or AWS Secrets Manager. Connect opens an in-process server with the one selected in the toolbar.
+  `ReadLocal` loads a key file whose `key` values are raw key bytes and whose metadata keeps the salt. `GET key-ids` fills the key picker. Rotate the selection with
+  `files/rotate-deks`. Migrate every file on a source key with `files/migrate-deks`. A partial failure reports how many succeeded and how many failed, then reloads when anything
+  succeeded.
 
 ## Examples
 

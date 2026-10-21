@@ -15,8 +15,8 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.FileStorage;
 
 /// <summary>
-/// Encode/decode streaming stages shared by every storage backend: single-pass compress-then-encrypt uploads and pipelined decrypt/decompress reads. Persisted
-/// ciphertext sizes and headers are read through <see cref="IFileStoragePhysicalIO" />.
+/// Encode/decode streaming stages shared by every storage backend: single-pass compress-then-encrypt uploads and pipelined decrypt/decompress reads. Persisted ciphertext
+/// sizes and headers are read through <see cref="IFileStoragePhysicalIO" />.
 /// </summary>
 internal sealed class FileStorageStreamingPipelines
 {
@@ -273,9 +273,10 @@ internal sealed class FileStorageStreamingPipelines
     private async Task DecompressCompressedPipeToPlainAsync(Pipe pipeCompressed, PipeWriter plainWriter, CompressionAlgorithm algorithm, int? chunkSize, CancellationToken ct)
     {
         try {
-            using (var compressedRead = pipeCompressed.Reader.AsStream(true))
-            using (var plainOut = plainWriter.AsStream(true))
-                await _compressionService!.Resolver.DecompressAsync(compressedRead, plainOut, algorithm, chunkSize, ct).ConfigureAwait(false);
+            using (var compressedRead = pipeCompressed.Reader.AsStream(true)) {
+                using (var plainOut = plainWriter.AsStream(true))
+                    await _compressionService!.Resolver.DecompressAsync(compressedRead, plainOut, algorithm, chunkSize, ct).ConfigureAwait(false);
+            }
 
             await pipeCompressed.Reader.CompleteAsync().ConfigureAwait(false);
             await plainWriter.CompleteAsync().ConfigureAwait(false);

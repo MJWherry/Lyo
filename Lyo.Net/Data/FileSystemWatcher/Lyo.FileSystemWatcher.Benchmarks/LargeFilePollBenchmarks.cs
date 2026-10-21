@@ -6,8 +6,8 @@ namespace Lyo.FileSystemWatcher.Benchmarks;
 
 /// <summary>Steady-state poll of one sparse file at 1 GiB or 2 GiB.</summary>
 /// <remarks>
-/// The file is created with <see cref="FileStream.SetLength(long)" />, so setup does not write the bytes. Above 1 GiB the fingerprinter reads 64 bytes plus the
-/// modification time. A full digest is taken only when another file shares that size, and this arm keeps the huge file's size unique.
+/// The file is created with <see cref="FileStream.SetLength(long)" />, so setup does not write the bytes. Above 1 GiB the fingerprinter reads 64 bytes plus the modification
+/// time. A full digest is taken only when another file shares that size, and this arm keeps the huge file's size unique.
 /// </remarks>
 [BenchmarkDescription(
     "LargeFilePoll is the warm poll for a single sparse file of FileBytes, either 1 GiB (beginning, middle, and end samples) or 2 GiB (64-byte sample plus " +
@@ -19,11 +19,11 @@ namespace Lyo.FileSystemWatcher.Benchmarks;
 public class LargeFilePollBenchmarks
 {
     private const long OneGiB = 1024L * 1024 * 1024;
+    private SnapshotTree _after = null!;
+    private SnapshotTree _before = null!;
+    private FileSystemWatcherOptions _options = null!;
 
     private IOTempSession _session = null!;
-    private FileSystemWatcherOptions _options = null!;
-    private SnapshotTree _before = null!;
-    private SnapshotTree _after = null!;
 
     [Params(OneGiB, OneGiB * 2)]
     public long FileBytes { get; set; }

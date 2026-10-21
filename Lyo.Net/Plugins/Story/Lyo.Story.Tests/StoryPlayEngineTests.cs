@@ -110,17 +110,11 @@ public sealed class StoryPlayEngineTests
     [Fact]
     public void TakeChoice_TargetNodeKeyWithoutGoto_MovesToTarget()
     {
-        var story = StoryBuilder.New("Target")
-            .Slug("target")
-            .StartNode("a", n => n.Choice("go", c => c.GoesTo("b")))
-            .Node("b", n => n.Ending())
-            .Build();
+        var story = StoryBuilder.New("Target").Slug("target").StartNode("a", n => n.Choice("go", c => c.GoesTo("b"))).Node("b", n => n.Ending()).Build();
         var choice = story.Nodes.Single(n => n.Key == "a").Choices[0];
         choice.Effects = [];
         var snap = StoryPlayEngine.Start(story);
-
         StoryPlayEngine.TakeChoice(story, snap, "go");
-
         Assert.Equal("b", snap.CurrentNodeKey);
     }
 
@@ -135,7 +129,6 @@ public sealed class StoryPlayEngineTests
             .Build();
 
         var snap = StoryPlayEngine.Start(story);
-
         Assert.Equal(["a-first", "b-second"], snap.Events.Where(e => e.Kind == StoryPlaythroughEventKind.ReactionFired).Select(e => e.ReactionKey));
         Assert.Equal("b", snap.Variables["last"]);
     }
@@ -145,6 +138,7 @@ public sealed class StoryPlayEngineTests
     {
         var variables = new Dictionary<string, string?> { ["name"] = "Alice" };
         var none = new HashSet<string>();
+
         bool Test(ComparisonOperatorEnum comparison, object value)
             => StoryWhere.Matches(new ConditionClause { Field = "var.name", Comparison = comparison, Value = value }, variables, none, none);
 
@@ -160,13 +154,9 @@ public sealed class StoryPlayEngineTests
     [Fact]
     public void Increment_NonNumericValue_Throws()
     {
-        var story = StoryBuilder.New("Count")
-            .Slug("count")
-            .StartNode("a", n => n.Choice("pay", c => c.Do(d => d.Increment("gold"))))
-            .Build();
+        var story = StoryBuilder.New("Count").Slug("count").StartNode("a", n => n.Choice("pay", c => c.Do(d => d.Increment("gold")))).Build();
         var snap = StoryPlayEngine.Start(story);
         snap.Variables["gold"] = "lots";
-
         var ex = Assert.Throws<StoryException>(() => StoryPlayEngine.TakeChoice(story, snap, "pay"));
         Assert.Contains("gold", ex.Message, StringComparison.Ordinal);
     }
@@ -214,20 +204,14 @@ public sealed class StoryBuilderTests
     [Fact]
     public void Build_UnknownGoto_Throws()
     {
-        var ex = Assert.Throws<StoryException>(() =>
-            StoryBuilder.New("Bad")
-                .StartNode("a", n => n.Choice("go", c => c.GoesTo("missing")))
-                .Build());
+        var ex = Assert.Throws<StoryException>(() => StoryBuilder.New("Bad").StartNode("a", n => n.Choice("go", c => c.GoesTo("missing"))).Build());
         Assert.Contains("missing", ex.Message, StringComparison.Ordinal);
     }
 
     [Fact]
     public void Build_ZeroScenesAndNoOpChoice_IsValid()
     {
-        var story = StoryBuilder.New("Quiet")
-            .Slug("quiet")
-            .StartNode("only", n => n.Choice("wait", c => { }))
-            .Build();
+        var story = StoryBuilder.New("Quiet").Slug("quiet").StartNode("only", n => n.Choice("wait", c => { })).Build();
         Assert.Empty(story.Scenes);
         Assert.Equal(StoryPresentationKind.None, story.Nodes[0].PresentationKind);
         Assert.Empty(story.Nodes[0].Choices[0].Effects);
@@ -261,6 +245,7 @@ public sealed class StoryBuilderTests
             CurrentNodeKey = live.CurrentNodeKey,
             Variables = live.Variables.Select(p => new StoryPlaythroughVariable { VariableKey = p.Key, Value = p.Value }).ToArray()
         };
+
         var restored = StoryPlayEngine.Restore(story, stored, live.Events);
         Assert.Equal(live.Chose, restored.Chose);
         Assert.Equal(live.Visited, restored.Visited);

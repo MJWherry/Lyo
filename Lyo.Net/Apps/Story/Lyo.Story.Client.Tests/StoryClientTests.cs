@@ -5,7 +5,6 @@ using Lyo.Http.Client;
 using Lyo.Http.Client.Plan;
 using Lyo.Http.Client.Session;
 using Lyo.Query.Models.Common.Request;
-using Lyo.Story.Client;
 using Lyo.Story.Enums;
 using Lyo.Story.Models.Request;
 using Lyo.Story.Models.Response;
@@ -37,7 +36,7 @@ public sealed class StoryClientTests
     public async Task ChooseAsync_WhenPrefix_PostsPrefixedRoute()
     {
         var api = new RecordingApiClient();
-        var client = new StoryClient(api, new StoryClientOptions { RoutePrefix = "api" });
+        var client = new StoryClient(api, new() { RoutePrefix = "api" });
         var id = Guid.Parse("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee");
         var req = new StoryChooseReq { ChoiceKey = "smash" };
         await client.ChooseAsync(id, req, TestCt);
@@ -61,7 +60,7 @@ public sealed class StoryClientTests
         var api = new RecordingApiClient();
         var client = new StoryClient(api);
         var id = Guid.Parse("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee");
-        await client.SetVariablesAsync(id, new StorySetVariablesReq { Values = new Dictionary<string, string?> { ["game.has.potion"] = "True" } }, TestCt);
+        await client.SetVariablesAsync(id, new() { Values = new() { ["game.has.potion"] = "True" } }, TestCt);
         Assert.Equal($"Story/playthrough/{id:D}/variables", api.LastUri);
         var body = Assert.IsType<StorySetVariablesReq>(api.LastBody);
         Assert.Equal("True", body.Values["game.has.potion"]);
@@ -73,15 +72,19 @@ public sealed class StoryClientTests
         var id = Guid.Parse("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee");
         var api = new RecordingApiClient {
             NextResult = new StoryPlayStateRes {
-                Playthrough = new() { Id = id, CurrentNodeKey = "alarm_cutscene", Status = StoryPlaythroughStatus.InProgress, Variables = [new() { VariableKey = "alarm", Value = "True" }] },
+                Playthrough = new() {
+                    Id = id,
+                    CurrentNodeKey = "alarm_cutscene",
+                    Status = StoryPlaythroughStatus.InProgress,
+                    Variables = [new() { VariableKey = "alarm", Value = "True" }]
+                },
                 CurrentNode = new() { Key = "alarm_cutscene", PresentationKind = StoryPresentationKind.Cutscene, MediaRef = "media:heist-alarm" },
                 Moves = [new() { Kind = StoryMoveKind.Advance, Enabled = true }]
             }
         };
+
         var store = new StoryClientStore(new StoryClient(api));
-
         var state = await store.TakeChoiceAsync(id, "smash", TestCt);
-
         Assert.Equal($"Story/playthrough/{id:D}/choose", api.LastUri);
         Assert.Equal("smash", Assert.IsType<StoryChooseReq>(api.LastBody).ChoiceKey);
         Assert.Equal("alarm_cutscene", state.Playthrough.CurrentNodeKey);
@@ -94,11 +97,20 @@ public sealed class StoryClientTests
     public async Task StoryClientStore_ListStories_PostsTenantAndGame()
     {
         var tenant = Guid.Parse("0199a8a0-0000-7000-8000-0000000000a1");
-        var api = new RecordingApiClient { NextResult = new[] { new StoryGraphRes { Id = Guid.Parse("0199a8a0-0000-7000-8000-0000000000b2"), Title = "Intro", Slug = "intro", TenantId = tenant, GameKey = "rpg" } } };
+        var api = new RecordingApiClient {
+            NextResult = new[] {
+                new StoryGraphRes {
+                    Id = Guid.Parse("0199a8a0-0000-7000-8000-0000000000b2"),
+                    Title = "Intro",
+                    Slug = "intro",
+                    TenantId = tenant,
+                    GameKey = "rpg"
+                }
+            }
+        };
+
         var store = new StoryClientStore(new StoryClient(api));
-
         var stories = await store.ListStoriesAsync(tenant, "rpg", TestCt);
-
         Assert.Equal("Story/graph/list", api.LastUri);
         var body = Assert.IsType<StoryListReq>(api.LastBody);
         Assert.Equal(tenant, body.TenantId);
@@ -115,9 +127,7 @@ public sealed class StoryClientTests
         var api = new RecordingApiClient { NextResult = new StoryGraphRes { Id = id, Title = "The Heist", Slug = "the-heist" } };
         var store = new StoryClientStore(new StoryClient(api));
         var story = StorySamples.TheHeist();
-
         await store.SaveStoryGraphAsync(story, TestCt);
-
         Assert.Equal("Story/graph", api.LastUri);
         var body = Assert.IsType<StoryGraphReq>(api.LastBody);
         Assert.Equal("vault_door", body.StartNodeKey);
@@ -157,7 +167,7 @@ internal sealed class RecordingApiClient : IApiClient
     {
         LastUri = uri;
         LastBody = request;
-        return Task.FromResult(NextResult is TResult next ? next : default(TResult)!);
+        return Task.FromResult(NextResult is TResult next ? next : default!);
     }
 
     public Task<TResult?> GetAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)

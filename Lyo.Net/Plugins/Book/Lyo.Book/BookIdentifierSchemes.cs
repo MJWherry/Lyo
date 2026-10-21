@@ -36,7 +36,7 @@ public static class BookIdentifierSchemes
             var c = trimmed[i];
             if (char.IsDigit(c))
                 buffer.Append(c);
-            else if ((c is 'X' or 'x') && string.Equals(scheme, Isbn10, StringComparison.OrdinalIgnoreCase))
+            else if (c is 'X' or 'x' && string.Equals(scheme, Isbn10, StringComparison.OrdinalIgnoreCase))
                 buffer.Append('X');
         }
 
@@ -44,6 +44,5 @@ public static class BookIdentifierSchemes
     }
 
     public static bool IsIsbn(string? scheme)
-        => string.Equals(scheme, Isbn13, StringComparison.OrdinalIgnoreCase)
-           || string.Equals(scheme, Isbn10, StringComparison.OrdinalIgnoreCase);
+        => string.Equals(scheme, Isbn13, StringComparison.OrdinalIgnoreCase) || string.Equals(scheme, Isbn10, StringComparison.OrdinalIgnoreCase);
 }

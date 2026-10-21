@@ -26,6 +26,7 @@ public class WhereClauseValidatorTests
                 .Add(new ConditionClause("Role", ComparisonOperatorEnum.In, (string[])["User", "Admin"]))
                 .Add(new ConditionClause("Status", ComparisonOperatorEnum.NotIn, (string[])["Banned"])))
         };
+
         var validator = new WhereClauseValidator<CreateUserRequest>(schema, CreateEvaluator());
         var result = validator.Validate(new() { Email = "not-an-email", Role = "Guest", Status = "Banned" });
         Assert.False(result.IsSuccess);
@@ -53,6 +54,7 @@ public class WhereClauseValidatorTests
         schema.Messages = new Dictionary<string, ValidationMessage>(StringComparer.OrdinalIgnoreCase) {
             ["Email"] = new() { ErrorCode = "BAD_EMAIL", ErrorMessage = "Use a real email" }
         };
+
         var validator = new WhereClauseValidator<CreateUserRequest>(schema, CreateEvaluator());
         var result = validator.Validate(new() { Email = "nope", Role = "User", Status = "Active" });
         Assert.False(result.IsSuccess);
@@ -84,12 +86,15 @@ public class WhereClauseValidatorTests
     public void IncludeSchema_MixesWithFluentRules()
     {
         var evaluator = CreateEvaluator();
-        var validator = ValidatorBuilder<CreateUserRequest>.Create()
-            .RuleFor(x => x.Name)
-            .NotWhiteSpace()
-            .IncludeSchema(SignupSchema(), evaluator)
-            .Build();
-        var result = validator.Validate(new() { Name = " ", Email = "matt@example.com", Role = "User", Status = "Active" });
+        var validator = ValidatorBuilder<CreateUserRequest>.Create().RuleFor(x => x.Name).NotWhiteSpace().IncludeSchema(SignupSchema(), evaluator).Build();
+        var result = validator.Validate(
+            new() {
+                Name = " ",
+                Email = "matt@example.com",
+                Role = "User",
+                Status = "Active"
+            });
+
         Assert.False(result.IsSuccess);
         Assert.Contains(result.Errors!, e => Equals(e.Metadata?[ValidationMetadataKeys.PropertyName], "Name"));
     }
@@ -128,9 +133,7 @@ public class WhereClauseValidatorTests
     {
         var store = new InMemoryValidationSchemaStore();
         await store.SaveAsync(SignupSchema(), TestCt);
-        await store.SaveAsync(
-            new ValidationSchema { Key = "other", TargetTypeName = "Other", Constraints = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "A") },
-            TestCt);
+        await store.SaveAsync(new() { Key = "other", TargetTypeName = "Other", Constraints = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "A") }, TestCt);
         var listed = await store.ListAsync(nameof(CreateUserRequest), TestCt);
         Assert.Single(listed);
         Assert.NotNull(await store.GetAsync("signup.v2", TestCt));

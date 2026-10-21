@@ -30,9 +30,6 @@ public sealed class HomeItemReq
     /// <summary>Physical or commercial condition.</summary>
     public HomeItemCondition Condition { get; set; } = HomeItemCondition.Unknown;
 
-    /// <summary>
-    /// Identifiers (SKU, serial, Wi-Fi MAC, …). The same <see cref="HomeProductKeyEntry.Kind"/> may appear more than once. Each row may carry a note for that
-    /// pair.
-    /// </summary>
+    /// <summary>Identifiers (SKU, serial, Wi-Fi MAC, …). The same <see cref="HomeProductKeyEntry.Kind" /> may appear more than once. Each row may carry a note for that pair.</summary>
     public List<HomeProductKeyEntry> ProductKeys { get; set; } = [];
 }

@@ -5,9 +5,7 @@ namespace Lyo.Authentication.Saml;
 /// <summary>Checks shared service-provider settings: entity id and assertion consumer URL.</summary>
 public static class SamlServiceProviderRules
 {
-    /// <summary>
-    /// Rejects a missing entity id, a missing ACS URL, a non-absolute ACS URL, and an <c>http</c> ACS URL whose host is not localhost.
-    /// </summary>
+    /// <summary>Rejects a missing entity id, a missing ACS URL, a non-absolute ACS URL, and an <c>http</c> ACS URL whose host is not localhost.</summary>
     public static void Validate(string? entityId, string? acsUrl)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(entityId);

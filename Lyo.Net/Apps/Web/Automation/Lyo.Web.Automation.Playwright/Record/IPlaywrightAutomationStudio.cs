@@ -23,6 +23,12 @@ public interface IPlaywrightAutomationStudio : IAsyncDisposable
     /// <summary>True while clicks and typing in the browser are appended to the plan.</summary>
     bool IsRecording { get; }
 
+    /// <summary>Runner log. When set, play writes here in addition to <see cref="StepNotice" />.</summary>
+    ILogger? PlayLogger { get; set; }
+
+    /// <summary>Plan loaded from the startup <c>--plan</c> path, when that file parsed.</summary>
+    AutomationPlan? LoadedPlan { get; }
+
     /// <summary>Raised after a recorded gesture changes the plan.</summary>
     event EventHandler? PlanChanged;
 
@@ -34,12 +40,6 @@ public interface IPlaywrightAutomationStudio : IAsyncDisposable
 
     /// <summary>Play notifications: step start, outcome, log line, screenshot path, and context.</summary>
     event EventHandler<AutomationStudioStepNotice>? StepNotice;
-
-    /// <summary>Runner log. When set, play writes here in addition to <see cref="StepNotice" />.</summary>
-    ILogger? PlayLogger { get; set; }
-
-    /// <summary>Plan loaded from the startup <c>--plan</c> path, when that file parsed.</summary>
-    AutomationPlan? LoadedPlan { get; }
 
     /// <summary>Ignores page clicks and typing until <see cref="ResumeRecording" />.</summary>
     void PauseRecording();
@@ -59,7 +59,10 @@ public interface IPlaywrightAutomationStudio : IAsyncDisposable
     /// <summary>Writes the plan JSON into <paramref name="directory" /> and returns the file path.</summary>
     string SavePlan(string? directory = null);
 
-    /// <summary>Runs <paramref name="plan" />. Earlier steps than <paramref name="startStepIndex" /> are skipped. When <paramref name="endStepIndex" /> is set, later steps are not started. Screenshots and context go under <paramref name="runDirectory" />.</summary>
+    /// <summary>
+    /// Runs <paramref name="plan" />. Earlier steps than <paramref name="startStepIndex" /> are skipped. When <paramref name="endStepIndex" /> is set, later steps are not
+    /// started. Screenshots and context go under <paramref name="runDirectory" />.
+    /// </summary>
     Task<AutomationPlanRunResult> PlayAsync(AutomationPlan plan, int startStepIndex, string runDirectory, CancellationToken ct = default, int? endStepIndex = null);
 
     /// <summary>Holds play before the next step.</summary>
@@ -107,4 +110,3 @@ public interface IPlaywrightAutomationStudio : IAsyncDisposable
     /// <summary>Commits pending typing, cancels play, closes the browser, and returns the plan.</summary>
     Task<AutomationPlan> StopAsync(CancellationToken ct = default);
 }
-

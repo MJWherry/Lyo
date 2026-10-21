@@ -5,8 +5,8 @@ namespace Lyo.FileStorage.Models;
 
 /// <summary>
 /// Redacted view of <see cref="FileStoreResult" /> that is safe to raise on public events. Drops <see cref="FileStoreResult.EncryptedDataEncryptionKey" />,
-/// <see cref="FileStoreResult.KeyEncryptionKeySalt" />, and raw file hashes, which event subscribers should not see by default. Call <see cref="From" /> at the
-/// event-publication boundary.
+/// <see cref="FileStoreResult.KeyEncryptionKeySalt" />, and raw file hashes, which event subscribers should not see by default. Call <see cref="From" /> at the event-publication
+/// boundary.
 /// </summary>
 /// <param name="Id">File id.</param>
 /// <param name="OriginalFileName">Filename given at save time.</param>

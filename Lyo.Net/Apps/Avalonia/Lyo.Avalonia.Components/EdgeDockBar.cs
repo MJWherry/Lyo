@@ -25,9 +25,8 @@ public sealed class EdgeDockButton
 }
 
 /// <summary>
-/// Screen-edge tab a consumer fills with an icon and any number of buttons.
-/// Hover can open those buttons inward. Click, double-click, and drag are separate events, so each app decides what they do.
-/// Thickness, length, and corner radius are the shape. The host window still places itself from <see cref="ScreenEdgeDock" />.
+/// Screen-edge tab a consumer fills with an icon and any number of buttons. Hover can open those buttons inward. Click, double-click, and drag are separate events, so each
+/// app decides what they do. Thickness, length, and corner radius are the shape. The host window still places itself from <see cref="ScreenEdgeDock" />.
 /// </summary>
 public class EdgeDockBar : Border
 {
@@ -59,123 +58,68 @@ public class EdgeDockBar : Border
     public static readonly StyledProperty<double> FaceOffsetProperty = AvaloniaProperty.Register<EdgeDockBar, double>(nameof(FaceOffset));
 
     private readonly ObservableCollection<EdgeDockButton> _buttons = [];
-    private readonly EdgeDockGesture _gesture = new();
-    private readonly DispatcherTimer _expand;
     private readonly DispatcherTimer _collapse;
+    private readonly DispatcherTimer _expand;
+    private readonly EdgeDockGesture _gesture = new();
     private StackPanel? _actions;
-    private Border? _face;
     private bool _building;
-    private long _leaveAfter;
-    private bool _left;
+    private Border? _face;
+    private bool _hoverKnown;
     private int _hoverX;
     private int _hoverY;
-    private bool _hoverKnown;
-
-    public EdgeDockBar()
-    {
-        ClipToBounds = true;
-        Background = new SolidColorBrush(Color.Parse("#202124"));
-        _buttons.CollectionChanged += OnButtonsChanged;
-        _expand = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
-        _expand.Tick += (_, _) => {
-            _expand.Stop();
-            if (ExpandOnHover)
-                Expanded = true;
-        };
-        _collapse = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
-        _collapse.Tick += (_, _) => {
-            if (!Expanded) {
-                _collapse.Stop();
-                return;
-            }
-
-            if (!ShouldClose(HoldOpen, IsPointerOver && !_left, PointerStillInside(), Environment.TickCount64, _leaveAfter))
-                return;
-            _collapse.Stop();
-            Expanded = false;
-        };
-        AddHandler(PointerPressedEvent, OnPressed, RoutingStrategies.Tunnel);
-        AddHandler(PointerMovedEvent, OnMoved, RoutingStrategies.Tunnel);
-        AddHandler(PointerReleasedEvent, OnReleased, RoutingStrategies.Tunnel);
-        PointerEntered += (_, e) => {
-            _left = false;
-            Remember(e);
-            ArmExpand();
-        };
-        PointerMoved += (_, e) => {
-            _left = false;
-            Remember(e);
-            if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
-                ArmExpand();
-        };
-        PointerExited += (_, _) => {
-            _left = true;
-            _expand.Stop();
-            if (Expanded && !_collapse.IsEnabled)
-                _collapse.Start();
-        };
-        Rebuild();
-    }
+    private long _leaveAfter;
+    private bool _left;
 
     /// <summary>Which screen edge the flat side sits on.</summary>
-    public ScreenEdge Edge
-    {
+    public ScreenEdge Edge {
         get => GetValue(EdgeProperty);
         set => SetValue(EdgeProperty, value);
     }
 
     /// <summary>Thickness of the collapsed tab, in device-independent pixels.</summary>
-    public double Thickness
-    {
+    public double Thickness {
         get => GetValue(ThicknessProperty);
         set => SetValue(ThicknessProperty, value);
     }
 
     /// <summary>Length of the collapsed tab, in device-independent pixels.</summary>
-    public double Length
-    {
+    public double Length {
         get => GetValue(LengthProperty);
         set => SetValue(LengthProperty, value);
     }
 
     /// <summary>Outer corner radius. The side on the screen edge stays square.</summary>
-    public double Corner
-    {
+    public double Corner {
         get => GetValue(CornerProperty);
         set => SetValue(CornerProperty, value);
     }
 
     /// <summary>Icon or mark drawn on the collapsed tab.</summary>
-    public Control? Icon
-    {
+    public Control? Icon {
         get => GetValue(IconProperty);
         set => SetValue(IconProperty, value);
     }
 
     /// <summary>True while the quick actions are open.</summary>
-    public bool Expanded
-    {
+    public bool Expanded {
         get => GetValue(ExpandedProperty);
         set => SetValue(ExpandedProperty, value);
     }
 
     /// <summary>Hover opens <see cref="Buttons" />. Moving the pointer off the bar closes them again.</summary>
-    public bool ExpandOnHover
-    {
+    public bool ExpandOnHover {
         get => GetValue(ExpandOnHoverProperty);
         set => SetValue(ExpandOnHoverProperty, value);
     }
 
     /// <summary>Shifts the icon along the bubble, in device-independent pixels. Positive moves toward the right or the bottom. <see cref="ScreenEdgeDock.IconBias" /> picks the value.</summary>
-    public double IconSlide
-    {
+    public double IconSlide {
         get => GetValue(IconSlideProperty);
         set => SetValue(IconSlideProperty, value);
     }
 
     /// <summary>Shifts the collapsed face along the edge, in device-independent pixels. Keeps the icon where it was when an open bar has to slide to stay on the screen.</summary>
-    public double FaceOffset
-    {
+    public double FaceOffset {
         get => GetValue(FaceOffsetProperty);
         set => SetValue(FaceOffsetProperty, value);
     }
@@ -185,6 +129,58 @@ public class EdgeDockBar : Border
 
     /// <summary>Keeps the drawer open while a menu from one of the buttons is up.</summary>
     public bool HoldOpen { get; set; }
+
+    public EdgeDockBar()
+    {
+        ClipToBounds = true;
+        Background = new SolidColorBrush(Color.Parse("#202124"));
+        _buttons.CollectionChanged += OnButtonsChanged;
+        _expand = new() { Interval = TimeSpan.FromMilliseconds(150) };
+        _expand.Tick += (_, _) => {
+            _expand.Stop();
+            if (ExpandOnHover)
+                Expanded = true;
+        };
+
+        _collapse = new() { Interval = TimeSpan.FromMilliseconds(200) };
+        _collapse.Tick += (_, _) => {
+            if (!Expanded) {
+                _collapse.Stop();
+                return;
+            }
+
+            if (!ShouldClose(HoldOpen, IsPointerOver && !_left, PointerStillInside(), Environment.TickCount64, _leaveAfter))
+                return;
+
+            _collapse.Stop();
+            Expanded = false;
+        };
+
+        AddHandler(PointerPressedEvent, OnPressed, RoutingStrategies.Tunnel);
+        AddHandler(PointerMovedEvent, OnMoved, RoutingStrategies.Tunnel);
+        AddHandler(PointerReleasedEvent, OnReleased, RoutingStrategies.Tunnel);
+        PointerEntered += (_, e) => {
+            _left = false;
+            Remember(e);
+            ArmExpand();
+        };
+
+        PointerMoved += (_, e) => {
+            _left = false;
+            Remember(e);
+            if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+                ArmExpand();
+        };
+
+        PointerExited += (_, _) => {
+            _left = true;
+            _expand.Stop();
+            if (Expanded && !_collapse.IsEnabled)
+                _collapse.Start();
+        };
+
+        Rebuild();
+    }
 
     /// <summary>The pointer went down and up on the tab, not on a button.</summary>
     public event EventHandler? Click;
@@ -221,6 +217,7 @@ public class EdgeDockBar : Border
         base.OnPropertyChanged(change);
         if (_building)
             return;
+
         if (change.Property == IconSlideProperty || change.Property == FaceOffsetProperty) {
             ApplyIcon();
             return;
@@ -242,8 +239,8 @@ public class EdgeDockBar : Border
             return;
         }
 
-        if (change.Property == EdgeProperty || change.Property == ThicknessProperty || change.Property == LengthProperty || change.Property == CornerProperty
-            || change.Property == IconProperty)
+        if (change.Property == EdgeProperty || change.Property == ThicknessProperty || change.Property == LengthProperty || change.Property == CornerProperty ||
+            change.Property == IconProperty)
             Rebuild();
     }
 
@@ -263,6 +260,7 @@ public class EdgeDockBar : Border
                 HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Top
             };
+
             _face = face;
             if (Icon != null) {
                 Icon.HorizontalAlignment = HorizontalAlignment.Center;
@@ -272,16 +270,18 @@ public class EdgeDockBar : Border
             var actions = new StackPanel {
                 Orientation = Orientation.Horizontal,
                 Spacing = 4,
-                Margin = new Thickness(6, 4),
+                Margin = new(6, 4),
                 VerticalAlignment = VerticalAlignment.Center
             };
+
             _actions = actions;
             foreach (var action in _buttons) {
-                var button = new Button { Content = action.Text, Padding = new Thickness(8, 2), FontSize = 12 };
+                var button = new Button { Content = action.Text, Padding = new(8, 2), FontSize = 12 };
                 button.Click += (sender, args) => {
                     args.Handled = true;
                     action.Pressed?.Invoke(sender, EventArgs.Empty);
                 };
+
                 actions.Children.Add(button);
             }
 
@@ -296,7 +296,7 @@ public class EdgeDockBar : Border
             }
 
             var corners = ScreenEdgeDock.Corners(Edge, (int)Math.Round(Corner));
-            CornerRadius = new CornerRadius(corners.TopLeft, corners.TopRight, corners.BottomRight, corners.BottomLeft);
+            CornerRadius = new(corners.TopLeft, corners.TopRight, corners.BottomRight, corners.BottomLeft);
             ShowActions();
             ApplyIcon();
             Child = row;
@@ -321,10 +321,12 @@ public class EdgeDockBar : Border
     {
         if (IsPointerOver || HoldOpen)
             return true;
+
         if (!_hoverKnown || Bounds.Width <= 0 || Bounds.Height <= 0)
             return false;
+
         var origin = this.PointToScreen(default);
-        var far = this.PointToScreen(new Point(Bounds.Width, Bounds.Height));
+        var far = this.PointToScreen(new(Bounds.Width, Bounds.Height));
         var left = Math.Min(origin.X, far.X);
         var top = Math.Min(origin.Y, far.Y);
         var right = Math.Max(origin.X, far.X);
@@ -339,8 +341,10 @@ public class EdgeDockBar : Border
         while (visual != null) {
             if (visual is Button)
                 return true;
+
             if (visual is EdgeDockBar)
                 return false;
+
             visual = visual.GetVisualParent();
         }
 
@@ -348,8 +352,10 @@ public class EdgeDockBar : Border
         while (node != null) {
             if (node is Button)
                 return true;
+
             if (node is EdgeDockBar)
                 return false;
+
             node = node.Parent ?? node.TemplatedParent as StyledElement;
         }
 
@@ -362,8 +368,10 @@ public class EdgeDockBar : Border
     {
         if (holdOpen || pointerOver)
             return false;
+
         if (sampleInside && now < leaveAfter)
             return false;
+
         return true;
     }
 
@@ -371,11 +379,12 @@ public class EdgeDockBar : Border
     {
         if (_face != null) {
             var vertical = Edge is ScreenEdge.Left or ScreenEdge.Right;
-            _face.Margin = vertical ? new Thickness(0, Math.Max(0, FaceOffset), 0, 0) : new Thickness(Math.Max(0, FaceOffset), 0, 0, 0);
+            _face.Margin = vertical ? new(0, Math.Max(0, FaceOffset), 0, 0) : new Thickness(Math.Max(0, FaceOffset), 0, 0, 0);
         }
 
         if (Icon == null)
             return;
+
         var side = Edge is ScreenEdge.Left or ScreenEdge.Right;
         Icon.RenderTransform = new TranslateTransform(side ? 0 : IconSlide, side ? IconSlide : 0);
     }
@@ -390,6 +399,7 @@ public class EdgeDockBar : Border
     {
         if (_actions == null)
             return;
+
         _actions.IsVisible = Expanded && _buttons.Count > 0;
         _actions.InvalidateMeasure();
         InvalidateMeasure();
@@ -409,8 +419,10 @@ public class EdgeDockBar : Border
     {
         if (FromButton(e.Source))
             return;
+
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             return;
+
         var point = this.PointToScreen(e.GetPosition(this));
         _gesture.Press(point.X, point.Y);
         e.Pointer.Capture(this);
@@ -421,13 +433,16 @@ public class EdgeDockBar : Border
     {
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             return;
+
         var point = this.PointToScreen(e.GetPosition(this));
         if (!_gesture.Move(point.X, point.Y))
             return;
+
         _expand.Stop();
         if (Expanded)
             Expanded = false;
-        Dragged?.Invoke(this, new EdgeDockPoint(point.X, point.Y));
+
+        Dragged?.Invoke(this, new(point.X, point.Y));
     }
 
     private void OnReleased(object? sender, PointerReleasedEventArgs e)
@@ -436,12 +451,14 @@ public class EdgeDockBar : Border
         var tap = _gesture.Release(point.X, point.Y, Environment.TickCount);
         if (e.Pointer.Captured == this)
             e.Pointer.Capture(null);
+
         if (tap == EdgeDockTap.Drag)
             DragFinished?.Invoke(this, EventArgs.Empty);
         else if (tap == EdgeDockTap.DoubleClick)
             DoubleClick?.Invoke(this, EventArgs.Empty);
         else if (tap == EdgeDockTap.Click)
             Click?.Invoke(this, EventArgs.Empty);
+
         e.Handled = tap != EdgeDockTap.None;
     }
 }

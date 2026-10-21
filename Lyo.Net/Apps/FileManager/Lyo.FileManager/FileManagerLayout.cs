@@ -65,8 +65,7 @@ public sealed class FileManagerLayout
         };
 
     /// <summary>The window for <paramref name="tool" />.</summary>
-    public FileManagerToolWindow Window(FileManagerTool tool)
-        => Tools.First(item => item.Tool == tool);
+    public FileManagerToolWindow Window(FileManagerTool tool) => Tools.First(item => item.Tool == tool);
 
     /// <summary>Edge of <paramref name="tool" />.</summary>
     public FileManagerDockEdge Edge(FileManagerTool tool) => Window(tool).Edge;

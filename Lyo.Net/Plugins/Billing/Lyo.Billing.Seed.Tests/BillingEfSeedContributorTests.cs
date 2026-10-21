@@ -1,6 +1,4 @@
-using Lyo.Billing;
 using Lyo.Billing.Postgres.Database;
-using Lyo.Billing.Seed;
 using Lyo.Seed;
 
 namespace Lyo.Billing.Seed.Tests;
@@ -33,17 +31,19 @@ public sealed class BillingEfSeedContributorTests
         Assert.Equal(3, charges.Count);
         Assert.Equal(3, payments.Count);
         Assert.All(payments, payment => Assert.Null(payment.JournalId));
-        Assert.All(clients, client => {
-            Assert.Null(client.TaxId);
-            Assert.Null(client.EncryptedTaxId);
-            Assert.Contains(invoices, invoice => invoice.ClientId == client.Id && invoice.Status == (int)InvoiceStatus.Draft);
-            var issued = Assert.Single(invoices, invoice => invoice.ClientId == client.Id && invoice.Status == (int)InvoiceStatus.Issued);
-            Assert.Contains(client.Id.ToString("N"), issued.Number, StringComparison.Ordinal);
-            Assert.Contains(lines, line => line.InvoiceId == issued.Id);
-            Assert.Contains(charges, charge => charge.InvoiceId == issued.Id && charge.ClientId == client.Id);
-            Assert.Contains(payments, payment => payment.InvoiceId == issued.Id);
-            Assert.Contains(transport.Items.OfType<BillingContactEntity>(), link => link.ClientId == client.Id);
-        });
+        Assert.All(
+            clients, client => {
+                Assert.Null(client.TaxId);
+                Assert.Null(client.EncryptedTaxId);
+                Assert.Contains(invoices, invoice => invoice.ClientId == client.Id && invoice.Status == (int)InvoiceStatus.Draft);
+                var issued = Assert.Single(invoices, invoice => invoice.ClientId == client.Id && invoice.Status == (int)InvoiceStatus.Issued);
+                Assert.Contains(client.Id.ToString("N"), issued.Number, StringComparison.Ordinal);
+                Assert.Contains(lines, line => line.InvoiceId == issued.Id);
+                Assert.Contains(charges, charge => charge.InvoiceId == issued.Id && charge.ClientId == client.Id);
+                Assert.Contains(payments, payment => payment.InvoiceId == issued.Id);
+                Assert.Contains(transport.Items.OfType<BillingContactEntity>(), link => link.ClientId == client.Id);
+            });
+
         Assert.All(invoices, invoice => Assert.Contains(lines, line => line.InvoiceId == invoice.Id));
     }
 
@@ -70,6 +70,7 @@ public sealed class BillingEfSeedContributorTests
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

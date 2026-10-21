@@ -9,8 +9,8 @@ public static class LyoClaims
     public const string Subject = LyoJwtClaims.Subject;
 
     /// <summary>
-    /// Fine-grained scope claim. May appear once per scope (opaque tokens); the JWT validator splits the space-delimited string so
-    /// policies see the same shape for either bearer format.
+    /// Fine-grained scope claim. May appear once per scope (opaque tokens); the JWT validator splits the space-delimited string so policies see the same shape for either bearer
+    /// format.
     /// </summary>
     public const string Scope = LyoJwtClaims.Scope;
 

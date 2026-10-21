@@ -1,4 +1,3 @@
-using Lyo.Authentication;
 using Lyo.Authentication.Saml;
 using Lyo.Authentication.Saml.Tests;
 using Lyo.Authentication.Sso.Protocol;
@@ -19,7 +18,6 @@ public class EntraSamlProfileTests
         services.AddInMemoryAuthenticationStores();
         services.AddEntraProvider(Apply);
         using var provider = services.BuildServiceProvider();
-
         var entra = provider.GetServices<ISamlIdentityProvider>().Single(item => item.Name == "entra");
         Assert.Contains("?appid=app-1", entra.MetadataUrl, StringComparison.Ordinal);
         Assert.Equal("https://login.microsoftonline.com/tenant-1/federationmetadata/2007-06/federationmetadata.xml?appid=app-1", entra.MetadataUrl);
@@ -32,8 +30,7 @@ public class EntraSamlProfileTests
     {
         var options = new EntraOptions();
         Apply(options);
-        var spec = new SamlResponseSpec
-        {
+        var spec = new SamlResponseSpec {
             NameId = "user@contoso.com",
             Issuer = options.ExpectedIssuer,
             Audience = options.EntityId!,
@@ -41,11 +38,11 @@ public class EntraSamlProfileTests
             Recipient = options.AcsUrl!,
             Now = DateTime.UtcNow
         };
+
         spec.Attributes.Add((EntraOptions.ObjectIdAttribute, ["11111111-1111-1111-1111-111111111111"]));
         var metadata = new SamlIdpMetadata(options.ExpectedIssuer, "https://login.microsoftonline.com/sso", [SamlTestCertificate.Signing.RawData]);
         var ticket = new SamlLoginTicket("ticket", "entra", spec.RequestId, "/done", "browser", spec.Now.AddMinutes(10));
         var assertion = new SamlResponseValidator().Validate(spec.ToBase64(), ticket, new EntraSamlProvider(options), metadata, spec.Now, new InMemorySamlAssertionReplayCache());
-
         Assert.Equal("11111111-1111-1111-1111-111111111111", assertion.Subject);
         Assert.EndsWith("/", options.ExpectedIssuer);
     }

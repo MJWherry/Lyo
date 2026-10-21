@@ -56,10 +56,12 @@ public static class AlgorithmHelpers
     [StackTraceHidden]
 #endif
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static T ThrowIfNull<T>([NotNull] T? value, string message, string? code = null) where T : class
+    public static T ThrowIfNull<T>([NotNull] T? value, string message, string? code = null)
+        where T : class
     {
         if (value is null)
             Throw(message, code);
+
         return value;
     }
 }

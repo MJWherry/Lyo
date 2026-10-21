@@ -3,8 +3,8 @@ using Lyo.Exceptions;
 namespace Lyo.Common.Core.Identifiers;
 
 /// <summary>
-/// Parameters for reading a millisecond timestamp from the high bits of a snowflake value. Different systems use different epoch origins and bit layouts (for example timestamp
-/// field width).
+/// Parameters for reading a millisecond timestamp from the high bits of a snowflake value. Different systems use different epoch origins and bit layouts (for example
+/// timestamp field width).
 /// </summary>
 public readonly record struct SnowflakeLayout(int TimestampShiftBits, long EpochMillisecondsSinceUnixEpoch)
 {
@@ -50,8 +50,8 @@ public readonly record struct Snowflake(ulong Value) : IComparable<Snowflake>
 }
 
 /// <summary>
-/// Thread-safe generator of monotonically increasing 64-bit <see cref="Snowflake" /> identifiers. The bit layout is: 1 unused sign bit, 41-bit millisecond
-/// timestamp (relative to <see cref="DefaultEpochMs" />), 10-bit machine ID, 12-bit sequence counter — up to 4 096 unique IDs per millisecond per machine.
+/// Thread-safe generator of monotonically increasing 64-bit <see cref="Snowflake" /> identifiers. The bit layout is: 1 unused sign bit, 41-bit millisecond timestamp
+/// (relative to <see cref="DefaultEpochMs" />), 10-bit machine ID, 12-bit sequence counter — up to 4 096 unique IDs per millisecond per machine.
 /// </summary>
 public sealed class SnowflakeGenerator
 {

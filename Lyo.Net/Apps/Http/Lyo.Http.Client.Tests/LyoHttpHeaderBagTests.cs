@@ -1,4 +1,3 @@
-using Lyo.Http.Client;
 using Lyo.Http.Client.Session;
 
 namespace Lyo.Http.Client.Tests;
@@ -27,4 +26,3 @@ public sealed class LyoHttpHeaderBagTests
         Assert.Equal("abc", value);
     }
 }
-

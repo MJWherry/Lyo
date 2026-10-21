@@ -2,17 +2,20 @@
 
 Session-scoped temp files and directories, with naming strategies and overflow policies.
 
-Callers use `IIOTempService` and `IIOTempSession`. `IOTempService` and `IOTempSession` are the stock implementations. When the repo generates XML docs, IntelliSense repeats the same summaries as this README. Types that only implement those interfaces use `<inheritdoc />`.
+Callers use `IIOTempService` and `IIOTempSession`. `IOTempService` and `IOTempSession` are the stock implementations. When the repo generates XML docs, IntelliSense repeats the
+same summaries as this README. Types that only implement those interfaces use `<inheritdoc />`.
 
 ## Features
 
 - **Sessions.** `IIOTempSession` owns a set of temp files and dirs and deletes them when disposed.
 - **One-offs.** `CreateFile` / `CreateDirectory` without opening a session.
-- **Pluggable storage.** All I/O goes through `Lyo.IO.FileSystem.IFileSystem`. Default is `LocalFileSystem` (`PathStyle.Host`). Set `IOTempServiceOptions.StorageKind` to `Memory` for `MemoryFileSystem` (`PathStyle.Posix`), or register `IFileSystem` before `AddIOTempService`. Path combine/normalize/jail uses `Lyo.Common.Core.Pathing.PathHelpers`.
+- **Pluggable storage.** All I/O goes through `Lyo.IO.FileSystem.IFileSystem`. Default is `LocalFileSystem` (`PathStyle.Host`). Set `IOTempServiceOptions.StorageKind` to `Memory`
+  for `MemoryFileSystem` (`PathStyle.Posix`), or register `IFileSystem` before `AddIOTempService`. Path combine/normalize/jail uses `Lyo.Common.Core.Pathing.PathHelpers`.
 - **Naming.** `Guid`, `Sequential`, `Timestamp`, `RandomChars`.
 - **Overflow.** When a per-file or total-size cap is crossed: `ThrowException`, `DeleteOldest`, or `DeleteLargest`.
 - **Generator.** `session.Generator` writes random-byte files, text/CSV/JSON, zips, and fake directory trees.
-- **Events.** Session: `FileCreated` / `DirectoryCreated` / `FileWritten` / `FileAppended` / `FileDeleted` / `DirectoryDeleted` / `Overflow` / `Cleared` / `Disposed`. Service: `SessionCreated` / `SessionDisposed` / one-off create and cleanup deletes.
+- **Events.** Session: `FileCreated` / `DirectoryCreated` / `FileWritten` / `FileAppended` / `FileDeleted` / `DirectoryDeleted` / `Overflow` / `Cleared` / `Disposed`. Service:
+  `SessionCreated` / `SessionDisposed` / one-off create and cleanup deletes.
 - **Nested sessions.** Child sessions whose root sits inside a parent session.
 - **Inspection.** Snapshots, byte totals, on-disk enumerations.
 - **Keyed pools.** `GetOrCreateSession(key)` for per-request or per-pipeline reuse.
@@ -204,7 +207,9 @@ Describe a folder layout for simulation or zip building:
 
 ## Storage backends
 
-All I/O goes through `IFileSystem`. `LocalFileSystem` and `MemoryFileSystem` ship in `Lyo.IO.FileSystem`. Register another `IFileSystem` via DI for a different backend (SFTP, FTP, S3, Azure Blob). Each backend reports `PathStyle` (`Host` on real disk, `Posix` for in-memory or remote). Service, session, and generator path combine/normalize/jail checks all go through `PathHelpers` with that style. `CopyFrom` / `MoveFrom` / `ExtractZipFile` may import a host path that sits outside the VFS jail.
+All I/O goes through `IFileSystem`. `LocalFileSystem` and `MemoryFileSystem` ship in `Lyo.IO.FileSystem`. Register another `IFileSystem` via DI for a different backend (SFTP, FTP,
+S3, Azure Blob). Each backend reports `PathStyle` (`Host` on real disk, `Posix` for in-memory or remote). Service, session, and generator path combine/normalize/jail checks all go
+through `PathHelpers` with that style. `CopyFrom` / `MoveFrom` / `ExtractZipFile` may import a host path that sits outside the VFS jail.
 
 ## LocalFileSystem, the default
 
@@ -217,7 +222,8 @@ services.AddIOTempService();
 
 ## MemoryFileSystem
 
-Flat path map with a child index and a `ReaderWriterLockSlim`, using `PathStyle.Posix` (`/` separators, no OS path resolution). No filesystem access; fits Blazor WASM and unit tests.
+Flat path map with a child index and a `ReaderWriterLockSlim`, using `PathStyle.Posix` (`/` separators, no OS path resolution). No filesystem access; fits Blazor WASM and unit
+tests.
 Data lasts for the lifetime of the `IFileSystem` instance.
 
 ```csharp
@@ -243,40 +249,41 @@ services.AddSingleton<IFileSystem>(new FtpFileSystem(ftpClient));
 services.AddIOTempService();
 ```
 
-`FileSystemExtensions` covers `ReadAllBytes` / `ReadAllText`, `TouchFile`, `WriteAllBytes` / `WriteAllText` / `AppendAllText`, `CopyStreamToFileAsync`, and `EnsureDirectoryAccessible` (used for R/W probing; may be a no-op for in-memory backends).
+`FileSystemExtensions` covers `ReadAllBytes` / `ReadAllText`, `TouchFile`, `WriteAllBytes` / `WriteAllText` / `AppendAllText`, `CopyStreamToFileAsync`, and
+`EnsureDirectoryAccessible` (used for R/W probing; may be a no-op for in-memory backends).
 
 ## IOTempServiceOptions
 
-| Option | Default | Description |
-| ------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `TempRoot` | `Path.GetTempPath()` | OS temp root. Parent folder of `DirectoryName`. |
-| `DirectoryName` | `"lyo-io-temp"` | Folder under `TempRoot`. |
-| `StorageKind` | `Local` | `Local` (`LocalFileSystem` at `RootDirectory`) or `Memory` (`MemoryFileSystem`). Ignored when `IFileSystem` is already registered. |
-| `FileLifetime` | `null` | Expiry `Cleanup()` uses when no argument is passed. |
-| `MaxFileSizeBytes` | 1 GB | Hard cap per file. |
-| `MaxTotalSizeBytes` | 10 GB | Cap on total size under the service directory. |
-| `OverflowStrategy` | `ThrowException` | `ThrowException`, `DeleteOldest`, or `DeleteLargest`. |
-| `EnableMetrics` | `true` | Write metrics through `IMetrics`. |
+| Option              | Default              | Description                                                                                                                        |
+|---------------------|----------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| `TempRoot`          | `Path.GetTempPath()` | OS temp root. Parent folder of `DirectoryName`.                                                                                    |
+| `DirectoryName`     | `"lyo-io-temp"`      | Folder under `TempRoot`.                                                                                                           |
+| `StorageKind`       | `Local`              | `Local` (`LocalFileSystem` at `RootDirectory`) or `Memory` (`MemoryFileSystem`). Ignored when `IFileSystem` is already registered. |
+| `FileLifetime`      | `null`               | Expiry `Cleanup()` uses when no argument is passed.                                                                                |
+| `MaxFileSizeBytes`  | 1 GB                 | Hard cap per file.                                                                                                                 |
+| `MaxTotalSizeBytes` | 10 GB                | Cap on total size under the service directory.                                                                                     |
+| `OverflowStrategy`  | `ThrowException`     | `ThrowException`, `DeleteOldest`, or `DeleteLargest`.                                                                              |
+| `EnableMetrics`     | `true`               | Write metrics through `IMetrics`.                                                                                                  |
 
 ## IOTempSessionOptions
 
-| Option | Default | Description |
-| -------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| `RootDirectory` | `{TempPath}/lyo-io-temp/{ProcessId}` | Folder that contains the session directory. A per-process suffix isolates parallel runners by default. |
-| `CreateRootDirectoryIfNotExists` | `true` | If true, a missing `RootDirectory` is created at construction; if false, a missing root throws. |
-| `FileNamingStrategy` | `Guid` | `Guid`, `Sequential`, `Timestamp`, or `RandomChars`. |
-| `FileExtension` | `.tmp` | Suffix added to auto-named files. |
-| `FilePrefix`/`Suffix` | `null` | Optional prefix or suffix on generated file names. |
-| `MaxFileSizeBytes` | 1 GB | Hard cap per file. |
-| `MaxTotalSizeBytes` | `null` | Total cap for one session. |
-| `OverflowStrategy` | `ThrowException` | What happens when the total cap is crossed. |
+| Option                           | Default                              | Description                                                                                            |
+|----------------------------------|--------------------------------------|--------------------------------------------------------------------------------------------------------|
+| `RootDirectory`                  | `{TempPath}/lyo-io-temp/{ProcessId}` | Folder that contains the session directory. A per-process suffix isolates parallel runners by default. |
+| `CreateRootDirectoryIfNotExists` | `true`                               | If true, a missing `RootDirectory` is created at construction; if false, a missing root throws.        |
+| `FileNamingStrategy`             | `Guid`                               | `Guid`, `Sequential`, `Timestamp`, or `RandomChars`.                                                   |
+| `FileExtension`                  | `.tmp`                               | Suffix added to auto-named files.                                                                      |
+| `FilePrefix`/`Suffix`            | `null`                               | Optional prefix or suffix on generated file names.                                                     |
+| `MaxFileSizeBytes`               | 1 GB                                 | Hard cap per file.                                                                                     |
+| `MaxTotalSizeBytes`              | `null`                               | Total cap for one session.                                                                             |
+| `OverflowStrategy`               | `ThrowException`                     | What happens when the total cap is crossed.                                                            |
 
 ## IOTempCleanupOptions
 
-| Option | Default | Description |
-| -------------- | --------- | ---------------------------------------------------- |
+| Option         | Default   | Description                                          |
+|----------------|-----------|------------------------------------------------------|
 | `InitialDelay` | 5 minutes | Wait after app startup before the first cleanup run. |
-| `Interval` | 1 hour | How often cleanup runs after that first pass. |
+| `Interval`     | 1 hour    | How often cleanup runs after that first pass.        |
 
 ## Dependencies
 

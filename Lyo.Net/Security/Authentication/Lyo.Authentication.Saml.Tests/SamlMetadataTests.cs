@@ -1,4 +1,5 @@
 using System.Net;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Lyo.Authentication.Sso.Completion;
 
@@ -19,7 +20,7 @@ public class SamlMetadataTests
     [Fact]
     public async Task Metadata_RedirectToHttp_Rejects()
     {
-        var cache = new SamlMetadataCache(new HttpClient(new RedirectHandler()));
+        var cache = new SamlMetadataCache(new(new RedirectHandler()));
         var ex = await Assert.ThrowsAsync<ExternalLoginRejectedException>(() => cache.GetAsync(SamlTestProvider.Default, TestCt));
         Assert.Equal("SamlMetadata", ex.Reason);
     }
@@ -27,7 +28,7 @@ public class SamlMetadataTests
     [Fact]
     public async Task Metadata_OversizedXml_Rejects()
     {
-        var cache = new SamlMetadataCache(new HttpClient(new OversizedHandler()));
+        var cache = new SamlMetadataCache(new(new OversizedHandler()));
         var ex = await Assert.ThrowsAsync<ExternalLoginRejectedException>(() => cache.GetAsync(SamlTestProvider.Default, TestCt));
         Assert.Equal("SamlMetadata", ex.Reason);
     }
@@ -37,8 +38,8 @@ public class SamlMetadataTests
     {
         var now = new DateTime(2026, 10, 17, 12, 0, 0, DateTimeKind.Utc);
         var clock = now;
-        var handler = new SequenceHandler(MetadataXml(SamlTestCertificate.Signing, SamlTestCertificate.Rollover), failSecond: true);
-        var cache = new SamlMetadataCache(new HttpClient(handler));
+        var handler = new SequenceHandler(MetadataXml(SamlTestCertificate.Signing, SamlTestCertificate.Rollover), true);
+        var cache = new SamlMetadataCache(new(handler));
         cache.UseClock(() => clock);
         var first = await cache.GetAsync(SamlTestProvider.Default, TestCt);
         clock = now.AddHours(2);
@@ -47,23 +48,23 @@ public class SamlMetadataTests
         Assert.Equal(2, handler.Calls);
     }
 
-    internal static string MetadataXml(System.Security.Cryptography.X509Certificates.X509Certificate2 signing, System.Security.Cryptography.X509Certificates.X509Certificate2 other)
+    internal static string MetadataXml(X509Certificate2 signing, X509Certificate2 other)
     {
         var signingBody = Convert.ToBase64String(signing.RawData);
         var otherBody = Convert.ToBase64String(other.RawData);
         return $"""
-            <md:EntityDescriptor xmlns:md="{SamlConstants.Metadata}" xmlns:ds="{SamlConstants.XmlDsig}" entityID="{SamlTestProvider.Issuer}">
-              <md:SPSSODescriptor>
-                <md:KeyDescriptor use="signing"><ds:KeyInfo><ds:X509Data><ds:X509Certificate>{otherBody}</ds:X509Certificate></ds:X509Data></ds:KeyInfo></md:KeyDescriptor>
-              </md:SPSSODescriptor>
-              <md:IDPSSODescriptor>
-                <md:KeyDescriptor use="encryption"><ds:KeyInfo><ds:X509Data><ds:X509Certificate>{otherBody}</ds:X509Certificate></ds:X509Data></ds:KeyInfo></md:KeyDescriptor>
-                <md:SingleSignOnService Binding="{SamlConstants.HttpPostBinding}" Location="https://idp.example/sso/post"/>
-                <md:KeyDescriptor use="signing"><ds:KeyInfo><ds:X509Data><ds:X509Certificate>{signingBody}</ds:X509Certificate></ds:X509Data></ds:KeyInfo></md:KeyDescriptor>
-                <md:SingleSignOnService Binding="{SamlConstants.HttpRedirectBinding}" Location="https://idp.example/sso/redirect"/>
-              </md:IDPSSODescriptor>
-            </md:EntityDescriptor>
-            """;
+                <md:EntityDescriptor xmlns:md="{SamlConstants.Metadata}" xmlns:ds="{SamlConstants.XmlDsig}" entityID="{SamlTestProvider.Issuer}">
+                  <md:SPSSODescriptor>
+                    <md:KeyDescriptor use="signing"><ds:KeyInfo><ds:X509Data><ds:X509Certificate>{otherBody}</ds:X509Certificate></ds:X509Data></ds:KeyInfo></md:KeyDescriptor>
+                  </md:SPSSODescriptor>
+                  <md:IDPSSODescriptor>
+                    <md:KeyDescriptor use="encryption"><ds:KeyInfo><ds:X509Data><ds:X509Certificate>{otherBody}</ds:X509Certificate></ds:X509Data></ds:KeyInfo></md:KeyDescriptor>
+                    <md:SingleSignOnService Binding="{SamlConstants.HttpPostBinding}" Location="https://idp.example/sso/post"/>
+                    <md:KeyDescriptor use="signing"><ds:KeyInfo><ds:X509Data><ds:X509Certificate>{signingBody}</ds:X509Certificate></ds:X509Data></ds:KeyInfo></md:KeyDescriptor>
+                    <md:SingleSignOnService Binding="{SamlConstants.HttpRedirectBinding}" Location="https://idp.example/sso/redirect"/>
+                  </md:IDPSSODescriptor>
+                </md:EntityDescriptor>
+                """;
     }
 
     private sealed class RedirectHandler : HttpMessageHandler
@@ -71,7 +72,7 @@ public class SamlMetadataTests
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             var response = new HttpResponseMessage(HttpStatusCode.Redirect);
-            response.Headers.Location = new Uri("http://evil.example/metadata");
+            response.Headers.Location = new("http://evil.example/metadata");
             return Task.FromResult(response);
         }
     }
@@ -94,6 +95,7 @@ public class SamlMetadataTests
             Calls++;
             if (Calls > 1 && failSecond)
                 return Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError));
+
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(xml, Encoding.UTF8, "application/xml") });
         }
     }

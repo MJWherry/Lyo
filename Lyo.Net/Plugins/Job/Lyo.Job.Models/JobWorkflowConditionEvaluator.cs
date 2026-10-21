@@ -12,12 +12,12 @@ using Lyo.Query.Models.Enums;
 namespace Lyo.Job.Models;
 
 /// <summary>
-/// Decides whether a conditional workflow step runs, by testing the step's <see cref="WhereClause" /> against its <see cref="JobContextBag" />. Pure and shared so the
-/// engine and any preview UI reach the same verdict.
+/// Decides whether a conditional workflow step runs, by testing the step's <see cref="WhereClause" /> against its <see cref="JobContextBag" />. Pure and shared so the engine and any
+/// preview UI reach the same verdict.
 /// <para>
-/// Each <c>ConditionClause.Field</c> is a context path rather than an entity property, so a gate can read an upstream step's result
-/// (<c>Step.Extract.Result.RowCount</c>), a workflow input (<c>Input.Env</c>), or a field of the workflow or definition (<c>Workflow.Name</c>). A <c>GroupClause</c>
-/// combines predicates with AND/OR and nests, which is what lets one workflow branch on more than a single value.
+/// Each <c>ConditionClause.Field</c> is a context path rather than an entity property, so a gate can read an upstream step's result (<c>Step.Extract.Result.RowCount</c>), a
+/// workflow input (<c>Input.Env</c>), or a field of the workflow or definition (<c>Workflow.Name</c>). A <c>GroupClause</c> combines predicates with AND/OR and nests, which is what
+/// lets one workflow branch on more than a single value.
 /// </para>
 /// <para>
 /// Every way of failing to evaluate — an unparseable clause, a path nothing seeded, an unsupported comparator — returns <see cref="JobWorkflowConditionOutcome.Skip" />. A
@@ -76,16 +76,15 @@ public static class JobWorkflowConditionEvaluator
 
     /// <summary>An empty group states nothing, so it gates nothing. Skipping there would strand every step whose clause was cleared in the editor.</summary>
     private static bool MatchesGroup(GroupClause group, JobContextBag context)
-        => group.Children.Count == 0
-           || (group.Operator == GroupOperatorEnum.Or ? group.Children.Any(c => Matches(c, context)) : group.Children.All(c => Matches(c, context)));
+        => group.Children.Count == 0 || (group.Operator == GroupOperatorEnum.Or ? group.Children.Any(c => Matches(c, context)) : group.Children.All(c => Matches(c, context)));
 
     private static bool MatchesCondition(ConditionClause condition, JobContextBag context)
         => TryResolve(context, condition.Field, out var actual) && Matches(actual, condition.Comparison, Text(condition.Value));
 
     /// <summary>
-    /// Reads a context path. Tried as a flat key first because <see cref="JobContextBag" /> writes its nested seeds under dotted keys
-    /// (<c>Step.Extract.Result.RowCount</c>), then as a bag/dictionary path, and finally by walking object properties — without that last step the object-valued entries
-    /// (<c>Workflow</c>, <c>Definition</c>) would have no readable fields at all.
+    /// Reads a context path. Tried as a flat key first because <see cref="JobContextBag" /> writes its nested seeds under dotted keys (<c>Step.Extract.Result.RowCount</c>), then
+    /// as a bag/dictionary path, and finally by walking object properties — without that last step the object-valued entries (<c>Workflow</c>, <c>Definition</c>) would have no readable
+    /// fields at all.
     /// </summary>
     private static bool TryResolve(JobContextBag context, string field, out string? value)
     {
@@ -163,8 +162,8 @@ public static class JobWorkflowConditionEvaluator
         };
 
     /// <summary>
-    /// Applies one comparison. Ordering comparators compare numerically when both sides parse as numbers, otherwise ordinally — without that, a row-count gate of
-    /// <c>&gt; 100</c> would let <c>90</c> through, because "90" sorts after "100" as text.
+    /// Applies one comparison. Ordering comparators compare numerically when both sides parse as numbers, otherwise ordinally — without that, a row-count gate of <c>&gt; 100</c>
+    /// would let <c>90</c> through, because "90" sorts after "100" as text.
     /// </summary>
     private static bool Matches(string? actual, ComparisonOperatorEnum comparator, string? expected)
     {
@@ -212,12 +211,12 @@ public static class JobWorkflowConditionEvaluator
 
     private static int Compare(string left, string right)
     {
-        if (decimal.TryParse(left, NumberStyles.Any, CultureInfo.InvariantCulture, out var leftNumber)
-            && decimal.TryParse(right, NumberStyles.Any, CultureInfo.InvariantCulture, out var rightNumber))
+        if (decimal.TryParse(left, NumberStyles.Any, CultureInfo.InvariantCulture, out var leftNumber) &&
+            decimal.TryParse(right, NumberStyles.Any, CultureInfo.InvariantCulture, out var rightNumber))
             return leftNumber.CompareTo(rightNumber);
 
-        if (DateTimeOffset.TryParse(left, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var leftDate)
-            && DateTimeOffset.TryParse(right, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var rightDate))
+        if (DateTimeOffset.TryParse(left, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var leftDate) && DateTimeOffset.TryParse(
+            right, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var rightDate))
             return leftDate.CompareTo(rightDate);
 
         return string.Compare(left, right, StringComparison.OrdinalIgnoreCase);

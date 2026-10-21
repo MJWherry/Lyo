@@ -4,7 +4,6 @@ using System.Text.Json.Serialization;
 using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Job.Models.Builders;
-using Lyo.Query.Models.Common;
 
 namespace Lyo.Job.Web.Components;
 
@@ -14,15 +13,12 @@ namespace Lyo.Job.Web.Components;
 /// </summary>
 public static class JobWorkflowDraftLinks
 {
-    /// <summary>
-    /// Renames <paramref name="step"/> and rewrites every <c>Step.{old}.</c> path in the draft. Dependency lists are ids, so they are left alone.
-    /// </summary>
+    /// <summary>Renames <paramref name="step" /> and rewrites every <c>Step.{old}.</c> path in the draft. Dependency lists are ids, so they are left alone.</summary>
     public static void Rename(IReadOnlyList<JobWorkflowStepDraft> steps, JobWorkflowStepDraft step, string newName)
     {
         ArgumentHelpers.ThrowIfNull(steps);
         ArgumentHelpers.ThrowIfNull(step);
         ArgumentHelpers.ThrowIfNull(newName);
-
         var oldName = step.StepName;
         step.StepName = newName;
         if (string.IsNullOrEmpty(oldName) || string.Equals(oldName, newName, StringComparison.Ordinal))
@@ -37,7 +33,7 @@ public static class JobWorkflowDraftLinks
         }
     }
 
-    /// <summary>Step names for <paramref name="step"/>'s dependencies, in list order, for <see cref="JobWorkflowBuilder.AddStep"/>.</summary>
+    /// <summary>Step names for <paramref name="step" />'s dependencies, in list order, for <see cref="JobWorkflowBuilder.AddStep" />.</summary>
     public static string[] DependencyNames(IReadOnlyList<JobWorkflowStepDraft> steps, JobWorkflowStepDraft step)
     {
         ArgumentHelpers.ThrowIfNull(steps);
@@ -100,7 +96,7 @@ public static class JobWorkflowDraftLinks
         return clause;
     }
 
-    /// <summary>Replaces every case-insensitive occurrence of <paramref name="from"/>. A step rename must catch <c>Step.extract.</c> as well as <c>Step.Extract.</c>.</summary>
+    /// <summary>Replaces every case-insensitive occurrence of <paramref name="from" />. A step rename must catch <c>Step.extract.</c> as well as <c>Step.Extract.</c>.</summary>
     private static string Replace(string? text, string from, string to)
     {
         if (string.IsNullOrEmpty(text) || from.Length == 0)
@@ -125,7 +121,7 @@ public static class JobWorkflowDraftLinks
 
     /// <summary>
     /// Reads one step while holding <c>DependsOn</c> aside. A guid entry is a current link; anything else is a step name from a draft saved before links were ids, and
-    /// <see cref="Repair"/> resolves it once the whole list is loaded.
+    /// <see cref="Repair" /> resolves it once the whole list is loaded.
     /// </summary>
     private sealed class JobWorkflowStepDraftConverter : JsonConverter<JobWorkflowStepDraft>
     {

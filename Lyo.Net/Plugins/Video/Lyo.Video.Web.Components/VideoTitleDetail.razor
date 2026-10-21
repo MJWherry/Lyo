@@ -2,7 +2,8 @@
 
 @if (Title is null) {
     <MudText Typo="Typo.body2">No title selected.</MudText>
-} else if (Title.Kind == VideoTitleKind.Series) {
+}
+else if (Title.Kind == VideoTitleKind.Series) {
     <MudStack Spacing="3">
         <MudText Typo="Typo.h5">@Title.Title</MudText>
         <MudText Typo="Typo.body2" Color="Color.Secondary">@Title.Status</MudText>
@@ -11,9 +12,11 @@
         }
         @foreach (var season in Title.Seasons) {
             <MudText Typo="Typo.subtitle1">Season @season.SeasonNumber @season.Name</MudText>
+
             @if (season.Episodes.Count == 0) {
                 <MudText Typo="Typo.body2">No episodes.</MudText>
-            } else {
+            }
+            else {
                 <MudSimpleTable Dense="true" Hover="true">
                     <thead>
                     <tr>
@@ -35,7 +38,8 @@
             }
         }
     </MudStack>
-} else {
+}
+else {
     <MudStack Spacing="3">
         <MudStack Row="true" Spacing="3">
             @if (!string.IsNullOrWhiteSpace(CoverImageUrl)) {
@@ -55,7 +59,8 @@
         <MudText Typo="Typo.subtitle1">Credits</MudText>
         @if (Title.Credits.Count == 0) {
             <MudText Typo="Typo.body2">None</MudText>
-        } else {
+        }
+        else {
             <MudSimpleTable Dense="true" Hover="true">
                 <thead>
                 <tr>

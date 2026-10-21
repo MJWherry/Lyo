@@ -1,5 +1,3 @@
-using Lyo.Rfid;
-
 namespace Lyo.Rfid.Tonie.Tests;
 
 public sealed class TonieContentPathTests
@@ -13,6 +11,5 @@ public sealed class TonieContentPathTests
     }
 
     [Fact]
-    public void ContentPath_PrefixNotSlixL_Throws() =>
-        Assert.Throws<RfidException>(() => TonieContentPath.FromUid(Convert.FromHexString("E004025012345678")));
+    public void ContentPath_PrefixNotSlixL_Throws() => Assert.Throws<RfidException>(() => TonieContentPath.FromUid(Convert.FromHexString("E004025012345678")));
 }

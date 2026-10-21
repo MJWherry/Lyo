@@ -14,8 +14,8 @@ public sealed class BenchmarkReportAttribute : Attribute
     public string Title { get; }
 
     /// <summary>
-    /// Suite-level methodology copied into <c>MicroBenchmarkReport.Description</c>: what is measured, which data set, and what each benchmark exercises so a row can stand
-    /// on its own.
+    /// Suite-level methodology copied into <c>MicroBenchmarkReport.Description</c>: what is measured, which data set, and what each benchmark exercises so a row can stand on its
+    /// own.
     /// </summary>
     public string? Description { get; set; }
 
@@ -28,8 +28,8 @@ public sealed class BenchmarkReportAttribute : Attribute
 }
 
 /// <summary>
-/// Plain-language note of what a benchmark class or method exercises. The exporter copies it into the report's group / measurement <c>description</c> so readers do not
-/// have to guess intent from method names.
+/// Plain-language note of what a benchmark class or method exercises. The exporter copies it into the report's group / measurement <c>description</c> so readers do not have
+/// to guess intent from method names.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
 public sealed class BenchmarkDescriptionAttribute : Attribute
@@ -43,8 +43,8 @@ public sealed class BenchmarkDescriptionAttribute : Attribute
 }
 
 /// <summary>
-/// Documents a <see cref="BenchmarkDotNet.Attributes.ParamsAttribute" /> so reported values make sense (for example <c>DataSize = 1048576</c> means "1 MB of bytes").
-/// Put one on the benchmark class for each parameter.
+/// Documents a <see cref="BenchmarkDotNet.Attributes.ParamsAttribute" /> so reported values make sense (for example <c>DataSize = 1048576</c> means "1 MB of bytes"). Put one
+/// on the benchmark class for each parameter.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public sealed class BenchmarkParameterAttribute : Attribute
@@ -82,9 +82,9 @@ public sealed class BenchmarkDataShapeAttribute : Attribute
 }
 
 /// <summary>
-/// Declares an SLA / business-standard budget for a benchmark. Put it on a method (that wins) or on the class (default for every method). The exporter compares measured
-/// mean / allocation / throughput to those budgets and writes a <c>Meets</c> / <c>Exceeds</c> / <c>Miss</c> verdict plus a target display string, so numbers are judged against
-/// an expectation instead of being read in isolation.
+/// Declares an SLA / business-standard budget for a benchmark. Put it on a method (that wins) or on the class (default for every method). The exporter compares measured mean
+/// / allocation / throughput to those budgets and writes a <c>Meets</c> / <c>Exceeds</c> / <c>Miss</c> verdict plus a target display string, so numbers are judged against an
+/// expectation instead of being read in isolation.
 /// </summary>
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
 public sealed class BenchmarkSlaAttribute : Attribute
@@ -118,8 +118,8 @@ public sealed class BenchmarkSlaAttribute : Attribute
 }
 
 /// <summary>
-/// Marks the benchmark class that owns the report's comparison table (replaces the old magic <c>AlgorithmComparisonBenchmarks</c> class-name convention). Methods join
-/// axes via <see cref="ComparisonAxisAttribute" />.
+/// Marks the benchmark class that owns the report's comparison table (replaces the old magic <c>AlgorithmComparisonBenchmarks</c> class-name convention). Methods join axes
+/// via <see cref="ComparisonAxisAttribute" />.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class)]
 public sealed class ComparisonSuiteAttribute : Attribute
@@ -129,8 +129,8 @@ public sealed class ComparisonSuiteAttribute : Attribute
 }
 
 /// <summary>
-/// Puts a benchmark method on the comparison table under the given <see cref="Axis" /> (for example <c>Encrypt</c>, <c>Hash</c>). The algorithm name is taken from the
-/// rest of the method name (replaces the old <c>_Encrypt</c>/<c>_Hash</c> suffix matching).
+/// Puts a benchmark method on the comparison table under the given <see cref="Axis" /> (for example <c>Encrypt</c>, <c>Hash</c>). The algorithm name is taken from the rest
+/// of the method name (replaces the old <c>_Encrypt</c>/<c>_Hash</c> suffix matching).
 /// </summary>
 [AttributeUsage(AttributeTargets.Method)]
 public sealed class ComparisonAxisAttribute : Attribute
@@ -139,8 +139,8 @@ public sealed class ComparisonAxisAttribute : Attribute
     public string Axis { get; }
 
     /// <summary>
-    /// Optional explicit algorithm name. When null, the name is derived by stripping the axis suffix from the method (for example <c>Sha256_Hash</c> with axis <c>Hash</c> -
-    /// &gt; <c>Sha256</c>).
+    /// Optional explicit algorithm name. When null, the name is derived by stripping the axis suffix from the method (for example <c>Sha256_Hash</c> with axis <c>Hash</c> - &gt;
+    /// <c>Sha256</c>).
     /// </summary>
     public string? Algorithm { get; set; }
 

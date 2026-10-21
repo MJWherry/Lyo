@@ -11,10 +11,9 @@ public sealed class InMemorySamlAssertionReplayCache : ISamlAssertionReplayCache
     public bool TryRemember(string assertionId, DateTime notOnOrAfter)
     {
         var now = DateTime.UtcNow;
-        foreach (var entry in _seen)
-        {
+        foreach (var entry in _seen) {
             if (entry.Value <= now)
-                _seen.TryRemove(entry.Key, out _);
+                _seen.TryRemove(entry.Key, out var _);
         }
 
         if (_seen.TryGetValue(assertionId, out var until) && until > now)

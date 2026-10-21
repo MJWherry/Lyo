@@ -91,7 +91,8 @@
                                         <MudSwitch T="bool" Label="Enabled" @bind-Value="window.Enabled" Color="Color.Success" Size="Size.Small"/>
                                     </MudItem>
                                     <MudItem xs="6" md="1" Class="d-flex align-center justify-end">
-                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Delete window" aria-label="Delete blackout window"
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Delete window"
+                                                       aria-label="Delete blackout window"
                                                        OnClick="@(() => RemoveWindow(window))"/>
                                     </MudItem>
                                     @if (window.Kind == WindowKind.Weekdays) {
@@ -111,19 +112,23 @@
                                                          Variant="@(window.MonthsMatch(MonthFlags.EveryMonth) ? Variant.Filled : Variant.Outlined)"
                                                          Color="@(window.MonthsMatch(MonthFlags.EveryMonth) ? Color.Primary : Color.Default)"
                                                          Selected="@window.MonthsMatch(MonthFlags.EveryMonth)"
-                                                         OnClick="@(() => window.ApplyMonths(MonthFlags.EveryMonth))">Every month</MudChip>
+                                                         OnClick="@(() => window.ApplyMonths(MonthFlags.EveryMonth))">Every month
+                                                </MudChip>
                                                 <MudChip T="string" Size="Size.Small"
                                                          Variant="@(window.MonthsMatch(MonthFlags.QuarterlyStart) ? Variant.Filled : Variant.Outlined)"
                                                          Color="@(window.MonthsMatch(MonthFlags.QuarterlyStart) ? Color.Primary : Color.Default)"
                                                          Selected="@window.MonthsMatch(MonthFlags.QuarterlyStart)"
-                                                         OnClick="@(() => window.ApplyMonths(MonthFlags.QuarterlyStart))">Quarter start</MudChip>
+                                                         OnClick="@(() => window.ApplyMonths(MonthFlags.QuarterlyStart))">Quarter start
+                                                </MudChip>
                                                 <MudChip T="string" Size="Size.Small"
                                                          Variant="@(window.MonthsMatch(MonthFlags.QuarterlyEnd) ? Variant.Filled : Variant.Outlined)"
                                                          Color="@(window.MonthsMatch(MonthFlags.QuarterlyEnd) ? Color.Primary : Color.Default)"
                                                          Selected="@window.MonthsMatch(MonthFlags.QuarterlyEnd)"
-                                                         OnClick="@(() => window.ApplyMonths(MonthFlags.QuarterlyEnd))">Quarter end</MudChip>
+                                                         OnClick="@(() => window.ApplyMonths(MonthFlags.QuarterlyEnd))">Quarter end
+                                                </MudChip>
                                             </MudStack>
                                         </MudItem>
+
                                         <MudItem xs="12" md="3">
                                             <MudSelect T="MonthFlags" Label="Months" MultiSelection="true" @bind-SelectedValues="window.Months"
                                                        Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
@@ -132,6 +137,7 @@
                                                 }
                                             </MudSelect>
                                         </MudItem>
+
                                         <MudItem xs="12" md="3">
                                             <MudSelect T="int" Label="Days of month" MultiSelection="true" @bind-SelectedValues="window.DaysOfMonth"
                                                        Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
@@ -144,10 +150,13 @@
                                     }
                                     else if (window.Kind == WindowKind.DateRange) {
                                         <MudItem xs="6" md="3">
-                                            <MudDatePicker Label="Start Date (UTC)" @bind-Date="window.StartDateUtc" Clearable Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudDatePicker Label="Start Date (UTC)" @bind-Date="window.StartDateUtc" Clearable Editable Variant="Variant.Outlined"
+                                                           Margin="Margin.Dense"/>
                                         </MudItem>
+
                                         <MudItem xs="6" md="3">
-                                            <MudDatePicker Label="End Date (UTC)" @bind-Date="window.EndDateUtc" Clearable Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudDatePicker Label="End Date (UTC)" @bind-Date="window.EndDateUtc" Clearable Editable Variant="Variant.Outlined"
+                                                           Margin="Margin.Dense"/>
                                         </MudItem>
                                     }
                                     else {
@@ -168,10 +177,13 @@
                                     </MudItem>
                                     @if (window.Kind == WindowKind.CalendarDays && !window.Repeat) {
                                         <MudItem xs="6" md="3">
-                                            <MudDatePicker Label="Start Date (UTC)" @bind-Date="window.StartDateUtc" Clearable Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudDatePicker Label="Start Date (UTC)" @bind-Date="window.StartDateUtc" Clearable Editable Variant="Variant.Outlined"
+                                                           Margin="Margin.Dense"/>
                                         </MudItem>
+
                                         <MudItem xs="6" md="3">
-                                            <MudDatePicker Label="End Date (UTC)" @bind-Date="window.EndDateUtc" Clearable Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudDatePicker Label="End Date (UTC)" @bind-Date="window.EndDateUtc" Clearable Editable Variant="Variant.Outlined"
+                                                           Margin="Margin.Dense"/>
                                         </MudItem>
                                     }
                                 </MudGrid>

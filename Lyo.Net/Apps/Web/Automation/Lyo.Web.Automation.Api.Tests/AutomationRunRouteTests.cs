@@ -13,22 +13,18 @@ public sealed class AutomationRunRouteTests
     [Fact]
     public async Task Post_MissingPlan_Returns400()
     {
-        await using var host = await AutomationApiHost.StartScriptedAsync(hold: false);
+        await using var host = await AutomationApiHost.StartScriptedAsync(false);
         using var body = new StringContent("{}", Encoding.UTF8, "application/json");
-
         var response = await host.Http.PostAsync(Constants.Rest.Runs, body, TestCt);
-
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]
     public async Task Post_WhileRunActive_Returns429()
     {
-        await using var host = await AutomationApiHost.StartScriptedAsync(hold: true);
-
+        await using var host = await AutomationApiHost.StartScriptedAsync(true);
         var first = await PostNavigateAsync(host.Http);
         var second = await PostNavigateAsync(host.Http);
-
         Assert.Equal(HttpStatusCode.Accepted, first.StatusCode);
         Assert.Equal(HttpStatusCode.TooManyRequests, second.StatusCode);
     }
@@ -36,20 +32,16 @@ public sealed class AutomationRunRouteTests
     [Fact]
     public async Task Get_UnknownRun_Returns404()
     {
-        await using var host = await AutomationApiHost.StartScriptedAsync(hold: false);
-
+        await using var host = await AutomationApiHost.StartScriptedAsync(false);
         var response = await host.Http.GetAsync(Constants.Rest.Run(LyoGuid.CreateV7()), TestCt);
-
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
     public async Task GetSnapshot_ParentPath_Returns400()
     {
-        await using var host = await AutomationApiHost.StartScriptedAsync(hold: false);
-
+        await using var host = await AutomationApiHost.StartScriptedAsync(false);
         var response = await host.Http.GetAsync($"{Constants.Rest.Runs}/{LyoGuid.CreateV7()}/Snapshot/foo..bar.png", TestCt);
-
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
@@ -58,10 +50,8 @@ public sealed class AutomationRunRouteTests
     {
         var png = new byte[] { 0x89, 0x50, 0x4E, 0x47 };
         await using var host = await AutomationApiHost.StartReportingAsync(new SeededStorage(png));
-
         var accepted = await ReadAcceptedAsync(await PostNavigateAsync(host.Http));
         var run = await WaitForStepAsync(host.Http, accepted.RunId);
-
         Assert.Equal(AutomationRunStatus.Running, run.Status);
         var step = Assert.Single(run.Steps);
         Assert.Equal(0, step.Index);
@@ -69,7 +59,6 @@ public sealed class AutomationRunRouteTests
         Assert.Equal("snap-1", step.ScreenshotFileId);
         Assert.NotNull(step.Context);
         Assert.Equal("hello", step.Context.Strings["greeting"]);
-
         var shot = await host.Http.GetByteArrayAsync(Constants.Rest.StepScreenshot(accepted.RunId, 0), TestCt);
         Assert.Equal(png, shot);
         await host.Http.PostAsync(Constants.Rest.Cancel(accepted.RunId), null, TestCt);
@@ -78,30 +67,27 @@ public sealed class AutomationRunRouteTests
     [Fact]
     public async Task GetLog_CompletedRun_ReturnsTranscript()
     {
-        await using var host = await AutomationApiHost.StartScriptedAsync(hold: false, transcript: "RUN_STARTED plan=demo\n");
-
+        await using var host = await AutomationApiHost.StartScriptedAsync(false, "RUN_STARTED plan=demo\n");
         var accepted = await ReadAcceptedAsync(await PostNavigateAsync(host.Http));
         await WaitForStatusAsync(host.Http, accepted.RunId, AutomationRunStatus.Completed);
         var log = await host.Http.GetStringAsync(Constants.Rest.Log(accepted.RunId), TestCt);
-
         Assert.Contains("RUN_STARTED plan=demo", log, StringComparison.Ordinal);
     }
 
     [Fact]
     public async Task Cancel_RunningRun_StatusCancelled()
     {
-        await using var host = await AutomationApiHost.StartScriptedAsync(hold: true);
-
+        await using var host = await AutomationApiHost.StartScriptedAsync(true);
         var accepted = await ReadAcceptedAsync(await PostNavigateAsync(host.Http));
         var cancel = await host.Http.PostAsync(Constants.Rest.Cancel(accepted.RunId), null, TestCt);
         var run = await WaitForStatusAsync(host.Http, accepted.RunId, AutomationRunStatus.Cancelled);
-
         Assert.Equal(HttpStatusCode.OK, cancel.StatusCode);
         Assert.Equal(AutomationRunStatus.Cancelled, run.Status);
     }
 
     private static Task<HttpResponseMessage> PostNavigateAsync(HttpClient http)
-        => http.PostAsJsonAsync(Constants.Rest.Runs, new AutomationRunReq { Plan = new AutomationPlan("demo", [new NavigateAutomationStep("https://example.com/")]) }, AutomationApiHost.Json, TestCt);
+        => http.PostAsJsonAsync(
+            Constants.Rest.Runs, new AutomationRunReq { Plan = new("demo", [new NavigateAutomationStep("https://example.com/")]) }, AutomationApiHost.Json, TestCt);
 
     private static async Task<AutomationRunAccepted> ReadAcceptedAsync(HttpResponseMessage response)
     {

@@ -1,8 +1,8 @@
-using Lyo.HomeInventory;
+using Lyo.Common.Core.Identifiers;
+using Lyo.Health;
 using Lyo.HomeInventory.Models;
 using Lyo.HomeInventory.Models.Enums;
 using Microsoft.Extensions.DependencyInjection;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.HomeInventory.Postgres.Tests;
 
@@ -15,11 +15,11 @@ public sealed class HomeInventoryPostgresStoreTests(HomeInventoryPostgresFixture
         var ct = TestCt;
         var store = fixture.ServiceProvider.GetRequiredService<IHomeInventoryStore>();
         var location = new HomeLocationRecord { Name = "Office", Code = Unique("OFF") };
-        await store.SaveLocationAsync(location, tenantId: null, ct);
+        await store.SaveLocationAsync(location, null, ct);
         var room = (await store.ListLocationsAsync(true, null, ct)).Single(l => l.Code == location.Code);
         var id = LyoGuid.CreateV7();
-        await store.SaveItemAsync(new HomeItemRecord { Id = id, Name = "Desk lamp", LocationId = room.Id }, tenantId: null, ct);
-        var loaded = await store.GetItemByIdAsync(id, tenantId: null, ct);
+        await store.SaveItemAsync(new() { Id = id, Name = "Desk lamp", LocationId = room.Id }, null, ct);
+        var loaded = await store.GetItemByIdAsync(id, null, ct);
         Assert.NotNull(loaded);
         Assert.Equal("Desk lamp", loaded.Name);
         Assert.Equal(room.Id, loaded.LocationId);
@@ -32,15 +32,16 @@ public sealed class HomeInventoryPostgresStoreTests(HomeInventoryPostgresFixture
         var store = fixture.ServiceProvider.GetRequiredService<IHomeInventoryStore>();
         var id = LyoGuid.CreateV7();
         await store.SaveItemAsync(
-            new HomeItemRecord {
+            new() {
                 Id = id,
                 Name = "AP",
                 ProductKeys = [
                     new() { Kind = HomeProductKeys.WifiMac, Value = "AA:BB:CC:DD:EE:01", Note = "AP radio" },
                     new() { Kind = HomeProductKeys.WifiMac, Value = "AA:BB:CC:DD:EE:02", Note = "client NIC" }
                 ]
-            }, tenantId: null, ct);
-        var loaded = await store.GetItemByIdAsync(id, tenantId: null, ct);
+            }, null, ct);
+
+        var loaded = await store.GetItemByIdAsync(id, null, ct);
         Assert.NotNull(loaded);
         Assert.Equal(2, loaded.ProductKeys.Count);
         Assert.Equal(HomeProductKeys.WifiMac, loaded.ProductKeys[0].Kind);
@@ -56,17 +57,17 @@ public sealed class HomeInventoryPostgresStoreTests(HomeInventoryPostgresFixture
         var ct = TestCt;
         var store = fixture.ServiceProvider.GetRequiredService<IHomeInventoryStore>();
         var location = new HomeLocationRecord { Name = "Pantry", Code = Unique("PAN") };
-        await store.SaveLocationAsync(location, tenantId: null, ct);
+        await store.SaveLocationAsync(location, null, ct);
         var room = (await store.ListLocationsAsync(true, null, ct)).Single(l => l.Code == location.Code);
         var id = LyoGuid.CreateV7();
-        await store.SaveItemAsync(new HomeItemRecord { Id = id, Name = "Rice" }, tenantId: null, ct);
-        var saved = await store.GetItemByIdAsync(id, tenantId: null, ct);
+        await store.SaveItemAsync(new() { Id = id, Name = "Rice" }, null, ct);
+        var saved = await store.GetItemByIdAsync(id, null, ct);
         Assert.NotNull(saved);
-        await store.AdjustStockAsync(saved.Id, room.Id, 4, HomeItemMovementType.Receipt, "po-1", createdBy: null, tenantId: null, ct);
-        var stock = await store.GetStockAsync(saved.Id, room.Id, tenantId: null, ct);
+        await store.AdjustStockAsync(saved.Id, room.Id, 4, HomeItemMovementType.Receipt, "po-1", null, null, ct);
+        var stock = await store.GetStockAsync(saved.Id, room.Id, null, ct);
         Assert.NotNull(stock);
         Assert.Equal(4m, stock.QuantityOnHand);
-        var movements = await store.ListMovementsForItemAsync(saved.Id, 10, tenantId: null, ct);
+        var movements = await store.ListMovementsForItemAsync(saved.Id, 10, null, ct);
         Assert.Single(movements);
         Assert.Equal(HomeItemMovementType.Receipt, movements[0].MovementType);
         Assert.Equal("po-1", movements[0].ReferenceNumber);
@@ -78,25 +79,26 @@ public sealed class HomeInventoryPostgresStoreTests(HomeInventoryPostgresFixture
         var ct = TestCt;
         var store = fixture.ServiceProvider.GetRequiredService<IHomeInventoryStore>();
         var id = LyoGuid.CreateV7();
-        await store.SaveItemAsync(new HomeItemRecord { Id = id, Name = "Camera" }, tenantId: null, ct);
-        var saved = await store.GetItemByIdAsync(id, tenantId: null, ct);
+        await store.SaveItemAsync(new() { Id = id, Name = "Camera" }, null, ct);
+        var saved = await store.GetItemByIdAsync(id, null, ct);
         Assert.NotNull(saved);
         var fileId = LyoGuid.CreateV7();
         await store.SaveAttachmentAsync(
-            new HomeAttachmentRecord {
+            new() {
                 EntityType = HomeInventoryEntityTypes.Item,
                 EntityId = saved.Id,
                 FileId = fileId,
                 Role = HomeAttachmentRole.Photo,
                 Caption = "front",
                 IsPrimary = true
-            }, tenantId: null, ct);
-        var listed = await store.ListAttachmentsAsync(HomeInventoryEntityTypes.Item, saved.Id, tenantId: null, ct);
+            }, null, ct);
+
+        var listed = await store.ListAttachmentsAsync(HomeInventoryEntityTypes.Item, saved.Id, null, ct);
         Assert.Single(listed);
         Assert.Equal(fileId, listed[0].FileId);
-        await store.DeleteItemAsync(saved.Id, tenantId: null, ct);
-        Assert.Empty(await store.ListAttachmentsAsync(HomeInventoryEntityTypes.Item, saved.Id, tenantId: null, ct));
-        Assert.Null(await store.GetItemByIdAsync(saved.Id, tenantId: null, ct));
+        await store.DeleteItemAsync(saved.Id, null, ct);
+        Assert.Empty(await store.ListAttachmentsAsync(HomeInventoryEntityTypes.Item, saved.Id, null, ct));
+        Assert.Null(await store.GetItemByIdAsync(saved.Id, null, ct));
     }
 
     [Fact]
@@ -105,15 +107,15 @@ public sealed class HomeInventoryPostgresStoreTests(HomeInventoryPostgresFixture
         var ct = TestCt;
         var store = fixture.ServiceProvider.GetRequiredService<IHomeInventoryStore>();
         var location = new HomeLocationRecord { Name = "Garage", Code = Unique("GAR") };
-        await store.SaveLocationAsync(location, tenantId: null, ct);
+        await store.SaveLocationAsync(location, null, ct);
         var room = (await store.ListLocationsAsync(true, null, ct)).Single(l => l.Code == location.Code);
         var id = LyoGuid.CreateV7();
-        await store.SaveItemAsync(new HomeItemRecord { Id = id, Name = "Bike", LocationId = room.Id }, tenantId: null, ct);
-        var saved = await store.GetItemByIdAsync(id, tenantId: null, ct);
+        await store.SaveItemAsync(new() { Id = id, Name = "Bike", LocationId = room.Id }, null, ct);
+        var saved = await store.GetItemByIdAsync(id, null, ct);
         Assert.NotNull(saved);
         Assert.Equal(room.Id, saved.LocationId);
-        await store.DeleteLocationAsync(room.Id, tenantId: null, ct);
-        var after = await store.GetItemByIdAsync(id, tenantId: null, ct);
+        await store.DeleteLocationAsync(room.Id, null, ct);
+        var after = await store.GetItemByIdAsync(id, null, ct);
         Assert.NotNull(after);
         Assert.Null(after.LocationId);
     }
@@ -122,7 +124,7 @@ public sealed class HomeInventoryPostgresStoreTests(HomeInventoryPostgresFixture
     public async Task HealthCheck_Succeeds()
     {
         var ct = TestCt;
-        var health = (Lyo.Health.IHealth)fixture.ServiceProvider.GetRequiredService<IHomeInventoryStore>();
+        var health = (IHealth)fixture.ServiceProvider.GetRequiredService<IHomeInventoryStore>();
         var result = await health.CheckHealthAsync(ct);
         Assert.True(result.IsHealthy);
         Assert.Equal("home-inventory-postgres", health.HealthCheckName);

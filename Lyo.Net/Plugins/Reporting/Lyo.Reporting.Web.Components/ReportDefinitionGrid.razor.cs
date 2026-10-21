@@ -1,22 +1,22 @@
 using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Response;
-using Lyo.Parameters;
 using Lyo.Query.Models.Common.Request;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
 using Lyo.Web.Components.DataGrid;
 using Lyo.Web.Components.Dialog;
 using Lyo.Web.Components.Form;
 using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Lyo.Reporting.Web.Components;
 
 public partial class ReportDefinitionGrid
 {
-    static ReportDefinitionGrid() => FormatterLyoType.EnsureRegistered();
+    private readonly ProjectedBoolOverrides _active = new("IsActive");
+
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Name"), new("GenerationProfileKey", "Profile"), new("IsActive", "Active", LyoTypeInfo.Bool)];
+
+    private LyoDataGridProjected? _dataGrid;
 
     [Parameter]
     [EditorRequired]
@@ -45,11 +45,7 @@ public partial class ReportDefinitionGrid
 
     private string _generationRoute => $"{BaseRoute.TrimEnd('/')}/Generation";
 
-    private LyoDataGridProjected? _dataGrid;
-
-    private readonly ProjectedBoolOverrides _active = new("IsActive");
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Name"), new("GenerationProfileKey", "Profile"), new("IsActive", "Active", LyoTypeInfo.Bool)];
+    static ReportDefinitionGrid() => FormatterLyoType.EnsureRegistered();
 
     private bool GetActive(object? item) => _active.Get(item);
 
@@ -67,8 +63,13 @@ public partial class ReportDefinitionGrid
 
     private async Task OpenRunDialog()
     {
-        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<ReportDefinitionRes>>($"{_definitionRoute}/QueryConcrete", new() { Amount = 200, Include = ["Parameters"] });
-        var parameters = new DialogParameters<RunReportDialog> { { d => d.Definitions, res?.Items ?? [] }, { d => d.GenerateRoute, $"{_generationRoute}/Generate" }, { d => d.ApiClient, ApiClient } };
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<ReportDefinitionRes>>(
+            $"{_definitionRoute}/QueryConcrete", new() { Amount = 200, Include = ["Parameters"] });
+
+        var parameters = new DialogParameters<RunReportDialog> {
+            { d => d.Definitions, res?.Items ?? [] }, { d => d.GenerateRoute, $"{_generationRoute}/Generate" }, { d => d.ApiClient, ApiClient }
+        };
+
         var dialog = await DialogService.ShowAsync<RunReportDialog>("Run Report", parameters, LyoDialogPresets.Medium);
         var result = await dialog.Result;
         if (result is { Canceled: false, Data: ReportGenerationRes gen })
@@ -89,11 +90,7 @@ public partial class ReportDefinitionGrid
             return;
         }
 
-        var parameters = new DialogParameters<ReportDefinitionView> {
-            { d => d.Definition, def },
-            { d => d.DefinitionRoute, _definitionRoute },
-            { d => d.Design, Design }
-        };
+        var parameters = new DialogParameters<ReportDefinitionView> { { d => d.Definition, def }, { d => d.DefinitionRoute, _definitionRoute }, { d => d.Design, Design } };
         await DialogService.ShowAsync<ReportDefinitionView>("Report Definition", parameters, LyoDialogPresets.Medium);
     }
 
@@ -146,6 +143,7 @@ public partial class ReportDefinitionGrid
             { d => d.LoadReportDataAsync, ReportGenerationDataLoader.Create(ApiClient, _generationRoute) },
             { d => d.OpenOutput, true }
         };
+
         return DialogService.ShowAsync<ReportGenerationView>("Report Generation", parameters, LyoDialogPresets.Medium);
     }
 

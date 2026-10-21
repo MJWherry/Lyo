@@ -1,15 +1,15 @@
+using Lyo.Exceptions;
 using Lyo.Job.Models;
 using Lyo.Job.Models.Response;
 using Lyo.Schedule.Models;
 using Lyo.Scheduler;
-using Lyo.Exceptions;
 
 namespace Lyo.Job.Scheduler;
 
 /// <summary>
 /// Slot math for one schedule: which slot is due now, and which slot was missed. Pure functions over an already-resolved <see cref="ScheduleDefinition" /> (time zone
-/// applied), blackout calendar, and reference instant, so cron, DST, window, and blackout interactions are testable without a scheduler, an API client, or a message queue.
-/// The caller owns resolution and gating (enabled flags, running runs, parallel restrictions) and the metrics/logging that go with them.
+/// applied), blackout calendar, and reference instant, so cron, DST, window, and blackout interactions are testable without a scheduler, an API client, or a message queue. The caller
+/// owns resolution and gating (enabled flags, running runs, parallel restrictions) and the metrics/logging that go with them.
 /// </summary>
 public static class JobScheduleSlotCalculator
 {
@@ -55,8 +55,8 @@ public static class JobScheduleSlotCalculator
 
     /// <summary>
     /// The most recent slot at or before <paramref name="now" /> that should have fired but did not, or null when the lookback window holds none. Slots are scanned newest-first
-    /// through a doubling window: walking forward from the reference gave up on dense schedules (a five-second interval produces thousands of slots in a 24-hour lookback) and
-    /// returned an older slot, or none, instead of the newest missed one.
+    /// through a doubling window: walking forward from the reference gave up on dense schedules (a five-second interval produces thousands of slots in a 24-hour lookback) and returned an
+    /// older slot, or none, instead of the newest missed one.
     /// </summary>
     /// <param name="definition">Schedule definition with its time zone already applied.</param>
     /// <param name="schedule">Schedule being evaluated, for its start/end bounds.</param>

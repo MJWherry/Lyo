@@ -1,22 +1,15 @@
 using Lyo.Common.Metadata.Records;
 using Lyo.Parameters;
-using Lyo.Query.Models.Parameters;
 
 namespace Lyo.Query.Tests;
 
 /// <summary>
-/// Covers the rules Job and Reporting now share. Several cases document a deliberate delta from the older job-side validation, which measured lengths against the JSON encoding,
-/// treated an encrypted-only value as missing, and compiled definition regexes with no timeout or length cap.
+/// Covers the rules Job and Reporting now share. Several cases document a deliberate delta from the older job-side validation, which measured lengths against the JSON
+/// encoding, treated an encrypted-only value as missing, and compiled definition regexes with no timeout or length cap.
 /// </summary>
 public sealed class LyoParameterValidatorTests
 {
-    private static LyoParameterSpec StringSpec(
-        string key = "Code",
-        bool required = false,
-        string? regex = null,
-        int? min = null,
-        int? max = null,
-        string? allowed = null)
+    private static LyoParameterSpec StringSpec(string key = "Code", bool required = false, string? regex = null, int? min = null, int? max = null, string? allowed = null)
         => new(key, LyoTypeInfo.String.FullName, required, regex, min, max, allowed);
 
     [Fact]
@@ -33,8 +26,7 @@ public sealed class LyoParameterValidatorTests
 
     [Fact]
     [Trait("Category", "Fast")]
-    public void Validate_RequiredWithEncryptedValueOnly_Passes()
-        => Assert.Empty(LyoParameterValidator.Validate([StringSpec(required: true)], [new("Code", null, true)]));
+    public void Validate_RequiredWithEncryptedValueOnly_Passes() => Assert.Empty(LyoParameterValidator.Validate([StringSpec(required: true)], [new("Code", null, true)]));
 
     [Fact]
     [Trait("Category", "Fast")]
@@ -43,12 +35,10 @@ public sealed class LyoParameterValidatorTests
         // "\"AB\"" is four characters as stored and two as typed; the limits apply to what the user typed.
         Assert.Empty(LyoParameterValidator.Validate([StringSpec(min: 2, max: 2)], [new("Code", LyoTypeInfo.String.ToJson("AB"))]));
         Assert.Contains(
-            LyoParameterValidator.Validate([StringSpec(min: 2)], [new("Code", LyoTypeInfo.String.ToJson("A"))]),
-            e => e.Contains("at least", StringComparison.OrdinalIgnoreCase));
+            LyoParameterValidator.Validate([StringSpec(min: 2)], [new("Code", LyoTypeInfo.String.ToJson("A"))]), e => e.Contains("at least", StringComparison.OrdinalIgnoreCase));
 
         Assert.Contains(
-            LyoParameterValidator.Validate([StringSpec(max: 2)], [new("Code", LyoTypeInfo.String.ToJson("ABC"))]),
-            e => e.Contains("exceed", StringComparison.OrdinalIgnoreCase));
+            LyoParameterValidator.Validate([StringSpec(max: 2)], [new("Code", LyoTypeInfo.String.ToJson("ABC"))]), e => e.Contains("exceed", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -57,9 +47,7 @@ public sealed class LyoParameterValidatorTests
     {
         var spec = StringSpec(regex: "^[A-Z]{2}$");
         Assert.Empty(LyoParameterValidator.Validate([spec], [new("Code", LyoTypeInfo.String.ToJson("AB"))]));
-        Assert.Contains(
-            LyoParameterValidator.Validate([spec], [new("Code", LyoTypeInfo.String.ToJson("ab"))]),
-            e => e.Contains("pattern", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(LyoParameterValidator.Validate([spec], [new("Code", LyoTypeInfo.String.ToJson("ab"))]), e => e.Contains("pattern", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -86,14 +74,12 @@ public sealed class LyoParameterValidatorTests
         var spec = StringSpec(allowed: ParameterListJson.Serialize(["AB", "CD"]));
         Assert.Empty(LyoParameterValidator.Validate([spec], [new("Code", LyoTypeInfo.String.ToJson("AB"))]));
         Assert.Contains(
-            LyoParameterValidator.Validate([spec], [new("Code", LyoTypeInfo.String.ToJson("XY"))]),
-            e => e.Contains("allowed values", StringComparison.OrdinalIgnoreCase));
+            LyoParameterValidator.Validate([spec], [new("Code", LyoTypeInfo.String.ToJson("XY"))]), e => e.Contains("allowed values", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
     [Trait("Category", "Fast")]
-    public void Validate_EmptyValue_IsTreatedAsUnset()
-        => Assert.Empty(LyoParameterValidator.Validate([StringSpec(min: 5, regex: "^[A-Z]+$")], [new("Code", "")]));
+    public void Validate_EmptyValue_IsTreatedAsUnset() => Assert.Empty(LyoParameterValidator.Validate([StringSpec(min: 5, regex: "^[A-Z]+$")], [new("Code", "")]));
 
     [Fact]
     [Trait("Category", "Fast")]
@@ -149,7 +135,6 @@ public sealed class LyoParameterValidatorTests
         LyoParameterValidator.ValidateSpec(StringSpec(min: -1, max: -2), errors);
         Assert.Contains(errors, e => e.Contains("MinLength must not be negative", StringComparison.OrdinalIgnoreCase));
         Assert.Contains(errors, e => e.Contains("MaxLength must not be negative", StringComparison.OrdinalIgnoreCase));
-
         errors.Clear();
         LyoParameterValidator.ValidateSpec(StringSpec(min: 5, max: 2), errors);
         Assert.Contains(errors, e => e.Contains("must not exceed MaxLength", StringComparison.OrdinalIgnoreCase));
@@ -169,7 +154,7 @@ public sealed class LyoParameterValidatorTests
     public void ValidateUniqueKeys_DuplicateIgnoringCase_IsReported()
     {
         var errors = new List<string>();
-        LyoParameterValidator.ValidateUniqueKeys([StringSpec("Code"), StringSpec("code")], errors);
+        LyoParameterValidator.ValidateUniqueKeys([StringSpec(), StringSpec("code")], errors);
         Assert.Single(errors);
     }
 }

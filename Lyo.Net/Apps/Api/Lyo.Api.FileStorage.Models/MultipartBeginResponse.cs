@@ -7,6 +7,5 @@ namespace Lyo.Api.FileStorage.Models;
 public sealed record MultipartBeginResponse(Guid SessionId, Guid TargetFileId, int PartSizeBytes, DateTime ExpiresUtc, string ProviderKind)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => $"MultipartBeginResponse: SessionId={SessionId}, TargetFileId={TargetFileId}, PartSizeBytes={PartSizeBytes}, ProviderKind={ProviderKind}";
+    public override string ToString() => $"MultipartBeginResponse: SessionId={SessionId}, TargetFileId={TargetFileId}, PartSizeBytes={PartSizeBytes}, ProviderKind={ProviderKind}";
 }

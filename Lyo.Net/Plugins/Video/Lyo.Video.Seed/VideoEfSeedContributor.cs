@@ -27,9 +27,7 @@ public sealed class VideoEfSeedContributor : SeedContributor, IEfSeedSource
     public DbContext CreateContext(string connectionString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        var options = new DbContextOptionsBuilder<VideoDbContext>()
-            .UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<VideoDbContext>().UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema)).Options;
         return new VideoDbContext(options);
     }
 
@@ -41,81 +39,100 @@ public sealed class VideoEfSeedContributor : SeedContributor, IEfSeedSource
         var now = DateTime.UtcNow;
         var genreId = LyoGuid.CreateV7();
         var collectionId = LyoGuid.CreateV7();
-        graph.Entity(GenreNames.Length, i => new VideoGenreEntity {
-            Id = i == 0 ? genreId : LyoGuid.CreateV7(),
-            Name = GenreNames[i],
-            Slug = GenreNames[i].ToLowerInvariant(),
-            SortOrder = i
-        });
+        graph.Entity(
+            GenreNames.Length, i => new VideoGenreEntity {
+                Id = i == 0 ? genreId : LyoGuid.CreateV7(),
+                Name = GenreNames[i],
+                Slug = GenreNames[i].ToLowerInvariant(),
+                SortOrder = i
+            });
+
         graph.Entity(1, _ => new VideoCollectionEntity { Id = collectionId, Title = "Sunday Night", Slug = "sunday-night" });
-        var seasons = graph.Entity(options.Count, i => new VideoTitleEntity {
-            Id = LyoGuid.CreateV7(),
-            Title = faker.Lorem.Sentence(3).TrimEnd('.'),
-            Slug = $"series-{i}",
-            Kind = VideoTitleKind.Series,
-            Status = VideoSeriesStatus.Ongoing,
-            Year = 2020,
-            CollectionId = collectionId,
-            CreatedTimestamp = now
-        });
-        seasons.ForEach(_ => 1, (title, _) => new VideoAlternateTitleEntity {
-            Id = LyoGuid.CreateV7(),
-            TitleId = title.Id,
-            Title = title.Title + " (alt)",
-            Language = "es",
-            Kind = VideoAlternateTitleKind.Translated,
-            SortOrder = 1
-        });
+        var seasons = graph.Entity(
+            options.Count, i => new VideoTitleEntity {
+                Id = LyoGuid.CreateV7(),
+                Title = faker.Lorem.Sentence(3).TrimEnd('.'),
+                Slug = $"series-{i}",
+                Kind = VideoTitleKind.Series,
+                Status = VideoSeriesStatus.Ongoing,
+                Year = 2020,
+                CollectionId = collectionId,
+                CreatedTimestamp = now
+            });
+
+        seasons.ForEach(
+            _ => 1, (title, _) => new VideoAlternateTitleEntity {
+                Id = LyoGuid.CreateV7(),
+                TitleId = title.Id,
+                Title = title.Title + " (alt)",
+                Language = "es",
+                Kind = VideoAlternateTitleKind.Translated,
+                SortOrder = 1
+            });
+
         seasons.ForEach(_ => 1, (title, _) => new VideoTitleGenreEntity { TitleId = title.Id, GenreId = genreId });
-        seasons.ForEach(_ => 1, (title, _) => new VideoCreditEntity {
-            Id = LyoGuid.CreateV7(),
-            TitleId = title.Id,
-            DisplayName = faker.Name.FullName(),
-            Role = VideoCreditRole.Director,
-            Ordinal = 1
-        });
-        seasons.ForEach(_ => 1, (title, _) => new VideoTitleIdentifierEntity {
-            Id = LyoGuid.CreateV7(),
-            TitleId = title.Id,
-            Scheme = "imdb",
-            Value = title.Id.ToString("N"),
-            NormalizedValue = title.Id.ToString("N"),
-            IsPrimary = true
-        });
-        seasons.ForEach(_ => 1, (title, _) => new VideoYoutubeLinkEntity {
-            Id = LyoGuid.CreateV7(),
-            TitleId = title.Id,
-            VideoId = title.Id.ToString("N")[^16..],
-            ChannelId = $"channel{title.Id.ToString("N")[^8..]}"
-        });
-        seasons.ForEach(_ => 1, (title, _) => new VideoCutEntity {
-            Id = LyoGuid.CreateV7(),
-            TitleId = title.Id,
-            Name = "Theatrical",
-            RuntimeSeconds = 3600,
-            IsPrimary = true
-        });
-        seasons.ForEach(_ => 1, (title, _) => new VideoSeasonEntity {
-            Id = LyoGuid.CreateV7(),
-            TitleId = title.Id,
-            SeasonNumber = 1,
-            Name = "Season 1",
-            Year = 2020
-        }).ForEach(_ => 2, (season, n) => new VideoEpisodeEntity {
-            Id = LyoGuid.CreateV7(),
-            SeasonId = season.Id,
-            EpisodeNumber = n + 1,
-            Title = faker.Lorem.Sentence(3).TrimEnd('.'),
-            RuntimeSeconds = 1800,
-            CreatedTimestamp = now
-        }).ForEach(_ => 1, (episode, _) => new VideoEpisodeIdentifierEntity {
-            Id = LyoGuid.CreateV7(),
-            EpisodeId = episode.Id,
-            Scheme = "imdb",
-            Value = episode.Id.ToString("N"),
-            NormalizedValue = episode.Id.ToString("N"),
-            IsPrimary = true
-        });
+        seasons.ForEach(
+            _ => 1, (title, _) => new VideoCreditEntity {
+                Id = LyoGuid.CreateV7(),
+                TitleId = title.Id,
+                DisplayName = faker.Name.FullName(),
+                Role = VideoCreditRole.Director,
+                Ordinal = 1
+            });
+
+        seasons.ForEach(
+            _ => 1, (title, _) => new VideoTitleIdentifierEntity {
+                Id = LyoGuid.CreateV7(),
+                TitleId = title.Id,
+                Scheme = "imdb",
+                Value = title.Id.ToString("N"),
+                NormalizedValue = title.Id.ToString("N"),
+                IsPrimary = true
+            });
+
+        seasons.ForEach(
+            _ => 1, (title, _) => new VideoYoutubeLinkEntity {
+                Id = LyoGuid.CreateV7(),
+                TitleId = title.Id,
+                VideoId = title.Id.ToString("N")[^16..],
+                ChannelId = $"channel{title.Id.ToString("N")[^8..]}"
+            });
+
+        seasons.ForEach(
+            _ => 1, (title, _) => new VideoCutEntity {
+                Id = LyoGuid.CreateV7(),
+                TitleId = title.Id,
+                Name = "Theatrical",
+                RuntimeSeconds = 3600,
+                IsPrimary = true
+            });
+
+        seasons.ForEach(
+                _ => 1, (title, _) => new VideoSeasonEntity {
+                    Id = LyoGuid.CreateV7(),
+                    TitleId = title.Id,
+                    SeasonNumber = 1,
+                    Name = "Season 1",
+                    Year = 2020
+                })
+            .ForEach(
+                _ => 2, (season, n) => new VideoEpisodeEntity {
+                    Id = LyoGuid.CreateV7(),
+                    SeasonId = season.Id,
+                    EpisodeNumber = n + 1,
+                    Title = faker.Lorem.Sentence(3).TrimEnd('.'),
+                    RuntimeSeconds = 1800,
+                    CreatedTimestamp = now
+                })
+            .ForEach(
+                _ => 1, (episode, _) => new VideoEpisodeIdentifierEntity {
+                    Id = LyoGuid.CreateV7(),
+                    EpisodeId = episode.Id,
+                    Scheme = "imdb",
+                    Value = episode.Id.ToString("N"),
+                    NormalizedValue = episode.Id.ToString("N"),
+                    IsPrimary = true
+                });
     }
 
     private static async Task ClearAsync(SeedSession session, CancellationToken ct)

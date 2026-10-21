@@ -5,8 +5,8 @@ namespace Lyo.Tag;
 
 /// <summary>Store contract for tags across entities.</summary>
 /// <remarks>
-/// Stores take <see cref="EntityRef" /> at the API edge and persist <c>EntityId</c> as one Guid (Option A). Pass null for <c>tenantId</c> on methods in
-/// single-tenant hosts (resolved through <see cref="EntityRefOptions.DefaultTenantId" />).
+/// Stores take <see cref="EntityRef" /> at the API edge and persist <c>EntityId</c> as one Guid (Option A). Pass null for <c>tenantId</c> on methods in single-tenant hosts
+/// (resolved through <see cref="EntityRefOptions.DefaultTenantId" />).
 /// </remarks>
 public interface ITagStore
 {
@@ -50,8 +50,8 @@ public interface ITagStore
     /// <param name="tenantId">Tenant scope; null on single-tenant hosts.</param>
     /// <param name="ct">Token that can abort the call.</param>
     /// <remarks>
-    /// Count sorts break ties by name, then tag type. Name sorts break ties by tag type. The tie-break does not follow <paramref name="direction" />.
-    /// Soft-deleted rows are excluded.
+    /// Count sorts break ties by name, then tag type. Name sorts break ties by tag type. The tie-break does not follow <paramref name="direction" />. Soft-deleted rows are
+    /// excluded.
     /// </remarks>
     Task<IReadOnlyList<TagCount>> GetTopTagsAsync(
         int take,

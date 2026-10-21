@@ -14,10 +14,8 @@ public class StateMachineExtensionsTests
         services.AddStateMachineObserver<JobState, JobTrigger, LoggingObserver>();
         services.AddStateMachine<JobState, JobTrigger, JobContext>("job", JobState.Queued, b => b.Configure(JobState.Queued).Permit(JobTrigger.Start, JobState.Running));
         await using var provider = services.BuildServiceProvider();
-
         var definition = provider.GetRequiredService<StateMachineDefinition<JobState, JobTrigger, JobContext>>();
         var result = await definition.FireAsync(new(), definition.CreateInitialSnapshot(), JobTrigger.Start, TestCt);
-
         Assert.Same(definition, provider.GetRequiredService<StateMachineDefinition<JobState, JobTrigger, JobContext>>());
         Assert.Equal("job", definition.Name);
         Assert.True(result.Succeeded);

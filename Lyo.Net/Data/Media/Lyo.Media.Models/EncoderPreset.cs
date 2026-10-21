@@ -2,9 +2,7 @@ using System.Collections.Concurrent;
 
 namespace Lyo.Media.Models;
 
-/// <summary>
-/// Extensible encoder speed/quality preset identifier. Lookups are thread-safe. Use <see cref="Custom" /> for a preset that is not listed.
-/// </summary>
+/// <summary>Extensible encoder speed/quality preset identifier. Lookups are thread-safe. Use <see cref="Custom" /> for a preset that is not listed.</summary>
 public sealed record EncoderPreset
 {
     private static readonly ConcurrentDictionary<string, EncoderPreset> ById = new(StringComparer.OrdinalIgnoreCase);
@@ -63,7 +61,8 @@ public sealed record EncoderPreset
 
     /// <summary>Every built-in preset. Touching this list registers the static instances for lookup.</summary>
     public static IReadOnlyList<EncoderPreset> BuiltIns { get; } = [
-        Ultrafast, Superfast, Veryfast, Faster, Fast, Medium, Slow, Slower, Veryslow, P1, P2, P3, P4, P5, P6, P7, Svt8
+        Ultrafast, Superfast, Veryfast, Faster, Fast, Medium, Slow, Slower, Veryslow, P1,
+        P2, P3, P4, P5, P6, P7, Svt8
     ];
 
     /// <summary>Stable display name (e.g. <c>Medium</c>).</summary>
@@ -73,8 +72,7 @@ public sealed record EncoderPreset
     public string Id { get; }
 
     /// <summary>True for the x264 family (<c>ultrafast</c> through <c>veryslow</c>).</summary>
-    public bool IsX264
-        => Id is "ultrafast" or "superfast" or "veryfast" or "faster" or "fast" or "medium" or "slow" or "slower" or "veryslow";
+    public bool IsX264 => Id is "ultrafast" or "superfast" or "veryfast" or "faster" or "fast" or "medium" or "slow" or "slower" or "veryslow";
 
     private EncoderPreset(string name, string id)
     {
@@ -101,7 +99,7 @@ public sealed record EncoderPreset
     public static EncoderPreset Custom(string id)
     {
         _ = BuiltIns;
-        return NamedCatalog.GetOrCustom(ById, id, key => new EncoderPreset(key, key));
+        return NamedCatalog.GetOrCustom(ById, id, key => new(key, key));
     }
 
     /// <inheritdoc />

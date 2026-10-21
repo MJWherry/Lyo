@@ -51,17 +51,18 @@ public static class ScreenEdgeDock
     {
         if (radius < 0)
             radius = 0;
+
         return edge switch {
             ScreenEdge.Left => new(0, radius, radius, 0),
             ScreenEdge.Right => new(radius, 0, 0, radius),
             ScreenEdge.Top => new(0, 0, radius, radius),
-            _ => new(radius, radius, 0, 0)
+            var _ => new(radius, radius, 0, 0)
         };
     }
 
     /// <summary>
-    /// Parks a bubble on the nearest edge of a work area. The window center decides the edge.
-    /// The bubble is centered on the window along that edge, then clamped inside the work area.
+    /// Parks a bubble on the nearest edge of a work area. The window center decides the edge. The bubble is centered on the window along that edge, then clamped inside the work
+    /// area.
     /// </summary>
     public static ScreenEdgeAnchor Place(
         int screenX,
@@ -75,8 +76,8 @@ public static class ScreenEdgeDock
         int thickness,
         int diameter)
     {
-        var centerX = windowX + (windowWidth / 2);
-        var centerY = windowY + (windowHeight / 2);
+        var centerX = windowX + windowWidth / 2;
+        var centerY = windowY + windowHeight / 2;
         var left = centerX - screenX;
         var right = screenX + screenWidth - centerX;
         var top = centerY - screenY;
@@ -95,24 +96,17 @@ public static class ScreenEdgeDock
 
         if (bottom < nearest)
             edge = ScreenEdge.Bottom;
+
         var vertical = edge is ScreenEdge.Left or ScreenEdge.Right;
-        var along = vertical ? centerY - (diameter / 2) : centerX - (diameter / 2);
+        var along = vertical ? centerY - diameter / 2 : centerX - diameter / 2;
         return Along(edge, screenX, screenY, screenWidth, screenHeight, along, thickness, diameter);
     }
 
     /// <summary>
-    /// Parks a bubble on <paramref name="edge" />. <paramref name="along" /> is the top for a side edge and the left for the top or bottom.
-    /// It is clamped so the bubble stays inside the work area.
+    /// Parks a bubble on <paramref name="edge" />. <paramref name="along" /> is the top for a side edge and the left for the top or bottom. It is clamped so the bubble stays
+    /// inside the work area.
     /// </summary>
-    public static ScreenEdgeAnchor Along(
-        ScreenEdge edge,
-        int screenX,
-        int screenY,
-        int screenWidth,
-        int screenHeight,
-        int along,
-        int thickness,
-        int diameter)
+    public static ScreenEdgeAnchor Along(ScreenEdge edge, int screenX, int screenY, int screenWidth, int screenHeight, int along, int thickness, int diameter)
     {
         var vertical = edge is ScreenEdge.Left or ScreenEdge.Right;
         var origin = vertical ? screenY : screenX;
@@ -120,31 +114,33 @@ public static class ScreenEdgeDock
         var max = origin + limit - diameter;
         if (max < origin)
             max = origin;
+
         if (along < origin)
             along = origin;
+
         if (along > max)
             along = max;
+
         return At(edge, screenX, screenY, screenWidth, screenHeight, along, thickness, diameter);
     }
 
     /// <summary>
-    /// Sizes <paramref name="collapsed" /> around content. The side on the screen edge stays put.
-    /// Width and height are screen pixels and may be larger than the collapsed face, so a top or bottom tab can show a row of buttons.
+    /// Sizes <paramref name="collapsed" /> around content. The side on the screen edge stays put. Width and height are screen pixels and may be larger than the collapsed face,
+    /// so a top or bottom tab can show a row of buttons.
     /// </summary>
     public static ScreenEdgeAnchor Fit(ScreenEdgeAnchor collapsed, int contentWidth, int contentHeight)
     {
-        var inward = collapsed.Edge is ScreenEdge.Left or ScreenEdge.Right
-            ? contentWidth - collapsed.Width
-            : contentHeight - collapsed.Height;
+        var inward = collapsed.Edge is ScreenEdge.Left or ScreenEdge.Right ? contentWidth - collapsed.Width : contentHeight - collapsed.Height;
         var fitted = Expand(collapsed, inward);
         if (collapsed.Edge is ScreenEdge.Left or ScreenEdge.Right)
             return fitted with { Height = Math.Max(fitted.Height, contentHeight) };
+
         return fitted with { Width = Math.Max(fitted.Width, contentWidth) };
     }
 
     /// <summary>
-    /// Pulls <paramref name="anchor" /> back into the work area. The side that sits on the screen edge stays on that edge.
-    /// A tab that is too wide or too tall slides along the edge instead of hanging off the screen.
+    /// Pulls <paramref name="anchor" /> back into the work area. The side that sits on the screen edge stays on that edge. A tab that is too wide or too tall slides along the
+    /// edge instead of hanging off the screen.
     /// </summary>
     public static ScreenEdgeAnchor Clamp(ScreenEdgeAnchor anchor, int screenX, int screenY, int screenWidth, int screenHeight)
     {
@@ -152,56 +148,69 @@ public static class ScreenEdgeDock
         var height = anchor.Height;
         if (width > screenWidth)
             width = Math.Max(1, screenWidth);
+
         if (height > screenHeight)
             height = Math.Max(1, screenHeight);
+
         var right = screenX + screenWidth;
         var bottom = screenY + screenHeight;
         var x = anchor.Edge switch {
             ScreenEdge.Left => screenX,
             ScreenEdge.Right => right - width,
-            _ => anchor.X
+            var _ => anchor.X
         };
+
         var y = anchor.Edge switch {
             ScreenEdge.Top => screenY,
             ScreenEdge.Bottom => bottom - height,
-            _ => anchor.Y
+            var _ => anchor.Y
         };
+
         if (anchor.Edge is ScreenEdge.Left or ScreenEdge.Right) {
             if (y < screenY)
                 y = screenY;
+
             if (y + height > bottom)
                 y = bottom - height;
         }
         else {
             if (x < screenX)
                 x = screenX;
+
             if (x + width > right)
                 x = right - width;
         }
 
-        return anchor with { X = x, Y = y, Width = width, Height = height };
+        return anchor with {
+            X = x,
+            Y = y,
+            Width = width,
+            Height = height
+        };
     }
 
     /// <summary>
-    /// How far to shift the icon from the center of the bubble, in the same units as <paramref name="max" />.
-    /// Positive moves toward the end of the edge (right or bottom). Zero keeps the icon centered.
-    /// <paramref name="slackStart" /> and <paramref name="slackEnd" /> are the free pixels before each end of the work area.
-    /// The shift eases in over <paramref name="travel" /> and stops at <paramref name="max" />, which is half the difference between the bubble's length and its thickness.
-    /// A bubble tucked into a corner then turns onto the next edge without the icon jumping outward.
+    /// How far to shift the icon from the center of the bubble, in the same units as <paramref name="max" />. Positive moves toward the end of the edge (right or bottom). Zero
+    /// keeps the icon centered. <paramref name="slackStart" /> and <paramref name="slackEnd" /> are the free pixels before each end of the work area. The shift eases in over
+    /// <paramref name="travel" /> and stops at <paramref name="max" />, which is half the difference between the bubble's length and its thickness. A bubble tucked into a corner then
+    /// turns onto the next edge without the icon jumping outward.
     /// </summary>
     public static double IconBias(int slackStart, int slackEnd, double travel, double max)
     {
         if (max <= 0 || travel <= 0)
             return 0;
+
         return Toward(slackEnd, travel, max) - Toward(slackStart, travel, max);
 
         static double Toward(int slack, double travel, double max)
         {
             if (slack <= 0)
                 return max;
+
             if (slack >= travel)
                 return 0;
-            return max * (1 - (slack / travel));
+
+            return max * (1 - slack / travel);
         }
     }
 
@@ -210,26 +219,25 @@ public static class ScreenEdgeDock
     {
         if (extra <= 0)
             return anchor;
+
         return anchor.Edge switch {
             ScreenEdge.Left => anchor with { Width = anchor.Width + extra },
             ScreenEdge.Right => anchor with { X = anchor.X - extra, Width = anchor.Width + extra },
             ScreenEdge.Top => anchor with { Height = anchor.Height + extra },
-            _ => anchor with { Y = anchor.Y - extra, Height = anchor.Height + extra }
+            var _ => anchor with { Y = anchor.Y - extra, Height = anchor.Height + extra }
         };
     }
 
-    /// <summary>
-    /// True when <paramref name="pointerX" /> / <paramref name="pointerY" /> has moved inward from <paramref name="edge" />
-    /// by more than <paramref name="threshold" />.
-    /// </summary>
+    /// <summary>True when <paramref name="pointerX" /> / <paramref name="pointerY" /> has moved inward from <paramref name="edge" /> by more than <paramref name="threshold" />.</summary>
     public static bool PulledOff(ScreenEdge edge, int screenX, int screenY, int screenWidth, int screenHeight, int pointerX, int pointerY, int threshold)
     {
         var inward = edge switch {
             ScreenEdge.Left => pointerX - screenX,
             ScreenEdge.Right => screenX + screenWidth - pointerX,
             ScreenEdge.Top => pointerY - screenY,
-            _ => screenY + screenHeight - pointerY
+            var _ => screenY + screenHeight - pointerY
         };
+
         return inward > threshold;
     }
 
@@ -243,10 +251,13 @@ public static class ScreenEdgeDock
         var nearest = left;
         if (right < nearest)
             nearest = right;
+
         if (top < nearest)
             nearest = top;
+
         if (bottom < nearest)
             nearest = bottom;
+
         return nearest > threshold;
     }
 
@@ -256,13 +267,15 @@ public static class ScreenEdgeDock
         var x = edge switch {
             ScreenEdge.Left => screenX,
             ScreenEdge.Right => screenX + screenWidth - thickness,
-            _ => along
+            var _ => along
         };
+
         var y = edge switch {
             ScreenEdge.Top => screenY,
             ScreenEdge.Bottom => screenY + screenHeight - thickness,
-            _ => along
+            var _ => along
         };
+
         return new(edge, x, y, vertical ? thickness : diameter, vertical ? diameter : thickness);
     }
 }

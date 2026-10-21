@@ -1,6 +1,9 @@
 # Lyo.Reporting.Api.Example
 
-Runnable example: `AddReportingApiFromConfiguration`, `AddIOTempService`, `AddReportingMaintenanceWorker`, and `BuildReportingGroup`. Maps surfaces with `EndpointAuth.Anonymous()` so the host can run without an identity stack; production embeddings should pass `ReportingApiOptions` with real policies. Prefer embedding those calls in another host when composing APIs. Not packed to NuGet. Binds http://localhost:5098 (see Properties/launchSettings.json). HTML/PDF needs `AddReportingWebRenderer` from `Lyo.Reporting.Web` plus a web renderer on the host.
+Runnable example: `AddReportingApiFromConfiguration`, `AddIOTempService`, `AddReportingMaintenanceWorker`, and `BuildReportingGroup`. Maps surfaces with `EndpointAuth.Anonymous()`
+so the host can run without an identity stack; production embeddings should pass `ReportingApiOptions` with real policies. Prefer embedding those calls in another host when
+composing APIs. Not packed to NuGet. Binds http://localhost:5098 (see Properties/launchSettings.json). HTML/PDF needs `AddReportingWebRenderer` from `Lyo.Reporting.Web` plus a web
+renderer on the host.
 
 ## Features
 

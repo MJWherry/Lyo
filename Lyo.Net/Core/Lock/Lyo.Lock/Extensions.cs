@@ -33,9 +33,7 @@ public static class LockServiceExtensions
             return services;
         }
 
-        /// <summary>
-        /// Binds <see cref="LockOptions" /> from the <c>LockOptions</c> section (see <see cref="LockOptions.SectionName" />), then registers <see cref="LocalLockService" />.
-        /// </summary>
+        /// <summary>Binds <see cref="LockOptions" /> from the <c>LockOptions</c> section (see <see cref="LockOptions.SectionName" />), then registers <see cref="LocalLockService" />.</summary>
         /// <param name="configuration">Configuration root or section parent.</param>
         /// <param name="configureOptions">Optional extra changes after bind.</param>
         public IServiceCollection AddLocalLockFromConfiguration(IConfiguration configuration, Action<LockOptions>? configureOptions = null)
@@ -76,9 +74,7 @@ public static class LockServiceExtensions
             return services;
         }
 
-        /// <summary>
-        /// Binds <see cref="KeyedSemaphoreOptions" /> from <see cref="KeyedSemaphoreOptions.SectionName" />, then registers <see cref="LocalKeyedSemaphoreService" />.
-        /// </summary>
+        /// <summary>Binds <see cref="KeyedSemaphoreOptions" /> from <see cref="KeyedSemaphoreOptions.SectionName" />, then registers <see cref="LocalKeyedSemaphoreService" />.</summary>
         /// <param name="configuration">Configuration root or section parent.</param>
         /// <param name="configureOptions">Optional extra changes after bind.</param>
         public IServiceCollection AddLocalKeyedSemaphoreFromConfiguration(IConfiguration configuration, Action<KeyedSemaphoreOptions>? configureOptions = null)

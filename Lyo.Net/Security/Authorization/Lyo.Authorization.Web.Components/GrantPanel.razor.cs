@@ -1,5 +1,4 @@
 using Lyo.Exceptions;
-using Lyo.Exceptions.Models;
 using Lyo.Web.Components.Dialog;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,6 +9,16 @@ namespace Lyo.Authorization.Web.Components;
 /// <summary>Lists grants from <see cref="IGrantStore" />. Saves and revokes go through <see cref="IResourceAuthorization" /> when it is registered.</summary>
 public partial class GrantPanel
 {
+    private string? _error;
+
+    private bool _includeExpired;
+
+    private bool _includeRevoked;
+
+    private bool _loading = true;
+
+    private IReadOnlyList<Grant> _rows = [];
+
     [Inject]
     private IServiceProvider Services { get; set; } = null!;
 
@@ -34,16 +43,6 @@ public partial class GrantPanel
     private IGrantStore? Store => Services.GetService<IGrantStore>();
 
     private IResourceAuthorization? Authorization => Services.GetService<IResourceAuthorization>();
-
-    private IReadOnlyList<Grant> _rows = [];
-
-    private bool _loading = true;
-
-    private bool _includeRevoked;
-
-    private bool _includeExpired;
-
-    private string? _error;
 
     /// <inheritdoc />
     protected override async Task OnParametersSetAsync() => await LoadAsync();
@@ -71,11 +70,8 @@ public partial class GrantPanel
         _loading = true;
         _error = null;
         try {
-            _rows = await store.ListAsync(new GrantListQuery {
-                Subject = string.IsNullOrWhiteSpace(Subject) ? null : Subject,
-                IncludeRevoked = _includeRevoked,
-                IncludeExpired = _includeExpired
-            });
+            _rows = await store.ListAsync(
+                new() { Subject = string.IsNullOrWhiteSpace(Subject) ? null : Subject, IncludeRevoked = _includeRevoked, IncludeExpired = _includeExpired });
         }
         catch (Exception ex) {
             _error = ex.Message;
@@ -98,6 +94,7 @@ public partial class GrantPanel
             { d => d.Subject, Subject },
             { d => d.GrantedBy, GrantedBy }
         };
+
         var dialog = await DialogService.ShowAsync<GrantEditDialog>("Add grant", parameters);
         var result = await dialog.Result;
         if (result is { Canceled: false })
@@ -114,6 +111,7 @@ public partial class GrantPanel
                 await Authorization.RevokeAsync(id);
             else if (Store is not null)
                 await Store.RevokeAsync(id);
+
             await LoadAsync();
         }
         catch (NotFoundException ex) {

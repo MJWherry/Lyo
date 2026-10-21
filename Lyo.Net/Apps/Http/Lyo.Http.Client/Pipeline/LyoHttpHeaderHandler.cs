@@ -1,10 +1,9 @@
+using System.Net.Http.Headers;
 using Lyo.Exceptions;
 
 namespace Lyo.Http.Client.Pipeline;
 
-/// <summary>
-/// Applies headers configured on <see cref="LyoHttpClientOptions" />. A header already on the request is left as-is. A resolver that returns text replaces the static value.
-/// </summary>
+/// <summary>Applies headers configured on <see cref="LyoHttpClientOptions" />. A header already on the request is left as-is. A resolver that returns text replaces the static value.</summary>
 public sealed class LyoHttpHeaderHandler : DelegatingHandler
 {
     private readonly LyoHttpClientOptions _options;
@@ -43,7 +42,7 @@ public sealed class LyoHttpHeaderHandler : DelegatingHandler
     private static bool HasHeader(HttpRequestMessage request, string name)
         => Contains(request.Headers, name) || (request.Content is not null && Contains(request.Content.Headers, name));
 
-    private static bool Contains(System.Net.Http.Headers.HttpHeaders headers, string name)
+    private static bool Contains(HttpHeaders headers, string name)
     {
         try {
             return headers.Contains(name);

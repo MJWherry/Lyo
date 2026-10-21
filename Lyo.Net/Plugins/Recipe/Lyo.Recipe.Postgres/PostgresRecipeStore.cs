@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
@@ -7,21 +8,17 @@ using Lyo.Recipe.Models;
 using Lyo.Recipe.Models.Enums;
 using Lyo.Recipe.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Recipe.Postgres;
 
-/// <summary>Postgres-backed <see cref="IRecipeStore"/>.</summary>
+/// <summary>Postgres-backed <see cref="IRecipeStore" />.</summary>
 public sealed class PostgresRecipeStore : IRecipeStore, IHealth
 {
     private readonly IDbContextFactory<RecipeDbContext> _contextFactory;
     private readonly EntityRefOptions _entityRefOptions;
     private readonly TenancyOptions _featureTenancy;
 
-    public PostgresRecipeStore(
-        IDbContextFactory<RecipeDbContext> contextFactory,
-        EntityRefOptions entityRefOptions,
-        PostgresRecipeOptions recipeOptions)
+    public PostgresRecipeStore(IDbContextFactory<RecipeDbContext> contextFactory, EntityRefOptions entityRefOptions, PostgresRecipeOptions recipeOptions)
     {
         ArgumentHelpers.ThrowIfNull(contextFactory);
         ArgumentHelpers.ThrowIfNull(entityRefOptions);
@@ -35,8 +32,7 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
     public string HealthCheckName => "recipe-postgres";
 
     /// <inheritdoc />
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => PostgresHealth.CheckAsync(_contextFactory, PostgresRecipeOptions.Schema, ct);
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => PostgresHealth.CheckAsync(_contextFactory, PostgresRecipeOptions.Schema, ct);
 
     /// <inheritdoc />
     public async Task SaveCategoryAsync(RecipeCategoryRecord category, Guid? tenantId, CancellationToken ct = default)
@@ -59,7 +55,7 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
         }
 
         context.Categories.Add(
-            new RecipeCategoryEntity {
+            new() {
                 Id = category.Id == Guid.Empty ? LyoGuid.CreateV7() : category.Id,
                 ParentId = category.ParentId,
                 Name = category.Name,
@@ -67,6 +63,7 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
                 TenantId = resolvedTenant,
                 CreatedTimestamp = category.CreatedTimestamp == default ? DateTime.UtcNow : category.CreatedTimestamp
             });
+
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 
@@ -84,11 +81,7 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
     {
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var list = await context.Categories.AsNoTracking()
-            .Where(c => c.TenantId == resolvedTenant)
-            .OrderBy(c => c.Name)
-            .ToListAsync(ct)
-            .ConfigureAwait(false);
+        var list = await context.Categories.AsNoTracking().Where(c => c.TenantId == resolvedTenant).OrderBy(c => c.Name).ToListAsync(ct).ConfigureAwait(false);
         return list.Select(ToCategoryRecord).ToList();
     }
 
@@ -98,11 +91,11 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         OperationHelpers.ThrowIf(
-            await context.Categories.AnyAsync(c => c.ParentId == id && c.TenantId == resolvedTenant, ct).ConfigureAwait(false),
-            "Reassign or delete child categories first.");
+            await context.Categories.AnyAsync(c => c.ParentId == id && c.TenantId == resolvedTenant, ct).ConfigureAwait(false), "Reassign or delete child categories first.");
+
         OperationHelpers.ThrowIf(
-            await context.Recipes.AnyAsync(r => r.CategoryId == id && r.TenantId == resolvedTenant, ct).ConfigureAwait(false),
-            "Category is still assigned to recipes.");
+            await context.Recipes.AnyAsync(r => r.CategoryId == id && r.TenantId == resolvedTenant, ct).ConfigureAwait(false), "Category is still assigned to recipes.");
+
         var entity = await context.Categories.FirstOrDefaultAsync(c => c.Id == id && c.TenantId == resolvedTenant, ct).ConfigureAwait(false);
         if (entity != null) {
             await RemoveAttachmentsAsync(context, RecipeEntityTypes.RecipeCategory, id, resolvedTenant, ct).ConfigureAwait(false);
@@ -133,7 +126,7 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
         }
 
         context.Ingredients.Add(
-            new IngredientEntity {
+            new() {
                 Id = ingredient.Id == Guid.Empty ? LyoGuid.CreateV7() : ingredient.Id,
                 Name = ingredient.Name,
                 Slug = ingredient.Slug,
@@ -142,6 +135,7 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
                 TenantId = resolvedTenant,
                 CreatedTimestamp = ingredient.CreatedTimestamp == default ? DateTime.UtcNow : ingredient.CreatedTimestamp
             });
+
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 
@@ -169,11 +163,7 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
     {
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var list = await context.Ingredients.AsNoTracking()
-            .Where(i => i.TenantId == resolvedTenant)
-            .OrderBy(i => i.Name)
-            .ToListAsync(ct)
-            .ConfigureAwait(false);
+        var list = await context.Ingredients.AsNoTracking().Where(i => i.TenantId == resolvedTenant).OrderBy(i => i.Name).ToListAsync(ct).ConfigureAwait(false);
         return list.Select(ToIngredientRecord).ToList();
     }
 
@@ -185,6 +175,7 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
         OperationHelpers.ThrowIf(
             await context.IngredientLines.AnyAsync(l => l.IngredientId == id && l.TenantId == resolvedTenant, ct).ConfigureAwait(false),
             "Ingredient is still used on a recipe line.");
+
         var entity = await context.Ingredients.FirstOrDefaultAsync(i => i.Id == id && i.TenantId == resolvedTenant, ct).ConfigureAwait(false);
         if (entity != null) {
             await RemoveAttachmentsAsync(context, RecipeEntityTypes.Ingredient, id, resolvedTenant, ct).ConfigureAwait(false);
@@ -217,6 +208,7 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
         entity.TenantId = resolvedTenant;
         if (entity.CreatedTimestamp == default)
             entity.CreatedTimestamp = DateTime.UtcNow;
+
         context.Recipes.Add(entity);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
     }
@@ -252,6 +244,7 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
             await RemoveLineLinksAsync(context, lineIds, stepIds, ct).ConfigureAwait(false);
             foreach (var stepId in stepIds)
                 await RemoveAttachmentsAsync(context, RecipeEntityTypes.RecipeStep, stepId, resolvedTenant, ct).ConfigureAwait(false);
+
             await RemoveAttachmentsAsync(context, RecipeEntityTypes.Recipe, id, resolvedTenant, ct).ConfigureAwait(false);
             context.Recipes.Remove(entity);
             await context.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -269,15 +262,15 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
             .ThenBy(l => l.Id)
             .ToListAsync(ct)
             .ConfigureAwait(false);
+
         var lineIds = list.Select(l => l.Id).ToList();
-        var links = lineIds.Count == 0
-            ? []
-            : await context.IngredientLineSteps.AsNoTracking().Where(j => lineIds.Contains(j.LineId)).ToListAsync(ct).ConfigureAwait(false);
+        var links = lineIds.Count == 0 ? [] : await context.IngredientLineSteps.AsNoTracking().Where(j => lineIds.Contains(j.LineId)).ToListAsync(ct).ConfigureAwait(false);
         return list.Select(e => {
-            var record = ToLineRecord(e);
-            record.StepIds = links.Where(j => j.LineId == e.Id).Select(j => j.StepId).ToList();
-            return record;
-        }).ToList();
+                var record = ToLineRecord(e);
+                record.StepIds = links.Where(j => j.LineId == e.Id).Select(j => j.StepId).ToList();
+                return record;
+            })
+            .ToList();
     }
 
     /// <inheritdoc />
@@ -299,6 +292,7 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
                 .Select(s => s.Id)
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
+
             if (owned.Count != requestedStepIds.Count)
                 throw new ArgumentException("Ingredient line steps must belong to the same recipe.", nameof(lines));
         }
@@ -317,7 +311,7 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
             var id = line.Id == Guid.Empty ? LyoGuid.CreateV7() : line.Id;
             var entity = existing.FirstOrDefault(e => e.Id == id);
             if (entity == null) {
-                entity = new RecipeIngredientLineEntity { Id = id, RecipeId = recipeId, TenantId = resolvedTenant };
+                entity = new() { Id = id, RecipeId = recipeId, TenantId = resolvedTenant };
                 context.IngredientLines.Add(entity);
             }
 
@@ -339,7 +333,7 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
         foreach (var (entity, stepIds) in kept) {
             foreach (var stepId in stepIds)
-                context.IngredientLineSteps.Add(new RecipeIngredientLineStepEntity { LineId = entity.Id, StepId = stepId });
+                context.IngredientLineSteps.Add(new() { LineId = entity.Id, StepId = stepId });
         }
 
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -357,6 +351,7 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
             .ThenBy(s => s.Id)
             .ToListAsync(ct)
             .ConfigureAwait(false);
+
         return list.Select(ToStepRecord).ToList();
     }
 
@@ -380,6 +375,7 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
             await RemoveLineLinksAsync(context, [], removedIds, ct).ConfigureAwait(false);
             foreach (var stepId in removedIds)
                 await RemoveAttachmentsAsync(context, RecipeEntityTypes.RecipeStep, stepId, resolvedTenant, ct).ConfigureAwait(false);
+
             context.Steps.RemoveRange(removed);
         }
 
@@ -387,7 +383,7 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
             var id = step.Id == Guid.Empty ? LyoGuid.CreateV7() : step.Id;
             var entity = existing.FirstOrDefault(e => e.Id == id);
             if (entity == null) {
-                entity = new RecipeStepEntity { Id = id, RecipeId = recipeId, TenantId = resolvedTenant };
+                entity = new() { Id = id, RecipeId = recipeId, TenantId = resolvedTenant };
                 context.Steps.Add(entity);
             }
 
@@ -407,10 +403,7 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
     {
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var lines = await context.IngredientLines.AsNoTracking()
-            .Where(l => l.IngredientId == ingredientId && l.TenantId == resolvedTenant)
-            .ToListAsync(ct)
-            .ConfigureAwait(false);
+        var lines = await context.IngredientLines.AsNoTracking().Where(l => l.IngredientId == ingredientId && l.TenantId == resolvedTenant).ToListAsync(ct).ConfigureAwait(false);
         if (lines.Count == 0)
             return [];
 
@@ -420,23 +413,26 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
         var steps = stepIds.Count == 0
             ? []
             : await context.Steps.AsNoTracking().Where(s => stepIds.Contains(s.Id)).Select(s => new { s.Id, s.SortOrder }).ToListAsync(ct).ConfigureAwait(false);
+
         var recipeIds = lines.Select(l => l.RecipeId).Distinct().ToList();
         var recipes = await context.Recipes.AsNoTracking().Where(r => recipeIds.Contains(r.Id)).Select(r => new { r.Id, r.Title }).ToListAsync(ct).ConfigureAwait(false);
         return lines.Select(line => {
-            var ordered = links.Where(j => j.LineId == line.Id)
-                .Select(j => steps.FirstOrDefault(s => s.Id == j.StepId))
-                .Where(s => s != null)
-                .OrderBy(s => s!.SortOrder)
-                .ThenBy(s => s!.Id)
-                .ToList();
-            return new IngredientUsageRecord {
-                RecipeId = line.RecipeId,
-                RecipeTitle = recipes.FirstOrDefault(r => r.Id == line.RecipeId)?.Title ?? string.Empty,
-                LineId = line.Id,
-                StepIds = ordered.Select(s => s!.Id).ToList(),
-                StepNumbers = ordered.Select(s => s!.SortOrder + 1).ToList()
-            };
-        }).ToList();
+                var ordered = links.Where(j => j.LineId == line.Id)
+                    .Select(j => steps.FirstOrDefault(s => s.Id == j.StepId))
+                    .Where(s => s != null)
+                    .OrderBy(s => s!.SortOrder)
+                    .ThenBy(s => s!.Id)
+                    .ToList();
+
+                return new IngredientUsageRecord {
+                    RecipeId = line.RecipeId,
+                    RecipeTitle = recipes.FirstOrDefault(r => r.Id == line.RecipeId)?.Title ?? string.Empty,
+                    LineId = line.Id,
+                    StepIds = ordered.Select(s => s!.Id).ToList(),
+                    StepNumbers = ordered.Select(s => s!.SortOrder + 1).ToList()
+                };
+            })
+            .ToList();
     }
 
     /// <inheritdoc />
@@ -451,8 +447,8 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         if (unit.Id == Guid.Empty)
             unit.Id = LyoGuid.CreateV7();
-        var duplicate = await context.Units.AnyAsync(
-            u => u.Id != unit.Id && u.TenantId == resolvedTenant && u.Abbreviation == unit.Abbreviation, ct).ConfigureAwait(false);
+
+        var duplicate = await context.Units.AnyAsync(u => u.Id != unit.Id && u.TenantId == resolvedTenant && u.Abbreviation == unit.Abbreviation, ct).ConfigureAwait(false);
         if (duplicate)
             throw new InvalidOperationException("A unit with that abbreviation already exists.");
 
@@ -464,13 +460,14 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
             existing.TenantId = resolvedTenant;
         }
         else {
-            context.Units.Add(new UnitEntity {
-                Id = unit.Id,
-                Name = unit.Name,
-                Abbreviation = unit.Abbreviation,
-                SortOrder = unit.SortOrder,
-                TenantId = resolvedTenant
-            });
+            context.Units.Add(
+                new() {
+                    Id = unit.Id,
+                    Name = unit.Name,
+                    Abbreviation = unit.Abbreviation,
+                    SortOrder = unit.SortOrder,
+                    TenantId = resolvedTenant
+                });
         }
 
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -487,7 +484,14 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
             .ThenBy(u => u.Abbreviation)
             .ToListAsync(ct)
             .ConfigureAwait(false);
-        return list.Select(u => new UnitRecord { Id = u.Id, Name = u.Name, Abbreviation = u.Abbreviation, SortOrder = u.SortOrder }).ToList();
+
+        return list.Select(u => new UnitRecord {
+                Id = u.Id,
+                Name = u.Name,
+                Abbreviation = u.Abbreviation,
+                SortOrder = u.SortOrder
+            })
+            .ToList();
     }
 
     /// <inheritdoc />
@@ -527,6 +531,7 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
         entity.TenantId = resolvedTenant;
         if (entity.CreatedTimestamp == default)
             entity.CreatedTimestamp = DateTime.UtcNow;
+
         context.Attachments.Add(entity);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
     }
@@ -552,6 +557,7 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
             .ThenBy(a => a.CreatedTimestamp)
             .ToListAsync(ct)
             .ConfigureAwait(false);
+
         return list.Select(ToAttachmentRecord).ToList();
     }
 
@@ -573,6 +579,7 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
     {
         if (lineIds.Count == 0 && stepIds.Count == 0)
             return;
+
         var query = context.IngredientLineSteps.AsQueryable();
         if (lineIds.Count > 0 && stepIds.Count > 0)
             query = query.Where(j => lineIds.Contains(j.LineId) || stepIds.Contains(j.StepId));
@@ -580,6 +587,7 @@ public sealed class PostgresRecipeStore : IRecipeStore, IHealth
             query = query.Where(j => lineIds.Contains(j.LineId));
         else
             query = query.Where(j => stepIds.Contains(j.StepId));
+
         var rows = await query.ToListAsync(ct).ConfigureAwait(false);
         if (rows.Count > 0)
             context.IngredientLineSteps.RemoveRange(rows);

@@ -13,14 +13,27 @@ services.AddReportingWebRenderer();
 
 ## Dependency injection
 
-Composition types come from `Lyo.Reporting.Models`. The package does not reference Postgres or EF. `AddReportingWebRenderer` registers `HtmlPdfReportRenderer` as scoped so it can consume scoped `IWebRendererService` / `HtmlRenderer`.
+Composition types come from `Lyo.Reporting.Models`. The package does not reference Postgres or EF. `AddReportingWebRenderer` registers `HtmlPdfReportRenderer` as scoped so it can
+consume scoped `IWebRendererService` / `HtmlRenderer`.
 
 ## Safe markup
 
-- Before `ReportViewer` emits markup, `ReportHtmlSanitizer` runs an allowlist of elements and attributes over `Html`, `Chart`, and `Image` blocks, so composition JSON cannot smuggle script, event handlers, or `javascript:` URLs. Nested section/control `Styles` maps are sanitized the same way as report-level CSS. Unknown `ContentType.Component` FullNames render a sanitized placeholder instead of crashing. The same paint path (`ReportViewPainter` / `ReportBodyItemView`) is what `HtmlPdfReportRenderer` uses. Optional `Layout.RootComponentType` renders a named Blazor type instead of `ReportViewer`. Renderers run `ReportCompositionProcessor` first so `{Key}` placeholders and `VisibleWhen` match generate output. The design canvas interpolates example parameters at paint time without cloning, paints TOC headings and FromParameter tables/charts from the example map, and dims `Collapsed` sections instead of using HTML `hidden`. Cards, blocks, and layout grids default to `break-inside: avoid` (`KeepTogether`); tables split unless the flag is on. A `Grid` paints with `display:grid`. The workbench live editor is `ReportDesignCanvas` in `Lyo.Reporting.Web.Components` — generate output never includes drag handles or selection rings.
-- Chart builders therefore ship data rather than code: they emit a `canvas` whose `data-lyo-chart` attribute holds configuration, and `ReportViewer` appends a single script — the Chart.js bundle plus a loader that paints every such canvas. Canvas ids are stable per block instance; the loader destroys and redraws when the config fingerprint changes so Blazor re-renders do not leave a blank chart.
-- This package vendors the Chart.js bundle. `ChartScriptUrl` falls back to `Constants.Charts.DefaultScriptUrl` = `_content/Lyo.Reporting.Web/scripts/chart.umd.min.js` (the static web asset), so drawing charts needs no outbound network; override with `Constants.Charts.CdnScriptUrl` (or any host-served URL), or leave it empty to skip charts. **Breaking change** — the public CDN used to be the default.
-- `InlineChartScript` is set by `HtmlPdfReportRenderer`, which inlines the bundle: the PDF converter receives a standalone file, and a relative asset URL would resolve against nothing.
+- Before `ReportViewer` emits markup, `ReportHtmlSanitizer` runs an allowlist of elements and attributes over `Html`, `Chart`, and `Image` blocks, so composition JSON cannot
+  smuggle script, event handlers, or `javascript:` URLs. Nested section/control `Styles` maps are sanitized the same way as report-level CSS. Unknown `ContentType.Component`
+  FullNames render a sanitized placeholder instead of crashing. The same paint path (`ReportViewPainter` / `ReportBodyItemView`) is what `HtmlPdfReportRenderer` uses. Optional
+  `Layout.RootComponentType` renders a named Blazor type instead of `ReportViewer`. Renderers run `ReportCompositionProcessor` first so `{Key}` placeholders and `VisibleWhen` match
+  generate output. The design canvas interpolates example parameters at paint time without cloning, paints TOC headings and FromParameter tables/charts from the example map, and
+  dims `Collapsed` sections instead of using HTML `hidden`. Cards, blocks, and layout grids default to `break-inside: avoid` (`KeepTogether`); tables split unless the flag is on. A
+  `Grid` paints with `display:grid`. The workbench live editor is `ReportDesignCanvas` in `Lyo.Reporting.Web.Components` — generate output never includes drag handles or selection
+  rings.
+- Chart builders therefore ship data rather than code: they emit a `canvas` whose `data-lyo-chart` attribute holds configuration, and `ReportViewer` appends a single script — the
+  Chart.js bundle plus a loader that paints every such canvas. Canvas ids are stable per block instance; the loader destroys and redraws when the config fingerprint changes so
+  Blazor re-renders do not leave a blank chart.
+- This package vendors the Chart.js bundle. `ChartScriptUrl` falls back to `Constants.Charts.DefaultScriptUrl` = `_content/Lyo.Reporting.Web/scripts/chart.umd.min.js` (the static
+  web asset), so drawing charts needs no outbound network; override with `Constants.Charts.CdnScriptUrl` (or any host-served URL), or leave it empty to skip charts. **Breaking
+  change** — the public CDN used to be the default.
+- `InlineChartScript` is set by `HtmlPdfReportRenderer`, which inlines the bundle: the PDF converter receives a standalone file, and a relative asset URL would resolve against
+  nothing.
 
 ## Dependencies
 

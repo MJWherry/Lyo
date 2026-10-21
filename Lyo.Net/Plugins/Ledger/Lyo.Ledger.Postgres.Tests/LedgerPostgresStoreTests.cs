@@ -1,6 +1,5 @@
-using Lyo.Ledger;
-using Microsoft.Extensions.DependencyInjection;
 using Lyo.Common.Core.Identifiers;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Ledger.Postgres.Tests;
 
@@ -19,18 +18,15 @@ public sealed class LedgerPostgresStoreTests(LedgerPostgresFixture fixture)
         Assert.NotNull(revenue);
         var clientId = LyoGuid.CreateV7();
         var posted = await store.PostJournalAsync(
-            new LedgerJournalRecord { Memo = "Issue" },
+            new() { Memo = "Issue" },
             [
-                new LedgerJournalLineRecord { AccountId = ar.Id, Debit = 1620m, ClientId = clientId },
-                new LedgerJournalLineRecord { AccountId = revenue.Id, Credit = 1500m },
-                new LedgerJournalLineRecord { AccountId = (await store.GetAccountByCodeAsync(LedgerAccountCodes.TaxPayable, ct: ct))!.Id, Credit = 120m }
-            ],
-            ct: ct);
+                new() { AccountId = ar.Id, Debit = 1620m, ClientId = clientId }, new() { AccountId = revenue.Id, Credit = 1500m },
+                new() { AccountId = (await store.GetAccountByCodeAsync(LedgerAccountCodes.TaxPayable, ct: ct))!.Id, Credit = 120m }
+            ], ct: ct);
+
         Assert.Equal(LedgerJournalStatus.Posted, posted.Status);
         Assert.Equal(1620m, await store.GetClientArBalanceAsync(clientId, ct: ct));
-
-        await Assert.ThrowsAsync<LedgerPostedJournalImmutableException>(
-            () => store.SaveDraftJournalAsync(posted, posted.Lines.ToList(), ct: ct));
+        await Assert.ThrowsAsync<LedgerPostedJournalImmutableException>(() => store.SaveDraftJournalAsync(posted, posted.Lines.ToList(), ct: ct));
     }
 
     [Fact]
@@ -41,14 +37,8 @@ public sealed class LedgerPostgresStoreTests(LedgerPostgresFixture fixture)
         await store.EnsureChartOfAccountsAsync(ct: ct);
         var ar = await store.GetAccountByCodeAsync(LedgerAccountCodes.AccountsReceivable, ct: ct);
         var revenue = await store.GetAccountByCodeAsync(LedgerAccountCodes.Revenue, ct: ct);
-        await Assert.ThrowsAsync<LedgerUnbalancedJournalException>(
-            () => store.PostJournalAsync(
-                new LedgerJournalRecord { Memo = "Bad" },
-                [
-                    new LedgerJournalLineRecord { AccountId = ar!.Id, Debit = 100m },
-                    new LedgerJournalLineRecord { AccountId = revenue!.Id, Credit = 90m }
-                ],
-                ct: ct));
+        await Assert.ThrowsAsync<LedgerUnbalancedJournalException>(() => store.PostJournalAsync(
+            new() { Memo = "Bad" }, [new() { AccountId = ar!.Id, Debit = 100m }, new() { AccountId = revenue!.Id, Credit = 90m }], ct: ct));
     }
 
     [Fact]
@@ -61,12 +51,8 @@ public sealed class LedgerPostgresStoreTests(LedgerPostgresFixture fixture)
         var cash = await store.GetAccountByCodeAsync(LedgerAccountCodes.Cash, ct: ct);
         var clientId = LyoGuid.CreateV7();
         var posted = await store.PostJournalAsync(
-            new LedgerJournalRecord { Memo = "AR" },
-            [
-                new LedgerJournalLineRecord { AccountId = ar!.Id, Debit = 50m, ClientId = clientId },
-                new LedgerJournalLineRecord { AccountId = cash!.Id, Credit = 50m }
-            ],
-            ct: ct);
+            new() { Memo = "AR" }, [new() { AccountId = ar!.Id, Debit = 50m, ClientId = clientId }, new() { AccountId = cash!.Id, Credit = 50m }], ct: ct);
+
         Assert.Equal(50m, await store.GetClientArBalanceAsync(clientId, ct: ct));
         var reversal = await store.VoidJournalAsync(posted.Id, ct: ct);
         Assert.Equal(LedgerJournalStatus.Posted, reversal.Status);
@@ -87,14 +73,7 @@ public sealed class LedgerPostgresStoreTests(LedgerPostgresFixture fixture)
         await store.EnsureChartOfAccountsAsync(tenantB, ct);
         var arB = await store.GetAccountByCodeAsync(LedgerAccountCodes.AccountsReceivable, tenantB, ct);
         var cashB = await store.GetAccountByCodeAsync(LedgerAccountCodes.Cash, tenantB, ct);
-        await Assert.ThrowsAsync<LedgerAccountTenantException>(
-            () => store.PostJournalAsync(
-                new LedgerJournalRecord { Memo = "Cross" },
-                [
-                    new LedgerJournalLineRecord { AccountId = arB!.Id, Debit = 10m },
-                    new LedgerJournalLineRecord { AccountId = cashB!.Id, Credit = 10m }
-                ],
-                tenantA,
-                ct));
+        await Assert.ThrowsAsync<LedgerAccountTenantException>(() => store.PostJournalAsync(
+            new() { Memo = "Cross" }, [new() { AccountId = arB!.Id, Debit = 10m }, new() { AccountId = cashB!.Id, Credit = 10m }], tenantA, ct));
     }
 }

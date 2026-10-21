@@ -8,8 +8,7 @@ public sealed class FantasyFootballDbContextFactory : IDesignTimeDbContextFactor
 {
     /// <inheritdoc />
     public FantasyFootballDbContext CreateDbContext(string[] args)
-        => new(PostgresDesignTime.CreateOptions<FantasyFootballDbContext>(
-            "FANTASY_FOOTBALL_CONNECTION_STRING",
-            PostgresFantasyFootballOptions.Schema,
-            "Host=localhost;Port=5432;Database=postgres;Username=user;Password=password"));
+        => new(
+            PostgresDesignTime.CreateOptions<FantasyFootballDbContext>(
+                "FANTASY_FOOTBALL_CONNECTION_STRING", PostgresFantasyFootballOptions.Schema, "Host=localhost;Port=5432;Database=postgres;Username=user;Password=password"));
 }

@@ -9,7 +9,6 @@ using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
-using Lyo.Query.Models.Enums;
 using Lyo.Schedule.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -118,12 +117,7 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
 
         Assert.True(created.IsSuccess, created.Error?.Detail ?? "create failed");
         await using var db = await factory.CreateDbContextAsync(TestCt);
-        var calendarIds = await db.JobSchedules.AsNoTracking()
-            .Where(s => s.JobDefinitionId == definitionId)
-            .Select(s => s.JobBlackoutCalendarId)
-            .Distinct()
-            .ToListAsync(TestCt);
-
+        var calendarIds = await db.JobSchedules.AsNoTracking().Where(s => s.JobDefinitionId == definitionId).Select(s => s.JobBlackoutCalendarId).Distinct().ToListAsync(TestCt);
         Assert.Single(calendarIds);
         Assert.NotNull(calendarIds[0]);
         Assert.Equal(1, await db.JobBlackoutCalendars.CountAsync(c => c.Id == calendarIds[0], TestCt));
@@ -152,8 +146,8 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
         var exclusiveDefId = LyoGuid.CreateCombPostgres();
         var sharedDefId = LyoGuid.CreateCombPostgres();
         Assert.True(
-            (await create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(
-                BuildDefinitionReq(exclusiveDefId, true), ApplyDefinitionIds(exclusiveDefId), ct: TestCt)).IsSuccess);
+            (await create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(BuildDefinitionReq(exclusiveDefId, true), ApplyDefinitionIds(exclusiveDefId), ct: TestCt))
+            .IsSuccess);
 
         Assert.True(
             (await create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(
@@ -176,9 +170,7 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
 
         Guid exclusiveCalendarId;
         await using (var db = await factory.CreateDbContextAsync(TestCt)) {
-            exclusiveCalendarId = await db.JobSchedules.Where(s => s.JobDefinitionId == exclusiveDefId)
-                .Select(s => s.JobBlackoutCalendarId!.Value)
-                .SingleAsync(TestCt);
+            exclusiveCalendarId = await db.JobSchedules.Where(s => s.JobDefinitionId == exclusiveDefId).Select(s => s.JobBlackoutCalendarId!.Value).SingleAsync(TestCt);
         }
 
         Assert.True(
@@ -191,8 +183,8 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
         }
 
         Assert.True(
-            (await delete.DeleteAsync<JobDefinition, JobDefinitionRes>(
-                [sharedDefId], ctx => JobDefinitionCascadeDelete.RemoveDependents(ctx.DbContext, ctx.Entity.Id), ct: TestCt)).IsSuccess);
+            (await delete.DeleteAsync<JobDefinition, JobDefinitionRes>([sharedDefId], ctx => JobDefinitionCascadeDelete.RemoveDependents(ctx.DbContext, ctx.Entity.Id), ct: TestCt))
+            .IsSuccess);
 
         await using (var db = await factory.CreateDbContextAsync(TestCt))
             Assert.False(await db.JobBlackoutCalendars.AnyAsync(c => c.Id == sharedCalendarId, TestCt));
@@ -290,7 +282,7 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
                     JobScheduleId = dropScheduleId,
                     State = JobState.Finished,
                     CreatedBy = "test",
-                    CreatedTimestamp = DateTime.UtcNow,
+                    CreatedTimestamp = DateTime.UtcNow
                 });
 
             await db.SaveChangesAsync(TestCt);
@@ -331,14 +323,12 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
         var definitionId = LyoGuid.CreateCombPostgres();
         Assert.True(
-            (await create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(
-                BuildDefinitionReq(definitionId, true), ApplyDefinitionIds(definitionId), ct: TestCt)).IsSuccess);
+            (await create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(BuildDefinitionReq(definitionId, true), ApplyDefinitionIds(definitionId), ct: TestCt))
+            .IsSuccess);
 
         Guid calendarId;
         await using (var db = await factory.CreateDbContextAsync(TestCt)) {
-            calendarId = await db.JobSchedules.Where(s => s.JobDefinitionId == definitionId)
-                .Select(s => s.JobBlackoutCalendarId!.Value)
-                .SingleAsync(TestCt);
+            calendarId = await db.JobSchedules.Where(s => s.JobDefinitionId == definitionId).Select(s => s.JobBlackoutCalendarId!.Value).SingleAsync(TestCt);
         }
 
         var deleted = await delete.DeleteAsync<JobBlackoutCalendar, JobBlackoutCalendarRes>(
@@ -360,8 +350,8 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
         var definitionId = LyoGuid.CreateCombPostgres();
         Assert.True(
-            (await create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(
-                BuildDefinitionReq(definitionId, false), ApplyDefinitionIds(definitionId), ct: TestCt)).IsSuccess);
+            (await create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(BuildDefinitionReq(definitionId, false), ApplyDefinitionIds(definitionId), ct: TestCt))
+            .IsSuccess);
 
         var workflowId = LyoGuid.CreateCombPostgres();
         var stepId = LyoGuid.CreateCombPostgres();
@@ -394,7 +384,7 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
                     JobDefinitionId = definitionId,
                     State = JobState.Finished,
                     CreatedBy = "test",
-                    CreatedTimestamp = DateTime.UtcNow,
+                    CreatedTimestamp = DateTime.UtcNow
                 });
 
             db.JobWorkflowRuns.Add(
@@ -470,7 +460,7 @@ public class JobCascadeAndCreateTests(JobPostgresFixture fixture) : IClassFixtur
                         }
                     ]
                 }
-            ],
+            ]
         };
 
     private static Action<CreateContext<JobDefinitionReq, JobDefinition, JobContext>> ApplyDefinitionIds(Guid definitionId)

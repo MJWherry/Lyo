@@ -9,12 +9,13 @@ public sealed class PlaywrightBrowserServiceTests
     [Fact]
     public void CreateSession_Configure_Keeps_Service_Browser_Kind()
     {
-        using var service = new PlaywrightBrowserService(new PlaywrightBrowserOptions { BrowserKind = AutomationBrowserKind.Firefox });
+        using var service = new PlaywrightBrowserService(new() { BrowserKind = AutomationBrowserKind.Firefox });
         AutomationBrowserKind? seen = null;
         using var session = service.CreateSession(o => {
             seen = o.BrowserKind;
             o.UserAgents = ["pinned"];
         });
+
         Assert.Equal(AutomationBrowserKind.Firefox, seen);
         Assert.Equal(["pinned"], session.Browser.Options.UserAgents);
     }
@@ -22,7 +23,7 @@ public sealed class PlaywrightBrowserServiceTests
     [Fact]
     public void CreateSession_Blank_Session_Options_Defaults_To_Chromium()
     {
-        using var service = new PlaywrightBrowserService(new PlaywrightBrowserOptions { BrowserKind = AutomationBrowserKind.Firefox });
+        using var service = new PlaywrightBrowserService(new() { BrowserKind = AutomationBrowserKind.Firefox });
         using var session = service.CreateSession(new PlaywrightSessionOptions());
         Assert.Equal(AutomationBrowserKind.Chromium, session.Browser.Options.BrowserKind);
     }

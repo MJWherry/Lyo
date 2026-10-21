@@ -69,8 +69,8 @@ public sealed class FileMetadataEntity
     public DateTime? DeletedAt { get; set; }
 
     /// <summary>
-    /// Principal that uploaded or owns this file (a user id, group id, or other domain owner). Null for system-uploaded files and rows created before ownership tracking.
-    /// Indexed for ownership lookups and later file-sharing.
+    /// Principal that uploaded or owns this file (a user id, group id, or other domain owner). Null for system-uploaded files and rows created before ownership tracking. Indexed
+    /// for ownership lookups and later file-sharing.
     /// </summary>
     public Guid? OwnerId { get; set; }
 
@@ -95,6 +95,7 @@ public sealed class FileMetadataEntity
         var availability = FileAvailability.Available;
         if (!string.IsNullOrEmpty(Availability) && Enum.TryParse<FileAvailability>(Availability, out var av))
             availability = av;
+
         if (DeletedAt != null)
             availability = FileAvailability.Deleted;
 

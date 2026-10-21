@@ -40,9 +40,7 @@ public class ShotSessionTests
         using var stop = CancellationTokenSource.CreateLinkedTokenSource(TestCt);
         var probe = new DisposeProbe([first, second], stop);
         var session = new ShotSession(probe);
-
         var shot = await session.CaptureAsync(ShotKind.Gif, new(0, 0, 8, 8), 5, false, stop.Token);
-
         Assert.True(probe.FirstDisposedBeforeSecond);
         Assert.True(probe.LastDisposedBeforeNextPull);
         using var gif = Image.Load<Rgba32>(shot.Bytes);
@@ -77,11 +75,9 @@ public class ShotSessionTests
         using var first = Frames.Rows(width, height, 0);
         using var second = Frames.Rows(width, height, shift);
         using var stop = CancellationTokenSource.CreateLinkedTokenSource(TestCt);
-        var probe = new SpillProbe([first, second], stop, 8 + (width * height * 4));
+        var probe = new SpillProbe([first, second], stop, 8 + width * height * 4);
         var session = new ShotSession(probe);
-
         var shot = await session.CaptureAsync(ShotKind.Receipt, new(0, 0, width, height), 5, false, stop.Token);
-
         Assert.True(probe.FirstDisposedBeforeSecond);
         Assert.True(probe.SpilledBeforeNext);
         Assert.True(probe.LastDisposedBeforeNextPull);
@@ -92,11 +88,16 @@ public class ShotSessionTests
 
     private sealed class FiniteSource(IReadOnlyList<Image<Rgba32>> frames) : IFrameSource
     {
-        public async IAsyncEnumerable<Image<Rgba32>> CaptureAsync(CaptureRegion region, int framesPerSecond, bool includeCursor, [EnumeratorCancellation] CancellationToken cancellationToken)
+        public async IAsyncEnumerable<Image<Rgba32>> CaptureAsync(
+            CaptureRegion region,
+            int framesPerSecond,
+            bool includeCursor,
+            [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             foreach (var frame in frames) {
                 cancellationToken.ThrowIfCancellationRequested();
                 yield return frame.Clone();
+
                 await Task.Yield();
             }
         }
@@ -105,20 +106,27 @@ public class ShotSessionTests
     private sealed class DisposeProbe(IReadOnlyList<Image<Rgba32>> frames, CancellationTokenSource stop) : IFrameSource
     {
         public bool FirstDisposedBeforeSecond { get; private set; }
+
         public bool LastDisposedBeforeNextPull { get; private set; }
 
-        public async IAsyncEnumerable<Image<Rgba32>> CaptureAsync(CaptureRegion region, int framesPerSecond, bool includeCursor, [EnumeratorCancellation] CancellationToken cancellationToken)
+        public async IAsyncEnumerable<Image<Rgba32>> CaptureAsync(
+            CaptureRegion region,
+            int framesPerSecond,
+            bool includeCursor,
+            [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             Image<Rgba32>? previous = null;
             for (var i = 0; i < frames.Count; i++) {
                 if (i == 1 && previous != null)
                     FirstDisposedBeforeSecond = Disposed(previous);
+
                 previous = frames[i].Clone();
                 yield return previous;
             }
 
             if (previous != null)
                 LastDisposedBeforeNextPull = Disposed(previous);
+
             stop.Cancel();
             try {
                 await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken).ConfigureAwait(false);
@@ -145,11 +153,18 @@ public class ShotSessionTests
         private readonly HashSet<string> _before = ReceiptSpills();
 
         public bool FirstDisposedBeforeSecond { get; private set; }
+
         public bool LastDisposedBeforeNextPull { get; private set; }
+
         public bool SpilledBeforeNext { get; private set; }
+
         public string? SpillPath { get; private set; }
 
-        public async IAsyncEnumerable<Image<Rgba32>> CaptureAsync(CaptureRegion region, int framesPerSecond, bool includeCursor, [EnumeratorCancellation] CancellationToken cancellationToken)
+        public async IAsyncEnumerable<Image<Rgba32>> CaptureAsync(
+            CaptureRegion region,
+            int framesPerSecond,
+            bool includeCursor,
+            [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             Image<Rgba32>? previous = null;
             for (var i = 0; i < frames.Count; i++) {
@@ -167,6 +182,7 @@ public class ShotSessionTests
 
             if (previous != null)
                 LastDisposedBeforeNextPull = Disposed(previous);
+
             stop.Cancel();
             try {
                 await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken).ConfigureAwait(false);
@@ -192,13 +208,18 @@ public class ShotSessionTests
             var directory = Path.Combine(Path.GetTempPath(), "lyo-shot");
             if (!Directory.Exists(directory))
                 return [];
+
             return Directory.GetFiles(directory, "receipt-*.bin").ToHashSet(StringComparer.Ordinal);
         }
     }
 
     private sealed class StopAfterSource(IReadOnlyList<Image<Rgba32>> frames, CancellationTokenSource stop) : IFrameSource
     {
-        public async IAsyncEnumerable<Image<Rgba32>> CaptureAsync(CaptureRegion region, int framesPerSecond, bool includeCursor, [EnumeratorCancellation] CancellationToken cancellationToken)
+        public async IAsyncEnumerable<Image<Rgba32>> CaptureAsync(
+            CaptureRegion region,
+            int framesPerSecond,
+            bool includeCursor,
+            [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             foreach (var frame in frames) {
                 cancellationToken.ThrowIfCancellationRequested();

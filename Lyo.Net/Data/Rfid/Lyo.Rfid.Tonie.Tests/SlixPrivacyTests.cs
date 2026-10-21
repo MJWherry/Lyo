@@ -10,6 +10,5 @@ public sealed class SlixPrivacyTests
     }
 
     [Fact]
-    public void XorPassword_WrongLengths_Throws() =>
-        Assert.Throws<ArgumentException>(() => SlixPrivacy.XorPassword(new byte[3], [0x12, 0x34]));
+    public void XorPassword_WrongLengths_Throws() => Assert.Throws<ArgumentException>(() => SlixPrivacy.XorPassword(new byte[3], [0x12, 0x34]));
 }

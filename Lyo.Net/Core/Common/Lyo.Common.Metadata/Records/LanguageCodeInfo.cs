@@ -139,7 +139,6 @@ public record LanguageCodeInfo(string Name, string Bcp47, string? Iso6391, strin
     static LanguageCodeInfo()
     {
         var fields = typeof(LanguageCodeInfo).PublicStaticFields<LanguageCodeInfo>();
-
         foreach (var langCode in fields) {
             AllCodes.Add(langCode);
             ByBcp47[langCode.Bcp47] = langCode;

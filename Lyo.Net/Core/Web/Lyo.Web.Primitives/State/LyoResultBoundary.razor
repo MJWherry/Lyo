@@ -16,20 +16,20 @@ else if (ChildContent is not null) {
 
 @code {
 
-    private RenderFragment DefaultLoading =>
-        @<LyoSkeletonPanel Rows="@SkeletonRows"/>;
+    private RenderFragment DefaultLoading
+        => @<LyoSkeletonPanel Rows="@SkeletonRows"/>;
 
-    private RenderFragment DefaultEmpty =>
-        @<LyoEmptyState Title="@EmptyTitle" Description="@EmptyDescription" Icon="@EmptyIcon" Actions="@EmptyActions"/>;
+    private RenderFragment DefaultEmpty
+        => @<LyoEmptyState Title="@EmptyTitle" Description="@EmptyDescription" Icon="@EmptyIcon" Actions="@EmptyActions"/>;
 
-    private RenderFragment DefaultError =>
-        @<MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="my-2">
-             <div class="d-flex align-center justify-space-between gap-4">
-                 <div style="white-space: pre-line;">@ErrorText</div>
-                 @if (OnRetry.HasDelegate) {
-                     <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Inherit" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@OnRetry">Retry</MudButton>
-                 }
-             </div>
-         </MudAlert>;
+    private RenderFragment DefaultError
+        => @<MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="my-2">
+               <div class="d-flex align-center justify-space-between gap-4">
+                   <div style="white-space: pre-line;">@ErrorText</div>
+                   @if (OnRetry.HasDelegate) {
+                       <MudButton Size="Size.Small" Variant="Variant.Text" Color="Color.Inherit" StartIcon="@Icons.Material.Filled.Refresh" OnClick="@OnRetry">Retry</MudButton>
+                   }
+               </div>
+           </MudAlert>;
 
 }

@@ -2,57 +2,57 @@ using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Avalonia.Media;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
-using Lyo.Desktop.Components;
 using Lyo.Desktop;
-using Lyo.Screenshot;
-using DesktopWindows = Lyo.Screenshot.DesktopWindows;
+using Lyo.Desktop.Components;
 
 namespace Lyo.Screenshot.App;
 
 public partial class MainWindow : Window
 {
+    private static readonly TimeSpan CaptureHideSettle = TimeSpan.FromMilliseconds(200);
+    private readonly EdgeDockWindow _edge;
     private readonly ShotSettings _settings;
+    private readonly bool _settingsReady;
+    private CancellationTokenSource? _capture;
+    private string? _chordBeforeListen;
+    private bool _closing;
+    private bool _fullScreen;
     private IScreenGrabber? _grabber;
     private IGlobalHotkeys? _hotkeys;
-    private CancellationTokenSource? _capture;
-    private CaptureRegion _region;
-    private bool _fullScreen;
-    private long _windowId;
-    private string _windowTitle = "";
-    private bool _recording;
-    private bool _closing;
     private bool _hotkeysReady;
-    private static readonly TimeSpan CaptureHideSettle = TimeSpan.FromMilliseconds(200);
-    private Button? _listening;
-    private string? _chordBeforeListen;
     private byte[]? _lastBytes;
-    private byte[]? _previewPng;
     private ShotKind _lastKind;
     private string? _lastPath;
-    private string? _tempShot;
-    private IStorageFile? _shotFile;
-    private bool _settingsReady;
+    private Button? _listening;
     private Bitmap? _preview;
-    private readonly EdgeDockWindow _edge;
+    private byte[]? _previewPng;
+    private bool _recording;
+    private CaptureRegion _region;
+    private IStorageFile? _shotFile;
+    private string? _tempShot;
+    private long _windowId;
+    private string _windowTitle = "";
 
     public MainWindow()
     {
         InitializeComponent();
-        _edge = new EdgeDockWindow(this, DockBar, MainPanel, new EdgeDockRest(360, 0, true), canResizeWhenOpen: false, minWidthWhenOpen: 360);
+        _edge = new(this, DockBar, MainPanel, new(360, 0, true), false, 360);
         ConfigureDock();
         _settings = ShotSettingsStore.Load();
         _edge.Placement.Apply(_settings.Docked, (int)_settings.DockEdge, _settings.DockX, _settings.DockY, _settings.DockRestX, _settings.DockRestY);
         _edge.DockedChanged += (_, _) => {
             if (!_edge.Docked)
                 PinOnTop();
+
             if (_settingsReady)
                 SaveSettings();
         };
+
         ApplySettings(_settings);
         StillMode.IsCheckedChanged += (_, _) => RefreshIdleHint();
         GifMode.IsCheckedChanged += (_, _) => RefreshIdleHint();
@@ -70,10 +70,12 @@ public partial class MainWindow : Window
             if (!ShotScratch.Wipe(ShotScratch.Directory))
                 ShotLog.Info("Temp: could not delete " + ShotScratch.Directory);
         };
+
         _settingsReady = true;
         Opened += (_, _) => {
             if (_edge.Restoring)
                 return;
+
             if (_settings.DockRestX == 0 && _settings.DockRestY == 0) {
                 _edge.Placement.RestX = Position.X;
                 _edge.Placement.RestY = Position.Y;
@@ -83,7 +85,8 @@ public partial class MainWindow : Window
             StartHotkeys();
             ApplyWindowIcon();
             if (_settings.Docked)
-                _edge.Show(saved: true);
+                _edge.Show(true);
+
             Opacity = 1;
         };
     }
@@ -116,6 +119,7 @@ public partial class MainWindow : Window
             RegionText.Text = $"{_region.Width} × {_region.Height} at {_region.X}, {_region.Y}";
         else
             RegionText.Text = "No region selected";
+
         StartButton.IsEnabled = HasRegion();
         RefreshIdleHint();
         if (settings.Docked)
@@ -126,6 +130,7 @@ public partial class MainWindow : Window
     {
         if (_hotkeys != null)
             return;
+
         try {
             _hotkeys = GlobalHotkeyHost.Create();
             _hotkeys.StartPressed += OnStartPressed;
@@ -146,6 +151,7 @@ public partial class MainWindow : Window
     {
         if (_recording)
             return false;
+
         Hide();
         var overlay = new RegionOverlay();
         var closed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -155,6 +161,7 @@ public partial class MainWindow : Window
         BringBack();
         if (overlay.Result is not { } region)
             return false;
+
         _fullScreen = false;
         _windowId = 0;
         _windowTitle = "";
@@ -169,6 +176,7 @@ public partial class MainWindow : Window
     {
         if (_recording)
             return;
+
         _fullScreen = true;
         _windowId = 0;
         _windowTitle = "";
@@ -177,12 +185,13 @@ public partial class MainWindow : Window
         SaveSettings();
     }
 
-    private void OnSelectWindow(object? sender, RoutedEventArgs e) => ShowWindowMenu(WindowButton, capture: false);
+    private void OnSelectWindow(object? sender, RoutedEventArgs e) => ShowWindowMenu(WindowButton, false);
 
     private void ShowWindowMenu(Control? anchor, bool capture)
     {
         if (anchor == null || _recording)
             return;
+
         var windows = DesktopWindows.List();
         if (windows.Count == 0) {
             StatusText.Text = "No windows found.";
@@ -192,14 +201,13 @@ public partial class MainWindow : Window
         var flyout = new MenuFlyout();
         foreach (var window in windows.OrderBy(item => item.Title, StringComparer.CurrentCultureIgnoreCase)) {
             var chosen = window;
-            var item = new MenuItem {
-                Header = new TextBlock { Text = chosen.Title, MaxWidth = 320, TextTrimming = TextTrimming.CharacterEllipsis }
-            };
+            var item = new MenuItem { Header = new TextBlock { Text = chosen.Title, MaxWidth = 320, TextTrimming = TextTrimming.CharacterEllipsis } };
             item.Click += (_, _) => {
                 ChooseWindow(chosen);
                 if (capture)
                     _ = CaptureFromDock();
             };
+
             flyout.Items.Add(item);
         }
 
@@ -208,6 +216,7 @@ public partial class MainWindow : Window
             DockBar.HoldOpen = false;
             DockBar.CollapseIfIdle();
         };
+
         flyout.ShowAt(anchor);
     }
 
@@ -252,8 +261,10 @@ public partial class MainWindow : Window
     {
         if (_recording || !HasRegion())
             return;
+
         if (!SelectedWindowOpen())
             return;
+
         var kind = CurrentKind();
         var fps = ReadFps();
         var delay = ReadDelay();
@@ -264,7 +275,7 @@ public partial class MainWindow : Window
         _recording = true;
         StartButton.IsVisible = false;
         StopButton.IsVisible = kind != ShotKind.Still || delay > 0;
-        _capture = new CancellationTokenSource();
+        _capture = new();
         try {
             _hotkeys?.SetEscapeStops(kind != ShotKind.Still);
         }
@@ -278,25 +289,30 @@ public partial class MainWindow : Window
         try {
             if (delay > 0)
                 await WaitDelayAsync(delay, token);
+
             if (kind == ShotKind.Still)
                 StopButton.IsVisible = false;
             else
                 StatusText.Text = "Scroll the page. Stop when you are done.";
+
             // A GIF or receipt has no Stop button while hidden. Leave the window up when the stop shortcut is not grabbed.
             if (kind == ShotKind.Still || _hotkeysReady) {
                 Hide();
                 hidden = true;
                 await Task.Delay(CaptureHideSettle, token);
             }
+
             ShotLog.Info($"Capture started ({kind}).");
             var shot = await Task.Run(async () => {
                 var grabber = Grabber();
                 var region = ResolveRegion(grabber, fullScreen, windowId, selected);
                 if (region.Width < 1 || region.Height < 1)
                     throw new InvalidOperationException("The capture region is empty.");
+
                 var session = new ShotSession(new GrabFrameSource(grabber));
                 return await session.CaptureAsync(kind, region, fps, cursor, token);
             });
+
             await FinishAsync(kind, shot);
         }
         catch (OperationCanceledException) {
@@ -312,6 +328,7 @@ public partial class MainWindow : Window
         finally {
             if (hidden)
                 BringBack();
+
             ShotEncoder.ReleaseScratchMemory();
             try {
                 _hotkeys?.SetEscapeStops(false);
@@ -341,8 +358,10 @@ public partial class MainWindow : Window
     {
         if (fullScreen)
             return grabber.VirtualScreen;
+
         if (windowId == 0)
             return selected;
+
         foreach (var window in DesktopWindows.List()) {
             if (window.Id == windowId)
                 return DesktopWindows.Region(window);
@@ -355,6 +374,7 @@ public partial class MainWindow : Window
     {
         if (_capture is null)
             return;
+
         ShotLog.Info("Stop.");
         StatusText.Text = CurrentKind() == ShotKind.Receipt ? "Stitching…" : "Finishing…";
         BringBack();
@@ -366,32 +386,34 @@ public partial class MainWindow : Window
         var bytes = shot.Bytes;
         ShowResult(kind, shot);
         var saving = SaveBox.IsChecked == true;
-        var directory = saving
-            ? (string.IsNullOrWhiteSpace(SaveDirectoryBox.Text) ? ShotSettingsStore.DefaultSaveDirectory() : SaveDirectoryBox.Text)
-            : ShotScratch.Directory;
+        var directory = saving ? string.IsNullOrWhiteSpace(SaveDirectoryBox.Text) ? ShotSettingsStore.DefaultSaveDirectory() : SaveDirectoryBox.Text : ShotScratch.Directory;
         Directory.CreateDirectory(directory);
         var ext = kind == ShotKind.Gif ? "gif" : "png";
         var path = Path.Combine(directory, $"lyo-shot-{DateTime.Now:yyyyMMdd-HHmmss}.{ext}");
         if (File.Exists(path))
             path = Path.Combine(directory, $"lyo-shot-{DateTime.Now:yyyyMMdd-HHmmss-fff}.{ext}");
+
         if (!saving)
             ForgetTempShot();
+
         // Stop cancels the capture token. The write must not observe that token, or the finished shot is dropped.
         await File.WriteAllBytesAsync(path, bytes);
         if (!saving)
             _tempShot = path;
+
         ShotLog.Info($"Saved {path} ({bytes.Length} bytes).");
         _lastPath = path;
         _shotFile = await StorageProvider.TryGetFileFromPathAsync(path);
         OpenSavedButton.IsVisible = true;
         OpenFolderButton.IsVisible = true;
         StatusText.Text = saving ? $"Saved to {path}" : $"Kept at {path}";
-
         var copied = false;
         if (CopyBox.IsChecked == true)
             copied = await CopyToClipboardAsync(kind, bytes, path, CancellationToken.None);
+
         if (!saving && copied)
             StatusText.Text = $"Copied. Kept at {path}";
+
         if (saving && OpenBox.IsChecked == true) {
             try {
                 OpenFile(path);
@@ -408,9 +430,7 @@ public partial class MainWindow : Window
     private async Task<bool> CopyToClipboardAsync(ShotKind kind, byte[] bytes, string? path, CancellationToken ct)
     {
         try {
-            var png = _previewPng is not null && ReferenceEquals(bytes, _lastBytes)
-                ? _previewPng
-                : kind == ShotKind.Gif ? ShotEncoder.FirstFramePng(bytes) : bytes;
+            var png = _previewPng is not null && ReferenceEquals(bytes, _lastBytes) ? _previewPng : kind == ShotKind.Gif ? ShotEncoder.FirstFramePng(bytes) : bytes;
             await ShotClipboard.CopyShotAsync(Clipboard, StorageProvider, path ?? _lastPath, png, ct);
             return true;
         }
@@ -433,7 +453,7 @@ public partial class MainWindow : Window
         Preview.Source = null;
         _preview?.Dispose();
         using var stream = new MemoryStream(png);
-        _preview = new Bitmap(stream);
+        _preview = new(stream);
         Preview.Source = _preview;
         PreviewHost.IsVisible = true;
         ResultActions.IsVisible = true;
@@ -443,6 +463,7 @@ public partial class MainWindow : Window
     {
         if (_tempShot is null)
             return;
+
         try {
             if (File.Exists(_tempShot))
                 File.Delete(_tempShot);
@@ -458,6 +479,7 @@ public partial class MainWindow : Window
     {
         if (_shotFile is null || !e.GetCurrentPoint(PreviewHost).Properties.IsLeftButtonPressed)
             return;
+
         var transfer = new DataTransfer();
         transfer.Add(DataTransferItem.CreateFile(_shotFile));
         e.Handled = true;
@@ -479,6 +501,7 @@ public partial class MainWindow : Window
     {
         if (_lastBytes is null)
             return;
+
         if (await CopyToClipboardAsync(_lastKind, _lastBytes, _lastPath, CancellationToken.None))
             StatusText.Text = "Copied the file.";
     }
@@ -487,6 +510,7 @@ public partial class MainWindow : Window
     {
         if (_lastBytes is null)
             return;
+
         try {
             var directory = string.IsNullOrWhiteSpace(SaveDirectoryBox.Text) ? ShotSettingsStore.DefaultSaveDirectory() : SaveDirectoryBox.Text;
             Directory.CreateDirectory(directory);
@@ -501,6 +525,7 @@ public partial class MainWindow : Window
             var path = Path.Combine(directory, $"lyo-shot-{DateTime.Now:yyyyMMdd-HHmmss}.{ext}");
             if (File.Exists(path))
                 path = Path.Combine(directory, $"lyo-shot-{DateTime.Now:yyyyMMdd-HHmmss-fff}.{ext}");
+
             await File.WriteAllBytesAsync(path, _lastBytes);
             ForgetTempShot();
             _lastPath = path;
@@ -520,6 +545,7 @@ public partial class MainWindow : Window
     {
         if (_lastPath is null)
             return;
+
         try {
             OpenFile(_lastPath);
         }
@@ -533,9 +559,11 @@ public partial class MainWindow : Window
     {
         if (_lastPath is null)
             return;
+
         var directory = Path.GetDirectoryName(_lastPath);
         if (string.IsNullOrEmpty(directory))
             return;
+
         try {
             OpenFile(directory);
         }
@@ -545,19 +573,18 @@ public partial class MainWindow : Window
         }
     }
 
-    private static void OpenFile(string path)
-    {
-        Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
-    }
+    private static void OpenFile(string path) => Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
 
     private async void OnBrowse(object? sender, RoutedEventArgs e)
     {
-        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { AllowMultiple = false, Title = "Save screenshots to" });
+        var folders = await StorageProvider.OpenFolderPickerAsync(new() { AllowMultiple = false, Title = "Save screenshots to" });
         if (folders.Count == 0)
             return;
+
         var path = folders[0].TryGetLocalPath();
         if (string.IsNullOrWhiteSpace(path))
             return;
+
         SaveDirectoryBox.Text = path;
         SaveSettings();
     }
@@ -566,6 +593,7 @@ public partial class MainWindow : Window
     {
         if (sender is not Button button)
             return;
+
         _listening = button;
         _chordBeforeListen = button.Content?.ToString();
         button.Content = "Press a shortcut";
@@ -591,6 +619,7 @@ public partial class MainWindow : Window
 
         if (e.Key is Key.LeftCtrl or Key.RightCtrl or Key.LeftShift or Key.RightShift or Key.LeftAlt or Key.RightAlt or Key.LWin or Key.RWin)
             return;
+
         var formatted = FormatChord(e.KeyModifiers, e.Key);
         var button = _listening;
         _listening = null;
@@ -611,6 +640,7 @@ public partial class MainWindow : Window
     {
         if (e.Key == Key.Escape)
             return true;
+
         try {
             var chord = HotkeyChord.Parse(StopChordButton.Content?.ToString() ?? "");
             return chord.Modifiers == ToHotkeyModifiers(e.KeyModifiers) && chord.Key.Equals(KeyName(e.Key), StringComparison.OrdinalIgnoreCase);
@@ -625,12 +655,16 @@ public partial class MainWindow : Window
         var mods = HotkeyModifiers.None;
         if (modifiers.HasFlag(KeyModifiers.Control))
             mods |= HotkeyModifiers.Ctrl;
+
         if (modifiers.HasFlag(KeyModifiers.Shift))
             mods |= HotkeyModifiers.Shift;
+
         if (modifiers.HasFlag(KeyModifiers.Alt))
             mods |= HotkeyModifiers.Alt;
+
         if (modifiers.HasFlag(KeyModifiers.Meta))
             mods |= HotkeyModifiers.Meta;
+
         return mods;
     }
 
@@ -638,10 +672,12 @@ public partial class MainWindow : Window
     {
         if (_hotkeys is null)
             return;
+
         var start = HotkeyChord.Parse(string.IsNullOrWhiteSpace(startText) ? "Ctrl+Shift+S" : startText);
         var stop = HotkeyChord.Parse(string.IsNullOrWhiteSpace(stopText) ? "Ctrl+Shift+X" : stopText);
         if (start == stop)
             throw new InvalidOperationException("Start and stop need different shortcuts.");
+
         _hotkeys.Update(start, stop);
     }
 
@@ -649,17 +685,18 @@ public partial class MainWindow : Window
     {
         if (_recording)
             return;
-        StatusText.Text = CurrentKind() == ShotKind.Still
-            ? "Press Start to grab one frame."
-            : "Press Start, scroll, then Stop.";
+
+        StatusText.Text = CurrentKind() == ShotKind.Still ? "Press Start to grab one frame." : "Press Start, scroll, then Stop.";
     }
 
     private ShotKind CurrentKind()
     {
         if (StillMode.IsChecked == true)
             return ShotKind.Still;
+
         if (GifMode.IsChecked == true)
             return ShotKind.Gif;
+
         return ShotKind.Receipt;
     }
 
@@ -669,6 +706,7 @@ public partial class MainWindow : Window
     {
         if (_windowId == 0 || !DesktopWindowFilter.Missing(_windowId, DesktopWindows.List()))
             return true;
+
         ClearWindowSelection();
         const string closed = "That window is no longer open.";
         StatusText.Text = closed;
@@ -694,6 +732,7 @@ public partial class MainWindow : Window
     {
         if (_closing)
             return;
+
         if (!IsVisible) {
             PinOnTop();
             Show();
@@ -710,8 +749,10 @@ public partial class MainWindow : Window
     {
         if (_closing)
             return;
+
         if (!_edge.Docked && TopmostBox.IsChecked != true)
             return;
+
         Topmost = false;
         Topmost = true;
     }
@@ -720,22 +761,24 @@ public partial class MainWindow : Window
     {
         if (_recording || _edge.Docked)
             return;
-        _edge.Show(saved: false);
+
+        _edge.Show(false);
     }
 
     private void ConfigureDock()
     {
         DockBar.Icon = new CameraIcon { Width = 16, Height = 16, Foreground = Brushes.White };
         DockBar.ExpandOnHover = true;
-        DockBar.Buttons.Add(new EdgeDockButton { Text = "Region", Pressed = (_, _) => _ = CaptureRegionFromDock() });
-        DockBar.Buttons.Add(new EdgeDockButton { Text = "Window", Pressed = (sender, _) => ShowWindowMenu(sender as Control, capture: true) });
-        DockBar.Buttons.Add(new EdgeDockButton { Text = "Full screen", Pressed = (_, _) => _ = CaptureFullScreenFromDock() });
+        DockBar.Buttons.Add(new() { Text = "Region", Pressed = (_, _) => _ = CaptureRegionFromDock() });
+        DockBar.Buttons.Add(new() { Text = "Window", Pressed = (sender, _) => ShowWindowMenu(sender as Control, true) });
+        DockBar.Buttons.Add(new() { Text = "Full screen", Pressed = (_, _) => _ = CaptureFullScreenFromDock() });
     }
 
     private async Task CaptureRegionFromDock()
     {
         if (_recording)
             return;
+
         DockBar.Expanded = false;
         if (await SelectRegionAsync())
             await CaptureFromDock();
@@ -745,7 +788,8 @@ public partial class MainWindow : Window
     {
         if (_recording)
             return;
-        OnFullScreen(this, new RoutedEventArgs());
+
+        OnFullScreen(this, new());
         await CaptureFromDock();
     }
 
@@ -753,6 +797,7 @@ public partial class MainWindow : Window
     {
         if (_recording || !HasRegion())
             return;
+
         DockBar.HoldOpen = false;
         DockBar.Expanded = false;
         await StartAsync();
@@ -761,13 +806,13 @@ public partial class MainWindow : Window
     private void ApplyWindowIcon()
     {
         var geometry = Geometry.Parse(CameraMark.Data);
-        var bitmap = new RenderTargetBitmap(new PixelSize(32, 32), new Vector(96, 96));
+        var bitmap = new RenderTargetBitmap(new(32, 32), new(96, 96));
         using (var context = bitmap.CreateDrawingContext()) {
             using (context.PushTransform(Matrix.CreateScale(32d / 24d, 32d / 24d)))
                 context.DrawGeometry(Brushes.Black, null, geometry);
         }
 
-        Icon = new WindowIcon(bitmap);
+        Icon = new(bitmap);
     }
 
     private void SaveSettings()
@@ -843,22 +888,27 @@ public partial class MainWindow : Window
         var parts = new List<string>();
         if (modifiers.HasFlag(KeyModifiers.Control))
             parts.Add("Ctrl");
+
         if (modifiers.HasFlag(KeyModifiers.Shift))
             parts.Add("Shift");
+
         if (modifiers.HasFlag(KeyModifiers.Alt))
             parts.Add("Alt");
+
         if (modifiers.HasFlag(KeyModifiers.Meta))
             parts.Add("Meta");
+
         parts.Add(KeyName(key));
         return string.Join('+', parts);
     }
 
-    private static string KeyName(Key key) => key switch {
-        >= Key.A and <= Key.Z => key.ToString(),
-        >= Key.D0 and <= Key.D9 => ((char)('0' + (key - Key.D0))).ToString(),
-        Key.Escape => "Escape",
-        Key.Space => "Space",
-        Key.Tab => "Tab",
-        _ => key.ToString()
-    };
+    private static string KeyName(Key key)
+        => key switch {
+            >= Key.A and <= Key.Z => key.ToString(),
+            >= Key.D0 and <= Key.D9 => ((char)('0' + (key - Key.D0))).ToString(),
+            Key.Escape => "Escape",
+            Key.Space => "Space",
+            Key.Tab => "Tab",
+            var _ => key.ToString()
+        };
 }

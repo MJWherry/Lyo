@@ -1,5 +1,6 @@
 using Lyo.Api.Services.Crud.Create;
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
 using Lyo.Job.Models.Enums;
@@ -9,7 +10,6 @@ using Lyo.Job.Postgres.Database;
 using Lyo.Schedule.Models;
 using Lyo.Testing.Containers;
 using Microsoft.EntityFrameworkCore;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Api.Tests.Fixtures;
 
@@ -98,6 +98,7 @@ public sealed class ApiPostgresFixture : PostgresContainerFixtureBase
             Type = LyoTypeInfo.String.FullName,
             Options = options
         };
+
         var result = await createService.CreateAsync<JobParameterReq, JobParameter, JobParameterRes>(
             req, ctx => {
                 ctx.Entity.Id = LyoGuid.CreateV7();
@@ -118,9 +119,10 @@ public sealed class ApiPostgresFixture : PostgresContainerFixtureBase
             Type = ScheduleType.SetTimes,
             DayFlags = DayFlags.EveryDay,
             Description = description,
-            Times = [new TimeOnly(9, 0)],
+            Times = [new(9, 0)],
             Enabled = true
         };
+
         var result = await createService.CreateAsync<JobScheduleReq, JobSchedule, JobScheduleRes>(
             req, ctx => {
                 ctx.Entity.Id = LyoGuid.CreateV7();

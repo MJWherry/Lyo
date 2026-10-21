@@ -1,6 +1,5 @@
 using Lyo.Law.Models.Enums;
 using Lyo.Law.Postgres.Database;
-using Lyo.Law.Seed;
 using Lyo.Seed;
 
 namespace Lyo.Law.Seed.Tests;
@@ -19,18 +18,19 @@ public sealed class LawEfSeedContributorTests
         Assert.Equal(2, jurisdictions.Count);
         Assert.Equal(2, codes.Count);
         Assert.All(jurisdictions, row => Assert.StartsWith("US-", row.Key));
-        Assert.All(codes, code => {
-            var title = Assert.Single(nodes, row => row.CodeId == code.Id && row.Kind == LawNodeKind.Title && row.ParentId == null);
-            var chapter = Assert.Single(nodes, row => row.ParentId == title.Id && row.Kind == LawNodeKind.Chapter);
-            var section = Assert.Single(nodes, row => row.ParentId == chapter.Id && row.Kind == LawNodeKind.Section);
-            Assert.False(string.IsNullOrWhiteSpace(section.Body));
-            Assert.False(string.IsNullOrWhiteSpace(section.SourceKey));
-            Assert.Equal(64, section.ContentSha256.Length);
-            Assert.Contains(annotations, row => row.NodeId == section.Id);
-            var revision = Assert.Single(revisions, row => row.NodeId == section.Id);
-            Assert.Equal(section.Heading, revision.Heading);
-            Assert.Equal(section.Body, revision.Body);
-        });
+        Assert.All(
+            codes, code => {
+                var title = Assert.Single(nodes, row => row.CodeId == code.Id && row.Kind == LawNodeKind.Title && row.ParentId == null);
+                var chapter = Assert.Single(nodes, row => row.ParentId == title.Id && row.Kind == LawNodeKind.Chapter);
+                var section = Assert.Single(nodes, row => row.ParentId == chapter.Id && row.Kind == LawNodeKind.Section);
+                Assert.False(string.IsNullOrWhiteSpace(section.Body));
+                Assert.False(string.IsNullOrWhiteSpace(section.SourceKey));
+                Assert.Equal(64, section.ContentSha256.Length);
+                Assert.Contains(annotations, row => row.NodeId == section.Id);
+                var revision = Assert.Single(revisions, row => row.NodeId == section.Id);
+                Assert.Equal(section.Heading, revision.Heading);
+                Assert.Equal(section.Body, revision.Body);
+            });
     }
 
     private static async Task<RecordingSeedTransport> SeedAsync(SeedContributor contributor, int count)
@@ -56,6 +56,7 @@ public sealed class LawEfSeedContributorTests
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

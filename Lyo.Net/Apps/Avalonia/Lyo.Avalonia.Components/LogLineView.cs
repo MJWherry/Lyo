@@ -5,9 +5,7 @@ using Avalonia.Media;
 
 namespace Lyo.Desktop.Components;
 
-/// <summary>
-/// Detail for one log line. Shows the message, scope and structured context, and for an exception the decoded crash site, frames, and raw text.
-/// </summary>
+/// <summary>Detail for one log line. Shows the message, scope and structured context, and for an exception the decoded crash site, frames, and raw text.</summary>
 public class LogLineView : UserControl
 {
     private static readonly FontFamily Mono = new("Consolas, Menlo, DejaVu Sans Mono");
@@ -18,14 +16,13 @@ public class LogLineView : UserControl
 
     private readonly StackPanel _body = new() { Spacing = 12 };
 
-    public LogLineView() => Content = new ScrollViewer { Content = _body, Padding = new Thickness(4) };
-
     /// <summary>The line to show. Null draws nothing.</summary>
-    public LogLine? Line
-    {
+    public LogLine? Line {
         get => GetValue(LineProperty);
         set => SetValue(LineProperty, value);
     }
+
+    public LogLineView() => Content = new ScrollViewer { Content = _body, Padding = new(4) };
 
     /// <inheritdoc />
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
@@ -44,22 +41,25 @@ public class LogLineView : UserControl
         var detail = LogLineDetail.From(line);
         var spec = LogLine.LevelChip(line.Level);
         var header = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-        header.Children.Add(new TextBlock {
-            Text = line.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff"),
-            FontFamily = Mono,
-            FontSize = 12,
-            Foreground = Dim,
-            VerticalAlignment = VerticalAlignment.Center
-        });
-        header.Children.Add(new Chip { Text = spec.Label, Hue = spec.Hue, VerticalAlignment = VerticalAlignment.Center });
-        if (!string.IsNullOrWhiteSpace(line.Source)) {
-            header.Children.Add(new TextBlock {
-                Text = line.Source,
+        header.Children.Add(
+            new TextBlock {
+                Text = line.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss.fff"),
                 FontFamily = Mono,
                 FontSize = 12,
                 Foreground = Dim,
                 VerticalAlignment = VerticalAlignment.Center
             });
+
+        header.Children.Add(new Chip { Text = spec.Label, Hue = spec.Hue, VerticalAlignment = VerticalAlignment.Center });
+        if (!string.IsNullOrWhiteSpace(line.Source)) {
+            header.Children.Add(
+                new TextBlock {
+                    Text = line.Source,
+                    FontFamily = Mono,
+                    FontSize = 12,
+                    Foreground = Dim,
+                    VerticalAlignment = VerticalAlignment.Center
+                });
         }
 
         _body.Children.Add(header);
@@ -95,8 +95,9 @@ public class LogLineView : UserControl
         var hue = frame.Category switch {
             "UserCode" => ChipHues.Coral,
             "TestFramework" => ChipHues.Green,
-            _ => -1
+            var _ => -1
         };
+
         var where = string.IsNullOrWhiteSpace(frame.Location) ? frame.Method : frame.Method + "  " + frame.Location;
         return KeyValueEntry.FromChip(where, frame.Category, hue, where);
     }
@@ -109,6 +110,5 @@ public class LogLineView : UserControl
 
     private static KeyValueView Values(IReadOnlyList<KeyValueEntry> entries) => new() { Entries = entries };
 
-    private static TextBlock Heading(string text)
-        => new() { Text = text, FontWeight = FontWeight.SemiBold, FontSize = 13 };
+    private static TextBlock Heading(string text) => new() { Text = text, FontWeight = FontWeight.SemiBold, FontSize = 13 };
 }

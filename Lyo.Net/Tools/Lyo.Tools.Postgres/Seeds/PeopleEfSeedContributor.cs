@@ -30,21 +30,25 @@ public sealed class PeopleEfSeedContributor(ILogger<PeopleEfSeedContributor> log
     protected override void Configure(SeedGraph graph, SeedOptions options)
     {
         var faker = options.RandomSeed is { } seed ? new Faker { Random = new(seed) } : new Faker();
-        var people = graph.Entity(options.Count, _ => {
-            var person = BuildPerson(faker);
-            person.SourceEntityType = PeopleSourceTypes.Seed;
-            person.SourceEntityId = person.Id.ToString();
-            person.ImportedAt = DateTime.UtcNow;
-            return person;
-        });
-        people.ForEach(_ => 1, (person, _) => new IdentificationEntity {
-            Id = LyoGuid.CreateV7(),
-            PersonId = person.Id,
-            Type = "Passport",
-            Number = faker.Random.AlphaNumeric(8),
-            IssuingCountry = "US",
-            CreatedTimestamp = DateTime.UtcNow
-        });
+        var people = graph.Entity(
+            options.Count, _ => {
+                var person = BuildPerson(faker);
+                person.SourceEntityType = PeopleSourceTypes.Seed;
+                person.SourceEntityId = person.Id.ToString();
+                person.ImportedAt = DateTime.UtcNow;
+                return person;
+            });
+
+        people.ForEach(
+            _ => 1, (person, _) => new IdentificationEntity {
+                Id = LyoGuid.CreateV7(),
+                PersonId = person.Id,
+                Type = "Passport",
+                Number = faker.Random.AlphaNumeric(8),
+                IssuingCountry = "US",
+                CreatedTimestamp = DateTime.UtcNow
+            });
+
         people.ForEach(_ => faker.Random.Int(0, 2), (person, _) => BuildEmployment(faker, person.Id));
         people.ForEach(_ => faker.Random.Int(0, 2), (person, _) => BuildSocialProfile(faker, person.Id));
         graph.After(async (session, ct) => await SeedContactsAndRelationshipsAsync(session, faker, ct).ConfigureAwait(false));
@@ -76,7 +80,6 @@ public sealed class PeopleEfSeedContributor(ILogger<PeopleEfSeedContributor> log
         await session.PersistAsync(phones.Select(p => p.Phone).ToArray(), ct).ConfigureAwait(false);
         await session.PersistAsync(emails.Select(e => e.Email).ToArray(), ct).ConfigureAwait(false);
         await session.PersistAsync(addrs.Select(a => a.Address).ToArray(), ct).ConfigureAwait(false);
-
         var contactPhones = new List<ContactPhoneNumberEntity>();
         var isPrimaryPhone = new HashSet<Guid>();
         foreach (var (personId, phone) in phones) {
@@ -122,14 +125,13 @@ public sealed class PeopleEfSeedContributor(ILogger<PeopleEfSeedContributor> log
         await session.PersistAsync(contactPhones, ct).ConfigureAwait(false);
         await session.PersistAsync(contactEmails, ct).ConfigureAwait(false);
         await session.PersistAsync(contactAddrs, ct).ConfigureAwait(false);
-
         var relationships = BuildRelationships(faker, persons.ToList());
         if (relationships.Count > 0)
             await session.PersistAsync(relationships, ct).ConfigureAwait(false);
 
         logger.LogInformation(
-            "Seeded {PersonCount} persons, {PhoneCount} phones, {EmailCount} emails, {AddrCount} addresses, {RelCount} relationships.",
-            persons.Count, phones.Count, emails.Count, addrs.Count, relationships.Count);
+            "Seeded {PersonCount} persons, {PhoneCount} phones, {EmailCount} emails, {AddrCount} addresses, {RelCount} relationships.", persons.Count, phones.Count, emails.Count,
+            addrs.Count, relationships.Count);
     }
 
     private static PersonEntity BuildPerson(Faker faker)

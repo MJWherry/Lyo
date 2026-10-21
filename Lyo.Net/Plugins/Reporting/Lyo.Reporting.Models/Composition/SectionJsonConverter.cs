@@ -5,9 +5,7 @@ using Lyo.Reporting.Models.Models;
 
 namespace Lyo.Reporting.Models.Composition;
 
-/// <summary>
-/// Reads <see cref="Section" /> from the <c>Controls</c> shape and writes <c>Controls</c> and <c>Subsections</c>.
-/// </summary>
+/// <summary>Reads <see cref="Section" /> from the <c>Controls</c> shape and writes <c>Controls</c> and <c>Subsections</c>.</summary>
 public sealed class SectionJsonConverter : JsonConverter<Section>
 {
     public override Section Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -55,18 +53,25 @@ public sealed class SectionJsonConverter : JsonConverter<Section>
     {
         if (TryGetString(root, "id", out var id))
             section.Id = id;
+
         if (TryGetString(root, "title", out var title))
             section.Title = title;
+
         if (TryGetString(root, "subtitle", out var subtitle))
             section.Subtitle = subtitle;
+
         if (TryGetString(root, "description", out var description))
             section.Description = description;
+
         if (TryGetInt(root, "order", out var order))
             section.Order = order;
+
         if (TryGetString(root, "visibleWhen", out var visibleWhen))
             section.VisibleWhen = visibleWhen;
+
         if (TryGetBool(root, "collapsed", out var collapsed))
             section.Collapsed = collapsed;
+
         if (TryGetProperty(root, "styles", out var styles) && styles.ValueKind == JsonValueKind.Object)
             section.Styles = JsonSerializer.Deserialize<Dictionary<string, string>>(styles.GetRawText(), options) ?? [];
     }
@@ -80,7 +85,7 @@ public sealed class SectionJsonConverter : JsonConverter<Section>
                 continue;
 
             if (control is Grid grid)
-                grid.Controls = [..grid.Controls.Where(c => c is not Grid)];
+                grid.Controls = [.. grid.Controls.Where(c => c is not Grid)];
 
             list.Add(control);
         }

@@ -1,6 +1,7 @@
 # Lyo.Nfc
 
-Read and write NTAG21x user pages and NFC Forum NDEF (Text, URI, or a raw record). `INfcTag` is the page port: `MemoryNfcTag` for tests and dumps, `Lyo.Nfc.Pcsc` for a PC/SC reader. ISO 15693 tags, including Tonie figures, live in `Lyo.Rfid`.
+Read and write NTAG21x user pages and NFC Forum NDEF (Text, URI, or a raw record). `INfcTag` is the page port: `MemoryNfcTag` for tests and dumps, `Lyo.Nfc.Pcsc` for a PC/SC
+reader. ISO 15693 tags, including Tonie figures, live in `Lyo.Rfid`.
 
 ## Features
 

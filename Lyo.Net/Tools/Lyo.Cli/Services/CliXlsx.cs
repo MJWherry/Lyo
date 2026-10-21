@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
-using Lyo.Json;
 using Lyo.Exceptions;
+using Lyo.Json;
 using Lyo.Xlsx;
 using Lyo.Xlsx.Models;
 using DataTableModel = Lyo.DataTable.Models.DataTable;
@@ -45,8 +45,8 @@ internal static class CliXlsx
     }
 
     /// <summary>
-    /// JSON workbook stats: file size, sheet names, and per-sheet rows, columns, headers, samples, and types. Pass <paramref name="sheet" /> to restrict the report to one sheet by name or
-    /// 0-based index.
+    /// JSON workbook stats: file size, sheet names, and per-sheet rows, columns, headers, samples, and types. Pass <paramref name="sheet" /> to restrict the report to one sheet
+    /// by name or 0-based index.
     /// </summary>
     public static string Stats(string? input, string? sheet, bool? hasHeader, XlsxService xlsx)
     {

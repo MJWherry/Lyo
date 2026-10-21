@@ -73,6 +73,5 @@ public sealed class PostgresGeolocationStore : IGeolocationStore, IHealth
     public string HealthCheckName => "geolocation-postgres";
 
     /// <inheritdoc />
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => PostgresHealth.CheckAsync(_contextFactory, PostgresGeolocationOptions.Schema, ct);
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => PostgresHealth.CheckAsync(_contextFactory, PostgresGeolocationOptions.Schema, ct);
 }

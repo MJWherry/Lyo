@@ -1,6 +1,7 @@
 # Lyo.Leaderboard.Web.Components
 
-Pass `ILeaderboardApiClient` into `LeaderboardManagement`. The property editor writes discrete-map, range-band, linear, and expression children onto the board algorithm. Enums use MudSelect.
+Pass `ILeaderboardApiClient` into `LeaderboardManagement`. The property editor writes discrete-map, range-band, linear, and expression children onto the board algorithm. Enums use
+MudSelect.
 
 ## Features
 

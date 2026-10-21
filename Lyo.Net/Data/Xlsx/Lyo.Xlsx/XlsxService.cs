@@ -13,7 +13,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Lyo.Xlsx;
 
 /// <summary>Facade for XLSX export (streaming OpenXML writer) and import (ExcelDataReader / ClosedXML), plus CSV conversion and batch HTML helpers.</summary>
-/// <remarks>Safe for concurrent calls. A call clones the data-table configuration it starts with. <see cref="SetExcelDataTableConfiguration" /> publishes a new instance for later calls.</remarks>
+/// <remarks>
+/// Safe for concurrent calls. A call clones the data-table configuration it starts with. <see cref="SetExcelDataTableConfiguration" /> publishes a new instance for later
+/// calls.
+/// </remarks>
 public class XlsxService : IXlsxService
 {
     private readonly ILogger<XlsxService> _logger;
@@ -490,6 +493,11 @@ public class XlsxService : IXlsxService
 
         return outputStream.ToArray();
     }
+
+    /// <inheritdoc cref="IXlsxService.ParseBytesAsResult{T}" />
+    public XlsxParseResult<T> ParseBytesAsResult<T>(byte[] xlsxBytes, string? sheetName = null, IReadOnlyCollection<string>? requiredHeaders = null)
+        where T : new()
+        => _reader.ParseBytesAsResult<T>(xlsxBytes, sheetName, requiredHeaders);
 
     /// <summary>Replaces the ExcelDataReader data-table configuration used for CSV conversion and parsing.</summary>
     public void SetExcelDataTableConfiguration(ExcelDataTableConfiguration excelDataTableConfiguration)
@@ -1212,9 +1220,4 @@ public class XlsxService : IXlsxService
         where T : new()
         => _reader.ParseXlsxStreamStreamingAsync<T>(xlsxStream, ct);
 #endif
-
-    /// <inheritdoc cref="IXlsxService.ParseBytesAsResult{T}" />
-    public XlsxParseResult<T> ParseBytesAsResult<T>(byte[] xlsxBytes, string? sheetName = null, IReadOnlyCollection<string>? requiredHeaders = null)
-        where T : new()
-        => _reader.ParseBytesAsResult<T>(xlsxBytes, sheetName, requiredHeaders);
 }

@@ -21,6 +21,7 @@ public sealed class FileStorageApiModelsTests
     {
         var json =
             """{"sessionId":"11111111-1111-1111-1111-111111111111","targetFileId":"22222222-2222-2222-2222-222222222222","partSizeBytes":8388608,"expiresUtc":"2026-01-01T00:00:00Z","providerKind":"awsS3"}""";
+
         var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
         var restored = JsonSerializer.Deserialize<MultipartBeginResponse>(json, options);
         Assert.NotNull(restored);
@@ -46,6 +47,7 @@ public sealed class FileStorageApiModelsTests
         var fileId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
         var original = new FileStorageFolderListResponse(
             [new("keep.txt", false, "reports", fileId, FileStoragePresence.Both, "keep.txt", 4, "reports/" + fileId.ToString("N"))], false);
+
         var json = JsonSerializer.Serialize(original);
         var restored = JsonSerializer.Deserialize<FileStorageFolderListResponse>(json);
         Assert.NotNull(restored);

@@ -31,7 +31,7 @@ internal sealed partial class FFmpegConvertEngine
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
         FFmpegPathKind.ThrowIfLocalFileMissing(inputPath);
         using var timer = _metrics.StartTimer(Constants.Metrics.ConvertDuration);
-        var result = await DispatchAsync(inputPath, outputPath, stdin: null, stdout: null, opts, applyTimeout: true, ct).ConfigureAwait(false);
+        var result = await DispatchAsync(inputPath, outputPath, null, null, opts, true, ct).ConfigureAwait(false);
         TrackConvert(result);
         return result;
     }
@@ -43,7 +43,7 @@ internal sealed partial class FFmpegConvertEngine
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
         FFmpegPathKind.ThrowIfLocalFileMissing(inputPath);
         if (opts.IoMode == MediaIoMode.Pipe)
-            return await DispatchAsync(inputPath, FFmpegPathKind.PipeOutput, stdin: null, stdout: outputStream, opts, applyTimeout: true, ct).ConfigureAwait(false);
+            return await DispatchAsync(inputPath, FFmpegPathKind.PipeOutput, null, outputStream, opts, true, ct).ConfigureAwait(false);
 
         var tempPath = FFmpegTempHelper.CreateTempFilePath(ExtensionFor(opts));
         try {
@@ -72,9 +72,9 @@ internal sealed partial class FFmpegConvertEngine
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         ArgumentHelpers.ThrowIfNull(outputStream);
         OperationHelpers.ThrowIfNotWritable(outputStream, $"Stream '{nameof(outputStream)}' must be writable.");
-        if (opts.IoMode == MediaIoMode.Pipe)
-            return await DispatchAsync(FFmpegPathKind.PipeInput, FFmpegPathKind.PipeOutput, inputStream, outputStream, opts, applyTimeout: true, ct)
-                .ConfigureAwait(false);
+        if (opts.IoMode == MediaIoMode.Pipe) {
+            return await DispatchAsync(FFmpegPathKind.PipeInput, FFmpegPathKind.PipeOutput, inputStream, outputStream, opts, true, ct).ConfigureAwait(false);
+        }
 
         var inputPath = await FFmpegTempHelper.WriteStreamToTempFileAsync(inputStream, ".tmp", ct).ConfigureAwait(false);
         try {
@@ -91,7 +91,7 @@ internal sealed partial class FFmpegConvertEngine
         OperationHelpers.ThrowIfNotReadable(inputStream, $"Stream '{nameof(inputStream)}' must be readable.");
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
         if (opts.IoMode == MediaIoMode.Pipe)
-            return await DispatchAsync(FFmpegPathKind.PipeInput, outputPath, inputStream, stdout: null, opts, applyTimeout: true, ct).ConfigureAwait(false);
+            return await DispatchAsync(FFmpegPathKind.PipeInput, outputPath, inputStream, null, opts, true, ct).ConfigureAwait(false);
 
         var inputPath = await FFmpegTempHelper.WriteStreamToTempFileAsync(inputStream, ".tmp", ct).ConfigureAwait(false);
         try {
@@ -113,7 +113,7 @@ internal sealed partial class FFmpegConvertEngine
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(inputPathOrUrl);
         FFmpegPathKind.ThrowIfLocalFileMissing(inputPathOrUrl);
-        return StartCoreAsync(inputPathOrUrl, stdin: null, opts, ct);
+        return StartCoreAsync(inputPathOrUrl, null, opts, ct);
     }
 
     public Task<Result<IMediaProcessSession>> StartConvertAsync(Stream input, ConvertKnobs opts, CancellationToken ct)
@@ -138,6 +138,7 @@ internal sealed partial class FFmpegConvertEngine
                     CancellationToken = ct
                 })
             .ConfigureAwait(false);
+
         var result = ToResult(run, Constants.Errors.FFmpegError);
         _metrics.IncrementCounter(result.IsSuccess ? Constants.Metrics.ExtractSuccess : Constants.Metrics.ExtractFailure);
         if (!result.IsSuccess && result.Errors?.Count > 0)
@@ -167,7 +168,7 @@ internal sealed partial class FFmpegConvertEngine
         var writerStream = pipe.Writer.AsStream();
         var readerStream = pipe.Reader.AsStream();
         var sessionCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        var command = BuildCommand(input, FFmpegPathKind.PipeOutput, opts, outputIsPipe: true);
+        var command = BuildCommand(input, FFmpegPathKind.PipeOutput, opts, true);
         var runTask = _runner.RunAsync(
             new() {
                 ExecutablePath = command.ExecutablePath,
@@ -180,6 +181,7 @@ internal sealed partial class FFmpegConvertEngine
                 Timeout = null,
                 CancellationToken = sessionCts.Token
             });
+
         var completion = AwaitSessionAsync(runTask, pipe.Writer);
         IMediaProcessSession session = new MediaProcessSession(readerStream, completion, pipe.Writer, sessionCts);
         return Result<IMediaProcessSession>.Success(session);
@@ -196,42 +198,29 @@ internal sealed partial class FFmpegConvertEngine
             try {
                 await writer.CompleteAsync(ex).ConfigureAwait(false);
             }
-            catch {
-            }
+            catch { }
 
             return Result<bool>.Failure(ex, Constants.Errors.FFmpegError);
         }
     }
 
-    private Task<Result<bool>> DispatchAsync(
-        string input,
-        string output,
-        Stream? stdin,
-        Stream? stdout,
-        ConvertKnobs opts,
-        bool applyTimeout,
-        CancellationToken ct)
+    private Task<Result<bool>> DispatchAsync(string input, string output, Stream? stdin, Stream? stdout, ConvertKnobs opts, bool applyTimeout, CancellationToken ct)
     {
         var outputIsPipe = stdout != null || string.Equals(output, FFmpegPathKind.PipeOutput, StringComparison.Ordinal);
         ThrowIfBlocked(opts, _options, outputIsPipe);
         if (!outputIsPipe && IsGif(opts))
             return RunGifAsync(input, output, opts, ct);
+
         if (!outputIsPipe && opts.TwoPass)
             return RunTwoPassAsync(input, output, opts, ct);
+
         if (opts.Loudness != null)
             return RunLoudnessAsync(input, output, stdin, stdout, opts, applyTimeout, ct);
 
         return RunToCompletionAsync(input, output, stdin, stdout, opts, applyTimeout, ct);
     }
 
-    private async Task<Result<bool>> RunToCompletionAsync(
-        string input,
-        string output,
-        Stream? stdin,
-        Stream? stdout,
-        ConvertKnobs opts,
-        bool applyTimeout,
-        CancellationToken ct)
+    private async Task<Result<bool>> RunToCompletionAsync(string input, string output, Stream? stdin, Stream? stdout, ConvertKnobs opts, bool applyTimeout, CancellationToken ct)
     {
         var outputIsPipe = stdout != null || string.Equals(output, FFmpegPathKind.PipeOutput, StringComparison.Ordinal);
         var command = BuildCommand(input, output, opts, outputIsPipe);
@@ -249,6 +238,7 @@ internal sealed partial class FFmpegConvertEngine
                     CancellationToken = ct
                 })
             .ConfigureAwait(false);
+
         return ToResult(run, Constants.Errors.FFmpegError);
     }
 
@@ -256,8 +246,8 @@ internal sealed partial class FFmpegConvertEngine
     {
         ArgumentHelpers.ThrowIf(
             opts.FragmentedOutput && opts.Format == null && !output.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase) &&
-            !string.Equals(output, FFmpegPathKind.PipeOutput, StringComparison.Ordinal),
-            "FragmentedOutput requires Format Mp4 or a .mp4 output path.");
+            !string.Equals(output, FFmpegPathKind.PipeOutput, StringComparison.Ordinal), "FragmentedOutput requires Format Mp4 or a .mp4 output path.");
+
         ArgumentHelpers.ThrowIf(
             opts.FragmentedOutput && opts.Format == null && string.Equals(output, FFmpegPathKind.PipeOutput, StringComparison.Ordinal),
             "FragmentedOutput requires Format Mp4 when outputting to a pipe.");

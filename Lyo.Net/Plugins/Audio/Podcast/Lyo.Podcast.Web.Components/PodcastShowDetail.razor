@@ -2,7 +2,8 @@
 
 @if (Show is null) {
     <MudText Typo="Typo.body2">No show selected.</MudText>
-} else {
+}
+else {
     <MudStack Spacing="3">
         <MudStack Row="true" Spacing="3">
             @if (!string.IsNullOrWhiteSpace(CoverImageUrl)) {
@@ -24,9 +25,11 @@
         }
         @foreach (var season in Show.Seasons) {
             <MudText Typo="Typo.subtitle1">Season @season.SeasonNumber @season.Name</MudText>
+
             @if (season.Episodes.Count == 0) {
                 <MudText Typo="Typo.body2">No episodes.</MudText>
-            } else {
+            }
+            else {
                 <MudSimpleTable Dense="true" Hover="true">
                     <thead>
                     <tr>

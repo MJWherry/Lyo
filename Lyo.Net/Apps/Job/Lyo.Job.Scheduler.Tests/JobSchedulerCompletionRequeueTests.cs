@@ -1,17 +1,15 @@
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Formatter;
 using Lyo.Job.Models;
 using Lyo.Job.Models.Response;
 using Lyo.MessageQueue;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Scheduler.Tests;
 
-/// <summary>
-/// Completion-queue poison handling: 404 acks, 500s use a counted envelope requeue (max 3) instead of an unbounded broker nack, and unparseable bytes are discarded.
-/// </summary>
+/// <summary>Completion-queue poison handling: 404 acks, 500s use a counted envelope requeue (max 3) instead of an unbounded broker nack, and unparseable bytes are discarded.</summary>
 public class JobSchedulerCompletionRequeueTests
 {
     [Fact]
@@ -89,8 +87,7 @@ public class JobSchedulerCompletionRequeueTests
                 EnableMisfireCatchUp = false
             }, api, new FormatterService(), new FakeEventPublisher(), mqService: mqService);
 
-    private static JobDefinitionRes BuildDefinition()
-        => new(LyoGuid.CreateV7(), "CompletionDef", null, "Test", "cs", true, [], [], null, 0, 0);
+    private static JobDefinitionRes BuildDefinition() => new(LyoGuid.CreateV7(), "CompletionDef", null, "Test", "cs", true, [], [], null);
 
     private static async Task<bool> InvokeOnJobRunCompleteAsync(JobScheduler scheduler, byte[] body)
     {

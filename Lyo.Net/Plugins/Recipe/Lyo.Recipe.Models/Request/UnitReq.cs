@@ -1,6 +1,6 @@
 namespace Lyo.Recipe.Models.Request;
 
-/// <summary>Create or update a cooking unit. An empty <see cref="Id"/> inserts a row.</summary>
+/// <summary>Create or update a cooking unit. An empty <see cref="Id" /> inserts a row.</summary>
 public sealed class UnitReq
 {
     /// <summary>Existing unit id. Empty creates a new unit.</summary>

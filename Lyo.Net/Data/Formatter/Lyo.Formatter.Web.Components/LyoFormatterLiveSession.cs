@@ -1,13 +1,12 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Lyo.Exceptions;
-using Lyo.Formatter;
 
 namespace Lyo.Formatter.Web.Components;
 
 /// <summary>
-/// Shared live-preview state for <see cref="LyoFormatterTemplateEditor" /> and <see cref="LyoFormatterPreview" />. The parent owns the instance so the two components can live in
-/// different layout regions. Template text updates immediately; annotated preview rebuilds after <see cref="DebounceInterval" />.
+/// Shared live-preview state for <see cref="LyoFormatterTemplateEditor" /> and <see cref="LyoFormatterPreview" />. The parent owns the instance so the two components can
+/// live in different layout regions. Template text updates immediately; annotated preview rebuilds after <see cref="DebounceInterval" />.
 /// </summary>
 public sealed class LyoFormatterLiveSession : INotifyPropertyChanged, IDisposable
 {
@@ -19,20 +18,7 @@ public sealed class LyoFormatterLiveSession : INotifyPropertyChanged, IDisposabl
     private int _debounceInterval = DefaultDebounceMs;
     private string? _hoveredPlaceholder;
     private CancellationTokenSource? _previewDebounceCts;
-    private IReadOnlyList<FormatterSegment> _previewSegments = [];
     private string _template = string.Empty;
-    private IReadOnlyList<FormatterSegment> _templateSegments = [];
-    private string? _validationError;
-
-    /// <summary>Builds a session that formats with the given <see cref="IFormatterService" /> (typically from DI).</summary>
-    public LyoFormatterLiveSession(IFormatterService formatter)
-    {
-        ArgumentHelpers.ThrowIfNull(formatter);
-        _formatter = formatter;
-    }
-
-    /// <inheritdoc />
-    public event PropertyChangedEventHandler? PropertyChanged;
 
     /// <summary>Raw template. Setter refreshes the editor overlay immediately and schedules a debounced preview rebuild.</summary>
     public string Template {
@@ -89,20 +75,20 @@ public sealed class LyoFormatterLiveSession : INotifyPropertyChanged, IDisposabl
     }
 
     /// <summary>Annotated spans for the live (immediate) template. Overlay uses <see cref="FormatterSegment.RawToken" /> for placeholders.</summary>
-    public IReadOnlyList<FormatterSegment> TemplateSegments => _templateSegments;
+    public IReadOnlyList<FormatterSegment> TemplateSegments { get; private set; } = [];
 
     /// <summary>Annotated spans after debounce. Preview uses <see cref="FormatterSegment.Text" /> replacements.</summary>
-    public IReadOnlyList<FormatterSegment> PreviewSegments => _previewSegments;
+    public IReadOnlyList<FormatterSegment> PreviewSegments { get; private set; } = [];
 
     /// <summary>Parser error for the current template, or null when it is empty or valid.</summary>
-    public string? ValidationError => _validationError;
+    public string? ValidationError { get; private set; }
 
     /// <summary>Unique placeholder keys in the current template, in first-seen order.</summary>
     public IReadOnlyList<string> PlaceholderKeys {
         get {
             var keys = new List<string>();
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var segment in _templateSegments) {
+            foreach (var segment in TemplateSegments) {
                 if (string.IsNullOrEmpty(segment.PlaceholderKey) || !seen.Add(segment.PlaceholderKey))
                     continue;
 
@@ -113,12 +99,12 @@ public sealed class LyoFormatterLiveSession : INotifyPropertyChanged, IDisposabl
         }
     }
 
-    /// <summary>True when <paramref name="key" /> equals <see cref="HoveredPlaceholder" />.</summary>
-    public bool IsHovered(string? key)
-        => !string.IsNullOrEmpty(key) && string.Equals(_hoveredPlaceholder, key, StringComparison.OrdinalIgnoreCase);
-
-    /// <summary>Rebuilds preview spans immediately, skipping debounce. Call after setting the initial <see cref="Template" /> and <see cref="Context" />.</summary>
-    public void RefreshPreview() => RebuildPreview();
+    /// <summary>Builds a session that formats with the given <see cref="IFormatterService" /> (typically from DI).</summary>
+    public LyoFormatterLiveSession(IFormatterService formatter)
+    {
+        ArgumentHelpers.ThrowIfNull(formatter);
+        _formatter = formatter;
+    }
 
     /// <inheritdoc />
     public void Dispose()
@@ -127,6 +113,15 @@ public sealed class LyoFormatterLiveSession : INotifyPropertyChanged, IDisposabl
         _previewDebounceCts?.Dispose();
         _previewDebounceCts = null;
     }
+
+    /// <inheritdoc />
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    /// <summary>True when <paramref name="key" /> equals <see cref="HoveredPlaceholder" />.</summary>
+    public bool IsHovered(string? key) => !string.IsNullOrEmpty(key) && string.Equals(_hoveredPlaceholder, key, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Rebuilds preview spans immediately, skipping debounce. Call after setting the initial <see cref="Template" /> and <see cref="Context" />.</summary>
+    public void RefreshPreview() => RebuildPreview();
 
     private void SchedulePreviewRebuild()
     {
@@ -156,8 +151,8 @@ public sealed class LyoFormatterLiveSession : INotifyPropertyChanged, IDisposabl
 
     private void RebuildTemplateSegments()
     {
-        _templateSegments = SafeSegments(_template);
-        _validationError = string.IsNullOrEmpty(_template) || _formatter.TryValidateTemplate(_template, out var error) ? null : error;
+        TemplateSegments = SafeSegments(_template);
+        ValidationError = string.IsNullOrEmpty(_template) || _formatter.TryValidateTemplate(_template, out var error) ? null : error;
         Notify(nameof(TemplateSegments));
         Notify(nameof(ValidationError));
         Notify(nameof(PlaceholderKeys));
@@ -165,7 +160,7 @@ public sealed class LyoFormatterLiveSession : INotifyPropertyChanged, IDisposabl
 
     private void RebuildPreview()
     {
-        _previewSegments = SafeSegments(_template);
+        PreviewSegments = SafeSegments(_template);
         Notify(nameof(PreviewSegments));
     }
 

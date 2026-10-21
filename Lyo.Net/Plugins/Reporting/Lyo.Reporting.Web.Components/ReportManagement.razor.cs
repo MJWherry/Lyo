@@ -1,26 +1,22 @@
-using Lyo.Api.Models.Common.Response;
-using Lyo.Parameters;
-using Lyo.Reporting.Client;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
-using Lyo.Web.Components.DataGrid;
 using Lyo.Web.Components.Dialog;
 using Microsoft.AspNetCore.Components;
-using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Lyo.Reporting.Web.Components;
 
 public partial class ReportManagement
 {
+    private int _tabIndex;
+    private bool _tabInitialized;
+
     /// <summary>Base route for reporting endpoints (for example "Reporting").</summary>
     [Parameter]
     [EditorRequired]
     public string BaseRoute { get; set; } = "Reporting";
 
     /// <summary>
-    /// Host callback to download a persisted output by opaque file id (usually FileStorage). The second argument is the preferred download file name
-    /// (<c>OriginalFileName</c>). When null, download actions show a snackbar that no download handler is configured.
+    /// Host callback to download a persisted output by opaque file id (usually FileStorage). The second argument is the preferred download file name (<c>OriginalFileName</c>).
+    /// When null, download actions show a snackbar that no download handler is configured.
     /// </summary>
     [Parameter]
     public Func<Guid, string?, CancellationToken, Task>? DownloadFileAsync { get; set; }
@@ -42,9 +38,6 @@ public partial class ReportManagement
     /// <summary>When set, Definitions shows a Design action that opens the composition workbench.</summary>
     [Parameter]
     public EventCallback<Guid> Design { get; set; }
-
-    private int _tabIndex;
-    private bool _tabInitialized;
 
     protected override void OnParametersSet()
     {
@@ -82,6 +75,7 @@ public partial class ReportManagement
             { d => d.LoadReportDataAsync, ReportGenerationDataLoader.Create(ApiClient, $"{BaseRoute.TrimEnd('/')}/Generation") },
             { d => d.OpenOutput, true }
         };
+
         await DialogService.ShowAsync<ReportGenerationView>("Report Generation", parameters, LyoDialogPresets.Medium);
     }
 }

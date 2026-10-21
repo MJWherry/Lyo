@@ -28,13 +28,15 @@ internal static class RfidCommands
         var cmd = new Command("path", "Print the SD-card directory and file name for a Tonie UID");
         var uidArg = new Argument<string>("uid") { Description = "16 hex characters, for example E004035012345678" };
         cmd.Arguments.Add(uidArg);
-        Bind(cmd, (pr, ct) => {
-            ct.ThrowIfCancellationRequested();
-            var path = TonieContentPath.FromUid(ParseUid(pr.GetValue(uidArg)!));
-            Console.WriteLine($"file {path.FileName}");
-            Console.WriteLine($"directory {path.DirectoryName}");
-            return Task.CompletedTask;
-        });
+        Bind(
+            cmd, (pr, ct) => {
+                ct.ThrowIfCancellationRequested();
+                var path = TonieContentPath.FromUid(ParseUid(pr.GetValue(uidArg)!));
+                Console.WriteLine($"file {path.FileName}");
+                Console.WriteLine($"directory {path.DirectoryName}");
+                return Task.CompletedTask;
+            });
+
         return cmd;
     }
 
@@ -45,17 +47,19 @@ internal static class RfidCommands
         var passwordOpt = PasswordOption();
         cmd.Options.Add(readerOpt);
         cmd.Options.Add(passwordOpt);
-        Bind(cmd, async (pr, ct) => {
-            var password = ParsePassword(pr.GetValue(passwordOpt));
-            var transceiver = OpenIso15693(pr.GetValue(readerOpt));
-            var uid = await TonieTagSession.InventoryAsync(transceiver, ct).ConfigureAwait(false);
-            var memory = await TonieTagSession.ReadUserMemoryAsync(transceiver, uid, password, ct).ConfigureAwait(false);
-            var path = TonieContentPath.FromUid(uid);
-            Console.WriteLine($"uid {ByteConvert.ToHex(uid)}");
-            Console.WriteLine($"file {path.FileName}");
-            Console.WriteLine($"directory {path.DirectoryName}");
-            Console.WriteLine(ByteConvert.ToHex(memory));
-        });
+        Bind(
+            cmd, async (pr, ct) => {
+                var password = ParsePassword(pr.GetValue(passwordOpt));
+                var transceiver = OpenIso15693(pr.GetValue(readerOpt));
+                var uid = await TonieTagSession.InventoryAsync(transceiver, ct).ConfigureAwait(false);
+                var memory = await TonieTagSession.ReadUserMemoryAsync(transceiver, uid, password, ct).ConfigureAwait(false);
+                var path = TonieContentPath.FromUid(uid);
+                Console.WriteLine($"uid {ByteConvert.ToHex(uid)}");
+                Console.WriteLine($"file {path.FileName}");
+                Console.WriteLine($"directory {path.DirectoryName}");
+                Console.WriteLine(ByteConvert.ToHex(memory));
+            });
+
         return cmd;
     }
 
@@ -66,16 +70,18 @@ internal static class RfidCommands
         var passwordOpt = PasswordOption();
         cmd.Options.Add(readerOpt);
         cmd.Options.Add(passwordOpt);
-        Bind(cmd, async (pr, ct) => {
-            var password = ParsePassword(pr.GetValue(passwordOpt));
-            var transceiver = OpenIso15693(pr.GetValue(readerOpt));
-            var uid = await TonieTagSession.InventoryAsync(transceiver, ct).ConfigureAwait(false);
-            await TonieTagSession.PrepareCustomTagAsync(transceiver, uid, userMemory: null, password, ct).ConfigureAwait(false);
-            var path = TonieContentPath.FromUid(uid);
-            Console.WriteLine($"uid {ByteConvert.ToHex(uid)}");
-            Console.WriteLine($"file {path.FileName}");
-            Console.WriteLine($"directory {path.DirectoryName}");
-        });
+        Bind(
+            cmd, async (pr, ct) => {
+                var password = ParsePassword(pr.GetValue(passwordOpt));
+                var transceiver = OpenIso15693(pr.GetValue(readerOpt));
+                var uid = await TonieTagSession.InventoryAsync(transceiver, ct).ConfigureAwait(false);
+                await TonieTagSession.PrepareCustomTagAsync(transceiver, uid, null, password, ct).ConfigureAwait(false);
+                var path = TonieContentPath.FromUid(uid);
+                Console.WriteLine($"uid {ByteConvert.ToHex(uid)}");
+                Console.WriteLine($"file {path.FileName}");
+                Console.WriteLine($"directory {path.DirectoryName}");
+            });
+
         return cmd;
     }
 
@@ -124,8 +130,8 @@ internal static class RfidCommands
         return password;
     }
 
-    private static void Bind(Command cmd, Func<ParseResult, CancellationToken, Task> body) =>
-        cmd.SetAction(async (pr, ct) => {
+    private static void Bind(Command cmd, Func<ParseResult, CancellationToken, Task> body)
+        => cmd.SetAction(async (pr, ct) => {
             try {
                 await body(pr, ct).ConfigureAwait(false);
                 return 0;

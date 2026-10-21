@@ -1,6 +1,7 @@
 # Lyo.Api.Import
 
-Validates an import request and dispatches to a format handler. JSON (array, wrapped rows path, NDJSON) is built in. YAML, XML, TOML, CSV, and XLSX are addon packages. A file over the row or byte cap fails the document and returns no rows.
+Validates an import request and dispatches to a format handler. JSON (array, wrapped rows path, NDJSON) is built in. YAML, XML, TOML, CSV, and XLSX are addon packages. A file over
+the row or byte cap fails the document and returns no rows.
 
 ## Features
 

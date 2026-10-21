@@ -4,13 +4,13 @@ using Lyo.Exceptions;
 namespace Lyo.Formatter.Algorithms;
 
 /// <summary>
-/// <see cref="IFormatterExpressionEvaluator" /> that runs <c>Algo("key")</c> and <c>score("key")</c> on <see cref="IAlgorithmRegistry" />.
-/// Any other expression uses the built-in formatter engine.
+/// <see cref="IFormatterExpressionEvaluator" /> that runs <c>Algo("key")</c> and <c>score("key")</c> on <see cref="IAlgorithmRegistry" />. Any other expression uses the
+/// built-in formatter engine.
 /// </summary>
 public sealed class AlgorithmFormatterExpressionEvaluator : IFormatterExpressionEvaluator
 {
-    private readonly IAlgorithmRegistry _registry;
     private readonly IFormatterExpressionEvaluator _fallback;
+    private readonly IAlgorithmRegistry _registry;
 
     /// <summary>Creates the addon. Other expressions use <see cref="FormatterExpressionEvaluator" />.</summary>
     /// <param name="registry">Catalog and startup algorithms. Must not be null.</param>
@@ -33,18 +33,19 @@ public sealed class AlgorithmFormatterExpressionEvaluator : IFormatterExpression
     {
         if (!ContainsCall(expression))
             return _fallback.TryValidate(expression);
-        return TryParseCall(expression, out _) ? null : "Formatter algorithms support Algo(\"key\") or score(\"key\").";
+
+        return TryParseCall(expression, out var _) ? null : "Formatter algorithms support Algo(\"key\") or score(\"key\").";
     }
 
     /// <inheritdoc />
-    public IReadOnlyList<string> GetIdentifiers(string expression)
-        => ContainsCall(expression) ? [] : _fallback.GetIdentifiers(expression);
+    public IReadOnlyList<string> GetIdentifiers(string expression) => ContainsCall(expression) ? [] : _fallback.GetIdentifiers(expression);
 
     /// <inheritdoc />
     public bool TryEvaluate(string expression, IReadOnlyDictionary<string, object?> context, out object? value, out string? error)
     {
         if (!ContainsCall(expression))
             return _fallback.TryEvaluate(expression, context, out value, out error);
+
         if (!TryParseCall(expression, out var key)) {
             value = null;
             error = "Formatter algorithms support Algo(\"key\") or score(\"key\").";
@@ -82,13 +83,14 @@ public sealed class AlgorithmFormatterExpressionEvaluator : IFormatterExpression
     {
         key = string.Empty;
         var text = expression.Trim();
-        var prefix = text.StartsWith("Algo(", StringComparison.Ordinal) ? "Algo("
-            : text.StartsWith("score(", StringComparison.Ordinal) ? "score(" : null;
+        var prefix = text.StartsWith("Algo(", StringComparison.Ordinal) ? "Algo(" : text.StartsWith("score(", StringComparison.Ordinal) ? "score(" : null;
         if (prefix is null || !text.EndsWith(")", StringComparison.Ordinal))
             return false;
+
         var inner = text.Substring(prefix.Length, text.Length - prefix.Length - 1).Trim();
         if (inner.Length < 2 || inner[0] != '"' || inner[^1] != '"')
             return false;
+
         key = inner.Substring(1, inner.Length - 2);
         return AlgorithmKeys.IsKey(key);
     }

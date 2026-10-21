@@ -2,7 +2,10 @@
 
 EF Core implementation of [`IHomeInventoryStore`](../Lyo.HomeInventory/README.md) backed by PostgreSQL.
 
-- `HomeInventoryDbContext` models items, categories, locations, stock, attachments, and the movement ledger (see `Database/*` plus the migrations snapshot for the FK / cascade story). - `PostgresHomeInventoryStore` runs stock adjustments and transfers inside database transactions (`BeginTransactionAsync`) so the stock row and its paired movement row commit atomically. - The store also implements `Lyo.Health.IHealth` (`HealthCheckName = "home-inventory-postgres"`). Registering the store exposes a database liveness probe. - Schema constant: `PostgresHomeInventoryOptions.Schema = "home_inventory"`. Default configuration section: `PostgresHomeInventory` (`PostgresHomeInventoryOptions.SectionName`).
+- `HomeInventoryDbContext` models items, categories, locations, stock, attachments, and the movement ledger (see `Database/*` plus the migrations snapshot for the FK / cascade
+  story). - `PostgresHomeInventoryStore` runs stock adjustments and transfers inside database transactions (`BeginTransactionAsync`) so the stock row and its paired movement row
+  commit atomically. - The store also implements `Lyo.Health.IHealth` (`HealthCheckName = "home-inventory-postgres"`). Registering the store exposes a database liveness probe. -
+  Schema constant: `PostgresHomeInventoryOptions.Schema = "home_inventory"`. Default configuration section: `PostgresHomeInventory` (`PostgresHomeInventoryOptions.SectionName`).
 
 ## Examples
 
@@ -34,9 +37,11 @@ services.AddPostgresHomeInventoryStoreFromConfiguration(configuration);
 
 ## Service registration
 
-- `AddHomeInventoryDbContextFactory(Action<PostgresHomeInventoryOptions>)` / `AddHomeInventoryDbContextFactory(PostgresHomeInventoryOptions)` register the `IDbContextFactory<HomeInventoryDbContext>` only. Handy for tooling and migrations.
+- `AddHomeInventoryDbContextFactory(Action<PostgresHomeInventoryOptions>)` / `AddHomeInventoryDbContextFactory(PostgresHomeInventoryOptions)` register the
+  `IDbContextFactory<HomeInventoryDbContext>` only. Handy for tooling and migrations.
 - `AddHomeInventoryDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresHomeInventoryOptions.SectionName)` does the same, bound from configuration.
-- `AddPostgresHomeInventoryStore(Action<PostgresHomeInventoryOptions>)` / `AddPostgresHomeInventoryStore(PostgresHomeInventoryOptions)` register the DbContext factory **and** the `IHomeInventoryStore` singleton.
+- `AddPostgresHomeInventoryStore(Action<PostgresHomeInventoryOptions>)` / `AddPostgresHomeInventoryStore(PostgresHomeInventoryOptions)` register the DbContext factory **and** the
+  `IHomeInventoryStore` singleton.
 - `AddPostgresHomeInventoryStoreFromConfiguration(IConfiguration, string sectionName = PostgresHomeInventoryOptions.SectionName)` registers the store by binding configuration.
 
 ## From configuration
@@ -45,13 +50,19 @@ The same registration from configuration:
 
 ## Migration hygiene
 
-Coordinate schema changes with any API adapters, especially when adjusting movement uniqueness constraints or the `(ItemId, LocationId)` composite key on stock (which must stay aligned with `UpsertStockAsync` semantics). Avoid editing historical migrations retroactively unless you intentionally squash, because that breaks checksums already deployed in production CI.
+Coordinate schema changes with any API adapters, especially when adjusting movement uniqueness constraints or the `(ItemId, LocationId)` composite key on stock (which must stay
+aligned with `UpsertStockAsync` semantics). Avoid editing historical migrations retroactively unless you intentionally squash, because that breaks checksums already deployed in
+production CI.
 
 ## Tenant isolation
 
-Inventory entities (`HomeItemEntity`, `HomeCategoryEntity`, `HomeLocationEntity`, `HomeItemStockEntity`, `HomeItemMovementEntity`, `HomeAttachmentEntity`) carry a nullable `tenant_id` (uuid) column with a filtered `ix_home_inv_<entity>_tenant` index. `OwnerEntityType` / `OwnerEntityId` on items still describe which user/household owns the item *within* a tenant. Those are orthogonal concepts.
+Inventory entities (`HomeItemEntity`, `HomeCategoryEntity`, `HomeLocationEntity`, `HomeItemStockEntity`, `HomeItemMovementEntity`, `HomeAttachmentEntity`) carry a nullable
+`tenant_id` (uuid) column with a filtered `ix_home_inv_<entity>_tenant` index. `OwnerEntityType` / `OwnerEntityId` on items still describe which user/household owns the item
+*within* a tenant. Those are orthogonal concepts.
 
-`IHomeInventoryStore` accepts an explicit `Guid? tenantId` on every method and runs it through `TenancyResolver.Resolve` using the policy configured in `PostgresHomeInventoryOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when unset). Stock and movement transactional methods (`AdjustStockAsync`, `TransferStockAsync`) resolve the tenant once and stamp it on every row written in the transaction:
+`IHomeInventoryStore` accepts an explicit `Guid? tenantId` on every method and runs it through `TenancyResolver.Resolve` using the policy configured in
+`PostgresHomeInventoryOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when unset). Stock and movement transactional methods (`AdjustStockAsync`, `TransferStockAsync`)
+resolve the tenant once and stamp it on every row written in the transaction:
 
 - `SystemOnly`. Every row is persisted with `tenant_id = NULL`.
 - `SingleTenantDefault` *(default)*, caller value, falling back to `Tenancy.DefaultTenantId` then `EntityRefOptions.DefaultTenantId`.

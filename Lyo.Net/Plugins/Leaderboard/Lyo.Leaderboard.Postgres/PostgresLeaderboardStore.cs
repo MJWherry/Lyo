@@ -1,5 +1,6 @@
 using Lyo.Algorithms;
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 using Lyo.Health;
@@ -7,15 +8,14 @@ using Lyo.Leaderboard.Enums;
 using Lyo.Leaderboard.Postgres.Database;
 using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Leaderboard.Postgres;
 
 /// <summary>PostgreSQL implementation of <see cref="ILeaderboardStore" />. Board roles are enforced here.</summary>
 public sealed class PostgresLeaderboardStore : ILeaderboardStore, IHealth
 {
-    private readonly IDbContextFactory<LeaderboardDbContext> _factory;
     private readonly LeaderboardCatalog _catalog;
+    private readonly IDbContextFactory<LeaderboardDbContext> _factory;
 
     /// <summary>Creates the store.</summary>
     public PostgresLeaderboardStore(IDbContextFactory<LeaderboardDbContext> factory, IAlgorithmCatalog catalog, IAlgorithmRegistry registry)
@@ -31,8 +31,7 @@ public sealed class PostgresLeaderboardStore : ILeaderboardStore, IHealth
     public string HealthCheckName => "leaderboard-postgres";
 
     /// <inheritdoc />
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => PostgresHealth.CheckAsync(_factory, PostgresLeaderboardOptions.Schema, ct);
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => PostgresHealth.CheckAsync(_factory, PostgresLeaderboardOptions.Schema, ct);
 
     /// <inheritdoc />
     public async Task<BoardRecord> SaveBoardAsync(BoardRecord board, LeaderboardActor actor, CancellationToken ct = default)
@@ -52,16 +51,18 @@ public sealed class PostgresLeaderboardStore : ILeaderboardStore, IHealth
             LeaderboardMapper.CopyBoard(board, entity);
             entity.OwnerUserId = actor.UserId;
             db.Boards.Add(entity);
-            db.Members.Add(new() {
-                Id = LyoGuid.CreateV7(),
-                BoardId = entity.Id,
-                UserId = actor.UserId,
-                DisplayName = actor.DisplayName ?? actor.Email ?? "Owner",
-                Role = LeaderboardMapper.EnumText(MemberRole.Owner),
-                Status = LeaderboardMapper.EnumText(MemberStatus.Active),
-                JoinedAt = now,
-                CreatedAt = now
-            });
+            db.Members.Add(
+                new() {
+                    Id = LyoGuid.CreateV7(),
+                    BoardId = entity.Id,
+                    UserId = actor.UserId,
+                    DisplayName = actor.DisplayName ?? actor.Email ?? "Owner",
+                    Role = LeaderboardMapper.EnumText(MemberRole.Owner),
+                    Status = LeaderboardMapper.EnumText(MemberStatus.Active),
+                    JoinedAt = now,
+                    CreatedAt = now
+                });
+
             entity.AlgorithmKey = LeaderboardCatalog.KeyFor(entity.Slug);
             await db.SaveChangesAsync(ct).ConfigureAwait(false);
             await _catalog.SaveFormulaAsync(entity.AlgorithmKey, board.ScoreFormula, ct).ConfigureAwait(false);
@@ -103,9 +104,7 @@ public sealed class PostgresLeaderboardStore : ILeaderboardStore, IHealth
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(slug);
         await using var db = await _factory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var trimmed = slug.Trim();
-        var entity = await db.Boards.AsNoTracking()
-            .FirstOrDefaultAsync(b => b.Slug == trimmed && b.DeletedAt == null, ct)
-            .ConfigureAwait(false);
+        var entity = await db.Boards.AsNoTracking().FirstOrDefaultAsync(b => b.Slug == trimmed && b.DeletedAt == null, ct).ConfigureAwait(false);
         if (entity == null || !await CanSeeAsync(db, entity, actor, ct).ConfigureAwait(false))
             return null;
 
@@ -183,8 +182,7 @@ public sealed class PostgresLeaderboardStore : ILeaderboardStore, IHealth
         ArgumentHelpers.ThrowIfNull(actor);
         await using var db = await _factory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var board = await RequireVisibleBoardAsync(db, boardId, actor, ct).ConfigureAwait(false);
-        var rows = await db.Properties.AsNoTracking().Where(p => p.BoardId == board.Id).OrderBy(p => p.SortOrder).ThenBy(p => p.Key).ToListAsync(ct)
-            .ConfigureAwait(false);
+        var rows = await db.Properties.AsNoTracking().Where(p => p.BoardId == board.Id).OrderBy(p => p.SortOrder).ThenBy(p => p.Key).ToListAsync(ct).ConfigureAwait(false);
         return rows.Select(LeaderboardMapper.ToProperty).ToArray();
     }
 
@@ -279,10 +277,11 @@ public sealed class PostgresLeaderboardStore : ILeaderboardStore, IHealth
             ExpiresAt = request.ExpiresAt,
             CreatedAt = now
         };
+
         db.Invites.Add(invite);
         MemberEntity? member = null;
         if (request.ShareKind is InviteShareKind.Email or InviteShareKind.User) {
-            member = new MemberEntity {
+            member = new() {
                 Id = LyoGuid.CreateV7(),
                 BoardId = board.Id,
                 UserId = request.InvitedUserId,
@@ -292,6 +291,7 @@ public sealed class PostgresLeaderboardStore : ILeaderboardStore, IHealth
                 InvitedByUserId = actor.UserId,
                 CreatedAt = now
             };
+
             db.Members.Add(member);
         }
 
@@ -352,8 +352,7 @@ public sealed class PostgresLeaderboardStore : ILeaderboardStore, IHealth
         if (invite.MaxUses > 0 && invite.UseCount >= invite.MaxUses)
             throw new BadRequestException("This invite has no remaining uses.");
 
-        if (!string.IsNullOrWhiteSpace(invite.Email) &&
-            !string.Equals(invite.Email, actor.Email, StringComparison.OrdinalIgnoreCase))
+        if (!string.IsNullOrWhiteSpace(invite.Email) && !string.Equals(invite.Email, actor.Email, StringComparison.OrdinalIgnoreCase))
             throw new BadRequestException("This invite is locked to a different email address.");
 
         var now = DateTime.UtcNow;
@@ -361,17 +360,12 @@ public sealed class PostgresLeaderboardStore : ILeaderboardStore, IHealth
         if (existing == null && invite.InvitedUserId == actor.UserId)
             existing = await db.Members.FirstOrDefaultAsync(m => m.BoardId == invite.BoardId && m.UserId == invite.InvitedUserId, ct).ConfigureAwait(false);
 
-        if (existing == null && !string.IsNullOrWhiteSpace(invite.Email))
-            existing = await db.Members.FirstOrDefaultAsync(
-                    m => m.BoardId == invite.BoardId && m.UserId == null && m.DisplayName == invite.Email, ct)
-                .ConfigureAwait(false);
+        if (existing == null && !string.IsNullOrWhiteSpace(invite.Email)) {
+            existing = await db.Members.FirstOrDefaultAsync(m => m.BoardId == invite.BoardId && m.UserId == null && m.DisplayName == invite.Email, ct).ConfigureAwait(false);
+        }
 
         if (existing == null) {
-            existing = new MemberEntity {
-                Id = LyoGuid.CreateV7(),
-                BoardId = invite.BoardId,
-                CreatedAt = now
-            };
+            existing = new() { Id = LyoGuid.CreateV7(), BoardId = invite.BoardId, CreatedAt = now };
             db.Members.Add(existing);
         }
 
@@ -448,13 +442,13 @@ public sealed class PostgresLeaderboardStore : ILeaderboardStore, IHealth
         }
 
         var scored = await _catalog.ScoreAsync(board.AlgorithmKey, properties.Select(LeaderboardMapper.ToProperty).ToArray(), entry.Values, ct).ConfigureAwait(false);
-
         var now = DateTime.UtcNow;
         var status = isAdmin || !board.RequireVerification ? EntryStatus.Approved : EntryStatus.Pending;
         EntryEntity entity;
         if (entry.Id != Guid.Empty) {
-            entity = await db.Entries.Include(e => e.Values).FirstOrDefaultAsync(e => e.Id == entry.Id && e.DeletedAt == null, ct).ConfigureAwait(false)
-                ?? throw NotFoundException.ForResource("Entry", entry.Id);
+            entity = await db.Entries.Include(e => e.Values).FirstOrDefaultAsync(e => e.Id == entry.Id && e.DeletedAt == null, ct).ConfigureAwait(false) ??
+                throw NotFoundException.ForResource("Entry", entry.Id);
+
             var current = LeaderboardMapper.ParseEnum(entity.Status, EntryStatus.Draft);
             if (current == EntryStatus.Approved && !isAdmin)
                 throw new ForbiddenException("Approved entries can only be edited by an admin.");
@@ -465,7 +459,13 @@ public sealed class PostgresLeaderboardStore : ILeaderboardStore, IHealth
             db.EntryValues.RemoveRange(entity.Values);
         }
         else {
-            entity = new EntryEntity { Id = LyoGuid.CreateV7(), CreatedAt = now, BoardId = board.Id, MemberId = member.Id };
+            entity = new() {
+                Id = LyoGuid.CreateV7(),
+                CreatedAt = now,
+                BoardId = board.Id,
+                MemberId = member.Id
+            };
+
             db.Entries.Add(entity);
         }
 
@@ -480,16 +480,17 @@ public sealed class PostgresLeaderboardStore : ILeaderboardStore, IHealth
         entity.VerifiedByUserId = status == EntryStatus.Approved && isAdmin ? actor.UserId : null;
         entity.VerifiedAt = status == EntryStatus.Approved && isAdmin ? now : null;
         foreach (var value in entry.Values) {
-            db.EntryValues.Add(new() {
-                Id = LyoGuid.CreateV7(),
-                EntryId = entity.Id,
-                PropertyId = value.PropertyId,
-                ChoiceKey = value.ChoiceKey,
-                NumberValue = value.NumberValue,
-                TextValue = value.TextValue,
-                BoolValue = value.BoolValue,
-                DateTimeValue = value.DateTimeValue
-            });
+            db.EntryValues.Add(
+                new() {
+                    Id = LyoGuid.CreateV7(),
+                    EntryId = entity.Id,
+                    PropertyId = value.PropertyId,
+                    ChoiceKey = value.ChoiceKey,
+                    NumberValue = value.NumberValue,
+                    TextValue = value.TextValue,
+                    BoolValue = value.BoolValue,
+                    DateTimeValue = value.DateTimeValue
+                });
         }
 
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -506,8 +507,7 @@ public sealed class PostgresLeaderboardStore : ILeaderboardStore, IHealth
     {
         ArgumentHelpers.ThrowIfNull(actor);
         await using var db = await _factory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await db.Entries.AsNoTracking().Include(e => e.Values).FirstOrDefaultAsync(e => e.Id == entryId && e.DeletedAt == null, ct)
-            .ConfigureAwait(false);
+        var entity = await db.Entries.AsNoTracking().Include(e => e.Values).FirstOrDefaultAsync(e => e.Id == entryId && e.DeletedAt == null, ct).ConfigureAwait(false);
         if (entity == null)
             return null;
 
@@ -537,6 +537,7 @@ public sealed class PostgresLeaderboardStore : ILeaderboardStore, IHealth
             .ThenByDescending(e => e.CreatedAt)
             .ToListAsync(ct)
             .ConfigureAwait(false);
+
         var actorMember = await FindMemberAsync(db, board.Id, actor.UserId, ct).ConfigureAwait(false);
         var role = actorMember == null ? (MemberRole?)null : LeaderboardMapper.ParseEnum(actorMember.Role, MemberRole.Viewer);
         var isAdmin = role is MemberRole.Admin or MemberRole.Owner;
@@ -558,8 +559,9 @@ public sealed class PostgresLeaderboardStore : ILeaderboardStore, IHealth
         ArgumentHelpers.ThrowIfNull(change);
         ArgumentHelpers.ThrowIfNull(actor);
         await using var db = await _factory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await db.Entries.FirstOrDefaultAsync(e => e.Id == entryId && e.DeletedAt == null, ct).ConfigureAwait(false)
-            ?? throw NotFoundException.ForResource("Entry", entryId);
+        var entity = await db.Entries.FirstOrDefaultAsync(e => e.Id == entryId && e.DeletedAt == null, ct).ConfigureAwait(false) ??
+            throw NotFoundException.ForResource("Entry", entryId);
+
         var actorMember = await FindMemberAsync(db, entity.BoardId, actor.UserId, ct).ConfigureAwait(false);
         var role = actorMember == null ? (MemberRole?)null : LeaderboardMapper.ParseEnum(actorMember.Role, MemberRole.Viewer);
         var isAdmin = role is MemberRole.Admin or MemberRole.Owner;
@@ -582,9 +584,8 @@ public sealed class PostgresLeaderboardStore : ILeaderboardStore, IHealth
             if (current == EntryStatus.Approved && !isAdmin)
                 throw new ForbiddenException("Approved entries cannot be withdrawn.");
         }
-        else {
+        else
             throw new BadRequestException("Unsupported entry status change.");
-        }
 
         entity.Status = LeaderboardMapper.EnumText(change.Status);
         entity.UpdatedAt = DateTime.UtcNow;
@@ -616,6 +617,7 @@ public sealed class PostgresLeaderboardStore : ILeaderboardStore, IHealth
             CreatedByUserId = actor.UserId,
             CreatedAt = DateTime.UtcNow
         };
+
         db.Adjustments.Add(entity);
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         await RecalculateBoardAsync(db, adjustment.BoardId, ct).ConfigureAwait(false);
@@ -628,8 +630,9 @@ public sealed class PostgresLeaderboardStore : ILeaderboardStore, IHealth
     {
         ArgumentHelpers.ThrowIfNull(actor);
         await using var db = await _factory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await db.Adjustments.FirstOrDefaultAsync(a => a.Id == adjustmentId && a.DeletedAt == null, ct).ConfigureAwait(false)
-            ?? throw NotFoundException.ForResource("Adjustment", adjustmentId);
+        var entity = await db.Adjustments.FirstOrDefaultAsync(a => a.Id == adjustmentId && a.DeletedAt == null, ct).ConfigureAwait(false) ??
+            throw NotFoundException.ForResource("Adjustment", adjustmentId);
+
         await RequireRoleAsync(db, entity.BoardId, actor, MemberRole.Admin, ct).ConfigureAwait(false);
         entity.DeletedAt = DateTime.UtcNow;
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -664,11 +667,9 @@ public sealed class PostgresLeaderboardStore : ILeaderboardStore, IHealth
         var board = await db.Boards.FirstAsync(b => b.Id == boardId, ct).ConfigureAwait(false);
         var aggregation = LeaderboardMapper.ParseEnum(board.AggregationKind, AggregationKind.Sum);
         var sort = LeaderboardMapper.ParseEnum(board.SortDirection, SortDirection.Desc);
-        var members = await db.Members.Where(m => m.BoardId == boardId && m.Status == LeaderboardMapper.EnumText(MemberStatus.Active)).ToListAsync(ct)
-            .ConfigureAwait(false);
+        var members = await db.Members.Where(m => m.BoardId == boardId && m.Status == LeaderboardMapper.EnumText(MemberStatus.Active)).ToListAsync(ct).ConfigureAwait(false);
         var approved = LeaderboardMapper.EnumText(EntryStatus.Approved);
-        var entries = await db.Entries.AsNoTracking().Where(e => e.BoardId == boardId && e.DeletedAt == null && e.Status == approved).ToListAsync(ct)
-            .ConfigureAwait(false);
+        var entries = await db.Entries.AsNoTracking().Where(e => e.BoardId == boardId && e.DeletedAt == null && e.Status == approved).ToListAsync(ct).ConfigureAwait(false);
         var adjustments = await db.Adjustments.AsNoTracking().Where(a => a.BoardId == boardId && a.DeletedAt == null).ToListAsync(ct).ConfigureAwait(false);
         var existing = await db.Standings.Where(s => s.BoardId == boardId).ToListAsync(ct).ConfigureAwait(false);
         db.Standings.RemoveRange(existing);
@@ -678,21 +679,23 @@ public sealed class PostgresLeaderboardStore : ILeaderboardStore, IHealth
             var memberEntries = entries.Where(e => e.MemberId == member.Id).Select(e => new ApprovedEntryScore(e.ComputedScore, e.OccurredAt)).ToArray();
             var entryScore = LeaderboardAggregator.Aggregate(aggregation, board.AggregationN, sort, memberEntries);
             var adjustmentScore = adjustments.Where(a => a.MemberId == member.Id).Sum(a => a.Delta);
-            computed.Add(new() {
-                BoardId = boardId,
-                MemberId = member.Id,
-                EntryScore = entryScore,
-                AdjustmentScore = adjustmentScore,
-                TotalScore = entryScore + adjustmentScore,
-                EntryCount = memberEntries.Length,
-                LastEntryAt = memberEntries.Length == 0 ? null : memberEntries.Max(e => e.OccurredAt),
-                ComputedAt = now
-            });
+            computed.Add(
+                new() {
+                    BoardId = boardId,
+                    MemberId = member.Id,
+                    EntryScore = entryScore,
+                    AdjustmentScore = adjustmentScore,
+                    TotalScore = entryScore + adjustmentScore,
+                    EntryCount = memberEntries.Length,
+                    LastEntryAt = memberEntries.Length == 0 ? null : memberEntries.Max(e => e.OccurredAt),
+                    ComputedAt = now
+                });
         }
 
         IEnumerable<StandingEntity> ranked = sort == SortDirection.Asc
             ? computed.OrderBy(s => s.TotalScore).ThenBy(s => s.LastEntryAt ?? DateTime.MaxValue)
             : computed.OrderByDescending(s => s.TotalScore).ThenBy(s => s.LastEntryAt ?? DateTime.MaxValue);
+
         var rank = 1;
         foreach (var row in ranked) {
             row.Rank = rank++;

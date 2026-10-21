@@ -3,18 +3,21 @@ using System.Collections.Concurrent;
 namespace Lyo.Algorithms;
 
 /// <summary>
-/// Resolves catalog revisions and publishes an immutable slot.
-/// A compiled latest or label delegate is invoked with <see cref="Volatile.Read{T}(ref T)" /> and does not open the store.
+/// Resolves catalog revisions and publishes an immutable slot. A compiled latest or label delegate is invoked with <see cref="Volatile.Read{T}(ref T)" /> and does not open
+/// the store.
 /// </summary>
 public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
 {
+    [ThreadStatic]
+    private static HashSet<string>? _warming;
+
     private readonly IExpressionCompiler _compiler;
-    private readonly IAlgorithmStartupStore _startup;
-    private readonly AlgorithmOptions _options;
-    private readonly IAlgorithmDefinitionStore? _store;
-    private readonly ConcurrentDictionary<string, SlotHolder> _latest = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, SlotHolder> _labels = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, SlotHolder> _latest = new(StringComparer.Ordinal);
+    private readonly AlgorithmOptions _options;
     private readonly ConcurrentDictionary<PinKey, object> _pins = new();
+    private readonly IAlgorithmStartupStore _startup;
+    private readonly IAlgorithmDefinitionStore? _store;
 
     /// <summary>Creates a runtime store. <paramref name="store" /> null means every resolve misses (startup-only hosts).</summary>
     public RuntimeAlgorithmStore(IExpressionCompiler compiler, IAlgorithmStartupStore startup, AlgorithmOptions options, IAlgorithmDefinitionStore? store = null)
@@ -32,6 +35,7 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
         var algorithm = FindCompiled<TContext, TResult>(reference);
         if (algorithm is null)
             return false;
+
         result = algorithm.Execute(context);
         return true;
     }
@@ -41,8 +45,10 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
     {
         if (FindCompiled<TContext, TResult>(reference) is { } ready)
             return ready;
+
         if (_store is null)
             return null;
+
         if (!_options.AllowRuntimeOverride && _startup.ContainsKey(reference.Key))
             return null;
 
@@ -57,15 +63,15 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
 
         var selected = await SelectAsync(definition, reference, ct).ConfigureAwait(false);
         var revision = AlgorithmHelpers.ThrowIfNull(selected.Revision, $"Algorithm '{reference.Key}' has no revision for {Describe(reference)}.");
-
-        var body = new Body(definition.Id, definition.Key, revision, selected.LastGood, lastGoodDelegates: null);
+        var body = new Body(definition.Id, definition.Key, revision, selected.LastGood, null);
         if (reference.Address == AlgorithmAddress.Revision)
             return await CompileWarm<TContext, TResult>(body, reference, ct).ConfigureAwait(false);
 
-        var slot = holder ?? Holder(reference, create: true)!;
+        var slot = holder ?? Holder(reference, true)!;
         var raced = slot.Read();
         if (raced is not null && raced.Revision.Revision == body.Revision.Revision)
             return await CompileWarm<TContext, TResult>(raced, reference, ct).ConfigureAwait(false);
+
         slot.Publish(body);
         return await CompileWarm<TContext, TResult>(body, reference, ct).ConfigureAwait(false);
     }
@@ -92,8 +98,10 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
     {
         if (revision.Kind == AlgorithmKind.Expression)
             return AlgorithmCalls.Keys(revision.Source);
+
         if (revision.Kind != AlgorithmKind.Composite || string.IsNullOrWhiteSpace(revision.Payload))
             return [];
+
         var composite = AlgorithmPayload.ParseComposite(revision.Payload!);
         var keys = new List<string>();
         foreach (var child in composite.Children) {
@@ -103,6 +111,7 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
 
         if (!string.IsNullOrWhiteSpace(composite.Formula))
             keys.AddRange(AlgorithmCalls.Keys(composite.Formula));
+
         return keys;
     }
 
@@ -112,12 +121,9 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
         return value;
     }
 
-    [ThreadStatic]
-    private static HashSet<string>? _warming;
-
     private static bool EnterWarm(string key)
     {
-        _warming ??= new HashSet<string>(StringComparer.Ordinal);
+        _warming ??= new(StringComparer.Ordinal);
         return _warming.Add(key);
     }
 
@@ -126,35 +132,38 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
     /// <summary>Publishes the latest slot for a revision saved in this process. The next execute compiles from this body.</summary>
     internal void NoteLatest(AlgorithmDefinitionRes definition, AlgorithmRevisionRes revision)
     {
-        var holder = _latest.GetOrAdd(definition.Key, static _ => new SlotHolder());
-        holder.Publish(new Body(definition.Id, definition.Key, revision, lastGood: true, LastGoodOf(holder.Read())));
+        var holder = _latest.GetOrAdd(definition.Key, static _ => new());
+        holder.Publish(new(definition.Id, definition.Key, revision, true, LastGoodOf(holder.Read())));
     }
 
     /// <summary>Publishes a label slot. Mutable labels keep the previous delegate when the new body fails to compile.</summary>
     internal void NoteLabel(string key, AlgorithmLabelRes label, AlgorithmRevisionRes revision)
     {
-        var holder = _labels.GetOrAdd(LabelKey(key, label.Label), static _ => new SlotHolder());
-        holder.Publish(new Body(revision.DefinitionId, key, revision, label.IsMutable, LastGoodOf(holder.Read())));
+        var holder = _labels.GetOrAdd(LabelKey(key, label.Label), static _ => new());
+        holder.Publish(new(revision.DefinitionId, key, revision, label.IsMutable, LastGoodOf(holder.Read())));
     }
 
     private static ConcurrentDictionary<TypePair, object>? LastGoodOf(Body? previous)
     {
         if (previous is null)
             return null;
+
         return previous.Compiled.IsEmpty ? previous.LastGoodDelegates : previous.Compiled;
     }
 
     private IAlgorithm<TContext, TResult>? FindCompiled<TContext, TResult>(AlgorithmRef reference)
     {
         if (reference.Address == AlgorithmAddress.Revision) {
-            if (_pins.TryGetValue(new PinKey(reference.Key, reference.RevisionNumber!.Value, typeof(TContext), typeof(TResult)), out var pinned))
+            if (_pins.TryGetValue(new(reference.Key, reference.RevisionNumber!.Value, typeof(TContext), typeof(TResult)), out var pinned))
                 return (IAlgorithm<TContext, TResult>)pinned;
+
             return null;
         }
 
         var body = Holder(reference)?.Read();
         if (body is null)
             return null;
+
         return body.Find<TContext, TResult>();
     }
 
@@ -170,7 +179,8 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
         IAlgorithm<TContext, TResult> compiled;
         if (body.Revision.Kind == AlgorithmKind.Named) {
             _startup.TryGet<TContext, TResult>(body.Revision.Source, out var named);
-            compiled = new KeyedAlgorithm<TContext, TResult>(body.Key, AlgorithmHelpers.ThrowIfNull(named, $"Catalog algorithm names startup key '{body.Revision.Source}', which is not registered."));
+            compiled = new KeyedAlgorithm<TContext, TResult>(
+                body.Key, AlgorithmHelpers.ThrowIfNull(named, $"Catalog algorithm names startup key '{body.Revision.Source}', which is not registered."));
         }
         else if (body.Revision.Kind == AlgorithmKind.Expression) {
             var result = _compiler.Compile<TContext, TResult>(body.Revision.Source);
@@ -194,7 +204,8 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
         compiled = new HostedAlgorithm<TContext, TResult>(body.Key, body.Revision.Kind, compiled, _options.MaxChainDepth, this);
         body.Compiled[pair] = compiled;
         if (reference.Address == AlgorithmAddress.Revision)
-            _pins.TryAdd(new PinKey(reference.Key, body.Revision.Revision, typeof(TContext), typeof(TResult)), compiled);
+            _pins.TryAdd(new(reference.Key, body.Revision.Revision, typeof(TContext), typeof(TResult)), compiled);
+
         return compiled;
     }
 
@@ -220,6 +231,7 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
                 var label = await _store!.GetLabelAsync(definition.Key, reference.LabelName!, ct).ConfigureAwait(false);
                 if (label is null)
                     return (null, false);
+
                 var revision = await _store.GetRevisionAsync(definition.Key, label.Revision, ct).ConfigureAwait(false);
                 return (revision, label.IsMutable);
             default:
@@ -231,32 +243,34 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
     {
         if (reference.Address == AlgorithmAddress.Revision)
             return null;
+
         var map = reference.Address == AlgorithmAddress.Label ? _labels : _latest;
         var key = reference.Address == AlgorithmAddress.Label ? LabelKey(reference.Key, reference.LabelName!) : reference.Key;
         if (create)
-            return map.GetOrAdd(key, static _ => new SlotHolder());
+            return map.GetOrAdd(key, static _ => new());
+
         return map.TryGetValue(key, out var holder) ? holder : null;
     }
 
     private static string LabelKey(string key, string label) => key + "\n" + label;
 
-    private static string Describe(AlgorithmRef reference) => reference.Address switch {
-        AlgorithmAddress.Revision => $"revision {reference.RevisionNumber}",
-        AlgorithmAddress.Label => $"label '{reference.LabelName}'",
-        _ => "latest"
-    };
+    private static string Describe(AlgorithmRef reference)
+        => reference.Address switch {
+            AlgorithmAddress.Revision => $"revision {reference.RevisionNumber}",
+            AlgorithmAddress.Label => $"label '{reference.LabelName}'",
+            var _ => "latest"
+        };
 
     private readonly record struct TypePair(Type Context, Type Result);
 
     private readonly record struct PinKey(string Key, int Revision, Type Context, Type Result);
 
-    private sealed class HostedAlgorithm<TContext, TResult>(
-        string key, AlgorithmKind kind, IAlgorithm<TContext, TResult> inner, int maxDepth, RuntimeAlgorithmStore store) : IAlgorithm<TContext, TResult>
+    private sealed class HostedAlgorithm<TContext, TResult>(string key, AlgorithmKind kind, IAlgorithm<TContext, TResult> inner, int maxDepth, RuntimeAlgorithmStore store)
+        : IAlgorithm<TContext, TResult>
     {
-        private readonly string _key = key;
-        private readonly bool _callsChildren = inner is ICallsChildren calls && calls.CallsChildren || kind == AlgorithmKind.Composite;
+        private readonly bool _callsChildren = (inner is ICallsChildren calls && calls.CallsChildren) || kind == AlgorithmKind.Composite;
 
-        public string Key => _key;
+        public string Key { get; } = key;
 
         public TResult Execute(TContext context)
         {
@@ -266,14 +280,16 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
             var began = AlgorithmCallScope.Begin(maxDepth);
             if (began)
                 AlgorithmCallScope.SetInvoker(child => store.InvokeChild(context, child));
-            AlgorithmCallScope.Enter(_key);
+
+            AlgorithmCallScope.Enter(Key);
             try {
                 if (kind is AlgorithmKind.Expression or AlgorithmKind.Named)
-                    return AlgorithmTrace.Run(_key, kind, null, () => inner.Execute(context), AlgorithmCalls.AsDouble);
+                    return AlgorithmTrace.Run(Key, kind, null, () => inner.Execute(context), AlgorithmCalls.AsDouble);
+
                 return inner.Execute(context);
             }
             finally {
-                AlgorithmCallScope.Exit(_key);
+                AlgorithmCallScope.Exit(Key);
                 if (began)
                     AlgorithmCallScope.End();
             }
@@ -291,15 +307,6 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
 
     private sealed class Body
     {
-        public Body(Guid definitionId, string key, AlgorithmRevisionRes revision, bool lastGood, ConcurrentDictionary<TypePair, object>? lastGoodDelegates)
-        {
-            DefinitionId = definitionId;
-            Key = key;
-            Revision = revision;
-            LastGood = lastGood;
-            LastGoodDelegates = lastGoodDelegates;
-        }
-
         public Guid DefinitionId { get; }
 
         public string Key { get; }
@@ -314,10 +321,20 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
 
         public ConcurrentDictionary<TypePair, byte> Failed { get; } = new();
 
+        public Body(Guid definitionId, string key, AlgorithmRevisionRes revision, bool lastGood, ConcurrentDictionary<TypePair, object>? lastGoodDelegates)
+        {
+            DefinitionId = definitionId;
+            Key = key;
+            Revision = revision;
+            LastGood = lastGood;
+            LastGoodDelegates = lastGoodDelegates;
+        }
+
         public IAlgorithm<TContext, TResult>? Find<TContext, TResult>()
         {
             if (Compiled.TryGetValue(new(typeof(TContext), typeof(TResult)), out var found))
                 return (IAlgorithm<TContext, TResult>)found;
+
             return null;
         }
     }

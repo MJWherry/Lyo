@@ -22,28 +22,33 @@ public static class ChipHues
     public const int Rose = 332;
 
     /// <summary>Named hues in wheel order, Coral through Rose.</summary>
-    public static readonly int[] List = [Coral, Amber, Lime, Green, Teal, Cyan, Blue, Indigo, Violet, Purple, Magenta, Rose];
+    public static readonly int[] List = [
+        Coral, Amber, Lime, Green, Teal, Cyan, Blue, Indigo, Violet, Purple,
+        Magenta, Rose
+    ];
 
     /// <summary>Fill for <paramref name="hue" /> at 72% saturation and 50% lightness. Negative hues are a neutral gray.</summary>
     public static Color Fill(int hue)
     {
         if (hue < 0)
             return Color.FromRgb(0x3A, 0x41, 0x50);
-        var degrees = ((hue % 360) + 360) % 360;
+
+        var degrees = (hue % 360 + 360) % 360;
         const double saturation = 0.72;
         const double lightness = 0.50;
-        var chroma = (1 - Math.Abs((2 * lightness) - 1)) * saturation;
+        var chroma = (1 - Math.Abs(2 * lightness - 1)) * saturation;
         var sector = degrees / 60d;
-        var x = chroma * (1 - Math.Abs((sector % 2) - 1));
+        var x = chroma * (1 - Math.Abs(sector % 2 - 1));
         var (r, g, b) = sector switch {
             < 1 => (chroma, x, 0d),
             < 2 => (x, chroma, 0d),
             < 3 => (0d, chroma, x),
             < 4 => (0d, x, chroma),
             < 5 => (x, 0d, chroma),
-            _ => (chroma, 0d, x)
+            var _ => (chroma, 0d, x)
         };
-        var match = lightness - (chroma / 2);
+
+        var match = lightness - chroma / 2;
         return Color.FromRgb(Channel(r + match), Channel(g + match), Channel(b + match));
     }
 
@@ -64,6 +69,18 @@ public class Chip : Border
 
     private readonly TextBlock _label;
 
+    /// <summary>Text inside the chip.</summary>
+    public string? Text {
+        get => GetValue(TextProperty);
+        set => SetValue(TextProperty, value);
+    }
+
+    /// <summary>Hue in degrees. Below zero uses a neutral fill.</summary>
+    public int Hue {
+        get => GetValue(HueProperty);
+        set => SetValue(HueProperty, value);
+    }
+
     public Chip()
     {
         CornerRadius = new(9);
@@ -74,20 +91,6 @@ public class Chip : Border
         _label = new() { FontSize = 11, Foreground = Brushes.White, VerticalAlignment = VerticalAlignment.Center };
         Child = _label;
         Apply();
-    }
-
-    /// <summary>Text inside the chip.</summary>
-    public string? Text
-    {
-        get => GetValue(TextProperty);
-        set => SetValue(TextProperty, value);
-    }
-
-    /// <summary>Hue in degrees. Below zero uses a neutral fill.</summary>
-    public int Hue
-    {
-        get => GetValue(HueProperty);
-        set => SetValue(HueProperty, value);
     }
 
     /// <inheritdoc />

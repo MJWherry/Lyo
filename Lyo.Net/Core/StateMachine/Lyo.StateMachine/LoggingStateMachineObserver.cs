@@ -34,6 +34,7 @@ public sealed class LoggingStateMachineObserver<TState, TTrigger> : IStateMachin
         if (!_logger.IsEnabled(LogLevel.Information))
             return;
 
-        _logger.LogInformation("State machine {Machine}: rejected {Trigger} in {State} ({Rejection})", rejection.MachineName, rejection.Trigger, rejection.State, rejection.Rejection);
+        _logger.LogInformation(
+            "State machine {Machine}: rejected {Trigger} in {State} ({Rejection})", rejection.MachineName, rejection.Trigger, rejection.State, rejection.Rejection);
     }
 }

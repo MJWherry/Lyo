@@ -24,7 +24,7 @@ public sealed class YamlReader : IYamlReader
     public T ParseStream<T>(Stream yamlStream)
     {
         ArgumentHelpers.ThrowIfNull(yamlStream);
-        using var reader = new StreamReader(yamlStream, _engine.Encoding, detectEncodingFromByteOrderMarks: true, 1024, leaveOpen: true);
+        using var reader = new StreamReader(yamlStream, _engine.Encoding, true, 1024, true);
         return ParseString<T>(reader.ReadToEnd());
     }
 
@@ -70,7 +70,7 @@ public sealed class YamlReader : IYamlReader
     public Result<DataTable.Models.DataTable> ParseStreamAsDataTable(Stream yamlStream, bool hasFooterRow = false)
     {
         ArgumentHelpers.ThrowIfNull(yamlStream);
-        using var reader = new StreamReader(yamlStream, _engine.Encoding, detectEncodingFromByteOrderMarks: true, 1024, leaveOpen: true);
+        using var reader = new StreamReader(yamlStream, _engine.Encoding, true, 1024, true);
         return ParseStringAsDataTable(reader.ReadToEnd(), hasFooterRow);
     }
 
@@ -95,7 +95,7 @@ public sealed class YamlReader : IYamlReader
     public async Task<T> ParseStreamAsync<T>(Stream yamlStream, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(yamlStream);
-        using var reader = new StreamReader(yamlStream, _engine.Encoding, detectEncodingFromByteOrderMarks: true, 1024, leaveOpen: true);
+        using var reader = new StreamReader(yamlStream, _engine.Encoding, true, 1024, true);
         var yaml = await reader.ReadToEndAsync(ct).ConfigureAwait(false);
         return ParseString<T>(yaml);
     }
@@ -125,7 +125,11 @@ public sealed class YamlReader : IYamlReader
     }
 
     /// <inheritdoc />
-    public Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(byte[] yamlBytes, bool hasFooterRow = false, Encoding? encoding = null, CancellationToken ct = default)
+    public Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(
+        byte[] yamlBytes,
+        bool hasFooterRow = false,
+        Encoding? encoding = null,
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(yamlBytes);
         ct.ThrowIfCancellationRequested();
@@ -136,9 +140,9 @@ public sealed class YamlReader : IYamlReader
     public async Task<Result<DataTable.Models.DataTable>> ParseStreamAsDataTableAsync(Stream yamlStream, bool hasFooterRow = false, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(yamlStream);
-        using var reader = new StreamReader(yamlStream, _engine.Encoding, detectEncodingFromByteOrderMarks: true, 1024, leaveOpen: true);
+        using var reader = new StreamReader(yamlStream, _engine.Encoding, true, 1024, true);
         var yaml = await reader.ReadToEndAsync(ct).ConfigureAwait(false);
-        return ParseStringAsDataTable(yaml, hasFooterRow);
+        return await ParseStringAsDataTableAsync(yaml, hasFooterRow, ct);
     }
 
     /// <inheritdoc />

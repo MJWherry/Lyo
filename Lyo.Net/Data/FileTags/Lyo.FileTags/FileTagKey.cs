@@ -5,8 +5,8 @@ using Lyo.Exceptions;
 namespace Lyo.FileTags;
 
 /// <summary>
-/// Catalog key for a file tag. Built-ins cover the tags file storage and media both read. <see cref="Custom" /> keeps any other name.
-/// Ids match the lowercase token stored in <c>fileTags</c> and passed to ffmpeg <c>-metadata</c> (<c>album_artist</c>, not <c>albumartist</c>).
+/// Catalog key for a file tag. Built-ins cover the tags file storage and media both read. <see cref="Custom" /> keeps any other name. Ids match the lowercase token stored in
+/// <c>fileTags</c> and passed to ffmpeg <c>-metadata</c> (<c>album_artist</c>, not <c>albumartist</c>).
 /// </summary>
 [DebuggerDisplay("{Name} ({Id})")]
 public sealed record FileTagKey
@@ -51,19 +51,22 @@ public sealed record FileTagKey
     public static readonly FileTagKey Keywords = Create("Keywords", "keywords");
 
     /// <summary>Every built-in. Touching this list registers the catalog.</summary>
-    public static IReadOnlyList<FileTagKey> BuiltIns { get; } = [Title, Artist, Album, AlbumArtist, Comment, Genre, Date, Author, Subject, Description, Copyright, Keywords];
-
-    private FileTagKey(string name, string id)
-    {
-        Name = name;
-        Id = id;
-    }
+    public static IReadOnlyList<FileTagKey> BuiltIns { get; } = [
+        Title, Artist, Album, AlbumArtist, Comment, Genre, Date, Author, Subject, Description,
+        Copyright, Keywords
+    ];
 
     /// <summary>Display name (<c>Title</c>, <c>AlbumArtist</c>, or the custom id).</summary>
     public string Name { get; }
 
     /// <summary>Stable id (<c>title</c>, <c>album_artist</c>, or the normalized custom id).</summary>
     public string Id { get; }
+
+    private FileTagKey(string name, string id)
+    {
+        Name = name;
+        Id = id;
+    }
 
     /// <summary>Resolves a built-in or previously registered custom id. Null when the id is empty or unknown.</summary>
     public static FileTagKey? TryFromId(string? id) => FileTagCatalog.TryFromId(ById, id);
@@ -75,8 +78,8 @@ public sealed record FileTagKey
     public static FileTagKey Custom(string id)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(id);
-        return FileTagCatalog.GetOrCustom(ById, ByName, id, key => new FileTagKey(key, key));
+        return FileTagCatalog.GetOrCustom(ById, ByName, id, key => new(key, key));
     }
 
-    private static FileTagKey Create(string name, string id) => FileTagCatalog.Register(ByName, ById, new FileTagKey(name, id), name, id);
+    private static FileTagKey Create(string name, string id) => FileTagCatalog.Register(ByName, ById, new(name, id), name, id);
 }

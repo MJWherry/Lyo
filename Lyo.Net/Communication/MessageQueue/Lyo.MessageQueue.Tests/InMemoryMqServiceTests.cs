@@ -69,7 +69,6 @@ public sealed class InMemoryMqServiceTests
         await mq.ConnectAsync(TestCt);
         await mq.CreateQueue("typed-test", ct: TestCt);
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-
         await mq.SendToQueueWithEnvelopeAsync("typed-test", new TestRequest("e1", "enveloped"), options, traceId: "trace-1");
         await mq.SendToQueue("typed-test", JsonSerializer.SerializeToUtf8Bytes(new TestRequest("l1", "bare"), options));
         var received = new List<(TestRequest Payload, QueueMessageEnvelope<TestRequest>? Envelope)>();
@@ -97,7 +96,7 @@ public sealed class InMemoryMqServiceTests
         await mq.ConnectAsync(TestCt);
         await mq.CreateQueue("typed-poison-test", ct: TestCt);
         await mq.SendToQueue("typed-poison-test", Encoding.UTF8.GetBytes("not json at all"));
-        await mq.SendToQueueWithEnvelopeAsync("typed-poison-test", new TestRequest("ok", "good"), new JsonSerializerOptions());
+        await mq.SendToQueueWithEnvelopeAsync("typed-poison-test", new TestRequest("ok", "good"), new());
         var received = new List<TestRequest>();
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
         _ = mq.SubscribeToQueueAsync<TestRequest>(

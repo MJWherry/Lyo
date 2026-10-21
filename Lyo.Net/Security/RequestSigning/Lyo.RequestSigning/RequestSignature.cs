@@ -13,8 +13,7 @@ public static class RequestSignature
     public const string Scheme = "v1";
 
     /// <summary>Builds <c>t=&lt;unix&gt;,v1=&lt;hex&gt;</c>.</summary>
-    public static string FormatHeader(long unixSeconds, string macHex)
-        => string.Concat("t=", unixSeconds.ToString(CultureInfo.InvariantCulture), ",v1=", macHex);
+    public static string FormatHeader(long unixSeconds, string macHex) => string.Concat("t=", unixSeconds.ToString(CultureInfo.InvariantCulture), ",v1=", macHex);
 
     /// <summary>Reads <c>t</c> and <c>v1</c>. Returns false when the shape is wrong.</summary>
     public static bool TryParse(string header, out long unixSeconds, out string macHex)
@@ -24,12 +23,15 @@ public static class RequestSignature
         var comma = header.IndexOf(',');
         if (comma <= 0 || header.IndexOf(',', comma + 1) >= 0)
             return false;
+
         var timePart = header.Substring(0, comma);
         var macPart = header.Substring(comma + 1);
         if (!timePart.StartsWith("t=", StringComparison.Ordinal) || !macPart.StartsWith("v1=", StringComparison.Ordinal))
             return false;
+
         if (!long.TryParse(timePart.Substring(2), NumberStyles.None, CultureInfo.InvariantCulture, out unixSeconds) || unixSeconds < 0)
             return false;
+
         macHex = macPart.Substring(3);
         return macHex.Length == 64;
     }
@@ -41,14 +43,9 @@ public static class RequestSignature
         ArgumentHelpers.ThrowIfNull(hashing);
         var bodyHash = hashing.ToHex(hashing.Hash(ContentDigestAlgorithm.Sha256, input.Body.Span), TextLetterCase.Lower);
         var text = string.Join(
-            "\n",
-            Scheme,
-            unixSeconds.ToString(CultureInfo.InvariantCulture),
-            input.Method.ToUpperInvariant(),
-            input.Scheme.ToLowerInvariant(),
-            input.Host,
-            input.PathAndQuery,
+            "\n", Scheme, unixSeconds.ToString(CultureInfo.InvariantCulture), input.Method.ToUpperInvariant(), input.Scheme.ToLowerInvariant(), input.Host, input.PathAndQuery,
             bodyHash);
+
         return Encoding.UTF8.GetBytes(text);
     }
 

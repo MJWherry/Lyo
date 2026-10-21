@@ -33,7 +33,7 @@ public static class BoardSlug
 
         for (var i = 1; i < key.Length; i++) {
             var c = key[i];
-            if (c is (>= 'a' and <= 'z') or (>= '0' and <= '9') or '_')
+            if (c is >= 'a' and <= 'z' or >= '0' and <= '9' or '_')
                 continue;
 
             return false;

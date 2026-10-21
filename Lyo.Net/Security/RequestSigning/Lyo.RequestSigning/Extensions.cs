@@ -24,7 +24,10 @@ public static class Extensions
         }
 
         /// <summary>Binds <see cref="RequestSignatureOptions" /> and registers the signer.</summary>
-        public IServiceCollection AddRequestSigningFromConfiguration(IConfiguration configuration, string sectionName = RequestSignatureOptions.SectionName, Func<DateTime>? utcNow = null)
+        public IServiceCollection AddRequestSigningFromConfiguration(
+            IConfiguration configuration,
+            string sectionName = RequestSignatureOptions.SectionName,
+            Func<DateTime>? utcNow = null)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

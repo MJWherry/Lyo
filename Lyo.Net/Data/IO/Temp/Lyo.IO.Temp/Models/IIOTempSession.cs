@@ -1,8 +1,6 @@
 namespace Lyo.IO.Temp.Models;
 
-/// <summary>
-/// Workspace scoped to one folder: it records files and directories it created, applies size/count limits, and removes <see cref="SessionDirectory" /> on dispose.
-/// </summary>
+/// <summary>Workspace scoped to one folder: it records files and directories it created, applies size/count limits, and removes <see cref="SessionDirectory" /> on dispose.</summary>
 /// <remarks>Text I/O is UTF-8 with no BOM.</remarks>
 // ReSharper disable once InconsistentNaming
 public interface IIOTempSession : IAsyncDisposable, IDisposable
@@ -43,9 +41,7 @@ public interface IIOTempSession : IAsyncDisposable, IDisposable
     /// </summary>
     event Action<string>? DirectoryDeleted;
 
-    /// <summary>
-    /// Fires when delete-oldest / delete-largest overflow drops a file. The argument is that path. <see cref="FileDeleted" /> runs for the same path as well.
-    /// </summary>
+    /// <summary>Fires when delete-oldest / delete-largest overflow drops a file. The argument is that path. <see cref="FileDeleted" /> runs for the same path as well.</summary>
     event Action<string>? Overflow;
 
     /// <summary>Fires when <see cref="Clear" /> completes; the session folder stays. The argument is <see cref="SessionDirectory" />.</summary>
@@ -63,23 +59,17 @@ public interface IIOTempSession : IAsyncDisposable, IDisposable
     /// <summary>Copy of files, directories, byte total, and creation time at this instant.</summary>
     TempSessionSnapshot GetSnapshot();
 
-    /// <summary>
-    /// Opens a nested session whose root sits inside this one. Tracking and dispose are separate. The nested folder is also listed on <see cref="Directories" />.
-    /// </summary>
+    /// <summary>Opens a nested session whose root sits inside this one. Tracking and dispose are separate. The nested folder is also listed on <see cref="Directories" />.</summary>
     IIOTempSession CreateSubSession();
 
-    /// <summary>
-    /// Lists every file under <see cref="SessionDirectory" /> on disk, including ones this session did not create. <paramref name="pattern" /> is an optional glob.
-    /// </summary>
+    /// <summary>Lists every file under <see cref="SessionDirectory" /> on disk, including ones this session did not create. <paramref name="pattern" /> is an optional glob.</summary>
     /// <param name="pattern">File-name filter; <c>*</c> means all. Other patterns use simple <c>*</c> segments.</param>
     IEnumerable<string> EnumerateFiles(string? pattern = null);
 
     /// <summary>Lists every directory under <see cref="SessionDirectory" /> on disk.</summary>
     IEnumerable<string> EnumerateDirectories();
 
-    /// <summary>
-    /// Removes tracked files and directories and zeroes the byte counter. The session folder remains and the session can still be used.
-    /// </summary>
+    /// <summary>Removes tracked files and directories and zeroes the byte counter. The session folder remains and the session can still be used.</summary>
     void Clear();
 
     /// <summary>Copies a file or directory at <paramref name="sourcePath" /> into the session and begins tracking it. Returns the destination path.</summary>

@@ -13,19 +13,20 @@ using Lyo.Api.Models.Error;
 using Lyo.Api.Services.Crud.Create;
 using Lyo.Api.Services.Crud.Delete;
 using Lyo.Api.Services.Crud.Read.Query;
+using Lyo.Api.Services.Crud.Read.Query.Sql;
 using Lyo.Api.Services.Crud.Update;
 using Lyo.Api.Services.Export;
 using Lyo.Common.Core;
 using Lyo.Common.Core.Conversion;
 using Lyo.Common.Core.Enums;
 using Lyo.Exceptions;
-using Lyo.Api.Services.Crud.Read.Query.Sql;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Sql;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Api.ApiEndpoint;
@@ -127,11 +128,11 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         => EndpointAuthorizationApplier.Apply(builder, endpointAuth ?? BuilderLevelAuth());
 
     /// <summary>
-    /// The builder-wide default expressed as an <see cref="EndpointAuth" />. Null means no convention, which is not the same as anonymous. The host's global policy still applies.
+    /// The builder-wide default expressed as an <see cref="EndpointAuth" />. Null means no convention, which is not the same as anonymous. The host's global policy still
+    /// applies.
     /// </summary>
     private EndpointAuth? BuilderLevelAuth()
-        => _authorizationPolicies is { Length: > 0 } policies ? EndpointAuth.RequireAuthorization(policies) :
-            _requireAuthorization ? EndpointAuth.RequireAuthorization() : null;
+        => _authorizationPolicies is { Length: > 0 } policies ? EndpointAuth.RequireAuthorization(policies) : _requireAuthorization ? EndpointAuth.RequireAuthorization() : null;
 
     private Expression<Func<TDbEntity, object?>> ResolveDefaultOrderFromPrimaryKey()
     {
@@ -407,7 +408,13 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         EndpointAuth? auth = null,
         PatchPropertyAuthorization? propertyAuthorization = null)
     {
-        _updateConfig = new() { Before = before, After = after, Auth = auth, PropertyAuthorization = propertyAuthorization };
+        _updateConfig = new() {
+            Before = before,
+            After = after,
+            Auth = auth,
+            PropertyAuthorization = propertyAuthorization
+        };
+
         return this;
     }
 
@@ -417,7 +424,13 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         EndpointAuth? auth = null,
         PatchPropertyAuthorization? propertyAuthorization = null)
     {
-        _updateBulkConfig = new() { Before = before, After = after, Auth = auth, PropertyAuthorization = propertyAuthorization };
+        _updateBulkConfig = new() {
+            Before = before,
+            After = after,
+            Auth = auth,
+            PropertyAuthorization = propertyAuthorization
+        };
+
         return this;
     }
 
@@ -963,17 +976,18 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
     {
         var routeBuilder = app.MapPost(
                 $"{baseRoute}/QuerySql", async (
-                    [FromBody] QueryRequestBase queryRequest, [FromServices] IDbContextFactory<TDbContext> contextFactory, HttpContext httpContext,
-                    CancellationToken ct = default) => {
+                    [FromBody] QueryRequestBase queryRequest, [FromServices] IDbContextFactory<TDbContext> contextFactory, HttpContext httpContext, CancellationToken ct = default)
+                => {
                     await using var context = await contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
                     var entityType = context.Model.FindEntityType(typeof(TDbEntity));
                     OperationHelpers.ThrowIfNull(entityType, $"Entity type {typeof(TDbEntity).Name} not found in model.");
                     try {
-                        QuerySqlRes result = queryRequest switch {
+                        var result = queryRequest switch {
                             QueryConcreteReq concrete => TranslateConcrete(concrete, entityType, httpContext),
                             ProjectionQueryReq projected => TranslateProjected(projected, entityType, httpContext),
-                            _ => throw new SqlTranslationException("Root queries use the context QuerySql route.")
+                            var _ => throw new SqlTranslationException("Root queries use the context QuerySql route.")
                         };
+
                         return Results.Ok(result);
                     }
                     catch (SqlTranslationException ex) {
@@ -988,7 +1002,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         ApplyAuthorization(routeBuilder, _queryConfig!.Auth);
     }
 
-    private QuerySqlRes TranslateConcrete(QueryConcreteReq queryRequest, Microsoft.EntityFrameworkCore.Metadata.IEntityType entityType, HttpContext httpContext)
+    private QuerySqlRes TranslateConcrete(QueryConcreteReq queryRequest, IEntityType entityType, HttpContext httpContext)
     {
         var queryPolicyErrors = ValidateQueryPolicy(queryRequest, _queryConfig!);
         if (queryPolicyErrors.Count > 0)
@@ -997,7 +1011,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         return QuerySqlPreview.Translate(queryRequest, entityType);
     }
 
-    private QuerySqlRes TranslateProjected(ProjectionQueryReq queryRequest, Microsoft.EntityFrameworkCore.Metadata.IEntityType entityType, HttpContext httpContext)
+    private QuerySqlRes TranslateProjected(ProjectionQueryReq queryRequest, IEntityType entityType, HttpContext httpContext)
     {
         var queryPolicyErrors = ValidateProjectedQueryPolicy(queryRequest, _queryConfig!);
         if (queryPolicyErrors.Count > 0)
@@ -1009,14 +1023,15 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
     private static LyoProblemDetails PolicyProblem(HttpContext httpContext, List<ApiError> errors)
         => ApiErrorResponseFactory.CreateForError(
             httpContext,
-            LyoProblemDetailsBuilder.CreateWithActivity().WithErrorCode(Constants.ApiErrorCodes.InvalidQuery).WithMessage("Invalid query.").WithStatus(400).AddErrors(errors).Build());
+            LyoProblemDetailsBuilder.CreateWithActivity()
+                .WithErrorCode(Constants.ApiErrorCodes.InvalidQuery)
+                .WithMessage("Invalid query.")
+                .WithStatus(400)
+                .AddErrors(errors)
+                .Build());
 
     private static LyoProblemDetails SqlProblem(SqlTranslationException ex)
-        => LyoProblemDetailsBuilder.CreateWithActivity()
-            .WithErrorCode(Constants.ApiErrorCodes.InvalidQuery)
-            .WithStatus(400)
-            .WithMessage(ex.Message)
-            .Build();
+        => LyoProblemDetailsBuilder.CreateWithActivity().WithErrorCode(Constants.ApiErrorCodes.InvalidQuery).WithStatus(400).WithMessage(ex.Message).Build();
 
     private static QueryPolicy ToPolicy(QueryConfig<TDbEntity> queryConfig)
         => new() {
@@ -1026,7 +1041,7 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
             MaxSelectFieldCount = queryConfig.MaxSelectFieldCount,
             MaxComputedFieldCount = queryConfig.MaxComputedFieldCount,
             MaxComputedTemplateLength = queryConfig.MaxComputedTemplateLength,
-            DeniedSelectFields = queryConfig.DeniedSelectFields ?? [],
+            DeniedSelectFields = queryConfig.DeniedSelectFields ?? []
         };
 
     private static List<ApiError> ValidateQueryPolicy(QueryConcreteReq queryRequest, QueryConfig<TDbEntity> queryConfig)
@@ -1218,7 +1233,8 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         var routeBuilder = app.MapPost(
                 $"{baseRoute}/Bulk/Update", async (
                     [FromBody] List<UpdateRequest<TRequest>> requests, [FromServices] IUpdateService<TDbContext> basicService,
-                    [FromServices] IQueryService<TDbContext> queryService, HttpContext httpContext, CancellationToken ct = default) => {
+                    [FromServices] IQueryService<TDbContext> queryService,
+                    HttpContext httpContext, CancellationToken ct = default) => {
                     foreach (var request in requests) {
                         var propertyDenial = await AuthorizeWriteAsync(_updateBulkConfig.PropertyAuthorization, httpContext, queryService, request.Keys, request.Data, ct)
                             .ConfigureAwait(false);
@@ -1251,9 +1267,8 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                     var fieldAuth = await PatchPropertyAuthorizationApplier.ApplyAsync(_patchConfig.PropertyAuthorization, httpContext, typeof(TDbEntity), request, ct)
                         .ConfigureAwait(false);
 
-                    if (!fieldAuth.Success) {
+                    if (!fieldAuth.Success)
                         return ApiErrorResponseFactory.ThrowForError(httpContext, fieldAuth.Error);
-                    }
 
                     request = fieldAuth.Request!;
                     var result = await basicService.PatchAsync<TDbEntity, TResponse>(request, _patchConfig.Before, _patchConfig.After, ct).ConfigureAwait(false);
@@ -1287,9 +1302,8 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
                                 .ApplyAsync(_patchBulkConfig.PropertyAuthorization, httpContext, typeof(TDbEntity), patchRequest, ct)
                                 .ConfigureAwait(false);
 
-                            if (!fieldAuth.Success) {
+                            if (!fieldAuth.Success)
                                 return ApiErrorResponseFactory.ThrowForError(httpContext, fieldAuth.Error);
-                            }
 
                             sanitized.Add(fieldAuth.Request!);
                         }
@@ -1349,7 +1363,8 @@ public class ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey
         var routeBuilder = app.MapPost(
                 $"{baseRoute}/Bulk/Upsert", async (
                     [FromBody] List<UpsertRequest<TRequest>> requests, [FromServices] IUpsertService<TDbContext> basicService,
-                    [FromServices] IQueryService<TDbContext> queryService, HttpContext httpContext, CancellationToken ct = default) => {
+                    [FromServices] IQueryService<TDbContext> queryService,
+                    HttpContext httpContext, CancellationToken ct = default) => {
                     foreach (var request in requests) {
                         var propertyDenial = await AuthorizeWriteAsync(_upsertBulkConfig.PropertyAuthorization, httpContext, queryService, request.Keys, request.NewData, ct)
                             .ConfigureAwait(false);

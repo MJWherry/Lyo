@@ -1,9 +1,9 @@
 @using Lyo.Web.Components.Export
 @using Lyo.Web.Components.Export.Csv
-@using Lyo.Web.Components.Export.Yaml
-@using Lyo.Web.Components.Export.Xml
 @using Lyo.Web.Components.Export.Toml
 @using Lyo.Web.Components.Export.Xlsx
+@using Lyo.Web.Components.Export.Xml
+@using Lyo.Web.Components.Export.Yaml
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -69,7 +69,8 @@
                 <LyoIdField Compact="true" Text="@ProjectedValueHelper.GetDisplayValue(item, "Id")"/>
             </CellContent>
         </LyoProjectedColumn>
-        <LyoProjectedColumn Field="JobDefinition.Name" Title="Definition" QuickSearchPropertyName="JobDefinition.Name" MaxDisplayLength="@ChipLabelHelper.DefaultGridCellMaxLength"/>
+        <LyoProjectedColumn Field="JobDefinition.Name" Title="Definition" QuickSearchPropertyName="JobDefinition.Name"
+                            MaxDisplayLength="@ChipLabelHelper.DefaultGridCellMaxLength"/>
         <LyoProjectedColumn Field="WorkerMachineName" Title="Worker" HeaderStyle="width: 180px;" CellStyle="white-space: nowrap;">
             <CellContent Context="item">
                 @{
@@ -100,7 +101,8 @@
                 <LyoChip Spec="@(LyoChips.FromEnum<JobState>(stateText, JobColorHelper.ForState, JobColorHelper.StateIcon))"/>
             </CellContent>
         </LyoProjectedColumn>
-        <TemplateColumn T="object?" Title="Duration" Sortable="false" HeaderClass="lyo-dg-align-center" CellClass="lyo-dg-align-center" HeaderStyle="width: 110px; text-align: center;" CellStyle="white-space: nowrap; text-align: center;">
+        <TemplateColumn T="object?" Title="Duration" Sortable="false" HeaderClass="lyo-dg-align-center" CellClass="lyo-dg-align-center"
+                        HeaderStyle="width: 110px; text-align: center;" CellStyle="white-space: nowrap; text-align: center;">
             <CellTemplate Context="cell">
                 @{
                     var (started, finished) = GetTimestamps(cell.Item);

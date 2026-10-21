@@ -28,9 +28,7 @@ public sealed class AutomationPlanRuntimeOptions
     /// </summary>
     public AutomationPlanRunDirectoryOptions? PlanRunDirectory { get; init; }
 
-    /// <summary>
-    /// If set, step templates are validated with <see cref="IFormatterService" /> (SmartFormat) before expansion. Placeholders use single braces, for example <c>{page.url}</c>.
-    /// </summary>
+    /// <summary>If set, step templates are validated with <see cref="IFormatterService" /> (SmartFormat) before expansion. Placeholders use single braces, for example <c>{page.url}</c>.</summary>
     public IFormatterService? Formatter { get; init; }
 
     /// <summary>Optional base URL used when resolving relative links extracted from pages.</summary>
@@ -59,8 +57,7 @@ public sealed class AutomationPlanRunDirectoryOptions
     /// <summary>Parent folder for runs. When <see cref="NestRunUnderRoot" /> is true, each run uses a subfolder here.</summary>
     public required string RootDirectory { get; init; }
 
-    /// <summary>When true (default), artifacts go under <c>Path.Combine(<see cref="RootDirectory" />, folder)</c> where folder is <see cref="RunFolderName" /> or the run
-    /// id.</summary>
+    /// <summary>When true (default), artifacts go under <c>Path.Combine(<see cref="RootDirectory" />, folder)</c> where folder is <see cref="RunFolderName" /> or the run id.</summary>
     public bool NestRunUnderRoot { get; init; } = true;
 
     /// <summary>When <see cref="NestRunUnderRoot" /> is true, names the run subfolder; default is the run <c>Guid</c> (<c>N</c> format).</summary>

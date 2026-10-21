@@ -1,5 +1,8 @@
 using Lyo.FileStorage.Abstractions;
+using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Models;
+using Lyo.FileStorage.OperationContext;
+using Lyo.FileStorage.Policy;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,8 +24,8 @@ public sealed class DiskFileStorageBuilder : FileStorageServiceBuilder<DiskFileS
     {
         var metrics = Options.EnableMetrics ? services.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
         return new LocalFileStorageService(
-            Options, services.GetService<ILoggerFactory>(), ResolveCompression(services, storeName), ResolveEncryption(services, storeName),
-            ResolveMetadata(services, storeName), metrics, services.GetService<OperationContext.IFileOperationContextAccessor>(),
-            services.GetServices<Audit.IFileAuditEventHandler>(), services.GetService<Policy.IFileContentPolicy>(), services.GetService<Policy.IFileTypeSniffer>());
+            Options, services.GetService<ILoggerFactory>(), ResolveCompression(services, storeName), ResolveEncryption(services, storeName), ResolveMetadata(services, storeName),
+            metrics, services.GetService<IFileOperationContextAccessor>(), services.GetServices<IFileAuditEventHandler>(), services.GetService<IFileContentPolicy>(),
+            services.GetService<IFileTypeSniffer>());
     }
 }

@@ -1,7 +1,7 @@
 using Lyo.Cache;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
-using Lyo.Query.Models.Enums;
 using Lyo.Query.Services.ValueConversion;
 using Lyo.Query.Services.WhereClause;
 using Lyo.Validation.Models;
@@ -10,7 +10,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Validation.Postgres.Tests;
 
@@ -41,10 +40,7 @@ public class PostgresValidationSchemaStoreTests(ValidationPostgresFixture fixtur
             Key = key,
             TargetTypeName = nameof(SignupTarget),
             Description = "Signup rules",
-            Constraints = WhereClauseBuilder.And(b => b
-                .Regex("Email", "^[^@]+@[^@]+$")
-                .In("Role", "User", "Admin")
-                .NotIn("Status", "Banned")),
+            Constraints = WhereClauseBuilder.And(b => b.Regex("Email", "^[^@]+@[^@]+$").In("Role", "User", "Admin").NotIn("Status", "Banned")),
             Messages = new Dictionary<string, ValidationMessage> { ["Email"] = new() { ErrorCode = "BAD_EMAIL", ErrorMessage = "Bad email" } }
         };
 
@@ -55,15 +51,12 @@ public class PostgresValidationSchemaStoreTests(ValidationPostgresFixture fixtur
         Assert.Equal(nameof(SignupTarget), loaded.TargetTypeName);
         Assert.IsType<GroupClause>(loaded.Constraints);
         Assert.Equal("BAD_EMAIL", loaded.Messages!["Email"].ErrorCode);
-
         var listed = await store.ListAsync(nameof(SignupTarget), TestCt);
         Assert.Contains(listed, s => s.Key == key);
-
         schema.Description = "Updated";
         await store.SaveAsync(schema, TestCt);
         var updated = await store.GetAsync(key, TestCt);
         Assert.Equal("Updated", updated!.Description);
-
         Assert.True(await store.DeleteAsync(key, TestCt));
         Assert.Null(await store.GetAsync(key, TestCt));
     }
@@ -74,15 +67,11 @@ public class PostgresValidationSchemaStoreTests(ValidationPostgresFixture fixtur
         var store = fixture.ServiceProvider.GetRequiredService<IValidationSchemaStore>();
         var key = $"compile-{LyoGuid.CreateV7():N}";
         await store.SaveAsync(
-            new ValidationSchema {
+            new() {
                 Key = key,
                 TargetTypeName = nameof(SignupTarget),
-                Constraints = WhereClauseBuilder.And(b => b
-                    .Regex("Email", "^[^@]+@[^@]+$")
-                    .In("Role", "User", "Admin")
-                    .NotIn("Status", "Banned"))
-            },
-            TestCt);
+                Constraints = WhereClauseBuilder.And(b => b.Regex("Email", "^[^@]+@[^@]+$").In("Role", "User", "Admin").NotIn("Status", "Banned"))
+            }, TestCt);
 
         var loaded = await store.GetAsync(key, TestCt);
         Assert.NotNull(loaded);

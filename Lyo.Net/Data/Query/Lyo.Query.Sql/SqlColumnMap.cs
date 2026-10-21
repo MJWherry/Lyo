@@ -5,6 +5,15 @@ namespace Lyo.Query.Sql;
 /// <summary>Scalar table mapping the translator uses instead of an EF model. Property names are CLR names; column names are store names.</summary>
 public sealed class SqlColumnMap
 {
+    /// <summary>Schema, or empty when the table is unqualified.</summary>
+    public string Schema { get; }
+
+    /// <summary>Table name.</summary>
+    public string Table { get; }
+
+    /// <summary>CLR property name to store column name, in <c>SELECT</c> order for a concrete query.</summary>
+    public IReadOnlyDictionary<string, string> Columns { get; }
+
     /// <summary>Creates a map. <paramref name="schema" /> may be empty when the statement should not qualify the table.</summary>
     /// <param name="schema">Schema name, or empty for an unqualified table.</param>
     /// <param name="table">Table name.</param>
@@ -22,13 +31,4 @@ public sealed class SqlColumnMap
 
         Columns = copy;
     }
-
-    /// <summary>Schema, or empty when the table is unqualified.</summary>
-    public string Schema { get; }
-
-    /// <summary>Table name.</summary>
-    public string Table { get; }
-
-    /// <summary>CLR property name to store column name, in <c>SELECT</c> order for a concrete query.</summary>
-    public IReadOnlyDictionary<string, string> Columns { get; }
 }

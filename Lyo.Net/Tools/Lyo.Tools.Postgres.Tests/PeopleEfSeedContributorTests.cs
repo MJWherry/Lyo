@@ -41,6 +41,7 @@ public sealed class PeopleEfSeedContributorTests
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

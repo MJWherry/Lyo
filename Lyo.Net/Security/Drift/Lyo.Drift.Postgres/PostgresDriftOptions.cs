@@ -18,10 +18,7 @@ public sealed class PostgresDriftOptions : PostgresOptionsBase
     /// <summary>Digest used to hash snapshot JSON for lineage dedupe. Default SHA-256. Changing this starts a new hash lineage.</summary>
     public ContentDigestAlgorithm ContentHashAlgorithm { get; set; } = ContentDigestAlgorithm.Sha256;
 
-    /// <summary>
-    /// When set, <see cref="DriftRetentionService" /> deletes snapshots and change events older than this, keeping the latest row per lineage.
-    /// Null disables pruning.
-    /// </summary>
+    /// <summary>When set, <see cref="DriftRetentionService" /> deletes snapshots and change events older than this, keeping the latest row per lineage. Null disables pruning.</summary>
     public TimeSpan? SnapshotRetention { get; set; }
 
     /// <inheritdoc />
@@ -33,6 +30,7 @@ public sealed class PostgresDriftOptions : PostgresOptionsBase
         base.Validate();
         if (MaxSnapshotJsonBytes <= 0)
             throw new ArgumentException($"{nameof(MaxSnapshotJsonBytes)} must be positive.", nameof(MaxSnapshotJsonBytes));
+
         if (!Enum.IsDefined(ContentHashAlgorithm))
             throw new ArgumentException($"{nameof(ContentHashAlgorithm)} is not a known digest.", nameof(ContentHashAlgorithm));
     }

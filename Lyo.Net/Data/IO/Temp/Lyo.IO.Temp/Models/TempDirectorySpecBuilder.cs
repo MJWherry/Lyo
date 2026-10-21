@@ -23,9 +23,7 @@ public sealed class TempDirectorySpecBuilder
     /// <summary>Sets file count and a uniform size from a <see cref="FileSizeUnitInfo" /> unit.</summary>
     public TempDirectorySpecBuilder WithFiles(int count, FileSizeUnitInfo unit, double amount) => WithFiles(count, unit.ConvertToBytes(amount));
 
-    /// <summary>
-    /// Sets a per-file size function. It receives the 0-based index and returns bytes. When set, it overrides the size from <c>WithFiles</c>.
-    /// </summary>
+    /// <summary>Sets a per-file size function. It receives the 0-based index and returns bytes. When set, it overrides the size from <c>WithFiles</c>.</summary>
     public TempDirectorySpecBuilder WithFileSizeSelector(Func<int, long> selector)
     {
         _fileSizeSelector = selector;

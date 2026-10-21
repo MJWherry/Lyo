@@ -3,10 +3,10 @@ using Lyo.Book;
 using Lyo.Book.Enums;
 using Lyo.Book.Postgres;
 using Lyo.Book.Postgres.Database;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Seed;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Tools.Postgres.Seeds;
 
@@ -27,7 +27,6 @@ public sealed class BookEfSeedContributor(ILogger<BookEfSeedContributor> logger)
         var formatId = BookDbSeeder.HardcoverFormatId;
         var genreId = BookDbSeeder.FantasyGenreId;
         var seriesId = LyoGuid.CreateV7();
-
         graph.OnClear(async (session, ct) => {
             if (session.Transport is not EfSeedTransport<BookDbContext> ef)
                 throw new SeedException("Book OnClear requires EfSeedTransport<BookDbContext>.");
@@ -48,20 +47,24 @@ public sealed class BookEfSeedContributor(ILogger<BookEfSeedContributor> logger)
             await BookDbSeeder.SeedAsync(db, ct).ConfigureAwait(false);
         });
 
-        graph.Entity(1, _ => new BookSeriesEntity {
-            Id = seriesId,
-            Title = faker.Lorem.Sentence(3).TrimEnd('.'),
-            Slug = $"series-{seriesId:N}",
-            Status = BookSeriesStatus.Ongoing,
-            CreatedTimestamp = DateTime.UtcNow
-        }).ForEach(_ => 1, (series, _) => new BookSeriesAlternateTitleEntity {
-            Id = LyoGuid.CreateV7(),
-            SeriesId = series.Id,
-            Title = "Serie Semilla",
-            Language = "es",
-            Kind = TitleKind.Translated,
-            SortOrder = 1
-        });
+        graph.Entity(
+                1, _ => new BookSeriesEntity {
+                    Id = seriesId,
+                    Title = faker.Lorem.Sentence(3).TrimEnd('.'),
+                    Slug = $"series-{seriesId:N}",
+                    Status = BookSeriesStatus.Ongoing,
+                    CreatedTimestamp = DateTime.UtcNow
+                })
+            .ForEach(
+                _ => 1, (series, _) => new BookSeriesAlternateTitleEntity {
+                    Id = LyoGuid.CreateV7(),
+                    SeriesId = series.Id,
+                    Title = "Serie Semilla",
+                    Language = "es",
+                    Kind = TitleKind.Translated,
+                    SortOrder = 1
+                });
+
         graph.After(async (session, ct) => {
             if (session.Transport is EfSeedTransport<BookDbContext> ef)
                 await BookDbSeeder.SeedAsync(ef.Context, ct).ConfigureAwait(false);
@@ -74,14 +77,16 @@ public sealed class BookEfSeedContributor(ILogger<BookEfSeedContributor> logger)
                 var pages = new List<BookPageEntity>();
                 var alternateTitles = new List<BookAlternateTitleEntity>();
                 foreach (var book in books) {
-                    alternateTitles.Add(new BookAlternateTitleEntity {
-                        Id = LyoGuid.CreateV7(),
-                        BookId = book.Id,
-                        Title = book.Title + " (alt)",
-                        Language = "es",
-                        Kind = TitleKind.Translated,
-                        SortOrder = 1
-                    });
+                    alternateTitles.Add(
+                        new() {
+                            Id = LyoGuid.CreateV7(),
+                            BookId = book.Id,
+                            Title = book.Title + " (alt)",
+                            Language = "es",
+                            Kind = TitleKind.Translated,
+                            SortOrder = 1
+                        });
+
                     var chapter = new BookChapterEntity {
                         Id = LyoGuid.CreateV7(),
                         BookId = book.Id,
@@ -90,9 +95,10 @@ public sealed class BookEfSeedContributor(ILogger<BookEfSeedContributor> logger)
                         Language = "en",
                         CreatedTimestamp = DateTime.UtcNow
                     };
+
                     chapters.Add(chapter);
                     pages.Add(
-                        new BookPageEntity {
+                        new() {
                             Id = LyoGuid.CreateV7(),
                             ChapterId = chapter.Id,
                             PageNumber = 1,
@@ -116,7 +122,7 @@ public sealed class BookEfSeedContributor(ILogger<BookEfSeedContributor> logger)
         var title = faker.Lorem.Sentence(3).TrimEnd('.');
         var id = LyoGuid.CreateV7();
         var isbn = UniqueIsbn13(id);
-        return new BookEntity {
+        return new() {
             Id = id,
             Title = title,
             Slug = $"{SlugOf(title)}-{id:N}",
@@ -131,7 +137,7 @@ public sealed class BookEfSeedContributor(ILogger<BookEfSeedContributor> logger)
             Publisher = faker.Company.CompanyName(),
             CreatedTimestamp = DateTime.UtcNow,
             Identifiers = [
-                new BookIdentifierEntity {
+                new() {
                     Id = LyoGuid.CreateV7(),
                     BookId = id,
                     Scheme = BookIdentifierSchemes.Isbn13,
@@ -141,7 +147,7 @@ public sealed class BookEfSeedContributor(ILogger<BookEfSeedContributor> logger)
                 }
             ],
             Contributors = [
-                new BookContributorEntity {
+                new() {
                     Id = LyoGuid.CreateV7(),
                     BookId = id,
                     DisplayName = faker.Name.FullName(),
@@ -149,7 +155,7 @@ public sealed class BookEfSeedContributor(ILogger<BookEfSeedContributor> logger)
                     Ordinal = 1
                 }
             ],
-            GenreLinks = [new BookBookGenreEntity { BookId = id, GenreId = genreId }]
+            GenreLinks = [new() { BookId = id, GenreId = genreId }]
         };
     }
 
@@ -159,6 +165,5 @@ public sealed class BookEfSeedContributor(ILogger<BookEfSeedContributor> logger)
         return $"978{n:D10}";
     }
 
-    private static string SlugOf(string title)
-        => string.Join('-', title.ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries));
+    private static string SlugOf(string title) => string.Join('-', title.ToLowerInvariant().Split(' ', StringSplitOptions.RemoveEmptyEntries));
 }

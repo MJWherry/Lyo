@@ -9,10 +9,8 @@ public sealed class CatalogLoadGateTests
     {
         using var gate = new CatalogLoadGate();
         var key = CatalogLoadGate.Key("/catalog", "Lyo.Cache");
-
         Assert.False(gate.IsCurrentRequest(key));
         var (requestId, _) = gate.Begin(key);
-
         Assert.True(gate.IsCurrentRequest(key));
         Assert.True(gate.IsCurrent(requestId));
         Assert.False(gate.IsCurrentRequest(CatalogLoadGate.Key("/catalog", "Lyo.Email")));
@@ -24,7 +22,6 @@ public sealed class CatalogLoadGateTests
         using var gate = new CatalogLoadGate();
         var first = gate.Begin(CatalogLoadGate.Key("/catalog", "Lyo.Cache"));
         var second = gate.Begin(CatalogLoadGate.Key("/catalog", "Lyo.Email"));
-
         Assert.True(first.Token.IsCancellationRequested);
         Assert.False(second.Token.IsCancellationRequested);
         Assert.False(gate.IsCurrent(first.RequestId));
@@ -37,9 +34,7 @@ public sealed class CatalogLoadGateTests
     {
         var gate = new CatalogLoadGate();
         var started = gate.Begin(CatalogLoadGate.Key("/catalog", "Lyo.Cache"));
-
         gate.Dispose();
-
         Assert.True(started.Token.IsCancellationRequested);
         Assert.False(gate.IsCurrent(started.RequestId));
         Assert.False(gate.IsCurrentRequest(CatalogLoadGate.Key("/catalog", "Lyo.Cache")));

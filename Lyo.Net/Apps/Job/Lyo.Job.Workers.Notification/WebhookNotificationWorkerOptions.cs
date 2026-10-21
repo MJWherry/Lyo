@@ -12,8 +12,8 @@ public sealed class WebhookNotificationWorkerOptions
     public string WorkerType { get; set; } = Constants.WorkerType.Webhook;
 
     /// <summary>
-    /// Extra attempts after the first for a retryable response (408, 429, 5xx) or a transport error. The run itself is also retried by the job scheduler, so keep this
-    /// small — it exists to ride out a blip, not to replace job-level retry. Default 2.
+    /// Extra attempts after the first for a retryable response (408, 429, 5xx) or a transport error. The run itself is also retried by the job scheduler, so keep this small — it
+    /// exists to ride out a blip, not to replace job-level retry. Default 2.
     /// </summary>
     public int RetryCount { get; set; } = 2;
 

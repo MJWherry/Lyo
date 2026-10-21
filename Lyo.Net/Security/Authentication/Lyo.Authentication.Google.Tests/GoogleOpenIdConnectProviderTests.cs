@@ -1,5 +1,3 @@
-using Lyo.Authentication.Google;
-
 namespace Lyo.Authentication.Google.Tests;
 
 public sealed class GoogleOpenIdConnectProviderTests
@@ -15,8 +13,7 @@ public sealed class GoogleOpenIdConnectProviderTests
 
     [Fact]
     public void Provider_RejectsMissingClientId()
-        => Assert.Throws<ArgumentException>(()
-            => new GoogleOpenIdConnectProvider(new GoogleOptions { ClientId = string.Empty, ClientSecret = "secret", RedirectUri = "https://x" }));
+        => Assert.Throws<ArgumentException>(() => new GoogleOpenIdConnectProvider(new() { ClientId = string.Empty, ClientSecret = "secret", RedirectUri = "https://x" }));
 
     [Fact]
     public void PreflightReject_AllowsWhenHostedDomainUnset()
@@ -50,7 +47,7 @@ public sealed class GoogleOpenIdConnectProviderTests
 
     private static GoogleOpenIdConnectProvider NewProvider(string? hd = null)
         => new(
-            new GoogleOptions {
+            new() {
                 ClientId = "client-id",
                 ClientSecret = "client-secret",
                 RedirectUri = "https://localhost/callback",

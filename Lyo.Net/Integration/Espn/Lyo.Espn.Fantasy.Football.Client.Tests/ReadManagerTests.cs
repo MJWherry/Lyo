@@ -15,9 +15,7 @@ public sealed class ReadManagerTests
     {
         var handler = new RecordingHandler { Respond = _ => Json("""{"players":[{"id":42,"player":{"id":42,"fullName":"Waiver Wire"}}]}""") };
         var client = Client(handler);
-
         var players = await client.Players.GetFreeAgentsAsync(LeagueId, SeasonId, 6, ct: TestCt);
-
         var call = Assert.Single(handler.Calls);
         Assert.Equal(HttpMethod.Get, call.Method);
         Assert.Equal($"{ReadsRoot}?view=kona_player_info&scoringPeriodId=6", call.Uri.AbsoluteUri);
@@ -41,9 +39,7 @@ public sealed class ReadManagerTests
     {
         var handler = new RecordingHandler { Respond = _ => Json("""{"transactions":[{"id":"pending-1","type":"WAIVER","isPending":true,"items":[]}]}""") };
         var client = Client(handler);
-
         var pending = await client.Transactions.GetPendingAsync(LeagueId, SeasonId, TestCt);
-
         var call = Assert.Single(handler.Calls);
         Assert.Equal(HttpMethod.Get, call.Method);
         Assert.Equal($"{ReadsRoot}?view=mPendingTransactions", call.Uri.AbsoluteUri);
@@ -55,35 +51,34 @@ public sealed class ReadManagerTests
     public async Task GetBoxScoreAsync_TypesRosterEntries()
     {
         const string body = """
-            {
-              "schedule": [
-                {
-                  "id": 7,
-                  "matchupPeriodId": 6,
-                  "home": {
-                    "teamId": 1,
-                    "totalPoints": 100,
-                    "rosterForCurrentScoringPeriod": {
-                      "entries": [
-                        {
-                          "playerId": 99,
-                          "lineupSlotId": 2,
-                          "pendingTransactionIds": [],
-                          "playerPoolEntry": { "id": 99, "appliedStatTotal": 18.5 }
-                        }
-                      ]
-                    }
-                  },
-                  "away": { "teamId": 2, "totalPoints": 90 }
-                }
-              ]
-            }
-            """;
+                            {
+                              "schedule": [
+                                {
+                                  "id": 7,
+                                  "matchupPeriodId": 6,
+                                  "home": {
+                                    "teamId": 1,
+                                    "totalPoints": 100,
+                                    "rosterForCurrentScoringPeriod": {
+                                      "entries": [
+                                        {
+                                          "playerId": 99,
+                                          "lineupSlotId": 2,
+                                          "pendingTransactionIds": [],
+                                          "playerPoolEntry": { "id": 99, "appliedStatTotal": 18.5 }
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "away": { "teamId": 2, "totalPoints": 90 }
+                                }
+                              ]
+                            }
+                            """;
+
         var handler = new RecordingHandler { Respond = _ => Json(body) };
         var client = Client(handler);
-
         var matchup = await client.League.GetBoxScoreAsync(LeagueId, SeasonId, 6, 7, TestCt);
-
         var call = Assert.Single(handler.Calls);
         Assert.Equal($"{ReadsRoot}?view=mMatchup&view=mMatchupScore&view=mScoreboard&scoringPeriodId=6", call.Uri.AbsoluteUri);
         var entry = Assert.Single(matchup!.Home!.RosterForCurrentScoringPeriod!.Entries!);
@@ -96,18 +91,17 @@ public sealed class ReadManagerTests
     public async Task GetNewsAsync_RequestsFantasyNewsFeed()
     {
         const string body = """
-            {
-              "resultsCount": 1,
-              "feed": [
-                { "playerId": 42, "headline": "Limited practice", "published": "2026-10-15T12:00:00Z", "description": "Ankle." }
-              ]
-            }
-            """;
+                            {
+                              "resultsCount": 1,
+                              "feed": [
+                                { "playerId": 42, "headline": "Limited practice", "published": "2026-10-15T12:00:00Z", "description": "Ankle." }
+                              ]
+                            }
+                            """;
+
         var handler = new RecordingHandler { Respond = _ => Json(body) };
         var client = Client(handler);
-
         var news = await client.Players.GetNewsAsync(TestCt);
-
         var call = Assert.Single(handler.Calls);
         Assert.Equal(HttpMethod.Get, call.Method);
         Assert.Equal("https://site.api.espn.com/apis/fantasy/v3/games/ffl/news/players", call.Uri.AbsoluteUri);
@@ -119,9 +113,7 @@ public sealed class ReadManagerTests
         Assert.Equal("Ankle.", item.Description);
     }
 
-    private static FantasyFootballClient Client(HttpMessageHandler handler)
-        => new(new FantasyFootballClientOptions { EspnS2 = "s2-token", Swid = "{SWID-1}" }, httpClient: new HttpClient(handler));
+    private static FantasyFootballClient Client(HttpMessageHandler handler) => new(new() { EspnS2 = "s2-token", Swid = "{SWID-1}" }, httpClient: new(handler));
 
-    private static HttpResponseMessage Json(string json)
-        => new(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
+    private static HttpResponseMessage Json(string json) => new(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
 }

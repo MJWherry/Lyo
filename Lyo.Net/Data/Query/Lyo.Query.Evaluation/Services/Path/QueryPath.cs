@@ -7,8 +7,8 @@ using Lyo.Query.Services.WhereClause;
 namespace Lyo.Query.Services.Path;
 
 /// <summary>
-/// A query-path window. <see cref="Start" /> is inclusive. <see cref="End" /> is exclusive, or null when the window runs through the end.
-/// <c>[n]</c> is the one-element window <c>[n:n+1]</c>.
+/// A query-path window. <see cref="Start" /> is inclusive. <see cref="End" /> is exclusive, or null when the window runs through the end. <c>[n]</c> is the one-element
+/// window <c>[n:n+1]</c>.
 /// </summary>
 public readonly struct QueryPathWindow
 {
@@ -36,9 +36,11 @@ public readonly struct QueryPathWindow
 /// <summary>Parses <c>[n]</c>, <c>[start:]</c>, <c>[:end]</c>, <c>[start:end]</c>, and <c>[:]</c> on a query path and builds the matching expression.</summary>
 public static class QueryPath
 {
-    /// <summary>
-    /// Splits one dot segment into a property name and an optional window. A segment with no brackets has a null window.
-    /// </summary>
+    private static readonly MethodInfo SubstringStart = typeof(string).GetMethod(nameof(string.Substring), [typeof(int)])!;
+
+    private static readonly MethodInfo SubstringLength = typeof(string).GetMethod(nameof(string.Substring), [typeof(int), typeof(int)])!;
+
+    /// <summary>Splits one dot segment into a property name and an optional window. A segment with no brackets has a null window.</summary>
     public static bool TryParseSegment(string segment, out string name, out QueryPathWindow? window, out string? error)
     {
         name = segment;
@@ -100,11 +102,9 @@ public static class QueryPath
         return true;
     }
 
-    /// <summary>
-    /// Binds <paramref name="path" /> against <paramref name="rootType" />. When <paramref name="requireScalar" /> is true, a collection window longer than one element fails.
-    /// </summary>
+    /// <summary>Binds <paramref name="path" /> against <paramref name="rootType" />. When <paramref name="requireScalar" /> is true, a collection window longer than one element fails.</summary>
     public static bool TryBindFactory(Type rootType, string path, bool requireScalar, out Func<Expression, Expression>? bind, out Type? resultType, out string? error)
-        => TryBindFactory(rootType, path, requireScalar, countCollection: false, out bind, out resultType, out _, out error);
+        => TryBindFactory(rootType, path, requireScalar, false, out bind, out resultType, out var _, out error);
 
     /// <summary>
     /// Binds <paramref name="path" />. When <paramref name="countCollection" /> is true, a collection path binds as the count of its elements and
@@ -131,7 +131,7 @@ public static class QueryPath
 
         var scope = new BindScope { CountCollection = countCollection };
         var probe = Expression.Parameter(rootType, "row");
-        if (!TryBind(rootType, parts, 0, probe, requireScalar, out var body, out error, terminalScalar: requireScalar, scope)) {
+        if (!TryBind(rootType, parts, 0, probe, requireScalar, out var body, out error, requireScalar, scope)) {
             bind = null;
             resultType = null;
             collectionSize = false;
@@ -141,7 +141,7 @@ public static class QueryPath
         resultType = body!.Type;
         collectionSize = scope.CollectionSize;
         bind = root => {
-            TryBind(rootType, parts, 0, root, requireScalar, out var rebound, out _, terminalScalar: requireScalar, scope);
+            TryBind(rootType, parts, 0, root, requireScalar, out var rebound, out var _, requireScalar, scope);
             return rebound!;
         };
 
@@ -150,7 +150,7 @@ public static class QueryPath
 
     /// <summary>Binds <paramref name="parts" /> from <paramref name="partIndex" /> onto <paramref name="root" />.</summary>
     public static bool TryBind(Type rootType, IReadOnlyList<string> parts, int partIndex, Expression root, bool requireScalar, out Expression? body, out string? error)
-        => TryBind(rootType, parts, partIndex, root, requireScalar, out body, out error, terminalScalar: requireScalar);
+        => TryBind(rootType, parts, partIndex, root, requireScalar, out body, out error, requireScalar);
 
     /// <summary>One character or a clamped slice. Null, or a start at or past the end, is null.</summary>
     public static string? SliceString(string? value, QueryPathWindow window)
@@ -190,7 +190,8 @@ public static class QueryPath
         if (underlying.IsPrimitive || underlying.IsEnum || underlying == typeof(string))
             return true;
 
-        return underlying == typeof(decimal) || underlying == typeof(DateTime) || underlying == typeof(DateTimeOffset) || underlying == typeof(Guid) || underlying == typeof(TimeSpan)
+        return underlying == typeof(decimal) || underlying == typeof(DateTime) || underlying == typeof(DateTimeOffset) || underlying == typeof(Guid) ||
+            underlying == typeof(TimeSpan)
 #if NET6_0_OR_GREATER
             || underlying == typeof(DateOnly) || underlying == typeof(TimeOnly)
 #endif
@@ -253,15 +254,13 @@ public static class QueryPath
             }
 
             if (partIndex + 1 >= parts.Count || requireScalar) {
-                error = scope is { CountCollection: true } && partIndex + 1 < parts.Count
-                    ? "is a list and cannot be counted."
-                    : "is a collection and cannot be grouped.";
+                error = scope is { CountCollection: true } && partIndex + 1 < parts.Count ? "is a list and cannot be counted." : "is a collection and cannot be grouped.";
                 return false;
             }
 
             var elementType = SharedEntityMetadataCache.GetCollectionElementType(property.PropertyType);
             var element = Expression.Parameter(elementType, "e");
-            if (!TryBind(elementType, parts, partIndex + 1, element, false, out var inner, out error, terminalScalar: true, scope))
+            if (!TryBind(elementType, parts, partIndex + 1, element, false, out var inner, out error, true, scope))
                 return false;
 
             body = CallSelect(access, elementType, element, inner!);
@@ -311,7 +310,7 @@ public static class QueryPath
         var item = Expression.Parameter(elements, "e");
         Expression? projected = null;
         if (partIndex + 1 < parts.Count) {
-            if (!TryBind(elements, parts, partIndex + 1, item, false, out projected, out error, terminalScalar: true, scope))
+            if (!TryBind(elements, parts, partIndex + 1, item, false, out projected, out error, true, scope))
                 return false;
         }
         else if (!IsScalar(elements)) {
@@ -386,8 +385,7 @@ public static class QueryPath
         return false;
     }
 
-    private static bool IsKey(PropertyInfo property)
-        => property.GetCustomAttributes(inherit: true).Any(attribute => attribute.GetType().Name == "KeyAttribute");
+    private static bool IsKey(PropertyInfo property) => property.GetCustomAttributes(true).Any(attribute => attribute.GetType().Name == "KeyAttribute");
 
     private static Expression StringSlice(Expression value, QueryPathWindow window)
     {
@@ -395,9 +393,8 @@ public static class QueryPath
         var length = Expression.Property(text, nameof(string.Length));
         var start = Expression.Constant(window.Start);
         Expression slice;
-        if (window.End is not int end) {
+        if (window.End is not int end)
             slice = Expression.Call(text, SubstringStart, start);
-        }
         else {
             var take = end - window.Start;
             var full = Expression.Call(text, SubstringLength, start, Expression.Constant(take));
@@ -410,19 +407,12 @@ public static class QueryPath
         return Expression.Condition(missing, Expression.Constant(null, typeof(string)), slice);
     }
 
-    private sealed class BindScope
-    {
-        public bool CountCollection { get; init; }
-
-        public bool CollectionSize { get; set; }
-    }
-
     private static bool IsTerminalCount(IReadOnlyList<string> parts, int index)
     {
         if (index != parts.Count - 1)
             return false;
 
-        return TryParseSegment(parts[index], out var name, out var window, out _) && window is null && name.Equals("count", StringComparison.OrdinalIgnoreCase);
+        return TryParseSegment(parts[index], out var name, out var window, out var _) && window is null && name.Equals("count", StringComparison.OrdinalIgnoreCase);
     }
 
     private static Expression CollectionCount(Expression collection, Type collectionType)
@@ -458,7 +448,7 @@ public static class QueryPath
 
     private static MethodInfo EnumerableCountArg(string name)
         => typeof(Enumerable).GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .Single(method => method.Name == name && method.IsGenericMethodDefinition && method.GetParameters() is [_, var count] && count.ParameterType == typeof(int));
+            .Single(method => method.Name == name && method.IsGenericMethodDefinition && method.GetParameters() is [var _, var count] && count.ParameterType == typeof(int));
 
     private static Expression First(Expression collection, Type elementType, PropertyInfo? key, int start)
         => CallFirstOrDefault(Skip(Order(collection, elementType, key), elementType, start), elementType);
@@ -489,7 +479,10 @@ public static class QueryPath
 
     private static int FuncArity(MethodInfo method) => method.GetParameters()[1].ParameterType.GetGenericArguments().Length;
 
-    private static readonly MethodInfo SubstringStart = typeof(string).GetMethod(nameof(string.Substring), [typeof(int)])!;
+    private sealed class BindScope
+    {
+        public bool CountCollection { get; init; }
 
-    private static readonly MethodInfo SubstringLength = typeof(string).GetMethod(nameof(string.Substring), [typeof(int), typeof(int)])!;
+        public bool CollectionSize { get; set; }
+    }
 }

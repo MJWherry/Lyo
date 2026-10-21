@@ -5,10 +5,7 @@ using Lyo.FileTags;
 
 namespace Lyo.Media.Models;
 
-/// <summary>
-/// Convert knobs for <see cref="IAudioConverter" />.
-/// Audio converts always drop video. A bare instance does not force PCM.
-/// </summary>
+/// <summary>Convert knobs for <see cref="IAudioConverter" />. Audio converts always drop video. A bare instance does not force PCM.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record AudioConversionOptions
 {
@@ -105,8 +102,7 @@ public sealed record AudioConversionOptions
         => ForTranscode(format ?? MediaContainer.M4a, encoder ?? AudioEncoder.Aac);
 
     /// <summary>Raw PCM on a pipe (s16le, 48 kHz stereo by default). Shaped for a voice pump without referencing Discord.</summary>
-    public static AudioConversionOptions ForRawPcm(int sampleRate = 48000, int channels = 2)
-        => ForRawPcm(AudioSampleRate.FromHertz(sampleRate), ChannelLayout.FromCount(channels));
+    public static AudioConversionOptions ForRawPcm(int sampleRate = 48000, int channels = 2) => ForRawPcm(AudioSampleRate.FromHertz(sampleRate), ChannelLayout.FromCount(channels));
 
     /// <summary>Raw PCM on a pipe. Shaped for a voice pump without referencing Discord.</summary>
     public static AudioConversionOptions ForRawPcm(AudioSampleRate sampleRate, ChannelLayout channels)
@@ -131,6 +127,5 @@ public sealed record AudioConversionOptions
     }
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"AudioConversionOptions(Format={Format}, Encoder={Encoder}, IoMode={IoMode}, CopyCodecs={CopyCodecs})";
+    public override string ToString() => $"AudioConversionOptions(Format={Format}, Encoder={Encoder}, IoMode={IoMode}, CopyCodecs={CopyCodecs})";
 }

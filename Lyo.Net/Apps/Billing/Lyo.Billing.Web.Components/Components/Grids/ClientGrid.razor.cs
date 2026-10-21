@@ -1,14 +1,15 @@
-using Lyo.Api.Client;
-using Lyo.Web.Components.DataGrid;
-using Lyo.Web.Components.Dialog;
-using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 
 namespace Lyo.Billing.Web.Components.Components.Grids;
 
 public partial class ClientGrid
 {
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [
+        new("DisplayName", "Name"), FilterPropertyDefinition.FromEnum("Status", BillingColorHelper.EnumFilterValues<BillingClientStatus>()), new("DefaultCurrency", "Currency")
+    ];
+
+    private LyoDataGridProjected? _dataGrid;
+
     [Parameter]
     [EditorRequired]
     public IApiClient ApiClient { get; set; } = null!;
@@ -16,19 +17,11 @@ public partial class ClientGrid
     [Parameter]
     public EventCallback<Guid> OnOpen { get; set; }
 
-    private LyoDataGridProjected? _dataGrid;
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions =
-    [
-        new("DisplayName", "Name"),
-        FilterPropertyDefinition.FromEnum("Status", BillingColorHelper.EnumFilterValues<BillingClientStatus>()),
-        new("DefaultCurrency", "Currency")
-    ];
-
     private async Task OpenAsync(object? item)
     {
         if (!ProjectedValueHelper.TryGetGuid(ProjectedValueHelper.GetValue(item, "Id"), out var id))
             return;
+
         await OnOpen.InvokeAsync(id);
     }
 
@@ -45,10 +38,8 @@ public partial class ClientGrid
     {
         if (!ProjectedValueHelper.TryGetGuid(ProjectedValueHelper.GetValue(item, "Id"), out var id))
             return;
-        var parameters = new DialogParameters<ClientEditor> {
-            { d => d.ApiClient, ApiClient },
-            { d => d.ClientId, id }
-        };
+
+        var parameters = new DialogParameters<ClientEditor> { { d => d.ApiClient, ApiClient }, { d => d.ClientId, id } };
         var dialog = await DialogService.ShowAsync<ClientEditor>("Edit client", parameters, LyoDialogPresets.Large);
         var result = await dialog.Result;
         if (result is { Canceled: false } && _dataGrid != null)

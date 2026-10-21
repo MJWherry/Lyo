@@ -2,7 +2,6 @@ using Lyo.Compression;
 using Lyo.Encryption.TwoKey;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore;
-using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.AzureBlob.Multipart;
 using Lyo.FileStorage.Multipart;
@@ -18,20 +17,19 @@ namespace Lyo.FileStorage.AzureBlob;
 public static class Extensions
 {
     private static void RegisterBlobService(IServiceCollection services)
-    {
-        global::Lyo.FileStorage.FileStorageServiceRegistration.AddScopedFileStorage<AzureBlobFileStorageService>(services, sp => {
-            var opts = sp.GetRequiredService<AzureBlobFileStorageOptions>();
-            var metadataStore = sp.GetRequiredService<IFileMetadataStore>();
-            var loggerFactory = sp.GetService<ILoggerFactory>();
-            var compression = sp.GetService<ICompressionService>();
-            var encryption = sp.GetService<ITwoKeyEncryptionService>();
-            var metrics = opts.EnableMetrics ? sp.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
-            var op = sp.GetService<IFileOperationContextAccessor>();
-            var auditHandlers = sp.GetServices<IFileAuditEventHandler>();
-            var policy = sp.GetService<IFileContentPolicy>();
-            return new(opts, metadataStore, loggerFactory, compression, encryption, null, metrics, op, auditHandlers, policy, sp.GetService<IFileTypeSniffer>());
-        });
-    }
+        => FileStorageServiceRegistration.AddScopedFileStorage<AzureBlobFileStorageService>(
+            services, sp => {
+                var opts = sp.GetRequiredService<AzureBlobFileStorageOptions>();
+                var metadataStore = sp.GetRequiredService<IFileMetadataStore>();
+                var loggerFactory = sp.GetService<ILoggerFactory>();
+                var compression = sp.GetService<ICompressionService>();
+                var encryption = sp.GetService<ITwoKeyEncryptionService>();
+                var metrics = opts.EnableMetrics ? sp.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
+                var op = sp.GetService<IFileOperationContextAccessor>();
+                var auditHandlers = sp.GetServices<IFileAuditEventHandler>();
+                var policy = sp.GetService<IFileContentPolicy>();
+                return new(opts, metadataStore, loggerFactory, compression, encryption, null, metrics, op, auditHandlers, policy, sp.GetService<IFileTypeSniffer>());
+            });
 
     extension(IServiceCollection services)
     {
@@ -85,9 +83,8 @@ public static class Extensions
                 var opts = sp.GetRequiredService<AzureBlobFileStorageOptions>();
                 var metrics = opts.EnableMetrics ? sp.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
                 return new(
-                    sp.GetRequiredService<AzureBlobFileStorageService>(), opts, sp.GetRequiredService<IMultipartUploadSessionStore>(),
-                    sp.GetService<IFileContentPolicy>(), sp.GetServices<IFileAuditEventHandler>(), sp.GetService<IFileOperationContextAccessor>(), sp.GetService<ILoggerFactory>(),
-                    metrics);
+                    sp.GetRequiredService<AzureBlobFileStorageService>(), opts, sp.GetRequiredService<IMultipartUploadSessionStore>(), sp.GetService<IFileContentPolicy>(),
+                    sp.GetServices<IFileAuditEventHandler>(), sp.GetService<IFileOperationContextAccessor>(), sp.GetService<ILoggerFactory>(), metrics);
             });
 
             services.AddScoped<IMultipartUploadService>(sp => sp.GetRequiredService<AzureBlobMultipartUploadService>());

@@ -1,8 +1,8 @@
 namespace Lyo.Parameters;
 
 /// <summary>
-/// Named string-encoded value. The minimum a collection must expose for the typed accessors in <see cref="LyoKeyedValueExtensions" /> to work over it, and is
-/// implemented by job/report parameters, run results, and anything else that stores values as JSON or plain text keyed by name.
+/// Named string-encoded value. The minimum a collection must expose for the typed accessors in <see cref="LyoKeyedValueExtensions" /> to work over it, and is implemented by
+/// job/report parameters, run results, and anything else that stores values as JSON or plain text keyed by name.
 /// </summary>
 public interface ILyoKeyedValue
 {

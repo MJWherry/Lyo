@@ -3,9 +3,7 @@ using Lyo.Exceptions;
 
 namespace Lyo.Media.Models;
 
-/// <summary>
-/// Playback knobs for <see cref="IVideoPlayer" />. NoDisplay defaults true; set it false to opt in to a window.
-/// </summary>
+/// <summary>Playback knobs for <see cref="IVideoPlayer" />. NoDisplay defaults true; set it false to opt in to a window.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record VideoPlayOptions
 {
@@ -28,6 +26,5 @@ public sealed record VideoPlayOptions
     public void Validate() => ArgumentHelpers.ThrowIfNotDefined(IoMode);
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"VideoPlayOptions(NoDisplay={NoDisplay}, AutoExit={AutoExit}, IoMode={IoMode}, StartTime={StartTime}, Duration={Duration})";
+    public override string ToString() => $"VideoPlayOptions(NoDisplay={NoDisplay}, AutoExit={AutoExit}, IoMode={IoMode}, StartTime={StartTime}, Duration={Duration})";
 }

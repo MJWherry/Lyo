@@ -1,7 +1,6 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using Lyo.Espn.Fantasy.Football.Client.Models.Request;
 using Lyo.Espn.Fantasy.Football.Client.Models.Response;
 
 namespace Lyo.Espn.Fantasy.Football.Client.Tests;
@@ -25,10 +24,9 @@ public sealed class CommunicationManagerTests
         var handler = new RecordingHandler {
             Respond = call => call.Uri.AbsolutePath.EndsWith("/communication/", StringComparison.Ordinal) ? Json(ListJson()) : Json(ConversationJson())
         };
+
         var client = Client(handler);
-
         var conversations = await client.Communication.GetLeagueChatAsync(LeagueId, SeasonId, TestCt);
-
         Assert.Equal(2, handler.Calls.Count);
         var list = handler.Calls[0];
         Assert.Equal(HttpMethod.Get, list.Method);
@@ -82,9 +80,7 @@ public sealed class CommunicationManagerTests
     {
         var handler = new RecordingHandler { Respond = _ => Json(ConversationJson()) };
         var client = Client(handler);
-
-        await client.Communication.GetConversationAsync(LeagueId, SeasonId, TopicId, new ChatConversationQuery { Limit = 10, Offset = 25 }, TestCt);
-
+        await client.Communication.GetConversationAsync(LeagueId, SeasonId, TopicId, new() { Limit = 10, Offset = 25 }, TestCt);
         var call = Assert.Single(handler.Calls);
         Assert.Equal(HttpMethod.Get, call.Method);
         Assert.Equal(ConversationUrl, call.Uri.AbsoluteUri);
@@ -100,47 +96,43 @@ public sealed class CommunicationManagerTests
     {
         var handler = new RecordingHandler { Respond = _ => Json("""{"topics":[]}""") };
         var client = Client(handler);
-
-        var chats = await client.Communication.GetLeagueChatAsync(new LeagueRes(LeagueId, SeasonId, 6), TestCt);
-
+        var chats = await client.Communication.GetLeagueChatAsync(new(LeagueId, SeasonId, 6), TestCt);
         Assert.Empty(chats!);
         var call = Assert.Single(handler.Calls);
         Assert.Contains($"/seasons/{SeasonId}/", call.Uri.AbsoluteUri, StringComparison.Ordinal);
         Assert.Contains($"/leagues/{LeagueId}/", call.Uri.AbsoluteUri, StringComparison.Ordinal);
     }
 
-    private static FantasyFootballClient Client(HttpMessageHandler handler)
-        => new(new FantasyFootballClientOptions { EspnS2 = "s2-token", Swid = "{SWID-1}" }, httpClient: new HttpClient(handler));
+    private static FantasyFootballClient Client(HttpMessageHandler handler) => new(new() { EspnS2 = "s2-token", Swid = "{SWID-1}" }, httpClient: new(handler));
 
-    private static HttpResponseMessage Json(string json)
-        => new(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
+    private static HttpResponseMessage Json(string json) => new(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
 
     private static string ListJson()
         => $$"""
-            {
-              "topics": [
-                {"id":"{{TopicId}}","type":"CHAT_ALL_MEMBERS","isDeleted":false},
-                {"id":"{{DeletedTopicId}}","type":"CHAT_DIRECT_MESSAGE","isDeleted":true}
-              ]
-            }
-            """;
+             {
+               "topics": [
+                 {"id":"{{TopicId}}","type":"CHAT_ALL_MEMBERS","isDeleted":false},
+                 {"id":"{{DeletedTopicId}}","type":"CHAT_DIRECT_MESSAGE","isDeleted":true}
+               ]
+             }
+             """;
 
     private static string ConversationJson()
         => $$"""
-            {
-              "author":"{83B30A97-98B3-4CC8-A7E8-6616E3CF674E}",
-              "date":1693303072165,
-              "dateEdited":1790187181538,
-              "id":"{{TopicId}}",
-              "isDeleted":false,
-              "isEdited":true,
-              "messages":[
-                {"attributes":{"team1":"12","addP1":"4832955","dropP1":"3149687"},"author":"LM","date":1789658639348,"id":"7ee88006-6ee1-46a6-8957-9d5b9eb1670a","isDeleted":false,"messageTypeId":266,"topicId":"{{TopicId}}"},
-                {"author":"LM","content":"What a matchup! Check out your league's recap in the Fantasy app.","date":1790090068560,"id":"d5443bce-0d67-4351-b388-259b88e235a6","isDeleted":false,"messageTypeId":270,"topicId":"{{TopicId}}"}
-              ],
-              "totalMessageCount":68,
-              "type":"CHAT_ALL_MEMBERS",
-              "unreadMessageCount":0
-            }
-            """;
+             {
+               "author":"{83B30A97-98B3-4CC8-A7E8-6616E3CF674E}",
+               "date":1693303072165,
+               "dateEdited":1790187181538,
+               "id":"{{TopicId}}",
+               "isDeleted":false,
+               "isEdited":true,
+               "messages":[
+                 {"attributes":{"team1":"12","addP1":"4832955","dropP1":"3149687"},"author":"LM","date":1789658639348,"id":"7ee88006-6ee1-46a6-8957-9d5b9eb1670a","isDeleted":false,"messageTypeId":266,"topicId":"{{TopicId}}"},
+                 {"author":"LM","content":"What a matchup! Check out your league's recap in the Fantasy app.","date":1790090068560,"id":"d5443bce-0d67-4351-b388-259b88e235a6","isDeleted":false,"messageTypeId":270,"topicId":"{{TopicId}}"}
+               ],
+               "totalMessageCount":68,
+               "type":"CHAT_ALL_MEMBERS",
+               "unreadMessageCount":0
+             }
+             """;
 }

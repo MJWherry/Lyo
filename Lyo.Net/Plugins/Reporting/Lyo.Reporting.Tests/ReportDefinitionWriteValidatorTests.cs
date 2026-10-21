@@ -1,9 +1,9 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Reporting.Models;
 using Lyo.Reporting.Models.Enums;
 using Lyo.Reporting.Postgres;
 using Lyo.Reporting.Postgres.Database;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Reporting.Tests;
 

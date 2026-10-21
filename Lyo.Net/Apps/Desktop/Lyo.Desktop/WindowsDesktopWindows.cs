@@ -35,6 +35,7 @@ internal static partial class WindowsDesktopWindows
         var hwnd = new IntPtr(id);
         if (IsWindow(hwnd) == 0)
             throw new InvalidOperationException("That window is not open.");
+
         ShowWindow(hwnd, ShowRestore);
         SetForegroundWindow(hwnd);
     }
@@ -43,10 +44,13 @@ internal static partial class WindowsDesktopWindows
     {
         if (_found is null || IsWindowVisible(hwnd) == 0 || GetWindow(hwnd, Owner) != IntPtr.Zero)
             return 1;
+
         if ((GetWindowLongPtr(hwnd, ExtendedStyle) & ToolWindow) != 0)
             return 1;
+
         if (GetWindowRect(hwnd, out var rect) == 0)
             return 1;
+
         var name = WindowTitle(hwnd);
         _found.Add(new(hwnd.ToInt64(), name, new(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top)));
         return 1;
@@ -62,18 +66,6 @@ internal static partial class WindowsDesktopWindows
         finally {
             Marshal.FreeHGlobal(buffer);
         }
-    }
-
-    [UnmanagedFunctionPointer(CallingConvention.Winapi)]
-    private delegate int EnumProc(IntPtr hwnd, IntPtr lParam);
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct Rect
-    {
-        public int Left;
-        public int Top;
-        public int Right;
-        public int Bottom;
     }
 
     [LibraryImport("user32.dll")]
@@ -102,4 +94,16 @@ internal static partial class WindowsDesktopWindows
 
     [LibraryImport("user32.dll", EntryPoint = "GetWindowTextW")]
     private static partial int GetWindowText(IntPtr hwnd, IntPtr text, int maxCount);
+
+    [UnmanagedFunctionPointer(CallingConvention.Winapi)]
+    private delegate int EnumProc(IntPtr hwnd, IntPtr lParam);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct Rect
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+    }
 }

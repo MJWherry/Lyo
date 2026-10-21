@@ -27,7 +27,6 @@ public sealed class MemoryFileSystemTests : IFileSystemContractTests
         using var fs = new MemoryFileSystem();
         var path = PathHelpers.Combine(PathStyle.Posix, fs.RootPath, "concurrent-append.bin");
         fs.WriteAllBytes(path, []);
-
         const int writers = 2;
         const int perWriter = 1000;
         using var gate = new Barrier(writers);
@@ -53,7 +52,6 @@ public sealed class MemoryFileSystemTests : IFileSystemContractTests
     {
         using var fs = new MemoryFileSystem();
         var target = PathHelpers.Combine(PathStyle.Posix, fs.RootPath, "a", "b", "c");
-
         const int callers = 8;
         using var gate = new Barrier(callers);
         var tasks = new Task[callers];

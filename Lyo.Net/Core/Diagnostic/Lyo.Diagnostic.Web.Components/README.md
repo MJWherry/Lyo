@@ -1,21 +1,23 @@
 # Lyo.Diagnostic.Web.Components
 
-Blazor (Server / Interactive) workbench that uses [`Lyo.Diagnostic`](../Lyo.Diagnostic/README.md) to analyze and triage .NET stack traces and exception payloads. The workbench is UI only — paste, view, and classify. Nothing is persisted by the components.
+Blazor (Server / Interactive) workbench that uses [`Lyo.Diagnostic`](../Lyo.Diagnostic/README.md) to analyze and triage .NET stack traces and exception payloads. The workbench is
+UI only — paste, view, and classify. Nothing is persisted by the components.
 
 ## Components
 
-| Component | What it does |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DiagnosticWorkbench` | Top-level shell. Arranges the panels below into a side-by-side input/output review layout. |
-| `StackTraceDecodePanel` | Drop in raw stack-trace text. `IStackTraceDecoder` decodes it and the panel shows structured frames. |
-| `DecodedStackTraceSummary` | Compact summary chip with top frame, exception type, and framework signature. |
-| `StackFrameTable` | Decoded frames in a table (`method`, `file`, `line`, `assembly`). Frames from user code get extra styling. |
-| `SanitisedStackTracePanel` | The sanitised stack trace (paths/PII trimmed) for error pages customers see. |
+| Component                      | What it does                                                                                                                                        |
+|--------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| `DiagnosticWorkbench`          | Top-level shell. Arranges the panels below into a side-by-side input/output review layout.                                                          |
+| `StackTraceDecodePanel`        | Drop in raw stack-trace text. `IStackTraceDecoder` decodes it and the panel shows structured frames.                                                |
+| `DecodedStackTraceSummary`     | Compact summary chip with top frame, exception type, and framework signature.                                                                       |
+| `StackFrameTable`              | Decoded frames in a table (`method`, `file`, `line`, `assembly`). Frames from user code get extra styling.                                          |
+| `SanitisedStackTracePanel`     | The sanitised stack trace (paths/PII trimmed) for error pages customers see.                                                                        |
 | `ExceptionTypeClassifierPanel` | Runs the pasted exception type through `IExceptionTypeClassifier` and shows the category (`Transient`, `Programming`, `Validation`, `Security`, …). |
 
 ## Wiring into a host
 
-DI supplies `IStackTraceDecoder` and `IExceptionTypeClassifier` to the workbench. Register them with `Lyo.Diagnostic` extensions before you mount `<DiagnosticWorkbench />`. MudBlazor layout comes from `Lyo.Web.Components`.
+DI supplies `IStackTraceDecoder` and `IExceptionTypeClassifier` to the workbench. Register them with `Lyo.Diagnostic` extensions before you mount `<DiagnosticWorkbench />`.
+MudBlazor layout comes from `Lyo.Web.Components`.
 
 ## Dependencies
 

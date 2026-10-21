@@ -8,8 +8,8 @@ namespace Lyo.Sms.Twilio.Builders;
 /// <summary>Fluent helper that builds a validated <see cref="SmsMessageQueryFilter" /> for Twilio message queries, including number normalization.</summary>
 /// <remarks>
 /// <para>
-/// Twilio's list API cannot filter by direction on the server, so criteria from <see cref="WithDirection" />, <see cref="Inbound" />, or
-/// <see cref="Outbound" /> are applied on the client in <see cref="TwilioSmsService.GetMessagesAsync(SmsMessageQueryFilter, CancellationToken)" />.
+/// Twilio's list API cannot filter by direction on the server, so criteria from <see cref="WithDirection" />, <see cref="Inbound" />, or <see cref="Outbound" /> are applied on
+/// the client in <see cref="TwilioSmsService.GetMessagesAsync(SmsMessageQueryFilter, CancellationToken)" />.
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{ToString(),nq}")]

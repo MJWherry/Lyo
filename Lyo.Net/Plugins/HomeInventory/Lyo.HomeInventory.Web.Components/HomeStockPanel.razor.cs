@@ -1,12 +1,16 @@
 using Lyo.HomeInventory.Models.Enums;
-using Lyo.HomeInventory.Models.Request;
-using Lyo.HomeInventory.Models.Response;
 
 namespace Lyo.HomeInventory.Web.Components;
 
 /// <summary>On-hand adjust/transfer for one item.</summary>
 public partial class HomeStockPanel
 {
+    private decimal _delta = 1;
+    private Guid _locationId;
+
+    private List<HomeItemStockRes> _stock = [];
+    private Guid _toLocationId;
+
     /// <summary>HTTP client.</summary>
     [Parameter]
     [EditorRequired]
@@ -25,19 +29,17 @@ public partial class HomeStockPanel
     [Parameter]
     public IReadOnlyList<HomeLocationRes> Locations { get; set; } = [];
 
-    private List<HomeItemStockRes> _stock = [];
-    private Guid _locationId;
-    private Guid _toLocationId;
-    private decimal _delta = 1;
-
     protected override async Task OnParametersSetAsync()
     {
         if (ItemId == Guid.Empty)
             return;
+
         if (_locationId == Guid.Empty && Locations.Count > 0)
             _locationId = Locations[0].Id;
+
         if (_toLocationId == Guid.Empty && Locations.Count > 1)
             _toLocationId = Locations[1].Id;
+
         await Reload();
     }
 
@@ -52,16 +54,16 @@ public partial class HomeStockPanel
     private async Task Adjust()
     {
         await ApiClient.PostAsAsync<HomeItemStockAdjustReq, HomeItemStockRes>(
-            $"{BaseRoute.TrimEnd('/')}/Items/{ItemId}/Stock/Adjust",
-            new() { LocationId = _locationId, QuantityDelta = _delta, MovementType = HomeItemMovementType.Adjustment });
+            $"{BaseRoute.TrimEnd('/')}/Items/{ItemId}/Stock/Adjust", new() { LocationId = _locationId, QuantityDelta = _delta, MovementType = HomeItemMovementType.Adjustment });
+
         await Reload();
     }
 
     private async Task Transfer()
     {
         await ApiClient.PostAsAsync<HomeItemStockTransferReq, List<HomeItemStockRes>>(
-            $"{BaseRoute.TrimEnd('/')}/Items/{ItemId}/Stock/Transfer",
-            new() { FromLocationId = _locationId, ToLocationId = _toLocationId, Quantity = Math.Abs(_delta) });
+            $"{BaseRoute.TrimEnd('/')}/Items/{ItemId}/Stock/Transfer", new() { FromLocationId = _locationId, ToLocationId = _toLocationId, Quantity = Math.Abs(_delta) });
+
         await Reload();
     }
 }

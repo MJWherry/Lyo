@@ -31,76 +31,6 @@ public sealed class PostgresStateStore<TState> : IStateStore<TState>, IStateInst
     }
 
     /// <inheritdoc />
-    public async Task<StateSnapshot<TState>?> LoadAsync(string machineName, string instanceKey, CancellationToken ct = default)
-    {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(machineName);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(instanceKey);
-        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var row = await context.Instances.AsNoTracking().FirstOrDefaultAsync(i => i.MachineName == machineName && i.InstanceKey == instanceKey, ct).ConfigureAwait(false);
-        return row is null ? null : ToSnapshot(row);
-    }
-
-    /// <inheritdoc />
-    public async Task<bool> SaveAsync(
-        string machineName,
-        string instanceKey,
-        StateSnapshot<TState> snapshot,
-        long expectedVersion,
-        TransitionRecord<TState>? transition = null,
-        CancellationToken ct = default)
-    {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(machineName);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(instanceKey);
-        ArgumentHelpers.ThrowIfNull(snapshot);
-        EnsureUtc(snapshot.EnteredAtUtc, nameof(snapshot));
-        EnsureUtc(snapshot.DueAtUtc, nameof(snapshot));
-        EnsureUtc(transition?.OccurredAtUtc, nameof(transition));
-        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        await using var tx = await context.Database.BeginTransactionAsync(ct).ConfigureAwait(false);
-        var state = _converter.ToKey(snapshot.State);
-        var now = DateTime.UtcNow;
-        if (expectedVersion == 0) {
-            context.Instances.Add(new() {
-                MachineName = machineName,
-                InstanceKey = instanceKey,
-                State = state,
-                Version = snapshot.Version,
-                EnteredTimestamp = snapshot.EnteredAtUtc,
-                UpdatedTimestamp = now,
-                DueTimestamp = snapshot.DueAtUtc,
-                DataJson = snapshot.DataJson
-            });
-        }
-        else {
-            var updated = await context.Instances.Where(i => i.MachineName == machineName && i.InstanceKey == instanceKey && i.Version == expectedVersion)
-                .ExecuteUpdateAsync(s => s
-                    .SetProperty(i => i.State, state)
-                    .SetProperty(i => i.Version, snapshot.Version)
-                    .SetProperty(i => i.EnteredTimestamp, snapshot.EnteredAtUtc)
-                    .SetProperty(i => i.UpdatedTimestamp, now)
-                    .SetProperty(i => i.DueTimestamp, snapshot.DueAtUtc)
-                    .SetProperty(i => i.DataJson, snapshot.DataJson), ct)
-                .ConfigureAwait(false);
-
-            if (updated == 0)
-                return false;
-        }
-
-        if (transition is not null)
-            context.Transitions.Add(ToEntity(machineName, instanceKey, transition));
-
-        try {
-            await context.SaveChangesAsync(ct).ConfigureAwait(false);
-        }
-        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation }) {
-            return false;
-        }
-
-        await tx.CommitAsync(ct).ConfigureAwait(false);
-        return true;
-    }
-
-    /// <inheritdoc />
     public async Task<IReadOnlyList<StateInstance<TState>>> ListAsync(
         string machineName,
         StateInstanceFilter<TState>? filter = null,
@@ -179,13 +109,85 @@ public sealed class PostgresStateStore<TState> : IStateStore<TState>, IStateInst
         return true;
     }
 
+    /// <inheritdoc />
+    public async Task<StateSnapshot<TState>?> LoadAsync(string machineName, string instanceKey, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(machineName);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(instanceKey);
+        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var row = await context.Instances.AsNoTracking().FirstOrDefaultAsync(i => i.MachineName == machineName && i.InstanceKey == instanceKey, ct).ConfigureAwait(false);
+        return row is null ? null : ToSnapshot(row);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> SaveAsync(
+        string machineName,
+        string instanceKey,
+        StateSnapshot<TState> snapshot,
+        long expectedVersion,
+        TransitionRecord<TState>? transition = null,
+        CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(machineName);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(instanceKey);
+        ArgumentHelpers.ThrowIfNull(snapshot);
+        EnsureUtc(snapshot.EnteredAtUtc, nameof(snapshot));
+        EnsureUtc(snapshot.DueAtUtc, nameof(snapshot));
+        EnsureUtc(transition?.OccurredAtUtc, nameof(transition));
+        await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        await using var tx = await context.Database.BeginTransactionAsync(ct).ConfigureAwait(false);
+        var state = _converter.ToKey(snapshot.State);
+        var now = DateTime.UtcNow;
+        if (expectedVersion == 0) {
+            context.Instances.Add(
+                new() {
+                    MachineName = machineName,
+                    InstanceKey = instanceKey,
+                    State = state,
+                    Version = snapshot.Version,
+                    EnteredTimestamp = snapshot.EnteredAtUtc,
+                    UpdatedTimestamp = now,
+                    DueTimestamp = snapshot.DueAtUtc,
+                    DataJson = snapshot.DataJson
+                });
+        }
+        else {
+            var updated = await context.Instances.Where(i => i.MachineName == machineName && i.InstanceKey == instanceKey && i.Version == expectedVersion)
+                .ExecuteUpdateAsync(
+                    s => s.SetProperty(i => i.State, state)
+                        .SetProperty(i => i.Version, snapshot.Version)
+                        .SetProperty(i => i.EnteredTimestamp, snapshot.EnteredAtUtc)
+                        .SetProperty(i => i.UpdatedTimestamp, now)
+                        .SetProperty(i => i.DueTimestamp, snapshot.DueAtUtc)
+                        .SetProperty(i => i.DataJson, snapshot.DataJson), ct)
+                .ConfigureAwait(false);
+
+            if (updated == 0)
+                return false;
+        }
+
+        if (transition is not null)
+            context.Transitions.Add(ToEntity(machineName, instanceKey, transition));
+
+        try {
+            await context.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation }) {
+            return false;
+        }
+
+        await tx.CommitAsync(ct).ConfigureAwait(false);
+        return true;
+    }
+
     private static void EnsureUtc(DateTime? value, string paramName)
     {
         if (value is { Kind: not DateTimeKind.Utc })
             throw new ArgumentException("Times must be UTC.", paramName);
     }
 
-    private StateSnapshot<TState> ToSnapshot(StateMachineInstanceEntity row) => new(_converter.FromKey(row.State), row.Version, row.EnteredTimestamp, row.DueTimestamp, row.DataJson);
+    private StateSnapshot<TState> ToSnapshot(StateMachineInstanceEntity row)
+        => new(_converter.FromKey(row.State), row.Version, row.EnteredTimestamp, row.DueTimestamp, row.DataJson);
 
     private StateMachineTransitionEntity ToEntity(string machineName, string instanceKey, TransitionRecord<TState> transition)
         => new() {

@@ -1,5 +1,4 @@
 using Lyo.Api.Models.Common.Response;
-using Lyo.Query.Models.Common.Request;
 using Lyo.Recipe.Models;
 using Lyo.Recipe.Models.Enums;
 
@@ -8,6 +7,20 @@ namespace Lyo.Recipe.Web.Components;
 /// <summary>Walks one saved recipe: ingredient overview, then one step at a time with its photos and a countdown.</summary>
 public partial class RecipeCookView : IAsyncDisposable
 {
+    private int? _cookingFor;
+    private int _index = -1;
+    private Dictionary<Guid, string> _ingredientNames = [];
+    private List<RecipeIngredientLineRes> _lines = [];
+
+    private bool _loading = true;
+    private List<RecipeAttachmentRes> _recipeFiles = [];
+    private int _remainingSeconds;
+    private Dictionary<Guid, List<RecipeAttachmentRes>> _stepFiles = [];
+    private List<RecipeStepRes> _steps = [];
+    private PeriodicTimer? _timer;
+    private CancellationTokenSource? _timerCts;
+    private bool _timerRunning;
+
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = null!;
 
@@ -34,43 +47,35 @@ public partial class RecipeCookView : IAsyncDisposable
     [EditorRequired]
     public RecipeRes Recipe { get; set; } = null!;
 
-    private bool _loading = true;
-    private int _index = -1;
-    private int? _cookingFor;
-    private Dictionary<Guid, string> _ingredientNames = [];
-    private List<RecipeIngredientLineRes> _lines = [];
-    private List<RecipeStepRes> _steps = [];
-    private List<RecipeAttachmentRes> _recipeFiles = [];
-    private Dictionary<Guid, List<RecipeAttachmentRes>> _stepFiles = [];
-    private PeriodicTimer? _timer;
-    private CancellationTokenSource? _timerCts;
-    private bool _timerRunning;
-    private int _remainingSeconds;
-
-    private string ApiOrigin
-    {
-        get
-        {
+    private string ApiOrigin {
+        get {
             if (Uri.TryCreate(BaseRoute, UriKind.Absolute, out var uri))
                 return uri.GetLeftPart(UriPartial.Authority);
+
             return "";
         }
+    }
+
+    private RecipeStepRes? CurrentStep => _index >= 0 && _index < _steps.Count ? _steps[_index] : null;
+
+    /// <inheritdoc />
+    public ValueTask DisposeAsync()
+    {
+        StopTimer();
+        return ValueTask.CompletedTask;
     }
 
     protected override async Task OnInitializedAsync()
     {
         _cookingFor = Recipe.Servings is > 0 ? Recipe.Servings : 1;
-        var ingredients = await ApiClient.QueryConcreteAsync<QueryRes<IngredientRes>>($"{BaseRoute.TrimEnd('/')}/Ingredients", new QueryConcreteReq { Amount = 500 });
+        var ingredients = await ApiClient.QueryConcreteAsync<QueryRes<IngredientRes>>($"{BaseRoute.TrimEnd('/')}/Ingredients", new() { Amount = 500 });
         _ingredientNames = (ingredients?.Items ?? []).ToDictionary(i => i.Id, i => i.Name);
         _lines = (await RecipeClient.GetIngredientLinesAsync(Recipe.Id)).ToList();
         _steps = (await RecipeClient.GetStepsAsync(Recipe.Id)).OrderBy(s => s.SortOrder).ThenBy(s => s.Id).ToList();
-        var attachments = await ApiClient.QueryConcreteAsync<QueryRes<RecipeAttachmentRes>>(
-            $"{BaseRoute.TrimEnd('/')}/Attachments", new QueryConcreteReq { Amount = 500 });
+        var attachments = await ApiClient.QueryConcreteAsync<QueryRes<RecipeAttachmentRes>>($"{BaseRoute.TrimEnd('/')}/Attachments", new() { Amount = 500 });
         var rows = attachments?.Items ?? [];
         _recipeFiles = rows.Where(a => a.EntityType == RecipeEntityTypes.Recipe && a.EntityId == Recipe.Id).ToList();
-        _stepFiles = rows.Where(a => a.EntityType == RecipeEntityTypes.RecipeStep)
-            .GroupBy(a => a.EntityId)
-            .ToDictionary(g => g.Key, g => g.ToList());
+        _stepFiles = rows.Where(a => a.EntityType == RecipeEntityTypes.RecipeStep).GroupBy(a => a.EntityId).ToDictionary(g => g.Key, g => g.ToList());
         _loading = false;
     }
 
@@ -80,6 +85,7 @@ public partial class RecipeCookView : IAsyncDisposable
     {
         if (_index >= 0)
             _index--;
+
         StopTimer();
     }
 
@@ -87,10 +93,9 @@ public partial class RecipeCookView : IAsyncDisposable
     {
         if (_index < _steps.Count - 1)
             _index++;
+
         StopTimer();
     }
-
-    private RecipeStepRes? CurrentStep => _index >= 0 && _index < _steps.Count ? _steps[_index] : null;
 
     private IEnumerable<RecipeAttachmentRes> OtherImages(Guid stepId)
     {
@@ -99,14 +104,12 @@ public partial class RecipeCookView : IAsyncDisposable
         return files.Where(f => f.Role == RecipeAttachmentRole.Image && f.Id != primary?.Id);
     }
 
-    private IEnumerable<RecipeIngredientLineRes> LinesFor(Guid stepId)
-        => _lines.Where(l => l.StepIds.Contains(stepId));
+    private IEnumerable<RecipeIngredientLineRes> LinesFor(Guid stepId) => _lines.Where(l => l.StepIds.Contains(stepId));
 
     private IReadOnlyList<int> StepNumbers(RecipeIngredientLineRes line)
         => line.StepIds.Select(id => _steps.FindIndex(s => s.Id == id)).Where(i => i >= 0).Select(i => i + 1).ToList();
 
-    private IReadOnlyList<RecipeAttachmentRes> FilesFor(Guid stepId)
-        => _stepFiles.TryGetValue(stepId, out var files) ? files : [];
+    private IReadOnlyList<RecipeAttachmentRes> FilesFor(Guid stepId) => _stepFiles.TryGetValue(stepId, out var files) ? files : [];
 
     private static RecipeAttachmentRes? PrimaryImage(IEnumerable<RecipeAttachmentRes> files)
     {
@@ -121,15 +124,19 @@ public partial class RecipeCookView : IAsyncDisposable
         var name = line.IngredientText;
         if (line.IngredientId is Guid ingredientId && _ingredientNames.TryGetValue(ingredientId, out var catalogName))
             name = catalogName;
+
         if (string.IsNullOrWhiteSpace(name))
             name = "Ingredient";
+
         var qty = RecipeQuantityScale.Scale(line.Quantity, Recipe.Servings, _cookingFor);
         var amount = qty is null ? "" : $"{qty:0.##} {line.Unit}".Trim();
         var text = string.IsNullOrWhiteSpace(amount) ? name : $"{amount} {name}";
         if (!string.IsNullOrWhiteSpace(line.Preparation))
             text += $", {line.Preparation}";
+
         if (line.IsOptional)
             text += " (optional)";
+
         return text;
     }
 
@@ -145,8 +152,8 @@ public partial class RecipeCookView : IAsyncDisposable
         StopTimer();
         _remainingSeconds = minutes * 60;
         _timerRunning = true;
-        _timerCts = new CancellationTokenSource();
-        _timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+        _timerCts = new();
+        _timer = new(TimeSpan.FromSeconds(1));
         var token = _timerCts.Token;
         try {
             while (await _timer.WaitForNextTickAsync(token)) {
@@ -175,12 +182,5 @@ public partial class RecipeCookView : IAsyncDisposable
         _timer = null;
         _timerCts?.Dispose();
         _timerCts = null;
-    }
-
-    /// <inheritdoc />
-    public ValueTask DisposeAsync()
-    {
-        StopTimer();
-        return ValueTask.CompletedTask;
     }
 }

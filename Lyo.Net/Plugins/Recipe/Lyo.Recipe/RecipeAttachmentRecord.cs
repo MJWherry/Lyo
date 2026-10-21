@@ -11,7 +11,7 @@ public sealed class RecipeAttachmentRecord
     /// <summary>Row id.</summary>
     public Guid Id { get; set; }
 
-    /// <summary>Subject type from <see cref="RecipeEntityTypes"/>.</summary>
+    /// <summary>Subject type from <see cref="RecipeEntityTypes" />.</summary>
     public string EntityType { get; set; } = string.Empty;
 
     /// <summary>Subject id.</summary>

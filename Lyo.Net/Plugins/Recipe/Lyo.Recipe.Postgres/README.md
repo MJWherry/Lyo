@@ -1,11 +1,13 @@
 # Lyo.Recipe.Postgres
 
-PostgreSQL and EF Core implementation of `Lyo.Recipe.IRecipeStore` (`PostgresRecipeStore`) via `RecipeDbContext`, `PostgresRecipeOptions`, and `AddPostgresMigrations<RecipeDbContext, PostgresRecipeOptions>`. `PostgresRecipeStore` implements `Lyo.Health.IHealth` (`recipe-postgres`).
+PostgreSQL and EF Core implementation of `Lyo.Recipe.IRecipeStore` (`PostgresRecipeStore`) via `RecipeDbContext`, `PostgresRecipeOptions`, and
+`AddPostgresMigrations<RecipeDbContext, PostgresRecipeOptions>`. `PostgresRecipeStore` implements `Lyo.Health.IHealth` (`recipe-postgres`).
 
 ## Features
 
 - **DI.** `AddRecipeDbContextFactory` / `AddPostgresRecipeStore` and `FromConfiguration` overloads (section `PostgresRecipe`).
-- Schema `recipe`. Unique slug per tenant. Units are unique by abbreviation. Ingredient lines link to steps through `ingredient_line_step`. Replacing steps keeps sent ids and deletes attachments for omitted steps.
+- Schema `recipe`. Unique slug per tenant. Units are unique by abbreviation. Ingredient lines link to steps through `ingredient_line_step`. Replacing steps keeps sent ids and
+  deletes attachments for omitted steps.
 
 ## Examples
 

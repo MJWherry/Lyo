@@ -1,6 +1,4 @@
 @namespace Lyo.FileStorage.Web.Components.FileStorageManagement
-@using Lyo.Common.Metadata.Records;
-@using Lyo.Web.Components
 @using Lyo.Web.Components.DataGrid
 @implements IDisposable
 
@@ -93,8 +91,7 @@
 
 @code {
 
-    private static bool CanPreview(object? row)
-        => FileMediaPreview.PreviewKind(FileStorageColorHelper.ResolveFileType(row)) is not null;
+    private static bool CanPreview(object? row) => FileMediaPreview.PreviewKind(FileStorageColorHelper.ResolveFileType(row)) is not null;
 
     private RenderFragment<object?> RowMenu(bool storageView)
         => row => {
@@ -102,17 +99,19 @@
             var actions = _actions!;
             return @<span style="display:contents">
             <MudMenuItem Icon="@Icons.Material.Filled.Info" OnClick="@(() => actions.ViewFromRowAsync(row))">View metadata</MudMenuItem>
-            <MudMenuItem Icon="@Icons.Material.Filled.PlayCircle" Disabled="@(deleted || !CanPreview(row))" OnClick="@(() => actions.PreviewFromRowAsync(row))">Preview</MudMenuItem>
-            <MudMenuItem Icon="@Icons.Material.Filled.Link" Disabled="@deleted" OnClick="@(() => actions.AccessLinkFromRowAsync(row))">Access link…</MudMenuItem>
-            <MudMenuItem Icon="@Icons.Material.Filled.FileDownload" Disabled="@deleted" OnClick="@(() => actions.DownloadFromRowAsync(row))">Download</MudMenuItem>
-            <MudMenuItem Icon="@Icons.Material.Filled.DriveFileMove" Disabled="@deleted" OnClick="@(() => actions.MoveFromRowAsync(row))">Move…</MudMenuItem>
-            <MudMenuItem Icon="@Icons.Material.Filled.ContentCopy" Disabled="@deleted" OnClick="@(() => actions.CopyFromRowAsync(row))">Copy…</MudMenuItem>
-            <MudMenuItem Icon="@Icons.Material.Filled.DriveFileRenameOutline" Disabled="@deleted" OnClick="@(() => actions.RenameFromRowAsync(row))">Rename…</MudMenuItem>
-            <MudMenuItem Icon="@Icons.Material.Filled.VpnKey" Disabled="@deleted" OnClick="@(() => actions.RotateDekFromRowAsync(row))">Rotate DEK…</MudMenuItem>
-            @if (storageView) {
-                <MudMenuItem Icon="@Icons.Material.Filled.ContentPaste" OnClick="@(() => actions.CopyExpectedKeyFromRowAsync(row))">Copy expected key</MudMenuItem>
-            }
-            <MudMenuItem Icon="@Icons.Material.Filled.Delete" Disabled="@deleted" OnClick="@(() => actions.DeleteFromRowAsync(row))">Delete</MudMenuItem>
+                       <MudMenuItem Icon="@Icons.Material.Filled.PlayCircle" Disabled="@(deleted || !CanPreview(row))"
+                                    OnClick="@(() => actions.PreviewFromRowAsync(row))">Preview</MudMenuItem>
+                       <MudMenuItem Icon="@Icons.Material.Filled.Link" Disabled="@deleted" OnClick="@(() => actions.AccessLinkFromRowAsync(row))">Access link…</MudMenuItem>
+                       <MudMenuItem Icon="@Icons.Material.Filled.FileDownload" Disabled="@deleted" OnClick="@(() => actions.DownloadFromRowAsync(row))">Download</MudMenuItem>
+                       <MudMenuItem Icon="@Icons.Material.Filled.DriveFileMove" Disabled="@deleted" OnClick="@(() => actions.MoveFromRowAsync(row))">Move…</MudMenuItem>
+                       <MudMenuItem Icon="@Icons.Material.Filled.ContentCopy" Disabled="@deleted" OnClick="@(() => actions.CopyFromRowAsync(row))">Copy…</MudMenuItem>
+                       <MudMenuItem Icon="@Icons.Material.Filled.DriveFileRenameOutline" Disabled="@deleted"
+                                    OnClick="@(() => actions.RenameFromRowAsync(row))">Rename…</MudMenuItem>
+                       <MudMenuItem Icon="@Icons.Material.Filled.VpnKey" Disabled="@deleted" OnClick="@(() => actions.RotateDekFromRowAsync(row))">Rotate DEK…</MudMenuItem>
+                       @if (storageView) {
+                           <MudMenuItem Icon="@Icons.Material.Filled.ContentPaste" OnClick="@(() => actions.CopyExpectedKeyFromRowAsync(row))">Copy expected key</MudMenuItem>
+                       }
+                       <MudMenuItem Icon="@Icons.Material.Filled.Delete" Disabled="@deleted" OnClick="@(() => actions.DeleteFromRowAsync(row))">Delete</MudMenuItem>
         </span>;
         };
 

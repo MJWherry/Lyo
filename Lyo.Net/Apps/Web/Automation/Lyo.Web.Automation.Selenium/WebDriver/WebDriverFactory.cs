@@ -1,7 +1,6 @@
 using Lyo.Common.Core.Extensions;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
-using Lyo.Web.Automation.Models;
 using Lyo.Web.Automation.Selenium.Configuration;
 using Lyo.Web.Automation.Selenium.Service;
 using OpenQA.Selenium;
@@ -113,7 +112,6 @@ public static class WebDriverFactory
         }
 
         o.AddArgument(WebDriverArgumentFormatter.Format("--user-agent", ResolveUserAgent(options)));
-
         o.AddArgument(WebDriverArgumentFormatter.Format("--window-size", $"{options.BrowserWindowWidth},{options.BrowserWindowHeight}"));
         ApplyDetectedBinary(options, path => o.BinaryLocation = path);
         ApplyDownloadDirectoryChromium(o, context);
@@ -140,7 +138,6 @@ public static class WebDriverFactory
         }
 
         o.AddArgument(WebDriverArgumentFormatter.Format("--user-agent", ResolveUserAgent(options)));
-
         o.AddArgument(WebDriverArgumentFormatter.Format("--window-size", $"{options.BrowserWindowWidth},{options.BrowserWindowHeight}"));
         ApplyDetectedBinary(options, path => o.BinaryLocation = path);
         ApplyDownloadDirectoryChromium(o, context);
@@ -172,14 +169,11 @@ public static class WebDriverFactory
         }
 
         o.SetPreference("general.useragent.override", ResolveUserAgent(options));
-
         return o;
     }
 
     private static string ResolveUserAgent(SeleniumBrowserOptions options)
-        => options.UserAgents.Count == 0
-            ? AutomationBrowserDetector.UserAgent(options.BrowserKind)
-            : options.UserAgents[new Random().Next(options.UserAgents.Count)];
+        => options.UserAgents.Count == 0 ? AutomationBrowserDetector.UserAgent(options.BrowserKind) : options.UserAgents[new Random().Next(options.UserAgents.Count)];
 
     private static void ApplyDetectedBinary(SeleniumBrowserOptions options, Action<string> setBinary)
     {

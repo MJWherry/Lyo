@@ -14,8 +14,8 @@ public class ExportRequest
 
     /// <summary>
     /// Optional. Column header to property name or SmartFormat template. When null or empty, every property is exported. When IFormatterService is registered, values with '{'
-    /// are SmartFormat templates (for example "{FirstName} {LastName}", "{CreatedAt:yyyy-MM-dd}"); otherwise they are property names. Formatter columns and their order apply
-    /// to every format, including JSON, YAML, XML, and TOML.
+    /// are SmartFormat templates (for example "{FirstName} {LastName}", "{CreatedAt:yyyy-MM-dd}"); otherwise they are property names. Formatter columns and their order apply to every
+    /// format, including JSON, YAML, XML, and TOML.
     /// </summary>
     /// <example>{"Email Address": "Email", "Full Name": "{FirstName} {LastName}", "Created": "{CreatedAt:yyyy-MM-dd}"}</example>
     public Dictionary<string, string>? Columns { get; set; }

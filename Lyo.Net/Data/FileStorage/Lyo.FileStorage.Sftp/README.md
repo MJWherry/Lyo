@@ -1,10 +1,12 @@
 # Lyo.FileStorage.Sftp
 
-Lyo.FileStorage physical-IO backend for SFTP. Save, read, delete, copy, move, and DEK header rotation work. v1 does not implement presigned URLs or multipart (the base throws NotSupportedException).
+Lyo.FileStorage physical-IO backend for SFTP. Save, read, delete, copy, move, and DEK header rotation work. v1 does not implement presigned URLs or multipart (the base throws
+NotSupportedException).
 
 ## Features
 
-- **Shared remote storage core.** `SFTPFileStorageService` subclasses `RemoteFileStorageServiceBase` in `Lyo.FileStorage`, which already covers streaming, encryption-header handling, copy/move, and health. What this package adds is `SftpRemoteFileTransport` (`IRemoteFileTransport` over `Lyo.Sftp.Client`), plus options and DI.
+- **Shared remote storage core.** `SFTPFileStorageService` subclasses `RemoteFileStorageServiceBase` in `Lyo.FileStorage`, which already covers streaming, encryption-header
+  handling, copy/move, and health. What this package adds is `SftpRemoteFileTransport` (`IRemoteFileTransport` over `Lyo.Sftp.Client`), plus options and DI.
 - **SFTP physical IO.** Commit-on-close upload and a leased read stream.
 - **Path jail.** POSIX paths rooted at `Sftp.RootRemoteDirectory`.
 - **DI.** `AddSftpFileStorageService` and `AddSftpFileStorageServiceFromConfiguration`, matching the Blob extensions.

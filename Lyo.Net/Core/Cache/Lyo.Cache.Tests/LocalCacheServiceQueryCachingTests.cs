@@ -1,7 +1,7 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Testing;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Cache.Tests;
 

@@ -1,5 +1,4 @@
 using Lyo.Authentication.Sso.Protocol;
-using Lyo.Exceptions;
 
 namespace Lyo.Authentication.OpenIdConnect.Coordinator;
 

@@ -244,9 +244,7 @@ public sealed class SpriteSheetExportService(IImageService imageService) : ISpri
         return Math.Clamp(fps, 1, 60);
     }
 
-    /// <summary>
-    /// Frames to place on the sheet for one loop: min(source frames, max(1, round(loop seconds × target fps))). Static or missing timing uses every source frame.
-    /// </summary>
+    /// <summary>Frames to place on the sheet for one loop: min(source frames, max(1, round(loop seconds × target fps))). Static or missing timing uses every source frame.</summary>
     public static int ComputeExtractSampleBudget(int sourceFrameCount, double loopDurationMs, int targetFps)
     {
         sourceFrameCount = Math.Max(1, sourceFrameCount);

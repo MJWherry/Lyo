@@ -48,9 +48,7 @@ public abstract class StoryStoreContractTests
         theirs.GameKey = game;
         await Store.SaveStoryGraphAsync(mine, ct);
         await Store.SaveStoryGraphAsync(theirs, ct);
-
         var listed = await Store.ListStoriesAsync(tenant, game, ct);
-
         var story = Assert.Single(listed);
         Assert.Equal(mine.Id, story.Id);
         Assert.Equal(tenant, story.TenantId);
@@ -65,18 +63,14 @@ public abstract class StoryStoreContractTests
         var story = StorySamples.TheHeist();
         story.Slug = $"play-{LyoGuid.CreateV7():N}";
         await Store.SaveStoryGraphAsync(story, ct);
-
-        var started = await Store.StartPlaythroughAsync(story.Id, playerRef: "tester", ct);
+        var started = await Store.StartPlaythroughAsync(story.Id, "tester", ct);
         Assert.Equal("vault_door", started.Playthrough.CurrentNodeKey);
         Assert.Contains(started.Moves, m => m.ChoiceKey == "smash");
-
         var smashed = await Store.TakeChoiceAsync(started.Playthrough.Id, "smash", ct);
         Assert.Equal("alarm_cutscene", smashed.Playthrough.CurrentNodeKey);
         Assert.Contains(smashed.Moves, m => m.Kind == StoryMoveKind.Advance);
-
         var advanced = await Store.AdvanceAsync(started.Playthrough.Id, ct);
         Assert.Equal("guards", advanced.Playthrough.CurrentNodeKey);
-
         var causes = await Store.GetCausesAsync(started.Playthrough.Id, "alarm", ct);
         Assert.Contains(causes, e => e.Kind == StoryPlaythroughEventKind.VariableChanged && e.VariableKey == "alarm");
         Assert.Contains(causes, e => e.Kind == StoryPlaythroughEventKind.ChoiceTaken && e.ChoiceKey == "smash");
@@ -89,10 +83,8 @@ public abstract class StoryStoreContractTests
         var story = StorySamples.TheHeist();
         story.Slug = $"keep-{LyoGuid.CreateV7():N}";
         await Store.SaveStoryGraphAsync(story, ct);
-        var started = await Store.StartPlaythroughAsync(story.Id, playerRef: "tester", ct);
-
+        var started = await Store.StartPlaythroughAsync(story.Id, "tester", ct);
         await Assert.ThrowsAsync<ConflictException>(() => Store.SaveStoryGraphAsync(story, ct));
-
         var kept = await Store.GetPlaythroughAsync(started.Playthrough.Id, ct);
         Assert.NotNull(kept);
         Assert.NotEmpty(await Store.GetEventsAsync(started.Playthrough.Id, ct));
@@ -119,11 +111,9 @@ public abstract class StoryStoreContractTests
         var story = StorySamples.TheHeist();
         story.Slug = $"delete-{LyoGuid.CreateV7():N}";
         await Store.SaveStoryGraphAsync(story, ct);
-        var started = await Store.StartPlaythroughAsync(story.Id, playerRef: "tester", ct);
-
+        var started = await Store.StartPlaythroughAsync(story.Id, "tester", ct);
         await Store.DeleteStoryAsync(story.Id, ct);
         await Store.DeleteStoryAsync(story.Id, ct);
-
         Assert.Null(await Store.GetStoryByIdAsync(story.Id, ct));
         Assert.Null(await Store.GetPlaythroughAsync(started.Playthrough.Id, ct));
     }
@@ -135,10 +125,8 @@ public abstract class StoryStoreContractTests
         var story = StorySamples.TheHeist();
         story.Slug = $"vars-{LyoGuid.CreateV7():N}";
         await Store.SaveStoryGraphAsync(story, ct);
-        var started = await Store.StartPlaythroughAsync(story.Id, playerRef: "tester", ct);
-
+        var started = await Store.StartPlaythroughAsync(story.Id, "tester", ct);
         var state = await Store.SetVariablesAsync(started.Playthrough.Id, new Dictionary<string, string?> { ["alarm"] = "True" }, ct);
-
         Assert.Equal("alarm_cutscene", state.Playthrough.CurrentNodeKey);
         Assert.Contains(state.Playthrough.Variables, v => v.VariableKey == "alarm" && v.Value == "True");
         var events = await Store.GetEventsAsync(started.Playthrough.Id, ct);

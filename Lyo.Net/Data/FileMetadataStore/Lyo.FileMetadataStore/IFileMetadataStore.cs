@@ -2,9 +2,7 @@ using Lyo.FileMetadataStore.Models;
 
 namespace Lyo.FileMetadataStore;
 
-/// <summary>
-/// File metadata store, independent of blob storage. Metadata can live in Postgres, SQLite, or files while blobs live on disk, S3, or another backend.
-/// </summary>
+/// <summary>File metadata store, independent of blob storage. Metadata can live in Postgres, SQLite, or files while blobs live on disk, S3, or another backend.</summary>
 public interface IFileMetadataStore
 {
     /// <summary>Loads metadata for a file by ID.</summary>
@@ -21,8 +19,8 @@ public interface IFileMetadataStore
     Task SaveMetadataAsync(Guid fileId, FileStoreResult metadata, CancellationToken ct = default);
 
     /// <summary>
-    /// Soft-deletes metadata: writes a deletion timestamp and <see cref="FileAvailability.Deleted" /> instead of removing the row. Later
-    /// <see cref="GetMetadataAsync" /> and duplicate lookups skip tombstones; idempotent deletes return false when already logically deleted.
+    /// Soft-deletes metadata: writes a deletion timestamp and <see cref="FileAvailability.Deleted" /> instead of removing the row. Later <see cref="GetMetadataAsync" /> and
+    /// duplicate lookups skip tombstones; idempotent deletes return false when already logically deleted.
     /// </summary>
     /// <param name="fileId">File identifier.</param>
     /// <param name="ct">Cancellation token.</param>
@@ -49,11 +47,7 @@ public interface IFileMetadataStore
     /// <param name="includeDescendants">When true, also return files under nested prefixes.</param>
     /// <param name="maxKeys">Maximum rows to return. Must be at least 1.</param>
     /// <param name="ct">Cancellation token.</param>
-    Task<IReadOnlyList<FileStoreResult>> ListByPathPrefixAsync(
-        string? pathPrefix,
-        bool includeDescendants,
-        int maxKeys,
-        CancellationToken ct = default);
+    Task<IReadOnlyList<FileStoreResult>> ListByPathPrefixAsync(string? pathPrefix, bool includeDescendants, int maxKeys, CancellationToken ct = default);
 
     /// <summary>Lists files encrypted with a given keyId and optional version (key rotation/migration).</summary>
     /// <param name="keyId">Key identifier to match.</param>

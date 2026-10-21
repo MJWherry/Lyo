@@ -14,7 +14,6 @@ public class JobWorkflowDiagramTests
         var extract = page.Cells.Single(cell => cell.IsVertex && cell.Value == "Extract");
         var load = page.Cells.Single(cell => cell.IsVertex && cell.Value == "Load");
         var edge = Assert.Single(page.Cells, cell => cell.IsEdge);
-
         Assert.Equal(extract.Id, edge.SourceId);
         Assert.Equal(load.Id, edge.TargetId);
         Assert.Equal(extract.Geometry!.X + JobWorkflowGraphLayout.NodeWidth, edge.Geometry!.SourcePoint!.X);
@@ -29,9 +28,7 @@ public class JobWorkflowDiagramTests
     {
         var steps = Steps(("Extract", []), ("Load", ["Extract"]));
         steps[1].Condition = JobWorkflowStepCondition.When("Extract", "RowCount", ComparisonOperatorEnum.GreaterThan, "0");
-
         var edge = Assert.Single(JobWorkflowDiagram.Create("Checkout", steps).Document.Pages[0].Cells, cell => cell.IsEdge);
-
         Assert.False(string.IsNullOrWhiteSpace(steps[1].ConditionText));
         Assert.Equal(steps[1].ConditionText, edge.Value);
     }
@@ -40,10 +37,7 @@ public class JobWorkflowDiagramTests
     [Fact]
     public void Create_Edge_WithoutACondition_SaysAlways()
     {
-        var edge = Assert.Single(
-            JobWorkflowDiagram.Create("Checkout", Steps(("Extract", []), ("Load", ["Extract"]))).Document.Pages[0].Cells,
-            cell => cell.IsEdge);
-
+        var edge = Assert.Single(JobWorkflowDiagram.Create("Checkout", Steps(("Extract", []), ("Load", ["Extract"]))).Document.Pages[0].Cells, cell => cell.IsEdge);
         Assert.Equal("always", edge.Value);
     }
 
@@ -51,7 +45,6 @@ public class JobWorkflowDiagramTests
     public void Create_Cycle_ReportsTheStepsAndDrawsNoCells()
     {
         var picture = JobWorkflowDiagram.Create("Loop", Steps(("A", ["B"]), ("B", ["A"])));
-
         Assert.Equal(["A", "B"], [.. picture.Cyclic.Order()]);
         Assert.Empty(picture.Document.Pages[0].Cells);
     }

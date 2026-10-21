@@ -2,9 +2,7 @@ using Lyo.Common.Metadata.Records;
 
 namespace Lyo.FileStorage.Policy;
 
-/// <summary>
-/// Maps well-known file headers to <see cref="FileTypeInfo" /> rows. Shared containers are reported as the container (<c>ZIP</c>, <c>DOC</c>, <c>MKV</c>, <c>OGG</c>).
-/// </summary>
+/// <summary>Maps well-known file headers to <see cref="FileTypeInfo" /> rows. Shared containers are reported as the container (<c>ZIP</c>, <c>DOC</c>, <c>MKV</c>, <c>OGG</c>).</summary>
 public sealed class MagicFileTypeSniffer : IFileTypeSniffer
 {
     /// <inheritdoc />

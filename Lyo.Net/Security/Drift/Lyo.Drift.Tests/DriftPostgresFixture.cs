@@ -16,11 +16,12 @@ public sealed class DriftPostgresFixture : PostgresServiceFixtureBase<DriftDbCon
     {
         services.AddLocalCache();
         services.AddLyoQueryServices();
-        services.AddPostgresDriftManagement(new PostgresDriftOptions {
-            ConnectionString = connectionString,
-            EnableAutoMigrations = true,
-            MaxSnapshotJsonBytes = 8 * 1024 * 1024,
-            SnapshotRetention = TimeSpan.FromDays(1)
-        });
+        services.AddPostgresDriftManagement(
+            new PostgresDriftOptions {
+                ConnectionString = connectionString,
+                EnableAutoMigrations = true,
+                MaxSnapshotJsonBytes = 8 * 1024 * 1024,
+                SnapshotRetention = TimeSpan.FromDays(1)
+            });
     }
 }

@@ -18,31 +18,33 @@ public sealed class S3FileStorageFactoryTests
             services.AddSingleton(Metadata());
             services.AddSingleton<ITwoKeyEncryptionService>(_ => throw new InvalidOperationException("unkeyed"));
             services.AddFileStorageFactory(stores => {
-                stores.AddS3("alpha", options => {
-                    options.BucketName = "alpha";
-                    options.AccessKeyId = "AKIATEST";
-                    options.SecretAccessKey = "secret";
-                    options.ServiceUrl = "http://127.0.0.1:9";
-                });
-                stores.AddS3("beta", builder => builder.Configure(options => {
-                    options.BucketName = "beta";
-                    options.AccessKeyId = "AKIATEST";
-                    options.SecretAccessKey = "secret";
-                    options.ServiceUrl = "http://127.0.0.1:9";
-                }));
+                stores.AddS3(
+                    "alpha", options => {
+                        options.BucketName = "alpha";
+                        options.AccessKeyId = "AKIATEST";
+                        options.SecretAccessKey = "secret";
+                        options.ServiceUrl = "http://127.0.0.1:9";
+                    });
+
+                stores.AddS3(
+                    "beta", builder => builder.Configure(options => {
+                        options.BucketName = "beta";
+                        options.AccessKeyId = "AKIATEST";
+                        options.SecretAccessKey = "secret";
+                        options.ServiceUrl = "http://127.0.0.1:9";
+                    }));
             });
         });
+
         using var scope = provider.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IFileStorageFactory>();
         var alpha = factory.Get("alpha");
         var beta = factory.Get("beta");
-
         Assert.Equal("alpha", Options(alpha).BucketName);
         Assert.Equal("beta", Options(beta).BucketName);
         Assert.Null(Field(alpha, "TwoKeyEncryptionService"));
         Assert.Null(provider.GetService<S3FileStorageOptions>());
         Assert.Null(provider.GetService<IAmazonS3>());
-
         var alphaMultipart = scope.ServiceProvider.GetRequiredKeyedService<IMultipartUploadService>("alpha");
         var betaMultipart = scope.ServiceProvider.GetRequiredKeyedService<IMultipartUploadService>("beta");
         Assert.NotSame(alphaMultipart, betaMultipart);
@@ -55,18 +57,22 @@ public sealed class S3FileStorageFactoryTests
     [Fact]
     public void FromConfiguration_ProviderNameIgnoresCase_AndRegistersMultipart()
     {
-        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> {
-            ["FileStorage:Stores:archive:Provider"] = "s3",
-            ["FileStorage:Stores:archive:BucketName"] = "archive",
-            ["FileStorage:Stores:archive:AccessKeyId"] = "AKIATEST",
-            ["FileStorage:Stores:archive:SecretAccessKey"] = "secret",
-            ["FileStorage:Stores:archive:ServiceUrl"] = "http://127.0.0.1:9"
-        }).Build();
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(
+                new Dictionary<string, string?> {
+                    ["FileStorage:Stores:archive:Provider"] = "s3",
+                    ["FileStorage:Stores:archive:BucketName"] = "archive",
+                    ["FileStorage:Stores:archive:AccessKeyId"] = "AKIATEST",
+                    ["FileStorage:Stores:archive:SecretAccessKey"] = "secret",
+                    ["FileStorage:Stores:archive:ServiceUrl"] = "http://127.0.0.1:9"
+                })
+            .Build();
+
         using var provider = Provider(services => {
             services.AddSingleton(Metadata());
             services.AddS3FileStorageProvider();
             services.AddFileStorageFactoryFromConfiguration(configuration);
         });
+
         using var scope = provider.CreateScope();
         var store = scope.ServiceProvider.GetRequiredService<IFileStorageFactory>().Get("archive");
         Assert.Equal("archive", Options(store).BucketName);
@@ -95,6 +101,7 @@ public sealed class S3FileStorageFactoryTests
             options.SecretAccessKey = "secret";
             options.ServiceUrl = "http://127.0.0.1:9";
         })));
+
         Assert.Contains("unkeyed", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 

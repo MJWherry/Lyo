@@ -3,7 +3,7 @@ using Lyo.FileMetadataStore.Models;
 
 namespace Lyo.FileManager.Tests;
 
-sealed class RecordingFileManagerApi : IFileManagerApi
+internal sealed class RecordingFileManagerApi : IFileManagerApi
 {
     public FileManagerHealth Health { get; set; } = new(true, null);
 
@@ -43,7 +43,7 @@ sealed class RecordingFileManagerApi : IFileManagerApi
     {
         var key = pathPrefix?.Trim().Trim('/') ?? "";
         Lists.Add(key);
-        return Task.FromResult(Folders.TryGetValue(key, out var listing) ? listing : new FileManagerListing([], false));
+        return Task.FromResult(Folders.TryGetValue(key, out var listing) ? listing : new([], false));
     }
 
     public Task<IReadOnlyList<FileManagerQueryRow>> QueryAsync(string? nameContains, string? pathPrefix, CancellationToken ct)
@@ -82,6 +82,7 @@ sealed class RecordingFileManagerApi : IFileManagerApi
     {
         if (FailMove == fileId)
             throw new InvalidOperationException("move failed");
+
         Moves.Add((fileId, pathPrefix));
         return Task.CompletedTask;
     }
@@ -98,8 +99,7 @@ sealed class RecordingFileManagerApi : IFileManagerApi
         return Task.CompletedTask;
     }
 
-    public Task<string> CreateAccessLinkAsync(Guid fileId, DateTime? expiresAtUtc, int? maxDownloads, CancellationToken ct)
-        => Task.FromResult("link");
+    public Task<string> CreateAccessLinkAsync(Guid fileId, DateTime? expiresAtUtc, int? maxDownloads, CancellationToken ct) => Task.FromResult("link");
 
     public Task<string> PresignedReadAsync(Guid fileId, CancellationToken ct) => Task.FromResult("https://example/read");
 
@@ -135,9 +135,7 @@ sealed class RecordingFileManagerApi : IFileManagerApi
 
     public void Dispose() { }
 
-    public static FileManagerEntry Dir(string name, string prefix)
-        => new(name, true, prefix, null, FileStoragePresence.Store, 0, null);
+    public static FileManagerEntry Dir(string name, string prefix) => new(name, true, prefix, null, FileStoragePresence.Store, 0, null);
 
-    public static FileManagerEntry Stored(string name, string? prefix, Guid id)
-        => new(name, false, prefix, id, FileStoragePresence.Both, 4, prefix + "/" + name);
+    public static FileManagerEntry Stored(string name, string? prefix, Guid id) => new(name, false, prefix, id, FileStoragePresence.Both, 4, prefix + "/" + name);
 }

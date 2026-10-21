@@ -1,23 +1,26 @@
 using Lyo.Api.Client;
-using Lyo.Api.Models.Common.Response;
 using Lyo.Parameters;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
-using Lyo.Web.Components.DataGrid;
 using Lyo.Web.Components.ParamTable;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Lyo.Reporting.Web.Components;
 
 public partial class RunReportDialog
 {
-    static RunReportDialog() => FormatterLyoType.EnsureRegistered();
+    private bool _busy;
+    private string? _fileName;
+    private ReportFormat? _formatOverride;
+
+    // Rebuilt on definition and value changes only; the formatter editor rebuilds its token catalog whenever it is given a new context instance.
+    private object? _formatterContext;
+    private List<LyoParameterEntry> _parameters = [];
+
+    private ReportDefinitionRes? _selected;
 
     [CascadingParameter]
-    IMudDialogInstance MudDialog { get; set; } = null!;
+    private IMudDialogInstance MudDialog { get; set; } = null!;
 
     [Parameter]
     [EditorRequired]
@@ -38,14 +41,7 @@ public partial class RunReportDialog
     [Inject]
     private IServiceProvider Services { get; set; } = null!;
 
-    private ReportDefinitionRes? _selected;
-    private ReportFormat? _formatOverride;
-    private string? _fileName;
-    private bool _busy;
-    private List<LyoParameterEntry> _parameters = [];
-
-    // Rebuilt on definition and value changes only; the formatter editor rebuilds its token catalog whenever it is given a new context instance.
-    private object? _formatterContext;
+    static RunReportDialog() => FormatterLyoType.EnsureRegistered();
 
     protected override void OnParametersSet()
     {
@@ -78,7 +74,12 @@ public partial class RunReportDialog
         _busy = true;
         try {
             var parameters = _parameters.Where(p => p.ShouldSubmit)
-                .Select(p => new ReportGenerationParameterReq { Key = p.Definition.Key, Type = p.Definition.Type, Value = p.SubmitValue, Description = p.Definition.Description })
+                .Select(p => new ReportGenerationParameterReq {
+                    Key = p.Definition.Key,
+                    Type = p.Definition.Type,
+                    Value = p.SubmitValue,
+                    Description = p.Definition.Description
+                })
                 .ToList();
 
             var req = new GenerateReportReq {

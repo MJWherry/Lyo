@@ -5,7 +5,8 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.IO.Temp.Models;
 
 /// <summary>
-/// Connects <see cref="IOTempFileGenerator" /> to its session without leaking session internals. Members are delegates taken from <see cref="IOTempSession" /> at construction.
+/// Connects <see cref="IOTempFileGenerator" /> to its session without leaking session internals. Members are delegates taken from <see cref="IOTempSession" /> at
+/// construction.
 /// </summary>
 internal sealed record IOTempGeneratorContext(
     string SessionDirectory,

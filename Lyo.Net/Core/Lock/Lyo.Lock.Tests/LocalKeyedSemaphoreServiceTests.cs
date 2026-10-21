@@ -54,9 +54,7 @@ public class LocalKeyedSemaphoreServiceTests
     {
         var handle = await _service.AcquireAsync("semaphore-key-4", 2, TimeSpan.FromSeconds(5), TestCt);
         handle.ShouldNotBeNull();
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () => await _service.AcquireAsync(
-            "semaphore-key-4", 3, TimeSpan.FromSeconds(5), TestCt));
-
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () => await _service.AcquireAsync("semaphore-key-4", 3, TimeSpan.FromSeconds(5), TestCt));
         Assert.Contains("max concurrency 2", ex.Message, StringComparison.Ordinal);
         await handle.ReleaseAsync();
     }
@@ -96,9 +94,7 @@ public class LocalKeyedSemaphoreServiceTests
     {
         var handle = await _service.AcquireAsync("semaphore-key-7", 1, TimeSpan.FromSeconds(5), TestCt);
         handle.ShouldNotBeNull();
-        await Assert.ThrowsAsync<TimeoutException>(async () => await _service.ExecuteAsync(
-            "semaphore-key-7", 1, _ => Task.CompletedTask, TimeSpan.FromMilliseconds(50), TestCt));
-
+        await Assert.ThrowsAsync<TimeoutException>(async () => await _service.ExecuteAsync("semaphore-key-7", 1, _ => Task.CompletedTask, TimeSpan.FromMilliseconds(50), TestCt));
         await handle.ReleaseAsync();
     }
 

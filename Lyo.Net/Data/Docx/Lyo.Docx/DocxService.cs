@@ -23,7 +23,7 @@ public sealed class DocxService : IDocxService
     public string ReadText(byte[] docx)
     {
         ArgumentHelpers.ThrowIfNull(docx);
-        using var stream = new MemoryStream(docx, writable: false);
+        using var stream = new MemoryStream(docx, false);
         using var document = WordprocessingDocument.Open(stream, false);
         var body = document.MainDocumentPart?.Document?.Body;
         if (body is null)
@@ -33,6 +33,7 @@ public sealed class DocxService : IDocxService
         foreach (var paragraph in body.Descendants<Paragraph>()) {
             if (lines.Length > 0)
                 lines.Append('\n');
+
             lines.Append(paragraph.InnerText);
         }
 
@@ -68,8 +69,10 @@ public sealed class DocxService : IDocxService
         var joined = string.Concat(runs.Select(run => run.InnerText));
         if (joined.IndexOf('{') < 0)
             return;
+
         if (!_formatter.TryFormat(joined, model, out var formatted) || formatted is null)
             return;
+
         if (formatted == joined || _formatter.GetUnresolvedPlaceholders(joined, formatted).Count > 0)
             return;
 

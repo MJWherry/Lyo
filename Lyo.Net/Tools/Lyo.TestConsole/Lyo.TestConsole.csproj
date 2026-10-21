@@ -11,7 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\Apps\Http\Lyo.Http.Client.Flared\Lyo.Http.Client.Flared.csproj" />
+        <ProjectReference Include="..\..\Apps\Http\Lyo.Http.Client.Flared\Lyo.Http.Client.Flared.csproj"/>
         <ProjectReference Include="..\..\Core\RateLimit\Lyo.RateLimit\Lyo.RateLimit.csproj"/>
         <ProjectReference Include="..\..\Communication\Email\Lyo.Email.Postgres\Lyo.Email.Postgres.csproj"/>
         <ProjectReference Include="..\..\Communication\Sms\Lyo.Sms.Twilio.Postgres\Lyo.Sms.Twilio.Postgres.csproj"/>
@@ -85,11 +85,11 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="appsettings.Development.json" />
-      <Content Include="appsettings.Development.json">
+        <None Remove="appsettings.Development.json"/>
+        <Content Include="appsettings.Development.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <DependentUpon>appsettings.json</DependentUpon>
-      </Content>
+        </Content>
     </ItemGroup>
 
 </Project>

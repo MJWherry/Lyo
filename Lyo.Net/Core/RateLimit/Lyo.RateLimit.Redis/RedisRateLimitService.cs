@@ -1,28 +1,18 @@
 using System.Globalization;
 using Lyo.Exceptions;
-using Lyo.RateLimit;
 using StackExchange.Redis;
 
 namespace Lyo.RateLimit.Redis;
 
-/// <summary>
-/// Quota store on Redis. Every host that shares a quota must use this registration. A process still on <see cref="LocalRateLimitService" /> does not share
-/// these counters.
-/// </summary>
+/// <summary>Quota store on Redis. Every host that shares a quota must use this registration. A process still on <see cref="LocalRateLimitService" /> does not share these counters.</summary>
 public sealed class RedisRateLimitService : IRateLimitService
 {
-    private readonly IRateLimitRedisExecutor _redis;
     private readonly RedisRateLimitOptions _options;
+    private readonly IRateLimitRedisExecutor _redis;
 
     /// <summary>Creates a store on <paramref name="multiplexer" />.</summary>
     public RedisRateLimitService(IConnectionMultiplexer multiplexer, RedisRateLimitOptions options)
         : this(CreateExecutor(multiplexer), options) { }
-
-    private static IRateLimitRedisExecutor CreateExecutor(IConnectionMultiplexer multiplexer)
-    {
-        ArgumentHelpers.ThrowIfNull(multiplexer);
-        return new StackExchangeRateLimitRedis(multiplexer);
-    }
 
     internal RedisRateLimitService(IRateLimitRedisExecutor redis, RedisRateLimitOptions options)
     {
@@ -44,8 +34,9 @@ public sealed class RedisRateLimitService : IRateLimitService
             RateLimitWindow.Fixed => RedisRateLimitScripts.Fixed,
             RateLimitWindow.Sliding => RedisRateLimitScripts.Sliding,
             RateLimitWindow.TokenBucket => RedisRateLimitScripts.TokenBucket,
-            _ => throw new ArgumentException("Unknown rate-limit window.", nameof(request))
+            var _ => throw new ArgumentException("Unknown rate-limit window.", nameof(request))
         };
+
         var args = new RedisValue[] {
             request.NowUnixMilliseconds.ToString(CultureInfo.InvariantCulture),
             request.PermitLimit.ToString(CultureInfo.InvariantCulture),
@@ -70,25 +61,32 @@ public sealed class RedisRateLimitService : IRateLimitService
         var now = values[1];
         var remaining = values[2];
         if (remaining < 0)
-            return new RateLimitDecision(false, request.Window, request.PermitLimit, 0);
+            return new(false, request.Window, request.PermitLimit, 0);
 
         if (allowed)
-            return new RateLimitDecision(true, null, request.PermitLimit, remaining);
+            return new(true, null, request.PermitLimit, remaining);
 
         var retryMs = request.Pattern switch {
             RateLimitWindow.Fixed => RateLimitMath.FixedRetryAfterMs(now, windowMs),
             RateLimitWindow.Sliding => RateLimitMath.SlidingRetryAfterMs(values[3], values[4], PositiveMod(now, windowMs), windowMs, request.PermitLimit),
-            _ => RateLimitMath.TokenRetryAfterMs(values[3], request.PermitLimit, windowMs)
+            var _ => RateLimitMath.TokenRetryAfterMs(values[3], request.PermitLimit, windowMs)
         };
-        return new RateLimitDecision(false, TimeSpan.FromMilliseconds(retryMs), request.PermitLimit, 0);
+
+        return new(false, TimeSpan.FromMilliseconds(retryMs), request.PermitLimit, 0);
+    }
+
+    private static IRateLimitRedisExecutor CreateExecutor(IConnectionMultiplexer multiplexer)
+    {
+        ArgumentHelpers.ThrowIfNull(multiplexer);
+        return new StackExchangeRateLimitRedis(multiplexer);
     }
 
     private RateLimitDecision StoreFailure(RateLimitRequest request)
     {
         if (_options.FailOpen)
-            return new RateLimitDecision(true, null, request.PermitLimit, request.PermitLimit);
+            return new(true, null, request.PermitLimit, request.PermitLimit);
 
-        return new RateLimitDecision(false, request.Window, request.PermitLimit, 0);
+        return new(false, request.Window, request.PermitLimit, 0);
     }
 
     private static long PositiveMod(long now, long windowMs)

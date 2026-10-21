@@ -6,8 +6,8 @@ namespace Lyo.StateMachine;
 
 /// <summary>Loads definitions from an <see cref="IStateMachineDefinitionStore" /> and caches each (name, revision) once. Thread-safe; register as a singleton.</summary>
 /// <remarks>
-/// Asking for the latest revision reads the store every call (a cheap lookup) so newly published revisions are picked up, but each revision is only loaded
-/// once. Revisions are immutable, so entries never go stale; <see cref="Invalidate" /> only frees memory.
+/// Asking for the latest revision reads the store every call (a cheap lookup) so newly published revisions are picked up, but each revision is only loaded once. Revisions
+/// are immutable, so entries never go stale; <see cref="Invalidate" /> only frees memory.
 /// </remarks>
 public sealed class StateMachineDefinitionCache<TState, TTrigger, TContext>
     where TState : notnull where TTrigger : notnull
@@ -47,8 +47,8 @@ public sealed class StateMachineDefinitionCache<TState, TTrigger, TContext>
         if (revision is { } pinned && _entries.TryGetValue((name, pinned), out var cached))
             return cached.Value;
 
-        var document = await _store.GetAsync(name, revision, ct).ConfigureAwait(false)
-            ?? throw new KeyNotFoundException($"State machine '{name}'{(revision is null ? string.Empty : $" revision {revision}")} is not in the definition store.");
+        var document = await _store.GetAsync(name, revision, ct).ConfigureAwait(false) ?? throw new KeyNotFoundException(
+            $"State machine '{name}'{(revision is null ? string.Empty : $" revision {revision}")} is not in the definition store.");
 
         var key = (name, document.Revision);
         var entry = _entries.GetOrAdd(key, _ => new(() => StateMachineDocumentLoader.Load(document, _registry, _stateConverter, _triggerConverter, _configure)));
@@ -56,7 +56,7 @@ public sealed class StateMachineDefinitionCache<TState, TTrigger, TContext>
             return entry.Value;
         }
         catch {
-            _entries.TryRemove(key, out _);
+            _entries.TryRemove(key, out var _);
             throw;
         }
     }
@@ -65,6 +65,6 @@ public sealed class StateMachineDefinitionCache<TState, TTrigger, TContext>
     public void Invalidate(string name)
     {
         foreach (var key in _entries.Keys.Where(k => k.Name == name))
-            _entries.TryRemove(key, out _);
+            _entries.TryRemove(key, out var _);
     }
 }

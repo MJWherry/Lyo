@@ -1,6 +1,7 @@
 # Lyo.Rating.Seed
 
-`RatingEfSeedContributor` writes `options.Count` public ratings (subject, title, value 1–5, message) for tenant `RatingEfSeedContributor.TenantId` and subject `seed` / `seed`, each with one like reaction. `OnClear` deletes reactions, then ratings, so `--replace` can run.
+`RatingEfSeedContributor` writes `options.Count` public ratings (subject, title, value 1–5, message) for tenant `RatingEfSeedContributor.TenantId` and subject `seed` / `seed`, each
+with one like reaction. `OnClear` deletes reactions, then ratings, so `--replace` can run.
 
 ## Features
 

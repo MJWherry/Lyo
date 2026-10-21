@@ -17,7 +17,7 @@ public sealed class LyoHttpHeaderBag
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
         ArgumentHelpers.ThrowIfNull(value);
-        if (IsCorrelation(name) && TryGet(name, out _))
+        if (IsCorrelation(name) && TryGet(name, out var _))
             return this;
 
         Remove(name);
@@ -70,14 +70,12 @@ public sealed class LyoHttpHeaderBag
             if (omit != null && omit.Any(n => string.Equals(n, pair.Key, StringComparison.OrdinalIgnoreCase)))
                 continue;
 
-            if (string.Equals(pair.Key, HttpHeaderInfo.Cookie, StringComparison.OrdinalIgnoreCase)
-                && request.Headers.Contains(HttpHeaderInfo.Cookie))
+            if (string.Equals(pair.Key, HttpHeaderInfo.Cookie, StringComparison.OrdinalIgnoreCase) && request.Headers.Contains(HttpHeaderInfo.Cookie))
                 continue;
 
             request.Headers.TryAddWithoutValidation(pair.Key, pair.Value);
         }
     }
 
-    private static bool IsCorrelation(string name)
-        => LyoHttpHeaders.CorrelationIds.Any(h => string.Equals(h, name, StringComparison.OrdinalIgnoreCase));
+    private static bool IsCorrelation(string name) => LyoHttpHeaders.CorrelationIds.Any(h => string.Equals(h, name, StringComparison.OrdinalIgnoreCase));
 }

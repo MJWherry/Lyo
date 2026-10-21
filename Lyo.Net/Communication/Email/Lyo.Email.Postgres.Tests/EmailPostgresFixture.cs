@@ -8,6 +8,6 @@ namespace Lyo.Email.Postgres.Tests;
 public sealed class EmailPostgresFixture : PostgresServiceFixtureBase<EmailDbContext>
 {
     /// <inheritdoc />
-    protected override void ConfigureServices(IServiceCollection services, string connectionString) =>
-        services.AddEmailDbContextFactory(new PostgresEmailOptions { ConnectionString = connectionString, EnableAutoMigrations = true });
+    protected override void ConfigureServices(IServiceCollection services, string connectionString)
+        => services.AddEmailDbContextFactory(new PostgresEmailOptions { ConnectionString = connectionString, EnableAutoMigrations = true });
 }

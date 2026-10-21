@@ -16,7 +16,6 @@ public sealed class StoryRouteSecurityTests(StoryApiFixture fixture)
         var state = await StartAsync(NewSubject(), story.Id, null);
         using var other = fixture.CreateHttp(NewSubject());
         var id = state.Playthrough.Id;
-
         Assert.Equal(HttpStatusCode.Forbidden, (await other.GetAsync($"Story/playthrough/{id}", TestCt)).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await other.GetAsync($"Story/playthrough/{id}/moves", TestCt)).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await other.GetAsync($"Story/playthrough/{id}/events", TestCt)).StatusCode);
@@ -32,7 +31,6 @@ public sealed class StoryRouteSecurityTests(StoryApiFixture fixture)
         var subject = NewSubject();
         var state = await StartAsync(subject, story.Id, null);
         using var http = fixture.CreateHttp(subject);
-
         Assert.Equal(HttpStatusCode.OK, (await http.GetAsync($"Story/playthrough/{state.Playthrough.Id}", TestCt)).StatusCode);
     }
 
@@ -42,9 +40,7 @@ public sealed class StoryRouteSecurityTests(StoryApiFixture fixture)
         var story = await SaveStoryAsync(null);
         var subject = NewSubject();
         using var http = fixture.CreateHttp(subject);
-
         var response = await http.PostAsJsonAsync("Story/playthrough/start", new StoryStartPlaythroughReq { StoryId = story.Id, PlayerRef = "player:someone-else" }, TestCt);
-
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("player:" + subject, (await response.Content.ReadFromJsonAsync<StoryPlayStateRes>(TestCt))?.Playthrough.PlayerRef);
     }
@@ -58,10 +54,8 @@ public sealed class StoryRouteSecurityTests(StoryApiFixture fixture)
         using var player = fixture.CreateHttp(subject);
         using var author = fixture.CreateHttp(NewSubject(), StoryApiFixture.AuthorRole);
         var body = new StorySetVariablesReq { Values = { ["gold"] = "99" } };
-
         var denied = await player.PostAsJsonAsync($"Story/playthrough/{state.Playthrough.Id}/variables", body, TestCt);
         var allowed = await author.PostAsJsonAsync($"Story/playthrough/{state.Playthrough.Id}/variables", body, TestCt);
-
         Assert.Equal(HttpStatusCode.Forbidden, denied.StatusCode);
         Assert.Equal(HttpStatusCode.OK, allowed.StatusCode);
     }
@@ -73,7 +67,6 @@ public sealed class StoryRouteSecurityTests(StoryApiFixture fixture)
         var story = await SaveStoryAsync(tenant);
         using var outsider = fixture.CreateHttp(NewSubject(), tenant: LyoGuid.CreateV7());
         using var insider = fixture.CreateHttp(NewSubject(), tenant: tenant);
-
         Assert.Equal(HttpStatusCode.NotFound, (await outsider.GetAsync($"Story/graph/{story.Id}", TestCt)).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await outsider.GetAsync($"Story/graph/by-slug/{story.Slug}", TestCt)).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await outsider.PostAsJsonAsync("Story/playthrough/start", new StoryStartPlaythroughReq { StoryId = story.Id }, TestCt)).StatusCode);
@@ -87,9 +80,7 @@ public sealed class StoryRouteSecurityTests(StoryApiFixture fixture)
         var subject = NewSubject();
         var state = await StartAsync(subject, story.Id, null);
         using var http = fixture.CreateHttp(subject);
-
         var response = await http.PostAsJsonAsync($"Story/playthrough/{state.Playthrough.Id}/choose", new StoryChooseReq { ChoiceKey = "missing" }, TestCt);
-
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
     }

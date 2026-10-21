@@ -1,9 +1,9 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Lyo.Exceptions;
+using Path = Avalonia.Controls.Shapes.Path;
 
 namespace Lyo.Desktop.Components;
 
@@ -14,8 +14,8 @@ public static class ToolDockBuilder
     private const double MinBottom = 80;
 
     /// <summary>
-    /// Fills <paramref name="host" /> from <paramref name="layout" />. <paramref name="changed" /> runs after a dock, hide, or splitter release.
-    /// Header tags are the pane ids, so the host can start a drag from the title bar.
+    /// Fills <paramref name="host" /> from <paramref name="layout" />. <paramref name="changed" /> runs after a dock, hide, or splitter release. Header tags are the pane ids, so
+    /// the host can start a drag from the title bar.
     /// </summary>
     public static void Fill(Grid host, ToolDockState layout, IReadOnlyDictionary<string, Control> panes, Control center, Action changed)
     {
@@ -36,36 +36,53 @@ public static class ToolDockBuilder
         if (left.Count > 0) {
             var column = new ColumnDefinition();
             host.ColumnDefinitions.Add(column);
-            host.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
-            leftSlot = new EdgeSlot { Layout = layout, Edge = ToolDockEdge.Left, Min = MinSide, Column = column };
+            host.ColumnDefinitions.Add(new(GridLength.Auto));
+            leftSlot = new() {
+                Layout = layout,
+                Edge = ToolDockEdge.Left,
+                Min = MinSide,
+                Column = column
+            };
         }
 
-        host.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+        host.ColumnDefinitions.Add(new(GridLength.Star));
         var rightColumn = host.ColumnDefinitions.Count;
         EdgeSlot? rightSlot = null;
         if (right.Count > 0) {
-            host.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+            host.ColumnDefinitions.Add(new(GridLength.Auto));
             rightColumn = host.ColumnDefinitions.Count;
             var column = new ColumnDefinition();
             host.ColumnDefinitions.Add(column);
-            rightSlot = new EdgeSlot { Layout = layout, Edge = ToolDockEdge.Right, Min = MinSide, Column = column };
+            rightSlot = new() {
+                Layout = layout,
+                Edge = ToolDockEdge.Right,
+                Min = MinSide,
+                Column = column
+            };
         }
 
-        host.RowDefinitions.Add(new RowDefinition(GridLength.Star));
+        host.RowDefinitions.Add(new(GridLength.Star));
         EdgeSlot? bottomSlot = null;
         if (bottom.Count > 0) {
-            host.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            host.RowDefinitions.Add(new(GridLength.Auto));
             var row = new RowDefinition();
             host.RowDefinitions.Add(row);
-            bottomSlot = new EdgeSlot { Layout = layout, Edge = ToolDockEdge.Bottom, Min = MinBottom, Row = row };
+            bottomSlot = new() {
+                Layout = layout,
+                Edge = ToolDockEdge.Bottom,
+                Min = MinBottom,
+                Row = row
+            };
         }
 
         if (leftSlot != null) {
-            Place(host, Stack(left, vertical: true, panes, layout, changed, leftSlot), 0, 0);
-            var splitter = Splitter(vertical: false, () => {
-                layout.Left = host.ColumnDefinitions[0].ActualWidth;
-                changed();
-            });
+            Place(host, Stack(left, true, panes, layout, changed, leftSlot), 0, 0);
+            var splitter = Splitter(
+                false, () => {
+                    layout.Left = host.ColumnDefinitions[0].ActualWidth;
+                    changed();
+                });
+
             leftSlot.Splitter = splitter;
             Place(host, splitter, 1, 0);
             leftSlot.Apply();
@@ -73,50 +90,54 @@ public static class ToolDockBuilder
 
         Place(host, center, centerColumn, 0);
         if (rightSlot != null) {
-            var splitter = Splitter(vertical: false, () => {
-                layout.Right = host.ColumnDefinitions[rightColumn].ActualWidth;
-                changed();
-            });
+            var splitter = Splitter(
+                false, () => {
+                    layout.Right = host.ColumnDefinitions[rightColumn].ActualWidth;
+                    changed();
+                });
+
             rightSlot.Splitter = splitter;
             Place(host, splitter, rightColumn - 1, 0);
-            Place(host, Stack(right, vertical: true, panes, layout, changed, rightSlot), rightColumn, 0);
+            Place(host, Stack(right, true, panes, layout, changed, rightSlot), rightColumn, 0);
             rightSlot.Apply();
         }
 
         if (bottomSlot != null) {
             var span = host.ColumnDefinitions.Count;
-            var splitter = Splitter(vertical: true, () => {
-                layout.Bottom = host.RowDefinitions[^1].ActualHeight;
-                changed();
-            });
+            var splitter = Splitter(
+                true, () => {
+                    layout.Bottom = host.RowDefinitions[^1].ActualHeight;
+                    changed();
+                });
+
             bottomSlot.Splitter = splitter;
             Grid.SetColumnSpan(splitter, span);
             Place(host, splitter, 0, 1);
-            var body = Stack(bottom, vertical: false, panes, layout, changed, bottomSlot);
+            var body = Stack(bottom, false, panes, layout, changed, bottomSlot);
             Grid.SetColumnSpan(body, span);
             Place(host, body, 0, 2);
             bottomSlot.Apply();
         }
     }
 
-    private static List<ToolDockPane> Visible(ToolDockState layout, ToolDockEdge edge)
-        => layout.Panes.Where(pane => pane.Visible && pane.Edge == edge).ToList();
+    private static List<ToolDockPane> Visible(ToolDockState layout, ToolDockEdge edge) => layout.Panes.Where(pane => pane.Visible && pane.Edge == edge).ToList();
 
     private static Control Stack(List<ToolDockPane> panes, bool vertical, IReadOnlyDictionary<string, Control> bodies, ToolDockState layout, Action changed, EdgeSlot edge)
     {
         if (panes.Count == 1)
             return Chrome(panes[0], Body(panes[0], bodies), layout, changed, edge, null, null);
+
         var grid = new Grid();
         var slot = 0;
         for (var i = 0; i < panes.Count; i++) {
             RowDefinition? paneRow = null;
             ColumnDefinition? paneColumn = null;
             if (vertical) {
-                paneRow = new RowDefinition(panes[i].Minimized ? GridLength.Auto : new GridLength(1, GridUnitType.Star));
+                paneRow = new(panes[i].Minimized ? GridLength.Auto : new(1, GridUnitType.Star));
                 grid.RowDefinitions.Add(paneRow);
             }
             else {
-                paneColumn = new ColumnDefinition(panes[i].Minimized ? GridLength.Auto : new GridLength(1, GridUnitType.Star));
+                paneColumn = new(panes[i].Minimized ? GridLength.Auto : new(1, GridUnitType.Star));
                 grid.ColumnDefinitions.Add(paneColumn);
             }
 
@@ -125,19 +146,23 @@ public static class ToolDockBuilder
                 Grid.SetRow(chrome, slot);
             else
                 Grid.SetColumn(chrome, slot);
+
             grid.Children.Add(chrome);
             slot++;
             if (i == panes.Count - 1)
                 continue;
+
             if (vertical)
-                grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+                grid.RowDefinitions.Add(new(GridLength.Auto));
             else
-                grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+                grid.ColumnDefinitions.Add(new(GridLength.Auto));
+
             var splitter = Splitter(vertical, () => changed());
             if (vertical)
                 Grid.SetRow(splitter, slot);
             else
                 Grid.SetColumn(splitter, slot);
+
             grid.Children.Add(splitter);
             slot++;
         }
@@ -149,6 +174,7 @@ public static class ToolDockBuilder
     {
         if (!bodies.TryGetValue(pane.Id, out var body))
             throw new InvalidOperationException($"No control is registered for {pane.Id}.");
+
         Detach(body);
         return body;
     }
@@ -159,10 +185,10 @@ public static class ToolDockBuilder
         var grip = new Border {
             Width = 22,
             Height = 22,
-            Margin = new Thickness(0, 0, 6, 0),
+            Margin = new(0, 0, 6, 0),
             Cursor = move,
             Background = Brushes.Transparent,
-            Child = new Avalonia.Controls.Shapes.Path {
+            Child = new Path {
                 Width = 12,
                 Height = 12,
                 Stretch = Stretch.Uniform,
@@ -172,45 +198,54 @@ public static class ToolDockBuilder
                 Data = Geometry.Parse("M5,1 H7 V5 H11 V7 H7 V11 H5 V7 H1 V5 H5 Z")
             }
         };
+
         ToolTip.SetTip(grip, "Drag to another edge");
         DockPanel.SetDock(grip, Dock.Left);
         var buttons = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 2 };
         DockPanel.SetDock(buttons, Dock.Right);
         body.IsVisible = !pane.Minimized;
         Button? minimize = null;
-        minimize = HeaderButton("—", pane.Minimized ? "Restore" : "Minimize", new Cursor(StandardCursorType.Arrow), () => {
-            layout.ToggleMinimized(pane.Id);
-            body.IsVisible = !pane.Minimized;
-            ToolTip.SetTip(minimize!, pane.Minimized ? "Restore" : "Minimize");
-            if (paneRow != null)
-                paneRow.Height = pane.Minimized ? GridLength.Auto : new GridLength(1, GridUnitType.Star);
-            if (paneColumn != null)
-                paneColumn.Width = pane.Minimized ? GridLength.Auto : new GridLength(1, GridUnitType.Star);
-            edge.Apply();
-        });
+        minimize = HeaderButton(
+            "—", pane.Minimized ? "Restore" : "Minimize", new(StandardCursorType.Arrow), () => {
+                layout.ToggleMinimized(pane.Id);
+                body.IsVisible = !pane.Minimized;
+                ToolTip.SetTip(minimize!, pane.Minimized ? "Restore" : "Minimize");
+                if (paneRow != null)
+                    paneRow.Height = pane.Minimized ? GridLength.Auto : new(1, GridUnitType.Star);
+
+                if (paneColumn != null)
+                    paneColumn.Width = pane.Minimized ? GridLength.Auto : new(1, GridUnitType.Star);
+
+                edge.Apply();
+            });
+
         buttons.Children.Add(minimize);
-        buttons.Children.Add(HeaderButton("×", "Close", new Cursor(StandardCursorType.Arrow), () => {
-            layout.SetVisible(pane.Id, false);
-            changed();
-        }));
+        buttons.Children.Add(
+            HeaderButton(
+                "×", "Close", new(StandardCursorType.Arrow), () => {
+                    layout.SetVisible(pane.Id, false);
+                    changed();
+                }));
+
         var title = new TextBlock { Text = pane.Title, VerticalAlignment = VerticalAlignment.Center };
         var header = new Border {
             Tag = pane.Id,
             Cursor = move,
-            Padding = new Thickness(4, 2),
+            Padding = new(4, 2),
             Background = new SolidColorBrush(Color.FromRgb(0x2A, 0x31, 0x40)),
-            BorderThickness = new Thickness(0, 0, 0, 1),
+            BorderThickness = new(0, 0, 0, 1),
             BorderBrush = new SolidColorBrush(Color.FromRgb(0x5C, 0x67, 0x7A)),
             Child = new DockPanel { Children = { buttons, grip, title } }
         };
+
         var panel = new DockPanel();
         DockPanel.SetDock(header, Dock.Top);
         panel.Children.Add(header);
         panel.Children.Add(body);
         return new Border {
-            Margin = new Thickness(1),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(4),
+            Margin = new(1),
+            BorderThickness = new(1),
+            CornerRadius = new(4),
             BorderBrush = new SolidColorBrush(Color.FromRgb(0x5C, 0x67, 0x7A)),
             Child = panel
         };
@@ -220,13 +255,14 @@ public static class ToolDockBuilder
     {
         var button = new Button {
             Content = glyph,
-            Padding = new Thickness(6, 0),
+            Padding = new(6, 0),
             MinWidth = 22,
             Height = 22,
             FontSize = 14,
             Cursor = cursor,
             Background = Brushes.Transparent
         };
+
         ToolTip.SetTip(button, tip);
         button.Click += (_, _) => action();
         return button;
@@ -235,10 +271,9 @@ public static class ToolDockBuilder
     private static GridSplitter Splitter(bool vertical, Action released)
     {
         var splitter = new GridSplitter {
-            ResizeDirection = vertical ? GridResizeDirection.Rows : GridResizeDirection.Columns,
-            Width = vertical ? double.NaN : 4,
-            Height = vertical ? 4 : double.NaN
+            ResizeDirection = vertical ? GridResizeDirection.Rows : GridResizeDirection.Columns, Width = vertical ? double.NaN : 4, Height = vertical ? 4 : double.NaN
         };
+
         splitter.PointerReleased += (_, _) => released();
         return splitter;
     }
@@ -279,14 +314,17 @@ public static class ToolDockBuilder
             var size = Edge switch {
                 ToolDockEdge.Left => Layout.Left,
                 ToolDockEdge.Right => Layout.Right,
-                _ => Layout.Bottom
+                var _ => Layout.Bottom
             };
+
             var hug = Layout.HugsHeader(Edge);
-            var length = hug ? GridLength.Auto : new GridLength(Math.Max(Min, size), GridUnitType.Pixel);
+            var length = hug ? GridLength.Auto : new(Math.Max(Min, size), GridUnitType.Pixel);
             if (Row != null)
                 Row.Height = length;
+
             if (Column != null)
                 Column.Width = length;
+
             if (Splitter != null)
                 Splitter.IsVisible = !hug;
         }

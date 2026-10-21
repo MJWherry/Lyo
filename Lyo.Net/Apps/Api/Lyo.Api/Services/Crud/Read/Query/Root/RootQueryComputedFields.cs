@@ -25,7 +25,8 @@ internal static partial class RootQueryComputedFields
             errors.Add(new(ApiErrorCodes.InvalidSelectField, $"Select field count ({request.Select.Count}) exceeds maximum allowed ({options.MaxSelectFieldCount})."));
 
         if (request.ComputedFields.Count > options.MaxComputedFieldCount)
-            errors.Add(new(ApiErrorCodes.InvalidComputedField, $"Computed field count ({request.ComputedFields.Count}) exceeds maximum allowed ({options.MaxComputedFieldCount})."));
+            errors.Add(
+                new(ApiErrorCodes.InvalidComputedField, $"Computed field count ({request.ComputedFields.Count}) exceeds maximum allowed ({options.MaxComputedFieldCount})."));
 
         foreach (var computedField in request.ComputedFields) {
             if (computedField.Template?.Length > options.MaxComputedTemplateLength) {

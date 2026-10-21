@@ -1,8 +1,8 @@
 namespace Lyo.Cache;
 
 /// <summary>
-/// Converts application values to plaintext bytes stored by <see cref="ICachePayloadCodec" /> (after optional compression/encryption). Swap in a custom implementation
-/// via DI; the default is <see cref="SystemTextJsonCachePayloadSerializer" />.
+/// Converts application values to plaintext bytes stored by <see cref="ICachePayloadCodec" /> (after optional compression/encryption). Swap in a custom implementation via
+/// DI; the default is <see cref="SystemTextJsonCachePayloadSerializer" />.
 /// </summary>
 public interface ICachePayloadSerializer
 {

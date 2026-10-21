@@ -3,8 +3,8 @@ using Testcontainers.Redis;
 namespace Lyo.Benchmark.Containers;
 
 /// <summary>
-/// Thin wrapper around a disposable Redis Testcontainers instance for Docker-backed benchmarks (cache backplane, distributed lock). Start it from <c>[GlobalSetup]</c>
-/// and dispose it from <c>[GlobalCleanup]</c>.
+/// Thin wrapper around a disposable Redis Testcontainers instance for Docker-backed benchmarks (cache backplane, distributed lock). Start it from <c>[GlobalSetup]</c> and
+/// dispose it from <c>[GlobalCleanup]</c>.
 /// </summary>
 public sealed class RedisBenchmarkContainer : IDisposable
 {

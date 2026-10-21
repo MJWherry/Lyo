@@ -5,7 +5,10 @@ using Lyo.Exceptions;
 
 namespace Lyo.Algorithms;
 
-/// <summary>Case-insensitive name/value bag for expressions that are not bound to a DTO. Catalog formulas execute against this. Names are expression identifiers (<c>Atk</c>), not dotted paths.</summary>
+/// <summary>
+/// Case-insensitive name/value bag for expressions that are not bound to a DTO. Catalog formulas execute against this. Names are expression identifiers (<c>Atk</c>), not
+/// dotted paths.
+/// </summary>
 public sealed class AlgorithmContextBag : IReadOnlyDictionary<string, object?>
 {
     private readonly ContextBag _values = new();
@@ -22,7 +25,21 @@ public sealed class AlgorithmContextBag : IReadOnlyDictionary<string, object?>
     /// <summary>Value for <paramref name="key" />, or null when missing. A pending factory runs.</summary>
     public object? this[string key] => _values.TryGetValue(key, out var value) ? value : null;
 
-    /// <summary>Sets or replaces <paramref name="key" />. Names must be expression identifiers (<c>Atk</c>), not dotted paths. A null literal is ambiguous with a factory overload; cast it to <see cref="object" />.</summary>
+    /// <inheritdoc />
+    public bool ContainsKey(string key) => _values.ContainsKey(key);
+
+    /// <inheritdoc />
+    public bool TryGetValue(string key, out object? value) => _values.TryGetValue(key, out value);
+
+    /// <inheritdoc />
+    public IEnumerator<KeyValuePair<string, object?>> GetEnumerator() => _values.GetEnumerator();
+
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+    /// <summary>
+    /// Sets or replaces <paramref name="key" />. Names must be expression identifiers (<c>Atk</c>), not dotted paths. A null literal is ambiguous with a factory overload; cast
+    /// it to <see cref="object" />.
+    /// </summary>
     public void Set(string key, object? value)
     {
         RequireIdentifier(key);
@@ -49,17 +66,6 @@ public sealed class AlgorithmContextBag : IReadOnlyDictionary<string, object?>
     /// <summary>Reads <paramref name="key" /> and converts it. See <see cref="ContextBag{TKey}.TryGetAs{T}" />.</summary>
     public bool TryGetAs<T>(string key, out T? value) => _values.TryGetAs(key, out value);
 
-    /// <inheritdoc />
-    public bool ContainsKey(string key) => _values.ContainsKey(key);
-
-    /// <inheritdoc />
-    public bool TryGetValue(string key, out object? value) => _values.TryGetValue(key, out value);
-
-    /// <inheritdoc />
-    public IEnumerator<KeyValuePair<string, object?>> GetEnumerator() => _values.GetEnumerator();
-
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
     /// <summary>Reads <paramref name="name" /> as a double. Compiled catalog formulas call this. A pending factory runs once.</summary>
     public static double ReadDouble(AlgorithmContextBag bag, string name)
     {
@@ -81,6 +87,7 @@ public sealed class AlgorithmContextBag : IReadOnlyDictionary<string, object?>
     {
         if (string.IsNullOrEmpty(name) || !(char.IsLetter(name[0]) || name[0] == '_'))
             return false;
+
         for (var i = 1; i < name.Length; i++) {
             if (!(char.IsLetterOrDigit(name[i]) || name[i] == '_'))
                 return false;

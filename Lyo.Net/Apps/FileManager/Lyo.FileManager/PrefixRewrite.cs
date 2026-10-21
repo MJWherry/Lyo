@@ -4,8 +4,8 @@ namespace Lyo.FileManager;
 public static class PrefixRewrite
 {
     /// <summary>
-    /// Maps <paramref name="filePrefix" /> from under <paramref name="sourceFolder" /> onto <paramref name="destinationFolder" />.
-    /// <c>docs/a</c> moved to <c>archive</c> becomes <c>archive/a</c>.
+    /// Maps <paramref name="filePrefix" /> from under <paramref name="sourceFolder" /> onto <paramref name="destinationFolder" />. <c>docs/a</c> moved to <c>archive</c> becomes
+    /// <c>archive/a</c>.
     /// </summary>
     public static string? Rewrite(string sourceFolder, string destinationFolder, string? filePrefix)
     {
@@ -14,6 +14,7 @@ public static class PrefixRewrite
         var current = Trim(filePrefix);
         if (current.Equals(source, StringComparison.Ordinal))
             return destination.Length == 0 ? null : destination;
+
         if (current.StartsWith(source + "/", StringComparison.Ordinal)) {
             var rest = current[source.Length..];
             return destination.Length == 0 ? rest.TrimStart('/') : destination + rest;
@@ -28,6 +29,7 @@ public static class PrefixRewrite
         var current = Trim(prefix);
         if (current.Length == 0)
             return null;
+
         var slash = current.LastIndexOf('/');
         return slash < 0 ? null : current[..slash];
     }

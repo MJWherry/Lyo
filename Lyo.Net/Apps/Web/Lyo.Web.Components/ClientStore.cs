@@ -1,7 +1,5 @@
 using Blazored.LocalStorage;
-using Lyo.Web.Components.DataGrid;
 using Lyo.Web.Components.ParamTable;
-using Lyo.Web.Primitives.DataGrid;
 
 namespace Lyo.Web.Components;
 
@@ -17,6 +15,21 @@ public class ClientStore(ILocalStorageService sessionStorage) : ILyoLayoutPrefer
     private const string StoryBuilderStateKey = "story_builder_state_v1";
     private const string ParameterLayoutKey = "pref_param_layout";
     private const string DataGridLayoutKey = "pref_grid_layout";
+
+    /// <summary>Stores the table/card choice for every data grid, so the preference follows the user across grids.</summary>
+    public async Task SetDataGridLayoutAsync(LyoDataGridLayout layout) => await sessionStorage.SetItemAsync(DataGridLayoutKey, layout);
+
+    /// <summary>Layout the user last picked in any data grid toolbar, or null to use the host default.</summary>
+    public async Task<LyoDataGridLayout?> GetDataGridLayoutAsync() => await sessionStorage.GetItemAsync<LyoDataGridLayout?>(DataGridLayoutKey);
+
+    /// <inheritdoc />
+    public async Task<string?> GetPreferenceAsync(string key) => await sessionStorage.GetItemAsync<string?>(key);
+
+    /// <inheritdoc />
+    public async Task SetPreferenceAsync(string key, string value) => await sessionStorage.SetItemAsync(key, value);
+
+    /// <inheritdoc />
+    public async Task RemovePreferenceAsync(string key) => await sessionStorage.RemoveItemAsync(key);
 
     public async Task SetStoreId(string storeId) => await sessionStorage.SetItemAsync(StoreIdKey, storeId);
 
@@ -68,19 +81,4 @@ public class ClientStore(ILocalStorageService sessionStorage) : ILyoLayoutPrefer
 
     /// <summary>Layout the user last picked in <see cref="ParamTable.LyoParameterEditor" />, or null to use the host default.</summary>
     public async Task<LyoParameterLayout?> GetParameterLayoutAsync() => await sessionStorage.GetItemAsync<LyoParameterLayout?>(ParameterLayoutKey);
-
-    /// <summary>Stores the table/card choice for every data grid, so the preference follows the user across grids.</summary>
-    public async Task SetDataGridLayoutAsync(LyoDataGridLayout layout) => await sessionStorage.SetItemAsync(DataGridLayoutKey, layout);
-
-    /// <summary>Layout the user last picked in any data grid toolbar, or null to use the host default.</summary>
-    public async Task<LyoDataGridLayout?> GetDataGridLayoutAsync() => await sessionStorage.GetItemAsync<LyoDataGridLayout?>(DataGridLayoutKey);
-
-    /// <inheritdoc />
-    public async Task<string?> GetPreferenceAsync(string key) => await sessionStorage.GetItemAsync<string?>(key);
-
-    /// <inheritdoc />
-    public async Task SetPreferenceAsync(string key, string value) => await sessionStorage.SetItemAsync(key, value);
-
-    /// <inheritdoc />
-    public async Task RemovePreferenceAsync(string key) => await sessionStorage.RemoveItemAsync(key);
 }

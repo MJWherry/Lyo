@@ -14,9 +14,12 @@ public class JobBlackoutCalendarTests
     public void ToCalendar_WeekdayWindow_PlacesMatchingDays()
     {
         var placed = JobBlackoutCalendar.ToCalendar(WeekdayCalendar(), 2026, 9, TimeZoneInfo.Utc);
-
         var tuesday = placed.Days.Single(day => day.Date == new DateOnlyModel(2026, 9, 1));
-        Assert.Contains(tuesday.Entries, entry => entry.Title == "Office" && entry.Start == new DateTime(2026, 9, 1, 9, 0, 0, DateTimeKind.Utc) && entry.End == new DateTime(2026, 9, 1, 17, 0, 0, DateTimeKind.Utc));
+        Assert.Contains(
+            tuesday.Entries,
+            entry => entry.Title == "Office" && entry.Start == new DateTime(2026, 9, 1, 9, 0, 0, DateTimeKind.Utc) &&
+                entry.End == new DateTime(2026, 9, 1, 17, 0, 0, DateTimeKind.Utc));
+
         Assert.Empty(placed.Days.Single(day => day.Date == new DateOnlyModel(2026, 9, 5)).Entries);
         Assert.Empty(placed.Days.Single(day => day.Date == new DateOnlyModel(2026, 9, 6)).Entries);
         Assert.Contains(placed.Days.Single(day => day.Date == new DateOnlyModel(2026, 9, 7)).Entries, entry => entry.Title == "Office");
@@ -26,7 +29,6 @@ public class JobBlackoutCalendarTests
     public void ToCalendar_DatedRange_ClipsToBounds()
     {
         var placed = JobBlackoutCalendar.ToCalendar(DatedCalendar(), 2026, 9, TimeZoneInfo.Utc);
-
         Assert.Contains(placed.Days.Single(day => day.Date == new DateOnlyModel(2026, 9, 10)).Entries, entry => entry.Title == "Freeze");
         Assert.Contains(placed.Days.Single(day => day.Date == new DateOnlyModel(2026, 9, 11)).Entries, entry => entry.Title == "Freeze");
         Assert.Contains(placed.Days.Single(day => day.Date == new DateOnlyModel(2026, 9, 12)).Entries, entry => entry.Title == "Freeze");
@@ -38,9 +40,12 @@ public class JobBlackoutCalendarTests
     public void ToCalendar_NewYearsDay_PlacesJanuary1()
     {
         var placed = JobBlackoutCalendar.ToCalendar(NewYearCalendar(), 2026, 1, TimeZoneInfo.Utc);
-
         var newYear = placed.Days.Single(day => day.Date == new DateOnlyModel(2026, 1, 1));
-        Assert.Contains(newYear.Entries, entry => entry.Title == "New Year" && entry.Start == new DateTime(2026, 1, 1, 9, 0, 0, DateTimeKind.Utc) && entry.End == new DateTime(2026, 1, 1, 17, 0, 0, DateTimeKind.Utc));
+        Assert.Contains(
+            newYear.Entries,
+            entry => entry.Title == "New Year" && entry.Start == new DateTime(2026, 1, 1, 9, 0, 0, DateTimeKind.Utc) &&
+                entry.End == new DateTime(2026, 1, 1, 17, 0, 0, DateTimeKind.Utc));
+
         Assert.Empty(placed.Days.Single(day => day.Date == new DateOnlyModel(2026, 1, 2)).Entries);
     }
 
@@ -48,16 +53,10 @@ public class JobBlackoutCalendarTests
     public void Suppress_SkipDatedDay_MutesFiresInsideTheWindow()
     {
         var calendar = Calendar.FromTimeFrames(
-            new(2026, 9, 1),
-            new(2026, 9, 30),
-            TimeZoneInfo.Utc,
-            [
-                Frame("labor", "Klein", new(2026, 9, 7, 12, 0, 0, DateTimeKind.Utc)),
-                Frame("next", "Klein", new(2026, 9, 8, 12, 0, 0, DateTimeKind.Utc))
-            ]);
+            new(2026, 9, 1), new(2026, 9, 30), TimeZoneInfo.Utc,
+            [Frame("labor", "Klein", new(2026, 9, 7, 12, 0, 0, DateTimeKind.Utc)), Frame("next", "Klein", new(2026, 9, 8, 12, 0, 0, DateTimeKind.Utc))]);
 
         var suppressed = JobBlackoutCalendar.Suppress(calendar, FullDay(new(2026, 9, 7)), TimeZoneInfo.Utc);
-
         var labor = Assert.Single(suppressed.Entries, entry => entry.Key == "labor");
         Assert.True(labor.Muted);
         var next = Assert.Single(suppressed.Entries, entry => entry.Key == "next");
@@ -67,22 +66,15 @@ public class JobBlackoutCalendarTests
     [Fact]
     public void Suppress_Defer_MovesTheFireToTheWindowEnd()
     {
-        var calendar = Calendar.FromTimeFrames(
-            new(2026, 9, 7),
-            new(2026, 9, 7),
-            TimeZoneInfo.Utc,
-            [Frame("slot", "Klein", new(2026, 9, 7, 10, 0, 0, DateTimeKind.Utc))]);
+        var calendar = Calendar.FromTimeFrames(new(2026, 9, 7), new(2026, 9, 7), TimeZoneInfo.Utc, [Frame("slot", "Klein", new(2026, 9, 7, 10, 0, 0, DateTimeKind.Utc))]);
         var calendarId = LyoGuid.CreateV7();
         var window = Window(calendarId, "Hold", DayFlags.EveryDay, "09:00", "12:00") with {
-            Policy = JobBlackoutPolicy.Defer,
-            StartDateUtc = new DateTime(2026, 9, 7, 0, 0, 0, DateTimeKind.Utc),
-            EndDateUtc = new DateTime(2026, 9, 7, 0, 0, 0, DateTimeKind.Utc)
+            Policy = JobBlackoutPolicy.Defer, StartDateUtc = new DateTime(2026, 9, 7, 0, 0, 0, DateTimeKind.Utc), EndDateUtc = new DateTime(2026, 9, 7, 0, 0, 0, DateTimeKind.Utc)
         };
 
         var suppressed = JobBlackoutCalendar.Suppress(calendar, new(calendarId, "Hold", null, true, [window]), TimeZoneInfo.Utc);
-
         var fire = Assert.Single(suppressed.Entries);
-        Assert.Equal(new DateTime(2026, 9, 7, 12, 0, 0, DateTimeKind.Utc), fire.Start);
+        Assert.Equal(new(2026, 9, 7, 12, 0, 0, DateTimeKind.Utc), fire.Start);
     }
 
     private static TimeFrame Frame(string key, string title, DateTime at) => new(at, at, key, title);
@@ -90,10 +82,7 @@ public class JobBlackoutCalendarTests
     private static JobBlackoutCalendarRes FullDay(DateTime day)
     {
         var calendarId = LyoGuid.CreateV7();
-        var window = Window(calendarId, "Labor Day (2026)", DayFlags.EveryDay, "00:00", "23:59") with {
-            StartDateUtc = day,
-            EndDateUtc = day
-        };
+        var window = Window(calendarId, "Labor Day (2026)", DayFlags.EveryDay, "00:00", "23:59") with { StartDateUtc = day, EndDateUtc = day };
         return new(calendarId, "Holidays", null, true, [window]);
     }
 
@@ -107,9 +96,9 @@ public class JobBlackoutCalendarTests
     {
         var calendarId = LyoGuid.CreateV7();
         var window = Window(calendarId, "Freeze", DayFlags.EveryDay, "09:00", "12:00") with {
-            StartDateUtc = new DateTime(2026, 9, 10, 0, 0, 0, DateTimeKind.Utc),
-            EndDateUtc = new DateTime(2026, 9, 12, 0, 0, 0, DateTimeKind.Utc)
+            StartDateUtc = new DateTime(2026, 9, 10, 0, 0, 0, DateTimeKind.Utc), EndDateUtc = new DateTime(2026, 9, 12, 0, 0, 0, DateTimeKind.Utc)
         };
+
         return new(calendarId, "Freeze", null, true, [window]);
     }
 

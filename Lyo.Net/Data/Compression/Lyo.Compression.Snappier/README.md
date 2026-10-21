@@ -29,7 +29,8 @@ services.AddDefaultCompressionService<CompressionService>();
 
 ## DI registration
 
-DI, ICompressionResolver, and configuration live in [`Lyo.Compression`](../Lyo.Compression/README.md). Register AddSnappierCompressor() if stored metadata might name Snappy. ICompressionResolver, not just the service default codec, is what decompresses those reads.
+DI, ICompressionResolver, and configuration live in [`Lyo.Compression`](../Lyo.Compression/README.md). Register AddSnappierCompressor () if stored metadata might name Snappy.
+ICompressionResolver, not just the service default codec, is what decompresses those reads.
 
 ## Dependencies
 

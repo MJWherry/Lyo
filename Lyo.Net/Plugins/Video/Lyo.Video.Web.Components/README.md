@@ -1,6 +1,7 @@
 # Lyo.Video.Web.Components
 
-Blazor components for browsing a video catalog. `VideoTitleSearch` asks the host to search. `VideoTitleDetail` shows a movie (runtime, overview, credits, YouTube id) or a series season and episode list. Cover URLs and tag lists come from the host. YouTube types arrive through `Lyo.Google.Youtube.Models`. Components do not take a database context.
+Blazor components for browsing a video catalog. `VideoTitleSearch` asks the host to search. `VideoTitleDetail` shows a movie (runtime, overview, credits, YouTube id) or a series
+season and episode list. Cover URLs and tag lists come from the host. YouTube types arrive through `Lyo.Google.Youtube.Models`. Components do not take a database context.
 
 ## Features
 

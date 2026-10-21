@@ -5,29 +5,14 @@ namespace Lyo.Toml.Tests;
 
 public class TomlOptionsTests
 {
-    private sealed class Person
-    {
-        public string? GivenName { get; set; }
-
-        public int? Age { get; set; }
-
-        public Address? Address { get; set; }
-
-        public DateTimeOffset When { get; set; }
-    }
-
-    private sealed class Address
-    {
-        public string? City { get; set; }
-    }
-
     [Fact]
     public void ParseString_ItemsKeyPeople_LoadsList()
     {
         const string toml = """
-            [[people]]
-            givenName = "Ada"
-            """;
+                            [[people]]
+                            givenName = "Ada"
+                            """;
+
         var people = new TomlService(o => o.ItemsKey = "people").ParseString<List<Person>>(toml);
         Assert.Single(people);
         Assert.Equal("Ada", people[0].GivenName);
@@ -51,7 +36,7 @@ public class TomlOptionsTests
     public void ExportToTomlString_InlineTables_RoundTripsAddressAndKeepsArrayOfTables()
     {
         var service = new TomlService(o => o.NestedTables = TomlNestedTables.Inline);
-        var toml = service.ExportToTomlString(new Person { Address = new Address { City = "London" } });
+        var toml = service.ExportToTomlString(new Person { Address = new() { City = "London" } });
         Assert.Contains("address = {", toml);
         Assert.Contains("London", toml);
         var back = service.ParseString<Person>(toml);
@@ -70,8 +55,7 @@ public class TomlOptionsTests
     }
 
     [Fact]
-    public void Constructor_IgnoreNullsFalse_Throws()
-        => Assert.ThrowsAny<Exception>(() => new TomlService(o => o.IgnoreNulls = false));
+    public void Constructor_IgnoreNullsFalse_Throws() => Assert.ThrowsAny<Exception>(() => new TomlService(o => o.IgnoreNulls = false));
 
     [Fact]
     public void ParseFile_Windows1252_RoundTrips()
@@ -83,7 +67,9 @@ public class TomlOptionsTests
             var back = service.ParseFile<Person>(path);
             Assert.Equal("José", back.GivenName);
         }
-        finally { File.Delete(path); }
+        finally {
+            File.Delete(path);
+        }
     }
 
     [Fact]
@@ -101,15 +87,35 @@ public class TomlOptionsTests
     public void Default_ParallelRoundTrip_ReturnsTheDocument()
     {
         var errors = 0;
-        Parallel.For(0, 32, _ => {
-            try {
-                var toml = TomlService.Default.ExportToTomlString(new Person { GivenName = "Ada", Age = 36 });
-                var person = TomlService.Default.ParseString<Person>(toml);
-                if (person.GivenName != "Ada" || person.Age != 36)
+        Parallel.For(
+            0, 32, _ => {
+                try {
+                    var toml = TomlService.Default.ExportToTomlString(new Person { GivenName = "Ada", Age = 36 });
+                    var person = TomlService.Default.ParseString<Person>(toml);
+                    if (person.GivenName != "Ada" || person.Age != 36)
+                        Interlocked.Increment(ref errors);
+                }
+                catch {
                     Interlocked.Increment(ref errors);
-            }
-            catch { Interlocked.Increment(ref errors); }
-        });
+                }
+            });
+
         Assert.Equal(0, errors);
+    }
+
+    private sealed class Person
+    {
+        public string? GivenName { get; set; }
+
+        public int? Age { get; set; }
+
+        public Address? Address { get; set; }
+
+        public DateTimeOffset When { get; set; }
+    }
+
+    private sealed class Address
+    {
+        public string? City { get; set; }
     }
 }

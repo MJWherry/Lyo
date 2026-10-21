@@ -2,7 +2,6 @@ using System.Text;
 using BenchmarkDotNet.Attributes;
 using Lyo.Benchmark;
 using Lyo.Benchmark.Data;
-using Lyo.Json;
 
 namespace Lyo.Json.Benchmarks;
 

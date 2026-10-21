@@ -38,7 +38,7 @@ public static class Extensions
             return services.AddRecipeApi(options);
         }
 
-        /// <summary>Registers Recipe from configuration section <see cref="PostgresRecipeOptions.SectionName"/>.</summary>
+        /// <summary>Registers Recipe from configuration section <see cref="PostgresRecipeOptions.SectionName" />.</summary>
         public IServiceCollection AddRecipeApiFromConfiguration(IConfiguration configuration, string configSectionName = PostgresRecipeOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(configuration);
@@ -66,28 +66,35 @@ public static class Extensions
         var tag = Constants.Rest.Recipe.Route;
         app.CreateBuilder<RecipeDbContext, RecipeCategoryEntity, RecipeCategoryReq, RecipeCategoryRes, Guid>(Constants.Rest.Recipe.Categories, tag)
             .WithCrud(
-                ApiFeatureSet.DefaultCrud, new() {
+                ApiFeatureSet.DefaultCrud,
+                new() {
                     BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateV7() : ctx.Entity.Id,
                     BeforeDeleteAsync = (ctx, ct) => CascadeNotesAndTagsAsync(ctx.Services, RecipeEntityTypes.RecipeCategory, ctx.Entity.Id, ct)
                 })
             .Build();
+
         app.CreateBuilder<RecipeDbContext, IngredientEntity, IngredientReq, IngredientRes, Guid>(Constants.Rest.Recipe.Ingredients, tag)
             .WithCrud(
-                ApiFeatureSet.DefaultCrud, new() {
+                ApiFeatureSet.DefaultCrud,
+                new() {
                     BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateV7() : ctx.Entity.Id,
                     BeforeDeleteAsync = (ctx, ct) => CascadeNotesAndTagsAsync(ctx.Services, RecipeEntityTypes.Ingredient, ctx.Entity.Id, ct)
                 })
             .Build();
+
         app.CreateBuilder<RecipeDbContext, RecipeEntity, RecipeReq, RecipeRes, Guid>(Constants.Rest.Recipe.Recipes, tag)
             .WithCrud(
-                ApiFeatureSet.DefaultCrud, new() {
+                ApiFeatureSet.DefaultCrud,
+                new() {
                     BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateV7() : ctx.Entity.Id,
                     BeforeDeleteAsync = (ctx, ct) => CascadeNotesAndTagsAsync(ctx.Services, RecipeEntityTypes.Recipe, ctx.Entity.Id, ct)
                 })
             .Build();
+
         app.CreateBuilder<RecipeDbContext, RecipeAttachmentEntity, RecipeAttachmentReq, RecipeAttachmentRes, Guid>(Constants.Rest.Recipe.Attachments, tag)
             .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateV7() : ctx.Entity.Id })
             .Build();
+
         MapLineAndStepEndpoints(app);
         MapUnitAndUsageEndpoints(app);
         MapNotesAndTags(app, Constants.Rest.Recipe.Categories, RecipeEntityTypes.RecipeCategory);
@@ -102,56 +109,60 @@ public static class Extensions
         var tag = Constants.Rest.Recipe.Route;
         var recipes = Constants.Rest.Recipe.Recipes;
         app.MapGet(
-                $"/{recipes}/{{id:guid}}/IngredientLines",
-                async (Guid id, IRecipeStore store, ILyoMapper mapper, Guid? tenantId, CancellationToken ct) => {
+                $"/{recipes}/{{id:guid}}/IngredientLines", async (Guid id, IRecipeStore store, ILyoMapper mapper, Guid? tenantId, CancellationToken ct) => {
                     var rows = await store.GetIngredientLinesAsync(id, tenantId, ct).ConfigureAwait(false);
                     return Results.Ok(rows.Select(mapper.Map<RecipeIngredientLineRes>).ToList());
                 })
             .WithTags(tag)
             .WithName("GetRecipeIngredientLines");
+
         app.MapPut(
-                $"/{recipes}/{{id:guid}}/IngredientLines",
-                async (Guid id, List<RecipeIngredientLineReq> req, IRecipeStore store, ILyoMapper mapper, Guid? tenantId, CancellationToken ct) => {
+                $"/{recipes}/{{id:guid}}/IngredientLines", async (
+                    Guid id, List<RecipeIngredientLineReq> req, IRecipeStore store, ILyoMapper mapper, Guid? tenantId, CancellationToken ct) => {
                     ArgumentHelpers.ThrowIfNull(req);
                     var lines = req.Select(r => new RecipeIngredientLineRecord {
-                        Id = r.Id,
-                        RecipeId = id,
-                        IngredientId = r.IngredientId,
-                        IngredientText = r.IngredientText,
-                        SortOrder = r.SortOrder,
-                        Quantity = r.Quantity,
-                        Unit = r.Unit,
-                        Preparation = r.Preparation,
-                        IsOptional = r.IsOptional,
-                        GroupLabel = r.GroupLabel,
-                        StepIds = r.StepIds ?? []
-                    }).ToList();
+                            Id = r.Id,
+                            RecipeId = id,
+                            IngredientId = r.IngredientId,
+                            IngredientText = r.IngredientText,
+                            SortOrder = r.SortOrder,
+                            Quantity = r.Quantity,
+                            Unit = r.Unit,
+                            Preparation = r.Preparation,
+                            IsOptional = r.IsOptional,
+                            GroupLabel = r.GroupLabel,
+                            StepIds = r.StepIds ?? []
+                        })
+                        .ToList();
+
                     await store.ReplaceIngredientLinesAsync(id, lines, tenantId, ct).ConfigureAwait(false);
                     var rows = await store.GetIngredientLinesAsync(id, tenantId, ct).ConfigureAwait(false);
                     return Results.Ok(rows.Select(mapper.Map<RecipeIngredientLineRes>).ToList());
                 })
             .WithTags(tag)
             .WithName("ReplaceRecipeIngredientLines");
+
         app.MapGet(
-                $"/{recipes}/{{id:guid}}/Steps",
-                async (Guid id, IRecipeStore store, ILyoMapper mapper, Guid? tenantId, CancellationToken ct) => {
+                $"/{recipes}/{{id:guid}}/Steps", async (Guid id, IRecipeStore store, ILyoMapper mapper, Guid? tenantId, CancellationToken ct) => {
                     var rows = await store.GetStepsAsync(id, tenantId, ct).ConfigureAwait(false);
                     return Results.Ok(rows.Select(mapper.Map<RecipeStepRes>).ToList());
                 })
             .WithTags(tag)
             .WithName("GetRecipeSteps");
+
         app.MapPut(
-                $"/{recipes}/{{id:guid}}/Steps",
-                async (Guid id, List<RecipeStepReq> req, IRecipeStore store, ILyoMapper mapper, Guid? tenantId, CancellationToken ct) => {
+                $"/{recipes}/{{id:guid}}/Steps", async (Guid id, List<RecipeStepReq> req, IRecipeStore store, ILyoMapper mapper, Guid? tenantId, CancellationToken ct) => {
                     ArgumentHelpers.ThrowIfNull(req);
                     var steps = req.Select(r => new RecipeStepRecord {
-                        Id = r.Id,
-                        RecipeId = id,
-                        SortOrder = r.SortOrder,
-                        Instruction = r.Instruction,
-                        DurationMinutes = r.DurationMinutes,
-                        GroupLabel = r.GroupLabel
-                    }).ToList();
+                            Id = r.Id,
+                            RecipeId = id,
+                            SortOrder = r.SortOrder,
+                            Instruction = r.Instruction,
+                            DurationMinutes = r.DurationMinutes,
+                            GroupLabel = r.GroupLabel
+                        })
+                        .ToList();
+
                     await store.ReplaceStepsAsync(id, steps, tenantId, ct).ConfigureAwait(false);
                     var rows = await store.GetStepsAsync(id, tenantId, ct).ConfigureAwait(false);
                     return Results.Ok(rows.Select(mapper.Map<RecipeStepRes>).ToList());
@@ -164,49 +175,61 @@ public static class Extensions
     {
         var tag = Constants.Rest.Recipe.Route;
         app.MapGet(
-                $"/{Constants.Rest.Recipe.Units}",
-                async (IRecipeStore store, Guid? tenantId, CancellationToken ct) => {
+                $"/{Constants.Rest.Recipe.Units}", async (IRecipeStore store, Guid? tenantId, CancellationToken ct) => {
                     var rows = await store.ListUnitsAsync(tenantId, ct).ConfigureAwait(false);
                     return Results.Ok(rows.Select(ToUnitRes).ToList());
                 })
             .WithTags(tag)
             .WithName("ListRecipeUnits");
+
         app.MapPut(
-                $"/{Constants.Rest.Recipe.Units}",
-                async (UnitReq req, IRecipeStore store, Guid? tenantId, CancellationToken ct) => {
+                $"/{Constants.Rest.Recipe.Units}", async (UnitReq req, IRecipeStore store, Guid? tenantId, CancellationToken ct) => {
                     ArgumentHelpers.ThrowIfNull(req);
-                    var unit = new UnitRecord { Id = req.Id, Name = req.Name, Abbreviation = req.Abbreviation, SortOrder = req.SortOrder };
+                    var unit = new UnitRecord {
+                        Id = req.Id,
+                        Name = req.Name,
+                        Abbreviation = req.Abbreviation,
+                        SortOrder = req.SortOrder
+                    };
+
                     await store.SaveUnitAsync(unit, tenantId, ct).ConfigureAwait(false);
                     return Results.Ok(ToUnitRes(unit));
                 })
             .WithTags(tag)
             .WithName("SaveRecipeUnit");
+
         app.MapDelete(
-                $"/{Constants.Rest.Recipe.Units}/{{id:guid}}",
-                async (Guid id, IRecipeStore store, Guid? tenantId, CancellationToken ct) => {
+                $"/{Constants.Rest.Recipe.Units}/{{id:guid}}", async (Guid id, IRecipeStore store, Guid? tenantId, CancellationToken ct) => {
                     await store.DeleteUnitAsync(id, tenantId, ct).ConfigureAwait(false);
                     return Results.NoContent();
                 })
             .WithTags(tag)
             .WithName("DeleteRecipeUnit");
+
         app.MapGet(
-                $"/{Constants.Rest.Recipe.Ingredients}/{{id:guid}}/Usage",
-                async (Guid id, IRecipeStore store, Guid? tenantId, CancellationToken ct) => {
+                $"/{Constants.Rest.Recipe.Ingredients}/{{id:guid}}/Usage", async (Guid id, IRecipeStore store, Guid? tenantId, CancellationToken ct) => {
                     var rows = await store.ListIngredientUsageAsync(id, tenantId, ct).ConfigureAwait(false);
-                    return Results.Ok(rows.Select(r => new IngredientUsageRes {
-                        RecipeId = r.RecipeId,
-                        RecipeTitle = r.RecipeTitle,
-                        LineId = r.LineId,
-                        StepIds = r.StepIds,
-                        StepNumbers = r.StepNumbers
-                    }).ToList());
+                    return Results.Ok(
+                        rows.Select(r => new IngredientUsageRes {
+                                RecipeId = r.RecipeId,
+                                RecipeTitle = r.RecipeTitle,
+                                LineId = r.LineId,
+                                StepIds = r.StepIds,
+                                StepNumbers = r.StepNumbers
+                            })
+                            .ToList());
                 })
             .WithTags(tag)
             .WithName("ListIngredientUsage");
     }
 
     private static UnitRes ToUnitRes(UnitRecord unit)
-        => new() { Id = unit.Id, Name = unit.Name, Abbreviation = unit.Abbreviation, SortOrder = unit.SortOrder };
+        => new() {
+            Id = unit.Id,
+            Name = unit.Name,
+            Abbreviation = unit.Abbreviation,
+            SortOrder = unit.SortOrder
+        };
 
     private static void MapNotesAndTags(WebApplication app, string parentRoute, string entityType)
     {
@@ -216,9 +239,9 @@ public static class Extensions
                 async (Guid id, INoteStore notes, Guid? tenantId, CancellationToken ct)
                     => Results.Ok(await notes.GetForEntityAsync(EntityRef.ForGuid(entityType, id), tenantId, ct).ConfigureAwait(false)))
             .WithTags(tag);
+
         app.MapPost(
-                $"/{parentRoute}/{{id:guid}}/Notes",
-                async (Guid id, RecipeNoteCreateReq req, INoteStore notes, Guid? tenantId, CancellationToken ct) => {
+                $"/{parentRoute}/{{id:guid}}/Notes", async (Guid id, RecipeNoteCreateReq req, INoteStore notes, Guid? tenantId, CancellationToken ct) => {
                     ArgumentHelpers.ThrowIfNull(req);
                     var note = new NoteRecord {
                         Id = LyoGuid.CreateV7(),
@@ -228,38 +251,40 @@ public static class Extensions
                         ActorEntityId = EntityRefWellKnown.SystemActorId.ToString(),
                         Content = req.Content
                     };
+
                     await notes.SaveAsync(note, tenantId, ct).ConfigureAwait(false);
                     return Results.Ok(note);
                 })
             .WithTags(tag);
+
         app.MapDelete(
-                $"/{parentRoute}/{{id:guid}}/Notes/{{noteId:guid}}",
-                async (Guid id, Guid noteId, INoteStore notes, Guid? tenantId, CancellationToken ct) => {
+                $"/{parentRoute}/{{id:guid}}/Notes/{{noteId:guid}}", async (Guid id, Guid noteId, INoteStore notes, Guid? tenantId, CancellationToken ct) => {
                     var existing = await notes.GetByIdAsync(noteId, tenantId, ct).ConfigureAwait(false);
-                    if (existing == null || !string.Equals(existing.SubjectEntityType, entityType, StringComparison.Ordinal)
-                        || !string.Equals(existing.SubjectEntityId, id.ToString(), StringComparison.Ordinal))
+                    if (existing == null || !string.Equals(existing.SubjectEntityType, entityType, StringComparison.Ordinal) ||
+                        !string.Equals(existing.SubjectEntityId, id.ToString(), StringComparison.Ordinal))
                         return Results.NotFound();
 
                     await notes.DeleteAsync(noteId, tenantId, ct).ConfigureAwait(false);
                     return Results.NoContent();
                 })
             .WithTags(tag);
+
         app.MapGet(
                 $"/{parentRoute}/{{id:guid}}/Tags",
-                async (Guid id, ITagStore tags, Guid? tenantId, CancellationToken ct)
-                    => Results.Ok(await tags.GetTagsForEntityAsync(EntityRef.ForGuid(entityType, id), tenantId: tenantId, ct: ct).ConfigureAwait(false)))
+                async (Guid id, ITagStore tags, Guid? tenantId, CancellationToken ct) => Results.Ok(
+                    await tags.GetTagsForEntityAsync(EntityRef.ForGuid(entityType, id), tenantId: tenantId, ct: ct).ConfigureAwait(false)))
             .WithTags(tag);
+
         app.MapPost(
-                $"/{parentRoute}/{{id:guid}}/Tags",
-                async (Guid id, RecipeTagAddReq req, ITagStore tags, Guid? tenantId, CancellationToken ct) => {
+                $"/{parentRoute}/{{id:guid}}/Tags", async (Guid id, RecipeTagAddReq req, ITagStore tags, Guid? tenantId, CancellationToken ct) => {
                     ArgumentHelpers.ThrowIfNull(req);
                     await tags.AddTagAsync(EntityRef.ForGuid(entityType, id), req.Name, req.TagType, slug: req.Slug, tenantId: tenantId, ct: ct).ConfigureAwait(false);
                     return Results.Ok(await tags.GetTagsForEntityAsync(EntityRef.ForGuid(entityType, id), tenantId: tenantId, ct: ct).ConfigureAwait(false));
                 })
             .WithTags(tag);
+
         app.MapDelete(
-                $"/{parentRoute}/{{id:guid}}/Tags/{{name}}",
-                async (Guid id, string name, ITagStore tags, string? tagType, Guid? tenantId, CancellationToken ct) => {
+                $"/{parentRoute}/{{id:guid}}/Tags/{{name}}", async (Guid id, string name, ITagStore tags, string? tagType, Guid? tenantId, CancellationToken ct) => {
                     await tags.RemoveTagAsync(EntityRef.ForGuid(entityType, id), name, tagType ?? "tag", tenantId: tenantId, ct: ct).ConfigureAwait(false);
                     return Results.NoContent();
                 })
@@ -270,8 +295,7 @@ public static class Extensions
     {
         var tag = Constants.Rest.Recipe.Route;
         app.MapPost(
-                $"/{Constants.Rest.Recipe.AttachmentsUpload}",
-                async (
+                $"/{Constants.Rest.Recipe.AttachmentsUpload}", async (
                     HttpContext http, [FromForm] string entityType, [FromForm] Guid entityId, [FromForm] string? role, [FromForm] string? caption, [FromForm] bool isPrimary,
                     IFormFile file, ILyoMapper mapper, Guid? tenantId, CancellationToken ct) => {
                     var helper = http.RequestServices.GetService<IRecipeAttachmentFiles>();
@@ -279,10 +303,9 @@ public static class Extensions
                         return Results.StatusCode(StatusCodes.Status501NotImplemented);
 
                     ArgumentHelpers.ThrowIfNull(file);
-                    var parsedRole = Enum.TryParse<RecipeAttachmentRole>(role, ignoreCase: true, out var parsed) ? parsed : RecipeAttachmentRole.Document;
+                    var parsedRole = Enum.TryParse<RecipeAttachmentRole>(role, true, out var parsed) ? parsed : RecipeAttachmentRole.Document;
                     await using var stream = file.OpenReadStream();
-                    var row = await helper.SaveAsync(entityType, entityId, stream, file.Length, file.FileName, parsedRole, caption, isPrimary, tenantId, ct)
-                        .ConfigureAwait(false);
+                    var row = await helper.SaveAsync(entityType, entityId, stream, file.Length, file.FileName, parsedRole, caption, isPrimary, tenantId, ct).ConfigureAwait(false);
                     return Results.Ok(mapper.Map<RecipeAttachmentRes>(row));
                 })
             .DisableAntiforgery()

@@ -1,4 +1,3 @@
-using Lyo.FeatureFlags;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -6,13 +5,13 @@ using Microsoft.Extensions.Options;
 namespace Lyo.FeatureFlags.Web.Components;
 
 /// <summary>
-/// Lists every flag's name and mode. When <see cref="AllowEdit" /> is true, a switch sets that flag on or off through <see cref="IFeatureFlagUpdater" />.
-/// A percentage or rules flag loses that targeting when the switch changes. Register <c>AddFeatureFlags</c> or <c>AddFeatureFlagsFromConfiguration</c> on the host.
+/// Lists every flag's name and mode. When <see cref="AllowEdit" /> is true, a switch sets that flag on or off through <see cref="IFeatureFlagUpdater" />. A percentage or
+/// rules flag loses that targeting when the switch changes. Register <c>AddFeatureFlags</c> or <c>AddFeatureFlagsFromConfiguration</c> on the host.
 /// </summary>
 public partial class FeatureFlagPanel : IDisposable
 {
-    private IDisposable? _subscription;
     private IReadOnlyList<Row> _rows = [];
+    private IDisposable? _subscription;
 
     [Inject]
     private IServiceProvider Services { get; set; } = null!;
@@ -39,21 +38,21 @@ public partial class FeatureFlagPanel : IDisposable
             Load();
             StateHasChanged();
         }));
+
         Load();
     }
 
     private void Load()
     {
         var flags = Monitor?.CurrentValue.Flags;
-        if (flags is null)
-        {
+        if (flags is null) {
             _rows = [];
             return;
         }
 
         var rows = new List<Row>(flags.Count);
         foreach (var pair in flags)
-            rows.Add(new Row(pair.Key, pair.Value.Mode));
+            rows.Add(new(pair.Key, pair.Value.Mode));
 
         _rows = rows;
     }

@@ -15,12 +15,10 @@ public sealed class PostgresIdempotencyStoreTests(IdempotencyPostgresFixture fix
         var hash = IdempotencyHash.Of("a"u8.ToArray());
         var began = await store.TryBeginAsync(scope, "k", hash, ct: TestCt);
         Assert.True(await store.CompleteAsync(began.Id, began.LeaseToken!.Value, 201, "a"u8.ToArray(), "text/plain", TestCt));
-
         var replay = await store.TryBeginAsync(scope, "k", hash, ct: TestCt);
         Assert.Equal(IdempotencyOutcome.Replay, replay.Outcome);
         Assert.Equal(201, replay.ResponseStatus);
         Assert.Equal("a"u8.ToArray(), replay.ResponseBody);
-
         var conflict = await store.TryBeginAsync(scope, "k", IdempotencyHash.Of("b"u8.ToArray()), ct: TestCt);
         Assert.Equal(IdempotencyOutcome.Conflict, conflict.Outcome);
     }
@@ -33,7 +31,6 @@ public sealed class PostgresIdempotencyStoreTests(IdempotencyPostgresFixture fix
         var hash = IdempotencyHash.Of("a"u8.ToArray());
         var first = await store.TryBeginAsync(scope, "k", hash, ct: TestCt);
         var second = await store.TryBeginAsync(scope, "k", hash, ct: TestCt);
-
         Assert.Equal(IdempotencyOutcome.Began, first.Outcome);
         Assert.Equal(IdempotencyOutcome.InProgress, second.Outcome);
     }
@@ -45,7 +42,6 @@ public sealed class PostgresIdempotencyStoreTests(IdempotencyPostgresFixture fix
         var scope = Scope();
         var hash = IdempotencyHash.Of("a"u8.ToArray());
         var began = await store.TryBeginAsync(scope, "k", hash, ct: TestCt);
-
         await using var conn = await OpenAsync();
         await using var cmd = new NpgsqlCommand("SELECT state FROM idempotency.entry WHERE id = @id", conn);
         cmd.Parameters.AddWithValue("id", began.Id);
@@ -87,7 +83,6 @@ public sealed class PostgresIdempotencyStoreTests(IdempotencyPostgresFixture fix
         Assert.Equal(IdempotencyOutcome.Began, (await store.TryBeginAsync(scope, "k", hash, transaction: tx, ct: TestCt)).Outcome);
         Assert.Equal(IdempotencyOutcome.InProgress, (await store.TryBeginAsync(scope, "k", hash, transaction: tx, ct: TestCt)).Outcome);
         await tx.CommitAsync(TestCt);
-
         await using var check = new NpgsqlCommand("SELECT COUNT(*) FROM idem_probe WHERE id = @id", conn);
         check.Parameters.AddWithValue("id", probe);
         Assert.Equal(1L, (long)(await check.ExecuteScalarAsync(TestCt))!);
@@ -99,10 +94,9 @@ public sealed class PostgresIdempotencyStoreTests(IdempotencyPostgresFixture fix
         var store = Clock();
         var scope = Scope();
         var oldHash = IdempotencyHash.Of("old"u8.ToArray());
-        var first = await store.TryBeginAsync(scope, "k", oldHash, expiresAt: Now, ct: TestCt);
+        var first = await store.TryBeginAsync(scope, "k", oldHash, Now, ct: TestCt);
         Assert.True(await store.CompleteAsync(first.Id, first.LeaseToken!.Value, 200, "old-body"u8.ToArray(), "text/plain", TestCt));
         await store.SweepExpiredAsync(TestCt);
-
         var liveHash = IdempotencyHash.Of("new"u8.ToArray());
         var live = await store.TryBeginAsync(scope, "k", liveHash, ct: TestCt);
         var again = await store.TryBeginAsync(scope, "k", liveHash, ct: TestCt);
@@ -117,17 +111,14 @@ public sealed class PostgresIdempotencyStoreTests(IdempotencyPostgresFixture fix
         var store = Clock();
         var scope = Scope();
         var hash = IdempotencyHash.Of("a"u8.ToArray());
-        await store.TryBeginAsync(scope, "k", hash, expiresAt: Now, ct: TestCt);
-
+        await store.TryBeginAsync(scope, "k", hash, Now, ct: TestCt);
         await using var conn = await OpenAsync();
         await using var tx = await conn.BeginTransactionAsync(TestCt);
         var inserted = await store.InsertOutboxAsync(tx, "email", "pay", "k-out", "body"u8.ToArray(), TestCt);
         await tx.CommitAsync(TestCt);
         Assert.True(inserted.Inserted);
-
         await store.SweepExpiredAsync(TestCt);
         Assert.Equal(IdempotencyOutcome.Began, (await store.TryBeginAsync(scope, "k", hash, ct: TestCt)).Outcome);
-
         await using var tx2 = await conn.BeginTransactionAsync(TestCt);
         var again = await store.InsertOutboxAsync(tx2, "email", "pay", "k-out", "body"u8.ToArray(), TestCt);
         await tx2.RollbackAsync(TestCt);
@@ -195,8 +186,7 @@ public sealed class PostgresIdempotencyStoreTests(IdempotencyPostgresFixture fix
         Assert.Equal("idempotency", fixture.Store.HealthCheckName);
     }
 
-    private PostgresIdempotencyStore Clock()
-        => new(new PostgresIdempotencyOptions { ConnectionString = fixture.ConnectionString }, () => Now);
+    private PostgresIdempotencyStore Clock() => new(new() { ConnectionString = fixture.ConnectionString }, () => Now);
 
     private async Task<NpgsqlConnection> OpenAsync()
     {

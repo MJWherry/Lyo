@@ -1,6 +1,5 @@
 using Lyo.Seed;
 using Lyo.Validation.Postgres.Database;
-using Lyo.Validation.Seed;
 
 namespace Lyo.Validation.Seed.Tests;
 
@@ -12,10 +11,11 @@ public sealed class ValidationEfSeedContributorTests
         var transport = await SeedAsync(new ValidationEfSeedContributor(), 2);
         var schemas = transport.Items.OfType<ValidationSchemaEntity>().ToList();
         Assert.Equal(2, schemas.Count);
-        Assert.All(schemas, schema => {
-            Assert.StartsWith("contact.schema.", schema.Key);
-            Assert.Contains("required", schema.ConstraintsJson);
-        });
+        Assert.All(
+            schemas, schema => {
+                Assert.StartsWith("contact.schema.", schema.Key);
+                Assert.Contains("required", schema.ConstraintsJson);
+            });
     }
 
     private static async Task<RecordingSeedTransport> SeedAsync(SeedContributor contributor, int count)
@@ -41,6 +41,7 @@ public sealed class ValidationEfSeedContributorTests
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

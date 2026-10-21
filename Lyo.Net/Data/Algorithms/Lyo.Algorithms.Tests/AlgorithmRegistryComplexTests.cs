@@ -1,16 +1,13 @@
 using Lyo.Algorithms.Models;
-using Lyo.Algorithms.Models.Request;
 using Lyo.Algorithms.Models.Response;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Result;
 using Microsoft.Extensions.DependencyInjection;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Algorithms.Tests;
 
 public sealed class AlgorithmRegistryComplexTests
 {
-    private sealed record Battle(double Level, double Power, double Atk, double Def, double Stab, string Matchup);
-
     [Fact]
     public async Task ExecuteAsync_WeightedSum_ScalesChildrenAndKeepsRawSteps()
     {
@@ -23,7 +20,6 @@ public sealed class AlgorithmRegistryComplexTests
         Assert.True((await Save(catalog, weightKey, AlgorithmKind.RangeBand, "", """{"input":"Weight","bands":[{"min":10,"max":50,"points":5}]}""", ct)).IsSuccess);
         var composite = "{\"combiner\":\"WeightedSum\",\"children\":[{\"ref\":\"" + typeKey + "\",\"weight\":2},{\"ref\":\"" + weightKey + "\",\"weight\":0.5}]}";
         Assert.True((await Save(catalog, scoreKey, AlgorithmKind.Composite, "", composite, ct)).IsSuccess);
-
         var bag = new AlgorithmContextBag();
         bag.Set("FishType", "bass");
         bag.Set("Weight", 12d);
@@ -51,7 +47,6 @@ public sealed class AlgorithmRegistryComplexTests
         Assert.True((await Save(catalog, bonusKey, AlgorithmKind.Expression, "3", null, ct)).IsSuccess);
         var outer = "{\"combiner\":\"Sum\",\"children\":[{\"ref\":\"" + innerKey + "\"},{\"ref\":\"" + bonusKey + "\"}]}";
         Assert.True((await Save(catalog, outerKey, AlgorithmKind.Composite, "", outer, ct)).IsSuccess);
-
         var bag = new AlgorithmContextBag();
         bag.Set("FishType", "trout");
         var breakdown = await registry.ExecuteWithBreakdownAsync<AlgorithmContextBag, double>(AlgorithmRef.Latest(outerKey), bag, ct);
@@ -79,10 +74,11 @@ public sealed class AlgorithmRegistryComplexTests
         var (catalog, registry, ct) = await CatalogAsync();
         var key = "mods.formula." + LyoGuid.CreateV7().ToString("N");
         var payload = """
-            {"combiner":"Formula","formula":"Atk * score(\"chart\")","children":[
-              {"key":"chart","kind":"DiscreteMap","payload":{"input":"Matchup","entries":[{"key":"water-fire","points":2},{"key":"water-water","points":0.5}]}}
-            ]}
-            """;
+                      {"combiner":"Formula","formula":"Atk * score(\"chart\")","children":[
+                        {"key":"chart","kind":"DiscreteMap","payload":{"input":"Matchup","entries":[{"key":"water-fire","points":2},{"key":"water-water","points":0.5}]}}
+                      ]}
+                      """;
+
         Assert.True((await Save(catalog, key, AlgorithmKind.Composite, "", payload, ct)).IsSuccess);
         var bag = new AlgorithmContextBag();
         bag.Set("Atk", 10d);
@@ -107,8 +103,7 @@ public sealed class AlgorithmRegistryComplexTests
         Assert.True((await Save(catalog, baseKey, AlgorithmKind.Expression, baseSource, null, ct)).IsSuccess);
         var totalSource = "Math.Floor(Algo(\"" + baseKey + "\") * Algo(\"" + typeKey + "\") * Stab)";
         Assert.True((await Save(catalog, totalKey, AlgorithmKind.Expression, totalSource, null, ct)).IsSuccess);
-
-        var super = new Battle(Level: 50, Power: 40, Atk: 120, Def: 90, Stab: 1.5, Matchup: "water-fire");
+        var super = new Battle(50, 40, 120, 90, 1.5, "water-fire");
         var breakdown = await registry.ExecuteWithBreakdownAsync<Battle, double>(AlgorithmRef.Latest(totalKey), super, ct);
         Assert.Equal(75d, breakdown.Value);
         Assert.Equal(25d, breakdown.Steps[0].Children.Single(step => step.Key == baseKey).Points);
@@ -116,15 +111,13 @@ public sealed class AlgorithmRegistryComplexTests
         Assert.Equal(AlgorithmKind.DiscreteMap, chartStep.Kind);
         Assert.Equal("water-fire", chartStep.Input);
         Assert.Equal(2d, chartStep.Points);
-
-        var resisted = new Battle(Level: 50, Power: 40, Atk: 120, Def: 90, Stab: 1, Matchup: "water-water");
+        var resisted = new Battle(50, 40, 120, 90, 1, "water-water");
         Assert.Equal(12d, await registry.ExecuteAsync<Battle, double>(totalKey, resisted, ct));
         Assert.Equal(75d, registry.Execute<Battle, double>(totalKey, super));
     }
 
-    private static Task<Result<AlgorithmDefinitionRes>> Save(
-        IAlgorithmCatalog catalog, string key, AlgorithmKind kind, string source, string? payload, CancellationToken ct)
-        => catalog.SaveRevisionAsync(key, new AlgorithmRevisionReq { Kind = kind, Source = source, Payload = payload }, ct);
+    private static Task<Result<AlgorithmDefinitionRes>> Save(IAlgorithmCatalog catalog, string key, AlgorithmKind kind, string source, string? payload, CancellationToken ct)
+        => catalog.SaveRevisionAsync(key, new() { Kind = kind, Source = source, Payload = payload }, ct);
 
     private static async Task<(IAlgorithmCatalog Catalog, IAlgorithmRegistry Registry, CancellationToken Ct)> CatalogAsync()
     {
@@ -133,4 +126,6 @@ public sealed class AlgorithmRegistryComplexTests
         var provider = services.BuildServiceProvider();
         return (provider.GetRequiredService<IAlgorithmCatalog>(), provider.GetRequiredService<IAlgorithmRegistry>(), TestCt);
     }
+
+    private sealed record Battle(double Level, double Power, double Atk, double Def, double Stab, string Matchup);
 }

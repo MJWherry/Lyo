@@ -4,9 +4,7 @@ using Lyo.Exceptions.Models;
 
 namespace Lyo.QRCode.Payloads;
 
-/// <summary>
-/// Wi‑Fi network join string (<c>WIFI:T:…;S:…;P:…;;</c>). Omits <c>H:</c> when the SSID is not hidden, which is more compatible on Android/iOS than <c>H:false</c>.
-/// </summary>
+/// <summary>Wi‑Fi network join string (<c>WIFI:T:…;S:…;P:…;;</c>). Omits <c>H:</c> when the SSID is not hidden, which is more compatible on Android/iOS than <c>H:false</c>.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class WifiQrPayload : IQrPayload
 {

@@ -2,26 +2,12 @@ using Lyo.Exceptions;
 
 namespace Lyo.Streams;
 
-/// <summary>
-/// Reads at most a fixed number of bytes from an inner stream, then returns end-of-stream. Bytes past that cap stay unread.
-/// Disposes the inner stream.
-/// </summary>
+/// <summary>Reads at most a fixed number of bytes from an inner stream, then returns end-of-stream. Bytes past that cap stay unread. Disposes the inner stream.</summary>
 public sealed class BoundedReadStream : Stream
 {
     private readonly Stream _inner;
-    private long _remaining;
     private bool _disposed;
-
-    /// <summary>Wraps <paramref name="inner" /> so reads stop after <paramref name="count" /> bytes. This wrapper disposes <paramref name="inner" />.</summary>
-    /// <param name="inner">Stream to read.</param>
-    /// <param name="count">Maximum bytes to return. Zero yields an empty read.</param>
-    public BoundedReadStream(Stream inner, long count)
-    {
-        ArgumentHelpers.ThrowIfNull(inner);
-        ArgumentHelpers.ThrowIfNegative(count);
-        _inner = inner;
-        _remaining = count;
-    }
+    private long _remaining;
 
     /// <inheritdoc />
     public override bool CanRead => !_disposed && _inner.CanRead;
@@ -39,6 +25,17 @@ public sealed class BoundedReadStream : Stream
     public override long Position {
         get => throw new NotSupportedException($"{nameof(BoundedReadStream)} does not support seeking.");
         set => throw new NotSupportedException($"{nameof(BoundedReadStream)} does not support seeking.");
+    }
+
+    /// <summary>Wraps <paramref name="inner" /> so reads stop after <paramref name="count" /> bytes. This wrapper disposes <paramref name="inner" />.</summary>
+    /// <param name="inner">Stream to read.</param>
+    /// <param name="count">Maximum bytes to return. Zero yields an empty read.</param>
+    public BoundedReadStream(Stream inner, long count)
+    {
+        ArgumentHelpers.ThrowIfNull(inner);
+        ArgumentHelpers.ThrowIfNegative(count);
+        _inner = inner;
+        _remaining = count;
     }
 
     /// <inheritdoc />
@@ -123,7 +120,7 @@ public sealed class BoundedReadStream : Stream
         if (_remaining == 0)
             return 0;
 
-        var n = read((int)Math.Min((long)count, _remaining));
+        var n = read((int)Math.Min(count, _remaining));
         if (n > 0)
             _remaining -= n;
 
@@ -135,7 +132,7 @@ public sealed class BoundedReadStream : Stream
         if (_remaining == 0)
             return 0;
 
-        var n = await read((int)Math.Min((long)count, _remaining)).ConfigureAwait(false);
+        var n = await read((int)Math.Min(count, _remaining)).ConfigureAwait(false);
         if (n > 0)
             _remaining -= n;
 

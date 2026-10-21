@@ -6,26 +6,6 @@ namespace Lyo.Schedule.Models;
 /// <summary>A placed civil range. Entries stay UTC. Days are the civil dates in <see cref="TimeZone" /> that the range covers, including days with no entries.</summary>
 public sealed class Calendar
 {
-    /// <summary>Builds a calendar and drops entries that miss the range in <paramref name="timeZone" />.</summary>
-    /// <param name="start">First civil day, inclusive.</param>
-    /// <param name="end">Last civil day, inclusive.</param>
-    /// <param name="timeZone">Zone used to choose which civil day an instant lands on.</param>
-    /// <param name="entries">Candidate entries. Ones outside the range are omitted.</param>
-    public Calendar(DateOnlyModel start, DateOnlyModel end, TimeZoneInfo timeZone, IEnumerable<CalendarEntry> entries)
-    {
-        ArgumentHelpers.ThrowIfNull(start);
-        ArgumentHelpers.ThrowIfNull(end);
-        ArgumentHelpers.ThrowIfNull(timeZone);
-        ArgumentHelpers.ThrowIfNull(entries);
-        ArgumentHelpers.ThrowIf(end < start, "End must be on or after Start.", nameof(end));
-
-        Start = start;
-        End = end;
-        TimeZone = timeZone;
-        Entries = entries.Where(entry => IntersectsRange(entry, start, end, timeZone)).ToArray();
-        Days = BuildDays();
-    }
-
     /// <summary>First civil day, inclusive.</summary>
     public DateOnlyModel Start { get; }
 
@@ -40,6 +20,25 @@ public sealed class Calendar
 
     /// <summary>Every civil day in the range, in order, including empty days.</summary>
     public IReadOnlyList<CalendarDay> Days { get; }
+
+    /// <summary>Builds a calendar and drops entries that miss the range in <paramref name="timeZone" />.</summary>
+    /// <param name="start">First civil day, inclusive.</param>
+    /// <param name="end">Last civil day, inclusive.</param>
+    /// <param name="timeZone">Zone used to choose which civil day an instant lands on.</param>
+    /// <param name="entries">Candidate entries. Ones outside the range are omitted.</param>
+    public Calendar(DateOnlyModel start, DateOnlyModel end, TimeZoneInfo timeZone, IEnumerable<CalendarEntry> entries)
+    {
+        ArgumentHelpers.ThrowIfNull(start);
+        ArgumentHelpers.ThrowIfNull(end);
+        ArgumentHelpers.ThrowIfNull(timeZone);
+        ArgumentHelpers.ThrowIfNull(entries);
+        ArgumentHelpers.ThrowIf(end < start, "End must be on or after Start.", nameof(end));
+        Start = start;
+        End = end;
+        TimeZone = timeZone;
+        Entries = entries.Where(entry => IntersectsRange(entry, start, end, timeZone)).ToArray();
+        Days = BuildDays();
+    }
 
     /// <summary>Places <paramref name="frames" /> onto the inclusive civil range.</summary>
     /// <param name="start">First civil day, inclusive.</param>
@@ -90,7 +89,11 @@ public sealed class Calendar
     {
         var days = new List<CalendarDay>();
         for (var date = Start; date <= End; date = date.AddDays(1)) {
-            var onDay = Entries.Where(entry => IntersectsDay(entry, date, TimeZone)).OrderBy(entry => CalendarEntry.AsUtc(entry.Start)).ThenBy(entry => entry.Key, StringComparer.Ordinal).ToArray();
+            var onDay = Entries.Where(entry => IntersectsDay(entry, date, TimeZone))
+                .OrderBy(entry => CalendarEntry.AsUtc(entry.Start))
+                .ThenBy(entry => entry.Key, StringComparer.Ordinal)
+                .ToArray();
+
             days.Add(new(date, onDay));
         }
 

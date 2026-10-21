@@ -1,10 +1,14 @@
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 
 namespace Lyo.Billing.Web.Components.Components.Forms;
 
 public partial class PaymentEditor
 {
+    private readonly PaymentEditModel _edit = new();
+    private bool _formHasChanges = true;
+    private bool _saving;
+    private bool _seeded;
+
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = null!;
 
@@ -17,17 +21,13 @@ public partial class PaymentEditor
     [Parameter]
     public string? Reference { get; set; }
 
-    private readonly PaymentEditModel _edit = new();
-    private bool _formHasChanges = true;
-    private bool _saving;
-    private bool _seeded;
-
     private bool _canSave => !_saving && _edit.Amount > 0;
 
     protected override void OnParametersSet()
     {
         if (_seeded)
             return;
+
         _edit.Amount = Amount;
         _edit.Method = Method;
         _edit.Reference = Reference;
@@ -44,7 +44,9 @@ public partial class PaymentEditor
     public sealed class PaymentEditModel
     {
         public decimal Amount { get; set; }
+
         public PaymentMethod Method { get; set; } = PaymentMethod.Internal;
+
         public string? Reference { get; set; }
     }
 }

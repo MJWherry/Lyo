@@ -6,9 +6,8 @@ public class ToolDockTests
     public void Move_ShowsThePaneOnTheNewEdge()
     {
         var layout = ToolDockState.Create(
-            ("tree", "Tree", ToolDockEdge.Left, true),
-            ("metadata", "Metadata", ToolDockEdge.Right, true),
-            ("log", "Log", ToolDockEdge.Bottom, false));
+            ("tree", "Tree", ToolDockEdge.Left, true), ("metadata", "Metadata", ToolDockEdge.Right, true), ("log", "Log", ToolDockEdge.Bottom, false));
+
         layout.Move("log", ToolDockEdge.Right);
         Assert.Equal(ToolDockEdge.Right, layout.Edge("log"));
         Assert.True(layout.IsVisible("log"));
@@ -48,9 +47,7 @@ public class ToolDockTests
     [Fact]
     public void HugsHeader_OneOpenPane_KeepsTheEdgeOpen()
     {
-        var layout = ToolDockState.Create(
-            ("log", "Log", ToolDockEdge.Bottom, true),
-            ("output", "Output", ToolDockEdge.Bottom, true));
+        var layout = ToolDockState.Create(("log", "Log", ToolDockEdge.Bottom, true), ("output", "Output", ToolDockEdge.Bottom, true));
         layout.ToggleMinimized("log");
         Assert.False(layout.HugsHeader(ToolDockEdge.Bottom));
     }

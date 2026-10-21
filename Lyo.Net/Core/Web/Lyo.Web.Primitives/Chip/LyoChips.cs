@@ -26,30 +26,28 @@ public static class LyoChips
         return hue.Style;
     }
 
-    /// <summary>
-    /// Parses a projected enum name. Unknown or blank values keep the raw text (or an em dash) plus <see cref="Color.Default" />.
-    /// </summary>
+    /// <summary>Parses a projected enum name. Unknown or blank values keep the raw text (or an em dash) plus <see cref="Color.Default" />.</summary>
     public static LyoChipSpec FromEnum<T>(string? text, Func<T, Color> color, Func<T, string>? icon = null)
         where T : struct, Enum
     {
-        if (Enum.TryParse<T>(text, ignoreCase: true, out var value))
+        if (Enum.TryParse<T>(text, true, out var value))
             return new(value.ToString(), color(value), icon?.Invoke(value));
 
         return Of(text);
     }
 
     /// <summary>
-    /// Parses a projected enum name into an identity hue. A null hue keeps <see cref="Color.Default" /> and no style.
-    /// Unknown or blank text matches <see cref="Of(string?, Color, string?, Variant, string?)" />.
+    /// Parses a projected enum name into an identity hue. A null hue keeps <see cref="Color.Default" /> and no style. Unknown or blank text matches
+    /// <see cref="Of(string?, Color, string?, Variant, string?)" />.
     /// </summary>
     public static LyoChipSpec FromEnum<T>(string? text, Func<T, LyoChipHue?> hue, Func<T, string>? icon = null)
         where T : struct, Enum
     {
         ArgumentHelpers.ThrowIfNull(hue);
-        if (Enum.TryParse<T>(text, ignoreCase: true, out var value)) {
+        if (Enum.TryParse<T>(text, true, out var value)) {
             var named = hue(value);
             return named is null
-                ? new LyoChipSpec(value.ToString(), Color.Default, icon?.Invoke(value))
+                ? new(value.ToString(), Color.Default, icon?.Invoke(value))
                 : new LyoChipSpec(value.ToString(), Color.Default, icon?.Invoke(value), Style: named.Style);
         }
 
@@ -60,7 +58,7 @@ public static class LyoChips
     public static LyoChipSpec FromEnum<T>(string? text, Func<T, LyoChipSpec> spec)
         where T : struct, Enum
     {
-        if (Enum.TryParse<T>(text, ignoreCase: true, out var value))
+        if (Enum.TryParse<T>(text, true, out var value))
             return spec(value);
 
         return Of(text);

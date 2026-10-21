@@ -5,25 +5,29 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using Lyo.Api.Models;
-using Lyo.Parameters;
 using Lyo.Api.Models.Error;
 using Lyo.Api.Services.Crud.Validation;
 using Lyo.Common.Core;
 using Lyo.Exceptions;
 using Lyo.Formatter;
+using Lyo.Parameters;
+using Lyo.Query;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
 using Lyo.Query.Services.Path;
 using Lyo.Query.Services.WhereClause;
 using Microsoft.Extensions.Logging;
+using Constants = Lyo.Api.Models.Constants;
 
 namespace Lyo.Api.Services.Crud.Read.Project;
 
 /// <inheritdoc cref="IProjectionService" />
 public sealed class ProjectionService(IFormatterService? formatterService = null, ILogger<ProjectionService>? logger = null) : IProjectionService
 {
+    /// <summary>Seven leaf slots plus a typed <c>Rest</c> (another anonymous type). Classes, not <see cref="ValueTuple" /> — Npgsql maps nested tuples to PG <c>record</c>.</summary>
+    private const int NestedAnonymousLeafCount = 7;
+
     /// <summary>Bare dotted path used as a template without braces.</summary>
     private static readonly Regex BarePropertyPathRegex = new(@"^(?:[A-Za-z_][A-Za-z0-9_]*)(?:\.[A-Za-z_][A-Za-z0-9_]*)+$", RegexOptions.Compiled);
 
@@ -35,19 +39,17 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         CreateAnonymousProjectionType(6), CreateAnonymousProjectionType(7), CreateAnonymousProjectionType(8)
     ];
 
-    /// <summary>Seven leaf slots plus a typed <c>Rest</c> (another anonymous type). Classes, not <see cref="ValueTuple"/> — Npgsql maps nested tuples to PG <c>record</c>.</summary>
-    private const int NestedAnonymousLeafCount = 7;
-
     private static readonly Type NestedAnonymousGenericDefinition = new {
-        V0 = (object?)null,
-        V1 = (object?)null,
-        V2 = (object?)null,
-        V3 = (object?)null,
-        V4 = (object?)null,
-        V5 = (object?)null,
-        V6 = (object?)null,
-        Rest = (object?)null
-    }.GetType().GetGenericTypeDefinition();
+            V0 = (object?)null,
+            V1 = (object?)null,
+            V2 = (object?)null,
+            V3 = (object?)null,
+            V4 = (object?)null,
+            V5 = (object?)null,
+            V6 = (object?)null,
+            Rest = (object?)null
+        }.GetType()
+        .GetGenericTypeDefinition();
 
     private static readonly ConcurrentDictionary<Type, Type> NestedAnonymousRowTypes = new();
     private static readonly ConcurrentDictionary<Type, PropertyInfo[]> CtorOrderedPropertiesByType = new();
@@ -536,8 +538,8 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         if (!TryBuildExpressionToCollectionNavigation(parameter, rootType, outerPrefixParts, out var collectionExpr, out var elementType))
             return null;
 
-        if (QueryPath.TryParseSegment(outerPrefixParts[^1], out _, out var window, out _) && window is not null) {
-            if (!QueryPath.TryWindowSequence(collectionExpr, elementType, window.Value, out var windowed, out _))
+        if (QueryPath.TryParseSegment(outerPrefixParts[^1], out var _, out var window, out var _) && window is not null) {
+            if (!QueryPath.TryWindowSequence(collectionExpr, elementType, window.Value, out var windowed, out var _))
                 return null;
 
             collectionExpr = windowed!;
@@ -577,7 +579,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
             if (SharedEntityMetadataCache.IsCollectionType(current))
                 current = SharedEntityMetadataCache.GetCollectionElementType(current);
 
-            if (!QueryPath.TryParseSegment(mergePrefixParts[i], out var segmentName, out _, out _))
+            if (!QueryPath.TryParseSegment(mergePrefixParts[i], out var segmentName, out var _, out var _))
                 return false;
 
             var property = SharedEntityMetadataCache.ResolveProperty(current, segmentName);
@@ -609,7 +611,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
             if (SharedEntityMetadataCache.IsCollectionType(currentType))
                 currentType = SharedEntityMetadataCache.GetCollectionElementType(currentType);
 
-            if (!QueryPath.TryParseSegment(part, out var segmentName, out _, out _))
+            if (!QueryPath.TryParseSegment(part, out var segmentName, out var _, out var _))
                 return false;
 
             var property = SharedEntityMetadataCache.ResolveProperty(currentType, segmentName);
@@ -674,7 +676,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         return GetProjectionSlotValue(item, slotIndex);
     }
 
-    /// <summary>Reads slot <paramref name="slotIndex"/> from a flat or nested anonymous row. Walks <c>Rest</c> in constructor-parameter order (do not sort property names).</summary>
+    /// <summary>Reads slot <paramref name="slotIndex" /> from a flat or nested anonymous row. Walks <c>Rest</c> in constructor-parameter order (do not sort property names).</summary>
     private static object? GetProjectionSlotValue(object item, int slotIndex)
     {
         var current = item;
@@ -956,7 +958,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
             if (SharedEntityMetadataCache.IsCollectionType(currentType))
                 currentType = SharedEntityMetadataCache.GetCollectionElementType(currentType);
 
-            if (!QueryPath.TryParseSegment(part, out var segmentName, out _, out _))
+            if (!QueryPath.TryParseSegment(part, out var segmentName, out var _, out var _))
                 break;
 
             var property = ResolvePropertyCached(currentType, segmentName);
@@ -1118,7 +1120,8 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
                 return value;
 
             var matchScoped = filterConditions.Operator == GroupOperatorEnum.Or
-                ? (Func<object?, bool>)(item => scopedConditions.Any(c => ComparisonEvaluator.Evaluate(GetNestedProjectedValue(item, c.NormalizedField), c.Comparison, c.Value, c.Threshold)))
+                ? (Func<object?, bool>)(item => scopedConditions.Any(c => ComparisonEvaluator.Evaluate(
+                    GetNestedProjectedValue(item, c.NormalizedField), c.Comparison, c.Value, c.Threshold)))
                 : item => scopedConditions.All(c => ComparisonEvaluator.Evaluate(GetNestedProjectedValue(item, c.NormalizedField), c.Comparison, c.Value, c.Threshold));
 
             return objectList.Where(matchScoped).ToList();
@@ -1191,13 +1194,12 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         return false;
     }
 
-    private static bool IsWindowTarget(Type type)
-        => (Nullable.GetUnderlyingType(type) ?? type) == typeof(string) || SharedEntityMetadataCache.IsCollectionType(type);
+    private static bool IsWindowTarget(Type type) => (Nullable.GetUnderlyingType(type) ?? type) == typeof(string) || SharedEntityMetadataCache.IsCollectionType(type);
 
     private static object? ExtractWindowedPathValue(object current, IReadOnlyList<string> parts, int index)
     {
         var part = parts[index];
-        if (!QueryPath.TryParseSegment(part, out var name, out var window, out _) || window is null)
+        if (!QueryPath.TryParseSegment(part, out var name, out var window, out var _) || window is null)
             return null;
 
         var property = SharedEntityMetadataCache.ResolveProperty(current.GetType(), name);
@@ -1212,7 +1214,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
             return null;
 
         var elementType = SharedEntityMetadataCache.GetCollectionElementType(property.PropertyType);
-        if (!QueryPath.TryOrderedWindow(next, elementType, window.Value, out var ordered, out _))
+        if (!QueryPath.TryOrderedWindow(next, elementType, window.Value, out var ordered, out var _))
             return null;
 
         if (window.Value.IsSingle)
@@ -1328,11 +1330,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
                 }
 
                 if (window is not null && !IsWindowTarget(property.PropertyType)) {
-                    list.Add(
-                        new(
-                            Constants.ApiErrorCodes.InvalidSelectField,
-                            $"Index is only valid on a string or a collection ('{spec.RequestedPath}')."));
-
+                    list.Add(new(Constants.ApiErrorCodes.InvalidSelectField, $"Index is only valid on a string or a collection ('{spec.RequestedPath}')."));
                     break;
                 }
 
@@ -1353,7 +1351,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
             return null;
 
         if (HasWindow(parts, partIndex))
-            return QueryPath.TryBind(rootType, parts, partIndex, parameter, requireScalar: false, out var bound, out _) ? bound : null;
+            return QueryPath.TryBind(rootType, parts, partIndex, parameter, false, out var bound, out var _) ? bound : null;
 
         var currentType = rootType;
         if (SharedEntityMetadataCache.IsCollectionType(currentType))
@@ -1398,7 +1396,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
             return current;
 
         if (HasWindow(parts, partIndex))
-            return QueryPath.TryBind(currentType, parts, partIndex, current, requireScalar: false, out var bound, out _) ? bound : null;
+            return QueryPath.TryBind(currentType, parts, partIndex, current, false, out var bound, out var _) ? bound : null;
 
         if (SharedEntityMetadataCache.IsCollectionType(currentType))
             currentType = SharedEntityMetadataCache.GetCollectionElementType(currentType);
@@ -1446,8 +1444,7 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
         return Expression.Lambda<Func<object, object?>>(body, param).Compile();
     }
 
-    private static Func<object, object?> GetCompiledPropertyGetter(PropertyInfo property)
-        => CompiledPropertyGetters.GetOrAdd(property, CompileAnonymousFieldGetter);
+    private static Func<object, object?> GetCompiledPropertyGetter(PropertyInfo property) => CompiledPropertyGetters.GetOrAdd(property, CompileAnonymousFieldGetter);
 
     private static PropertyInfo[] GetCtorOrderedProperties(Type type)
         => CtorOrderedPropertiesByType.GetOrAdd(
@@ -1458,7 +1455,8 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
 
     private static Type GetNestedAnonymousRowType(Type restType)
         => NestedAnonymousRowTypes.GetOrAdd(
-            restType, static r => NestedAnonymousGenericDefinition.MakeGenericType(
+            restType,
+            static r => NestedAnonymousGenericDefinition.MakeGenericType(
                 typeof(object), typeof(object), typeof(object), typeof(object), typeof(object), typeof(object), typeof(object), r));
 
     private static Type CreateAnonymousProjectionType(int fieldCount)
@@ -1768,8 +1766,8 @@ public sealed class ProjectionService(IFormatterService? formatterService = null
                 ComparisonOperatorEnum.LessThanOrEqual => CompareOrdered(actualValue, expectedValue, static c => c <= 0),
                 ComparisonOperatorEnum.Regex => MatchesRegex(actualText, expectedText),
                 ComparisonOperatorEnum.NotRegex => !MatchesRegex(actualText, expectedText),
-                ComparisonOperatorEnum.Fuzzy => Lyo.Query.FuzzyMatch.IsSimilar(actualText, expectedText, fuzzyThreshold),
-                ComparisonOperatorEnum.NotFuzzy => !Lyo.Query.FuzzyMatch.IsSimilar(actualText, expectedText, fuzzyThreshold),
+                ComparisonOperatorEnum.Fuzzy => FuzzyMatch.IsSimilar(actualText, expectedText, fuzzyThreshold),
+                ComparisonOperatorEnum.NotFuzzy => !FuzzyMatch.IsSimilar(actualText, expectedText, fuzzyThreshold),
                 // An unrecognized comparator cannot be shown to match. Returning true kept every collection item under MatchedOnly, which reads as "the filter did nothing".
                 var _ => false
             };

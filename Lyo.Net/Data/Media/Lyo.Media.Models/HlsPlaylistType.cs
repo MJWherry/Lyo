@@ -51,7 +51,7 @@ public sealed record HlsPlaylistType
     public static HlsPlaylistType Custom(string id)
     {
         _ = BuiltIns;
-        return NamedCatalog.GetOrCustom(ById, id, key => new HlsPlaylistType(key, key));
+        return NamedCatalog.GetOrCustom(ById, id, key => new(key, key));
     }
 
     /// <inheritdoc />

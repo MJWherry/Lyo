@@ -75,11 +75,11 @@ public sealed class TypeConversionService : ITypeConversionService
         return values;
     }
 
-    public object? ConvertToTargetType(object? value, Type targetType) => Lyo.Common.Core.Conversion.TypeConversion.ConvertTo(value, targetType);
+    public object? ConvertToTargetType(object? value, Type targetType) => Common.Core.Conversion.TypeConversion.ConvertTo(value, targetType);
 
-    public Type GetUnderlyingType(Type type) => Lyo.Common.Core.Conversion.TypeConversion.GetUnderlyingType(type);
+    public Type GetUnderlyingType(Type type) => Common.Core.Conversion.TypeConversion.GetUnderlyingType(type);
 
-    public bool IsObjectEnumerable(object? obj) => Lyo.Common.Core.Conversion.TypeConversion.IsObjectEnumerable(obj);
+    public bool IsObjectEnumerable(object? obj) => Common.Core.Conversion.TypeConversion.IsObjectEnumerable(obj);
 
     private static bool TryGetProjectedRowValue(IReadOnlyDictionary<string, object?> row, string propertyName, out object? value)
     {
@@ -104,12 +104,13 @@ public sealed class TypeConversionService : ITypeConversionService
     }
 
     private EntityKeyMetadata GetEntityKeyMetadataCached<TEntity>(DbContext context)
-        => KeyMetadata.GetOrAdd(typeof(TEntity), static (_, ctx) => {
-            var entityType = ctx.Model.FindEntityType(typeof(TEntity));
-            OperationHelpers.ThrowIfNull(entityType, $"Entity type {typeof(TEntity).Name} not found in model");
-            var primaryKey = entityType.FindPrimaryKey();
-            OperationHelpers.ThrowIfNull(primaryKey, $"No primary key defined for {typeof(TEntity).Name}");
-            var keyProperties = primaryKey.Properties.ToArray();
-            return new(keyProperties, primaryKey.Properties.Count);
-        }, context);
+        => KeyMetadata.GetOrAdd(
+            typeof(TEntity), static (_, ctx) => {
+                var entityType = ctx.Model.FindEntityType(typeof(TEntity));
+                OperationHelpers.ThrowIfNull(entityType, $"Entity type {typeof(TEntity).Name} not found in model");
+                var primaryKey = entityType.FindPrimaryKey();
+                OperationHelpers.ThrowIfNull(primaryKey, $"No primary key defined for {typeof(TEntity).Name}");
+                var keyProperties = primaryKey.Properties.ToArray();
+                return new(keyProperties, primaryKey.Properties.Count);
+            }, context);
 }

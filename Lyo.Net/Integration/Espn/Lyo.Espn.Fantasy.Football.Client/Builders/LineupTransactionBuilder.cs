@@ -6,9 +6,9 @@ namespace Lyo.Espn.Fantasy.Football.Client.Builders;
 /// <summary>Builds a <c>ROSTER</c> transaction with one <c>LINEUP</c> item per move. Call <see cref="Build" /> and pass the result to the transactions manager.</summary>
 public sealed class LineupTransactionBuilder
 {
-    private readonly int _teamId;
-    private readonly int _scoringPeriodId;
     private readonly List<FantasyTransactionItemReq> _moves = [];
+    private readonly int _scoringPeriodId;
+    private readonly int _teamId;
 
     /// <summary>Starts a lineup edit for one team and scoring period.</summary>
     public LineupTransactionBuilder(int teamId, int scoringPeriodId)
@@ -23,7 +23,14 @@ public sealed class LineupTransactionBuilder
     /// <summary>Moves a player from one lineup slot id to another.</summary>
     public LineupTransactionBuilder Move(int playerId, int fromSlotId, int toSlotId)
     {
-        _moves.Add(new() { PlayerId = playerId, Type = "LINEUP", FromLineupSlotId = fromSlotId, ToLineupSlotId = toSlotId });
+        _moves.Add(
+            new() {
+                PlayerId = playerId,
+                Type = "LINEUP",
+                FromLineupSlotId = fromSlotId,
+                ToLineupSlotId = toSlotId
+            });
+
         return this;
     }
 

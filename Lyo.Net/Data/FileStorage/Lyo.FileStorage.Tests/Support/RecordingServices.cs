@@ -11,7 +11,7 @@ internal static class Recording
     public static Counter<ITwoKeyEncryptionService> Encryption()
     {
         var proxy = DispatchProxy.Create<ITwoKeyEncryptionService, CounterProxy>();
-        var counter = (CounterProxy)(object)proxy;
+        var counter = (CounterProxy)proxy;
         counter.Kind = CounterProxy.ProxyKind.Encryption;
         return new(proxy, counter);
     }
@@ -20,11 +20,11 @@ internal static class Recording
     {
         var resolver = DispatchProxy.Create<ICompressionResolver, CounterProxy>();
         var service = DispatchProxy.Create<ICompressionService, CounterProxy>();
-        var counter = (CounterProxy)(object)service;
+        var counter = (CounterProxy)service;
         counter.Kind = CounterProxy.ProxyKind.Compression;
         counter.Resolver = resolver;
-        ((CounterProxy)(object)resolver).Kind = CounterProxy.ProxyKind.Resolver;
-        ((CounterProxy)(object)resolver).Owner = counter;
+        ((CounterProxy)resolver).Kind = CounterProxy.ProxyKind.Resolver;
+        ((CounterProxy)resolver).Owner = counter;
         return new(service, counter);
     }
 
@@ -42,9 +42,9 @@ internal static class Recording
 
         public ProxyKind Kind;
 
-        public ICompressionResolver? Resolver;
-
         public CounterProxy? Owner;
+
+        public ICompressionResolver? Resolver;
 
         protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
         {
@@ -75,7 +75,9 @@ internal static class Recording
                 return Task.CompletedTask;
             }
 
-            var returnsTask = targetMethod?.ReturnType == typeof(Task) || (targetMethod?.ReturnType.IsGenericType == true && targetMethod.ReturnType.GetGenericTypeDefinition() == typeof(Task<>));
+            var returnsTask = targetMethod?.ReturnType == typeof(Task) ||
+                (targetMethod?.ReturnType.IsGenericType == true && targetMethod.ReturnType.GetGenericTypeDefinition() == typeof(Task<>));
+
             if (returnsTask)
                 return Task.CompletedTask;
 

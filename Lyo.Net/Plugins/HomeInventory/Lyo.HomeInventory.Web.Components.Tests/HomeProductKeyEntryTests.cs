@@ -9,15 +9,13 @@ public sealed class HomeProductKeyEntryTests
     {
         List<HomeProductKeyEntry> entries = [
             new() { Kind = HomeProductKeys.WifiMac, Value = "AA:BB:CC:DD:EE:01", Note = "AP radio" },
-            new() { Kind = HomeProductKeys.WifiMac, Value = "AA:BB:CC:DD:EE:02", Note = "client NIC" },
-            new() { Kind = HomeProductKeys.Sku, Value = "KIT-1" }
+            new() { Kind = HomeProductKeys.WifiMac, Value = "AA:BB:CC:DD:EE:02", Note = "client NIC" }, new() { Kind = HomeProductKeys.Sku, Value = "KIT-1" }
         ];
 
         var json = HomeProductKeyJson.Serialize(entries);
         Assert.Contains("\"kind\":\"WifiMac\"", json, StringComparison.Ordinal);
         Assert.Contains("\"note\":\"AP radio\"", json, StringComparison.Ordinal);
         Assert.DoesNotContain("ethernet", json, StringComparison.OrdinalIgnoreCase);
-
         var roundTripped = HomeProductKeyJson.Deserialize(json);
         Assert.Equal(3, roundTripped.Count);
         Assert.Equal(HomeProductKeys.WifiMac, roundTripped[0].Kind);

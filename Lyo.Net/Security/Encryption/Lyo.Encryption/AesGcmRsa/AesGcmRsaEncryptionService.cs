@@ -13,11 +13,9 @@ using Lyo.Exceptions.Models;
 namespace Lyo.Encryption.AesGcmRsa;
 
 /// <summary>
-/// Hybrid encrypt/decrypt: AES-GCM for the payload, RSA for key exchange. Each encrypt mints a random AES key and wraps it with RSA.
-/// Confidentiality, integrity, and key handling are covered; a good fit for file encryption. Thread-safe: concurrent calls on one instance are safe because each
-/// call owns its cryptographic context (nonce, key material) and shares no mutable crypto state. If the RSA keys themselves are not thread-safe, synchronize
-/// at the RSA key
-/// level.
+/// Hybrid encrypt/decrypt: AES-GCM for the payload, RSA for key exchange. Each encrypt mints a random AES key and wraps it with RSA. Confidentiality, integrity, and key
+/// handling are covered; a good fit for file encryption. Thread-safe: concurrent calls on one instance are safe because each call owns its cryptographic context (nonce, key material)
+/// and shares no mutable crypto state. If the RSA keys themselves are not thread-safe, synchronize at the RSA key level.
 /// </summary>
 public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryptionAlgorithmProvider, IDisposable, IAsyncDisposable
 {
@@ -101,8 +99,8 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
     public void SetDecryptionEncoding(Encoding encoding) => _decryptionEncoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
 
     /// <summary>
-    /// Encrypts with AES-GCM using a random key (or a caller key) that is wrapped with RSA. Throughput is typically about 100-500 MB/s on typical
-    /// hardware depending on payload size. For large files, prefer EncryptToStreamAsync to keep memory use down.
+    /// Encrypts with AES-GCM using a random key (or a caller key) that is wrapped with RSA. Throughput is typically about 100-500 MB/s on typical hardware depending on payload
+    /// size. For large files, prefer EncryptToStreamAsync to keep memory use down.
     /// </summary>
     /// <param name="plaintext">Plaintext. Must not be null or empty.</param>
     /// <param name="keyId">Ignored. AES-GCM-RSA uses RSA keys from the constructor; present only for the interface.</param>
@@ -110,10 +108,7 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
     /// <param name="associatedData">Optional AAD authenticated (not encrypted) by the AES-GCM tag; the same bytes must be passed on decrypt.</param>
     /// <returns>Ciphertext</returns>
     /// <exception cref="ArgumentException">Thrown when keyId is supplied</exception>
-    /// <exception cref="ArgumentOutsideRangeException">
-    /// Thrown when plaintext is empty (below MinInputSize), exceeds MaxInputSize, or the key length is
-    /// not 32 bytes
-    /// </exception>
+    /// <exception cref="ArgumentOutsideRangeException">Thrown when plaintext is empty (below MinInputSize), exceeds MaxInputSize, or the key length is not 32 bytes</exception>
     public byte[] Encrypt(byte[] plaintext, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
         ArgumentHelpers.ThrowIfNotInRange(plaintext, MinInputSize, MaxInputSize);
@@ -124,18 +119,15 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
     /// <param name="encryptedData">Ciphertext</param>
     /// <param name="keyId">Ignored. AES-GCM-RSA uses RSA keys from the constructor; present only for the interface.</param>
     /// <param name="key">Optional AES key. Used only when the payload was encrypted with an external key (not embedded).</param>
-    /// <param name="associatedData">
-    /// Optional AAD authenticated at encrypt time; must equal the bytes passed to
-    /// <see cref="Encrypt(byte[], string, byte[], byte[])" />.
-    /// </param>
+    /// <param name="associatedData">Optional AAD authenticated at encrypt time; must equal the bytes passed to <see cref="Encrypt(byte[], string, byte[], byte[])" />.</param>
     /// <returns>Plaintext</returns>
     /// <exception cref="ArgumentException">Thrown when keyId is supplied</exception>
     /// <exception cref="ArgumentOutsideRangeException">Thrown when encryptedData is empty (length &lt; 1) or shorter than the minimum size</exception>
     /// <exception cref="InvalidDataException">Thrown when layout is invalid, encrypted key+nonce length is illegal, nonce length is illegal, or data is corrupted</exception>
     /// <exception cref="InvalidOperationException">Thrown when no decrypt key is supplied and the payload used an external key</exception>
     /// <exception cref="DecryptionFailedException">
-    /// Thrown when decrypt fails: wrong RSA key (embedded key), wrong AES key (external key), damaged data, authentication
-    /// failure, or tampering
+    /// Thrown when decrypt fails: wrong RSA key (embedded key), wrong AES key (external key), damaged data, authentication failure, or
+    /// tampering
     /// </exception>
     public byte[] Decrypt(byte[] encryptedData, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
     {
@@ -211,9 +203,10 @@ public sealed class AesGcmRsaEncryptionService : IEncryptionService, IEncryption
                     nonceLength, AesGcmHelper.NonceSize, AesGcmHelper.NonceSize, nameof(encryptedData),
                     $"Invalid nonce length: {nonceLength}. Expected {AesGcmHelper.NonceSize} bytes.");
 
-                if (encrypted.Length - o < nonceLength)
+                if (encrypted.Length - o < nonceLength) {
                     throw new InvalidDataException(
                         $"Invalid encrypted data format: nonce length ({nonceLength} bytes) exceeds remaining stream size ({encrypted.Length - o} bytes).");
+                }
 
                 nonce = encrypted.Slice(o, nonceLength);
                 o += nonceLength;

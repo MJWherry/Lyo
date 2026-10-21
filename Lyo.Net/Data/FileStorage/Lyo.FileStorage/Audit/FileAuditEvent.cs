@@ -17,6 +17,5 @@ public sealed record FileAuditEvent(
     Guid? CorrelationId = null)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => $"FileAuditEvent: {EventType} {Outcome} FileId={FileId?.ToString() ?? "(none)"} @ {UtcTimestamp:u}";
+    public override string ToString() => $"FileAuditEvent: {EventType} {Outcome} FileId={FileId?.ToString() ?? "(none)"} @ {UtcTimestamp:u}";
 }

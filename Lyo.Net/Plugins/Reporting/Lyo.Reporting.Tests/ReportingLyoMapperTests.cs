@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Parameters;
 using Lyo.Reporting.Models.Enums;
@@ -6,7 +7,6 @@ using Lyo.Reporting.Models.Response;
 using Lyo.Reporting.Postgres;
 using Lyo.Reporting.Postgres.Database;
 using Lyo.Reporting.Postgres.Mapping;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Reporting.Tests;
 
@@ -156,7 +156,6 @@ public sealed class ReportingLyoMapperTests
         var entity = _mapper.Map<ReportDefinitionParameter>(req);
         Assert.Equal(nameof(LyoParameterDefaultKind.Expression), entity.DefaultKind);
         Assert.Equal(req.DefaultTemplate, entity.DefaultTemplate);
-
         var res = _mapper.Map<ReportDefinitionParameterRes>(entity);
         Assert.Equal(LyoParameterDefaultKind.Expression, res.DefaultKind);
         Assert.Equal(req.DefaultTemplate, res.DefaultTemplate);
@@ -166,13 +165,7 @@ public sealed class ReportingLyoMapperTests
     public void Map_UnreadableDefaultColumn_DefaultsToLiteral()
     {
         // Rows written before the column existed, or by a client sending garbage, cannot be read as expression-authored.
-        var res = _mapper.Map<ReportDefinitionParameterRes>(
-            new ReportDefinitionParameter {
-                Key = "Code",
-                Type = LyoTypeInfo.String.FullName,
-                DefaultKind = "nonsense"
-            });
-
+        var res = _mapper.Map<ReportDefinitionParameterRes>(new ReportDefinitionParameter { Key = "Code", Type = LyoTypeInfo.String.FullName, DefaultKind = "nonsense" });
         Assert.Equal(LyoParameterDefaultKind.Literal, res.DefaultKind);
     }
 

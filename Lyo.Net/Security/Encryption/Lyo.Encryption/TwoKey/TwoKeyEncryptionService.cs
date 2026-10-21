@@ -14,10 +14,8 @@ using KeyNotFoundException = Lyo.KeyStore.Exceptions.KeyNotFoundException;
 namespace Lyo.Encryption.TwoKey;
 
 /// <summary>
-/// Generic envelope service: a KEK wraps a unique DEK for each encrypt. Any IEncryptionService can fill either role,
-/// so callers can pick algorithms independently: use the same algorithm for DEK and KEK (usual case), use different algorithms when needed, and reuse existing
-/// encryption-service
-/// implementations instead of duplicating crypto.
+/// Generic envelope service: a KEK wraps a unique DEK for each encrypt. Any IEncryptionService can fill either role, so callers can pick algorithms independently: use the
+/// same algorithm for DEK and KEK (usual case), use different algorithms when needed, and reuse existing encryption-service implementations instead of duplicating crypto.
 /// </summary>
 public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncryptionService> : ITwoKeyEncryptionService, IDisposable
     where TKeyEncryptionService : IEncryptionService where TDataEncryptionService : IEncryptionService
@@ -75,10 +73,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
         _keyStore = keyStore;
     }
 
-    /// <summary>
-    /// Creates a service with separate DEK and KEK encryption services. Use when data encryption and key
-    /// wrapping need different algorithms.
-    /// </summary>
+    /// <summary>Creates a service with separate DEK and KEK encryption services. Use when data encryption and key wrapping need different algorithms.</summary>
     /// <param name="dekEncryptionService">Service that encrypts payload data with the DEK</param>
     /// <param name="kekEncryptionService">Service that wraps the DEK with the KEK</param>
     /// <param name="keyStore">Store used to fetch Key Encryption Keys (KEK)</param>
@@ -91,10 +86,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
         _keyStore = keyStore;
     }
 
-    /// <summary>
-    /// Disposes this service. Injected DEK/KEK services and the keystore are not disposed: the caller (or DI) owns them and they may be shared with
-    /// other consumers.
-    /// </summary>
+    /// <summary>Disposes this service. Injected DEK/KEK services and the keystore are not disposed: the caller (or DI) owns them and they may be shared with other consumers.</summary>
     public void Dispose() { }
 
     public string FileExtension => _dekEncryptionService.FileExtension + FileTypeInfo.TwoKeyEnvelopeSuffix;
@@ -594,9 +586,10 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
     {
         ArgumentHelpers.ThrowIfNull(prefix);
         OperationHelpers.ThrowIfNotReadable(prefix, $"Stream '{nameof(prefix)}' must be readable.");
-        if (_dekEncryptionService is not EncryptionServiceBase dekBase)
+        if (_dekEncryptionService is not EncryptionServiceBase dekBase) {
             throw new NotSupportedException(
                 $"The data encryption service '{_dekEncryptionService.GetType().Name}' does not support streaming. It must derive from EncryptionServiceBase (a single-key AEAD service).");
+        }
 
         var header = new MemoryStream();
         var fixedHeader = await TakeAsync(prefix, header, 5, "two-key stream header", ct).ConfigureAwait(false);
@@ -619,7 +612,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
         var keyVersion = keyVersionBytes.Length > 0 ? Encoding.UTF8.GetString(keyVersionBytes) : null;
         byte[]? dek = null;
         try {
-            dek = UnwrapStreamDek(dekEncoding, encryptedDek, streamKeyId, keyVersion, kek: null);
+            dek = UnwrapStreamDek(dekEncoding, encryptedDek, streamKeyId, keyVersion, null);
             TwoKeyDekValidation.ValidatePlaintextDekLength(dek, dekKeyMaterialBytes);
             using var cryptor = dekBase.CreateStreamCryptor(dek);
             var nonceLength = cryptor.NonceSize - AeadStreamProcessor.CounterSize;
@@ -665,9 +658,10 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
         ArgumentHelpers.ThrowIfNegative(chunkIndex);
         ArgumentHelpers.ThrowIfNegative(skipPlaintextBytes);
         ArgumentHelpers.ThrowIfNegative(maxPlaintextBytes);
-        if (_dekEncryptionService is not EncryptionServiceBase dekBase)
+        if (_dekEncryptionService is not EncryptionServiceBase dekBase) {
             throw new NotSupportedException(
                 $"The data encryption service '{_dekEncryptionService.GetType().Name}' does not support streaming. It must derive from EncryptionServiceBase (a single-key AEAD service).");
+        }
 
         var parsed = ParseHeaderBytes(header.Span);
         ValidateStreamHeader(parsed.DekAlgorithmId, parsed.KekAlgorithmId, parsed.DekKeyMaterialBytes, parsed.DekEncoding);
@@ -860,17 +854,16 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
 
     private byte[] UnwrapStreamDek(byte dekEncoding, byte[] encryptedDek, string? keyId, string? keyVersion, byte[]? kek)
     {
-        byte[]? kekBytes = kek;
+        var kekBytes = kek;
         if (kekBytes == null && keyId != null) {
-            kekBytes = !string.IsNullOrWhiteSpace(keyVersion)
-                ? _keyStore.GetKey(keyId, keyVersion)
-                : _keyStore.GetCurrentKey(keyId);
+            kekBytes = !string.IsNullOrWhiteSpace(keyVersion) ? _keyStore.GetKey(keyId, keyVersion) : _keyStore.GetCurrentKey(keyId);
         }
 
         if (kekBytes == null) {
             var keyInfo = keyId != null ? $"key ID '{keyId}' " : "";
             var versionInfo = !string.IsNullOrWhiteSpace(keyVersion) ? $"version {keyVersion}" : "current version";
-            throw new KeyNotFoundException($"No Key Encryption Key available for {keyInfo}{versionInfo} in KeyStore. Ensure the keystore is properly initialized with the required key.");
+            throw new KeyNotFoundException(
+                $"No Key Encryption Key available for {keyInfo}{versionInfo} in KeyStore. Ensure the keystore is properly initialized with the required key.");
         }
 
         try {
@@ -914,8 +907,6 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
         return length == 0 ? [] : await TakeAsync(input, header, length, fieldName, ct).ConfigureAwait(false);
     }
 
-    private readonly record struct ParsedRangeHeader(byte Format, byte DekAlgorithmId, byte KekAlgorithmId, byte DekKeyMaterialBytes, byte DekEncoding, byte[] NoncePrefix);
-
     private static ParsedRangeHeader ParseHeaderBytes(ReadOnlySpan<byte> header)
     {
         if (header.Length < 5 + 12)
@@ -932,7 +923,6 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
         offset = Advance(header, offset, keyVersionLength, "key version");
         var encryptedDekLength = ReadHeaderInt(header, ref offset, "encrypted DEK");
         offset = Advance(header, offset, encryptedDekLength, "encrypted DEK");
-
         return new(format, header[1], header[2], header[3], header[4], header[offset..].ToArray());
     }
 
@@ -958,8 +948,8 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
     }
 
     /// <summary>
-    /// Builds chunk-auth AAD: the four immutable fixed-header bytes ([FormatVersion][DEKAlgorithmId][KEKAlgorithmId][DekKeyMaterialBytes]) followed by
-    /// the per-stream nonce prefix. Mutable rotation fields (KeyId, KeyVersion, EncryptedDEK, DekEncoding) are omitted so headers can be rewritten in place during KEK rotation.
+    /// Builds chunk-auth AAD: the four immutable fixed-header bytes ([FormatVersion][DEKAlgorithmId][KEKAlgorithmId][DekKeyMaterialBytes]) followed by the per-stream nonce
+    /// prefix. Mutable rotation fields (KeyId, KeyVersion, EncryptedDEK, DekEncoding) are omitted so headers can be rewritten in place during KEK rotation.
     /// </summary>
     private static byte[] BuildImmutableAadHeader(ReadOnlySpan<byte> immutableFixedFields, ReadOnlySpan<byte> noncePrefix)
     {
@@ -976,8 +966,8 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
     private byte[] WrapDek(byte[] dek, byte[]? kek) => UsesAesKeyWrap(kek) ? AesKeyWrap.Wrap(kek!, dek) : _kekEncryptionService.Encrypt(dek, null, kek);
 
     /// <summary>
-    /// Recovers a DEK produced by <see cref="WrapDek" />. Encoding is deterministic from the KEK (service type + key size), so this mirrors <see cref="WrapDek" />
-    /// exactly: AES Key Wrap (RFC 3394 IV integrity) for raw AES-sized KEKs, otherwise the KEK service's envelope decoder.
+    /// Recovers a DEK produced by <see cref="WrapDek" />. Encoding is deterministic from the KEK (service type + key size), so this mirrors <see cref="WrapDek" /> exactly: AES
+    /// Key Wrap (RFC 3394 IV integrity) for raw AES-sized KEKs, otherwise the KEK service's envelope decoder.
     /// </summary>
     private byte[] UnwrapDek(byte[] encryptedDek, byte[]? kek)
         => UsesAesKeyWrap(kek) ? AesKeyWrap.Unwrap(kek!, encryptedDek) : _kekEncryptionService.Decrypt(encryptedDek, null, kek);
@@ -1000,4 +990,6 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
 
         throw new InvalidOperationException("Cannot determine algorithm ID from encryption service. Service must implement IEncryptionAlgorithmProvider.");
     }
+
+    private readonly record struct ParsedRangeHeader(byte Format, byte DekAlgorithmId, byte KekAlgorithmId, byte DekKeyMaterialBytes, byte DekEncoding, byte[] NoncePrefix);
 }

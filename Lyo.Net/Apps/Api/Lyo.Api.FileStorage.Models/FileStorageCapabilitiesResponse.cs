@@ -2,9 +2,7 @@ using System.Diagnostics;
 
 namespace Lyo.Api.FileStorage.Models;
 
-/// <summary>
-/// <c>GET capabilities</c> body. Flags a client can use to enable or disable actions. Bucket, disk root, and keystore location are not included.
-/// </summary>
+/// <summary><c>GET capabilities</c> body. Flags a client can use to enable or disable actions. Bucket, disk root, and keystore location are not included.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record FileStorageCapabilitiesResponse(
     bool PresignedRead,
@@ -25,7 +23,7 @@ public sealed record FileStorageCapabilitiesResponse(
 
     /// <inheritdoc />
     public override string ToString()
-        => "FileStorageCapabilitiesResponse: "
-           + $"PresignedRead={PresignedRead} DirectUpload={DirectUpload} Multipart={Multipart} PresignedMultipartParts={PresignedMultipartParts} "
-           + $"Copy={Copy} Move={Move} Physical={Physical} Encryption={Encryption} Archive={Archive} AccessLinks={AccessLinks}";
+        => "FileStorageCapabilitiesResponse: " +
+            $"PresignedRead={PresignedRead} DirectUpload={DirectUpload} Multipart={Multipart} PresignedMultipartParts={PresignedMultipartParts} " +
+            $"Copy={Copy} Move={Move} Physical={Physical} Encryption={Encryption} Archive={Archive} AccessLinks={AccessLinks}";
 }

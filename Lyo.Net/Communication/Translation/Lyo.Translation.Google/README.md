@@ -25,24 +25,24 @@ services.AddGoogleTranslationServiceFromConfiguration(configuration);
 
 Inherits all of [`TranslationServiceOptions`](../Lyo.Translation/README.md). and adds:
 
-| Property | Type | Default | Purpose |
-| ------------------------ | --------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `ApiKey` | `string?` | `null` | Google Cloud API key. Required by `TranslateCoreAsync`. The service throws when that key is missing. |
-| `ProjectId` | `string?` | `null` | GCP project id, used with service-account credentials. |
-| `ServiceAccountJsonPath` | `string?` | `null` | Optional path to a service-account credentials JSON file. |
-| `ApiEndpoint` | `string` | `https://translation.googleapis.com/language/translate/v2` | REST endpoint base; trailing slashes are dropped at startup. |
+| Property                 | Type      | Default                                                    | Purpose                                                                                              |
+|--------------------------|-----------|------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
+| `ApiKey`                 | `string?` | `null`                                                     | Google Cloud API key. Required by `TranslateCoreAsync`. The service throws when that key is missing. |
+| `ProjectId`              | `string?` | `null`                                                     | GCP project id, used with service-account credentials.                                               |
+| `ServiceAccountJsonPath` | `string?` | `null`                                                     | Optional path to a service-account credentials JSON file.                                            |
+| `ApiEndpoint`            | `string`  | `https://translation.googleapis.com/language/translate/v2` | REST endpoint base; trailing slashes are dropped at startup.                                         |
 
 Configuration section name: `GoogleTranslationOptions.SectionName = "GoogleTranslationOptions"`.
 
 ## Runtime notes
 
-| Area | Detail |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| API | POSTs to `{ApiEndpoint}?key={ApiKey}` with `{ q, target, source }` (source left out when unset so the API can auto-detect). |
-| Language codes | Google Translate uses ISO 639-1; the service takes that from `LanguageCodeInfo.Iso6391` (falls back to the first segment of `Bcp47`). |
-| Detection | `TranslateCoreAsync` maps the API's `detectedSourceLanguage` through `LanguageCodeInfo.FromISO639_1` when that field is present. |
-| Metrics | Replaces the base `MetricNames` with `translation.google.*` (see `Lyo.Translation.Google.Constants.Metrics`). |
-| Disposal | `Dispose` disposes the HTTP client the service created. An externally supplied `HttpClient` is also disposed when passed in, so inject a long-lived client via DI and letting the consumer manage its lifetime. |
+| Area           | Detail                                                                                                                                                                                                          |
+|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| API            | POSTs to `{ApiEndpoint}?key={ApiKey}` with `{ q, target, source }` (source left out when unset so the API can auto-detect).                                                                                     |
+| Language codes | Google Translate uses ISO 639-1; the service takes that from `LanguageCodeInfo.Iso6391` (falls back to the first segment of `Bcp47`).                                                                           |
+| Detection      | `TranslateCoreAsync` maps the API's `detectedSourceLanguage` through `LanguageCodeInfo.FromISO639_1` when that field is present.                                                                                |
+| Metrics        | Replaces the base `MetricNames` with `translation.google.*` (see `Lyo.Translation.Google.Constants.Metrics`).                                                                                                   |
+| Disposal       | `Dispose` disposes the HTTP client the service created. An externally supplied `HttpClient` is also disposed when passed in, so inject a long-lived client via DI and letting the consumer manage its lifetime. |
 
 ## Dependencies
 

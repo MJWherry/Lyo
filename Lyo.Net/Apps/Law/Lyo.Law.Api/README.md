@@ -1,6 +1,7 @@
 # Lyo.Law.Api
 
-Maps jurisdiction and code CRUD, query-only nodes, annotations, and revisions, plus node upsert and lookup. Register with `AddLawApiFromConfiguration`, then call `BuildLawGroup`. The host still calls `AddLyoQueryServices`. Node list queries cannot select `Body`.
+Maps jurisdiction and code CRUD, query-only nodes, annotations, and revisions, plus node upsert and lookup. Register with `AddLawApiFromConfiguration`, then call `BuildLawGroup`.
+The host still calls `AddLyoQueryServices`. Node list queries cannot select `Body`.
 
 ## Features
 

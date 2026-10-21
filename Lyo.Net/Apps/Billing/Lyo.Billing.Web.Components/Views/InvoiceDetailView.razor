@@ -18,10 +18,13 @@
             @if (_invoice.Status == InvoiceStatus.Draft) {
                 <MudButton Variant="Variant.Outlined" Color="Color.Error" Disabled="@_busy" OnClick="DeleteDraftAsync">Delete draft</MudButton>
             }
+
             @if (_invoice.Status is InvoiceStatus.Issued or InvoiceStatus.PartiallyPaid) {
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@_busy" OnClick="PayAsync">Pay</MudButton>
+
                 <MudButton Variant="Variant.Outlined" Color="Color.Error" Disabled="@_busy" OnClick="VoidAsync">Void</MudButton>
             }
+
             @if (_invoice.Status is InvoiceStatus.Issued or InvoiceStatus.PartiallyPaid or InvoiceStatus.Paid) {
                 <MudButton Variant="Variant.Outlined" Href="@Billing.InvoicePdfHref(_invoice.Id)" Target="_blank">PDF</MudButton>
             }

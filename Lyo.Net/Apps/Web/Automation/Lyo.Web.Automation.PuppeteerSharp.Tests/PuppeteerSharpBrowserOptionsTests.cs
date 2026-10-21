@@ -46,11 +46,12 @@ public sealed class PuppeteerSharpBrowserOptionsTests
     {
         var options = new PuppeteerSharpBrowserOptions {
             RandomizeViewportOnSessionStart = true,
-            ViewportSizes = [new DesktopDisplaySize(1440, 900)],
+            ViewportSizes = [new(1440, 900)],
             ViewportWidth = 800,
             ViewportHeight = 600
         };
-        options.ApplySessionViewport(new Random(1));
+
+        options.ApplySessionViewport(new(1));
         Assert.Equal(1440, options.ViewportWidth);
         Assert.Equal(900, options.ViewportHeight);
         Assert.Equal(1440, options.ScreenWidth);

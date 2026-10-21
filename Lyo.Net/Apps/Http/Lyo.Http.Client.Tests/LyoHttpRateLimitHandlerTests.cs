@@ -12,7 +12,15 @@ public sealed class LyoHttpRateLimitHandlerTests
     public async Task SendAsync_On429_HonorsRetryAfter_ThenSucceeds()
     {
         var inner = new SequenceHandler();
-        var options = new LyoHttpRateLimitOptions { Enabled = true, PermitLimit = 10, Window = TimeSpan.FromSeconds(1), HonorRetryAfter = true, MaxRetriesOn429 = 2, Jitter = 0 };
+        var options = new LyoHttpRateLimitOptions {
+            Enabled = true,
+            PermitLimit = 10,
+            Window = TimeSpan.FromSeconds(1),
+            HonorRetryAfter = true,
+            MaxRetriesOn429 = 2,
+            Jitter = 0
+        };
+
         using var handler = Handler(options, new AllowingLimiter(), inner);
         using var client = new HttpClient(handler);
         using var response = await client.GetAsync("https://example.test/x", TestCt);
@@ -26,8 +34,8 @@ public sealed class LyoHttpRateLimitHandlerTests
         var options = new LyoHttpRateLimitOptions { Jitter = 0.2 };
         using var handler = Handler(options, null, new SequenceHandler());
         var wait = TimeSpan.FromSeconds(1);
-        var a = handler.JitterWait(wait, new Random(42));
-        var b = handler.JitterWait(wait, new Random(42));
+        var a = handler.JitterWait(wait, new(42));
+        var b = handler.JitterWait(wait, new(42));
         Assert.Equal(a, b);
         Assert.NotEqual(wait, a);
     }
@@ -45,6 +53,7 @@ public sealed class LyoHttpRateLimitHandlerTests
             Jitter = 0.2,
             RetryAfterMaxWait = TimeSpan.FromMilliseconds(40)
         };
+
         using var handler = Handler(options, new AllowingLimiter(), inner);
         using var client = new HttpClient(handler);
         var started = DateTime.UtcNow;
@@ -71,10 +80,17 @@ public sealed class LyoHttpRateLimitHandlerTests
     public async Task SendAsync_QueueFull_ThrowsBeforeSend()
     {
         var inner = new HoldHandler();
-        var options = new LyoHttpRateLimitOptions { Enabled = true, PermitLimit = 10, Window = TimeSpan.FromSeconds(1), QueueLimit = 1, Jitter = 0 };
+        var options = new LyoHttpRateLimitOptions {
+            Enabled = true,
+            PermitLimit = 10,
+            Window = TimeSpan.FromSeconds(1),
+            QueueLimit = 1,
+            Jitter = 0
+        };
+
         var gate = new LyoHttpRateLimitGate(options);
         using var handler = Handler(options, new AllowingLimiter(), inner, gate);
-        using var client = new HttpClient(handler, disposeHandler: false);
+        using var client = new HttpClient(handler, false);
         var first = client.GetAsync("https://example.test/hold", TestCt);
         await inner.Entered.Task.WaitAsync(TestCt);
         var ex = await Assert.ThrowsAsync<RateLimitExceededException>(() => client.GetAsync("https://example.test/hold", TestCt));
@@ -89,9 +105,15 @@ public sealed class LyoHttpRateLimitHandlerTests
     public async Task SendAsync_EmptyBucket_WaitsThenSends()
     {
         var limiter = new CountingLimiter();
-        limiter.Decisions.Enqueue(new RateLimitDecision(false, TimeSpan.FromMilliseconds(30), 1, 0));
-        limiter.Decisions.Enqueue(new RateLimitDecision(true, null, 1, 0));
-        var options = new LyoHttpRateLimitOptions { Enabled = true, PermitLimit = 1, Window = TimeSpan.FromSeconds(2), QueueLimit = 4 };
+        limiter.Decisions.Enqueue(new(false, TimeSpan.FromMilliseconds(30), 1, 0));
+        limiter.Decisions.Enqueue(new(true, null, 1, 0));
+        var options = new LyoHttpRateLimitOptions {
+            Enabled = true,
+            PermitLimit = 1,
+            Window = TimeSpan.FromSeconds(2),
+            QueueLimit = 4
+        };
+
         var inner = new OkHandler();
         using var handler = Handler(options, limiter, inner);
         using var client = new HttpClient(handler);
@@ -107,7 +129,13 @@ public sealed class LyoHttpRateLimitHandlerTests
     public async Task SendAsync_OtherOptionsType_DoesNotShareQuota()
     {
         var limiter = new PerPolicyLimiter(TimeSpan.FromSeconds(30));
-        var options = new LyoHttpRateLimitOptions { Enabled = true, PermitLimit = 1, Window = TimeSpan.FromSeconds(10), QueueLimit = 4 };
+        var options = new LyoHttpRateLimitOptions {
+            Enabled = true,
+            PermitLimit = 1,
+            Window = TimeSpan.FromSeconds(10),
+            QueueLimit = 4
+        };
+
         var innerA = new OkHandler();
         var innerB = new OkHandler();
         using var handlerA = Handler(options, limiter, innerA, policy: "Lyo.A.Options");
@@ -126,7 +154,13 @@ public sealed class LyoHttpRateLimitHandlerTests
     public async Task SendAsync_PartitionByHostFalse_SharesDefault()
     {
         var limiter = new CountingLimiter();
-        var options = new LyoHttpRateLimitOptions { Enabled = true, PermitLimit = 10, Window = TimeSpan.FromSeconds(1), PartitionByHost = false };
+        var options = new LyoHttpRateLimitOptions {
+            Enabled = true,
+            PermitLimit = 10,
+            Window = TimeSpan.FromSeconds(1),
+            PartitionByHost = false
+        };
+
         using var handler = Handler(options, limiter, new OkHandler());
         using var client = new HttpClient(handler);
         using var first = await client.GetAsync("https://one.test/x", TestCt);
@@ -146,6 +180,7 @@ public sealed class LyoHttpRateLimitHandlerTests
             o.RateLimit.Window = TimeSpan.FromSeconds(1);
             o.EnsureStatusCode = false;
         });
+
         using var provider = services.BuildServiceProvider();
         var factory = provider.GetRequiredService<IHttpClientFactory>();
         var ex = Assert.Throws<InvalidOperationException>(() => factory.CreateClient(nameof(ILyoHttpClient)));
@@ -156,15 +191,21 @@ public sealed class LyoHttpRateLimitHandlerTests
     public async Task SendAsync_MaxConcurrent_ThirdCallDoesNotSend()
     {
         var inner = new HoldHandler();
-        var options = new LyoHttpRateLimitOptions { Enabled = true, PermitLimit = 10, Window = TimeSpan.FromSeconds(1), MaxConcurrent = 1, QueueLimit = 8 };
+        var options = new LyoHttpRateLimitOptions {
+            Enabled = true,
+            PermitLimit = 10,
+            Window = TimeSpan.FromSeconds(1),
+            MaxConcurrent = 1,
+            QueueLimit = 8
+        };
+
         var gate = new LyoHttpRateLimitGate(options);
         using var handler = Handler(options, new AllowingLimiter(), inner, gate);
-        using var client = new HttpClient(handler, disposeHandler: false);
+        using var client = new HttpClient(handler, false);
         var calls = new[] {
-            client.GetAsync("https://example.test/1", TestCt),
-            client.GetAsync("https://example.test/2", TestCt),
-            client.GetAsync("https://example.test/3", TestCt)
+            client.GetAsync("https://example.test/1", TestCt), client.GetAsync("https://example.test/2", TestCt), client.GetAsync("https://example.test/3", TestCt)
         };
+
         await inner.Entered.Task.WaitAsync(TestCt);
         await Task.Delay(50, TestCt);
         Assert.Equal(1, inner.Sends);
@@ -176,7 +217,13 @@ public sealed class LyoHttpRateLimitHandlerTests
     public async Task SendAsync_WhitelistedPath_DoesNotConsumeQuota()
     {
         var limiter = new CountingLimiter();
-        var options = new LyoHttpRateLimitOptions { Enabled = true, PermitLimit = 1, Window = TimeSpan.FromSeconds(10), Whitelist = ["GET /health"] };
+        var options = new LyoHttpRateLimitOptions {
+            Enabled = true,
+            PermitLimit = 1,
+            Window = TimeSpan.FromSeconds(10),
+            Whitelist = ["GET /health"]
+        };
+
         using var handler = Handler(options, limiter, new OkHandler());
         using var client = new HttpClient(handler);
         using var response = await client.GetAsync("https://example.test/health", TestCt);
@@ -188,7 +235,13 @@ public sealed class LyoHttpRateLimitHandlerTests
     public async Task SendAsync_UnlistedPath_StillConsumesQuota()
     {
         var limiter = new CountingLimiter();
-        var options = new LyoHttpRateLimitOptions { Enabled = true, PermitLimit = 1, Window = TimeSpan.FromSeconds(10), Whitelist = ["GET /health"] };
+        var options = new LyoHttpRateLimitOptions {
+            Enabled = true,
+            PermitLimit = 1,
+            Window = TimeSpan.FromSeconds(10),
+            Whitelist = ["GET /health"]
+        };
+
         using var handler = Handler(options, limiter, new OkHandler());
         using var client = new HttpClient(handler);
         using var response = await client.GetAsync("https://example.test/search", TestCt);
@@ -199,11 +252,7 @@ public sealed class LyoHttpRateLimitHandlerTests
     [Fact]
     public void UserAgentResolve_SameSeed_PicksSameAgent()
     {
-        var options = new LyoHttpUserAgentOptions {
-            Enabled = true,
-            Rotation = LyoHttpUserAgentRotation.PerSession,
-            Agents = ["alpha", "beta"]
-        };
+        var options = new LyoHttpUserAgentOptions { Enabled = true, Rotation = LyoHttpUserAgentRotation.PerSession, Agents = ["alpha", "beta"] };
         Assert.Equal(options.Resolve(7), options.Resolve(7));
         Assert.NotEqual(options.Resolve(0), options.Resolve(1));
     }
@@ -228,6 +277,7 @@ public sealed class LyoHttpRateLimitHandlerTests
     private sealed class CountingLimiter : IRateLimitService
     {
         public List<RateLimitRequest> Calls { get; } = [];
+
         public Queue<RateLimitDecision> Decisions { get; } = new();
 
         public ValueTask<RateLimitDecision> TryAcquireAsync(RateLimitRequest request, CancellationToken ct = default)
@@ -259,6 +309,7 @@ public sealed class LyoHttpRateLimitHandlerTests
     private sealed class SequenceHandler(TimeSpan? retryAfter = null) : HttpMessageHandler
     {
         private readonly TimeSpan _retryAfter = retryAfter ?? TimeSpan.FromMilliseconds(10);
+
         public int Sends { get; private set; }
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
@@ -288,8 +339,11 @@ public sealed class LyoHttpRateLimitHandlerTests
     private sealed class HoldHandler : HttpMessageHandler
     {
         private int _sends;
+
         public int Sends => _sends;
+
         public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
         public TaskCompletionSource Release { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
@@ -299,7 +353,7 @@ public sealed class LyoHttpRateLimitHandlerTests
                 Entered.TrySetResult();
 
             await Release.Task.WaitAsync(ct);
-            return new HttpResponseMessage(HttpStatusCode.OK);
+            return new(HttpStatusCode.OK);
         }
     }
 }

@@ -5,9 +5,6 @@ namespace Lyo.FeatureFlags;
 /// <summary>Caller values a flag evaluates. Apps build one with <see cref="Create" />. HTTP hosts map a request into one.</summary>
 public sealed class FeatureFlagContext
 {
-    /// <summary>Creates an empty context. Chain <c>With*</c> and call <see cref="FeatureFlagContextBuilder.Build" />.</summary>
-    public static FeatureFlagContextBuilder Create() => new();
-
     /// <summary>User id compared by rules and hashed when stickiness is <see cref="FeatureFlagStickiness.User" />.</summary>
     public string? UserId { get; }
 
@@ -23,17 +20,14 @@ public sealed class FeatureFlagContext
     /// <summary>Attributes. A rule matches when any pair has the required key and value.</summary>
     public IReadOnlyList<FeatureFlagAttribute> Attributes { get; }
 
-    internal FeatureFlagContext(
-        string? userId,
-        string? tenantId,
-        string? stickinessKey,
-        IReadOnlyList<FeatureFlagClaim> claims,
-        IReadOnlyList<FeatureFlagAttribute> attributes)
+    internal FeatureFlagContext(string? userId, string? tenantId, string? stickinessKey, IReadOnlyList<FeatureFlagClaim> claims, IReadOnlyList<FeatureFlagAttribute> attributes)
     {
         if (userId is not null)
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(userId);
+
         if (tenantId is not null)
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(tenantId);
+
         if (stickinessKey is not null)
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(stickinessKey);
 
@@ -43,16 +37,19 @@ public sealed class FeatureFlagContext
         Claims = claims;
         Attributes = attributes;
     }
+
+    /// <summary>Creates an empty context. Chain <c>With*</c> and call <see cref="FeatureFlagContextBuilder.Build" />.</summary>
+    public static FeatureFlagContextBuilder Create() => new();
 }
 
 /// <summary>Builds a <see cref="FeatureFlagContext" />. Repeated claim and attribute calls append.</summary>
 public sealed class FeatureFlagContextBuilder
 {
-    private string? _userId;
-    private string? _tenantId;
-    private string? _stickinessKey;
-    private readonly List<FeatureFlagClaim> _claims = [];
     private readonly List<FeatureFlagAttribute> _attributes = [];
+    private readonly List<FeatureFlagClaim> _claims = [];
+    private string? _stickinessKey;
+    private string? _tenantId;
+    private string? _userId;
 
     internal FeatureFlagContextBuilder() { }
 
@@ -77,7 +74,7 @@ public sealed class FeatureFlagContextBuilder
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(type);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(value);
-        _claims.Add(new FeatureFlagClaim { Type = type, Value = value });
+        _claims.Add(new() { Type = type, Value = value });
         return this;
     }
 
@@ -86,7 +83,7 @@ public sealed class FeatureFlagContextBuilder
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(value);
-        _attributes.Add(new FeatureFlagAttribute { Key = key, Value = value });
+        _attributes.Add(new() { Key = key, Value = value });
         return this;
     }
 

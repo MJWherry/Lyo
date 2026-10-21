@@ -18,8 +18,7 @@ public sealed class PostgresAudiobookStoreTests(AudiobookPostgresFixture fixture
     }
 
     [Fact]
-    public void Normalize_Custom_PreservesCase()
-        => Assert.Equal("AbC", AudiobookIdentifierSchemes.Normalize(AudiobookIdentifierSchemes.Custom, " AbC "));
+    public void Normalize_Custom_PreservesCase() => Assert.Equal("AbC", AudiobookIdentifierSchemes.Normalize(AudiobookIdentifierSchemes.Custom, " AbC "));
 
     [Fact]
     public async Task SaveWork_RoundTrip_SubtitleNarratorAndIsbn()
@@ -27,9 +26,16 @@ public sealed class PostgresAudiobookStoreTests(AudiobookPostgresFixture fixture
         var ct = TestCt;
         var work = NewWork($"book-{LyoGuid.CreateV7():N}");
         work.Subtitle = "A reading";
-        work.Credits = [new AudiobookCredit { DisplayName = "Narrator", Role = AudiobookCreditRole.Narrator, Ordinal = 1, PersonRef = "person:1" }];
-        work.Identifiers = [new AudiobookIdentifier { Scheme = AudiobookIdentifierSchemes.Isbn, Value = "978-0-306-40615-7", IsPrimary = true }];
+        work.Credits = [
+            new() {
+                DisplayName = "Narrator",
+                Role = AudiobookCreditRole.Narrator,
+                Ordinal = 1,
+                PersonRef = "person:1"
+            }
+        ];
 
+        work.Identifiers = [new() { Scheme = AudiobookIdentifierSchemes.Isbn, Value = "978-0-306-40615-7", IsPrimary = true }];
         await Store.SaveWorkAsync(work, ct);
         var loaded = await Store.GetWorkByIdentifierAsync(AudiobookIdentifierSchemes.Isbn, "978-0-306-40615-7", ct);
         Assert.NotNull(loaded);
@@ -46,12 +52,11 @@ public sealed class PostgresAudiobookStoreTests(AudiobookPostgresFixture fixture
         var slug = $"slug-{LyoGuid.CreateV7():N}";
         await Store.SaveWorkAsync(NewWork(slug), ct);
         await Assert.ThrowsAsync<ConflictException>(() => Store.SaveWorkAsync(NewWork(slug), ct));
-
         var first = NewWork($"isbn-a-{LyoGuid.CreateV7():N}");
-        first.Identifiers = [new AudiobookIdentifier { Scheme = AudiobookIdentifierSchemes.Isbn, Value = "978-0-123", IsPrimary = true }];
+        first.Identifiers = [new() { Scheme = AudiobookIdentifierSchemes.Isbn, Value = "978-0-123", IsPrimary = true }];
         await Store.SaveWorkAsync(first, ct);
         var second = NewWork($"isbn-b-{LyoGuid.CreateV7():N}");
-        second.Identifiers = [new AudiobookIdentifier { Scheme = AudiobookIdentifierSchemes.Isbn, Value = "9780123", IsPrimary = true }];
+        second.Identifiers = [new() { Scheme = AudiobookIdentifierSchemes.Isbn, Value = "9780123", IsPrimary = true }];
         await Assert.ThrowsAsync<ConflictException>(() => Store.SaveWorkAsync(second, ct));
     }
 
@@ -60,13 +65,11 @@ public sealed class PostgresAudiobookStoreTests(AudiobookPostgresFixture fixture
     {
         var ct = TestCt;
         var first = NewWork($"custom-a-{LyoGuid.CreateV7():N}");
-        first.Identifiers = [new AudiobookIdentifier { Scheme = AudiobookIdentifierSchemes.Custom, Value = "AbC", IsPrimary = true }];
+        first.Identifiers = [new() { Scheme = AudiobookIdentifierSchemes.Custom, Value = "AbC", IsPrimary = true }];
         await Store.SaveWorkAsync(first, ct);
-
         Assert.Null(await Store.GetWorkByIdentifierAsync(AudiobookIdentifierSchemes.Custom, "abc", ct));
-
         var second = NewWork($"custom-b-{LyoGuid.CreateV7():N}");
-        second.Identifiers = [new AudiobookIdentifier { Scheme = AudiobookIdentifierSchemes.Custom, Value = "abc", IsPrimary = true }];
+        second.Identifiers = [new() { Scheme = AudiobookIdentifierSchemes.Custom, Value = "abc", IsPrimary = true }];
         await Store.SaveWorkAsync(second, ct);
         var loaded = await Store.GetWorkByIdentifierAsync(AudiobookIdentifierSchemes.Custom, "abc", ct);
         Assert.NotNull(loaded);
@@ -78,24 +81,16 @@ public sealed class PostgresAudiobookStoreTests(AudiobookPostgresFixture fixture
     {
         var ct = TestCt;
         var work = NewWork($"ch-{LyoGuid.CreateV7():N}");
-        work.Chapters = [
-            new AudiobookChapter { Number = 2, Title = "Two" },
-            new AudiobookChapter { Number = 1, Title = "One" }
-        ];
+        work.Chapters = [new() { Number = 2, Title = "Two" }, new() { Number = 1, Title = "One" }];
         await Store.SaveWorkAsync(work, ct);
         var loaded = await Store.GetWorkByIdAsync(work.Id, ct);
         Assert.NotNull(loaded);
         Assert.Equal(["One", "Two"], loaded.Chapters.Select(c => c.Title).ToArray());
-
         var duplicate = NewWork($"ch-dup-{LyoGuid.CreateV7():N}");
-        duplicate.Chapters = [
-            new AudiobookChapter { Number = 1, Title = "A" },
-            new AudiobookChapter { Number = 1, Title = "B" }
-        ];
+        duplicate.Chapters = [new() { Number = 1, Title = "A" }, new() { Number = 1, Title = "B" }];
         await Assert.ThrowsAsync<ConflictException>(() => Store.SaveWorkAsync(duplicate, ct));
-
         var other = NewWork($"ch-other-{LyoGuid.CreateV7():N}");
-        other.Chapters = [new AudiobookChapter { Number = 1, Title = "Also one" }];
+        other.Chapters = [new() { Number = 1, Title = "Also one" }];
         await Store.SaveWorkAsync(other, ct);
         var otherLoaded = await Store.GetWorkByIdAsync(other.Id, ct);
         Assert.NotNull(otherLoaded);
@@ -112,9 +107,7 @@ public sealed class PostgresAudiobookStoreTests(AudiobookPostgresFixture fixture
         work.SeriesId = series.Id;
         work.SeriesIndex = 1.5m;
         await Store.SaveWorkAsync(work, ct);
-
         await Store.DeleteSeriesAsync(series.Id, ct);
-
         var loaded = await Store.GetWorkByIdAsync(work.Id, ct);
         Assert.NotNull(loaded);
         Assert.Null(loaded.SeriesId);
@@ -130,20 +123,16 @@ public sealed class PostgresAudiobookStoreTests(AudiobookPostgresFixture fixture
         var other = NewWork($"other-{LyoGuid.CreateV7():N}");
         other.Transcript = "a quiet unrelated scene";
         await Store.SaveWorkAsync(other, ct);
-
         var work = NewWork($"keep-{LyoGuid.CreateV7():N}");
         work.Transcript = $"work says {token} once";
-        work.Chapters = [new AudiobookChapter { Number = 1, Title = "Open", Transcript = $"chapter says {token} aloud" }];
+        work.Chapters = [new() { Number = 1, Title = "Open", Transcript = $"chapter says {token} aloud" }];
         await Store.SaveWorkAsync(work, ct);
-
         var loaded = await Store.GetWorkByIdAsync(work.Id, ct);
         Assert.NotNull(loaded);
         Assert.Null(loaded.Transcript);
         Assert.Null(loaded.Chapters[0].Transcript);
-
         await Store.SaveWorkAsync(loaded, ct);
-
-        var hits = await Store.SearchTranscriptsAsync(new AudiobookTranscriptQuery { FullText = token }, ct);
+        var hits = await Store.SearchTranscriptsAsync(new() { FullText = token }, ct);
         Assert.Contains(hits, h => h.WorkId == work.Id && h.ChapterId == null);
         Assert.Contains(hits, h => h.WorkId == work.Id && h.ChapterId == loaded.Chapters[0].Id);
         Assert.DoesNotContain(hits, h => h.WorkId == other.Id);
@@ -170,10 +159,9 @@ public sealed class PostgresAudiobookStoreTests(AudiobookPostgresFixture fixture
         other.Title = prefix;
         await Store.SaveWorkAsync(match, ct);
         await Store.SaveWorkAsync(other, ct);
-
-        var results = await Store.SearchWorksAsync(new AudiobookQuery { TitleContains = prefix, Year = 1999 }, ct);
+        var results = await Store.SearchWorksAsync(new() { TitleContains = prefix, Year = 1999 }, ct);
         Assert.Equal(match.Id, Assert.Single(results).Id);
-        Assert.Empty(await Store.SearchWorksAsync(new AudiobookQuery { FilterIds = [] }, ct));
+        Assert.Empty(await Store.SearchWorksAsync(new() { FilterIds = [] }, ct));
     }
 
     [Fact]
@@ -188,6 +176,5 @@ public sealed class PostgresAudiobookStoreTests(AudiobookPostgresFixture fixture
         await Assert.ThrowsAsync<UnprocessableEntityException>(() => Store.SaveGenreAsync(parent, ct));
     }
 
-    private static Audiobook NewWork(string slug)
-        => new() { Title = slug, Slug = slug };
+    private static Audiobook NewWork(string slug) => new() { Title = slug, Slug = slug };
 }

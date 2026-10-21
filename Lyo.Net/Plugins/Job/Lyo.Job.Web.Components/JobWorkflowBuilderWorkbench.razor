@@ -1,5 +1,5 @@
-@inject ISnackbar Snackbar
 @using Lyo.Web.Components.ParamTable
+@inject ISnackbar Snackbar
 
 <MudStack Spacing="2" Class="pa-2">
     <MudStack Row Spacing="2" AlignItems="AlignItems.Center">
@@ -39,6 +39,7 @@
                 else {
                     <JobWorkflowGraphView Steps="@_state.Steps" Definitions="@_definitions" SelectedStepId="@_state.SelectedStepId"
                                           OnStepSelected="SelectStepAsync"/>
+
                     @if (SelectedStep is { } selected) {
                         <JobWorkflowStepEditor Step="@selected" Steps="@_state.Steps" Definitions="@_definitions" OtherSteps="@OtherSteps(selected)"
                                                ApiClient="@ApiClient" InputKeys="@InputKeys" Workflow="@DraftWorkflow" OnChanged="OnStepChangedAsync"
@@ -73,6 +74,7 @@
                         </MudButton>
                         <MudText Typo="Typo.caption" Class="mud-text-secondary">Workflow @workflowId</MudText>
                     </MudStack>
+
                     <JobWorkflowRunGrid ApiClient="@ApiClient" BaseRoute="@BaseRoute" WorkflowId="@workflowId"/>
                 }
                 else {

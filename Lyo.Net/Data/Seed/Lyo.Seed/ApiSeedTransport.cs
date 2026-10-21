@@ -3,13 +3,13 @@ using Lyo.Exceptions;
 
 namespace Lyo.Seed;
 
-/// <summary>Writes generated items through Lyo.Api bulk create, chunked to <see cref="SeedApiCatalog.MaxBulkAmount"/>.</summary>
+/// <summary>Writes generated items through Lyo.Api bulk create, chunked to <see cref="SeedApiCatalog.MaxBulkAmount" />.</summary>
 public sealed class ApiSeedTransport : ISeedTransport
 {
-    private readonly IApiClient _client;
     private readonly SeedApiCatalog _catalog;
+    private readonly IApiClient _client;
 
-    /// <summary>Builds a transport over <paramref name="client"/>. <see cref="HttpClient.BaseAddress"/> (or <c>ApiClientOptions.BaseUrl</c>) must already be set.</summary>
+    /// <summary>Builds a transport over <paramref name="client" />. <see cref="HttpClient.BaseAddress" /> (or <c>ApiClientOptions.BaseUrl</c>) must already be set.</summary>
     public ApiSeedTransport(IApiClient client, SeedApiCatalog catalog)
     {
         ArgumentHelpers.ThrowIfNull(client);

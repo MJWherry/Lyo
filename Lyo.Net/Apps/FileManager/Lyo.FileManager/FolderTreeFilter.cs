@@ -26,6 +26,7 @@ public static class FolderTreeFilter
         var matches = term.Length == 0 || node.Name.Contains(term, StringComparison.OrdinalIgnoreCase) || children.Count > 0;
         if (!matches)
             return null;
-        return new FolderTreeNode { Name = node.Name, Children = children };
+
+        return new() { Name = node.Name, Children = children };
     }
 }

@@ -8,44 +8,44 @@ namespace Lyo.Media.Models;
 public sealed class VideoConversionBuilder
 {
     private readonly List<string> _inputs = [];
-    private readonly Dictionary<FileTagKey, string> _metadata = [];
     private readonly List<MediaStreamMap> _maps = [];
-    private VideoEncoder? _encoder;
-    private AudioEncoder? _audioEncoder;
-    private MediaContainer? _format;
-    private VideoFrameRate? _frameRate;
-    private PixelFormat? _pixelFormat;
-    private ConstantRateFactor? _crf;
-    private MediaBitRate? _videoBitRate;
-    private EncoderPreset? _preset;
-    private string? _videoFilter;
-    private int? _width;
-    private int? _height;
-    private ScaleMode _scale = ScaleMode.Stretch;
-    private bool _dropAudio;
-    private bool _copy;
-    private TimeSpan? _start;
-    private TimeSpan? _duration;
-    private MediaIoMode _ioMode = MediaIoMode.TempFile;
-    private bool _fragmented;
-    private MediaContainer? _inputFormat;
+    private readonly Dictionary<FileTagKey, string> _metadata = [];
     private MediaBitRate? _audioBitRate;
-    private AudioVbrQuality? _audioQuality;
-    private AudioSampleRate? _sampleRate;
-    private ChannelLayout? _channels;
+    private AudioEncoder? _audioEncoder;
     private string? _audioFilter;
+    private AudioVbrQuality? _audioQuality;
+    private ChannelLayout? _channels;
+    private bool _clearMetadata;
+    private bool _concat;
+    private bool _copy;
+    private ConstantRateFactor? _crf;
+    private bool _dropAudio;
+    private TimeSpan? _duration;
+    private VideoEncoder? _encoder;
+    private MediaContainer? _format;
+    private bool _fragmented;
+    private VideoFrameRate? _frameRate;
     private HardwareAccel? _hardware;
     private HardwareDevice? _hardwareDevice;
-    private bool _clearMetadata;
+    private int? _height;
+    private MediaContainer? _inputFormat;
+    private MediaIoMode _ioMode = MediaIoMode.TempFile;
+    private LoudnessTarget? _loudness;
+    private string? _output;
+    private bool _overwrite = true;
+    private StreamPackaging? _packaging;
+    private PixelFormat? _pixelFormat;
+    private EncoderPreset? _preset;
+    private AudioSampleRate? _sampleRate;
+    private ScaleMode _scale = ScaleMode.Stretch;
+    private TimeSpan? _start;
+    private SubtitleCodec? _subtitleCodec;
     private string? _subtitlePath;
     private SubtitleMode _subtitles;
-    private SubtitleCodec? _subtitleCodec;
-    private LoudnessTarget? _loudness;
     private bool _twoPass;
-    private StreamPackaging? _packaging;
-    private bool _overwrite = true;
-    private string? _output;
-    private bool _concat;
+    private MediaBitRate? _videoBitRate;
+    private string? _videoFilter;
+    private int? _width;
 
     private VideoConversionBuilder() { }
 
@@ -266,8 +266,10 @@ public sealed class VideoConversionBuilder
             _output = output,
             _concat = concat
         };
+
         if (options.Maps != null)
             builder._maps.AddRange(options.Maps);
+
         if (inputs != null)
             builder._inputs.AddRange(inputs);
         else if (!string.IsNullOrWhiteSpace(input))

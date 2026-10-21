@@ -21,7 +21,7 @@ public class TwilioPostgresExtensionsTests
     public void AddTwilioSmsDbContext_WithNullConnectionString_ThrowsArgumentNullException()
     {
         var services = new ServiceCollection();
-        var ex = Assert.Throws<ArgumentNullException>(() => services.AddTwilioSmsDbContext((string)null!));
+        var ex = Assert.Throws<ArgumentNullException>(() => services.AddTwilioSmsDbContext(null!));
         Assert.Equal("connectionString", ex.ParamName);
     }
 

@@ -42,6 +42,7 @@ public sealed class InMemoryGrantStore : IGrantStore
                 ExpiresAt = normalized.ExpiresAt,
                 CreatedTimestamp = now
             };
+
             _grants.Add(saved);
             return Task.FromResult(saved);
         }
@@ -93,6 +94,7 @@ public sealed class InMemoryGrantStore : IGrantStore
 
             if (!filter.IncludeRevoked)
                 rows = rows.Where(g => g.RevokedAt is null);
+
             if (!filter.IncludeExpired)
                 rows = rows.Where(g => g.ExpiresAt is null || g.ExpiresAt > now);
 
@@ -105,12 +107,9 @@ public sealed class InMemoryGrantStore : IGrantStore
     public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => Task.FromResult(HealthResult.Healthy(TimeSpan.Zero));
 
     private Grant? FindActive(GrantWrite write)
-        => _grants.FirstOrDefault(g => g.RevokedAt is null
-            && g.Subject == write.Subject
-            && g.Action == write.Action
-            && g.ResourceType == write.ResourceType
-            && g.ResourceId == write.ResourceId
-            && g.TenantId == write.TenantId);
+        => _grants.FirstOrDefault(g
+            => g.RevokedAt is null && g.Subject == write.Subject && g.Action == write.Action && g.ResourceType == write.ResourceType && g.ResourceId == write.ResourceId &&
+            g.TenantId == write.TenantId);
 
     private void Replace(Grant current, Grant updated)
     {

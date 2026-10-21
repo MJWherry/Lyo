@@ -7,8 +7,8 @@ public interface IDocxService
     string ReadText(byte[] docx);
 
     /// <summary>
-    /// Replaces <c>{Token}</c> placeholders with <see cref="Lyo.Formatter.IFormatterService" />. A token split across runs is joined first.
-    /// An unknown token leaves that paragraph unchanged. Returns the written package bytes.
+    /// Replaces <c>{Token}</c> placeholders with <see cref="Lyo.Formatter.IFormatterService" />. A token split across runs is joined first. An unknown token leaves that
+    /// paragraph unchanged. Returns the written package bytes.
     /// </summary>
     byte[] Fill(byte[] docx, object? model);
 }

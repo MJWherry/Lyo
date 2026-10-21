@@ -13,7 +13,7 @@ public class FileManagerCommandStateTests
         Assert.False(state.Move);
         Assert.False(state.AccessLinks);
         Assert.False(state.Encryption);
-        Assert.False(state.CanEncrypt(hasKeyStore: true, keyIdCount: 3));
+        Assert.False(state.CanEncrypt(true, 3));
     }
 
     [Fact]
@@ -24,8 +24,8 @@ public class FileManagerCommandStateTests
         Assert.True(state.Copy);
         Assert.True(state.Move);
         Assert.True(state.AccessLinks);
-        Assert.False(state.CanEncrypt(hasKeyStore: false, keyIdCount: 0));
-        Assert.True(state.CanEncrypt(hasKeyStore: true, keyIdCount: 0));
-        Assert.True(state.CanEncrypt(hasKeyStore: false, keyIdCount: 1));
+        Assert.False(state.CanEncrypt(false, 0));
+        Assert.True(state.CanEncrypt(true, 0));
+        Assert.True(state.CanEncrypt(false, 1));
     }
 }

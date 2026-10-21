@@ -4,7 +4,6 @@ using Lyo.Common.Metadata.Records;
 using Lyo.Http.Client;
 using Lyo.Http.Client.Plan;
 using Lyo.Http.Client.Session;
-using Lyo.Law.Client;
 using Lyo.Law.Models;
 using Lyo.Law.Models.Request;
 using Lyo.Query.Models.Common.Request;

@@ -1,6 +1,7 @@
 # Lyo.HomeInventory.Models
 
-Shared wire types for household inventory. `Request/` and `Response/` types are used by `Lyo.HomeInventory.Api` (`CreateBuilder` + stock/notes/tags routes) and `Lyo.HomeInventory.Web.Components`. Enums live here so the store contract (`Lyo.HomeInventory`) and HTTP surface share one vocabulary. This package has no DI registration.
+Shared wire types for household inventory. `Request/` and `Response/` types are used by `Lyo.HomeInventory.Api` (`CreateBuilder` + stock/notes/tags routes) and
+`Lyo.HomeInventory.Web.Components`. Enums live here so the store contract (`Lyo.HomeInventory`) and HTTP surface share one vocabulary. This package has no DI registration.
 
 ## Features
 

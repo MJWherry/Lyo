@@ -31,8 +31,8 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Adds <see cref="JobScheduler" /> as a hosted service, binding options from the <see cref="JobSchedulerOptions.SectionName" /> section and validating them on
-        /// host start. Needs <c>IApiClient</c>, <c>IFormatterService</c>, and <c>IJobEventPublisher</c> (add via <c>Lyo.Job.Client.AddMqJobEventPublisher*</c>).
+        /// Adds <see cref="JobScheduler" /> as a hosted service, binding options from the <see cref="JobSchedulerOptions.SectionName" /> section and validating them on host start.
+        /// Needs <c>IApiClient</c>, <c>IFormatterService</c>, and <c>IJobEventPublisher</c> (add via <c>Lyo.Job.Client.AddMqJobEventPublisher*</c>).
         /// </summary>
         public IServiceCollection AddJobScheduler(string configSectionName = JobSchedulerOptions.SectionName)
         {
@@ -58,8 +58,8 @@ public static class Extensions
 
         /// <summary>
         /// Adds <see cref="JobWorkflowEngine" /> as a hosted service that advances workflow runs when jobs complete. When an <c>IJobEventPublisher</c> is registered, the engine
-        /// creates step runs with dispatch suppressed and publishes only after linking the run to its workflow step (closes the fast-worker completion race).
-        /// Needs <c>IApiClient</c>, <c>IMqService</c>, and <c>IFormatterService</c> (the engine templates each step's parameters against its upstream runs).
+        /// creates step runs with dispatch suppressed and publishes only after linking the run to its workflow step (closes the fast-worker completion race). Needs <c>IApiClient</c>,
+        /// <c>IMqService</c>, and <c>IFormatterService</c> (the engine templates each step's parameters against its upstream runs).
         /// </summary>
         public IServiceCollection AddJobWorkflowEngine(JobWorkflowEngineOptions options)
         {
@@ -92,8 +92,8 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Adds <see cref="JobWorkflowScheduler" /> as a hosted service, starting workflow runs for workflow-owned <c>JobSchedule</c> rows. Needs <c>IApiClient</c>. Independent
-        /// of <c>AddJobScheduler</c>: that one walks definition-owned schedules, which never overlap with these.
+        /// Adds <see cref="JobWorkflowScheduler" /> as a hosted service, starting workflow runs for workflow-owned <c>JobSchedule</c> rows. Needs <c>IApiClient</c>. Independent of
+        /// <c>AddJobScheduler</c>: that one walks definition-owned schedules, which never overlap with these.
         /// </summary>
         public IServiceCollection AddJobWorkflowScheduler(JobWorkflowSchedulerOptions options)
         {

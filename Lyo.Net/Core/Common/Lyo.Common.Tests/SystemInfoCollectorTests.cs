@@ -33,6 +33,7 @@ public class SystemInfoCollectorTests
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
             if (File.Exists("/sys/firmware/acpi/platform_profile"))
                 Assert.False(string.IsNullOrEmpty(hardware.PowerPolicy.Profile));
+
             if (HasLinuxCpuSysfs("scaling_governor"))
                 Assert.False(string.IsNullOrEmpty(hardware.PowerPolicy.CpuGovernor));
         }
@@ -152,7 +153,7 @@ public class SystemInfoCollectorTests
     public void LogHardwareInfo_LogsPowerWhenAnyFieldSet()
     {
         var logger = new CapturingLogger(LogLevel.Trace);
-        var hardware = new HardwareInfo(1, "cpu", "X64", "X64", 1, [], [], [], [], new PowerPolicyInfo("balanced", "schedutil", null, null, true));
+        var hardware = new HardwareInfo(1, "cpu", "X64", "X64", 1, [], [], [], [], new("balanced", "schedutil", null, null, true));
         logger.LogHardwareInfo(hardware, LogLevel.Information);
         Assert.Contains(logger.Entries, entry => entry.Message.StartsWith("Power:"));
     }
@@ -161,7 +162,7 @@ public class SystemInfoCollectorTests
     public void LogHardwareInfo_OmitsPowerWhenAllFieldsNull()
     {
         var logger = new CapturingLogger(LogLevel.Trace);
-        var hardware = new HardwareInfo(1, "cpu", "X64", "X64", 1, [], [], [], [], new PowerPolicyInfo(null, null, null, null, null));
+        var hardware = new HardwareInfo(1, "cpu", "X64", "X64", 1, [], [], [], [], new(null, null, null, null, null));
         logger.LogHardwareInfo(hardware, LogLevel.Information);
         Assert.DoesNotContain(logger.Entries, entry => entry.Message.StartsWith("Power:"));
         Assert.DoesNotContain(logger.Entries, entry => entry.Message.StartsWith("Audio "));
@@ -183,8 +184,9 @@ public class SystemInfoCollectorTests
     {
         var logger = new CapturingLogger(LogLevel.Trace);
         var hardware = new HardwareInfo(
-            1, "cpu", "X64", "X64", 1, [], [], [new AudioDeviceInfo("Speakers", AudioDeviceInfo.Playback, "Realtek", "Speakers", true)],
-            [new PrinterInfo("Office", "HP", "ipp://print", true, "Idle")], new PowerPolicyInfo(null, null, null, null, null));
+            1, "cpu", "X64", "X64", 1, [], [], [new("Speakers", AudioDeviceInfo.Playback, "Realtek", "Speakers", true)], [new("Office", "HP", "ipp://print", true, "Idle")],
+            new(null, null, null, null, null));
+
         logger.LogHardwareInfo(hardware, LogLevel.Information);
         Assert.Contains(logger.Entries, entry => entry.Message.StartsWith("Audio ") && entry.Message.Contains("Speakers"));
         Assert.Contains(logger.Entries, entry => entry.Message.StartsWith("Printer ") && entry.Message.Contains("Office"));
@@ -199,6 +201,7 @@ public class SystemInfoCollectorTests
             var name = Path.GetFileName(cpuDirectory);
             if (name.Length < 4 || !name.StartsWith("cpu", StringComparison.Ordinal) || !char.IsDigit(name[3]))
                 continue;
+
             if (File.Exists(Path.Combine(cpuDirectory, "cpufreq", fileName)))
                 return true;
         }

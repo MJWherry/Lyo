@@ -13,15 +13,12 @@ public sealed class AutomationRunPlaywrightTests
     {
         using var pages = new WebAutomationTestPageHostFixture();
         await using var host = await AutomationApiHost.StartPlaywrightAsync();
-
         var response = await host.Http.PostAsJsonAsync(
-            Constants.Rest.Runs,
-            new AutomationRunReq { Plan = new AutomationPlan("local", [new NavigateAutomationStep(pages.HomeUri.AbsoluteUri)]), Headless = true },
-            AutomationApiHost.Json,
+            Constants.Rest.Runs, new AutomationRunReq { Plan = new("local", [new NavigateAutomationStep(pages.HomeUri.AbsoluteUri)]), Headless = true }, AutomationApiHost.Json,
             TestCt);
+
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
         var accepted = (await response.Content.ReadFromJsonAsync<AutomationRunAccepted>(AutomationApiHost.Json, TestCt))!;
-
         var started = DateTime.UtcNow;
         AutomationRunRes? run = null;
         while (DateTime.UtcNow - started < TimeSpan.FromSeconds(60)) {

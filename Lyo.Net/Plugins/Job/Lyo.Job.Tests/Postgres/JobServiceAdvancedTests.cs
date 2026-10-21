@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Job.Models.Builders;
 using Lyo.Job.Models.Enums;
@@ -6,7 +7,6 @@ using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Tests.Postgres;
 
@@ -85,6 +85,7 @@ public class JobServiceAdvancedTests
                 CreatedTimestamp = DateTime.UtcNow,
                 StartedTimestamp = DateTime.UtcNow
             });
+
         db.JobRuns.Add(
             new() {
                 Id = LyoGuid.CreateV7(),
@@ -93,8 +94,8 @@ public class JobServiceAdvancedTests
                 CreatedBy = "test",
                 CreatedTimestamp = DateTime.UtcNow
             });
-        await db.SaveChangesAsync(TestCt);
 
+        await db.SaveChangesAsync(TestCt);
         var stats = await _fixture.JobService.GetDefinitionStats(definitionId, 30, TestCt);
         Assert.NotNull(stats);
         Assert.Equal(1, stats.RunningCount);

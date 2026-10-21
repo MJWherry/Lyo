@@ -33,12 +33,12 @@ public static class SamlConstants
     /// <summary>Exclusive canonicalization without comments.</summary>
     public const string ExclusiveC14N = "http://www.w3.org/2001/10/xml-exc-c14n#";
 
+    /// <summary>Maximum decoded SAML or metadata document size.</summary>
+    public const int MaxDocumentBytes = 1_048_576;
+
     /// <summary>How long a login ticket and an AuthnRequest stay valid.</summary>
     public static readonly TimeSpan TicketTtl = TimeSpan.FromMinutes(15);
 
     /// <summary>Clock skew applied to NotBefore and NotOnOrAfter.</summary>
     public static readonly TimeSpan ClockSkew = TimeSpan.FromMinutes(2);
-
-    /// <summary>Maximum decoded SAML or metadata document size.</summary>
-    public const int MaxDocumentBytes = 1_048_576;
 }

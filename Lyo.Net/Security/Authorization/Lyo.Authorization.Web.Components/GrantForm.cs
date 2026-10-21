@@ -1,5 +1,3 @@
-using Lyo.Exceptions;
-
 namespace Lyo.Authorization.Web.Components;
 
 /// <summary>Fields from the grant editor. Blank resource id and tenant are wildcards. A local expiry keeps the clock time and is stored as UTC.</summary>
@@ -27,29 +25,34 @@ public sealed class GrantForm
     public DateTime? ExpiresAt { get; set; }
 
     /// <summary>Builds a write the store can save.</summary>
-    public GrantWrite ToWrite() => GrantRules.Normalize(new GrantWrite {
-        Subject = Subject,
-        Action = Action,
-        ResourceType = ResourceType,
-        ResourceId = ResourceIdOrNull(),
-        TenantId = TenantOrNull(),
-        GrantedBy = string.IsNullOrWhiteSpace(GrantedBy) ? null : GrantedBy,
-        ExpiresAt = AsUtc(ExpiresAt)
-    });
+    public GrantWrite ToWrite()
+        => GrantRules.Normalize(
+            new GrantWrite {
+                Subject = Subject,
+                Action = Action,
+                ResourceType = ResourceType,
+                ResourceId = ResourceIdOrNull(),
+                TenantId = TenantOrNull(),
+                GrantedBy = string.IsNullOrWhiteSpace(GrantedBy) ? null : GrantedBy,
+                ExpiresAt = AsUtc(ExpiresAt)
+            });
 
     /// <summary>Builds a check from the same field rules as <see cref="ToWrite" />.</summary>
-    public GrantCheck ToCheck() => GrantRules.Normalize(new GrantCheck {
-        Subject = Subject,
-        Action = Action,
-        ResourceType = ResourceType,
-        ResourceId = ResourceIdOrNull(),
-        TenantId = TenantOrNull()
-    });
+    public GrantCheck ToCheck()
+        => GrantRules.Normalize(
+            new GrantCheck {
+                Subject = Subject,
+                Action = Action,
+                ResourceType = ResourceType,
+                ResourceId = ResourceIdOrNull(),
+                TenantId = TenantOrNull()
+            });
 
     private string? ResourceIdOrNull()
     {
         if (ResourceId is null || ResourceId.Length == 0)
             return null;
+
         if (string.IsNullOrWhiteSpace(ResourceId))
             throw new ArgumentException("A whitespace resource id is not a wildcard. Pass null.", nameof(ResourceId));
 
@@ -60,6 +63,7 @@ public sealed class GrantForm
     {
         if (string.IsNullOrWhiteSpace(TenantId))
             return null;
+
         if (!Guid.TryParse(TenantId.Trim(), out var id))
             throw new ArgumentException("Tenant id must be a guid.", nameof(TenantId));
 

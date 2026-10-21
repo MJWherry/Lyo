@@ -67,11 +67,11 @@ public static class SystemInfoLoggerExtensions
             }
 
             var power = hardware.PowerPolicy;
-            if (power.Profile is not null || power.CpuGovernor is not null || power.EnergyPerformancePreference is not null || power.SchemeId is not null
-                || power.OnAcPower is not null) {
+            if (power.Profile is not null || power.CpuGovernor is not null || power.EnergyPerformancePreference is not null || power.SchemeId is not null ||
+                power.OnAcPower is not null) {
                 logger.Log(
-                    level, "Power: {PowerProfile} | governor {CpuGovernor} | EPP {EnergyPerformancePreference} | scheme {PowerSchemeId} | AC {OnAcPower}",
-                    power.Profile, power.CpuGovernor, power.EnergyPerformancePreference, power.SchemeId, power.OnAcPower);
+                    level, "Power: {PowerProfile} | governor {CpuGovernor} | EPP {EnergyPerformancePreference} | scheme {PowerSchemeId} | AC {OnAcPower}", power.Profile,
+                    power.CpuGovernor, power.EnergyPerformancePreference, power.SchemeId, power.OnAcPower);
             }
         }
 

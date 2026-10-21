@@ -1,6 +1,5 @@
 using Lyo.Common.Core.Conversion;
 using Lyo.Parameters;
-using Lyo.Query.Models.Parameters;
 using Lyo.Reporting.Models.Request;
 using Lyo.Reporting.Postgres.Database;
 
@@ -19,8 +18,7 @@ internal static class ReportParameterValidator
         IReadOnlyList<ReportDefinitionParameter> definitionParameters,
         IReadOnlyList<ReportGenerationParameterReq> requestParameters,
         bool rejectUnknownKeys = false)
-        => LyoParameterValidator.Validate(
-            [.. definitionParameters.Select(ToSpec)], [.. requestParameters.Select(LyoParameterValueSpec.From)], rejectUnknownKeys);
+        => LyoParameterValidator.Validate([.. definitionParameters.Select(ToSpec)], [.. requestParameters.Select(LyoParameterValueSpec.From)], rejectUnknownKeys);
 
     /// <summary>Projects a definition parameter entity onto the shared spec. The entity is not touched. Only the fields validation reads are copied.</summary>
     /// <param name="parameter">Definition parameter as stored in the database.</param>

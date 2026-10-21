@@ -9,9 +9,8 @@ using Lyo.Web.Automation.Playwright.Configuration;
 namespace Lyo.TestConsole;
 
 /// <summary>
-/// Host-owned Flared → Playwright glue. Playwright does not reference <c>Lyo.Http.Client</c>; copy UA and cookies here after a solver round-trip.
-/// FlareSolverr is Chromium-family — pin UA for Chrome, Chromium, and Edge. <c>cf_clearance</c> is IP-bound: set the same
-/// <see cref="LyoHttpClientOptions.ProxyUrl" /> on Flared and Playwright.
+/// Host-owned Flared → Playwright glue. Playwright does not reference <c>Lyo.Http.Client</c>; copy UA and cookies here after a solver round-trip. FlareSolverr is
+/// Chromium-family — pin UA for Chrome, Chromium, and Edge. <c>cf_clearance</c> is IP-bound: set the same <see cref="LyoHttpClientOptions.ProxyUrl" /> on Flared and Playwright.
 /// </summary>
 internal static class FlaredPlaywrightHandoff
 {
@@ -23,8 +22,10 @@ internal static class FlaredPlaywrightHandoff
         OperationHelpers.ThrowIf(
             options.BrowserKind is not (AutomationBrowserKind.Chrome or AutomationBrowserKind.Chromium or AutomationBrowserKind.Edge),
             "Flared cookie handoff requires a Chromium-family browser (Chrome, Chromium, or Edge). Firefox and WebKit cannot use solver clearance cookies.");
+
         if (!string.IsNullOrWhiteSpace(session.UserAgent))
             options.UserAgents = [session.UserAgent];
+
         if (flared is null || string.IsNullOrWhiteSpace(flared.ProxyUrl))
             return;
 
@@ -51,7 +52,6 @@ internal static class FlaredPlaywrightHandoff
                     HttpOnly = c.HttpOnly,
                     Expiry = c.Expiry
                 })
-                .ToList(),
-            ct);
+                .ToList(), ct);
     }
 }

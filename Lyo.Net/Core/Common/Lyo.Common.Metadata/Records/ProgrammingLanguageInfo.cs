@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using Lyo.Common.Core;
 using Lyo.Common.Core.Extensions;
-using Lyo.Common.Metadata.Extensions;
 
 // ReSharper disable NotAccessedPositionalProperty.Global
 
@@ -169,7 +168,6 @@ public sealed record ProgrammingLanguageInfo(
     static ProgrammingLanguageInfo()
     {
         var fields = typeof(ProgrammingLanguageInfo).PublicStaticFields<ProgrammingLanguageInfo>();
-
         foreach (var language in fields) {
             AllLanguages.Add(language);
             ByName[Normalize(language.Name)] = language;

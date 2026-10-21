@@ -5,9 +5,9 @@ using Org.BouncyCastle.Crypto.Parameters;
 namespace Lyo.Encryption.XChaCha20Poly1305;
 
 /// <summary>
-/// Per-stream XChaCha20-Poly1305 cipher reused for every chunk (see <see cref="IAeadStreamCryptor" />). XChaCha20 derives a subkey from the first
-/// 16 nonce bytes via HChaCha20; in a stream those bytes come from the fixed per-stream nonce prefix, so the subkey is computed once and cached (only recomputed if that prefix
-/// changes). The BouncyCastle cipher and grow-once scratch buffers are reused per chunk, so the chunk loop allocates no extra heap.
+/// Per-stream XChaCha20-Poly1305 cipher reused for every chunk (see <see cref="IAeadStreamCryptor" />). XChaCha20 derives a subkey from the first 16 nonce bytes via
+/// HChaCha20; in a stream those bytes come from the fixed per-stream nonce prefix, so the subkey is computed once and cached (only recomputed if that prefix changes). The
+/// BouncyCastle cipher and grow-once scratch buffers are reused per chunk, so the chunk loop allocates no extra heap.
 /// </summary>
 internal sealed class XChaCha20Poly1305StreamCryptor : IAeadStreamCryptor
 {

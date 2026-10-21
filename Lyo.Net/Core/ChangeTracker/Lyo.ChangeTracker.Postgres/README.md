@@ -34,26 +34,29 @@ dotnet ef migrations add MigrationName --project Core/ChangeTracker/Lyo.ChangeTr
 
 Registration helpers, from factory-only through `IChangeTracker`:
 
-| Extension | What it adds |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `AddChangeTrackerDbContextFactory(options)` / `(Action<…>)` | Registers `IDbContextFactory<ChangeTrackerDbContext>` and the migrations helper (`AddPostgresMigrations`). |
+| Extension                                                              | What it adds                                                                                                                                            |
+|------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AddChangeTrackerDbContextFactory(options)` / `(Action<…>)`            | Registers `IDbContextFactory<ChangeTrackerDbContext>` and the migrations helper (`AddPostgresMigrations`).                                              |
 | `AddChangeTrackerDbContextFactoryFromConfiguration(IConfiguration, …)` | Binds `PostgresChangeTrackerOptions` from `"PostgresChangeTracker"` (override the section via the optional `configSectionName`) and registers as above. |
-| `AddChangeTrackerDbContext(connectionString)` | Builds options from a raw connection string, registers the factory, and exposes a scoped `ChangeTrackerDbContext`. |
-| `AddPostgresChangeTracker(options)` / `(Action<…>)` | Calls `AddChangeTrackerDbContextFactory` and registers `IChangeTracker` → `PostgresChangeTracker` as a singleton. |
-| `AddPostgresChangeTrackerFromConfiguration(IConfiguration, …)` | Same as the options overload, binding from configuration. |
+| `AddChangeTrackerDbContext(connectionString)`                          | Builds options from a raw connection string, registers the factory, and exposes a scoped `ChangeTrackerDbContext`.                                      |
+| `AddPostgresChangeTracker(options)` / `(Action<…>)`                    | Calls `AddChangeTrackerDbContextFactory` and registers `IChangeTracker` → `PostgresChangeTracker` as a singleton.                                       |
+| `AddPostgresChangeTrackerFromConfiguration(IConfiguration, …)`         | Same as the options overload, binding from configuration.                                                                                               |
 
 ## Health
 
-`HealthCheckName = "change-tracker-postgres"` comes from `PostgresChangeTracker` implementing `Lyo.Health.IHealth`. The probe constructs a `ChangeTrackerDbContext` and calls `Database.CanConnectAsync`. Schema name is placed in the `HealthResult` data bag. Hosts resolving `IEnumerable<IHealth>` pick this tracker up.
+`HealthCheckName = "change-tracker-postgres"` comes from `PostgresChangeTracker` implementing `Lyo.Health.IHealth`. The probe constructs a `ChangeTrackerDbContext` and calls
+`Database.CanConnectAsync`. Schema name is placed in the `HealthResult` data bag. Hosts resolving `IEnumerable<IHealth>` pick this tracker up.
 
 ## Database schema
 
 - The `change_tracker` schema holds every table (see `PostgresChangeTrackerOptions.Schema`).
-- `change_tracker.changes`. Subject (`for_entity_*` / `SubjectEntityType`), optional actor (`from_entity_*` / `ActorEntityType`), nullable `tenant_id` (uuid), JSON `OldValues`, JSON `ChangedProperties`, optional `ChangeType` / `Message`, and `Timestamp`.
+- `change_tracker.changes`. Subject (`for_entity_*` / `SubjectEntityType`), optional actor (`from_entity_*` / `ActorEntityType`), nullable `tenant_id` (uuid), JSON `OldValues`,
+  JSON `ChangedProperties`, optional `ChangeType` / `Message`, and `Timestamp`.
 
 ## Tenancy
 
-`ChangeRecord` carries an optional `TenantId`; `null` denotes a system / untenanted row. Before persist, `PostgresChangeTracker` runs every record through `TenancyResolver.Resolve` using the
+`ChangeRecord` carries an optional `TenantId`; `null` denotes a system / untenanted row. Before persist, `PostgresChangeTracker` runs every record through `TenancyResolver.Resolve`
+using the
 policy configured in `PostgresChangeTrackerOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when unset):
 
 - `SystemOnly`. Caller `TenantId` is ignored. The row stores `null`.

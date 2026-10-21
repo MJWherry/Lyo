@@ -28,7 +28,7 @@ public sealed class JobWorkerInstanceReq
 
     /// <summary>
     /// Optional key/value bag stored as JSON. The SDK fills system info (CPU, memory, OS/runtime) and worker keys (queue subscriptions, DLQ, requeue limits); host extras from
-    /// <c>GetWorkerMetadata</c> merge on top. See <see cref="Lyo.Job.Models.Constants.WorkerMetadata"/>.
+    /// <c>GetWorkerMetadata</c> merge on top. See <see cref="Lyo.Job.Models.Constants.WorkerMetadata" />.
     /// </summary>
     public IReadOnlyDictionary<string, string?>? Metadata { get; set; }
 }

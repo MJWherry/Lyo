@@ -7,8 +7,8 @@ namespace Lyo.Postgres;
 
 /// <summary>Reachability checks for Lyo stores that sit on PostgreSQL.</summary>
 /// <remarks>
-/// A store's <c>CheckHealthAsync</c> asks whether the database answers, times the call, and tags the result with the schema it owns. That shape is the same in every
-/// package, so implementations call here and only pass their schema.
+/// A store's <c>CheckHealthAsync</c> asks whether the database answers, times the call, and tags the result with the schema it owns. That shape is the same in every package,
+/// so implementations call here and only pass their schema.
 /// </remarks>
 public static class PostgresHealth
 {
@@ -25,13 +25,11 @@ public static class PostgresHealth
     {
         ArgumentHelpers.ThrowIfNull(contextFactory);
         var sw = Stopwatch.StartNew();
-        try
-        {
+        try {
             await using var context = await contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
             return await CheckAsync(context, schema, ct).ConfigureAwait(false);
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             sw.Stop();
             return HealthResult.Unhealthy(sw.Elapsed, ex.Message, null, ex);
         }
@@ -47,16 +45,14 @@ public static class PostgresHealth
     {
         ArgumentHelpers.ThrowIfNull(context);
         var sw = Stopwatch.StartNew();
-        try
-        {
+        try {
             var canConnect = await context.Database.CanConnectAsync(ct).ConfigureAwait(false);
             sw.Stop();
             return canConnect
                 ? HealthResult.Healthy(sw.Elapsed, null, new Dictionary<string, object?> { [SchemaMetadataKey] = schema })
                 : HealthResult.Unhealthy(sw.Elapsed, "Database connection failed");
         }
-        catch (Exception ex)
-        {
+        catch (Exception ex) {
             sw.Stop();
             return HealthResult.Unhealthy(sw.Elapsed, ex.Message, null, ex);
         }

@@ -1,6 +1,7 @@
 # Lyo.Recipe.Client
 
-`IRecipeClient` wraps ingredient-line and step GET/PUT, nested notes/tags, and multipart attachment upload. Category, ingredient, recipe, and attachment CRUD stay on `IApiClient`. Register with `AddRecipeClient<TApiClient>` or a factory overload. `RecipeClientOptions.RoutePrefix` is a path prefix, not an absolute URL.
+`IRecipeClient` wraps ingredient-line and step GET/PUT, nested notes/tags, and multipart attachment upload. Category, ingredient, recipe, and attachment CRUD stay on `IApiClient`.
+Register with `AddRecipeClient<TApiClient>` or a factory overload. `RecipeClientOptions.RoutePrefix` is a path prefix, not an absolute URL.
 
 ## Features
 

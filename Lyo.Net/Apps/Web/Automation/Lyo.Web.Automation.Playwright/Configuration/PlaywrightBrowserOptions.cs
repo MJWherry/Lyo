@@ -9,6 +9,9 @@ public class PlaywrightBrowserOptions
 {
     public const string SectionName = "PlaywrightBrowserOptions";
 
+    /// <summary>Chromium-only defaults. Do not pass these to Firefox or WebKit; Playwright treats unknown tokens as start URLs (for example <c>http://1920,1080</c>).</summary>
+    public static readonly string[] ChromiumDefaultLaunchArguments = ["--disable-infobars", "--disable-extensions", "--disable-dev-shm-usage", "--no-sandbox"];
+
     /// <summary>Which browser to launch. Chrome and Edge use the Chromium browser type with channel <c>chrome</c> or <c>msedge</c> when <see cref="Channel" /> is empty.</summary>
     public AutomationBrowserKind BrowserKind { get; set; } = AutomationBrowserKind.Chromium;
 
@@ -39,10 +42,7 @@ public class PlaywrightBrowserOptions
     /// </summary>
     public string ServiceRootDirectory { get; set; } = Path.Combine(Path.GetTempPath(), "lyo-playwright");
 
-    /// <summary>
-    /// Session profile directory; when null, resolved as <c>browser-profile/</c> under the session directory. Not passed as a Playwright persistent context in this
-    /// package.
-    /// </summary>
+    /// <summary>Session profile directory; when null, resolved as <c>browser-profile/</c> under the session directory. Not passed as a Playwright persistent context in this package.</summary>
     public string? BrowserUserDataDirectory { get; set; }
 
     /// <summary>Download directory; when null, resolved as <c>downloads/</c> under the session directory.</summary>
@@ -51,20 +51,15 @@ public class PlaywrightBrowserOptions
     /// <summary>Artifacts directory (HAR, traces); when null, resolved as <c>artifacts/</c> under the session directory.</summary>
     public string? ArtifactsDirectory { get; set; }
 
-    /// <summary>Chromium-only defaults. Do not pass these to Firefox or WebKit; Playwright treats unknown tokens as start URLs (for example <c>http://1920,1080</c>).</summary>
-    public static readonly string[] ChromiumDefaultLaunchArguments = ["--disable-infobars", "--disable-extensions", "--disable-dev-shm-usage", "--no-sandbox"];
-
     /// <summary>
     /// Extra launch arguments (Chromium/Edge). Each entry must start with <c>-</c>; Playwright rejects bare tokens (it treats them as an initial page URL). Do not add
-    /// <c>--disable-gpu</c> unless you need software GL: that flag forces SwiftShader (<c>SwiftShader Device (Subzero)</c>), which bot-detection sites flag. Docker hosts without a
-    /// GPU still use SwiftShader even without the flag; do not spoof <c>WEBGL_UNMASKED_RENDERER</c>. <see cref="ResolveLaunchArguments" /> omits these defaults (and
-    /// <c>--window-size</c>) when <see cref="BrowserKind" /> is Firefox or WebKit.
+    /// <c>--disable-gpu</c> unless you need software GL: that flag forces SwiftShader (<c>SwiftShader Device (Subzero)</c>), which bot-detection sites flag. Docker hosts without a GPU
+    /// still use SwiftShader even without the flag; do not spoof <c>WEBGL_UNMASKED_RENDERER</c>. <see cref="ResolveLaunchArguments" /> omits these defaults (and <c>--window-size</c>)
+    /// when <see cref="BrowserKind" /> is Firefox or WebKit.
     /// </summary>
     public List<string> LaunchArguments { get; set; } = [.. ChromiumDefaultLaunchArguments];
 
-    /// <summary>
-    /// User-Agent pool. Playwright uses the first entry. An empty list means <see cref="AutomationBrowserDetector.UserAgent" /> for <see cref="BrowserKind" />.
-    /// </summary>
+    /// <summary>User-Agent pool. Playwright uses the first entry. An empty list means <see cref="AutomationBrowserDetector.UserAgent" /> for <see cref="BrowserKind" />.</summary>
     public List<string> UserAgents { get; set; } = [];
 
     /// <summary>Viewport width in CSS pixels (<c>window.innerWidth</c>).</summary>
@@ -73,14 +68,10 @@ public class PlaywrightBrowserOptions
     /// <summary>Viewport height in CSS pixels (<c>window.innerHeight</c>).</summary>
     public int ViewportHeight { get; set; } = 1080;
 
-    /// <summary>
-    /// Reported as <c>window.screen.width</c>. Headless Chromium defaults to 800 when this is omitted; Playwright requires it to be ≥ <see cref="ViewportWidth" />.
-    /// </summary>
+    /// <summary>Reported as <c>window.screen.width</c>. Headless Chromium defaults to 800 when this is omitted; Playwright requires it to be ≥ <see cref="ViewportWidth" />.</summary>
     public int ScreenWidth { get; set; } = 1920;
 
-    /// <summary>
-    /// Reported as <c>window.screen.height</c>. Headless Chromium defaults to 600 when this is omitted; Playwright requires it to be ≥ <see cref="ViewportHeight" />.
-    /// </summary>
+    /// <summary>Reported as <c>window.screen.height</c>. Headless Chromium defaults to 600 when this is omitted; Playwright requires it to be ≥ <see cref="ViewportHeight" />.</summary>
     public int ScreenHeight { get; set; } = 1080;
 
     /// <summary>
@@ -145,13 +136,14 @@ public class PlaywrightBrowserOptions
 
         if (ScreenWidth < ViewportWidth)
             ScreenWidth = ViewportWidth;
+
         if (ScreenHeight < ViewportHeight)
             ScreenHeight = ViewportHeight;
     }
 
     /// <summary>
-    /// Launch args for this engine. Chromium gets <c>--window-size</c> matching the screen when missing. Firefox/WebKit drop Chromium defaults and never get
-    /// <c>--window-size</c> (Playwright opens that token as a URL). Every remaining entry must start with <c>-</c>.
+    /// Launch args for this engine. Chromium gets <c>--window-size</c> matching the screen when missing. Firefox/WebKit drop Chromium defaults and never get <c>--window-size</c>
+    /// (Playwright opens that token as a URL). Every remaining entry must start with <c>-</c>.
     /// </summary>
     public IReadOnlyList<string> ResolveLaunchArguments()
     {
@@ -184,18 +176,14 @@ public class PlaywrightBrowserOptions
     }
 
     /// <summary>User-Agent for a new context. An empty <see cref="UserAgents" /> list is generated for <see cref="BrowserKind" /> on this host.</summary>
-    public string ResolveContextUserAgent()
-        => UserAgents.Count == 0 ? AutomationBrowserDetector.UserAgent(BrowserKind) : UserAgents[0];
+    public string ResolveContextUserAgent() => UserAgents.Count == 0 ? AutomationBrowserDetector.UserAgent(BrowserKind) : UserAgents[0];
 
-    private bool UsesChromiumLaunchProfile()
-        => BrowserKind is AutomationBrowserKind.Chrome or AutomationBrowserKind.Chromium or AutomationBrowserKind.Edge;
+    private bool UsesChromiumLaunchProfile() => BrowserKind is AutomationBrowserKind.Chrome or AutomationBrowserKind.Chromium or AutomationBrowserKind.Edge;
 
     private static void EnsureLaunchArgIsFlag(string arg)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(arg);
-        ArgumentHelpers.ThrowIf(
-            !arg.StartsWith("-", StringComparison.Ordinal),
-            $"Launch argument '{arg}' must start with '-'; Playwright treats other tokens as a start URL.");
+        ArgumentHelpers.ThrowIf(!arg.StartsWith("-", StringComparison.Ordinal), $"Launch argument '{arg}' must start with '-'; Playwright treats other tokens as a start URL.");
     }
 
     private static bool IsChromiumBuiltinLaunchArg(string arg)

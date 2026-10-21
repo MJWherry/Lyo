@@ -8,9 +8,8 @@ namespace Lyo.FileMetadataStore;
 public static class FileTagGrouper
 {
     /// <summary>
-    /// Lists the immediate children of <paramref name="virtualPath" /> for <paramref name="groupBy" />.
-    /// A file missing the next key, or whose value does not parse, is a file in the current folder.
-    /// <c>imported</c> cannot use grain <see cref="FileTagGrain.Value" />.
+    /// Lists the immediate children of <paramref name="virtualPath" /> for <paramref name="groupBy" />. A file missing the next key, or whose value does not parse, is a file in
+    /// the current folder. <c>imported</c> cannot use grain <see cref="FileTagGrain.Value" />.
     /// </summary>
     public static FileTagGroupPage Group(
         IReadOnlyList<FileTagGroupKey> groupBy,
@@ -174,14 +173,12 @@ public static class FileTagGrouper
             FileTagValueKind.DateTime => RenderDateTime(value, key.Grain, fixedParts),
             FileTagValueKind.TimeOnly => RenderTimeOnly(value, key.Grain, fixedParts),
             FileTagValueKind.TimeSpan => RenderTimeSpan(value, key.Grain, fixedParts),
-            _ => null
+            var _ => null
         };
 
-    private static string? RenderGuid(string value)
-        => Guid.TryParse(value, out var id) ? id.ToString("D") : null;
+    private static string? RenderGuid(string value) => Guid.TryParse(value, out var id) ? id.ToString("D") : null;
 
-    private static string? RenderBoolean(string value)
-        => bool.TryParse(value, out var flag) ? flag ? "true" : "false" : null;
+    private static string? RenderBoolean(string value) => bool.TryParse(value, out var flag) ? flag ? "true" : "false" : null;
 
     private static string? RenderInteger(string value)
         => long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number) ? number.ToString(CultureInfo.InvariantCulture) : null;
@@ -209,7 +206,7 @@ public static class FileTagGrouper
             FileTagGrain.Day when fixedParts.Year => utc.ToString("MM-dd", CultureInfo.InvariantCulture),
             FileTagGrain.Day => utc.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             FileTagGrain.Hour or FileTagGrain.Minute or FileTagGrain.Second => RenderDateClock(utc, grain, fixedParts),
-            _ => null
+            var _ => null
         };
     }
 
@@ -227,8 +224,9 @@ public static class FileTagGrouper
         var clock = grain switch {
             FileTagGrain.Hour => utc.ToString("HH", CultureInfo.InvariantCulture),
             FileTagGrain.Minute => utc.ToString("HH:mm", CultureInfo.InvariantCulture),
-            _ => utc.ToString("HH:mm:ss", CultureInfo.InvariantCulture)
+            var _ => utc.ToString("HH:mm:ss", CultureInfo.InvariantCulture)
         };
+
         if (fixedParts.Day)
             return clock;
 
@@ -253,7 +251,7 @@ public static class FileTagGrouper
             FileTagGrain.Second when fixedParts.Minute => Two(time.Seconds),
             FileTagGrain.Second when fixedParts.Hour => Two(time.Minutes) + ":" + Two(time.Seconds),
             FileTagGrain.Second => Two(time.Hours) + ":" + Two(time.Minutes) + ":" + Two(time.Seconds),
-            _ => null
+            var _ => null
         };
     }
 
@@ -273,15 +271,13 @@ public static class FileTagGrouper
             FileTagGrain.Seconds when fixedParts.Hours => Whole(span.Minutes * 60 + span.Seconds),
             FileTagGrain.Seconds when fixedParts.Days => Whole((span.Hours * 60L + span.Minutes) * 60L + span.Seconds),
             FileTagGrain.Seconds => Whole(span.TotalSeconds),
-            _ => null
+            var _ => null
         };
     }
 
-    private static string Whole(double total)
-        => ((long)total).ToString(CultureInfo.InvariantCulture);
+    private static string Whole(double total) => ((long)total).ToString(CultureInfo.InvariantCulture);
 
-    private static string Two(int value)
-        => value.ToString("00", CultureInfo.InvariantCulture);
+    private static string Two(int value) => value.ToString("00", CultureInfo.InvariantCulture);
 
     private static bool TryParseUtc(string value, out DateTime utc)
     {
@@ -341,7 +337,7 @@ public static class FileTagGrouper
             FileTagValueKind.Boolean => CompareBoolean(a.Name, b.Name),
             FileTagValueKind.Integer or FileTagValueKind.Number or FileTagValueKind.TimeSpan => CompareNumeric(a.Name, b.Name),
             FileTagValueKind.DateTime or FileTagValueKind.TimeOnly => StringComparer.Ordinal.Compare(a.Name, b.Name),
-            _ => StringComparer.OrdinalIgnoreCase.Compare(a.Name, b.Name)
+            var _ => StringComparer.OrdinalIgnoreCase.Compare(a.Name, b.Name)
         };
     }
 

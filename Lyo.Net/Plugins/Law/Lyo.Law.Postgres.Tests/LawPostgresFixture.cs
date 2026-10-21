@@ -1,6 +1,5 @@
 using Lyo.Api;
 using Lyo.Cache;
-using Lyo.Law.Postgres;
 using Lyo.Law.Postgres.Database;
 using Lyo.Testing.Containers;
 using Microsoft.Extensions.DependencyInjection;

@@ -1,5 +1,4 @@
 using Lyo.Podcast.Postgres.Database;
-using Lyo.Podcast.Seed;
 using Lyo.Seed;
 
 namespace Lyo.Podcast.Seed.Tests;
@@ -47,6 +46,7 @@ public sealed class PodcastEfSeedContributorTests
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

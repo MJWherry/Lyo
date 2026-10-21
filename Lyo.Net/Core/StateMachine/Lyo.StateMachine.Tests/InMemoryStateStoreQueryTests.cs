@@ -19,12 +19,10 @@ public class InMemoryStateStoreQueryTests
     public async Task ListAsync_FiltersByStatesAndDue()
     {
         var store = await SeededAsync();
-
         var running = await store.ListAsync("job", new() { States = [JobState.Running] }, ct: TestCt);
         var dueSoon = await store.ListAsync("job", new() { DueBeforeUtc = T0.AddSeconds(7) }, ct: TestCt);
         var dueLater = await store.ListAsync("job", new() { DueBeforeUtc = T0.AddSeconds(20) }, ct: TestCt);
         var paged = await store.ListAsync("job", skip: 1, take: 1, ct: TestCt);
-
         Assert.Equal(["a", "b"], running.Select(i => i.InstanceKey));
         Assert.Equal(["b"], dueSoon.Select(i => i.InstanceKey));
         Assert.Equal(["b", "a"], dueLater.Select(i => i.InstanceKey));
@@ -43,11 +41,9 @@ public class InMemoryStateStoreQueryTests
     public async Task DeleteAsync_StaleVersion_ReturnsFalse()
     {
         var store = await SeededAsync();
-
         Assert.False(await store.DeleteAsync("job", "a", 5, TestCt));
         Assert.True(await store.DeleteAsync("job", "a", 1, TestCt));
         Assert.False(await store.DeleteAsync("job", "a", ct: TestCt));
-
         Assert.Null(await store.LoadAsync("job", "a", TestCt));
         Assert.Empty(await store.GetHistoryAsync("job", "a", ct: TestCt));
     }

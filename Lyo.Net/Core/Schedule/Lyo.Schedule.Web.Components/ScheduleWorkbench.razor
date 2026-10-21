@@ -370,15 +370,17 @@
 
 @code {
 
-    private RenderFragment<bool> EnabledIcon => enabled => @<text>
-        <MudIcon Icon="@(enabled ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
-                 Color="@(enabled ? Color.Success : Color.Default)"
-                 Size="Size.Small"/>
+    private RenderFragment<bool> EnabledIcon
+        => enabled => @<text>
+                           <MudIcon Icon="@(enabled ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)"
+                                    Color="@(enabled ? Color.Success : Color.Default)"
+                                    Size="Size.Small"/>
     </text>;
 
-    private RenderFragment<string> RemoveScheduleButton => id => @<text>
-        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
-                       title="Remove" OnClick="@(() => RemoveSchedule(id))"/>
+    private RenderFragment<string> RemoveScheduleButton
+        => id => @<text>
+                      <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                     title="Remove" OnClick="@(() => RemoveSchedule(id))"/>
     </text>;
 
 }

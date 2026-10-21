@@ -25,6 +25,7 @@ internal static class ShotClipboard
         IStorageFile? file = null;
         if (storage != null && !string.IsNullOrEmpty(path))
             file = await storage.TryGetFileFromPathAsync(path);
+
         using var stream = new MemoryStream(png);
         var bitmap = new Bitmap(stream);
         var transfer = new DataTransfer();
@@ -32,8 +33,10 @@ internal static class ShotClipboard
         item.SetBitmap(bitmap);
         if (file != null)
             item.SetFile(file);
+
         if (!string.IsNullOrEmpty(path))
             item.SetText(path);
+
         transfer.Add(item);
         await clipboard.SetDataAsync(transfer).ConfigureAwait(true);
         await clipboard.FlushAsync().ConfigureAwait(true);

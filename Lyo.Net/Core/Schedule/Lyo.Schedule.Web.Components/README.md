@@ -1,16 +1,17 @@
 # Lyo.Schedule.Web.Components
 
-Blazor component(s) for interactively building and previewing [`Lyo.Schedule.Models.ScheduleDefinition`](../Lyo.Schedule.Models/README.md) values.
+Blazor component (s) for interactively building and previewing [`Lyo.Schedule.Models.ScheduleDefinition`](../Lyo.Schedule.Models/README.md) values.
 
 ## Components
 
-| Component | What it does |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Component           | What it does                                                                                                                                                                                                                                                                                                                                                                  |
+|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `ScheduleWorkbench` | Interactive editor for `ScheduleDefinition`. Chooses the `ScheduleType` (`SetTimes` / `Interval` / `OneShot` / `Cron`), shows the matching inputs for that type (day/month flags, time pickers, interval bounds, one-shot timestamp, cron string), validates with `ScheduleDefinition.Validate()`, and previews the visible month on `LyoCalendar` plus the next occurrences. |
 
 ## Wiring into a host
 
-`<ScheduleWorkbench />` is a pure component. Pass a `ScheduleDefinition?` initial value as a parameter and take the updated value from the value-changed callback. MudBlazor layout primitives come from [`Lyo.Web.Components`](../../../Apps/Web/Lyo.Web.Components/README.md).
+`<ScheduleWorkbench />` is a pure component. Pass a `ScheduleDefinition?` initial value as a parameter and take the updated value from the value-changed callback. MudBlazor layout
+primitives come from [`Lyo.Web.Components`](../../../Apps/Web/Lyo.Web.Components/README.md).
 
 ## Dependencies
 

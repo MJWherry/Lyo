@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Components;
 namespace Lyo.Web.Primitives;
 
 /// <summary>
-/// Navigation trail above a page title. Takes <see cref="LyoBreadcrumb" /> records so callers describe the trail in C# rather than building MudBlazor's item type,
-/// and renders nothing at all when the trail is empty so a top-level page needs no conditional around it.
+/// Navigation trail above a page title. Takes <see cref="LyoBreadcrumb" /> records so callers describe the trail in C# rather than building MudBlazor's item type, and
+/// renders nothing at all when the trail is empty so a top-level page needs no conditional around it.
 /// </summary>
 /// <remarks>
 /// Normally set through <see cref="LyoPageHeader.Breadcrumbs" /> rather than used directly.
@@ -26,6 +26,5 @@ public partial class LyoBreadcrumbs
     [Parameter]
     public string? Class { get; set; }
 
-    private List<BreadcrumbItem> MudItems
-        => [.. (Items ?? []).Select(item => new BreadcrumbItem(item.Text, item.Href, string.IsNullOrWhiteSpace(item.Href), item.Icon))];
+    private List<BreadcrumbItem> MudItems => [.. (Items ?? []).Select(item => new BreadcrumbItem(item.Text, item.Href, string.IsNullOrWhiteSpace(item.Href), item.Icon))];
 }

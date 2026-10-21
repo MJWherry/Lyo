@@ -1,12 +1,12 @@
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Postgres.Database;
 using Lyo.Authentication.Services.Users;
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Authentication.Postgres.Stores;
 
@@ -45,6 +45,7 @@ public sealed class PostgresUserClaimStore : IUserClaimStore
             .OrderBy(c => c.CreatedTimestamp)
             .ToListAsync(ct)
             .ConfigureAwait(false);
+
         return rows.Select(ToRecord).ToArray();
     }
 
@@ -88,6 +89,5 @@ public sealed class PostgresUserClaimStore : IUserClaimStore
             UpdatedTimestamp = claim.UpdatedAt
         };
 
-    private static LyoUserClaim ToRecord(UserClaimEntity entity)
-        => new(entity.Id, entity.UserId, entity.Type, entity.Value, entity.CreatedTimestamp, entity.UpdatedTimestamp);
+    private static LyoUserClaim ToRecord(UserClaimEntity entity) => new(entity.Id, entity.UserId, entity.Type, entity.Value, entity.CreatedTimestamp, entity.UpdatedTimestamp);
 }

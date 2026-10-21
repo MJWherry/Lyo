@@ -8,7 +8,6 @@ using Lyo.Api.Services.Crud.Create;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Cache;
 using Lyo.Common.Core.Identifiers;
-using Lyo.Exceptions;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Request;
@@ -23,8 +22,8 @@ using Constants = Lyo.Job.Models.Constants;
 namespace Lyo.Job.Postgres;
 
 /// <summary>
-/// Starts workflow runs. A workflow run is materialized here as a <see cref="JobWorkflowRunState.Pending" /> run plus one <see cref="JobWorkflowStepState.Pending" /> run step
-/// per enabled step; the <c>JobWorkflowEngine</c> picks it up from the published created-event and dispatches the roots. Nothing in this service dispatches job runs itself.
+/// Starts workflow runs. A workflow run is materialized here as a <see cref="JobWorkflowRunState.Pending" /> run plus one <see cref="JobWorkflowStepState.Pending" /> run
+/// step per enabled step; the <c>JobWorkflowEngine</c> picks it up from the published created-event and dispatches the roots. Nothing in this service dispatches job runs itself.
 /// </summary>
 public sealed class JobWorkflowService(
     ILogger<JobWorkflowService> logger,
@@ -50,7 +49,7 @@ public sealed class JobWorkflowService(
     /// <returns>The created (or already-existing) workflow run, or a failure when the workflow is missing, disabled, or has nothing to run.</returns>
     public async Task<CreateResult<JobWorkflowRunRes>> StartWorkflowAsync(Guid workflowId, JobWorkflowStartReq? request = null, CancellationToken ct = default)
     {
-        request ??= new JobWorkflowStartReq();
+        request ??= new();
         await using var db = await dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var workflow = await db.JobWorkflows.AsNoTracking().Include(w => w.JobWorkflowSteps).FirstOrDefaultAsync(w => w.Id == workflowId, ct).ConfigureAwait(false);
         if (workflow is null)
@@ -76,7 +75,6 @@ public sealed class JobWorkflowService(
         }
 
         var inputsJson = await ResolveInputsAsync(db, request, ct).ConfigureAwait(false);
-
         CreateResult<JobWorkflowRunRes> result;
         try {
             result = await CreateRunAsync(workflowId, request, steps, inputsJson, ct).ConfigureAwait(false);
@@ -107,15 +105,16 @@ public sealed class JobWorkflowService(
         }
         catch (Exception ex) {
             _metrics.IncrementCounter(Constants.Metrics.Workflow.RunDispatchDeferred);
-            logger.LogError(ex, "Workflow run {WorkflowRunId} was created but the created-event publish failed; the run will stay Pending until it is redispatched", result.Data!.Id);
+            logger.LogError(
+                ex, "Workflow run {WorkflowRunId} was created but the created-event publish failed; the run will stay Pending until it is redispatched", result.Data!.Id);
         }
 
         return result;
     }
 
     /// <summary>
-    /// Freezes the values this run branches on: the schedule's enabled parameters as the base, the caller's inputs layered over them. Resolving once here rather than per
-    /// step is what stops an edit to a schedule parameter mid-run from flipping a gate that already went the other way.
+    /// Freezes the values this run branches on: the schedule's enabled parameters as the base, the caller's inputs layered over them. Resolving once here rather than per step is
+    /// what stops an edit to a schedule parameter mid-run from flipping a gate that already went the other way.
     /// </summary>
     /// <returns>Serialized flat string map, or null when the start supplied nothing and the schedule declares nothing.</returns>
     private static async Task<string?> ResolveInputsAsync(JobContext db, JobWorkflowStartReq start, CancellationToken ct)
@@ -153,14 +152,7 @@ public sealed class JobWorkflowService(
             JobScheduleId = start.JobScheduleId,
             ScheduledSlotUtc = start.ScheduledSlotUtc,
             InputsJson = inputsJson,
-            CreateRunSteps = [
-                .. steps.Select(
-                    s => new JobWorkflowRunStepReq {
-                        JobWorkflowRunId = runId,
-                        JobWorkflowStepId = s.Id,
-                        State = JobWorkflowStepState.Pending
-                    })
-            ]
+            CreateRunSteps = [.. steps.Select(s => new JobWorkflowRunStepReq { JobWorkflowRunId = runId, JobWorkflowStepId = s.Id, State = JobWorkflowStepState.Pending })]
         };
 
         return createService.CreateAsync<JobWorkflowRunReq, JobWorkflowRun, JobWorkflowRunRes>(
@@ -195,9 +187,8 @@ public sealed class JobWorkflowService(
     private static bool MentionsDedupeConstraint(LyoProblemDetails? error)
     {
         var message = error?.GetFullMessage();
-        return message is not null
-            && (message.Contains(IdempotencyKeyUniqueConstraint, StringComparison.OrdinalIgnoreCase)
-                || message.Contains(ScheduleSlotUniqueConstraint, StringComparison.OrdinalIgnoreCase));
+        return message is not null && (message.Contains(IdempotencyKeyUniqueConstraint, StringComparison.OrdinalIgnoreCase) ||
+            message.Contains(ScheduleSlotUniqueConstraint, StringComparison.OrdinalIgnoreCase));
     }
 
     private CreateResult<JobWorkflowRunRes> Rejected(string message, string code, string metricReason)

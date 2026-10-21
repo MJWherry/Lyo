@@ -5,7 +5,7 @@ using Lyo.Story.Enums;
 
 namespace Lyo.Story.Builders;
 
-/// <summary>Builds a <see cref="StoryReaction"/> rule.</summary>
+/// <summary>Builds a <see cref="StoryReaction" /> rule.</summary>
 public sealed class StoryReactionBuilder
 {
     private readonly StoryReaction _reaction;
@@ -18,7 +18,7 @@ public sealed class StoryReactionBuilder
         _reaction = new() { Key = key };
     }
 
-    /// <summary>Trigger for this rule. Optional <paramref name="scopeKey"/> is a node key or variable key depending on the trigger.</summary>
+    /// <summary>Trigger for this rule. Optional <paramref name="scopeKey" /> is a node key or variable key depending on the trigger.</summary>
     public StoryReactionBuilder On(StoryTrigger trigger, string? scopeKey = null)
     {
         _reaction.Trigger = trigger;
@@ -26,6 +26,7 @@ public sealed class StoryReactionBuilder
             _reaction.ScopeVariableKey = scopeKey;
         else if (trigger is StoryTrigger.EnterNode or StoryTrigger.LeaveNode or StoryTrigger.Advanced or StoryTrigger.ChoiceTaken)
             _reaction.ScopeNodeKey = scopeKey;
+
         return this;
     }
 

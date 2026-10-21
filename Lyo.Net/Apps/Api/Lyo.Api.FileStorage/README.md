@@ -1,6 +1,10 @@
 # Lyo.Api.FileStorage
 
-HTTP endpoints for Lyo file storage. After a keyed `IFileStorageService` (plus multipart and archive) is registered, hosts map `BuildFileStorageApi`. When `IFileStorageFactory` is registered, `GET {Route}/stores` lists each name and `{Route}/{name}`. File and multipart calls for that store use the name. `FileStorage:Default` serves the bare route. FileMetadata Query/QueryProject stays on the host route. Access links stay on the bare route. `GET capabilities` lists feature flags for presigned read, direct upload, multipart, copy, move, physical listing, encryption, archive, and access links. It does not include bucket, disk root, or keystore location. `GET key-ids` lists encryption key identifiers; keystore CRUD is not part of this API.
+HTTP endpoints for Lyo file storage. After a keyed `IFileStorageService` (plus multipart and archive) is registered, hosts map `BuildFileStorageApi`. When `IFileStorageFactory` is
+registered, `GET {Route}/stores` lists each name and `{Route}/{name}`. File and multipart calls for that store use the name. `FileStorage:Default` serves the bare route.
+FileMetadata Query/QueryProject stays on the host route. Access links stay on the bare route. `GET capabilities` lists feature flags for presigned read, direct upload, multipart,
+copy, move, physical listing, encryption, archive, and access links. It does not include bucket, disk root, or keystore location. `GET key-ids` lists encryption key identifiers;
+keystore CRUD is not part of this API.
 
 ## Examples
 
@@ -28,7 +32,14 @@ FileMetadata QueryProject stays at FileStorage/FileMetadata. The grid does not s
 
 ## Routes this maps
 
-At `FileStorageApiOptions.Route` the group exposes: health, `GET capabilities` (feature flags only; no bucket, disk root, or keystore location), save/save-stream, copy/move/rename, metadata, download (always streams through the host, honors `?inline=true`; decrypt/decompress on the API; a full response sets `Content-Digest` for the plaintext hash). A single `Range` on any uncompressed object, including an encrypted one, returns `206` with `Accept-Ranges: bytes` when the backend can slice. An encrypted object is decrypted from the chunk that holds the requested plaintext offset. The initial `200` for that file also sends `Accept-Ranges`. Compressed objects ignore `Range` and stay a full `200` without `Accept-Ranges`. A well-formed range that starts at or past the end returns `416`. The same group also maps `GET files/{id}/integrity` (plaintext hash, algorithm, and size), archive, access-links, presigned-read (direct-to-bucket URL), DEK migrate/rotate, `GET key-ids` (encryption key identifiers only, no raw material), `GET files/folder` (store PathPrefix plus reconcile, flags `Store` / `Physical` / `Both`), `diagnostics/storage-keys`, `multipart/*`, `direct-upload/*`. Optional `POST DirectUploadPath` (default `upload/file`). A read-only FileMetadata QueryProject lives at `FileMetadataRoute`. No `keys/*` CRUD routes exist. Wire DTOs live in `Lyo.Api.FileStorage.Models`.
+At `FileStorageApiOptions.Route` the group exposes: health, `GET capabilities` (feature flags only; no bucket, disk root, or keystore location), save/save-stream, copy/move/rename,
+metadata, download (always streams through the host, honors `?inline=true`; decrypt/decompress on the API; a full response sets `Content-Digest` for the plaintext hash). A single
+`Range` on any uncompressed object, including an encrypted one, returns `206` with `Accept-Ranges: bytes` when the backend can slice. An encrypted object is decrypted from the
+chunk that holds the requested plaintext offset. The initial `200` for that file also sends `Accept-Ranges`. Compressed objects ignore `Range` and stay a full `200` without
+`Accept-Ranges`. A well-formed range that starts at or past the end returns `416`. The same group also maps `GET files/{id}/integrity` (plaintext hash, algorithm, and size),
+archive, access-links, presigned-read (direct-to-bucket URL), DEK migrate/rotate, `GET key-ids` (encryption key identifiers only, no raw material), `GET files/folder` (store
+PathPrefix plus reconcile, flags `Store` / `Physical` / `Both`), `diagnostics/storage-keys`, `multipart/*`, `direct-upload/*`. Optional `POST DirectUploadPath` (default
+`upload/file`). A read-only FileMetadata QueryProject lives at `FileMetadataRoute`. No `keys/*` CRUD routes exist. Wire DTOs live in `Lyo.Api.FileStorage.Models`.
 
 ## Dependencies
 

@@ -8,6 +8,14 @@ namespace Lyo.Law.Web.Components;
 /// <summary>Projected statute grid. Body is not selected. Open a row to read and save it.</summary>
 public partial class LawNodeGrid
 {
+    private static readonly string[] _keySelectFields = ["Id", "Citation", "Heading", "Label", "Kind", "IsRepealed", "Code.Key", "Code.Jurisdiction.Key", "Annotations.Count"];
+
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [
+        new("Code.Jurisdiction.Key", "State"), new("Code.Name", "Code"), new("Kind"), new("Label"), new("Citation"), new("Heading")
+    ];
+
+    private LyoDataGridProjected? _dataGrid;
+
     /// <summary>HTTP client used for QueryProject.</summary>
     [Parameter]
     [EditorRequired]
@@ -23,21 +31,6 @@ public partial class LawNodeGrid
     public string BaseRoute { get; set; } = Constants.Rest.Law.Route;
 
     private string _nodesRoute => $"{BaseRoute.TrimEnd('/')}/Nodes";
-
-    private LyoDataGridProjected? _dataGrid;
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [
-        new("Code.Jurisdiction.Key", "State"),
-        new("Code.Name", "Code"),
-        new("Kind"),
-        new("Label"),
-        new("Citation"),
-        new("Heading")
-    ];
-
-    private static readonly string[] _keySelectFields = [
-        "Id", "Citation", "Heading", "Label", "Kind", "IsRepealed", "Code.Key", "Code.Jurisdiction.Key", "Annotations.Count"
-    ];
 
     private async Task OpenNode(object? item)
     {

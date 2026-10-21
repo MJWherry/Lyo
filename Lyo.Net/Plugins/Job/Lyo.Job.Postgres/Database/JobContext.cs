@@ -241,7 +241,6 @@ public partial class JobContext : DbContext
             // Serves the scheduler's latest-run lookups (newest run per definition, optionally filtered by result). Without the trailing
             // descending timestamp, Postgres had to sort the whole per-definition partition on every refresh.
             entity.HasIndex(e => new { e.JobDefinitionId, e.CreatedTimestamp }).IsDescending(false, true).HasDatabaseName("ix_job_run_definition_created_desc");
-
             entity.HasIndex(e => new { e.JobDefinitionId, e.Result, e.CreatedTimestamp })
                 .IsDescending(false, false, true)
                 .HasDatabaseName("ix_job_run_definition_result_created_desc");
@@ -259,7 +258,6 @@ public partial class JobContext : DbContext
             // the migration is metadata-only and no physical column is added. Guards the read-modify-write paths (notably maintenance
             // dead-job detection) against overwriting a worker's concurrent finish.
             entity.Property<uint>("Version").HasColumnName("xmin").IsRowVersion();
-
             entity.HasOne(d => d.JobDefinition)
                 .WithMany(p => p.JobRuns)
                 .HasForeignKey(d => d.JobDefinitionId)
@@ -361,11 +359,7 @@ public partial class JobContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_job_schedule_job_definition_job_definition_id");
 
-            entity.HasOne(d => d.JobWorkflow)
-                .WithMany(p => p.JobSchedules)
-                .HasForeignKey(d => d.JobWorkflowId)
-                .HasConstraintName("fk_job_schedule_job_workflow_job_workflow_id");
-
+            entity.HasOne(d => d.JobWorkflow).WithMany(p => p.JobSchedules).HasForeignKey(d => d.JobWorkflowId).HasConstraintName("fk_job_schedule_job_workflow_job_workflow_id");
             entity.HasOne(d => d.JobBlackoutCalendar)
                 .WithMany(p => p.JobSchedules)
                 .HasForeignKey(d => d.JobBlackoutCalendarId)
@@ -485,10 +479,7 @@ public partial class JobContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("fk_job_workflow_run_job_workflow_job_workflow_id");
 
-            entity.HasOne(d => d.JobSchedule)
-                .WithMany()
-                .HasForeignKey(d => d.JobScheduleId)
-                .HasConstraintName("fk_job_workflow_run_job_schedule_job_schedule_id");
+            entity.HasOne(d => d.JobSchedule).WithMany().HasForeignKey(d => d.JobScheduleId).HasConstraintName("fk_job_workflow_run_job_schedule_job_schedule_id");
         });
 
         modelBuilder.Entity<JobWorkflowRunStep>(entity => {

@@ -1,4 +1,3 @@
-
 namespace Lyo.Common.Core.Enums;
 
 /// <summary>Which UUID variant to mint.</summary>

@@ -1,11 +1,12 @@
 # Lyo.Formatter.Algorithms
 
-Registers an IFormatterExpressionEvaluator that understands Algo("key") and score("key") by calling IAlgorithmRegistry. Lyo.Formatter does not reference Algorithms. Job, Api, and AddFormatterService stay unchanged until a host calls AddFormatterAlgorithms().
+Registers an IFormatterExpressionEvaluator that understands Algo ("key") and score ("key") by calling IAlgorithmRegistry. Lyo.Formatter does not reference Algorithms. Job, Api, and
+AddFormatterService stay unchanged until a host calls AddFormatterAlgorithms ().
 
 ## Features
 
 - **Opt-in.** AddFormatterAlgorithms after AddAlgorithms and AddFormatterService. Hosts that skip it keep the built-in DateTime and LINQ expressions.
-- **Latest key.** The token is the whole expression: {Algo("attack.physical")} or {score("fish.score")}. Pins and labels stay on AlgorithmRef in application code.
+- **Latest key.** The token is the whole expression: {Algo ("attack.physical")} or {score ("fish.score")}. Pins and labels stay on AlgorithmRef in application code.
 - **Same registry.** A cold key is loaded once. Later formats hit the compiled delegate.
 
 ## Examples

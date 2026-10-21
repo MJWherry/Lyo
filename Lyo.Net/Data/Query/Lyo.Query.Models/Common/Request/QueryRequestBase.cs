@@ -18,8 +18,8 @@ public abstract class QueryRequestBase
     public int? Amount { get; set; }
 
     /// <summary>
-    /// Optional primary-key values to fetch specific entities. Each element is a key array. Single-key entities: one value per row, e.g. [[1], [2], [3]] for ids 1,
-    /// 2, 3. Composite-key entities: multiple values per row in key order, e.g. [["tenant-a", 1], ["tenant-b", 2]] for (TenantId, Id).
+    /// Optional primary-key values to fetch specific entities. Each element is a key array. Single-key entities: one value per row, e.g. [[1], [2], [3]] for ids 1, 2, 3.
+    /// Composite-key entities: multiple values per row in key order, e.g. [["tenant-a", 1], ["tenant-b", 2]] for (TenantId, Id).
     /// </summary>
     public List<object[]> Keys { get; set; } = [];
 

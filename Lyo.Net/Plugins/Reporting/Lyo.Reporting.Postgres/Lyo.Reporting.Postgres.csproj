@@ -40,7 +40,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Remove="Mapping\CompositeLyoMapper.cs" />
+        <Compile Remove="Mapping\CompositeLyoMapper.cs"/>
     </ItemGroup>
 
 </Project>

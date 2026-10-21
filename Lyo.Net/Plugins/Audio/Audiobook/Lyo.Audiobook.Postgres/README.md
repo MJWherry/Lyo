@@ -1,6 +1,7 @@
 # Lyo.Audiobook.Postgres
 
-PostgreSQL and EF Core implementation of `Lyo.Audiobook.IAudiobookStore` (`PostgresAudiobookStore`) via `AudiobookDbContext`, schema `audiobook`, and `AddPostgresMigrations`. `PostgresAudiobookStore` implements `Lyo.Health.IHealth`.
+PostgreSQL and EF Core implementation of `Lyo.Audiobook.IAudiobookStore` (`PostgresAudiobookStore`) via `AudiobookDbContext`, schema `audiobook`, and `AddPostgresMigrations`.
+`PostgresAudiobookStore` implements `Lyo.Health.IHealth`.
 
 ## Features
 

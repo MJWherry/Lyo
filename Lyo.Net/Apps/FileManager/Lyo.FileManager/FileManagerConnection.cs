@@ -7,14 +7,6 @@ public sealed class FileManagerConnection
 {
     private readonly string? _keyStoreName;
 
-    internal FileManagerConnection(FileManagerServer server, IFileManagerApi api, Guid? keyStoreId, string? keyStoreName)
-    {
-        Server = server;
-        Api = api;
-        KeyStoreId = keyStoreId;
-        _keyStoreName = string.IsNullOrWhiteSpace(keyStoreName) ? null : keyStoreName.Trim();
-    }
-
     /// <summary>Saved server this connection opened.</summary>
     public FileManagerServer Server { get; }
 
@@ -47,4 +39,12 @@ public sealed class FileManagerConnection
 
     /// <summary>Rows from the last query on this connection.</summary>
     public IReadOnlyList<FileManagerQueryRow> QueryRows { get; internal set; } = [];
+
+    internal FileManagerConnection(FileManagerServer server, IFileManagerApi api, Guid? keyStoreId, string? keyStoreName)
+    {
+        Server = server;
+        Api = api;
+        KeyStoreId = keyStoreId;
+        _keyStoreName = string.IsNullOrWhiteSpace(keyStoreName) ? null : keyStoreName.Trim();
+    }
 }

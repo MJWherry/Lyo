@@ -1,6 +1,7 @@
 # Lyo.Favorite.Seed
 
-`FavoriteEfSeedContributor` writes `options.Count` public favorite rows for tenant `FavoriteEfSeedContributor.TenantId` and subject `seed` / `seed`. `OnClear` deletes favorites so `--replace` can run.
+`FavoriteEfSeedContributor` writes `options.Count` public favorite rows for tenant `FavoriteEfSeedContributor.TenantId` and subject `seed` / `seed`. `OnClear` deletes favorites so
+`--replace` can run.
 
 ## Features
 

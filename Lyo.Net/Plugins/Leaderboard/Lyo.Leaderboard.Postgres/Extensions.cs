@@ -18,12 +18,11 @@ public static class Extensions
     public static WebApplication MapLeaderboardQueryEndpoints(this WebApplication app)
     {
         ArgumentHelpers.ThrowIfNull(app);
-        app.CreateBuilder<LeaderboardDbContext, EntryEntity, EntryEntity, EntryEntity, Guid>("Leaderboard/Entry", "Leaderboard")
-            .WithCrud(ApiFeatureSet.ReadOnly, new())
-            .Build();
+        app.CreateBuilder<LeaderboardDbContext, EntryEntity, EntryEntity, EntryEntity, Guid>("Leaderboard/Entry", "Leaderboard").WithCrud(ApiFeatureSet.ReadOnly, new()).Build();
         app.CreateBuilder<LeaderboardDbContext, StandingEntity, StandingEntity, StandingEntity, Guid>("Leaderboard/Standing", "Leaderboard")
             .WithCrud(new(ApiFeature.Query), new())
             .Build();
+
         return app;
     }
 
@@ -40,9 +39,7 @@ public static class Extensions
         }
 
         /// <summary>Registers the leaderboard DbContext factory from configuration.</summary>
-        public IServiceCollection AddLeaderboardDbContextFactoryFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresLeaderboardOptions.SectionName)
+        public IServiceCollection AddLeaderboardDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresLeaderboardOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
@@ -72,9 +69,7 @@ public static class Extensions
         }
 
         /// <summary>Registers <see cref="ILeaderboardStore" /> from configuration.</summary>
-        public IServiceCollection AddPostgresLeaderboardStoreFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresLeaderboardOptions.SectionName)
+        public IServiceCollection AddPostgresLeaderboardStoreFromConfiguration(IConfiguration configuration, string configSectionName = PostgresLeaderboardOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

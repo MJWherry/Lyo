@@ -9,18 +9,19 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Lyo.Authorization;
 
 /// <summary>
-/// Counts allow and deny, audits saves and revokes, and keeps store failures off the deny counter.
-/// <see cref="IMetrics.RecordError" /> is given a fixed message so a provider exception cannot leak a subject.
+/// Counts allow and deny, audits saves and revokes, and keeps store failures off the deny counter. <see cref="IMetrics.RecordError" /> is given a fixed message so a provider
+/// exception cannot leak a subject.
 /// </summary>
 public sealed class ResourceAuthorization : IResourceAuthorization
 {
     /// <summary>Fixed <see cref="IMetrics.RecordError" /> message.</summary>
     public const string StoreFailedMessage = "authorization.store_failed";
 
-    private readonly IGrantStore _store;
-    private readonly IMetrics _metrics;
-    private readonly ILogger _logger;
     private readonly IAuditRecorder _audit;
+    private readonly ILogger _logger;
+    private readonly IMetrics _metrics;
+
+    private readonly IGrantStore _store;
 
     /// <summary>Wraps <paramref name="store" />. Missing metrics, logger, and audit recorder become no-ops.</summary>
     public ResourceAuthorization(IGrantStore store, IMetrics? metrics = null, ILogger? logger = null, IAuditRecorder? audit = null)
@@ -37,9 +38,12 @@ public sealed class ResourceAuthorization : IResourceAuthorization
     {
         ArgumentHelpers.ThrowIfNull(write);
         try {
-            var before = await _store.ListAsync(new GrantListQuery { Subject = write.Subject, IncludeExpired = true, Take = GrantListQuery.MaxTake }, ct).ConfigureAwait(false);
+            var before = await _store.ListAsync(new() { Subject = write.Subject, IncludeExpired = true, Take = GrantListQuery.MaxTake }, ct).ConfigureAwait(false);
             var saved = await _store.SaveAsync(write, ct).ConfigureAwait(false);
-            var superseded = before.Any(g => g.RevokedAt is null && g.Subject == saved.Subject && g.Action == saved.Action && g.ResourceType == saved.ResourceType && g.ResourceId == saved.ResourceId && g.TenantId == saved.TenantId && g.Id != saved.Id);
+            var superseded = before.Any(g
+                => g.RevokedAt is null && g.Subject == saved.Subject && g.Action == saved.Action && g.ResourceType == saved.ResourceType && g.ResourceId == saved.ResourceId &&
+                g.TenantId == saved.TenantId && g.Id != saved.Id);
+
             _metrics.IncrementCounter(superseded ? "authorization.grant.superseded" : "authorization.grant.saved");
             await AuditAsync(superseded ? "authorization.grant.superseded" : "authorization.grant.saved", saved.Subject, saved.GrantedBy, ct).ConfigureAwait(false);
             return saved;
@@ -83,11 +87,7 @@ public sealed class ResourceAuthorization : IResourceAuthorization
             throw;
         }
 
-        _metrics.IncrementCounter("authorization.grant.check", tags: [
-            ("result", allowed ? "allow" : "deny"),
-            ("action", check.Action),
-            ("resource_type", check.ResourceType)
-        ]);
+        _metrics.IncrementCounter("authorization.grant.check", tags: [("result", allowed ? "allow" : "deny"), ("action", check.Action), ("resource_type", check.ResourceType)]);
         if (allowed)
             _logger.LogInformation("Grant {Result} {Action} {ResourceType}", "allow", check.Action, check.ResourceType);
         else {
@@ -104,7 +104,8 @@ public sealed class ResourceAuthorization : IResourceAuthorization
             EntityRef? actor = null;
             if (!string.IsNullOrWhiteSpace(grantedBy))
                 actor = new EntityRef("authorization.actor", grantedBy);
-            await _audit.RecordEventAsync(new AuditEvent(new EntityRef("authorization.subject", subject), eventType, Actor: actor), ct).ConfigureAwait(false);
+
+            await _audit.RecordEventAsync(new(new("authorization.subject", subject), eventType, Actor: actor), ct).ConfigureAwait(false);
         }
         catch (Exception ex) {
             _logger.LogDebug(ex, "Grant audit failed for {EventType}", eventType);

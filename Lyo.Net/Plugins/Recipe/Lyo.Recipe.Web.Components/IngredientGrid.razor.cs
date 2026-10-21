@@ -1,5 +1,4 @@
 using Lyo.Api.Models.Common.Response;
-using Lyo.Query.Models.Common.Request;
 using Lyo.Web.Components.DataGrid;
 using Lyo.Web.Components.Dialog;
 using Lyo.Web.Components.Models;
@@ -9,6 +8,10 @@ namespace Lyo.Recipe.Web.Components;
 /// <summary>Projected ingredient catalog grid.</summary>
 public partial class IngredientGrid
 {
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Name"), new("Slug")];
+
+    private LyoDataGridProjected? _dataGrid;
+
     /// <summary>HTTP client.</summary>
     [Parameter]
     [EditorRequired]
@@ -30,10 +33,6 @@ public partial class IngredientGrid
 
     private string _route => $"{BaseRoute.TrimEnd('/')}/Ingredients";
 
-    private LyoDataGridProjected? _dataGrid;
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Name"), new("Slug")];
-
     private async Task OpenCreate()
     {
         var parameters = new DialogParameters<IngredientView> {
@@ -43,6 +42,7 @@ public partial class IngredientGrid
             { d => d.FileStorageApiRoutePrefix, FileStorageApiRoutePrefix },
             { d => d.Ingredient, null }
         };
+
         var dialog = await DialogService.ShowAsync<IngredientView>("New ingredient", parameters, LyoDialogPresets.Medium);
         var result = await dialog.Result;
         if (result is { Canceled: false } && _dataGrid != null)
@@ -54,7 +54,7 @@ public partial class IngredientGrid
         if (!ProjectedValueHelper.TryGetGuid(ProjectedValueHelper.GetValue(item, "Id"), out var id))
             return;
 
-        var res = await ApiClient.QueryConcreteAsync<QueryRes<IngredientRes>>(_route, new QueryConcreteReq { Keys = [[id]], Amount = 1 });
+        var res = await ApiClient.QueryConcreteAsync<QueryRes<IngredientRes>>(_route, new() { Keys = [[id]], Amount = 1 });
         var loaded = res?.Items?.FirstOrDefault();
         if (loaded == null)
             return;
@@ -66,6 +66,7 @@ public partial class IngredientGrid
             { d => d.FileStorageApiRoutePrefix, FileStorageApiRoutePrefix },
             { d => d.Ingredient, loaded }
         };
+
         var dialog = await DialogService.ShowAsync<IngredientView>("Ingredient", parameters, LyoDialogPresets.Medium);
         var result = await dialog.Result;
         if (result is { Canceled: false } && _dataGrid != null)

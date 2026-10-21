@@ -1,19 +1,16 @@
 using System.Text.Json;
-using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
-using Lyo.Common.Metadata.Records;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Job.Client;
 using Lyo.Job.Models;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
-using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Tests.Postgres;
 using Lyo.Job.Worker;
 using Lyo.MessageQueue;
 using Microsoft.Extensions.Logging.Abstractions;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Tests;
 
@@ -31,17 +28,14 @@ public class JobWorkerBaseDrainTests
         var worker = new GatedJobWorker(mq, new JobClient(api), new FakeJobEventPublisher());
         await worker.StartAsync(TestCt);
         Assert.Equal(1, api.RegisterCount);
-
         var handler = mq.GetHandler(Constants.Mq.QueueGetJobRunCreated("cs"));
         Assert.NotNull(handler);
         var delivery = Task.Run(() => handler!(Envelope(api.RunId)), TestCt);
         await WaitUntilAsync(() => worker.ExecutionStarted, TimeSpan.FromSeconds(5), TestCt);
-
         var stopping = worker.StopAsync(CancellationToken.None);
         await Task.Delay(250, TestCt);
         Assert.False(stopping.IsCompleted);
         Assert.Equal(0, api.DeregisterCount);
-
         worker.ReleaseExecution();
         await stopping;
         await delivery;
@@ -61,8 +55,7 @@ public class JobWorkerBaseDrainTests
         Assert.False(worker.IsRunning);
     }
 
-    private static byte[] Envelope(Guid runId)
-        => JsonSerializer.SerializeToUtf8Bytes(new QueueMessageEnvelope<Guid>(runId, 0, runId.ToString("D"), DateTime.UtcNow));
+    private static byte[] Envelope(Guid runId) => JsonSerializer.SerializeToUtf8Bytes(new QueueMessageEnvelope<Guid>(runId, 0, runId.ToString("D"), DateTime.UtcNow));
 
     private static async Task WaitUntilAsync(Func<bool> condition, TimeSpan timeout, CancellationToken ct)
     {
@@ -115,22 +108,24 @@ public class JobWorkerBaseDrainTests
             string? enumerableDelimiter = null,
             Action<HttpRequestMessage>? before = null,
             CancellationToken ct = default)
-            where TRequest : default
-            where TResult : default
+            where TRequest : default where TResult : default
             => Task.FromResult(default(TResult));
 
         public override Task<TResult> PostAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
             => Task.FromResult((TResult)(object)BuildRun(JobState.Running));
 
-        public override Task<TResult> PostAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        public override Task<TResult> PostAsAsync<TRequest, TResult>(
+            string uri,
+            TRequest? request = default,
+            Action<HttpRequestMessage>? before = null,
+            CancellationToken ct = default)
             where TRequest : default
         {
             if (uri.Contains("WorkerInstance", StringComparison.OrdinalIgnoreCase)) {
                 RegisterCount++;
                 var now = DateTime.UtcNow;
                 var created = new CreateResult<JobWorkerInstanceRes>(
-                    true,
-                    new() {
+                    true, new() {
                         Id = LyoGuid.CreateV7(),
                         WorkerType = "cs",
                         MachineName = "host",
@@ -140,8 +135,7 @@ public class JobWorkerBaseDrainTests
                         StartedTimestamp = now,
                         LastHeartbeatUtc = now,
                         CreatedTimestamp = now
-                    },
-                    null);
+                    }, null);
 
                 return Task.FromResult((TResult)(object)created);
             }
@@ -152,11 +146,15 @@ public class JobWorkerBaseDrainTests
             return Task.FromResult((TResult)(object)BuildRun(JobState.Running));
         }
 
-        public override Task<TResult> PatchAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        public override Task<TResult> PatchAsAsync<TRequest, TResult>(
+            string uri,
+            TRequest? request = default,
+            Action<HttpRequestMessage>? before = null,
+            CancellationToken ct = default)
             where TRequest : default
         {
-            if (uri.Contains("WorkerInstance", StringComparison.OrdinalIgnoreCase) && request is PatchRequest patch &&
-                patch.Properties.TryGetValue("State", out var state) && Equals(state, JobWorkerInstanceState.Stopped))
+            if (uri.Contains("WorkerInstance", StringComparison.OrdinalIgnoreCase) && request is PatchRequest patch && patch.Properties.TryGetValue("State", out var state) &&
+                Equals(state, JobWorkerInstanceState.Stopped))
                 DeregisterCount++;
 
             return Task.FromResult(default(TResult)!);

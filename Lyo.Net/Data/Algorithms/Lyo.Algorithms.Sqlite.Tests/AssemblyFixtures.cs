@@ -1,1 +1,3 @@
-[assembly: AssemblyFixture(typeof(Lyo.Algorithms.Sqlite.Tests.AlgorithmSqliteFixture))]
+using Lyo.Algorithms.Sqlite.Tests;
+
+[assembly: AssemblyFixture(typeof(AlgorithmSqliteFixture))]

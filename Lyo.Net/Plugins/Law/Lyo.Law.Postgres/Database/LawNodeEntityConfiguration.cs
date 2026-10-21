@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Lyo.Law.Postgres.Database;
 
-/// <summary>Maps <see cref="LawNodeEntity"/> to <c>law.node</c>.</summary>
+/// <summary>Maps <see cref="LawNodeEntity" /> to <c>law.node</c>.</summary>
 public sealed class LawNodeEntityConfiguration : IEntityTypeConfiguration<LawNodeEntity>
 {
     /// <inheritdoc />

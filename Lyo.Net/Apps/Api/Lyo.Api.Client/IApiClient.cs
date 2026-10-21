@@ -13,8 +13,8 @@ public interface IApiClient : ILyoHttpClient
     Task<TResult?> QueryConcreteAsync<TResult>(string route, QueryConcreteReq request, Action<HttpRequestMessage>? before = null, CancellationToken ct = default);
 
     /// <summary>
-    /// POST <c>{route}/QuerySql</c> with a concrete, projection, or root query. Returns the SQL the translator would emit. The query is not executed.
-    /// Use the entity route for concrete and projection bodies, and the context route for a root <see cref="QueryReq" />.
+    /// POST <c>{route}/QuerySql</c> with a concrete, projection, or root query. Returns the SQL the translator would emit. The query is not executed. Use the entity route for
+    /// concrete and projection bodies, and the context route for a root <see cref="QueryReq" />.
     /// </summary>
     Task<TResult?> QuerySqlAsync<TResult>(string route, QueryRequestBase request, Action<HttpRequestMessage>? before = null, CancellationToken ct = default);
 }

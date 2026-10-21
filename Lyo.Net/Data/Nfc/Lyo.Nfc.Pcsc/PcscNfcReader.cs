@@ -5,8 +5,8 @@ using PCSC.Exceptions;
 namespace Lyo.Nfc.Pcsc;
 
 /// <summary>
-/// PC/SC reader list and tag sessions. On Linux the process needs <c>pcscd</c> and <c>libpcsclite</c>.
-/// This speaks ISO 14443 Type 2 pages. It does not speak ISO 15693, so a Tonie figure will not answer.
+/// PC/SC reader list and tag sessions. On Linux the process needs <c>pcscd</c> and <c>libpcsclite</c>. This speaks ISO 14443 Type 2 pages. It does not speak ISO 15693, so a
+/// Tonie figure will not answer.
 /// </summary>
 public sealed class PcscNfcReader : INfcReader, IDisposable
 {
@@ -22,6 +22,16 @@ public sealed class PcscNfcReader : INfcReader, IDisposable
         catch (NoServiceException) {
             throw new NfcException("PC/SC service is not running. On Linux start pcscd.");
         }
+    }
+
+    /// <summary>Releases the PC/SC context.</summary>
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        _context.Dispose();
+        _disposed = true;
     }
 
     /// <inheritdoc />
@@ -64,16 +74,6 @@ public sealed class PcscNfcReader : INfcReader, IDisposable
         catch (PCSCException ex) {
             throw new NfcException($"PC/SC could not open reader '{name}': {ex.Message}");
         }
-    }
-
-    /// <summary>Releases the PC/SC context.</summary>
-    public void Dispose()
-    {
-        if (_disposed)
-            return;
-
-        _context.Dispose();
-        _disposed = true;
     }
 
     private void ThrowIfDisposed() => OperationHelpers.ThrowIfDisposed(_disposed, nameof(PcscNfcReader));

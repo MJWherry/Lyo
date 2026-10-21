@@ -3,6 +3,18 @@ namespace Lyo.Leaderboard.Web.Components;
 /// <summary>Dynamic entry form built from <see cref="ILeaderboardApiClient.ListPropertiesAsync" />.</summary>
 public partial class LeaderboardEntryForm
 {
+    private bool _asGuest;
+    private bool _busy;
+    private List<FieldState> _fields = [];
+
+    private Guid _loadedBoardId;
+    private int _loadedVersion = -1;
+    private Guid _memberId;
+    private IReadOnlyList<MemberRecord> _members = [];
+    private string? _notes;
+    private DateTime? _occurredDate = DateTime.UtcNow.Date;
+    private string? _title;
+
     /// <summary>Typed Leaderboard API client.</summary>
     [Parameter]
     [EditorRequired]
@@ -20,21 +32,7 @@ public partial class LeaderboardEntryForm
     [Parameter]
     public EventCallback OnChanged { get; set; }
 
-    private static string ChoiceLabel(ScoringPropertyRecord property, ScoringChoice choice)
-    {
-        return $"{choice.Label} ({choice.Value})";
-    }
-
-    private Guid _loadedBoardId;
-    private int _loadedVersion = -1;
-    private Guid _memberId;
-    private bool _asGuest;
-    private bool _busy;
-    private string? _title;
-    private string? _notes;
-    private DateTime? _occurredDate = DateTime.UtcNow.Date;
-    private IReadOnlyList<MemberRecord> _members = [];
-    private List<FieldState> _fields = [];
+    private static string ChoiceLabel(ScoringPropertyRecord property, ScoringChoice choice) => $"{choice.Label} ({choice.Value})";
 
     /// <inheritdoc />
     protected override async Task OnParametersSetAsync()
@@ -94,19 +92,16 @@ public partial class LeaderboardEntryForm
 
         _busy = true;
         try {
-            var occurred = _occurredDate.HasValue
-                ? DateTime.SpecifyKind(_occurredDate.Value.Date, DateTimeKind.Utc)
-                : DateTime.UtcNow;
+            var occurred = _occurredDate.HasValue ? DateTime.SpecifyKind(_occurredDate.Value.Date, DateTimeKind.Utc) : DateTime.UtcNow;
             var saved = await Client.CreateEntryAsync(
-                    Board.Id,
-                    new() {
-                        MemberId = _memberId,
-                        Title = _title,
-                        Notes = _notes,
-                        OccurredAt = occurred,
-                        Values = values
-                    },
-                    _asGuest);
+                Board.Id, new() {
+                    MemberId = _memberId,
+                    Title = _title,
+                    Notes = _notes,
+                    OccurredAt = occurred,
+                    Values = values
+                }, _asGuest);
+
             Snackbar.Add($"Entry {saved.Status.ToString().ToLowerInvariant()} · {saved.ComputedScore} pts.", Severity.Success);
             await OnChanged.InvokeAsync();
         }
@@ -121,10 +116,15 @@ public partial class LeaderboardEntryForm
     private sealed class FieldState
     {
         public ScoringPropertyRecord Property { get; set; } = new();
+
         public string? ChoiceKey { get; set; }
+
         public decimal? Number { get; set; }
+
         public string? Text { get; set; }
+
         public bool Bool { get; set; }
+
         public DateTime? Date { get; set; }
 
         public bool HasValue()
@@ -144,9 +144,7 @@ public partial class LeaderboardEntryForm
                 NumberValue = Property.ValueKind is ScoringValueKind.Number or ScoringValueKind.Integer or ScoringValueKind.Duration ? Number : null,
                 TextValue = Property.ValueKind == ScoringValueKind.Text ? Text : null,
                 BoolValue = Property.ValueKind == ScoringValueKind.Boolean ? Bool : null,
-                DateTimeValue = Property.ValueKind == ScoringValueKind.DateTime && Date is { } d
-                    ? DateTime.SpecifyKind(d, DateTimeKind.Utc)
-                    : null
+                DateTimeValue = Property.ValueKind == ScoringValueKind.DateTime && Date is { } d ? DateTime.SpecifyKind(d, DateTimeKind.Utc) : null
             };
     }
 }

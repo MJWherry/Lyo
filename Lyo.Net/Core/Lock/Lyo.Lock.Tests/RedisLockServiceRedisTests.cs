@@ -82,9 +82,7 @@ public class RedisLockServiceRedisTests : RedisContainerFixtureBase
         var key = "redis-test-timeout-5";
         var handle = await _lockService.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestCt);
         handle.ShouldNotBeNull();
-        await Assert.ThrowsAsync<TimeoutException>(async () => await _lockService.ExecuteWithLockAsync(
-            key, _ => Task.CompletedTask, TimeSpan.FromMilliseconds(100), ct: TestCt));
-
+        await Assert.ThrowsAsync<TimeoutException>(async () => await _lockService.ExecuteWithLockAsync(key, _ => Task.CompletedTask, TimeSpan.FromMilliseconds(100), ct: TestCt));
         await handle.ReleaseAsync();
     }
 
@@ -119,9 +117,7 @@ public class RedisLockServiceRedisTests : RedisContainerFixtureBase
     {
         Assert.NotNull(_lockService);
         var key = "redis-test-exception-8";
-        await Assert.ThrowsAsync<InvalidOperationException>(async ()
-            => await _lockService.ExecuteWithLockAsync(key, _ => throw new InvalidOperationException("test"), ct: TestCt));
-
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await _lockService.ExecuteWithLockAsync(key, _ => throw new InvalidOperationException("test"), ct: TestCt));
         var handle = await _lockService.AcquireAsync(key, TimeSpan.FromSeconds(5), ct: TestCt);
         handle.ShouldNotBeNull();
         await handle.ReleaseAsync();

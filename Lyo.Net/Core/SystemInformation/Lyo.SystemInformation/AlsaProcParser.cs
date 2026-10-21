@@ -75,6 +75,7 @@ internal static class AlsaProcParser
         var cutAt = rest.Length;
         if (playback.Success)
             cutAt = Math.Min(cutAt, playback.Index);
+
         if (capture.Success)
             cutAt = Math.Min(cutAt, capture.Index);
 
@@ -86,6 +87,6 @@ internal static class AlsaProcParser
 
         var kind = playCount > 0 && captureCount > 0 ? AudioDeviceInfo.Duplex : playCount > 0 ? AudioDeviceInfo.Playback : AudioDeviceInfo.Capture;
         descriptions.TryGetValue(int.Parse(match.Groups["card"].Value, CultureInfo.InvariantCulture), out var description);
-        return new AudioDeviceInfo(name, kind, description, null, null);
+        return new(name, kind, description, null, null);
     }
 }

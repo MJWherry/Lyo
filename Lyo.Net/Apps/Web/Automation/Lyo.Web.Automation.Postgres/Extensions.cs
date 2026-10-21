@@ -6,7 +6,6 @@ using Lyo.Web.Automation.Core;
 using Lyo.Web.Automation.Plan;
 using Lyo.Web.Automation.Postgres.Database;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -60,6 +59,7 @@ public static class Extensions
             .WithQuery()
             .WithGet()
             .Build();
+
         return app;
     }
 }

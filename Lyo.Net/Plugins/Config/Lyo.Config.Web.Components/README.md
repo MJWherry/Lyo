@@ -1,8 +1,10 @@
 # Lyo.Config.Web.Components
 
-Blazor / MudBlazor dashboard for [`Lyo.Config`](../Lyo.Config/README.md). Add `ConfigManagement` to a host page for definitions, resolved per-entity values, **definition history**, and **value history**.
+Blazor / MudBlazor dashboard for [`Lyo.Config`](../Lyo.Config/README.md). Add `ConfigManagement` to a host page for definitions, resolved per-entity values, **definition history**,
+and **value history**.
 
-Components take `IConfigStore` as a parameter for writes and an `IApiClient` for reads: the grids are `LyoDataGridProjected` over Config.Api / TestApi query routes. There is no `AddXxx` DI registration and **no `IEncryptionService`** in this package. The client sends plaintext plus `IsEncrypted`. The API encrypts at rest.
+Components take `IConfigStore` as a parameter for writes and an `IApiClient` for reads: the grids are `LyoDataGridProjected` over Config.Api / TestApi query routes. There is no
+`AddXxx` DI registration and **no `IEncryptionService`** in this package. The client sends plaintext plus `IsEncrypted`. The API encrypts at rest.
 
 Targets interactive Blazor on `net10.0`.
 
@@ -36,28 +38,29 @@ flowchart LR
 <ConfigManagement Store="Store" />
 ```
 
-| Parameter | Notes |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Store` | Required `IConfigStore`. Hosts inject the store and pass it in. |
-| `ApiClient` | Required `IApiClient`. The definitions tab uses `LyoDataGridProjected` on `Config/Definition` (search/filter/sort/export). Bulk delete still calls `IConfigStore.DeleteDefinitionAsync`. |
-| `InitialSubjectEntityType` | Toolbar prefill. Defaults to `App` (`AppConfigEntity.AppEntityType`). |
-| `InitialSubjectEntityId` | Toolbar prefill for the entity instance (string; app routes use `kind:id`). |
+| Parameter                  | Notes                                                                                                                                                                                    |
+|----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `Store`                    | Required `IConfigStore`. Hosts inject the store and pass it in.                                                                                                                          |
+| `ApiClient`                | Required `IApiClient`. The definitions tab uses `LyoDataGridProjected` on `Config/Definition` (search/filter/sort/export). Bulk delete still calls `IConfigStore.DeleteDefinitionAsync`. |
+| `InitialSubjectEntityType` | Toolbar prefill. Defaults to `App` (`AppConfigEntity.AppEntityType`).                                                                                                                    |
+| `InitialSubjectEntityId`   | Toolbar prefill for the entity instance (string; app routes use `kind:id`).                                                                                                              |
 
-`ConfigManagement` owns subject entity type/id (Apply to load) and renders tabbed `MudTabs`: Definitions, Resolved, Definition history, Value history. `GetDefinitionsAsync` requires an entity type. Bindings and `LoadConfigAsync` also need an id. There is no list-all-definitions API.
+`ConfigManagement` owns subject entity type/id (Apply to load) and renders tabbed `MudTabs`: Definitions, Resolved, Definition history, Value history. `GetDefinitionsAsync`
+requires an entity type. Bindings and `LoadConfigAsync` also need an id. There is no list-all-definitions API.
 
 ## Component catalog
 
-| Component | Role |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ConfigManagement` | Toolbar + tabbed dashboard shell. |
-| `ConfigDefinitionGrid` | `LyoDataGridProjected` over the definition query route (filter Key / ForValueType / IsRequired / IsEncrypted, export, store-backed bulk delete). History opens definition history. Required / Encrypted / Has default chips. |
-| `ConfigDefinitionView` | `LyoDialogPresets.Medium` + `LyoForm`. Type dropdown from `LyoTypeInfo.All` plus Custom FullName (Enum also asks for the concrete FullName). Encrypted switch (flag only). Optional default via `ConfigValueEditor`. Compact definition history with revert. |
-| `ConfigResolvedView` | `LoadConfigAsync` merge for type+id. Source chips: Overridden / Using default / Missing. Edit binding, reset to default, clear binding. History jumps to Value history when a binding exists. |
-| `ConfigBindingView` | Medium binding editor. Encrypted inherits from the definition (client still only sends plaintext). Compact value history with revert. |
-| `ConfigValueEditor` | Typed Mud inputs from `LyoTypeValueInput` (`LyoTypeInfo.EditorKind`). `JsonEditor<JsonNode>` for JSON documents, binary, and custom types. Chip input for collections. Password-style input when Encrypted. No type-name field (the definition owns `ForValueType`). |
-| `ConfigDefinitionRevisionList` | Newest-first metadata revisions for a selected definition. Revert copies that snapshot and appends a new revision. |
-| `ConfigRevisionList` | Newest-first value revisions for a selected binding. Revert copies that snapshot and appends a new revision. Empty until the first binding save. |
-| `ConfigColorHelper` | Chip colors for required/optional and Binding/Default/Missing. Rendering goes through `LyoChip`. |
+| Component                      | Role                                                                                                                                                                                                                                                                 |
+|--------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ConfigManagement`             | Toolbar + tabbed dashboard shell.                                                                                                                                                                                                                                    |
+| `ConfigDefinitionGrid`         | `LyoDataGridProjected` over the definition query route (filter Key / ForValueType / IsRequired / IsEncrypted, export, store-backed bulk delete). History opens definition history. Required / Encrypted / Has default chips.                                         |
+| `ConfigDefinitionView`         | `LyoDialogPresets.Medium` + `LyoForm`. Type dropdown from `LyoTypeInfo.All` plus Custom FullName (Enum also asks for the concrete FullName). Encrypted switch (flag only). Optional default via `ConfigValueEditor`. Compact definition history with revert.         |
+| `ConfigResolvedView`           | `LoadConfigAsync` merge for type+id. Source chips: Overridden / Using default / Missing. Edit binding, reset to default, clear binding. History jumps to Value history when a binding exists.                                                                        |
+| `ConfigBindingView`            | Medium binding editor. Encrypted inherits from the definition (client still only sends plaintext). Compact value history with revert.                                                                                                                                |
+| `ConfigValueEditor`            | Typed Mud inputs from `LyoTypeValueInput` (`LyoTypeInfo.EditorKind`). `JsonEditor<JsonNode>` for JSON documents, binary, and custom types. Chip input for collections. Password-style input when Encrypted. No type-name field (the definition owns `ForValueType`). |
+| `ConfigDefinitionRevisionList` | Newest-first metadata revisions for a selected definition. Revert copies that snapshot and appends a new revision.                                                                                                                                                   |
+| `ConfigRevisionList`           | Newest-first value revisions for a selected binding. Revert copies that snapshot and appends a new revision. Empty until the first binding save.                                                                                                                     |
+| `ConfigColorHelper`            | Chip colors for required/optional and Binding/Default/Missing. Rendering goes through `LyoChip`.                                                                                                                                                                     |
 
 ## Store calls
 
@@ -70,7 +73,8 @@ flowchart LR
 
 ## Shared UI
 
-Reuse `LyoDialog` / `LyoDialogPresets.Medium`, `LyoForm` / `LyoFormInput`, `LyoIdField`, `LyoChip` / `LyoChips`, `LyoTimestamp`, `LyoTruncatedText`, and `JsonEditor`. Status chips go in `TitleChips`, not `TitleContent`. Pass `IApiClient` for `LyoDataGridProjected` on definition query routes. Do not register `IEncryptionService` in this package.
+Reuse `LyoDialog` / `LyoDialogPresets.Medium`, `LyoForm` / `LyoFormInput`, `LyoIdField`, `LyoChip` / `LyoChips`, `LyoTimestamp`, `LyoTruncatedText`, and `JsonEditor`. Status chips
+go in `TitleChips`, not `TitleContent`. Pass `IApiClient` for `LyoDataGridProjected` on definition query routes. Do not register `IEncryptionService` in this package.
 
 ## See also
 

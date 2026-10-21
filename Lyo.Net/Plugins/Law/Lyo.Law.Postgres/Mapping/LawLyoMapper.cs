@@ -1,13 +1,12 @@
 using Lyo.Api.Mapping;
 using Lyo.Exceptions;
-using Lyo.Law;
 using Lyo.Law.Models.Request;
 using Lyo.Law.Models.Response;
 using Lyo.Law.Postgres.Database;
 
 namespace Lyo.Law.Postgres.Mapping;
 
-/// <summary>Hand-rolled <see cref="ILyoMapper"/> for jurisdiction and code CRUD. Node text is written through <see cref="ILawStore"/>.</summary>
+/// <summary>Hand-rolled <see cref="ILyoMapper" /> for jurisdiction and code CRUD. Node text is written through <see cref="ILawStore" />.</summary>
 public sealed class LawLyoMapper : ILyoMapper
 {
     /// <inheritdoc />
@@ -17,7 +16,7 @@ public sealed class LawLyoMapper : ILyoMapper
             LawCodeReq req when typeof(TResult) == typeof(LawCodeEntity) => (TResult)(object)ReqToNew(req),
             LawJurisdictionEntity entity when typeof(TResult) == typeof(LawJurisdictionRes) => (TResult)(object)ToRes(entity),
             LawCodeEntity entity when typeof(TResult) == typeof(LawCodeRes) => (TResult)(object)ToRes(entity),
-            _ => throw Unmapped(source.GetType(), typeof(TResult))
+            var _ => throw Unmapped(source.GetType(), typeof(TResult))
         };
 
     /// <inheritdoc />
@@ -70,8 +69,7 @@ public sealed class LawLyoMapper : ILyoMapper
         entity.SourceHost = string.IsNullOrWhiteSpace(request.SourceHost) ? null : request.SourceHost.Trim();
     }
 
-    private static LawJurisdictionRes ToRes(LawJurisdictionEntity entity)
-        => new() { Id = entity.Id, Key = entity.Key, Name = entity.Name };
+    private static LawJurisdictionRes ToRes(LawJurisdictionEntity entity) => new() { Id = entity.Id, Key = entity.Key, Name = entity.Name };
 
     private static LawCodeRes ToRes(LawCodeEntity entity)
         => new() {
@@ -83,6 +81,5 @@ public sealed class LawLyoMapper : ILyoMapper
             SourceHost = entity.SourceHost
         };
 
-    private static InvalidOperationException Unmapped(Type source, Type dest)
-        => new($"No mapping configured from {source.Name} to {dest.Name}.");
+    private static InvalidOperationException Unmapped(Type source, Type dest) => new($"No mapping configured from {source.Name} to {dest.Name}.");
 }

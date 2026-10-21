@@ -5,6 +5,8 @@ namespace Lyo.Web.Components.ParamTable;
 
 public partial class LyoParameterValueGrid
 {
+    private IReadOnlyDictionary<string, string?> _siblings = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+
     /// <summary>Entries to edit. Nothing draws when the list is empty, so callers do not need their own guard.</summary>
     [Parameter]
     [EditorRequired]
@@ -31,13 +33,11 @@ public partial class LyoParameterValueGrid
     public EventCallback ValueChanged { get; set; }
 
     /// <summary>
-    /// Sample data for autocomplete and live preview on formatter-typed parameters. Run dialogs pass what the template will resolve against at run time so the user
-    /// does not have to remember the token names.
+    /// Sample data for autocomplete and live preview on formatter-typed parameters. Run dialogs pass what the template will resolve against at run time so the user does not have
+    /// to remember the token names.
     /// </summary>
     [Parameter]
     public object? FormatterContext { get; set; }
-
-    private IReadOnlyDictionary<string, string?> _siblings = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
 
     protected override void OnParametersSet() => _siblings = LyoParameterEntry.SiblingMap(Entries);
 

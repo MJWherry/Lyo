@@ -37,15 +37,17 @@ public sealed class AzureBlobFileStorageBuilder : FileStorageServiceBuilder<Azur
             return;
 
         services.TryAddInMemoryMultipartUploadSessionStoreIfMissing();
-        services.AddKeyedScoped<AzureBlobMultipartUploadService>(storeName, (provider, _) => {
-            if (provider.GetRequiredService<IFileStorageFactory>().Get(storeName) is not AzureBlobFileStorageService storage)
-                throw new InvalidOperationException($"File storage '{storeName}' is not an Azure Blob store.");
+        services.AddKeyedScoped<AzureBlobMultipartUploadService>(
+            storeName, (provider, _) => {
+                if (provider.GetRequiredService<IFileStorageFactory>().Get(storeName) is not AzureBlobFileStorageService storage)
+                    throw new InvalidOperationException($"File storage '{storeName}' is not an Azure Blob store.");
 
-            var metrics = Options.EnableMetrics ? provider.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
-            return new AzureBlobMultipartUploadService(
-                storage, Options, provider.GetRequiredService<IMultipartUploadSessionStore>(), provider.GetService<IFileContentPolicy>(),
-                provider.GetServices<IFileAuditEventHandler>(), provider.GetService<IFileOperationContextAccessor>(), provider.GetService<ILoggerFactory>(), metrics);
-        });
+                var metrics = Options.EnableMetrics ? provider.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
+                return new(
+                    storage, Options, provider.GetRequiredService<IMultipartUploadSessionStore>(), provider.GetService<IFileContentPolicy>(),
+                    provider.GetServices<IFileAuditEventHandler>(), provider.GetService<IFileOperationContextAccessor>(), provider.GetService<ILoggerFactory>(), metrics);
+            });
+
         services.AddKeyedScoped<IMultipartUploadService>(storeName, (provider, _) => provider.GetRequiredKeyedService<AzureBlobMultipartUploadService>(storeName));
     }
 
@@ -61,10 +63,11 @@ public sealed class AzureBlobFileStorageBuilder : FileStorageServiceBuilder<Azur
                 throw new InvalidOperationException("The unkeyed file storage service is not an Azure Blob store.");
 
             var metrics = Options.EnableMetrics ? provider.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
-            return new AzureBlobMultipartUploadService(
+            return new(
                 storage, Options, provider.GetRequiredService<IMultipartUploadSessionStore>(), provider.GetService<IFileContentPolicy>(),
                 provider.GetServices<IFileAuditEventHandler>(), provider.GetService<IFileOperationContextAccessor>(), provider.GetService<ILoggerFactory>(), metrics);
         });
+
         services.AddScoped<IMultipartUploadService>(provider => provider.GetRequiredService<AzureBlobMultipartUploadService>());
     }
 

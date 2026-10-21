@@ -1,14 +1,19 @@
 # Lyo.Testing.Containers
 
-Testcontainers fixtures for xUnit v3. The shipped helpers start and dispose Redis, RabbitMQ, and PostgreSQL containers, and `ContainerTestHost` covers backends with no Testcontainers module of their own.
+Testcontainers fixtures for xUnit v3. The shipped helpers start and dispose Redis, RabbitMQ, and PostgreSQL containers, and `ContainerTestHost` covers backends with no
+Testcontainers module of their own.
 
 Internal-only: `IsPackable` is `false` and `xunit.v3.extensibility.core` is a project-level dependency. Reference this project from test projects. Do not pack it.
 
 ## Features
 
-- **Per-backend containers and fixtures.** `RabbitMqTestContainer` / `RabbitMqContainerFixtureBase`, `PostgresTestContainer` / `PostgresContainerFixtureBase`, and `RedisTestContainer` / `RedisContainerFixtureBase`, each with an `*ContainerOptions` class exposing `Image` and a `ConfigureBuilder` hook.
-- **`PostgresServiceFixtureBase<TContext>`.** The shape almost every `Lyo.*.Postgres.Tests` fixture needs: starts a Postgres container, builds a `ServiceProvider` from the abstract `ConfigureServices(services, connectionString)`, migrates `TContext`, then exposes `ContextFactory`, `ServiceProvider`, and `CreateScope()`. Override `OnMigratedAsync` to seed and `MinimumLogLevel` to change log verbosity.
-- **`ContainerTestHost.TryStartAsync`.** Starts a raw `ContainerBuilder` container and returns `null` (rather than throwing) when Docker is unavailable, so integration suites skip cleanly instead of failing. Takes an optional `readyDelay` for servers whose wait strategy fires before they accept connections.
+- **Per-backend containers and fixtures.** `RabbitMqTestContainer` / `RabbitMqContainerFixtureBase`, `PostgresTestContainer` / `PostgresContainerFixtureBase`, and
+  `RedisTestContainer` / `RedisContainerFixtureBase`, each with an `*ContainerOptions` class exposing `Image` and a `ConfigureBuilder` hook.
+- **`PostgresServiceFixtureBase<TContext>`.** The shape almost every `Lyo.*.Postgres.Tests` fixture needs: starts a Postgres container, builds a `ServiceProvider` from the abstract
+  `ConfigureServices(services, connectionString)`, migrates `TContext`, then exposes `ContextFactory`, `ServiceProvider`, and `CreateScope()`. Override `OnMigratedAsync` to seed
+  and `MinimumLogLevel` to change log verbosity.
+- **`ContainerTestHost.TryStartAsync`.** Starts a raw `ContainerBuilder` container and returns `null` (rather than throwing) when Docker is unavailable, so integration suites skip
+  cleanly instead of failing. Takes an optional `readyDelay` for servers whose wait strategy fires before they accept connections.
 
 ## Examples
 
@@ -67,19 +72,19 @@ var (host, port, adminUrl) = (broker.Host, broker.Port, broker.AdminUrl);
 
 ## Types
 
-| Type | Role |
-| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PostgresTestContainer` | `IAsyncDisposable` wrapper around `PostgreSqlContainer`. Call `StartAsync(CancellationToken)` once, then read `ConnectionString`. Throws `InvalidOperationException` when `ConnectionString` is read before `StartAsync`. |
-| `PostgresContainerOptions` | `Image` (defaults to `postgres:16-alpine`) and optional `ConfigureBuilder(Action<PostgreSqlBuilder>)` hook for custom env vars, networks, volumes, and similar. |
-| `PostgresContainerFixtureBase` | Abstract xUnit `IAsyncLifetime` fixture: starts a shared container, invokes `OnContainerStartedAsync(connectionString, ct)`, exposes `ConnectionString`, and calls `OnContainerDisposingAsync(ct)` before tearing the container down. Cancellation is sourced from `TestContext.Current.CancellationToken`. |
-| `RabbitMqTestContainer` | `IAsyncDisposable` wrapper around `RabbitMqContainer`. After `StartAsync`, exposes `Host`, `Port` (mapped AMQP), `AdminUrl` (mapped management HTTP API), `Username`/`Password`, and the AMQP `ConnectionString`. |
-| `RabbitMqContainerOptions` | `Image` (defaults to `rabbitmq:4-management-alpine`, which must be a management-enabled image for `AdminUrl` to work) and optional `ConfigureBuilder(Action<RabbitMqBuilder>)` hook. |
-| `RabbitMqContainerFixtureBase` | Abstract xUnit `IAsyncLifetime` fixture mirroring the Postgres one: starts a shared broker, invokes `OnContainerStartedAsync(container, ct)`, exposes the endpoint properties, and calls `OnContainerDisposingAsync(ct)` before teardown. |
-| `RedisTestContainer` | `IAsyncDisposable` wrapper around `RedisContainer`. Call `StartAsync(CancellationToken)`, then read `ConnectionString`. |
-| `RedisContainerOptions` | `Image` (defaults to `redis:7-alpine`) and optional `ConfigureBuilder(Action<RedisBuilder>)` hook. |
-| `RedisContainerFixtureBase` | Abstract xUnit `IAsyncLifetime` fixture exposing `ConnectionString`, with the same `OnContainerStartedAsync` / `OnContainerDisposingAsync` hooks as the other fixtures. |
-| `PostgresServiceFixtureBase<TContext>` | Postgres fixture that also owns a DI container. Implement `ConfigureServices(services, connectionString)`; the base builds the provider, runs `MigrateAsync`, calls `OnMigratedAsync` for seeding, and exposes `ServiceProvider`, `ContextFactory`, and `CreateScope()`. `OnContainerStartedAsync` is sealed. |
-| `ContainerTestHost.TryStartAsync(image, configure, ct, readyDelay)` | Raw `ContainerBuilder` start for backends without a Testcontainers module. Returns `null` and disposes the partial container when the start fails, so callers can skip instead of fail. |
+| Type                                                                | Role                                                                                                                                                                                                                                                                                                          |
+|---------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `PostgresTestContainer`                                             | `IAsyncDisposable` wrapper around `PostgreSqlContainer`. Call `StartAsync(CancellationToken)` once, then read `ConnectionString`. Throws `InvalidOperationException` when `ConnectionString` is read before `StartAsync`.                                                                                     |
+| `PostgresContainerOptions`                                          | `Image` (defaults to `postgres:16-alpine`) and optional `ConfigureBuilder(Action<PostgreSqlBuilder>)` hook for custom env vars, networks, volumes, and similar.                                                                                                                                               |
+| `PostgresContainerFixtureBase`                                      | Abstract xUnit `IAsyncLifetime` fixture: starts a shared container, invokes `OnContainerStartedAsync(connectionString, ct)`, exposes `ConnectionString`, and calls `OnContainerDisposingAsync(ct)` before tearing the container down. Cancellation is sourced from `TestContext.Current.CancellationToken`.   |
+| `RabbitMqTestContainer`                                             | `IAsyncDisposable` wrapper around `RabbitMqContainer`. After `StartAsync`, exposes `Host`, `Port` (mapped AMQP), `AdminUrl` (mapped management HTTP API), `Username`/`Password`, and the AMQP `ConnectionString`.                                                                                             |
+| `RabbitMqContainerOptions`                                          | `Image` (defaults to `rabbitmq:4-management-alpine`, which must be a management-enabled image for `AdminUrl` to work) and optional `ConfigureBuilder(Action<RabbitMqBuilder>)` hook.                                                                                                                          |
+| `RabbitMqContainerFixtureBase`                                      | Abstract xUnit `IAsyncLifetime` fixture mirroring the Postgres one: starts a shared broker, invokes `OnContainerStartedAsync(container, ct)`, exposes the endpoint properties, and calls `OnContainerDisposingAsync(ct)` before teardown.                                                                     |
+| `RedisTestContainer`                                                | `IAsyncDisposable` wrapper around `RedisContainer`. Call `StartAsync(CancellationToken)`, then read `ConnectionString`.                                                                                                                                                                                       |
+| `RedisContainerOptions`                                             | `Image` (defaults to `redis:7-alpine`) and optional `ConfigureBuilder(Action<RedisBuilder>)` hook.                                                                                                                                                                                                            |
+| `RedisContainerFixtureBase`                                         | Abstract xUnit `IAsyncLifetime` fixture exposing `ConnectionString`, with the same `OnContainerStartedAsync` / `OnContainerDisposingAsync` hooks as the other fixtures.                                                                                                                                       |
+| `PostgresServiceFixtureBase<TContext>`                              | Postgres fixture that also owns a DI container. Implement `ConfigureServices(services, connectionString)`; the base builds the provider, runs `MigrateAsync`, calls `OnMigratedAsync` for seeding, and exposes `ServiceProvider`, `ContextFactory`, and `CreateScope()`. `OnContainerStartedAsync` is sealed. |
+| `ContainerTestHost.TryStartAsync(image, configure, ct, readyDelay)` | Raw `ContainerBuilder` start for backends without a Testcontainers module. Returns `null` and disposes the partial container when the start fails, so callers can skip instead of fail.                                                                                                                       |
 
 ## Sharing one container across an assembly
 

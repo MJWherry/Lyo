@@ -9,8 +9,7 @@ public static class WebAutomationBrowserExtensions
     public static Task<IReadOnlyList<BrowserCookie>> TryGetCookiesAsync(this IWebAutomationBrowser browser, string? url = null, CancellationToken ct = default)
         => browser.CookieJar?.GetCookiesAsync(url, ct) ?? Task.FromResult<IReadOnlyList<BrowserCookie>>([]);
 
-    /// <summary>Returns session cookies formatted as a <c>Cookie</c> header value (for example <c>"name=value; name2=value2"</c>), or <see langword="null" /> when not
-    /// supported.</summary>
+    /// <summary>Returns session cookies formatted as a <c>Cookie</c> header value (for example <c>"name=value; name2=value2"</c>), or <see langword="null" /> when not supported.</summary>
     public static async Task<string?> TryGetCookieHeaderAsync(this IWebAutomationBrowser browser, string? url = null, CancellationToken ct = default)
     {
         var jar = browser.CookieJar;

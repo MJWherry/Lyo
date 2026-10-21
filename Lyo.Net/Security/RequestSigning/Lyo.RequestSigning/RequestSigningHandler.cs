@@ -34,10 +34,12 @@ public sealed class RequestSigningHandler : DelegatingHandler
     {
         if (request.Content is null)
             return [];
+
         var body = await request.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
         var replacement = new ByteArrayContent(body);
         foreach (var header in request.Content.Headers)
             replacement.Headers.TryAddWithoutValidation(header.Key, header.Value);
+
         request.Content = replacement;
         return body;
     }

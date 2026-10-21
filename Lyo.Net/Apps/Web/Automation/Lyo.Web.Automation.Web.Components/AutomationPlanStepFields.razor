@@ -1,189 +1,437 @@
 @namespace Lyo.Web.Automation.Web.Components
 
 <MudStack Spacing="2">
-    <MudTextField T="string" Label="Name" Value="@_name" ValueChanged="@(value => { _name = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
+    <MudTextField T="string" Label="Name" Value="@_name" ValueChanged="@(value => {
+                                                                           _name = value;
+                                                                           Touch();
+                                                                       })" Immediate="true" Variant="Variant.Outlined"/>
     @if (_type is "navigate" or "openNewTab" or "downloadFile" or "httpRequest") {
-        <MudTextField T="string" Label="URL" Value="@_url" ValueChanged="@(value => { _url = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
+        <MudTextField T="string" Label="URL" Value="@_url" ValueChanged="@(value => {
+                                                                             _url = value;
+                                                                             Touch();
+                                                                         })" Immediate="true" Variant="Variant.Outlined"/>
     }
     @if (_type == "httpRequest") {
-        <MudTextField T="string" Label="Method" Value="@_method" ValueChanged="@(value => { _method = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-        <MudTextField T="string" Label="Body template" Value="@_body" ValueChanged="@(value => { _body = value; Touch(); })" Immediate="true" Lines="3" Variant="Variant.Outlined"/>
-        <MudTextField T="string" Label="Response variable" Value="@_responseVariable" ValueChanged="@(value => { _responseVariable = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-        <MudTextField T="string" Label="Status variable" Value="@_statusVariable" ValueChanged="@(value => { _statusVariable = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
+        <MudTextField T="string" Label="Method" Value="@_method" ValueChanged="@(value => {
+                                                                                   _method = value;
+                                                                                   Touch();
+                                                                               })" Immediate="true" Variant="Variant.Outlined"/>
+
+        <MudTextField T="string" Label="Body template" Value="@_body" ValueChanged="@(value => {
+                                                                                        _body = value;
+                                                                                        Touch();
+                                                                                    })" Immediate="true" Lines="3" Variant="Variant.Outlined"/>
+
+        <MudTextField T="string" Label="Response variable" Value="@_responseVariable" ValueChanged="@(value => {
+                                                                                                        _responseVariable = value;
+                                                                                                        Touch();
+                                                                                                    })" Immediate="true" Variant="Variant.Outlined"/>
+
+        <MudTextField T="string" Label="Status variable" Value="@_statusVariable" ValueChanged="@(value => {
+                                                                                                    _statusVariable = value;
+                                                                                                    Touch();
+                                                                                                })" Immediate="true" Variant="Variant.Outlined"/>
+
         @Pairs("Header")
     }
     @if (_type == "delay") {
-        <MudNumericField T="int" Label="Milliseconds" Value="@_delayMs" ValueChanged="@(value => { _delayMs = value; Touch(); })" Variant="Variant.Outlined"/>
+        <MudNumericField T="int" Label="Milliseconds" Value="@_delayMs" ValueChanged="@(value => {
+                                                                                          _delayMs = value;
+                                                                                          Touch();
+                                                                                      })" Variant="Variant.Outlined"/>
     }
     @if (_type is "findElement" or "findAndAct" or "findDescendant") {
         @if (_type == "findDescendant") {
-            <MudTextField T="string" Label="Parent ref" Value="@_parentRef" ValueChanged="@(value => { _parentRef = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
+            <MudTextField T="string" Label="Parent ref" Value="@_parentRef" ValueChanged="@(value => {
+                                                                                              _parentRef = value;
+                                                                                              Touch();
+                                                                                          })" Immediate="true" Variant="Variant.Outlined"/>
         }
-        <MudTextField T="string" Label="Ref name" Value="@_refName" ValueChanged="@(value => { _refName = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
+
+        <MudTextField T="string" Label="Ref name" Value="@_refName" ValueChanged="@(value => {
+                                                                                      _refName = value;
+                                                                                      Touch();
+                                                                                  })" Immediate="true" Variant="Variant.Outlined"/>
+
         @LocatorFields()
     }
     @if (_type is "elementAction" or "findAndAct" or "findAndActChain") {
         @if (_type == "elementAction") {
-            <MudTextField T="string" Label="Element ref" Value="@_refName" ValueChanged="@(value => { _refName = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
+            <MudTextField T="string" Label="Element ref" Value="@_refName" ValueChanged="@(value => {
+                                                                                             _refName = value;
+                                                                                             Touch();
+                                                                                         })" Immediate="true" Variant="Variant.Outlined"/>
         }
+
         @ActionFields()
     }
     @if (_type is "findElementChain" or "findAndActChain" or "findElementsChain") {
-        <MudTextField T="string" Label="Ref name" Value="@_refName" ValueChanged="@(value => { _refName = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
+        <MudTextField T="string" Label="Ref name" Value="@_refName" ValueChanged="@(value => {
+                                                                                      _refName = value;
+                                                                                      Touch();
+                                                                                  })" Immediate="true" Variant="Variant.Outlined"/>
+
         <MudText Typo="Typo.subtitle2">Locator chain</MudText>
+
         @for (var i = 0; i < _segments.Count; i++) {
             var index = i;
             var row = _segments[index];
             <MudStack Row="true" Spacing="1">
-                <MudSelect T="ElementLocatorKind" Value="@row.Kind" ValueChanged="@(value => { row.Kind = value; Touch(); })" Label="Kind" Variant="Variant.Outlined">
+                <MudSelect T="ElementLocatorKind" Value="@row.Kind" ValueChanged="@(value => {
+                                                                                      row.Kind = value;
+                                                                                      Touch();
+                                                                                  })" Label="Kind" Variant="Variant.Outlined">
                     @foreach (var kind in Enum.GetValues<ElementLocatorKind>()) {
                         <MudSelectItem Value="@kind">@kind</MudSelectItem>
                     }
                 </MudSelect>
-                <MudTextField T="string" Label="Value" Value="@row.Value" ValueChanged="@(value => { row.Value = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
+                <MudTextField T="string" Label="Value" Value="@row.Value" ValueChanged="@(value => {
+                                                                                            row.Value = value;
+                                                                                            Touch();
+                                                                                        })" Immediate="true" Variant="Variant.Outlined"/>
             </MudStack>
         }
+
         <MudButton OnClick="AddSegment">Add locator</MudButton>
     }
     @if (_type is "extractElementData" or "extractElementsListData") {
         @if (_type == "extractElementsListData") {
-            <MudTextField T="string" Label="Element list" Value="@_elementsList" ValueChanged="@(value => { _elementsList = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-        } else {
-            <MudTextField T="string" Label="Element ref" Value="@_refName" ValueChanged="@(value => { _refName = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
+            <MudTextField T="string" Label="Element list" Value="@_elementsList" ValueChanged="@(value => {
+                                                                                                   _elementsList = value;
+                                                                                                   Touch();
+                                                                                               })" Immediate="true" Variant="Variant.Outlined"/>
         }
-        <MudTextField T="string" Label="Variable" Value="@_variable" ValueChanged="@(value => { _variable = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-        <MudSelect T="ElementDataExtractKind" Value="@_extractKind" ValueChanged="@(value => { _extractKind = value; Touch(); })" Label="Extract" Variant="Variant.Outlined">
+        else {
+            <MudTextField T="string" Label="Element ref" Value="@_refName" ValueChanged="@(value => {
+                                                                                             _refName = value;
+                                                                                             Touch();
+                                                                                         })" Immediate="true" Variant="Variant.Outlined"/>
+        }
+
+        <MudTextField T="string" Label="Variable" Value="@_variable" ValueChanged="@(value => {
+                                                                                       _variable = value;
+                                                                                       Touch();
+                                                                                   })" Immediate="true" Variant="Variant.Outlined"/>
+
+        <MudSelect T="ElementDataExtractKind" Value="@_extractKind" ValueChanged="@(value => {
+                                                                                      _extractKind = value;
+                                                                                      Touch();
+                                                                                  })" Label="Extract" Variant="Variant.Outlined">
             @foreach (var kind in Enum.GetValues<ElementDataExtractKind>()) {
                 <MudSelectItem Value="@kind">@kind</MudSelectItem>
             }
         </MudSelect>
+
         @if (_extractKind == ElementDataExtractKind.Attribute) {
-            <MudTextField T="string" Label="Attribute" Value="@_attribute" ValueChanged="@(value => { _attribute = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
+            <MudTextField T="string" Label="Attribute" Value="@_attribute" ValueChanged="@(value => {
+                                                                                             _attribute = value;
+                                                                                             Touch();
+                                                                                         })" Immediate="true" Variant="Variant.Outlined"/>
         }
     }
     @if (_type is "storeLiteral" or "storeTemplate" or "storePageUrl" or "storePageTitle" or "captureNetwork" or "storeStringList" or "writeStringListToFile" or "upsertJsonRecords") {
-        <MudTextField T="string" Label="Variable" Value="@_variable" ValueChanged="@(value => { _variable = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
+        <MudTextField T="string" Label="Variable" Value="@_variable" ValueChanged="@(value => {
+                                                                                       _variable = value;
+                                                                                       Touch();
+                                                                                   })" Immediate="true" Variant="Variant.Outlined"/>
     }
     @if (_type is "storeLiteral" or "storeTemplate") {
-        <MudTextField T="string" Label="@(_type == "storeTemplate" ? "Template" : "Value")" Value="@_value" ValueChanged="@(value => { _value = value; Touch(); })" Immediate="true" Lines="3" Variant="Variant.Outlined"/>
+        <MudTextField T="string" Label="@(_type == "storeTemplate" ? "Template" : "Value")" Value="@_value" ValueChanged="@(value => {
+                                                                                                                              _value = value;
+                                                                                                                              Touch();
+                                                                                                                          })" Immediate="true" Lines="3"
+                      Variant="Variant.Outlined"/>
     }
     @if (_type == "storeStringListFromTemplate") {
-        <MudTextField T="string" Label="Source list" Value="@_sourceVariable" ValueChanged="@(value => { _sourceVariable = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-        <MudTextField T="string" Label="Variable" Value="@_variable" ValueChanged="@(value => { _variable = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-        <MudTextField T="string" Label="Item template" Value="@_value" ValueChanged="@(value => { _value = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
+        <MudTextField T="string" Label="Source list" Value="@_sourceVariable" ValueChanged="@(value => {
+                                                                                                _sourceVariable = value;
+                                                                                                Touch();
+                                                                                            })" Immediate="true" Variant="Variant.Outlined"/>
+
+        <MudTextField T="string" Label="Variable" Value="@_variable" ValueChanged="@(value => {
+                                                                                       _variable = value;
+                                                                                       Touch();
+                                                                                   })" Immediate="true" Variant="Variant.Outlined"/>
+
+        <MudTextField T="string" Label="Item template" Value="@_value" ValueChanged="@(value => {
+                                                                                         _value = value;
+                                                                                         Touch();
+                                                                                     })" Immediate="true" Variant="Variant.Outlined"/>
     }
     @if (_type == "storeStringList") {
-        <MudTextField T="string" Label="Values" Value="@_values" ValueChanged="@(value => { _values = value; Touch(); })" Immediate="true" Lines="3" Variant="Variant.Outlined"/>
+        <MudTextField T="string" Label="Values" Value="@_values" ValueChanged="@(value => {
+                                                                                   _values = value;
+                                                                                   Touch();
+                                                                               })" Immediate="true" Lines="3" Variant="Variant.Outlined"/>
     }
     @if (_type == "captureNetwork") {
-        <MudTextField T="string" Label="URL regex" Value="@_urlPattern" ValueChanged="@(value => { _urlPattern = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-        <MudNumericField T="int" Label="Listen milliseconds" Value="@_listenMs" ValueChanged="@(value => { _listenMs = value; Touch(); })" Variant="Variant.Outlined"/>
+        <MudTextField T="string" Label="URL regex" Value="@_urlPattern" ValueChanged="@(value => {
+                                                                                          _urlPattern = value;
+                                                                                          Touch();
+                                                                                      })" Immediate="true" Variant="Variant.Outlined"/>
+
+        <MudNumericField T="int" Label="Listen milliseconds" Value="@_listenMs" ValueChanged="@(value => {
+                                                                                                  _listenMs = value;
+                                                                                                  Touch();
+                                                                                              })" Variant="Variant.Outlined"/>
     }
     @if (_type == "setViewportSize") {
-        <MudNumericField T="int" Label="Width" Value="@_width" ValueChanged="@(value => { _width = value; Touch(); })" Variant="Variant.Outlined"/>
-        <MudNumericField T="int" Label="Height" Value="@_height" ValueChanged="@(value => { _height = value; Touch(); })" Variant="Variant.Outlined"/>
+        <MudNumericField T="int" Label="Width" Value="@_width" ValueChanged="@(value => {
+                                                                                 _width = value;
+                                                                                 Touch();
+                                                                             })" Variant="Variant.Outlined"/>
+
+        <MudNumericField T="int" Label="Height" Value="@_height" ValueChanged="@(value => {
+                                                                                   _height = value;
+                                                                                   Touch();
+                                                                               })" Variant="Variant.Outlined"/>
     }
     @if (_type == "randomizeViewport") {
-        <MudNumericField T="int" Label="Jitter pixels" Value="@_jitter" ValueChanged="@(value => { _jitter = value; Touch(); })" Variant="Variant.Outlined"/>
+        <MudNumericField T="int" Label="Jitter pixels" Value="@_jitter" ValueChanged="@(value => {
+                                                                                          _jitter = value;
+                                                                                          Touch();
+                                                                                      })" Variant="Variant.Outlined"/>
+
         @for (var i = 0; i < _sizes.Count; i++) {
             var index = i;
             var row = _sizes[index];
             <MudStack Row="true" Spacing="1">
-                <MudNumericField T="int" Label="Width" Value="@row.Width" ValueChanged="@(value => { row.Width = value; Touch(); })" Variant="Variant.Outlined"/>
-                <MudNumericField T="int" Label="Height" Value="@row.Height" ValueChanged="@(value => { row.Height = value; Touch(); })" Variant="Variant.Outlined"/>
+                <MudNumericField T="int" Label="Width" Value="@row.Width" ValueChanged="@(value => {
+                                                                                            row.Width = value;
+                                                                                            Touch();
+                                                                                        })" Variant="Variant.Outlined"/>
+                <MudNumericField T="int" Label="Height" Value="@row.Height" ValueChanged="@(value => {
+                                                                                              row.Height = value;
+                                                                                              Touch();
+                                                                                          })" Variant="Variant.Outlined"/>
             </MudStack>
         }
+
         <MudButton OnClick="AddSize">Add size</MudButton>
     }
     @if (_type == "switchTabByIndex") {
-        <MudNumericField T="int" Label="Tab index" Value="@_tabIndex" ValueChanged="@(value => { _tabIndex = value; Touch(); })" Variant="Variant.Outlined"/>
+        <MudNumericField T="int" Label="Tab index" Value="@_tabIndex" ValueChanged="@(value => {
+                                                                                        _tabIndex = value;
+                                                                                        Touch();
+                                                                                    })" Variant="Variant.Outlined"/>
     }
     @if (_type == "switchTabByKey") {
-        <MudTextField T="string" Label="Tab key" Value="@_tabKey" ValueChanged="@(value => { _tabKey = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
+        <MudTextField T="string" Label="Tab key" Value="@_tabKey" ValueChanged="@(value => {
+                                                                                    _tabKey = value;
+                                                                                    Touch();
+                                                                                })" Immediate="true" Variant="Variant.Outlined"/>
     }
     @if (_type == "openNewTab") {
-        <MudTextField T="string" Label="Tab key variable" Value="@_variable" ValueChanged="@(value => { _variable = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
+        <MudTextField T="string" Label="Tab key variable" Value="@_variable" ValueChanged="@(value => {
+                                                                                               _variable = value;
+                                                                                               Touch();
+                                                                                           })" Immediate="true" Variant="Variant.Outlined"/>
     }
     @if (_type == "writeStringListToFile") {
-        <MudTextField T="string" Label="File path" Value="@_targetFile" ValueChanged="@(value => { _targetFile = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-        <MudCheckBox T="bool" Label="Append" Value="@_append" ValueChanged="@(value => { _append = value; Touch(); })"/>
+        <MudTextField T="string" Label="File path" Value="@_targetFile" ValueChanged="@(value => {
+                                                                                          _targetFile = value;
+                                                                                          Touch();
+                                                                                      })" Immediate="true" Variant="Variant.Outlined"/>
+
+        <MudCheckBox T="bool" Label="Append" Value="@_append" ValueChanged="@(value => {
+                                                                                _append = value;
+                                                                                Touch();
+                                                                            })"/>
     }
     @if (_type == "downloadUrlsToDirectory") {
-        <MudTextField T="string" Label="URL list variable" Value="@_urlListVariable" ValueChanged="@(value => { _urlListVariable = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-        <MudTextField T="string" Label="Directory" Value="@_targetDirectory" ValueChanged="@(value => { _targetDirectory = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-        <MudTextField T="string" Label="File name prefix" Value="@_filePrefix" ValueChanged="@(value => { _filePrefix = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-        <MudTextField T="string" Label="Source step index" Value="@_fromStep" ValueChanged="@(value => { _fromStep = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
+        <MudTextField T="string" Label="URL list variable" Value="@_urlListVariable" ValueChanged="@(value => {
+                                                                                                       _urlListVariable = value;
+                                                                                                       Touch();
+                                                                                                   })" Immediate="true" Variant="Variant.Outlined"/>
+
+        <MudTextField T="string" Label="Directory" Value="@_targetDirectory" ValueChanged="@(value => {
+                                                                                               _targetDirectory = value;
+                                                                                               Touch();
+                                                                                           })" Immediate="true" Variant="Variant.Outlined"/>
+
+        <MudTextField T="string" Label="File name prefix" Value="@_filePrefix" ValueChanged="@(value => {
+                                                                                                 _filePrefix = value;
+                                                                                                 Touch();
+                                                                                             })" Immediate="true" Variant="Variant.Outlined"/>
+
+        <MudTextField T="string" Label="Source step index" Value="@_fromStep" ValueChanged="@(value => {
+                                                                                                _fromStep = value;
+                                                                                                Touch();
+                                                                                            })" Immediate="true" Variant="Variant.Outlined"/>
     }
     @if (_type == "downloadFile") {
-        <MudTextField T="string" Label="Target file" Value="@_targetFile" ValueChanged="@(value => { _targetFile = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-        <MudTextField T="string" Label="Saved path variable" Value="@_savedPathVariable" ValueChanged="@(value => { _savedPathVariable = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
+        <MudTextField T="string" Label="Target file" Value="@_targetFile" ValueChanged="@(value => {
+                                                                                            _targetFile = value;
+                                                                                            Touch();
+                                                                                        })" Immediate="true" Variant="Variant.Outlined"/>
+
+        <MudTextField T="string" Label="Saved path variable" Value="@_savedPathVariable" ValueChanged="@(value => {
+                                                                                                           _savedPathVariable = value;
+                                                                                                           Touch();
+                                                                                                       })" Immediate="true" Variant="Variant.Outlined"/>
     }
     @if (_type == "extractSources") {
-        <MudTextField T="string" Label="Variable" Value="@_variable" ValueChanged="@(value => { _variable = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-        <MudTextField T="string" Label="Element list" Value="@_elementsList" ValueChanged="@(value => { _elementsList = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-        <MudTextField T="string" Label="Attributes" Value="@_attributes" ValueChanged="@(value => { _attributes = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-        <MudCheckBox T="bool" Label="Resolve relative URLs" Value="@_resolve" ValueChanged="@(value => { _resolve = value; Touch(); })"/>
-        <MudCheckBox T="bool" Label="Deduplicate" Value="@_dedupe" ValueChanged="@(value => { _dedupe = value; Touch(); })"/>
-        <MudCheckBox T="bool" Label="Split comma-separated values" Value="@_split" ValueChanged="@(value => { _split = value; Touch(); })"/>
+        <MudTextField T="string" Label="Variable" Value="@_variable" ValueChanged="@(value => {
+                                                                                       _variable = value;
+                                                                                       Touch();
+                                                                                   })" Immediate="true" Variant="Variant.Outlined"/>
+
+        <MudTextField T="string" Label="Element list" Value="@_elementsList" ValueChanged="@(value => {
+                                                                                               _elementsList = value;
+                                                                                               Touch();
+                                                                                           })" Immediate="true" Variant="Variant.Outlined"/>
+
+        <MudTextField T="string" Label="Attributes" Value="@_attributes" ValueChanged="@(value => {
+                                                                                           _attributes = value;
+                                                                                           Touch();
+                                                                                       })" Immediate="true" Variant="Variant.Outlined"/>
+
+        <MudCheckBox T="bool" Label="Resolve relative URLs" Value="@_resolve" ValueChanged="@(value => {
+                                                                                                _resolve = value;
+                                                                                                Touch();
+                                                                                            })"/>
+
+        <MudCheckBox T="bool" Label="Deduplicate" Value="@_dedupe" ValueChanged="@(value => {
+                                                                                     _dedupe = value;
+                                                                                     Touch();
+                                                                                 })"/>
+
+        <MudCheckBox T="bool" Label="Split comma-separated values" Value="@_split" ValueChanged="@(value => {
+                                                                                                     _split = value;
+                                                                                                     Touch();
+                                                                                                 })"/>
     }
     @if (_type == "upsertJsonRecords") {
-        <MudTextField T="string" Label="Target" Value="@_targetName" ValueChanged="@(value => { _targetName = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
+        <MudTextField T="string" Label="Target" Value="@_targetName" ValueChanged="@(value => {
+                                                                                       _targetName = value;
+                                                                                       Touch();
+                                                                                   })" Immediate="true" Variant="Variant.Outlined"/>
     }
     @if (_type == "uploadDirectoryToFileStorage") {
-        <MudTextField T="string" Label="Source directory" Value="@_targetDirectory" ValueChanged="@(value => { _targetDirectory = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-        <MudTextField T="string" Label="Destination prefix" Value="@_prefix" ValueChanged="@(value => { _prefix = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-        <MudTextField T="string" Label="Stored file list variable" Value="@_storedList" ValueChanged="@(value => { _storedList = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
+        <MudTextField T="string" Label="Source directory" Value="@_targetDirectory" ValueChanged="@(value => {
+                                                                                                      _targetDirectory = value;
+                                                                                                      Touch();
+                                                                                                  })" Immediate="true" Variant="Variant.Outlined"/>
+
+        <MudTextField T="string" Label="Destination prefix" Value="@_prefix" ValueChanged="@(value => {
+                                                                                               _prefix = value;
+                                                                                               Touch();
+                                                                                           })" Immediate="true" Variant="Variant.Outlined"/>
+
+        <MudTextField T="string" Label="Stored file list variable" Value="@_storedList" ValueChanged="@(value => {
+                                                                                                          _storedList = value;
+                                                                                                          Touch();
+                                                                                                      })" Immediate="true" Variant="Variant.Outlined"/>
     }
     @if (_type == "invokeDiMethod") {
-        <MudTextField T="string" Label="Service type" Value="@_service" ValueChanged="@(value => { _service = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-        <MudTextField T="string" Label="Method" Value="@_methodName" ValueChanged="@(value => { _methodName = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-        <MudTextField T="string" Label="Result variable" Value="@_resultVariable" ValueChanged="@(value => { _resultVariable = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-        <MudCheckBox T="bool" Label="Throw when the method is missing" Value="@_throwMissing" ValueChanged="@(value => { _throwMissing = value; Touch(); })"/>
+        <MudTextField T="string" Label="Service type" Value="@_service" ValueChanged="@(value => {
+                                                                                          _service = value;
+                                                                                          Touch();
+                                                                                      })" Immediate="true" Variant="Variant.Outlined"/>
+
+        <MudTextField T="string" Label="Method" Value="@_methodName" ValueChanged="@(value => {
+                                                                                       _methodName = value;
+                                                                                       Touch();
+                                                                                   })" Immediate="true" Variant="Variant.Outlined"/>
+
+        <MudTextField T="string" Label="Result variable" Value="@_resultVariable" ValueChanged="@(value => {
+                                                                                                    _resultVariable = value;
+                                                                                                    Touch();
+                                                                                                })" Immediate="true" Variant="Variant.Outlined"/>
+
+        <MudCheckBox T="bool" Label="Throw when the method is missing" Value="@_throwMissing" ValueChanged="@(value => {
+                                                                                                                _throwMissing = value;
+                                                                                                                Touch();
+                                                                                                            })"/>
+
         @Pairs("Argument")
     }
 </MudStack>
 
 @code {
-    private RenderFragment LocatorFields() => __builder => {
-        <MudSelect T="ElementLocatorKind" Value="@_locatorKind" ValueChanged="@(value => { _locatorKind = value; Touch(); })" Label="Locator" Variant="Variant.Outlined">
-            @foreach (var kind in Enum.GetValues<ElementLocatorKind>()) {
-                <MudSelectItem Value="@kind">@kind</MudSelectItem>
-            }
-        </MudSelect>
-        <MudTextField T="string" Label="Locator value" Value="@_locatorValue" ValueChanged="@(value => { _locatorValue = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-    };
 
-    private RenderFragment ActionFields() => __builder => {
-        <MudSelect T="string" Value="@_actionType" ValueChanged="@(value => { _actionType = value; Touch(); })" Label="Action" Variant="Variant.Outlined">
-            @foreach (var action in ActionTypes) {
-                <MudSelectItem Value="@action">@action</MudSelectItem>
-            }
-        </MudSelect>
-        @if (_actionType is not "click" and not "clear" and not "submit") {
-            <MudTextField T="string" Label="Action value" Value="@_actionText" ValueChanged="@(value => { _actionText = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-        }
-        @if (_actionType == "dropdown") {
-            <MudSelect T="DropdownSelectionMode" Value="@_dropdownMode" ValueChanged="@(value => { _dropdownMode = value; Touch(); })" Label="Dropdown mode" Variant="Variant.Outlined">
-                @foreach (var mode in Enum.GetValues<DropdownSelectionMode>()) {
-                    <MudSelectItem Value="@mode">@mode</MudSelectItem>
+    private RenderFragment LocatorFields()
+        => __builder => {
+            <MudSelect T="ElementLocatorKind" Value="@_locatorKind" ValueChanged="@(value => {
+                                                                                      _locatorKind = value;
+                                                                                      Touch();
+                                                                                  })" Label="Locator" Variant="Variant.Outlined">
+                @foreach (var kind in Enum.GetValues<ElementLocatorKind>()) {
+                    <MudSelectItem Value="@kind">@kind</MudSelectItem>
                 }
             </MudSelect>
-            <MudTextField T="string" Label="Option locator" Value="@_locatorValue" ValueChanged="@(value => { _locatorValue = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-            <MudTextField T="string" Label="Scope parent ref" Value="@_scopeParent" ValueChanged="@(value => { _scopeParent = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-            <MudCheckBox T="bool" Label="Click trigger first" Value="@_clickTrigger" ValueChanged="@(value => { _clickTrigger = value; Touch(); })"/>
-        }
-    };
 
-    private RenderFragment Pairs(string label) => __builder => {
-        <MudText Typo="Typo.subtitle2">@(label)s</MudText>
-        @for (var i = 0; i < _pairs.Count; i++) {
-            var index = i;
-            var row = _pairs[index];
-            <MudStack Row="true" Spacing="1">
-                <MudTextField T="string" Label="@($"{label} name")" Value="@row.Key" ValueChanged="@(value => { row.Key = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-                <MudTextField T="string" Label="Value" Value="@row.Value" ValueChanged="@(value => { row.Value = value; Touch(); })" Immediate="true" Variant="Variant.Outlined"/>
-            </MudStack>
-        }
-        <MudButton OnClick="AddPair">Add @label.ToLowerInvariant()</MudButton>
-    };
+            <MudTextField T="string" Label="Locator value" Value="@_locatorValue" ValueChanged="@(value => {
+                                                                                                    _locatorValue = value;
+                                                                                                    Touch();
+                                                                                                })" Immediate="true" Variant="Variant.Outlined"/>
+        };
+
+    private RenderFragment ActionFields()
+        => __builder => {
+            <MudSelect T="string" Value="@_actionType" ValueChanged="@(value => {
+                                                                         _actionType = value;
+                                                                         Touch();
+                                                                     })" Label="Action" Variant="Variant.Outlined">
+                @foreach (var action in ActionTypes) {
+                    <MudSelectItem Value="@action">@action</MudSelectItem>
+                }
+            </MudSelect>
+
+            @if (_actionType is not "click" and not "clear" and not "submit") {
+                <MudTextField T="string" Label="Action value" Value="@_actionText" ValueChanged="@(value => {
+                                                                                                     _actionText = value;
+                                                                                                     Touch();
+                                                                                                 })" Immediate="true" Variant="Variant.Outlined"/>
+            }
+
+            @if (_actionType == "dropdown") {
+                <MudSelect T="DropdownSelectionMode" Value="@_dropdownMode" ValueChanged="@(value => {
+                                                                                              _dropdownMode = value;
+                                                                                              Touch();
+                                                                                          })" Label="Dropdown mode" Variant="Variant.Outlined">
+                    @foreach (var mode in Enum.GetValues<DropdownSelectionMode>()) {
+                        <MudSelectItem Value="@mode">@mode</MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudTextField T="string" Label="Option locator" Value="@_locatorValue" ValueChanged="@(value => {
+                                                                                                         _locatorValue = value;
+                                                                                                         Touch();
+                                                                                                     })" Immediate="true" Variant="Variant.Outlined"/>
+
+                <MudTextField T="string" Label="Scope parent ref" Value="@_scopeParent" ValueChanged="@(value => {
+                                                                                                          _scopeParent = value;
+                                                                                                          Touch();
+                                                                                                      })" Immediate="true" Variant="Variant.Outlined"/>
+
+                <MudCheckBox T="bool" Label="Click trigger first" Value="@_clickTrigger" ValueChanged="@(value => {
+                                                                                                           _clickTrigger = value;
+                                                                                                           Touch();
+                                                                                                       })"/>
+            }
+        };
+
+    private RenderFragment Pairs(string label)
+        => __builder => {
+            <MudText Typo="Typo.subtitle2">@(label)s</MudText>
+
+            @for (var i = 0; i < _pairs.Count; i++) {
+                var index = i;
+                var row = _pairs[index];
+                <MudStack Row="true" Spacing="1">
+                    <MudTextField T="string" Label="@($"{label} name")" Value="@row.Key" ValueChanged="@(value => {
+                                                                                                           row.Key = value;
+                                                                                                           Touch();
+                                                                                                       })" Immediate="true" Variant="Variant.Outlined"/>
+                    <MudTextField T="string" Label="Value" Value="@row.Value" ValueChanged="@(value => {
+                                                                                                row.Value = value;
+                                                                                                Touch();
+                                                                                            })" Immediate="true" Variant="Variant.Outlined"/>
+                </MudStack>
+            }
+
+            <MudButton OnClick="AddPair">Add @label.ToLowerInvariant()</MudButton>
+        };
+
 }

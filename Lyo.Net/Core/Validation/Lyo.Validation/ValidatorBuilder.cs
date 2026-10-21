@@ -51,7 +51,8 @@ public class ValidatorBuilder<T>
     }
 
     /// <summary>
-    /// Loads <paramref name="key" /> from <paramref name="store" /> on the calling thread and includes it. Prefer <see cref="IValidationSchemaCompiler.GetAsync{T}" /> in async hosts.
+    /// Loads <paramref name="key" /> from <paramref name="store" /> on the calling thread and includes it. Prefer <see cref="IValidationSchemaCompiler.GetAsync{T}" /> in async
+    /// hosts.
     /// </summary>
     public ValidatorBuilder<T> IncludeStore(IValidationSchemaStore store, string key, IValidationClauseEvaluator evaluator)
     {
@@ -89,6 +90,7 @@ public class ValidatorBuilder<T>
         var resolvedPropertyName = string.IsNullOrWhiteSpace(propertyName) ? selector.Body.TryGetMemberPath() ?? selector.ToString() : propertyName!;
         if (string.IsNullOrWhiteSpace(resolvedPropertyName))
             resolvedPropertyName = selector.ToString();
+
         return new(this, compiled, resolvedPropertyName);
     }
 

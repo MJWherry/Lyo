@@ -6,10 +6,7 @@ namespace Lyo.Ftp.Client;
 /// </summary>
 /// <remarks>
 /// <para>Hosts and adapters should call the <c>*Async</c> methods. Sync methods park the calling thread while they wait on the async implementation.</para>
-/// <para>
-/// Safe for concurrent callers: up to <see cref="FtpClientOptions.MaxPooledClients" /> operations can run at once. Do not share one leased <see cref="Stream" /> across
-/// threads.
-/// </para>
+/// <para>Safe for concurrent callers: up to <see cref="FtpClientOptions.MaxPooledClients" /> operations can run at once. Do not share one leased <see cref="Stream" /> across threads.</para>
 /// </remarks>
 public interface IFtpClient : IDisposable
 {

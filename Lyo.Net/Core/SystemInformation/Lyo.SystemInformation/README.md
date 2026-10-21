@@ -1,19 +1,27 @@
 # Lyo.SystemInformation
 
-`Lyo.SystemInformation` takes a point-in-time picture of the machine a process is running on. `SystemInfoCollector.Collect()` returns a `SystemInfo` record covering hardware (including audio devices and printers), software, network, and environment, stamped with `CollectedAtUtc`; the `ILogger` extensions emit it as structured log entries at a level you choose.
+`Lyo.SystemInformation` takes a point-in-time picture of the machine a process is running on. `SystemInfoCollector.Collect()` returns a `SystemInfo` record covering hardware
+(including audio devices and printers), software, network, and environment, stamped with `CollectedAtUtc`; the `ILogger` extensions emit it as structured log entries at a level you
+choose.
 
-It was carved out of `Lyo.Common` because it is the one part of that package that legitimately needs `Microsoft.Extensions.Logging.Abstractions`. Keeping it separate is what let the rest of the Common family shed that dependency. Its only production consumer is `Lyo.Job.Worker`, which logs the host inventory when a worker starts.
+It was carved out of `Lyo.Common` because it is the one part of that package that legitimately needs `Microsoft.Extensions.Logging.Abstractions`. Keeping it separate is what let
+the rest of the Common family shed that dependency. Its only production consumer is `Lyo.Job.Worker`, which logs the host inventory when a worker starts.
 
 Everything lives in the `Lyo.SystemInformation` namespace, matching the package.
 
 ## Features
 
-- **`SystemInfoCollector`.** Take the full snapshot with `Collect()`, or pay only for one facet via `GetHardwareInfo()` / `GetSoftwareInfo()` / `GetNetworkInfo()` / `GetEnvironmentInfo()`.
-- **Hardware inventory.** `HardwareInfo` covers CPU, memory, `DriveSpaceInfo` per volume, `MonitorInfo` for attached displays, `AudioDeviceInfo` for playback and capture endpoints (Windows form factor distinguishes speakers, headphones, and headsets), `PrinterInfo` for installed printers, and `PowerPolicyInfo` (profile, CPU governor, EPP, Windows scheme, AC vs battery).
-- **EDID parsing** (`EdidParser`). Pulls manufacturer, model, and physical dimensions from the display's Extended Display Identification Data — details OS APIs often collapse to a device string.
+- **`SystemInfoCollector`.** Take the full snapshot with `Collect()`, or pay only for one facet via `GetHardwareInfo()` / `GetSoftwareInfo()` / `GetNetworkInfo()` /
+  `GetEnvironmentInfo()`.
+- **Hardware inventory.** `HardwareInfo` covers CPU, memory, `DriveSpaceInfo` per volume, `MonitorInfo` for attached displays, `AudioDeviceInfo` for playback and capture endpoints
+  (Windows form factor distinguishes speakers, headphones, and headsets), `PrinterInfo` for installed printers, and `PowerPolicyInfo` (profile, CPU governor, EPP, Windows scheme,
+  AC vs battery).
+- **EDID parsing** (`EdidParser`). Pulls manufacturer, model, and physical dimensions from the display's Extended Display Identification Data — details OS APIs often collapse to a
+  device string.
 - **Network inventory.** Interfaces, addresses, and link state on `NetworkInfo` and `NetworkInterfaceInfo`.
 - **Software and environment.** `EnvironmentInfo` (machine and user context, working set) and `SoftwareInfo` (OS, runtime, architecture).
-- **Structured logging** (`SystemInfoLoggerExtensions`). `LogSystemInfo(info, level)` plus per-facet `LogHardwareInfo` / `LogSoftwareInfo` / `LogNetworkInfo` / `LogEnvironmentInfo`, so a startup banner is one call and the fields stay queryable in the log sink.
+- **Structured logging** (`SystemInfoLoggerExtensions`). `LogSystemInfo(info, level)` plus per-facet `LogHardwareInfo` / `LogSoftwareInfo` / `LogNetworkInfo` /
+  `LogEnvironmentInfo`, so a startup banner is one call and the fields stay queryable in the log sink.
 
 ## Examples
 
@@ -38,7 +46,11 @@ foreach (var drive in SystemInfoCollector.GetHardwareInfo().Drives)
 
 ## What platforms cover
 
-Collection is best-effort and degrades instead of throwing: facets the current OS does not expose come back empty or with defaults. Monitor enumeration and EDID reads depend most on the platform, because they go through native display APIs on Windows and sysfs on Linux. Audio devices come from `/proc/asound` on Linux (form factor stays null; ALSA proc does not classify speakers) and from WASAPI on Windows. Printers come from CUPS `printers.conf` on Linux and `EnumPrinters` on Windows. Power policy is the same shape: Linux reads ACPI platform profile, cpufreq governor/EPP, and mains `power_supply`; Windows uses powrprof (active scheme, overlay, friendly name) and `GetSystemPowerStatus`. macOS leaves audio, printers, and every power field empty or null.
+Collection is best-effort and degrades instead of throwing: facets the current OS does not expose come back empty or with defaults. Monitor enumeration and EDID reads depend most
+on the platform, because they go through native display APIs on Windows and sysfs on Linux. Audio devices come from `/proc/asound` on Linux (form factor stays null; ALSA proc does
+not classify speakers) and from WASAPI on Windows. Printers come from CUPS `printers.conf` on Linux and `EnumPrinters` on Windows. Power policy is the same shape: Linux reads ACPI
+platform profile, cpufreq governor/EPP, and mains `power_supply`; Windows uses powrprof (active scheme, overlay, friendly name) and `GetSystemPowerStatus`. macOS leaves audio,
+printers, and every power field empty or null.
 
 ## Dependencies
 

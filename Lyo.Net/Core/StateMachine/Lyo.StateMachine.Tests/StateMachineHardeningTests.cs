@@ -11,9 +11,7 @@ public class StateMachineHardeningTests
         var boom = new InvalidOperationException("boom");
         var builder = Job();
         builder.Configure(JobState.Done).OnEntry(_ => throw boom);
-
         var ex = Assert.Throws<StateMachineHookException>(() => builder.Build().Fire(new(), At(JobState.Running), JobTrigger.Complete));
-
         Assert.Same(boom, ex.InnerException);
         Assert.Contains("'job'", ex.Message);
         Assert.Contains("entry", ex.Message);
@@ -26,9 +24,7 @@ public class StateMachineHardeningTests
     {
         var builder = new StateMachineBuilder<JobState, JobTrigger, JobContext>("job", JobState.Running);
         builder.Configure(JobState.Running).PermitIf(JobTrigger.Complete, JobState.Done, _ => throw new FormatException("bad"));
-
         var ex = Assert.Throws<StateMachineHookException>(() => builder.Build().Fire(new(), At(JobState.Running), JobTrigger.Complete));
-
         Assert.IsType<FormatException>(ex.InnerException);
         Assert.Contains("guard", ex.Message);
     }
@@ -54,9 +50,7 @@ public class StateMachineHardeningTests
         var builder = Job();
         builder.Configure(JobState.Running).OnExit(_ => cts.Cancel());
         var context = new JobContext();
-
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => builder.Build().FireAsync(context, At(JobState.Running), JobTrigger.Complete, cts.Token));
-
         Assert.DoesNotContain("enter:Done", context.Log);
     }
 
@@ -67,7 +61,6 @@ public class StateMachineHardeningTests
         var builder = Job().GuardReentrancy();
         builder.Configure(JobState.Done).OnEntryAsync((t, ct) => definition!.FireAsync(t.Context, At(JobState.Queued), JobTrigger.Start, ct));
         definition = builder.Build();
-
         await Assert.ThrowsAsync<StateMachineReentrancyException>(() => definition.FireAsync(new(), At(JobState.Running), JobTrigger.Complete, TestCt));
     }
 
@@ -79,9 +72,7 @@ public class StateMachineHardeningTests
         var builder = Job().GuardReentrancy();
         builder.Configure(JobState.Done).OnEntryAsync(async (_, ct) => inner = await definition!.FireAsync(new(), At(JobState.Queued), JobTrigger.Start, ct));
         definition = builder.Build();
-
         await definition.FireAsync(new(), At(JobState.Running), JobTrigger.Complete, TestCt);
-
         Assert.True(inner!.Succeeded);
     }
 }

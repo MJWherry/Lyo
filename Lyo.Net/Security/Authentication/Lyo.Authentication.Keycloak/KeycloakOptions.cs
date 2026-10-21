@@ -27,8 +27,8 @@ public sealed class KeycloakOptions
     public IList<string> Scopes { get; set; } = ["openid", "email", "profile", "roles"];
 
     /// <summary>
-    /// Translates Keycloak realm-role names into Lyo scopes. A role may expand to several scopes; roles missing from this map are ignored so a new Keycloak role
-    /// cannot silently grant Lyo permissions.
+    /// Translates Keycloak realm-role names into Lyo scopes. A role may expand to several scopes; roles missing from this map are ignored so a new Keycloak role cannot silently
+    /// grant Lyo permissions.
     /// </summary>
     public IDictionary<string, string[]> RolesToScopes { get; set; } = new Dictionary<string, string[]>(StringComparer.Ordinal);
 

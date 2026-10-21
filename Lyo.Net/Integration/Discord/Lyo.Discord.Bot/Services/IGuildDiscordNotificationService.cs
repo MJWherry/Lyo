@@ -4,10 +4,7 @@ using Lyo.Discord.Models;
 
 namespace Lyo.Discord.Bot.Services;
 
-/// <summary>
-/// Posts to Discord guild channels: a channel id, or the cached guild log channel from <see cref="DiscordGuildSettings" /> (through
-/// <see cref="Lyo.Cache.ICacheService" />).
-/// </summary>
+/// <summary>Posts to Discord guild channels: a channel id, or the cached guild log channel from <see cref="DiscordGuildSettings" /> (through <see cref="Lyo.Cache.ICacheService" />).</summary>
 public interface IGuildDiscordNotificationService
 {
     /// <summary>Posts an embed to one channel. Returns false if the guild is missing, the channel is missing or not text-based, or send failed.</summary>

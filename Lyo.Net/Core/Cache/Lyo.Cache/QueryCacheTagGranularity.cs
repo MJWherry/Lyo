@@ -3,10 +3,7 @@ namespace Lyo.Cache;
 /// <summary>How list-query and GET cache entries are tagged for invalidation.</summary>
 public enum QueryCacheTagGranularity
 {
-    /// <summary>
-    /// Per-row and include-cascade instance tags (<c>entity:&lt;type&gt;:&lt;pk&gt;</c>) so mutations can bust only affected cached pages. Higher CPU when storing
-    /// cache entries.
-    /// </summary>
+    /// <summary>Per-row and include-cascade instance tags (<c>entity:&lt;type&gt;:&lt;pk&gt;</c>) so mutations can bust only affected cached pages. Higher CPU when storing cache entries.</summary>
     Granular = 0,
 
     /// <summary>

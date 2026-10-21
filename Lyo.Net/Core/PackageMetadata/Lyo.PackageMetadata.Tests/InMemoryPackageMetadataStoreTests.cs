@@ -87,10 +87,8 @@ public sealed class InMemoryPackageMetadataStoreTests
         var second = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000002");
         store.Register(["Shared.", "FirstOnly."], new(first, PackageEcosystem.NuGet, "First"));
         store.Register(["Shared."], new(second, PackageEcosystem.NuGet, "Second"));
-
         var shared = await store.TryGetForFrameAsync("", "Shared.Type.M", TestCt);
         var only = await store.TryGetForFrameAsync("", "FirstOnly.Type.M", TestCt);
-
         Assert.Equal("Second", shared!.Name);
         Assert.Equal("First", only!.Name);
     }

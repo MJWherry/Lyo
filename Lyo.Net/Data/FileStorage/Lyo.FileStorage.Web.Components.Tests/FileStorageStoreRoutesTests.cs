@@ -12,7 +12,6 @@ public sealed class FileStorageStoreRoutesTests
         var component = new FileStorageManagementComponent { FileMetadataQueryRoute = "FileStorage/FileMetadata", FileStorageApiRoutePrefix = "FileStorage" };
         component.UseStores(stores);
         component.SelectStore("b");
-
         Assert.Equal("FileStorage/b/files/folder", component.FilesApi("files/folder"));
         Assert.Equal("FileStorage/b/health", component.FilesApi("health"));
         Assert.StartsWith("FileStorage/b/files/save-stream", component.BuildSaveStreamUri(null, false, false, null, null, null));

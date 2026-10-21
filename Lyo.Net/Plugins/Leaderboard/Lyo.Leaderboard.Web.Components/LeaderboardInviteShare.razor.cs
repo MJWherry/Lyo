@@ -3,6 +3,16 @@ namespace Lyo.Leaderboard.Web.Components;
 /// <summary>Creates Link / QR / Email / User invites and shows the join URL plus QR PNG from the API.</summary>
 public partial class LeaderboardInviteShare
 {
+    private bool _busy;
+    private InviteCreatedResponse? _created;
+    private string? _email;
+
+    private InviteShareKind _kind = InviteShareKind.Qr;
+    private string? _qrSrc;
+    private MemberRole _role = MemberRole.Contributor;
+    private int _seenVersion = int.MinValue;
+    private string _userIdText = "";
+
     /// <summary>Typed Leaderboard API client.</summary>
     [Parameter]
     [EditorRequired]
@@ -15,15 +25,6 @@ public partial class LeaderboardInviteShare
     /// <summary>Unused except to reset local state when the parent reloads the board.</summary>
     [Parameter]
     public int DataVersion { get; set; }
-
-    private InviteShareKind _kind = InviteShareKind.Qr;
-    private MemberRole _role = MemberRole.Contributor;
-    private string? _email;
-    private string _userIdText = "";
-    private bool _busy;
-    private InviteCreatedResponse? _created;
-    private string? _qrSrc;
-    private int _seenVersion = int.MinValue;
 
     /// <inheritdoc />
     protected override void OnParametersSet()
@@ -59,13 +60,13 @@ public partial class LeaderboardInviteShare
         _busy = true;
         try {
             _created = await Client.CreateInviteAsync(
-                    Board.Id,
-                    new() {
-                        ShareKind = _kind,
-                        Role = _role,
-                        Email = _email,
-                        InvitedUserId = invitedUserId
-                    });
+                Board.Id, new() {
+                    ShareKind = _kind,
+                    Role = _role,
+                    Email = _email,
+                    InvitedUserId = invitedUserId
+                });
+
             _qrSrc = null;
             if (_kind is InviteShareKind.Qr or InviteShareKind.Link) {
                 try {

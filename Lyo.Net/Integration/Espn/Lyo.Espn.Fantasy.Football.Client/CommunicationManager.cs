@@ -49,11 +49,10 @@ public class CommunicationManager(FantasyFootballClient client)
     }
 
     /// <summary>
-    /// Loads one Fantasy Chat conversation page from <c>lm-api-communication</c>. Author, members, and teams are filled from the league index when it already has them.
-    /// Player cards stay empty until <see cref="LoadPlayersAsync(ChatConversationRes, int, int, CancellationToken)" />.
+    /// Loads one Fantasy Chat conversation page from <c>lm-api-communication</c>. Author, members, and teams are filled from the league index when it already has them. Player
+    /// cards stay empty until <see cref="LoadPlayersAsync(ChatConversationRes, int, int, CancellationToken)" />.
     /// </summary>
-    public async Task<ChatConversationRes?> GetConversationAsync(
-        int leagueId, int seasonId, string topicId, ChatConversationQuery? query = null, CancellationToken ct = default)
+    public async Task<ChatConversationRes?> GetConversationAsync(int leagueId, int seasonId, string topicId, ChatConversationQuery? query = null, CancellationToken ct = default)
     {
         FantasyFootballClient.ValidateSeason(seasonId, nameof(GetConversationAsync));
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(topicId);
@@ -75,8 +74,8 @@ public class CommunicationManager(FantasyFootballClient client)
     }
 
     /// <summary>
-    /// Loads every player card <paramref name="conversation" /> names with one player request. A second call uses the cache.
-    /// <see cref="ChatMessagePlayer.PlayerId" /> is left as it was.
+    /// Loads every player card <paramref name="conversation" /> names with one player request. A second call uses the cache. <see cref="ChatMessagePlayer.PlayerId" /> is left as
+    /// it was.
     /// </summary>
     public async Task LoadPlayersAsync(ChatConversationRes conversation, int leagueId, int seasonId, CancellationToken ct = default)
     {
@@ -85,6 +84,7 @@ public class CommunicationManager(FantasyFootballClient client)
         var ids = new List<int>();
         foreach (var message in conversation.Messages ?? [])
             message.CollectPlayerIds(ids);
+
         if (ids.Count == 0)
             return;
 
@@ -115,10 +115,9 @@ public class CommunicationManager(FantasyFootballClient client)
     }
 
     /// <summary>
-    /// Posts a user text message. <see cref="ChatMessageBuilder.For" /> accepts a topic UUID or a <see cref="ChatTopics" /> value.
-    /// <see cref="ChatMessageBuilder.To(string)" /> posts to the live direct message with that member. ESPN returns the new message as a one-element array; this method returns
-    /// that message.
-    /// Missing <see cref="FantasyFootballClientOptions.Swid" /> throws before any request is sent.
+    /// Posts a user text message. <see cref="ChatMessageBuilder.For" /> accepts a topic UUID or a <see cref="ChatTopics" /> value. <see cref="ChatMessageBuilder.To(string)" />
+    /// posts to the live direct message with that member. ESPN returns the new message as a one-element array; this method returns that message. Missing
+    /// <see cref="FantasyFootballClientOptions.Swid" /> throws before any request is sent.
     /// </summary>
     public async Task<ChatMessageRes> PostMessageAsync(int leagueId, int seasonId, ChatMessageBuilder message, CancellationToken ct = default)
     {
@@ -139,6 +138,7 @@ public class CommunicationManager(FantasyFootballClient client)
             OperationHelpers.ThrowIf(
                 message.TopicId is string topic && !string.Equals(topic, ChatTopics.DirectMessage, StringComparison.OrdinalIgnoreCase),
                 "A direct-message recipient cannot be combined with another chat.");
+
             var memberId = ResolveMemberId(message);
             return await ResolveDirectMessageTopicAsync(leagueId, seasonId, memberId, ct).ConfigureAwait(false);
         }
@@ -155,7 +155,7 @@ public class CommunicationManager(FantasyFootballClient client)
         }
 
         var name = message.RecipientName!;
-        if (Guid.TryParse(name, out _))
+        if (Guid.TryParse(name, out var _))
             return name;
 
         var index = client.LeagueDirectory;
@@ -197,13 +197,14 @@ public class CommunicationManager(FantasyFootballClient client)
 
     private async Task<string> ResolveTopicIdAsync(int leagueId, int seasonId, string topicId, CancellationToken ct)
     {
-        if (Guid.TryParse(topicId, out _))
+        if (Guid.TryParse(topicId, out var _))
             return topicId;
 
         var listed = await ListTopicsAsync(leagueId, seasonId, ct).ConfigureAwait(false);
         var matches = (listed ?? [])
             .Where(topic => !topic.IsDeleted && !string.IsNullOrWhiteSpace(topic.Id) && string.Equals(topic.Type, topicId, StringComparison.OrdinalIgnoreCase))
             .ToArray();
+
         OperationHelpers.ThrowIf(matches.Length == 0, $"No live Fantasy Chat topic of type {topicId}.");
         OperationHelpers.ThrowIf(matches.Length > 1, $"More than one live Fantasy Chat topic of type {topicId}. Pass the topic id.");
         return matches[0].Id;

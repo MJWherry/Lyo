@@ -1,3 +1,4 @@
+using System.Text;
 using CliWrap;
 using Lyo.IO.Temp.Models;
 
@@ -29,12 +30,13 @@ public class FFmpegFileTagIntegrationTests
 
     private static async Task<string> CodecAsync(string path)
     {
-        var stdout = new System.Text.StringBuilder();
+        var stdout = new StringBuilder();
         await Cli.Wrap("ffprobe")
             .WithArguments("-v", "error", "-select_streams", "a:0", "-show_entries", "stream=codec_name", "-of", "default=nw=1:nk=1", path)
             .WithStandardOutputPipe(PipeTarget.ToStringBuilder(stdout))
             .WithValidation(CommandResultValidation.None)
             .ExecuteAsync(TestCt);
+
         return stdout.ToString().Trim();
     }
 
@@ -52,5 +54,5 @@ public class FFmpegFileTagIntegrationTests
 
 file static class CliArgumentExtensions
 {
-    public static Command WithArguments(this Command command, params string[] args) => command.WithArguments((IEnumerable<string>)args);
+    public static Command WithArguments(this Command command, params string[] args) => command.WithArguments(args);
 }

@@ -1,6 +1,4 @@
 using System.Reflection;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
 using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
@@ -10,8 +8,18 @@ namespace Lyo.Web.Components.Export;
 
 public partial class ExportColumnSelectorDialog
 {
+    private string _customHeader = "";
+    private string _customTemplate = "";
+    private int? _dragOverIndex;
+
+    private int? _dragSourceIndex;
+
+    private bool _showAddCustom;
+
+    private HashSet<string> _uncheckedByDefaultLookup = [];
+
     [CascadingParameter]
-    IMudDialogInstance MudDialog { get; set; } = null!;
+    private IMudDialogInstance MudDialog { get; set; } = null!;
 
     [Parameter]
     public string? ElementId { get; set; }
@@ -31,8 +39,8 @@ public partial class ExportColumnSelectorDialog
     public bool AllowCustomColumns { get; set; } = true;
 
     /// <summary>
-    /// Field paths (<see cref="ExportColumnItem.Value" />) that start <strong>unchecked</strong> (for example columns hidden in the grid).
-    /// The user can still enable them for export.
+    /// Field paths (<see cref="ExportColumnItem.Value" />) that start <strong>unchecked</strong> (for example columns hidden in the grid). The user can still enable them for
+    /// export.
     /// </summary>
     [Parameter]
     public IReadOnlyCollection<string>? FieldsUncheckedByDefault { get; set; }
@@ -45,21 +53,14 @@ public partial class ExportColumnSelectorDialog
 
     private int SelectedCount => AllItems.Count(p => p.IsSelected);
 
-    private bool _showAddCustom;
-    private string _customHeader = "";
-    private string _customTemplate = "";
-
-    private HashSet<string> _uncheckedByDefaultLookup = [];
-
-    private int? _dragSourceIndex;
-    private int? _dragOverIndex;
-
     protected override void OnInitialized()
     {
         var source = FieldsUncheckedByDefault ?? DisabledExportFields;
         _uncheckedByDefaultLookup = source?.Where(f => !string.IsNullOrWhiteSpace(f)).Select(f => f.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase) ?? [];
         var fields = GetAvailableFields().ToList();
-        var lookup = DisplayNameOverrides?.ToDictionary(p => p.PropertyName, p => p.DisplayName ?? p.PropertyName, StringComparer.OrdinalIgnoreCase) ?? new Dictionary<string, string>();
+        var lookup = DisplayNameOverrides?.ToDictionary(p => p.PropertyName, p => p.DisplayName ?? p.PropertyName, StringComparer.OrdinalIgnoreCase) ??
+            new Dictionary<string, string>();
+
         AllItems = fields.Select((f, i) => {
                 var uncheckedDefault = _uncheckedByDefaultLookup.Contains(f);
                 return new ExportColumnItem {
@@ -152,7 +153,8 @@ public partial class ExportColumnSelectorDialog
     private static bool IsExportableType(Type type)
     {
         type = Nullable.GetUnderlyingType(type) ?? type;
-        return type.IsPrimitive || type == typeof(string) || type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(TimeSpan) || type == typeof(decimal) || type == typeof(Guid) || type.IsEnum;
+        return type.IsPrimitive || type == typeof(string) || type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(TimeSpan) || type == typeof(decimal) ||
+            type == typeof(Guid) || type.IsEnum;
     }
 
     private void AddCustomColumn()

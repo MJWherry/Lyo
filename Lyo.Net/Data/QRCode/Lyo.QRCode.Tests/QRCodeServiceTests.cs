@@ -1,10 +1,10 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions.Models;
 using Lyo.Metrics;
 using Lyo.QRCode.Models;
 using Lyo.QRCode.QRCoder;
 using Lyo.Testing;
 using Microsoft.Extensions.Logging;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.QRCode.Tests;
 

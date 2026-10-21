@@ -1,10 +1,10 @@
 using System.Text.Json;
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Postgres;
 using Lyo.Geolocation.Models.Addresses;
 using Lyo.Geolocation.Postgres.Database;
 using NpgsqlTypes;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Geolocation.Postgres.Mapping;
 

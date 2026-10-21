@@ -3,6 +3,15 @@ namespace Lyo.Leaderboard.Web.Components;
 /// <summary>Creates or updates a board and its scoring properties.</summary>
 public partial class LeaderboardBoardEditor
 {
+    private BoardRecord? _board;
+    private CreateBoardRequest _edit = new();
+
+    private LyoForm<CreateBoardRequest>? _form;
+    private bool _formHasChanges;
+    private int _loadedVersion = -1;
+    private IReadOnlyList<ScoringPropertyRecord> _properties = [];
+    private bool _saving;
+
     /// <summary>Typed Leaderboard API client.</summary>
     [Parameter]
     [EditorRequired]
@@ -19,14 +28,6 @@ public partial class LeaderboardBoardEditor
     /// <summary>Raised after create/update so the parent can adopt the board.</summary>
     [Parameter]
     public EventCallback<BoardRecord> OnChanged { get; set; }
-
-    private LyoForm<CreateBoardRequest>? _form;
-    private CreateBoardRequest _edit = new();
-    private bool _formHasChanges;
-    private bool _saving;
-    private BoardRecord? _board;
-    private int _loadedVersion = -1;
-    private IReadOnlyList<ScoringPropertyRecord> _properties = [];
 
     /// <inheritdoc />
     protected override async Task OnParametersSetAsync()
@@ -65,9 +66,7 @@ public partial class LeaderboardBoardEditor
 
         _saving = true;
         try {
-            var saved = _board == null
-                ? await Client.CreateBoardAsync(_edit)
-                : await Client.UpdateBoardAsync(_board.Id, _edit);
+            var saved = _board == null ? await Client.CreateBoardAsync(_edit) : await Client.UpdateBoardAsync(_board.Id, _edit);
             Snackbar.Add(_board == null ? "Board created." : "Board saved.", Severity.Success);
             await OnChanged.InvokeAsync(saved);
         }
@@ -105,11 +104,7 @@ public partial class LeaderboardBoardEditor
         if (_board == null)
             return;
 
-        var parameters = new DialogParameters<LeaderboardPropertyEditor> {
-            { x => x.Client, Client },
-            { x => x.BoardId, _board.Id },
-            { x => x.Property, null }
-        };
+        var parameters = new DialogParameters<LeaderboardPropertyEditor> { { x => x.Client, Client }, { x => x.BoardId, _board.Id }, { x => x.Property, null } };
         var dialog = await DialogService.ShowAsync<LeaderboardPropertyEditor>("New property", parameters, LyoDialogPresets.Large);
         var result = await dialog.Result;
         if (result is { Canceled: false })
@@ -121,11 +116,7 @@ public partial class LeaderboardBoardEditor
         if (_board == null)
             return;
 
-        var parameters = new DialogParameters<LeaderboardPropertyEditor> {
-            { x => x.Client, Client },
-            { x => x.BoardId, _board.Id },
-            { x => x.Property, property }
-        };
+        var parameters = new DialogParameters<LeaderboardPropertyEditor> { { x => x.Client, Client }, { x => x.BoardId, _board.Id }, { x => x.Property, property } };
         var dialog = await DialogService.ShowAsync<LeaderboardPropertyEditor>("Edit property", parameters, LyoDialogPresets.Large);
         var result = await dialog.Result;
         if (result is { Canceled: false })

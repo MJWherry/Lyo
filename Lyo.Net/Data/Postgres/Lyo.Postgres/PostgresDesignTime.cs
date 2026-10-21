@@ -5,9 +5,9 @@ namespace Lyo.Postgres;
 
 /// <summary>Helpers used by <c>IDesignTimeDbContextFactory</c> types that <c>dotnet ef</c> loads.</summary>
 /// <remarks>
-/// Design-time factories run under the EF CLI with no host, configuration, or service provider, so the connection string has to come from the environment. Every Lyo
-/// package does the same three steps: read an environment variable, fail with a useful message when it is missing, then build schema-scoped options. Those steps live
-/// here so each package factory only names its variable and schema.
+/// Design-time factories run under the EF CLI with no host, configuration, or service provider, so the connection string has to come from the environment. Every Lyo package
+/// does the same three steps: read an environment variable, fail with a useful message when it is missing, then build schema-scoped options. Those steps live here so each package
+/// factory only names its variable and schema.
 /// </remarks>
 /// <example>
 /// <code>
@@ -40,8 +40,7 @@ public static class PostgresDesignTime
     /// <param name="fallbackConnectionString">Used when none of the variables is set. Pass null to require one of them.</param>
     /// <returns>Options to hand to the context constructor.</returns>
     /// <exception cref="InvalidOperationException">Raised when no variable is set and no fallback was given.</exception>
-    public static DbContextOptions<TContext> CreateOptions<TContext>(
-        IReadOnlyList<string> environmentVariableNames, string schema, string? fallbackConnectionString = null)
+    public static DbContextOptions<TContext> CreateOptions<TContext>(IReadOnlyList<string> environmentVariableNames, string schema, string? fallbackConnectionString = null)
         where TContext : DbContext
     {
         ArgumentHelpers.ThrowIfNull(environmentVariableNames);
@@ -49,13 +48,11 @@ public static class PostgresDesignTime
         if (environmentVariableNames.Count == 0)
             throw new ArgumentException("At least one environment variable name is required.", nameof(environmentVariableNames));
 
-        var connectionString = environmentVariableNames
-            .Select(Environment.GetEnvironmentVariable)
-            .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value)) ?? fallbackConnectionString;
+        var connectionString = environmentVariableNames.Select(Environment.GetEnvironmentVariable).FirstOrDefault(value => !string.IsNullOrWhiteSpace(value)) ??
+            fallbackConnectionString;
 
         OperationHelpers.ThrowIfNullOrWhiteSpace(
-            connectionString,
-            $"Set {string.Join(" or ", environmentVariableNames)} to a PostgreSQL connection string for design-time operations.");
+            connectionString, $"Set {string.Join(" or ", environmentVariableNames)} to a PostgreSQL connection string for design-time operations.");
 
         return PostgresSchema.BuildOptions<TContext>(connectionString, schema);
     }

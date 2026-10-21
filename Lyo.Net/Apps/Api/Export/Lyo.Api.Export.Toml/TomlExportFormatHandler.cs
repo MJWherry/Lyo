@@ -22,6 +22,7 @@ public sealed class TomlExportFormatHandler(ITomlService toml) : IExportFormatHa
             await toml.ExportFormattedToTomlAsync(items, formatters, stream, ct).ConfigureAwait(false);
         else
             await toml.ExportToTomlAsync(items, stream, ct).ConfigureAwait(false);
+
         stream.Position = 0;
         return (stream, Format.FileType.MimeType, Format.DefaultFileName);
     }
@@ -37,6 +38,7 @@ public sealed class TomlExportFormatHandler(ITomlService toml) : IExportFormatHa
             await toml.ExportColumnsToTomlAsync(items, columns, stream, ct).ConfigureAwait(false);
         else
             await toml.ExportToTomlAsync(items, stream, ct).ConfigureAwait(false);
+
         stream.Position = 0;
         return (stream, Format.FileType.MimeType, Format.DefaultFileName);
     }

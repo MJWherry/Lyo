@@ -1,7 +1,6 @@
 using Lyo.EntityReference.Models;
 using Lyo.Seed;
 using Lyo.Tag.Postgres.Database;
-using Lyo.Tag.Seed;
 
 namespace Lyo.Tag.Seed.Tests;
 
@@ -15,15 +14,16 @@ public sealed class TagEfSeedContributorTests
         Assert.Equal(3, rows.Count);
         Assert.Equal(3, rows.Select(r => r.Slug).Distinct().Count());
         Assert.Equal(3, rows.Select(r => r.SubjectEntityId).Distinct().Count());
-        Assert.All(rows, row => {
-            Assert.Equal(TagEfSeedContributor.TenantId, row.TenantId);
-            Assert.Equal(TagEfSeedContributor.SubjectType, row.SubjectEntityType);
-            Assert.False(string.IsNullOrWhiteSpace(row.SubjectEntityId));
-            Assert.Equal(EntityRefVisibility.Public, row.Visibility);
-            Assert.Equal("tag", row.TagType);
-            Assert.False(string.IsNullOrWhiteSpace(row.Name));
-            Assert.False(string.IsNullOrWhiteSpace(row.Slug));
-        });
+        Assert.All(
+            rows, row => {
+                Assert.Equal(TagEfSeedContributor.TenantId, row.TenantId);
+                Assert.Equal(TagEfSeedContributor.SubjectType, row.SubjectEntityType);
+                Assert.False(string.IsNullOrWhiteSpace(row.SubjectEntityId));
+                Assert.Equal(EntityRefVisibility.Public, row.Visibility);
+                Assert.Equal("tag", row.TagType);
+                Assert.False(string.IsNullOrWhiteSpace(row.Name));
+                Assert.False(string.IsNullOrWhiteSpace(row.Slug));
+            });
     }
 
     private static async Task<RecordingSeedTransport> SeedAsync(SeedContributor contributor, int count)
@@ -49,6 +49,7 @@ public sealed class TagEfSeedContributorTests
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

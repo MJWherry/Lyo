@@ -1,8 +1,6 @@
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.HomeInventory.Models;
-using Lyo.HomeInventory.Models.Enums;
-using Lyo.Query.Models.Common.Request;
 
 namespace Lyo.HomeInventory.Web.Components;
 
@@ -10,6 +8,15 @@ namespace Lyo.HomeInventory.Web.Components;
 public partial class HomeItemView
 {
     private const string CustomKindChoice = "__custom__";
+
+    private readonly HomeItemReq _req = new();
+    private IReadOnlyList<HomeCategoryRes> _categories = [];
+    private string _customKind = "";
+    private string _draftKind = HomeProductKeys.Sku;
+    private string _draftNote = "";
+    private string _draftValue = "";
+    private IReadOnlyList<HomeLocationRes> _locations = [];
+    private Guid? _savedId;
 
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = null!;
@@ -32,31 +39,19 @@ public partial class HomeItemView
     [Parameter]
     public HomeItemRes? Item { get; set; }
 
-    private readonly HomeItemReq _req = new();
-    private Guid? _savedId;
-    private IReadOnlyList<HomeLocationRes> _locations = [];
-    private IReadOnlyList<HomeCategoryRes> _categories = [];
-    private string _draftKind = HomeProductKeys.Sku;
-    private string _customKind = "";
-    private string _draftValue = "";
-    private string _draftNote = "";
-
     private string _itemsRoute => $"{BaseRoute.TrimEnd('/')}/Items";
 
     private string _attachmentsRoute => $"{BaseRoute.TrimEnd('/')}/Attachments";
 
     private bool IsCustomKind => _draftKind == CustomKindChoice;
 
-    private bool CanAddKey
-        => !string.IsNullOrWhiteSpace(_draftValue)
-           && (IsCustomKind ? !string.IsNullOrWhiteSpace(_customKind) : !string.IsNullOrWhiteSpace(_draftKind));
+    private bool CanAddKey => !string.IsNullOrWhiteSpace(_draftValue) && (IsCustomKind ? !string.IsNullOrWhiteSpace(_customKind) : !string.IsNullOrWhiteSpace(_draftKind));
 
-    private string ApiOrigin
-    {
-        get
-        {
+    private string ApiOrigin {
+        get {
             if (Uri.TryCreate(BaseRoute, UriKind.Absolute, out var uri))
                 return uri.GetLeftPart(UriPartial.Authority);
+
             return "";
         }
     }
@@ -76,9 +71,9 @@ public partial class HomeItemView
             _req.ProductKeys = Item.ProductKeys.Select(k => new HomeProductKeyEntry { Kind = k.Kind, Value = k.Value, Note = k.Note }).ToList();
         }
 
-        var locations = await ApiClient.QueryConcreteAsync<QueryRes<HomeLocationRes>>($"{BaseRoute.TrimEnd('/')}/Locations", new QueryConcreteReq { Amount = 500 });
+        var locations = await ApiClient.QueryConcreteAsync<QueryRes<HomeLocationRes>>($"{BaseRoute.TrimEnd('/')}/Locations", new() { Amount = 500 });
         _locations = locations?.Items ?? [];
-        var categories = await ApiClient.QueryConcreteAsync<QueryRes<HomeCategoryRes>>($"{BaseRoute.TrimEnd('/')}/Categories", new QueryConcreteReq { Amount = 500 });
+        var categories = await ApiClient.QueryConcreteAsync<QueryRes<HomeCategoryRes>>($"{BaseRoute.TrimEnd('/')}/Categories", new() { Amount = 500 });
         _categories = categories?.Items ?? [];
     }
 
@@ -88,11 +83,7 @@ public partial class HomeItemView
             return;
 
         var kind = IsCustomKind ? _customKind.Trim() : _draftKind;
-        _req.ProductKeys.Add(new HomeProductKeyEntry {
-            Kind = kind,
-            Value = _draftValue.Trim(),
-            Note = string.IsNullOrWhiteSpace(_draftNote) ? null : _draftNote.Trim()
-        });
+        _req.ProductKeys.Add(new() { Kind = kind, Value = _draftValue.Trim(), Note = string.IsNullOrWhiteSpace(_draftNote) ? null : _draftNote.Trim() });
         _draftValue = "";
         _draftNote = "";
         if (IsCustomKind)
@@ -105,9 +96,8 @@ public partial class HomeItemView
 
     private async Task Save()
     {
-        if (_savedId is Guid id) {
+        if (_savedId is Guid id)
             await ApiClient.PostAsAsync<UpdateRequest<HomeItemReq>, UpdateResult<HomeItemRes>>($"{_itemsRoute}/Update", new(_req, id));
-        }
         else {
             var created = await ApiClient.PostAsAsync<HomeItemReq, CreateResult<HomeItemRes>>(_itemsRoute, _req);
             _savedId = created.Data?.Id;

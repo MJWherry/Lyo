@@ -7,13 +7,6 @@ namespace Lyo.Http.Client;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class LyoHttpCallContext
 {
-    /// <summary>Creates a context for <paramref name="request" />.</summary>
-    public LyoHttpCallContext(HttpRequestMessage request)
-    {
-        ArgumentHelpers.ThrowIfNull(request);
-        Request = request;
-    }
-
     /// <summary>Outbound request (hooks may mutate it in <see cref="LyoHttpClientHooks.BeforeSendAsync" />).</summary>
     public HttpRequestMessage Request { get; }
 
@@ -31,6 +24,13 @@ public sealed class LyoHttpCallContext
 
     /// <summary>Per-call bag.</summary>
     public IDictionary<string, object?> Items { get; } = new Dictionary<string, object?>(StringComparer.Ordinal);
+
+    /// <summary>Creates a context for <paramref name="request" />.</summary>
+    public LyoHttpCallContext(HttpRequestMessage request)
+    {
+        ArgumentHelpers.ThrowIfNull(request);
+        Request = request;
+    }
 
     /// <inheritdoc />
     public override string ToString() => $"{Request.Method} {Request.RequestUri} attempt={Attempt}";

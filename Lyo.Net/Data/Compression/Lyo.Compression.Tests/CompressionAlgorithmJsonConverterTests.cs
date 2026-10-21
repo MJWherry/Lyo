@@ -62,8 +62,7 @@ public class CompressionAlgorithmJsonConverterTests
     [Theory]
     [InlineData("{\"Name\":\"GZip\",\"Extension\":\".gz\"}")]
     [InlineData("{\"name\":\"GZip\",\"extension\":\".gz\"}")]
-    public void Deserialize_ObjectFormat_Throws(string json)
-        => Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<CompressionAlgorithm>(json, Options));
+    public void Deserialize_ObjectFormat_Throws(string json) => Assert.Throws<JsonException>(() => JsonSerializer.Deserialize<CompressionAlgorithm>(json, Options));
 
     [Fact]
     public void NestedProperty_RoundTrip_PreservesCompressionAlgorithm()

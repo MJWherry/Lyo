@@ -19,6 +19,7 @@ root.Subcommands.Add(CsvCommands.Create());
 root.Subcommands.Add(XlsxCommands.Create());
 foreach (var command in DocumentCommands.Create())
     root.Subcommands.Add(command);
+
 root.Subcommands.Add(NfcCommands.Create());
 root.Subcommands.Add(RfidCommands.Create());
 try {

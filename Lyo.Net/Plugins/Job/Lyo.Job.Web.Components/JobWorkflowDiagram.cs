@@ -18,9 +18,7 @@ public static class JobWorkflowDiagram
     {
         ArgumentHelpers.ThrowIfNull(steps);
         var layout = JobWorkflowGraphLayout.Build(steps);
-        var document = new DiagramBuilder(string.IsNullOrWhiteSpace(name) ? "Workflow" : name)
-            .Page("flow", "Flow", page => Write(page, layout))
-            .Build();
+        var document = new DiagramBuilder(string.IsNullOrWhiteSpace(name) ? "Workflow" : name).Page("flow", "Flow", page => Write(page, layout)).Build();
         return new(document, layout.Cyclic);
     }
 
@@ -33,22 +31,16 @@ public static class JobWorkflowDiagram
             page.Shape(CellId(node.Step.Id), node.Name, node.X, node.Y, JobWorkflowGraphLayout.NodeWidth, JobWorkflowGraphLayout.NodeHeight, DiagramShapeKind.Rounded);
 
         foreach (var edge in layout.Edges) {
-            var from = NodeAt(layout, edge.FromName, edge.StartX, edge.StartY, source: true);
-            var to = NodeAt(layout, edge.ToName, edge.EndX, edge.EndY, source: false);
+            var from = NodeAt(layout, edge.FromName, edge.StartX, edge.StartY, true);
+            var to = NodeAt(layout, edge.ToName, edge.EndX, edge.EndY, false);
             page.Connect(
-                $"{CellId(from.Step.Id)}-{CellId(to.Step.Id)}",
-                CellId(from.Step.Id),
-                CellId(to.Step.Id),
-                Waypoints(edge),
-                new DiagramPoint { X = edge.StartX, Y = edge.StartY },
-                new DiagramPoint { X = edge.EndX, Y = edge.EndY },
-                EdgeLabel(to.Step));
+                $"{CellId(from.Step.Id)}-{CellId(to.Step.Id)}", CellId(from.Step.Id), CellId(to.Step.Id), Waypoints(edge), new() { X = edge.StartX, Y = edge.StartY },
+                new() { X = edge.EndX, Y = edge.EndY }, EdgeLabel(to.Step));
         }
     }
 
     /// <summary>What has to be true for the target to run once the source has finished. An ungated step says so, rather than leaving a blank arrow.</summary>
-    private static string EdgeLabel(JobWorkflowStepDraft step)
-        => string.IsNullOrWhiteSpace(step.ConditionText) ? "always" : step.ConditionText;
+    private static string EdgeLabel(JobWorkflowStepDraft step) => string.IsNullOrWhiteSpace(step.ConditionText) ? "always" : step.ConditionText;
 
     /// <summary>The layout names an edge by step name. Matching the anchor as well keeps two steps that share a name on the right ends of the arrow.</summary>
     private static JobWorkflowGraphNode NodeAt(JobWorkflowGraphLayout layout, string name, int anchorX, int anchorY, bool source)
@@ -65,8 +57,8 @@ public static class JobWorkflowDiagram
             return [];
 
         return [
-            new DiagramPoint { X = int.Parse(tokens[4], CultureInfo.InvariantCulture), Y = int.Parse(tokens[5], CultureInfo.InvariantCulture) },
-            new DiagramPoint { X = int.Parse(tokens[7], CultureInfo.InvariantCulture), Y = int.Parse(tokens[8], CultureInfo.InvariantCulture) }
+            new() { X = int.Parse(tokens[4], CultureInfo.InvariantCulture), Y = int.Parse(tokens[5], CultureInfo.InvariantCulture) },
+            new() { X = int.Parse(tokens[7], CultureInfo.InvariantCulture), Y = int.Parse(tokens[8], CultureInfo.InvariantCulture) }
         ];
     }
 

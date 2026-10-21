@@ -20,9 +20,6 @@ public sealed class DiagnosticWebOptions
     /// <summary>Ceiling for <see cref="InMemoryErrorInbox" /> when <see cref="DiagnosticWebServiceCollectionExtensions.AddLyoDiagnosticsWeb" /> registers it.</summary>
     public int InMemoryInboxMaxOccurrences { get; set; } = 5_000;
 
-    /// <summary>
-    /// Request headers tried in order for <see cref="RequestMetadata.CorrelationId" />; falls back to
-    /// <see cref="Microsoft.AspNetCore.Http.HttpContext.TraceIdentifier" />.
-    /// </summary>
+    /// <summary>Request headers tried in order for <see cref="RequestMetadata.CorrelationId" />; falls back to <see cref="Microsoft.AspNetCore.Http.HttpContext.TraceIdentifier" />.</summary>
     public string[] CorrelationIdHeaders { get; set; } = LyoHttpHeaders.CorrelationIds;
 }

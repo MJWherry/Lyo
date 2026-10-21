@@ -1,6 +1,7 @@
 # Lyo.Job.Api.Example
 
-Runnable example: `AddPostgresJobManagementFromConfiguration`, `AddJobMaintenanceService`, export contributors, and `BuildJobGroup`. Demo wiring (local cache, OpenAPI/Scalar). Prefer embedding those calls in another host when composing APIs. Not packed to NuGet. Binds http://localhost:5096 (see Properties/launchSettings.json).
+Runnable example: `AddPostgresJobManagementFromConfiguration`, `AddJobMaintenanceService`, export contributors, and `BuildJobGroup`. Demo wiring (local cache, OpenAPI/Scalar).
+Prefer embedding those calls in another host when composing APIs. Not packed to NuGet. Binds http://localhost:5096 (see Properties/launchSettings.json).
 
 ## Features
 

@@ -26,9 +26,7 @@ public sealed class HomeInventoryEfSeedContributor : SeedContributor, IEfSeedSou
     public DbContext CreateContext(string connectionString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        var options = new DbContextOptionsBuilder<HomeInventoryDbContext>()
-            .UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<HomeInventoryDbContext>().UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema)).Options;
         return new HomeInventoryDbContext(options);
     }
 
@@ -39,55 +37,68 @@ public sealed class HomeInventoryEfSeedContributor : SeedContributor, IEfSeedSou
         var faker = options.RandomSeed is { } seed ? new Faker { Random = new(seed) } : new Faker();
         var now = DateTime.UtcNow;
         var lookupCount = Math.Min(5, Math.Max(1, options.Count));
-        var categories = Enumerable.Range(0, lookupCount).Select(i => {
-            var name = faker.Commerce.Department();
-            return new HomeCategoryEntity {
+        var categories = Enumerable.Range(0, lookupCount)
+            .Select(i => {
+                var name = faker.Commerce.Department();
+                return new HomeCategoryEntity {
+                    Id = LyoGuid.CreateV7(),
+                    Name = name,
+                    Slug = $"{Slug(name)}-{i}",
+                    CreatedTimestamp = now
+                };
+            })
+            .ToArray();
+
+        var locations = Enumerable.Range(0, lookupCount)
+            .Select(i => new HomeLocationEntity {
                 Id = LyoGuid.CreateV7(),
-                Name = name,
-                Slug = $"{Slug(name)}-{i}",
+                Name = faker.Address.StreetName(),
+                Code = $"L{i}",
+                IsActive = true,
                 CreatedTimestamp = now
-            };
-        }).ToArray();
-        var locations = Enumerable.Range(0, lookupCount).Select(i => new HomeLocationEntity {
-            Id = LyoGuid.CreateV7(),
-            Name = faker.Address.StreetName(),
-            Code = $"L{i}",
-            IsActive = true,
-            CreatedTimestamp = now
-        }).ToArray();
+            })
+            .ToArray();
+
         graph.Entity(categories);
         graph.Entity(locations);
-        var items = graph.Entity(options.Count, i => new HomeItemEntity {
-            Id = LyoGuid.CreateV7(),
-            CategoryId = categories[i % lookupCount].Id,
-            LocationId = locations[i % lookupCount].Id,
-            Name = faker.Commerce.ProductName(),
-            ProductKeysJson = "[]",
-            CreatedTimestamp = now
-        });
-        items.ForEach(_ => 1, (item, _) => new HomeItemStockEntity {
-            ItemId = item.Id,
-            LocationId = item.LocationId!.Value,
-            QuantityOnHand = faker.Random.Int(1, 24),
-            UpdatedTimestamp = now
-        });
-        items.ForEach(_ => 1, (item, _) => new HomeItemMovementEntity {
-            Id = LyoGuid.CreateV7(),
-            ItemId = item.Id,
-            MovementType = (int)HomeItemMovementType.Receipt,
-            Quantity = 1,
-            ToLocationId = item.LocationId,
-            CreatedTimestamp = now
-        });
-        items.ForEach(_ => 1, (item, _) => new HomeAttachmentEntity {
-            Id = LyoGuid.CreateV7(),
-            EntityType = HomeInventoryEntityTypes.Item,
-            EntityId = item.Id,
-            FileId = LyoGuid.CreateV7(),
-            Caption = faker.Commerce.ProductAdjective(),
-            IsPrimary = true,
-            CreatedTimestamp = now
-        });
+        var items = graph.Entity(
+            options.Count, i => new HomeItemEntity {
+                Id = LyoGuid.CreateV7(),
+                CategoryId = categories[i % lookupCount].Id,
+                LocationId = locations[i % lookupCount].Id,
+                Name = faker.Commerce.ProductName(),
+                ProductKeysJson = "[]",
+                CreatedTimestamp = now
+            });
+
+        items.ForEach(
+            _ => 1, (item, _) => new HomeItemStockEntity {
+                ItemId = item.Id,
+                LocationId = item.LocationId!.Value,
+                QuantityOnHand = faker.Random.Int(1, 24),
+                UpdatedTimestamp = now
+            });
+
+        items.ForEach(
+            _ => 1, (item, _) => new HomeItemMovementEntity {
+                Id = LyoGuid.CreateV7(),
+                ItemId = item.Id,
+                MovementType = (int)HomeItemMovementType.Receipt,
+                Quantity = 1,
+                ToLocationId = item.LocationId,
+                CreatedTimestamp = now
+            });
+
+        items.ForEach(
+            _ => 1, (item, _) => new HomeAttachmentEntity {
+                Id = LyoGuid.CreateV7(),
+                EntityType = HomeInventoryEntityTypes.Item,
+                EntityId = item.Id,
+                FileId = LyoGuid.CreateV7(),
+                Caption = faker.Commerce.ProductAdjective(),
+                IsPrimary = true,
+                CreatedTimestamp = now
+            });
     }
 
     private static string Slug(string value)

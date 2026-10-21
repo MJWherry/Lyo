@@ -1,5 +1,4 @@
 using Lyo.Music.Postgres.Database;
-using Lyo.Music.Seed;
 using Lyo.Seed;
 
 namespace Lyo.Music.Seed.Tests;
@@ -21,20 +20,22 @@ public sealed class MusicEfSeedContributorTests
         Assert.Equal(2, releases.Count);
         Assert.Equal(4, tracks.Count);
         Assert.Equal(4, recordings.Count);
-        Assert.All(releases, release => {
-            Assert.Contains(groups, group => group.Id == release.ReleaseGroupId);
-            Assert.NotNull(release.FormatId);
-            Assert.Equal(2, transport.Items.OfType<MusicReleaseGenreEntity>().Count(row => row.ReleaseId == release.Id));
-            var identifier = Assert.Single(transport.Items.OfType<MusicIdentifierEntity>(), row => row.ReleaseId == release.Id);
-            Assert.Equal(release.Id.ToString("N"), identifier.NormalizedValue);
-            Assert.Contains(credits, row => row.ReleaseId == release.Id);
-            var releaseTracks = tracks.Where(row => row.ReleaseId == release.Id).ToList();
-            Assert.Equal(2, releaseTracks.Count);
-            Assert.All(releaseTracks, track => {
-                Assert.Contains(recordings, row => row.Id == track.RecordingId);
-                Assert.Contains(credits, row => row.TrackId == track.Id);
+        Assert.All(
+            releases, release => {
+                Assert.Contains(groups, group => group.Id == release.ReleaseGroupId);
+                Assert.NotNull(release.FormatId);
+                Assert.Equal(2, transport.Items.OfType<MusicReleaseGenreEntity>().Count(row => row.ReleaseId == release.Id));
+                var identifier = Assert.Single(transport.Items.OfType<MusicIdentifierEntity>(), row => row.ReleaseId == release.Id);
+                Assert.Equal(release.Id.ToString("N"), identifier.NormalizedValue);
+                Assert.Contains(credits, row => row.ReleaseId == release.Id);
+                var releaseTracks = tracks.Where(row => row.ReleaseId == release.Id).ToList();
+                Assert.Equal(2, releaseTracks.Count);
+                Assert.All(
+                    releaseTracks, track => {
+                        Assert.Contains(recordings, row => row.Id == track.RecordingId);
+                        Assert.Contains(credits, row => row.TrackId == track.Id);
+                    });
             });
-        });
     }
 
     private static async Task<RecordingSeedTransport> SeedAsync(SeedContributor contributor, int count)
@@ -60,6 +61,7 @@ public sealed class MusicEfSeedContributorTests
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

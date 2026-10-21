@@ -4,10 +4,7 @@ using Lyo.Exceptions;
 
 namespace Lyo.Media.Models;
 
-/// <summary>
-/// Constant rate factor. Hardware encoders remap <see cref="Value" /> onto their own quality flag.
-/// Lookups are thread-safe.
-/// </summary>
+/// <summary>Constant rate factor. Hardware encoders remap <see cref="Value" /> onto their own quality flag. Lookups are thread-safe.</summary>
 public sealed record ConstantRateFactor
 {
     private static readonly ConcurrentDictionary<string, ConstantRateFactor> ById = new(StringComparer.OrdinalIgnoreCase);
@@ -66,7 +63,7 @@ public sealed record ConstantRateFactor
         _ = BuiltIns;
         ArgumentHelpers.ThrowIfLessThan(value, 0);
         var key = value.ToString(CultureInfo.InvariantCulture);
-        return NamedCatalog.GetOrCustom(ById, key, _ => new ConstantRateFactor(key, value));
+        return NamedCatalog.GetOrCustom(ById, key, _ => new(key, value));
     }
 
     /// <inheritdoc />

@@ -6,12 +6,12 @@ namespace Lyo.Espn.Fantasy.Football.Client.Builders;
 /// <summary>Builds a trade proposal or a response to an existing proposal.</summary>
 public sealed class TradeTransactionBuilder
 {
-    private readonly int _teamId;
-    private readonly int _otherTeamId;
-    private readonly int _scoringPeriodId;
-    private readonly string? _responseType;
-    private readonly string? _relatedTransactionId;
     private readonly List<FantasyTransactionItemReq> _items = [];
+    private readonly int _otherTeamId;
+    private readonly string? _relatedTransactionId;
+    private readonly string? _responseType;
+    private readonly int _scoringPeriodId;
+    private readonly int _teamId;
     private string? _comment;
     private long? _expirationDate;
 
@@ -36,14 +36,28 @@ public sealed class TradeTransactionBuilder
     /// <summary>Offers a player from this team to the other team.</summary>
     public TradeTransactionBuilder Send(int playerId)
     {
-        _items.Add(new() { PlayerId = playerId, Type = "TRADE", FromTeamId = _teamId, ToTeamId = _otherTeamId });
+        _items.Add(
+            new() {
+                PlayerId = playerId,
+                Type = "TRADE",
+                FromTeamId = _teamId,
+                ToTeamId = _otherTeamId
+            });
+
         return this;
     }
 
     /// <summary>Asks for a player from the other team.</summary>
     public TradeTransactionBuilder Receive(int playerId)
     {
-        _items.Add(new() { PlayerId = playerId, Type = "TRADE", FromTeamId = _otherTeamId, ToTeamId = _teamId });
+        _items.Add(
+            new() {
+                PlayerId = playerId,
+                Type = "TRADE",
+                FromTeamId = _otherTeamId,
+                ToTeamId = _teamId
+            });
+
         return this;
     }
 
@@ -74,8 +88,7 @@ public sealed class TradeTransactionBuilder
         => new(teamId, scoringPeriodId, relatedTransactionId, "TRADE_UPHOLD");
 
     /// <summary>Vetoes an existing proposal. Use <see cref="Comment" /> when a reason should be sent.</summary>
-    public static TradeTransactionBuilder Veto(int teamId, int scoringPeriodId, string relatedTransactionId)
-        => new(teamId, scoringPeriodId, relatedTransactionId, "TRADE_VETO");
+    public static TradeTransactionBuilder Veto(int teamId, int scoringPeriodId, string relatedTransactionId) => new(teamId, scoringPeriodId, relatedTransactionId, "TRADE_VETO");
 
     /// <summary>Returns the trade body. A proposal with no players throws. A response carries <c>relatedTransactionId</c> and no items.</summary>
     public FantasyTransactionReq Build()
@@ -105,6 +118,5 @@ public sealed class TradeTransactionBuilder
         };
     }
 
-    private static long ToUnixMilliseconds(DateTimeOffset value)
-        => (value.ToUniversalTime().Ticks - 621355968000000000L) / TimeSpan.TicksPerMillisecond;
+    private static long ToUnixMilliseconds(DateTimeOffset value) => (value.ToUniversalTime().Ticks - 621355968000000000L) / TimeSpan.TicksPerMillisecond;
 }

@@ -4,9 +4,5 @@ namespace Lyo.Job.Web.Components;
 internal static class JobDefinitionEditorQuery
 {
     /// <summary>Parameters and schedules, including schedule parameters and blackout windows.</summary>
-    public static readonly string[] Includes = [
-        "JobParameters",
-        "JobSchedules.JobScheduleParameters",
-        "JobSchedules.JobBlackoutCalendar.JobBlackoutWindows"
-    ];
+    public static readonly string[] Includes = ["JobParameters", "JobSchedules.JobScheduleParameters", "JobSchedules.JobBlackoutCalendar.JobBlackoutWindows"];
 }

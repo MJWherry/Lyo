@@ -96,10 +96,11 @@ public partial class LyoHttpClientOptions
     public LyoHttpClientOptions UseBearer(Func<IServiceProvider, CancellationToken, ValueTask<string?>> token)
     {
         ArgumentHelpers.ThrowIfNull(token);
-        return UseHeader(LyoHttpHeaders.Authorization, async (sp, ct) => {
-            var value = await token(sp, ct).ConfigureAwait(false);
-            return string.IsNullOrEmpty(value) ? null : "Bearer " + value;
-        });
+        return UseHeader(
+            LyoHttpHeaders.Authorization, async (sp, ct) => {
+                var value = await token(sp, ct).ConfigureAwait(false);
+                return string.IsNullOrEmpty(value) ? null : "Bearer " + value;
+            });
     }
 
     /// <summary>Sets <see cref="LyoHttpHeaders.ApiKey" /> to the raw secret on every send.</summary>
@@ -164,7 +165,7 @@ public partial class LyoHttpClientOptions
     private LyoHttpConfiguredHeader Slot(string name)
     {
         if (!ConfiguredHeaders.TryGetValue(name, out var header)) {
-            header = new LyoHttpConfiguredHeader();
+            header = new();
             ConfiguredHeaders[name] = header;
         }
 

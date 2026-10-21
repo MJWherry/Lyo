@@ -3,7 +3,7 @@ using Lyo.Story.Enums;
 
 namespace Lyo.Story;
 
-/// <summary>Append-only play log row. <see cref="CausedByEventId"/> is the only consequence pointer.</summary>
+/// <summary>Append-only play log row. <see cref="CausedByEventId" /> is the only consequence pointer.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class StoryPlaythroughEvent
 {

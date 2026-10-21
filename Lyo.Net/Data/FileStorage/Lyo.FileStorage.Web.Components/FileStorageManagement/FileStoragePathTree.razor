@@ -1,96 +1,105 @@
-@namespace Lyo.FileStorage.Web.Components.FileStorageManagement
 @using Microsoft.AspNetCore.Components.Web.Virtualization
+@namespace Lyo.FileStorage.Web.Components.FileStorageManagement
 
 <MudPaper Outlined="true" Class="pa-2 d-flex flex-column overflow-hidden" Style="height:100%;min-height:0;">
     <div class="file-storage-tree-panel">
-    <div class="file-storage-tree-toolbar">
-        <MudStack Spacing="1">
-            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-                <MudText Typo="Typo.subtitle2" Class="flex-grow-1">Paths</MudText>
-                <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" Disabled="@Busy" OnClick="Refresh" aria-label="Refresh tree"/>
-            </MudStack>
-        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-            <MudTextField T="string"
-                          Class="flex-grow-1"
-                          @bind-Value="_filter"
-                          Immediate="true"
-                          DebounceInterval="200"
-                          Variant="Variant.Outlined"
-                          Margin="Margin.Dense"
-                          Placeholder="Search"
-                          Adornment="Adornment.Start"
-                          AdornmentIcon="@Icons.Material.Filled.Search"
-                          Clearable="true"
-                          Disabled="@Busy"
-                          aria-label="Search paths"/>
-            <MudTooltip Text="@(_editMode ? "Done selecting" : "Select multiple for bulk actions")">
-                <MudIconButton Icon="@(_editMode ? Icons.Material.Filled.Close : Icons.Material.Filled.Edit)"
-                               Color="@(_editMode ? Color.Primary : Color.Default)"
-                               Size="Size.Small"
-                               Disabled="@Busy"
-                               OnClick="ToggleEdit"
-                               aria-label="Toggle bulk selection"/>
-            </MudTooltip>
-        </MudStack>
-        @if (_editMode) {
-            <MudText Typo="Typo.caption" Color="Color.Secondary">
-                Check files or folders, then Move / Rotate DEKs / Delete / Download zip. A folder includes every file under it. Drag onto a folder to move.
-            </MudText>
-            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
-                <MudText Typo="Typo.caption" Class="mud-text-secondary">@BulkFileCount file(s)</MudText>
-                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileMove" Disabled="@(Busy || BulkFileCount == 0)" OnClick="OnBulkMoveAsync">Move…</MudButton>
-                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.VpnKey" Disabled="@(Busy || BulkFileCount == 0)" OnClick="OnBulkRotateAsync">Rotate DEKs…</MudButton>
-                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Archive" Disabled="@(Busy || BulkFileCount == 0)" OnClick="OnBulkDownloadAsync">Download zip</MudButton>
-                <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" Disabled="@(Busy || BulkFileCount == 0)" OnClick="OnBulkDeleteAsync">Delete</MudButton>
-            </MudStack>
-        }
-        @if (Truncated) {
-            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-1">Listing was truncated at the QueryProject page cap.</MudAlert>
-        }
-        </MudStack>
-    </div>
-    @{
-        var rows = FileStoragePathTreeBuilder.FlattenVisible(DisplayItems);
-    }
-    <div class="file-storage-tree-scroll" role="tree" aria-label="File storage paths">
-        @if (Busy) {
-            <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>
-        }
-        @if (rows.Count == 0) {
-            <MudText Typo="Typo.caption" Color="Color.Secondary">No matching paths.</MudText>
-        }
-        else {
-            <Virtualize Items="@rows" ItemSize="@FileStoragePathTreeVisibleRow.ItemSize" OverscanCount="12" Context="row">
-                @{
-                    var node = row.Node;
+        <div class="file-storage-tree-toolbar">
+            <MudStack Spacing="1">
+                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.subtitle2" Class="flex-grow-1">Paths</MudText>
+                    <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" Disabled="@Busy" OnClick="Refresh" aria-label="Refresh tree"/>
+                </MudStack>
+                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                    <MudTextField T="string"
+                                  Class="flex-grow-1"
+                                  @bind-Value="_filter"
+                                  Immediate="true"
+                                  DebounceInterval="200"
+                                  Variant="Variant.Outlined"
+                                  Margin="Margin.Dense"
+                                  Placeholder="Search"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Clearable="true"
+                                  Disabled="@Busy"
+                                  aria-label="Search paths"/>
+                    <MudTooltip Text="@(_editMode ? "Done selecting" : "Select multiple for bulk actions")">
+                        <MudIconButton Icon="@(_editMode ? Icons.Material.Filled.Close : Icons.Material.Filled.Edit)"
+                                       Color="@(_editMode ? Color.Primary : Color.Default)"
+                                       Size="Size.Small"
+                                       Disabled="@Busy"
+                                       OnClick="ToggleEdit"
+                                       aria-label="Toggle bulk selection"/>
+                    </MudTooltip>
+                </MudStack>
+                @if (_editMode) {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        Check files or folders, then Move / Rotate DEKs / Delete / Download zip. A folder includes every file under it. Drag onto a folder to move.
+                    </MudText>
+
+                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">@BulkFileCount file(s)</MudText>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileMove" Disabled="@(Busy || BulkFileCount == 0)"
+                                   OnClick="OnBulkMoveAsync">Move…
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.VpnKey" Disabled="@(Busy || BulkFileCount == 0)"
+                                   OnClick="OnBulkRotateAsync">Rotate DEKs…
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Archive" Disabled="@(Busy || BulkFileCount == 0)"
+                                   OnClick="OnBulkDownloadAsync">Download zip
+                        </MudButton>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete"
+                                   Disabled="@(Busy || BulkFileCount == 0)" OnClick="OnBulkDeleteAsync">Delete
+                        </MudButton>
+                    </MudStack>
                 }
-                <div @key="@node.Key"
-                     class="@RowClass(row)"
-                     role="treeitem"
-                     aria-selected="@(IsRowSelected(node) ? "true" : "false")"
-                     aria-expanded="@(row.Expandable ? (row.Expanded ? "true" : "false") : null)"
-                     draggable="@(_editMode && !node.IsDeleted && !FileStoragePathTreeBuilder.IsPendingChild(node) ? "true" : "false")"
-                     @onclick="@(() => OnSelectAsync(node))"
-                     @ondragstart="@(() => OnDragStart(node))"
-                     @ondragover:preventDefault="@(_editMode && node.IsDirectory)"
-                     @ondragenter="@(() => OnDragEnter(node))"
-                     @ondragleave="@(() => OnDragLeave(node))"
-                     @ondrop:preventDefault="@(_editMode && node.IsDirectory)"
-                     @ondrop="@(() => OnDropAsync(node))">
-                    <span class="file-storage-tree-indent" style="width: @(row.Depth * 16)px;"></span>
-                    @if (row.Expandable) {
-                        <span class="file-storage-tree-toggle" @onclick:stopPropagation="true">
+                @if (Truncated) {
+                    <MudAlert Severity="Severity.Info" Dense="true" Class="mb-1">Listing was truncated at the QueryProject page cap.</MudAlert>
+                }
+            </MudStack>
+        </div>
+        @{
+            var rows = FileStoragePathTreeBuilder.FlattenVisible(DisplayItems);
+        }
+        <div class="file-storage-tree-scroll" role="tree" aria-label="File storage paths">
+            @if (Busy) {
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>
+            }
+            @if (rows.Count == 0) {
+                <MudText Typo="Typo.caption" Color="Color.Secondary">No matching paths.</MudText>
+            }
+            else {
+                <Virtualize Items="@rows" ItemSize="@FileStoragePathTreeVisibleRow.ItemSize" OverscanCount="12" Context="row">
+                    @{
+                        var node = row.Node;
+                    }
+                    <div @key="@node.Key"
+                         class="@RowClass(row)"
+                         role="treeitem"
+                         aria-selected="@(IsRowSelected(node) ? "true" : "false")"
+                         aria-expanded="@(row.Expandable ? row.Expanded ? "true" : "false" : null)"
+                         draggable="@(_editMode && !node.IsDeleted && !FileStoragePathTreeBuilder.IsPendingChild(node) ? "true" : "false")"
+                         @onclick="@(() => OnSelectAsync(node))"
+                         @ondragstart="@(() => OnDragStart(node))"
+                         @ondragover:preventDefault="@(_editMode && node.IsDirectory)"
+                         @ondragenter="@(() => OnDragEnter(node))"
+                         @ondragleave="@(() => OnDragLeave(node))"
+                         @ondrop:preventDefault="@(_editMode && node.IsDirectory)"
+                         @ondrop="@(() => OnDropAsync(node))">
+                        <span class="file-storage-tree-indent" style="width: @(row.Depth * 16)px;"></span>
+                        @if (row.Expandable) {
+                            <span class="file-storage-tree-toggle" @onclick:stopPropagation="true">
                             <MudIconButton Icon="@(row.Expanded ? Icons.Material.Filled.ExpandMore : Icons.Material.Filled.ChevronRight)"
                                            Size="Size.Small"
                                            OnClick="@(() => OnExpandedAsync(node, !row.Expanded))"
                                            aria-label="@(row.Expanded ? "Collapse" : "Expand")"/>
                         </span>
-                    }
-                    else {
-                        <span class="file-storage-tree-toggle-placeholder"></span>
-                    }
-                    @if (_editMode) {
-                        <span @onclick:stopPropagation="true">
+                        }
+                        else {
+                            <span class="file-storage-tree-toggle-placeholder"></span>
+                        }
+                        @if (_editMode) {
+                            <span @onclick:stopPropagation="true">
                             <MudCheckBox T="bool"
                                          Value="@_checked.Contains(node)"
                                          ValueChanged="@(value => OnRowCheckedChangedAsync(node, value))"
@@ -98,23 +107,23 @@
                                          Size="Size.Small"
                                          Disabled="@(node.IsDeleted || FileStoragePathTreeBuilder.IsPendingChild(node))"/>
                         </span>
-                    }
-                    <MudIcon Icon="@IconFor(node)" Color="@IconColorFor(node)" Size="Size.Small"/>
-                    <MudText Typo="Typo.body2"
-                             Class="file-storage-tree-name"
-                             Color="@(node.IsDeleted ? Color.Secondary : Color.Default)"
-                             Style="@(node.IsDeleted ? "text-decoration: line-through;" : null)">
-                        @node.Name
-                        @if (node.IsPending) {
-                            <span class="mud-text-secondary"> (new)</span>
                         }
-                    </MudText>
-                    @foreach (var badge in BadgesFor(node)) {
-                        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@badge.Color">@badge.Label</MudChip>
-                    }
-                </div>
-            </Virtualize>
-        }
-    </div>
+                        <MudIcon Icon="@IconFor(node)" Color="@IconColorFor(node)" Size="Size.Small"/>
+                        <MudText Typo="Typo.body2"
+                                 Class="file-storage-tree-name"
+                                 Color="@(node.IsDeleted ? Color.Secondary : Color.Default)"
+                                 Style="@(node.IsDeleted ? "text-decoration: line-through;" : null)">
+                            @node.Name
+                            @if (node.IsPending) {
+                                <span class="mud-text-secondary"> (new)</span>
+                            }
+                        </MudText>
+                        @foreach (var badge in BadgesFor(node)) {
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="@badge.Color">@badge.Label</MudChip>
+                        }
+                    </div>
+                </Virtualize>
+            }
+        </div>
     </div>
 </MudPaper>

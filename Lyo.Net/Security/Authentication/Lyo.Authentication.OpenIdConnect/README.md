@@ -1,8 +1,10 @@
 # Lyo.Authentication.OpenIdConnect
 
-OpenID Connect client base for Lyo. The Lyo API is the OIDC confidential client (BFF pattern). The frontend never sees the IdP and never receives tokens by URL fragment. After a successful external login, the API either:
+OpenID Connect client base for Lyo. The Lyo API is the OIDC confidential client (BFF pattern). The frontend never sees the IdP and never receives tokens by URL fragment. After a
+successful external login, the API either:
 
-- issues tokens directly as JSON, for API clients calling `/auth/login/{provider}?mode=api`, or - mints a single-use handoff code and 302-redirects the browser to a whitelisted consumer origin, which then exchanges that code server-to-server for the tokens, for browser clients via `Lyo.Authentication.Client`.
+- issues tokens directly as JSON, for API clients calling `/auth/login/{provider}?mode=api`, or - mints a single-use handoff code and 302-redirects the browser to a whitelisted
+  consumer origin, which then exchanges that code server-to-server for the tokens, for browser clients via `Lyo.Authentication.Client`.
 
 ## Examples
 
@@ -25,27 +27,29 @@ services.AddKeycloakProviderFromConfiguration(builder.Configuration);
 - `OidcTokenExchangeClient.` Typed `HttpClient` that POSTs the authorization code back for tokens.
 - `OidcIdTokenValidator.` Validates issuer, audience, nonce, exp, signature.
 - `OidcSsoProtocol.` OpenID Connect `ISsoProtocol`. `CompleteAsync` validates the code and id_token, then calls SSO completion once.
-- `IExternalLoginCoordinator` / `DefaultExternalLoginCoordinator.` Facade over `OidcSsoProtocol`. It returns the token that completion already minted. It does not mint a second JWT.
+- `IExternalLoginCoordinator` / `DefaultExternalLoginCoordinator.` Facade over `OidcSsoProtocol`. It returns the token that completion already minted. It does not mint a second
+  JWT.
 
 ## Endpoints
 
 `Lyo.Authentication.Sso` maps these with `app.MapLyoAuthEndpoints()`. The OpenID Connect package keeps an obsolete forwarder of that method.
 
-| Method | Path | Purpose |
-| ------ | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| GET | `/auth/login/{provider}?returnUrl=...&mode=browser\|api` | Starts the OIDC login. `mode=browser` or `mode=api`. |
-| GET | `/auth/callback/{provider}` | OpenID Connect redirect. Browser mode mints a handoff code and 302s to `{returnUrl}?lyo_handoff=lyoh_...`. API mode returns 200 OK with `{access_token, refresh_token, expires_in, token_type}`. |
-| POST | `/auth/callback/{provider}` | SAML HTTP-POST. Form fields `SAMLResponse` and `RelayState`. Antiforgery is disabled; the login ticket is the cross-site control. Browser handoff only. |
-| POST | `/auth/handoff/exchange` | Body `{ code }`. Consumes a handoff code once, returns tokens. Audited as `HandoffCodeConsumed` / `HandoffCodeRejected`. |
-| POST | `/auth/token` | Reserved for first-party API client grants. |
-| POST | `/auth/refresh` | Body `{ refresh_token }`. Returns a rotated `{access_token, refresh_token, expires_in}`. |
-| POST | `/auth/logout` | Body `{ refresh_token }`. Revokes the token; audited as `TokenRevoked` + `SignedOut`. |
-| GET | `/auth/me` | Returns the principal for the bearer access token. |
-| GET | `/auth/users/{id}` | Returns the same shape as `/auth/me` for an arbitrary user id. Requires the `auth.users.read` scope (policy `scope:auth.users.read`). `Scopes` reflects the target user's baseline scopes, not the caller's. |
+| Method | Path                                                     | Purpose                                                                                                                                                                                                      |
+|--------|----------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| GET    | `/auth/login/{provider}?returnUrl=...&mode=browser\|api` | Starts the OIDC login. `mode=browser` or `mode=api`.                                                                                                                                                         |
+| GET    | `/auth/callback/{provider}`                              | OpenID Connect redirect. Browser mode mints a handoff code and 302s to `{returnUrl}?lyo_handoff=lyoh_...`. API mode returns 200 OK with `{access_token, refresh_token, expires_in, token_type}`.             |
+| POST   | `/auth/callback/{provider}`                              | SAML HTTP-POST. Form fields `SAMLResponse` and `RelayState`. Antiforgery is disabled; the login ticket is the cross-site control. Browser handoff only.                                                      |
+| POST   | `/auth/handoff/exchange`                                 | Body `{ code }`. Consumes a handoff code once, returns tokens. Audited as `HandoffCodeConsumed` / `HandoffCodeRejected`.                                                                                     |
+| POST   | `/auth/token`                                            | Reserved for first-party API client grants.                                                                                                                                                                  |
+| POST   | `/auth/refresh`                                          | Body `{ refresh_token }`. Returns a rotated `{access_token, refresh_token, expires_in}`.                                                                                                                     |
+| POST   | `/auth/logout`                                           | Body `{ refresh_token }`. Revokes the token; audited as `TokenRevoked` + `SignedOut`.                                                                                                                        |
+| GET    | `/auth/me`                                               | Returns the principal for the bearer access token.                                                                                                                                                           |
+| GET    | `/auth/users/{id}`                                       | Returns the same shape as `/auth/me` for an arbitrary user id. Requires the `auth.users.read` scope (policy `scope:auth.users.read`). `Scopes` reflects the target user's baseline scopes, not the caller's. |
 
 ## Registration
 
-`AddLyoOpenIdConnect(IConfiguration)` does not bind BFF options. `AddLyoSso(IConfiguration)` binds `LyoExternalLogin` and `LyoSso`. The per-provider packages register their `IOpenIdConnectProvider` under their canonical name (`google`, `keycloak:<realm>`), and that name is also registered on `SsoProtocolRegistry`.
+`AddLyoOpenIdConnect(IConfiguration)` does not bind BFF options. `AddLyoSso(IConfiguration)` binds `LyoExternalLogin` and `LyoSso`. The per-provider packages register their
+`IOpenIdConnectProvider` under their canonical name (`google`, `keycloak:<realm>`), and that name is also registered on `SsoProtocolRegistry`.
 
 ## BFF options
 
@@ -61,26 +65,31 @@ Bind this on `Lyo.Authentication.Sso`.
 }
 ```
 
-- `AllowedReturnOrigins.` Exact origin (`scheme://host[:port]`) match for absolute `returnUrl` values. Same-origin relative `returnUrl` starting with `/` is always allowed. Absolute URLs outside the allowlist are rejected at `GET /auth/login/{provider}` (400) before the protocol starts. The error names `LyoSso:AllowedReturnOrigins`.
+- `AllowedReturnOrigins.` Exact origin (`scheme://host[:port]`) match for absolute `returnUrl` values. Same-origin relative `returnUrl` starting with `/` is always allowed.
+  Absolute URLs outside the allowlist are rejected at `GET /auth/login/{provider}` (400) before the protocol starts. The error names `LyoSso:AllowedReturnOrigins`.
 - `DefaultReturnUrl.` Used when `returnUrl` is missing. Relative `/` stays on the API origin, so local BFF setups should always send an absolute consumer handoff URL.
-- `HandoffCodeTtl.` Short. 30s is plenty. The consumer redeems immediately on the redirect. The handoff `IssuedTo` origin is the return URL's origin, not the callback request's origin.
+- `HandoffCodeTtl.` Short. 30s is plenty. The consumer redeems immediately on the redirect. The handoff `IssuedTo` origin is the return URL's origin, not the callback request's
+  origin.
 
 ## Auditing
 
-Every meaningful state transition emits an `AuthAuditEvent`. With `Lyo.Authentication.Postgres` wired up these land in `[user].[event]`. The `kind` column stores the enum's string name, `JwtIssued`, `HandoffCodeIssued`, and so on. Otherwise they hit whatever `IAuthAuditRecorder` is registered, default `NullAuthAuditRecorder`. IP, User-Agent, and correlation come from the registered `IAuthAuditContextAccessor`. Call `services.AddLyoApiTokenAuthentication()` or `services.AddLyoAuthHttpContextAccessor()` standalone on an ASP.NET host to swap in `HttpAuthAuditContextAccessor`.
+Every meaningful state transition emits an `AuthAuditEvent`. With `Lyo.Authentication.Postgres` wired up these land in `[user].[event]`. The `kind` column stores the enum's string
+name, `JwtIssued`, `HandoffCodeIssued`, and so on. Otherwise they hit whatever `IAuthAuditRecorder` is registered, default `NullAuthAuditRecorder`. IP, User-Agent, and correlation
+come from the registered `IAuthAuditContextAccessor`. Call `services.AddLyoApiTokenAuthentication()` or `services.AddLyoAuthHttpContextAccessor()` standalone on an ASP.NET host to
+swap in `HttpAuthAuditContextAccessor`.
 
-| Kind | When |
-| -------------------------------------- | ---------------------------------------------------------------- |
-| `ExternalLoginSucceeded` | Callback validated, tokens minted. |
-| `ExternalLoginRejected` | State/nonce/signature/policy failure. Carries a stable `reason`. |
-| `UserProvisioned` | First-time JIT user creation. |
-| `IdentityLinked` | New `(provider, subject)` linked to a user. |
-| `HandoffCodeIssued` | Mint succeeded; included in the browser redirect. |
-| `HandoffCodeConsumed` | Successful `/auth/handoff/exchange`. |
-| `HandoffCodeRejected` | Wrong origin, expired, unknown, or already consumed. |
-| `JwtIssued` | Access token minted. |
-| `RefreshSucceeded` / `RefreshRejected` | `/auth/refresh` outcome. |
-| `TokenRevoked` / `SignedOut` | `/auth/logout` outcome. |
+| Kind                                   | When                                                             |
+|----------------------------------------|------------------------------------------------------------------|
+| `ExternalLoginSucceeded`               | Callback validated, tokens minted.                               |
+| `ExternalLoginRejected`                | State/nonce/signature/policy failure. Carries a stable `reason`. |
+| `UserProvisioned`                      | First-time JIT user creation.                                    |
+| `IdentityLinked`                       | New `(provider, subject)` linked to a user.                      |
+| `HandoffCodeIssued`                    | Mint succeeded; included in the browser redirect.                |
+| `HandoffCodeConsumed`                  | Successful `/auth/handoff/exchange`.                             |
+| `HandoffCodeRejected`                  | Wrong origin, expired, unknown, or already consumed.             |
+| `JwtIssued`                            | Access token minted.                                             |
+| `RefreshSucceeded` / `RefreshRejected` | `/auth/refresh` outcome.                                         |
+| `TokenRevoked` / `SignedOut`           | `/auth/logout` outcome.                                          |
 
 ## Talking to it
 

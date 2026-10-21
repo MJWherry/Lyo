@@ -24,9 +24,7 @@ public sealed class EmailEfSeedContributor : SeedContributor, IEfSeedSource
     public DbContext CreateContext(string connectionString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        var options = new DbContextOptionsBuilder<EmailDbContext>()
-            .UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<EmailDbContext>().UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema)).Options;
         return new EmailDbContext(options);
     }
 
@@ -36,28 +34,31 @@ public sealed class EmailEfSeedContributor : SeedContributor, IEfSeedSource
         graph.OnClear(ClearAsync);
         var faker = options.RandomSeed is { } seed ? new Faker { Random = new(seed) } : new Faker();
         var now = DateTime.UtcNow;
-        graph.Entity(options.Count, i => new EmailLogEntity {
-            Id = LyoGuid.CreateV7(),
-            Direction = EmailDirection.Outbound,
-            FromAddress = faker.Internet.Email(),
-            FromName = faker.Name.FullName(),
-            ToAddressesJson = $"[\"{faker.Internet.UserName()}.{i}@example.com\"]",
-            Subject = faker.Lorem.Sentence(4).TrimEnd('.'),
-            TextBody = faker.Lorem.Paragraph(),
-            IsSuccess = true,
-            Message = "accepted",
-            MessageId = $"mail-{i}@example.com",
-            SentTimestamp = now,
-            CreatedTimestamp = now
-        }).ForEach(_ => 1, (log, _) => new EmailAttachmentLogEntity {
-            Id = LyoGuid.CreateV7(),
-            EmailLogId = log.Id,
-            FileName = "notes.txt",
-            ContentType = "text/plain",
-            SizeBytes = 4,
-            SortOrder = 1,
-            CreatedTimestamp = now
-        });
+        graph.Entity(
+                options.Count, i => new EmailLogEntity {
+                    Id = LyoGuid.CreateV7(),
+                    Direction = EmailDirection.Outbound,
+                    FromAddress = faker.Internet.Email(),
+                    FromName = faker.Name.FullName(),
+                    ToAddressesJson = $"[\"{faker.Internet.UserName()}.{i}@example.com\"]",
+                    Subject = faker.Lorem.Sentence(4).TrimEnd('.'),
+                    TextBody = faker.Lorem.Paragraph(),
+                    IsSuccess = true,
+                    Message = "accepted",
+                    MessageId = $"mail-{i}@example.com",
+                    SentTimestamp = now,
+                    CreatedTimestamp = now
+                })
+            .ForEach(
+                _ => 1, (log, _) => new EmailAttachmentLogEntity {
+                    Id = LyoGuid.CreateV7(),
+                    EmailLogId = log.Id,
+                    FileName = "notes.txt",
+                    ContentType = "text/plain",
+                    SizeBytes = 4,
+                    SortOrder = 1,
+                    CreatedTimestamp = now
+                });
     }
 
     private static async Task ClearAsync(SeedSession session, CancellationToken ct)

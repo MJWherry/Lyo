@@ -1,6 +1,7 @@
 using System.Net;
 using Lyo.Common.Core.Extensions;
 using Microsoft.Extensions.Logging;
+
 namespace Lyo.Authentication.Web.Components.Wasm;
 
 /// <summary>

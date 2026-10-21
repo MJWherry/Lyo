@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Globalization;
 using Lyo.Exceptions;
 
 namespace Lyo.Media.Models;
@@ -35,7 +36,7 @@ public sealed record ChannelLayout
         ArgumentHelpers.ThrowIfLessThan(count, 1);
         Name = name;
         Count = count;
-        Id = count.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        Id = count.ToString(CultureInfo.InvariantCulture);
         NamedCatalog.Register(ByName, ById, this, Name, Id);
     }
 
@@ -58,8 +59,8 @@ public sealed record ChannelLayout
     {
         _ = BuiltIns;
         ArgumentHelpers.ThrowIfLessThan(count, 1);
-        var key = count.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        return NamedCatalog.GetOrCustom(ById, key, _ => new ChannelLayout(key, count));
+        var key = count.ToString(CultureInfo.InvariantCulture);
+        return NamedCatalog.GetOrCustom(ById, key, _ => new(key, count));
     }
 
     /// <inheritdoc />

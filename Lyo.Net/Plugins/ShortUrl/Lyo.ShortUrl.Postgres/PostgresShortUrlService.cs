@@ -62,8 +62,7 @@ public sealed class PostgresShortUrlService : ShortUrlServiceBase
     /// <inheritdoc />
     public override Task<bool> TestConnectionAsync(CancellationToken ct = default) => Task.FromResult(true);
 
-    private string BuildShortUrl(string id)
-        => string.IsNullOrWhiteSpace(Options.BaseUrl) ? id : $"{Options.BaseUrl.TrimEnd('/')}/{id}";
+    private string BuildShortUrl(string id) => string.IsNullOrWhiteSpace(Options.BaseUrl) ? id : $"{Options.BaseUrl.TrimEnd('/')}/{id}";
 
     private static string IdFrom(string shortUrl)
     {

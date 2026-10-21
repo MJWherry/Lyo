@@ -7,13 +7,13 @@ namespace Lyo.Authentication.Web.Components;
 /// <summary>Compact Guid cell that prefers <see cref="LyoIdField" /> <c>Value</c> so QueryProject Guid JSON actually renders.</summary>
 public partial class AuthProjectedGuid
 {
+    private Guid? _value;
+
     [Parameter]
     public object? Item { get; set; }
 
     [Parameter]
     public string Field { get; set; } = "UserId";
-
-    private Guid? _value;
 
     protected override void OnParametersSet() => _value = TryRead(Item, Field);
 

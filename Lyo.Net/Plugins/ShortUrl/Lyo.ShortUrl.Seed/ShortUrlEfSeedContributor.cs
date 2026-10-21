@@ -23,9 +23,7 @@ public sealed class ShortUrlEfSeedContributor : SeedContributor, IEfSeedSource
     public DbContext CreateContext(string connectionString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        var options = new DbContextOptionsBuilder<ShortUrlDbContext>()
-            .UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<ShortUrlDbContext>().UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema)).Options;
         return new ShortUrlDbContext(options);
     }
 
@@ -34,16 +32,14 @@ public sealed class ShortUrlEfSeedContributor : SeedContributor, IEfSeedSource
     {
         graph.OnClear(ClearAsync);
         var faker = options.RandomSeed is { } seed ? new Faker { Random = new(seed) } : new Faker();
-        graph.Entity(options.Count, i => new ShortUrlEntity {
-            Id = $"{faker.Lorem.Word()}-{i}",
-            LongUrl = faker.Internet.Url(),
-            IsActive = true,
-            CreatedTimestamp = DateTime.UtcNow
-        }).ForEach(_ => 1, (url, _) => new UrlClickEntity {
-            ShortUrlId = url.Id,
-            ClickedAt = DateTime.UtcNow,
-            IpAddress = "127.0.0.1"
-        });
+        graph.Entity(
+                options.Count, i => new ShortUrlEntity {
+                    Id = $"{faker.Lorem.Word()}-{i}",
+                    LongUrl = faker.Internet.Url(),
+                    IsActive = true,
+                    CreatedTimestamp = DateTime.UtcNow
+                })
+            .ForEach(_ => 1, (url, _) => new UrlClickEntity { ShortUrlId = url.Id, ClickedAt = DateTime.UtcNow, IpAddress = "127.0.0.1" });
     }
 
     private static async Task ClearAsync(SeedSession session, CancellationToken ct)

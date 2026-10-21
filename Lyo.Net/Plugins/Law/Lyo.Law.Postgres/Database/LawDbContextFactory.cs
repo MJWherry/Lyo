@@ -7,6 +7,5 @@ namespace Lyo.Law.Postgres.Database;
 public class LawDbContextFactory : IDesignTimeDbContextFactory<LawDbContext>
 {
     /// <inheritdoc />
-    public LawDbContext CreateDbContext(string[] args)
-        => new(PostgresDesignTime.CreateOptions<LawDbContext>("LAW_CONNECTION_STRING", PostgresLawOptions.Schema));
+    public LawDbContext CreateDbContext(string[] args) => new(PostgresDesignTime.CreateOptions<LawDbContext>("LAW_CONNECTION_STRING", PostgresLawOptions.Schema));
 }

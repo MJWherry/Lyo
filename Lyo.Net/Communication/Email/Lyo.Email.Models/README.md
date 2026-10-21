@@ -6,22 +6,25 @@ Shared models, options, failure codes, and event payloads for the [`Lyo.Email`](
 
 - `EmailRequest`. Sender, recipients, subject, optional `TextBody` / `HtmlBody`, and optional attachment metadata carried as the `Result<EmailRequest>.Data` payload.
 - `EmailAttachment`. File name and bytes, plus optional `ContentType` and `MetadataJson`. The logging schema does not persist attachment bytes.
-- `EmailResult`. `Result<EmailRequest>` that adds `MessageId`, `SentDate`, and `SmtpResponse`. Built via `EmailResult.FromSuccess`, `EmailResult.FromException`, and `EmailResult.FromError`.
+- `EmailResult`. `Result<EmailRequest>` that adds `MessageId`, `SentDate`, and `SmtpResponse`. Built via `EmailResult.FromSuccess`, `EmailResult.FromException`, and
+  `EmailResult.FromError`.
 
 ## Options
 
-- `EmailServiceOptions`. Settings for `EmailService` (host, port, SSL, default sender, optional SMTP credentials, metrics toggle, `BulkEmailConcurrencyLimit` (default `10`), `MaxBulkEmailLimit` (default `1000`), `MaxAttachmentCountPerEmail` (default `20`)). Section name constant: `EmailServiceOptions.SectionName = "EmailServiceOptions"`.
-- `EmailServiceOptionsValidator`. `IValidateOptions<EmailServiceOptions>` that demands `Host`, port range `1..65535`, `DefaultFromAddress`/`DefaultFromName`, and `MaxAttachmentCountPerEmail > 0`.
+- `EmailServiceOptions`. Settings for `EmailService` (host, port, SSL, default sender, optional SMTP credentials, metrics toggle, `BulkEmailConcurrencyLimit` (default `10`),
+  `MaxBulkEmailLimit` (default `1000`), `MaxAttachmentCountPerEmail` (default `20`)). Section name constant: `EmailServiceOptions.SectionName = "EmailServiceOptions"`.
+- `EmailServiceOptionsValidator`. `IValidateOptions<EmailServiceOptions>` that demands `Host`, port range `1..65535`, `DefaultFromAddress`/`DefaultFromName`, and
+  `MaxAttachmentCountPerEmail > 0`.
 
 ## Failure codes
 
 `EmailErrorCodes` constants hung on failed `EmailResult` values:
 
-| Constant | Value | Meaning |
-| -------------------- | --------------------------- | ---------------------------------------- |
-| `SendFailed` | `EMAIL_SEND_FAILED` | The SMTP send threw. |
-| `BuildFailed` | `EMAIL_BUILD_FAILED` | The builder could not produce a message. |
-| `OperationCancelled` | `EMAIL_OPERATION_CANCELLED` | The operation was cancelled. |
+| Constant             | Value                       | Meaning                                  |
+|----------------------|-----------------------------|------------------------------------------|
+| `SendFailed`         | `EMAIL_SEND_FAILED`         | The SMTP send threw.                     |
+| `BuildFailed`        | `EMAIL_BUILD_FAILED`        | The builder could not produce a message. |
+| `OperationCancelled` | `EMAIL_OPERATION_CANCELLED` | The operation was cancelled.             |
 
 ## Event payloads
 

@@ -1,6 +1,7 @@
 # Lyo.ContactUs
 
-Contact-form submission contracts. `IContactUsService` and `ContactUsServiceBase` cover validation, error-code mapping, and logging. Storage implementations sit in sibling packages such as [`Lyo.ContactUs.Postgres`](../Lyo.ContactUs.Postgres/README.md).
+Contact-form submission contracts. `IContactUsService` and `ContactUsServiceBase` cover validation, error-code mapping, and logging. Storage implementations sit in sibling packages
+such as [`Lyo.ContactUs.Postgres`](../Lyo.ContactUs.Postgres/README.md).
 
 ## Examples
 
@@ -54,7 +55,8 @@ else
 
 ## `ContactUsServiceBase`
 
-- `ValidateRequest(ContactUsRequest)` (virtual; the default checks `Name` / `Email` (≤ 320 chars) / `Subject` / `Message` and clamps message length to `Options.MinMessageLength` … `Options.MaxMessageLength`).
+- `ValidateRequest(ContactUsRequest)` (virtual; the default checks `Name` / `Email` (≤ 320 chars) / `Subject` / `Message` and clamps message length to `Options.MinMessageLength` …
+  `Options.MaxMessageLength`).
 - `SubmitCoreAsync(ContactUsRequest, CancellationToken)` (abstract; this is where the row is actually persisted).
 - `GetByIdAsync(Guid, CancellationToken)` rejects `Guid.Empty`, then calls abstract `GetByIdCoreAsync`.
 - `ListAsync(CancellationToken)` calls abstract `ListCoreAsync` (newest `CreatedTimestamp` first).
@@ -62,8 +64,10 @@ else
 
 ## Request and result models (`Lyo.ContactUs.Models`)
 
-- `ContactUsRequest` *(record)*: `Name` (req, ≤ 200), `Email` (req, ≤ 320, `[EmailAddress]`), `Subject` (req, ≤ 500), `Message` (req, ≤ 10 000), optional `Phone` (≤ 50), optional `Company` (≤ 200).
-- `ContactSubmission` *(record)*: stored row returned by `GetByIdAsync` / `ListAsync`. `Id`, `Name`, `Email`, `Subject`, `Message`, optional `Phone`, optional `Company`, `CreatedTimestamp` (UTC).
+- `ContactUsRequest` *(record)*: `Name` (req, ≤ 200), `Email` (req, ≤ 320, `[EmailAddress]`), `Subject` (req, ≤ 500), `Message` (req, ≤ 10 000), optional `Phone` (≤ 50), optional
+  `Company` (≤ 200).
+- `ContactSubmission` *(record)*: stored row returned by `GetByIdAsync` / `ListAsync`. `Id`, `Name`, `Email`, `Subject`, `Message`, optional `Phone`, optional `Company`,
+  `CreatedTimestamp` (UTC).
 - `ContactUsServiceOptions`: `SectionName = "ContactUsOptions"`, `MaxMessageLength` (default `10000`), `MinMessageLength` (default `10`), `EnableMetrics` (default `false`).
 - `ContactUsSubmitResult` *(derives from `Lyo.Result.Result<Guid?>`)*: `SubmissionId`, `Message`, plus `FromSuccess` / `FromException` / `FromError` factories.
 
@@ -71,7 +75,8 @@ else
 
 - `services.AddContactUsService<TService, TOptions>(Action<TOptions>? configure = null)` generic registration of a custom `IContactUsService` plus options type.
 - `services.AddContactUsService<TService>(ContactUsServiceOptions options)` the same with a pre-built options instance.
-- `services.AddContactUsFromConfiguration(IConfiguration configuration, string sectionName = ContactUsServiceOptions.SectionName)` binds only the shared `ContactUsServiceOptions` (idempotent, skips if already registered). Pair this with a storage registration such as `AddContactUsPostgres(...)` from `Lyo.ContactUs.Postgres` to get a working service.
+- `services.AddContactUsFromConfiguration(IConfiguration configuration, string sectionName = ContactUsServiceOptions.SectionName)` binds only the shared `ContactUsServiceOptions`
+  (idempotent, skips if already registered). Pair this with a storage registration such as `AddContactUsPostgres(...)` from `Lyo.ContactUs.Postgres` to get a working service.
 
 ## Configuration
 

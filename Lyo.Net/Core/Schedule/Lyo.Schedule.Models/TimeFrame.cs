@@ -1,5 +1,4 @@
 using Lyo.EntityReference.Models;
-using Lyo.Exceptions;
 
 namespace Lyo.Schedule.Models;
 

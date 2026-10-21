@@ -24,21 +24,17 @@ public sealed class PostgresPodcastStore : IPodcastStore, IHealth
     public string HealthCheckName => "podcast-postgres";
 
     /// <inheritdoc />
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => PostgresHealth.CheckAsync(_contextFactory, PostgresPodcastOptions.Schema, ct);
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => PostgresHealth.CheckAsync(_contextFactory, PostgresPodcastOptions.Schema, ct);
 
     /// <inheritdoc />
     public async Task SaveShowAsync(PodcastShow show, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(show);
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var existing = show.Id != Guid.Empty
-            ? await LoadShowQuery(ctx, tracking: true).FirstOrDefaultAsync(s => s.Id == show.Id, ct).ConfigureAwait(false)
-            : null;
-
+        var existing = show.Id != Guid.Empty ? await LoadShowQuery(ctx, true).FirstOrDefaultAsync(s => s.Id == show.Id, ct).ConfigureAwait(false) : null;
         var id = existing?.Id ?? (show.Id == Guid.Empty ? LyoGuid.CreateV7() : show.Id);
         if (existing == null)
-            ctx.Shows.Add(existing = new PodcastShowEntity { Id = id, CreatedTimestamp = DateTime.UtcNow });
+            ctx.Shows.Add(existing = new() { Id = id, CreatedTimestamp = DateTime.UtcNow });
 
         existing.Title = show.Title;
         existing.Subtitle = show.Subtitle;
@@ -47,7 +43,6 @@ public sealed class PostgresPodcastStore : IPodcastStore, IHealth
         existing.Language = show.Language;
         existing.CoverImageRef = show.CoverImageRef;
         existing.Overview = show.Overview;
-
         ctx.Credits.RemoveRange(existing.Credits);
         foreach (var credit in show.Credits)
             ctx.Credits.Add(ToCredit(credit, id, null));
@@ -59,7 +54,7 @@ public sealed class PostgresPodcastStore : IPodcastStore, IHealth
         ReplaceSeasons(ctx, existing, show.Seasons, id);
         ctx.ShowGenres.RemoveRange(existing.GenreLinks);
         foreach (var genreId in show.GenreIds.Distinct())
-            ctx.ShowGenres.Add(new PodcastShowGenreEntity { ShowId = id, GenreId = genreId });
+            ctx.ShowGenres.Add(new() { ShowId = id, GenreId = genreId });
 
         await SaveCatchingConflictAsync(ctx, ct).ConfigureAwait(false);
         show.Id = id;
@@ -69,7 +64,7 @@ public sealed class PostgresPodcastStore : IPodcastStore, IHealth
     public async Task<PodcastShow?> GetShowByIdAsync(Guid id, CancellationToken ct = default)
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await LoadShowQuery(ctx, tracking: false).FirstOrDefaultAsync(s => s.Id == id, ct).ConfigureAwait(false);
+        var entity = await LoadShowQuery(ctx, false).FirstOrDefaultAsync(s => s.Id == id, ct).ConfigureAwait(false);
         return entity == null ? null : ToShow(entity);
     }
 
@@ -78,7 +73,7 @@ public sealed class PostgresPodcastStore : IPodcastStore, IHealth
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(slug);
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await LoadShowQuery(ctx, tracking: false).FirstOrDefaultAsync(s => s.Slug == slug, ct).ConfigureAwait(false);
+        var entity = await LoadShowQuery(ctx, false).FirstOrDefaultAsync(s => s.Slug == slug, ct).ConfigureAwait(false);
         return entity == null ? null : ToShow(entity);
     }
 
@@ -94,6 +89,7 @@ public sealed class PostgresPodcastStore : IPodcastStore, IHealth
             .Select(i => (Guid?)i.ShowId)
             .FirstOrDefaultAsync(ct)
             .ConfigureAwait(false);
+
         return showId is null ? null : await GetShowByIdAsync(showId.Value, ct).ConfigureAwait(false);
     }
 
@@ -117,7 +113,7 @@ public sealed class PostgresPodcastStore : IPodcastStore, IHealth
             return [];
 
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var q = LoadShowQuery(ctx, tracking: false);
+        var q = LoadShowQuery(ctx, false);
         if (!string.IsNullOrWhiteSpace(query.TitleContains)) {
             var needle = query.TitleContains.ToLowerInvariant();
             q = q.Where(s => s.Title.ToLower().Contains(needle) || (s.Subtitle != null && s.Subtitle.ToLower().Contains(needle)));
@@ -125,8 +121,10 @@ public sealed class PostgresPodcastStore : IPodcastStore, IHealth
 
         if (query.Status is { } status)
             q = q.Where(s => s.Status == status);
+
         if (query.GenreId is Guid genreId)
             q = q.Where(s => s.GenreLinks.Any(g => g.GenreId == genreId));
+
         if (query.FilterIds is not null)
             q = q.Where(s => query.FilterIds.Contains(s.Id));
 
@@ -142,9 +140,11 @@ public sealed class PostgresPodcastStore : IPodcastStore, IHealth
         var id = genre.Id == Guid.Empty ? LyoGuid.CreateV7() : genre.Id;
         if (genre.ParentGenreId is Guid parent)
             await EnsureNoGenreCycleAsync(ctx, id, parent, ct).ConfigureAwait(false);
+
         var existing = genre.Id != Guid.Empty ? await ctx.Genres.FirstOrDefaultAsync(g => g.Id == genre.Id, ct).ConfigureAwait(false) : null;
         if (existing == null)
-            ctx.Genres.Add(existing = new PodcastGenreEntity { Id = id });
+            ctx.Genres.Add(existing = new() { Id = id });
+
         existing.ParentGenreId = genre.ParentGenreId;
         existing.Slug = genre.Slug;
         existing.Name = genre.Name;
@@ -158,7 +158,15 @@ public sealed class PostgresPodcastStore : IPodcastStore, IHealth
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entity = await ctx.Genres.AsNoTracking().FirstOrDefaultAsync(g => g.Id == id, ct).ConfigureAwait(false);
-        return entity == null ? null : new PodcastGenre { Id = entity.Id, ParentGenreId = entity.ParentGenreId, Slug = entity.Slug, Name = entity.Name, SortOrder = entity.SortOrder };
+        return entity == null
+            ? null
+            : new PodcastGenre {
+                Id = entity.Id,
+                ParentGenreId = entity.ParentGenreId,
+                Slug = entity.Slug,
+                Name = entity.Name,
+                SortOrder = entity.SortOrder
+            };
     }
 
     /// <inheritdoc />
@@ -166,19 +174,27 @@ public sealed class PostgresPodcastStore : IPodcastStore, IHealth
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var rows = await ctx.Genres.AsNoTracking().OrderBy(g => g.Name).ToListAsync(ct).ConfigureAwait(false);
-        return rows.Select(g => new PodcastGenre { Id = g.Id, ParentGenreId = g.ParentGenreId, Slug = g.Slug, Name = g.Name, SortOrder = g.SortOrder }).ToArray();
+        return rows.Select(g => new PodcastGenre {
+                Id = g.Id,
+                ParentGenreId = g.ParentGenreId,
+                Slug = g.Slug,
+                Name = g.Name,
+                SortOrder = g.SortOrder
+            })
+            .ToArray();
     }
 
     /// <inheritdoc />
     public async Task DeleteGenreAsync(Guid id, CancellationToken ct = default)
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        if (await ctx.Genres.AnyAsync(g => g.ParentGenreId == id, ct).ConfigureAwait(false)
-            || await ctx.ShowGenres.AnyAsync(g => g.GenreId == id, ct).ConfigureAwait(false))
+        if (await ctx.Genres.AnyAsync(g => g.ParentGenreId == id, ct).ConfigureAwait(false) || await ctx.ShowGenres.AnyAsync(g => g.GenreId == id, ct).ConfigureAwait(false))
             throw ConflictException.ForResource("PodcastGenre", id);
+
         var entity = await ctx.Genres.FirstOrDefaultAsync(g => g.Id == id, ct).ConfigureAwait(false);
         if (entity == null)
             return;
+
         ctx.Genres.Remove(entity);
         await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
     }
@@ -195,9 +211,7 @@ public sealed class PostgresPodcastStore : IPodcastStore, IHealth
         return await ctx.Episodes.AsNoTracking()
             .Where(e => e.SearchVector.Matches(EF.Functions.PlainToTsQuery("english", fullText)))
             .Select(e => new PodcastTranscriptHit {
-                ShowId = e.Season!.ShowId,
-                EpisodeId = e.Id,
-                Snippet = EF.Functions.PlainToTsQuery("english", fullText).GetResultHeadline(e.Transcript ?? "")
+                ShowId = e.Season!.ShowId, EpisodeId = e.Id, Snippet = EF.Functions.PlainToTsQuery("english", fullText).GetResultHeadline(e.Transcript ?? "")
             })
             .ToListAsync(ct)
             .ConfigureAwait(false);
@@ -210,6 +224,7 @@ public sealed class PostgresPodcastStore : IPodcastStore, IHealth
         var row = await ctx.Episodes.AsNoTracking().Where(e => e.Id == episodeId).Select(e => new { e.Transcript }).FirstOrDefaultAsync(ct).ConfigureAwait(false);
         if (row == null)
             throw NotFoundException.ForResource("PodcastEpisode", episodeId);
+
         return row.Transcript;
     }
 
@@ -220,6 +235,7 @@ public sealed class PostgresPodcastStore : IPodcastStore, IHealth
         var entity = await ctx.Episodes.FirstOrDefaultAsync(e => e.Id == episodeId, ct).ConfigureAwait(false);
         if (entity == null)
             throw NotFoundException.ForResource("PodcastEpisode", episodeId);
+
         entity.Transcript = transcript;
         await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
     }
@@ -235,8 +251,10 @@ public sealed class PostgresPodcastStore : IPodcastStore, IHealth
             var next = await ctx.Genres.AsNoTracking().Where(g => g.Id == current).Select(g => g.ParentGenreId).FirstOrDefaultAsync(ct).ConfigureAwait(false);
             if (next == null)
                 return;
+
             if (next == genreId)
                 throw new UnprocessableEntityException("Genre parent would create a cycle.");
+
             current = next.Value;
         }
 
@@ -253,7 +271,7 @@ public sealed class PostgresPodcastStore : IPodcastStore, IHealth
             var match = season.Id != Guid.Empty ? existing.Seasons.FirstOrDefault(s => s.Id == season.Id) : null;
             if (match == null) {
                 var seasonId = season.Id == Guid.Empty ? LyoGuid.CreateV7() : season.Id;
-                match = new PodcastSeasonEntity { Id = seasonId, ShowId = showId };
+                match = new() { Id = seasonId, ShowId = showId };
                 ctx.Seasons.Add(match);
                 season.Id = seasonId;
             }
@@ -275,7 +293,7 @@ public sealed class PostgresPodcastStore : IPodcastStore, IHealth
             var match = episode.Id != Guid.Empty ? season.Episodes.FirstOrDefault(e => e.Id == episode.Id) : null;
             if (match == null) {
                 var episodeId = episode.Id == Guid.Empty ? LyoGuid.CreateV7() : episode.Id;
-                match = new PodcastEpisodeEntity { Id = episodeId, SeasonId = season.Id, CreatedTimestamp = DateTime.UtcNow };
+                match = new() { Id = episodeId, SeasonId = season.Id, CreatedTimestamp = DateTime.UtcNow };
                 ctx.Episodes.Add(match);
                 episode.Id = episodeId;
             }
@@ -288,9 +306,11 @@ public sealed class PostgresPodcastStore : IPodcastStore, IHealth
             match.Description = episode.Description;
             if (episode.Transcript != null)
                 match.Transcript = episode.Transcript;
+
             ctx.Credits.RemoveRange(match.Credits);
             foreach (var credit in episode.Credits)
                 ctx.Credits.Add(ToCredit(credit, null, match.Id));
+
             ctx.EpisodeIdentifiers.RemoveRange(match.Identifiers);
             foreach (var identifier in episode.Identifiers)
                 ctx.EpisodeIdentifiers.Add(ToEpisodeIdentifier(identifier, match.Id));
@@ -299,12 +319,16 @@ public sealed class PostgresPodcastStore : IPodcastStore, IHealth
 
     private static IQueryable<PodcastShowEntity> LoadShowQuery(PodcastDbContext ctx, bool tracking)
     {
-        var query = ctx.Shows
-            .Include(s => s.Credits)
+        var query = ctx.Shows.Include(s => s.Credits)
             .Include(s => s.Identifiers)
-            .Include(s => s.Seasons).ThenInclude(season => season.Episodes).ThenInclude(e => e.Credits)
-            .Include(s => s.Seasons).ThenInclude(season => season.Episodes).ThenInclude(e => e.Identifiers)
+            .Include(s => s.Seasons)
+            .ThenInclude(season => season.Episodes)
+            .ThenInclude(e => e.Credits)
+            .Include(s => s.Seasons)
+            .ThenInclude(season => season.Episodes)
+            .ThenInclude(e => e.Identifiers)
             .Include(s => s.GenreLinks);
+
         return tracking ? query : query.AsNoTracking();
     }
 
@@ -351,9 +375,7 @@ public sealed class PostgresPodcastStore : IPodcastStore, IHealth
         };
 
     private static string Normalize(PodcastIdentifier identifier)
-        => string.IsNullOrEmpty(identifier.NormalizedValue)
-            ? PodcastIdentifierSchemes.Normalize(identifier.Scheme, identifier.Value)
-            : identifier.NormalizedValue;
+        => string.IsNullOrEmpty(identifier.NormalizedValue) ? PodcastIdentifierSchemes.Normalize(identifier.Scheme, identifier.Value) : identifier.NormalizedValue;
 
     private static PodcastShow ToShow(PodcastShowEntity entity)
         => new() {
@@ -370,25 +392,29 @@ public sealed class PostgresPodcastStore : IPodcastStore, IHealth
             UpdatedTimestamp = entity.UpdatedTimestamp,
             Credits = entity.Credits.OrderBy(c => c.Ordinal).Select(ToCreditModel).ToArray(),
             Identifiers = entity.Identifiers.Select(i => ToIdentifierModel(i.Id, i.Scheme, i.Value, i.NormalizedValue, i.IsPrimary)).ToArray(),
-            Seasons = entity.Seasons.OrderBy(s => s.SeasonNumber).Select(s => new PodcastSeason {
-                Id = s.Id,
-                ShowId = s.ShowId,
-                SeasonNumber = s.SeasonNumber,
-                Name = s.Name,
-                Year = s.Year,
-                Episodes = s.Episodes.OrderBy(e => e.EpisodeNumber).Select(e => new PodcastEpisode {
-                    Id = e.Id,
-                    SeasonId = e.SeasonId,
-                    EpisodeNumber = e.EpisodeNumber,
-                    Title = e.Title,
-                    RuntimeSeconds = e.RuntimeSeconds,
-                    PublishedDate = e.PublishedDate?.ToDateTime(TimeOnly.MinValue),
-                    AudioFileRef = e.AudioFileRef,
-                    Description = e.Description,
-                    Credits = e.Credits.OrderBy(c => c.Ordinal).Select(ToCreditModel).ToArray(),
-                    Identifiers = e.Identifiers.Select(i => ToIdentifierModel(i.Id, i.Scheme, i.Value, i.NormalizedValue, i.IsPrimary)).ToArray()
-                }).ToArray()
-            }).ToArray()
+            Seasons = entity.Seasons.OrderBy(s => s.SeasonNumber)
+                .Select(s => new PodcastSeason {
+                    Id = s.Id,
+                    ShowId = s.ShowId,
+                    SeasonNumber = s.SeasonNumber,
+                    Name = s.Name,
+                    Year = s.Year,
+                    Episodes = s.Episodes.OrderBy(e => e.EpisodeNumber)
+                        .Select(e => new PodcastEpisode {
+                            Id = e.Id,
+                            SeasonId = e.SeasonId,
+                            EpisodeNumber = e.EpisodeNumber,
+                            Title = e.Title,
+                            RuntimeSeconds = e.RuntimeSeconds,
+                            PublishedDate = e.PublishedDate?.ToDateTime(TimeOnly.MinValue),
+                            AudioFileRef = e.AudioFileRef,
+                            Description = e.Description,
+                            Credits = e.Credits.OrderBy(c => c.Ordinal).Select(ToCreditModel).ToArray(),
+                            Identifiers = e.Identifiers.Select(i => ToIdentifierModel(i.Id, i.Scheme, i.Value, i.NormalizedValue, i.IsPrimary)).ToArray()
+                        })
+                        .ToArray()
+                })
+                .ToArray()
         };
 
     private static PodcastCredit ToCreditModel(PodcastCreditEntity credit)

@@ -22,9 +22,9 @@ public sealed class DefaultApiTokenValidator : IApiTokenValidator
     private readonly IAuthAuditContextAccessor _auditContext;
     private readonly ILogger<DefaultApiTokenValidator> _logger;
     private readonly AuthenticationOptions _options;
+    private readonly IUserScopeStore? _scopes;
     private readonly IApiTokenStore _store;
     private readonly IUserStore _users;
-    private readonly IUserScopeStore? _scopes;
 
     /// <summary>Builds a new validator.</summary>
     public DefaultApiTokenValidator(

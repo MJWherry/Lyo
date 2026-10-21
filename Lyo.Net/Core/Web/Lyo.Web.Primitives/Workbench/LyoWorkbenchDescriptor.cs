@@ -1,8 +1,7 @@
 namespace Lyo.Web.Primitives;
 
 /// <summary>Default <see cref="ILyoWorkbenchDescriptor" /> minted by <c>AddLyoWorkbench</c>.</summary>
-public sealed record LyoWorkbenchDescriptor(string Title, string Icon, string Category, string Route, Type ComponentType, string? SlugOverride = null)
-    : ILyoWorkbenchDescriptor
+public sealed record LyoWorkbenchDescriptor(string Title, string Icon, string Category, string Route, Type ComponentType, string? SlugOverride = null) : ILyoWorkbenchDescriptor
 {
     /// <inheritdoc />
     public string Slug => string.IsNullOrWhiteSpace(SlugOverride) ? LastSegment(Route) : SlugOverride.Trim();

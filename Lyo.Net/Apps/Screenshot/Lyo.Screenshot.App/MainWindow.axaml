@@ -9,102 +9,102 @@
         WindowStartupLocation="CenterScreen"
         KeyDown="OnKeyDown">
     <Grid>
-    <StackPanel x:Name="MainPanel" Margin="12" Spacing="10">
-        <DockPanel>
-            <Button x:Name="DockButton"
-                    DockPanel.Dock="Right"
-                    Content="Dock"
-                    VerticalAlignment="Center"
-                    Click="OnDock"
-                    ToolTip.Tip="Dock to the nearest screen edge"/>
-            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                <RadioButton x:Name="StillMode" Content="Still" GroupName="Mode"/>
-                <RadioButton x:Name="GifMode" Content="GIF" GroupName="Mode"/>
-                <RadioButton x:Name="ReceiptMode" Content="Receipt" GroupName="Mode" IsChecked="True"/>
-            </StackPanel>
-        </DockPanel>
-        <StackPanel Spacing="6">
-            <StackPanel Orientation="Horizontal" Spacing="8">
-                <Button x:Name="SelectRegionButton" Content="Select region" Click="OnSelectRegion"/>
-                <Button x:Name="WindowButton" Content="Window" Click="OnSelectWindow"/>
-                <Button x:Name="FullScreenButton" Content="Full screen" Click="OnFullScreen"/>
-            </StackPanel>
-            <TextBlock x:Name="RegionText" Text="No region selected" Opacity="0.75"/>
-        </StackPanel>
-        <StackPanel Orientation="Horizontal" Spacing="8">
-            <Button x:Name="StartButton" Content="Start" Click="OnStart" IsEnabled="False"/>
-            <Button x:Name="StopButton" Content="Stop" Click="OnStop" IsVisible="False"/>
-            <CheckBox x:Name="SaveBox" Content="Save file" IsChecked="True" VerticalAlignment="Center"/>
-            <TextBlock Text="Delay" VerticalAlignment="Center"/>
-            <ComboBox x:Name="DelayBox" Width="64" SelectedIndex="0" VerticalAlignment="Center">
-                <ComboBoxItem Content="0"/>
-                <ComboBoxItem Content="1"/>
-                <ComboBoxItem Content="2"/>
-                <ComboBoxItem Content="3"/>
-                <ComboBoxItem Content="5"/>
-                <ComboBoxItem Content="10"/>
-            </ComboBox>
-            <TextBlock Text="sec" VerticalAlignment="Center" Opacity="0.75"/>
-        </StackPanel>
-        <TextBlock x:Name="StatusText" Text="Press Start, scroll, then Stop." TextWrapping="Wrap" Opacity="0.75"/>
-        <Border x:Name="PreviewHost"
-                Background="Transparent"
-                HorizontalAlignment="Stretch"
-                IsVisible="False"
-                PointerPressed="OnPreviewPointerPressed"
-                ToolTip.Tip="Drag the file">
-            <Image x:Name="Preview" MaxHeight="160" Stretch="Uniform"/>
-        </Border>
-        <StackPanel x:Name="ResultActions" Orientation="Horizontal" Spacing="8" IsVisible="False">
-            <Button x:Name="CopyImageButton" Content="Copy" Click="OnCopyLast"/>
-            <Button x:Name="OpenSavedButton" Content="Open file" Click="OnOpenSaved" IsVisible="False"/>
-            <Button x:Name="OpenFolderButton" Content="Open folder" Click="OnOpenFolder" IsVisible="False"/>
-            <Button x:Name="SaveButton" Content="Save" Click="OnSave"/>
-        </StackPanel>
-        <Button x:Name="MoreButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Click="OnToggleMore">
+        <StackPanel x:Name="MainPanel" Margin="12" Spacing="10">
             <DockPanel>
-                <TextBlock x:Name="MoreChevron" Text="▾" DockPanel.Dock="Right"/>
-                <TextBlock Text="More" HorizontalAlignment="Left"/>
+                <Button x:Name="DockButton"
+                        DockPanel.Dock="Right"
+                        Content="Dock"
+                        VerticalAlignment="Center"
+                        Click="OnDock"
+                        ToolTip.Tip="Dock to the nearest screen edge" />
+                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <RadioButton x:Name="StillMode" Content="Still" GroupName="Mode" />
+                    <RadioButton x:Name="GifMode" Content="GIF" GroupName="Mode" />
+                    <RadioButton x:Name="ReceiptMode" Content="Receipt" GroupName="Mode" IsChecked="True" />
+                </StackPanel>
             </DockPanel>
-        </Button>
-        <StackPanel x:Name="MorePanel" IsVisible="False" Spacing="10">
+            <StackPanel Spacing="6">
                 <StackPanel Orientation="Horizontal" Spacing="8">
-                    <TextBlock Text="Frames/sec" Width="88" VerticalAlignment="Center"/>
+                    <Button x:Name="SelectRegionButton" Content="Select region" Click="OnSelectRegion" />
+                    <Button x:Name="WindowButton" Content="Window" Click="OnSelectWindow" />
+                    <Button x:Name="FullScreenButton" Content="Full screen" Click="OnFullScreen" />
+                </StackPanel>
+                <TextBlock x:Name="RegionText" Text="No region selected" Opacity="0.75" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button x:Name="StartButton" Content="Start" Click="OnStart" IsEnabled="False" />
+                <Button x:Name="StopButton" Content="Stop" Click="OnStop" IsVisible="False" />
+                <CheckBox x:Name="SaveBox" Content="Save file" IsChecked="True" VerticalAlignment="Center" />
+                <TextBlock Text="Delay" VerticalAlignment="Center" />
+                <ComboBox x:Name="DelayBox" Width="64" SelectedIndex="0" VerticalAlignment="Center">
+                    <ComboBoxItem Content="0" />
+                    <ComboBoxItem Content="1" />
+                    <ComboBoxItem Content="2" />
+                    <ComboBoxItem Content="3" />
+                    <ComboBoxItem Content="5" />
+                    <ComboBoxItem Content="10" />
+                </ComboBox>
+                <TextBlock Text="sec" VerticalAlignment="Center" Opacity="0.75" />
+            </StackPanel>
+            <TextBlock x:Name="StatusText" Text="Press Start, scroll, then Stop." TextWrapping="Wrap" Opacity="0.75" />
+            <Border x:Name="PreviewHost"
+                    Background="Transparent"
+                    HorizontalAlignment="Stretch"
+                    IsVisible="False"
+                    PointerPressed="OnPreviewPointerPressed"
+                    ToolTip.Tip="Drag the file">
+                <Image x:Name="Preview" MaxHeight="160" Stretch="Uniform" />
+            </Border>
+            <StackPanel x:Name="ResultActions" Orientation="Horizontal" Spacing="8" IsVisible="False">
+                <Button x:Name="CopyImageButton" Content="Copy" Click="OnCopyLast" />
+                <Button x:Name="OpenSavedButton" Content="Open file" Click="OnOpenSaved" IsVisible="False" />
+                <Button x:Name="OpenFolderButton" Content="Open folder" Click="OnOpenFolder" IsVisible="False" />
+                <Button x:Name="SaveButton" Content="Save" Click="OnSave" />
+            </StackPanel>
+            <Button x:Name="MoreButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Click="OnToggleMore">
+                <DockPanel>
+                    <TextBlock x:Name="MoreChevron" Text="▾" DockPanel.Dock="Right" />
+                    <TextBlock Text="More" HorizontalAlignment="Left" />
+                </DockPanel>
+            </Button>
+            <StackPanel x:Name="MorePanel" IsVisible="False" Spacing="10">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="Frames/sec" Width="88" VerticalAlignment="Center" />
                     <ComboBox x:Name="FpsBox" Width="72" SelectedIndex="2">
-                        <ComboBoxItem Content="1"/>
-                        <ComboBoxItem Content="2"/>
-                        <ComboBoxItem Content="5"/>
-                        <ComboBoxItem Content="8"/>
-                        <ComboBoxItem Content="12"/>
-                        <ComboBoxItem Content="20"/>
-                        <ComboBoxItem Content="30"/>
+                        <ComboBoxItem Content="1" />
+                        <ComboBoxItem Content="2" />
+                        <ComboBoxItem Content="5" />
+                        <ComboBoxItem Content="8" />
+                        <ComboBoxItem Content="12" />
+                        <ComboBoxItem Content="20" />
+                        <ComboBoxItem Content="30" />
                     </ComboBox>
                 </StackPanel>
                 <StackPanel Spacing="6">
                     <DockPanel>
-                        <TextBlock Text="Start" Width="48" VerticalAlignment="Center"/>
-                        <Button x:Name="StartChordButton" Content="Ctrl+Shift+S" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Click="OnChordClick"/>
+                        <TextBlock Text="Start" Width="48" VerticalAlignment="Center" />
+                        <Button x:Name="StartChordButton" Content="Ctrl+Shift+S" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Click="OnChordClick" />
                     </DockPanel>
                     <DockPanel>
-                        <TextBlock Text="Stop" Width="48" VerticalAlignment="Center"/>
-                        <Button x:Name="StopChordButton" Content="Ctrl+Shift+X" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Click="OnChordClick"/>
+                        <TextBlock Text="Stop" Width="48" VerticalAlignment="Center" />
+                        <Button x:Name="StopChordButton" Content="Ctrl+Shift+X" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Click="OnChordClick" />
                     </DockPanel>
                 </StackPanel>
                 <StackPanel Spacing="6">
-                    <TextBlock Text="Save to"/>
+                    <TextBlock Text="Save to" />
                     <DockPanel>
-                        <Button x:Name="BrowseButton" Content="Browse" DockPanel.Dock="Right" Margin="8,0,0,0" Click="OnBrowse"/>
-                        <TextBox x:Name="SaveDirectoryBox" IsReadOnly="True"/>
+                        <Button x:Name="BrowseButton" Content="Browse" DockPanel.Dock="Right" Margin="8,0,0,0" Click="OnBrowse" />
+                        <TextBox x:Name="SaveDirectoryBox" IsReadOnly="True" />
                     </DockPanel>
                 </StackPanel>
                 <StackPanel Spacing="6">
-                    <CheckBox x:Name="CopyBox" Content="Copy to clipboard" IsChecked="True"/>
-                    <CheckBox x:Name="OpenBox" Content="Open after save"/>
-                    <CheckBox x:Name="CursorBox" Content="Include cursor"/>
-                    <CheckBox x:Name="TopmostBox" Content="Always on top" IsCheckedChanged="OnTopmostChanged"/>
+                    <CheckBox x:Name="CopyBox" Content="Copy to clipboard" IsChecked="True" />
+                    <CheckBox x:Name="OpenBox" Content="Open after save" />
+                    <CheckBox x:Name="CursorBox" Content="Include cursor" />
+                    <CheckBox x:Name="TopmostBox" Content="Always on top" IsCheckedChanged="OnTopmostChanged" />
                 </StackPanel>
+            </StackPanel>
         </StackPanel>
-    </StackPanel>
-    <ui:EdgeDockBar x:Name="DockBar" IsVisible="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+        <ui:EdgeDockBar x:Name="DockBar" IsVisible="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
     </Grid>
 </Window>

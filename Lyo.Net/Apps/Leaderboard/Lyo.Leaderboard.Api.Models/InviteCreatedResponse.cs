@@ -1,5 +1,3 @@
-using Lyo.Leaderboard;
-
 namespace Lyo.Leaderboard.Api.Models;
 
 /// <summary>Invite create response. <see cref="Token" /> is returned once.</summary>

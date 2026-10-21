@@ -10,6 +10,10 @@ namespace Lyo.Authentication.Web.Components;
 
 public partial class AuthScopeEditDialog
 {
+    private bool _busy;
+
+    private string _name = string.Empty;
+
     [CascadingParameter]
     public IMudDialogInstance MudDialog { get; set; } = null!;
 
@@ -33,10 +37,6 @@ public partial class AuthScopeEditDialog
     [Inject]
     private ISnackbar Snackbar { get; set; } = null!;
 
-    private string _name = string.Empty;
-
-    private bool _busy;
-
     private bool _isNew => ScopeId is null;
 
     protected override void OnParametersSet() => _name = Name;
@@ -50,9 +50,8 @@ public partial class AuthScopeEditDialog
 
         _busy = true;
         try {
-            if (_isNew) {
+            if (_isNew)
                 await ApiClient.PostAsAsync<AuthScopeReq, CreateResult<object>>(ScopeRoute, new() { UserId = UserId, Name = _name.Trim() });
-            }
             else {
                 var patch = PatchRequestBuilder.New().WithKey(ScopeId!).SetProperty("Name", _name.Trim()).Build();
                 await ApiClient.PatchAsAsync<PatchRequest, PatchResult<object>>(ScopeRoute, patch);

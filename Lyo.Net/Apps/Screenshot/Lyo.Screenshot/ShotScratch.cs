@@ -9,10 +9,7 @@ public static class ShotScratch
     /// <summary>OS temp directory <c>lyo-shot</c>.</summary>
     public static string Directory => Path.Combine(Path.GetTempPath(), "lyo-shot");
 
-    /// <summary>
-    /// Deletes <paramref name="directory" /> and everything inside it.
-    /// A null, empty, or missing path is ignored. A file that is still open is retried a few times.
-    /// </summary>
+    /// <summary>Deletes <paramref name="directory" /> and everything inside it. A null, empty, or missing path is ignored. A file that is still open is retried a few times.</summary>
     /// <param name="directory">Folder to remove.</param>
     /// <returns>True when the folder is gone or was already missing.</returns>
     public static bool Wipe(string? directory)

@@ -15,5 +15,6 @@ public class FFmpegPathKindTests
 
     [Fact]
     public void ThrowIfLocalFileMissing_MissingLocalFile_Throws()
-        => Assert.Throws<FileNotFoundException>(() => FFmpegPathKind.ThrowIfLocalFileMissing(Path.Combine(Path.GetTempPath(), "lyo-ffmpeg-missing-" + LyoGuid.CreateV7().ToString("N") + ".wav")));
+        => Assert.Throws<FileNotFoundException>(()
+            => FFmpegPathKind.ThrowIfLocalFileMissing(Path.Combine(Path.GetTempPath(), "lyo-ffmpeg-missing-" + LyoGuid.CreateV7().ToString("N") + ".wav")));
 }

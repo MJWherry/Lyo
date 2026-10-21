@@ -38,8 +38,7 @@ public class ImageDecorationServiceTests
         await using var logoMs = new MemoryStream(logo);
         await using var outMs = new MemoryStream();
         var result = await svc.OverlayAsync(
-            bgMs, logoMs, outMs, OverlayOptionsBuilder.New().WithOverlaySizePercent(20).WithPadColor("#FFFFFF").Build(), ImageFormat.Png,
-            ct: TestCt);
+            bgMs, logoMs, outMs, OverlayOptionsBuilder.New().WithOverlaySizePercent(20).WithPadColor("#FFFFFF").Build(), ImageFormat.Png, ct: TestCt);
 
         Assert.True(result.IsSuccess);
         var bytes = outMs.ToArray();
@@ -63,9 +62,7 @@ public class ImageDecorationServiceTests
         await using var bgMs = new MemoryStream(bgBytes);
         await using var logoMs = new MemoryStream(logo);
         await using var outMs = new MemoryStream();
-        var result = await svc.OverlayAsync(
-            bgMs, logoMs, outMs, OverlayOptionsBuilder.New().WithOverlaySizePercent(15).WithBorder("#000000").Build(), ImageFormat.Svg, ct: TestCt);
-
+        var result = await svc.OverlayAsync(bgMs, logoMs, outMs, OverlayOptionsBuilder.New().WithOverlaySizePercent(15).WithBorder("#000000").Build(), ImageFormat.Svg, ct: TestCt);
         Assert.True(result.IsSuccess);
         var withIcon = Encoding.UTF8.GetString(outMs.ToArray());
         Assert.Contains("<image href=\"data:image/png;base64,", withIcon, StringComparison.Ordinal);
@@ -80,8 +77,7 @@ public class ImageDecorationServiceTests
         await using var inMs = new MemoryStream(qr);
         await using var outMs = new MemoryStream();
         var result = await svc.AddFrameAsync(
-            inMs, outMs, FrameOptionsBuilder.New().WithStrokeColor("#000000").WithStrokeWidth(4).WithPadding(12).WithCornerRadius(16).Build(), ImageFormat.Png,
-            ct: TestCt);
+            inMs, outMs, FrameOptionsBuilder.New().WithStrokeColor("#000000").WithStrokeWidth(4).WithPadding(12).WithCornerRadius(16).Build(), ImageFormat.Png, ct: TestCt);
 
         Assert.True(result.IsSuccess);
         var (w, h) = await GetSizeAsync(outMs.ToArray());
@@ -96,9 +92,7 @@ public class ImageDecorationServiceTests
         var qr = CreateSquarePng(200);
         await using var inMs = new MemoryStream(qr);
         await using var outMs = new MemoryStream();
-        var result = await svc.AddCaptionAsync(
-            inMs, outMs, CaptionOptionsBuilder.New().WithText("Scan Me").WithBandHeight(48).Build(), ImageFormat.Png, ct: TestCt);
-
+        var result = await svc.AddCaptionAsync(inMs, outMs, CaptionOptionsBuilder.New().WithText("Scan Me").WithBandHeight(48).Build(), ImageFormat.Png, ct: TestCt);
         Assert.True(result.IsSuccess);
         var (w, h) = await GetSizeAsync(outMs.ToArray());
         Assert.Equal(200, w);
@@ -113,8 +107,7 @@ public class ImageDecorationServiceTests
         await using var inMs = new MemoryStream(qr);
         await using var outMs = new MemoryStream();
         var result = await svc.AddOuterPaddingAsync(
-            inMs, outMs, PaddingOptionsBuilder.New().WithPadding(20).WithMargin(15).WithCornerRadius(24).WithShadow("#33000000", 8).Build(), ImageFormat.Png,
-            ct: TestCt);
+            inMs, outMs, PaddingOptionsBuilder.New().WithPadding(20).WithMargin(15).WithCornerRadius(24).WithShadow("#33000000", 8).Build(), ImageFormat.Png, ct: TestCt);
 
         Assert.True(result.IsSuccess);
         var (w, h) = await GetSizeAsync(outMs.ToArray());

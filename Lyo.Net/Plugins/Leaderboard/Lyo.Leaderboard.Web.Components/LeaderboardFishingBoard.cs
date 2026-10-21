@@ -1,3 +1,5 @@
+using SortDirection = Lyo.Common.Core.Enums.SortDirection;
+
 namespace Lyo.Leaderboard.Web.Components;
 
 /// <summary>Fishing-derby seed. Choice numbers plus one board formula score bass / 6 / 15 as 38.</summary>
@@ -5,8 +7,8 @@ public static class LeaderboardFishingBoard
 {
     /// <summary>Expression that scores fish type, weight bands, and clamped length.</summary>
     public const string Formula = """
-        fish_type + (weight >= 5 && weight < 10 ? 3 : (weight >= 0 && weight < 5 ? 1 : 0)) + (length < 10 ? 0 : (length > 20 ? 50 : (length - 10) / 10 * 50))
-        """;
+                                  fish_type + (weight >= 5 && weight < 10 ? 3 : (weight >= 0 && weight < 5 ? 1 : 0)) + (length < 10 ? 0 : (length > 20 ? 50 : (length - 10) / 10 * 50))
+                                  """;
 
     /// <summary>Board create payload for the Spring Fishing Derby.</summary>
     public static CreateBoardRequest BoardRequest()
@@ -19,7 +21,7 @@ public static class LeaderboardFishingBoard
             MembersCanSubmit = true,
             AggregationKind = AggregationKind.Sum,
             ScoreFormula = Formula,
-            SortDirection = Lyo.Common.Core.Enums.SortDirection.Desc
+            SortDirection = SortDirection.Desc
         };
 
     /// <summary>Fish-type choices. Bass is 10 and catfish is 5.</summary>
@@ -31,10 +33,7 @@ public static class LeaderboardFishingBoard
             ValueKind = ScoringValueKind.Choice,
             Required = true,
             SortOrder = 0,
-            Choices = [
-                new() { Key = "bass", Label = "Bass", Value = 10 },
-                new() { Key = "catfish", Label = "Catfish", Value = 5 }
-            ]
+            Choices = [new() { Key = "bass", Label = "Bass", Value = 10 }, new() { Key = "catfish", Label = "Catfish", Value = 5 }]
         };
 
     /// <summary>Weight in pounds. The board formula maps the raw number.</summary>

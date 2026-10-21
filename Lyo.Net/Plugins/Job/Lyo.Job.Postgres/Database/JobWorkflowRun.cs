@@ -20,8 +20,8 @@ public class JobWorkflowRun
     public DateTime? ScheduledSlotUtc { get; set; }
 
     /// <summary>
-    /// Values this run branches on, as a serialized flat string map. Resolved once at start from the caller's inputs layered over the schedule's enabled parameters, so
-    /// editing a schedule parameter mid-run cannot flip a gate that already went the other way.
+    /// Values this run branches on, as a serialized flat string map. Resolved once at start from the caller's inputs layered over the schedule's enabled parameters, so editing a
+    /// schedule parameter mid-run cannot flip a gate that already went the other way.
     /// </summary>
     public string? InputsJson { get; set; }
 

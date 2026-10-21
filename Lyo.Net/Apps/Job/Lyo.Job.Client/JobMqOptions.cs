@@ -1,16 +1,16 @@
 namespace Lyo.Job.Client;
 
 /// <summary>
-/// Message-queue topology settings for scheduler/worker hosts. Worker run queues are declared at host startup (via
-/// <see cref="MqJobEventPublisher.SetupAsync" />) and again by each worker for its own type if the broker is still empty.
+/// Message-queue topology settings for scheduler/worker hosts. Worker run queues are declared at host startup (via <see cref="MqJobEventPublisher.SetupAsync" />) and again
+/// by each worker for its own type if the broker is still empty.
 /// </summary>
 public sealed class JobMqOptions
 {
     public const string SectionName = "JobMqOptions";
 
     /// <summary>
-    /// Worker types that get <c>job.run.{workerType}</c> and <c>job.run.{workerType}.cancel</c> queues at startup. Merged with distinct <c>WorkerType</c> values
-    /// from the Job API when <see cref="IJobClient" /> is present.
+    /// Worker types that get <c>job.run.{workerType}</c> and <c>job.run.{workerType}.cancel</c> queues at startup. Merged with distinct <c>WorkerType</c> values from the Job API
+    /// when <see cref="IJobClient" /> is present.
     /// </summary>
     public IReadOnlyList<string> WorkerTypes { get; set; } = [];
 

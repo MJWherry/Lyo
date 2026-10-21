@@ -237,6 +237,7 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
         Options.ViewportHeight = height;
         if (Options.ScreenWidth < width)
             Options.ScreenWidth = width;
+
         if (Options.ScreenHeight < height)
             Options.ScreenHeight = height;
     }
@@ -347,11 +348,7 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
             contextOptions.UserAgent = userAgent;
 
         if (!string.IsNullOrWhiteSpace(Options.ProxyUrl)) {
-            contextOptions.Proxy = new Proxy {
-                Server = Options.ProxyUrl!,
-                Username = Options.ProxyUsername,
-                Password = Options.ProxyPassword
-            };
+            contextOptions.Proxy = new() { Server = Options.ProxyUrl!, Username = Options.ProxyUsername, Password = Options.ProxyPassword };
         }
 
         Context = await _browser.NewContextAsync(contextOptions).ConfigureAwait(false);
@@ -551,8 +548,7 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
         }
     }
 
-    /// <summary>Resolves a chained path once (first segment respects the current frame stack via <see cref="PlaywrightFrameNavigator" />). Yields <see langword="null" /> if not
-    /// found.</summary>
+    /// <summary>Resolves a chained path once (first segment respects the current frame stack via <see cref="PlaywrightFrameNavigator" />). Yields <see langword="null" /> if not found.</summary>
     public async Task<IWebAutomationElement?> GetElementChainAsync(ElementLocatorChain chain, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(chain);
@@ -644,8 +640,9 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
         }
     }
 
-    /// <summary>Waits until at least one match is visible, then yields every matching element for the final segment; each attempt runs <see cref="GetElementsChainCoreAsync"
-    /// />.</summary>
+    /// <summary>
+    /// Waits until at least one match is visible, then yields every matching element for the final segment; each attempt runs <see cref="GetElementsChainCoreAsync" />.
+    /// </summary>
     public async Task<IReadOnlyList<IWebAutomationElement>> PollForElementsAsync(ElementLocatorChain chain, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(chain);
@@ -751,8 +748,10 @@ public sealed class PlaywrightBrowser : IWebAutomationBrowser, IDisposable, IAsy
     {
         if (Options.BrowserKind is not (AutomationBrowserKind.Chrome or AutomationBrowserKind.Chromium or AutomationBrowserKind.Edge))
             return null;
+
         if (!string.IsNullOrWhiteSpace(Options.Channel))
             return Options.Channel;
+
         return Options.BrowserKind switch {
             AutomationBrowserKind.Chrome => "chrome",
             AutomationBrowserKind.Edge => "msedge",

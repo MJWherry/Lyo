@@ -1,11 +1,17 @@
-using Lyo.Api.Client;
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 
 namespace Lyo.Billing.Web.Components.Views;
 
 public partial class InvoiceComposerView
 {
+    private bool _busy;
+
+    private Guid? _clientId;
+    private InvoiceRecord? _invoice;
+    private bool _seeded;
+    private decimal _taxRate = 0.08m;
+    private List<ChargeRecord> _unbilled = [];
+
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = null!;
 
@@ -22,17 +28,11 @@ public partial class InvoiceComposerView
     [Parameter]
     public EventCallback<Guid> OnIssued { get; set; }
 
-    private Guid? _clientId;
-    private decimal _taxRate = 0.08m;
-    private InvoiceRecord? _invoice;
-    private List<ChargeRecord> _unbilled = [];
-    private bool _busy;
-    private bool _seeded;
-
     protected override void OnParametersSet()
     {
         if (_seeded)
             return;
+
         _clientId = ClientId;
         _seeded = true;
     }
@@ -48,6 +48,7 @@ public partial class InvoiceComposerView
     {
         if (_clientId is not { } clientId)
             return;
+
         _busy = true;
         try {
             _invoice = await ApiClient.PostAsAsync<object, InvoiceRecord>("Billing/Invoices/draft", new { clientId, taxRate = _taxRate });
@@ -66,6 +67,7 @@ public partial class InvoiceComposerView
     {
         if (_invoice == null)
             return;
+
         _busy = true;
         try {
             await ApiClient.PostAsAsync<InvoiceLineRecord, InvoiceLineRecord>($"Billing/Invoices/{_invoice.Id}/lines", line);
@@ -79,13 +81,13 @@ public partial class InvoiceComposerView
         }
     }
 
-    private Task AddChargeAsync(ChargeRecord charge)
-        => AddLineAsync(new InvoiceLineRecord { ChargeId = charge.Id });
+    private Task AddChargeAsync(ChargeRecord charge) => AddLineAsync(new() { ChargeId = charge.Id });
 
     private async Task RemoveLineAsync(InvoiceLineRecord line)
     {
         if (_invoice == null)
             return;
+
         _busy = true;
         try {
             await ApiClient.DeleteAsAsync<object>($"Billing/Invoices/{_invoice.Id}/lines/{line.Id}");
@@ -103,6 +105,7 @@ public partial class InvoiceComposerView
     {
         if (_invoice == null)
             return;
+
         _busy = true;
         try {
             _invoice = await ApiClient.PostAsAsync<InvoiceRecord>($"Billing/Invoices/{_invoice.Id}/issue");
@@ -122,8 +125,10 @@ public partial class InvoiceComposerView
     {
         if (_invoice == null)
             return;
+
         if (!await DialogService.ConfirmDeleteAsync("this draft invoice", "Reserved charges are unbilled again."))
             return;
+
         _busy = true;
         try {
             await ApiClient.DeleteAsAsync<object>($"Billing/Invoices/{_invoice.Id}/draft");
@@ -143,11 +148,11 @@ public partial class InvoiceComposerView
     {
         if (_invoice == null)
             return;
+
         _invoice = await ApiClient.GetAsAsync<InvoiceRecord>($"Billing/Invoices/{_invoice.Id}/record");
         if (_clientId is { } clientId)
             await LoadUnbilledAsync(clientId);
     }
 
-    private async Task LoadUnbilledAsync(Guid clientId)
-        => _unbilled = await ApiClient.GetAsAsync<List<ChargeRecord>>($"Billing/Clients/{clientId:D}/unbilled-charges") ?? [];
+    private async Task LoadUnbilledAsync(Guid clientId) => _unbilled = await ApiClient.GetAsAsync<List<ChargeRecord>>($"Billing/Clients/{clientId:D}/unbilled-charges") ?? [];
 }

@@ -1,6 +1,8 @@
 # Lyo.Drift.Agent
 
-Hosted agent: upserts an InstanceKey, constructs one FileSystemWatcher per watch, copies DTOs on ScanCompleted onto a bounded Channel, and POSTs from the hosted-service loop so the debounce thread never awaits HTTP. System-info uses SystemInfoDriftProjection with DriftAgent:SystemInfo:Include (empty = identity-only). Identical collector hashes are not re-inserted.
+Hosted agent: upserts an InstanceKey, constructs one FileSystemWatcher per watch, copies DTOs on ScanCompleted onto a bounded Channel, and POSTs from the hosted-service loop so the
+debounce thread never awaits HTTP. System-info uses SystemInfoDriftProjection with DriftAgent:SystemInfo:Include (empty = identity-only). Identical collector hashes are not
+re-inserted.
 
 ## Features
 

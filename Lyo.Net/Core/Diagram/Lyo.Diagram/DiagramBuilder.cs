@@ -31,22 +31,17 @@ public sealed class DiagramBuilder
     }
 
     /// <summary>Returns the document. Each call mints a new id.</summary>
-    public DiagramDocument Build()
-        => new() {
-            Id = LyoGuid.CreateV7(),
-            Name = _name,
-            Pages = [.. _pages]
-        };
+    public DiagramDocument Build() => new() { Id = LyoGuid.CreateV7(), Name = _name, Pages = [.. _pages] };
 }
 
 /// <summary>Adds cells to one page. Obtained from <see cref="DiagramBuilder.Page" />.</summary>
 public sealed class DiagramPageBuilder
 {
+    private readonly List<DiagramCell> _cells = [];
     private readonly string _id;
     private readonly string _name;
-    private readonly List<DiagramCell> _cells = [];
-    private double _pageWidth = 850;
     private double _pageHeight = 1100;
+    private double _pageWidth = 850;
 
     internal DiagramPageBuilder(string id, string name)
     {
@@ -74,40 +69,59 @@ public sealed class DiagramPageBuilder
         RejectReservedId(id);
         ArgumentHelpers.ThrowIfNull(label);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(style);
-        _cells.Add(new DiagramCell {
-            Id = id,
-            Value = label,
-            Style = style,
-            IsVertex = true,
-            Geometry = new DiagramGeometry { X = x, Y = y, Width = width, Height = height }
-        });
+        _cells.Add(
+            new() {
+                Id = id,
+                Value = label,
+                Style = style,
+                IsVertex = true,
+                Geometry = new() {
+                    X = x,
+                    Y = y,
+                    Width = width,
+                    Height = height
+                }
+            });
+
         return this;
     }
 
     /// <summary>Adds an orthogonal connector from <paramref name="sourceId" /> to <paramref name="targetId" />. <paramref name="label" /> may be null.</summary>
-    public DiagramPageBuilder Connect(string id, string sourceId, string targetId, string? label = null)
-        => Connect(id, sourceId, targetId, [], null, null, label);
+    public DiagramPageBuilder Connect(string id, string sourceId, string targetId, string? label = null) => Connect(id, sourceId, targetId, [], null, null, label);
 
     /// <summary>
     /// Adds a connector that keeps its anchors and bend points. <paramref name="points" /> are the corners between <paramref name="sourcePoint" /> and
     /// <paramref name="targetPoint" />. A null anchor means the edge is attached only by cell id.
     /// </summary>
     public DiagramPageBuilder Connect(
-        string id, string sourceId, string targetId, IReadOnlyList<DiagramPoint> points, DiagramPoint? sourcePoint, DiagramPoint? targetPoint, string? label = null)
+        string id,
+        string sourceId,
+        string targetId,
+        IReadOnlyList<DiagramPoint> points,
+        DiagramPoint? sourcePoint,
+        DiagramPoint? targetPoint,
+        string? label = null)
     {
         RejectReservedId(id);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourceId);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(targetId);
         ArgumentHelpers.ThrowIfNull(points);
-        _cells.Add(new DiagramCell {
-            Id = id,
-            Value = label,
-            Style = DiagramStyles.Connector,
-            IsEdge = true,
-            SourceId = sourceId,
-            TargetId = targetId,
-            Geometry = new DiagramGeometry { Relative = true, Points = points.ToArray(), SourcePoint = sourcePoint, TargetPoint = targetPoint }
-        });
+        _cells.Add(
+            new() {
+                Id = id,
+                Value = label,
+                Style = DiagramStyles.Connector,
+                IsEdge = true,
+                SourceId = sourceId,
+                TargetId = targetId,
+                Geometry = new() {
+                    Relative = true,
+                    Points = points.ToArray(),
+                    SourcePoint = sourcePoint,
+                    TargetPoint = targetPoint
+                }
+            });
+
         return this;
     }
 

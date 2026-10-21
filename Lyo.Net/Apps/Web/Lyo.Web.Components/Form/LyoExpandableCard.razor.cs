@@ -4,6 +4,8 @@ namespace Lyo.Web.Components.Form;
 
 public partial class LyoExpandableCard
 {
+    private bool _expanded;
+
     /// <summary>Optional HTML <c>id</c> override for the root node.</summary>
     [Parameter]
     public string? ElementId { get; set; }
@@ -15,8 +17,6 @@ public partial class LyoExpandableCard
     /// <summary>Extra fields displayed after the trailing expand arrow is opened.</summary>
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
-
-    private bool _expanded;
 
     private void Toggle() => _expanded = !_expanded;
 }

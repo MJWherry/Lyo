@@ -1,7 +1,6 @@
 using Lyo.Common.Core.Identifiers;
 using Lyo.FileMetadataStore.Postgres;
 using Lyo.FileMetadataStore.Sqlite;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.FileManager.Tests;
 
@@ -15,7 +14,13 @@ public class FileStorageLocalHostTests
         Directory.CreateDirectory(root);
         await File.WriteAllTextAsync(source, "hello", TestCt);
         try {
-            var server = new FileManagerServer { Kind = FileManagerServerKind.Local, Name = "local", RootDirectory = root, MetadataKind = FileManagerMetadataKind.Sqlite };
+            var server = new FileManagerServer {
+                Kind = FileManagerServerKind.Local,
+                Name = "local",
+                RootDirectory = root,
+                MetadataKind = FileManagerMetadataKind.Sqlite
+            };
+
             using var host = FileStorageLocalHost.Open(server);
             await host.UploadAsync(source, "docs", new(), TestCt);
             var listed = await host.ListAsync("docs", TestCt);
@@ -24,9 +29,11 @@ public class FileStorageLocalHostTests
         finally {
             if (File.Exists(source))
                 File.Delete(source);
+
             var database = FileManagerPaths.DefaultSqliteFile(root);
             if (File.Exists(database))
                 File.Delete(database);
+
             if (Directory.Exists(root))
                 Directory.Delete(root, true);
         }
@@ -38,7 +45,13 @@ public class FileStorageLocalHostTests
         var root = Path.Combine(Path.GetTempPath(), "lyo-fm-" + LyoGuid.CreateV7().ToString("N"));
         Directory.CreateDirectory(root);
         try {
-            var server = new FileManagerServer { Kind = FileManagerServerKind.Local, Name = "local", RootDirectory = root, MetadataKind = FileManagerMetadataKind.Sqlite };
+            var server = new FileManagerServer {
+                Kind = FileManagerServerKind.Local,
+                Name = "local",
+                RootDirectory = root,
+                MetadataKind = FileManagerMetadataKind.Sqlite
+            };
+
             using var host = FileStorageLocalHost.Open(server);
             var caps = await host.GetCapabilitiesAsync(TestCt);
             Assert.True(caps.PresignedRead);
@@ -56,6 +69,7 @@ public class FileStorageLocalHostTests
             var database = FileManagerPaths.DefaultSqliteFile(root);
             if (File.Exists(database))
                 File.Delete(database);
+
             if (Directory.Exists(root))
                 Directory.Delete(root, true);
         }
@@ -74,6 +88,7 @@ public class FileStorageLocalHostTests
                 MetadataKind = FileManagerMetadataKind.Sqlite,
                 Passphrase = "local-passphrase"
             };
+
             using var host = FileStorageLocalHost.Open(server);
             var caps = await host.GetCapabilitiesAsync(TestCt);
             Assert.True(caps.Encryption);
@@ -83,6 +98,7 @@ public class FileStorageLocalHostTests
             var database = FileManagerPaths.DefaultSqliteFile(root);
             if (File.Exists(database))
                 File.Delete(database);
+
             if (Directory.Exists(root))
                 Directory.Delete(root, true);
         }
@@ -96,7 +112,13 @@ public class FileStorageLocalHostTests
         Directory.CreateDirectory(root);
         await File.WriteAllTextAsync(source, "hello root", TestCt);
         try {
-            var server = new FileManagerServer { Kind = FileManagerServerKind.Local, Name = "local", RootDirectory = root, MetadataKind = FileManagerMetadataKind.Sqlite };
+            var server = new FileManagerServer {
+                Kind = FileManagerServerKind.Local,
+                Name = "local",
+                RootDirectory = root,
+                MetadataKind = FileManagerMetadataKind.Sqlite
+            };
+
             using var host = FileStorageLocalHost.Open(server);
             await host.UploadAsync(source, null, new() { Compress = true, CompressionAlgorithm = "GZip" }, TestCt);
             var listed = await host.ListAsync(null, TestCt);
@@ -109,9 +131,11 @@ public class FileStorageLocalHostTests
         finally {
             if (File.Exists(source))
                 File.Delete(source);
+
             var database = FileManagerPaths.DefaultSqliteFile(root);
             if (File.Exists(database))
                 File.Delete(database);
+
             if (Directory.Exists(root))
                 Directory.Delete(root, true);
         }
@@ -132,6 +156,7 @@ public class FileStorageLocalHostTests
                 MetadataKind = FileManagerMetadataKind.Sqlite,
                 Passphrase = "local-passphrase"
             };
+
             using var host = FileStorageLocalHost.Open(server);
             await host.UploadAsync(source, null, new() { Encrypt = true, EncryptionAlgorithm = "AesGcm", KeyId = FileManagerLimits.LocalKeyId }, TestCt);
             var listed = await host.ListAsync(null, TestCt);
@@ -152,9 +177,11 @@ public class FileStorageLocalHostTests
         finally {
             if (File.Exists(source))
                 File.Delete(source);
+
             var database = FileManagerPaths.DefaultSqliteFile(root);
             if (File.Exists(database))
                 File.Delete(database);
+
             if (Directory.Exists(root))
                 Directory.Delete(root, true);
         }
@@ -170,6 +197,7 @@ public class FileStorageLocalHostTests
                 MetadataKind = FileManagerMetadataKind.Postgres,
                 ConnectionString = "Host=localhost;Database=lyo_files"
             });
+
         Assert.Contains(services, descriptor => descriptor.ServiceType == typeof(PostgresFileMetadataStore));
         Assert.DoesNotContain(services, descriptor => descriptor.ServiceType == typeof(SqliteFileMetadataStore));
     }

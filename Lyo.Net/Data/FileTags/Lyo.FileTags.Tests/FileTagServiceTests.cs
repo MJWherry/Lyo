@@ -1,6 +1,5 @@
 using Lyo.FileTags.FFmpeg;
 using Lyo.FileTags.Images;
-using Lyo.FFmpeg.Models;
 
 namespace Lyo.FileTags.Tests;
 

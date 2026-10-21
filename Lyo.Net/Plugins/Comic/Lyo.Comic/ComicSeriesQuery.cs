@@ -20,9 +20,7 @@ public sealed class ComicSeriesQuery
     /// <summary>Value: tag strings to filter by. Only series that have ALL specified tags are returned. Null or empty means no tag filter.</summary>
     public IReadOnlyList<string>? Tags { get; set; }
 
-    /// <summary>
-    /// An explicit set of series IDs to restrict results to. Populated internally by the API after resolving <see cref="Tags" /> — do not set directly stored here.
-    /// </summary>
+    /// <summary>An explicit set of series IDs to restrict results to. Populated internally by the API after resolving <see cref="Tags" /> — do not set directly stored here.</summary>
     public IReadOnlyList<Guid>? FilterSeriesIds { get; set; }
 
     /// <summary>Maximum number of results to return. Null means no limit for this record.</summary>

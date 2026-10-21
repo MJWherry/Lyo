@@ -1,6 +1,5 @@
 using System.Globalization;
 using Lyo.Exceptions;
-using Lyo.Story.Enums;
 
 namespace Lyo.Story.Web.Components;
 
@@ -25,8 +24,8 @@ public sealed record StoryGraphNodePlacement(string Key, StoryNodeDraft Node, in
 public sealed record StoryGraphEdgePlacement(string FromKey, string ToKey, string ChoiceKey, int StartX, int StartY, int EndX, int EndY, string Path);
 
 /// <summary>
-/// Places story nodes left to right from the start node and draws one arrow per choice, aimed at that choice's last goto.
-/// A node with no incoming choice is still placed. Nodes caught in a cycle are reported and left off the page.
+/// Places story nodes left to right from the start node and draws one arrow per choice, aimed at that choice's last goto. A node with no incoming choice is still placed.
+/// Nodes caught in a cycle are reported and left off the page.
 /// </summary>
 public sealed class StoryGraphLayout
 {
@@ -44,15 +43,6 @@ public sealed class StoryGraphLayout
 
     private const int EdgeInset = 12;
 
-    private StoryGraphLayout(IReadOnlyList<StoryGraphNodePlacement> nodes, IReadOnlyList<StoryGraphEdgePlacement> edges, IReadOnlyList<string> cyclic)
-    {
-        Nodes = nodes;
-        Edges = edges;
-        Cyclic = cyclic;
-        Width = nodes.Count == 0 ? 0 : nodes.Max(node => node.X) + NodeWidth;
-        Height = nodes.Count == 0 ? 0 : nodes.Max(node => node.Y) + NodeHeight;
-    }
-
     /// <summary>Placed nodes. Cyclic nodes are absent.</summary>
     public IReadOnlyList<StoryGraphNodePlacement> Nodes { get; }
 
@@ -67,6 +57,15 @@ public sealed class StoryGraphLayout
 
     /// <summary>Canvas height in pixels.</summary>
     public int Height { get; }
+
+    private StoryGraphLayout(IReadOnlyList<StoryGraphNodePlacement> nodes, IReadOnlyList<StoryGraphEdgePlacement> edges, IReadOnlyList<string> cyclic)
+    {
+        Nodes = nodes;
+        Edges = edges;
+        Cyclic = cyclic;
+        Width = nodes.Count == 0 ? 0 : nodes.Max(node => node.X) + NodeWidth;
+        Height = nodes.Count == 0 ? 0 : nodes.Max(node => node.Y) + NodeHeight;
+    }
 
     /// <summary>Lays out <paramref name="draft" />. Blank keys are skipped. A goto that names a missing node draws no arrow.</summary>
     public static StoryGraphLayout Build(StoryDraft draft)
@@ -134,7 +133,10 @@ public sealed class StoryGraphLayout
     private static List<StoryGraphEdgePlacement> BuildEdges(List<StoryGraphNodePlacement> nodes, List<(string From, string To, string ChoiceKey)> links)
     {
         var placed = nodes.ToDictionary(node => node.Key, StringComparer.Ordinal);
-        var pairs = links.Where(link => placed.ContainsKey(link.From) && placed.ContainsKey(link.To)).Select(link => (From: placed[link.From], To: placed[link.To], link.ChoiceKey)).ToList();
+        var pairs = links.Where(link => placed.ContainsKey(link.From) && placed.ContainsKey(link.To))
+            .Select(link => (From: placed[link.From], To: placed[link.To], link.ChoiceKey))
+            .ToList();
+
         List<StoryGraphEdgePlacement> edges = [];
         foreach (var pair in pairs) {
             var exitIndex = pairs.Where(item => item.From == pair.From).ToList().IndexOf(pair);
@@ -148,13 +150,19 @@ public sealed class StoryGraphLayout
     }
 
     private static StoryGraphEdgePlacement Connect(
-        StoryGraphNodePlacement from, StoryGraphNodePlacement to, string choiceKey, int exitIndex, int exitCount, int entryIndex, int entryCount)
+        StoryGraphNodePlacement from,
+        StoryGraphNodePlacement to,
+        string choiceKey,
+        int exitIndex,
+        int exitCount,
+        int entryIndex,
+        int entryCount)
     {
         var startX = from.X + NodeWidth;
         var startY = Spread(from.Y, exitCount, exitIndex);
         var endX = to.X;
         var endY = Spread(to.Y, entryCount, entryIndex);
-        var channelX = endX - (ColumnGap / 2) - (entryIndex * 8);
+        var channelX = endX - ColumnGap / 2 - entryIndex * 8;
         if (channelX <= startX)
             channelX = startX + Math.Max((endX - startX) / 2, 1);
 
@@ -165,9 +173,9 @@ public sealed class StoryGraphLayout
     private static int Spread(int origin, int count, int index)
     {
         if (count <= 1)
-            return origin + (NodeHeight / 2);
+            return origin + NodeHeight / 2;
 
-        var span = NodeHeight - (2 * EdgeInset);
+        var span = NodeHeight - 2 * EdgeInset;
         return origin + EdgeInset + (int)Math.Round(span * (index / (double)(count - 1)));
     }
 }

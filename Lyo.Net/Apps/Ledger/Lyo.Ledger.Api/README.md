@@ -1,6 +1,7 @@
 # Lyo.Ledger.Api
 
-Maps QueryProject CRUD on ledger accounts, journals, and lines, plus post/void/AR-balance and chart-ensure routes. Journal post tenant-checks account ids. Register with `AddLedgerApiFromConfiguration`, then call `BuildLedgerGroup`. Example host: `Lyo.Ledger.Api.Example` (`http://localhost:5104`).
+Maps QueryProject CRUD on ledger accounts, journals, and lines, plus post/void/AR-balance and chart-ensure routes. Journal post tenant-checks account ids. Register with
+`AddLedgerApiFromConfiguration`, then call `BuildLedgerGroup`. Example host: `Lyo.Ledger.Api.Example` (`http://localhost:5104`).
 
 ## Features
 

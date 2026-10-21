@@ -51,18 +51,19 @@ public sealed class FileStorageFactoryBuilder
 
     /// <summary>Records <paramref name="builder" /> under <paramref name="name" />. Provider packages call this from their <c>AddS3</c> style extensions.</summary>
     public FileStorageFactoryBuilder Add<TOptions, TBuilder>(string name, FileStorageServiceBuilder<TOptions, TBuilder> builder)
-        where TOptions : FileStorageServiceBaseOptions, new()
-        where TBuilder : FileStorageServiceBuilder<TOptions, TBuilder>
+        where TOptions : FileStorageServiceBaseOptions, new() where TBuilder : FileStorageServiceBuilder<TOptions, TBuilder>
     {
         ArgumentHelpers.ThrowIfNull(builder);
         var storeName = RequireName(name);
         builder.EnsureValid();
-        _catalog.Add(new() {
-            Name = storeName,
-            Create = builder.ToDelegate(storeName),
-            EncryptionServiceKey = builder.EncryptionKey,
-            DisposeCreated = true
-        });
+        _catalog.Add(
+            new() {
+                Name = storeName,
+                Create = builder.ToDelegate(storeName),
+                EncryptionServiceKey = builder.EncryptionKey,
+                DisposeCreated = true
+            });
+
         if (builder.Archive)
             FileStorageFactoryArchive.Register(_services, storeName);
 

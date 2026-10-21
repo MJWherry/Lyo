@@ -1,5 +1,4 @@
 using System.Text;
-using Lyo.Api;
 using Lyo.Api.Client;
 using Lyo.Common.Metadata.Records;
 using Microsoft.AspNetCore.Builder;
@@ -27,12 +26,10 @@ public sealed class ApiClientTransportCompressionTests
         app.MapPost("/file", () => Results.Text(Payload, FileTypeInfo.Csv.MimeType));
         await app.StartAsync(TestCt);
         var baseUrl = app.Urls.Single();
-
         using var client = new ApiClient(options: new() { BaseUrl = baseUrl });
         var getBytes = await client.GetFileAsync("file", ct: TestCt);
         Assert.Equal(Payload, Encoding.UTF8.GetString(getBytes));
-
-        var postBytes = await client.PostAsBinaryAsync<object?>("file", null, ct: TestCt);
+        var postBytes = await client.PostAsBinaryAsync<object?>("file", ct: TestCt);
         Assert.Equal(Payload, Encoding.UTF8.GetString(postBytes));
     }
 }

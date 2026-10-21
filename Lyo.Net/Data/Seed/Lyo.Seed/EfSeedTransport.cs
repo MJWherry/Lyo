@@ -3,19 +3,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Seed;
 
-/// <summary>Writes generated items with <c>AddRange</c> plus <c>SaveChangesAsync</c> on <typeparamref name="TContext"/>.</summary>
+/// <summary>Writes generated items with <c>AddRange</c> plus <c>SaveChangesAsync</c> on <typeparamref name="TContext" />.</summary>
 public sealed class EfSeedTransport<TContext> : ISeedTransport
     where TContext : DbContext
 {
+    /// <summary>EF context used by <c>OnClear</c> and <c>After</c> callbacks that need schema-specific deletes.</summary>
+    public TContext Context { get; }
+
     /// <summary>Builds a transport over an open context. The caller owns disposal.</summary>
     public EfSeedTransport(TContext context)
     {
         ArgumentHelpers.ThrowIfNull(context);
         Context = context;
     }
-
-    /// <summary>EF context used by <c>OnClear</c> and <c>After</c> callbacks that need schema-specific deletes.</summary>
-    public TContext Context { get; }
 
     /// <inheritdoc />
     public SeedTransportKind Kind => SeedTransportKind.Ef;

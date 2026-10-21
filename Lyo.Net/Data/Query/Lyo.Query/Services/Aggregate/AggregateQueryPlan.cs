@@ -18,19 +18,10 @@ public sealed class AggregateQueryPage(IReadOnlyList<Dictionary<string, object?>
 /// <summary>Translatable grouped query plus the shaper that turns each row into a dictionary.</summary>
 public sealed class AggregateQueryPlan
 {
-    private readonly AggregateRowShape _shape;
-    private readonly string[] _keyNames;
     private readonly string[] _aggregateNames;
     private readonly KeyValuePair<string, object?>[] _emptyAggregates;
-
-    internal AggregateQueryPlan(IQueryable ordered, AggregateRowShape shape, string[] keyNames, string[] aggregateNames, KeyValuePair<string, object?>[] emptyAggregates)
-    {
-        Ordered = ordered;
-        _shape = shape;
-        _keyNames = keyNames;
-        _aggregateNames = aggregateNames;
-        _emptyAggregates = emptyAggregates;
-    }
+    private readonly string[] _keyNames;
+    private readonly AggregateRowShape _shape;
 
     /// <summary>Grouped, ordered query before paging. The element type is <see cref="RowType" />.</summary>
     public IQueryable Ordered { get; }
@@ -41,10 +32,19 @@ public sealed class AggregateQueryPlan
     /// <summary>True when <c>Select</c> is empty and the result is one summary row.</summary>
     public bool Ungrouped => _keyNames.Length == 0;
 
+    internal AggregateQueryPlan(IQueryable ordered, AggregateRowShape shape, string[] keyNames, string[] aggregateNames, KeyValuePair<string, object?>[] emptyAggregates)
+    {
+        Ordered = ordered;
+        _shape = shape;
+        _keyNames = keyNames;
+        _aggregateNames = aggregateNames;
+        _emptyAggregates = emptyAggregates;
+    }
+
     /// <summary>Skip <paramref name="start" /> groups and take <paramref name="take" />. <see cref="int.MaxValue" /> takes the rest.</summary>
     public IQueryable Slice(int start, int take)
     {
-        IQueryable query = Ordered;
+        var query = Ordered;
         if (start > 0)
             query = Apply("Skip", query, start);
 
@@ -110,12 +110,12 @@ public sealed class AggregateQueryPlan
                 fetched = fetched.Take(amount).ToList();
         }
 
-        int? totalOut = mode switch {
+        var totalOut = mode switch {
             QueryTotalCountMode.Exact when Ungrouped => 1,
             QueryTotalCountMode.Exact => groupCount,
             QueryTotalCountMode.HasMore when Ungrouped => 1,
             QueryTotalCountMode.HasMore when more == false => start + fetched.Count,
-            _ => null
+            var _ => null
         };
 
         return new(fetched, totalOut, more);
@@ -124,7 +124,7 @@ public sealed class AggregateQueryPlan
     private IQueryable Apply(string name, IQueryable query, int value)
     {
         var method = typeof(Queryable).GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .Single(m => m.Name == name && m.IsGenericMethodDefinition && m.GetParameters() is [_, { ParameterType: var second }] && second == typeof(int))
+            .Single(m => m.Name == name && m.IsGenericMethodDefinition && m.GetParameters() is [var _, { ParameterType: var second }] && second == typeof(int))
             .MakeGenericMethod(RowType);
 
         return (IQueryable)Invoke(method, [query, value]);

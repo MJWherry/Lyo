@@ -1,8 +1,7 @@
 using Lyo.Common.Core.Extensions;
-using Lyo.Common.Metadata.Extensions;
 using Lyo.Common.Core.Pathing;
-using Lyo.Common.Metadata.Records;
 using Lyo.Common.Core.Security;
+using Lyo.Common.Metadata.Records;
 
 namespace Lyo.Common.Tests;
 
@@ -15,8 +14,7 @@ public class CatalogPrimitiveTests
     [InlineData("elevenchars", 10, "elevenc...")]
     [InlineData("abcdef", 3, "...")]
     [InlineData("abcdef", 2, "..")]
-    public void TruncateWithEllipsis_SpendsBudgetOnSuffix(string value, int maxLength, string expected)
-        => Assert.Equal(expected, value.TruncateWithEllipsis(maxLength));
+    public void TruncateWithEllipsis_SpendsBudgetOnSuffix(string value, int maxLength, string expected) => Assert.Equal(expected, value.TruncateWithEllipsis(maxLength));
 
     [Fact]
     public void TruncateWithEllipsis_NullEmptyOrZeroBudget_ReturnsEmpty()

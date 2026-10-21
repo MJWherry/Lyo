@@ -22,7 +22,7 @@ public class EndatoPostgresExtensionsTests
     public void AddEndatoDbContext_WithNullConnectionString_ThrowsArgumentException()
     {
         var services = new ServiceCollection();
-        var ex = Assert.Throws<ArgumentNullException>(() => services.AddEndatoDbContext((string)null!));
+        var ex = Assert.Throws<ArgumentNullException>(() => services.AddEndatoDbContext(null!));
         Assert.Equal("connectionString", ex.ParamName);
     }
 

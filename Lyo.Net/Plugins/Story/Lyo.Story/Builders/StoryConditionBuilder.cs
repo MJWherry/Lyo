@@ -11,10 +11,9 @@ public sealed class StoryConditionBuilder
     private readonly WhereClauseBuilder _inner;
     private int _count;
 
-    internal StoryConditionBuilder(GroupOperatorEnum op)
-        => _inner = op == GroupOperatorEnum.Or ? WhereClauseBuilder.Or() : WhereClauseBuilder.And();
+    internal StoryConditionBuilder(GroupOperatorEnum op) => _inner = op == GroupOperatorEnum.Or ? WhereClauseBuilder.Or() : WhereClauseBuilder.And();
 
-    /// <summary>Variable <paramref name="key"/> is true.</summary>
+    /// <summary>Variable <paramref name="key" /> is true.</summary>
     public StoryConditionBuilder Flag(string key)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
@@ -23,7 +22,7 @@ public sealed class StoryConditionBuilder
         return this;
     }
 
-    /// <summary>Variable <paramref name="key"/> is missing or false.</summary>
+    /// <summary>Variable <paramref name="key" /> is missing or false.</summary>
     public StoryConditionBuilder NotFlag(string key)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
@@ -32,7 +31,7 @@ public sealed class StoryConditionBuilder
         return this;
     }
 
-    /// <summary>Variable <paramref name="key"/> equals <paramref name="value"/>.</summary>
+    /// <summary>Variable <paramref name="key" /> equals <paramref name="value" />.</summary>
     public StoryConditionBuilder Eq(string key, object? value)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
@@ -41,7 +40,7 @@ public sealed class StoryConditionBuilder
         return this;
     }
 
-    /// <summary>The playthrough has taken choice <paramref name="choiceKey"/>.</summary>
+    /// <summary>The playthrough has taken choice <paramref name="choiceKey" />.</summary>
     public StoryConditionBuilder Chose(string choiceKey)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(choiceKey);
@@ -50,7 +49,7 @@ public sealed class StoryConditionBuilder
         return this;
     }
 
-    /// <summary>The playthrough has entered node <paramref name="nodeKey"/>.</summary>
+    /// <summary>The playthrough has entered node <paramref name="nodeKey" />.</summary>
     public StoryConditionBuilder Visited(string nodeKey)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(nodeKey);

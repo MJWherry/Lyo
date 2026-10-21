@@ -10,9 +10,7 @@ public class StateMachineDefinitionTests
     {
         var clock = new DateTime(2026, 9, 26, 12, 0, 0, DateTimeKind.Utc);
         var definition = Job().UseClock(() => clock).Build();
-
         var result = await definition.FireAsync(new(), At(JobState.Queued), JobTrigger.Start, TestCt);
-
         Assert.True(result.Succeeded);
         Assert.Equal(TransitionRejection.None, result.Rejection);
         Assert.Equal(JobState.Queued, result.From);
@@ -27,9 +25,7 @@ public class StateMachineDefinitionTests
         var definition = Job().Build();
         var context = new JobContext();
         var snapshot = At(JobState.Queued, 4);
-
         var result = await definition.FireAsync(context, snapshot, JobTrigger.Complete, TestCt);
-
         Assert.False(result.Succeeded);
         Assert.Equal(TransitionRejection.NoTransition, result.Rejection);
         Assert.Same(snapshot, result.Snapshot);
@@ -41,9 +37,7 @@ public class StateMachineDefinitionTests
     {
         var definition = Job().Build();
         var context = new JobContext { MaxAttempts = 2 };
-
         var result = await definition.FireAsync(context, At(JobState.Running), Retry, new(2), TestCt);
-
         Assert.Equal(TransitionRejection.GuardFailed, result.Rejection);
         Assert.Equal(JobState.Running, result.To);
         Assert.Empty(context.Log);
@@ -57,9 +51,7 @@ public class StateMachineDefinitionTests
         var builder = new StateMachineBuilder<JobState, JobTrigger, JobContext>("job", JobState.Running);
         builder.Configure(JobState.Running).PermitIf(Retry, JobState.Queued, (_, p) => (seenByGuard = p.Attempt) < 5);
         builder.Configure(JobState.Queued).OnEntryFrom(Retry, (_, p) => seenByEntry = p.Attempt);
-
         var result = await builder.Build().FireAsync(new(), At(JobState.Running), Retry, new(3), TestCt);
-
         Assert.True(result.Succeeded);
         Assert.Equal(3, seenByGuard);
         Assert.Equal(3, seenByEntry);
@@ -78,16 +70,15 @@ public class StateMachineDefinitionTests
         var log = new List<string>();
         var builder = new StateMachineBuilder<JobState, JobTrigger, JobContext>("job", JobState.Running);
         builder.Configure(JobState.Running).Permit(JobTrigger.Complete, JobState.Done).OnExit(_ => log.Add("exit"));
-        builder.Configure(JobState.Done).OnEntryAsync((_, _) => {
-            log.Add("entry");
-            return Task.CompletedTask;
-        });
+        builder.Configure(JobState.Done)
+            .OnEntryAsync((_, _) => {
+                log.Add("entry");
+                return Task.CompletedTask;
+            });
 
         builder.OnTransition(t => log.Add($"transition:{t.Source}->{t.Destination}:{t.Trigger}"));
         builder.AddObserver(new RecordingObserver(log));
-
         await builder.Build().FireAsync(new(), At(JobState.Running), JobTrigger.Complete, TestCt);
-
         Assert.Equal(["exit", "transition:Running->Done:Complete", "entry", "observer:Running->Done@1"], log);
     }
 
@@ -96,9 +87,7 @@ public class StateMachineDefinitionTests
     {
         var definition = Job().Build();
         var context = new JobContext();
-
         var result = await definition.FireAsync(context, At(JobState.Running, 7), JobTrigger.Heartbeat, TestCt);
-
         Assert.True(result.Succeeded);
         Assert.Equal(JobState.Running, result.To);
         Assert.Equal(8, result.Snapshot.Version);
@@ -111,7 +100,6 @@ public class StateMachineDefinitionTests
         var builder = Job();
         builder.Configure(JobState.Done).OnEntryAsync((_, _) => Task.CompletedTask);
         var definition = builder.Build();
-
         Assert.True(definition.HasAsyncHooks);
         Assert.Throws<StateMachineConfigurationException>(() => definition.Fire(new(), At(JobState.Running), JobTrigger.Complete));
     }
@@ -122,10 +110,8 @@ public class StateMachineDefinitionTests
         var definition = Job().UseClock(() => DateTime.UnixEpoch).Build();
         var syncContext = new JobContext();
         var asyncContext = new JobContext();
-
         var sync = definition.Fire(syncContext, At(JobState.Running), Retry, new(1));
         var async = await definition.FireAsync(asyncContext, At(JobState.Running), Retry, new(1), TestCt);
-
         Assert.Equal(async, sync);
         Assert.Equal(JobState.Queued, sync.To);
         Assert.Equal(asyncContext.Log, syncContext.Log);

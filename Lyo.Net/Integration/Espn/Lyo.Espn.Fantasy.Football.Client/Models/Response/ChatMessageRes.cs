@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Lyo.Espn.Fantasy.Football.Client;
 
 namespace Lyo.Espn.Fantasy.Football.Client.Models.Response;
 
@@ -25,27 +24,19 @@ public enum ChatMessageKind
 /// </summary>
 public sealed class ChatMessagePlayer
 {
-    /// <summary>Builds a player reference from the ESPN id. The card stays empty until a load.</summary>
-    public ChatMessagePlayer(int playerId) => PlayerId = playerId;
-
     /// <summary>ESPN player id. Negative ids are defense and kicker slots.</summary>
     public int PlayerId { get; }
 
     /// <summary>Player card, when <see cref="CommunicationManager.LoadPlayersAsync(ChatConversationRes, int, int, CancellationToken)" /> has loaded it.</summary>
     public PlayerInfoItemRes? Player { get; internal set; }
+
+    /// <summary>Builds a player reference from the ESPN id. The card stays empty until a load.</summary>
+    public ChatMessagePlayer(int playerId) => PlayerId = playerId;
 }
 
 /// <summary>One side of a trade or add/drop. <see cref="TeamId" /> is the ESPN team. <see cref="Team" /> is that team when the league index had it.</summary>
 public sealed class ChatMessageSide
 {
-    /// <summary>Builds a side from the team id and the added and dropped players, in ESPN's numeric order.</summary>
-    public ChatMessageSide(int? teamId, IReadOnlyList<ChatMessagePlayer> added, IReadOnlyList<ChatMessagePlayer> dropped)
-    {
-        TeamId = teamId;
-        Added = added;
-        Dropped = dropped;
-    }
-
     /// <summary>ESPN team id for this side.</summary>
     public int? TeamId { get; }
 
@@ -57,42 +48,23 @@ public sealed class ChatMessageSide
 
     /// <summary>Players dropped from this team, in ESPN's numeric order.</summary>
     public IReadOnlyList<ChatMessagePlayer> Dropped { get; }
+
+    /// <summary>Builds a side from the team id and the added and dropped players, in ESPN's numeric order.</summary>
+    public ChatMessageSide(int? teamId, IReadOnlyList<ChatMessagePlayer> added, IReadOnlyList<ChatMessagePlayer> dropped)
+    {
+        TeamId = teamId;
+        Added = added;
+        Dropped = dropped;
+    }
 }
 
 /// <summary>
-/// One Fantasy Chat message. <see cref="AuthorId" /> and <see cref="DateUnix" /> are the ESPN values. <see cref="Author" /> and <see cref="Date" /> are those values in a form you
-/// can use. Adds, drops, and trades list players on <see cref="Side1" /> and <see cref="Side2" />.
+/// One Fantasy Chat message. <see cref="AuthorId" /> and <see cref="DateUnix" /> are the ESPN values. <see cref="Author" /> and <see cref="Date" /> are those values in a
+/// form you can use. Adds, drops, and trades list players on <see cref="Side1" /> and <see cref="Side2" />.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class ChatMessageRes
 {
-    /// <summary>Builds a message from values already taken off the ESPN payload.</summary>
-    public ChatMessageRes(
-        string Id,
-        string? AuthorId,
-        long DateUnix,
-        bool IsDeleted,
-        string? TopicId,
-        ChatMessageKind Kind,
-        string? Content = null,
-        string? TransactionId = null,
-        ChatMessageSide? Side1 = null,
-        ChatMessageSide? Side2 = null,
-        bool IsEdited = false)
-    {
-        this.Id = Id;
-        this.AuthorId = AuthorId;
-        this.DateUnix = DateUnix;
-        this.IsDeleted = IsDeleted;
-        this.TopicId = TopicId;
-        this.Kind = Kind;
-        this.Content = Content;
-        this.TransactionId = TransactionId;
-        this.Side1 = Side1;
-        this.Side2 = Side2;
-        this.IsEdited = IsEdited;
-    }
-
     /// <summary>ESPN message id.</summary>
     public string Id { get; }
 
@@ -135,6 +107,33 @@ public sealed class ChatMessageRes
     /// <summary>True when ESPN has edited the message.</summary>
     public bool IsEdited { get; }
 
+    /// <summary>Builds a message from values already taken off the ESPN payload.</summary>
+    public ChatMessageRes(
+        string Id,
+        string? AuthorId,
+        long DateUnix,
+        bool IsDeleted,
+        string? TopicId,
+        ChatMessageKind Kind,
+        string? Content = null,
+        string? TransactionId = null,
+        ChatMessageSide? Side1 = null,
+        ChatMessageSide? Side2 = null,
+        bool IsEdited = false)
+    {
+        this.Id = Id;
+        this.AuthorId = AuthorId;
+        this.DateUnix = DateUnix;
+        this.IsDeleted = IsDeleted;
+        this.TopicId = TopicId;
+        this.Kind = Kind;
+        this.Content = Content;
+        this.TransactionId = TransactionId;
+        this.Side1 = Side1;
+        this.Side2 = Side2;
+        this.IsEdited = IsEdited;
+    }
+
     /// <summary>Id, kind, and author, for logs and the debugger.</summary>
     public override string ToString() => $"Message Id={Id} Kind={Kind} Author={AuthorId} Date={DateUnix}";
 
@@ -155,12 +154,15 @@ public sealed class ChatMessageRes
         if (side == null)
             return;
 
-        foreach (var player in side.Added)
+        foreach (var player in side.Added) {
             if (player.Player == null)
                 playerIds.Add(player.PlayerId);
-        foreach (var player in side.Dropped)
+        }
+
+        foreach (var player in side.Dropped) {
             if (player.Player == null)
                 playerIds.Add(player.PlayerId);
+        }
     }
 
     private static void Apply(ChatMessageSide? side, IReadOnlyDictionary<int, PlayerInfoItemRes> cards)
@@ -170,6 +172,7 @@ public sealed class ChatMessageRes
 
         foreach (var player in side.Added)
             Assign(player, cards);
+
         foreach (var player in side.Dropped)
             Assign(player, cards);
     }

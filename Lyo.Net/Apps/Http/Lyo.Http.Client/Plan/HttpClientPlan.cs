@@ -56,10 +56,8 @@ public abstract record HttpClientPlanStep(string? Name = null)
 }
 
 /// <summary>HTTP request (GET/POST/PUT/PATCH/DELETE).</summary>
-public sealed record HttpRequestPlanStep(
-    string Method,
-    string Uri,
-    string? Name = null) : HttpClientPlanStep(Name)
+public sealed record HttpRequestPlanStep(string Method, string Uri, string? Name = null)
+    : HttpClientPlanStep(Name)
 {
     /// <summary>Extra request headers.</summary>
     public Dictionary<string, string>? Headers { get; init; }
@@ -123,66 +121,84 @@ public sealed record HttpRequestPlanStep(
 }
 
 /// <summary>Wait between steps (on top of the timing handler).</summary>
-public sealed record HttpDelayPlanStep(TimeSpan Min, TimeSpan? Max = null, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpDelayPlanStep(TimeSpan Min, TimeSpan? Max = null, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>Download one URL to a file.</summary>
-public sealed record HttpDownloadFilePlanStep(string Uri, string Destination, string? Name = null) : HttpClientPlanStep(Name)
+public sealed record HttpDownloadFilePlanStep(string Uri, string Destination, string? Name = null)
+    : HttpClientPlanStep(Name)
 {
     /// <summary>Optional variable to store the destination path.</summary>
     public string? SavePathAs { get; init; }
 }
 
 /// <summary>Download every URL in a string-list variable into a directory.</summary>
-public sealed record HttpDownloadUrlsPlanStep(string VariableName, string Directory, string? Prefix = null, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpDownloadUrlsPlanStep(string VariableName, string Directory, string? Prefix = null, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>Parse the current (or named) body as JSON into a variable.</summary>
-public sealed record HttpExtractJsonPlanStep(string VariableName, string? FromVariable = null, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpExtractJsonPlanStep(string VariableName, string? FromVariable = null, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>JSON path into a variable.</summary>
-public sealed record HttpExtractJsonPathPlanStep(string VariableName, string JsonPath, string? FromVariable = null, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpExtractJsonPathPlanStep(string VariableName, string JsonPath, string? FromVariable = null, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>JSON array into a string-list variable.</summary>
-public sealed record HttpExtractJsonArrayPlanStep(string VariableName, string? JsonPath = null, string? FromVariable = null, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpExtractJsonArrayPlanStep(string VariableName, string? JsonPath = null, string? FromVariable = null, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>Array of objects into a JSON variable.</summary>
-public sealed record HttpExtractJsonRecordsPlanStep(string VariableName, string? JsonPath = null, string? FromVariable = null, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpExtractJsonRecordsPlanStep(string VariableName, string? JsonPath = null, string? FromVariable = null, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>Copy a response header into a variable.</summary>
-public sealed record HttpExtractHeaderPlanStep(string HeaderName, string VariableName, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpExtractHeaderPlanStep(string HeaderName, string VariableName, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>CSS + attributes → URL list.</summary>
-public sealed record HttpExtractSourcesPlanStep(string VariableName, LyoHttpExtractOptions Options, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpExtractSourcesPlanStep(string VariableName, LyoHttpExtractOptions Options, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>Image URLs.</summary>
-public sealed record HttpExtractImagesPlanStep(string VariableName, LyoHttpExtractOptions? Options = null, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpExtractImagesPlanStep(string VariableName, LyoHttpExtractOptions? Options = null, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>Link URLs.</summary>
-public sealed record HttpExtractLinksPlanStep(string VariableName, LyoHttpExtractOptions? Options = null, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpExtractLinksPlanStep(string VariableName, LyoHttpExtractOptions? Options = null, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>One attribute.</summary>
-public sealed record HttpExtractAttributePlanStep(string VariableName, LyoHttpExtractOptions Options, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpExtractAttributePlanStep(string VariableName, LyoHttpExtractOptions Options, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>Inner text.</summary>
-public sealed record HttpExtractTextPlanStep(string VariableName, LyoHttpExtractOptions Options, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpExtractTextPlanStep(string VariableName, LyoHttpExtractOptions Options, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>Inner HTML.</summary>
-public sealed record HttpExtractHtmlPlanStep(string VariableName, LyoHttpExtractOptions Options, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpExtractHtmlPlanStep(string VariableName, LyoHttpExtractOptions Options, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>Regex.</summary>
 public sealed record HttpExtractRegexPlanStep(string VariableName, string Pattern, string? Group = null, string? FromVariable = null, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>Meta / OG / canonical. <paramref name="VariablePrefix" /> prefixes stored keys (e.g. <c>og</c>).</summary>
-public sealed record HttpExtractMetaPlanStep(string VariablePrefix, LyoHttpExtractOptions? Options = null, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpExtractMetaPlanStep(string VariablePrefix, LyoHttpExtractOptions? Options = null, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>JSON-LD.</summary>
-public sealed record HttpExtractJsonLdPlanStep(string VariableName, LyoHttpExtractOptions? Options = null, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpExtractJsonLdPlanStep(string VariableName, LyoHttpExtractOptions? Options = null, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>HTML table.</summary>
-public sealed record HttpExtractTablePlanStep(string VariableName, string Selector, LyoHttpExtractOptions? Options = null, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpExtractTablePlanStep(string VariableName, string Selector, LyoHttpExtractOptions? Options = null, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>Filter a string list in bindings.</summary>
-public sealed record HttpFilterListPlanStep(string SourceVariable, string TargetVariable, string? Name = null) : HttpClientPlanStep(Name)
+public sealed record HttpFilterListPlanStep(string SourceVariable, string TargetVariable, string? Name = null)
+    : HttpClientPlanStep(Name)
 {
     /// <summary>Keep items matching this regex.</summary>
     public string? IncludeRegex { get; init; }
@@ -205,28 +221,37 @@ public sealed record HttpMapListPlanStep(string SourceVariable, string TargetVar
     : HttpClientPlanStep(Name);
 
 /// <summary>Store a literal string.</summary>
-public sealed record HttpStoreLiteralPlanStep(string VariableName, string Value, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpStoreLiteralPlanStep(string VariableName, string Value, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>Store an interpolated template.</summary>
-public sealed record HttpStoreTemplatePlanStep(string VariableName, string Template, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpStoreTemplatePlanStep(string VariableName, string Template, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>Set a session default header for later steps.</summary>
-public sealed record HttpSetHeaderPlanStep(string HeaderName, string Value, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpSetHeaderPlanStep(string HeaderName, string Value, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>Remove a session default header.</summary>
-public sealed record HttpRemoveHeaderPlanStep(string HeaderName, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpRemoveHeaderPlanStep(string HeaderName, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>Add a cookie to the jar.</summary>
-public sealed record HttpSetCookiePlanStep(LyoHttpCookie Cookie, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpSetCookiePlanStep(LyoHttpCookie Cookie, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>Remove a cookie from the jar.</summary>
-public sealed record HttpRemoveCookiePlanStep(string CookieName, string? Domain = null, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpRemoveCookiePlanStep(string CookieName, string? Domain = null, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>Empty the jar.</summary>
-public sealed record HttpClearCookiesPlanStep(string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpClearCookiesPlanStep(string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>Export the jar into a JSON variable (not for committed secrets).</summary>
-public sealed record HttpExportCookiesPlanStep(string VariableName, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpExportCookiesPlanStep(string VariableName, string? Name = null)
+    : HttpClientPlanStep(Name);
 
 /// <summary>Load cookies from a JSON variable or runtime cookie file.</summary>
-public sealed record HttpLoadCookiesPlanStep(string? VariableName = null, string? CookieFile = null, string? Name = null) : HttpClientPlanStep(Name);
+public sealed record HttpLoadCookiesPlanStep(string? VariableName = null, string? CookieFile = null, string? Name = null)
+    : HttpClientPlanStep(Name);

@@ -1,62 +1,37 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
+using Lyo.Algorithms.Api;
+using Lyo.Algorithms.Postgres;
 using Lyo.Api;
 using Lyo.Api.Authentication;
-using Lyo.Query.Postgres;
 using Lyo.Api.Export;
 using Lyo.Api.Export.Csv;
 using Lyo.Api.Export.Toml;
 using Lyo.Api.Export.Xlsx;
 using Lyo.Api.Export.Xml;
 using Lyo.Api.Export.Yaml;
-using Lyo.Reporting.Api;
+using Lyo.Api.Middleware;
 using Lyo.Api.Services.Crud.Read;
+using Lyo.Audiobook.Postgres;
+using Lyo.Audiobook.Postgres.Database;
 using Lyo.Authentication;
 using Lyo.Authentication.AspNetCore;
 using Lyo.Authentication.AspNetCore.Endpoints;
 using Lyo.Authentication.Google;
 using Lyo.Authentication.Keycloak;
 using Lyo.Authentication.OpenIdConnect;
-using Lyo.Authentication.Sso.Endpoints;
 using Lyo.Authentication.Postgres;
-using Lyo.Cache;
-using Lyo.FeatureFlags;
-using Lyo.FeatureFlags.AspNetCore;
-using Lyo.Book.Postgres;
-using Lyo.Book.Postgres.Database;
-using Lyo.Music.Postgres;
-using Lyo.Music.Postgres.Database;
-using Lyo.Audiobook.Postgres;
-using Lyo.Audiobook.Postgres.Database;
-using Lyo.Podcast.Postgres;
-using Lyo.Podcast.Postgres.Database;
-using Lyo.Video.Postgres;
-using Lyo.Video.Postgres.Database;
-using Lyo.Google.Youtube.Client;
-using Lyo.Comic.Api;
-using Lyo.Espn.Fantasy.Football.Client;
-using Lyo.FantasyFootball.Api;
-using Lyo.Comic.Postgres;
-using Lyo.Algorithms.Api;
-using Lyo.Algorithms.Postgres;
-using Lyo.Story.Api;
-using Lyo.Story.Postgres;
-using Lyo.Leaderboard.Api;
-using Lyo.HomeInventory.Api;
-using Lyo.HomeInventory.FileStorage;
-using Lyo.HomeInventory.Postgres;
-using Lyo.Recipe.Api;
-using Lyo.Recipe.FileStorage;
-using Lyo.Recipe.Postgres;
-using Lyo.Ledger.Api;
-using Lyo.Ledger.Postgres;
-using Lyo.Ledger.Postgres.Database;
+using Lyo.Authentication.Sso.Endpoints;
 using Lyo.Billing;
 using Lyo.Billing.Api;
 using Lyo.Billing.Postgres;
 using Lyo.Billing.Postgres.Database;
-using Lyo.Json;
+using Lyo.Book.Postgres;
+using Lyo.Book.Postgres.Database;
+using Lyo.Cache;
+using Lyo.Comic.Api;
+using Lyo.Comic.Postgres;
 using Lyo.Compression;
 using Lyo.Config;
 using Lyo.Config.Api;
@@ -65,9 +40,14 @@ using Lyo.Csv;
 using Lyo.DateAndTime.Json;
 using Lyo.Discord.Postgres;
 using Lyo.Discord.Postgres.Database;
+using Lyo.Drift.Postgres;
 using Lyo.Encryption.Extensions;
 using Lyo.Endato.Postgres;
 using Lyo.Endato.Postgres.Database;
+using Lyo.Espn.Fantasy.Football.Client;
+using Lyo.FantasyFootball.Api;
+using Lyo.FeatureFlags;
+using Lyo.FeatureFlags.AspNetCore;
 using Lyo.FileMetadataStore.Postgres;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.FileStorage;
@@ -75,26 +55,47 @@ using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.S3;
 using Lyo.Formatter;
+using Lyo.Google.Youtube.Client;
+using Lyo.HomeInventory.Api;
+using Lyo.HomeInventory.FileStorage;
+using Lyo.HomeInventory.Postgres;
 using Lyo.IO.Temp;
 using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
-using Lyo.Drift.Postgres;
+using Lyo.Json;
 using Lyo.KeyStore;
 using Lyo.KeyStore.Aws;
+using Lyo.Leaderboard.Api;
+using Lyo.Ledger.Api;
+using Lyo.Ledger.Postgres;
+using Lyo.Ledger.Postgres.Database;
 using Lyo.Lock;
 using Lyo.Lock.Redis;
-using Lyo.Metrics.OpenTelemetry;
 using Lyo.MessageQueue.RabbitMq;
+using Lyo.Metrics.OpenTelemetry;
+using Lyo.Music.Postgres;
+using Lyo.Music.Postgres.Database;
 using Lyo.People.Postgres;
 using Lyo.People.Postgres.Database;
+using Lyo.Podcast.Postgres;
+using Lyo.Podcast.Postgres.Database;
+using Lyo.Query.Postgres;
+using Lyo.Recipe.Api;
+using Lyo.Recipe.FileStorage;
+using Lyo.Recipe.Postgres;
+using Lyo.Reporting.Api;
 using Lyo.Reporting.Business.Example;
 using Lyo.Reporting.Postgres;
 using Lyo.Reporting.Web;
 using Lyo.Sms.Twilio.Postgres;
 using Lyo.Sms.Twilio.Postgres.Database;
-using Lyo.SystemInformation;
+using Lyo.Story.Api;
+using Lyo.Story.Postgres;
 using Lyo.TestApi;
 using Lyo.TestApi.FileStorageWorkbench;
+using Lyo.Toml;
+using Lyo.Video.Postgres;
+using Lyo.Video.Postgres.Database;
 using Lyo.Web.Automation;
 using Lyo.Web.Automation.Api;
 using Lyo.Web.Automation.FileStorage;
@@ -104,7 +105,6 @@ using Lyo.Web.WebRenderer;
 using Lyo.Xlsx;
 using Lyo.Xml;
 using Lyo.Yaml;
-using Lyo.Toml;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -154,12 +154,13 @@ builder.Services.AddPostgresJobManagement(opts => {
     opts.ConnectionString = connStr;
     opts.EnableAutoMigrations = true;
 });
+
 builder.Services.AddPostgresDriftManagement(opts => {
     opts.ConnectionString = connStr;
     opts.EnableAutoMigrations = true;
 });
-builder.Services.AddDriftRetentionService();
 
+builder.Services.AddDriftRetentionService();
 builder.Services.AddJobMaintenanceService();
 builder.Services.AddLyoCrudServices<JobContext>();
 builder.Services.AddLyoApiAuthentication();
@@ -174,6 +175,7 @@ builder.Services.AddReportingApi(opts => {
     // This workbench posts composition JSON directly to Generate; the packaged default rejects that.
     opts.AllowAdHocGeneration = true;
 });
+
 builder.Services.AddWebRendererServiceFromConfiguration(builder.Configuration);
 builder.Services.AddPlaywrightBrowserService(options => options.Headless = true);
 builder.Services.AddPlaywrightBrowserSessionFactory();
@@ -183,7 +185,6 @@ builder.Services.AddAutomationPlansPostgres(new PostgresAutomationPlanOptions { 
 builder.Services.AddAutomationPlanFileStorage(sp => sp.GetRequiredKeyedService<IFileStorageService>(Constants.FileStorageWorkbench.ServiceKey));
 builder.Services.AddReportingWebRenderer();
 ReportingBusinessExamples.Register();
-
 builder.Services.AddReportingGenerationHooks(
     new() {
         AfterRenderAsync = async (ctx, ct) => {
@@ -217,8 +218,9 @@ builder.Services.AddKeyedLocalKeyStore(
         ks.AddKey(ConfigQueryRoutes.EncryptionKeyName, "v1", seed);
         ks.SetCurrentVersion(ConfigQueryRoutes.EncryptionKeyName, "v1");
     });
+
 builder.Services.AddEncryptionServiceKeyed(ConfigQueryRoutes.EncryptionKeyName, ConfigQueryRoutes.EncryptionKeyName);
-builder.Services.AddConfigValueEncryption(ConfigQueryRoutes.EncryptionKeyName);
+builder.Services.AddConfigValueEncryption();
 builder.Services.AddPostgresBookStore(new PostgresBookOptions { ConnectionString = connStr, EnableAutoMigrations = true });
 builder.Services.AddLyoCrudServices<BookDbContext>();
 builder.Services.AddPostgresMusicStore(new PostgresMusicOptions { ConnectionString = connStr, EnableAutoMigrations = true });
@@ -233,6 +235,7 @@ var youtube = new GoogleYoutubeClientOptions();
 builder.Configuration.GetSection(GoogleYoutubeClientOptions.SectionName).Bind(youtube);
 if (!string.IsNullOrWhiteSpace(youtube.ApiKey))
     builder.Services.AddGoogleYoutubeClient(youtube);
+
 builder.Services.AddComicApi(new PostgresComicOptions { ConnectionString = connStr, EnableAutoMigrations = true });
 builder.Services.AddStoryApi(new PostgresStoryOptions { ConnectionString = connStr, EnableAutoMigrations = true });
 builder.Services.AddAlgorithmsApi(new PostgresAlgorithmOptions { ConnectionString = connStr, EnableAutoMigrations = true });
@@ -249,8 +252,9 @@ builder.Services.AddKeyedLocalKeyStore(
         ks.AddKey(BillingEncryptionKeys.Fields, "v1", seed);
         ks.SetCurrentVersion(BillingEncryptionKeys.Fields, "v1");
     });
+
 builder.Services.AddEncryptionServiceKeyed(BillingEncryptionKeys.Fields, BillingEncryptionKeys.Fields);
-builder.Services.AddBillingFieldEncryption(BillingEncryptionKeys.Fields);
+builder.Services.AddBillingFieldEncryption();
 builder.Services.AddDiscordGuildSettingsInfrastructure();
 builder.Services.AddLyoQueryServices();
 builder.Services.AddLyoQueryPostgres();
@@ -292,11 +296,11 @@ builder.Services.AddS3FileStorageServiceKeyed(Constants.FileStorageWorkbench.Ser
     .UseEncryptionService(Constants.FileStorageWorkbench.ServiceKey)
     .ConfigureS3FileStorage()
     .Build(builder.Configuration);
+
 builder.Services.AddFileStorageArchiveServiceKeyed(Constants.FileStorageWorkbench.ServiceKey);
 builder.Services.AddScoped<IFileStorageService>(sp => sp.GetRequiredKeyedService<IFileStorageService>(Constants.FileStorageWorkbench.ServiceKey));
 builder.Services.AddHomeInventoryFileStorage();
 builder.Services.AddRecipeFileStorage();
-
 builder.Services.AddFileOperationContextAccessor();
 builder.Services.AddPostgresFileAuditSink();
 builder.Services.AddScoped<IFileAuditEventHandler, FileMetadataQueryCacheInvalidationHandler>();
@@ -324,7 +328,7 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration.GetSection("KeycloakAuth")[
 
 var app = builder.Build();
 EnsurePgTrgm(connStr);
-app.UseMiddleware<Lyo.Api.Middleware.LoggingMiddleware>();
+app.UseMiddleware<LoggingMiddleware>();
 if (app.Environment.IsDevelopment()) {
     app.MapOpenApi();
     app.MapScalarApiReference();

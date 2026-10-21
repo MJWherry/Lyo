@@ -1,8 +1,8 @@
 using System.Runtime.CompilerServices;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Reporting.Models.Controls;
 using Lyo.Reporting.Models.Models;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Reporting.Models.Composition;
 
@@ -31,14 +31,9 @@ public sealed class ReportDesignSelection
         if (candidate is null)
             return false;
 
-        return ReferenceEquals(candidate, Card)
-            || ReferenceEquals(candidate, Block)
-            || ReferenceEquals(candidate, Table)
-            || ReferenceEquals(candidate, Grid)
-            || ReferenceEquals(candidate, TableColumn)
-            || ReferenceEquals(candidate, TableRow)
-            || ReferenceEquals(candidate, Control)
-            || (Card is null && Block is null && Table is null && Grid is null && TableColumn is null && TableRow is null && Control is null && ReferenceEquals(candidate, Section));
+        return ReferenceEquals(candidate, Card) || ReferenceEquals(candidate, Block) || ReferenceEquals(candidate, Table) || ReferenceEquals(candidate, Grid) ||
+            ReferenceEquals(candidate, TableColumn) || ReferenceEquals(candidate, TableRow) || ReferenceEquals(candidate, Control) || (Card is null && Block is null &&
+                Table is null && Grid is null && TableColumn is null && TableRow is null && Control is null && ReferenceEquals(candidate, Section));
     }
 }
 
@@ -155,8 +150,8 @@ public static class ReportDesignDropMapper
     }
 
     /// <summary>
-    /// Relocates <paramref name="item" /> into the section with <paramref name="destId" /> at <paramref name="insertIndex" />.
-    /// Returns false when the destination is missing or the move would cycle a subsection.
+    /// Relocates <paramref name="item" /> into the section with <paramref name="destId" /> at <paramref name="insertIndex" />. Returns false when the destination is missing or
+    /// the move would cycle a subsection.
     /// </summary>
     public static bool TryRelocate(IEnumerable<Section> roots, SectionBodyItem item, string destId, int insertIndex)
     {
@@ -172,17 +167,17 @@ public static class ReportDesignTreeExpand
 {
     private static readonly ConditionalWeakTable<object, StrongBox<string>> LiveKeys = new();
 
+    /// <summary>Key for the report chrome (title), not a section.</summary>
+    public static string ReportKey => "r";
+
     /// <summary>Session-only identity for tree/canvas chrome. Does not write <see cref="Section.Id" />.</summary>
     public static string LiveKey(object node)
     {
         ArgumentHelpers.ThrowIfNull(node);
-        return LiveKeys.GetValue(node, static _ => new StrongBox<string>(LyoGuid.CreateV7().ToString("N")[..8])).Value!;
+        return LiveKeys.GetValue(node, static _ => new(LyoGuid.CreateV7().ToString("N")[..8])).Value!;
     }
 
     public static string SectionKey(Section section) => "s:" + LiveKey(section);
-
-    /// <summary>Key for the report chrome (title), not a section.</summary>
-    public static string ReportKey => "r";
 
     public static string ControlKey(Section section, Control control)
     {
@@ -218,12 +213,12 @@ public static class ReportDesignTreeExpand
         => item.Kind switch {
             SectionBodyKind.Control when item.Control is not null => ControlKey(item.Section, item.Control),
             SectionBodyKind.Subsection when item.Subsection is not null => SectionKey(item.Subsection),
-            _ => "item"
+            var _ => "item"
         };
 
     /// <summary>
-    /// Keys that must be expanded so <paramref name="selection" /> is visible, including the containing section (top-level included)
-    /// so a collapsed parent reopens when the canvas hits a nested control.
+    /// Keys that must be expanded so <paramref name="selection" /> is visible, including the containing section (top-level included) so a collapsed parent reopens when the
+    /// canvas hits a nested control.
     /// </summary>
     public static IReadOnlyList<string> AncestorKeys(IEnumerable<Section> roots, ReportDesignSelection selection)
     {
@@ -253,8 +248,8 @@ public static class ReportDesignTreeExpand
                 keys.Add(TableKey(section, selection.Table));
             else if (selection.TableColumn is not null || selection.TableRow is not null) {
                 foreach (var table in SectionBody.WalkControls(section.Controls).OfType<Table>()) {
-                    if ((selection.TableColumn is not null && table.Columns.Contains(selection.TableColumn))
-                        || (selection.TableRow is not null && table.Rows.Contains(selection.TableRow))) {
+                    if ((selection.TableColumn is not null && table.Columns.Contains(selection.TableColumn)) ||
+                        (selection.TableRow is not null && table.Rows.Contains(selection.TableRow))) {
                         keys.Add(TableKey(section, table));
                         break;
                     }

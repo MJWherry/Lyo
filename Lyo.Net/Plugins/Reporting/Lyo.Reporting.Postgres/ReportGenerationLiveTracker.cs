@@ -7,8 +7,8 @@ namespace Lyo.Reporting.Postgres;
 /// without this a long provider or render pass looks the same as a host that crashed mid-generation.
 /// </summary>
 /// <remarks>
-/// Process-local by design. It protects the common single-host deployment with no schema change. Across hosts, set <see cref="PostgresReportingOptions.GenerationTimeout" /> so
-/// recovery can bound how long a live generation may legitimately take.
+/// Process-local by design. It protects the common single-host deployment with no schema change. Across hosts, set <see cref="PostgresReportingOptions.GenerationTimeout" />
+/// so recovery can bound how long a live generation may legitimately take.
 /// </remarks>
 public sealed class ReportGenerationLiveTracker
 {
@@ -29,6 +29,6 @@ public sealed class ReportGenerationLiveTracker
 
     private sealed class Scope(ReportGenerationLiveTracker tracker, Guid generationId) : IDisposable
     {
-        public void Dispose() => tracker._live.TryRemove(generationId, out _);
+        public void Dispose() => tracker._live.TryRemove(generationId, out var _);
     }
 }

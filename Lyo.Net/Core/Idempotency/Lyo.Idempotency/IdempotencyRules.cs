@@ -56,6 +56,5 @@ internal static class IdempotencyRules
         return value.Kind == DateTimeKind.Utc ? value : DateTime.SpecifyKind(value, DateTimeKind.Utc);
     }
 
-    public static bool IsTimeExpired(DateTime? expiresAt, DateTime utcNow)
-        => expiresAt is DateTime exp && exp <= utcNow;
+    public static bool IsTimeExpired(DateTime? expiresAt, DateTime utcNow) => expiresAt is DateTime exp && exp <= utcNow;
 }

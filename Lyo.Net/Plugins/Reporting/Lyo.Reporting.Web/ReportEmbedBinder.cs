@@ -39,9 +39,7 @@ public static class ReportEmbedBinder
 
     /// <summary>Public writable <c>[Parameter]</c> properties on <paramref name="componentType" />.</summary>
     public static IReadOnlyList<PropertyInfo> ParameterProperties(Type componentType)
-    {
-        return componentType.WritableProperties().Where(p => p.HasAttribute<ParameterAttribute>()).ToArray();
-    }
+        => componentType.WritableProperties().Where(p => p.HasAttribute<ParameterAttribute>()).ToArray();
 
     /// <summary>Builds a parameter dictionary for <c>DynamicComponent</c> from block bindings. Missing types yield an empty dictionary.</summary>
     public static Dictionary<string, object>? BindBlock(Block block, IReadOnlyDictionary<string, string?>? reportParams, out string? error)
@@ -54,7 +52,11 @@ public static class ReportEmbedBinder
     }
 
     /// <summary>Binds report params onto a root component by explicit bindings, then by matching parameter names.</summary>
-    public static Dictionary<string, object> Bind(Type componentType, Dictionary<string, ComponentBinding>? bindings, IReadOnlyDictionary<string, string?>? reportParams, out string? error)
+    public static Dictionary<string, object> Bind(
+        Type componentType,
+        Dictionary<string, ComponentBinding>? bindings,
+        IReadOnlyDictionary<string, string?>? reportParams,
+        out string? error)
     {
         error = null;
         var result = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
@@ -69,6 +71,7 @@ public static class ReportEmbedBinder
 
                 if (converted is not null)
                     result[prop.Name] = converted;
+
                 continue;
             }
 
@@ -87,8 +90,7 @@ public static class ReportEmbedBinder
         return result;
     }
 
-    private static string? Lookup(IReadOnlyDictionary<string, string?> parameters, string key)
-        => parameters.TryGetValue(key, out var value) ? value : null;
+    private static string? Lookup(IReadOnlyDictionary<string, string?> parameters, string key) => parameters.TryGetValue(key, out var value) ? value : null;
 
     private static object? ConvertValue(string? raw, Type target, out string? error)
     {
@@ -100,8 +102,8 @@ public static class ReportEmbedBinder
             return raw;
 
         try {
-            if (target.IsPrimitive || target == typeof(decimal) || target == typeof(Guid) || target == typeof(DateTime) || target == typeof(DateOnly) || target == typeof(TimeOnly) ||
-                target == typeof(DateTimeOffset))
+            if (target.IsPrimitive || target == typeof(decimal) || target == typeof(Guid) || target == typeof(DateTime) || target == typeof(DateOnly) ||
+                target == typeof(TimeOnly) || target == typeof(DateTimeOffset))
                 return JsonSerializer.Deserialize(WrapScalar(raw, target), target);
 
             return JsonSerializer.Deserialize(raw, target);

@@ -83,7 +83,8 @@ public class UpsertService<TContext>(
         var entity = entities[0];
         var upsertResult = await UpsertInternal<TRequest, TDbModel, TResult>(entity, request, context, before, beforeUpdate, after, afterUpdate, ct);
         if (upsertResult.Result == UpsertResultEnum.Updated) {
-            await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), [typeConversion.GetPrimaryKeyValues(entity, context)], ct, Logger)
+            await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(
+                    cache, cacheOptions, typeof(TDbModel), [typeConversion.GetPrimaryKeyValues(entity, context)], ct, Logger)
                 .ConfigureAwait(false);
         }
 

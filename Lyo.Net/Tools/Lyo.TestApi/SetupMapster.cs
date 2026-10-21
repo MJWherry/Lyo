@@ -1,24 +1,24 @@
 using System.Text.Json;
+using Lyo.Api.Authentication;
 using Lyo.Api.Mapping;
-using Lyo.Json;
 using Lyo.Common.Core.Conversion;
 using Lyo.Common.Core.Enums;
 using Lyo.DateAndTime;
 using Lyo.Discord.Postgres;
+using Lyo.Drift.Postgres.Mapping;
 using Lyo.FileMetadataStore.Models;
 using Lyo.Geolocation.Models.Enums;
-using Lyo.Api.Authentication;
-using Lyo.Drift.Postgres.Mapping;
 using Lyo.HomeInventory.Postgres.Mapping;
-using Lyo.Recipe.Postgres.Mapping;
-using Lyo.Story.Postgres.Mapping;
 using Lyo.Job.Postgres.Mapping;
+using Lyo.Json;
 using Lyo.People.Models.Enum;
 using Lyo.People.Postgres.Database;
 using Lyo.Query.Models.Common;
-using Lyo.Tools;
+using Lyo.Recipe.Postgres.Mapping;
+using Lyo.Story.Postgres.Mapping;
 using Lyo.TestApi.Person.Request;
 using Lyo.TestApi.Person.Response;
+using Lyo.Tools;
 using Mapster;
 using MapsterMapper;
 using CompositeLyoMapper = Lyo.Api.Mapping.CompositeLyoMapper;
@@ -155,14 +155,15 @@ public static class SetupMapster
         services.AddScoped<ILyoMapper>(sp => new CompositeLyoMapper(
             sp.GetRequiredService<StoryLyoMapper>(),
             new CompositeLyoMapper(
-            sp.GetRequiredService<AuthenticationLyoMapper>(),
-            new CompositeLyoMapper(
-                sp.GetRequiredService<RecipeLyoMapper>(),
+                sp.GetRequiredService<AuthenticationLyoMapper>(),
                 new CompositeLyoMapper(
-                sp.GetRequiredService<HomeInventoryLyoMapper>(),
-                new CompositeLyoMapper(
-                    sp.GetRequiredService<JobLyoMapper>(),
-                    new CompositeLyoMapper(sp.GetRequiredService<DriftLyoMapper>(), new MapsterLyoMapper(sp.GetRequiredService<IMapper>()))))))));
+                    sp.GetRequiredService<RecipeLyoMapper>(),
+                    new CompositeLyoMapper(
+                        sp.GetRequiredService<HomeInventoryLyoMapper>(),
+                        new CompositeLyoMapper(
+                            sp.GetRequiredService<JobLyoMapper>(),
+                            new CompositeLyoMapper(sp.GetRequiredService<DriftLyoMapper>(), new MapsterLyoMapper(sp.GetRequiredService<IMapper>()))))))));
+
         return services;
     }
 

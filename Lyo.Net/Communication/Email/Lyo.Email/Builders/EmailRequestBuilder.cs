@@ -276,11 +276,7 @@ public sealed class EmailRequestBuilder
     /// <param name="contentType">Optional MIME type; MimeKit infers it from the extension when omitted.</param>
     /// <param name="metadataJson">Optional JSON metadata stored only in logs.</param>
     /// <returns>This builder for further calls.</returns>
-    public EmailRequestBuilder AddAttachment(
-        string fileName,
-        byte[] data,
-        ContentType? contentType = null,
-        string? metadataJson = null)
+    public EmailRequestBuilder AddAttachment(string fileName, byte[] data, ContentType? contentType = null, string? metadataJson = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(fileName);
         ArgumentHelpers.ThrowIfNull(data);
@@ -299,11 +295,7 @@ public sealed class EmailRequestBuilder
     /// <param name="contentType">Optional MIME type; MimeKit infers it from the extension when omitted.</param>
     /// <param name="metadataJson">Optional JSON metadata stored only in logs.</param>
     /// <returns>This builder for further calls.</returns>
-    public EmailRequestBuilder AddAttachment(
-        string fileName,
-        Stream data,
-        ContentType? contentType = null,
-        string? metadataJson = null)
+    public EmailRequestBuilder AddAttachment(string fileName, Stream data, ContentType? contentType = null, string? metadataJson = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(fileName);
         ArgumentHelpers.ThrowIfNull(data);

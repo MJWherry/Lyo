@@ -18,33 +18,39 @@ public sealed class AzureBlobFileStorageFactoryTests
             services.AddSingleton(Metadata());
             services.AddSingleton<ITwoKeyEncryptionService>(_ => throw new InvalidOperationException("unkeyed"));
             services.AddFileStorageFactory(stores => {
-                stores.AddAzureBlob("plain", options => {
-                    options.ConnectionString = ConnectionString;
-                    options.ContainerName = "plain";
-                });
-                stores.AddAzureBlob("left", builder => builder.WithMultipart().Configure(options => {
-                    options.ConnectionString = ConnectionString;
-                    options.ContainerName = "left";
-                }));
-                stores.AddAzureBlob("right", builder => builder.Configure(options => {
-                    options.ConnectionString = ConnectionString;
-                    options.ContainerName = "right";
-                }).WithMultipart());
+                stores.AddAzureBlob(
+                    "plain", options => {
+                        options.ConnectionString = ConnectionString;
+                        options.ContainerName = "plain";
+                    });
+
+                stores.AddAzureBlob(
+                    "left", builder => builder.WithMultipart()
+                        .Configure(options => {
+                            options.ConnectionString = ConnectionString;
+                            options.ContainerName = "left";
+                        }));
+
+                stores.AddAzureBlob(
+                    "right", builder => builder.Configure(options => {
+                            options.ConnectionString = ConnectionString;
+                            options.ContainerName = "right";
+                        })
+                        .WithMultipart());
             });
         });
+
         using var scope = provider.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IFileStorageFactory>();
         var plain = factory.Get("plain");
         var left = factory.Get("left");
         var right = factory.Get("right");
-
         Assert.Equal("plain", Options(plain).ContainerName);
         Assert.Equal("left", Options(left).ContainerName);
         Assert.Equal("right", Options(right).ContainerName);
         Assert.Null(Field(plain, "TwoKeyEncryptionService"));
         Assert.Null(provider.GetService<AzureBlobFileStorageOptions>());
         Assert.Null(scope.ServiceProvider.GetKeyedService<IMultipartUploadService>("plain"));
-
         var leftMultipart = scope.ServiceProvider.GetRequiredKeyedService<IMultipartUploadService>("left");
         var rightMultipart = scope.ServiceProvider.GetRequiredKeyedService<IMultipartUploadService>("right");
         Assert.NotSame(leftMultipart, rightMultipart);

@@ -1,4 +1,5 @@
 using Lyo.Common.Core;
+using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Formatter;
@@ -6,7 +7,6 @@ using Lyo.Job.Models.Context;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Response;
 using Lyo.Schedule.Models;
-using Lyo.Common.Core.Enums;
 
 namespace Lyo.Job.Tests;
 
@@ -22,8 +22,7 @@ public class JobContextBagTests
     public void TryGetValue_UnderscoreKey_IsAbsent()
     {
         var bag = new JobContextBag().WithLastRuns(BuildRun(), null, null);
-
-        Assert.False(bag.TryGetValue("LastRun_Result_RowCount", out _));
+        Assert.False(bag.TryGetValue("LastRun_Result_RowCount", out var _));
         Assert.True(bag.TryGetValue("LastRun.Result.RowCount", out var value));
         Assert.Equal("42", value);
     }
@@ -32,7 +31,6 @@ public class JobContextBagTests
     public void WithInputs_SeedsInputDotKeyEntries()
     {
         var bag = new JobContextBag().WithInputs("""{"Env":"prod","Region":"eu"}""");
-
         Assert.True(bag.TryGetValue("Input.Env", out var env));
         Assert.Equal("prod", env);
         Assert.True(bag.TryGetValue("Input.Region", out var region));
@@ -44,16 +42,14 @@ public class JobContextBagTests
     {
         // A hand-edited or truncated inputs column must not stop the engine from starting the run's steps.
         var bag = new JobContextBag().WithInputs("{ not json");
-
-        Assert.False(bag.TryGetValue("Input.Env", out _));
+        Assert.False(bag.TryGetValue("Input.Env", out var _));
     }
 
     [Fact]
     public void TryGetValue_UnderscoreKeyWhoseTailContainsUnderscores_IsAbsent()
     {
         var bag = new JobContextBag().WithLastRuns(BuildRun("Row_Count"), null, null);
-
-        Assert.False(bag.TryGetValue("LastRun_Result_Row_Count", out _));
+        Assert.False(bag.TryGetValue("LastRun_Result_Row_Count", out var _));
         Assert.True(bag.TryGetValue("LastRun.Result.Row_Count", out var value));
         Assert.Equal("42", value);
     }
@@ -62,7 +58,6 @@ public class JobContextBagTests
     public void WithLastRuns_RunResults_ExposeDottedPath()
     {
         var bag = new JobContextBag().WithLastRuns(BuildRun(), null, null);
-
         Assert.Equal("42", Format("{LastRun.Result.RowCount}", bag));
         Assert.Equal("to@example.com", Format("{LastRun.Parameter.EmailTo}", bag));
     }
@@ -71,10 +66,9 @@ public class JobContextBagTests
     public void WithSchedule_DisabledParameter_IsNotExposed()
     {
         var bag = new JobContextBag().WithSchedule(BuildSchedule());
-
-        Assert.True(bag.TryGetValue("Schedule.Parameter.EmailTo", out _));
-        Assert.False(bag.TryGetValue("Schedule.Parameter.Disabled", out _));
-        Assert.False(bag.TryGetValue("Schedule_Parameter_Disabled", out _));
+        Assert.True(bag.TryGetValue("Schedule.Parameter.EmailTo", out var _));
+        Assert.False(bag.TryGetValue("Schedule.Parameter.Disabled", out var _));
+        Assert.False(bag.TryGetValue("Schedule_Parameter_Disabled", out var _));
     }
 
     [Fact]
@@ -84,21 +78,18 @@ public class JobContextBagTests
         var run = new JobContextBag().WithLastRuns(BuildRun(), null, null);
         var extract = run.CreateStepScope(BuildStep(workflowId, "Extract"));
         var load = run.CreateStepScope(BuildStep(workflowId, "Load"));
-
         extract.WithUpstreamRun("Seed", BuildRun());
-
-        Assert.False(load.TryGetValue("Step.Seed.Result.RowCount", out _));
-        Assert.True(extract.TryGetValue("Step.Seed.Result.RowCount", out _));
+        Assert.False(load.TryGetValue("Step.Seed.Result.RowCount", out var _));
+        Assert.True(extract.TryGetValue("Step.Seed.Result.RowCount", out var _));
 
         // Both still see everything the run-level bag seeded.
-        Assert.True(load.TryGetValue("LastRun.Result.RowCount", out _));
+        Assert.True(load.TryGetValue("LastRun.Result.RowCount", out var _));
     }
 
     [Fact]
     public void CreateStepScope_NamesTheCurrentStep()
     {
         var scope = new JobContextBag().CreateStepScope(BuildStep(LyoGuid.CreateV7(), "Load"));
-
         Assert.Equal("Load", Format("{CurrentStep.StepName}", scope));
     }
 
@@ -106,7 +97,6 @@ public class JobContextBagTests
     public void WithUpstreamRun_TwoSteps_KeyedByStepName()
     {
         var bag = new JobContextBag().WithUpstreamRun("Extract", BuildRun(value: "7")).WithUpstreamRun("Load", BuildRun(value: "9"));
-
         Assert.Equal("7", Format("{Step.Extract.Result.RowCount}", bag));
         Assert.Equal("9", Format("{Step.Load.Result.RowCount}", bag));
     }
@@ -115,9 +105,8 @@ public class JobContextBagTests
     public void Freeze_ThenSet_Throws()
     {
         var frozen = new JobContextBag().WithLastRuns(BuildRun(), null, null).Freeze();
-
         Assert.Throws<ContextBagException>(() => frozen.Set("Anything", "value"));
-        Assert.True(frozen.TryGetValue("LastRun.Result.RowCount", out _));
+        Assert.True(frozen.TryGetValue("LastRun.Result.RowCount", out var _));
     }
 
     [Fact]

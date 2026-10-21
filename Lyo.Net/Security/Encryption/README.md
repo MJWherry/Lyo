@@ -78,7 +78,8 @@ Start here for narrative and threat-modeling context; use the per-project README
     - Extensive test coverage
     - Well-documented API
 
-On-disk layouts, default file extensions, and MIME types for Lyo ciphertext are **Lyo-specific** (registered on `FileTypeInfo` in **Lyo.Common.Core**); they describe interoperability
+On-disk layouts, default file extensions, and MIME types for Lyo ciphertext are **Lyo-specific** (registered on `FileTypeInfo` in **Lyo.Common.Core**); they describe
+interoperability
 within this stack, not a single industry-wide “AES-GCM file” or “RSA file” format. See [Lyo ciphertext files and metadata](#lyo-ciphertext-files-and-metadata).
 
 ## Target frameworks: net10.0 and netstandard2.0
@@ -848,7 +849,9 @@ The generic keyed helpers support `AesGcmEncryptionService`, `ChaCha20Poly1305En
 ### Lyo ciphertext files and metadata
 
 Algorithms such as AES-GCM and RSA are standardized; **how** ciphertext is framed on disk (headers, chunks, default extensions) is defined by this library and related packages.
-Those defaults are not interchangeable with arbitrary third-party “`.aes`” or ad-hoc blobs. Symmetric AEAD services also implement **`IRawAead`** (`EncryptRaw` / `DecryptRaw`): a headerless `[nonce][tag][ciphertext]` blob (AES-SIV: RFC 5297 `SIV || ciphertext`) that a stock AES-GCM or ChaCha client can open after slicing those regions. Framed `Encrypt` and raw `EncryptRaw` are different wire formats; do not mix them. Raw blobs do not record key id or version.
+Those defaults are not interchangeable with arbitrary third-party “`.aes`” or ad-hoc blobs. Symmetric AEAD services also implement **`IRawAead`** (`EncryptRaw` / `DecryptRaw`): a
+headerless `[nonce][tag][ciphertext]` blob (AES-SIV: RFC 5297 `SIV || ciphertext`) that a stock AES-GCM or ChaCha client can open after slicing those regions. Framed `Encrypt` and
+raw `EncryptRaw` are different wire formats; do not mix them. Raw blobs do not record key id or version.
 
 - **`FileTypeInfo` (Lyo.Common.Core)** registers human-readable names, canonical extensions (for example `.ag`, `.chacha`, `.ag2k` for two-key with an AES-GCM inner encryptor), and
   vendor MIME types such as `application/x-lyo-ciphertext-aes-gcm`. Use these when you need consistent content typing or UI labels.

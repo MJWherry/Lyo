@@ -31,6 +31,12 @@ public sealed class FileHeaderSignature
 {
     private readonly FileHeaderMark[] _marks;
 
+    /// <summary>Marks that must all match for this alternative.</summary>
+    public IReadOnlyList<FileHeaderMark> Marks => _marks;
+
+    /// <summary>Sum of mark lengths. A longer match wins over a shorter one that also matches.</summary>
+    public int Specificity { get; }
+
     private FileHeaderSignature(FileHeaderMark[] marks)
     {
         _marks = marks;
@@ -41,18 +47,12 @@ public sealed class FileHeaderSignature
         Specificity = specificity;
     }
 
-    /// <summary>Marks that must all match for this alternative.</summary>
-    public IReadOnlyList<FileHeaderMark> Marks => _marks;
-
-    /// <summary>Sum of mark lengths. A longer match wins over a shorter one that also matches.</summary>
-    public int Specificity { get; }
-
     /// <summary>One mark at <paramref name="offset" />.</summary>
-    public static FileHeaderSignature At(int offset, ReadOnlySpan<byte> magic) => new([new FileHeaderMark(offset, magic)]);
+    public static FileHeaderSignature At(int offset, ReadOnlySpan<byte> magic) => new([new(offset, magic)]);
 
     /// <summary>Two marks. Both must match. Used when the type is decided by bytes that are not adjacent, such as a RIFF form type.</summary>
     public static FileHeaderSignature At(int offset, ReadOnlySpan<byte> magic, int secondOffset, ReadOnlySpan<byte> secondMagic)
-        => new([new FileHeaderMark(offset, magic), new FileHeaderMark(secondOffset, secondMagic)]);
+        => new([new(offset, magic), new(secondOffset, secondMagic)]);
 
     /// <summary>True when every mark is present in <paramref name="header" />.</summary>
     public bool Matches(ReadOnlySpan<byte> header)

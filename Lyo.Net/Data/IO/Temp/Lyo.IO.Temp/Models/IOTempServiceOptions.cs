@@ -16,17 +16,13 @@ public class IOTempServiceOptions
     /// <summary>OS temp folder. Default is <see cref="Path.GetTempPath" />.</summary>
     public string TempRoot { get; set; } = Path.GetTempPath();
 
-    /// <summary>
-    /// Folder name under <see cref="TempRoot" /> for this service. Change it per instance (tests especially) so parallel instances do not collide.
-    /// </summary>
+    /// <summary>Folder name under <see cref="TempRoot" /> for this service. Change it per instance (tests especially) so parallel instances do not collide.</summary>
     public string DirectoryName { get; set; } = "lyo-io-temp";
 
     /// <summary>Combined root from <see cref="TempRoot" /> and <see cref="DirectoryName" />. Used when <see cref="StorageKind" /> is <see cref="IOTempStorageKind.Local" />.</summary>
     public string RootDirectory => Path.Combine(TempRoot, DirectoryName);
 
-    /// <summary>
-    /// Backend used when DI does not already have an <see cref="Lyo.IO.FileSystem.IFileSystem" />. Default is local disk at <see cref="RootDirectory" />.
-    /// </summary>
+    /// <summary>Backend used when DI does not already have an <see cref="Lyo.IO.FileSystem.IFileSystem" />. Default is local disk at <see cref="RootDirectory" />.</summary>
     public IOTempStorageKind StorageKind { get; set; } = IOTempStorageKind.Local;
 
     /// <summary>If true, a missing <see cref="RootDirectory" /> is created at startup; if false, a missing root throws.</summary>
@@ -65,9 +61,7 @@ public class IOTempServiceOptions
     /// <summary>Not a hard disk quota by itself; copied onto sessions as a default and used where those sessions apply it.</summary>
     public long MaxTotalSizeBytes { get; set; } = FileSizeUnitInfo.Gigabyte.ConvertToBytes(10);
 
-    /// <summary>
-    /// Cap on tracked files per session. When crossed, <see cref="OverflowStrategy" /> either deletes oldest/largest files or throws. <c>null</c> means no cap.
-    /// </summary>
+    /// <summary>Cap on tracked files per session. When crossed, <see cref="OverflowStrategy" /> either deletes oldest/largest files or throws. <c>null</c> means no cap.</summary>
     public int? MaxFileCount { get; set; }
 
     /// <summary>Default overflow policy for new sessions when a cap is crossed.</summary>
@@ -86,6 +80,7 @@ public class IOTempServiceOptions
         ArgumentHelpers.ThrowIfNegativeOrZero(MaxTotalSizeBytes);
         if (MaxFileCount is { } count)
             ArgumentHelpers.ThrowIfNegativeOrZero(count);
+
         if (FileLifetime is { } lifetime)
             ArgumentHelpers.ThrowIf(lifetime <= TimeSpan.Zero, "FileLifetime must be greater than zero.");
     }

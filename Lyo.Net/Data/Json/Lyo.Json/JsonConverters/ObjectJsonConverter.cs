@@ -5,8 +5,8 @@ using Lyo.Common.Core.Conversion;
 namespace Lyo.Json.JsonConverters;
 
 /// <summary>
-/// STJ adapter over <see cref="TypeConversion.FromJsonElement(in JsonElement)" /> so <c>object</c> properties and collection items
-/// round-trip as CLR primitives instead of <see cref="JsonElement" />.
+/// STJ adapter over <see cref="TypeConversion.FromJsonElement(in JsonElement)" /> so <c>object</c> properties and collection items round-trip as CLR primitives instead of
+/// <see cref="JsonElement" />.
 /// </summary>
 public sealed class ObjectJsonConverter : JsonConverter<object>
 {
@@ -16,6 +16,5 @@ public sealed class ObjectJsonConverter : JsonConverter<object>
         return TypeConversion.FromJsonElement(doc.RootElement);
     }
 
-    public override void Write(Utf8JsonWriter writer, object value, JsonSerializerOptions options)
-        => JsonSerializer.Serialize(writer, value, value.GetType(), options);
+    public override void Write(Utf8JsonWriter writer, object value, JsonSerializerOptions options) => JsonSerializer.Serialize(writer, value, value.GetType(), options);
 }

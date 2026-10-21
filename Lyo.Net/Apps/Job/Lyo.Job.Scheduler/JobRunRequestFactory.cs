@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Lyo.Common.Metadata.Records;
+using Lyo.Exceptions;
 using Lyo.Formatter;
 using Lyo.Job.Models;
 using Lyo.Job.Models.Context;
@@ -8,7 +9,6 @@ using Lyo.Job.Models.Response;
 using Lyo.Parameters;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Lyo.Exceptions;
 
 namespace Lyo.Job.Scheduler;
 
@@ -24,8 +24,8 @@ public sealed class JobRunRequestFactory(IFormatterService formatter, string cre
     private readonly ILogger _logger = logger ?? NullLogger.Instance;
 
     /// <summary>
-    /// Builds a run request for <paramref name="jobInfo" />. Definition parameters come first; schedule parameters replace same-key entries rather than appending, so the API never
-    /// sees a duplicate key carrying an empty definition default next to the schedule value.
+    /// Builds a run request for <paramref name="jobInfo" />. Definition parameters come first; schedule parameters replace same-key entries rather than appending, so the API
+    /// never sees a duplicate key carrying an empty definition default next to the schedule value.
     /// </summary>
     /// <param name="jobInfo">Definition and its recent runs, used as template data.</param>
     /// <param name="schedule">Schedule that fired, when this is a scheduled run.</param>
@@ -56,12 +56,12 @@ public sealed class JobRunRequestFactory(IFormatterService formatter, string cre
     }
 
     /// <summary>
-    /// Builds the run request for one workflow step. Definition parameters come first, then the step's own <c>ParametersJson</c> values <b>replace</b> same-key entries — the
-    /// same merge rule schedules use — so one shared definition can serve many workflows with different inputs.
+    /// Builds the run request for one workflow step. Definition parameters come first, then the step's own <c>ParametersJson</c> values <b>replace</b> same-key entries — the same merge
+    /// rule schedules use — so one shared definition can serve many workflows with different inputs.
     /// <para>
     /// <c>ParametersJson</c> is a flat object map (<c>{"Path":"/tmp/out"}</c>). The parameter type comes from the matching definition parameter; a key the definition does not
-    /// declare is treated as a string. Unparseable JSON is logged and ignored rather than failing the step: a bad step configuration should still produce a runnable request
-    /// from the definition defaults, and the workflow's own failure policy then decides what happens.
+    /// declare is treated as a string. Unparseable JSON is logged and ignored rather than failing the step: a bad step configuration should still produce a runnable request from the
+    /// definition defaults, and the workflow's own failure policy then decides what happens.
     /// </para>
     /// </summary>
     /// <param name="definition">Definition the step runs.</param>
@@ -72,12 +72,7 @@ public sealed class JobRunRequestFactory(IFormatterService formatter, string cre
         ArgumentHelpers.ThrowIfNull(definition);
         ArgumentHelpers.ThrowIfNull(step);
         ArgumentHelpers.ThrowIfNull(stepScope);
-        var req = new JobRunReq {
-            JobDefinitionId = definition.Id,
-            CreatedBy = createdBy,
-            JobRunParameters = []
-        };
-
+        var req = new JobRunReq { JobDefinitionId = definition.Id, CreatedBy = createdBy, JobRunParameters = [] };
         foreach (var p in definition.JobParameters ?? [])
             req.JobRunParameters.Add(CreateRunParameterFromDefinition(p, stepScope));
 
@@ -87,7 +82,7 @@ public sealed class JobRunRequestFactory(IFormatterService formatter, string cre
             var formatted = FormatterLyoType.IsFormattable(LyoTypeInfo.FromName(type)) ? FormatTemplateValue(value ?? "", stepScope) : value;
             req.JobRunParameters.RemoveAll(existing => string.Equals(existing.Key, key, StringComparison.OrdinalIgnoreCase));
             req.JobRunParameters.Add(
-                new JobRunParameterReq {
+                new() {
                     Key = declared?.Key ?? key,
                     Description = declared?.Description,
                     Type = LyoTypeInfo.NormalizeFullName(type),
@@ -143,15 +138,13 @@ public sealed class JobRunRequestFactory(IFormatterService formatter, string cre
     }
 
     /// <summary>
-    /// The context every parameter template resolves against. Internal so tests can assert the template editor's advertised token list against what actually resolves —
-    /// the editor builds its own bag from the same <see cref="JobContextBag" /> seeders.
+    /// The context every parameter template resolves against. Internal so tests can assert the template editor's advertised token list against what actually resolves — the
+    /// editor builds its own bag from the same <see cref="JobContextBag" /> seeders.
     /// </summary>
     /// <param name="jobInfo">Definition and its recent runs.</param>
     /// <param name="schedule">Schedule that fired, if any.</param>
     internal static JobContextBag BuildTemplateData(JobInfo jobInfo, JobScheduleRes? schedule)
-        => new JobContextBag().WithDefinition(jobInfo.Definition)
-            .WithLastRuns(jobInfo.LastRun, jobInfo.LastSuccessfulRun, jobInfo.LastFailedRun)
-            .WithSchedule(schedule);
+        => new JobContextBag().WithDefinition(jobInfo.Definition).WithLastRuns(jobInfo.LastRun, jobInfo.LastSuccessfulRun, jobInfo.LastFailedRun).WithSchedule(schedule);
 
     private JobRunParameterReq CreateRunParameterFromDefinition(JobParameterRes p, JobContextBag templateData)
     {

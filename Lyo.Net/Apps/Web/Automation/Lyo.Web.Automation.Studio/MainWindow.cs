@@ -4,12 +4,12 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
-using Avalonia.VisualTree;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
-using Lyo.Desktop.Components;
+using Avalonia.VisualTree;
 using Lyo.Desktop;
+using Lyo.Desktop.Components;
 using Lyo.Web.Automation.Abstractions;
 using Lyo.Web.Automation.Models;
 using Lyo.Web.Automation.Models.Enums;
@@ -22,132 +22,135 @@ namespace Lyo.Web.Automation.Studio;
 
 internal sealed class MainWindow : Window
 {
+    private const int ToolNavigate = 0;
+    private const int ToolElement = 1;
+    private const int ToolNetwork = 2;
+
     private static readonly (ElementLocatorKind Kind, string Label)[] LocatorKinds = [
-        (ElementLocatorKind.CssSelector, "CSS"),
-        (ElementLocatorKind.Id, "Id"),
-        (ElementLocatorKind.Name, "Name"),
-        (ElementLocatorKind.XPath, "XPath"),
-        (ElementLocatorKind.LinkText, "Link text"),
-        (ElementLocatorKind.PartialLinkText, "Partial link text"),
-        (ElementLocatorKind.ClassName, "Class"),
+        (ElementLocatorKind.CssSelector, "CSS"), (ElementLocatorKind.Id, "Id"), (ElementLocatorKind.Name, "Name"), (ElementLocatorKind.XPath, "XPath"),
+        (ElementLocatorKind.LinkText, "Link text"), (ElementLocatorKind.PartialLinkText, "Partial link text"), (ElementLocatorKind.ClassName, "Class"),
         (ElementLocatorKind.TagName, "Tag")
     ];
 
     private static readonly string[] RecordKinds = [
-        "Navigate", "Reload", "Delay", "Find", "Click", "Type", "Clear",
-        "Store literal", "Store page URL", "Store page title",
-        "Capture network", "Store captured URLs",
-        "Viewport", "Open tab", "Switch tab", "Close tab",
-        "Grabbed text", "Grabbed images", "Grabbed links"
+        "Navigate", "Reload", "Delay", "Find", "Click", "Type", "Clear", "Store literal", "Store page URL", "Store page title",
+        "Capture network", "Store captured URLs", "Viewport", "Open tab", "Switch tab", "Close tab", "Grabbed text", "Grabbed images", "Grabbed links"
     ];
 
-    private readonly StudioLaunch _launch;
-    private readonly ServiceProvider _provider;
-    private readonly LogSink _log = new();
-    private readonly LogView _logView = new();
+    private readonly TextBox _address = new() { PlaceholderText = "https://", MinWidth = 360 };
+    private readonly Button _clearElement;
+    private readonly Button _clearNetwork;
+    private readonly Button _click;
+    private readonly Button _closeSession;
+    private readonly NameValueList _context = new();
+    private readonly Button _delete;
     private readonly ToolDockState _dock = ToolDockState.Create(("log", "Log", ToolDockEdge.Bottom, true));
     private readonly Dictionary<string, Control> _dockPanes = [];
-    private readonly Button _showLog;
-    private Grid? _dockHost;
-    private readonly LogSinkLoggerProvider _logProvider;
-    private readonly ListBox _steps = new();
-    private readonly ListBox _runSteps = new();
-    private readonly ComboBox _recordKind = new() { MinWidth = 220 };
-    private readonly TextBox _recordUrl = new() { PlaceholderText = "URL" };
-    private readonly ComboBox _recordLocatorKind = new() { MinWidth = 140 };
-    private readonly TextBox _recordLocator = new() { PlaceholderText = "Locator", MinWidth = 240 };
-    private readonly TextBox _recordText = new() { PlaceholderText = "Text" };
-    private readonly TextBox _recordVariable = new() { PlaceholderText = "Variable", Text = "value", MinWidth = 160 };
-    private readonly TextBox _recordDelay = new() { PlaceholderText = "Milliseconds", Text = "250", Width = 140 };
-    private readonly TextBox _recordWidth = new() { PlaceholderText = "Width", Text = "1280", Width = 80 };
-    private readonly TextBox _recordHeight = new() { PlaceholderText = "Height", Text = "800", Width = 80 };
-    private readonly TextBox _recordTab = new() { PlaceholderText = "Tab index", Text = "0", Width = 90 };
-    private readonly TextBox _recordPattern = new() { PlaceholderText = "URL regex" };
-    private readonly StackPanel _recordLocatorRow = new() { Orientation = Orientation.Horizontal, Spacing = 8 };
-    private readonly StackPanel _recordViewportRow = new() { Orientation = Orientation.Horizontal, Spacing = 8 };
-    private readonly Chip _status = new() { Text = "idle" };
-    private readonly TextBlock _url = new() { Text = "No browser", VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 520 };
-    private readonly TextBlock _outcomeHint = new() { Text = "This step has not been run.", TextWrapping = TextWrapping.Wrap };
-    private readonly StackPanel _outcomeBody = new() { Spacing = 8, IsVisible = false };
-    private readonly TextBlock _error = new() { TextWrapping = TextWrapping.Wrap };
-    private readonly IdText _stepId = new();
-    private readonly NameValueList _context = new();
-    private readonly TextBox _stepLog = new() { IsReadOnly = true, AcceptsReturn = true, MinHeight = 60 };
-    private readonly Image _shot = new() { MaxHeight = 180, Stretch = Stretch.Uniform };
-    private readonly Tabber _sessions = new();
-    private readonly Tabber _views;
-    private readonly TextBox _address = new() { PlaceholderText = "https://", MinWidth = 360 };
-    private readonly ComboBox _locatorKind = new() { MinWidth = 140 };
-    private readonly TextBox _locator = new() { PlaceholderText = "Locator", MinWidth = 240 };
-    private readonly TextBlock _foundLabel = new() { Text = "No element", TextWrapping = TextWrapping.Wrap };
     private readonly NameValueList _elementInfo = new();
+    private readonly TextBlock _error = new() { TextWrapping = TextWrapping.Wrap };
+    private readonly Button _find;
+    private readonly TextBlock _foundLabel = new() { Text = "No element", TextWrapping = TextWrapping.Wrap };
+    private readonly Button _go;
+    private readonly Button _grabWatch;
+    private readonly StudioHotkeySettings _hotkeysSettings;
+
+    private readonly StudioLaunch _launch;
+    private readonly Button _listen;
+    private readonly TextBox _locator = new() { PlaceholderText = "Locator", MinWidth = 240 };
+    private readonly ComboBox _locatorKind = new() { MinWidth = 140 };
+    private readonly LogSink _log = new();
+    private readonly LogSinkLoggerProvider _logProvider;
+    private readonly LogView _logView = new();
+    private readonly TextBox _netFilter = new() { PlaceholderText = "URL regex", MinWidth = 220 };
+    private readonly List<AutomationStudioNetworkRow> _netRows = [];
+    private readonly ListBox _network = new() { MinHeight = 120, MaxHeight = 200 };
+    private readonly List<BrowserSession> _open = [];
+    private readonly StackPanel _outcomeBody = new() { Spacing = 8, IsVisible = false };
+    private readonly TextBlock _outcomeHint = new() { Text = "This step has not been run.", TextWrapping = TextWrapping.Wrap };
+    private readonly TextBlock _pageTitle = new() { Text = "Title unavailable", TextWrapping = TextWrapping.Wrap };
+    private readonly Button _pause;
+    private readonly ServiceProvider _provider;
+    private readonly TextBox _recordDelay = new() { PlaceholderText = "Milliseconds", Text = "250", Width = 140 };
+    private readonly TextBox _recordHeight = new() { PlaceholderText = "Height", Text = "800", Width = 80 };
+    private readonly ComboBox _recordKind = new() { MinWidth = 220 };
+    private readonly TextBox _recordLocator = new() { PlaceholderText = "Locator", MinWidth = 240 };
+    private readonly ComboBox _recordLocatorKind = new() { MinWidth = 140 };
+    private readonly StackPanel _recordLocatorRow = new() { Orientation = Orientation.Horizontal, Spacing = 8 };
+    private readonly TextBox _recordPattern = new() { PlaceholderText = "URL regex" };
+    private readonly TextBox _recordTab = new() { PlaceholderText = "Tab index", Text = "0", Width = 90 };
+    private readonly TextBox _recordText = new() { PlaceholderText = "Text" };
+    private readonly Button _recordToggle;
+    private readonly TextBox _recordUrl = new() { PlaceholderText = "URL" };
+    private readonly TextBox _recordVariable = new() { PlaceholderText = "Variable", Text = "value", MinWidth = 160 };
+    private readonly StackPanel _recordViewportRow = new() { Orientation = Orientation.Horizontal, Spacing = 8 };
+    private readonly TextBox _recordWidth = new() { PlaceholderText = "Width", Text = "1280", Width = 80 };
+    private readonly Button _reload;
+    private readonly Button _replay;
+    private readonly NameValueList _request = new();
     private readonly JsonEditor _requestJson = new();
+    private readonly NameValueList _response = new();
     private readonly JsonEditor _responseJson = new();
+    private readonly Button _resume;
+    private readonly Button _run;
+    private readonly Button _runFrom;
+    private readonly Button _runStep;
+    private readonly ListBox _runSteps = new();
+    private readonly Button _save;
+    private readonly Tabber _sessions = new();
+    private readonly Image _shot = new() { MaxHeight = 180, Stretch = Stretch.Uniform };
+
     private readonly TextBlock _shotHint = new() {
         Text = "No screenshot",
         HorizontalAlignment = HorizontalAlignment.Center,
         VerticalAlignment = VerticalAlignment.Center,
         Opacity = 0.7
     };
+
+    private readonly Button _showLog;
+    private readonly Button _startChord;
+    private readonly Chip _status = new() { Text = "idle" };
+    private readonly IdText _stepId = new();
+    private readonly TextBox _stepLog = new() { IsReadOnly = true, AcceptsReturn = true, MinHeight = 60 };
+    private readonly ListBox _steps = new();
+    private readonly Button _stop;
+    private readonly Button _stopChord;
+    private readonly Button _tabClose;
+    private readonly ListBox _tabList = new() { MinHeight = 80, MaxHeight = 140 };
+    private readonly Button _tabOpen;
+    private readonly List<AutomationTabInfo> _tabRows = [];
+    private readonly Button _tabSwitch;
+    private readonly DispatcherTimer _tick;
+    private readonly Button _type;
     private readonly List<(string Type, Chip Chip)> _typeChips = [];
     private readonly TextBox _typeText = new() { PlaceholderText = "Text to type", MinWidth = 200 };
-    private readonly TextBox _netFilter = new() { PlaceholderText = "URL regex", MinWidth = 220 };
-    private readonly ListBox _network = new() { MinHeight = 120, MaxHeight = 200 };
-    private readonly NameValueList _request = new();
-    private readonly NameValueList _response = new();
-    private readonly TextBlock _pageTitle = new() { Text = "Title unavailable", TextWrapping = TextWrapping.Wrap };
-    private readonly TextBox _viewportWidth = new() { Text = "1280", PlaceholderText = "Width", Width = 80 };
+
+    private readonly TextBlock _url = new() {
+        Text = "No browser",
+        VerticalAlignment = VerticalAlignment.Center,
+        TextTrimming = TextTrimming.CharacterEllipsis,
+        MaxWidth = 520
+    };
+
+    private readonly Button _viewportApply;
     private readonly TextBox _viewportHeight = new() { Text = "800", PlaceholderText = "Height", Width = 80 };
-    private readonly ListBox _tabList = new() { MinHeight = 80, MaxHeight = 140 };
-    private readonly List<AutomationStudioNetworkRow> _netRows = [];
-    private readonly List<AutomationTabInfo> _tabRows = [];
-    private readonly List<BrowserSession> _open = [];
-    private readonly DispatcherTimer _tick;
-    private readonly Button _closeSession;
-    private readonly Button _run;
-    private readonly Button _runFrom;
-    private readonly Button _runStep;
-    private readonly Button _pause;
-    private readonly Button _resume;
-    private readonly Button _stop;
-    private readonly Button _save;
-    private readonly Button _recordToggle;
-    private readonly Button _delete;
-    private readonly Button _go;
-    private readonly Button _reload;
-    private readonly Button _find;
-    private readonly Button _click;
-    private readonly Button _type;
-    private readonly Button _clearElement;
-    private readonly Button _grabWatch;
-    private readonly Button _startChord;
-    private readonly Button _stopChord;
-    private readonly StudioHotkeySettings _hotkeysSettings;
+    private readonly TextBox _viewportWidth = new() { Text = "1280", PlaceholderText = "Width", Width = 80 };
+    private readonly Tabber _views;
+    private Bitmap? _bitmap;
+    private string? _chordBeforeListen;
+    private bool _closing;
+    private int _describing;
+    private Grid? _dockHost;
+    private int _dragFrom = -1;
+    private IWebAutomationElement? _found;
     private IGlobalHotkeys? _hotkeys;
     private Button? _listening;
-    private string? _chordBeforeListen;
-    private readonly Button _listen;
-    private readonly Button _clearNetwork;
-    private readonly Button _replay;
-    private readonly Button _viewportApply;
-    private readonly Button _tabOpen;
-    private readonly Button _tabSwitch;
-    private readonly Button _tabClose;
-    private BrowserSession? _selected;
-    private IWebAutomationElement? _found;
-    private Bitmap? _bitmap;
-    private int _view;
-    private const int ToolNavigate = 0;
-    private const int ToolElement = 1;
-    private const int ToolNetwork = 2;
-    private int _toolView;
-    private int _dragFrom = -1;
     private string? _netType;
-    private string? _targetKey;
     private int _nextSession = 1;
-    private int _describing;
+    private BrowserSession? _selected;
+    private string? _targetKey;
     private int _titling;
-    private bool _closing;
+    private int _toolView;
+    private int _view;
 
     public MainWindow(StudioLaunch launch)
     {
@@ -173,6 +176,7 @@ internal sealed class MainWindow : Window
         _recordViewportRow.Children.Add(_recordHeight);
         foreach (var kind in RecordKinds)
             _recordKind.Items.Add(kind);
+
         _recordKind.SelectedIndex = 0;
         _recordKind.SelectionChanged += (_, _) => ShowRecordFields();
         _logView.Sink = _log;
@@ -196,21 +200,24 @@ internal sealed class MainWindow : Window
         _tick.Tick += (_, _) => RefreshLive();
         _tick.Start();
         _steps.SelectionChanged += (_, _) => ApplyCommands();
-        _steps.AddHandler(InputElement.PointerPressedEvent, OnStepPressed, RoutingStrategies.Tunnel);
-        _steps.AddHandler(InputElement.PointerMovedEvent, OnStepMoved, RoutingStrategies.Tunnel);
-        _steps.AddHandler(InputElement.PointerReleasedEvent, OnStepReleased, RoutingStrategies.Tunnel);
+        _steps.AddHandler(PointerPressedEvent, OnStepPressed, RoutingStrategies.Tunnel);
+        _steps.AddHandler(PointerMovedEvent, OnStepMoved, RoutingStrategies.Tunnel);
+        _steps.AddHandler(PointerReleasedEvent, OnStepReleased, RoutingStrategies.Tunnel);
         _runSteps.SelectionChanged += (_, _) => {
             ShowExecuted();
             ApplyCommands();
         };
+
         _network.SelectionChanged += (_, _) => {
             ShowRequest();
             ApplyCommands();
         };
+
         _netFilter.TextChanged += (_, _) => {
             RefreshNetwork();
             ApplyCommands();
         };
+
         Content = Build();
         AddHandler(KeyDownEvent, OnKeyDown, RoutingStrategies.Tunnel);
         StartHotkeys();
@@ -218,39 +225,25 @@ internal sealed class MainWindow : Window
         ApplyCommands();
     }
 
-    private (Button Run, Button RunFrom, Button RunStep, Button Pause, Button Resume, Button Stop, Button Save, Button Record, Button Delete) PlanButtons() => (
-        Button("Run", (_, _) => _ = RunAsync(0, null)),
-        Button("Run from here", (_, _) => _ = RunAsync(SelectedStep(), null)),
-        Button("Run this step", (_, _) => {
-            var index = SelectedStep();
-            _ = RunAsync(index, index);
-        }),
-        Button("Pause", (_, _) => PauseRun()),
-        Button("Resume", (_, _) => ResumeRun()),
-        Button("Stop", (_, _) => StopRun()),
-        Button("Save", (_, _) => Save()),
-        Button("Record", (_, _) => _ = ToggleRecordAsync()),
-        Button("Delete", (_, _) => Delete()));
+    private (Button Run, Button RunFrom, Button RunStep, Button Pause, Button Resume, Button Stop, Button Save, Button Record, Button Delete) PlanButtons()
+        => (Button("Run", (_, _) => _ = RunAsync(0, null)), Button("Run from here", (_, _) => _ = RunAsync(SelectedStep(), null)), Button(
+                "Run this step", (_, _) => {
+                    var index = SelectedStep();
+                    _ = RunAsync(index, index);
+                }), Button("Pause", (_, _) => PauseRun()), Button("Resume", (_, _) => ResumeRun()), Button("Stop", (_, _) => StopRun()), Button("Save", (_, _) => Save()),
+            Button("Record", (_, _) => _ = ToggleRecordAsync()), Button("Delete", (_, _) => Delete()));
 
-    private (Button Go, Button Reload, Button Find, Button Click, Button Type, Button Clear) FindButtons() => (
-        Button("Go", (_, _) => _ = GoAsync()),
-        Button("Reload", (_, _) => _ = ReloadAsync()),
-        Button("Find", (_, _) => _ = FindAsync()),
-        Button("Click", (_, _) => _ = ClickFoundAsync()),
-        Button("Type", (_, _) => _ = TypeFoundAsync()),
-        Button("Clear", (_, _) => _ = ClearFoundAsync()));
+    private (Button Go, Button Reload, Button Find, Button Click, Button Type, Button Clear) FindButtons()
+        => (Button("Go", (_, _) => _ = GoAsync()), Button("Reload", (_, _) => _ = ReloadAsync()), Button("Find", (_, _) => _ = FindAsync()),
+            Button("Click", (_, _) => _ = ClickFoundAsync()), Button("Type", (_, _) => _ = TypeFoundAsync()), Button("Clear", (_, _) => _ = ClearFoundAsync()));
 
-    private (Button Watch, Button Listen, Button ClearNetwork, Button Replay) ToolButtons() => (
-        Button("Watch cursor", (_, _) => _ = ToggleGrabberAsync()),
-        Button("Listen", (_, _) => ToggleListen()),
-        Button("Clear", (_, _) => ClearCaptured()),
-        Button("Replay", (_, _) => _ = ReplayAsync()));
+    private (Button Watch, Button Listen, Button ClearNetwork, Button Replay) ToolButtons()
+        => (Button("Watch cursor", (_, _) => _ = ToggleGrabberAsync()), Button("Listen", (_, _) => ToggleListen()), Button("Clear", (_, _) => ClearCaptured()),
+            Button("Replay", (_, _) => _ = ReplayAsync()));
 
-    private (Button Apply, Button Open, Button Switch, Button Close) PageButtons() => (
-        Button("Apply", (_, _) => _ = ApplyViewportAsync()),
-        Button("Open tab", (_, _) => _ = OpenTabAsync()),
-        Button("Switch", (_, _) => _ = SwitchTabAsync()),
-        Button("Close tab", (_, _) => _ = CloseTabAsync()));
+    private (Button Apply, Button Open, Button Switch, Button Close) PageButtons()
+        => (Button("Apply", (_, _) => _ = ApplyViewportAsync()), Button("Open tab", (_, _) => _ = OpenTabAsync()), Button("Switch", (_, _) => _ = SwitchTabAsync()),
+            Button("Close tab", (_, _) => _ = CloseTabAsync()));
 
     private Control Build()
     {
@@ -263,8 +256,7 @@ internal sealed class MainWindow : Window
         root.Children.Add(top);
         DockPanel.SetDock(_sessions, Dock.Top);
         root.Children.Add(_sessions);
-
-        _dockHost = new Grid();
+        _dockHost = new();
         root.Children.Add(_dockHost);
         ApplyDock();
         return root;
@@ -275,6 +267,7 @@ internal sealed class MainWindow : Window
         _dock.SetVisible("log", true);
         if (_dock.Pane("log").Minimized)
             _dock.ToggleMinimized("log");
+
         ApplyDock();
     }
 
@@ -282,6 +275,7 @@ internal sealed class MainWindow : Window
     {
         if (_dockHost == null)
             return;
+
         ToolDockBuilder.Fill(_dockHost, _dock, _dockPanes, _views, ApplyDock);
         _showLog.IsVisible = !_dock.IsVisible("log");
     }
@@ -369,9 +363,11 @@ internal sealed class MainWindow : Window
             _toolView = tools.SelectedIndex;
             if (_toolView == ToolNetwork)
                 RefreshNetwork();
+
             if (_toolView == ToolNavigate)
                 _ = RefreshTabsAsync();
         };
+
         return tools;
     }
 
@@ -417,11 +413,9 @@ internal sealed class MainWindow : Window
         DockPanel.SetDock(actions, Dock.Bottom);
         left.Children.Add(actions);
         left.Children.Add(_network);
-
         var right = new Tabber();
         right.Add(new() { Header = "Request", Content = Detail(_request, _requestJson) });
         right.Add(new() { Header = "Response", Content = Detail(_response, _responseJson) });
-
         var grid = new Grid { Margin = new(8) };
         grid.ColumnDefinitions.Add(new(1, GridUnitType.Star) { MinWidth = 280 });
         grid.ColumnDefinitions.Add(new(GridLength.Auto));
@@ -436,11 +430,7 @@ internal sealed class MainWindow : Window
         return grid;
     }
 
-    private static GridSplitter Splitter() => new() {
-        Width = 6,
-        ResizeDirection = GridResizeDirection.Columns,
-        Background = new SolidColorBrush(Color.FromRgb(0x3A, 0x41, 0x50))
-    };
+    private static GridSplitter Splitter() => new() { Width = 6, ResizeDirection = GridResizeDirection.Columns, Background = new SolidColorBrush(Color.FromRgb(0x3A, 0x41, 0x50)) };
 
     private Control TypeFilters()
     {
@@ -454,6 +444,7 @@ internal sealed class MainWindow : Window
                 RefreshNetwork();
                 e.Handled = true;
             };
+
             _typeChips.Add((key, chip));
             wrap.Children.Add(chip);
         }
@@ -477,11 +468,13 @@ internal sealed class MainWindow : Window
         _view = next;
         if (previous == 2 && next != 2)
             _ = SetGrabberAsync(_selected, false);
+
         if (next == 2) {
             _ = SetGrabberAsync(_selected, _selected?.Grabbing == true);
             _ = RefreshTabsAsync();
             if (_toolView == ToolNetwork)
                 RefreshNetwork();
+
             if (_toolView == ToolNavigate)
                 _ = RefreshTabsAsync();
         }
@@ -492,16 +485,16 @@ internal sealed class MainWindow : Window
     private async Task StartBrowserAsync()
     {
         try {
-            var studio = new PlaywrightAutomationStudio(
-                _provider.GetRequiredService<IPlaywrightBrowserService>(),
-                _provider.GetRequiredService<IAutomationPlanRunner>());
-            var browser = await studio.StartAsync(new() {
-                StartUrl = _launch.StartUrl,
-                PlanName = _launch.PlanName,
-                PlanPath = _launch.PlanPath,
-                OutputDirectory = _launch.OutputDirectory,
-                Headless = false
-            });
+            var studio = new PlaywrightAutomationStudio(_provider.GetRequiredService<IPlaywrightBrowserService>(), _provider.GetRequiredService<IAutomationPlanRunner>());
+            var browser = await studio.StartAsync(
+                new() {
+                    StartUrl = _launch.StartUrl,
+                    PlanName = _launch.PlanName,
+                    PlanPath = _launch.PlanPath,
+                    OutputDirectory = _launch.OutputDirectory,
+                    Headless = false
+                });
+
             var session = new BrowserSession { Number = _nextSession++, Studio = browser };
             browser.PlayLogger = _logProvider.CreateLogger("studio");
             browser.StepNotice += (_, notice) => Dispatcher.UIThread.Post(() => ApplyNotice(session, notice));
@@ -509,6 +502,7 @@ internal sealed class MainWindow : Window
                 if (session == _selected)
                     RefreshSteps();
             });
+
             _open.Add(session);
             _sessions.Add(new() { Header = SessionTitle(session, _launch.StartUrl), Content = new Panel { Height = 0 }, CanClose = true });
             _sessions.Select(_open.Count - 1);
@@ -543,6 +537,7 @@ internal sealed class MainWindow : Window
             var tab = _open.IndexOf(session);
             if (tab >= 0)
                 _sessions.Rename(tab, SessionTitle(session, null));
+
             if (session == _selected) {
                 _url.Text = "Browser closed";
                 _found = null;
@@ -567,6 +562,7 @@ internal sealed class MainWindow : Window
         _open.RemoveAt(index);
         if (_selected == session)
             _selected = null;
+
         _ = StopQuiet(session);
     }
 
@@ -587,11 +583,13 @@ internal sealed class MainWindow : Window
         _selected = index >= 0 && index < _open.Count ? _open[index] : null;
         if (previous != null && previous != _selected && previous.Grabbing && previous.BrowserOpen)
             _ = previous.Studio.SetGrabberAsync(false);
+
         _found = null;
         _targetKey = null;
         ShowTarget(null, "No element");
         if (_selected?.Grabbing == true && _view == 2)
             _ = SetGrabberAsync(_selected, true);
+
         _address.Text = _selected?.BrowserOpen == true ? PageUrl(_selected) ?? "" : "";
         BindChrome();
         if (_view == 2)
@@ -612,6 +610,7 @@ internal sealed class MainWindow : Window
         RefreshSteps();
         if (_view == 2 && _toolView == ToolNetwork)
             RefreshNetwork();
+
         ApplyCommands();
     }
 
@@ -619,19 +618,21 @@ internal sealed class MainWindow : Window
     {
         var session = _selected;
         var plan = session?.Studio.Plan;
-        var state = StudioCommandState.From(new() {
-            HasSession = session != null,
-            BrowserOpen = session?.BrowserOpen == true,
-            Playing = session?.Playing == true,
-            Paused = session?.Paused == true,
-            StepCount = plan?.Steps.Count ?? 0,
-            SelectedStep = _steps.SelectedIndex,
-            RunSelectedStep = _runSteps.SelectedIndex,
-            NetworkCount = session == null ? 0 : session.Studio.NetworkRows(null).Count,
-            NetworkRowSelected = _network.SelectedIndex >= 0 && _network.SelectedIndex < _netRows.Count,
-            CaptureVariableFilled = !string.IsNullOrWhiteSpace(_recordVariable.Text),
-            HasCapturedMatch = session != null && session.Studio.NetworkRows(_netFilter.Text).Count > 0
-        });
+        var state = StudioCommandState.From(
+            new() {
+                HasSession = session != null,
+                BrowserOpen = session?.BrowserOpen == true,
+                Playing = session?.Playing == true,
+                Paused = session?.Paused == true,
+                StepCount = plan?.Steps.Count ?? 0,
+                SelectedStep = _steps.SelectedIndex,
+                RunSelectedStep = _runSteps.SelectedIndex,
+                NetworkCount = session == null ? 0 : session.Studio.NetworkRows(null).Count,
+                NetworkRowSelected = _network.SelectedIndex >= 0 && _network.SelectedIndex < _netRows.Count,
+                CaptureVariableFilled = !string.IsNullOrWhiteSpace(_recordVariable.Text),
+                HasCapturedMatch = session != null && session.Studio.NetworkRows(_netFilter.Text).Count > 0
+            });
+
         _closeSession.IsEnabled = session != null;
         _go.IsEnabled = state.Go;
         _reload.IsEnabled = state.Reload;
@@ -670,8 +671,10 @@ internal sealed class MainWindow : Window
             var current = session.Done.LastOrDefault(step => step.Index == notice.StepIndex) ?? session.Done.LastOrDefault();
             if (current != null && notice.LogLine != null)
                 current.Log.Add(notice.LogLine);
+
             if (session == _selected)
                 ShowExecuted();
+
             return;
         }
 
@@ -683,6 +686,7 @@ internal sealed class MainWindow : Window
                 if (notice.StepIndex >= 0 && notice.StepIndex < _runSteps.ItemCount)
                     _runSteps.SelectedIndex = notice.StepIndex;
             }
+
             return;
         }
 
@@ -692,9 +696,11 @@ internal sealed class MainWindow : Window
         var step = session.Done.LastOrDefault(item => item.Index == notice.StepIndex);
         if (step != null)
             step.Outcome = notice;
+
         var name = notice.Outcome?.ToString() ?? "failed";
         if (notice.Outcome is AutomationPlanStepOutcome.Failed or AutomationPlanStepOutcome.TimedOut or AutomationPlanStepOutcome.Cancelled)
             SetStatus(session, name.ToLowerInvariant(), step?.Label);
+
         if (session == _selected)
             RefreshSteps();
     }
@@ -727,8 +733,10 @@ internal sealed class MainWindow : Window
         catch (Exception ex) {
             if (session.BrowserOpen)
                 SetStatus(session, "failed", CurrentLabel(session));
+
             if (session == _selected)
                 _error.Text = ex.Message;
+
             _log.Write(ex.Message);
         }
         finally {
@@ -761,10 +769,7 @@ internal sealed class MainWindow : Window
         ApplyCommands();
     }
 
-    private void StopRun()
-    {
-        _selected?.Studio.CancelPlay();
-    }
+    private void StopRun() => _selected?.Studio.CancelPlay();
 
     private async Task GoAsync()
     {
@@ -825,6 +830,7 @@ internal sealed class MainWindow : Window
                 Locator = new() { Kind = locator.Kind.ToString(), Value = locator.Value },
                 Attributes = await TargetAttributes(_found)
             };
+
             ShowTarget(info, "Find");
         }
         catch (Exception ex) {
@@ -850,6 +856,7 @@ internal sealed class MainWindow : Window
             new() { Name = "Page", Value = info.Url },
             new() { Name = "Title", Value = info.Title }
         };
+
         if (info.Attributes != null) {
             foreach (var pair in info.Attributes.OrderBy(pair => pair.Key, StringComparer.Ordinal))
                 rows.Add(new() { Name = pair.Key, Value = pair.Value });
@@ -873,6 +880,7 @@ internal sealed class MainWindow : Window
     {
         if (info.Locator?.Value is not string value || string.IsNullOrWhiteSpace(value))
             return null;
+
         if (!Enum.TryParse<ElementLocatorKind>(info.Locator.Kind, true, out var kind))
             return null;
 
@@ -989,10 +997,8 @@ internal sealed class MainWindow : Window
         var stop = HotkeyChord.Parse(ChordText(_stopChord, "Ctrl+Shift+Q"));
         if (start == stop)
             throw new InvalidOperationException("Start and stop need different shortcuts.");
-        _hotkeys.Bind([
-            new(start, () => Dispatcher.UIThread.Post(() => _ = StartWatchAsync())),
-            new(stop, () => Dispatcher.UIThread.Post(StopWatch))
-        ]);
+
+        _hotkeys.Bind([new(start, () => Dispatcher.UIThread.Post(() => _ = StartWatchAsync())), new(stop, () => Dispatcher.UIThread.Post(StopWatch))]);
     }
 
     private void OnChordClick(object? sender, RoutedEventArgs e)
@@ -1064,24 +1070,29 @@ internal sealed class MainWindow : Window
         var parts = new List<string>();
         if (modifiers.HasFlag(KeyModifiers.Control))
             parts.Add("Ctrl");
+
         if (modifiers.HasFlag(KeyModifiers.Shift))
             parts.Add("Shift");
+
         if (modifiers.HasFlag(KeyModifiers.Alt))
             parts.Add("Alt");
+
         if (modifiers.HasFlag(KeyModifiers.Meta))
             parts.Add("Meta");
+
         parts.Add(KeyName(key));
         return string.Join('+', parts);
     }
 
-    private static string KeyName(Key key) => key switch {
-        >= Key.A and <= Key.Z => key.ToString(),
-        >= Key.D0 and <= Key.D9 => ((char)('0' + (key - Key.D0))).ToString(),
-        Key.Escape => "Escape",
-        Key.Space => "Space",
-        Key.Tab => "Tab",
-        _ => key.ToString()
-    };
+    private static string KeyName(Key key)
+        => key switch {
+            >= Key.A and <= Key.Z => key.ToString(),
+            >= Key.D0 and <= Key.D9 => ((char)('0' + (key - Key.D0))).ToString(),
+            Key.Escape => "Escape",
+            Key.Space => "Space",
+            Key.Tab => "Tab",
+            var _ => key.ToString()
+        };
 
     private static TextBlock ChordLabel(string text) => new() { Text = text, VerticalAlignment = VerticalAlignment.Center };
 
@@ -1118,6 +1129,7 @@ internal sealed class MainWindow : Window
             session.Studio.StopNetworkCapture();
         else
             session.Studio.StartNetworkCapture();
+
         session.Listening = !session.Listening;
         ApplyCommands();
     }
@@ -1233,6 +1245,7 @@ internal sealed class MainWindow : Window
                 _tabList.Items.Clear();
                 foreach (var tab in tabs)
                     _tabList.Items.Add($"{tab.Index}. {tab.Title ?? tab.Url}");
+
                 if (selected >= 0 && selected < _tabList.ItemCount)
                     _tabList.SelectedIndex = selected;
             });
@@ -1255,16 +1268,15 @@ internal sealed class MainWindow : Window
             return;
         }
 
-        var request = new List<NameValueRow> {
-            new() { Name = "Method", Value = detail.Method },
-            new() { Name = "URL", Value = detail.Url }
-        };
+        var request = new List<NameValueRow> { new() { Name = "Method", Value = detail.Method }, new() { Name = "URL", Value = detail.Url } };
         foreach (var header in detail.RequestHeaders)
             request.Add(new() { Name = header.Key, Value = header.Value });
+
         _request.Rows = request;
         var response = new List<NameValueRow> { new() { Name = "Status", Value = detail.Status?.ToString() } };
         foreach (var header in detail.ResponseHeaders)
             response.Add(new() { Name = header.Key, Value = header.Value });
+
         _response.Rows = response;
         _requestJson.Text = detail.RequestBody;
         _responseJson.Text = detail.ResponseBody;
@@ -1299,20 +1311,25 @@ internal sealed class MainWindow : Window
 
         var rows = _selected.Studio.NetworkRows(_netFilter.Text).Where(row => NetworkTypeFilter.Matches(row.ResourceType, _netType)).ToList();
         if (NetworkSameIds(rows)) {
-            for (var i = 0; i < rows.Count; i++)
+            for (var i = 0; i < rows.Count; i++) {
                 if (_network.Items[i] is NetworkRowView view)
                     view.Apply(rows[i]);
+            }
+
             _netRows.Clear();
             _netRows.AddRange(rows);
             return;
         }
 
         if (NetworkAppended(rows)) {
-            for (var i = 0; i < _netRows.Count; i++)
+            for (var i = 0; i < _netRows.Count; i++) {
                 if (_network.Items[i] is NetworkRowView view)
                     view.Apply(rows[i]);
+            }
+
             for (var i = _netRows.Count; i < rows.Count; i++)
                 _network.Items.Add(new NetworkRowView(rows[i]));
+
             _netRows.Clear();
             _netRows.AddRange(rows);
             return;
@@ -1328,6 +1345,7 @@ internal sealed class MainWindow : Window
         var index = _netRows.FindIndex(row => row.Id == selected);
         if (index >= 0)
             _network.SelectedIndex = index;
+
         ApplyCommands();
     }
 
@@ -1336,9 +1354,10 @@ internal sealed class MainWindow : Window
         if (rows.Count != _netRows.Count)
             return false;
 
-        for (var i = 0; i < rows.Count; i++)
+        for (var i = 0; i < rows.Count; i++) {
             if (rows[i].Id != _netRows[i].Id)
                 return false;
+        }
 
         return true;
     }
@@ -1348,9 +1367,10 @@ internal sealed class MainWindow : Window
         if (rows.Count <= _netRows.Count)
             return false;
 
-        for (var i = 0; i < _netRows.Count; i++)
+        for (var i = 0; i < _netRows.Count; i++) {
             if (rows[i].Id != _netRows[i].Id)
                 return false;
+        }
 
         return true;
     }
@@ -1576,13 +1596,16 @@ internal sealed class MainWindow : Window
         var index = _sessions.SelectedIndex;
         if (index >= 0)
             _sessions.Rename(index, SessionTitle(session, url));
+
         if (_view != 2)
             return;
 
         if (_toolView == ToolNetwork)
             RefreshNetwork();
+
         if (_toolView == ToolNavigate && Interlocked.Exchange(ref _titling, 1) == 0)
             _ = RefreshTitleAsync(session);
+
         if (_toolView == ToolElement && session.Grabbing && Interlocked.Exchange(ref _describing, 1) == 0)
             _ = DescribeAsync(session);
     }
@@ -1615,10 +1638,12 @@ internal sealed class MainWindow : Window
                 await Dispatcher.UIThread.InvokeAsync(() => {
                     if (session != _selected)
                         return;
+
                     _found = null;
                     _targetKey = null;
                     ShowTarget(null, "Cursor");
                 });
+
                 return;
             }
 
@@ -1675,6 +1700,7 @@ internal sealed class MainWindow : Window
             var label = $"{i + 1}. {LabelOf(plan, i)}";
             if (withOutcome)
                 label += RunMark(i);
+
             list.Items.Add(label);
         }
 
@@ -1687,6 +1713,7 @@ internal sealed class MainWindow : Window
         var done = _selected?.Done.LastOrDefault(step => step.Index == index);
         if (done?.Outcome?.Outcome is { } outcome)
             return "  " + outcome;
+
         return done == null ? "" : "  running";
     }
 
@@ -1721,9 +1748,8 @@ internal sealed class MainWindow : Window
             _bitmap = new(path);
             _shot.Source = _bitmap;
         }
-        else {
+        else
             _shot.Source = null;
-        }
 
         _shotHint.IsVisible = _bitmap == null;
     }
@@ -1736,10 +1762,13 @@ internal sealed class MainWindow : Window
         var rows = new List<NameValueRow>();
         foreach (var pair in context.Strings)
             rows.Add(new() { Name = pair.Key, Value = pair.Value });
+
         foreach (var pair in context.StringLists)
             rows.Add(new() { Name = pair.Key, Value = string.Join(", ", pair.Value) });
+
         foreach (var pair in context.ContextItems)
             rows.Add(new() { Name = pair.Key, Value = pair.Value });
+
         return rows;
     }
 
@@ -1761,7 +1790,7 @@ internal sealed class MainWindow : Window
             "completed" => ChipHues.Green,
             "failed" => ChipHues.Rose,
             "cancelled" => ChipHues.Coral,
-            _ => -1
+            var _ => -1
         };
     }
 
@@ -1817,16 +1846,17 @@ internal sealed class MainWindow : Window
             CloseCurrentTabAutomationStep => "Close tab",
             SwitchToTabByIndexAutomationStep switchTab => "Switch to tab " + switchTab.TabIndex,
             ExtractElementDataAutomationStep extract => "Extract " + extract.VariableName,
-            _ => Fallback(plan.Steps[index])
+            var _ => Fallback(plan.Steps[index])
         };
     }
 
-    private static string ActionLabel(ElementAction action) => action switch {
-        ClickElementAction => "Click",
-        InputTextElementAction input => "Type " + Trim(input.Text, 40),
-        ClearElementAction => "Clear",
-        _ => "Act"
-    };
+    private static string ActionLabel(ElementAction action)
+        => action switch {
+            ClickElementAction => "Click",
+            InputTextElementAction input => "Type " + Trim(input.Text, 40),
+            ClearElementAction => "Clear",
+            var _ => "Act"
+        };
 
     private static string Fallback(AutomationStepDefinition step)
     {
@@ -1834,6 +1864,7 @@ internal sealed class MainWindow : Window
         const string suffix = "AutomationStep";
         if (type.EndsWith(suffix, StringComparison.Ordinal))
             type = type[..^suffix.Length];
+
         return string.IsNullOrWhiteSpace(step.Name) ? type : step.Name!;
     }
 
@@ -1859,6 +1890,7 @@ internal sealed class MainWindow : Window
         var host = "browser";
         if (!string.IsNullOrWhiteSpace(url) && Uri.TryCreate(url, UriKind.Absolute, out var parsed) && !string.IsNullOrWhiteSpace(parsed.Host))
             host = parsed.Host;
+
         return $"Session {session.Number} · {host}";
     }
 
@@ -1900,7 +1932,7 @@ internal sealed class MainWindow : Window
         Close();
     }
 
-    private static Button Button(string text, EventHandler<Avalonia.Interactivity.RoutedEventArgs> click)
+    private static Button Button(string text, EventHandler<RoutedEventArgs> click)
     {
         var button = new Button { Content = text };
         button.Click += click;
@@ -1912,6 +1944,7 @@ internal sealed class MainWindow : Window
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
         foreach (var child in children)
             row.Children.Add(child);
+
         return row;
     }
 

@@ -1,8 +1,8 @@
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
 using Lyo.Schedule.Models;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Tests.Postgres;
 

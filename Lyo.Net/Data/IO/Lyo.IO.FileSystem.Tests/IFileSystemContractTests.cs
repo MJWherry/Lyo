@@ -10,14 +10,12 @@ namespace Lyo.IO.FileSystem.Tests;
 /// </summary>
 public abstract class IFileSystemContractTests
 {
-    /// <summary>
-    /// Builds a fresh file system for one test, or returns null when the backend needs infrastructure that is not available (for example Docker). Null skips the test.
-    /// </summary>
+    /// <summary>Builds a fresh file system for one test, or returns null when the backend needs infrastructure that is not available (for example Docker). Null skips the test.</summary>
     protected abstract ValueTask<IFileSystem?> CreateAsync();
 
     /// <summary>
-    /// Releases the backend after one test. The default disposes it. Override when <see cref="CreateAsync" /> also allocated something the file system does not own, such
-    /// as a remote client.
+    /// Releases the backend after one test. The default disposes it. Override when <see cref="CreateAsync" /> also allocated something the file system does not own, such as a
+    /// remote client.
     /// </summary>
     protected virtual ValueTask DisposeBackendAsync(IFileSystem fileSystem)
     {
@@ -129,16 +127,14 @@ public abstract class IFileSystemContractTests
         await using var ctx = await ArrangeAsync(useAsync);
         var empty = ctx.Combine("empty");
         await ctx.Api.CreateDirectoryAsync(empty, TestCt);
-        await ctx.Api.DeleteDirectoryAsync(empty, recursive: false, TestCt);
+        await ctx.Api.DeleteDirectoryAsync(empty, false, TestCt);
         Assert.False(await ctx.Api.DirectoryExistsAsync(empty, TestCt));
-
         var filled = ctx.Combine("filled");
         await ctx.Api.CreateDirectoryAsync(filled, TestCt);
         await ctx.Api.WriteAllBytesAsync(ctx.Combine("filled", "child.bin"), "x"u8.ToArray(), TestCt);
-        await Assert.ThrowsAsync<IOException>(() => ctx.Api.DeleteDirectoryAsync(filled, recursive: false, TestCt));
+        await Assert.ThrowsAsync<IOException>(() => ctx.Api.DeleteDirectoryAsync(filled, false, TestCt));
         Assert.True(await ctx.Api.FileExistsAsync(ctx.Combine("filled", "child.bin"), TestCt));
-
-        await ctx.Api.DeleteDirectoryAsync(ctx.Combine("missing"), recursive: false, TestCt);
+        await ctx.Api.DeleteDirectoryAsync(ctx.Combine("missing"), false, TestCt);
     }
 
     [Theory]
@@ -181,7 +177,7 @@ public abstract class IFileSystemContractTests
         var dest = ctx.Combine("copy-dest.bin");
         await ctx.Api.WriteAllTextAsync(src, "source", TestCt);
         await ctx.Api.WriteAllTextAsync(dest, "original", TestCt);
-        await Assert.ThrowsAsync<IOException>(() => ctx.Api.CopyFileAsync(src, dest, overwrite: false, TestCt));
+        await Assert.ThrowsAsync<IOException>(() => ctx.Api.CopyFileAsync(src, dest, false, TestCt));
         Assert.Equal("original"u8.ToArray(), await ctx.Api.ReadAllBytesAsync(dest, TestCt));
     }
 
@@ -195,7 +191,7 @@ public abstract class IFileSystemContractTests
         var dest = ctx.Combine("ow-dest.bin");
         await ctx.Api.WriteAllTextAsync(src, "source", TestCt);
         await ctx.Api.WriteAllTextAsync(dest, "original", TestCt);
-        await ctx.Api.CopyFileAsync(src, dest, overwrite: true, TestCt);
+        await ctx.Api.CopyFileAsync(src, dest, true, TestCt);
         Assert.Equal("source"u8.ToArray(), await ctx.Api.ReadAllBytesAsync(dest, TestCt));
     }
 
@@ -209,7 +205,7 @@ public abstract class IFileSystemContractTests
         var dest = ctx.Combine("mv-dest.bin");
         await ctx.Api.WriteAllTextAsync(src, "source", TestCt);
         await ctx.Api.WriteAllTextAsync(dest, "original", TestCt);
-        await Assert.ThrowsAsync<IOException>(() => ctx.Api.MoveAsync(src, dest, overwrite: false, TestCt));
+        await Assert.ThrowsAsync<IOException>(() => ctx.Api.MoveAsync(src, dest, false, TestCt));
         Assert.True(await ctx.Api.FileExistsAsync(src, TestCt));
         Assert.Equal("original"u8.ToArray(), await ctx.Api.ReadAllBytesAsync(dest, TestCt));
     }
@@ -224,7 +220,7 @@ public abstract class IFileSystemContractTests
         var dest = ctx.Combine("mvo-dest.bin");
         await ctx.Api.WriteAllTextAsync(src, "source", TestCt);
         await ctx.Api.WriteAllTextAsync(dest, "original", TestCt);
-        await ctx.Api.MoveAsync(src, dest, overwrite: true, TestCt);
+        await ctx.Api.MoveAsync(src, dest, true, TestCt);
         Assert.False(await ctx.Api.FileExistsAsync(src, TestCt));
         Assert.Equal("source"u8.ToArray(), await ctx.Api.ReadAllBytesAsync(dest, TestCt));
     }
@@ -239,7 +235,6 @@ public abstract class IFileSystemContractTests
         var dest = ctx.Combine("moved-dir");
         await ctx.Api.CreateDirectoryAsync(src, TestCt);
         await ctx.Api.WriteAllTextAsync(ctx.Combine("movable", "inner.txt"), "inner", TestCt);
-
         if ((ctx.Api.Capabilities & FileSystemCapabilities.MoveDirectory) == 0) {
             await Assert.ThrowsAsync<NotSupportedException>(() => ctx.Api.MoveAsync(src, dest, ct: TestCt));
             return;
@@ -300,7 +295,6 @@ public abstract class IFileSystemContractTests
         var path = ctx.Combine("entry.bin");
         var payload = "entry-payload"u8.ToArray();
         await ctx.Api.WriteAllBytesAsync(path, payload, TestCt);
-
         var entry = await ctx.Api.GetEntryAsync(path, TestCt);
         Assert.NotNull(entry);
         Assert.False(entry.IsDirectory);
@@ -335,16 +329,15 @@ public abstract class IFileSystemContractTests
     [Fact]
     public async Task EnumerateDirectoryAsync_NonRecursive_YieldsSameSetAsListDirectory()
     {
-        await using var ctx = await ArrangeAsync(useAsync: true);
+        await using var ctx = await ArrangeAsync(true);
         var dir = ctx.Combine("enum");
         await ctx.Api.CreateDirectoryAsync(dir, TestCt);
         await ctx.Api.WriteAllTextAsync(ctx.Combine("enum", "one.txt"), "1", TestCt);
         await ctx.Api.WriteAllTextAsync(ctx.Combine("enum", "two.txt"), "2", TestCt);
         await ctx.Api.CreateDirectoryAsync(ctx.Combine("enum", "sub"), TestCt);
-
         var listed = (await ctx.Api.ListDirectoryAsync(dir, TestCt)).Select(e => e.Path).OrderBy(p => p, StringComparer.Ordinal);
         var enumerated = new List<string>();
-        await foreach (var entry in ctx.FileSystem.EnumerateDirectoryAsync(dir, recursive: false, TestCt))
+        await foreach (var entry in ctx.FileSystem.EnumerateDirectoryAsync(dir, false, TestCt))
             enumerated.Add(entry.Path);
 
         Assert.Equal(listed, enumerated.OrderBy(p => p, StringComparer.Ordinal));
@@ -353,14 +346,13 @@ public abstract class IFileSystemContractTests
     [Fact]
     public async Task EnumerateDirectoryAsync_Recursive_YieldsDescendants()
     {
-        await using var ctx = await ArrangeAsync(useAsync: true);
+        await using var ctx = await ArrangeAsync(true);
         var dir = ctx.Combine("deep");
         await ctx.Api.CreateDirectoryAsync(ctx.Combine("deep", "nested"), TestCt);
         await ctx.Api.WriteAllTextAsync(ctx.Combine("deep", "top.txt"), "t", TestCt);
         await ctx.Api.WriteAllTextAsync(ctx.Combine("deep", "nested", "deep.txt"), "d", TestCt);
-
         var names = new List<string>();
-        await foreach (var entry in ctx.FileSystem.EnumerateDirectoryAsync(dir, recursive: true, TestCt))
+        await foreach (var entry in ctx.FileSystem.EnumerateDirectoryAsync(dir, true, TestCt))
             names.Add(entry.Name);
 
         Assert.Contains("top.txt", names);
@@ -371,18 +363,17 @@ public abstract class IFileSystemContractTests
     [Fact]
     public async Task EnumerateDirectoryAsync_Cancelled_ThrowsOperationCanceled()
     {
-        await using var ctx = await ArrangeAsync(useAsync: true);
+        await using var ctx = await ArrangeAsync(true);
         var dir = ctx.Combine("cancel");
         await ctx.Api.CreateDirectoryAsync(dir, TestCt);
         for (var i = 0; i < 8; i++)
             await ctx.Api.WriteAllTextAsync(ctx.Combine("cancel", $"f{i}.txt"), "x", TestCt);
 
         using var cts = new CancellationTokenSource();
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            async () => {
-                await foreach (var _ in ctx.FileSystem.EnumerateDirectoryAsync(dir, recursive: false, cts.Token))
-                    await cts.CancelAsync();
-            });
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => {
+            await foreach (var _ in ctx.FileSystem.EnumerateDirectoryAsync(dir, false, cts.Token))
+                await cts.CancelAsync();
+        });
     }
 
     [Theory]
@@ -393,7 +384,6 @@ public abstract class IFileSystemContractTests
         await using var ctx = await ArrangeAsync(useAsync);
         var path = ctx.Combine("append.bin");
         await ctx.Api.WriteAllBytesAsync(path, "ab"u8.ToArray(), TestCt);
-
         if ((ctx.Api.Capabilities & FileSystemCapabilities.Append) == 0) {
             await Assert.ThrowsAsync<NotSupportedException>(() => ctx.Api.OpenAppendAsync(path, TestCt));
             return;
@@ -434,13 +424,14 @@ public abstract class IFileSystemContractTests
         var outside = ctx.FileSystem.PathStyle == PathStyle.Host
             ? Path.Combine(Path.GetTempPath(), "lyo-vfs-outside-" + LyoGuid.CreateV7().ToString("N"))
             : "/outside-" + LyoGuid.CreateV7().ToString("N");
+
         await Assert.ThrowsAsync<InvalidFormatException>(() => ctx.Api.DirectoryExistsAsync(outside, TestCt));
     }
 
     [Fact]
     public async Task Watch_WithoutCapability_ReturnsNull()
     {
-        await using var ctx = await ArrangeAsync(useAsync: false);
+        await using var ctx = await ArrangeAsync(false);
         if ((ctx.Api.Capabilities & FileSystemCapabilities.Watch) != 0)
             return;
 
@@ -462,14 +453,6 @@ public abstract class IFileSystemContractTests
     {
         private readonly Func<IFileSystem, ValueTask> _release;
 
-        /// <summary>Wraps <paramref name="fileSystem" /> and picks which half of the interface <see cref="Api" /> calls.</summary>
-        public ContractContext(IFileSystem fileSystem, bool useAsync, Func<IFileSystem, ValueTask> release)
-        {
-            FileSystem = fileSystem;
-            Api = new(fileSystem, useAsync);
-            _release = release;
-        }
-
         /// <summary>Backend under test.</summary>
         public IFileSystem FileSystem { get; }
 
@@ -479,6 +462,17 @@ public abstract class IFileSystemContractTests
         /// <summary>Root jail of the backend.</summary>
         public string RootPath => FileSystem.RootPath;
 
+        /// <summary>Wraps <paramref name="fileSystem" /> and picks which half of the interface <see cref="Api" /> calls.</summary>
+        public ContractContext(IFileSystem fileSystem, bool useAsync, Func<IFileSystem, ValueTask> release)
+        {
+            FileSystem = fileSystem;
+            Api = new(fileSystem, useAsync);
+            _release = release;
+        }
+
+        /// <inheritdoc />
+        public ValueTask DisposeAsync() => _release(FileSystem);
+
         /// <summary>Builds an absolute path under the backend root from <paramref name="parts" />.</summary>
         public string Combine(params string[] parts)
         {
@@ -487,8 +481,5 @@ public abstract class IFileSystemContractTests
             Array.Copy(parts, 0, segments, 1, parts.Length);
             return PathHelpers.Combine(FileSystem.PathStyle, segments);
         }
-
-        /// <inheritdoc />
-        public ValueTask DisposeAsync() => _release(FileSystem);
     }
 }

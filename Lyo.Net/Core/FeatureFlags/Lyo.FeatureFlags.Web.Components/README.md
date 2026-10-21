@@ -1,6 +1,8 @@
 # Lyo.FeatureFlags.Web.Components
 
-FeatureFlagPanel lists every flag's name and mode from the in-process snapshot. AllowEdit defaults to false. A switch sets that flag on or off through IFeatureFlagUpdater. A percentage or rules flag loses that targeting when the switch changes. FeatureFlagView renders its child only when IFeatureFlagService.IsEnabled is true. A missing service or a disabled flag renders nothing. Register AddFeatureFlags or AddFeatureFlagsFromConfiguration on the host.
+FeatureFlagPanel lists every flag's name and mode from the in-process snapshot. AllowEdit defaults to false. A switch sets that flag on or off through IFeatureFlagUpdater. A
+percentage or rules flag loses that targeting when the switch changes. FeatureFlagView renders its child only when IFeatureFlagService.IsEnabled is true. A missing service or a
+disabled flag renders nothing. Register AddFeatureFlags or AddFeatureFlagsFromConfiguration on the host.
 
 ## Features
 

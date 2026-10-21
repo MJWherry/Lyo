@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Globalization;
 using System.Text.Json;
 using Lyo.Common.Core.Conversion;
@@ -29,8 +30,8 @@ public static class LyoDateTimeDisplay
     }
 
     /// <summary>
-    /// Picks the display string for <see cref="LyoTimestampKind" /> from a UTC instant. Relative kinds use <paramref name="relativeWindow" /> as a plus/minus bound
-    /// (default 24 hours).
+    /// Picks the display string for <see cref="LyoTimestampKind" /> from a UTC instant. Relative kinds use <paramref name="relativeWindow" /> as a plus/minus bound (default 24
+    /// hours).
     /// </summary>
     public static string FormatKind(LyoTimestampKind kind, DateTime utc, string absolute, TimeSpan? relativeWindow = null)
     {
@@ -74,8 +75,8 @@ public static class LyoDateTimeDisplay
     }
 
     /// <summary>
-    /// Short zone label for a converted local instant (EST/EDT when the OS name is already short, otherwise initials of the English
-    /// standard/daylight name). Never uses the IANA id. UTC stays <c>UTC</c>; unknown names fall back to a UTC offset (<c>UTC-4</c>).
+    /// Short zone label for a converted local instant (EST/EDT when the OS name is already short, otherwise initials of the English standard/daylight name). Never uses the IANA
+    /// id. UTC stays <c>UTC</c>; unknown names fall back to a UTC offset (<c>UTC-4</c>).
     /// </summary>
     public static string FormatTimeZoneLabel(TimeZoneInfo timeZone, DateTime local)
     {
@@ -94,10 +95,8 @@ public static class LyoDateTimeDisplay
     }
 
     private static bool IsUtcZone(TimeZoneInfo timeZone)
-        => timeZone.Equals(TimeZoneInfo.Utc)
-           || timeZone.Id.Equals("UTC", StringComparison.OrdinalIgnoreCase)
-           || timeZone.Id.Equals("Etc/UTC", StringComparison.OrdinalIgnoreCase)
-           || timeZone.Id.Equals("Etc/Universal", StringComparison.OrdinalIgnoreCase);
+        => timeZone.Equals(TimeZoneInfo.Utc) || timeZone.Id.Equals("UTC", StringComparison.OrdinalIgnoreCase) ||
+            timeZone.Id.Equals("Etc/UTC", StringComparison.OrdinalIgnoreCase) || timeZone.Id.Equals("Etc/Universal", StringComparison.OrdinalIgnoreCase);
 
     private static bool IsShortAbbreviation(string? name)
     {
@@ -135,7 +134,7 @@ public static class LyoDateTimeDisplay
             letters[i] = char.ToUpperInvariant(part[0]);
         }
 
-        acronym = new string(letters);
+        acronym = new(letters);
         return acronym.Length is >= 2 and <= 5;
     }
 
@@ -208,21 +207,26 @@ public static class LyoDateTimeDisplay
                 yield break;
             case string:
                 yield return value;
+
                 yield break;
             case JsonElement { ValueKind: JsonValueKind.Array } arr:
                 foreach (var el in arr.EnumerateArray())
                     yield return el;
+
                 yield break;
             case IEnumerable<object?> objects:
                 foreach (var item in objects)
                     yield return item;
+
                 yield break;
-            case System.Collections.IEnumerable enumerable:
+            case IEnumerable enumerable:
                 foreach (var item in enumerable)
                     yield return item;
+
                 yield break;
             default:
                 yield return value;
+
                 break;
         }
     }

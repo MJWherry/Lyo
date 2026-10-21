@@ -6,8 +6,8 @@ using Lyo.Exceptions;
 namespace Lyo.Common.Metadata.Records;
 
 /// <summary>
-/// Catalog row for an IANA media type. File extensions live on <see cref="FileTypeInfo" />; this type is the MIME string, its aliases, and HTTP
-/// <c>Content-Type</c> helpers. Several file types may share one row (for example <see cref="Unknown" /> for <c>application/octet-stream</c>).
+/// Catalog row for an IANA media type. File extensions live on <see cref="FileTypeInfo" />; this type is the MIME string, its aliases, and HTTP <c>Content-Type</c> helpers.
+/// Several file types may share one row (for example <see cref="Unknown" /> for <c>application/octet-stream</c>).
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class MimeTypeInfo
@@ -34,8 +34,9 @@ public sealed class MimeTypeInfo
     public static readonly MimeTypeInfo ProblemJson = new("application/problem+json");
 
     public static readonly MimeTypeInfo Html = new("text/html");
-    public static readonly MimeTypeInfo JavaScript = new(
-        "application/javascript", ["text/javascript", "application/x-javascript", "application/ecmascript", "text/ecmascript"]);
+
+    public static readonly MimeTypeInfo JavaScript = new("application/javascript", ["text/javascript", "application/x-javascript", "application/ecmascript", "text/ecmascript"]);
+
     public static readonly MimeTypeInfo Graphql = new("application/graphql");
     public static readonly MimeTypeInfo WwwFormUrlEncoded = new("application/x-www-form-urlencoded");
 
@@ -73,8 +74,9 @@ public sealed class MimeTypeInfo
     public static readonly MimeTypeInfo JavaEar = new("application/x-java-ear");
     public static readonly MimeTypeInfo AndroidAar = new("application/vnd.android.aar");
     public static readonly MimeTypeInfo DebianPackage = new("application/vnd.debian.binary-package", ["application/x-debian-package"]);
-    public static readonly MimeTypeInfo RpmPackage = new(
-        "application/x-rpm", ["application/redhat-package-manager", "application/x-redhat-package-manager"]);
+
+    public static readonly MimeTypeInfo RpmPackage = new("application/x-rpm", ["application/redhat-package-manager", "application/x-redhat-package-manager"]);
+
     public static readonly MimeTypeInfo WindowsInstallerMsi = new("application/x-msi");
 
     public static readonly MimeTypeInfo Gpg = new("application/pgp-encrypted");
@@ -104,8 +106,8 @@ public sealed class MimeTypeInfo
     public static readonly MimeTypeInfo Mpeg = new("video/mpeg", ["video/mpg"]);
     public static readonly MimeTypeInfo MpegTs = new("video/mp2t");
     public static readonly MimeTypeInfo ThreeGp = new("video/3gpp", ["video/3gp"]);
-    public static readonly MimeTypeInfo Hls = new(
-        "application/vnd.apple.mpegurl", ["application/x-mpegurl", "audio/mpegurl", "audio/x-mpegurl"]);
+
+    public static readonly MimeTypeInfo Hls = new("application/vnd.apple.mpegurl", ["application/x-mpegurl", "audio/mpegurl", "audio/x-mpegurl"]);
 
     private static readonly Dictionary<string, MimeTypeInfo> ByValue = new(StringComparer.OrdinalIgnoreCase);
     private static readonly List<MimeTypeInfo> AllTypes = [];
@@ -119,10 +121,24 @@ public sealed class MimeTypeInfo
     /// <summary>Every registered media type. Duplicate field aliases (if any) appear once.</summary>
     public static IReadOnlyList<MimeTypeInfo> All => AllTypes;
 
+    /// <summary>
+    /// True when the payload is character data, so a <c>charset</c> parameter is meaningful. Covers <c>text/*</c> plus structured text types under <c>application/</c> (JSON,
+    /// XML, JavaScript, GraphQL, and the <c>+json</c> / <c>+xml</c> suffixes from RFC 6839).
+    /// </summary>
+    public bool IsTextBased
+        => Value.StartsWith("text/", StringComparison.OrdinalIgnoreCase) || Value.EndsWith("+json", StringComparison.OrdinalIgnoreCase) ||
+            Value.EndsWith("+xml", StringComparison.OrdinalIgnoreCase) ||
+            Value is "application/json" or "application/xml" or "application/javascript" or "application/graphql" or "application/x-www-form-urlencoded";
+
+    /// <summary>
+    /// HTTP <c>Content-Type</c> header value: <see cref="ContentType(string)" /> for text payloads, bare <see cref="Value" /> for binary ones. Prefer this over choosing at the
+    /// call site — appending <c>charset</c> to a PDF or spreadsheet is meaningless.
+    /// </summary>
+    public string HttpContentType => IsTextBased ? ContentType() : Value;
+
     static MimeTypeInfo()
     {
         var fields = typeof(MimeTypeInfo).PublicStaticFields<MimeTypeInfo>();
-
         foreach (var mime in fields) {
             if (!ByValue.ContainsKey(mime.Value))
                 AllTypes.Add(mime);
@@ -140,36 +156,18 @@ public sealed class MimeTypeInfo
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(value);
         Value = value.Trim();
-        Aliases = aliases is { Length: > 0 }
-            ? aliases.Select(static a => a.Trim()).Where(static a => a.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToArray()
-            : [];
+        Aliases = aliases is { Length: > 0 } ? aliases.Select(static a => a.Trim()).Where(static a => a.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToArray() : [];
     }
 
     /// <inheritdoc />
     public override string ToString() => Value;
 
     /// <summary>
-    /// True when the payload is character data, so a <c>charset</c> parameter is meaningful. Covers <c>text/*</c> plus structured text types under
-    /// <c>application/</c> (JSON, XML, JavaScript, GraphQL, and the <c>+json</c> / <c>+xml</c> suffixes from RFC 6839).
-    /// </summary>
-    public bool IsTextBased
-        => Value.StartsWith("text/", StringComparison.OrdinalIgnoreCase)
-            || Value.EndsWith("+json", StringComparison.OrdinalIgnoreCase)
-            || Value.EndsWith("+xml", StringComparison.OrdinalIgnoreCase)
-            || Value is "application/json" or "application/xml" or "application/javascript" or "application/graphql" or "application/x-www-form-urlencoded";
-
-    /// <summary>
-    /// <see cref="Value" /> plus a <c>; charset=</c> parameter, for HTTP <c>Content-Type</c> headers on text payloads (for example
-    /// <c>text/csv; charset=utf-8</c>). Prefer this over concatenating the parameter at the call site.
+    /// <see cref="Value" /> plus a <c>; charset=</c> parameter, for HTTP <c>Content-Type</c> headers on text payloads (for example <c>text/csv; charset=utf-8</c>). Prefer this
+    /// over concatenating the parameter at the call site.
     /// </summary>
     /// <param name="charset">Charset name; falls back to <see cref="Utf8Charset" />.</param>
     public string ContentType(string charset = Utf8Charset) => charset.IsNullOrWhitespace() ? Value : $"{Value}; charset={charset.Trim()}";
-
-    /// <summary>
-    /// HTTP <c>Content-Type</c> header value: <see cref="ContentType(string)" /> for text payloads, bare <see cref="Value" /> for binary ones. Prefer this
-    /// over choosing at the call site — appending <c>charset</c> to a PDF or spreadsheet is meaningless.
-    /// </summary>
-    public string HttpContentType => IsTextBased ? ContentType() : Value;
 
     /// <summary>Looks up a catalog row by MIME token, including aliases. Strips RFC 6838 parameters after the first <c>;</c>.</summary>
     /// <param name="mimeType">MIME token, for example <c>application/pdf</c> or <c>text/plain; charset=utf-8</c>.</param>

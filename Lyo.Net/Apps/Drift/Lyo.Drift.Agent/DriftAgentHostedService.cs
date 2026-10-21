@@ -1,13 +1,13 @@
 using System.Text.Json;
 using System.Threading.Channels;
 using Lyo.Api.Client;
-using Lyo.Json;
 using Lyo.Diff.ObjectGraph;
 using Lyo.Drift.Client;
 using Lyo.Drift.Models;
 using Lyo.Exceptions;
 using Lyo.FileSystemWatcher;
 using Lyo.FileSystemWatcher.Models;
+using Lyo.Json;
 using Lyo.SystemInformation;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,23 +17,21 @@ using IoFileSystemWatcher = System.IO.FileSystemWatcher;
 
 namespace Lyo.Drift.Agent;
 
-/// <summary>
-/// Registers with the collector, watches configured directories, and posts snapshots off the watcher debounce thread via a bounded channel.
-/// </summary>
+/// <summary>Registers with the collector, watches configured directories, and posts snapshots off the watcher debounce thread via a bounded channel.</summary>
 /// <remarks>
-/// Native <see cref="IoFileSystemWatcher" /> events are consumed inside <see cref="Watcher" />. This hosted service must not POST from <c>ScanCompleted</c>
-/// or from the system-info timer callback.
+/// Native <see cref="IoFileSystemWatcher" /> events are consumed inside <see cref="Watcher" />. This hosted service must not POST from <c>ScanCompleted</c> or from the
+/// system-info timer callback.
 /// </remarks>
 public sealed class DriftAgentHostedService : BackgroundService
 {
     private static readonly JsonSerializerOptions Json = LyoJsonSerializerOptions.Create();
-    private readonly DriftAgentOptions _options;
-    private readonly IDriftClient _client;
-    private readonly IObjectGraphDiffService _objectGraphDiff;
-    private readonly ILogger<DriftAgentHostedService> _logger;
     private readonly Channel<IngestWork> _channel;
-    private readonly List<Watcher> _watchers = [];
+    private readonly IDriftClient _client;
     private readonly Dictionary<string, Guid> _lastSnapshotIdByWatch = new(StringComparer.OrdinalIgnoreCase);
+    private readonly ILogger<DriftAgentHostedService> _logger;
+    private readonly IObjectGraphDiffService _objectGraphDiff;
+    private readonly DriftAgentOptions _options;
+    private readonly List<Watcher> _watchers = [];
     private Guid? _instanceId;
     private Guid? _lastSystemSnapshotId;
 
@@ -50,11 +48,7 @@ public sealed class DriftAgentHostedService : BackgroundService
     internal bool SystemInfoTimerCallbackRunning { get; private set; }
 
     /// <summary>Builds an agent over <paramref name="client" />.</summary>
-    public DriftAgentHostedService(
-        DriftAgentOptions options,
-        IDriftClient client,
-        IObjectGraphDiffService objectGraphDiff,
-        ILogger<DriftAgentHostedService>? logger = null)
+    public DriftAgentHostedService(DriftAgentOptions options, IDriftClient client, IObjectGraphDiffService objectGraphDiff, ILogger<DriftAgentHostedService>? logger = null)
     {
         ArgumentHelpers.ThrowIfNull(options);
         ArgumentHelpers.ThrowIfNull(client);
@@ -122,15 +116,22 @@ public sealed class DriftAgentHostedService : BackgroundService
     {
         var key = _options.InstanceKey;
         var result = await RetryAsync(
-            () => _client.UpsertInstanceAsync(
-                new() {
-                    InstanceKey = key,
-                    MachineName = Environment.MachineName,
-                    ProcessId = Environment.ProcessId,
-                    State = DriftInstanceState.Running,
-                    WatchesJson = JsonSerializer.Serialize(
-                        _options.Watches.Select(w => new { w.Path, w.IncludeSubdirectories, w.IncludePatterns, w.ExcludePatterns }), Json)
-                }, ct), ct).ConfigureAwait(false);
+                () => _client.UpsertInstanceAsync(
+                    new() {
+                        InstanceKey = key,
+                        MachineName = Environment.MachineName,
+                        ProcessId = Environment.ProcessId,
+                        State = DriftInstanceState.Running,
+                        WatchesJson = JsonSerializer.Serialize(
+                            _options.Watches.Select(w => new {
+                                w.Path,
+                                w.IncludeSubdirectories,
+                                w.IncludePatterns,
+                                w.ExcludePatterns
+                            }), Json)
+                    }, ct), ct)
+            .ConfigureAwait(false);
+
         if (result is not { IsSuccess: true, Data: { } data })
             throw new InvalidOperationException("Drift instance upsert failed.");
 
@@ -142,13 +143,15 @@ public sealed class DriftAgentHostedService : BackgroundService
         foreach (var watch in _options.Watches) {
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(watch.Path);
             var watcher = new Watcher(
-                watch.Path, new FileSystemWatcherOptions {
+                watch.Path,
+                new FileSystemWatcherOptions {
                     IncludeSubdirectories = watch.IncludeSubdirectories,
                     IncludePatterns = watch.IncludePatterns,
                     ExcludePatterns = watch.ExcludePatterns,
                     EnableFileHashing = watch.EnableFileHashing,
                     DebounceTimerDelay = watch.DebounceTimerDelay
                 });
+
             var root = watcher.Path;
             watcher.ScanCompleted += (_, e) => OnScanCompleted(root, e);
             _watchers.Add(watcher);
@@ -203,14 +206,16 @@ public sealed class DriftAgentHostedService : BackgroundService
             return;
 
         var posted = await RetryAsync(
-            () => _client.PostSnapshotAsync(
-                new() {
-                    InstanceId = instanceId,
-                    Kind = DriftSnapshotKind.FileTree,
-                    WatchRoot = work.WatchRoot,
-                    TakenAtUtc = work.TakenAtUtc,
-                    TreeJson = JsonSerializer.Serialize(work.Tree, Json)
-                }, ct), ct).ConfigureAwait(false);
+                () => _client.PostSnapshotAsync(
+                    new() {
+                        InstanceId = instanceId,
+                        Kind = DriftSnapshotKind.FileTree,
+                        WatchRoot = work.WatchRoot,
+                        TakenAtUtc = work.TakenAtUtc,
+                        TreeJson = JsonSerializer.Serialize(work.Tree, Json)
+                    }, ct), ct)
+            .ConfigureAwait(false);
+
         if (posted is not { IsSuccess: true, Data: { } snapshot })
             return;
 
@@ -219,13 +224,8 @@ public sealed class DriftAgentHostedService : BackgroundService
             _lastSnapshotIdByWatch[work.WatchRoot ?? ""] = snapshot.Id;
 
         if (_options.PostLiveChanges && work.Changes is { Count: > 0 }) {
-            await RetryAsync(
-                () => _client.PostChangesAsync(
-                    new() {
-                        InstanceId = instanceId,
-                        WatchRoot = work.WatchRoot,
-                        Changes = work.Changes.ToList()
-                    }, ct), ct).ConfigureAwait(false);
+            await RetryAsync(() => _client.PostChangesAsync(new() { InstanceId = instanceId, WatchRoot = work.WatchRoot, Changes = work.Changes.ToList() }, ct), ct)
+                .ConfigureAwait(false);
         }
 
         if (_options.ComputeDiffsLocally && !snapshot.Deduped && previousId != Guid.Empty && previousId != snapshot.Id && work.Tree is not null) {
@@ -235,14 +235,15 @@ public sealed class DriftAgentHostedService : BackgroundService
                 if (oldTree is not null) {
                     var changes = FileSystemSnapshotDiffer.DetectChanges(oldTree, work.Tree, work.TakenAtUtc, ct);
                     await RetryAsync(
-                        () => _client.PostDiffAsync(
-                            new() {
-                                InstanceId = instanceId,
-                                FromSnapshotId = previousId,
-                                ToSnapshotId = snapshot.Id,
-                                Source = DriftDiffSource.Agent,
-                                FileChangesJson = JsonSerializer.Serialize(changes, Json)
-                            }, ct), ct).ConfigureAwait(false);
+                            () => _client.PostDiffAsync(
+                                new() {
+                                    InstanceId = instanceId,
+                                    FromSnapshotId = previousId,
+                                    ToSnapshotId = snapshot.Id,
+                                    Source = DriftDiffSource.Agent,
+                                    FileChangesJson = JsonSerializer.Serialize(changes, Json)
+                                }, ct), ct)
+                        .ConfigureAwait(false);
                 }
             }
         }
@@ -255,13 +256,15 @@ public sealed class DriftAgentHostedService : BackgroundService
 
         var json = JsonSerializer.Serialize(work.Projection, Json);
         var posted = await RetryAsync(
-            () => _client.PostSnapshotAsync(
-                new() {
-                    InstanceId = instanceId,
-                    Kind = DriftSnapshotKind.SystemInfo,
-                    TakenAtUtc = work.TakenAtUtc,
-                    SystemInfoJson = json
-                }, ct), ct).ConfigureAwait(false);
+                () => _client.PostSnapshotAsync(
+                    new() {
+                        InstanceId = instanceId,
+                        Kind = DriftSnapshotKind.SystemInfo,
+                        TakenAtUtc = work.TakenAtUtc,
+                        SystemInfoJson = json
+                    }, ct), ct)
+            .ConfigureAwait(false);
+
         if (posted is not { IsSuccess: true, Data: { } snapshot })
             return;
 
@@ -276,19 +279,22 @@ public sealed class DriftAgentHostedService : BackgroundService
                 if (oldProjection is not null) {
                     var diffs = _objectGraphDiff.GetDifferences(oldProjection, work.Projection);
                     var dtos = diffs.Select(d => new ObjectGraphDifferenceDto {
-                        Path = d.Path,
-                        OldValueJson = d.OldValue is null ? null : JsonSerializer.Serialize(d.OldValue, Json),
-                        NewValueJson = d.NewValue is null ? null : JsonSerializer.Serialize(d.NewValue, Json)
-                    }).ToArray();
+                            Path = d.Path,
+                            OldValueJson = d.OldValue is null ? null : JsonSerializer.Serialize(d.OldValue, Json),
+                            NewValueJson = d.NewValue is null ? null : JsonSerializer.Serialize(d.NewValue, Json)
+                        })
+                        .ToArray();
+
                     await RetryAsync(
-                        () => _client.PostDiffAsync(
-                            new() {
-                                InstanceId = instanceId,
-                                FromSnapshotId = fromId,
-                                ToSnapshotId = snapshot.Id,
-                                Source = DriftDiffSource.Agent,
-                                SystemDifferencesJson = JsonSerializer.Serialize(dtos, Json)
-                            }, ct), ct).ConfigureAwait(false);
+                            () => _client.PostDiffAsync(
+                                new() {
+                                    InstanceId = instanceId,
+                                    FromSnapshotId = fromId,
+                                    ToSnapshotId = snapshot.Id,
+                                    Source = DriftDiffSource.Agent,
+                                    SystemDifferencesJson = JsonSerializer.Serialize(dtos, Json)
+                                }, ct), ct)
+                        .ConfigureAwait(false);
                 }
             }
         }
@@ -355,10 +361,12 @@ public sealed class DriftAgentHostedService : BackgroundService
     }
 
     private async Task RetryAsync(Func<Task> send, CancellationToken ct)
-        => await RetryAsync(async () => {
-            await send().ConfigureAwait(false);
-            return true;
-        }, ct).ConfigureAwait(false);
+        => await RetryAsync(
+                async () => {
+                    await send().ConfigureAwait(false);
+                    return true;
+                }, ct)
+            .ConfigureAwait(false);
 
     private enum IngestKind
     {
@@ -377,7 +385,6 @@ public sealed class DriftAgentHostedService : BackgroundService
         public static IngestWork ForTree(string watchRoot, FileSystemSnapshotTreeDto tree, IReadOnlyList<FileSystemChangeDto> changes, DateTime takenAtUtc)
             => new(IngestKind.FileTree, watchRoot, tree, changes, null, takenAtUtc);
 
-        public static IngestWork ForSystem(SystemInfoDriftProjection projection, DateTime takenAtUtc)
-            => new(IngestKind.SystemInfo, null, null, null, projection, takenAtUtc);
+        public static IngestWork ForSystem(SystemInfoDriftProjection projection, DateTime takenAtUtc) => new(IngestKind.SystemInfo, null, null, null, projection, takenAtUtc);
     }
 }

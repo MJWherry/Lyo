@@ -5,14 +5,11 @@ using Lyo.Exceptions;
 
 namespace Lyo.FantasyFootball.Api;
 
-/// <summary>
-/// Reads chats and trades from <see cref="IFantasyFootballStore" />. Refresh and writes call <see cref="FantasyFootballClient" />, then save what ESPN returns.
-/// </summary>
+/// <summary>Reads chats and trades from <see cref="IFantasyFootballStore" />. Refresh and writes call <see cref="FantasyFootballClient" />, then save what ESPN returns.</summary>
 public sealed class FantasyFootballInteractions(FantasyFootballClient client, IFantasyFootballStore store)
 {
     /// <summary>Pulls the league, roster, chats, and trades from ESPN and upserts them.</summary>
-    public Task<FantasyLeagueRecord> RefreshAsync(int leagueId, int seasonId, CancellationToken ct = default)
-        => RefreshAsync(leagueId, seasonId, null, ct);
+    public Task<FantasyLeagueRecord> RefreshAsync(int leagueId, int seasonId, CancellationToken ct = default) => RefreshAsync(leagueId, seasonId, null, ct);
 
     /// <summary>Pulls the league, roster, chats, and trades from ESPN with the supplied cookies, then upserts them.</summary>
     public async Task<FantasyLeagueRecord> RefreshAsync(int leagueId, int seasonId, FantasyFootballCredentials? credentials, CancellationToken ct = default)
@@ -23,7 +20,6 @@ public sealed class FantasyFootballInteractions(FantasyFootballClient client, IF
         var period = league!.ScoringPeriodId > 0 ? league.ScoringPeriodId : 1;
         var withRosters = await client.League.GetTeamsAsync(leagueId, seasonId, period, ct).ConfigureAwait(false);
         await store.SaveLeagueAsync(ToLeague(league, withRosters), ct).ConfigureAwait(false);
-
         var chats = await client.Communication.GetLeagueChatAsync(leagueId, seasonId, ct).ConfigureAwait(false) ?? [];
         await store.SaveConversationsAsync(leagueId, seasonId, chats.Select(ToConversation).ToArray(), ct).ConfigureAwait(false);
         foreach (var chat in chats) {
@@ -42,8 +38,7 @@ public sealed class FantasyFootballInteractions(FantasyFootballClient client, IF
     }
 
     /// <summary>Loads the stored league. Null before the first refresh.</summary>
-    public Task<FantasyLeagueRecord?> GetLeagueAsync(int leagueId, int seasonId, CancellationToken ct = default)
-        => store.GetLeagueAsync(leagueId, seasonId, ct);
+    public Task<FantasyLeagueRecord?> GetLeagueAsync(int leagueId, int seasonId, CancellationToken ct = default) => store.GetLeagueAsync(leagueId, seasonId, ct);
 
     /// <summary>Lists stored chat topics. Does not call ESPN.</summary>
     public Task<IReadOnlyList<FantasyConversationRecord>> ListConversationsAsync(int leagueId, int seasonId, CancellationToken ct = default)
@@ -58,7 +53,13 @@ public sealed class FantasyFootballInteractions(FantasyFootballClient client, IF
         => PostMessageAsync(leagueId, seasonId, topicId, content, null, ct);
 
     /// <summary>Posts user text to a topic with the supplied cookies, then stores the message ESPN returns.</summary>
-    public async Task<FantasyMessageRecord> PostMessageAsync(int leagueId, int seasonId, string topicId, string content, FantasyFootballCredentials? credentials, CancellationToken ct = default)
+    public async Task<FantasyMessageRecord> PostMessageAsync(
+        int leagueId,
+        int seasonId,
+        string topicId,
+        string content,
+        FantasyFootballCredentials? credentials,
+        CancellationToken ct = default)
     {
         using var scope = Authenticate(credentials);
         var posted = await client.Communication.PostMessageAsync(leagueId, seasonId, new ChatMessageBuilder(topicId).Content(content), ct).ConfigureAwait(false);
@@ -72,7 +73,13 @@ public sealed class FantasyFootballInteractions(FantasyFootballClient client, IF
         => PostDirectAsync(leagueId, seasonId, recipient, content, null, ct);
 
     /// <summary>Posts user text to an existing direct message with the supplied cookies, then stores the message ESPN returns.</summary>
-    public async Task<FantasyMessageRecord> PostDirectAsync(int leagueId, int seasonId, string recipient, string content, FantasyFootballCredentials? credentials, CancellationToken ct = default)
+    public async Task<FantasyMessageRecord> PostDirectAsync(
+        int leagueId,
+        int seasonId,
+        string recipient,
+        string content,
+        FantasyFootballCredentials? credentials,
+        CancellationToken ct = default)
     {
         using var scope = Authenticate(credentials);
         var posted = await client.Communication.PostMessageAsync(leagueId, seasonId, ChatMessageBuilder.To(recipient).Content(content), ct).ConfigureAwait(false);
@@ -91,13 +98,19 @@ public sealed class FantasyFootballInteractions(FantasyFootballClient client, IF
         => ProposeTradeAsync(leagueId, seasonId, request, null, ct);
 
     /// <summary>Proposes a trade with the supplied cookies, then stores the transaction ESPN returns.</summary>
-    public async Task<FantasyTradeRecord> ProposeTradeAsync(int leagueId, int seasonId, ProposeTradeRequest request, FantasyFootballCredentials? credentials, CancellationToken ct = default)
+    public async Task<FantasyTradeRecord> ProposeTradeAsync(
+        int leagueId,
+        int seasonId,
+        ProposeTradeRequest request,
+        FantasyFootballCredentials? credentials,
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(request);
         using var scope = Authenticate(credentials);
         var builder = new TradeTransactionBuilder(request.TeamId, request.OtherTeamId, request.ScoringPeriodId).Comment(request.Comment);
         foreach (var playerId in request.SendPlayerIds)
             builder.Send(playerId);
+
         foreach (var playerId in request.ReceivePlayerIds)
             builder.Receive(playerId);
 
@@ -112,7 +125,13 @@ public sealed class FantasyFootballInteractions(FantasyFootballClient client, IF
         => RespondToTradeAsync(leagueId, seasonId, transactionId, request, null, ct);
 
     /// <summary>Accepts, declines, upholds, or vetoes a trade with the supplied cookies, then stores the transaction ESPN returns.</summary>
-    public async Task<FantasyTradeRecord> RespondToTradeAsync(int leagueId, int seasonId, string transactionId, RespondTradeRequest request, FantasyFootballCredentials? credentials, CancellationToken ct = default)
+    public async Task<FantasyTradeRecord> RespondToTradeAsync(
+        int leagueId,
+        int seasonId,
+        string transactionId,
+        RespondTradeRequest request,
+        FantasyFootballCredentials? credentials,
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(request);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(transactionId);
@@ -122,8 +141,9 @@ public sealed class FantasyFootballInteractions(FantasyFootballClient client, IF
             "decline" => TradeTransactionBuilder.Decline(request.TeamId, request.ScoringPeriodId, transactionId),
             "uphold" => TradeTransactionBuilder.Uphold(request.TeamId, request.ScoringPeriodId, transactionId),
             "veto" => TradeTransactionBuilder.Veto(request.TeamId, request.ScoringPeriodId, transactionId),
-            _ => throw new ArgumentException("Action must be accept, decline, uphold, or veto.", nameof(request))
+            var _ => throw new ArgumentException("Action must be accept, decline, uphold, or veto.", nameof(request))
         };
+
         builder.Comment(request.Comment);
         var posted = await client.Transactions.RespondToTradeAsync(leagueId, seasonId, builder, ct).ConfigureAwait(false);
         var trade = ToTrade(posted);
@@ -140,16 +160,9 @@ public sealed class FantasyFootballInteractions(FantasyFootballClient client, IF
         return client.UseCredentials(credentials.EspnS2, credentials.Swid);
     }
 
-    private sealed class NoopScope : IDisposable
-    {
-        public static readonly NoopScope Instance = new();
-
-        public void Dispose() { }
-    }
-
     private static bool IsTrade(TransactionRes trade)
-        => trade.Type?.StartsWith("TRADE", StringComparison.OrdinalIgnoreCase) == true
-            || trade.Items.Any(item => string.Equals(item.Type, "TRADE", StringComparison.OrdinalIgnoreCase));
+        => trade.Type?.StartsWith("TRADE", StringComparison.OrdinalIgnoreCase) == true ||
+            trade.Items.Any(item => string.Equals(item.Type, "TRADE", StringComparison.OrdinalIgnoreCase));
 
     private static FantasyLeagueRecord ToLeague(LeagueRes league, LeagueRes? withRosters)
         => new() {
@@ -162,7 +175,12 @@ public sealed class FantasyFootballInteractions(FantasyFootballClient client, IF
         };
 
     private static FantasyMemberRecord ToMember(MemberRes member)
-        => new() { EspnMemberId = member.Id, DisplayName = member.DisplayName, FirstName = member.FirstName, LastName = member.LastName };
+        => new() {
+            EspnMemberId = member.Id,
+            DisplayName = member.DisplayName,
+            FirstName = member.FirstName,
+            LastName = member.LastName
+        };
 
     private static FantasyTeamRecord ToTeam(TeamRes team)
         => new() {
@@ -172,11 +190,9 @@ public sealed class FantasyFootballInteractions(FantasyFootballClient client, IF
             Location = team.Location,
             Nickname = team.Nickname,
             PrimaryOwnerId = team.PrimaryOwner,
-            Roster = (team.Roster?.Entries ?? []).Where(entry => entry.PlayerId != null).Select(entry => new FantasyRosterEntryRecord {
-                ScoringPeriodId = 0,
-                PlayerId = entry.PlayerId!.Value,
-                PlayerName = entry.PlayerPoolEntry?.Player?.FullName
-            }).ToArray()
+            Roster = (team.Roster?.Entries ?? []).Where(entry => entry.PlayerId != null)
+                .Select(entry => new FantasyRosterEntryRecord { ScoringPeriodId = 0, PlayerId = entry.PlayerId!.Value, PlayerName = entry.PlayerPoolEntry?.Player?.FullName })
+                .ToArray()
         };
 
     private static FantasyConversationRecord ToConversation(ChatConversationRes conversation)
@@ -184,7 +200,8 @@ public sealed class FantasyFootballInteractions(FantasyFootballClient client, IF
         var members = conversation.Members.Count > 0
             ? conversation.Members.Select(ToMember).ToArray()
             : conversation.ViewableByIds.Select(id => new FantasyMemberRecord { EspnMemberId = id }).ToArray();
-        return new FantasyConversationRecord {
+
+        return new() {
             EspnTopicId = conversation.Id,
             Type = conversation.Type,
             UnreadCount = conversation.UnreadMessageCount,
@@ -210,6 +227,7 @@ public sealed class FantasyFootballInteractions(FantasyFootballClient client, IF
     {
         foreach (var player in Side(message.Side1, 1))
             yield return player;
+
         foreach (var player in Side(message.Side2, 2))
             yield return player;
     }
@@ -221,6 +239,7 @@ public sealed class FantasyFootballInteractions(FantasyFootballClient client, IF
 
         foreach (var player in side.Added)
             yield return Player(side, number, player, "added");
+
         foreach (var player in side.Dropped)
             yield return Player(side, number, player, "dropped");
     }
@@ -242,10 +261,18 @@ public sealed class FantasyFootballInteractions(FantasyFootballClient client, IF
             ScoringPeriodId = trade.ScoringPeriodId,
             IsPending = trade.IsPending == true,
             Items = trade.Items.Select(item => new FantasyTradeItemRecord {
-                FromEspnTeamId = item.FromTeamId,
-                ToEspnTeamId = item.ToTeamId,
-                PlayerId = item.PlayerId,
-                PlayerName = item.Player?.FullName
-            }).ToArray()
+                    FromEspnTeamId = item.FromTeamId,
+                    ToEspnTeamId = item.ToTeamId,
+                    PlayerId = item.PlayerId,
+                    PlayerName = item.Player?.FullName
+                })
+                .ToArray()
         };
+
+    private sealed class NoopScope : IDisposable
+    {
+        public static readonly NoopScope Instance = new();
+
+        public void Dispose() { }
+    }
 }

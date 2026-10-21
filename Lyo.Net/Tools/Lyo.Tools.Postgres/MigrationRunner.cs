@@ -1,9 +1,8 @@
 using Lyo.Audit.Postgres.Database;
-using Lyo.ChangeTracker.Postgres.Database;
 using Lyo.Book.Postgres;
 using Lyo.Book.Postgres.Database;
+using Lyo.ChangeTracker.Postgres.Database;
 using Lyo.Comic.Postgres.Database;
-using Lyo.Story.Postgres.Database;
 using Lyo.Comment.Postgres.Database;
 using Lyo.Config.Postgres.Database;
 using Lyo.ContactUs.Postgres.Database;
@@ -14,16 +13,17 @@ using Lyo.Favorite.Postgres.Database;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.Geolocation.Postgres.Database;
 using Lyo.HomeInventory.Postgres.Database;
-using Lyo.Recipe.Postgres.Database;
 using Lyo.Job.Postgres.Database;
 using Lyo.Note.Postgres.Database;
 using Lyo.People.Postgres.Database;
 using Lyo.Postgres;
 using Lyo.Rating.Postgres.Database;
+using Lyo.Recipe.Postgres.Database;
 using Lyo.Reporting.Postgres.Database;
 using Lyo.ShortUrl.Postgres.Database;
 using Lyo.Sms.Postgres.Database;
 using Lyo.Sms.Twilio.Postgres.Database;
+using Lyo.Story.Postgres.Database;
 using Lyo.Tag.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -36,8 +36,8 @@ namespace Lyo.Tools.Postgres;
 public sealed record MigrationStatus(string Name, bool IsApplied);
 
 /// <summary>
-/// Applies EF Core migrations on demand for any postgres context. Pulls the connection string from ConnectionStringProvider at call time so menu edits
-/// take effect immediately.
+/// Applies EF Core migrations on demand for any postgres context. Pulls the connection string from ConnectionStringProvider at call time so menu edits take effect
+/// immediately.
 /// </summary>
 public sealed class MigrationRunner
 {
@@ -140,6 +140,7 @@ public sealed class MigrationRunner
             await context.Database.MigrateAsync(ct);
             if (context is BookDbContext bookDb)
                 await BookDbSeeder.SeedAsync(bookDb, ct);
+
             _logger.LogInformation("Migrations complete for {Context}", typeof(TContext).Name);
         }
         catch (Exception ex) {

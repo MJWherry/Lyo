@@ -1,7 +1,7 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.PackageMetadata.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.PackageMetadata.Postgres;
 
@@ -93,6 +93,7 @@ public sealed class PostgresPackageMetadataStore : IPackageMetadataStore
         var externalPrefixes = claimedList.Count == 0
             ? []
             : await db.StackPrefixes.Where(p => claimedList.Contains(p.NormalizedPrefix) && !ids.Contains(p.PackageMetadataId)).ToListAsync(ct).ConfigureAwait(false);
+
         var byId = existing.ToDictionary(e => e.Id);
         var toInsert = new List<PackageStackPrefixEntity>();
         foreach (var item in folded) {
@@ -151,8 +152,8 @@ public sealed class PostgresPackageMetadataStore : IPackageMetadataStore
     /// <summary>Clears the in-process ordered-prefix snapshot so the next bulk lookup reloads from PostgreSQL.</summary>
     /// <remarks>
     /// Call this when another process or tool mutates <c>package_metadata</c> tables without going through <see cref="RegisterManyAsync" />. When
-    /// <see cref="PostgresPackageMetadataOptions.PrefixCatalogCaching" /> is <see cref="PostgresPrefixCatalogCachingMode.Disabled" />, there is no snapshot to drop; the method only
-    /// bumps an internal generation counter (harmless for lookups).
+    /// <see cref="PostgresPackageMetadataOptions.PrefixCatalogCaching" /> is <see cref="PostgresPrefixCatalogCachingMode.Disabled" />, there is no snapshot to drop; the method only bumps
+    /// an internal generation counter (harmless for lookups).
     /// </remarks>
     public void ClearPrefixCatalogCache() => InvalidateCatalogSnapshot();
 
@@ -225,13 +226,6 @@ public sealed class PostgresPackageMetadataStore : IPackageMetadataStore
         return foldedList;
     }
 
-    private sealed class FoldedRegistration(PackageMetadata package)
-    {
-        public PackageMetadata Package { get; set; } = package;
-
-        public List<string> Prefixes { get; } = [];
-    }
-
     private static async Task<List<(string Prefix, PackageMetadata Metadata)>> QueryAndMaterializeOrderedModelsAsync(PackageMetadataDbContext db, CancellationToken ct)
     {
         var rows = await db.StackPrefixes.AsNoTracking()
@@ -252,6 +246,13 @@ public sealed class PostgresPackageMetadataStore : IPackageMetadataStore
             _mutationVersion++;
             _catalogSnapshot = null;
         }
+    }
+
+    private sealed class FoldedRegistration(PackageMetadata package)
+    {
+        public PackageMetadata Package { get; set; } = package;
+
+        public List<string> Prefixes { get; } = [];
     }
 
     private sealed record PrefixCatalogSnapshot(long MutationVersion, List<(string Prefix, PackageMetadata Metadata)> Ordered);

@@ -39,11 +39,7 @@ internal static class WatchTree
 
     /// <summary>Watcher options for one matrix point. Path comparison is ordinal so the diff does not fold case.</summary>
     public static FileSystemWatcherOptions Options(bool enableHashing)
-        => new() {
-            EnableFileHashing = enableHashing,
-            IncludeSubdirectories = true,
-            PathComparison = StringComparison.Ordinal
-        };
+        => new() { EnableFileHashing = enableHashing, IncludeSubdirectories = true, PathComparison = StringComparison.Ordinal };
 
     /// <summary>Writes <paramref name="fileCount" /> small files under <paramref name="root" />, spread across <c>fileCount / 10</c> directories.</summary>
     public static List<string> BuildSmall(string root, int fileCount, long fileBytes)
@@ -103,8 +99,8 @@ internal static class WatchTree
     }
 
     /// <summary>
-    /// Throws when <paramref name="changes" /> is not what <paramref name="ev" /> should produce. Content edits and rename matching show up only when hashing is on,
-    /// because a snapshot taken without hashing stores no size, fingerprint, or digest.
+    /// Throws when <paramref name="changes" /> is not what <paramref name="ev" /> should produce. Content edits and rename matching show up only when hashing is on, because a
+    /// snapshot taken without hashing stores no size, fingerprint, or digest.
     /// </summary>
     public static void AssertDetected(BenchEvent ev, bool hashing, IReadOnlyList<FileSystemChangeInfo> changes)
     {

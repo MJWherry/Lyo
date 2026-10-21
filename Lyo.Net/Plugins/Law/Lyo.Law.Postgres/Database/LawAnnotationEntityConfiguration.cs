@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Lyo.Law.Postgres.Database;
 
-/// <summary>Maps <see cref="LawAnnotationEntity"/> to <c>law.annotation</c>.</summary>
+/// <summary>Maps <see cref="LawAnnotationEntity" /> to <c>law.annotation</c>.</summary>
 public sealed class LawAnnotationEntityConfiguration : IEntityTypeConfiguration<LawAnnotationEntity>
 {
     /// <inheritdoc />

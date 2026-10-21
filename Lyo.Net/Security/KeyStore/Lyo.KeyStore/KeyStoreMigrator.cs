@@ -1,12 +1,15 @@
-using System.Security.Cryptography;
 using Lyo.Exceptions;
 using KeyNotFoundException = Lyo.KeyStore.Exceptions.KeyNotFoundException;
+
+#if NET10_0_OR_GREATER
+using System.Security.Cryptography;
+#endif
 
 namespace Lyo.KeyStore;
 
 /// <summary>
-/// Copies key-encryption keys from one <see cref="IKeyStore" /> to another. Version strings are preserved with <c>AddKey</c>. The source is not modified.
-/// The source must implement <see cref="IKeyInventoryStore" />.
+/// Copies key-encryption keys from one <see cref="IKeyStore" /> to another. Version strings are preserved with <c>AddKey</c>. The source is not modified. The source must
+/// implement <see cref="IKeyInventoryStore" />.
 /// </summary>
 public static class KeyStoreMigrator
 {
@@ -156,12 +159,7 @@ public enum KeyStoreMigrationItemOutcome
 /// <param name="KeyId">Key id this report describes.</param>
 /// <param name="Version">Version this report describes.</param>
 /// <param name="Outcome">How that version finished.</param>
-public sealed record KeyStoreMigrationProgress(
-    int KeysCompleted,
-    int KeysTotal,
-    string KeyId,
-    string Version,
-    KeyStoreMigrationItemOutcome Outcome);
+public sealed record KeyStoreMigrationProgress(int KeysCompleted, int KeysTotal, string KeyId, string Version, KeyStoreMigrationItemOutcome Outcome);
 
 /// <summary>Counts from a finished key-store copy.</summary>
 /// <param name="KeysCopied">Key ids that finished.</param>

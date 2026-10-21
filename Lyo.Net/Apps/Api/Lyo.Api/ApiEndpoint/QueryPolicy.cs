@@ -4,12 +4,10 @@ using Lyo.Query.Models.Common.Request;
 
 namespace Lyo.Api.ApiEndpoint;
 
-/// <summary>
-/// Request-shape limits for a query endpoint, independent of the entity CLR type so the typed and dynamic builders share one implementation.
-/// </summary>
+/// <summary>Request-shape limits for a query endpoint, independent of the entity CLR type so the typed and dynamic builders share one implementation.</summary>
 /// <remarks>
-/// Every limit is optional and unset means unbounded. The dynamic routes used to bypass these entirely, which let a caller ask for a hundred include paths against a route the
-/// host believed was capped at five.
+/// Every limit is optional and unset means unbounded. The dynamic routes used to bypass these entirely, which let a caller ask for a hundred include paths against a route
+/// the host believed was capped at five.
 /// </remarks>
 public sealed record QueryPolicy
 {

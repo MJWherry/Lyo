@@ -3,9 +3,7 @@ using Lyo.FileMetadataStore.Models;
 
 namespace Lyo.FileStorage;
 
-/// <summary>
-/// Plaintext hash a downloader can check. This is <see cref="FileStoreResult.OriginalFileHash" /> plus the algorithm and size. Wrapped key material is not included.
-/// </summary>
+/// <summary>Plaintext hash a downloader can check. This is <see cref="FileStoreResult.OriginalFileHash" /> plus the algorithm and size. Wrapped key material is not included.</summary>
 /// <param name="HashAlgorithm">Algorithm that produced <see cref="OriginalFileHash" />. SHA-256 when the row did not record one.</param>
 /// <param name="OriginalFileHash">Digest of the plaintext bytes.</param>
 /// <param name="OriginalFileSize">Plaintext length in bytes.</param>

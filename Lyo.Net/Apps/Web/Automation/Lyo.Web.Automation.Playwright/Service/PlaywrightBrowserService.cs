@@ -45,6 +45,15 @@ public sealed class PlaywrightBrowserService : IPlaywrightBrowserService
         return CreateSessionCore(effective);
     }
 
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        _disposed = true;
+    }
+
     private IPlaywrightBrowserSession CreateSessionCore(PlaywrightBrowserOptions effective)
     {
         var sessionId = LyoGuid.CreateV7();
@@ -53,15 +62,6 @@ public sealed class PlaywrightBrowserService : IPlaywrightBrowserService
         var browser = new PlaywrightBrowser(effective, ctx, baseLogger, _metrics);
         Interlocked.Increment(ref _activeSessions);
         return new PlaywrightBrowserSession(browser, OnSessionDisposed);
-    }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        if (_disposed)
-            return;
-
-        _disposed = true;
     }
 
     private void OnSessionDisposed() => Interlocked.Decrement(ref _activeSessions);

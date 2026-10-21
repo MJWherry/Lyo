@@ -172,10 +172,7 @@ public class JobRunLifecycleFixTests
     public async Task CreateJobRun_ConcurrentDuplicateIdempotencyKeys_AllResolveToOneRun()
     {
         var key = $"race-{LyoGuid.CreateV7():N}";
-        var tasks = Enumerable.Range(0, 4)
-            .Select(_ => _fixture.JobService.CreateJobRun(new(_fixture.JobDefinitionId, "test-user") { IdempotencyKey = key }, TestCt))
-            .ToList();
-
+        var tasks = Enumerable.Range(0, 4).Select(_ => _fixture.JobService.CreateJobRun(new(_fixture.JobDefinitionId, "test-user") { IdempotencyKey = key }, TestCt)).ToList();
         var results = await Task.WhenAll(tasks);
 
         // Regression for the double-commit bug: the unique-violation recovery path must return the existing run, not throw
@@ -226,12 +223,9 @@ public class JobRunLifecycleFixTests
     {
         var scheduleId = await SeedScheduleAsync(_fixture.JobDefinitionId);
         var slot = DateTime.UtcNow.AddMinutes(-1);
-        var first = await _fixture.JobService.CreateJobRun(
-            new(_fixture.JobDefinitionId, "test-user", scheduleId: scheduleId) { ScheduledSlotUtc = slot }, TestCt);
+        var first = await _fixture.JobService.CreateJobRun(new(_fixture.JobDefinitionId, "test-user", scheduleId) { ScheduledSlotUtc = slot }, TestCt);
         Assert.True(first.IsSuccess, first.Error?.Detail ?? "first create failed");
-
-        var second = await _fixture.JobService.CreateJobRun(
-            new(_fixture.JobDefinitionId, "test-user", scheduleId: scheduleId) { ScheduledSlotUtc = slot }, TestCt);
+        var second = await _fixture.JobService.CreateJobRun(new(_fixture.JobDefinitionId, "test-user", scheduleId) { ScheduledSlotUtc = slot }, TestCt);
         Assert.True(second.IsSuccess, second.Error?.Detail ?? "duplicate slot must be idempotent");
         Assert.Equal(first.Data!.Id, second.Data!.Id);
     }
@@ -242,9 +236,7 @@ public class JobRunLifecycleFixTests
         var scheduleId = await SeedScheduleAsync(_fixture.JobDefinitionId);
         var slot = DateTime.UtcNow.AddMinutes(-2);
         var tasks = Enumerable.Range(0, 4)
-            .Select(
-                _ => _fixture.JobService.CreateJobRun(
-                    new(_fixture.JobDefinitionId, "test-user", scheduleId: scheduleId) { ScheduledSlotUtc = slot }, TestCt))
+            .Select(_ => _fixture.JobService.CreateJobRun(new(_fixture.JobDefinitionId, "test-user", scheduleId) { ScheduledSlotUtc = slot }, TestCt))
             .ToList();
 
         var results = await Task.WhenAll(tasks);
@@ -308,7 +300,7 @@ public class JobRunLifecycleFixTests
             JobDefinitionId = _fixture.JobDefinitionId,
             State = state,
             CreatedBy = "test",
-            CreatedTimestamp = DateTime.UtcNow,
+            CreatedTimestamp = DateTime.UtcNow
         };
 
         configure?.Invoke(run);
@@ -368,6 +360,7 @@ public class JobRunLifecycleFixTests
                 Enabled = true,
                 CreatedTimestamp = DateTime.UtcNow
             });
+
         await db.SaveChangesAsync(TestCt);
         return scheduleId;
     }

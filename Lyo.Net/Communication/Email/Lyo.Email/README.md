@@ -411,7 +411,8 @@ dotnet test
 
 ## Several files in one ZIP
 
-`AddZippedFile` and `AddAttachmentsAsZip` pack several files into one ZIP attachment. The packer is `ZipFileBuilder` in `Lyo.Common.Core`. It queues entries until `Build`, and further adds throw after that.
+`AddZippedFile` and `AddAttachmentsAsZip` pack several files into one ZIP attachment. The packer is `ZipFileBuilder` in `Lyo.Common.Core`. It queues entries until `Build`, and
+further adds throw after that.
 
 ## Resilience
 
@@ -535,7 +536,8 @@ Log levels:
 
 ## `IEmailService`
 
-- `Task<Result<EmailRequest>> SendEmailAsync(EmailRequestBuilder requestBuilder, string fromAddress, string? fromName = null, CancellationToken ct = default)`. Send mail using a custom from address.
+- `Task<Result<EmailRequest>> SendEmailAsync(EmailRequestBuilder requestBuilder, string fromAddress, string? fromName = null, CancellationToken ct = default)`. Send mail using a
+  custom from address.
 - `Task<Result<EmailRequest>> SendEmailAsync(EmailRequestBuilder requestBuilder, CancellationToken ct = default)`. Send mail using the default from address.
 - `Task<Result<EmailRequest>> SendEmailAsync(EmailRequest request, CancellationToken ct = default)`. Send mail from an EmailRequest object.
 - `Task<IReadOnlyList<Result<EmailRequest>>> SendBulkEmailAsync(IEnumerable<EmailRequestBuilder> builders, CancellationToken ct = default)`. Send several emails one after another.
@@ -601,7 +603,8 @@ The same instance can be used from multiple threads at once.
 
 - `MaxBulkEmailLimit` (default `1000`). `SendBulkEmailAsync` throws `ArgumentOutsideRangeException` when the input exceeds this count.
 - `MaxAttachmentCountPerEmail` (default `20`). Enforced per request for both single and bulk sends.
-- `BulkEmailConcurrencyLimit` (default `10`). A soft cap used by callers planning concurrent bulk batches. The current implementation sends messages sequentially within a single bulk call, so this value does not change behavior inside a call.
+- `BulkEmailConcurrencyLimit` (default `10`). A soft cap used by callers planning concurrent bulk batches. The current implementation sends messages sequentially within a single
+  bulk call, so this value does not change behavior inside a call.
 
 ## Cancellation
 

@@ -24,7 +24,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-
             if (!services.Any(s => s.ServiceType == typeof(AwsTranslationOptions))) {
                 var options = new AwsTranslationOptions();
                 configuration.GetSection(configSectionName).Bind(options);
@@ -36,7 +35,6 @@ public static class Extensions
             if (!services.Any(s => s.ServiceType == typeof(IAmazonTranslate))) {
                 services.AddSingleton<IAmazonTranslate>(provider => {
                     var options = provider.GetRequiredService<AwsTranslationOptions>();
-
                     var config = new AmazonTranslateConfig();
                     if (!string.IsNullOrWhiteSpace(options.Region)) {
                         var region = RegionEndpoint.GetBySystemName(options.Region);
@@ -79,7 +77,6 @@ public static class Extensions
             configure(options);
             options.Validate();
             services.AddSingleton(options);
-
             services.AddSingleton<AwsTranslationService>(provider => {
                 var options = provider.GetRequiredService<AwsTranslationOptions>();
                 var logger = provider.GetService<ILogger<AwsTranslationService>>();

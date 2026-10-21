@@ -18,11 +18,7 @@ public class ZipFileReaderTests
     [Fact]
     public void Entries_ExposeLengthCommentAndUnixMode()
     {
-        var bytes = ZipFileBuilder.Create()
-            .WithComment("bundle")
-            .AddFile("a.txt", [1, 2], new() { Comment = "note", UnixMode = 0x1ED })
-            .Build();
-
+        var bytes = ZipFileBuilder.Create().WithComment("bundle").AddFile("a.txt", [1, 2], new() { Comment = "note", UnixMode = 0x1ED }).Build();
         using var reader = ZipFileReader.Open(new MemoryStream(bytes));
         Assert.Equal("bundle", reader.Comment);
         var entry = Assert.Single(reader.Entries);
@@ -38,6 +34,7 @@ public class ZipFileReaderTests
     {
         if (OperatingSystem.IsWindows())
             return;
+
         using var session = new IOTempSession();
         session.CreateDirectory("src");
         session.CreateDirectory("src/empty");
@@ -46,7 +43,6 @@ public class ZipFileReaderTests
         File.SetUnixFileMode(source, mode);
         var local = new DateTime(2024, 3, 4, 5, 6, 8, DateTimeKind.Local);
         File.SetLastWriteTime(source, local);
-
         var zipPath = session.GetFilePath("files.zip");
         ZipFileBuilder.Create().AddDirectory(session.GetDirectoryPath("src")).BuildToFile(zipPath);
         var dest = session.CreateDirectory("out");
@@ -66,11 +62,12 @@ public class ZipFileReaderTests
     {
         using var session = new IOTempSession();
         var zipPath = session.GetFilePath("bad.zip");
-        using (var file = File.Create(zipPath))
-        using (var archive = new ZipArchive(file, ZipArchiveMode.Create, leaveOpen: true)) {
-            var entry = archive.CreateEntry("../evil.txt");
-            using var output = entry.Open();
-            output.Write([1]);
+        using (var file = File.Create(zipPath)) {
+            using (var archive = new ZipArchive(file, ZipArchiveMode.Create, true)) {
+                var entry = archive.CreateEntry("../evil.txt");
+                using var output = entry.Open();
+                output.Write([1]);
+            }
         }
 
         var dest = session.CreateDirectory("safe");

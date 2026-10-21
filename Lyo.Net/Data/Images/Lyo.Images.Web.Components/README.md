@@ -15,14 +15,14 @@ services.AddSpriteSheetExportService(); // ISpriteSheetExportService used by Spr
 
 ## Components
 
-| Component | Purpose |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `<ImageWorkbench />` | Upload an image, inspect metadata and palette, and call `IImageService` (resize, crop, rotate, watermark, convert, thumbnail, compress). |
-| `<SpriteSheetWorkbench />` | Two tabs. Animate a flat strip, or pull a grid spritesheet from an animated source (GIF/WebP/APNG) through `ISpriteSheetExportService`. |
-| `<SpriteSheetAnimateUploader />` | Multi-sheet upload plus label/select chrome that `SpriteSheetWorkbench` uses. |
-| `<SpriteSheetImageInfo />` | Short metadata readout (dimensions, format, byte size) for a loaded raster. |
-| `<SpriteSheetPlayer />` | Plays a sliced strip in the browser with a canvas JS animator for live preview. |
-| `<SpriteSheetProcessor />` | Slicing and parameter panel for spritesheets (frame size, padding, sample budget, FPS, grid). |
+| Component                        | Purpose                                                                                                                                  |
+|----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| `<ImageWorkbench />`             | Upload an image, inspect metadata and palette, and call `IImageService` (resize, crop, rotate, watermark, convert, thumbnail, compress). |
+| `<SpriteSheetWorkbench />`       | Two tabs. Animate a flat strip, or pull a grid spritesheet from an animated source (GIF/WebP/APNG) through `ISpriteSheetExportService`.  |
+| `<SpriteSheetAnimateUploader />` | Multi-sheet upload plus label/select chrome that `SpriteSheetWorkbench` uses.                                                            |
+| `<SpriteSheetImageInfo />`       | Short metadata readout (dimensions, format, byte size) for a loaded raster.                                                              |
+| `<SpriteSheetPlayer />`          | Plays a sliced strip in the browser with a canvas JS animator for live preview.                                                          |
+| `<SpriteSheetProcessor />`       | Slicing and parameter panel for spritesheets (frame size, padding, sample budget, FPS, grid).                                            |
 
 Supporting types sit in `SpriteSheetModels.cs` (`SpriteSheetEntry`, frame/grid state that drives the workbench).
 

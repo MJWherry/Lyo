@@ -13,6 +13,10 @@ namespace Lyo.Authentication.Web.Components;
 
 public partial class AuthClaimGrid
 {
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Type"), new("Value")];
+
+    private LyoDataGridProjected? _dataGrid;
+
     [Parameter]
     [EditorRequired]
     public IApiClient ApiClient { get; set; } = null!;
@@ -25,10 +29,6 @@ public partial class AuthClaimGrid
 
     private string _route => $"{BaseRoute.TrimEnd('/')}/Claim";
 
-    private LyoDataGridProjected? _dataGrid;
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Type"), new("Value")];
-
     public Task RefreshAsync() => _dataGrid is null ? Task.CompletedTask : _dataGrid.RefreshData();
 
     private void ApplyQuery(ProjectionQueryReqBuilder q)
@@ -39,11 +39,7 @@ public partial class AuthClaimGrid
 
     private async Task AddClaim()
     {
-        var parameters = new DialogParameters<AuthClaimEditDialog> {
-            { d => d.ApiClient, ApiClient },
-            { d => d.ClaimRoute, _route },
-            { d => d.UserId, UserId ?? Guid.Empty }
-        };
+        var parameters = new DialogParameters<AuthClaimEditDialog> { { d => d.ApiClient, ApiClient }, { d => d.ClaimRoute, _route }, { d => d.UserId, UserId ?? Guid.Empty } };
         var dialog = await DialogService.ShowAsync<AuthClaimEditDialog>("Add claim", parameters, LyoDialogPresets.Small);
         var result = await dialog.Result;
         if (result is { Canceled: false })
@@ -63,6 +59,7 @@ public partial class AuthClaimGrid
             { d => d.Type, ProjectedValueHelper.GetDisplayValue(item, "Type") },
             { d => d.Value, ProjectedValueHelper.GetDisplayValue(item, "Value") }
         };
+
         var dialog = await DialogService.ShowAsync<AuthClaimEditDialog>("Edit claim", parameters, LyoDialogPresets.Small);
         var result = await dialog.Result;
         if (result is { Canceled: false })

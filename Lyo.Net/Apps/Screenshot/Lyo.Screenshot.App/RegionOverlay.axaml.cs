@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
-using Lyo.Screenshot;
 
 namespace Lyo.Screenshot.App;
 
@@ -10,9 +9,9 @@ public partial class RegionOverlay : Window
     private PixelPoint? _anchor;
     private PixelPoint _current;
 
-    public RegionOverlay() => InitializeComponent();
-
     public CaptureRegion? Result { get; private set; }
+
+    public RegionOverlay() => InitializeComponent();
 
     protected override void OnOpened(EventArgs e)
     {
@@ -20,6 +19,7 @@ public partial class RegionOverlay : Window
         var screens = Screens?.All;
         if (screens is null || screens.Count == 0)
             return;
+
         var left = screens.Min(screen => screen.Bounds.X);
         var top = screens.Min(screen => screen.Bounds.Y);
         var right = screens.Max(screen => screen.Bounds.Right);
@@ -41,6 +41,7 @@ public partial class RegionOverlay : Window
     {
         if (_anchor is null)
             return;
+
         _current = this.PointToScreen(e.GetPosition(this));
         UpdateSelection();
     }
@@ -49,6 +50,7 @@ public partial class RegionOverlay : Window
     {
         if (_anchor is null)
             return;
+
         _current = this.PointToScreen(e.GetPosition(this));
         var region = ToRegion();
         _anchor = null;
@@ -65,6 +67,7 @@ public partial class RegionOverlay : Window
     {
         if (e.Key != Key.Escape)
             return;
+
         Result = null;
         Close();
         e.Handled = true;
@@ -74,6 +77,7 @@ public partial class RegionOverlay : Window
     {
         if (_anchor is null)
             return;
+
         var region = ToRegion();
         var scale = RenderScaling <= 0 ? 1 : RenderScaling;
         Selection.IsVisible = true;

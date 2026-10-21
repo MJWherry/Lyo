@@ -7,7 +7,9 @@ MudBlazor workbench for trying [`Lyo.Tts.Typecast`](../Lyo.Tts.Typecast/README.m
 - `TtsWorkbench` is the Typecast workbench panel.
 - Voice, model, and audio-format selectors (model defaults come from `TypecastModel.SsfmV30` / `SsfmV21`), optional seed, and a tag-chip view of the selected voice.
 - Multi-line text field.
-- **Synthesize** and **Test Connection** invoke the resolved `TypecastTtsService` (and its bound `TypecastOptions` for defaults). The component needs `TypecastTtsService`, `TypecastOptions`, `IJsInterop`, and `ISnackbar` in DI, registered via [`Lyo.Tts.Typecast`](../Lyo.Tts.Typecast/README.md) and [`Lyo.Typecast.Client`](../../../Integration/Typecast/Lyo.Typecast.Client/README.md).
+- **Synthesize** and **Test Connection** invoke the resolved `TypecastTtsService` (and its bound `TypecastOptions` for defaults). The component needs `TypecastTtsService`,
+  `TypecastOptions`, `IJsInterop`, and `ISnackbar` in DI, registered via [`Lyo.Tts.Typecast`](../Lyo.Tts.Typecast/README.md) and [
+  `Lyo.Typecast.Client`](../../../Integration/Typecast/Lyo.Typecast.Client/README.md).
 - Plays the returned audio bytes inline in the browser.
 
 ## Supported framework

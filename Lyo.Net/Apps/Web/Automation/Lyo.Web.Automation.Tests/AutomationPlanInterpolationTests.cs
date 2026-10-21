@@ -1,3 +1,4 @@
+using Lyo.Web.Automation.Abstractions;
 using Lyo.Web.Automation.Plan;
 
 namespace Lyo.Web.Automation.Tests;
@@ -33,7 +34,7 @@ public sealed class AutomationPlanInterpolationTests
         => new() {
             Strings = new Dictionary<string, string> { ["name"] = "Ada" },
             StringLists = new Dictionary<string, IReadOnlyList<string>>(),
-            Elements = new Dictionary<string, Abstractions.IWebAutomationElement>(),
+            Elements = new Dictionary<string, IWebAutomationElement>(),
             ContextItems = new Dictionary<string, object?>()
         };
 }

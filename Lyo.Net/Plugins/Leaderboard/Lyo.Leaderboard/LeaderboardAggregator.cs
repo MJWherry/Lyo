@@ -22,7 +22,7 @@ public static class LeaderboardAggregator
             AggregationKind.Average => approvedScores.Average(s => s.Score),
             AggregationKind.Count => approvedScores.Count,
             AggregationKind.Latest => approvedScores.OrderByDescending(s => s.OccurredAt).First().Score,
-            _ => 0
+            var _ => 0
         };
     }
 

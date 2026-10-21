@@ -10,22 +10,22 @@ public sealed class ReportLayoutCssTests
     [Fact]
     public void ResolvePadding_Unset_UsesThemeFallback()
     {
-        Assert.Equal("24px", ReportLayoutCss.ResolvePadding(new(), compact: true));
-        Assert.Equal("40px", ReportLayoutCss.ResolvePadding(new(), compact: false));
+        Assert.Equal("24px", ReportLayoutCss.ResolvePadding(new(), true));
+        Assert.Equal("40px", ReportLayoutCss.ResolvePadding(new(), false));
     }
 
     [Fact]
     public void ResolvePadding_ShorthandAndPerSide_Resolves()
     {
         var layout = new Layout { Padding = "16px", PaddingTop = "8px" };
-        Assert.Equal("8px 16px 16px 16px", ReportLayoutCss.ResolvePadding(layout, compact: false));
+        Assert.Equal("8px 16px 16px 16px", ReportLayoutCss.ResolvePadding(layout, false));
     }
 
     [Fact]
     public void ResolvePadding_ExpressionInjection_DropsToFallback()
     {
         var layout = new Layout { Padding = "expression(alert(1))" };
-        Assert.Equal("40px", ReportLayoutCss.ResolvePadding(layout, compact: false));
+        Assert.Equal("40px", ReportLayoutCss.ResolvePadding(layout, false));
     }
 
     [Fact]
@@ -38,8 +38,7 @@ public sealed class ReportLayoutCssTests
     }
 
     [Fact]
-    public void ResolvePageRule_AutoWithoutMargin_ReturnsEmpty()
-        => Assert.Equal(string.Empty, ReportLayoutCss.ResolvePageRule(new()));
+    public void ResolvePageRule_AutoWithoutMargin_ReturnsEmpty() => Assert.Equal(string.Empty, ReportLayoutCss.ResolvePageRule(new()));
 
     [Theory]
     [InlineData("Letter", "Portrait", "letter portrait")]
@@ -67,6 +66,7 @@ public sealed class ReportLayoutCssTests
             .SetTitle("T")
             .SetLayout(l => l.SetPadding("12px").SetMargin("1in").SetRootComponentType("Lyo.Reporting.Business.Example.Invoice"))
             .Build();
+
         var json = ReportJson.Serialize(report);
         var back = ReportJson.Deserialize<object>(json);
         Assert.Equal("12px", back.Layout.Padding);

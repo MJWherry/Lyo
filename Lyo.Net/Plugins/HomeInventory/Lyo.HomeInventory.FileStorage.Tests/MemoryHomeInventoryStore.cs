@@ -1,7 +1,6 @@
-using Lyo.EntityReference.Models;
-using Lyo.HomeInventory;
-using Lyo.HomeInventory.Models.Enums;
 using Lyo.Common.Core.Identifiers;
+using Lyo.EntityReference.Models;
+using Lyo.HomeInventory.Models.Enums;
 
 namespace Lyo.HomeInventory.FileStorage.Tests;
 
@@ -13,13 +12,16 @@ internal sealed class MemoryHomeInventoryStore : IHomeInventoryStore
     {
         if (attachment.Id == Guid.Empty)
             attachment.Id = LyoGuid.CreateV7();
+
         if (attachment.CreatedTimestamp == default)
             attachment.CreatedTimestamp = DateTime.UtcNow;
+
         var existing = Attachments.FindIndex(a => a.Id == attachment.Id);
         if (existing >= 0)
             Attachments[existing] = attachment;
         else
             Attachments.Add(attachment);
+
         return Task.CompletedTask;
     }
 
@@ -57,7 +59,14 @@ internal sealed class MemoryHomeInventoryStore : IHomeInventoryStore
 
     public Task DeleteLocationAsync(Guid id, Guid? tenantId, CancellationToken ct = default) => throw new NotSupportedException();
 
-    public Task UpsertStockAsync(Guid itemId, Guid locationId, decimal quantityOnHand, decimal quantityReserved, decimal? reorderPoint, Guid? tenantId, CancellationToken ct = default)
+    public Task UpsertStockAsync(
+        Guid itemId,
+        Guid locationId,
+        decimal quantityOnHand,
+        decimal quantityReserved,
+        decimal? reorderPoint,
+        Guid? tenantId,
+        CancellationToken ct = default)
         => throw new NotSupportedException();
 
     public Task<HomeItemStockRecord?> GetStockAsync(Guid itemId, Guid locationId, Guid? tenantId, CancellationToken ct = default) => throw new NotSupportedException();
@@ -65,12 +74,25 @@ internal sealed class MemoryHomeInventoryStore : IHomeInventoryStore
     public Task<IReadOnlyList<HomeItemStockRecord>> GetStockForItemAsync(Guid itemId, Guid? tenantId, CancellationToken ct = default) => throw new NotSupportedException();
 
     public Task AdjustStockAsync(
-        Guid itemId, Guid locationId, decimal quantityDelta, HomeItemMovementType movementType, string? referenceNumber, EntityRef? createdBy, Guid? tenantId,
+        Guid itemId,
+        Guid locationId,
+        decimal quantityDelta,
+        HomeItemMovementType movementType,
+        string? referenceNumber,
+        EntityRef? createdBy,
+        Guid? tenantId,
         CancellationToken ct = default)
         => throw new NotSupportedException();
 
     public Task TransferStockAsync(
-        Guid itemId, Guid fromLocationId, Guid toLocationId, decimal quantity, string? referenceNumber, EntityRef? createdBy, Guid? tenantId, CancellationToken ct = default)
+        Guid itemId,
+        Guid fromLocationId,
+        Guid toLocationId,
+        decimal quantity,
+        string? referenceNumber,
+        EntityRef? createdBy,
+        Guid? tenantId,
+        CancellationToken ct = default)
         => throw new NotSupportedException();
 
     public Task<IReadOnlyList<HomeItemMovementRecord>> ListMovementsForItemAsync(Guid itemId, int take, Guid? tenantId, CancellationToken ct = default)

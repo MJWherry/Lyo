@@ -12,9 +12,7 @@ namespace Lyo.Discord.Bot;
 /// <summary>Adds <see cref="LyoDiscordBotOptions" />, <see cref="IGuildDatabaseSyncService" />, and <see cref="LyoDiscordClient" />.</summary>
 public static class ServiceCollectionExtensions
 {
-    /// <summary>
-    /// Reads <see cref="LyoDiscordBotOptions" /> from configuration, registers <see cref="LyoDiscordClient" />, sync service, and <typeparamref name="TBot" /> (singleton).
-    /// </summary>
+    /// <summary>Reads <see cref="LyoDiscordBotOptions" /> from configuration, registers <see cref="LyoDiscordClient" />, sync service, and <typeparamref name="TBot" /> (singleton).</summary>
     public static IServiceCollection AddLyoDiscordBot<TBot>(this IServiceCollection services, IConfiguration configuration, string sectionName = LyoDiscordBotOptions.SectionName)
         where TBot : LyoDiscordBotBase
     {

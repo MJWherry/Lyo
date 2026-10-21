@@ -25,7 +25,7 @@ public static class Extensions
             return services.AddLawDbContextFactory(options);
         }
 
-        /// <summary>Registers the law DbContext factory from configuration section <see cref="PostgresLawOptions.SectionName"/>.</summary>
+        /// <summary>Registers the law DbContext factory from configuration section <see cref="PostgresLawOptions.SectionName" />.</summary>
         public IServiceCollection AddLawDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresLawOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -45,7 +45,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Registers <see cref="ILawStore"/> on PostgreSQL.</summary>
+        /// <summary>Registers <see cref="ILawStore" /> on PostgreSQL.</summary>
         public IServiceCollection AddPostgresLawStore(Action<PostgresLawOptions> configure)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -55,7 +55,7 @@ public static class Extensions
             return services.AddPostgresLawStore(options);
         }
 
-        /// <summary>Registers <see cref="ILawStore"/> from configuration section <see cref="PostgresLawOptions.SectionName"/>.</summary>
+        /// <summary>Registers <see cref="ILawStore" /> from configuration section <see cref="PostgresLawOptions.SectionName" />.</summary>
         public IServiceCollection AddPostgresLawStoreFromConfiguration(IConfiguration configuration, string configSectionName = PostgresLawOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -66,7 +66,7 @@ public static class Extensions
             return services.AddPostgresLawStore(options);
         }
 
-        /// <summary>Registers <see cref="ILawStore"/> on PostgreSQL.</summary>
+        /// <summary>Registers <see cref="ILawStore" /> on PostgreSQL.</summary>
         public IServiceCollection AddPostgresLawStore(PostgresLawOptions options)
         {
             ArgumentHelpers.ThrowIfNull(services);

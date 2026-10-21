@@ -1,7 +1,6 @@
 using Bogus;
 using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
-using Lyo.Ledger;
 using Lyo.Ledger.Postgres;
 using Lyo.Ledger.Postgres.Database;
 using Lyo.Seed;
@@ -27,9 +26,7 @@ public sealed class LedgerEfSeedContributor : SeedContributor, IEfSeedSource
     public DbContext CreateContext(string connectionString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        var options = new DbContextOptionsBuilder<LedgerDbContext>()
-            .UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<LedgerDbContext>().UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema)).Options;
         return new LedgerDbContext(options);
     }
 
@@ -41,35 +38,42 @@ public sealed class LedgerEfSeedContributor : SeedContributor, IEfSeedSource
         var now = DateTime.UtcNow;
         var cashId = LyoGuid.CreateV7();
         var revenueId = LyoGuid.CreateV7();
-        graph.Entity(1, _ => new LedgerAccountEntity {
-            Id = cashId,
-            Code = "1000",
-            Name = "Cash",
-            AccountType = (int)LedgerAccountType.Asset,
-            CreatedAt = now
-        });
-        graph.Entity(1, _ => new LedgerAccountEntity {
-            Id = revenueId,
-            Code = "4000",
-            Name = "Revenue",
-            AccountType = (int)LedgerAccountType.Revenue,
-            CreatedAt = now
-        });
-        graph.Entity(options.Count, i => new LedgerJournalEntity {
-            Id = LyoGuid.CreateV7(),
-            Status = (int)LedgerJournalStatus.Posted,
-            Memo = faker.Commerce.ProductName(),
-            PostedAt = now,
-            CreatedAt = now
-        }).ForEach(_ => 2, (journal, line) => new LedgerJournalLineEntity {
-            Id = LyoGuid.CreateV7(),
-            JournalId = journal.Id,
-            LineNumber = line + 1,
-            AccountId = line == 0 ? cashId : revenueId,
-            Debit = line == 0 ? Amount : 0,
-            Credit = line == 0 ? 0 : Amount,
-            Memo = line == 0 ? "Debit cash" : "Credit revenue"
-        });
+        graph.Entity(
+            1, _ => new LedgerAccountEntity {
+                Id = cashId,
+                Code = "1000",
+                Name = "Cash",
+                AccountType = (int)LedgerAccountType.Asset,
+                CreatedAt = now
+            });
+
+        graph.Entity(
+            1, _ => new LedgerAccountEntity {
+                Id = revenueId,
+                Code = "4000",
+                Name = "Revenue",
+                AccountType = (int)LedgerAccountType.Revenue,
+                CreatedAt = now
+            });
+
+        graph.Entity(
+                options.Count, i => new LedgerJournalEntity {
+                    Id = LyoGuid.CreateV7(),
+                    Status = (int)LedgerJournalStatus.Posted,
+                    Memo = faker.Commerce.ProductName(),
+                    PostedAt = now,
+                    CreatedAt = now
+                })
+            .ForEach(
+                _ => 2, (journal, line) => new LedgerJournalLineEntity {
+                    Id = LyoGuid.CreateV7(),
+                    JournalId = journal.Id,
+                    LineNumber = line + 1,
+                    AccountId = line == 0 ? cashId : revenueId,
+                    Debit = line == 0 ? Amount : 0,
+                    Credit = line == 0 ? 0 : Amount,
+                    Memo = line == 0 ? "Debit cash" : "Credit revenue"
+                });
     }
 
     private static async Task ClearAsync(SeedSession session, CancellationToken ct)

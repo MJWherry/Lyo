@@ -1,5 +1,4 @@
 using Lyo.Exceptions;
-using Lyo.Web.Automation.Models;
 
 namespace Lyo.Web.Automation.Selenium.Configuration;
 

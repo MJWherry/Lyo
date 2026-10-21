@@ -22,19 +22,19 @@ public sealed record ReportDesignSample(string Name, string Description, Func<Re
 /// <summary>Starter compositions for the design workbench. Placeholders such as <c>{Period}</c> bind from example parameter values.</summary>
 public static class ReportDesignTemplates
 {
+    private const string SampleLineItems =
+        """[{"title":"Widget A","description":"Blue anodized","qty":"2","amount":"$40.00"},{"title":"Widget B","description":"","qty":"1","amount":"$18.50"}]""";
+
+    private const string SampleRegionSeries = """[{"label":"North","value":12},{"label":"South","value":8},{"label":"West","value":15}]""";
     private static readonly string JsonArrayType = LyoTypeInfo.JsonArray.FullName;
 
-    private const string SampleLineItems = """[{"title":"Widget A","description":"Blue anodized","qty":"2","amount":"$40.00"},{"title":"Widget B","description":"","qty":"1","amount":"$18.50"}]""";
-    private const string SampleRegionSeries = """[{"label":"North","value":12},{"label":"South","value":8},{"label":"West","value":15}]""";
-
     /// <summary>
-    /// Saved-definition samples (excludes <see cref="Blank" />). Used by the workbench Templates menu and Test Gateway seed.
-    /// Each call to <see cref="ReportDesignSample.Create" /> returns a new graph.
+    /// Saved-definition samples (excludes <see cref="Blank" />). Used by the workbench Templates menu and Test Gateway seed. Each call to
+    /// <see cref="ReportDesignSample.Create" /> returns a new graph.
     /// </summary>
     public static IReadOnlyList<ReportDesignSample> Samples { get; } = [
         new("Controls gallery", "Kitchen sink: TOC, charts, FromParameter series, page break, collapsed appendix.", ControlsGallery),
-        new("Sales summary", "KPI cards plus a static category chart.", SalesSummary),
-        new("Invoice", "Bill-to, FromParameter line items, and totals.", Invoice),
+        new("Sales summary", "KPI cards plus a static category chart.", SalesSummary), new("Invoice", "Bill-to, FromParameter line items, and totals.", Invoice),
         new("Operations dashboard", "KPI cards, FromParameter bar chart, sparkline/gauge, collapsed notes.", OperationsDashboard)
     ];
 
@@ -54,35 +54,33 @@ public static class ReportDesignTemplates
             .SetTitle("{ReportTitle}")
             .SetSubtitle("{Period} · {Customer}")
             .SetDescription("Preview this gallery with the example parameters on the Parameters tab. Hidden callouts use VisibleWhen.")
-            .SetLayout(
-                l => l.SetTheme("Default")
-                    .SetPageSize("Letter")
-                    .SetOrientation("Portrait")
-                    .SetAccentColor("#2563eb")
-                    .SetHeaderText("{Customer}")
-                    .SetWatermark("{Watermark}")
-                    .ShowPageNumbers())
+            .SetLayout(l => l.SetTheme("Default")
+                .SetPageSize("Letter")
+                .SetOrientation("Portrait")
+                .SetAccentColor("#2563eb")
+                .SetHeaderText("{Customer}")
+                .SetWatermark("{Watermark}")
+                .ShowPageNumbers())
             .AddParameter("ReportTitle", example: "\"Q4 Performance\"", description: "Report title")
             .AddParameter("Period", example: "\"Q4 2024\"", required: true, description: "Reporting period")
             .AddParameter("Customer", example: "\"Acme Corporation\"", required: true)
-            .AddParameter("Completion", type: "System.Int32", example: "72", description: "Progress percent")
-            .AddParameter("ShowRisks", type: "System.Boolean", example: "true", description: "When true, the risks callout is shown")
+            .AddParameter("Completion", "System.Int32", "72", description: "Progress percent")
+            .AddParameter("ShowRisks", "System.Boolean", "true", description: "When true, the risks callout is shown")
             .AddParameter("Watermark", example: "\"DRAFT\"")
-            .AddParameter("RegionSeries", type: JsonArrayType, example: SampleRegionSeries, description: "JSON array of {label,value} for the FromParameter chart")
+            .AddParameter("RegionSeries", JsonArrayType, SampleRegionSeries, description: "JSON array of {label,value} for the FromParameter chart")
             .AddSection(
                 "Overview",
                 s => s.SetId("overview")
                     .AddTableOfContents()
                     .AddBadge("Draft", "warning")
                     .AddBadge("On track", "success")
-                    .AddGrid(
-                        g => g.SetTemplateColumns("repeat(auto-fit, minmax(220px, 1fr))")
-                            .AddCard("Period", "{Period}")
-                            .AddCard("Customer", "{Customer}", emphasized: true)
-                            .AddCard("Completion", "{Completion}%", alignment: "right"))
-                    .AddHeading("Highlights", 3)
+                    .AddGrid(g => g.SetTemplateColumns("repeat(auto-fit, minmax(220px, 1fr))")
+                        .AddCard("Period", "{Period}")
+                        .AddCard("Customer", "{Customer}", emphasized: true)
+                        .AddCard("Completion", "{Completion}%", alignment: "right"))
+                    .AddHeading("Highlights")
                     .AddText("Revenue and delivery for {Period}.")
-                    .AddCallout("All figures are example values from the workbench, not a live generate.", "info")
+                    .AddCallout("All figures are example values from the workbench, not a live generate.")
                     .AddProgress(72, "Completion")
                     .AddKeyValue("Account manager", "Jordan Lee")
                     .AddKeyValue("Status", "On track"))
@@ -110,8 +108,8 @@ public static class ReportDesignTemplates
                 s => s.SetId("charts")
                     .AddChart(ChartKind.Bar, "Static series", ["North|12", "South|8", "West|15"])
                     .AddChartFromParameter(ChartKind.Bar, "RegionSeries", "From example parameter")
-                    .AddChart(ChartKind.Sparkline, "Weekly trend", ["W1|4", "W2|7", "W3|6", "W4|9"], height: 80)
-                    .AddChart(ChartKind.Gauge, "Completion", ["Done|72", "Remaining|28"], height: 180)
+                    .AddChart(ChartKind.Sparkline, "Weekly trend", ["W1|4", "W2|7", "W3|6", "W4|9"], 80)
+                    .AddChart(ChartKind.Gauge, "Completion", ["Done|72", "Remaining|28"], 180)
                     .AddHtml("<p>HTML block with <strong>emphasis</strong> for the gallery.</p>"))
             .AddSection(
                 "Risks",
@@ -123,14 +121,10 @@ public static class ReportDesignTemplates
                 s => s.AddAddress("Bill to", ["{Customer}", "100 Main Street", "Springfield, ST 00000"])
                     .AddTotals(["Subtotal|$100.00", "Tax|$8.00", "Total|$108.00"])
                     .AddCheckbox(["I agree to the terms", "Net 30 payment"], "Please confirm:")
-                    .AddNotes("Leave packages at the loading dock.", "Notes")
+                    .AddNotes("Leave packages at the loading dock.")
                     .AddPageBreak()
                     .AddSignature("Authorized by", "Jordan Lee"))
-            .AddSection(
-                "Appendix",
-                s => s.SetCollapsed()
-                    .AddHeading("Methodology", 3)
-                    .AddText("Collapsed in generate output; dimmed on the design canvas so you can still edit it."))
+            .AddSection("Appendix", s => s.SetCollapsed().AddHeading("Methodology").AddText("Collapsed in generate output; dimmed on the design canvas so you can still edit it."))
             .SetFooter("Workbench preview for {Customer} · {Period}")
             .Build();
 
@@ -142,15 +136,14 @@ public static class ReportDesignTemplates
             .SetLayout(l => l.SetAccentColor("#0f766e").SetTheme("Formal").SetPageSize("Letter"))
             .AddParameter("Period", example: "\"Q4 2024\"", required: true)
             .AddParameter("Revenue", example: "\"$125,000.50\"")
-            .AddParameter("Orders", type: "System.Int32", example: "45")
+            .AddParameter("Orders", "System.Int32", "45")
             .AddSection(
                 "Summary",
                 s => s.AddTableOfContents()
-                    .AddGrid(
-                        g => g.SetTemplateColumns("repeat(auto-fit, minmax(220px, 1fr))")
-                            .AddCard("Period", "{Period}")
-                            .AddCard("Total revenue", "{Revenue}", alignment: "right")
-                            .AddCard("Orders", "{Orders}", alignment: "right"))
+                    .AddGrid(g => g.SetTemplateColumns("repeat(auto-fit, minmax(220px, 1fr))")
+                        .AddCard("Period", "{Period}")
+                        .AddCard("Total revenue", "{Revenue}", alignment: "right")
+                        .AddCard("Orders", "{Orders}", alignment: "right"))
                     .AddText("Use example parameters to see how this header binds before you generate."))
             .AddSection(
                 "Breakdown",
@@ -173,41 +166,31 @@ public static class ReportDesignTemplates
         => ReportBuilder<object>.New()
             .SetTitle("{InvoiceNo}")
             .SetSubtitle("{Period} · {Customer}")
-            .SetLayout(
-                l => l.SetTheme("Formal")
-                    .SetPageSize("Letter")
-                    .SetOrientation("Portrait")
-                    .SetAccentColor("#1e3a5f")
-                    .SetHeaderText("Invoice")
-                    .ShowPageNumbers())
+            .SetLayout(l => l.SetTheme("Formal").SetPageSize("Letter").SetOrientation("Portrait").SetAccentColor("#1e3a5f").SetHeaderText("Invoice").ShowPageNumbers())
             .AddParameter("InvoiceNo", example: "\"INV-1042\"", required: true, description: "Invoice number")
             .AddParameter("Period", example: "\"Q4 2024\"", required: true)
             .AddParameter("Customer", example: "\"Acme Corporation\"", required: true)
             .AddParameter("IssuedAt", example: "\"2024-12-01\"")
             .AddParameter("DueAt", example: "\"2024-12-31\"")
-            .AddParameter("LineItems", type: JsonArrayType, example: SampleLineItems, required: true, description: "JSON array of {title,description,qty,amount}")
+            .AddParameter("LineItems", JsonArrayType, SampleLineItems, true, "JSON array of {title,description,qty,amount}")
             .AddParameter("Subtotal", example: "\"$58.50\"")
             .AddParameter("Tax", example: "\"$4.68\"")
             .AddParameter("Total", example: "\"$63.18\"")
-            .AddSection(
-                s => s.SetId("invoice")
-                    .AddGrid(
-                        g => g.SetTemplateColumns("repeat(auto-fit, minmax(220px, 1fr))")
-                            .AddCard("Issued", "{IssuedAt}")
-                            .AddCard("Due", "{DueAt}"))
-                    .AddAddress("Bill to", ["{Customer}", "100 Main Street", "Springfield, ST 00000"])
-                    .AddTable(
-                        "Line items",
-                        g => g.SetBordered()
-                            .SetStriped()
-                            .SetShowRowNumbers()
-                            .SetFromParameter("LineItems")
-                            .AddColumn("Title", "title")
-                            .AddColumn("Description", "description")
-                            .AddColumn("Qty", "qty", alignment: "right")
-                            .AddColumn("Amount", "amount", alignment: "right"))
-                    .AddTotals(["Subtotal|{Subtotal}", "Tax|{Tax}", "Total|{Total}"])
-                    .AddNotes("Remit to the lockbox on the statement. PO must appear on the wire memo.", "Payment"))
+            .AddSection(s => s.SetId("invoice")
+                .AddGrid(g => g.SetTemplateColumns("repeat(auto-fit, minmax(220px, 1fr))").AddCard("Issued", "{IssuedAt}").AddCard("Due", "{DueAt}"))
+                .AddAddress("Bill to", ["{Customer}", "100 Main Street", "Springfield, ST 00000"])
+                .AddTable(
+                    "Line items",
+                    g => g.SetBordered()
+                        .SetStriped()
+                        .SetShowRowNumbers()
+                        .SetFromParameter("LineItems")
+                        .AddColumn("Title", "title")
+                        .AddColumn("Description", "description")
+                        .AddColumn("Qty", "qty", alignment: "right")
+                        .AddColumn("Amount", "amount", alignment: "right"))
+                .AddTotals(["Subtotal|{Subtotal}", "Tax|{Tax}", "Total|{Total}"])
+                .AddNotes("Remit to the lockbox on the statement. PO must appear on the wire memo.", "Payment"))
             .SetFooter("{Customer}")
             .Build();
 
@@ -217,39 +200,33 @@ public static class ReportDesignTemplates
             .SetTitle("Operations · {Period}")
             .SetSubtitle("{Region}")
             .SetDescription("KPI cards plus a chart filled from the RegionSeries example JSON at paint time.")
-            .SetLayout(
-                l => l.SetTheme("Default")
-                    .SetPageSize("Letter")
-                    .SetOrientation("Landscape")
-                    .SetAccentColor("#0f766e")
-                    .ShowPageNumbers())
+            .SetLayout(l => l.SetTheme("Default").SetPageSize("Letter").SetOrientation("Landscape").SetAccentColor("#0f766e").ShowPageNumbers())
             .AddParameter("Period", example: "\"Q4 2024\"", required: true)
             .AddParameter("Region", example: "\"Americas\"")
             .AddParameter("Revenue", example: "\"$125,000.50\"")
-            .AddParameter("Orders", type: "System.Int32", example: "45")
-            .AddParameter("OnTime", type: "System.Int32", example: "94", description: "On-time percent")
-            .AddParameter("RegionSeries", type: JsonArrayType, example: SampleRegionSeries, description: "JSON array of {label,value}")
+            .AddParameter("Orders", "System.Int32", "45")
+            .AddParameter("OnTime", "System.Int32", "94", description: "On-time percent")
+            .AddParameter("RegionSeries", JsonArrayType, SampleRegionSeries, description: "JSON array of {label,value}")
             .AddSection(
                 "Snapshot",
                 s => s.SetId("snapshot")
                     .AddTableOfContents()
-                    .AddGrid(
-                        g => g.SetTemplateColumns("repeat(auto-fit, minmax(220px, 1fr))")
-                            .AddCard("Period", "{Period}")
-                            .AddCard("Region", "{Region}", emphasized: true)
-                            .AddCard("Revenue", "{Revenue}", alignment: "right")
-                            .AddCard("Orders", "{Orders}", alignment: "right")
-                            .AddCard("On-time", "{OnTime}%", alignment: "right"))
+                    .AddGrid(g => g.SetTemplateColumns("repeat(auto-fit, minmax(220px, 1fr))")
+                        .AddCard("Period", "{Period}")
+                        .AddCard("Region", "{Region}", emphasized: true)
+                        .AddCard("Revenue", "{Revenue}", alignment: "right")
+                        .AddCard("Orders", "{Orders}", alignment: "right")
+                        .AddCard("On-time", "{OnTime}%", alignment: "right"))
                     .AddChartFromParameter(ChartKind.Bar, "RegionSeries", "Orders by region")
-                    .AddChart(ChartKind.Sparkline, "Weekly volume", ["W1|38", "W2|41", "W3|39", "W4|45"], height: 80)
-                    .AddChart(ChartKind.Gauge, "On-time", ["On time|94", "Late|6"], height: 180)
+                    .AddChart(ChartKind.Sparkline, "Weekly volume", ["W1|38", "W2|41", "W3|39", "W4|45"], 80)
+                    .AddChart(ChartKind.Gauge, "On-time", ["On time|94", "Late|6"], 180)
                     .AddBadge("Healthy", "success"))
             .AddSection(
                 "Methodology",
                 s => s.SetCollapsed()
-                    .AddHeading("Notes", 3)
+                    .AddHeading("Notes")
                     .AddText("Collapsed in generate output. On the canvas this section stays visible and dimmed so you can still edit it.")
-                    .AddCallout("Replace RegionSeries example JSON with a live parameter when you wire a data provider.", "info"))
+                    .AddCallout("Replace RegionSeries example JSON with a live parameter when you wire a data provider."))
             .SetFooter("Operations dashboard · {Period}")
             .Build();
 
@@ -264,17 +241,15 @@ public static class ReportDesignTemplates
             ReportDataJson = ReportJson.Serialize(report),
             IsActive = true,
             DefaultFormat = defaultFormat,
-            CreateParameters = report.ParameterSpecs
-                .Where(s => !string.IsNullOrWhiteSpace(s.Key))
-                .Select(
-                    s => new ReportDefinitionParameterReq {
-                        Key = s.Key.Trim(),
-                        Type = s.Type,
-                        Value = s.DefaultValue ?? s.ExampleValue,
-                        Description = s.Description,
-                        Required = s.Required,
-                        AllowedValues = s.AllowedValues
-                    })
+            CreateParameters = report.ParameterSpecs.Where(s => !string.IsNullOrWhiteSpace(s.Key))
+                .Select(s => new ReportDefinitionParameterReq {
+                    Key = s.Key.Trim(),
+                    Type = s.Type,
+                    Value = s.DefaultValue ?? s.ExampleValue,
+                    Description = s.Description,
+                    Required = s.Required,
+                    AllowedValues = s.AllowedValues
+                })
                 .ToList()
         };
     }

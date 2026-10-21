@@ -31,8 +31,7 @@ public sealed class DefaultFileContentPolicyTests
     {
         var policy = new DefaultFileContentPolicy(Options(o => o.AllowedContentTypes = ["application/pdf"]));
         await policy.ValidateAsync(Context("a.pdf", "application/pdf"), TestCt);
-        await Assert.ThrowsAsync<FilePolicyRejectedException>(() =>
-            policy.ValidateAsync(Context("app.jar", "application/java-archive"), TestCt));
+        await Assert.ThrowsAsync<FilePolicyRejectedException>(() => policy.ValidateAsync(Context("app.jar", "application/java-archive"), TestCt));
     }
 
     [Fact]
@@ -40,8 +39,7 @@ public sealed class DefaultFileContentPolicyTests
     {
         var policy = new DefaultFileContentPolicy(Options(o => o.DeniedContentTypes = ["application/java-archive"]));
         await policy.ValidateAsync(Context("a.pdf", "application/pdf"), TestCt);
-        await Assert.ThrowsAsync<FilePolicyRejectedException>(() =>
-            policy.ValidateAsync(Context("app.jar", "application/java-archive"), TestCt));
+        await Assert.ThrowsAsync<FilePolicyRejectedException>(() => policy.ValidateAsync(Context("app.jar", "application/java-archive"), TestCt));
     }
 
     [Fact]
@@ -82,6 +80,5 @@ public sealed class DefaultFileContentPolicyTests
         return options;
     }
 
-    private static FileSavePolicyContext Context(string? name, string? contentType)
-        => new() { ByteLength = 1, OriginalFileName = name, ContentType = contentType };
+    private static FileSavePolicyContext Context(string? name, string? contentType) => new() { ByteLength = 1, OriginalFileName = name, ContentType = contentType };
 }

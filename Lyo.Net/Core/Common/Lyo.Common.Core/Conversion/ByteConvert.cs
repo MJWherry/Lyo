@@ -23,8 +23,8 @@ public static class ByteConvert
         return letterCase == TextLetterCase.Upper ? Convert.ToHexString(bytes) : Convert.ToHexStringLower(bytes);
 #else
         var chars = new char[bytes.Length * 2];
-        TryToHex(bytes, chars, out _);
-        return new string(chars);
+        TryToHex(bytes, chars, out var _);
+        return new(chars);
 #endif
     }
 
@@ -216,12 +216,12 @@ public static class ByteConvert
     private static Encoding EncodingOrUtf8(Encoding? encoding) => encoding ?? Encoding.UTF8;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static char Nibble(int nibble, TextLetterCase letterCase)
-        => (char)(nibble < 10 ? '0' + nibble : (letterCase == TextLetterCase.Upper ? 'A' : 'a') + (nibble - 10));
+    private static char Nibble(int nibble, TextLetterCase letterCase) => (char)(nibble < 10 ? '0' + nibble : (letterCase == TextLetterCase.Upper ? 'A' : 'a') + (nibble - 10));
 
-    private static int HexValue(char c) => c switch {
-        >= '0' and <= '9' => c - '0',
-        >= 'a' and <= 'f' => c - 'a' + 10,
-        _ => c is >= 'A' and <= 'F' ? c - 'A' + 10 : -1
-    };
+    private static int HexValue(char c)
+        => c switch {
+            >= '0' and <= '9' => c - '0',
+            >= 'a' and <= 'f' => c - 'a' + 10,
+            var _ => c is >= 'A' and <= 'F' ? c - 'A' + 10 : -1
+        };
 }

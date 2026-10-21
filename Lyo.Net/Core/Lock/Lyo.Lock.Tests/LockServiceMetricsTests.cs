@@ -1,10 +1,10 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Lock.Redis;
 using Lyo.Metrics;
 using Lyo.Metrics.Models;
 using Lyo.Testing;
 using Lyo.Testing.Containers;
 using StackExchange.Redis;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Lock.Tests;
 

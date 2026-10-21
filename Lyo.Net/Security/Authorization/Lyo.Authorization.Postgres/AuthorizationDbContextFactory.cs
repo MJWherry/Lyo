@@ -11,8 +11,8 @@ public sealed class AuthorizationDbContextFactory : IDesignTimeDbContextFactory<
     public AuthorizationDbContext CreateDbContext(string[] args)
     {
         var options = new DbContextOptionsBuilder<AuthorizationDbContext>().UseNpgsql(
-            "Host=localhost;Database=authorization",
-            npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", PostgresAuthorizationOptions.Schema));
-        return new AuthorizationDbContext(options.Options);
+            "Host=localhost;Database=authorization", npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", PostgresAuthorizationOptions.Schema));
+
+        return new(options.Options);
     }
 }

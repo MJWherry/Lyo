@@ -1,8 +1,8 @@
 using BenchmarkDotNet.Attributes;
 using Lyo.Benchmark;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Lock.Abstractions;
 using Microsoft.Extensions.Logging.Abstractions;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Lock.Benchmarks;
 

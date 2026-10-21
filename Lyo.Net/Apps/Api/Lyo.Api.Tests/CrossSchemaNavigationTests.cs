@@ -1,9 +1,9 @@
 using Lyo.Api.EntityFramework;
+using Lyo.Common.Core.Identifiers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Api.Tests;
 
@@ -90,15 +90,7 @@ public class CrossSchemaNavigationTests
                 new RootEntity { Id = LyoGuid.CreateV7(), ChildId = bob.Id });
 
         await context.SaveChangesAsync(TestCt);
-        var page = await context.Set<RootEntity>()
-            .AsNoTracking()
-            .Include(r => r.Child)
-            .Where(r => r.Child!.Label == "Ann")
-            .OrderBy(r => r.Id)
-            .Skip(0)
-            .Take(10)
-            .ToListAsync(TestCt);
-
+        var page = await context.Set<RootEntity>().AsNoTracking().Include(r => r.Child).Where(r => r.Child!.Label == "Ann").OrderBy(r => r.Id).Skip(0).Take(10).ToListAsync(TestCt);
         var total = await context.Set<RootEntity>().AsNoTracking().Where(r => r.Child!.Label == "Ann").CountAsync(TestCt);
         Assert.Equal(2, total);
         Assert.Equal(2, page.Count);

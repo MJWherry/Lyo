@@ -1,6 +1,7 @@
 # Lyo.Comic.Api.Example
 
-Runnable example: `AddComicApiFromConfiguration` and `BuildComicGroup`. Demo wiring (local cache, OpenAPI/Scalar, auto-migrate). Prefer embedding those calls in another host when composing APIs. Not packed to NuGet. Binds http://localhost:5101 (see Properties/launchSettings.json).
+Runnable example: `AddComicApiFromConfiguration` and `BuildComicGroup`. Demo wiring (local cache, OpenAPI/Scalar, auto-migrate). Prefer embedding those calls in another host when
+composing APIs. Not packed to NuGet. Binds http://localhost:5101 (see Properties/launchSettings.json).
 
 ## Features
 

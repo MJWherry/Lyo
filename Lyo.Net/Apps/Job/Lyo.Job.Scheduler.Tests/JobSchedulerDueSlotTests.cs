@@ -1,9 +1,9 @@
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Formatter;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Response;
 using Lyo.Schedule.Models;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Scheduler.Tests;
 
@@ -74,6 +74,7 @@ public class JobSchedulerDueSlotTests
             CreatedTimestamp = DateTime.UtcNow,
             ScheduledSlotUtc = DateTime.UtcNow.AddSeconds(30)
         };
+
         api.LastRun = retry;
         api.LastFailedRun = retry;
         api.LastSuccessfulRun = Run(definitionId, schedule.Id, currentHour.AddHours(-1), JobRunResult.Success);
@@ -102,8 +103,7 @@ public class JobSchedulerDueSlotTests
         return new(now.Year, now.Month, now.Day, now.Hour, 0, 0, DateTimeKind.Utc);
     }
 
-    private static JobDefinitionRes Definition(Guid definitionId, JobScheduleRes schedule)
-        => new(definitionId, "DueSlotDef", null, "Test", "cs", true, [], [schedule], null);
+    private static JobDefinitionRes Definition(Guid definitionId, JobScheduleRes schedule) => new(definitionId, "DueSlotDef", null, "Test", "cs", true, [], [schedule], null);
 
     private static JobScheduleRes HourlyCron(Guid definitionId)
         => new(LyoGuid.CreateV7(), definitionId, MonthFlags.EveryMonth, DayFlags.EveryDay, ScheduleType.Cron, null, null, null, null, "hourly", true, null, "0 * * * *");

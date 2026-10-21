@@ -1,13 +1,13 @@
 using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Health;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.MessageQueue;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Scheduler.Tests;
 
@@ -48,6 +48,7 @@ internal sealed class FakeSchedulerApiClient(JobDefinitionRes definition) : Stub
                     LastFailedRun = LastFailedRun
                 }
             };
+
             return Task.FromResult((TResult)(object)latest);
         }
 
@@ -92,7 +93,11 @@ internal sealed class FakeSchedulerApiClient(JobDefinitionRes definition) : Stub
         return Task.FromResult(default(TResult));
     }
 
-    public override Task<TResult> PatchAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+    public override Task<TResult> PatchAsAsync<TRequest, TResult>(
+        string uri,
+        TRequest? request = default,
+        Action<HttpRequestMessage>? before = null,
+        CancellationToken ct = default)
         where TRequest : default
     {
         if (uri.Contains("Job/Definition/", StringComparison.OrdinalIgnoreCase)) {
@@ -141,8 +146,7 @@ internal sealed class FakeEventPublisher : IJobEventPublisher
 
     public Task SubscribeToRunCompletionsAsync(Func<byte[], Task<bool>> handler, CancellationToken ct = default) => Task.CompletedTask;
 
-    public Task SubscribeToRunCancellationsAsync(string workerType, Func<Guid, Task> handler, CancellationToken ct = default, string? instanceSuffix = null)
-        => Task.CompletedTask;
+    public Task SubscribeToRunCancellationsAsync(string workerType, Func<Guid, Task> handler, CancellationToken ct = default, string? instanceSuffix = null) => Task.CompletedTask;
 }
 
 /// <summary>Fake MQ implementing <see cref="IDelayedMqService" /> so the scheduler chooses the delayed-envelope dispatch path; records the delayed sends.</summary>

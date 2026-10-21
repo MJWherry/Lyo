@@ -9,9 +9,7 @@ public sealed class ReportChartMarkupTests
     [Fact]
     public void Serialize_StructuredChart_RoundTrips()
     {
-        var report = ReportBuilder<object>.New()
-            .AddSection(s => s.AddChart(ChartKind.Bar, "Sales", ["Q1|10", "Q2|20"]))
-            .Build();
+        var report = ReportBuilder<object>.New().AddSection(s => s.AddChart(ChartKind.Bar, "Sales", ["Q1|10", "Q2|20"])).Build();
         var json = ReportJson.Serialize(report);
         var back = ReportJson.Deserialize<object>(json);
         var block = Assert.Single(back.Sections[0].Controls.OfType<Block>());
@@ -40,8 +38,7 @@ public sealed class ReportChartMarkupTests
     }
 
     [Fact]
-    public void TryBuild_MissingKind_ReturnsNull()
-        => Assert.Null(ReportChartMarkup.TryBuild(new() { ContentType = ContentType.Chart, ListItems = ["A|1"] }));
+    public void TryBuild_MissingKind_ReturnsNull() => Assert.Null(ReportChartMarkup.TryBuild(new() { ContentType = ContentType.Chart, ListItems = ["A|1"] }));
 
     [Fact]
     public void ApplyFromRows_LabelAndValue_MapsSeries()

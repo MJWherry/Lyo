@@ -21,8 +21,7 @@ public static class Extensions
             => services.AddLyoHttpClient<GoogleMapsClient, GoogleMapsClientOptions>(configure, Create);
 
         /// <summary>Adds <see cref="GoogleMapsClient" />.</summary>
-        public IHttpClientBuilder AddGoogleMapsClient(GoogleMapsClientOptions options)
-            => services.AddLyoHttpClient<GoogleMapsClient, GoogleMapsClientOptions>(options, Create);
+        public IHttpClientBuilder AddGoogleMapsClient(GoogleMapsClientOptions options) => services.AddLyoHttpClient<GoogleMapsClient, GoogleMapsClientOptions>(options, Create);
 
         /// <summary>Adds <see cref="GoogleMapsGeolocationService" /> as <see cref="IGeolocationService" />.</summary>
         public IServiceCollection AddGoogleMapsGeolocationService()

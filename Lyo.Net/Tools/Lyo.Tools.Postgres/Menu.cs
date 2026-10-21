@@ -1,8 +1,7 @@
 using Lyo.Audit.Postgres.Database;
-using Lyo.ChangeTracker.Postgres.Database;
 using Lyo.Book.Postgres.Database;
+using Lyo.ChangeTracker.Postgres.Database;
 using Lyo.Comic.Postgres.Database;
-using Lyo.Story.Postgres.Database;
 using Lyo.Comment.Postgres.Database;
 using Lyo.Config.Postgres.Database;
 using Lyo.ContactUs.Postgres.Database;
@@ -13,16 +12,17 @@ using Lyo.Favorite.Postgres.Database;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.Geolocation.Postgres.Database;
 using Lyo.HomeInventory.Postgres.Database;
-using Lyo.Recipe.Postgres.Database;
 using Lyo.Job.Postgres.Database;
 using Lyo.Note.Postgres.Database;
 using Lyo.People.Postgres.Database;
 using Lyo.Rating.Postgres.Database;
+using Lyo.Recipe.Postgres.Database;
 using Lyo.Reporting.Postgres.Database;
 using Lyo.Seed;
 using Lyo.ShortUrl.Postgres.Database;
 using Lyo.Sms.Postgres.Database;
 using Lyo.Sms.Twilio.Postgres.Database;
+using Lyo.Story.Postgres.Database;
 using Lyo.Tag.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -134,22 +134,16 @@ internal static class Menu
         else
             transportKind = via.HasFlag(SeedTransportKind.Api) ? SeedTransportKind.Api : SeedTransportKind.Ef;
 
-        var defaultCount = contributor.Name.Equals("Comic", StringComparison.OrdinalIgnoreCase)
-            ? 20
-            : contributor.Name.Equals("Story", StringComparison.OrdinalIgnoreCase)
-                ? 1
-                : 50;
+        var defaultCount = contributor.Name.Equals("Comic", StringComparison.OrdinalIgnoreCase) ? 20 :
+            contributor.Name.Equals("Story", StringComparison.OrdinalIgnoreCase) ? 1 : 50;
+
         var count = AnsiConsole.Prompt(new TextPrompt<int>("Number of root rows to generate:").DefaultValue(defaultCount));
         var seedInput = AnsiConsole.Prompt(new TextPrompt<string>("[grey](Optional)[/] Random seed [grey](blank = random)[/]:").AllowEmpty());
         int? seed = int.TryParse(seedInput, out var s) ? s : null;
-        var conflict = AnsiConsole.Confirm("Skip if destination already has rows?", false)
-            ? SeedConflictMode.SkipIfNotEmpty
-            : SeedConflictMode.Append;
-        var canReplace = transportKind == SeedTransportKind.Ef
-            && (contributor is IEfSeedSource
-                || contributor.Name.Equals("Comic", StringComparison.OrdinalIgnoreCase)
-                || contributor.Name.Equals("Book", StringComparison.OrdinalIgnoreCase)
-                || contributor.Name.Equals("Story", StringComparison.OrdinalIgnoreCase));
+        var conflict = AnsiConsole.Confirm("Skip if destination already has rows?", false) ? SeedConflictMode.SkipIfNotEmpty : SeedConflictMode.Append;
+        var canReplace = transportKind == SeedTransportKind.Ef && (contributor is IEfSeedSource || contributor.Name.Equals("Comic", StringComparison.OrdinalIgnoreCase) ||
+            contributor.Name.Equals("Book", StringComparison.OrdinalIgnoreCase) || contributor.Name.Equals("Story", StringComparison.OrdinalIgnoreCase));
+
         if (canReplace && AnsiConsole.Confirm($"Replace existing {contributor.Name.ToLowerInvariant()} rows if the database already has data?", false))
             conflict = SeedConflictMode.Replace;
 
@@ -165,13 +159,8 @@ internal static class Menu
             .StartAsync(
                 $"Seeding {contributor.Name}...",
                 async _ => result = await SeedExecution.RunAsync(
-                    contributor,
-                    sp.GetRequiredService<ISeedRunner>(),
-                    sp.GetRequiredService<ConnectionStringProvider>(),
-                    transportKind,
-                    new() { Count = count, RandomSeed = seed, Conflict = conflict },
-                    apiBaseUrl,
-                    ct));
+                    contributor, sp.GetRequiredService<ISeedRunner>(), sp.GetRequiredService<ConnectionStringProvider>(), transportKind,
+                    new() { Count = count, RandomSeed = seed, Conflict = conflict }, apiBaseUrl, ct));
 
         result ??= SeedResult.Fail(contributor.Name, ["No result"]);
         if (result.Skipped)
@@ -194,8 +183,9 @@ internal static class Menu
                 new SelectionPrompt<string>().Title("Select a context:")
                     .PageSize(20)
                     .AddChoices(
-                        "Run All (Latest)", "Audit", "Book", "ChangeTracker", "Comic", "Comment", "Config", "ContactUs", "Discord", "Email", "Endato", "Favorite", "FileMetadataStore",
-                        "Geolocation", "HomeInventory", "Job", "Note", "People", "Rating", "Recipe", "Reporting", "ShortUrl", "Sms", "SmsTwilio", "Story", "Tag", BackLabel));
+                        "Run All (Latest)", "Audit", "Book", "ChangeTracker", "Comic", "Comment", "Config", "ContactUs", "Discord", "Email", "Endato", "Favorite",
+                        "FileMetadataStore", "Geolocation", "HomeInventory", "Job", "Note", "People", "Rating", "Recipe", "Reporting", "ShortUrl", "Sms", "SmsTwilio", "Story",
+                        "Tag", BackLabel));
 
             if (choice == BackLabel)
                 break;

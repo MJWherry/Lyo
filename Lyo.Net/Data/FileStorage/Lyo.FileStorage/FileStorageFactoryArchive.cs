@@ -14,9 +14,11 @@ internal static class FileStorageFactoryArchive
             services.AddSingleton(new FileStorageArchiveOptions());
 
         services.TryAddIOTemp();
-        services.AddKeyedScoped<IFileStorageArchiveService>(storeName, (provider, _) => new FileStorageArchiveService(
-            provider.GetRequiredService<IFileStorageFactory>().Get(storeName), provider.GetRequiredService<IIOTempService>(),
-            provider.GetRequiredService<FileStorageArchiveOptions>(), provider.GetService<ILogger<FileStorageArchiveService>>()));
+        services.AddKeyedScoped<IFileStorageArchiveService>(
+            storeName,
+            (provider, _) => new FileStorageArchiveService(
+                provider.GetRequiredService<IFileStorageFactory>().Get(storeName), provider.GetRequiredService<IIOTempService>(),
+                provider.GetRequiredService<FileStorageArchiveOptions>(), provider.GetService<ILogger<FileStorageArchiveService>>()));
     }
 
     private static void TryAddIOTemp(this IServiceCollection services)

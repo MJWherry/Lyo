@@ -1,6 +1,5 @@
 using Lyo.Algorithms;
 using Lyo.Algorithms.Models;
-using Lyo.Algorithms.Models.Request;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Formatter.Algorithms.Tests;
@@ -19,8 +18,7 @@ public sealed class AlgorithmFormatterTests
         var catalog = provider.GetRequiredService<IAlgorithmCatalog>();
         var formatter = provider.GetRequiredService<IFormatterService>();
         var ct = TestCt;
-        Assert.True((await catalog.SaveRevisionAsync("attack.physical", new AlgorithmRevisionReq { Kind = AlgorithmKind.Expression, Source = "Atk * 2" }, ct)).IsSuccess);
-
+        Assert.True((await catalog.SaveRevisionAsync("attack.physical", new() { Kind = AlgorithmKind.Expression, Source = "Atk * 2" }, ct)).IsSuccess);
         var text = formatter.Format("{Algo(\"attack.physical\")}", new Dictionary<string, object?> { ["Atk"] = 10d });
         Assert.Equal("20", text);
         Assert.Equal("3", formatter.Format("{Convert.ToInt32(1)+2}", (object?)null));
@@ -49,6 +47,7 @@ public sealed class AlgorithmFormatterTests
         while (dir is not null) {
             if (File.Exists(Path.Combine(dir.FullName, "Lyo.Net", "Lyo.slnx")))
                 return dir.FullName;
+
             dir = dir.Parent;
         }
 

@@ -8,10 +8,7 @@ namespace Lyo.Encryption;
 /// </summary>
 public sealed record EncryptionHeader
 {
-    /// <summary>
-    /// <see cref="DekEncoding" /> value: the DEK is sealed with the KEK service's ordinary single-shot envelope (when no raw AES-sized KEK exists, for example RSA
-    /// KEKs).
-    /// </summary>
+    /// <summary><see cref="DekEncoding" /> value: the DEK is sealed with the KEK service's ordinary single-shot envelope (when no raw AES-sized KEK exists, for example RSA KEKs).</summary>
     public const byte DekEncodingEnvelope = 0;
 
     /// <summary><see cref="DekEncoding" /> value: AES Key Wrap (RFC 3394) of the DEK — deterministic, integrity-checked, always <c>dekLength + 8</c> bytes.</summary>
@@ -164,16 +161,16 @@ public sealed record EncryptionHeader
     }
 
     /// <summary>
-    /// Deduces DEK-blob encoding from length: AES Key Wrap is always exactly <paramref name="dekKeyMaterialBytes" /> +
-    /// <see cref="AesKeyWrapOverhead" /> bytes; KEK-service envelopes (version + nonce + tag + ciphertext) are always larger.
+    /// Deduces DEK-blob encoding from length: AES Key Wrap is always exactly <paramref name="dekKeyMaterialBytes" /> + <see cref="AesKeyWrapOverhead" /> bytes; KEK-service
+    /// envelopes (version + nonce + tag + ciphertext) are always larger.
     /// </summary>
     public static byte InferDekEncoding(int encryptedDekLength, byte dekKeyMaterialBytes)
         => encryptedDekLength == dekKeyMaterialBytes + AesKeyWrapOverhead ? DekEncodingAesKeyWrap : DekEncodingEnvelope;
 
     /// <summary>
     /// Returns a copy with updated fields. When <paramref name="encryptedDataEncryptionKey" /> is provided (for example DEK migration onto a different KEK),
-    /// <see cref="DekEncoding" /> is recomputed from the new blob via <see cref="InferDekEncoding" /> — the previous value can be wrong when source and target KEKs differ on AES
-    /// Key Wrap eligibility, and a stale byte would leave the file undecryptable.
+    /// <see cref="DekEncoding" /> is recomputed from the new blob via <see cref="InferDekEncoding" /> — the previous value can be wrong when source and target KEKs differ on AES Key Wrap
+    /// eligibility, and a stale byte would leave the file undecryptable.
     /// </summary>
     public EncryptionHeader With(
         string? keyId = null,

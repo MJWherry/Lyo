@@ -1,6 +1,7 @@
 # Lyo.Comment.Seed
 
-`CommentEfSeedContributor` writes `options.Count` public comments for tenant `CommentEfSeedContributor.TenantId` and subject `seed` / `seed`, each with one like reaction. Bogus supplies the text when the host passes `SeedOptions.RandomSeed`. `OnClear` deletes reactions, then comments, so `--replace` can run.
+`CommentEfSeedContributor` writes `options.Count` public comments for tenant `CommentEfSeedContributor.TenantId` and subject `seed` / `seed`, each with one like reaction. Bogus
+supplies the text when the host passes `SeedOptions.RandomSeed`. `OnClear` deletes reactions, then comments, so `--replace` can run.
 
 ## Features
 

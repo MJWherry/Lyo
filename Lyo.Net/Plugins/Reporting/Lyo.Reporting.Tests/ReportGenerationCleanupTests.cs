@@ -1,8 +1,8 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Reporting.Models.Rendering;
 using Lyo.Reporting.Postgres;
 using Lyo.Reporting.Postgres.Database;
 using Microsoft.Extensions.DependencyInjection;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Reporting.Tests;
 

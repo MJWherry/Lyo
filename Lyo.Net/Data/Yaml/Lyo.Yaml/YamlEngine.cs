@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Reflection;
 using System.Text;
 using System.Text.Json.Nodes;
@@ -16,17 +17,19 @@ internal sealed class YamlEngine
 {
     private static readonly Regex DocSplit = new(@"(?m)^---[ \t]*$", RegexOptions.Compiled);
     private static readonly Regex Alias = new(@"(?m)(?:^|[\s\[\{,])\*[A-Za-z_]", RegexOptions.Compiled);
+    private readonly bool _allowAliases;
+    private readonly IDeserializer _deserializer;
+    private readonly bool _explicitMarkers;
 
     private readonly JsonService _json;
-    private readonly IDeserializer _deserializer;
-    private readonly ISerializer _serializer;
-    private readonly ISerializer _rows;
-    private readonly bool _explicitMarkers;
     private readonly bool _multiDocument;
-    private readonly bool _allowAliases;
-    private readonly bool _readNumbersFromStrings;
     private readonly MemberOrder _order;
     private readonly string[] _orderNames;
+    private readonly bool _readNumbersFromStrings;
+    private readonly ISerializer _rows;
+    private readonly ISerializer _serializer;
+
+    public Encoding Encoding { get; }
 
     public YamlEngine(YamlOptions options)
     {
@@ -52,8 +55,6 @@ internal sealed class YamlEngine
         _rows = rows.Build();
     }
 
-    public Encoding Encoding { get; }
-
     public T Parse<T>(string yaml)
     {
         if (_multiDocument && IsList(typeof(T), out var element)) {
@@ -66,8 +67,9 @@ internal sealed class YamlEngine
 
     public string Export<T>(T value)
     {
-        if (_multiDocument && value is System.Collections.IEnumerable enumerable && value is not string)
+        if (_multiDocument && value is IEnumerable enumerable && value is not string)
             return ExportDocuments(enumerable);
+
         return Emit(JsonNode.Parse(_json.ExportToJsonString(value)));
     }
 
@@ -79,21 +81,24 @@ internal sealed class YamlEngine
     {
         if (string.IsNullOrWhiteSpace(yaml))
             return null;
+
         if (!_allowAliases && Alias.IsMatch(yaml))
             throw new YamlException("Aliases are disabled.");
+
         var graph = _deserializer.Deserialize<object>(yaml);
         var node = JsonNodeGraph.FromClr(graph);
         if (_readNumbersFromStrings)
             JsonNodeNumbers.Coerce(node);
+
         return node;
     }
 
-    private string Emit(JsonNode? node, bool? markers = null) => Emit(node, markers ?? _explicitMarkers, applyOrder: true);
+    private string Emit(JsonNode? node, bool? markers = null) => Emit(node, markers ?? _explicitMarkers, true);
 
-    public string ExportPreservingKeys<T>(T value) => Emit(JsonNode.Parse(_json.ExportPreservingKeyOrder(value)), _explicitMarkers, applyOrder: false);
+    public string ExportPreservingKeys<T>(T value) => Emit(JsonNode.Parse(_json.ExportPreservingKeyOrder(value)), _explicitMarkers, false);
 
     /// <summary>Writes a data-table row array. String cells are double-quoted so a value such as <c>01</c> stays text.</summary>
-    public string ExportRows(JsonArray rows) => Emit(rows, _rows, _explicitMarkers, applyOrder: false);
+    public string ExportRows(JsonArray rows) => Emit(rows, _rows, _explicitMarkers, false);
 
     /// <summary>Reads a YAML sequence of maps into a data table. Cell text stays text.</summary>
     public Result<DataTable.Models.DataTable> ParseRows(string yaml, bool hasFooterRow) => DataTableDocument.FromRows(ToNode(yaml), hasFooterRow);
@@ -104,11 +109,14 @@ internal sealed class YamlEngine
     {
         if (applyOrder)
             node = JsonMemberOrder.Apply(node, _order, _orderNames);
+
         if (node is null)
             return mark ? "---\nnull\n...\n" : "null\n";
+
         var text = serializer.Serialize(JsonNodeGraph.ToClr(node));
         if (!mark)
             return text;
+
         return "---\n" + text.TrimEnd() + "\n...\n";
     }
 
@@ -116,6 +124,7 @@ internal sealed class YamlEngine
     {
         if (node is null)
             return default!;
+
         return _json.ParseString<T>(node.ToJsonString());
     }
 
@@ -124,21 +133,23 @@ internal sealed class YamlEngine
         var list = new List<TItem>();
         foreach (var chunk in Split(yaml))
             list.Add(FromNode<TItem>(ToNode(chunk)));
+
         return list;
     }
 
-    private string ExportDocuments(System.Collections.IEnumerable values)
+    private string ExportDocuments(IEnumerable values)
     {
         var builder = new StringBuilder();
         foreach (var value in values) {
             builder.Append("---\n");
             var node = value is null ? null : JsonNode.Parse(_json.ExportToJsonString(value));
-            builder.Append(Emit(node, markers: false).TrimEnd());
+            builder.Append(Emit(node, false).TrimEnd());
             builder.Append('\n');
         }
 
         if (_explicitMarkers)
             builder.Append("...\n");
+
         return builder.ToString();
     }
 
@@ -148,6 +159,7 @@ internal sealed class YamlEngine
             var trimmed = part.Trim();
             if (trimmed.Length == 0 || trimmed == "...")
                 continue;
+
             yield return trimmed;
         }
     }
@@ -157,6 +169,7 @@ internal sealed class YamlEngine
         element = typeof(object);
         if (type == typeof(string))
             return false;
+
         if (type.IsArray) {
             element = type.GetElementType()!;
             return false;
@@ -164,6 +177,7 @@ internal sealed class YamlEngine
 
         if (!type.IsGenericType || type.GetGenericTypeDefinition() != typeof(List<>))
             return false;
+
         element = type.GetGenericArguments()[0];
         return true;
     }
@@ -210,6 +224,7 @@ internal sealed class YamlStyleEmitter : ChainedEventEmitter
     {
         if (_flow)
             eventInfo.Style = MappingStyle.Flow;
+
         base.Emit(eventInfo, emitter);
     }
 
@@ -217,6 +232,7 @@ internal sealed class YamlStyleEmitter : ChainedEventEmitter
     {
         if (_flow)
             eventInfo.Style = SequenceStyle.Flow;
+
         base.Emit(eventInfo, emitter);
     }
 
@@ -224,6 +240,7 @@ internal sealed class YamlStyleEmitter : ChainedEventEmitter
     {
         if (_quotes != YamlQuoteStyle.Plain && eventInfo.Source.Type == typeof(string))
             eventInfo.Style = _quotes == YamlQuoteStyle.SingleQuoted ? ScalarStyle.SingleQuoted : ScalarStyle.DoubleQuoted;
+
         base.Emit(eventInfo, emitter);
     }
 }

@@ -113,9 +113,8 @@ public partial class QueryFilterComponent
             value = _currentProperty.UniqueValues != null || _currentProperty.EnumValues != null || _currentProperty.HasDynamicUniqueValues ? _currentMultiSelectValues.ToList() :
                 string.IsNullOrWhiteSpace(_currentCsvValue) ? new() : _currentCsvValue.Split(',').Select(item => item.Trim()).Where(item => !string.IsNullOrEmpty(item)).ToList();
         }
-        else {
+        else
             value = CurrentScalarValue(_currentProperty);
-        }
 
         _filters.Add(new(_currentProperty.PropertyName, _currentComparison, value, threshold: _currentComparison.IsFuzzyComparisonOperator() ? _currentThreshold : null));
         await FiltersChanged.InvokeAsync(_filters);
@@ -178,8 +177,7 @@ public partial class QueryFilterComponent
         return string.IsNullOrWhiteSpace(_currentStringValue) ? null : _currentStringValue;
     }
 
-    private void OnTimeOnlyChanged(TimeSpan? time)
-        => _currentDateValue = time is { } t ? DateTime.MinValue.Add(t) : null;
+    private void OnTimeOnlyChanged(TimeSpan? time) => _currentDateValue = time is { } t ? DateTime.MinValue.Add(t) : null;
 
     private void ClearInputs()
     {

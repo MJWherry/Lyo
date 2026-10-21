@@ -1,6 +1,6 @@
+using Lyo.Exceptions;
 using Lyo.Job.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
-using Lyo.Exceptions;
 
 namespace Lyo.Job.Postgres;
 
@@ -15,7 +15,6 @@ public static class JobDefinitionCascadeDelete
         ArgumentHelpers.ThrowIfNull(db);
         var workflowStepIds = db.JobWorkflowSteps.Where(s => s.JobDefinitionId == definitionId).Select(s => s.Id).ToList();
         var runs = JobRunDependents.IncludeDependents(db.JobRuns.Where(r => r.JobDefinitionId == definitionId)).ToList();
-
         var runIds = runs.Select(r => r.Id).ToHashSet();
 
         // Workflow run-steps reference runs and workflow steps, so delete them before either.

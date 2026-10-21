@@ -5,10 +5,10 @@ namespace Lyo.StateMachine;
 
 /// <summary>One persisted entity driven by a shared definition: loads its snapshot from a store, fires, and saves with optimistic concurrency.</summary>
 /// <remarks>
-/// Hooks run before the save. When another writer saved first, the result is <see cref="TransitionRejection.ConcurrencyConflict" /> and nothing is written, but
-/// hook side effects have already happened. With <see cref="StateMachineInstanceOptions.MaxConflictRetries" /> the instance reloads and fires again, which runs
-/// the hooks again, so keep hooks idempotent. One instance allows one operation at a time; firing it again from inside its own hook throws
-/// <see cref="StateMachineReentrancyException" />. Instances are cheap; create one per operation. Internal and ignored triggers are not saved.
+/// Hooks run before the save. When another writer saved first, the result is <see cref="TransitionRejection.ConcurrencyConflict" /> and nothing is written, but hook side
+/// effects have already happened. With <see cref="StateMachineInstanceOptions.MaxConflictRetries" /> the instance reloads and fires again, which runs the hooks again, so keep hooks
+/// idempotent. One instance allows one operation at a time; firing it again from inside its own hook throws <see cref="StateMachineReentrancyException" />. Instances are cheap;
+/// create one per operation. Internal and ignored triggers are not saved.
 /// </remarks>
 public sealed class StateMachineInstance<TState, TTrigger, TContext>
     where TState : notnull where TTrigger : notnull
@@ -17,6 +17,9 @@ public sealed class StateMachineInstance<TState, TTrigger, TContext>
     private readonly StateMachineInstanceOptions _options;
     private readonly IStateStore<TState> _store;
     private int _busy;
+
+    /// <summary>Key of this instance within the machine.</summary>
+    public string InstanceKey { get; }
 
     /// <summary>Binds <paramref name="instanceKey" /> (for example a job id) to a definition and store.</summary>
     public StateMachineInstance(
@@ -36,9 +39,6 @@ public sealed class StateMachineInstance<TState, TTrigger, TContext>
         InstanceKey = instanceKey;
     }
 
-    /// <summary>Key of this instance within the machine.</summary>
-    public string InstanceKey { get; }
-
     /// <summary>The saved snapshot, or the definition's initial snapshot when nothing has been saved yet.</summary>
     public async Task<StateSnapshot<TState>> GetSnapshotAsync(CancellationToken ct = default)
         => await _store.LoadAsync(_definition.Name, InstanceKey, ct).ConfigureAwait(false) ?? _definition.CreateInitialSnapshot();
@@ -57,11 +57,11 @@ public sealed class StateMachineInstance<TState, TTrigger, TContext>
     /// <summary>Fires the current state's timer trigger when it is due at <paramref name="nowUtc" />. Returns null when nothing is due.</summary>
     /// <remarks>Call from the host's scheduler, typically for each result of <c>IStateInstanceQuery.ListAsync</c> with <c>DueBeforeUtc</c>.</remarks>
     public Task<TransitionResult<TState>?> FireDueAsync(TContext context, DateTime nowUtc, CancellationToken ct = default)
-        => RunAsync(snapshot => _definition.GetDueTrigger(snapshot, nowUtc) is { } due ? new Attempt(_definition.FireAsync(context, snapshot, due.Trigger, ct), due.Trigger) : null, ct);
+        => RunAsync(
+            snapshot => _definition.GetDueTrigger(snapshot, nowUtc) is { } due ? new Attempt(_definition.FireAsync(context, snapshot, due.Trigger, ct), due.Trigger) : null, ct);
 
     /// <summary>Deserializes the instance's data, or returns default when none has been stored.</summary>
-    public async Task<TData?> GetDataAsync<TData>(CancellationToken ct = default)
-        => (await GetSnapshotAsync(ct).ConfigureAwait(false)).GetData<TState, TData>(_options.Json);
+    public async Task<TData?> GetDataAsync<TData>(CancellationToken ct = default) => (await GetSnapshotAsync(ct).ConfigureAwait(false)).GetData<TState, TData>(_options.Json);
 
     /// <summary>Replaces the instance's data with the result of <paramref name="update" />. Bumps the version; no history row is written. State and timers are unchanged.</summary>
     /// <returns>False when another writer saved first and retries (if any) were exhausted.</returns>

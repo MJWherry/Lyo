@@ -1,20 +1,27 @@
 # Lyo.FileStorage.AzureBlob
 
-Azure.Storage.Blobs [`IFileStorageService`](../Lyo.FileStorage/README.md) for Azure Blob Storage. The package id and namespace Lyo.FileStorage.AzureBlob match the blob abstraction. Configuration and types use Blob* naming. The appsettings section is AzureBlobFileStorage.
+Azure.Storage.Blobs [`IFileStorageService`](../Lyo.FileStorage/README.md) for Azure Blob Storage. The package id and namespace Lyo.FileStorage.AzureBlob match the blob abstraction.
+Configuration and types use Blob* naming. The appsettings section is AzureBlobFileStorage.
 
-Also exposes `AzureBlobFileSystem` (`IFileSystem`) for the raw blob-name tree (`GetBlobsByHierarchy`). That is not the FileStorage metadata tree. Blob storage has no directories, so an otherwise empty directory is kept visible by a zero-byte `.lyo-dir` child blob.
+Also exposes `AzureBlobFileSystem` (`IFileSystem`) for the raw blob-name tree (`GetBlobsByHierarchy`). That is not the FileStorage metadata tree. Blob storage has no directories,
+so an otherwise empty directory is kept visible by a zero-byte `.lyo-dir` child blob.
 
 Architecture, duplicate handling, and threat-model context for storage live in Lyo.FileStorage. This README is the assembly plus Azure-specific options.
 
 ## Features
 
-- **Same contract as Local / S3.** Save, stream save, multipart, presigned reads (SAS GET), direct PUT begin/complete, server-side copy, DEK migrate/rotate, health, IFileStorageDiagnosticsService listing keys under the container prefix (normalized and traversal-guarded by Lyo.Exceptions.FileHelpers.NormalizeAndValidatePathPrefix).
+- **Same contract as Local / S3.** Save, stream save, multipart, presigned reads (SAS GET), direct PUT begin/complete, server-side copy, DEK migrate/rotate, health,
+  IFileStorageDiagnosticsService listing keys under the container prefix (normalized and traversal-guarded by Lyo.Exceptions.FileHelpers.NormalizeAndValidatePathPrefix).
 - **Raw blob VFS.** `AzureBlobFileSystem` lists immediate children via `GetBlobsByHierarchy`. Empty folders are zero-byte `{path}/` markers. `OpenAppend` is not supported.
-- **Optional compression and two-key encryption.** Same pipeline as Lyo.FileStorage when ICompressionService / ICompressionResolver / ITwoKeyEncryptionService are registered. Reads use metadata CompressionAlgorithm via the resolver.
-- **SSE.** Optional encryption scope and customer-provided key (SSE-C via a base64 key on options). Applied to single-blob writes, multipart staging, header range updates, and DEK migrations. See XML docs on AzureBlobFileStorageOptions for presigned/SSE limits.
-- **Multipart.** Register AddAzureBlobMultipartUploadService() after AddAzureBlobFileStorageService. Final commit uses SyncCopyFromUriAsync rather than download+re-upload.
-- **Resolved suffix cache.** Saved metadata keeps the storage extension/suffix so later reads/copies skip the legacy N+1 "try base then `.gz`/`.lyo.gz`/…" probes. The shared CloudObjectKeyBuilder produces the candidate key directly.
-- **Shared traversal guard.** Container/blob prefix normalization and traversal rejection live in Lyo.Exceptions.FileHelpers so the same rules apply across diagnostics listing and core save/direct-upload validation.
+- **Optional compression and two-key encryption.** Same pipeline as Lyo.FileStorage when ICompressionService / ICompressionResolver / ITwoKeyEncryptionService are registered. Reads
+  use metadata CompressionAlgorithm via the resolver.
+- **SSE.** Optional encryption scope and customer-provided key (SSE-C via a base64 key on options). Applied to single-blob writes, multipart staging, header range updates, and DEK
+  migrations. See XML docs on AzureBlobFileStorageOptions for presigned/SSE limits.
+- **Multipart.** Register AddAzureBlobMultipartUploadService () after AddAzureBlobFileStorageService. Final commit uses SyncCopyFromUriAsync rather than download+re-upload.
+- **Resolved suffix cache.** Saved metadata keeps the storage extension/suffix so later reads/copies skip the legacy N+1 "try base then `.gz`/`.lyo.gz`/…" probes. The shared
+  CloudObjectKeyBuilder produces the candidate key directly.
+- **Shared traversal guard.** Container/blob prefix normalization and traversal rejection live in Lyo.Exceptions.FileHelpers so the same rules apply across diagnostics listing and
+  core save/direct-upload validation.
 
 ## Examples
 
@@ -96,38 +103,44 @@ services.AddFileStorageFactory(stores =>
 
 ## Where to read next
 
-| Document | Scope |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Document                                                    | Scope                                                                                                               |
+|-------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
 | [`Lyo.FileStorage/README.md`](../Lyo.FileStorage/README.md) | Core contracts (IFileStorageService), multipart, models, LocalFileStorageService, and FileStorageServiceBaseOptions |
-| This file | AzureBlobFileStorageOptions, AzureBlobFileStorageService, AddAzureBlobFileStorageService, SAS, and encryption scope |
-| Lyo.FileStorage.S3/README.md | S3-compatible backend (compare multipart and presigned behaviour) |
+| This file                                                   | AzureBlobFileStorageOptions, AzureBlobFileStorageService, AddAzureBlobFileStorageService, SAS, and encryption scope |
+| Lyo.FileStorage.S3/README.md                                | S3-compatible backend (compare multipart and presigned behaviour)                                                   |
 
 ## AzureBlobFileStorageService
 
-Concrete implementation registered as IFileStorageService (scoped). Mirrors S3FileStorageService for cloud-specific paths (presigned URLs, CopyFileAsync / MoveFileAsync via sync copy then delete source, multipart block uploads). RenameFileAsync is metadata-only (shared base implementation).
+Concrete implementation registered as IFileStorageService (scoped). Mirrors S3FileStorageService for cloud-specific paths (presigned URLs, CopyFileAsync / MoveFileAsync via sync
+copy then delete source, multipart block uploads). RenameFileAsync is metadata-only (shared base implementation).
 
 ## AzureBlobFileStorageOptions
 
-| Property / constant | Typical use |
-| ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| SectionName (AzureBlobFileStorage) | Default configuration section name |
-| ConnectionString | Connection string for the storage account |
-| ContainerName | Container to target |
-| BlobPrefix | Optional key prefix within the container |
-| EncryptionScope | Server-side encryption scope on Azure |
-| CustomerProvidedKeyBase64 | Base64-encoded 256-bit AES key for SSE-C on SDK uploads. Direct/SAS uploads with SSE-C are not supported and fail fast. |
-| EnableMetrics | When true, emits metrics if IMetrics is present |
-| Inherited: HealthCheckMode, MaxUploadSizeBytes, DefaultAvailability, duplicate/hash options, etc. | See FileStorageServiceBaseOptions xmldoc in core. |
+| Property / constant                                                                               | Typical use                                                                                                             |
+|---------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
+| SectionName (AzureBlobFileStorage)                                                                | Default configuration section name                                                                                      |
+| ConnectionString                                                                                  | Connection string for the storage account                                                                               |
+| ContainerName                                                                                     | Container to target                                                                                                     |
+| BlobPrefix                                                                                        | Optional key prefix within the container                                                                                |
+| EncryptionScope                                                                                   | Server-side encryption scope on Azure                                                                                   |
+| CustomerProvidedKeyBase64                                                                         | Base64-encoded 256-bit AES key for SSE-C on SDK uploads. Direct/SAS uploads with SSE-C are not supported and fail fast. |
+| EnableMetrics                                                                                     | When true, emits metrics if IMetrics is present                                                                         |
+| Inherited: HealthCheckMode, MaxUploadSizeBytes, DefaultAvailability, duplicate/hash options, etc. | See FileStorageServiceBaseOptions xmldoc in core.                                                                       |
 
 ## DI setup
 
 Register Microsoft.Extensions.DependencyInjection and Microsoft.Extensions.Configuration through your host.
 
-> **Keyed / multi-tenant DI.** Lyo.FileStorage.AzureBlob does not currently ship the keyed builder pattern that Lyo.FileStorage.S3 exposes via AddS3FileStorageServiceKeyed. Use AddAzureBlobFileStorageService (non-keyed) per host. If you need multiple Blob backends side-by-side, register each in a separate DI scope or wire them manually via AddKeyedScoped<IFileStorageService>(...) and AddKeyedScoped<AzureBlobFileStorageService>(...) mirroring the constructor arguments of [AzureBlobFileStorageService](AzureBlobFileStorageService.cs). A keyed builder analogous to S3's is on the roadmap.
+> **Keyed / multi-tenant DI.** Lyo.FileStorage.AzureBlob does not currently ship the keyed builder pattern that Lyo.FileStorage.S3 exposes via AddS3FileStorageServiceKeyed. Use
+> AddAzureBlobFileStorageService (non-keyed) per host. If you need multiple Blob backends side-by-side, register each in a separate DI scope or wire them manually via
+> AddKeyedScoped<IFileStorageService>(...) and AddKeyedScoped<AzureBlobFileStorageService>(...) mirroring the constructor arguments
+> of [AzureBlobFileStorageService](AzureBlobFileStorageService.cs). A keyed builder analogous to S3's is on the roadmap.
 
 ## Direct upload via presigned PUT
 
-BeginDirectUploadAsync returns a SAS URL plus a RequiredPutHeaders map. Clients must apply those headers verbatim on the PUT. Azure block blob uploads require at minimum `x-ms-blob-type: BlockBlob`, and when the caller supplied a ContentType the map also includes `x-ms-blob-content-type` (so the value is persisted on the blob) and Content-Type for parity with the S3 backend. Customer-Provided-Key (SSE-C) accounts are rejected at begin time. Direct PUT is not currently supported with SSE-C. Presigned reads use the core API:
+BeginDirectUploadAsync returns a SAS URL plus a RequiredPutHeaders map. Clients must apply those headers verbatim on the PUT. Azure block blob uploads require at minimum
+`x-ms-blob-type: BlockBlob`, and when the caller supplied a ContentType the map also includes `x-ms-blob-content-type` (so the value is persisted on the blob) and Content-Type for
+parity with the S3 backend. Customer-Provided-Key (SSE-C) accounts are rejected at begin time. Direct PUT is not currently supported with SSE-C. Presigned reads use the core API:
 
 ## Sample configuration
 
@@ -135,15 +148,17 @@ Bind section AzureBlobFileStorage.
 
 ## Health
 
-IFileStorageService extends IHealth. Call await fileStorage.CheckHealthAsync(ct) directly. HealthCheckMode controls depth.
+IFileStorageService extends IHealth. Call await fileStorage.CheckHealthAsync (ct) directly. HealthCheckMode controls depth.
 
 ## Concurrency
 
-AzureBlobFileStorageService follows the core base type: concurrent calls on one instance are supported. IFileMetadataStore, keystores, and ILogger must match the DI lifetimes you chose.
+AzureBlobFileStorageService follows the core base type: concurrent calls on one instance are supported. IFileMetadataStore, keystores, and ILogger must match the DI lifetimes you
+chose.
 
 ## Tests
 
-Lyo.FileStorage.AzureBlob.Tests provides isolated unit coverage for AzureBlobFileStorageOptions (CPK resolution, section names, base defaults) and the shared CloudObjectKeyBuilder. Path-prefix traversal coverage lives in Lyo.FileStorage.Tests against the shared Lyo.Exceptions.FileHelpers helper. Live container I/O would need Azurite.
+Lyo.FileStorage.AzureBlob.Tests provides isolated unit coverage for AzureBlobFileStorageOptions (CPK resolution, section names, base defaults) and the shared CloudObjectKeyBuilder.
+Path-prefix traversal coverage lives in Lyo.FileStorage.Tests against the shared Lyo.Exceptions.FileHelpers helper. Live container I/O would need Azurite.
 
 ## Dependencies
 

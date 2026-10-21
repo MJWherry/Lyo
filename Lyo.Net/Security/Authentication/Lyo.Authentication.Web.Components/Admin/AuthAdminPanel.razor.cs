@@ -1,5 +1,4 @@
 using Lyo.Api.Client;
-using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Authentication.Models;
 using Lyo.Authentication.Models.Response;
@@ -10,9 +9,18 @@ using MudBlazor;
 
 namespace Lyo.Authentication.Web.Components;
 
-/// <summary>Hostable auth admin shell: users, tokens, claims, scopes, linked identities, and audit. Pair with <c>Lyo.Api.Authentication</c> and an authenticated <see cref="IApiClient" />.</summary>
+/// <summary>
+/// Hostable auth admin shell: users, tokens, claims, scopes, linked identities, and audit. Pair with <c>Lyo.Api.Authentication</c> and an authenticated
+/// <see cref="IApiClient" />.
+/// </summary>
 public partial class AuthAdminPanel
 {
+    private Guid? _selectedUserId;
+
+    private int _tabIndex;
+
+    private AuthUserGrid? _userGrid;
+
     [Inject]
     private IApiClient InjectedApiClient { get; set; } = null!;
 
@@ -32,12 +40,6 @@ public partial class AuthAdminPanel
     public Guid? UserId { get; set; }
 
     private IApiClient ResolvedApiClient => ApiClient ?? InjectedApiClient;
-
-    private int _tabIndex;
-
-    private Guid? _selectedUserId;
-
-    private AuthUserGrid? _userGrid;
 
     private string UserRoute => $"{BaseRoute.TrimEnd('/')}/User";
 

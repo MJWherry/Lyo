@@ -108,8 +108,7 @@ public sealed class JsonWriter : IJsonWriter
     }
 
     /// <inheritdoc />
-    public void ExportToJsonFromDataTable(DataTable.Models.DataTable dataTable, Stream jsonStream)
-        => Write(ExportToJsonStringFromDataTable(dataTable), jsonStream);
+    public void ExportToJsonFromDataTable(DataTable.Models.DataTable dataTable, Stream jsonStream) => Write(ExportToJsonStringFromDataTable(dataTable), jsonStream);
 
     /// <inheritdoc />
     public byte[] ExportToJsonBytesFromDataTable(DataTable.Models.DataTable dataTable, Encoding? encoding = null)

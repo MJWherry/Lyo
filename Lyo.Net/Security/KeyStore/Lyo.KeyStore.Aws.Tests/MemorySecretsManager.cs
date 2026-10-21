@@ -10,7 +10,7 @@ internal static class MemorySecretsManager
     public static (IAmazonSecretsManager Client, MemorySecretsState State) Create()
     {
         var client = DispatchProxy.Create<IAmazonSecretsManager, MemorySecretsProxy>();
-        var proxy = (MemorySecretsProxy)(object)client;
+        var proxy = (MemorySecretsProxy)client;
         return (client, proxy.State);
     }
 
@@ -61,8 +61,7 @@ internal sealed class MemorySecretsState
 
         SecretVersion version;
         if (!string.IsNullOrEmpty(request.VersionId)) {
-            version = versions.FirstOrDefault(item => item.VersionId == request.VersionId)
-                      ?? throw new ResourceNotFoundException("missing version");
+            version = versions.FirstOrDefault(item => item.VersionId == request.VersionId) ?? throw new ResourceNotFoundException("missing version");
         }
         else
             version = versions[^1];

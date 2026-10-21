@@ -6,14 +6,14 @@ using Lyo.Parameters;
 namespace Lyo.Web.Components.ParamTable;
 
 /// <summary>
-/// Persists the edits a user made in a <see cref="LyoParameterEditor" /> back to a CRUD parameter route. The editor hands back a flat row list with no change log, so saving means
-/// reconciling it against what was loaded: rows that disappeared are deleted, new rows are created, and the rest are updated.
+/// Persists the edits a user made in a <see cref="LyoParameterEditor" /> back to a CRUD parameter route. The editor hands back a flat row list with no change log, so saving
+/// means reconciling it against what was loaded: rows that disappeared are deleted, new rows are created, and the rest are updated.
 /// </summary>
 public static class LyoParameterEditRowSync
 {
     /// <summary>
-    /// Reconciles <paramref name="rows" /> against <paramref name="loadedIds" /> and writes the differences. Deletes run first so a row can be replaced by a new one with the same
-    /// key without tripping a uniqueness constraint. Created rows are stamped with their server id, so calling this twice does not duplicate them.
+    /// Reconciles <paramref name="rows" /> against <paramref name="loadedIds" /> and writes the differences. Deletes run first so a row can be replaced by a new one with the
+    /// same key without tripping a uniqueness constraint. Created rows are stamped with their server id, so calling this twice does not duplicate them.
     /// </summary>
     /// <typeparam name="TRequest">Request DTO for this parameter kind, for example <c>JobParameterReq</c>.</typeparam>
     /// <typeparam name="TResponse">Response DTO for this parameter kind.</typeparam>
@@ -32,8 +32,7 @@ public static class LyoParameterEditRowSync
         Func<LyoParameterEditRow, TRequest> toRequest,
         Func<TResponse, Guid> idOf,
         CancellationToken ct = default)
-        where TRequest : LyoParameterDefinitionBase
-        where TResponse : class, ILyoParameterDefinition
+        where TRequest : LyoParameterDefinitionBase where TResponse : class, ILyoParameterDefinition
     {
         var route = parameterRoute.TrimEnd('/');
         foreach (var removed in loadedIds.Where(id => rows.All(r => r.Id != id)))

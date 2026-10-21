@@ -12,6 +12,6 @@ internal static class WebRendererTestHost
         services.AddLogging();
         var provider = services.BuildServiceProvider();
         var htmlRenderer = new HtmlRenderer(provider, provider.GetRequiredService<ILoggerFactory>());
-        return new WebRendererService(htmlRenderer, provider.GetRequiredService<ILogger<WebRendererService>>(), options: options);
+        return new(htmlRenderer, provider.GetRequiredService<ILogger<WebRendererService>>(), options: options);
     }
 }

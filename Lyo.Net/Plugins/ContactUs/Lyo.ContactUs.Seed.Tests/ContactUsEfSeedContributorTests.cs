@@ -1,5 +1,4 @@
 using Lyo.ContactUs.Postgres.Database;
-using Lyo.ContactUs.Seed;
 using Lyo.Seed;
 
 namespace Lyo.ContactUs.Seed.Tests;
@@ -12,12 +11,13 @@ public sealed class ContactUsEfSeedContributorTests
         var transport = await SeedAsync(new ContactUsEfSeedContributor(), 3);
         var rows = transport.Items.OfType<ContactSubmissionEntity>().ToList();
         Assert.Equal(3, rows.Count);
-        Assert.All(rows, row => {
-            Assert.False(string.IsNullOrWhiteSpace(row.Name));
-            Assert.False(string.IsNullOrWhiteSpace(row.Email));
-            Assert.False(string.IsNullOrWhiteSpace(row.Subject));
-            Assert.False(string.IsNullOrWhiteSpace(row.Message));
-        });
+        Assert.All(
+            rows, row => {
+                Assert.False(string.IsNullOrWhiteSpace(row.Name));
+                Assert.False(string.IsNullOrWhiteSpace(row.Email));
+                Assert.False(string.IsNullOrWhiteSpace(row.Subject));
+                Assert.False(string.IsNullOrWhiteSpace(row.Message));
+            });
     }
 
     private static async Task<RecordingSeedTransport> SeedAsync(SeedContributor contributor, int count)
@@ -43,6 +43,7 @@ public sealed class ContactUsEfSeedContributorTests
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

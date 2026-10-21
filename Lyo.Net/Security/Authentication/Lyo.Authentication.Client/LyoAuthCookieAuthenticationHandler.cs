@@ -11,8 +11,8 @@ using LyoClaimNames = Lyo.Authentication.Models.Records.LyoJwtClaims;
 namespace Lyo.Authentication.Client;
 
 /// <summary>
-/// Cookie authentication scheme for consumer (Gateway-style) hosts. The cookie holds a data-protected session id; access/refresh tokens stay server-side
-/// in <see cref="LyoAuthSessionStore" />. When the cookie is present and resolves to an active session, cached JWT claims become a <see cref="ClaimsPrincipal" />.
+/// Cookie authentication scheme for consumer (Gateway-style) hosts. The cookie holds a data-protected session id; access/refresh tokens stay server-side in
+/// <see cref="LyoAuthSessionStore" />. When the cookie is present and resolves to an active session, cached JWT claims become a <see cref="ClaimsPrincipal" />.
 /// </summary>
 public sealed class LyoAuthCookieAuthenticationHandler : AuthenticationHandler<LyoAuthCookieOptions>
 {

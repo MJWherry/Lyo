@@ -4,8 +4,8 @@ namespace Lyo.RateLimit;
 public static class RateLimitEndpointMatcher
 {
     /// <summary>
-    /// True when <paramref name="whitelist" /> exempts this call. An entry is an endpoint name (<c>GetPerson</c>) or <c>METHOD /route</c>
-    /// (<c>GET /health</c>, <c>POST /person/{id}</c>). A trailing <c>/*</c> is a path prefix. Query strings and a trailing slash are ignored.
+    /// True when <paramref name="whitelist" /> exempts this call. An entry is an endpoint name (<c>GetPerson</c>) or <c>METHOD /route</c> (<c>GET /health</c>,
+    /// <c>POST /person/{id}</c>). A trailing <c>/*</c> is a path prefix. Query strings and a trailing slash are ignored.
     /// </summary>
     /// <param name="whitelist">Exempt endpoints. Null or empty exempts nothing.</param>
     /// <param name="endpointName">Route endpoint name, when the host assigned one.</param>
@@ -51,8 +51,7 @@ public static class RateLimitEndpointMatcher
 
         if (pattern.EndsWith("/*", StringComparison.Ordinal)) {
             var prefix = NormalizePath(pattern[..^2]);
-            return string.Equals(actual, prefix, StringComparison.Ordinal)
-                || actual.StartsWith(prefix + "/", StringComparison.Ordinal);
+            return string.Equals(actual, prefix, StringComparison.Ordinal) || actual.StartsWith(prefix + "/", StringComparison.Ordinal);
         }
 
         if (string.Equals(pattern, actual, StringComparison.Ordinal))

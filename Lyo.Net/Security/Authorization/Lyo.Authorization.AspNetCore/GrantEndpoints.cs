@@ -1,14 +1,14 @@
+using System.Security.Claims;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Authorization.AspNetCore;
 
 /// <summary>
-/// Grant HTTP API for browser clients. Reads <c>lyo:user</c> or else <c>sub</c> from the authenticated principal.
-/// Does not parse tokens and does not reference Lyo.Authentication.
+/// Grant HTTP API for browser clients. Reads <c>lyo:user</c> or else <c>sub</c> from the authenticated principal. Does not parse tokens and does not reference
+/// Lyo.Authentication.
 /// </summary>
 public static class GrantEndpoints
 {
@@ -16,26 +16,40 @@ public static class GrantEndpoints
     public const string ManagePolicyName = "authorization.grants.manage";
 
     /// <summary>
-    /// Maps list, save, revoke, and check under <paramref name="prefix" />. Every route requires an authenticated user.
-    /// When <paramref name="managePolicy" /> is set, save, revoke, listing another subject, and checking another subject require that policy.
-    /// Omitting the subject on list returns every grant when the caller may manage, and only the caller's grants otherwise.
+    /// Maps list, save, revoke, and check under <paramref name="prefix" />. Every route requires an authenticated user. When <paramref name="managePolicy" /> is set, save,
+    /// revoke, listing another subject, and checking another subject require that policy. Omitting the subject on list returns every grant when the caller may manage, and only the
+    /// caller's grants otherwise.
     /// </summary>
     public static IEndpointRouteBuilder MapGrantEndpoints(this IEndpointRouteBuilder endpoints, string? managePolicy = null, string prefix = "/authorization/grants")
     {
         ArgumentHelpers.ThrowIfNull(endpoints);
         var group = endpoints.MapGroup(prefix).RequireAuthorization();
-        group.MapGet("", (HttpContext http, IGrantStore store, string? subject, bool? includeRevoked, bool? includeExpired, int? take, CancellationToken ct)
-            => ListAsync(http, store, managePolicy, subject, includeRevoked ?? false, includeExpired ?? false, take, ct));
-        group.MapPost("", (HttpContext http, GrantWrite write, IResourceAuthorization authorization, CancellationToken ct)
-            => SaveAsync(http, write, authorization, managePolicy, ct));
-        group.MapPost("/{id:guid}/revoke", (HttpContext http, Guid id, IResourceAuthorization authorization, CancellationToken ct)
-            => RevokeAsync(http, id, authorization, managePolicy, ct));
-        group.MapPost("/check", (HttpContext http, GrantCheck check, IResourceAuthorization authorization, CancellationToken ct)
-            => CheckAsync(http, check, authorization, managePolicy, ct));
+        group.MapGet(
+            "",
+            (HttpContext http, IGrantStore store, string? subject, bool? includeRevoked, bool? includeExpired, int? take, CancellationToken ct) => ListAsync(
+                http, store, managePolicy, subject, includeRevoked ?? false, includeExpired ?? false, take, ct));
+
+        group.MapPost(
+            "", (HttpContext http, GrantWrite write, IResourceAuthorization authorization, CancellationToken ct) => SaveAsync(http, write, authorization, managePolicy, ct));
+
+        group.MapPost(
+            "/{id:guid}/revoke", (HttpContext http, Guid id, IResourceAuthorization authorization, CancellationToken ct) => RevokeAsync(http, id, authorization, managePolicy, ct));
+
+        group.MapPost(
+            "/check", (HttpContext http, GrantCheck check, IResourceAuthorization authorization, CancellationToken ct) => CheckAsync(http, check, authorization, managePolicy, ct));
+
         return endpoints;
     }
 
-    private static async Task<IResult> ListAsync(HttpContext http, IGrantStore store, string? managePolicy, string? subject, bool includeRevoked, bool includeExpired, int? take, CancellationToken ct)
+    private static async Task<IResult> ListAsync(
+        HttpContext http,
+        IGrantStore store,
+        string? managePolicy,
+        string? subject,
+        bool includeRevoked,
+        bool includeExpired,
+        int? take,
+        CancellationToken ct)
     {
         var caller = Caller(http.User);
         if (caller is null)
@@ -50,12 +64,15 @@ public static class GrantEndpoints
                 return Results.Forbid();
         }
 
-        var rows = await store.ListAsync(new GrantListQuery {
-            Subject = filter,
-            IncludeRevoked = includeRevoked,
-            IncludeExpired = includeExpired,
-            Take = take ?? GrantListQuery.DefaultTake
-        }, ct).ConfigureAwait(false);
+        var rows = await store.ListAsync(
+                new() {
+                    Subject = filter,
+                    IncludeRevoked = includeRevoked,
+                    IncludeExpired = includeExpired,
+                    Take = take ?? GrantListQuery.DefaultTake
+                }, ct)
+            .ConfigureAwait(false);
+
         return Results.Ok(rows);
     }
 
@@ -93,6 +110,7 @@ public static class GrantEndpoints
         var caller = Caller(http.User);
         if (caller is null)
             return Results.BadRequest("authorization_subject_required");
+
         if (!string.Equals(check.Subject?.Trim(), caller, StringComparison.Ordinal) && !await CanManageAsync(http, managePolicy))
             return Results.Forbid();
 
@@ -118,7 +136,7 @@ public static class GrantEndpoints
         return result.Succeeded;
     }
 
-    private static string? Caller(System.Security.Claims.ClaimsPrincipal user)
+    private static string? Caller(ClaimsPrincipal user)
     {
         var lyoUser = user.FindFirst("lyo:user")?.Value;
         if (!string.IsNullOrWhiteSpace(lyoUser))
@@ -128,12 +146,13 @@ public static class GrantEndpoints
         return string.IsNullOrWhiteSpace(sub) ? null : sub;
     }
 
-    private static IResult Failure(Exception ex) => ex switch {
-        ConflictException conflict => Results.Conflict(conflict.Message),
-        NotFoundException missing => Results.NotFound(missing.Message),
-        ArgumentException invalid => Results.BadRequest(invalid.Message),
-        _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError)
-    };
+    private static IResult Failure(Exception ex)
+        => ex switch {
+            ConflictException conflict => Results.Conflict(conflict.Message),
+            NotFoundException missing => Results.NotFound(missing.Message),
+            ArgumentException invalid => Results.BadRequest(invalid.Message),
+            var _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError)
+        };
 
     /// <summary>Check response. A store failure is not returned as <c>allowed: false</c>.</summary>
     public sealed record GrantCheckResponse(bool Allowed);

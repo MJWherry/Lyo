@@ -1,4 +1,3 @@
-using System.Linq;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore;
 using Lyo.FileStorage.Abstractions;
@@ -37,8 +36,8 @@ public sealed record FileStorageFolderEntry(
 public static class FileStorageFolderList
 {
     /// <summary>
-    /// Lists one folder. When <paramref name="physical" /> is null, catalog files are <see cref="FileStoragePresence.Store" />. When physical listing ran and a row did
-    /// not join, presence is <see cref="FileStoragePresence.None" />.
+    /// Lists one folder. When <paramref name="physical" /> is null, catalog files are <see cref="FileStoragePresence.Store" />. When physical listing ran and a row did not join,
+    /// presence is <see cref="FileStoragePresence.None" />.
     /// </summary>
     public static async Task<(IReadOnlyList<FileStorageFolderEntry> Entries, bool Truncated)> ListAsync(
         IFileMetadataStore store,
@@ -53,7 +52,6 @@ public static class FileStorageFolderList
         var immediate = await store.ListByPathPrefixAsync(parent, false, maxKeys, ct).ConfigureAwait(false);
         var descendants = await store.ListByPathPrefixAsync(parent, true, maxKeys, ct).ConfigureAwait(false);
         var truncated = immediate.Count >= maxKeys || descendants.Count >= maxKeys;
-
         IReadOnlyList<FileStorageReconcileEntry> reconciled = [];
         if (physical != null) {
             reconciled = await FileStorageReconcile.ReconcileAsync(store, physical, pathPrefix: parent, maxKeys: maxKeys, ct: ct).ConfigureAwait(false);
@@ -80,13 +78,11 @@ public static class FileStorageFolderList
 
         foreach (var row in immediate) {
             presenceById.TryGetValue(row.Id, out var joined);
-            var presence = physical == null
-                ? FileStoragePresence.Store
-                : joined?.Presence ?? FileStoragePresence.None;
+            var presence = physical == null ? FileStoragePresence.Store : joined?.Presence ?? FileStoragePresence.None;
             entries.Add(
                 new(
-                    row.OriginalFileName ?? row.Id.ToString("D"), false, row.PathPrefix, row.Id, presence, row.OriginalFileName, row.OriginalFileSize,
-                    joined?.PhysicalKey, row.IsCompressed, row.CompressionAlgorithm?.Name, row.IsEncrypted, row.DataEncryptionKeyAlgorithm?.ToString()));
+                    row.OriginalFileName ?? row.Id.ToString("D"), false, row.PathPrefix, row.Id, presence, row.OriginalFileName, row.OriginalFileSize, joined?.PhysicalKey,
+                    row.IsCompressed, row.CompressionAlgorithm?.Name, row.IsEncrypted, row.DataEncryptionKeyAlgorithm?.ToString()));
         }
 
         if (physical != null) {
@@ -119,12 +115,13 @@ public static class FileStorageFolderList
 
             return StringComparer.OrdinalIgnoreCase.Compare(a.Name, b.Name);
         });
+
         return (entries, truncated);
     }
 
     /// <summary>
-    /// Lists one folder using <paramref name="fileStorage" />'s physical backend when the service implements <see cref="IFileStoragePhysical" />. Hosts that must not
-    /// reference <see cref="IFileSystem" /> should call this overload.
+    /// Lists one folder using <paramref name="fileStorage" />'s physical backend when the service implements <see cref="IFileStoragePhysical" />. Hosts that must not reference
+    /// <see cref="IFileSystem" /> should call this overload.
     /// </summary>
     public static Task<(IReadOnlyList<FileStorageFolderEntry> Entries, bool Truncated)> ListAsync(
         IFileMetadataStore store,

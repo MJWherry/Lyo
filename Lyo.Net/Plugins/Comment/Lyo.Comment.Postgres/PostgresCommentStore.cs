@@ -1,11 +1,11 @@
 using Lyo.Comment.Postgres.Database;
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
 using Lyo.Health;
 using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Comment.Postgres;
 
@@ -103,7 +103,8 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
     {
         var tenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Comments.AsNoTracking().WhereActive()
+        var entities = await context.Comments.AsNoTracking()
+            .WhereActive()
             .WhereTenant(tenant)
             .Where(c => c.ReplyToCommentId == replyToCommentId)
             .OrderBy(c => c.CreatedAt)
@@ -120,7 +121,8 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         var tenant = ResolveTenant(tenantId);
         var fromId = EntityRefPersistedGuid.PersistedEntityId(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Comments.AsNoTracking().WhereActive()
+        var entities = await context.Comments.AsNoTracking()
+            .WhereActive()
             .WhereTenant(tenant)
             .Where(c => c.ActorEntityType == fromEntity.EntityType && c.ActorEntityId == fromId)
             .OrderBy(c => c.CreatedAt)
@@ -239,7 +241,8 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var commentId = EntityRefPersistedGuid.RequirePersistedGuid(commentRef);
         var fromId = EntityRefPersistedGuid.PersistedEntityId(fromEntity);
-        var entity = await context.CommentReactions.AsNoTracking().FirstOrDefaultAsync(
+        var entity = await context.CommentReactions.AsNoTracking()
+            .FirstOrDefaultAsync(
                 r => r.SubjectEntityType == commentRef.EntityType && r.SubjectEntityId == commentId.ToString() && r.ActorEntityType == fromEntity.EntityType &&
                     r.ActorEntityId == fromId, ct)
             .ConfigureAwait(false);
@@ -318,8 +321,7 @@ public sealed class PostgresCommentStore : EntityRefPostgresStoreBase, ICommentS
     public string HealthCheckName => "comment-postgres";
 
     /// <inheritdoc />
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => PostgresHealth.CheckAsync(_contextFactory, PostgresCommentOptions.Schema, ct);
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => PostgresHealth.CheckAsync(_contextFactory, PostgresCommentOptions.Schema, ct);
 
     private static async Task<List<Guid>> CollectDescendantIdsAsync(CommentDbContext context, Guid rootId, Guid tenant, CancellationToken ct)
     {

@@ -1,8 +1,8 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Enums;
 using Lyo.Query.Models.Exceptions;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Query.Tests;
 

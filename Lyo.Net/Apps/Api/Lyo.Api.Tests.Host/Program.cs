@@ -8,19 +8,20 @@ using Lyo.Api.Export.Toml;
 using Lyo.Api.Export.Xlsx;
 using Lyo.Api.Export.Xml;
 using Lyo.Api.Export.Yaml;
+using Lyo.Api.Middleware;
 using Lyo.Cache;
-using Lyo.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Csv;
 using Lyo.Formatter;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
+using Lyo.Json;
+using Lyo.Toml;
 using Lyo.Xlsx;
 using Lyo.Xml;
 using Lyo.Yaml;
-using Lyo.Toml;
-using Lyo.Common.Core.Identifiers;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddCsvService();
@@ -47,7 +48,7 @@ builder.Services.AddCors(options => {
 });
 
 var app = builder.Build();
-app.UseMiddleware<Lyo.Api.Middleware.LoggingMiddleware>();
+app.UseMiddleware<LoggingMiddleware>();
 app.UseCors();
 app.UseLyoApiCompression();
 app.CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>("/api/Job/Definition", "Job")

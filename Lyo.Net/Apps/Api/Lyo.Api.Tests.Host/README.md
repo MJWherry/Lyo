@@ -1,6 +1,7 @@
 # Lyo.Api.Tests.Host
 
-Reference ASP.NET Core minimal-API host that `Lyo.Api.Tests` and other integration tests target via `WebApplicationFactory<Program>`. It wires a realistic mix of `Lyo.Api` services so tests walk the same registration and middleware paths production hosts use.
+Reference ASP.NET Core minimal-API host that `Lyo.Api.Tests` and other integration tests target via `WebApplicationFactory<Program>`. It wires a realistic mix of `Lyo.Api` services
+so tests walk the same registration and middleware paths production hosts use.
 
 ## Examples
 
@@ -25,7 +26,8 @@ public sealed class JobApiTests : IClassFixture<WebApplicationFactory<Program>>
 
 ## What ships
 
-- `Program` ([`Program.cs`](Program.cs)). Top-level statements that build the host. At the bottom, the empty `Lyo.Api.Tests.Host.Program` class is the entry-point type `WebApplicationFactory<Program>` requires.
+- `Program` ([`Program.cs`](Program.cs)). Top-level statements that build the host. At the bottom, the empty `Lyo.Api.Tests.Host.Program` class is the entry-point type
+  `WebApplicationFactory<Program>` requires.
 
 ## Services registered
 
@@ -35,13 +37,17 @@ public sealed class JobApiTests : IClassFixture<WebApplicationFactory<Program>>
 - **Local cache** (`AddLocalCache`) plus `AddLyoQueryServices`.
 - **Job persistence** through `AddPostgresJobManagementFromConfiguration` (PostgreSQL `Lyo.Job` schema; configured via `appsettings.json`).
 - **Export service** for `JobContext`.
-- **Mapping** is registered by `AddPostgresJobManagementFromConfiguration` (`ILyoMapper` the Job package needs), so this host has no mapper of its own. Hosts that map their own DTOs supply an `ILyoMapper` themselves — Lyo ships no AutoMapper or Mapster adapter.
+- **Mapping** is registered by `AddPostgresJobManagementFromConfiguration` (`ILyoMapper` the Job package needs), so this host has no mapper of its own. Hosts that map their own
+  DTOs supply an `ILyoMapper` themselves — Lyo ships no AutoMapper or Mapster adapter.
 - **CORS** with a default policy that allows everything (test convenience).
 
 ## Endpoints
 
-- **Typed builder** at `/api/Job/Definition`. Uses `CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>` with `AllowAnonymous`, `WithMetadata(IncludeEntityMetadata = true)`, and lifecycle hooks (`WithGet`, `WithCreate`, `WithCreateBulk`, `WithUpdate`, `WithUpdateBulk`, `WithPatch`, `WithPatchBulk`, `WithUpsert`, `WithUpsertBulk`, `WithDelete`, `WithDeleteBulk`). Each hook appends a marker (e.g. `[afterCreate]`) to `Description` so tests can verify hook execution order.
-- **Dynamic builder** at `api/Job`. `MapDynamicCrudEndpoints<JobContext>` with `IncludeOnly<JobDefinition>` and `BeforeCreate` setting a `LyoGuid.CreateV7()` PK when callers omit `Id`. Features: `ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance` on dynamic defaults.
+- **Typed builder** at `/api/Job/Definition`. Uses `CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>` with `AllowAnonymous`,
+  `WithMetadata(IncludeEntityMetadata = true)`, and lifecycle hooks (`WithGet`, `WithCreate`, `WithCreateBulk`, `WithUpdate`, `WithUpdateBulk`, `WithPatch`, `WithPatchBulk`,
+  `WithUpsert`, `WithUpsertBulk`, `WithDelete`, `WithDeleteBulk`). Each hook appends a marker (e.g. `[afterCreate]`) to `Description` so tests can verify hook execution order.
+- **Dynamic builder** at `api/Job`. `MapDynamicCrudEndpoints<JobContext>` with `IncludeOnly<JobDefinition>` and `BeforeCreate` setting a `LyoGuid.CreateV7()` PK when callers omit
+  `Id`. Features: `ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance` on dynamic defaults.
 
 ## Calling it from tests
 

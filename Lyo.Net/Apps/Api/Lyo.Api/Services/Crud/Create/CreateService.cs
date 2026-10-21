@@ -194,8 +194,8 @@ public class CreateService<TContext>(
     }
 
     /// <summary>
-    /// Invalidates cached graphs of every entity the new row points at through a foreign key. A create emits the new type's own tag, but nothing carries the child's identity into a
-    /// cached parent, so a parent loaded with <c>Include(x =&gt; x.Children)</c> kept serving a graph that was missing the row that had just been inserted.
+    /// Invalidates cached graphs of every entity the new row points at through a foreign key. A create emits the new type's own tag, but nothing carries the child's identity
+    /// into a cached parent, so a parent loaded with <c>Include(x =&gt; x.Children)</c> kept serving a graph that was missing the row that had just been inserted.
     /// </summary>
     private async Task InvalidatePrincipalTypeCachesAsync<TDbModel>(DbContext context)
         where TDbModel : class

@@ -3,12 +3,12 @@ namespace Lyo.Story.Web.Components;
 /// <summary>Plays a saved story: start, choices, advance, variable bag, event log, and causes.</summary>
 public partial class StoryPlayView
 {
-    private string? _playerRef;
     private bool _busy;
-    private StoryPlayStateRes? _state;
-    private List<StoryPlaythroughEventRes> _events = [];
-    private IReadOnlyList<StoryPlaythroughEventRes>? _causes;
     private string? _causeKey;
+    private IReadOnlyList<StoryPlaythroughEventRes>? _causes;
+    private List<StoryPlaythroughEventRes> _events = [];
+    private string? _playerRef;
+    private StoryPlayStateRes? _state;
 
     /// <summary>Client that starts and advances play.</summary>
     [Parameter]
@@ -49,6 +49,7 @@ public partial class StoryPlayView
     {
         if (_state is null || string.IsNullOrWhiteSpace(choiceKey))
             return;
+
         _busy = true;
         try {
             _state = await StoryClient.ChooseAsync(_state.Playthrough.Id, new() { ChoiceKey = choiceKey });
@@ -66,6 +67,7 @@ public partial class StoryPlayView
     {
         if (_state is null)
             return;
+
         _busy = true;
         try {
             _state = await StoryClient.AdvanceAsync(_state.Playthrough.Id);
@@ -83,6 +85,7 @@ public partial class StoryPlayView
     {
         if (_state is null)
             return;
+
         _causeKey = variableKey;
         try {
             _causes = await StoryClient.GetCausesAsync(_state.Playthrough.Id, variableKey);
@@ -96,6 +99,7 @@ public partial class StoryPlayView
     {
         if (_state is null)
             return;
+
         _events = [.. await StoryClient.GetEventsAsync(_state.Playthrough.Id)];
         _causes = null;
     }

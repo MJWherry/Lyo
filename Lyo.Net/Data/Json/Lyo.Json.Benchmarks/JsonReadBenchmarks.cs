@@ -3,7 +3,6 @@ using BenchmarkDotNet.Attributes;
 using Lyo.Benchmark;
 using Lyo.Benchmark.Data;
 using Lyo.Common.Core.Identifiers;
-using Lyo.Json;
 
 namespace Lyo.Json.Benchmarks;
 
@@ -17,8 +16,8 @@ public class JsonReadBenchmarks
 {
     private readonly JsonService _json = JsonService.Default;
     private byte[] _bytes = null!;
-    private byte[] _ndjson = null!;
     private string _filePath = null!;
+    private byte[] _ndjson = null!;
     private string _text = null!;
 
     [Params(100, 1_000, 10_000, 100_000)]

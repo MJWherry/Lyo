@@ -7,7 +7,7 @@ public sealed class RecipeIngredientLineEntity
     [Key]
     public Guid Id { get; set; }
 
-    /// <summary>tenant scope. <see langword="null"/> means system / no tenant.</summary>
+    /// <summary>tenant scope. <see langword="null" /> means system / no tenant.</summary>
     public Guid? TenantId { get; set; }
 
     public Guid RecipeId { get; set; }

@@ -1,6 +1,7 @@
 using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Job.Client;
 using Lyo.Job.Models;
 using Lyo.Job.Models.Enums;
@@ -11,7 +12,6 @@ using Lyo.Job.Tests.Postgres;
 using Lyo.Job.Worker;
 using Lyo.MessageQueue;
 using Microsoft.Extensions.Logging.Abstractions;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Tests;
 
@@ -149,7 +149,11 @@ public class JobWorkerBaseRegistrationTests
 
         public JobWorkerInstanceReq? LastRegisterRequest { get; private set; }
 
-        public override Task<TResult> PatchAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        public override Task<TResult> PatchAsAsync<TRequest, TResult>(
+            string uri,
+            TRequest? request = default,
+            Action<HttpRequestMessage>? before = null,
+            CancellationToken ct = default)
             where TRequest : default
         {
             if (!IsWorkerInstanceRoute(uri))
@@ -169,7 +173,11 @@ public class JobWorkerBaseRegistrationTests
             return Task.FromResult(default(TResult)!);
         }
 
-        public override Task<TResult> PostAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        public override Task<TResult> PostAsAsync<TRequest, TResult>(
+            string uri,
+            TRequest? request = default,
+            Action<HttpRequestMessage>? before = null,
+            CancellationToken ct = default)
             where TRequest : default
         {
             if (!IsWorkerInstanceRoute(uri))
@@ -186,8 +194,7 @@ public class JobWorkerBaseRegistrationTests
             var now = DateTime.UtcNow;
             LastRegisterRequest = request as JobWorkerInstanceReq;
             var created = new CreateResult<JobWorkerInstanceRes>(
-                true,
-                new() {
+                true, new() {
                     Id = id,
                     WorkerType = "cs",
                     MachineName = "host",
@@ -197,8 +204,8 @@ public class JobWorkerBaseRegistrationTests
                     StartedTimestamp = now,
                     LastHeartbeatUtc = now,
                     CreatedTimestamp = now
-                },
-                null);
+                }, null);
+
             return Task.FromResult((TResult)(object)created);
         }
 

@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Images.Ocr.Models;
 using Lyo.Result;
 using SixLabors.Fonts;
@@ -5,7 +6,6 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Images.Ocr.Tesseract.Tests;
 

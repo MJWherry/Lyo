@@ -9,8 +9,8 @@ using Lyo.Job.Models.Response;
 namespace Lyo.Job.Scheduler.Tests;
 
 /// <summary>
-/// A workflow step's <c>ParametersJson</c> is what makes a shared job definition reusable across workflows: the definition declares the inputs and each step supplies its
-/// own values, templated against upstream results. These lock the merge rule, the upstream tokens, and the failure behavior when the JSON is unusable.
+/// A workflow step's <c>ParametersJson</c> is what makes a shared job definition reusable across workflows: the definition declares the inputs and each step supplies its own
+/// values, templated against upstream results. These lock the merge rule, the upstream tokens, and the failure behavior when the JSON is unusable.
 /// </summary>
 public class JobRunRequestFactoryWorkflowTests
 {
@@ -34,7 +34,6 @@ public class JobRunRequestFactoryWorkflowTests
         var definition = BuildDefinition(Parameter("Rows", LyoTypeInfo.String, "0"));
         var scope = new JobContextBag().WithUpstreamRun("Extract", RunWithRowCount("42"));
         var req = Build(definition, Step(definition, """{"Rows":"{Step.Extract.Result.RowCount}"}"""), scope);
-
         Assert.Equal("42", Assert.Single(req.JobRunParameters).Value);
     }
 
@@ -43,7 +42,6 @@ public class JobRunRequestFactoryWorkflowTests
     {
         var definition = BuildDefinition(Parameter("Path", LyoTypeInfo.String, "/tmp/a"));
         var req = Build(definition, Step(definition, """{"Extra":"x"}"""), new());
-
         var extra = Assert.Single(req.JobRunParameters, p => p.Key == "Extra");
         Assert.Equal(LyoTypeInfo.String.FullName, extra.Type);
         Assert.Equal("x", extra.Value);
@@ -76,7 +74,6 @@ public class JobRunRequestFactoryWorkflowTests
     {
         var definition = BuildDefinition(Parameter("Path", LyoTypeInfo.String, "/tmp/a"));
         var req = Build(definition, Step(definition, null), new());
-
         Assert.Equal(definition.Id, req.JobDefinitionId);
     }
 

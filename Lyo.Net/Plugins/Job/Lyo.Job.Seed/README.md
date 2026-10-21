@@ -1,6 +1,9 @@
 # Lyo.Job.Seed
 
-`JobEfSeedContributor` writes `options.Count` disabled job definitions, each with a parameter, a disabled schedule and schedule parameter, a parallel restriction, and a historical succeeded run (log, run parameter, and run result). It also writes one disabled blackout calendar and window, one stopped worker, one file-upload row, and one disabled workflow with a finished workflow run. Definitions, schedules, and workflow steps stay disabled so seeding does not start workers. `OnClear` deletes run and workflow children before definitions so `--replace` can run.
+`JobEfSeedContributor` writes `options.Count` disabled job definitions, each with a parameter, a disabled schedule and schedule parameter, a parallel restriction, and a historical
+succeeded run (log, run parameter, and run result). It also writes one disabled blackout calendar and window, one stopped worker, one file-upload row, and one disabled workflow
+with a finished workflow run. Definitions, schedules, and workflow steps stay disabled so seeding does not start workers. `OnClear` deletes run and workflow children before
+definitions so `--replace` can run.
 
 ## Features
 

@@ -15,9 +15,8 @@ public sealed class PostgresMusicStoreTests(MusicPostgresFixture fixture)
         var ct = TestCt;
         var release = NewRelease($"artist-{LyoGuid.CreateV7():N}");
         release.Credits = [
-            new MusicCredit { DisplayName = "Second", Role = MusicCreditRole.Artist, Ordinal = 2 },
-            new MusicCredit { DisplayName = "First", Role = MusicCreditRole.Featured, Ordinal = 1 },
-            new MusicCredit { DisplayName = "Producer", Role = MusicCreditRole.Producer, Ordinal = 0 }
+            new() { DisplayName = "Second", Role = MusicCreditRole.Artist, Ordinal = 2 }, new() { DisplayName = "First", Role = MusicCreditRole.Featured, Ordinal = 1 },
+            new() { DisplayName = "Producer", Role = MusicCreditRole.Producer, Ordinal = 0 }
         ];
 
         await Store.SaveReleaseAsync(release, ct);
@@ -33,14 +32,12 @@ public sealed class PostgresMusicStoreTests(MusicPostgresFixture fixture)
         var slug = $"slug-{LyoGuid.CreateV7():N}";
         await Store.SaveReleaseAsync(NewRelease(slug), ct);
         await Assert.ThrowsAsync<ConflictException>(() => Store.SaveReleaseAsync(NewRelease(slug), ct));
-
         var barcode = "123456789012";
         var first = NewRelease($"bar-a-{LyoGuid.CreateV7():N}");
-        first.Identifiers = [new MusicIdentifier { Scheme = MusicIdentifierSchemes.Barcode, Value = barcode, IsPrimary = true }];
+        first.Identifiers = [new() { Scheme = MusicIdentifierSchemes.Barcode, Value = barcode, IsPrimary = true }];
         await Store.SaveReleaseAsync(first, ct);
-
         var second = NewRelease($"bar-b-{LyoGuid.CreateV7():N}");
-        second.Identifiers = [new MusicIdentifier { Scheme = MusicIdentifierSchemes.Barcode, Value = "1234-5678-9012", IsPrimary = true }];
+        second.Identifiers = [new() { Scheme = MusicIdentifierSchemes.Barcode, Value = "1234-5678-9012", IsPrimary = true }];
         await Assert.ThrowsAsync<ConflictException>(() => Store.SaveReleaseAsync(second, ct));
     }
 
@@ -49,9 +46,8 @@ public sealed class PostgresMusicStoreTests(MusicPostgresFixture fixture)
     {
         var ct = TestCt;
         var release = NewRelease($"norm-{LyoGuid.CreateV7():N}");
-        release.Identifiers = [new MusicIdentifier { Scheme = MusicIdentifierSchemes.Barcode, Value = "12345678901", IsPrimary = true }];
+        release.Identifiers = [new() { Scheme = MusicIdentifierSchemes.Barcode, Value = "12345678901", IsPrimary = true }];
         await Store.SaveReleaseAsync(release, ct);
-
         var found = await Store.GetReleaseByIdentifierAsync(MusicIdentifierSchemes.Barcode, "1 2345-67890-1", ct);
         Assert.NotNull(found);
         Assert.Equal(release.Id, found.Id);
@@ -67,9 +63,7 @@ public sealed class PostgresMusicStoreTests(MusicPostgresFixture fixture)
         var release = NewRelease($"mem-{LyoGuid.CreateV7():N}");
         release.ReleaseGroupId = group.Id;
         await Store.SaveReleaseAsync(release, ct);
-
         await Store.DeleteReleaseGroupAsync(group.Id, ct);
-
         var loaded = await Store.GetReleaseByIdAsync(release.Id, ct);
         Assert.NotNull(loaded);
         Assert.Null(loaded.ReleaseGroupId);
@@ -81,10 +75,7 @@ public sealed class PostgresMusicStoreTests(MusicPostgresFixture fixture)
     {
         var ct = TestCt;
         var release = NewRelease($"trk-{LyoGuid.CreateV7():N}");
-        release.Tracks = [
-            new MusicTrack { DiscNumber = 1, TrackNumber = 1, Title = "A" },
-            new MusicTrack { DiscNumber = 1, TrackNumber = 1, Title = "B" }
-        ];
+        release.Tracks = [new() { DiscNumber = 1, TrackNumber = 1, Title = "A" }, new() { DiscNumber = 1, TrackNumber = 1, Title = "B" }];
         await Assert.ThrowsAsync<ConflictException>(() => Store.SaveReleaseAsync(release, ct));
     }
 
@@ -93,11 +84,9 @@ public sealed class PostgresMusicStoreTests(MusicPostgresFixture fixture)
     {
         var ct = TestCt;
         var release = NewRelease($"del-{LyoGuid.CreateV7():N}");
-        release.Tracks = [new MusicTrack { DiscNumber = 1, TrackNumber = 1, Title = "Only" }];
+        release.Tracks = [new() { DiscNumber = 1, TrackNumber = 1, Title = "Only" }];
         await Store.SaveReleaseAsync(release, ct);
-
         await Store.DeleteReleaseAsync(release.Id, ct);
-
         Assert.Null(await Store.GetReleaseByIdAsync(release.Id, ct));
     }
 
@@ -107,7 +96,7 @@ public sealed class PostgresMusicStoreTests(MusicPostgresFixture fixture)
         var ct = TestCt;
         var slug = $"flt-{LyoGuid.CreateV7():N}";
         await Store.SaveReleaseAsync(NewRelease(slug), ct);
-        var results = await Store.SearchReleasesAsync(new MusicReleaseQuery { TitleContains = slug, FilterIds = [] }, ct);
+        var results = await Store.SearchReleasesAsync(new() { TitleContains = slug, FilterIds = [] }, ct);
         Assert.Empty(results);
     }
 
@@ -118,12 +107,27 @@ public sealed class PostgresMusicStoreTests(MusicPostgresFixture fixture)
         var recording = new MusicRecording { Title = "Shared" };
         await Store.SaveRecordingAsync(recording, ct);
         var first = NewRelease($"rec-a-{LyoGuid.CreateV7():N}");
-        first.Tracks = [new MusicTrack { DiscNumber = 1, TrackNumber = 1, Title = "On A", RecordingId = recording.Id }];
+        first.Tracks = [
+            new() {
+                DiscNumber = 1,
+                TrackNumber = 1,
+                Title = "On A",
+                RecordingId = recording.Id
+            }
+        ];
+
         var second = NewRelease($"rec-b-{LyoGuid.CreateV7():N}");
-        second.Tracks = [new MusicTrack { DiscNumber = 1, TrackNumber = 1, Title = "On B", RecordingId = recording.Id }];
+        second.Tracks = [
+            new() {
+                DiscNumber = 1,
+                TrackNumber = 1,
+                Title = "On B",
+                RecordingId = recording.Id
+            }
+        ];
+
         await Store.SaveReleaseAsync(first, ct);
         await Store.SaveReleaseAsync(second, ct);
-
         var loaded = await Store.GetRecordingAsync(recording.Id, ct);
         Assert.NotNull(loaded);
         Assert.Equal(2, loaded.Tracks.Count);
@@ -136,7 +140,13 @@ public sealed class PostgresMusicStoreTests(MusicPostgresFixture fixture)
     {
         var ct = TestCt;
         var id = LyoGuid.CreateV7();
-        var genre = new MusicGenre { Id = id, ParentGenreId = id, Slug = $"self-{id:N}", Name = "Self" };
+        var genre = new MusicGenre {
+            Id = id,
+            ParentGenreId = id,
+            Slug = $"self-{id:N}",
+            Name = "Self"
+        };
+
         await Assert.ThrowsAsync<UnprocessableEntityException>(() => Store.SaveGenreAsync(genre, ct));
     }
 
@@ -158,14 +168,20 @@ public sealed class PostgresMusicStoreTests(MusicPostgresFixture fixture)
         var ct = TestCt;
         var token = $"lyric{LyoGuid.CreateV7():N}";
         var release = NewRelease($"lyr-{LyoGuid.CreateV7():N}");
-        release.Tracks = [new MusicTrack { DiscNumber = 1, TrackNumber = 1, Title = "Verse", Lyrics = $"a chorus about {token} tonight" }];
-        await Store.SaveReleaseAsync(release, ct);
+        release.Tracks = [
+            new() {
+                DiscNumber = 1,
+                TrackNumber = 1,
+                Title = "Verse",
+                Lyrics = $"a chorus about {token} tonight"
+            }
+        ];
 
-        var hits = await Store.SearchLyricsAsync(new MusicLyricsQuery { FullText = token }, ct);
+        await Store.SaveReleaseAsync(release, ct);
+        var hits = await Store.SearchLyricsAsync(new() { FullText = token }, ct);
         var hit = Assert.Single(hits);
         Assert.Equal(release.Id, hit.ReleaseId);
         Assert.Contains(token, hit.Snippet, StringComparison.OrdinalIgnoreCase);
-
         var loaded = await Store.GetReleaseByIdAsync(release.Id, ct);
         Assert.NotNull(loaded);
         Assert.Null(loaded.Tracks[0].Lyrics);

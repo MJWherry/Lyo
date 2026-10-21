@@ -1,6 +1,7 @@
 # Lyo.Authentication.Client
 
-Consumer-side runtime for the Lyo BFF auth flow. Plugs a web host, typically a Blazor Server gateway or a server-rendered API consumer, into a Lyo authentication API without ever exposing tokens to the browser.
+Consumer-side runtime for the Lyo BFF auth flow. Plugs a web host, typically a Blazor Server gateway or a server-rendered API consumer, into a Lyo authentication API without ever
+exposing tokens to the browser.
 
 ## Examples
 
@@ -102,7 +103,8 @@ Register in the consuming host's `Program.cs`. Bind `appsettings.json`. On the A
 
 ## API client flow (no browser)
 
-For non-browser callers, hit `POST /auth/token` (grant_type=refresh_token) and `POST /auth/refresh` directly on the API. Both return JSON `{access_token, expires_in, refresh_token, token_type}`. This package isn't needed for that flow. It exists to bridge the browser handoff into a server-managed session.
+For non-browser callers, hit `POST /auth/token` (grant_type=refresh_token) and `POST /auth/refresh` directly on the API. Both return JSON
+`{access_token, expires_in, refresh_token, token_type}`. This package isn't needed for that flow. It exists to bridge the browser handoff into a server-managed session.
 
 ## Production swap-out points
 

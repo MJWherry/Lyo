@@ -9,16 +9,9 @@ public static class FileTagValueKinds
     private static readonly FileTagGrain[] SpanGrains = [FileTagGrain.Days, FileTagGrain.Hours, FileTagGrain.Minutes, FileTagGrain.Seconds];
 
     /// <summary>Kinds a structure control can offer, in display order.</summary>
-    public static IReadOnlyList<FileTagValueKind> All { get; } =
-    [
-        FileTagValueKind.String,
-        FileTagValueKind.Guid,
-        FileTagValueKind.Boolean,
-        FileTagValueKind.Integer,
-        FileTagValueKind.Number,
-        FileTagValueKind.DateTime,
-        FileTagValueKind.TimeOnly,
-        FileTagValueKind.TimeSpan
+    public static IReadOnlyList<FileTagValueKind> All { get; } = [
+        FileTagValueKind.String, FileTagValueKind.Guid, FileTagValueKind.Boolean, FileTagValueKind.Integer, FileTagValueKind.Number, FileTagValueKind.DateTime,
+        FileTagValueKind.TimeOnly, FileTagValueKind.TimeSpan
     ];
 
     /// <summary>Query name for <paramref name="kind" />. <c>datetimeoffset</c> is accepted by <see cref="TryParse" /> and reported as <c>datetime</c>.</summary>
@@ -33,12 +26,10 @@ public static class FileTagValueKinds
             FileTagValueKind.DateTime => "datetime",
             FileTagValueKind.TimeOnly => "timeonly",
             FileTagValueKind.TimeSpan => "timespan",
-            _ => "string"
+            var _ => "string"
         };
 
-    /// <summary>
-    /// Parses a Lyo short name. <c>long</c> is an integer. <c>double</c> is a number. <c>datetimeoffset</c> is a UTC date-time. <c>time</c> is a time of day.
-    /// </summary>
+    /// <summary>Parses a Lyo short name. <c>long</c> is an integer. <c>double</c> is a number. <c>datetimeoffset</c> is a UTC date-time. <c>time</c> is a time of day.</summary>
     /// <param name="text">Kind token.</param>
     /// <param name="kind">Parsed kind when this returns true.</param>
     /// <returns>True when <paramref name="text" /> names a kind.</returns>
@@ -84,9 +75,7 @@ public static class FileTagValueKinds
         }
     }
 
-    /// <summary>
-    /// Kind implied when a query writes a grain and no kind. Time-of-day grains are a time of day. <see cref="FileTagGrain.Value" /> is a string.
-    /// </summary>
+    /// <summary>Kind implied when a query writes a grain and no kind. Time-of-day grains are a time of day. <see cref="FileTagGrain.Value" /> is a string.</summary>
     /// <param name="grain">Grain token.</param>
     /// <returns>The kind that grain belongs to when the query omits a kind.</returns>
     public static FileTagValueKind KindForGrain(FileTagGrain grain)
@@ -94,7 +83,7 @@ public static class FileTagValueKinds
             FileTagGrain.Year or FileTagGrain.Month or FileTagGrain.Day => FileTagValueKind.DateTime,
             FileTagGrain.Hour or FileTagGrain.Minute or FileTagGrain.Second => FileTagValueKind.TimeOnly,
             FileTagGrain.Days or FileTagGrain.Hours or FileTagGrain.Minutes or FileTagGrain.Seconds => FileTagValueKind.TimeSpan,
-            _ => FileTagValueKind.String
+            var _ => FileTagValueKind.String
         };
 
     /// <summary>Grains a grouping row of <paramref name="kind" /> may use. String, guid, bool, integer, and number are <see cref="FileTagGrain.Value" /> only.</summary>
@@ -105,7 +94,7 @@ public static class FileTagValueKinds
             FileTagValueKind.DateTime => DateGrains,
             FileTagValueKind.TimeOnly => TimeGrains,
             FileTagValueKind.TimeSpan => SpanGrains,
-            _ => ValueOnly
+            var _ => ValueOnly
         };
 
     /// <summary>True when <paramref name="grain" /> is a folder component of <paramref name="kind" />.</summary>
@@ -130,6 +119,6 @@ public static class FileTagValueKinds
             FileTagValueKind.DateTime or FileTagValueKind.TimeOnly => FileTagSort.Chronological,
             FileTagValueKind.TimeSpan => FileTagSort.Duration,
             FileTagValueKind.Integer or FileTagValueKind.Number => FileTagSort.Numeric,
-            _ => FileTagSort.Ordinal
+            var _ => FileTagSort.Ordinal
         };
 }

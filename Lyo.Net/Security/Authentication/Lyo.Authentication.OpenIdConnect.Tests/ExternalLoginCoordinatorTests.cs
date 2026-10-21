@@ -1,17 +1,20 @@
+using System.Text;
+using System.Text.Json;
+using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.OpenIdConnect.Client;
 using Lyo.Authentication.OpenIdConnect.Coordinator;
-using Lyo.Authentication.Sso.Completion;
 using Lyo.Authentication.OpenIdConnect.Discovery;
 using Lyo.Authentication.OpenIdConnect.Pkce;
 using Lyo.Authentication.OpenIdConnect.Provider;
 using Lyo.Authentication.Services.Opaque;
 using Lyo.Authentication.Services.Users;
+using Lyo.Authentication.Sso.Completion;
 using Lyo.Common.Core.Extensions;
+using Lyo.Common.Core.Identifiers;
 using Lyo.KeyStore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Authentication.OpenIdConnect.Tests;
 
@@ -41,9 +44,7 @@ public sealed class ExternalLoginCoordinatorTests
         await using var fx = await CoordinatorFixture.CreateAsync(ExternalLoginPolicy.RequireExistingUser);
         var (sealedState, nonce, state) = await fx.BuildRedirectAsync("fake");
         var code = fx.IssueCode("user-2", "bob@example.com", nonce);
-        var ex = await Assert.ThrowsAsync<ExternalLoginRejectedException>(() => fx.Coordinator.HandleCallbackAsync(
-            "fake", code, sealedState, state, TestCt));
-
+        var ex = await Assert.ThrowsAsync<ExternalLoginRejectedException>(() => fx.Coordinator.HandleCallbackAsync("fake", code, sealedState, state, TestCt));
         Assert.Equal("UserNotProvisioned", ex.Reason);
     }
 
@@ -73,7 +74,6 @@ public sealed class ExternalLoginCoordinatorTests
         Assert.NotNull(user);
         var afterFirst = await fx.TokenStore.ListForUserAsync(user.Id, true, null, TestCt);
         Assert.Single(afterFirst.Where(t => t.Kind == "internal" && t.RevokedAt is null));
-
         var (sealedState2, nonce2, state2) = await fx.BuildRedirectAsync("fake");
         var code2 = fx.IssueCode("user-refresh", "refresh@example.com", nonce2);
         await fx.Coordinator.HandleCallbackAsync("fake", code2, sealedState2, state2, TestCt);
@@ -109,9 +109,7 @@ public sealed class ExternalLoginCoordinatorTests
         var claims = CoordinatorFixture.IssueClaims("user-4", "dave@example.com", nonce);
         claims["email_verified"] = false;
         var code = fx.IssueCodeWithClaims(claims);
-        var ex = await Assert.ThrowsAsync<ExternalLoginRejectedException>(() => fx.Coordinator.HandleCallbackAsync(
-            "fake", code, sealedState, state, TestCt));
-
+        var ex = await Assert.ThrowsAsync<ExternalLoginRejectedException>(() => fx.Coordinator.HandleCallbackAsync("fake", code, sealedState, state, TestCt));
         Assert.Equal("EmailNotVerified", ex.Reason);
     }
 
@@ -121,9 +119,7 @@ public sealed class ExternalLoginCoordinatorTests
         await using var fx = await CoordinatorFixture.CreateAsync(ExternalLoginPolicy.JustInTime);
         var (sealedState, nonce, state) = await fx.BuildRedirectAsync("fake");
         var code = fx.IssueCode("user-5", "eve@example.com", nonce);
-        var ex = await Assert.ThrowsAsync<ExternalLoginRejectedException>(() => fx.Coordinator.HandleCallbackAsync(
-            "fake", code, sealedState[..^2] + "AA", state, TestCt));
-
+        var ex = await Assert.ThrowsAsync<ExternalLoginRejectedException>(() => fx.Coordinator.HandleCallbackAsync("fake", code, sealedState[..^2] + "AA", state, TestCt));
         Assert.Equal("OidcStateInvalid", ex.Reason);
     }
 
@@ -133,9 +129,7 @@ public sealed class ExternalLoginCoordinatorTests
         await using var fx = await CoordinatorFixture.CreateAsync(ExternalLoginPolicy.JustInTime, secondProvider: true);
         var (sealedState, nonce, state) = await fx.BuildRedirectAsync("fake");
         var code = fx.IssueCode("user-6", "frank@example.com", nonce);
-        var ex = await Assert.ThrowsAsync<ExternalLoginRejectedException>(() => fx.Coordinator.HandleCallbackAsync(
-            "fake2", code, sealedState, state, TestCt));
-
+        var ex = await Assert.ThrowsAsync<ExternalLoginRejectedException>(() => fx.Coordinator.HandleCallbackAsync("fake2", code, sealedState, state, TestCt));
         Assert.Equal("OidcStateInvalid", ex.Reason);
     }
 
@@ -147,9 +141,7 @@ public sealed class ExternalLoginCoordinatorTests
         var claims = CoordinatorFixture.IssueClaims("user-7", "x@nope.io", nonce);
         claims["hd"] = "nope.io";
         var code = fx.IssueCodeWithClaims(claims);
-        var ex = await Assert.ThrowsAsync<ExternalLoginRejectedException>(() => fx.Coordinator.HandleCallbackAsync(
-            "fake", code, sealedState, state, TestCt));
-
+        var ex = await Assert.ThrowsAsync<ExternalLoginRejectedException>(() => fx.Coordinator.HandleCallbackAsync("fake", code, sealedState, state, TestCt));
         Assert.Equal("UserNotProvisioned", ex.Reason);
     }
 
@@ -172,9 +164,7 @@ public sealed class ExternalLoginCoordinatorTests
         await using var fx = await CoordinatorFixture.CreateAsync(ExternalLoginPolicy.JustInTime);
         var (sealedState, nonce, _) = await fx.BuildRedirectAsync("fake");
         var code = fx.IssueCode("user-state-mismatch", "spoof@example.com", nonce);
-        var ex = await Assert.ThrowsAsync<ExternalLoginRejectedException>(() => fx.Coordinator.HandleCallbackAsync(
-            "fake", code, sealedState, "not-the-right-state", TestCt));
-
+        var ex = await Assert.ThrowsAsync<ExternalLoginRejectedException>(() => fx.Coordinator.HandleCallbackAsync("fake", code, sealedState, "not-the-right-state", TestCt));
         Assert.Equal("OidcStateInvalid", ex.Reason);
     }
 
@@ -190,9 +180,7 @@ public sealed class ExternalLoginCoordinatorTests
         await fx.UserStore.SetDisabledAsync(user.Id, DateTime.UtcNow, "compromised", null, TestCt);
         var (sealedState2, nonce2, state2) = await fx.BuildRedirectAsync("fake");
         var code2 = fx.IssueCode("user-9", "gina@example.com", nonce2);
-        var ex = await Assert.ThrowsAsync<ExternalLoginRejectedException>(() => fx.Coordinator.HandleCallbackAsync(
-            "fake", code2, sealedState2, state2, TestCt));
-
+        var ex = await Assert.ThrowsAsync<ExternalLoginRejectedException>(() => fx.Coordinator.HandleCallbackAsync("fake", code2, sealedState2, state2, TestCt));
         Assert.Equal("UserDisabled", ex.Reason);
     }
 
@@ -211,11 +199,11 @@ public sealed class ExternalLoginCoordinatorTests
         Assert.Null(internalTokens[0].RevokedAt);
     }
 
-    private static System.Text.Json.JsonElement DecodeJwtPayload(string jwt)
+    private static JsonElement DecodeJwtPayload(string jwt)
     {
         var parts = jwt.Split('.');
-        var json = System.Text.Encoding.UTF8.GetString(Lyo.Authentication.Models.Format.Base64Url.Decode(parts[1]));
-        return System.Text.Json.JsonDocument.Parse(json).RootElement.Clone();
+        var json = Encoding.UTF8.GetString(Base64Url.Decode(parts[1]));
+        return JsonDocument.Parse(json).RootElement.Clone();
     }
 
     private sealed class ProviderScopedProfile(params string[] scopes) : IOpenIdConnectProvider

@@ -1,8 +1,7 @@
 using Lyo.Common.Metadata.Records;
 using Lyo.FileStorage.Web.Components.FileStorageManagement;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
 using Lyo.Web.Components.DataGrid;
+using Lyo.Web.Primitives;
 using MudBlazor;
 
 namespace Lyo.FileStorage.Web.Components;
@@ -28,13 +27,13 @@ public static class FileStorageColorHelper
         var name = FileStorageGridRowHelper.GetOriginalFileNameFromRow(item);
         if (string.IsNullOrWhiteSpace(name))
             name = FileStorageGridRowHelper.GetSourceFileNameFromRow(item);
+
         var type = FileTypeInfo.FromMimeType(mime);
         return type == FileTypeInfo.Unknown ? FileTypeInfo.FromFilePath(name) : type;
     }
 
     /// <summary>DEK algorithm chip; blank shows <c>None</c>.</summary>
-    public static LyoChipSpec EncryptionChip(object? item)
-        => EncryptionChip(ProjectedValueHelper.GetDisplayValue(item, "DataEncryptionKeyAlgorithm"));
+    public static LyoChipSpec EncryptionChip(object? item) => EncryptionChip(ProjectedValueHelper.GetDisplayValue(item, "DataEncryptionKeyAlgorithm"));
 
     /// <summary>Chip for a persisted encryption algorithm name.</summary>
     public static LyoChipSpec EncryptionChip(string? algorithm)
@@ -48,20 +47,18 @@ public static class FileStorageColorHelper
             "RSA" => LyoChipHue.Violet,
             var _ => null
         };
-        return hue is null
-            ? LyoChips.Of(algorithm, Color.Default, Icons.Material.Filled.Lock)
-            : LyoChips.Of(algorithm, hue, Icons.Material.Filled.Lock);
+
+        return hue is null ? LyoChips.Of(algorithm, Color.Default, Icons.Material.Filled.Lock) : LyoChips.Of(algorithm, hue, Icons.Material.Filled.Lock);
     }
 
     /// <summary>Compression algorithm chip; blank shows <c>None</c>.</summary>
-    public static LyoChipSpec CompressionChip(object? item)
-        => CompressionChip(ProjectedValueHelper.GetDisplayValue(item, "CompressionAlgorithm"));
+    public static LyoChipSpec CompressionChip(object? item) => CompressionChip(ProjectedValueHelper.GetDisplayValue(item, "CompressionAlgorithm"));
 
     /// <summary>Chip for a persisted compression algorithm name.</summary>
     public static LyoChipSpec CompressionChip(string? algorithm)
     {
         if (string.IsNullOrWhiteSpace(algorithm))
-            return LyoChips.Of("None", Color.Default);
+            return LyoChips.Of("None");
 
         var hue = Normalize(algorithm) switch {
             "BROTLI" => LyoChipHue.Lime,
@@ -70,20 +67,20 @@ public static class FileStorageColorHelper
             "LZ4" => LyoChipHue.Coral,
             var _ => null
         };
-        return hue is null
-            ? LyoChips.Of(algorithm, icon: Icons.Material.Filled.Compress)
-            : LyoChips.Of(algorithm, hue, Icons.Material.Filled.Compress);
+
+        return hue is null ? LyoChips.Of(algorithm, icon: Icons.Material.Filled.Compress) : LyoChips.Of(algorithm, hue, Icons.Material.Filled.Compress);
     }
 
     /// <summary>
-    /// Hue for one file type name. A stride of five around <see cref="LyoChipHue.All" /> keeps names whose
-    /// character sums differ by one (CSV and HTML) about 150° apart, so they do not both read as cyan.
+    /// Hue for one file type name. A stride of five around <see cref="LyoChipHue.All" /> keeps names whose character sums differ by one (CSV and HTML) about 150° apart, so they
+    /// do not both read as cyan.
     /// </summary>
     private static LyoChipHue HueForType(FileTypeInfo type)
     {
         var sum = 0;
         foreach (var c in type.Name)
             sum += c;
+
         return LyoChipHue.All[sum * 5 % LyoChipHue.All.Count];
     }
 

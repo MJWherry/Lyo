@@ -19,8 +19,9 @@ public static class NetworkChip
             "PATCH" => ChipHues.Violet,
             "DELETE" => ChipHues.Rose,
             "HEAD" => ChipHues.Cyan,
-            _ => -1
+            var _ => -1
         };
+
         return new(label, hue);
     }
 
@@ -35,8 +36,9 @@ public static class NetworkChip
             >= 300 and < 400 => ChipHues.Cyan,
             >= 400 and < 500 => ChipHues.Amber,
             >= 500 => ChipHues.Rose,
-            _ => -1
+            var _ => -1
         };
+
         return new(code.ToString(), hue);
     }
 
@@ -52,8 +54,9 @@ public static class NetworkChip
             "image" => ChipHues.Lime,
             "font" => ChipHues.Magenta,
             "media" => ChipHues.Amber,
-            _ => -1
+            var _ => -1
         };
+
         return new(label, hue);
     }
 }

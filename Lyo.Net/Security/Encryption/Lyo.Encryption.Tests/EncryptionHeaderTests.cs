@@ -382,8 +382,8 @@ public class EncryptionHeaderTests
     }
 
     /// <summary>
-    /// Checks <see cref="EncryptionHeader.InferDekEncoding" /> against real two-key stream bytes: an AES Key Wrapped DEK is exactly
-    /// <c>DekKeyMaterialBytes + 8</c> bytes, a KEK-service envelope is always larger, and inference matches the DekEncoding byte written by the encryptor.
+    /// Checks <see cref="EncryptionHeader.InferDekEncoding" /> against real two-key stream bytes: an AES Key Wrapped DEK is exactly <c>DekKeyMaterialBytes + 8</c> bytes, a
+    /// KEK-service envelope is always larger, and inference matches the DekEncoding byte written by the encryptor.
     /// </summary>
     [Fact]
     public async Task InferDekEncoding_MatchesActualStreamHeaderEncoding()

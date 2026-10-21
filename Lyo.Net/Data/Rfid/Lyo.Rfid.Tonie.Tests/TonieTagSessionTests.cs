@@ -1,5 +1,3 @@
-using Lyo.Rfid;
-
 namespace Lyo.Rfid.Tonie.Tests;
 
 public sealed class TonieTagSessionTests
@@ -10,13 +8,11 @@ public sealed class TonieTagSessionTests
         var uid = Convert.FromHexString("E004035012345678");
         var user = Enumerable.Range(0, 32).Select(i => (byte)i).ToArray();
         var transceiver = new MemorySlixTransceiver();
-        await TonieTagSession.PrepareCustomTagAsync(transceiver, uid, user, password: null, TestCt);
-
+        await TonieTagSession.PrepareCustomTagAsync(transceiver, uid, user, null, TestCt);
         var xor = SlixPrivacy.XorPassword(ToniePrivacy.NxpDefault.Span, [0x12, 0x34]);
         var privacy = SlixFrames.EnablePrivacy(uid, xor);
         Assert.Contains(transceiver.Sent, frame => frame.AsSpan().SequenceEqual(privacy));
-
-        var read = await TonieTagSession.ReadUserMemoryAsync(transceiver, uid, password: null, TestCt);
+        var read = await TonieTagSession.ReadUserMemoryAsync(transceiver, uid, null, TestCt);
         Assert.Equal(user, read);
     }
 
@@ -25,11 +21,9 @@ public sealed class TonieTagSessionTests
     {
         var uid = Convert.FromHexString("E004035012345678");
         var transceiver = new MemorySlixTransceiver();
-        await TonieTagSession.PrepareCustomTagAsync(transceiver, uid, userMemory: null, password: null, TestCt);
+        await TonieTagSession.PrepareCustomTagAsync(transceiver, uid, null, null, TestCt);
         transceiver.Sent.Clear();
-
-        var read = await TonieTagSession.ReadUserMemoryAsync(transceiver, uid, password: null, TestCt);
-
+        var read = await TonieTagSession.ReadUserMemoryAsync(transceiver, uid, null, TestCt);
         Assert.Equal(32, read.Length);
         Assert.Single(transceiver.Sent, frame => frame[1] == 0x23);
         Assert.DoesNotContain(transceiver.Sent, frame => frame[1] == 0x20);
@@ -38,8 +32,8 @@ public sealed class TonieTagSessionTests
     private sealed class MemorySlixTransceiver : IIso15693Transceiver
     {
         private readonly byte[] _memory = new byte[32];
-        private bool _privacy;
         private bool _authed = true;
+        private bool _privacy;
 
         public List<byte[]> Sent { get; } = [];
 
@@ -64,7 +58,7 @@ public sealed class TonieTagSessionTests
             }
 
             if (_privacy && !_authed)
-                return Task.FromResult(Respond([0x0F], error: true));
+                return Task.FromResult(Respond([0x0F], true));
 
             if (command == 0x21) {
                 var block = bytes[10];

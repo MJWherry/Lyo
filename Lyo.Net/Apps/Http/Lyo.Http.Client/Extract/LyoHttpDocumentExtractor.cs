@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
 using Lyo.Exceptions;
 
@@ -104,27 +105,29 @@ public static class LyoHttpDocumentExtractor
 
             var metaKey = key;
             var metaContent = content;
-            list.Add(new() {
-                Text = metaKey,
-                Raw = metaContent,
-                Url = Resolve(metaContent, document.DocumentUri, options),
-                Attribute = "content",
-                AttributeValue = metaContent,
-                Selector = "meta",
-                Metadata = new() { ["name"] = key }
-            });
+            list.Add(
+                new() {
+                    Text = metaKey,
+                    Raw = metaContent,
+                    Url = Resolve(metaContent, document.DocumentUri, options),
+                    Attribute = "content",
+                    AttributeValue = metaContent,
+                    Selector = "meta",
+                    Metadata = new() { ["name"] = key }
+                });
         }
 
         var canonical = document.QuerySelector("link[rel=canonical]")?.GetAttribute("href");
         if (!string.IsNullOrWhiteSpace(canonical)) {
             var canonicalHref = canonical;
-            list.Add(new() {
-                Text = "canonical",
-                Raw = canonicalHref,
-                Url = Resolve(canonicalHref, document.DocumentUri, options),
-                Attribute = "href",
-                Selector = "link[rel=canonical]"
-            });
+            list.Add(
+                new() {
+                    Text = "canonical",
+                    Raw = canonicalHref,
+                    Url = Resolve(canonicalHref, document.DocumentUri, options),
+                    Attribute = "href",
+                    Selector = "link[rel=canonical]"
+                });
         }
 
         return Dedupe(list, options);
@@ -142,9 +145,8 @@ public static class LyoHttpDocumentExtractor
                 continue;
 
             list.Add(new() { Raw = raw, Selector = "script[type=application/ld+json]", Metadata = new() { ["@type"] = TryJsonLdType(raw) } });
-            foreach (var url in FindUrlsInJson(raw)) {
+            foreach (var url in FindUrlsInJson(raw))
                 list.Add(new() { Url = url, Raw = url, Selector = "script[type=application/ld+json]" });
-            }
         }
 
         return Dedupe(list, options);
@@ -198,15 +200,16 @@ public static class LyoHttpDocumentExtractor
                         continue;
 
                     var urlPart = isSrcset ? token.Split([' '], StringSplitOptions.RemoveEmptyEntries)[0] : token;
-                    list.Add(new() {
-                        Url = Resolve(urlPart, document.DocumentUri, options),
-                        Text = el.GetAttribute("alt") ?? el.GetAttribute("title") ?? el.TextContent?.Trim(),
-                        Attribute = attr,
-                        AttributeValue = attrValue,
-                        Selector = selector,
-                        Raw = token,
-                        Metadata = isSrcset && token.IndexOf(' ') >= 0 ? new() { ["descriptor"] = token[(urlPart.Length)..].Trim() } : null
-                    });
+                    list.Add(
+                        new() {
+                            Url = Resolve(urlPart, document.DocumentUri, options),
+                            Text = el.GetAttribute("alt") ?? el.GetAttribute("title") ?? el.TextContent?.Trim(),
+                            Attribute = attr,
+                            AttributeValue = attrValue,
+                            Selector = selector,
+                            Raw = token,
+                            Metadata = isSrcset && token.IndexOf(' ') >= 0 ? new() { ["descriptor"] = token[urlPart.Length..].Trim() } : null
+                        });
                 }
             }
         }
@@ -251,7 +254,7 @@ public static class LyoHttpDocumentExtractor
         return t.StartsWith(".", StringComparison.Ordinal) ? t.ToLowerInvariant() : "." + t.ToLowerInvariant();
     }
 
-    private static AngleSharp.Html.Dom.IHtmlDocument Parse(string html, Uri? baseUri)
+    private static IHtmlDocument Parse(string html, Uri? baseUri)
     {
         var parser = new HtmlParser();
         var document = parser.ParseDocument(html);
@@ -279,6 +282,7 @@ public static class LyoHttpDocumentExtractor
     {
         if (string.IsNullOrWhiteSpace(value))
             return [];
+
         if (isSrcset) {
             var parts = value!.Split([','], StringSplitOptions.RemoveEmptyEntries).Select(p => p.Trim()).Where(p => p.Length > 0);
             return mode == LyoHttpSrcsetMode.First ? parts.Take(1) : parts;
@@ -304,7 +308,8 @@ public static class LyoHttpDocumentExtractor
     }
 
     private static bool LooksLikeUrl(string? value)
-        => !string.IsNullOrEmpty(value) && (value!.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || value.StartsWith("https://", StringComparison.OrdinalIgnoreCase) || value.StartsWith("/"));
+        => !string.IsNullOrEmpty(value) && (value!.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || value.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ||
+            value.StartsWith("/"));
 
     private static string? TryJsonLdType(string raw)
     {

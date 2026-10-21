@@ -1,11 +1,13 @@
 # Lyo.Video.Postgres
 
-PostgreSQL and EF Core implementation of `Lyo.Video.IVideoStore` (`PostgresVideoStore`) via `VideoDbContext`, schema `video`, and `AddPostgresMigrations`. `PostgresVideoStore` implements `Lyo.Health.IHealth`. YouTube link columns live in this schema. The store does not reference `Lyo.Google.Youtube.Client`.
+PostgreSQL and EF Core implementation of `Lyo.Video.IVideoStore` (`PostgresVideoStore`) via `VideoDbContext`, schema `video`, and `AddPostgresMigrations`. `PostgresVideoStore`
+implements `Lyo.Health.IHealth`. YouTube link columns live in this schema. The store does not reference `Lyo.Google.Youtube.Client`.
 
 ## Features
 
 - **Schema `video`.** Titles, seasons, episodes, credits, identifiers, YouTube links, genres, alternate titles, collections, and cuts.
-- **Constraints.** Unique slug, identifier `(scheme, normalized value)` per owner table, season and episode numbers, and one primary cut per movie. `VideoId` is unique across titles and episodes.
+- **Constraints.** Unique slug, identifier `(scheme, normalized value)` per owner table, season and episode numbers, and one primary cut per movie. `VideoId` is unique across
+  titles and episodes.
 - **Text.** Stored `tsvector` columns and GIN indexes on movie and episode transcripts.
 - **DI.** `AddVideoDbContextFactory` / `AddPostgresVideoStore` and `FromConfiguration` overloads (section `PostgresVideo`).
 

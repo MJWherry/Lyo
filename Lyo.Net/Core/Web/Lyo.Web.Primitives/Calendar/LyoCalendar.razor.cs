@@ -6,22 +6,23 @@ using Microsoft.AspNetCore.Components;
 namespace Lyo.Web.Primitives;
 
 /// <summary>
-/// Month, week, and day grid bound to a <see cref="Calendar" />. A month cell groups fires that share a local hour and shows at most three rows. The magnifying glass opens that day's hourly column. Week and day default to the hourly grid, with a list switch. Clicking an entry opens it in a dialog. A muted entry is drawn gray.
+/// Month, week, and day grid bound to a <see cref="Calendar" />. A month cell groups fires that share a local hour and shows at most three rows. The magnifying glass opens
+/// that day's hourly column. Week and day default to the hourly grid, with a list switch. Clicking an entry opens it in a dialog. A muted entry is drawn gray.
 /// </summary>
 public partial class LyoCalendar
 {
     private static readonly string[] WeekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
     private static readonly IReadOnlyList<TimeZoneInfo> Zones = TimeZoneInfo.GetSystemTimeZones().OrderBy(z => z.BaseUtcOffset).ThenBy(z => z.Id, StringComparer.Ordinal).ToArray();
-
-    private CalendarViewMode _view = CalendarViewMode.Month;
     private bool _agenda;
-    private TimeZoneInfo _zone = TimeZoneInfo.Utc;
-    private string? _zoneFromParent;
-    private bool _use24Hour = true;
     private DateOnlyModel? _anchor;
     private DateOnlyModel? _peek;
     private CalendarEntry? _selected;
+    private bool _use24Hour = true;
+
+    private CalendarViewMode _view = CalendarViewMode.Month;
+    private TimeZoneInfo _zone = TimeZoneInfo.Utc;
+    private string? _zoneFromParent;
 
     /// <summary>Placed range to draw. Null shows an empty state.</summary>
     [Parameter]
@@ -101,7 +102,7 @@ public partial class LyoCalendar
         if (index < 0)
             index = 0;
 
-        var start = index - (index % 7);
+        var start = index - index % 7;
         return days.Skip(start).Take(7).ToArray();
     }
 
@@ -130,9 +131,9 @@ public partial class LyoCalendar
     private Task<IEnumerable<string>> SearchZones(string? value, CancellationToken _)
     {
         IEnumerable<TimeZoneInfo> query = Zones;
-        if (!string.IsNullOrWhiteSpace(value))
-            query = query.Where(zone =>
-                zone.Id.Contains(value, StringComparison.OrdinalIgnoreCase) || zone.DisplayName.Contains(value, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(value)) {
+            query = query.Where(zone => zone.Id.Contains(value, StringComparison.OrdinalIgnoreCase) || zone.DisplayName.Contains(value, StringComparison.OrdinalIgnoreCase));
+        }
 
         return Task.FromResult(query.Take(40).Select(zone => zone.Id));
     }
@@ -170,7 +171,7 @@ public partial class LyoCalendar
         var next = anchor.AddDays(_view == CalendarViewMode.Week ? 7 * direction : direction);
         _anchor = next;
         if (next < shown.Start || next > shown.End)
-            await VisibleMonthChanged.InvokeAsync(new DateOnlyModel(next.Year, next.Month, 1));
+            await VisibleMonthChanged.InvokeAsync(new(next.Year, next.Month, 1));
     }
 
     private void OpenDay(DateOnlyModel date)
@@ -210,13 +211,14 @@ public partial class LyoCalendar
         var css = "lyo-cal-day";
         if (IsOutside(day.Date))
             css += " lyo-cal-day-outside";
+
         if (IsToday(day.Date))
             css += " lyo-cal-day-today";
+
         return css;
     }
 
-    private CalendarMonthSummary.Result MonthRows(CalendarDay day)
-        => CalendarMonthSummary.Build(day.Entries.Select(entry => (entry.Start, entry.End)).ToArray(), day.Date, _zone);
+    private CalendarMonthSummary.Result MonthRows(CalendarDay day) => CalendarMonthSummary.Build(day.Entries.Select(entry => (entry.Start, entry.End)).ToArray(), day.Date, _zone);
 
     private string GroupLabel(CalendarDay day, CalendarMonthSummary.Row row)
     {
@@ -226,8 +228,7 @@ public partial class LyoCalendar
         return $"{HourLabel(row.Hour)} · {row.Indexes.Count}";
     }
 
-    private string GroupTitle(CalendarDay day, CalendarMonthSummary.Row row)
-        => string.Join("\n", row.Indexes.Select(index => EventTooltip(day.Entries[index])));
+    private string GroupTitle(CalendarDay day, CalendarMonthSummary.Row row) => string.Join("\n", row.Indexes.Select(index => EventTooltip(day.Entries[index])));
 
     private IReadOnlyList<CalendarEventLayout.Block> BlocksFor(CalendarDay day)
         => CalendarEventLayout.Place(day.Entries.Select(entry => (entry.Start, entry.End)).ToArray(), day.Date, _zone);
@@ -292,8 +293,7 @@ public partial class LyoCalendar
 
     private static string DayTitle(CalendarDay day) => day.Entries.Count == 1 ? "1 event" : $"{day.Entries.Count} events";
 
-    private static string EventTooltip(CalendarEntry entry)
-        => string.IsNullOrWhiteSpace(entry.Description) ? entry.Title : entry.Title + " — " + entry.Description;
+    private static string EventTooltip(CalendarEntry entry) => string.IsNullOrWhiteSpace(entry.Description) ? entry.Title : entry.Title + " — " + entry.Description;
 
     private string EventLabel(CalendarEntry entry) => Clock(entry) + " " + entry.Title;
 

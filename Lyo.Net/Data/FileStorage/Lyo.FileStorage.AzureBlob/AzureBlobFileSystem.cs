@@ -9,14 +9,14 @@ using Lyo.IO.FileSystem;
 namespace Lyo.FileStorage.AzureBlob;
 
 /// <summary>
-/// Raw Azure Blob name tree as <see cref="IFileSystem" />. Directories are prefix + delimiter <c>/</c> via <see cref="BlobContainerClient.GetBlobsByHierarchyAsync" />.
-/// Empty folders survive as a zero-byte <c>{path}/</c> marker. Container is constructor state, not a path segment.
+/// Raw Azure Blob name tree as <see cref="IFileSystem" />. Directories are prefix + delimiter <c>/</c> via <see cref="BlobContainerClient.GetBlobsByHierarchyAsync" />. Empty
+/// folders survive as a zero-byte <c>{path}/</c> marker. Container is constructor state, not a path segment.
 /// </summary>
 public sealed class AzureBlobFileSystem : IFileSystem
 {
     /// <summary>
-    /// Name of the zero-byte blob that keeps an otherwise empty directory visible. It is a child of the directory rather than the conventional <c>{path}/</c> blob
-    /// because <see cref="BlobContainerClient.GetBlobClient" /> strips a trailing slash from the name, which would write the marker over the directory path itself.
+    /// Name of the zero-byte blob that keeps an otherwise empty directory visible. It is a child of the directory rather than the conventional <c>{path}/</c> blob because
+    /// <see cref="BlobContainerClient.GetBlobClient" /> strips a trailing slash from the name, which would write the marker over the directory path itself.
     /// </summary>
     private const string DirectoryMarkerName = ".lyo-dir";
 
@@ -38,8 +38,8 @@ public sealed class AzureBlobFileSystem : IFileSystem
 
     /// <inheritdoc />
     public FileSystemCapabilities Capabilities
-        => FileSystemCapabilities.Read | FileSystemCapabilities.Write | FileSystemCapabilities.CreateDirectory | FileSystemCapabilities.Delete
-           | FileSystemCapabilities.Move | FileSystemCapabilities.Copy;
+        => FileSystemCapabilities.Read | FileSystemCapabilities.Write | FileSystemCapabilities.CreateDirectory | FileSystemCapabilities.Delete | FileSystemCapabilities.Move |
+            FileSystemCapabilities.Copy;
 
     /// <inheritdoc />
     public IFileSystemWatch? Watch(string path, bool recursive = true) => null;
@@ -73,7 +73,7 @@ public sealed class AzureBlobFileSystem : IFileSystem
 
         var key = ObjectStoreVfs.DirectoryPrefix(jailed) + DirectoryMarkerName;
         using var empty = new MemoryStream([]);
-        await _container.GetBlobClient(key).UploadAsync(empty, overwrite: true, cancellationToken: ct).ConfigureAwait(false);
+        await _container.GetBlobClient(key).UploadAsync(empty, true, ct).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -130,8 +130,7 @@ public sealed class AzureBlobFileSystem : IFileSystem
     }
 
     /// <inheritdoc />
-    public async IAsyncEnumerable<FileSystemEntry> EnumerateDirectoryAsync(
-        string path, bool recursive = false, [EnumeratorCancellation] CancellationToken ct = default)
+    public async IAsyncEnumerable<FileSystemEntry> EnumerateDirectoryAsync(string path, bool recursive = false, [EnumeratorCancellation] CancellationToken ct = default)
     {
         var pending = new Queue<string>();
         pending.Enqueue(path);
@@ -145,6 +144,7 @@ public sealed class AzureBlobFileSystem : IFileSystem
                     continue;
 
                 yield return entry;
+
                 if (recursive && entry.IsDirectory)
                     pending.Enqueue(entry.Path);
             }
@@ -251,15 +251,15 @@ public sealed class AzureBlobFileSystem : IFileSystem
     {
         ct.ThrowIfCancellationRequested();
         var key = ObjectStoreVfs.ToObjectKey(Jail(path));
-        return Task.FromResult<Stream>(new CommitOnCloseStream(async bytes => {
-            using var ms = new MemoryStream(bytes);
-            await _container.GetBlobClient(key).UploadAsync(ms, overwrite: true, cancellationToken: ct).ConfigureAwait(false);
-        }));
+        return Task.FromResult<Stream>(
+            new CommitOnCloseStream(async bytes => {
+                using var ms = new MemoryStream(bytes);
+                await _container.GetBlobClient(key).UploadAsync(ms, true, ct).ConfigureAwait(false);
+            }));
     }
 
     /// <inheritdoc />
-    public Stream OpenAppend(string path)
-        => throw new NotSupportedException("Azure Blob does not support append through this adapter; FileSystemCapabilities.Append is not set.");
+    public Stream OpenAppend(string path) => throw new NotSupportedException("Azure Blob does not support append through this adapter; FileSystemCapabilities.Append is not set.");
 
     /// <inheritdoc />
     public Task<Stream> OpenAppendAsync(string path, CancellationToken ct = default)
@@ -269,8 +269,7 @@ public sealed class AzureBlobFileSystem : IFileSystem
     public long GetLength(string path) => FileSystemSync.Wait(GetLengthAsync(path));
 
     /// <inheritdoc />
-    public async Task<long> GetLengthAsync(string path, CancellationToken ct = default)
-        => (await PropertiesOrThrowAsync(path, ct).ConfigureAwait(false)).ContentLength;
+    public async Task<long> GetLengthAsync(string path, CancellationToken ct = default) => (await PropertiesOrThrowAsync(path, ct).ConfigureAwait(false)).ContentLength;
 
     /// <inheritdoc />
     public DateTimeOffset GetCreationTimeUtc(string path) => FileSystemSync.Wait(GetCreationTimeUtcAsync(path));
@@ -324,9 +323,7 @@ public sealed class AzureBlobFileSystem : IFileSystem
 
         var filePath = ObjectStoreVfs.ToVfsPath(item.Blob.Name);
         var last = item.Blob.Properties.LastModified ?? DateTimeOffset.MinValue;
-        return new(
-            filePath, PathHelpers.GetFileName(PathStyle.Posix, filePath), false, item.Blob.Properties.ContentLength ?? 0,
-            item.Blob.Properties.CreatedOn ?? last, last);
+        return new(filePath, PathHelpers.GetFileName(PathStyle.Posix, filePath), false, item.Blob.Properties.ContentLength ?? 0, item.Blob.Properties.CreatedOn ?? last, last);
     }
 
     /// <summary>Buffers the blob body and uploads it on close. Prefer <c>await using</c>: the synchronous path has to block on the upload.</summary>

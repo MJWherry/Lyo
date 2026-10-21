@@ -13,8 +13,8 @@ using Lyo.Testing;
 namespace Lyo.FileStorage.Tests;
 
 /// <summary>
-/// <c>GetFileAsync</c> returns one array, so it should cost one payload-sized allocation. It also has to keep raising exactly one retrieve event and one read audit,
-/// which is what a rewrite onto the shared streaming decode pipeline is most likely to double up.
+/// <c>GetFileAsync</c> returns one array, so it should cost one payload-sized allocation. It also has to keep raising exactly one retrieve event and one read audit, which is
+/// what a rewrite onto the shared streaming decode pipeline is most likely to double up.
 /// </summary>
 [Collection(SerialAllocationCollection.Name)]
 public sealed class FileStorageGetFileMemoryTests
@@ -41,15 +41,12 @@ public sealed class FileStorageGetFileMemoryTests
 
         // Warm the read path so first-call JIT and static initialisation stay out of the measurement.
         Assert.Equal(PayloadBytes, (await scope.Storage.GetFileAsync(saved.Id, ct: TestCt)).Length);
-
         var before = GC.GetTotalAllocatedBytes(true);
         var data = await scope.Storage.GetFileAsync(saved.Id, ct: TestCt);
         var allocated = GC.GetTotalAllocatedBytes(true) - before;
-
         Assert.Equal(PayloadBytes, data.Length);
         Assert.True(
-            allocated < 12L * 1024 * 1024,
-            $"Reading {PayloadBytes:N0} bytes allocated {allocated:N0} bytes; the returned array should be the only payload-sized allocation.");
+            allocated < 12L * 1024 * 1024, $"Reading {PayloadBytes:N0} bytes allocated {allocated:N0} bytes; the returned array should be the only payload-sized allocation.");
     }
 
     [Fact]
@@ -61,20 +58,16 @@ public sealed class FileStorageGetFileMemoryTests
 
         var payload = TestData.Create(256 * 1024);
         var saved = await scope.Storage.SaveFileAsync(payload, "both.bin", true, true, "enc-key", ct: TestCt);
-
         var retrieved = new List<FileRetrievedResult>();
         scope.Storage.FileRetrieved += (_, e) => retrieved.Add(e);
         audit.Events.Clear();
-
         var data = await scope.Storage.GetFileAsync(saved.Id, ct: TestCt);
-
         Assert.Equal(payload, data);
         var raised = Assert.Single(retrieved);
         Assert.Equal(saved.Id, raised.FileId);
         Assert.Equal(payload.LongLength, raised.FileSize);
         Assert.True(raised.WasCompressed);
         Assert.True(raised.WasEncrypted);
-
         var read = Assert.Single(audit.Events, e => e.EventType == FileAuditEventType.Read);
         Assert.Equal(FileAuditOutcome.Success, read.Outcome);
     }

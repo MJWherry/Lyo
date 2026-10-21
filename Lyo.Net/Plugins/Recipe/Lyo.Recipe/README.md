@@ -1,6 +1,7 @@
 # Lyo.Recipe
 
-Household recipes with an ingredient catalog, ordered lines and steps, hierarchical categories, and FileStorage attachment links. Listing and search stay on the Query/CRUD layer. Notes and tags use `RecipeEntityTypes`. Does not reference Favorite or Tag.
+Household recipes with an ingredient catalog, ordered lines and steps, hierarchical categories, and FileStorage attachment links. Listing and search stay on the Query/CRUD layer.
+Notes and tags use `RecipeEntityTypes`. Does not reference Favorite or Tag.
 
 ## Features
 

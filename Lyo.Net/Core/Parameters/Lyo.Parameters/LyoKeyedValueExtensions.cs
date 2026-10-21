@@ -8,8 +8,8 @@ using Lyo.Common.Metadata.Records;
 namespace Lyo.Parameters;
 
 /// <summary>
-/// Typed accessors over any collection of <see cref="ILyoKeyedValue" /> — job run parameters and results, report generation parameters, schedule and trigger overrides. Lookups
-/// are case-insensitive and every accessor returns null instead of throwing when the key is absent or the value will not convert.
+/// Typed accessors over any collection of <see cref="ILyoKeyedValue" /> — job run parameters and results, report generation parameters, schedule and trigger overrides.
+/// Lookups are case-insensitive and every accessor returns null instead of throwing when the key is absent or the value will not convert.
 /// </summary>
 /// <remarks>
 /// <para>Scalar accessors delegate to <see cref="TypeConversion" />, so booleans parse leniently (<c>1/0</c>, <c>y/n</c>, <c>yes/no</c>, <c>t/f</c>, <c>on/off</c>).</para>
@@ -51,8 +51,8 @@ public static class LyoKeyedValueExtensions
         }
 
         /// <summary>
-        /// Returns the bool stored under <paramref name="key" />, or null when missing or not parseable. Accepts every
-        /// <see cref="TypeConversion.DefaultTrueValues" /> and <see cref="TypeConversion.DefaultFalseValues" /> token, case-insensitively.
+        /// Returns the bool stored under <paramref name="key" />, or null when missing or not parseable. Accepts every <see cref="TypeConversion.DefaultTrueValues" /> and
+        /// <see cref="TypeConversion.DefaultFalseValues" /> token, case-insensitively.
         /// </summary>
         /// <param name="key">Key to look up.</param>
         public bool? GetBool(string key) => TypeConversion.TryToBoolean(items.GetString(key), out var result) ? result : null;
@@ -81,10 +81,7 @@ public static class LyoKeyedValueExtensions
             where TEnum : struct, Enum
             => TypeConversion.EnumOrNull<TEnum>(items.GetString(key));
 
-        /// <summary>
-        /// Returns a compiled <see cref="Regex" /> from the value stored under <paramref name="key" /> (see <see cref="LyoTypeInfo.Regex" />), or null when missing or
-        /// invalid.
-        /// </summary>
+        /// <summary>Returns a compiled <see cref="Regex" /> from the value stored under <paramref name="key" /> (see <see cref="LyoTypeInfo.Regex" />), or null when missing or invalid.</summary>
         /// <param name="key">Key to look up.</param>
         public Regex? GetRegex(string key)
         {

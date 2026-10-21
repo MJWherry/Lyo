@@ -1,5 +1,3 @@
-using Lyo.IO.FileSystem;
-
 namespace Lyo.IO.FileSystem.Web.Components.Tests;
 
 public sealed class LyoFileTreeLoaderTests
@@ -11,7 +9,7 @@ public sealed class LyoFileTreeLoaderTests
         fs.CreateDirectory(fs.RootPath + "/reports");
         fs.WriteAllBytes(fs.RootPath + "/a.bin", "x"u8.ToArray());
         var source = new FileSystemTreeSource(fs);
-        var root = FileTreeLoader.CreateRoot(fs.RootPath, "/");
+        var root = FileTreeLoader.CreateRoot(fs.RootPath);
         await FileTreeLoader.EnsureChildrenAsync(source, root, TestCt);
         Assert.True(root.ChildrenLoaded);
         Assert.Contains(root.Children, n => n.Entry.Name == "reports");
@@ -25,7 +23,7 @@ public sealed class LyoFileTreeLoaderTests
         fs.CreateDirectory(fs.RootPath + "/reports");
         fs.WriteAllBytes(fs.RootPath + "/reports/keep.txt", "x"u8.ToArray());
         var source = new FileSystemTreeSource(fs);
-        var root = FileTreeLoader.CreateRoot(fs.RootPath, "/");
+        var root = FileTreeLoader.CreateRoot(fs.RootPath);
         await FileTreeLoader.EnsureChildrenAsync(source, root, TestCt);
         var reports = Assert.Single(root.Children, n => n.Entry.Name == "reports");
         Assert.False(reports.ChildrenLoaded);

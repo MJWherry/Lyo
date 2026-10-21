@@ -88,8 +88,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Binds <paramref name="configuration" /> to a singleton <see cref="SeleniumBrowserOptions" /> and registers browser services (no
-        /// <c>IOptions&lt;T&gt;</c>).</summary>
+        /// <summary>Binds <paramref name="configuration" /> to a singleton <see cref="SeleniumBrowserOptions" /> and registers browser services (no <c>IOptions&lt;T&gt;</c>).</summary>
         /// <param name="configuration">The configuration (for example builder.Configuration).</param>
         /// <param name="configSectionName">Default is <see cref="SeleniumBrowserOptions.SectionName" />.</param>
         public IServiceCollection AddSeleniumBrowserServiceFromConfiguration(IConfiguration configuration, string? configSectionName = null)

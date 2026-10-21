@@ -10,39 +10,37 @@ public sealed class AuthManager(TraktClient client)
     private const string DeviceTokenUrl = "https://auth.trakt.tv/oauth/device/token";
 
     /// <summary>
-    /// Exchanges an authorization code for tokens. Requires <see cref="TraktClientOptions.ClientSecret" /> and <see cref="TraktClientOptions.RedirectUri" />.
-    /// Keep the returned refresh token; the previous one cannot be reused.
+    /// Exchanges an authorization code for tokens. Requires <see cref="TraktClientOptions.ClientSecret" /> and <see cref="TraktClientOptions.RedirectUri" />. Keep the returned
+    /// refresh token; the previous one cannot be reused.
     /// </summary>
     public Task<TraktToken> ExchangeCodeAsync(string code, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(code);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(client.Settings.ClientSecret);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(client.Settings.RedirectUri);
-        return client.PostAsAsync<CodeExchangeRequest, TraktToken>(TokenUrl, new CodeExchangeRequest {
-            Code = code,
-            ClientId = client.Settings.ClientId,
-            ClientSecret = client.Settings.ClientSecret,
-            RedirectUri = client.Settings.RedirectUri
-        }, ct: ct);
+        return client.PostAsAsync<CodeExchangeRequest, TraktToken>(
+            TokenUrl, new() {
+                Code = code,
+                ClientId = client.Settings.ClientId,
+                ClientSecret = client.Settings.ClientSecret,
+                RedirectUri = client.Settings.RedirectUri
+            }, ct: ct);
     }
 
-    /// <summary>
-    /// Polls <c>POST /oauth/device/token</c>. Pending, expired, denied, and slow-down come back as <see cref="TraktDevicePoll.Status" /> instead of an exception.
-    /// </summary>
+    /// <summary>Polls <c>POST /oauth/device/token</c>. Pending, expired, denied, and slow-down come back as <see cref="TraktDevicePoll.Status" /> instead of an exception.</summary>
     public async Task<TraktDevicePoll> PollDeviceTokenAsync(string deviceCode, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(deviceCode);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(client.Settings.ClientSecret);
         try {
-            var token = await client.PostAsAsync<DeviceTokenRequest, TraktToken>(DeviceTokenUrl, new DeviceTokenRequest {
-                Code = deviceCode,
-                ClientId = client.Settings.ClientId,
-                ClientSecret = client.Settings.ClientSecret
-            }, ct: ct).ConfigureAwait(false);
-            return new TraktDevicePoll { Status = TraktDevicePollStatus.Authorized, Token = token };
+            var token = await client.PostAsAsync<DeviceTokenRequest, TraktToken>(
+                    DeviceTokenUrl, new() { Code = deviceCode, ClientId = client.Settings.ClientId, ClientSecret = client.Settings.ClientSecret }, ct: ct)
+                .ConfigureAwait(false);
+
+            return new() { Status = TraktDevicePollStatus.Authorized, Token = token };
         }
         catch (LyoHttpException ex) when (TryMapPollStatus(ex.StatusCode, out var status)) {
-            return new TraktDevicePoll { Status = status };
+            return new() { Status = status };
         }
     }
 

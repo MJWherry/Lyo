@@ -4,8 +4,8 @@ using Lyo.Exceptions;
 namespace Lyo.Authentication.Models.Records;
 
 /// <summary>
-/// JSON shape returned by <c>POST /auth/handoff/exchange</c>, <c>POST /auth/token</c>, and <c>POST /auth/refresh</c>. Snake-case per RFC 6749 (OAuth 2.0). Shared by the
-/// API host and consumer clients so access and refresh expiries stay in one type.
+/// JSON shape returned by <c>POST /auth/handoff/exchange</c>, <c>POST /auth/token</c>, and <c>POST /auth/refresh</c>. Snake-case per RFC 6749 (OAuth 2.0). Shared by the API
+/// host and consumer clients so access and refresh expiries stay in one type.
 /// </summary>
 public sealed record LyoOAuthTokenResponse(
     [property: JsonPropertyName("access_token")]
@@ -28,9 +28,7 @@ public sealed record LyoOAuthTokenResponse(
 
     /// <summary>Builds the wire response from raw token strings and expiry instants.</summary>
     public static LyoOAuthTokenResponse FromTokens(string accessToken, DateTime accessTokenExpiresAt, string? refreshToken, DateTime? refreshTokenExpiresAt, DateTime utcNow)
-        => new(
-            accessToken, SecondsRemaining(accessTokenExpiresAt, utcNow), refreshToken, "Bearer",
-            refreshTokenExpiresAt is { } exp ? SecondsRemaining(exp, utcNow) : null);
+        => new(accessToken, SecondsRemaining(accessTokenExpiresAt, utcNow), refreshToken, "Bearer", refreshTokenExpiresAt is { } exp ? SecondsRemaining(exp, utcNow) : null);
 
     /// <summary>UTC instant when the refresh token expires, or <c>null</c> when none was issued / no lifetime was returned.</summary>
     public DateTime? RefreshExpiresAtUtc(DateTime utcNow) => RefreshExpiresIn is { } seconds ? utcNow.AddSeconds(seconds) : null;

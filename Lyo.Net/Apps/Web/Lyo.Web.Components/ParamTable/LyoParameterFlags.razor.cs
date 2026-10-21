@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Components;
 namespace Lyo.Web.Components.ParamTable;
 
 /// <summary>
-/// Required / Encrypt / Enabled toggles for one parameter row, shared by the table and card layouts of <see cref="LyoParameterEditor" />. Which toggles appear
-/// depends on the host: definitions show Required and Encrypt; schedule overrides show Enabled.
+/// Required / Encrypt / Enabled toggles for one parameter row, shared by the table and card layouts of <see cref="LyoParameterEditor" />. Which toggles appear depends on the
+/// host: definitions show Required and Encrypt; schedule overrides show Enabled.
 /// </summary>
 public partial class LyoParameterFlags
 {

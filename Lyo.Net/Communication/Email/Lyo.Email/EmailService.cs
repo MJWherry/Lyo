@@ -603,7 +603,6 @@ public sealed class EmailService : IEmailService
 
         var textBody = message.TextBody;
         var htmlBody = message.HtmlBody;
-
         return new(
             fromAddress, fromName, toAddresses.Count > 0 ? toAddresses : null, ccAddresses.Count > 0 ? ccAddresses : null, bccAddresses.Count > 0 ? bccAddresses : null,
             message.Subject, attachments, string.IsNullOrEmpty(textBody) ? null : textBody, string.IsNullOrEmpty(htmlBody) ? null : htmlBody);

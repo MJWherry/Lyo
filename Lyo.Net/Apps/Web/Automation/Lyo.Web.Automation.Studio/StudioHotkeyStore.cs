@@ -21,6 +21,7 @@ internal static class StudioHotkeyStore
             var path = ConfigPath();
             if (!File.Exists(path))
                 return new();
+
             var loaded = JsonSerializer.Deserialize<StudioHotkeySettings>(File.ReadAllText(path), Json);
             return WithDefaults(loaded ?? new());
         }
@@ -40,8 +41,10 @@ internal static class StudioHotkeyStore
     {
         if (string.IsNullOrWhiteSpace(settings.StartWatch))
             settings.StartWatch = "Ctrl+Shift+W";
+
         if (string.IsNullOrWhiteSpace(settings.StopWatch))
             settings.StopWatch = "Ctrl+Shift+Q";
+
         return settings;
     }
 

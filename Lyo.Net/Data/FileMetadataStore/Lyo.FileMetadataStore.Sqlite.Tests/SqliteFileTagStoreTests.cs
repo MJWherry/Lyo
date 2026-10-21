@@ -1,7 +1,5 @@
-using Lyo.FileMetadataStore.Models;
 using Lyo.FileMetadataStore.Sqlite.Database;
 using Lyo.FileMetadataStore.Tests;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.FileMetadataStore.Sqlite.Tests;

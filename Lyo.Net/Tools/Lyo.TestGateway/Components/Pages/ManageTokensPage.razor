@@ -69,11 +69,12 @@
 
 @code {
 
-    private RenderFragment<TokenDto> RevokeButton => token => @<text>
-        <MudButton Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined"
-                   OnClick="@(() => RevokeAsync(token.Id))" Disabled="@(token.RevokedAt is not null)">
-            Revoke
-        </MudButton>
+    private RenderFragment<TokenDto> RevokeButton
+        => token => @<text>
+                         <MudButton Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined"
+                                    OnClick="@(() => RevokeAsync(token.Id))" Disabled="@(token.RevokedAt is not null)">
+                             Revoke
+                         </MudButton>
     </text>;
 
 }

@@ -14,12 +14,10 @@ public class HttpHeaderInfoTests
         Assert.Equal(HttpHeaderPresence.Request, HttpHeaderInfo.Accept.Presence);
         Assert.True(HttpHeaderInfo.Accept.IsRequest);
         Assert.False(HttpHeaderInfo.Accept.IsResponse);
-
         Assert.Equal("Content-Type", HttpHeaderInfo.ContentType.Name);
         Assert.Equal(HttpHeaderPresence.Both, HttpHeaderInfo.ContentType.Presence);
         Assert.True(HttpHeaderInfo.ContentType.IsRequest);
         Assert.True(HttpHeaderInfo.ContentType.IsResponse);
-
         Assert.Equal(HttpHeaderCategory.Cookie, HttpHeaderInfo.SetCookie.Category);
         Assert.Equal(HttpHeaderPresence.Response, HttpHeaderInfo.SetCookie.Presence);
         Assert.Contains("X-XSRF-TOKEN", HttpHeaderInfo.CsrfToken.Aliases);
@@ -46,7 +44,6 @@ public class HttpHeaderInfoTests
         Assert.Contains(HttpHeaderInfo.RequestId, correlation);
         Assert.Contains(HttpHeaderInfo.TraceId, correlation);
         Assert.DoesNotContain(HttpHeaderInfo.ForwardedFor, correlation);
-
         var proxy = HttpHeaderInfo.ByCategory(HttpHeaderCategory.Proxy).ToList();
         Assert.Contains(HttpHeaderInfo.ForwardedFor, proxy);
         Assert.Contains(HttpHeaderInfo.ForwardedProto, proxy);
@@ -99,7 +96,7 @@ public class HttpHeaderInfoTests
     }
 
     [Fact]
-    public void TryFromName_Unknown_ReturnsFalse() => Assert.False(HttpHeaderInfo.TryFromName("X-FlareSolverr-Url", out _));
+    public void TryFromName_Unknown_ReturnsFalse() => Assert.False(HttpHeaderInfo.TryFromName("X-FlareSolverr-Url", out var _));
 
     [Fact]
     public void All_ExcludesUnknown()

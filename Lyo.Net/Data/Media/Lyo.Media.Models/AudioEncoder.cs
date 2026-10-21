@@ -3,8 +3,8 @@ using System.Collections.Concurrent;
 namespace Lyo.Media.Models;
 
 /// <summary>
-/// Extensible audio codec identifier. Lookups are thread-safe. Use <see cref="Custom" /> for a codec that is not listed.
-/// Ids are codec tokens (<c>mp3</c>, <c>aac</c>), not a specific backend's encoder binary name.
+/// Extensible audio codec identifier. Lookups are thread-safe. Use <see cref="Custom" /> for a codec that is not listed. Ids are codec tokens (<c>mp3</c>, <c>aac</c>), not a
+/// specific backend's encoder binary name.
 /// </summary>
 public sealed record AudioEncoder
 {
@@ -66,7 +66,7 @@ public sealed record AudioEncoder
     public static AudioEncoder Custom(string id)
     {
         _ = BuiltIns;
-        return NamedCatalog.GetOrCustom(ById, id, key => new AudioEncoder(key, key));
+        return NamedCatalog.GetOrCustom(ById, id, key => new(key, key));
     }
 
     /// <inheritdoc />

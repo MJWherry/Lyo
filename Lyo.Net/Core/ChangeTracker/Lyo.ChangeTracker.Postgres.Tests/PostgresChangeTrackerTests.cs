@@ -1,10 +1,11 @@
 using System.Text.Json;
 using Lyo.ChangeTracker.Postgres.Database;
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Lyo.Common.Core.Identifiers;
+
 namespace Lyo.ChangeTracker.Postgres.Tests;
 
 public class PostgresChangeTrackerTests : IAsyncDisposable
@@ -105,9 +106,7 @@ public class PostgresChangeTrackerTests : IAsyncDisposable
     public async Task SystemOnly_PersistsNullTenantRegardlessOfCaller()
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ChangeTrackerDbContext>>();
-        var tracker = new PostgresChangeTracker(
-            factory, new EntityRefOptions(), new PostgresChangeTrackerOptions { Tenancy = new() { Mode = TenancyMode.SystemOnly } });
-
+        var tracker = new PostgresChangeTracker(factory, new(), new() { Tenancy = new() { Mode = TenancyMode.SystemOnly } });
         var record = new ChangeRecord(EntityRef.ForKey("Order", "system-only-1"), new Dictionary<string, object?>(), new Dictionary<string, object?> { ["x"] = 1 }) {
             TenantId = LyoGuid.CreateV7()
         };
@@ -122,9 +121,7 @@ public class PostgresChangeTrackerTests : IAsyncDisposable
     public async Task MultiTenantStrict_ThrowsWhenCallerDoesNotSupplyTenant()
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ChangeTrackerDbContext>>();
-        var tracker = new PostgresChangeTracker(
-            factory, new EntityRefOptions(), new PostgresChangeTrackerOptions { Tenancy = new() { Mode = TenancyMode.MultiTenantStrict } });
-
+        var tracker = new PostgresChangeTracker(factory, new(), new() { Tenancy = new() { Mode = TenancyMode.MultiTenantStrict } });
         var record = new ChangeRecord(EntityRef.ForKey("Order", "strict-missing"), new Dictionary<string, object?>(), new Dictionary<string, object?> { ["x"] = 1 });
         await Assert.ThrowsAsync<ArgumentNullException>(() => tracker.RecordChangeAsync(record, TestCt));
     }
@@ -134,10 +131,7 @@ public class PostgresChangeTrackerTests : IAsyncDisposable
     {
         var defaultTenant = LyoGuid.CreateV7();
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ChangeTrackerDbContext>>();
-        var tracker = new PostgresChangeTracker(
-            factory, new EntityRefOptions(),
-            new PostgresChangeTrackerOptions { Tenancy = new() { Mode = TenancyMode.SingleTenantDefault, DefaultTenantId = defaultTenant } });
-
+        var tracker = new PostgresChangeTracker(factory, new(), new() { Tenancy = new() { Mode = TenancyMode.SingleTenantDefault, DefaultTenantId = defaultTenant } });
         var record = new ChangeRecord(EntityRef.ForKey("Order", "default-tenant-1"), new Dictionary<string, object?>(), new Dictionary<string, object?> { ["x"] = 1 });
         await tracker.RecordChangeAsync(record, TestCt);
         await using var context = await factory.CreateDbContextAsync(TestCt);

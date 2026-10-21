@@ -8,8 +8,8 @@ namespace Lyo.Seed;
 public static class SeedFailureText
 {
     /// <summary>
-    /// Walks <paramref name="exception"/> and each inner exception. A <see cref="DbUpdateException"/> adds the entity type names being saved.
-    /// A <see cref="PostgresException"/> adds SQL state, table, column, constraint, and detail.
+    /// Walks <paramref name="exception" /> and each inner exception. A <see cref="DbUpdateException" /> adds the entity type names being saved. A
+    /// <see cref="PostgresException" /> adds SQL state, table, column, constraint, and detail.
     /// </summary>
     public static string Format(Exception exception)
     {
@@ -21,11 +21,12 @@ public static class SeedFailureText
         return string.Join(Environment.NewLine, parts);
     }
 
-    private static string Describe(Exception exception) => exception switch {
-        PostgresException postgres => DescribePostgres(postgres),
-        DbUpdateException update => DescribeUpdate(update),
-        _ => exception.Message
-    };
+    private static string Describe(Exception exception)
+        => exception switch {
+            PostgresException postgres => DescribePostgres(postgres),
+            DbUpdateException update => DescribeUpdate(update),
+            var _ => exception.Message
+        };
 
     private static string DescribeUpdate(DbUpdateException update)
     {

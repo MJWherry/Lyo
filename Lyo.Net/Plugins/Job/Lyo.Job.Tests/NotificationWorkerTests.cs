@@ -1,25 +1,22 @@
-using System.Text.Json;
 using System.Net;
+using System.Text.Json;
 using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Email;
 using Lyo.Email.Builders;
 using Lyo.Email.Models;
-using Lyo.Formatter;
 using Lyo.Http.Client;
 using Lyo.Job.Client;
 using Lyo.Job.Models.Enums;
-using Lyo.Job.Models.Events;
+using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Tests.Postgres;
 using Lyo.Job.Worker;
 using Lyo.Job.Workers.Notification;
-using Lyo.MessageQueue;
 using Lyo.Result;
 using Lyo.Sms;
 using Lyo.Sms.Builders;
 using Lyo.Sms.Models;
-using Lyo.Job.Models.Request;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NotificationConstants = Lyo.Job.Workers.Notification.Constants;
@@ -38,7 +35,6 @@ public class NotificationWorkerTests
         var http = new StubHttpClient(HttpStatusCode.OK);
         var ctx = Context(("Url", "https://hooks.example/notify"), ("Body", "{\"ok\":true}"));
         await new TestWebhookWorker(http).RunAsync(ctx);
-
         Assert.Equal(JobRunResult.Success, ctx.Results.CurrentOutcome);
         Assert.Equal("https://hooks.example/notify", http.LastUri);
         Assert.Equal("200", ResultValue(ctx, NotificationConstants.ResultKey.StatusCode));
@@ -61,7 +57,6 @@ public class NotificationWorkerTests
         var http = new StubHttpClient(HttpStatusCode.InternalServerError);
         var ctx = Context(("Url", "https://hooks.example/notify"), ("Body", "{}"));
         await new TestWebhookWorker(http, new() { RetryCount = 2, RetryDelay = TimeSpan.Zero }).RunAsync(ctx);
-
         Assert.Equal(3, http.Attempts);
     }
 
@@ -83,7 +78,6 @@ public class NotificationWorkerTests
         var http = new StubHttpClient(HttpStatusCode.OK);
         var ctx = Context(("Body", "{}"));
         await new TestWebhookWorker(http).RunAsync(ctx);
-
         Assert.Equal(JobRunResult.Failure, ctx.Results.CurrentOutcome);
         Assert.Equal(0, http.Attempts);
         Assert.Contains(NotificationConstants.ParameterKey.Url, FailureReason(ctx), StringComparison.Ordinal);
@@ -97,7 +91,6 @@ public class NotificationWorkerTests
         // The scheduler resolved {Step.Extract.Result.RowCount} before the run was created, so the worker must post the value as-is rather than re-formatting it.
         var ctx = Context(("Url", "https://hooks.example/notify"), ("Body", "{\"rows\":42}"));
         await new TestWebhookWorker(http).RunAsync(ctx);
-
         Assert.Equal("{\"rows\":42}", http.LastBody);
     }
 
@@ -107,7 +100,6 @@ public class NotificationWorkerTests
         var email = new StubEmailService();
         var ctx = Context(("To", "ops@example.com"), ("Subject", "Nightly ETL"), ("Body", "12 rows loaded"));
         await new TestEmailWorker(email).RunAsync(ctx);
-
         Assert.Equal(JobRunResult.Success, ctx.Results.CurrentOutcome);
         Assert.Equal("ops@example.com", ResultValue(ctx, NotificationConstants.ResultKey.Recipient));
     }
@@ -130,7 +122,6 @@ public class NotificationWorkerTests
         var email = new StubEmailService { Failure = "Mailbox unavailable" };
         var ctx = Context(("To", "ops@example.com"), ("Subject", "Nightly ETL"), ("Body", "hi"));
         await new TestEmailWorker(email).RunAsync(ctx);
-
         Assert.Equal(JobRunResult.Failure, ctx.Results.CurrentOutcome);
     }
 
@@ -140,7 +131,6 @@ public class NotificationWorkerTests
         var email = new StubEmailService();
         var ctx = Context(("Subject", "Nightly ETL"), ("Body", "hi"));
         await new TestEmailWorker(email).RunAsync(ctx);
-
         Assert.Equal(JobRunResult.Failure, ctx.Results.CurrentOutcome);
         Assert.False(email.Sent);
         Assert.Contains(NotificationConstants.ParameterKey.To, FailureReason(ctx), StringComparison.Ordinal);
@@ -152,7 +142,6 @@ public class NotificationWorkerTests
         var sms = new StubSmsService();
         var ctx = Context(("To", "+15555550123"), ("Body", "ETL finished"));
         await new TestSmsWorker(sms).RunAsync(ctx);
-
         Assert.Equal(JobRunResult.Success, ctx.Results.CurrentOutcome);
         Assert.Equal("ETL finished", sms.LastBody);
     }
@@ -163,7 +152,6 @@ public class NotificationWorkerTests
         var sms = new StubSmsService { Failure = "Carrier rejected" };
         var ctx = Context(("To", "+15555550123"), ("Body", "ETL finished"));
         await new TestSmsWorker(sms).RunAsync(ctx);
-
         Assert.Equal(JobRunResult.Failure, ctx.Results.CurrentOutcome);
     }
 
@@ -173,7 +161,6 @@ public class NotificationWorkerTests
         var sms = new StubSmsService();
         var ctx = Context(("To", "+15555550123"));
         await new TestSmsWorker(sms).RunAsync(ctx);
-
         Assert.Equal(JobRunResult.Failure, ctx.Results.CurrentOutcome);
         Assert.Contains(NotificationConstants.ParameterKey.Body, FailureReason(ctx), StringComparison.Ordinal);
     }
@@ -186,9 +173,7 @@ public class NotificationWorkerTests
             JobDefinitionId = LyoGuid.CreateV7(),
             State = JobState.Running,
             CreatedTimestamp = DateTime.UtcNow,
-            JobRunParameters = [
-                .. parameters.Select(p => new JobRunParameterRes(LyoGuid.CreateV7(), runId, p.Key, LyoTypeInfo.String.FullName, p.Value, null, null, true))
-            ]
+            JobRunParameters = [.. parameters.Select(p => new JobRunParameterRes(LyoGuid.CreateV7(), runId, p.Key, LyoTypeInfo.String.FullName, p.Value, null, null, true))]
         };
 
         return new(run);
@@ -205,22 +190,25 @@ public class NotificationWorkerTests
         => string.Join(" | ", ctx.Results.Build().Where(r => r.Key.StartsWith("FailureReason", StringComparison.OrdinalIgnoreCase)).Select(r => r.Value?.ToString()));
 
     /// <summary>
-    /// A real <see cref="LyoHttpClient" /> over a recording handler, so the worker's retry and status handling run against the same non-success-throws behaviour production
-    /// gets rather than against a hand-written double of it.
+    /// A real <see cref="LyoHttpClient" /> over a recording handler, so the worker's retry and status handling run against the same non-success-throws behaviour production gets
+    /// rather than against a hand-written double of it.
     /// </summary>
     private sealed class StubHttpClient : LyoHttpClient
     {
         private readonly RecordingHandler _handler;
-
-        public StubHttpClient(HttpStatusCode status) : this(new RecordingHandler(status)) { }
-
-        private StubHttpClient(RecordingHandler handler) : base(new HttpClient(handler), logger: NullLogger.Instance) => _handler = handler;
 
         public int Attempts => _handler.Attempts;
 
         public string? LastUri => _handler.LastUri;
 
         public string? LastBody => _handler.LastBody;
+
+        public StubHttpClient(HttpStatusCode status)
+            : this(new RecordingHandler(status)) { }
+
+        private StubHttpClient(RecordingHandler handler)
+            : base(new(handler), logger: NullLogger.Instance)
+            => _handler = handler;
 
         private sealed class RecordingHandler(HttpStatusCode status) : HttpMessageHandler
         {
@@ -297,11 +285,9 @@ public class NotificationWorkerTests
 
         public Task<Result<SmsRequest>> SendAsync(SmsMessageBuilder builder, string? from = null, CancellationToken ct = default) => throw new NotSupportedException();
 
-        public Task<Result<SmsRequest>> SendAsync(SmsRequest request, CancellationToken ct = default)
-            => SendSmsAsync(request.To ?? "", request.Body ?? "", request.From, ct);
+        public Task<Result<SmsRequest>> SendAsync(SmsRequest request, CancellationToken ct = default) => SendSmsAsync(request.To ?? "", request.Body ?? "", request.From, ct);
 
-        public Task<IReadOnlyList<Result<SmsRequest>>> SendBulkAsync(IEnumerable<SmsMessageBuilder> builders, CancellationToken ct = default)
-            => throw new NotSupportedException();
+        public Task<IReadOnlyList<Result<SmsRequest>>> SendBulkAsync(IEnumerable<SmsMessageBuilder> builders, CancellationToken ct = default) => throw new NotSupportedException();
 
         public Task<IReadOnlyList<Result<SmsRequest>>> SendBulkSmsAsync(IEnumerable<SmsRequest> messages, CancellationToken ct = default) => throw new NotSupportedException();
 
@@ -309,8 +295,7 @@ public class NotificationWorkerTests
 
         public Task<Result<SmsRequest>> GetMessageByIdAsync(string messageId, CancellationToken ct = default) => throw new NotSupportedException();
 
-        public Task<SmsMessageQueryResults<Result<SmsRequest>>> GetMessagesAsync(SmsMessageQueryFilter filter, CancellationToken ct = default)
-            => throw new NotSupportedException();
+        public Task<SmsMessageQueryResults<Result<SmsRequest>>> GetMessagesAsync(SmsMessageQueryFilter filter, CancellationToken ct = default) => throw new NotSupportedException();
 
         public Task<bool> TestConnectionAsync(CancellationToken ct = default) => Task.FromResult(true);
     }
@@ -327,15 +312,13 @@ public class NotificationWorkerTests
     }
 
     private sealed class TestEmailWorker(IEmailService email)
-        : EmailNotificationWorker(
-            new FakeMqService(), new JobClient(new NoopApiClient()), new FakeJobEventPublisher(), email, new(), NullLogger<EmailNotificationWorker>.Instance)
+        : EmailNotificationWorker(new FakeMqService(), new JobClient(new NoopApiClient()), new FakeJobEventPublisher(), email, new(), NullLogger<EmailNotificationWorker>.Instance)
     {
         public Task RunAsync(IJobWorkerContext ctx) => ExecuteAsync(ctx);
     }
 
     private sealed class TestSmsWorker(ISmsService sms)
-        : SmsNotificationWorker(
-            new FakeMqService(), new JobClient(new NoopApiClient()), new FakeJobEventPublisher(), sms, new(), NullLogger<SmsNotificationWorker>.Instance)
+        : SmsNotificationWorker(new FakeMqService(), new JobClient(new NoopApiClient()), new FakeJobEventPublisher(), sms, new(), NullLogger<SmsNotificationWorker>.Instance)
     {
         public Task RunAsync(IJobWorkerContext ctx) => ExecuteAsync(ctx);
     }
@@ -353,8 +336,7 @@ public class NotificationWorkerTests
 
         public Task ReportProgressAsync(int percent, string? message = null, CancellationToken ct = default) => Task.CompletedTask;
 
-        public Task<IReadOnlyList<JobRunRes>> CreateChildRunsAsync(JobCreateChildRunsReq request, CancellationToken ct = default)
-            => Task.FromResult<IReadOnlyList<JobRunRes>>([]);
+        public Task<IReadOnlyList<JobRunRes>> CreateChildRunsAsync(JobCreateChildRunsReq request, CancellationToken ct = default) => Task.FromResult<IReadOnlyList<JobRunRes>>([]);
 
         public void AddContext(string name, object? value) { }
 

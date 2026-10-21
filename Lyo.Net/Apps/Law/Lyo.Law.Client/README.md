@@ -1,6 +1,7 @@
 # Lyo.Law.Client
 
-`ILawClient` wraps node upsert, detail, citation lookup, children, and ancestors. Jurisdiction, code, node, annotation, and revision queries stay on `IApiClient`. Register with `AddLawClient<TApiClient>`. `LawClientOptions.RoutePrefix` is a path prefix, not an absolute URL.
+`ILawClient` wraps node upsert, detail, citation lookup, children, and ancestors. Jurisdiction, code, node, annotation, and revision queries stay on `IApiClient`. Register with
+`AddLawClient<TApiClient>`. `LawClientOptions.RoutePrefix` is a path prefix, not an absolute URL.
 
 ## Features
 

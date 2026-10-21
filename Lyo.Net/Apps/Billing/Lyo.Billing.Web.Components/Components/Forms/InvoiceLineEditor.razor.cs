@@ -1,9 +1,12 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Components;
 
 namespace Lyo.Billing.Web.Components.Components.Forms;
 
 public partial class InvoiceLineEditor
 {
+    private readonly InvoiceLineRecord _draft = new() { Quantity = 1m, Pricing = InvoiceLinePricing.Amount };
+
     [Parameter]
     public IReadOnlyList<InvoiceLineRecord> Lines { get; set; } = [];
 
@@ -18,13 +21,12 @@ public partial class InvoiceLineEditor
 
     private IReadOnlyList<InvoiceLineRecord> _lines => Lines;
 
-    private readonly InvoiceLineRecord _draft = new() { Quantity = 1m, Pricing = InvoiceLinePricing.Amount };
-
-    private string UnitLabel => _draft.Pricing switch {
-        InvoiceLinePricing.Discount => "Discount",
-        InvoiceLinePricing.PercentDiscount => "% off",
-        var _ => "Rate"
-    };
+    private string UnitLabel
+        => _draft.Pricing switch {
+            InvoiceLinePricing.Discount => "Discount",
+            InvoiceLinePricing.PercentDiscount => "% off",
+            var _ => "Rate"
+        };
 
     private decimal UnitMin => _draft.Pricing == InvoiceLinePricing.Discount ? 0.01m : 0m;
 
@@ -40,26 +42,24 @@ public partial class InvoiceLineEditor
         };
 
     private static string UnitDisplay(InvoiceLineRecord line)
-        => line.Pricing == InvoiceLinePricing.PercentDiscount
-            ? $"{line.UnitAmount}%"
-            : line.UnitAmount.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        => line.Pricing == InvoiceLinePricing.PercentDiscount ? $"{line.UnitAmount}%" : line.UnitAmount.ToString(CultureInfo.InvariantCulture);
 
     private async Task AddManualAsync()
     {
         await Add.InvokeAsync(
-            new InvoiceLineRecord {
+            new() {
                 Title = _draft.Title,
                 Description = _draft.Description,
                 Quantity = _draft.Quantity,
                 UnitAmount = _draft.UnitAmount,
                 Pricing = _draft.Pricing
             });
+
         _draft.Title = string.Empty;
         _draft.Description = string.Empty;
         _draft.Quantity = 1m;
         _draft.UnitAmount = 0m;
     }
 
-    private static string QtyDisplay(decimal quantity)
-        => quantity.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+    private static string QtyDisplay(decimal quantity) => quantity.ToString("0.##", CultureInfo.InvariantCulture);
 }

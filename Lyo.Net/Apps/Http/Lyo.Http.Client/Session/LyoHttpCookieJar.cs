@@ -6,12 +6,11 @@ namespace Lyo.Http.Client.Session;
 /// <summary>Default <see cref="ILyoHttpCookieJar" />. Keeps its own list so export/clear work on netstandard2.0 (no <c>CookieContainer.GetAllCookies</c>).</summary>
 public sealed class LyoHttpCookieJar : ILyoHttpCookieJar
 {
-    private readonly object _gate = new();
     private readonly List<LyoHttpCookie> _cookies = [];
-    private readonly CookieContainer _container = new();
+    private readonly object _gate = new();
 
     /// <summary>Underlying container for code that still talks to <see cref="HttpClientHandler" />.</summary>
-    public CookieContainer Container => _container;
+    public CookieContainer Container { get; } = new();
 
     /// <inheritdoc />
     public IReadOnlyList<LyoHttpCookie> GetCookies(Uri? uri = null)
@@ -50,8 +49,8 @@ public sealed class LyoHttpCookieJar : ILyoHttpCookieJar
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
         lock (_gate) {
-            _cookies.RemoveAll(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase)
-                && (domain == null || string.Equals(c.Domain, domain, StringComparison.OrdinalIgnoreCase)));
+            _cookies.RemoveAll(c
+                => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase) && (domain == null || string.Equals(c.Domain, domain, StringComparison.OrdinalIgnoreCase)));
         }
     }
 
@@ -84,15 +83,14 @@ public sealed class LyoHttpCookieJar : ILyoHttpCookieJar
             Value = cookie.Value,
             Domain = string.IsNullOrWhiteSpace(cookie.Domain) ? uri?.Host : cookie.Domain,
             Path = string.IsNullOrWhiteSpace(cookie.Path) ? "/" : cookie.Path,
-            Secure = cookie.Secure ?? (uri?.Scheme == Uri.UriSchemeHttps),
+            Secure = cookie.Secure ?? uri?.Scheme == Uri.UriSchemeHttps,
             HttpOnly = cookie.HttpOnly,
             Expiry = cookie.Expiry
         };
 
     private static bool SameIdentity(LyoHttpCookie a, LyoHttpCookie b)
-        => string.Equals(a.Name, b.Name, StringComparison.OrdinalIgnoreCase)
-            && string.Equals(a.Domain ?? "", b.Domain ?? "", StringComparison.OrdinalIgnoreCase)
-            && string.Equals(a.Path ?? "/", b.Path ?? "/", StringComparison.OrdinalIgnoreCase);
+        => string.Equals(a.Name, b.Name, StringComparison.OrdinalIgnoreCase) && string.Equals(a.Domain ?? "", b.Domain ?? "", StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(a.Path ?? "/", b.Path ?? "/", StringComparison.OrdinalIgnoreCase);
 
     private static bool MatchesUri(LyoHttpCookie cookie, Uri uri)
     {
@@ -118,16 +116,16 @@ public sealed class LyoHttpCookieJar : ILyoHttpCookieJar
 
         try {
             var net = new Cookie(cookie.Name, cookie.Value, cookie.Path ?? "/", cookie.Domain ?? uri!.Host) {
-                Secure = cookie.Secure ?? false,
-                HttpOnly = cookie.HttpOnly ?? false
+                Secure = cookie.Secure ?? false, HttpOnly = cookie.HttpOnly ?? false
             };
+
             if (cookie.Expiry is { } expiry)
                 net.Expires = expiry.UtcDateTime;
 
             if (uri != null)
-                _container.Add(uri, net);
+                Container.Add(uri, net);
             else
-                _container.Add(net);
+                Container.Add(net);
         }
         catch (CookieException) {
             // Domain/path rejected by CookieContainer; the list still holds the cookie for header emission.

@@ -1,6 +1,7 @@
 # Lyo.Audiobook.Web.Components
 
-Blazor components for browsing an audiobook catalog. `AudiobookSearch` asks the host to search. `AudiobookDetail` shows overview, credits, and chapters. Cover URLs and tag lists come from the host. Components do not take a database context.
+Blazor components for browsing an audiobook catalog. `AudiobookSearch` asks the host to search. `AudiobookDetail` shows overview, credits, and chapters. Cover URLs and tag lists
+come from the host. Components do not take a database context.
 
 ## Features
 

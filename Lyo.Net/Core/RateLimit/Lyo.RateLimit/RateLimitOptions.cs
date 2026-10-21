@@ -12,8 +12,8 @@ public class RateLimitOptions
     public TimeProvider Clock { get; set; } = TimeProvider.System;
 
     /// <summary>
-    /// When true, a Redis failure allows the call and writes nothing. Default false: a Redis failure is a denial with <see cref="RateLimitRequest.Window" /> as
-    /// the retry. Ignored by the in-memory store.
+    /// When true, a Redis failure allows the call and writes nothing. Default false: a Redis failure is a denial with <see cref="RateLimitRequest.Window" /> as the retry.
+    /// Ignored by the in-memory store.
     /// </summary>
     public bool FailOpen { get; set; }
 

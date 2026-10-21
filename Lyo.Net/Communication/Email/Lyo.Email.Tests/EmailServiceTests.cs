@@ -205,12 +205,7 @@ public class EmailServiceTests
     public async Task SendEmailAsync_BuilderWithHtmlAndText_PutsBodiesOnRequest()
     {
         var service = new EmailService(_options, _logger);
-        var builder = EmailRequestBuilder.New()
-            .SetSubject("HTML Email")
-            .SetHtmlBody("<p>Hello</p>")
-            .SetTextBody("Hello")
-            .AddTo("recipient@example.com");
-
+        var builder = EmailRequestBuilder.New().SetSubject("HTML Email").SetHtmlBody("<p>Hello</p>").SetTextBody("Hello").AddTo("recipient@example.com");
         var result = await service.SendEmailAsync(builder, TestCt);
         result.ShouldNotBeNull();
         result.Data.ShouldNotBeNull();
@@ -223,11 +218,7 @@ public class EmailServiceTests
     {
         var service = new EmailService(_options, _logger);
         var request = new EmailRequest(
-            FromAddress: "test@example.com",
-            ToAddresses: ["recipient@example.com"],
-            Subject: "Request body",
-            TextBody: "Plain from request",
-            HtmlBody: "<p>Html from request</p>");
+            "test@example.com", ToAddresses: ["recipient@example.com"], Subject: "Request body", TextBody: "Plain from request", HtmlBody: "<p>Html from request</p>");
 
         var result = await service.SendEmailAsync(request, TestCt);
         result.ShouldNotBeNull();
@@ -240,13 +231,7 @@ public class EmailServiceTests
     public void BuildMimeMessageFromRequest_WithBodies_AppliesHtmlAndText()
     {
         var service = new EmailService(_options, _logger);
-        var request = new EmailRequest(
-            FromAddress: "test@example.com",
-            ToAddresses: ["recipient@example.com"],
-            Subject: "Bodies",
-            TextBody: "Plain",
-            HtmlBody: "<p>Hi</p>");
-
+        var request = new EmailRequest("test@example.com", ToAddresses: ["recipient@example.com"], Subject: "Bodies", TextBody: "Plain", HtmlBody: "<p>Hi</p>");
         var mime = service.BuildMimeMessageFromRequest(request);
         mime.TextBody.ShouldBe("Plain");
         mime.HtmlBody.ShouldBe("<p>Hi</p>");

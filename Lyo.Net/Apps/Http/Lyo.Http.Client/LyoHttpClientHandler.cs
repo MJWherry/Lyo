@@ -5,11 +5,10 @@ using Lyo.Exceptions;
 namespace Lyo.Http.Client;
 
 /// <summary>
-/// Primary <see cref="HttpClientHandler" /> that applies <see cref="LyoHttpClientOptions.AcceptEncodings" /> to
-/// <see cref="HttpClientHandler.AutomaticDecompression" />. Pair it with <c>IHttpClientFactory</c> through
-/// <c>UseLyoHttpClientHandler</c>. New instance per handler lifetime; do not register as a singleton.
-/// Swapping the primary handler (proxy, client certificates, test stubs) drops decompression unless the replacement subclasses this type or sets
-/// <see cref="HttpClientHandler.AutomaticDecompression" /> itself. Do not also wrap a decompressing <see cref="DelegatingHandler" />; the body would inflate twice.
+/// Primary <see cref="HttpClientHandler" /> that applies <see cref="LyoHttpClientOptions.AcceptEncodings" /> to <see cref="HttpClientHandler.AutomaticDecompression" />. Pair
+/// it with <c>IHttpClientFactory</c> through <c>UseLyoHttpClientHandler</c>. New instance per handler lifetime; do not register as a singleton. Swapping the primary handler (proxy,
+/// client certificates, test stubs) drops decompression unless the replacement subclasses this type or sets <see cref="HttpClientHandler.AutomaticDecompression" /> itself. Do not
+/// also wrap a decompressing <see cref="DelegatingHandler" />; the body would inflate twice.
 /// </summary>
 public class LyoHttpClientHandler : HttpClientHandler
 {
@@ -20,18 +19,18 @@ public class LyoHttpClientHandler : HttpClientHandler
         UseCookies = false;
         if (options.EnableAutoResponseDecompression)
             AutomaticDecompression = ToDecompressionMethods(options.AcceptEncodings);
+
         if (!string.IsNullOrWhiteSpace(options.ProxyUrl)) {
             UseProxy = true;
             var proxy = new WebProxy(options.ProxyUrl);
             if (!string.IsNullOrWhiteSpace(options.ProxyUsername))
                 proxy.Credentials = new NetworkCredential(options.ProxyUsername, options.ProxyPassword ?? "");
+
             Proxy = proxy;
         }
     }
 
-    /// <summary>
-    /// Maps <see cref="LyoContentEncodings" /> tokens (<c>gzip</c>, <c>deflate</c>, <c>br</c>) onto <see cref="DecompressionMethods" /> flags. Unknown values are skipped.
-    /// </summary>
+    /// <summary>Maps <see cref="LyoContentEncodings" /> tokens (<c>gzip</c>, <c>deflate</c>, <c>br</c>) onto <see cref="DecompressionMethods" /> flags. Unknown values are skipped.</summary>
     public static DecompressionMethods ToDecompressionMethods(IEnumerable<string>? encodings)
     {
         var methods = DecompressionMethods.None;

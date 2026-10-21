@@ -11,7 +11,10 @@ public static class ServiceCollectionExtensions
 {
     extension(IServiceCollection services)
     {
-        /// <summary>Adds <see cref="ExportEndpointContributor" /> and a scoped <see cref="IExportService{TContext}" /> used by export endpoints. YAML, XML, TOML, CSV, and XLSX handlers are added by their addon packages.</summary>
+        /// <summary>
+        /// Adds <see cref="ExportEndpointContributor" /> and a scoped <see cref="IExportService{TContext}" /> used by export endpoints. YAML, XML, TOML, CSV, and XLSX handlers are
+        /// added by their addon packages.
+        /// </summary>
         public IServiceCollection AddLyoApiExport<TContext>()
             where TContext : DbContext
         {

@@ -3,6 +3,11 @@ namespace Lyo.Leaderboard.Web.Components;
 /// <summary>Ranked standings table for one board.</summary>
 public partial class LeaderboardStandingTable
 {
+    private Guid? _boardId;
+    private int _loadedVersion = -1;
+    private bool _loading;
+    private IReadOnlyList<StandingRecord> _rows = [];
+
     /// <summary>Typed Leaderboard API client.</summary>
     [Parameter]
     [EditorRequired]
@@ -15,11 +20,6 @@ public partial class LeaderboardStandingTable
     /// <summary>Bump to reload.</summary>
     [Parameter]
     public int DataVersion { get; set; }
-
-    private Guid? _boardId;
-    private int _loadedVersion = -1;
-    private bool _loading;
-    private IReadOnlyList<StandingRecord> _rows = [];
 
     /// <inheritdoc />
     protected override async Task OnParametersSetAsync()

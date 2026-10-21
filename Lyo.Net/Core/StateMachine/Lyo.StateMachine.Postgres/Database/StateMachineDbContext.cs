@@ -5,10 +5,6 @@ namespace Lyo.StateMachine.Postgres.Database;
 /// <summary>EF Core context for state machine instances, transition history, and definition documents in PostgreSQL.</summary>
 public sealed class StateMachineDbContext : DbContext
 {
-    /// <summary>Mints a context with the supplied options.</summary>
-    public StateMachineDbContext(DbContextOptions<StateMachineDbContext> options)
-        : base(options) { }
-
     /// <summary>Current snapshot per instance.</summary>
     public DbSet<StateMachineInstanceEntity> Instances { get; set; } = null!;
 
@@ -17,6 +13,10 @@ public sealed class StateMachineDbContext : DbContext
 
     /// <summary>Saved state machine document revisions.</summary>
     public DbSet<StateMachineDefinitionEntity> Definitions { get; set; } = null!;
+
+    /// <summary>Mints a context with the supplied options.</summary>
+    public StateMachineDbContext(DbContextOptions<StateMachineDbContext> options)
+        : base(options) { }
 
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)

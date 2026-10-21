@@ -5,9 +5,9 @@ using Lyo.Encryption.Exceptions;
 namespace Lyo.Encryption.Streaming;
 
 /// <summary>
-/// Shared compact-AEAD chunk loops (see <see cref="AeadChunkCodec" />). Rents once per stream from <see cref="ArrayPool{T}" /> and
-/// reuses those buffers for every chunk, so allocation is O(chunkSize) no matter how long the stream is. Buffers that held plaintext are zeroed before return to the pool. Used by
-/// <see cref="EncryptionServiceBase" /> and the two-key envelope service.
+/// Shared compact-AEAD chunk loops (see <see cref="AeadChunkCodec" />). Rents once per stream from <see cref="ArrayPool{T}" /> and reuses those buffers for every chunk, so
+/// allocation is O(chunkSize) no matter how long the stream is. Buffers that held plaintext are zeroed before return to the pool. Used by <see cref="EncryptionServiceBase" /> and the
+/// two-key envelope service.
 /// </summary>
 internal static class AeadStreamProcessor
 {
@@ -19,9 +19,9 @@ internal static class AeadStreamProcessor
 
     /// <summary>
     /// Encrypt: reads <paramref name="input" /> in <paramref name="effectiveChunkSize" /> slices and writes compact frames to <paramref name="output" />. Each chunk nonce is
-    /// <paramref name="noncePrefix" /> (chosen once per stream and stored in the stream header) plus a 4-byte little-endian counter; the nonce is never written on the
-    /// wire, so decrypt must rebuild the same sequence — reordered, replayed, or dropped chunks fail auth. The last chunk is marked final (truncation detection)
-    /// and every chunk authenticates <paramref name="aadNonFinal" /> / <paramref name="aadFinal" /> (stream header + final-flag byte + caller AAD).
+    /// <paramref name="noncePrefix" /> (chosen once per stream and stored in the stream header) plus a 4-byte little-endian counter; the nonce is never written on the wire, so decrypt
+    /// must rebuild the same sequence — reordered, replayed, or dropped chunks fail auth. The last chunk is marked final (truncation detection) and every chunk authenticates
+    /// <paramref name="aadNonFinal" /> / <paramref name="aadFinal" /> (stream header + final-flag byte + caller AAD).
     /// </summary>
     public static async Task EncryptChunksAsync(
         Stream input,
@@ -72,9 +72,9 @@ internal static class AeadStreamProcessor
 
     /// <summary>
     /// Decrypt: reads compact frames from <paramref name="input" />, rebuilds each nonce from <paramref name="noncePrefix" /> plus a counter that starts at
-    /// <paramref name="startingChunkIndex" /> (the wire has no nonce) and authenticates <paramref name="aadNonFinal" /> / <paramref name="aadFinal" /> per chunk. The first
-    /// chunk discards <paramref name="skipPlaintextBytes" />. When <paramref name="maxPlaintextBytes" /> is set, writing stops after that many plaintext bytes and a missing
-    /// final chunk is not an error. Otherwise throws if the stream ends before a final-flagged chunk (truncation) or has bytes after it (extension).
+    /// <paramref name="startingChunkIndex" /> (the wire has no nonce) and authenticates <paramref name="aadNonFinal" /> / <paramref name="aadFinal" /> per chunk. The first chunk discards
+    /// <paramref name="skipPlaintextBytes" />. When <paramref name="maxPlaintextBytes" /> is set, writing stops after that many plaintext bytes and a missing final chunk is not an error.
+    /// Otherwise throws if the stream ends before a final-flagged chunk (truncation) or has bytes after it (extension).
     /// </summary>
     public static async Task DecryptChunksAsync(
         Stream input,
@@ -100,7 +100,7 @@ internal static class AeadStreamProcessor
         noncePrefix.AsSpan(0, nonceSize - CounterSize).CopyTo(nonce);
         try {
             var sawFinalChunk = false;
-            long chunkIndex = startingChunkIndex;
+            var chunkIndex = startingChunkIndex;
             long written = 0;
             var pendingSkip = skipPlaintextBytes;
             while (true) {

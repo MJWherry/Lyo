@@ -1,5 +1,4 @@
 @namespace Lyo.FileStorage.Web.Components.FileStorageManagement
-@using Lyo.IO.FileSystem.Web.Components
 @implements IDisposable
 
 <MudPaper Class="pa-4 mt-1" Outlined="true">
@@ -44,7 +43,8 @@
                                     }
                                 </MudSelect>
                                 @if (SelectedType != null) {
-                                    <MudSelect T="string" Value="EffectiveKind" ValueChanged="KindChanged" Label="Kind" Disabled="@SelectedType.Automatic" Variant="Variant.Outlined"
+                                    <MudSelect T="string" Value="EffectiveKind" ValueChanged="KindChanged" Label="Kind" Disabled="@SelectedType.Automatic"
+                                               Variant="Variant.Outlined"
                                                Margin="Margin.Dense" Dense="true" Style="min-width:8rem;">
                                         @foreach (var kind in KindChoices) {
                                             <MudSelectItem T="string" Value="@kind.Kind">@kind.Kind</MudSelectItem>
@@ -52,7 +52,8 @@
                                     </MudSelect>
                                 }
                                 @if (SelectedTypeNeedsGrain) {
-                                    <MudSelect T="string" @bind-Value="_addGrain" Label="Grain" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" Style="min-width:8rem;">
+                                    <MudSelect T="string" @bind-Value="_addGrain" Label="Grain" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true"
+                                               Style="min-width:8rem;">
                                         @foreach (var grain in SelectedGrains) {
                                             <MudSelectItem T="string" Value="@grain">@grain</MudSelectItem>
                                         }
@@ -72,17 +73,30 @@
                     </AboveFilter>
                     <SelectionToolbar>
                         <MudText Typo="Typo.caption" Color="Color.Secondary">
-                            Check files or folders, then Move / Copy / Delete / Download. Rotate DEKs and zip need catalog rows. A folder includes every descendant; the action loads children.
+                            Check files or folders, then Move / Copy / Delete / Download. Rotate DEKs and zip need catalog rows. A folder includes every descendant; the action
+                            loads children.
                         </MudText>
                         <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
-                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@_bulkCatalogCount catalog, @_bulkPhysicalCount on @FileStoragePresenceUi.DisplayName(BackendKind)</MudText>
+                            <MudText Typo="Typo.caption"
+                                     Class="mud-text-secondary">@_bulkCatalogCount catalog, @_bulkPhysicalCount on @FileStoragePresenceUi.DisplayName(BackendKind)</MudText>
                             @if (BlobStructure) {
-                                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileMove" Disabled="@(!BulkObjectActionsEnabled)" OnClick="OnBulkMoveAsync">Move…</MudButton>
-                                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.ContentCopy" Disabled="@(!BulkObjectActionsEnabled)" OnClick="OnBulkCopyAsync">Copy…</MudButton>
+                                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.DriveFileMove" Disabled="@(!BulkObjectActionsEnabled)"
+                                           OnClick="OnBulkMoveAsync">Move…
+                                </MudButton>
+
+                                <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.ContentCopy" Disabled="@(!BulkObjectActionsEnabled)"
+                                           OnClick="OnBulkCopyAsync">Copy…
+                                </MudButton>
                             }
-                            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.VpnKey" Disabled="@(!BulkCatalogActionsEnabled)" OnClick="OnBulkRotateAsync">Rotate DEKs…</MudButton>
-                            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Archive" Disabled="@(!BulkObjectActionsEnabled)" OnClick="OnBulkDownloadAsync">Download</MudButton>
-                            <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" Disabled="@(!BulkObjectActionsEnabled)" OnClick="OnBulkDeleteAsync">Delete</MudButton>
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.VpnKey" Disabled="@(!BulkCatalogActionsEnabled)"
+                                       OnClick="OnBulkRotateAsync">Rotate DEKs…
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Archive" Disabled="@(!BulkObjectActionsEnabled)"
+                                       OnClick="OnBulkDownloadAsync">Download
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete"
+                                       Disabled="@(!BulkObjectActionsEnabled)" OnClick="OnBulkDeleteAsync">Delete
+                            </MudButton>
                         </MudStack>
                     </SelectionToolbar>
                     <ItemTrailing>
@@ -97,12 +111,12 @@
             <div class="file-storage-tree-col">
                 @if (_actions != null) {
                     <FileStoragePathInspector Actions="_actions"
-                                            FolderSource="FolderSource"
-                                            ListingRevision="_listingRevision"
-                                            AllowPrefixChanges="BlobStructure"
-                                            Selected="_selected"
-                                            SelectedChanged="OnInspectorSelectedAsync"
-                                            TreeChanged="OnTreeChangedAsync"/>
+                                              FolderSource="FolderSource"
+                                              ListingRevision="_listingRevision"
+                                              AllowPrefixChanges="BlobStructure"
+                                              Selected="_selected"
+                                              SelectedChanged="OnInspectorSelectedAsync"
+                                              TreeChanged="OnTreeChangedAsync"/>
                 }
             </div>
         </div>

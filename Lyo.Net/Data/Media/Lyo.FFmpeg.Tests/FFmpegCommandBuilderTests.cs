@@ -1,6 +1,6 @@
 using Lyo.Common.Core.Records;
-using Lyo.FileTags;
 using Lyo.FFmpeg.Models;
+using Lyo.FileTags;
 using Lyo.Media.Models;
 
 namespace Lyo.FFmpeg.Tests;
@@ -42,11 +42,7 @@ public class FFmpegCommandBuilderTests
     [Fact]
     public void Build_ForCompressVideo_EmitsCrfPresetAndCodec()
     {
-        var cmd = FFmpegCommandBuilder.New()
-            .WithInput("in.mov")
-            .WithOutput("out.mp4")
-            .ApplyOptions(VideoConversionOptions.ForCompressVideo())
-            .Build();
+        var cmd = FFmpegCommandBuilder.New().WithInput("in.mov").WithOutput("out.mp4").ApplyOptions(VideoConversionOptions.ForCompressVideo()).Build();
         Assert.Contains("-crf", cmd.ArgumentList);
         Assert.Contains("23", cmd.ArgumentList);
         Assert.Contains("-preset", cmd.ArgumentList);
@@ -65,6 +61,7 @@ public class FFmpegCommandBuilderTests
             .WithOutput("out.webm")
             .ApplyOptions(VideoConversionOptions.ForTranscode(MediaContainer.WebM, AudioEncoder.Opus, VideoEncoder.Vp9))
             .Build();
+
         Assert.Contains("-f", cmd.ArgumentList);
         Assert.Contains("webm", cmd.ArgumentList);
         Assert.Contains("-c:a", cmd.ArgumentList);
@@ -78,11 +75,7 @@ public class FFmpegCommandBuilderTests
     [Fact]
     public void Build_ForCompressAudio_EmitsBitrateAndDropVideo()
     {
-        var cmd = FFmpegCommandBuilder.New()
-            .WithInput("in.wav")
-            .WithOutput("out.mp3")
-            .ApplyOptions(AudioConversionOptions.ForCompressAudio())
-            .Build();
+        var cmd = FFmpegCommandBuilder.New().WithInput("in.wav").WithOutput("out.mp3").ApplyOptions(AudioConversionOptions.ForCompressAudio()).Build();
         Assert.Contains("-b:a", cmd.ArgumentList);
         Assert.Contains("128k", cmd.ArgumentList);
         Assert.Contains("-c:a", cmd.ArgumentList);
@@ -99,6 +92,7 @@ public class FFmpegCommandBuilderTests
             .WithOutput("out.mp4")
             .ApplyOptions(new VideoConversionOptions { CopyCodecs = true, AudioEncoder = AudioEncoder.Aac })
             .Build();
+
         Assert.Contains("-c", cmd.ArgumentList);
         Assert.Contains("copy", cmd.ArgumentList);
         Assert.Contains("-c:a", cmd.ArgumentList);
@@ -113,6 +107,7 @@ public class FFmpegCommandBuilderTests
             .WithOutput("out.wav")
             .ApplyOptions(new AudioConversionOptions { InputFormat = MediaContainer.S16le, InputSampleRate = AudioSampleRate.Hz48000, InputChannels = ChannelLayout.Stereo })
             .Build();
+
         var list = cmd.ArgumentList.ToList();
         var i = list.IndexOf("-i");
         var f = list.IndexOf("-f");
@@ -146,11 +141,7 @@ public class FFmpegCommandBuilderTests
     [Fact]
     public void Build_ForRawPcm_EmitsPipeShapedAudio()
     {
-        var cmd = FFmpegCommandBuilder.New()
-            .WithInput("in.mp3")
-            .WithOutput("pipe:1")
-            .ApplyOptions(AudioConversionOptions.ForRawPcm())
-            .Build();
+        var cmd = FFmpegCommandBuilder.New().WithInput("in.mp3").WithOutput("pipe:1").ApplyOptions(AudioConversionOptions.ForRawPcm()).Build();
         Assert.Contains("-vn", cmd.ArgumentList);
         Assert.Contains("-c:a", cmd.ArgumentList);
         Assert.Contains("pcm_s16le", cmd.ArgumentList);
@@ -162,11 +153,7 @@ public class FFmpegCommandBuilderTests
     [Fact]
     public void Build_ForStreamingVideo_EmitsCopyAndMovflags()
     {
-        var cmd = FFmpegCommandBuilder.New()
-            .WithInput("in.mp4")
-            .WithOutput("pipe:1")
-            .ApplyOptions(VideoConversionOptions.ForStreamingVideo())
-            .Build();
+        var cmd = FFmpegCommandBuilder.New().WithInput("in.mp4").WithOutput("pipe:1").ApplyOptions(VideoConversionOptions.ForStreamingVideo()).Build();
         Assert.Contains("-c", cmd.ArgumentList);
         Assert.Contains("copy", cmd.ArgumentList);
         Assert.Contains("-movflags", cmd.ArgumentList);
@@ -177,11 +164,7 @@ public class FFmpegCommandBuilderTests
     [Fact]
     public void Build_ForStreamingVideo_WebM_OmitsMovflags()
     {
-        var cmd = FFmpegCommandBuilder.New()
-            .WithInput("in.webm")
-            .WithOutput("pipe:1")
-            .ApplyOptions(VideoConversionOptions.ForStreamingVideo(MediaContainer.WebM))
-            .Build();
+        var cmd = FFmpegCommandBuilder.New().WithInput("in.webm").WithOutput("pipe:1").ApplyOptions(VideoConversionOptions.ForStreamingVideo(MediaContainer.WebM)).Build();
         Assert.Contains("-c", cmd.ArgumentList);
         Assert.Contains("copy", cmd.ArgumentList);
         Assert.Contains("webm", cmd.ArgumentList);
@@ -191,12 +174,7 @@ public class FFmpegCommandBuilderTests
     [Fact]
     public void Build_Trim_EmitsSsBeforeInputAndTAfter()
     {
-        var cmd = FFmpegCommandBuilder.New()
-            .WithInput("in.mp4")
-            .WithOutput("out.mp4")
-            .WithStartTime(TimeSpan.FromSeconds(1.5))
-            .WithDuration(TimeSpan.FromSeconds(3))
-            .Build();
+        var cmd = FFmpegCommandBuilder.New().WithInput("in.mp4").WithOutput("out.mp4").WithStartTime(TimeSpan.FromSeconds(1.5)).WithDuration(TimeSpan.FromSeconds(3)).Build();
         var list = cmd.ArgumentList.ToList();
         var ss = list.IndexOf("-ss");
         var i = list.IndexOf("-i");
@@ -208,11 +186,7 @@ public class FFmpegCommandBuilderTests
     [Fact]
     public void Build_LavfiInput_DoesNotRequireFile()
     {
-        var cmd = FFmpegCommandBuilder.New()
-            .WithInputFormat("lavfi")
-            .WithInput("testsrc=duration=1:size=160x120:rate=1")
-            .WithOutput("out.mp4")
-            .Build();
+        var cmd = FFmpegCommandBuilder.New().WithInputFormat("lavfi").WithInput("testsrc=duration=1:size=160x120:rate=1").WithOutput("out.mp4").Build();
         Assert.Contains("-f", cmd.ArgumentList);
         Assert.Contains("lavfi", cmd.ArgumentList);
         Assert.Contains("testsrc=duration=1:size=160x120:rate=1", cmd.ArgumentList);
@@ -244,12 +218,14 @@ public class FFmpegCommandBuilderTests
     [Fact]
     public void Build_VideoAudioKnobs_EmitsBitrateRateAndChannels()
     {
-        var cmd = Built(new VideoConversionOptions {
-            AudioEncoder = AudioEncoder.Aac,
-            AudioBitRate = MediaBitRate.K128,
-            SampleRate = AudioSampleRate.Hz48000,
-            Channels = ChannelLayout.Stereo
-        });
+        var cmd = Built(
+            new() {
+                AudioEncoder = AudioEncoder.Aac,
+                AudioBitRate = MediaBitRate.K128,
+                SampleRate = AudioSampleRate.Hz48000,
+                Channels = ChannelLayout.Stereo
+            });
+
         var args = cmd.ArgumentList;
         Assert.Equal("aac", After(args, "-c:a"));
         Assert.Equal("128k", After(args, "-b:a"));
@@ -271,8 +247,9 @@ public class FFmpegCommandBuilderTests
             .WithInput("in.mov")
             .WithOutput("out.mp4")
             .ApplyOptions(VideoConversionOptions.ForCompressVideo())
-            .ApplyHost(new FFmpegOptions { Hardware = "nvenc" })
+            .ApplyHost(new() { Hardware = "nvenc" })
             .Build();
+
         var args = cmd.ArgumentList;
         Assert.Equal("cuda", After(args, "-hwaccel"));
         Assert.Equal("h264_nvenc", After(args, "-c:v"));
@@ -287,8 +264,9 @@ public class FFmpegCommandBuilderTests
             .WithInput("in.mov")
             .WithOutput("out.mp4")
             .ApplyOptions(VideoConversionOptions.ForCompressVideo() with { Hardware = HardwareAccel.None })
-            .ApplyHost(new FFmpegOptions { Hardware = "nvenc" })
+            .ApplyHost(new() { Hardware = "nvenc" })
             .Build();
+
         Assert.Equal("libx264", After(cmd.ArgumentList, "-c:v"));
         Assert.DoesNotContain("-hwaccel", cmd.ArgumentList);
     }
@@ -300,8 +278,9 @@ public class FFmpegCommandBuilderTests
             .WithInput("in.mp4")
             .WithOutput("out.mp4")
             .ApplyOptions(new VideoConversionOptions { CopyCodecs = true })
-            .ApplyHost(new FFmpegOptions { Hardware = "nvenc" })
+            .ApplyHost(new() { Hardware = "nvenc" })
             .Build();
+
         Assert.Equal("copy", After(cmd.ArgumentList, "-c"));
         Assert.DoesNotContain("h264_nvenc", cmd.ArgumentList);
         Assert.DoesNotContain("-hwaccel", cmd.ArgumentList);
@@ -310,53 +289,51 @@ public class FFmpegCommandBuilderTests
     [Fact]
     public void Build_NvencCrf_EmitsVbrCq()
     {
-        var nvenc = Built(new VideoConversionOptions { Encoder = VideoEncoder.H264, Crf = ConstantRateFactor.Standard, Hardware = HardwareAccel.Nvenc });
+        var nvenc = Built(new() { Encoder = VideoEncoder.H264, Crf = ConstantRateFactor.Standard, Hardware = HardwareAccel.Nvenc });
         Assert.Equal("vbr", After(nvenc.ArgumentList, "-rc:v"));
         Assert.Equal("23", After(nvenc.ArgumentList, "-cq"));
         Assert.DoesNotContain("-crf", nvenc.ArgumentList);
-
-        var qsv = Built(new VideoConversionOptions { Encoder = VideoEncoder.H264, Crf = ConstantRateFactor.Standard, Hardware = HardwareAccel.Qsv });
+        var qsv = Built(new() { Encoder = VideoEncoder.H264, Crf = ConstantRateFactor.Standard, Hardware = HardwareAccel.Qsv });
         Assert.Equal("23", After(qsv.ArgumentList, "-global_quality"));
-
-        var vaapi = Built(new VideoConversionOptions { Encoder = VideoEncoder.H264, Crf = ConstantRateFactor.Standard, Hardware = HardwareAccel.Vaapi });
+        var vaapi = Built(new() { Encoder = VideoEncoder.H264, Crf = ConstantRateFactor.Standard, Hardware = HardwareAccel.Vaapi });
         Assert.Equal("vaapi", After(vaapi.ArgumentList, "-hwaccel"));
         Assert.Equal(HardwareDevice.RenderD128.Path, After(vaapi.ArgumentList, "-vaapi_device"));
         Assert.Equal("23", After(vaapi.ArgumentList, "-qp"));
         Assert.Contains("format=nv12,hwupload", After(vaapi.ArgumentList, "-vf"), StringComparison.Ordinal);
+        var filtered = Built(
+            new() {
+                Encoder = VideoEncoder.H264,
+                Crf = ConstantRateFactor.Standard,
+                Hardware = HardwareAccel.Vaapi,
+                VideoFilter = "eq=brightness=0.1"
+            });
 
-        var filtered = Built(new VideoConversionOptions {
-            Encoder = VideoEncoder.H264,
-            Crf = ConstantRateFactor.Standard,
-            Hardware = HardwareAccel.Vaapi,
-            VideoFilter = "eq=brightness=0.1"
-        });
         Assert.DoesNotContain("hwupload", After(filtered.ArgumentList, "-vf"), StringComparison.Ordinal);
-
-        Assert.Throws<ArgumentException>(() => Built(new VideoConversionOptions { Hardware = HardwareAccel.VideoToolbox, Crf = ConstantRateFactor.Standard }));
+        Assert.Throws<ArgumentException>(() => Built(new() { Hardware = HardwareAccel.VideoToolbox, Crf = ConstantRateFactor.Standard }));
     }
 
     [Fact]
     public void Build_ScaleFit_EmitsForceOriginalAspectRatio()
     {
-        var fit = Built(new VideoConversionOptions {
-            Width = 1280,
-            Height = 720,
-            Scale = ScaleMode.Fit,
-            VideoFilter = "eq=brightness=0.1",
-            Subtitles = SubtitleMode.BurnIn,
-            SubtitlePath = "caps.srt"
-        });
+        var fit = Built(
+            new() {
+                Width = 1280,
+                Height = 720,
+                Scale = ScaleMode.Fit,
+                VideoFilter = "eq=brightness=0.1",
+                Subtitles = SubtitleMode.BurnIn,
+                SubtitlePath = "caps.srt"
+            });
+
         Assert.DoesNotContain("-s", fit.ArgumentList);
         var filter = After(fit.ArgumentList, "-vf");
         var scaleAt = filter.IndexOf("scale=1280:720:force_original_aspect_ratio=decrease", StringComparison.Ordinal);
         var eqAt = filter.IndexOf("eq=brightness=0.1", StringComparison.Ordinal);
         var subAt = filter.IndexOf("subtitles=", StringComparison.Ordinal);
         Assert.True(scaleAt >= 0 && scaleAt < eqAt && eqAt < subAt);
-
-        var stretch = Built(new VideoConversionOptions { Width = 640, Height = 360, Scale = ScaleMode.Stretch });
+        var stretch = Built(new() { Width = 640, Height = 360, Scale = ScaleMode.Stretch });
         Assert.Equal("640x360", After(stretch.ArgumentList, "-s"));
-
-        var widthOnly = Built(new VideoConversionOptions { Width = 640, Scale = ScaleMode.Fit });
+        var widthOnly = Built(new() { Width = 640, Scale = ScaleMode.Fit });
         Assert.Equal("scale=640:-2", After(widthOnly.ArgumentList, "-vf"));
         Assert.Throws<ArgumentException>(() => new VideoConversionOptions { Width = 640, Scale = ScaleMode.Fill }.Validate());
     }
@@ -364,11 +341,13 @@ public class FFmpegCommandBuilderTests
     [Fact]
     public void Build_MetadataAndMaps_RepeatFlags()
     {
-        var cmd = Built(new VideoConversionOptions {
-            ClearMetadata = true,
-            Metadata = new Dictionary<FileTagKey, string> { [FileTagKey.Title] = "Show", [FileTagKey.Artist] = "Band" },
-            Maps = [MediaStreamMap.Video(), MediaStreamMap.Audio()]
-        });
+        var cmd = Built(
+            new() {
+                ClearMetadata = true,
+                Metadata = new Dictionary<FileTagKey, string> { [FileTagKey.Title] = "Show", [FileTagKey.Artist] = "Band" },
+                Maps = [MediaStreamMap.Video(), MediaStreamMap.Audio()]
+            });
+
         var args = cmd.ArgumentList.ToList();
         Assert.Equal(2, args.Count(static arg => arg == "-map"));
         Assert.Equal(2, args.Count(static arg => arg == "-metadata"));
@@ -382,7 +361,7 @@ public class FFmpegCommandBuilderTests
     [Fact]
     public void Build_SubtitleBurnIn_EscapesPath()
     {
-        var cmd = Built(new VideoConversionOptions { Subtitles = SubtitleMode.BurnIn, SubtitlePath = @"C:\a:b'c,d.srt" });
+        var cmd = Built(new() { Subtitles = SubtitleMode.BurnIn, SubtitlePath = @"C:\a:b'c,d.srt" });
         Assert.Contains(@"subtitles=C\:\\a\:b\'c\,d.srt", After(cmd.ArgumentList, "-vf"), StringComparison.Ordinal);
     }
 
@@ -394,7 +373,7 @@ public class FFmpegCommandBuilderTests
     public void Build_SubtitleCopy_UsesContainerCodec(string format, string codec)
     {
         var container = MediaContainer.TryFromFormat(format);
-        var cmd = Built(new VideoConversionOptions { Format = container, Subtitles = SubtitleMode.Copy, SubtitlePath = "caps.srt" });
+        var cmd = Built(new() { Format = container, Subtitles = SubtitleMode.Copy, SubtitlePath = "caps.srt" });
         var args = cmd.ArgumentList.ToList();
         Assert.Equal(codec, After(args, "-c:s"));
         Assert.Equal(2, args.Count(static arg => arg == "-i"));
@@ -411,7 +390,6 @@ public class FFmpegCommandBuilderTests
         Assert.Equal("6", After(hls.ArgumentList, "-hls_time"));
         Assert.Equal("vod", After(hls.ArgumentList, "-hls_playlist_type"));
         Assert.Equal(Path.Combine("/var/media", "seg_%03d.ts"), After(hls.ArgumentList, "-hls_segment_filename"));
-
         var dash = FFmpegCommandBuilder.New().WithInput("in.mp4").WithOutput("/var/media/show.mpd").ApplyOptions(VideoConversionOptions.ForDash()).Build();
         Assert.Equal("dash", After(dash.ArgumentList, "-f"));
         Assert.Equal("4", After(dash.ArgumentList, "-seg_duration"));
@@ -419,8 +397,7 @@ public class FFmpegCommandBuilderTests
         Assert.Equal(Path.Combine("/var/media", "chunk_%03d.m4s"), After(dash.ArgumentList, "-media_seg_name"));
     }
 
-    private static FFmpegCommand Built(VideoConversionOptions options)
-        => FFmpegCommandBuilder.New().WithInput("in.mov").WithOutput("out.mp4").ApplyOptions(options).Build();
+    private static FFmpegCommand Built(VideoConversionOptions options) => FFmpegCommandBuilder.New().WithInput("in.mov").WithOutput("out.mp4").ApplyOptions(options).Build();
 
     private static string After(IReadOnlyList<string> args, string flag)
     {

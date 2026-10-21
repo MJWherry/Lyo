@@ -38,19 +38,19 @@ public partial class RecipeIngredientLinesPanel
 
     private Task<IEnumerable<string>> SearchIngredients(string? value, CancellationToken ct)
     {
-        IEnumerable<string> names = Ingredients.Select(i => i.Name);
+        var names = Ingredients.Select(i => i.Name);
         if (!string.IsNullOrWhiteSpace(value))
             names = names.Where(n => n.Contains(value, StringComparison.OrdinalIgnoreCase));
+
         if (!string.IsNullOrWhiteSpace(value) && names.All(n => !string.Equals(n, value, StringComparison.OrdinalIgnoreCase)))
             names = names.Prepend(value);
+
         return Task.FromResult(names);
     }
 
     private async Task OnIngredientChanged(RecipeIngredientLineReq line, string? value)
     {
-        var match = string.IsNullOrWhiteSpace(value)
-            ? null
-            : Ingredients.FirstOrDefault(i => string.Equals(i.Name, value.Trim(), StringComparison.OrdinalIgnoreCase));
+        var match = string.IsNullOrWhiteSpace(value) ? null : Ingredients.FirstOrDefault(i => string.Equals(i.Name, value.Trim(), StringComparison.OrdinalIgnoreCase));
         if (match != null) {
             line.IngredientId = match.Id;
             line.IngredientText = null;
@@ -70,13 +70,14 @@ public partial class RecipeIngredientLinesPanel
     {
         if (!line.StepIds.Remove(stepId))
             line.StepIds.Add(stepId);
+
         if (Changed.HasDelegate)
             await Changed.InvokeAsync();
     }
 
     private async Task Add()
     {
-        Lines.Add(new RecipeIngredientLineReq { Id = LyoGuid.CreateV7(), SortOrder = Lines.Count });
+        Lines.Add(new() { Id = LyoGuid.CreateV7(), SortOrder = Lines.Count });
         if (Changed.HasDelegate)
             await Changed.InvokeAsync();
     }

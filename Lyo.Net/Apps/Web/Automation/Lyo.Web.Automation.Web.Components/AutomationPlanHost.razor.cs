@@ -7,16 +7,14 @@ using Microsoft.AspNetCore.Components.Forms;
 
 namespace Lyo.Web.Automation.Web.Components;
 
-/// <summary>
-/// Selection bar plus Manage, Editor, and Runner. Manage lists stored plans. Editor and Runner share the selection, including a file that was never saved.
-/// </summary>
+/// <summary>Selection bar plus Manage, Editor, and Runner. Manage lists stored plans. Editor and Runner share the selection, including a file that was never saved.</summary>
 public partial class AutomationPlanHost : ComponentBase, IDisposable
 {
     private readonly CancellationTokenSource _lifetime = new();
+    private bool _busy;
+    private string? _error;
     private AutomationPlan? _plan;
     private string _source = "none";
-    private string? _error;
-    private bool _busy;
     private int _tab;
 
     /// <summary>Client for plan reads, saves, and runs.</summary>

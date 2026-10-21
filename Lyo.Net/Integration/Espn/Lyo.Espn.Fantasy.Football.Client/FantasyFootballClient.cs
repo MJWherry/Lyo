@@ -1,10 +1,10 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Lyo.Http.Client;
-using Lyo.Json;
 using Lyo.Espn.Fantasy.Football.Client.Models.Request;
 using Lyo.Espn.Fantasy.Football.Client.Models.Response;
 using Lyo.Exceptions;
+using Lyo.Http.Client;
+using Lyo.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -13,6 +13,7 @@ namespace Lyo.Espn.Fantasy.Football.Client;
 /// <summary>HTTP client for ESPN fantasy football league data.</summary>
 public class FantasyFootballClient : LyoHttpClient
 {
+    private static readonly AsyncLocal<FantasyFootballCredentialsOverride?> RequestCredentials = new();
     public readonly CommunicationManager Communication;
     public readonly LeagueManager League;
     public readonly PlayerManager Players;
@@ -24,6 +25,10 @@ public class FantasyFootballClient : LyoHttpClient
 
     /// <summary>Player cards filled by player, free-agent, and cached lookups.</summary>
     public PlayerCache PlayerCache { get; } = new();
+
+    internal string? Swid => Cookie(RequestCredentials.Value?.Swid, _options.Swid);
+
+    internal string NewsBaseUrl => _options.NewsBaseUrl;
 
     public FantasyFootballClient(FantasyFootballClientOptions options, ILoggerFactory? loggerFactory = null, HttpClient? httpClient = null)
         : base(
@@ -43,22 +48,16 @@ public class FantasyFootballClient : LyoHttpClient
     public void Remember(LeagueRes league)
     {
         ArgumentHelpers.ThrowIfNull(league);
-        LeagueDirectory = new LeagueIndex(league);
+        LeagueDirectory = new(league);
     }
-
-    internal string? Swid => Cookie(RequestCredentials.Value?.Swid, _options.Swid);
-
-    private static readonly AsyncLocal<FantasyFootballCredentialsOverride?> RequestCredentials = new();
 
     /// <summary>Uses these ESPN cookies on the current async flow. A blank value keeps the option cookie. Dispose when the call finishes.</summary>
     public IDisposable UseCredentials(string? espnS2, string? swid)
     {
         var previous = RequestCredentials.Value;
-        RequestCredentials.Value = new FantasyFootballCredentialsOverride(espnS2, swid);
+        RequestCredentials.Value = new(espnS2, swid);
         return new RestoreCredentials(previous);
     }
-
-    internal string NewsBaseUrl => _options.NewsBaseUrl;
 
     internal static void ValidateSeason(int seasonId, string methodName)
     {
@@ -126,8 +125,7 @@ public class FantasyFootballClient : LyoHttpClient
         return $"{_options.CommunicationBaseUrl.TrimEnd('/')}/seasons/{seasonId}/segments/0/leagues/{leagueId}/communication/topics/{topic}/messages/?source={source}";
     }
 
-    internal Task<TResult?> GetAuthenticatedAsync<TResult>(string url, CancellationToken ct)
-        => GetAsAsync<TResult>(url, ApplyAuthentication, ct);
+    internal Task<TResult?> GetAuthenticatedAsync<TResult>(string url, CancellationToken ct) => GetAsAsync<TResult>(url, ApplyAuthentication, ct);
 
     internal Task<TResult> PostAuthenticatedAsync<TRequest, TResult>(string url, TRequest body, CancellationToken ct)
         => PostAsAsync<TRequest, TResult>(url, body, ApplyAuthentication, ct);
@@ -160,8 +158,7 @@ public class FantasyFootballClient : LyoHttpClient
         request.Headers.TryAddWithoutValidation("Cookie", string.Join("; ", cookies));
     }
 
-    private static string? Cookie(string? requestValue, string? configured)
-        => string.IsNullOrWhiteSpace(requestValue) ? configured : requestValue;
+    private static string? Cookie(string? requestValue, string? configured) => string.IsNullOrWhiteSpace(requestValue) ? configured : requestValue;
 
     private sealed record FantasyFootballCredentialsOverride(string? EspnS2, string? Swid);
 

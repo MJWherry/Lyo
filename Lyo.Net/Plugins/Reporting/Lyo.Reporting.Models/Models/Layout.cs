@@ -60,9 +60,7 @@ public sealed class Layout
     /// <summary>CSS margin-left for <c>@page</c>; overrides the left of <see cref="Margin" /> when set.</summary>
     public string? MarginLeft { get; set; }
 
-    /// <summary>
-    /// Optional Blazor component FullName rendered as the HTML/PDF root instead of <c>ReportViewer</c>. Must resolve to an <c>IComponent</c> in a loaded assembly.
-    /// </summary>
+    /// <summary>Optional Blazor component FullName rendered as the HTML/PDF root instead of <c>ReportViewer</c>. Must resolve to an <c>IComponent</c> in a loaded assembly.</summary>
     public string? RootComponentType { get; set; }
 
     public override string ToString() => $"Layout: {Theme ?? "Default"} {PageSize ?? "Auto"} {Orientation ?? "Portrait"}";

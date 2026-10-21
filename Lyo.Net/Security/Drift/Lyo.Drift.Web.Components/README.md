@@ -1,6 +1,7 @@
 # Lyo.Drift.Web.Components
 
-Drop DriftManagement on a host page for instance registry (stop/delete), structure snapshots (payload viewer + DiffAgainst), stored diffs, and live change events. Uses injected IApiClient and a configurable BaseRoute. Grids do not Select jsonb payload columns.
+Drop DriftManagement on a host page for instance registry (stop/delete), structure snapshots (payload viewer + DiffAgainst), stored diffs, and live change events. Uses injected
+IApiClient and a configurable BaseRoute. Grids do not Select jsonb payload columns.
 
 ## Features
 

@@ -16,10 +16,7 @@ public sealed class AutomationPlanRunControlTests
         using var session = new ControlSession();
         using var http = new HttpClient();
         var runner = new AutomationPlanRunner(http, new ControlSink(), new ControlStorage(), new ControlServices());
-        var plan = new AutomationPlan("pause", [
-            new StoreLiteralAutomationStep("a", "1"),
-            new StoreLiteralAutomationStep("b", "2")
-        ]);
+        var plan = new AutomationPlan("pause", [new StoreLiteralAutomationStep("a", "1"), new StoreLiteralAutomationStep("b", "2")]);
         var options = new AutomationPlanRuntimeOptions {
             Gate = gate,
             Instrumentation = new StepIndexInstrumentation(started),
@@ -54,7 +51,6 @@ public sealed class AutomationPlanRunControlTests
         var plan = new AutomationPlan("stop", [new StoreLiteralAutomationStep("a", "1")]);
         var options = new AutomationPlanRuntimeOptions { Gate = gate, Instrumentation = new StepIndexInstrumentation(started) };
         using var cts = new CancellationTokenSource();
-
         var run = runner.RunWithResultAsync(session, plan, options, null, cts.Token);
         var waiting = await WaitUntilAsync(() => !run.IsCompleted, TimeSpan.FromSeconds(1));
         Assert.True(waiting);
@@ -70,16 +66,15 @@ public sealed class AutomationPlanRunControlTests
         using var session = new ControlSession();
         using var http = new HttpClient();
         var runner = new AutomationPlanRunner(http, new ControlSink(), new ControlStorage(), new ControlServices());
-        var plan = new AutomationPlan("from here", [
-            new StoreLiteralAutomationStep("a", "0"),
-            new StoreLiteralAutomationStep("b", "1"),
-            new StoreLiteralAutomationStep("c", "2"),
-            new StoreLiteralAutomationStep("d", "3")
-        ]);
+        var plan = new AutomationPlan(
+            "from here",
+            [
+                new StoreLiteralAutomationStep("a", "0"), new StoreLiteralAutomationStep("b", "1"), new StoreLiteralAutomationStep("c", "2"),
+                new StoreLiteralAutomationStep("d", "3")
+            ]);
+
         var options = new AutomationPlanRuntimeOptions { StartStepIndex = 2, Instrumentation = new OutcomeInstrumentation(outcomes) };
-
         var result = await runner.RunWithResultAsync(session, plan, options, null, CancellationToken.None);
-
         Assert.False(result.Snapshot.Strings.ContainsKey("a"));
         Assert.False(result.Snapshot.Strings.ContainsKey("b"));
         Assert.Equal("2", result.Snapshot.Strings["c"]);
@@ -96,21 +91,18 @@ public sealed class AutomationPlanRunControlTests
         using var session = new ControlSession();
         using var http = new HttpClient();
         var runner = new AutomationPlanRunner(http, new ControlSink(), new ControlStorage(), new ControlServices());
-        var plan = new AutomationPlan("one", [
-            new StoreLiteralAutomationStep("a", "0"),
-            new StoreLiteralAutomationStep("b", "1"),
-            new StoreLiteralAutomationStep("c", "2"),
-            new StoreLiteralAutomationStep("d", "3")
-        ]);
+        var plan = new AutomationPlan(
+            "one",
+            [
+                new StoreLiteralAutomationStep("a", "0"), new StoreLiteralAutomationStep("b", "1"), new StoreLiteralAutomationStep("c", "2"),
+                new StoreLiteralAutomationStep("d", "3")
+            ]);
+
         var options = new AutomationPlanRuntimeOptions { StartStepIndex = 2, EndStepIndex = 2, Instrumentation = new OutcomeInstrumentation(outcomes) };
-
         var result = await runner.RunWithResultAsync(session, plan, options, null, CancellationToken.None);
-
         Assert.Equal("2", result.Snapshot.Strings["c"]);
         Assert.False(result.Snapshot.Strings.ContainsKey("d"));
-        Assert.Equal(
-            [(0, AutomationPlanStepOutcome.Skipped), (1, AutomationPlanStepOutcome.Skipped), (2, AutomationPlanStepOutcome.Success)],
-            outcomes);
+        Assert.Equal([(0, AutomationPlanStepOutcome.Skipped), (1, AutomationPlanStepOutcome.Skipped), (2, AutomationPlanStepOutcome.Success)], outcomes);
     }
 
     private static async Task<bool> WaitUntilAsync(Func<bool> condition, TimeSpan timeout)

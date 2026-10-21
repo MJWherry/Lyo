@@ -2,9 +2,7 @@ using Lyo.EntityReference.Models;
 
 namespace Lyo.Billing;
 
-/// <summary>
-/// Invoices and charges. Issue, void, and pay post journals through <c>ILedgerStore</c>. There is no PDF in this plugin.
-/// </summary>
+/// <summary>Invoices and charges. Issue, void, and pay post journals through <c>ILedgerStore</c>. There is no PDF in this plugin.</summary>
 /// <remarks>Pass null for <c>tenantId</c> on single-tenant hosts. Copied tax ids are encrypted on the invoice row.</remarks>
 public interface IBillingStore
 {
@@ -29,9 +27,7 @@ public interface IBillingStore
     /// <summary>Creates an empty draft invoice for a client. Add lines with <see cref="AddInvoiceLineAsync" /> before issuing.</summary>
     Task<InvoiceRecord> CreateDraftInvoiceAsync(Guid clientId, decimal taxRate = 0m, Guid? tenantId = null, CancellationToken ct = default);
 
-    /// <summary>
-    /// Adds a line to a draft. When <see cref="InvoiceLineRecord.ChargeId" /> is set, copies missing description/qty/rate from the charge and reserves it.
-    /// </summary>
+    /// <summary>Adds a line to a draft. When <see cref="InvoiceLineRecord.ChargeId" /> is set, copies missing description/qty/rate from the charge and reserves it.</summary>
     Task<InvoiceLineRecord> AddInvoiceLineAsync(Guid invoiceId, InvoiceLineRecord line, Guid? tenantId = null, CancellationToken ct = default);
 
     /// <summary>Removes a draft line and unreserves its charge when one was reserved.</summary>
@@ -46,16 +42,21 @@ public interface IBillingStore
     /// <summary>Loads an invoice and its lines. Decrypts the tax snapshot into <see cref="InvoiceRecord.TaxId" />.</summary>
     Task<InvoiceRecord?> GetInvoiceByIdAsync(Guid id, Guid? tenantId = null, CancellationToken ct = default);
 
-    /// <summary>
-    /// Issues a draft: assigns a number, snapshots bill-to (including encrypted tax id), freezes lines, marks charges billed, posts Dr AR / Cr Revenue / Cr Tax.
-    /// </summary>
+    /// <summary>Issues a draft: assigns a number, snapshots bill-to (including encrypted tax id), freezes lines, marks charges billed, posts Dr AR / Cr Revenue / Cr Tax.</summary>
     Task<InvoiceRecord> IssueInvoiceAsync(Guid invoiceId, Guid? tenantId = null, CancellationToken ct = default);
 
     /// <summary>Reverses the issue journal, unlinks charges, and sets status Void. Fails when any payment has been recorded.</summary>
     Task<InvoiceRecord> VoidInvoiceAsync(Guid invoiceId, Guid? tenantId = null, CancellationToken ct = default);
 
     /// <summary>Records a payment and posts Dr Cash / Cr AR. Updates amount paid and status. Pass null <paramref name="currency" /> to use the invoice currency.</summary>
-    Task<PaymentRecord> RecordPaymentAsync(Guid invoiceId, decimal amount, string? currency, PaymentMethod method, string? reference, Guid? tenantId = null, CancellationToken ct = default);
+    Task<PaymentRecord> RecordPaymentAsync(
+        Guid invoiceId,
+        decimal amount,
+        string? currency,
+        PaymentMethod method,
+        string? reference,
+        Guid? tenantId = null,
+        CancellationToken ct = default);
 
     /// <summary>Loads one payment.</summary>
     Task<PaymentRecord?> GetPaymentByIdAsync(Guid id, Guid? tenantId = null, CancellationToken ct = default);

@@ -14,6 +14,7 @@
         }
 
         <MudText Typo="Typo.caption" Color="Color.Secondary">@_items.Count key(s) for @SubjectEntityType / @SubjectEntityId</MudText>
+
         <LyoResponsiveTable>
             <TableContent>
                 <MudTable Items="_items" Dense="true" Hover="true" Breakpoint="Breakpoint.None" Elevation="0">
@@ -93,27 +94,28 @@
 
 @code {
 
-    private RenderFragment<ResolvedConfigItemRecord> RowActions => item => @<text>
-        <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                       Size="Size.Small"
-                       title="Edit binding"
-                       OnClick="@(() => OpenBindingAsync(item))"/>
-        <MudIconButton Icon="@Icons.Material.Filled.RestartAlt"
-                       Size="Size.Small"
-                       Disabled="@(item.Binding == null || item.Definition.DefaultValue == null)"
-                       title="Reset to default"
-                       OnClick="@(() => ResetToDefaultAsync(item))"/>
-        <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                       Size="Size.Small"
-                       Color="Color.Error"
-                       Disabled="@(item.Binding == null)"
-                       title="Clear binding"
-                       OnClick="@(() => ClearBindingAsync(item))"/>
-        <MudIconButton Icon="@Icons.Material.Filled.History"
-                       Size="Size.Small"
-                       Disabled="@(item.Binding == null)"
-                       title="Value history"
-                       OnClick="@(() => ViewRevisionsAsync(item))"/>
+    private RenderFragment<ResolvedConfigItemRecord> RowActions
+        => item => @<text>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                       Size="Size.Small"
+                                       title="Edit binding"
+                                       OnClick="@(() => OpenBindingAsync(item))"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.RestartAlt"
+                                       Size="Size.Small"
+                                       Disabled="@(item.Binding == null || item.Definition.DefaultValue == null)"
+                                       title="Reset to default"
+                                       OnClick="@(() => ResetToDefaultAsync(item))"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Size="Size.Small"
+                                       Color="Color.Error"
+                                       Disabled="@(item.Binding == null)"
+                                       title="Clear binding"
+                                       OnClick="@(() => ClearBindingAsync(item))"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.History"
+                                       Size="Size.Small"
+                                       Disabled="@(item.Binding == null)"
+                                       title="Value history"
+                                       OnClick="@(() => ViewRevisionsAsync(item))"/>
     </text>;
 
 }

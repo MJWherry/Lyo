@@ -4,10 +4,9 @@ using System.Text.Json;
 using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
 using Lyo.Common.Core.Extensions;
-using Lyo.Common.Core.Pathing;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
-using Lyo.FileStorage;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Multipart;
 using Lyo.FileStorage.OperationContext;
@@ -15,7 +14,6 @@ using Lyo.FileStorage.Policy;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.FileStorage.AzureBlob.Multipart;
 
@@ -87,9 +85,8 @@ public sealed class AzureBlobMultipartUploadService : IMultipartUploadService
             var state = JsonSerializer.Serialize(new AzureBlobProviderState { StagingBlobName = blobName });
             var record = new MultipartUploadSessionRecord(
                 sessionId, tenant, now, now.Add(ttl), targetFileId, request.PathPrefix, request.Compress, request.Encrypt, request.KeyId, request.OriginalFileName,
-                request.ContentType, FileStorageServiceBase.NormalizeCharset(request.Charset), MultipartSessionStatus.Active, MultipartUploadProviderKind.AzureBlob, state, request.DeclaredContentLength, request.PartSizeBytes) {
-                MetadataJson = FileStoreResult.SerializeMetadata(request.Metadata)
-            };
+                request.ContentType, FileStorageServiceBase.NormalizeCharset(request.Charset), MultipartSessionStatus.Active, MultipartUploadProviderKind.AzureBlob, state,
+                request.DeclaredContentLength, request.PartSizeBytes) { MetadataJson = FileStoreResult.SerializeMetadata(request.Metadata) };
 
             await _sessions.CreateAsync(record, ct).ConfigureAwait(false);
             await FileAuditPublication.PublishAsync(
@@ -158,8 +155,7 @@ public sealed class AzureBlobMultipartUploadService : IMultipartUploadService
                 using var readStream = await blockBlob.OpenReadAsync(cancellationToken: ct).ConfigureAwait(false);
                 var len = readStream.Length;
                 result = await _storage.SaveFromStreamAsync(
-                        readStream, len, session.OriginalFileName ?? session.TargetFileId.ToString(), session.Compress, session.Encrypt, session.KeyId, session.PathPrefix,
-                        null,
+                        readStream, len, session.OriginalFileName ?? session.TargetFileId.ToString(), session.Compress, session.Encrypt, session.KeyId, session.PathPrefix, null,
                         session.ContentType, session.Charset, session.TenantId, null, session.TargetFileId, FileStoreResult.DeserializeMetadata(session.MetadataJson), ct)
                     .ConfigureAwait(false);
             }

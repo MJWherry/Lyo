@@ -1,5 +1,4 @@
 using Lyo.FileSystemWatcher.Postgres.Database;
-using Lyo.FileSystemWatcher.Seed;
 using Lyo.Seed;
 
 namespace Lyo.FileSystemWatcher.Seed.Tests;
@@ -12,12 +11,13 @@ public sealed class FileSystemWatcherEfSeedContributorTests
         var transport = await SeedAsync(new FileSystemWatcherEfSeedContributor(), 2);
         var watches = transport.Items.OfType<FileSystemWatchEntity>().ToList();
         Assert.Equal(2, watches.Count);
-        Assert.All(watches, watch => {
-            var snapshot = Assert.Single(transport.Items.OfType<FileSystemSnapshotEntity>(), row => row.WatchId == watch.Id);
-            Assert.Equal(64, snapshot.ContentHash.Length);
-            var change = Assert.Single(transport.Items.OfType<FileSystemChangeEntity>(), row => row.WatchId == watch.Id);
-            Assert.Equal(snapshot.Id, change.SnapshotId);
-        });
+        Assert.All(
+            watches, watch => {
+                var snapshot = Assert.Single(transport.Items.OfType<FileSystemSnapshotEntity>(), row => row.WatchId == watch.Id);
+                Assert.Equal(64, snapshot.ContentHash.Length);
+                var change = Assert.Single(transport.Items.OfType<FileSystemChangeEntity>(), row => row.WatchId == watch.Id);
+                Assert.Equal(snapshot.Id, change.SnapshotId);
+            });
     }
 
     private static async Task<RecordingSeedTransport> SeedAsync(SeedContributor contributor, int count)
@@ -43,6 +43,7 @@ public sealed class FileSystemWatcherEfSeedContributorTests
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

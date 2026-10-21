@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Lyo.Screenshot.App;
 
@@ -21,6 +22,7 @@ internal static partial class X11ShotClipboard
     {
         if (!OperatingSystem.IsLinux() || string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DISPLAY")))
             return false;
+
         EnsureStarted();
         var ready = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         Offers.Enqueue(new(path, png, ready));
@@ -33,6 +35,7 @@ internal static partial class X11ShotClipboard
         lock (Gate) {
             if (_started)
                 return;
+
             _started = true;
             var thread = new Thread(Loop) { IsBackground = true, Name = "lyo-shot-clipboard" };
             thread.Start();
@@ -108,6 +111,7 @@ internal static partial class X11ShotClipboard
         var time = Marshal.ReadIntPtr(ev, 72);
         if (property == IntPtr.Zero)
             property = target;
+
         var delivered = property;
         if (target == targets)
             WriteAtoms(display, requestor, property, atomType, [targets, pngAtom, uriList, gnome, utf8, plain]);
@@ -118,7 +122,7 @@ internal static partial class X11ShotClipboard
         else if (target == gnome)
             WriteBytes(display, requestor, property, gnome, GnomeList(_path));
         else if (target == utf8 || target == plain)
-            WriteBytes(display, requestor, property, utf8, System.Text.Encoding.UTF8.GetBytes(_path));
+            WriteBytes(display, requestor, property, utf8, Encoding.UTF8.GetBytes(_path));
         else
             delivered = IntPtr.Zero;
 
@@ -126,6 +130,7 @@ internal static partial class X11ShotClipboard
         try {
             for (var i = 0; i < 256; i++)
                 Marshal.WriteByte(notify, i, 0);
+
             Marshal.WriteInt32(notify, SelectionNotify);
             Marshal.WriteInt32(notify, 16, 1);
             Marshal.WriteIntPtr(notify, 24, display);
@@ -148,6 +153,7 @@ internal static partial class X11ShotClipboard
         try {
             for (var i = 0; i < atoms.Length; i++)
                 Marshal.WriteIntPtr(data, i * IntPtr.Size, atoms[i]);
+
             XChangeProperty(display, window, property, type, 32, PropModeReplace, data, atoms.Length);
         }
         finally {
@@ -170,18 +176,16 @@ internal static partial class X11ShotClipboard
     private static byte[] UriList(string path)
     {
         var uri = new Uri(path).AbsoluteUri;
-        return System.Text.Encoding.ASCII.GetBytes(uri + "\r\n");
+        return Encoding.ASCII.GetBytes(uri + "\r\n");
     }
 
     private static byte[] GnomeList(string path)
     {
         var uri = new Uri(path).AbsoluteUri;
-        return System.Text.Encoding.ASCII.GetBytes("copy\n" + uri);
+        return Encoding.ASCII.GetBytes("copy\n" + uri);
     }
 
     private static IntPtr Intern(IntPtr display, string name) => XInternAtom(display, name, 0);
-
-    private readonly record struct Offer(string Path, byte[] Png, TaskCompletionSource<bool> Ready);
 
     [LibraryImport("libX11.so.6")]
     private static partial int XInitThreads();
@@ -224,4 +228,6 @@ internal static partial class X11ShotClipboard
 
     [LibraryImport("libX11.so.6")]
     private static partial int XNextEvent(IntPtr display, IntPtr ev);
+
+    private readonly record struct Offer(string Path, byte[] Png, TaskCompletionSource<bool> Ready);
 }

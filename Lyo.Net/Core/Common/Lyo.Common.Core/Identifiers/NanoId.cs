@@ -4,8 +4,8 @@ using Lyo.Exceptions;
 namespace Lyo.Common.Core.Identifiers;
 
 /// <summary>
-/// NanoID factory: a compact, URL-safe, cryptographically random string identifier. Uses rejection sampling against a power-of-2 bitmask for a perfectly uniform
-/// distribution over any alphabet without bias.
+/// NanoID factory: a compact, URL-safe, cryptographically random string identifier. Uses rejection sampling against a power-of-2 bitmask for a perfectly uniform distribution
+/// over any alphabet without bias.
 /// </summary>
 public static class NanoId
 {
@@ -25,8 +25,8 @@ public static class NanoId
     public static string Create(string alphabet, int size) => Generate(alphabet, size);
 
     /// <summary>
-    /// Mints <paramref name="count" /> NanoIDs with the default alphabet and default length in one batch. Uses one pre-sized RNG fill for the whole batch; a refill only
-    /// happens in the (extremely rare) event that rejection sampling exhausts the pre-allocated pool.
+    /// Mints <paramref name="count" /> NanoIDs with the default alphabet and default length in one batch. Uses one pre-sized RNG fill for the whole batch; a refill only happens
+    /// in the (extremely rare) event that rejection sampling exhausts the pre-allocated pool.
     /// </summary>
     public static string[] CreateBulk(int count) => GenerateBulk(DefaultAlphabet, DefaultSize, count);
 

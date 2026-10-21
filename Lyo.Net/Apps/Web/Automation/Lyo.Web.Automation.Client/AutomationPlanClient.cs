@@ -1,6 +1,5 @@
 using System.Text;
 using Lyo.Api.Client;
-using Lyo.Api.Models.Builders;
 using Lyo.Exceptions;
 using Lyo.Web.Automation.Core;
 using Lyo.Web.Automation.Models;
@@ -29,12 +28,10 @@ public sealed class AutomationPlanClient : IAutomationPlanClient
     }
 
     /// <inheritdoc />
-    public Task<AutomationRunRes?> GetAsync(Guid runId, CancellationToken ct = default)
-        => _api.GetAsAsync<AutomationRunRes>(Route(Constants.Rest.Run(runId)), ct: ct);
+    public Task<AutomationRunRes?> GetAsync(Guid runId, CancellationToken ct = default) => _api.GetAsAsync<AutomationRunRes>(Route(Constants.Rest.Run(runId)), ct: ct);
 
     /// <inheritdoc />
-    public Task CancelAsync(Guid runId, CancellationToken ct = default)
-        => _api.PostAsAsync<object>(Route(Constants.Rest.Cancel(runId)), ct: ct);
+    public Task CancelAsync(Guid runId, CancellationToken ct = default) => _api.PostAsAsync<object>(Route(Constants.Rest.Cancel(runId)), ct: ct);
 
     /// <inheritdoc />
     public async Task<string> GetLogAsync(Guid runId, CancellationToken ct = default)
@@ -72,7 +69,7 @@ public sealed class AutomationPlanClient : IAutomationPlanClient
     public Task<AutomationPlan> CreatePlanAsync(string name, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
-        return _api.PostAsAsync<AutomationPlanCreateReq, AutomationPlan>(Route(Constants.Rest.Plans), new AutomationPlanCreateReq { Name = name }, ct: ct);
+        return _api.PostAsAsync<AutomationPlanCreateReq, AutomationPlan>(Route(Constants.Rest.Plans), new() { Name = name }, ct: ct);
     }
 
     /// <inheritdoc />
@@ -83,8 +80,7 @@ public sealed class AutomationPlanClient : IAutomationPlanClient
     }
 
     /// <inheritdoc />
-    public Task<AutomationPlan?> GetPlanByIdAsync(Guid id, CancellationToken ct = default)
-        => _api.GetAsAsync<AutomationPlan>(Route(Constants.Rest.PlanById(id)), ct: ct);
+    public Task<AutomationPlan?> GetPlanByIdAsync(Guid id, CancellationToken ct = default) => _api.GetAsAsync<AutomationPlan>(Route(Constants.Rest.PlanById(id)), ct: ct);
 
     /// <inheritdoc />
     public Task<AutomationPlan> SavePlanAsync(string name, AutomationPlan plan, CancellationToken ct = default)

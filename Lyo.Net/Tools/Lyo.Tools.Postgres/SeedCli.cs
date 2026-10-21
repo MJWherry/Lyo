@@ -11,19 +11,18 @@ internal static class SeedCli
         var name = args.Length > 1 ? args[1] : "";
         if (string.IsNullOrWhiteSpace(name) || name.StartsWith('-')) {
             Console.Error.WriteLine(
-                "Usage: seed {people|people-api|comic|book|story|comment|favorite|note|rating|tag|contactus|shorturl|homeinventory|config|job|reporting|billing|ledger} "
-                + "[--via ef|api] [--count N] [--seed N] [--skip] [--replace] [--base-url URL]");
+                "Usage: seed {people|people-api|comic|book|story|comment|favorite|note|rating|tag|contactus|shorturl|homeinventory|config|job|reporting|billing|ledger} " +
+                "[--via ef|api] [--count N] [--seed N] [--skip] [--replace] [--base-url URL]");
+
             return 2;
         }
 
         var via = ParseVia(args);
         var count = ParseInt(args, "--count") ?? 50;
         var randomSeed = ParseInt(args, "--seed");
-        var conflict = args.Contains("--replace", StringComparer.OrdinalIgnoreCase)
-            ? SeedConflictMode.Replace
-            : args.Contains("--skip", StringComparer.OrdinalIgnoreCase)
-                ? SeedConflictMode.SkipIfNotEmpty
-                : SeedConflictMode.Append;
+        var conflict = args.Contains("--replace", StringComparer.OrdinalIgnoreCase) ? SeedConflictMode.Replace :
+            args.Contains("--skip", StringComparer.OrdinalIgnoreCase) ? SeedConflictMode.SkipIfNotEmpty : SeedConflictMode.Append;
+
         var baseUrl = ParseValue(args, "--base-url");
         var contributors = sp.GetRequiredService<IEnumerable<SeedContributor>>().ToList();
         var contributor = Match(contributors, name);
@@ -32,13 +31,13 @@ internal static class SeedCli
             return 2;
         }
 
-        via ??= contributor.SupportedTransports.HasFlag(SeedTransportKind.Ef) && !contributor.SupportedTransports.HasFlag(SeedTransportKind.Api)
-            ? SeedTransportKind.Ef
-            : contributor.SupportedTransports.HasFlag(SeedTransportKind.Api) && !contributor.SupportedTransports.HasFlag(SeedTransportKind.Ef)
-                ? SeedTransportKind.Api
-                : SeedTransportKind.Ef;
+        via ??= contributor.SupportedTransports.HasFlag(SeedTransportKind.Ef) && !contributor.SupportedTransports.HasFlag(SeedTransportKind.Api) ? SeedTransportKind.Ef :
+            contributor.SupportedTransports.HasFlag(SeedTransportKind.Api) && !contributor.SupportedTransports.HasFlag(SeedTransportKind.Ef) ? SeedTransportKind.Api :
+            SeedTransportKind.Ef;
+
         if (contributor.Name.Equals("Comic", StringComparison.OrdinalIgnoreCase) && count == 50 && ParseInt(args, "--count") is null)
             count = 20;
+
         if (contributor.Name.Equals("Story", StringComparison.OrdinalIgnoreCase) && count == 50 && ParseInt(args, "--count") is null)
             count = 1;
 
@@ -56,6 +55,7 @@ internal static class SeedCli
             Console.Error.WriteLine($"Failed {contributor.Name}: {SeedFailureText.Format(ex)}");
             return 1;
         }
+
         if (result.Skipped) {
             Console.WriteLine($"Skipped {result.Contributor} — destination already has rows.");
             return 0;
@@ -77,8 +77,9 @@ internal static class SeedCli
             return exact;
 
         var slug = name.Replace(" ", "", StringComparison.OrdinalIgnoreCase);
-        return contributors.FirstOrDefault(c => c.Name.Replace(" ", "", StringComparison.OrdinalIgnoreCase).Equals(slug, StringComparison.OrdinalIgnoreCase)
-            || (name.Equals("people-api", StringComparison.OrdinalIgnoreCase) && c.Name.Contains("API", StringComparison.OrdinalIgnoreCase)));
+        return contributors.FirstOrDefault(c
+            => c.Name.Replace(" ", "", StringComparison.OrdinalIgnoreCase).Equals(slug, StringComparison.OrdinalIgnoreCase) ||
+            (name.Equals("people-api", StringComparison.OrdinalIgnoreCase) && c.Name.Contains("API", StringComparison.OrdinalIgnoreCase)));
     }
 
     private static SeedTransportKind? ParseVia(string[] args)
@@ -89,6 +90,7 @@ internal static class SeedCli
 
         if (value.Equals("ef", StringComparison.OrdinalIgnoreCase) || value.Equals("direct", StringComparison.OrdinalIgnoreCase))
             return SeedTransportKind.Ef;
+
         if (value.Equals("api", StringComparison.OrdinalIgnoreCase))
             return SeedTransportKind.Api;
 

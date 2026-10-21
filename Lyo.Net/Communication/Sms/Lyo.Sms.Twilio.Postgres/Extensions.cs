@@ -4,6 +4,7 @@ using Lyo.Sms.Twilio.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace Lyo.Sms.Twilio.Postgres;
 
 /// <summary>DI helpers that register the PostgreSQL Twilio SMS logging context.</summary>
@@ -40,7 +41,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(configuration);
             var options = new PostgresTwilioSmsOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddTwilioSmsDbContextFactory(options);
         }
 
@@ -50,7 +50,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPostgresDbContextFactory<TwilioSmsDbContext, PostgresTwilioSmsOptions>(options);
-
             return services;
         }
     }

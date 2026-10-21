@@ -36,21 +36,27 @@ public readonly record struct HotkeyChord(HotkeyModifiers Modifiers, string Key)
         var parts = new List<string>(5);
         if (Modifiers.HasFlag(HotkeyModifiers.Ctrl))
             parts.Add("Ctrl");
+
         if (Modifiers.HasFlag(HotkeyModifiers.Shift))
             parts.Add("Shift");
+
         if (Modifiers.HasFlag(HotkeyModifiers.Alt))
             parts.Add("Alt");
+
         if (Modifiers.HasFlag(HotkeyModifiers.Meta))
             parts.Add("Meta");
+
         parts.Add(Key);
         return string.Join('+', parts);
     }
 
     private static bool IsModifier(string part, params string[] names)
     {
-        foreach (var name in names)
+        foreach (var name in names) {
             if (part.Equals(name, StringComparison.OrdinalIgnoreCase))
                 return true;
+        }
+
         return false;
     }
 }

@@ -1,7 +1,6 @@
 using Lyo.Exceptions;
 using Lyo.FantasyFootball.Postgres.Database;
 using Lyo.Postgres;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -24,7 +23,8 @@ public static class Extensions
 
         /// <summary>Registers the fantasy football DbContext factory from configuration.</summary>
         public IServiceCollection AddFantasyFootballDbContextFactoryFromConfiguration(
-            IConfiguration configuration, string configSectionName = PostgresFantasyFootballOptions.SectionName)
+            IConfiguration configuration,
+            string configSectionName = PostgresFantasyFootballOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
@@ -55,7 +55,8 @@ public static class Extensions
 
         /// <summary>Registers <see cref="IFantasyFootballStore" /> from configuration.</summary>
         public IServiceCollection AddPostgresFantasyFootballStoreFromConfiguration(
-            IConfiguration configuration, string configSectionName = PostgresFantasyFootballOptions.SectionName)
+            IConfiguration configuration,
+            string configSectionName = PostgresFantasyFootballOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);

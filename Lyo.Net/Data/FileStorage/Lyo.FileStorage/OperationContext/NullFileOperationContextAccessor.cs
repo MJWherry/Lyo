@@ -1,8 +1,8 @@
 namespace Lyo.FileStorage.OperationContext;
 
 /// <summary>
-/// No-op accessor used when no ambient operation context is configured. <see cref="Current" /> always returns <see langword="null" />, even if a caller tries to set it,
-/// so tenant and actor ids cannot leak across requests through the shared singleton.
+/// No-op accessor used when no ambient operation context is configured. <see cref="Current" /> always returns <see langword="null" />, even if a caller tries to set it, so
+/// tenant and actor ids cannot leak across requests through the shared singleton.
 /// </summary>
 public sealed class NullFileOperationContextAccessor : IFileOperationContextAccessor
 {

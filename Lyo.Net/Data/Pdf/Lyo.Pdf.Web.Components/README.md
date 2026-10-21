@@ -1,6 +1,7 @@
 # Lyo.Pdf.Web.Components
 
-Blazor / MudBlazor PDF UI: an HTML to PDF workbench, a PDF annotation workbench, and `LyoPdfAnnotator` so a user can draw bounding-box regions on a PDF and emit `PdfBoundingBox` payloads.
+Blazor / MudBlazor PDF UI: an HTML to PDF workbench, a PDF annotation workbench, and `LyoPdfAnnotator` so a user can draw bounding-box regions on a PDF and emit `PdfBoundingBox`
+payloads.
 
 Targets `net10.0`. Razor SDK with `FrameworkReference Microsoft.AspNetCore.App` and `MudBlazor` 9.3+.
 
@@ -15,15 +16,20 @@ services.AddPdfAnnotatorInterop(); // LyoPdfAnnotatorController (scoped)
 
 ## Components
 
-- `HtmlToPdfWorkbench.razor`. Paste HTML or upload an `.html` / `.htm` / `.txt` file, pick PDF, PNG, JPEG, or WebP, and for PDF pick paper and orientation. The result previews in the page and can be downloaded.
+- `HtmlToPdfWorkbench.razor`. Paste HTML or upload an `.html` / `.htm` / `.txt` file, pick PDF, PNG, JPEG, or WebP, and for PDF pick paper and orientation. The result previews in
+  the page and can be downloaded.
 - `PdfAnnotationWorkbench.razor`. Hosts `LyoPdfAnnotator` and shows a live table of saved annotations and their extracted payloads.
-- `PdfAnnotator/LyoPdfAnnotator.razor` (+ `LyoPdfAnnotator.razor.cs`, `LyoPdfAnnotatorResultsView.razor`). Drawing canvas and result list. Fires `AnnotationsChanged` and `AnnotationsSaved`.
+- `PdfAnnotator/LyoPdfAnnotator.razor` (+ `LyoPdfAnnotator.razor.cs`, `LyoPdfAnnotatorResultsView.razor`). Drawing canvas and result list. Fires `AnnotationsChanged` and
+  `AnnotationsSaved`.
 
 ## Annotator services
 
-- `IPdfAnnotatorService` (`BrowserPdfAnnotator`). After the user finishes annotating a PDF given as `Stream`, `byte[]`, or file path, returns `IReadOnlyDictionary<string, PdfBoundingBox>` (`AnnotateAsync` / `AnnotateFileAsync`).
+- `IPdfAnnotatorService` (`BrowserPdfAnnotator`). After the user finishes annotating a PDF given as `Stream`, `byte[]`, or file path, returns
+  `IReadOnlyDictionary<string, PdfBoundingBox>` (`AnnotateAsync` / `AnnotateFileAsync`).
 - `LyoPdfAnnotatorController`. Scoped controller the Blazor components use.
-- `LyoPdfAnnotationResult`. Payload for each saved region: `Key`, `BoundingBoxSummary`, `ExtractionType` (`BoundingBoxText`, `KeyValue`, `Table`), `ExtractedText`, optional `KeyValuePairs` / `TableRows`, `KnownKeys`, `TableHeaders`, `YTolerance`, `KeyValueLayout` (`PdfKeyValueLayout`), `InferFormattingFlags` (`PdfInferFormattingFlags`), `KeyValueInferDelimiters`, `TableKeyColumnLabel`, `ColumnCount`, and `ColumnTexts`.
+- `LyoPdfAnnotationResult`. Payload for each saved region: `Key`, `BoundingBoxSummary`, `ExtractionType` (`BoundingBoxText`, `KeyValue`, `Table`), `ExtractedText`, optional
+  `KeyValuePairs` / `TableRows`, `KnownKeys`, `TableHeaders`, `YTolerance`, `KeyValueLayout` (`PdfKeyValueLayout`), `InferFormattingFlags` (`PdfInferFormattingFlags`),
+  `KeyValueInferDelimiters`, `TableKeyColumnLabel`, `ColumnCount`, and `ColumnTexts`.
 
 ## DI registration
 

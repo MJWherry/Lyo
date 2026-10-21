@@ -1,8 +1,6 @@
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
-using Lyo.Query.Models.Common.Request;
 using Lyo.Recipe.Models;
-using Lyo.Recipe.Models.Enums;
 using Lyo.Web.Components.Dialog;
 
 namespace Lyo.Recipe.Web.Components;
@@ -10,6 +8,16 @@ namespace Lyo.Recipe.Web.Components;
 /// <summary>Create/edit dialog for a household recipe. Lines and steps are edited before the first save and written with it.</summary>
 public partial class RecipeView
 {
+    private readonly List<RecipeIngredientLineReq> _lines = [];
+
+    private readonly RecipeReq _req = new();
+    private readonly List<RecipeStepReq> _steps = [];
+    private IReadOnlyList<RecipeCategoryRes> _categories = [];
+    private IReadOnlyList<IngredientRes> _ingredients = [];
+    private Guid? _savedId;
+    private HashSet<Guid> _savedStepIds = [];
+    private IReadOnlyList<UnitRes> _units = [];
+
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = null!;
 
@@ -36,27 +44,17 @@ public partial class RecipeView
     [Parameter]
     public RecipeRes? Recipe { get; set; }
 
-    private readonly RecipeReq _req = new();
-    private Guid? _savedId;
-    private IReadOnlyList<RecipeCategoryRes> _categories = [];
-    private IReadOnlyList<IngredientRes> _ingredients = [];
-    private IReadOnlyList<UnitRes> _units = [];
-    private readonly List<RecipeIngredientLineReq> _lines = [];
-    private readonly List<RecipeStepReq> _steps = [];
-    private HashSet<Guid> _savedStepIds = [];
-
     private string _recipesRoute => $"{BaseRoute.TrimEnd('/')}/Recipes";
 
     private string _attachmentsRoute => $"{BaseRoute.TrimEnd('/')}/Attachments";
 
     private static string NotesParentRoute => Constants.Rest.Recipe.Recipes;
 
-    private string ApiOrigin
-    {
-        get
-        {
+    private string ApiOrigin {
+        get {
             if (Uri.TryCreate(BaseRoute, UriKind.Absolute, out var uri))
                 return uri.GetLeftPart(UriPartial.Authority);
+
             return "";
         }
     }
@@ -84,9 +82,9 @@ public partial class RecipeView
             _savedStepIds = _steps.Select(s => s.Id).ToHashSet();
         }
 
-        var categories = await ApiClient.QueryConcreteAsync<QueryRes<RecipeCategoryRes>>($"{BaseRoute.TrimEnd('/')}/Categories", new QueryConcreteReq { Amount = 500 });
+        var categories = await ApiClient.QueryConcreteAsync<QueryRes<RecipeCategoryRes>>($"{BaseRoute.TrimEnd('/')}/Categories", new() { Amount = 500 });
         _categories = categories?.Items ?? [];
-        var ingredients = await ApiClient.QueryConcreteAsync<QueryRes<IngredientRes>>($"{BaseRoute.TrimEnd('/')}/Ingredients", new QueryConcreteReq { Amount = 500 });
+        var ingredients = await ApiClient.QueryConcreteAsync<QueryRes<IngredientRes>>($"{BaseRoute.TrimEnd('/')}/Ingredients", new() { Amount = 500 });
         _ingredients = ingredients?.Items ?? [];
         _units = await RecipeClient.ListUnitsAsync();
     }
@@ -116,10 +114,10 @@ public partial class RecipeView
             var steps = _steps.Where(s => !string.IsNullOrWhiteSpace(s.Instruction)).ToList();
             for (var i = 0; i < steps.Count; i++)
                 steps[i].SortOrder = i;
+
             await RecipeClient.ReplaceStepsAsync(recipeId, steps);
             _steps.Clear();
             _steps.AddRange(steps);
-
             var lines = _lines.Where(l => l.IngredientId != null || !string.IsNullOrWhiteSpace(l.IngredientText)).ToList();
             var stepIds = steps.Select(s => s.Id).ToHashSet();
             for (var i = 0; i < lines.Count; i++) {
@@ -144,8 +142,10 @@ public partial class RecipeView
     {
         if (!await Save())
             return;
+
         if (_savedId is not Guid saved)
             return;
+
         var recipe = new RecipeRes {
             Id = saved,
             Title = _req.Title,
@@ -161,6 +161,7 @@ public partial class RecipeView
             YieldLabel = _req.YieldLabel,
             CategoryId = _req.CategoryId
         };
+
         var parameters = new DialogParameters<RecipeCookView> {
             { d => d.ApiClient, ApiClient },
             { d => d.RecipeClient, RecipeClient },
@@ -168,6 +169,7 @@ public partial class RecipeView
             { d => d.FileStorageApiRoutePrefix, FileStorageApiRoutePrefix },
             { d => d.Recipe, recipe }
         };
+
         await DialogService.ShowAsync<RecipeCookView>(string.IsNullOrWhiteSpace(recipe.Title) ? "Cook" : recipe.Title, parameters, LyoDialogPresets.Large);
     }
 

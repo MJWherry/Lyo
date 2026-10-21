@@ -17,12 +17,6 @@ internal static class FusionL2Frame
     internal const byte MetaHasPriority = 0x20;
     internal const int FixedPrefixLength = 24;
 
-    internal readonly record struct Header(
-        long Timestamp,
-        long LogicalExpirationTimestamp,
-        string[]? Tags,
-        FusionCacheEntryMetadata? Metadata);
-
     private static ReadOnlySpan<byte> Magic => "LYO2"u8;
 
     internal static bool IsFramed(ReadOnlySpan<byte> data) => data.Length >= FixedPrefixLength && data.StartsWith(Magic);
@@ -147,12 +141,16 @@ internal static class FusionL2Frame
         var size = 1;
         if (metadata.EagerExpirationTimestamp.HasValue)
             size += 8;
+
         if (!string.IsNullOrEmpty(metadata.ETag))
             size += 2 + Math.Min(Encoding.UTF8.GetByteCount(metadata.ETag), ushort.MaxValue);
+
         if (metadata.LastModifiedTimestamp.HasValue)
             size += 8;
+
         if (metadata.Size.HasValue)
             size += 8;
+
         if (metadata.Priority.HasValue)
             size += 1;
 
@@ -164,14 +162,19 @@ internal static class FusionL2Frame
         byte metaFlags = 0;
         if (metadata.IsStale)
             metaFlags |= MetaIsStale;
+
         if (metadata.EagerExpirationTimestamp.HasValue)
             metaFlags |= MetaHasEagerExpiration;
+
         if (!string.IsNullOrEmpty(metadata.ETag))
             metaFlags |= MetaHasETag;
+
         if (metadata.LastModifiedTimestamp.HasValue)
             metaFlags |= MetaHasLastModified;
+
         if (metadata.Size.HasValue)
             metaFlags |= MetaHasSize;
+
         if (metadata.Priority.HasValue)
             metaFlags |= MetaHasPriority;
 
@@ -269,7 +272,9 @@ internal static class FusionL2Frame
             offset += 1;
         }
 
-        metadata = new FusionCacheEntryMetadata((metaFlags & MetaIsStale) != 0, eager, etag, lastModified, size, priority);
+        metadata = new((metaFlags & MetaIsStale) != 0, eager, etag, lastModified, size, priority);
         return true;
     }
+
+    internal readonly record struct Header(long Timestamp, long LogicalExpirationTimestamp, string[]? Tags, FusionCacheEntryMetadata? Metadata);
 }

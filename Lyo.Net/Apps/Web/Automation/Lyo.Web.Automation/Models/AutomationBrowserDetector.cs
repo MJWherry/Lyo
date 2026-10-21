@@ -4,8 +4,8 @@ using Lyo.Common.Core.Net;
 namespace Lyo.Web.Automation.Models;
 
 /// <summary>
-/// Finds an installed browser from <see cref="Catalog" />. Checks that row's environment variables, then <c>BROWSER_PATH</c> and
-/// <c>PUPPETEER_EXECUTABLE_PATH</c>, then install paths for the current OS. Windows tries x64, then x86. The first existing file wins.
+/// Finds an installed browser from <see cref="Catalog" />. Checks that row's environment variables, then <c>BROWSER_PATH</c> and <c>PUPPETEER_EXECUTABLE_PATH</c>, then
+/// install paths for the current OS. Windows tries x64, then x86. The first existing file wins.
 /// </summary>
 public static class AutomationBrowserDetector
 {
@@ -35,8 +35,7 @@ public static class AutomationBrowserDetector
                 return fromKind;
         }
 
-        var shared = ExistingFile(Environment.GetEnvironmentVariable(EnvBrowserPath))
-            ?? ExistingFile(Environment.GetEnvironmentVariable(EnvPuppeteerExecutablePath));
+        var shared = ExistingFile(Environment.GetEnvironmentVariable(EnvBrowserPath)) ?? ExistingFile(Environment.GetEnvironmentVariable(EnvPuppeteerExecutablePath));
         if (shared != null)
             return shared;
 
@@ -77,6 +76,7 @@ public static class AutomationBrowserDetector
         foreach (var row in metadata.Paths) {
             if (!row.OperatingSystem.Equals(os) || row.Architecture != architecture)
                 continue;
+
             if (File.Exists(row.Path))
                 return row.Path;
         }
@@ -88,15 +88,17 @@ public static class AutomationBrowserDetector
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             return OSPlatform.Windows;
+
         if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             return OSPlatform.OSX;
+
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             return OSPlatform.Linux;
+
         return null;
     }
 
-    private static string? ExistingFile(string? path)
-        => !string.IsNullOrWhiteSpace(path) && File.Exists(path) ? path : null;
+    private static string? ExistingFile(string? path) => !string.IsNullOrWhiteSpace(path) && File.Exists(path) ? path : null;
 
     private static IReadOnlyList<AutomationBrowserMetadata> CreateCatalog()
     {
@@ -106,63 +108,41 @@ public static class AutomationBrowserDetector
         var safari = new AutomationBrowserUserAgentTemplate(UserAgentFormat.Safari, UserAgentGenerator.SafariVersion);
         return [
             new(
-                AutomationBrowserKind.Chrome,
-                "Google Chrome",
-                ["CHROME_PATH", "GOOGLE_CHROME_SHIM"],
+                AutomationBrowserKind.Chrome, "Google Chrome", ["CHROME_PATH", "GOOGLE_CHROME_SHIM"],
                 [
                     new(OSPlatform.Windows, Architecture.X64, @"C:\Program Files\Google\Chrome\Application\chrome.exe"),
                     new(OSPlatform.Windows, Architecture.X86, @"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"),
-                    new(OSPlatform.OSX, null, "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
-                    new(OSPlatform.OSX, null, "/usr/local/bin/google-chrome"),
-                    new(OSPlatform.Linux, null, "/usr/bin/google-chrome"),
-                    new(OSPlatform.Linux, null, "/usr/bin/google-chrome-stable"),
-                    new(OSPlatform.Linux, null, "/usr/bin/chromium-browser"),
-                    new(OSPlatform.Linux, null, "/usr/bin/chromium")
-                ],
-                chrome),
+                    new(OSPlatform.OSX, null, "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"), new(OSPlatform.OSX, null, "/usr/local/bin/google-chrome"),
+                    new(OSPlatform.Linux, null, "/usr/bin/google-chrome"), new(OSPlatform.Linux, null, "/usr/bin/google-chrome-stable"),
+                    new(OSPlatform.Linux, null, "/usr/bin/chromium-browser"), new(OSPlatform.Linux, null, "/usr/bin/chromium")
+                ], chrome),
             new(
-                AutomationBrowserKind.Chromium,
-                "Chromium",
-                ["CHROMIUM_PATH", "CHROME_PATH"],
+                AutomationBrowserKind.Chromium, "Chromium", ["CHROMIUM_PATH", "CHROME_PATH"],
                 [
                     new(OSPlatform.Windows, Architecture.X64, @"C:\Program Files\Chromium\chrome.exe"),
                     new(OSPlatform.Windows, Architecture.X64, @"C:\Program Files\Google\Chrome\Application\chrome.exe"),
                     new(OSPlatform.Windows, Architecture.X86, @"C:\Program Files (x86)\Chromium\chrome.exe"),
                     new(OSPlatform.Windows, Architecture.X86, @"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"),
-                    new(OSPlatform.OSX, null, "/Applications/Chromium.app/Contents/MacOS/Chromium"),
-                    new(OSPlatform.OSX, null, "/usr/local/bin/chromium"),
-                    new(OSPlatform.Linux, null, "/usr/bin/chromium-browser"),
-                    new(OSPlatform.Linux, null, "/usr/bin/chromium"),
-                    new(OSPlatform.Linux, null, "/snap/bin/chromium"),
-                    new(OSPlatform.Linux, null, "/usr/bin/google-chrome"),
-                    new(OSPlatform.Linux, null, "/usr/bin/google-chrome-stable")
-                ],
-                chrome),
+                    new(OSPlatform.OSX, null, "/Applications/Chromium.app/Contents/MacOS/Chromium"), new(OSPlatform.OSX, null, "/usr/local/bin/chromium"),
+                    new(OSPlatform.Linux, null, "/usr/bin/chromium-browser"), new(OSPlatform.Linux, null, "/usr/bin/chromium"), new(OSPlatform.Linux, null, "/snap/bin/chromium"),
+                    new(OSPlatform.Linux, null, "/usr/bin/google-chrome"), new(OSPlatform.Linux, null, "/usr/bin/google-chrome-stable")
+                ], chrome),
             new(
-                AutomationBrowserKind.Edge,
-                "Microsoft Edge",
-                ["EDGE_PATH"],
+                AutomationBrowserKind.Edge, "Microsoft Edge", ["EDGE_PATH"],
                 [
                     new(OSPlatform.Windows, Architecture.X64, @"C:\Program Files\Microsoft\Edge\Application\msedge.exe"),
                     new(OSPlatform.Windows, Architecture.X86, @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"),
-                    new(OSPlatform.OSX, null, "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge"),
-                    new(OSPlatform.Linux, null, "/usr/bin/microsoft-edge"),
+                    new(OSPlatform.OSX, null, "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge"), new(OSPlatform.Linux, null, "/usr/bin/microsoft-edge"),
                     new(OSPlatform.Linux, null, "/usr/bin/microsoft-edge-stable")
-                ],
-                edge),
+                ], edge),
             new(
-                AutomationBrowserKind.Firefox,
-                "Firefox",
-                ["FIREFOX_PATH"],
+                AutomationBrowserKind.Firefox, "Firefox", ["FIREFOX_PATH"],
                 [
                     new(OSPlatform.Windows, Architecture.X64, @"C:\Program Files\Mozilla Firefox\firefox.exe"),
                     new(OSPlatform.Windows, Architecture.X86, @"C:\Program Files (x86)\Mozilla Firefox\firefox.exe"),
-                    new(OSPlatform.OSX, null, "/Applications/Firefox.app/Contents/MacOS/firefox"),
-                    new(OSPlatform.OSX, null, "/usr/bin/firefox"),
-                    new(OSPlatform.Linux, null, "/usr/bin/firefox"),
-                    new(OSPlatform.Linux, null, "/snap/bin/firefox")
-                ],
-                firefox),
+                    new(OSPlatform.OSX, null, "/Applications/Firefox.app/Contents/MacOS/firefox"), new(OSPlatform.OSX, null, "/usr/bin/firefox"),
+                    new(OSPlatform.Linux, null, "/usr/bin/firefox"), new(OSPlatform.Linux, null, "/snap/bin/firefox")
+                ], firefox),
             new(AutomationBrowserKind.WebKit, "WebKit", [], [], safari)
         ];
     }

@@ -1,9 +1,9 @@
-using Lyo.Parameters;
 using System.Collections;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Lyo.Exceptions;
+using Lyo.Parameters;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 
@@ -72,9 +72,7 @@ public static class ParameterOptionsBinder
         return keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList();
     }
 
-    /// <summary>
-    /// Substitutes <c>{{Key}}</c> placeholders in sproc argument values. Returns false when any placeholder has no non-whitespace sibling value.
-    /// </summary>
+    /// <summary>Substitutes <c>{{Key}}</c> placeholders in sproc argument values. Returns false when any placeholder has no non-whitespace sibling value.</summary>
     public static bool TryBindSprocParameters(
         IReadOnlyDictionary<string, string>? template,
         IReadOnlyDictionary<string, string?> siblingValues,
@@ -104,8 +102,8 @@ public static class ParameterOptionsBinder
     }
 
     /// <summary>
-    /// Reads picker key/label from a projected row. Prefers columns named <c>Key</c>/<c>Value</c>; otherwise uses property names of the first two
-    /// <paramref name="selectPaths" /> (alias stripped).
+    /// Reads picker key/label from a projected row. Prefers columns named <c>Key</c>/<c>Value</c>; otherwise uses property names of the first two <paramref name="selectPaths" />
+    /// (alias stripped).
     /// </summary>
     public static bool TryReadKeyValue(object? row, IReadOnlyList<string>? selectPaths, out string key, out string label)
     {
@@ -158,7 +156,7 @@ public static class ParameterOptionsBinder
             return !string.IsNullOrEmpty(key);
         }
 
-        return TryReadKeyValue(row, (IReadOnlyList<string>?)null, out key, out label);
+        return TryReadKeyValue(row, null, out key, out label);
     }
 
     /// <summary>Static options from JSON-array <c>AllowedValues</c> (key = label for each canonical token).</summary>

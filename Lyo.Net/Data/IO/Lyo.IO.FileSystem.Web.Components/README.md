@@ -5,7 +5,8 @@ MudBlazor tree that lazy-lists folders through `IFileTreeSource`. It does not kn
 ## Features
 
 - **Lazy expand.** Children load from `IFileTreeSource.ListChildrenAsync` when a directory is opened.
-- **Optional filter, selection, and trailing content.** Search filters loaded nodes. Multi-select is opt-in. Hosts supply `ItemTrailing` (FileStorage draws Store / Physical / Both chips); raw property dumps are not rendered.
+- **Optional filter, selection, and trailing content.** Search filters loaded nodes. Multi-select is opt-in. Hosts supply `ItemTrailing` (FileStorage draws Store / Physical / Both
+  chips); raw property dumps are not rendered.
 
 ## Examples
 

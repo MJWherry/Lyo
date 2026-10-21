@@ -33,6 +33,5 @@ public partial class LyoKeyedValueTable
     [Parameter]
     public string? KeyClass { get; set; }
 
-    private IEnumerable<ILyoParameterValue> Sorted
-        => SortByKey ? (Items ?? []).OrderBy(i => i.Key, StringComparer.OrdinalIgnoreCase) : Items ?? [];
+    private IEnumerable<ILyoParameterValue> Sorted => SortByKey ? (Items ?? []).OrderBy(i => i.Key, StringComparer.OrdinalIgnoreCase) : Items ?? [];
 }

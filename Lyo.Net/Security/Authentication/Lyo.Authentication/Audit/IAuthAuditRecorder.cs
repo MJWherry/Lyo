@@ -3,8 +3,8 @@ using Lyo.Authentication.Models.Audit;
 namespace Lyo.Authentication.Audit;
 
 /// <summary>
-/// Persistence/sink contract for <see cref="AuthAuditEvent" />. Never throws — implementations MUST swallow exceptions or log-and-swallow, because audit failures
-/// must not bubble into the authentication path. The default <see cref="NullAuthAuditRecorder" /> is registered when nothing else is.
+/// Persistence/sink contract for <see cref="AuthAuditEvent" />. Never throws — implementations MUST swallow exceptions or log-and-swallow, because audit failures must not
+/// bubble into the authentication path. The default <see cref="NullAuthAuditRecorder" /> is registered when nothing else is.
 /// </summary>
 public interface IAuthAuditRecorder
 {

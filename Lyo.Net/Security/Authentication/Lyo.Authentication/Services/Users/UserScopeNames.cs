@@ -1,15 +1,13 @@
 using Lyo.Authentication.Models.Records;
-using Lyo.Exceptions;
 using Lyo.Common.Core.Identifiers;
+using Lyo.Exceptions;
 
 namespace Lyo.Authentication.Services.Users;
 
 /// <summary>Resolves and mirrors internal user scopes used for JWT/PAT issuance. Provider/link scopes are never consulted.</summary>
 public static class UserScopeNames
 {
-    /// <summary>
-    /// Prefers store rows. An empty or missing store returns no scopes.
-    /// </summary>
+    /// <summary>Prefers store rows. An empty or missing store returns no scopes.</summary>
     public static async Task<IReadOnlyList<string>> ResolveAsync(IUserScopeStore? store, LyoUser user, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(user);
@@ -31,7 +29,7 @@ public static class UserScopeNames
                 continue;
 
             var now = DateTime.UtcNow;
-            await store.CreateAsync(new LyoUserScope(LyoGuid.CreateV7(), userId, name, now, null), tenantId, ct).ConfigureAwait(false);
+            await store.CreateAsync(new(LyoGuid.CreateV7(), userId, name, now, null), tenantId, ct).ConfigureAwait(false);
         }
     }
 
@@ -44,6 +42,5 @@ public static class UserScopeNames
         await users.SetScopesAsync(userId, names, tenantId, ct).ConfigureAwait(false);
     }
 
-    private static IReadOnlyList<string> DistinctNames(IEnumerable<string> names)
-        => names.Where(n => !string.IsNullOrWhiteSpace(n)).Distinct(StringComparer.Ordinal).ToArray();
+    private static IReadOnlyList<string> DistinctNames(IEnumerable<string> names) => names.Where(n => !string.IsNullOrWhiteSpace(n)).Distinct(StringComparer.Ordinal).ToArray();
 }

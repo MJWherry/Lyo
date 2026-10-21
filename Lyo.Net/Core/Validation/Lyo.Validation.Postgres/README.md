@@ -1,6 +1,7 @@
 # Lyo.Validation.Postgres
 
-PostgreSQL + EF Core implementation of [`IValidationSchemaStore`](../Lyo.Validation/README.md). Named validation schemas live in schema `validation`, table `schema`, with `constraints_json` / `messages_json` as jsonb.
+PostgreSQL + EF Core implementation of [`IValidationSchemaStore`](../Lyo.Validation/README.md). Named validation schemas live in schema `validation`, table `schema`, with
+`constraints_json` / `messages_json` as jsonb.
 
 **Archetype A (Lyo domain).** Hosts expose or fetch `ValidationSchema` JSON on their own API. This package is the database backend only.
 
@@ -20,7 +21,8 @@ services.AddPostgresValidationStoreFromConfiguration(configuration);
 
 ## Database schema
 
-PostgreSQL schema `validation`. Table `schema` columns: `id`, unique `key`, `target_type_name`, `description`, `constraints_json` (WhereClause), `messages_json`, timestamps. Migrations history lives in `__EFMigrationsHistory` in the same schema.
+PostgreSQL schema `validation`. Table `schema` columns: `id`, unique `key`, `target_type_name`, `description`, `constraints_json` (WhereClause), `messages_json`, timestamps.
+Migrations history lives in `__EFMigrationsHistory` in the same schema.
 
 ## Migrations
 

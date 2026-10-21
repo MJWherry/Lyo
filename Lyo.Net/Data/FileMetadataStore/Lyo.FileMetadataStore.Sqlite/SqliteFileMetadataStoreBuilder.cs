@@ -1,5 +1,4 @@
 using Lyo.Exceptions;
-using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Sqlite.Database;
 using Lyo.FileStorage.Multipart;
 using Microsoft.EntityFrameworkCore;
@@ -56,7 +55,7 @@ public sealed class SqliteFileMetadataStoreBuilder
             }
             else {
                 using var tempProvider = _services.BuildServiceProvider();
-                options = new SqliteFileMetadataStoreOptions();
+                options = new();
                 tempProvider.GetRequiredService<IConfiguration>().GetSection(configSectionName).Bind(options);
             }
 
@@ -74,7 +73,7 @@ public sealed class SqliteFileMetadataStoreBuilder
                 else {
                     // The builder has no service provider of its own, so it stands one up to reach IConfiguration.
                     using var tempProvider = _services.BuildServiceProvider();
-                    options = new SqliteFileMetadataStoreOptions();
+                    options = new();
                     tempProvider.GetRequiredService<IConfiguration>().GetSection(configSectionName).Bind(options);
                 }
 

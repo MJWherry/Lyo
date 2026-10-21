@@ -9,7 +9,7 @@ public sealed class UtilitiesManager(OpenSubtitlesClient client)
     public Task<FilenameGuess?> GuessAsync(string filename, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(filename);
-        return client.GetAsAsync<GuessQuery, FilenameGuess>("utilities/guessit", new GuessQuery { Filename = filename }, ct: ct);
+        return client.GetAsAsync<GuessQuery, FilenameGuess>("utilities/guessit", new() { Filename = filename }, ct: ct);
     }
 
     internal sealed class GuessQuery

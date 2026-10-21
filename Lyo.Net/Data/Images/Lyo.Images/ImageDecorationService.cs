@@ -14,8 +14,8 @@ using static Lyo.Images.ImageErrorCodes;
 namespace Lyo.Images;
 
 /// <summary>
-/// Default <see cref="IImageDecorationService" />: stream-based overlay/frame/caption/padding primitives plus the <see cref="ImageDecorationPipeline" />
-/// factory. Compositors live in <c>Lyo.Images.Decoration</c>.
+/// Default <see cref="IImageDecorationService" />: stream-based overlay/frame/caption/padding primitives plus the <see cref="ImageDecorationPipeline" /> factory. Compositors
+/// live in <c>Lyo.Images.Decoration</c>.
 /// </summary>
 public class ImageDecorationService : IImageDecorationService
 {

@@ -17,8 +17,8 @@ public sealed class JobWorkflowSchedulerOptions
     public TimeZoneInfo? TimeZone { get; set; }
 
     /// <summary>
-    /// How far back the due-slot search anchors when a schedule has never run. Too small and a schedule created mid-interval waits a full cycle before its first run; too
-    /// large and a long-dormant schedule fires for a slot nobody wanted. Default 1440 (24h), matching <c>JobSchedulerOptions</c>.
+    /// How far back the due-slot search anchors when a schedule has never run. Too small and a schedule created mid-interval waits a full cycle before its first run; too large
+    /// and a long-dormant schedule fires for a slot nobody wanted. Default 1440 (24h), matching <c>JobSchedulerOptions</c>.
     /// </summary>
     public int MisfireLookbackMinutes { get; set; } = 1440;
 

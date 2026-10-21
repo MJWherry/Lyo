@@ -10,12 +10,7 @@ public sealed class IdempotencyPostgresFixture : PostgresServiceFixtureBase<Idem
     public PostgresIdempotencyStore Store => ServiceProvider.GetRequiredService<PostgresIdempotencyStore>();
 
     protected override void ConfigureServices(IServiceCollection services, string connectionString)
-    {
-        services.AddPostgresIdempotency(new PostgresIdempotencyOptions {
-            ConnectionString = connectionString,
-            EnableAutoMigrations = true
-        });
-    }
+        => services.AddPostgresIdempotency(new() { ConnectionString = connectionString, EnableAutoMigrations = true });
 
     protected override async ValueTask OnMigratedAsync(CancellationToken cancellationToken)
     {

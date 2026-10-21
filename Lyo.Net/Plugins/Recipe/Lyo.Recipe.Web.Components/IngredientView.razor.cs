@@ -7,6 +7,11 @@ namespace Lyo.Recipe.Web.Components;
 /// <summary>Create/edit dialog for an ingredient catalog row.</summary>
 public partial class IngredientView
 {
+    private readonly IngredientReq _req = new();
+    private Guid? _savedId;
+    private IReadOnlyList<UnitRes> _units = [];
+    private IReadOnlyList<IngredientUsageRes> _usage = [];
+
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = null!;
 
@@ -33,23 +38,17 @@ public partial class IngredientView
     [Parameter]
     public IngredientRes? Ingredient { get; set; }
 
-    private readonly IngredientReq _req = new();
-    private Guid? _savedId;
-    private IReadOnlyList<UnitRes> _units = [];
-    private IReadOnlyList<IngredientUsageRes> _usage = [];
-
     private string _route => $"{BaseRoute.TrimEnd('/')}/Ingredients";
 
     private string _attachmentsRoute => $"{BaseRoute.TrimEnd('/')}/Attachments";
 
     private static string NotesParentRoute => Constants.Rest.Recipe.Ingredients;
 
-    private string ApiOrigin
-    {
-        get
-        {
+    private string ApiOrigin {
+        get {
             if (Uri.TryCreate(BaseRoute, UriKind.Absolute, out var uri))
                 return uri.GetLeftPart(UriPartial.Authority);
+
             return "";
         }
     }
@@ -59,6 +58,7 @@ public partial class IngredientView
         _units = await RecipeClient.ListUnitsAsync();
         if (Ingredient == null)
             return;
+
         _savedId = Ingredient.Id;
         _req.Name = Ingredient.Name;
         _req.Slug = Ingredient.Slug;
@@ -74,9 +74,8 @@ public partial class IngredientView
         if (string.IsNullOrWhiteSpace(_req.Slug))
             _req.Slug = RecipeSlugs.FromName(_req.Name);
 
-        if (_savedId is Guid id) {
+        if (_savedId is Guid id)
             await ApiClient.PostAsAsync<UpdateRequest<IngredientReq>, UpdateResult<IngredientRes>>($"{_route}/Update", new(_req, id));
-        }
         else {
             var created = await ApiClient.PostAsAsync<IngredientReq, CreateResult<IngredientRes>>(_route, _req);
             _savedId = created.Data?.Id;

@@ -16,8 +16,7 @@ public static class RecipeColorHelper
         };
 
     /// <summary>Color for a status enum name or numeric string.</summary>
-    public static Color ForStatus(string? text)
-        => Enum.TryParse<RecipeStatus>(text, true, out var status) ? ForStatus(status) : Color.Default;
+    public static Color ForStatus(string? text) => Enum.TryParse<RecipeStatus>(text, true, out var status) ? ForStatus(status) : Color.Default;
 
     /// <summary>Color for cook difficulty.</summary>
     public static Color ForDifficulty(RecipeDifficulty difficulty)
@@ -29,8 +28,7 @@ public static class RecipeColorHelper
         };
 
     /// <summary>Color for a difficulty enum name or numeric string.</summary>
-    public static Color ForDifficulty(string? text)
-        => Enum.TryParse<RecipeDifficulty>(text, true, out var difficulty) ? ForDifficulty(difficulty) : Color.Default;
+    public static Color ForDifficulty(string? text) => Enum.TryParse<RecipeDifficulty>(text, true, out var difficulty) ? ForDifficulty(difficulty) : Color.Default;
 
     /// <summary>Identity hue for an attachment role. Unknown roles stay uncolored.</summary>
     public static LyoChipHue? ForRole(RecipeAttachmentRole role)

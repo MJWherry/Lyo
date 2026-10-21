@@ -1,6 +1,7 @@
 # Lyo.Ledger.Api.Example
 
-Runnable example: `AddLedgerApiFromConfiguration` and `BuildLedgerGroup`. Demo wiring (local cache, OpenAPI/Scalar, auto-migrate). Prefer embedding those calls in another host when composing APIs. Not packed to NuGet. Binds http://localhost:5104 (see Properties/launchSettings.json).
+Runnable example: `AddLedgerApiFromConfiguration` and `BuildLedgerGroup`. Demo wiring (local cache, OpenAPI/Scalar, auto-migrate). Prefer embedding those calls in another host when
+composing APIs. Not packed to NuGet. Binds http://localhost:5104 (see Properties/launchSettings.json).
 
 ## Features
 

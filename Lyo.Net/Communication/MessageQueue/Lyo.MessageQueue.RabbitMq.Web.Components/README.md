@@ -4,11 +4,12 @@ Blazor UI for RabbitMQ exchanges, bindings, and broker workbenches.
 
 ## RabbitMqWorkbench
 
-`RabbitMqWorkbench` is a list-select dashboard for the full `IRabbitMqService` API. Queue and exchange snapshots load on the first render. Auto-refresh remains on the queue toolbar.
+`RabbitMqWorkbench` is a list-select dashboard for the full `IRabbitMqService` API. Queue and exchange snapshots load on the first render. Auto-refresh remains on the queue
+toolbar.
 
-| Tab | Operations |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Queues** | Type-to-filter dropdown (name plus flag chips in the list). **Info** shows durable/state/type chips plus ready/unacked/consumers. **Quick actions** peek/clear/delete/copy. Inner **Send** tab: wrap/priority/delay/send. Inner **Manage** tab: create and bind. |
+| Tab           | Operations                                                                                                                                                                                                                                                                        |
+|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Queues**    | Type-to-filter dropdown (name plus flag chips in the list). **Info** shows durable/state/type chips plus ready/unacked/consumers. **Quick actions** peek/clear/delete/copy. Inner **Send** tab: wrap/priority/delay/send. Inner **Manage** tab: create and bind.                  |
 | **Exchanges** | Type-to-filter dropdown (name plus type/durable chips). `amq.*` and the unnamed default stay hidden unless Show defaults is on. **Info** and **Quick actions** sit side by side. Inner **Send** tab: wrap/priority/delay/routing key/send. Inner **Manage** tab: create and bind. |
 
 Creating a queue supports:

@@ -31,16 +31,15 @@ public class PdfServiceOptions
     /// <summary>Largest Y gap (points) between a key and continuation words on later lines. Words farther away belong to another section. Starts as 10.0.</summary>
     public double MaxContinuationYGap { get; set; } = 10.0;
 
-    /// <summary>
-    /// Largest X distance (points) from a value column's left edge for continuation words. Words farther horizontally are not treated as part of the value. Starts as 100.0.
-    /// </summary>
+    /// <summary>Largest X distance (points) from a value column's left edge for continuation words. Words farther horizontally are not treated as part of the value. Starts as 100.0.</summary>
     public double MaxContinuationXDistance { get; set; } = 100.0;
 
     /// <summary>X-position slack (points) when matching continuation words to the value column. Starts as 20.0.</summary>
     public double ValueColumnXTolerance { get; set; } = 20.0;
 
     /// <summary>
-    /// Largest vertical distance (points) from a key line to the first value line for stacked key/value pairs (covers label-to-field gaps and form-field overlays). Starts as 120.0.
+    /// Largest vertical distance (points) from a key line to the first value line for stacked key/value pairs (covers label-to-field gaps and form-field overlays). Starts as
+    /// 120.0.
     /// </summary>
     public double KeyValueStackedMaxFirstGap { get; set; } = 120.0;
 

@@ -12,7 +12,7 @@ public class ValueOrChainMissingTests
     [Fact]
     public void IfNotNull_SubjectPresent_ReturnsChosen()
     {
-        string? name = "a";
+        var name = "a";
         Assert.Equal("present", name.IfNotNull("present").OrDefault("missing"));
     }
 

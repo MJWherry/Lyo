@@ -15,9 +15,7 @@ public static class IOTempSessionExtensions
                 OperationHelpers.ThrowIf(!File.Exists(file), $"Expected tracked temp file does not exist on disk: {file}");
         }
 
-        /// <summary>
-        /// Throws <see cref="InvalidOperationException" /> if session byte usage is farther from <paramref name="expectedBytes" /> than <paramref name="toleranceBytes" />.
-        /// </summary>
+        /// <summary>Throws <see cref="InvalidOperationException" /> if session byte usage is farther from <paramref name="expectedBytes" /> than <paramref name="toleranceBytes" />.</summary>
         public void AssertTotalSize(long expectedBytes, long toleranceBytes = 0)
         {
             var actual = session.GetTotalBytesUsed();

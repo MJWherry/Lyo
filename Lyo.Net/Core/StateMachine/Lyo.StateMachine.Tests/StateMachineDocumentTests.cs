@@ -18,7 +18,12 @@ public class StateMachineDocumentTests
                     Name = "Queued",
                     Transitions = [
                         new() { Kind = TransitionDocumentKind.Permit, Trigger = "Start", Destination = "Running" },
-                        new() { Kind = TransitionDocumentKind.Permit, Trigger = "Fail", Destination = "Failed", Guard = "can fail" }
+                        new() {
+                            Kind = TransitionDocumentKind.Permit,
+                            Trigger = "Fail",
+                            Destination = "Failed",
+                            Guard = "can fail"
+                        }
                     ]
                 },
                 new() {
@@ -28,22 +33,29 @@ public class StateMachineDocumentTests
                     OnExit = ["log-exit"],
                     Timers = [new() { After = TimeSpan.FromMinutes(5), Trigger = "Complete" }],
                     Transitions = [
-                        new() { Kind = TransitionDocumentKind.Dynamic, Trigger = "Complete", Destinations = ["Done", "Failed"], Selector = "pick" },
-                        new() { Kind = TransitionDocumentKind.Permit, Trigger = "Retry", Destination = "Queued", Guard = "attempts left" },
+                        new() {
+                            Kind = TransitionDocumentKind.Dynamic,
+                            Trigger = "Complete",
+                            Destinations = ["Done", "Failed"],
+                            Selector = "pick"
+                        },
+                        new() {
+                            Kind = TransitionDocumentKind.Permit,
+                            Trigger = "Retry",
+                            Destination = "Queued",
+                            Guard = "attempts left"
+                        },
                         new() { Kind = TransitionDocumentKind.Internal, Trigger = "Heartbeat", Action = "beat" },
                         new() { Kind = TransitionDocumentKind.Reentry, Trigger = "Resume" },
                         new() { Kind = TransitionDocumentKind.Ignore, Trigger = "Throttle" }
                     ]
                 },
-                new() { Name = "Working", Parent = "Running" },
-                new() { Name = "Done", IsFinal = true },
-                new() { Name = "Failed", IsFinal = true }
+                new() { Name = "Working", Parent = "Running" }, new() { Name = "Done", IsFinal = true }, new() { Name = "Failed", IsFinal = true }
             ]
         };
 
     private static StateMachineRegistry<string, JobTrigger, JobContext> Registry()
-        => new StateMachineRegistry<string, JobTrigger, JobContext>()
-            .Guard("can fail", c => c.CanFail)
+        => new StateMachineRegistry<string, JobTrigger, JobContext>().Guard("can fail", c => c.CanFail)
             .Guard<RetryPayload>("attempts left", (c, p) => p.Attempt < c.MaxAttempts)
             .Payload<RetryPayload>(JobTrigger.Retry)
             .Action("audit", t => t.Context.Log.Add($"audit:{t.Source}->{t.Destination}"))
@@ -62,13 +74,11 @@ public class StateMachineDocumentTests
     {
         var definition = Load();
         var context = new JobContext();
-
         var started = await definition.FireAsync(context, AtState("Queued"), JobTrigger.Start, TestCt);
         var beat = await definition.FireAsync(context, started.Snapshot, JobTrigger.Heartbeat, TestCt);
         var ignored = await definition.FireAsync(context, started.Snapshot, JobTrigger.Throttle, TestCt);
         var done = await definition.FireAsync(context, started.Snapshot, JobTrigger.Complete, TestCt);
         var failGuarded = await definition.FireAsync(context, AtState("Queued"), JobTrigger.Fail, TestCt);
-
         Assert.Equal("Working", started.To);
         Assert.Equal(TransitionKind.Internal, beat.Kind);
         Assert.Equal(TransitionKind.Ignored, ignored.Kind);
@@ -87,18 +97,26 @@ public class StateMachineDocumentTests
                     Name = "Queued",
                     OnEntry = ["nope-hook"],
                     Transitions = [
-                        new() { Kind = TransitionDocumentKind.Permit, Trigger = "Start", Destination = "Running", Guard = "nope-guard" },
-                        new() { Kind = TransitionDocumentKind.Dynamic, Trigger = "Complete", Destinations = ["Done"], Selector = "nope-selector" },
+                        new() {
+                            Kind = TransitionDocumentKind.Permit,
+                            Trigger = "Start",
+                            Destination = "Running",
+                            Guard = "nope-guard"
+                        },
+                        new() {
+                            Kind = TransitionDocumentKind.Dynamic,
+                            Trigger = "Complete",
+                            Destinations = ["Done"],
+                            Selector = "nope-selector"
+                        },
                         new() { Kind = TransitionDocumentKind.Permit, Trigger = "Explode", Destination = "Done" }
                     ]
                 },
-                new() { Name = "Running" },
-                new() { Name = "Done" }
+                new() { Name = "Running" }, new() { Name = "Done" }
             ]
         };
 
         var ex = Assert.Throws<StateMachineConfigurationException>(() => StateMachineDocumentLoader.Load(document, Registry(), StringStateKeyConverter.Instance, Triggers));
-
         Assert.Contains("nope-hook", ex.Message);
         Assert.Contains("nope-guard", ex.Message);
         Assert.Contains("nope-selector", ex.Message);
@@ -109,7 +127,9 @@ public class StateMachineDocumentTests
     public void Load_UnknownEnumState_Throws()
     {
         var document = new StateMachineDocument { Name = "job", InitialState = "Queued", States = [new() { Name = "Queued" }, new() { Name = "Sleeping" }] };
-        var ex = Assert.Throws<StateMachineConfigurationException>(() => StateMachineDocumentLoader.Load(document, new StateMachineRegistry<JobState, JobTrigger, JobContext>(), States, Triggers));
+        var ex = Assert.Throws<StateMachineConfigurationException>(() => StateMachineDocumentLoader.Load(
+            document, new StateMachineRegistry<JobState, JobTrigger, JobContext>(), States, Triggers));
+
         Assert.Contains("Sleeping", ex.Message);
     }
 
@@ -118,7 +138,6 @@ public class StateMachineDocumentTests
     {
         var definition = Load();
         var running = AtState("Working");
-
         Assert.Equal("Queued", definition.Fire(new(), running, Retry, new(1)).To);
         Assert.Equal(TransitionRejection.GuardFailed, definition.Fire(new(), running, Retry, new(3)).Rejection);
         Assert.Throws<ArgumentException>(() => definition.Fire(new(), running, JobTrigger.Retry));
@@ -129,9 +148,7 @@ public class StateMachineDocumentTests
     {
         var original = Document() with { Revision = 4 };
         var json = StateMachineDocumentJson.Serialize(original);
-
         var exported = Load(StateMachineDocumentJson.Deserialize(json)).ToDocument(StringStateKeyConverter.Instance, Triggers, 4);
-
         Assert.Equal(json, StateMachineDocumentJson.Serialize(exported));
     }
 
@@ -139,7 +156,6 @@ public class StateMachineDocumentTests
     public void ToDocument_CodeBuilt_UsesGuardDescriptionsAndSkipsUnnamedHooks()
     {
         var document = Job().Build().ToDocument(States, Triggers);
-
         var queued = document.States.Single(s => s.Name == "Queued");
         Assert.Empty(queued.OnEntry);
         Assert.Equal("can fail", queued.Transitions.Single(t => t.Trigger == "Fail").Guard);
@@ -159,13 +175,11 @@ public class StateMachineDocumentTests
         var store = new InMemoryStateMachineDefinitionStore();
         await store.SaveAsync(Document(), 0, TestCt);
         var cache = new StateMachineDefinitionCache<string, JobTrigger, JobContext>(store, Registry(), StringStateKeyConverter.Instance, Triggers);
-
         var first = await cache.GetAsync("job", ct: TestCt);
         var again = await cache.GetAsync("job", ct: TestCt);
         await store.SaveAsync(Document() with { InitialState = "Running" }, 1, TestCt);
         var latest = await cache.GetAsync("job", ct: TestCt);
         var pinned = await cache.GetAsync("job", 1, TestCt);
-
         Assert.Same(first, again);
         Assert.NotSame(first, latest);
         Assert.Equal("Running", latest.InitialState);

@@ -1,15 +1,14 @@
+using Lyo.Exceptions;
 using Lyo.Job.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
-using Lyo.Exceptions;
 
 namespace Lyo.Job.Postgres;
 
 /// <summary>
 /// Shared primitives that make a <see cref="JobRun" /> deletable. A run is referenced by three child collections and by two self-referencing FKs on other runs. PostgreSQL is
-/// mapped with restrict / <c>ClientSetNull</c> semantics, so every delete path (definition cascade, single-run delete endpoint, retention purge) has to detach and remove
-/// the same graph.
-/// Call <see cref="IncludeDependents" /> when loading the runs, then <see cref="Remove" /> per run before <c>RemoveRange</c> on the runs themselves.
-/// Workflow run-steps are deliberately not handled here: the delete paths remove them while retention purge only nulls their run reference.
+/// mapped with restrict / <c>ClientSetNull</c> semantics, so every delete path (definition cascade, single-run delete endpoint, retention purge) has to detach and remove the same
+/// graph. Call <see cref="IncludeDependents" /> when loading the runs, then <see cref="Remove" /> per run before <c>RemoveRange</c> on the runs themselves. Workflow run-steps are
+/// deliberately not handled here: the delete paths remove them while retention purge only nulls their run reference.
 /// </summary>
 public static class JobRunDependents
 {

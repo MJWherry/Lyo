@@ -1,14 +1,17 @@
 # Lyo.FileSystemWatcher
 
-Snapshot-based .NET file watcher. Finds creates, deletes, changes, moves, and renames with debounce and SHA256 hashing. `WatchableLocalFileSystem` lists through `LocalFileSystem` and maps watcher events onto `IFileSystemWatch`.
+Snapshot-based .NET file watcher. Finds creates, deletes, changes, moves, and renames with debounce and SHA256 hashing. `WatchableLocalFileSystem` lists through `LocalFileSystem`
+and maps watcher events onto `IFileSystemWatch`.
 
 ## Features
 
 - **Snapshot-based change detection.** Compares directory snapshots rather than relying only on FileSystemWatcher events.
 - **Debouncing.** Batches rapid changes so an event storm does not fire.
 - **Hash-based move detection.** Finds file moves and renames even when the file system does not report them.
-- **IFileSystem.** `WatchableLocalFileSystem` is the live-tree adapter (`Watch` capability) and is held to the shared `IFileSystemContractTests` suite from `Lyo.IO.FileSystem.Tests`.
-- **Cheap polling.** Each `SnapshotDirectoryNode` caches its own snapshot entry, and hash and fingerprint indexes are built once per tree rather than per comparison, so a poll over 2000 files allocates less than the snapshot it diffs.
+- **IFileSystem.** `WatchableLocalFileSystem` is the live-tree adapter (`Watch` capability) and is held to the shared `IFileSystemContractTests` suite from
+  `Lyo.IO.FileSystem.Tests`.
+- **Cheap polling.** Each `SnapshotDirectoryNode` caches its own snapshot entry, and hash and fingerprint indexes are built once per tree rather than per comparison, so a poll over
+  2000 files allocates less than the snapshot it diffs.
 - **Batch scan.** `ScanCompleted` fires once per debounce with the previous tree, current tree, and every detected change. `CurrentSnapshot` exposes the last completed tree.
 - **Thread-safe.** Safe to call from multiple threads.
 - **Metrics.** Optional `IMetrics` hook (`Lyo.Metrics`).
@@ -230,13 +233,13 @@ var watcher = new FileSystemWatcher("C:\\MyDirectory", options, logger, metrics)
 
 ## FileSystemWatcherOptions
 
-| Property | Type | Default | Description |
-| ----------------------- | ------------------ | ------------------- | ----------------------------------------------------------------------------------- |
-| `IncludeSubdirectories` | `bool` | `false` | Whether subdirectories are watched recursively |
-| `DebounceTimerDelay` | `int` | `250` | Debounce delay in milliseconds. Changes inside this delay are batched together |
-| `EnableFileHashing` | `bool` | `true` | Enable file hashing for move/rename detection. Turn off for better performance |
-| `PathComparison` | `StringComparison` | `OrdinalIgnoreCase` | String comparison for path operations. Use `Ordinal` on case-sensitive file systems |
-| `EnableMetrics` | `bool` | `false` | Enable metrics collection (needs an IMetrics instance) |
+| Property                | Type               | Default             | Description                                                                         |
+|-------------------------|--------------------|---------------------|-------------------------------------------------------------------------------------|
+| `IncludeSubdirectories` | `bool`             | `false`             | Whether subdirectories are watched recursively                                      |
+| `DebounceTimerDelay`    | `int`              | `250`               | Debounce delay in milliseconds. Changes inside this delay are batched together      |
+| `EnableFileHashing`     | `bool`             | `true`              | Enable file hashing for move/rename detection. Turn off for better performance      |
+| `PathComparison`        | `StringComparison` | `OrdinalIgnoreCase` | String comparison for path operations. Use `Ordinal` on case-sensitive file systems |
+| `EnableMetrics`         | `bool`             | `false`             | Enable metrics collection (needs an IMetrics instance)                              |
 
 ## File events
 
@@ -456,18 +459,18 @@ File hashing (SHA256) detects moves and renames even when the file system does n
 
 ## Types
 
-| Type | Description |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `FileSystemWatcher` | Snapshot-based, debounced watcher (`IDisposable`). Constructor: `FileSystemWatcher(string path, FileSystemWatcherOptions?, ILogger?, IMetrics?)`. Raises the file/directory/`OnAnyChange`/`ScanCompleted`/`Error` events listed above. |
-| `FileSystemWatcherOptions` | `IncludeSubdirectories`, `DebounceTimerDelay`, `EnableFileHashing`, `PathComparison`, `EnableMetrics`, `IncludePatterns`, `ExcludePatterns`. |
-| `FileSystemChangeInfo` | `record` payload emitted by every change event. |
-| `ChangeTypeEnum` | `Unknown` / `Created` / `Changed` / `Deleted` / `Renamed` / `Moved`. |
-| `DirectorySnapshotEntry` | Single snapshot entry (path, info, optional `Hash`, `Fingerprint`, `FileSize`). |
-| `SnapshotTree` / `SnapshotDirectoryNode` | In-memory snapshot of the watched tree, used for diffing. |
-| `FileSystemScanCompletedEventArgs` / `ScanCompleted` | One event per debounce with previous tree, current tree, and the full change list. `CurrentSnapshot` is the last completed tree. |
-| `FileSystemWatcherMapping` | `ToDto()` extensions that copy size/timestamps onto persistable models (relative '/' paths). |
-| `Constants.Metrics` + `Constants.Metrics.Tags` | Metric and tag name constants (snapshot, change detection, event, and error metrics above). |
-| `Utilities` | Helpers the watcher implementation shares. |
+| Type                                                 | Description                                                                                                                                                                                                                            |
+|------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `FileSystemWatcher`                                  | Snapshot-based, debounced watcher (`IDisposable`). Constructor: `FileSystemWatcher(string path, FileSystemWatcherOptions?, ILogger?, IMetrics?)`. Raises the file/directory/`OnAnyChange`/`ScanCompleted`/`Error` events listed above. |
+| `FileSystemWatcherOptions`                           | `IncludeSubdirectories`, `DebounceTimerDelay`, `EnableFileHashing`, `PathComparison`, `EnableMetrics`, `IncludePatterns`, `ExcludePatterns`.                                                                                           |
+| `FileSystemChangeInfo`                               | `record` payload emitted by every change event.                                                                                                                                                                                        |
+| `ChangeTypeEnum`                                     | `Unknown` / `Created` / `Changed` / `Deleted` / `Renamed` / `Moved`.                                                                                                                                                                   |
+| `DirectorySnapshotEntry`                             | Single snapshot entry (path, info, optional `Hash`, `Fingerprint`, `FileSize`).                                                                                                                                                        |
+| `SnapshotTree` / `SnapshotDirectoryNode`             | In-memory snapshot of the watched tree, used for diffing.                                                                                                                                                                              |
+| `FileSystemScanCompletedEventArgs` / `ScanCompleted` | One event per debounce with previous tree, current tree, and the full change list. `CurrentSnapshot` is the last completed tree.                                                                                                       |
+| `FileSystemWatcherMapping`                           | `ToDto()` extensions that copy size/timestamps onto persistable models (relative '/' paths).                                                                                                                                           |
+| `Constants.Metrics` + `Constants.Metrics.Tags`       | Metric and tag name constants (snapshot, change detection, event, and error metrics above).                                                                                                                                            |
+| `Utilities`                                          | Helpers the watcher implementation shares.                                                                                                                                                                                             |
 
 <!-- LYO_README_SYNC:END -->
 

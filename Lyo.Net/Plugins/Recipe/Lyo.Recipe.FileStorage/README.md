@@ -1,6 +1,7 @@
 # Lyo.Recipe.FileStorage
 
-`IRecipeAttachmentFiles` stores any stream under `RecipeFilePaths` and inserts a `RecipeAttachmentRecord`. Roles include Document, Scan, Card, Image, and Other. Upload does not restrict content type.
+`IRecipeAttachmentFiles` stores any stream under `RecipeFilePaths` and inserts a `RecipeAttachmentRecord`. Roles include Document, Scan, Card, Image, and Other. Upload does not
+restrict content type.
 
 ## Features
 

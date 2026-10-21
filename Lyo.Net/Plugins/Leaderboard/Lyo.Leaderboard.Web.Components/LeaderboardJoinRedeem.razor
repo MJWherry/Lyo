@@ -1,4 +1,3 @@
-@using Lyo.Web.Primitives
 @inject ISnackbar Snackbar
 
 <MudPaper Class="pa-4" Outlined="true">
@@ -23,9 +22,8 @@
         </MudButton>
         @if (_member != null) {
             <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-                <LyoChip Spec="@(LeaderboardColorHelper.ForRole(_member.Role) is { } roleHue
-                    ? LyoChips.Of(_member.Role.ToString(), roleHue)
-                    : LyoChips.Of(_member.Role.ToString()))"/>
+                <LyoChip
+                    Spec="@(LeaderboardColorHelper.ForRole(_member.Role) is { } roleHue ? LyoChips.Of(_member.Role.ToString(), roleHue) : LyoChips.Of(_member.Role.ToString()))"/>
                 <LyoChip Spec="@LyoChips.Of(_member.Status.ToString(), LeaderboardColorHelper.ForMemberStatus(_member.Status))"/>
                 <MudText Typo="Typo.body2">@_member.DisplayName</MudText>
             </MudStack>

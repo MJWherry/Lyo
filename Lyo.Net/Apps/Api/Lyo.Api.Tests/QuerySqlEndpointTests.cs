@@ -1,13 +1,15 @@
+using System.Linq.Expressions;
 using System.Net;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using Lyo.Api.ApiEndpoint;
+using Lyo.Api.ApiEndpoint.Config;
 using Lyo.Api.ApiEndpoint.Dynamic;
 using Lyo.Api.Middleware;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Read.Query.Root;
+using Lyo.Common.Core.Enums;
 using Lyo.Json;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
@@ -15,7 +17,6 @@ using Lyo.Query.Models.Enums;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Api.Tests;
 
@@ -50,15 +51,16 @@ public sealed class QuerySqlEndpointTests(QuerySqlApiFixture fixture) : IClassFi
         QueryRequestBase request = new QueryReq {
             From = new() { Alias = "o", EntityType = "SqlPreviewOrder" },
             Joins = [
-                new JoinClause {
+                new() {
                     Alias = "p",
                     EntityType = "SqlPreviewPerson",
                     Type = JoinType.Left,
-                    On = [new JoinOn { From = "o.PersonId", To = "p.Id" }]
+                    On = [new() { From = "o.PersonId", To = "p.Id" }]
                 }
             ],
             Select = ["o.Id", "p.Name"]
         };
+
         var body = await fixture.PostAsync("/api/QuerySql", request);
         Assert.Equal(HttpStatusCode.OK, body.Status);
         Assert.Contains("LEFT JOIN", body.Sql, StringComparison.Ordinal);
@@ -80,7 +82,7 @@ public sealed class QuerySqlEndpointTests(QuerySqlApiFixture fixture) : IClassFi
     [Fact]
     public async Task QuerySql_ComputedField_ReturnsBadRequest()
     {
-        QueryRequestBase request = new ProjectionQueryReq { Select = ["Name"], ComputedFields = [new ComputedField("label", "{Name}")] };
+        QueryRequestBase request = new ProjectionQueryReq { Select = ["Name"], ComputedFields = [new("label", "{Name}")] };
         var body = await fixture.PostAsync("/api/person/QuerySql", request);
         Assert.Equal(HttpStatusCode.BadRequest, body.Status);
         Assert.Contains("Computed", body.Raw, StringComparison.Ordinal);
@@ -90,10 +92,10 @@ public sealed class QuerySqlEndpointTests(QuerySqlApiFixture fixture) : IClassFi
 
 public sealed class QuerySqlApiFixture : IAsyncLifetime
 {
-    private WebApplication _app = null!;
-    private HttpClient _client = null!;
     private readonly SpyQueryService _query = new();
     private readonly SpyRootQueryService _root = new();
+    private WebApplication _app = null!;
+    private HttpClient _client = null!;
 
     public int QueryCalls => _query.Calls;
 
@@ -112,14 +114,21 @@ public sealed class QuerySqlApiFixture : IAsyncLifetime
         _app.CreateBuilder<PreviewDb, SqlPreviewPerson, SqlPreviewPerson, SqlPreviewPerson, int>("/api/person", "Person").AllowAnonymous().WithQuery().Build();
         _app.MapRootQueryEndpoints<PreviewDb>("api", auth: EndpointAuth.Anonymous());
         await _app.StartAsync();
-        _client = new HttpClient { BaseAddress = new Uri(_app.Urls.First()) };
+        _client = new() { BaseAddress = new(_app.Urls.First()) };
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _client.Dispose();
+        await _app.StopAsync();
+        await _app.DisposeAsync();
     }
 
     public async Task<QuerySqlHttpBody> PostAsync(string path, QueryRequestBase request)
     {
         var json = JsonSerializer.Serialize(request, LyoJsonSerializerOptions.Create());
         using var content = new StringContent(json, Encoding.UTF8);
-        content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+        content.Headers.ContentType = new("application/json");
         using var response = await _client.PostAsync(path, content, TestCt);
         var raw = await response.Content.ReadAsStringAsync(TestCt);
         string? sql = null;
@@ -134,19 +143,14 @@ public sealed class QuerySqlApiFixture : IAsyncLifetime
         return new(response.StatusCode, sql, parameter, raw);
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        _client.Dispose();
-        await _app.StopAsync();
-        await _app.DisposeAsync();
-    }
-
     private sealed class SpyQueryService : IQueryService<PreviewDb>
     {
         public int Calls { get; private set; }
 
         public Task<QueryRes<TResult>> Query<TDbModel, TResult>(
-            QueryConcreteReq queryRequest, System.Linq.Expressions.Expression<Func<TDbModel, object?>> defaultOrder, Lyo.Common.Core.Enums.SortDirection defaultSortDirection = Lyo.Common.Core.Enums.SortDirection.Desc,
+            QueryConcreteReq queryRequest,
+            Expression<Func<TDbModel, object?>> defaultOrder,
+            SortDirection defaultSortDirection = SortDirection.Desc,
             CancellationToken ct = default)
             where TDbModel : class
         {
@@ -155,7 +159,9 @@ public sealed class QuerySqlApiFixture : IAsyncLifetime
         }
 
         public Task<QueryRes<TDbModel>> Query<TDbModel>(
-            QueryConcreteReq queryRequest, System.Linq.Expressions.Expression<Func<TDbModel, object?>> defaultOrder, Lyo.Common.Core.Enums.SortDirection defaultSortDirection = Lyo.Common.Core.Enums.SortDirection.Desc,
+            QueryConcreteReq queryRequest,
+            Expression<Func<TDbModel, object?>> defaultOrder,
+            SortDirection defaultSortDirection = SortDirection.Desc,
             CancellationToken ct = default)
             where TDbModel : class
         {
@@ -164,7 +170,9 @@ public sealed class QuerySqlApiFixture : IAsyncLifetime
         }
 
         public Task<ProjectedQueryRes<object?>> QueryProjected<TDbModel>(
-            ProjectionQueryReq queryRequest, System.Linq.Expressions.Expression<Func<TDbModel, object?>> defaultOrder, Lyo.Common.Core.Enums.SortDirection defaultSortDirection = Lyo.Common.Core.Enums.SortDirection.Desc,
+            ProjectionQueryReq queryRequest,
+            Expression<Func<TDbModel, object?>> defaultOrder,
+            SortDirection defaultSortDirection = SortDirection.Desc,
             CancellationToken ct = default)
             where TDbModel : class
         {
@@ -173,8 +181,11 @@ public sealed class QuerySqlApiFixture : IAsyncLifetime
         }
 
         public Task<TResult?> Get<TDbModel, TResult>(
-            object[] keys, IEnumerable<string>? includes = null, Action<Lyo.Api.ApiEndpoint.Config.GetContext<TDbModel, PreviewDb>>? before = null,
-            Action<Lyo.Api.ApiEndpoint.Config.GetContext<TDbModel, PreviewDb>>? after = null, CancellationToken ct = default)
+            object[] keys,
+            IEnumerable<string>? includes = null,
+            Action<GetContext<TDbModel, PreviewDb>>? before = null,
+            Action<GetContext<TDbModel, PreviewDb>>? after = null,
+            CancellationToken ct = default)
             where TDbModel : class
         {
             Calls++;
@@ -224,7 +235,8 @@ public sealed class SqlPreviewOrder
     public int PersonId { get; set; }
 }
 
-public sealed class PreviewDb(DbContextOptions<PreviewDb> options) : DbContext(options)
+public sealed class PreviewDb(DbContextOptions<PreviewDb> options)
+    : DbContext(options)
 {
     public DbSet<SqlPreviewPerson> People => Set<SqlPreviewPerson>();
 
@@ -240,6 +252,7 @@ public sealed class PreviewDb(DbContextOptions<PreviewDb> options) : DbContext(o
             entity.Property(person => person.Name).HasColumnName("name");
             entity.Property(person => person.Amount).HasColumnName("amount");
         });
+
         modelBuilder.Entity<SqlPreviewOrder>(entity => {
             entity.ToTable("order", "sales");
             entity.HasKey(order => order.Id);

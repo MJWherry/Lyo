@@ -1,10 +1,12 @@
 # Lyo.RequestSigning
 
-Header Lyo-Signature is t=<unix seconds>,v1=<lowercase hex HMAC-SHA256>. v1 is the canonicalization scheme. Sign with Key. Verify accepts Key and, when set, PreviousKey. The default max age is 5 minutes. A timestamp exactly on the boundary is still valid.
+Header Lyo-Signature is t=<unix seconds>,v1=<lowercase hex HMAC-SHA256>. v1 is the canonicalization scheme. Sign with Key. Verify accepts Key and, when set, PreviousKey. The
+default max age is 5 minutes. A timestamp exactly on the boundary is still valid.
 
 ## Features
 
-- **Canonical lines are v1, the unix time, the method, the scheme, the host, the path and query, and the body hash.** The host is the host the request reports. No port is added or stripped.
+- **Canonical lines are v1, the unix time, the method, the scheme, the host, the path and query, and the body hash.** The host is the host the request reports. No port is added or
+  stripped.
 - **A DelegatingHandler adds the header on outbound HttpRequestMessage.** The HMAC key is the UTF-8 bytes of Key.
 
 ## Examples

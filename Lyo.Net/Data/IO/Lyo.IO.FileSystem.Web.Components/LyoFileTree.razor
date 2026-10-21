@@ -30,9 +30,9 @@
                                           aria-label="Search tree"/>
                         }
                         @if (EnableSelection) {
-                            <MudTooltip Text="@(_editMode ? "Done selecting" : "Select multiple for bulk actions")">
-                                <MudIconButton Icon="@(_editMode ? Icons.Material.Filled.Close : Icons.Material.Filled.Edit)"
-                                               Color="@(_editMode ? Color.Primary : Color.Default)"
+                            <MudTooltip Text="@(EditMode ? "Done selecting" : "Select multiple for bulk actions")">
+                                <MudIconButton Icon="@(EditMode ? Icons.Material.Filled.Close : Icons.Material.Filled.Edit)"
+                                               Color="@(EditMode ? Color.Primary : Color.Default)"
                                                Size="Size.Small"
                                                Disabled="@Busy"
                                                OnClick="ToggleEditAsync"
@@ -41,13 +41,13 @@
                         }
                     </MudStack>
                 }
-                @if (_editMode && SelectionToolbar != null) {
+                @if (EditMode && SelectionToolbar != null) {
                     @SelectionToolbar
                 }
                 @if (Truncated) {
                     <MudAlert Severity="Severity.Info" Dense="true">Listing was truncated.</MudAlert>
                 }
-                @if (_searchListingTruncated) {
+                @if (SearchListingTruncated) {
                     <MudAlert Severity="Severity.Info" Dense="true">Search listing was truncated before every folder was loaded.</MudAlert>
                 }
                 @if (Busy) {
@@ -71,7 +71,7 @@
                                      Items="@context.Children">
                         <BodyContent Context="body">
                             <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-                                @if (_editMode && context.Value != null) {
+                                @if (EditMode && context.Value != null) {
                                     <span @onclick:stopPropagation="true">
                                         <MudCheckBox T="bool"
                                                      Value="@_checked.Contains(context.Value)"

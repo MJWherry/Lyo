@@ -1,6 +1,6 @@
-@namespace Lyo.Web.Components.ParamTable
 @using Lyo.Parameters
 @using Lyo.Web.Components.ParamOptions
+@namespace Lyo.Web.Components.ParamTable
 
 <MudGrid Spacing="2">
     @if (ShowType) {
@@ -55,6 +55,7 @@
                                AllowUnset="true"
                                EditorSurfaceHeight="@EditorSurfaceHeight"
                                FormatterContext="@FormatterContext"/>
+
             <MudText Typo="Typo.caption" Class="@(ExpressionError is null ? "mud-text-secondary" : "mud-error-text")">@ExpressionHint</MudText>
         }
         else {
@@ -70,6 +71,7 @@
                                     IsEncrypted="@Item.IsEncrypted"
                                     EditorSurfaceHeight="@EditorSurfaceHeight"
                                     FormatterContext="@FormatterContext"/>
+
             <MudText Typo="Typo.caption" Class="mud-text-secondary">@ResolvedDefaultHint</MudText>
         }
     </MudItem>

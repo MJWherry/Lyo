@@ -3,9 +3,9 @@ using System.Diagnostics;
 namespace Lyo.Authentication.Models.Audit;
 
 /// <summary>
-/// One auth-subsystem audit row. Maps 1:1 to <c>[user].[event]</c> on Postgres, or to a fire-and-forget sink (logger, queue, …)
-/// otherwise. Always carries <see cref="Kind" /> (closed taxonomy), a UTC timestamp, and optional <see cref="UserId" /> when the event is user-attached; everything else is
-/// loosely typed metadata so the persistence shape stays stable as the schema evolves.
+/// One auth-subsystem audit row. Maps 1:1 to <c>[user].[event]</c> on Postgres, or to a fire-and-forget sink (logger, queue, …) otherwise. Always carries <see cref="Kind" />
+/// (closed taxonomy), a UTC timestamp, and optional <see cref="UserId" /> when the event is user-attached; everything else is loosely typed metadata so the persistence shape stays
+/// stable as the schema evolves.
 /// </summary>
 /// <param name="Id">Server-generated row id (GUID v4). Caller sets this — recorders treat it as the primary key.</param>
 /// <param name="Timestamp">UTC when the event happened (not when it was persisted).</param>

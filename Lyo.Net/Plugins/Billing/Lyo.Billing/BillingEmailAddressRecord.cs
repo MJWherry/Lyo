@@ -2,7 +2,7 @@ using Lyo.EntityReference.Models;
 
 namespace Lyo.Billing;
 
-/// <summary>Lite email payload owned by billing. Attach via EntityRef type <see cref="BillingEntityTypes.BillingEmailAddress"/>.</summary>
+/// <summary>Lite email payload owned by billing. Attach via EntityRef type <see cref="BillingEntityTypes.BillingEmailAddress" />.</summary>
 [EntityRefLogicalType(BillingEntityTypes.BillingEmailAddress)]
 public sealed class BillingEmailAddressRecord
 {

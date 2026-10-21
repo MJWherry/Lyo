@@ -1,6 +1,8 @@
 # Lyo.FileSystemWatcher.Postgres
 
-EF Core persistence for Lyo.FileSystemWatcher models. Schema `filesystem_watcher` holds watch, snapshot (tree jsonb + content_hash + content_hash_algorithm), and change rows. Hashes use Lyo.Hashing (SHA-256 by default). `FileSystemWatcherPersister` copies DTOs on ScanCompleted and writes them off the debounce thread. Register with AddPostgresFileSystemWatcherStore / FromConfiguration.
+EF Core persistence for Lyo.FileSystemWatcher models. Schema `filesystem_watcher` holds watch, snapshot (tree jsonb + content_hash + content_hash_algorithm), and change rows.
+Hashes use Lyo.Hashing (SHA-256 by default). `FileSystemWatcherPersister` copies DTOs on ScanCompleted and writes them off the debounce thread. Register with
+AddPostgresFileSystemWatcherStore / FromConfiguration.
 
 ## Features
 

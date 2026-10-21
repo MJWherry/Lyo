@@ -1,10 +1,11 @@
 using System.Collections.Concurrent;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Health;
 using Lyo.Job.Client;
 using Lyo.Job.Models;
 using Lyo.MessageQueue;
 using Microsoft.Extensions.Logging.Abstractions;
-using Lyo.Common.Core.Identifiers;
+
 namespace Lyo.Job.Tests;
 
 /// <summary>
@@ -71,7 +72,7 @@ public class MqJobEventPublisherCancelFanoutTests
         Assert.Equal(runId, Assert.Single(receivedByInstanceB));
     }
 
-    private static MqJobEventPublisher CreatePublisher(IMqService mq) => new(mq, NullLogger<MqJobEventPublisher>.Instance, new JobMqOptions());
+    private static MqJobEventPublisher CreatePublisher(IMqService mq) => new(mq, NullLogger<MqJobEventPublisher>.Instance, new());
 
     /// <summary>Fake MQ that records queue declarations/bindings and routes exchange publishes to every bound queue's subscriber (broadcast semantics).</summary>
     private sealed class RoutingFakeMqService : IMqService

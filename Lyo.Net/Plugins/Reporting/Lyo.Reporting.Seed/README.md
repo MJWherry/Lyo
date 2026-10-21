@@ -1,6 +1,8 @@
 # Lyo.Reporting.Seed
 
-`ReportingEfSeedContributor` writes `ReportDesignTemplates.Samples` as report definitions, including their parameters, into schema `reporting`. Each definition gets one succeeded generation whose `ReportDataJson` is copied from the definition, and one generation parameter per definition parameter. `SeedOptions.Count` is ignored. `OnClear` deletes generations and parameters before definitions so `--replace` can run.
+`ReportingEfSeedContributor` writes `ReportDesignTemplates.Samples` as report definitions, including their parameters, into schema `reporting`. Each definition gets one succeeded
+generation whose `ReportDataJson` is copied from the definition, and one generation parameter per definition parameter. `SeedOptions.Count` is ignored. `OnClear` deletes
+generations and parameters before definitions so `--replace` can run.
 
 ## Features
 

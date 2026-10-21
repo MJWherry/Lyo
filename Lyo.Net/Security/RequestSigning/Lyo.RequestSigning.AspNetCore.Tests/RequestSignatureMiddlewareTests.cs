@@ -1,8 +1,6 @@
 using System.Text;
 using Lyo.Hashing;
-using Lyo.RequestSigning.AspNetCore;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,10 +13,12 @@ public sealed class RequestSignatureMiddlewareTests
     public async Task Middleware_ValidSignature_CallsNext()
     {
         var runs = 0;
-        await using var host = await HostAsync(app => app.MapPost("/pay", () => {
-            runs++;
-            return Results.Ok("paid");
-        }));
+        await using var host = await HostAsync(app => app.MapPost(
+            "/pay", () => {
+                runs++;
+                return Results.Ok("paid");
+            }));
+
         var body = Encoding.UTF8.GetBytes("{\"a\":1}");
         var header = Header(host, body);
         var status = await SendAsync(host, body, header);
@@ -30,10 +30,12 @@ public sealed class RequestSignatureMiddlewareTests
     public async Task Middleware_BadSignature_Returns401()
     {
         var runs = 0;
-        await using var host = await HostAsync(app => app.MapPost("/pay", () => {
-            runs++;
-            return Results.Ok("paid");
-        }));
+        await using var host = await HostAsync(app => app.MapPost(
+            "/pay", () => {
+                runs++;
+                return Results.Ok("paid");
+            }));
+
         var status = await SendAsync(host, Encoding.UTF8.GetBytes("{\"a\":1}"), "t=1,v1=" + new string('a', 64));
         Assert.Equal(StatusCodes.Status401Unauthorized, status);
         Assert.Equal(0, runs);
@@ -62,9 +64,7 @@ public sealed class RequestSignatureMiddlewareTests
     private static async Task<int> SendAsync(WebApplication host, byte[] body, string header)
     {
         var client = host.GetTestClient();
-        var request = new HttpRequestMessage(HttpMethod.Post, "http://localhost/pay") {
-            Content = new ByteArrayContent(body)
-        };
+        var request = new HttpRequestMessage(HttpMethod.Post, "http://localhost/pay") { Content = new ByteArrayContent(body) };
         request.Headers.TryAddWithoutValidation("Lyo-Signature", header);
         var response = await client.SendAsync(request, TestCt);
         return (int)response.StatusCode;

@@ -55,8 +55,7 @@ public sealed record FileStorageFolderEntryDto(
     string? Encryption = null)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => IsDirectory ? $"dir {Name} prefix={PathPrefix}" : $"file {Name} FileId={FileId} {Presence}";
+    public override string ToString() => IsDirectory ? $"dir {Name} prefix={PathPrefix}" : $"file {Name} FileId={FileId} {Presence}";
 }
 
 /// <summary>Immediate children of one PathPrefix.</summary>
@@ -67,6 +66,5 @@ public sealed record FileStorageFolderListResponse(
     FileStorageBackendKind BackendKind = FileStorageBackendKind.None)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => $"FileStorageFolderListResponse: {Entries.Count} entries truncated={Truncated} backend={BackendKind}";
+    public override string ToString() => $"FileStorageFolderListResponse: {Entries.Count} entries truncated={Truncated} backend={BackendKind}";
 }

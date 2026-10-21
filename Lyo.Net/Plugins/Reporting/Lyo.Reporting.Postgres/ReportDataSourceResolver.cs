@@ -143,8 +143,7 @@ public sealed class ReportParameterOptionsExecutor(IServiceProvider services)
             return [];
 
         try {
-            return JsonSerializer.Deserialize<Dictionary<string, object?>>(JsonSerializer.Serialize(row, JsonOptions), JsonOptions)
-                ?? [];
+            return JsonSerializer.Deserialize<Dictionary<string, object?>>(JsonSerializer.Serialize(row, JsonOptions), JsonOptions) ?? [];
         }
         catch (JsonException) {
             return [];
@@ -167,22 +166,18 @@ public sealed class ReportDataSourceResolver(IServiceProvider services) : IRepor
         ArgumentHelpers.ThrowIfNull(mergedParameters);
         var report = ReportJson.Deserialize<object>(reportDataJson);
         var fromParameterKeys = new HashSet<string>(CollectFromParameterKeys(report.Sections), StringComparer.OrdinalIgnoreCase);
-        var queryTables = SectionBody.CollectTables(report.Sections)
-            .Where(t => t.DataSourceKind is DataSourceKind.Query or DataSourceKind.Sproc)
+        var queryTables = SectionBody.CollectTables(report.Sections).Where(t => t.DataSourceKind is DataSourceKind.Query or DataSourceKind.Sproc).ToList();
+        var datasetDefs = definitionParameters.Where(p
+                => !string.IsNullOrWhiteSpace(p.Key) && ParameterOptionsJson.TryDeserialize(p.Options, out var o) && o is not null &&
+                o.Kind is ParameterOptionsKind.Query or ParameterOptionsKind.Sproc && (IsDataset(p.Type) || fromParameterKeys.Contains(p.Key)))
             .ToList();
-        var datasetDefs = definitionParameters
-            .Where(p => !string.IsNullOrWhiteSpace(p.Key) && ParameterOptionsJson.TryDeserialize(p.Options, out var o) && o is not null &&
-                o.Kind is ParameterOptionsKind.Query or ParameterOptionsKind.Sproc &&
-                (IsDataset(p.Type) || fromParameterKeys.Contains(p.Key)))
-            .ToList();
+
         if (fromParameterKeys.Count == 0 && datasetDefs.Count == 0 && queryTables.Count == 0)
             return reportDataJson;
+
         var siblings = mergedParameters.ToDictionary(p => p.Key, p => p.Value, StringComparer.OrdinalIgnoreCase);
         var executor = new ReportParameterOptionsExecutor(services);
-        var optionsByKey = definitionParameters
-            .Where(p => !string.IsNullOrWhiteSpace(p.Key))
-            .ToDictionary(p => p.Key, p => p, StringComparer.OrdinalIgnoreCase);
-
+        var optionsByKey = definitionParameters.Where(p => !string.IsNullOrWhiteSpace(p.Key)).ToDictionary(p => p.Key, p => p, StringComparer.OrdinalIgnoreCase);
         foreach (var param in mergedParameters) {
             if (!optionsByKey.TryGetValue(param.Key, out var def) || !ParameterOptionsJson.TryDeserialize(def.Options, out var options) || options is null)
                 continue;
@@ -218,9 +213,11 @@ public sealed class ReportDataSourceResolver(IServiceProvider services) : IRepor
             switch (control) {
                 case Table { DataSourceKind: DataSourceKind.FromParameter, DataParameterKey: { Length: > 0 } key }:
                     yield return key;
+
                     break;
                 case Block { ContentType: ContentType.Chart, DataSourceKind: DataSourceKind.FromParameter, DataParameterKey: { Length: > 0 } key }:
                     yield return key;
+
                     break;
             }
         }
@@ -263,11 +260,7 @@ public sealed class ReportDataSourceResolver(IServiceProvider services) : IRepor
         TableDataBinder.Apply(table, TableDataBinder.ParseRows(json));
     }
 
-    private static async Task FillFromOptionsAsync(
-        Table table,
-        IReadOnlyDictionary<string, string?> siblings,
-        ReportParameterOptionsExecutor executor,
-        CancellationToken ct)
+    private static async Task FillFromOptionsAsync(Table table, IReadOnlyDictionary<string, string?> siblings, ReportParameterOptionsExecutor executor, CancellationToken ct)
     {
         if (!ParameterOptionsJson.TryDeserialize(table.Options, out var options) || options is null)
             throw new ReportValidationException("Table Query/Sproc options are missing or invalid.");

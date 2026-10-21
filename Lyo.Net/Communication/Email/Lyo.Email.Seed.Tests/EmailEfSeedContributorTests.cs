@@ -1,5 +1,4 @@
 using Lyo.Email.Postgres.Database;
-using Lyo.Email.Seed;
 using Lyo.Seed;
 
 namespace Lyo.Email.Seed.Tests;
@@ -26,12 +25,19 @@ public sealed class EmailEfSeedContributorTests
     private sealed class RecordingSeedTransport : ISeedTransport
     {
         public List<object> Items { get; } = [];
+
         public SeedTransportKind Kind => SeedTransportKind.Ef;
-        public Task<bool> IsEmptyAsync<T>(CancellationToken ct = default) where T : class => Task.FromResult(!Items.OfType<T>().Any());
-        public Task PersistAsync<T>(IReadOnlyList<T> items, CancellationToken ct = default) where T : class
+
+        public Task<bool> IsEmptyAsync<T>(CancellationToken ct = default)
+            where T : class
+            => Task.FromResult(!Items.OfType<T>().Any());
+
+        public Task PersistAsync<T>(IReadOnlyList<T> items, CancellationToken ct = default)
+            where T : class
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

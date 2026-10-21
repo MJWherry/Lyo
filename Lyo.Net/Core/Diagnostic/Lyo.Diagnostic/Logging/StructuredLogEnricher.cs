@@ -7,8 +7,7 @@ namespace Lyo.Diagnostic.Logging;
 
 /// <summary>
 /// Writes structured diagnostic properties derived from a <see cref="DiagnosticContext" /> to Microsoft.Extensions.Logging. Serilog integration: pass the dictionary from
-/// <see cref="BuildLogProperties" /> into a <c>LogContext.PushProperty</c> / <c>ForContext</c> call before logging, or destructure with <c>{@DiagContext}</c> in the message
-/// template.
+/// <see cref="BuildLogProperties" /> into a <c>LogContext.PushProperty</c> / <c>ForContext</c> call before logging, or destructure with <c>{@DiagContext}</c> in the message template.
 /// </summary>
 public sealed class StructuredLogEnricher(LogEnricherOptions? options = null) : IStructuredLogEnricher
 {

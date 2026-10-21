@@ -1,5 +1,5 @@
-using Lyo.FileSystemWatcher.Models;
 using Lyo.Exceptions;
+using Lyo.FileSystemWatcher.Models;
 
 namespace Lyo.FileSystemWatcher;
 
@@ -49,6 +49,7 @@ public static class FileSystemWatcherMapping
             DirectoryCount = tree.DirectoryCount,
             Root = MapDirectory(tree.Root, tree.RootPath, tree.PathComparison, tree.SegmentComparer)
         };
+
         return dto;
     }
 
@@ -62,24 +63,18 @@ public static class FileSystemWatcherMapping
         if (string.Equals(r, f, comparison))
             return "";
 
-        if (f.Length > r.Length && f.StartsWith(r, comparison)
-            && (f[r.Length] == Path.DirectorySeparatorChar || f[r.Length] == Path.AltDirectorySeparatorChar))
+        if (f.Length > r.Length && f.StartsWith(r, comparison) && (f[r.Length] == Path.DirectorySeparatorChar || f[r.Length] == Path.AltDirectorySeparatorChar))
             return FileSystemPathGlob.Normalize(f.Substring(r.Length));
 
         return FileSystemPathGlob.Normalize(f);
     }
 
-    private static FileSystemSnapshotDirectoryDto MapDirectory(
-        SnapshotDirectoryNode node,
-        string rootPath,
-        StringComparison comparison,
-        StringComparer segmentComparer)
+    private static FileSystemSnapshotDirectoryDto MapDirectory(SnapshotDirectoryNode node, string rootPath, StringComparison comparison, StringComparer segmentComparer)
     {
         var dto = new FileSystemSnapshotDirectoryDto {
-            RelativePath = ToRelativePath(rootPath, node.FullPath, comparison),
-            Directories = new(segmentComparer),
-            Files = new(segmentComparer)
+            RelativePath = ToRelativePath(rootPath, node.FullPath, comparison), Directories = new(segmentComparer), Files = new(segmentComparer)
         };
+
         foreach (var pair in node.Directories)
             dto.Directories[pair.Key] = MapDirectory(pair.Value, rootPath, comparison, segmentComparer);
 
@@ -94,7 +89,7 @@ public static class FileSystemWatcherMapping
         DateTime? lastWrite = null;
         DateTime? created = null;
         int? attributes = null;
-        long? size = entry.FileSize;
+        var size = entry.FileSize;
         try {
             lastWrite = entry.Info.LastWriteTimeUtc;
             created = entry.Info.CreationTimeUtc;

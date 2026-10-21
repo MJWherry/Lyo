@@ -4,6 +4,7 @@ using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace Lyo.Email.Postgres;
 
 /// <summary>DI helpers for PostgreSQL email logging.</summary>
@@ -46,7 +47,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresEmailOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddEmailDbContextFactory(options);
         }
 
@@ -58,7 +58,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPostgresDbContextFactory<EmailDbContext, PostgresEmailOptions>(options);
-
             return services;
         }
     }

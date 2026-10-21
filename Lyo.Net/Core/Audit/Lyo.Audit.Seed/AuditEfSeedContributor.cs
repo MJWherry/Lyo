@@ -24,9 +24,7 @@ public sealed class AuditEfSeedContributor : SeedContributor, IEfSeedSource
     public DbContext CreateContext(string connectionString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        var options = new DbContextOptionsBuilder<AuditDbContext>()
-            .UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<AuditDbContext>().UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema)).Options;
         return new AuditDbContext(options);
     }
 
@@ -37,29 +35,32 @@ public sealed class AuditEfSeedContributor : SeedContributor, IEfSeedSource
         var faker = options.RandomSeed is { } seed ? new Faker { Random = new(seed) } : new Faker();
         var now = DateTime.UtcNow;
         var eventIds = Enumerable.Range(0, options.Count).Select(_ => LyoGuid.CreateV7()).ToArray();
-        graph.Entity(options.Count, i => new AuditEventEntity {
-            Id = eventIds[i],
-            EventType = "Updated",
-            Timestamp = now,
-            Message = faker.Lorem.Sentence(),
-            MetadataJson = "{}",
-            SubjectEntityType = "order",
-            SubjectEntityId = $"order-{i}",
-            ActorEntityType = "person",
-            ActorEntityId = $"person-{i}",
-            CreatedTimestamp = now
-        });
-        graph.Entity(options.Count, i => new AuditChangeEntity {
-            Id = LyoGuid.CreateV7(),
-            Timestamp = now,
-            OldValuesJson = """{"name":null}""",
-            ChangedPropertiesJson = """{"title":"renamed"}""",
-            SubjectEntityType = "AuditEvent",
-            SubjectEntityId = eventIds[i].ToString(),
-            ActorEntityType = "person",
-            ActorEntityId = $"person-{i}",
-            CreatedTimestamp = now
-        });
+        graph.Entity(
+            options.Count, i => new AuditEventEntity {
+                Id = eventIds[i],
+                EventType = "Updated",
+                Timestamp = now,
+                Message = faker.Lorem.Sentence(),
+                MetadataJson = "{}",
+                SubjectEntityType = "order",
+                SubjectEntityId = $"order-{i}",
+                ActorEntityType = "person",
+                ActorEntityId = $"person-{i}",
+                CreatedTimestamp = now
+            });
+
+        graph.Entity(
+            options.Count, i => new AuditChangeEntity {
+                Id = LyoGuid.CreateV7(),
+                Timestamp = now,
+                OldValuesJson = """{"name":null}""",
+                ChangedPropertiesJson = """{"title":"renamed"}""",
+                SubjectEntityType = "AuditEvent",
+                SubjectEntityId = eventIds[i].ToString(),
+                ActorEntityType = "person",
+                ActorEntityId = $"person-{i}",
+                CreatedTimestamp = now
+            });
     }
 
     private static async Task ClearAsync(SeedSession session, CancellationToken ct)

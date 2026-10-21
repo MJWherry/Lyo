@@ -29,11 +29,7 @@ internal sealed partial class FFmpegConvertEngine
     internal static ConvertKnobs PrepareConcat(ConvertKnobs opts)
     {
         var reencode = opts.VideoEncoder != null || opts.AudioEncoder != null || opts.VideoBitRate != null || opts.Crf != null || opts.AudioBitRate != null;
-        return opts with {
-            ConcatSafe = true,
-            InputFormat = MediaContainer.Custom("concat"),
-            CopyCodecs = opts.CopyCodecs || !reencode
-        };
+        return opts with { ConcatSafe = true, InputFormat = MediaContainer.Custom("concat"), CopyCodecs = opts.CopyCodecs || !reencode };
     }
 
     internal static FFmpegCommand BuildExtractFrame(FFmpegOptions options, string input, string output, TimeSpan? at, ConvertKnobs opts)
@@ -45,14 +41,18 @@ internal sealed partial class FFmpegConvertEngine
             .WithStartTime(at ?? TimeSpan.Zero)
             .WithArgument("-frames:v")
             .WithArgument("1");
+
         if (opts.Overwrite)
             builder.Overwrite();
         else
             builder.NoOverwrite();
+
         if (opts.Format != null)
             builder.WithFormat(opts.Format);
+
         if (opts.PixelFormat != null)
             builder.WithPixelFormat(opts.PixelFormat);
+
         if (opts.Scale == ScaleMode.Stretch && opts.Width is { } width && opts.Height is { } height)
             builder.WithSize(width, height);
 
@@ -75,6 +75,7 @@ internal sealed partial class FFmpegConvertEngine
             .WithFormat(MediaContainer.Gif)
             .WithArgument("-filter_complex")
             .WithArgument(graph + "[x];[x][1:v]paletteuse");
+
         if (opts.Overwrite) {
             palette.Overwrite();
             encode.Overwrite();
@@ -92,11 +93,9 @@ internal sealed partial class FFmpegConvertEngine
         ArgumentHelpers.ThrowIfNull(opts.Loudness);
         var target = opts.Loudness;
         var culture = CultureInfo.InvariantCulture;
-        var filter = "loudnorm=" +
-                     $"I={target.IntegratedLufs.ToString("G", culture)}:" +
-                     $"TP={target.TruePeak.ToString("G", culture)}:" +
-                     $"LRA={target.Range.ToString("G", culture)}:" +
-                     "print_format=json";
+        var filter = "loudnorm=" + $"I={target.IntegratedLufs.ToString("G", culture)}:" + $"TP={target.TruePeak.ToString("G", culture)}:" +
+            $"LRA={target.Range.ToString("G", culture)}:" + "print_format=json";
+
         return FFmpegCommandBuilder.New()
             .WithDefaults(options)
             .WithInput(input)
@@ -116,12 +115,16 @@ internal sealed partial class FFmpegConvertEngine
         var pass1 = FFmpegCommandBuilder.New().WithDefaults(options).WithInput(input).WithOutput("-").DropAudio().WithVideoCodec(encoder);
         if (opts.VideoBitRate != null)
             pass1.WithVideoBitRate(opts.VideoBitRate.Id);
+
         if (opts.Preset != null)
             pass1.WithPreset(opts.Preset);
+
         if (opts.PixelFormat != null)
             pass1.WithPixelFormat(opts.PixelFormat);
+
         if (opts.FrameRate != null)
             pass1.WithFrameRate(opts.FrameRate.Value);
+
         ApplyScale(pass1, opts);
         if (!opts.Overwrite)
             pass1.NoOverwrite();
@@ -134,6 +137,7 @@ internal sealed partial class FFmpegConvertEngine
             .ApplyKnobs(opts with { TwoPass = false })
             .WithPass(2)
             .WithPassLogFile(prefix);
+
         if (opts.Progress != null)
             pass2.WithArgument("-progress").WithArgument("pipe:1");
 
@@ -160,7 +164,7 @@ internal sealed partial class FFmpegConvertEngine
 
     internal static void ThrowIfTwoPass(ConvertKnobs opts, FFmpegOptions host)
     {
-        HardwareAccel? device = opts.Hardware == HardwareAccel.None ? null : opts.Hardware;
+        var device = opts.Hardware == HardwareAccel.None ? null : opts.Hardware;
         if (device == null && opts.Hardware != HardwareAccel.None) {
             var parsed = HardwareAccel.TryParse(host.Hardware);
             if (parsed != null && parsed != HardwareAccel.None)
@@ -177,12 +181,11 @@ internal sealed partial class FFmpegConvertEngine
         var palette = FFmpegTempHelper.CreateTempFilePath(".png");
         try {
             var (first, second) = BuildGif(_options, input, palette, output, opts);
-            var paletteRun = await RunCommandAsync(first, progress: null, knownDuration: null, progressOnStdout: false, ct).ConfigureAwait(false);
+            var paletteRun = await RunCommandAsync(first, null, null, false, ct).ConfigureAwait(false);
             if (!paletteRun.IsSuccess)
                 return paletteRun;
 
-            return await RunCommandAsync(second, progress: opts.Progress, knownDuration: opts.KnownDuration, progressOnStdout: opts.Progress != null, ct)
-                .ConfigureAwait(false);
+            return await RunCommandAsync(second, opts.Progress, opts.KnownDuration, opts.Progress != null, ct).ConfigureAwait(false);
         }
         finally {
             FFmpegTempHelper.TryDelete(palette);
@@ -194,11 +197,11 @@ internal sealed partial class FFmpegConvertEngine
         var prefix = Path.Combine(Path.GetTempPath(), "lyo-ffmpeg-pass-" + Guid.NewGuid().ToString("N"));
         try {
             var (pass1, pass2) = BuildTwoPass(_options, input, output, prefix, opts);
-            var first = await RunCommandAsync(pass1, progress: null, knownDuration: null, progressOnStdout: false, ct).ConfigureAwait(false);
+            var first = await RunCommandAsync(pass1, null, null, false, ct).ConfigureAwait(false);
             if (!first.IsSuccess)
                 return first;
 
-            return await RunCommandAsync(pass2, opts.Progress, opts.KnownDuration, progressOnStdout: opts.Progress != null, ct).ConfigureAwait(false);
+            return await RunCommandAsync(pass2, opts.Progress, opts.KnownDuration, opts.Progress != null, ct).ConfigureAwait(false);
         }
         finally {
             foreach (var log in TwoPassLogs(prefix))
@@ -206,14 +209,7 @@ internal sealed partial class FFmpegConvertEngine
         }
     }
 
-    private async Task<Result<bool>> RunLoudnessAsync(
-        string input,
-        string output,
-        Stream? stdin,
-        Stream? stdout,
-        ConvertKnobs opts,
-        bool applyTimeout,
-        CancellationToken ct)
+    private async Task<Result<bool>> RunLoudnessAsync(string input, string output, Stream? stdin, Stream? stdout, ConvertKnobs opts, bool applyTimeout, CancellationToken ct)
     {
         ArgumentHelpers.ThrowIf(string.Equals(input, FFmpegPathKind.PipeInput, StringComparison.Ordinal), "Loudness requires a file input.");
         var measured = await MeasureLoudnessAsync(input, opts, ct).ConfigureAwait(false);
@@ -235,9 +231,11 @@ internal sealed partial class FFmpegConvertEngine
                     CancellationToken = ct
                 })
             .ConfigureAwait(false);
+
         var result = ToResult(run, Constants.Errors.FFmpegError);
         if (!result.IsSuccess)
             return Result<string>.Failure(result.Errors ?? []);
+
         if (opts.Loudness == null || !FFmpegLoudness.TryParse(run.StdErr, out var measured))
             return Result<string>.Failure("loudnorm did not return measurements.", Constants.Errors.FFmpegError);
 
@@ -262,6 +260,7 @@ internal sealed partial class FFmpegConvertEngine
                     CancellationToken = ct
                 })
             .ConfigureAwait(false);
+
         return ToResult(run, Constants.Errors.FFmpegError);
     }
 
@@ -292,6 +291,5 @@ internal sealed partial class FFmpegConvertEngine
         return $"fps={fps},{scale}";
     }
 
-    private static bool IsGif(ConvertKnobs opts)
-        => opts.Format == MediaContainer.Gif || string.Equals(opts.Format?.Format, "gif", StringComparison.OrdinalIgnoreCase);
+    private static bool IsGif(ConvertKnobs opts) => opts.Format == MediaContainer.Gif || string.Equals(opts.Format?.Format, "gif", StringComparison.OrdinalIgnoreCase);
 }

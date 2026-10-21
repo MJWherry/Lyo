@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Lyo.Common.Metadata.Records;
 using System.Globalization;
 using System.Security.Claims;
 using System.Text.Json;
@@ -7,8 +6,9 @@ using System.Text.Json.Serialization;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Error;
 using Lyo.Common.Core;
-using Lyo.Json;
+using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions.Models;
+using Lyo.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -133,7 +133,7 @@ public class LoggingMiddleware(RequestDelegate next, ILogger<LoggingMiddleware> 
         if (!context.Response.HasStarted && context.Response.ContentLength is not > 0)
             await WriteProblemAsync(context, error);
 
-        LogCaughtFailure(context, error, exception: null);
+        LogCaughtFailure(context, error, null);
     }
 
     private void LogCaughtFailure(HttpContext context, LyoProblemDetails error, Exception? exception)
@@ -143,6 +143,7 @@ public class LoggingMiddleware(RequestDelegate next, ILogger<LoggingMiddleware> 
             logger.LogWarning(
                 "API failure {Status} {ErrorCode} {ErrorCodes} {ClientIp} {UserId} {UserName} {Detail}", error.Status, primaryCode, codes, clientIp, userId, userName,
                 error.GetFullMessage());
+
             return;
         }
 
@@ -168,19 +169,11 @@ public class LoggingMiddleware(RequestDelegate next, ILogger<LoggingMiddleware> 
         return (clientIp, userId, userName, primaryCode, codes);
     }
 
-    /// <summary>
-    /// Lyo JWTs use <c>lyo:user</c> / <c>sub</c> (not <see cref="ClaimTypes.NameIdentifier" />). <c>email</c> and <c>name</c> are the JWT claim names, not the SOAP URIs.
-    /// </summary>
+    /// <summary>Lyo JWTs use <c>lyo:user</c> / <c>sub</c> (not <see cref="ClaimTypes.NameIdentifier" />). <c>email</c> and <c>name</c> are the JWT claim names, not the SOAP URIs.</summary>
     private static (string? UserId, string? UserName) ResolveUser(ClaimsPrincipal user)
     {
-        var userId = user.FindFirst("lyo:user")?.Value
-            ?? user.FindFirst("sub")?.Value
-            ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value
-            ?? user.Identity?.Name;
-        var userName = user.FindFirst("email")?.Value
-            ?? user.FindFirst(ClaimTypes.Email)?.Value
-            ?? user.FindFirst("name")?.Value
-            ?? user.FindFirst(ClaimTypes.Name)?.Value;
+        var userId = user.FindFirst("lyo:user")?.Value ?? user.FindFirst("sub")?.Value ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? user.Identity?.Name;
+        var userName = user.FindFirst("email")?.Value ?? user.FindFirst(ClaimTypes.Email)?.Value ?? user.FindFirst("name")?.Value ?? user.FindFirst(ClaimTypes.Name)?.Value;
         return (userId, userName);
     }
 

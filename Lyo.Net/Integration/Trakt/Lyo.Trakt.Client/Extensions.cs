@@ -16,12 +16,10 @@ public static class Extensions
             => services.AddLyoHttpClient<TraktClient, TraktClientOptions>(configuration, configSectionName, Create);
 
         /// <summary>Registers the client and applies <paramref name="configure" /> before validation.</summary>
-        public IHttpClientBuilder AddTraktClient(Action<TraktClientOptions> configure)
-            => services.AddLyoHttpClient<TraktClient, TraktClientOptions>(configure, Create);
+        public IHttpClientBuilder AddTraktClient(Action<TraktClientOptions> configure) => services.AddLyoHttpClient<TraktClient, TraktClientOptions>(configure, Create);
 
         /// <summary>Registers the client from a ready options instance.</summary>
-        public IHttpClientBuilder AddTraktClient(TraktClientOptions options)
-            => services.AddLyoHttpClient<TraktClient, TraktClientOptions>(options, Create);
+        public IHttpClientBuilder AddTraktClient(TraktClientOptions options) => services.AddLyoHttpClient<TraktClient, TraktClientOptions>(options, Create);
     }
 
     private static TraktClient Create(IServiceProvider provider, HttpClient httpClient, TraktClientOptions options)

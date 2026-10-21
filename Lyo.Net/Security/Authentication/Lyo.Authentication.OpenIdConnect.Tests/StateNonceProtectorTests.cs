@@ -1,6 +1,6 @@
 using Lyo.Authentication.OpenIdConnect.Pkce;
-using Microsoft.AspNetCore.DataProtection;
 using Lyo.Common.Core.Identifiers;
+using Microsoft.AspNetCore.DataProtection;
 
 namespace Lyo.Authentication.OpenIdConnect.Tests;
 

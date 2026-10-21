@@ -1,7 +1,7 @@
 using Lyo.Api.Mapping;
 using Lyo.Common.Core.Conversion;
-using Lyo.Parameters;
 using Lyo.Common.Metadata.Records;
+using Lyo.Parameters;
 using Lyo.Reporting.Models.Enums;
 using Lyo.Reporting.Models.Request;
 using Lyo.Reporting.Models.Response;
@@ -143,8 +143,8 @@ public sealed class ReportingLyoMapper : ILyoMapper
 
     /// <param name="e">Generation entity to map.</param>
     /// <param name="includeReportData">
-    /// When false, <see cref="ReportGenerationRes.ReportDataJson" /> is omitted. Generate and rerun default to false so a multi-megabyte composition is not echoed back on every
-    /// call. The query/get projection keeps it.
+    /// When false, <see cref="ReportGenerationRes.ReportDataJson" /> is omitted. Generate and rerun default to false so a multi-megabyte composition is
+    /// not echoed back on every call. The query/get projection keeps it.
     /// </param>
     internal static ReportGenerationRes ToRes(ReportGeneration e, bool includeReportData = true)
         => new(

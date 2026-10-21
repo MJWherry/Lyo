@@ -38,7 +38,8 @@
                                 </MudPaper>
                             }
                             <MudTextField @bind-Value="_draft" Label="Message" Lines="2" Variant="Variant.Outlined"/>
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_busy || string.IsNullOrWhiteSpace(_selectedTopicId)" OnClick="SendAsync">Send</MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_busy || string.IsNullOrWhiteSpace(_selectedTopicId)" OnClick="SendAsync">Send
+                            </MudButton>
                         </MudStack>
                     </MudItem>
                 </MudGrid>
@@ -72,11 +73,13 @@
                     </MudSelect>
                     <MudText Typo="Typo.caption">Send</MudText>
                     @foreach (var player in Roster(_teamId)) {
-                        <MudCheckBox T="bool" Value="@_send.Contains(player.PlayerId)" ValueChanged="@(value => Toggle(_send, player.PlayerId, value))" Label="@PlayerLabel(player)"/>
+                        <MudCheckBox T="bool" Value="@_send.Contains(player.PlayerId)" ValueChanged="@(value => Toggle(_send, player.PlayerId, value))"
+                                     Label="@PlayerLabel(player)"/>
                     }
                     <MudText Typo="Typo.caption">Receive</MudText>
                     @foreach (var player in Roster(_otherTeamId)) {
-                        <MudCheckBox T="bool" Value="@_receive.Contains(player.PlayerId)" ValueChanged="@(value => Toggle(_receive, player.PlayerId, value))" Label="@PlayerLabel(player)"/>
+                        <MudCheckBox T="bool" Value="@_receive.Contains(player.PlayerId)" ValueChanged="@(value => Toggle(_receive, player.PlayerId, value))"
+                                     Label="@PlayerLabel(player)"/>
                     }
                     <MudTextField @bind-Value="_comment" Label="Comment" Variant="Variant.Outlined"/>
                     <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_busy" OnClick="ProposeAsync">Propose trade</MudButton>

@@ -7,15 +7,20 @@ namespace Lyo.Algorithms;
 internal static class AlgorithmScorer
 {
     public static IAlgorithm<TContext, TResult> Compile<TContext, TResult>(
-        string key, AlgorithmKind kind, string payload, IExpressionCompiler compiler, Func<TContext, string, double> invokeChild)
+        string key,
+        AlgorithmKind kind,
+        string payload,
+        IExpressionCompiler compiler,
+        Func<TContext, string, double> invokeChild)
     {
         var score = kind switch {
             AlgorithmKind.DiscreteMap => Map<TContext>(key, AlgorithmPayload.ParseMap(payload)),
             AlgorithmKind.RangeBand => Bands<TContext>(key, AlgorithmPayload.ParseBands(payload)),
             AlgorithmKind.Linear => Line<TContext>(key, AlgorithmPayload.ParseLinear(payload)),
             AlgorithmKind.Composite => Combine(key, AlgorithmPayload.ParseComposite(payload), compiler, invokeChild),
-            _ => AlgorithmHelpers.Throw<Func<TContext, double>>($"Algorithm kind '{kind}' is not a scorer.")
+            var _ => AlgorithmHelpers.Throw<Func<TContext, double>>($"Algorithm kind '{kind}' is not a scorer.")
         };
+
         return new Scorer<TContext, TResult>(key, kind, score);
     }
 
@@ -24,6 +29,7 @@ internal static class AlgorithmScorer
         var lookup = new Dictionary<string, double>(body.Entries.Count, StringComparer.OrdinalIgnoreCase);
         foreach (var entry in body.Entries)
             lookup[entry.Key] = entry.Points;
+
         var read = ReadText<TContext>(body.Input);
         return ctx => {
             var text = read(ctx);
@@ -32,7 +38,7 @@ internal static class AlgorithmScorer
 
             if (body.Missing == MissingKeyPolicy.Reject)
                 AlgorithmHelpers.Throw($"'{text}' is not in discrete map '{key}'.");
-            
+
             points = 0;
             return Trace(key, AlgorithmKind.DiscreteMap, text, () => points);
         };
@@ -58,7 +64,7 @@ internal static class AlgorithmScorer
                 points = body.OutOfRange switch {
                     OutOfRangePolicy.Reject => AlgorithmHelpers.Throw<double>($"'{value.ToString(CultureInfo.InvariantCulture)}' is outside range band '{key}'."),
                     OutOfRangePolicy.Nearest => Nearest(bands, value),
-                    _ => 0
+                    var _ => 0
                 };
             }
 
@@ -86,8 +92,10 @@ internal static class AlgorithmScorer
     {
         if (value < band.Min)
             return band.Min - value;
+
         if (value >= band.Max)
             return value - band.Max;
+
         return 0;
     }
 
@@ -106,7 +114,7 @@ internal static class AlgorithmScorer
                     t = 1;
             }
 
-            var points = body.PointsMin + (t * pointSpan);
+            var points = body.PointsMin + t * pointSpan;
             return Trace(key, AlgorithmKind.Linear, value.ToString(CultureInfo.InvariantCulture), () => points);
         };
     }
@@ -133,12 +141,14 @@ internal static class AlgorithmScorer
             var formula = compiler.Compile<TContext, double>(body.Formula!);
             if (!formula.IsSuccess || formula.Data is null)
                 AlgorithmHelpers.Throw(formula.Errors?[0].Message ?? "Composite formula failed to compile.", "algorithm.expression.parse");
+
             var del = formula.Data;
             return ctx => {
                 var previous = AlgorithmCallScope.Invoker;
                 AlgorithmCallScope.SetInvoker(name => {
                     if (!inline.TryGetValue(name, out var local))
                         return invokeChild(ctx, name);
+
                     AlgorithmCallScope.Enter(name);
                     try {
                         return local(ctx);
@@ -147,6 +157,7 @@ internal static class AlgorithmScorer
                         AlgorithmCallScope.Exit(name);
                     }
                 });
+
                 try {
                     return Trace(key, AlgorithmKind.Composite, null, () => del.Execute(ctx));
                 }
@@ -157,34 +168,36 @@ internal static class AlgorithmScorer
         }
 
         var weighted = body.Combiner == CombinerKind.WeightedSum;
-        return ctx => Trace(key, AlgorithmKind.Composite, null, () => {
-            var total = 0d;
-            foreach (var part in parts)
-                total += part.Run(ctx) * (weighted ? part.Weight : 1d);
-            return total;
-        });
+        return ctx => Trace(
+            key, AlgorithmKind.Composite, null, () => {
+                var total = 0d;
+                foreach (var part in parts)
+                    total += part.Run(ctx) * (weighted ? part.Weight : 1d);
+
+                return total;
+            });
     }
 
-    private static double Trace(string key, AlgorithmKind kind, string? input, Func<double> execute) => AlgorithmTrace.IsActive 
-        ? AlgorithmTrace.Run(key, kind, input, execute, static value => value)
-        : execute();
+    private static double Trace(string key, AlgorithmKind kind, string? input, Func<double> execute)
+        => AlgorithmTrace.IsActive ? AlgorithmTrace.Run(key, kind, input, execute, static value => value) : execute();
 
     private static Func<TContext, string> ReadText<TContext>(string input)
     {
         if (typeof(TContext) != typeof(AlgorithmContextBag))
-            return CompileProperty<TContext, string>(input, asText: true);
+            return CompileProperty<TContext, string>(input, true);
 
         Func<AlgorithmContextBag, string> read = bag => {
             AlgorithmHelpers.ThrowIf(!bag.TryGetValue(input, out var value) || value is null, $"Expression identifier '{input}' is missing.");
             return Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty;
         };
+
         return (Func<TContext, string>)(object)read;
     }
 
     private static Func<TContext, double> ReadNumber<TContext>(string input)
     {
         if (typeof(TContext) != typeof(AlgorithmContextBag))
-            return CompileProperty<TContext, double>(input, asText: false);
+            return CompileProperty<TContext, double>(input, false);
 
         Func<AlgorithmContextBag, double> read = bag => AlgorithmContextBag.ReadDouble(bag, input);
         return (Func<TContext, double>)(object)read;
@@ -196,31 +209,39 @@ internal static class AlgorithmScorer
             typeof(TContext).GetProperties(BindingFlags.Instance | BindingFlags.Public)
                 .FirstOrDefault(p => string.Equals(p.Name, input, StringComparison.OrdinalIgnoreCase) && p.GetGetMethod() is not null),
             $"'{input}' is not a property of {typeof(TContext).Name}.");
+
         var context = Expression.Parameter(typeof(TContext), "context");
         Expression access = Expression.Property(context, property);
         Expression body = asText
-            ? Expression.Call(typeof(Convert).GetMethod(nameof(Convert.ToString), [typeof(object), typeof(IFormatProvider)])!, Expression.Convert(access, typeof(object)), Expression.Constant(CultureInfo.InvariantCulture, typeof(IFormatProvider)))
+            ? Expression.Call(
+                typeof(Convert).GetMethod(nameof(Convert.ToString), [typeof(object), typeof(IFormatProvider)])!, Expression.Convert(access, typeof(object)),
+                Expression.Constant(CultureInfo.InvariantCulture, typeof(IFormatProvider)))
             : Expression.Convert(access, typeof(double));
+
         if (asText && body.Type != typeof(TValue))
             body = Expression.Coalesce(body, Expression.Constant(string.Empty));
+
         return Expression.Lambda<Func<TContext, TValue>>(body, context).Compile();
     }
 
     private sealed class Scorer<TContext, TResult>(string key, AlgorithmKind kind, Func<TContext, double> score) : IAlgorithm<TContext, TResult>
     {
-        public string Key { get; } = key;
-
         public AlgorithmKind Kind { get; } = kind;
+
+        public string Key { get; } = key;
 
         public TResult Execute(TContext context)
         {
             var points = score(context);
             if (typeof(TResult) == typeof(double))
                 return (TResult)(object)points;
+
             if (typeof(TResult) == typeof(decimal))
                 return (TResult)(object)(decimal)points;
+
             if (typeof(TResult) == typeof(object))
                 return (TResult)(object)points;
+
             return (TResult)Convert.ChangeType(points, typeof(TResult), CultureInfo.InvariantCulture);
         }
     }

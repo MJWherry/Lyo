@@ -3,18 +3,18 @@ using Lyo.Json;
 
 namespace Lyo.Xml;
 
-/// <summary>Options for <see cref="XmlService" />. The JSON contract fields control names, numbers, and omission. <see cref="JsonOptions.ReadNumbersFromStrings" /> starts true so element text such as <c>36</c> stays a number.</summary>
+/// <summary>
+/// Options for <see cref="XmlService" />. The JSON contract fields control names, numbers, and omission. <see cref="JsonOptions.ReadNumbersFromStrings" /> starts true so
+/// element text such as <c>36</c> stays a number.
+/// </summary>
 public sealed class XmlOptions : JsonOptions
 {
     /// <summary>Configuration section name. Nothing in this package binds it.</summary>
     public new const string SectionName = "Lyo:Xml";
 
-    /// <summary>Builds options. XML starts indented, and element text that is a canonical number is read as a number.</summary>
-    public XmlOptions()
-    {
-        WriteIndented = true;
-        ReadNumbersFromStrings = true;
-    }
+    private readonly Dictionary<string, bool?> _named = new(StringComparer.Ordinal);
+
+    private readonly Dictionary<(Type Type, string Name), bool?> _typed = [];
 
     /// <summary>Root element name. Empty uses the camelCase CLR name, or <c>items</c> for an array.</summary>
     public string RootElementName { get; set; } = "";
@@ -34,9 +34,16 @@ public sealed class XmlOptions : JsonOptions
     /// <summary>When true, an element whose text is empty is skipped. Nulls are already omitted by <see cref="JsonOptions.IgnoreNulls" />. Starts false.</summary>
     public bool OmitEmptyElements { get; set; }
 
-    private readonly Dictionary<(Type Type, string Name), bool?> _typed = [];
+    internal IReadOnlyDictionary<(Type Type, string Name), bool?> TypedMembers => _typed;
 
-    private readonly Dictionary<string, bool?> _named = new(StringComparer.Ordinal);
+    internal IReadOnlyDictionary<string, bool?> NamedMembers => _named;
+
+    /// <summary>Builds options. XML starts indented, and element text that is a canonical number is read as a number.</summary>
+    public XmlOptions()
+    {
+        WriteIndented = true;
+        ReadNumbersFromStrings = true;
+    }
 
     /// <summary>Marks a CLR property as an attribute or an element. This overrides <see cref="XmlMemberAttribute" /> on that property.</summary>
     public void Member<T>(string propertyName, bool? asAttribute = null)
@@ -51,8 +58,4 @@ public sealed class XmlOptions : JsonOptions
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(localName);
         _named[localName] = asAttribute;
     }
-
-    internal IReadOnlyDictionary<(Type Type, string Name), bool?> TypedMembers => _typed;
-
-    internal IReadOnlyDictionary<string, bool?> NamedMembers => _named;
 }

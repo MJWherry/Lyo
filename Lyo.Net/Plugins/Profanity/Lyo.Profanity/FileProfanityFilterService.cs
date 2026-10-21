@@ -13,9 +13,9 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Lyo.Profanity;
 
 /// <summary>
-/// File-backed profanity filter. Accepts: - Structured JSON: [{ "id", "match", "tags", "severity", "exceptions" }] with match as a regex. - Plain JSON
-/// array: ["word1", "word2", ...] turned into default entries (id=match=word, tags=[], severity=1, exceptions=[]). - Newline-separated text: one word per line, same defaults.
-/// Per-language lists come from Language and WordsByLanguage.
+/// File-backed profanity filter. Accepts: - Structured JSON: [{ "id", "match", "tags", "severity", "exceptions" }] with match as a regex. - Plain JSON array: ["word1",
+/// "word2", ...] turned into default entries (id=match=word, tags=[], severity=1, exceptions=[]). - Newline-separated text: one word per line, same defaults. Per-language lists come
+/// from Language and WordsByLanguage.
 /// </summary>
 public sealed class FileProfanityFilterService : IProfanityFilterService
 {

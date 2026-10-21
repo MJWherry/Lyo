@@ -5,10 +5,9 @@ namespace Lyo.Web.Automation.PuppeteerSharp.Tests;
 
 public sealed class PuppeteerSharpWebAutomationContractTests
     : WebAutomationContractTests<PuppeteerSharpWebAutomationTestEngineFixture>, IClassFixture<PuppeteerSharpWebAutomationTestEngineFixture>,
-    IClassFixture<WebAutomationTestPageHostFixture>
+        IClassFixture<WebAutomationTestPageHostFixture>
 {
-    public PuppeteerSharpWebAutomationContractTests(
-        PuppeteerSharpWebAutomationTestEngineFixture factory, WebAutomationTestPageHostFixture pageHost, ITestOutputHelper output)
+    public PuppeteerSharpWebAutomationContractTests(PuppeteerSharpWebAutomationTestEngineFixture factory, WebAutomationTestPageHostFixture pageHost, ITestOutputHelper output)
         : base(factory, pageHost)
         => factory.UseTestOutputLogger(output);
 }

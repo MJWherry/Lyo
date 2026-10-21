@@ -7,6 +7,5 @@ namespace Lyo.Ledger.Postgres.Database;
 public class LedgerDbContextFactory : IDesignTimeDbContextFactory<LedgerDbContext>
 {
     /// <inheritdoc />
-    public LedgerDbContext CreateDbContext(string[] args)
-        => new(PostgresDesignTime.CreateOptions<LedgerDbContext>("LEDGER_CONNECTION_STRING", PostgresLedgerOptions.Schema));
+    public LedgerDbContext CreateDbContext(string[] args) => new(PostgresDesignTime.CreateOptions<LedgerDbContext>("LEDGER_CONNECTION_STRING", PostgresLedgerOptions.Schema));
 }

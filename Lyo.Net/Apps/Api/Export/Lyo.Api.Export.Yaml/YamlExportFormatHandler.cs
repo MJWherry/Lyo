@@ -22,6 +22,7 @@ public sealed class YamlExportFormatHandler(IYamlService yaml) : IExportFormatHa
             await yaml.ExportFormattedToYamlAsync(items, formatters, stream, ct).ConfigureAwait(false);
         else
             await yaml.ExportToYamlAsync(items, stream, ct).ConfigureAwait(false);
+
         stream.Position = 0;
         return (stream, Format.FileType.MimeType, Format.DefaultFileName);
     }
@@ -37,6 +38,7 @@ public sealed class YamlExportFormatHandler(IYamlService yaml) : IExportFormatHa
             await yaml.ExportColumnsToYamlAsync(items, columns, stream, ct).ConfigureAwait(false);
         else
             await yaml.ExportToYamlAsync(items, stream, ct).ConfigureAwait(false);
+
         stream.Position = 0;
         return (stream, Format.FileType.MimeType, Format.DefaultFileName);
     }

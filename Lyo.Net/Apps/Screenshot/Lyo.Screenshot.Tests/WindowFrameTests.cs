@@ -8,10 +8,7 @@ public class WindowFrameTests
     public void Selectable_DropsBlankTitlesOwnWindowAndEmptyBounds()
     {
         DesktopWindow[] windows = [
-            new(1, "  ", new(0, 0, 10, 10)),
-            new(2, "lyo-shot", new(0, 0, 10, 10)),
-            new(3, "Notes", new(0, 0, 0, 10)),
-            new(4, "Editor", new(5, 6, 200, 100))
+            new(1, "  ", new(0, 0, 10, 10)), new(2, "lyo-shot", new(0, 0, 10, 10)), new(3, "Notes", new(0, 0, 0, 10)), new(4, "Editor", new(5, 6, 200, 100))
         ];
 
         var only = Assert.Single(DesktopWindowFilter.Selectable(windows));
@@ -32,7 +29,7 @@ public class WindowFrameTests
     public void ClippedTo_DropsThePartAboveTheScreen()
     {
         var clipped = new CaptureRegion(0, -32, 1920, 1192).ClippedTo(new(0, 0, 1920, 1200));
-        Assert.Equal(new CaptureRegion(0, 0, 1920, 1160), clipped);
+        Assert.Equal(new(0, 0, 1920, 1160), clipped);
     }
 
     [Fact]

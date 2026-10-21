@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using Lyo.Common.Core.Extensions;
-using Lyo.Parameters;
 using Lyo.Job.Models.Enums;
+using Lyo.Parameters;
 
 namespace Lyo.Job.Models.Response;
 
@@ -91,14 +91,10 @@ public sealed record JobRunRes
     /// <summary>Process id copied from the worker instance at start.</summary>
     public int? WorkerProcessId { get; init; }
 
-    /// <summary>
-    /// Typed value of the result with the given key (case-insensitive) via <see cref="LyoKeyedValueExtensions" />, or default when absent or not convertible.
-    /// </summary>
+    /// <summary>Typed value of the result with the given key (case-insensitive) via <see cref="LyoKeyedValueExtensions" />, or default when absent or not convertible.</summary>
     public T? GetResultValueAs<T>(string key, string? format = null) => JobRunResults.GetAs<T>(key, format);
 
-    /// <summary>
-    /// Typed value of the parameter with the given key (case-insensitive) via <see cref="LyoKeyedValueExtensions" />, or default when absent or not convertible.
-    /// </summary>
+    /// <summary>Typed value of the parameter with the given key (case-insensitive) via <see cref="LyoKeyedValueExtensions" />, or default when absent or not convertible.</summary>
     public T? GetParameterValueAs<T>(string key, string? format = null) => JobRunParameters.GetAs<T>(key, format);
 
     public Dictionary<string, string?> GetParameterDictionary() => JobRunParameters?.ToDictionary(i => i.Key.ToString(), i => i.Value) ?? new Dictionary<string, string?>();

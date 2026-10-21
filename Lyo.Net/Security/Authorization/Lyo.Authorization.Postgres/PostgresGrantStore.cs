@@ -32,12 +32,11 @@ public sealed class PostgresGrantStore : IGrantStore
         var now = Utc();
         await using var db = await _factory.CreateDbContextAsync(ct).ConfigureAwait(false);
         await using var tx = await db.Database.BeginTransactionAsync(ct).ConfigureAwait(false);
-        var active = await db.Grants.FirstOrDefaultAsync(g => g.RevokedAt == null
-            && g.Subject == normalized.Subject
-            && g.Action == normalized.Action
-            && g.ResourceType == normalized.ResourceType
-            && g.ResourceId == normalized.ResourceId
-            && g.TenantId == normalized.TenantId, ct).ConfigureAwait(false);
+        var active = await db.Grants.FirstOrDefaultAsync(
+                g => g.RevokedAt == null && g.Subject == normalized.Subject && g.Action == normalized.Action && g.ResourceType == normalized.ResourceType &&
+                    g.ResourceId == normalized.ResourceId && g.TenantId == normalized.TenantId, ct)
+            .ConfigureAwait(false);
+
         if (active is not null) {
             var inForce = active.ExpiresAt is null || active.ExpiresAt > now;
             if (inForce)
@@ -57,6 +56,7 @@ public sealed class PostgresGrantStore : IGrantStore
             ExpiresAt = normalized.ExpiresAt,
             CreatedTimestamp = now
         };
+
         db.Grants.Add(entity);
         try {
             await db.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -77,6 +77,7 @@ public sealed class PostgresGrantStore : IGrantStore
         var entity = await db.Grants.FirstOrDefaultAsync(g => g.Id == id, ct).ConfigureAwait(false);
         if (entity is null)
             throw new NotFoundException("Grant", id);
+
         if (entity.RevokedAt is null) {
             entity.RevokedAt = now;
             await db.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -91,17 +92,12 @@ public sealed class PostgresGrantStore : IGrantStore
         var normalized = GrantRules.Normalize(check);
         var now = Utc();
         await using var db = await _factory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var query = db.Grants.Where(g => g.Subject == normalized.Subject
-            && g.Action == normalized.Action
-            && g.ResourceType == normalized.ResourceType
-            && g.RevokedAt == null
-            && (g.ExpiresAt == null || g.ExpiresAt > now));
-        query = normalized.ResourceId is null
-            ? query.Where(g => g.ResourceId == null)
-            : query.Where(g => g.ResourceId == null || g.ResourceId == normalized.ResourceId);
-        query = normalized.TenantId is null
-            ? query.Where(g => g.TenantId == null)
-            : query.Where(g => g.TenantId == null || g.TenantId == normalized.TenantId);
+        var query = db.Grants.Where(g
+            => g.Subject == normalized.Subject && g.Action == normalized.Action && g.ResourceType == normalized.ResourceType && g.RevokedAt == null &&
+            (g.ExpiresAt == null || g.ExpiresAt > now));
+
+        query = normalized.ResourceId is null ? query.Where(g => g.ResourceId == null) : query.Where(g => g.ResourceId == null || g.ResourceId == normalized.ResourceId);
+        query = normalized.TenantId is null ? query.Where(g => g.TenantId == null) : query.Where(g => g.TenantId == null || g.TenantId == normalized.TenantId);
         return await query.AnyAsync(ct).ConfigureAwait(false);
     }
 
@@ -122,6 +118,7 @@ public sealed class PostgresGrantStore : IGrantStore
 
         if (!filter.IncludeRevoked)
             rows = rows.Where(g => g.RevokedAt == null);
+
         if (!filter.IncludeExpired)
             rows = rows.Where(g => g.ExpiresAt == null || g.ExpiresAt > now);
 
@@ -136,27 +133,26 @@ public sealed class PostgresGrantStore : IGrantStore
         try {
             await using var db = await _factory.CreateDbContextAsync(ct).ConfigureAwait(false);
             var ok = await db.Database.CanConnectAsync(ct).ConfigureAwait(false);
-            return ok
-                ? HealthResult.Healthy(DateTime.UtcNow - started)
-                : HealthResult.Unhealthy(DateTime.UtcNow - started, "Authorization store could not connect.");
+            return ok ? HealthResult.Healthy(DateTime.UtcNow - started) : HealthResult.Unhealthy(DateTime.UtcNow - started, "Authorization store could not connect.");
         }
         catch (Exception ex) {
             return HealthResult.Unhealthy(DateTime.UtcNow - started, "Authorization store probe failed.", exception: ex);
         }
     }
 
-    private static Grant ToGrant(GrantEntity entity) => new() {
-        Id = entity.Id,
-        Subject = entity.Subject,
-        Action = entity.Action,
-        ResourceType = entity.ResourceType,
-        ResourceId = entity.ResourceId,
-        TenantId = entity.TenantId,
-        GrantedBy = entity.GrantedBy,
-        ExpiresAt = entity.ExpiresAt,
-        RevokedAt = entity.RevokedAt,
-        CreatedTimestamp = entity.CreatedTimestamp
-    };
+    private static Grant ToGrant(GrantEntity entity)
+        => new() {
+            Id = entity.Id,
+            Subject = entity.Subject,
+            Action = entity.Action,
+            ResourceType = entity.ResourceType,
+            ResourceId = entity.ResourceId,
+            TenantId = entity.TenantId,
+            GrantedBy = entity.GrantedBy,
+            ExpiresAt = entity.ExpiresAt,
+            RevokedAt = entity.RevokedAt,
+            CreatedTimestamp = entity.CreatedTimestamp
+        };
 
     private DateTime Utc()
     {

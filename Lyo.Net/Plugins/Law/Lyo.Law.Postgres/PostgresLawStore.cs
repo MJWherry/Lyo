@@ -12,15 +12,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Law.Postgres;
 
-/// <summary>Postgres-backed <see cref="ILawStore"/>.</summary>
+/// <summary>Postgres-backed <see cref="ILawStore" />.</summary>
 public sealed class PostgresLawStore(IDbContextFactory<LawDbContext> contextFactory) : ILawStore, IHealth
 {
     /// <inheritdoc />
     public string HealthCheckName => "law-postgres";
 
     /// <inheritdoc />
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => PostgresHealth.CheckAsync(contextFactory, PostgresLawOptions.Schema, ct);
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => PostgresHealth.CheckAsync(contextFactory, PostgresLawOptions.Schema, ct);
 
     /// <inheritdoc />
     public async Task<LawJurisdictionRes> SaveJurisdictionAsync(LawJurisdictionReq jurisdiction, CancellationToken ct = default)
@@ -33,11 +32,11 @@ public sealed class PostgresLawStore(IDbContextFactory<LawDbContext> contextFact
         await using var context = await contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var existing = await context.Jurisdictions.FirstOrDefaultAsync(j => j.Key == key, ct).ConfigureAwait(false);
         if (existing is null) {
-            existing = new LawJurisdictionEntity { Id = LyoGuid.CreateV7(), Key = key, Name = name };
+            existing = new() { Id = LyoGuid.CreateV7(), Key = key, Name = name };
             context.Jurisdictions.Add(existing);
-        } else {
-            existing.Name = name;
         }
+        else
+            existing.Name = name;
 
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
         return ToRes(existing);
@@ -65,7 +64,7 @@ public sealed class PostgresLawStore(IDbContextFactory<LawDbContext> contextFact
         OperationHelpers.ThrowIfNull(jurisdiction, $"Unknown jurisdiction '{jurisdictionKey.Trim()}'.");
         var existing = await context.Codes.FirstOrDefaultAsync(c => c.JurisdictionId == jurisdiction.Id && c.Key == key, ct).ConfigureAwait(false);
         if (existing is null) {
-            existing = new LawCodeEntity { Id = LyoGuid.CreateV7(), JurisdictionId = jurisdiction.Id, Key = key };
+            existing = new() { Id = LyoGuid.CreateV7(), JurisdictionId = jurisdiction.Id, Key = key };
             context.Codes.Add(existing);
         }
 
@@ -82,9 +81,7 @@ public sealed class PostgresLawStore(IDbContextFactory<LawDbContext> contextFact
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(jurisdictionKey);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(codeKey);
         await using var context = await contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var row = await context.Codes.AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Jurisdiction.Key == jurisdictionKey.Trim() && c.Key == codeKey.Trim(), ct)
-            .ConfigureAwait(false);
+        var row = await context.Codes.AsNoTracking().FirstOrDefaultAsync(c => c.Jurisdiction.Key == jurisdictionKey.Trim() && c.Key == codeKey.Trim(), ct).ConfigureAwait(false);
         return row is null ? null : ToRes(row);
     }
 
@@ -101,27 +98,28 @@ public sealed class PostgresLawStore(IDbContextFactory<LawDbContext> contextFact
         await using var context = await contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var code = await RequireCodeAsync(context, request.JurisdictionKey, request.CodeKey, ct).ConfigureAwait(false);
         var parentId = await ResolveParentIdAsync(context, code.Id, sourceKey, request.ParentSourceKey, ct).ConfigureAwait(false);
-        var existing = await context.Nodes.Include(n => n.Annotations)
-            .FirstOrDefaultAsync(n => n.CodeId == code.Id && n.SourceKey == sourceKey, ct)
-            .ConfigureAwait(false);
+        var existing = await context.Nodes.Include(n => n.Annotations).FirstOrDefaultAsync(n => n.CodeId == code.Id && n.SourceKey == sourceKey, ct).ConfigureAwait(false);
         if (existing is not null && existing.ContentSha256 == hash)
-            return new LawNodeUpsertRes { Id = existing.Id, Unchanged = true };
+            return new() { Id = existing.Id, Unchanged = true };
 
         if (existing is null) {
-            existing = new LawNodeEntity { Id = LyoGuid.CreateV7(), CodeId = code.Id, SourceKey = sourceKey };
+            existing = new() { Id = LyoGuid.CreateV7(), CodeId = code.Id, SourceKey = sourceKey };
             context.Nodes.Add(existing);
-        } else {
+        }
+        else {
             var previous = existing.Annotations.ToArray();
             var next = await context.Revisions.Where(r => r.NodeId == existing.Id).MaxAsync(r => (int?)r.Revision, ct).ConfigureAwait(false) ?? 0;
-            context.Revisions.Add(new LawRevisionEntity {
-                Id = LyoGuid.CreateV7(),
-                NodeId = existing.Id,
-                Revision = next + 1,
-                Heading = existing.Heading,
-                Body = existing.Body,
-                ContentSha256 = existing.ContentSha256,
-                AnnotationsJson = Snapshot(previous)
-            });
+            context.Revisions.Add(
+                new() {
+                    Id = LyoGuid.CreateV7(),
+                    NodeId = existing.Id,
+                    Revision = next + 1,
+                    Heading = existing.Heading,
+                    Body = existing.Body,
+                    ContentSha256 = existing.ContentSha256,
+                    AnnotationsJson = Snapshot(previous)
+                });
+
             context.Annotations.RemoveRange(previous);
         }
 
@@ -139,7 +137,7 @@ public sealed class PostgresLawStore(IDbContextFactory<LawDbContext> contextFact
             context.Annotations.Add(ToEntity(note, existing.Id));
 
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
-        return new LawNodeUpsertRes { Id = existing.Id, Unchanged = false };
+        return new() { Id = existing.Id, Unchanged = false };
     }
 
     /// <inheritdoc />
@@ -158,8 +156,10 @@ public sealed class PostgresLawStore(IDbContextFactory<LawDbContext> contextFact
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(citation);
         await using var context = await contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var trimmed = citation.Trim();
-        var node = await DetailQuery(context).FirstOrDefaultAsync(
-            n => n.Code.Jurisdiction.Key == jurisdictionKey.Trim() && n.Code.Key == codeKey.Trim() && n.Citation == trimmed, ct).ConfigureAwait(false);
+        var node = await DetailQuery(context)
+            .FirstOrDefaultAsync(n => n.Code.Jurisdiction.Key == jurisdictionKey.Trim() && n.Code.Key == codeKey.Trim() && n.Citation == trimmed, ct)
+            .ConfigureAwait(false);
+
         return node is null ? null : await ToDetailAsync(context, node, ct).ConfigureAwait(false);
     }
 
@@ -167,12 +167,7 @@ public sealed class PostgresLawStore(IDbContextFactory<LawDbContext> contextFact
     public async Task<IReadOnlyList<LawNodeChildRes>> GetChildrenAsync(Guid parentId, CancellationToken ct = default)
     {
         await using var context = await contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var rows = await context.Nodes.AsNoTracking()
-            .Where(n => n.ParentId == parentId)
-            .OrderBy(n => n.SortOrder)
-            .ThenBy(n => n.Label)
-            .ToListAsync(ct)
-            .ConfigureAwait(false);
+        var rows = await context.Nodes.AsNoTracking().Where(n => n.ParentId == parentId).OrderBy(n => n.SortOrder).ThenBy(n => n.Label).ToListAsync(ct).ConfigureAwait(false);
         return rows.Select(ToChild).ToArray();
     }
 
@@ -204,11 +199,7 @@ public sealed class PostgresLawStore(IDbContextFactory<LawDbContext> contextFact
     public async Task<IReadOnlyList<LawRevisionRes>> ListRevisionsAsync(Guid nodeId, CancellationToken ct = default)
     {
         await using var context = await contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var rows = await context.Revisions.AsNoTracking()
-            .Where(r => r.NodeId == nodeId)
-            .OrderBy(r => r.Revision)
-            .ToListAsync(ct)
-            .ConfigureAwait(false);
+        var rows = await context.Revisions.AsNoTracking().Where(r => r.NodeId == nodeId).OrderBy(r => r.Revision).ToListAsync(ct).ConfigureAwait(false);
         return rows.Select(ToRes).ToArray();
     }
 
@@ -242,7 +233,7 @@ public sealed class PostgresLawStore(IDbContextFactory<LawDbContext> contextFact
         if (node.ParentId is Guid parentId)
             parentSourceKey = await context.Nodes.AsNoTracking().Where(n => n.Id == parentId).Select(n => n.SourceKey).FirstOrDefaultAsync(ct).ConfigureAwait(false);
 
-        return new LawNodeDetailRes {
+        return new() {
             Id = node.Id,
             CodeId = node.CodeId,
             JurisdictionKey = node.Code.Jurisdiction.Key,
@@ -267,7 +258,7 @@ public sealed class PostgresLawStore(IDbContextFactory<LawDbContext> contextFact
     {
         ArgumentHelpers.ThrowIfNull(note);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(note.Body);
-        return new LawAnnotationEntity {
+        return new() {
             Id = LyoGuid.CreateV7(),
             NodeId = nodeId,
             Kind = note.Kind,

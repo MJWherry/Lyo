@@ -10,17 +10,18 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Lyo.Outbox.Postgres;
 
 /// <summary>
-/// Writes outbox rows through <see cref="PostgresIdempotencyStore" /> on the caller's transaction. Does not commit.
-/// A different payload is a conflict: the store rolls the transaction back, then this type rethrows.
+/// Writes outbox rows through <see cref="PostgresIdempotencyStore" /> on the caller's transaction. Does not commit. A different payload is a conflict: the store rolls the
+/// transaction back, then this type rethrows.
 /// </summary>
 public sealed class PostgresOutbox : IOutbox
 {
     /// <summary>Fixed <see cref="IMetrics.RecordError" /> message.</summary>
     public const string StoreFailedMessage = "outbox.store_failed";
 
-    private readonly PostgresIdempotencyStore _store;
-    private readonly IMetrics _metrics;
     private readonly ILogger _logger;
+    private readonly IMetrics _metrics;
+
+    private readonly PostgresIdempotencyStore _store;
 
     /// <summary>Builds an outbox over the Postgres idempotency store.</summary>
     public PostgresOutbox(PostgresIdempotencyStore store, IMetrics? metrics = null, ILogger? logger = null)
@@ -45,7 +46,7 @@ public sealed class PostgresOutbox : IOutbox
             _metrics.IncrementCounter("outbox.enqueue", tags: [("outcome", outcome)]);
             _logger.LogInformation("Outbox {Destination} {Outcome}", message.Destination, outcome);
             _logger.LogDebug("Outbox {Id} {Destination}", inserted.Id, message.Destination);
-            return new OutboxEnqueueResult { Inserted = inserted.Inserted, Id = inserted.Id };
+            return new() { Inserted = inserted.Inserted, Id = inserted.Id };
         }
         catch (ConflictException) {
             _logger.LogInformation("Outbox {Destination} {Outcome}", message.Destination, "conflict");

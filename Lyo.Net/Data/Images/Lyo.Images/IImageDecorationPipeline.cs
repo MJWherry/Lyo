@@ -5,8 +5,8 @@ using Lyo.Result;
 namespace Lyo.Images;
 
 /// <summary>
-/// Fluent decoration chain. Stages queue lazily and run in order from <see cref="RunAsync" /> / <see cref="ToByteArrayAsync" />. One in-memory image is reused so steps do not
-/// serialize between calls. Build via <see cref="IImageDecorationService.Pipeline(byte[])" />.
+/// Fluent decoration chain. Stages queue lazily and run in order from <see cref="RunAsync" /> / <see cref="ToByteArrayAsync" />. One in-memory image is reused so steps do
+/// not serialize between calls. Build via <see cref="IImageDecorationService.Pipeline(byte[])" />.
 /// </summary>
 public interface IImageDecorationPipeline
 {

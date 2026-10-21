@@ -4,7 +4,8 @@
     <DialogContent>
         @if (_detail is null) {
             <MudProgressCircular Indeterminate="true" Size="Size.Small"/>
-        } else {
+        }
+        else {
             <MudStack Spacing="2">
                 <MudText Typo="Typo.subtitle2">@_detail.JurisdictionKey / @_detail.CodeKey</MudText>
                 <MudText Typo="Typo.body2">@_detail.Citation</MudText>
@@ -29,7 +30,8 @@
                 <MudText Typo="Typo.subtitle1">Children</MudText>
                 @if (_children.Count == 0) {
                     <MudText Typo="Typo.body2">None</MudText>
-                } else {
+                }
+                else {
                     @foreach (var child in _children) {
                         <MudText Typo="Typo.body2">@child.Label @child.Heading</MudText>
                     }
@@ -39,6 +41,8 @@
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Close">Close</MudButton>
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Save" Disabled="@(_detail is null || string.IsNullOrWhiteSpace(_heading) || string.IsNullOrWhiteSpace(_label))">Save</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Save"
+                   Disabled="@(_detail is null || string.IsNullOrWhiteSpace(_heading) || string.IsNullOrWhiteSpace(_label))">Save
+        </MudButton>
     </DialogActions>
 </MudDialog>

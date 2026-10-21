@@ -1,6 +1,8 @@
 # Lyo.Story.Web.Components
 
-Blazor / MudBlazor story builder. Drop `StoryManagement` on a host page to list graphs for a tenant and optional game, then author the open graph. The graph is a tested layout drawn as SVG: boxes are 220 by 72 with a 96 column gap and a 20 row gap. Choice arrows follow the last `gotoNode` effect. The host must already register `IStoryClient`. This package has no `Add*` registration.
+Blazor / MudBlazor story builder. Drop `StoryManagement` on a host page to list graphs for a tenant and optional game, then author the open graph. The graph is a tested layout
+drawn as SVG: boxes are 220 by 72 with a 96 column gap and a 20 row gap. Choice arrows follow the last `gotoNode` effect. The host must already register `IStoryClient`. This
+package has no `Add*` registration.
 
 ## Features
 
@@ -21,27 +23,27 @@ Blazor / MudBlazor story builder. Drop `StoryManagement` on a host page to list 
 
 ## Parameters
 
-| Parameter | Notes |
-| ------------- | ---------------------------------------------------------------------- |
+| Parameter     | Notes                                                                  |
+|---------------|------------------------------------------------------------------------|
 | `StoryClient` | `IStoryClient`. Required. The client already carries its route prefix. |
-| `BaseRoute` | Route prefix shown to the host. Defaults to `"Story"`. |
-| `TenantId` | Tenant whose stories are listed. Null lists stories with no tenant. |
-| `GameKey` | Optional game filter. |
+| `BaseRoute`   | Route prefix shown to the host. Defaults to `"Story"`.                 |
+| `TenantId`    | Tenant whose stories are listed. Null lists stories with no tenant.    |
+| `GameKey`     | Optional game filter.                                                  |
 
 ## Component catalog
 
-| Component | Role |
-| ----------------------- | ------------------------------------------------------------------------------------------------ |
-| `StoryManagement` | Library of graph headers. Create, open, duplicate, delete. Opens the workbench. |
-| `StoryBuilderWorkbench` | Tabs: Visual, Request JSON, Play. |
-| `StoryGraphView` | SVG of the computed layout. Click a node to select it. |
-| `StoryNodeEditor` | Key, title, scene, presentation (none / text / cutscene), body, media, start, ending. |
-| `StoryChoiceEditor` | Prompt, order, `visibleWhen` and `enabledWhen`. |
-| `StoryEffectListEditor` | Set, unset, increment, goto, end playthrough, invoke action. Reorder. |
-| `StoryVariableEditor` | Boolean, integer, string, default. |
-| `StoryActionEditor` | Named action and its effect list. |
-| `StoryReactionEditor` | Trigger, scope node or variable, once, when, effects. |
-| `StoryPlayView` | Start, current node, enabled choices, Advance, variable bag, event log, causes for one variable. |
+| Component               | Role                                                                                             |
+|-------------------------|--------------------------------------------------------------------------------------------------|
+| `StoryManagement`       | Library of graph headers. Create, open, duplicate, delete. Opens the workbench.                  |
+| `StoryBuilderWorkbench` | Tabs: Visual, Request JSON, Play.                                                                |
+| `StoryGraphView`        | SVG of the computed layout. Click a node to select it.                                           |
+| `StoryNodeEditor`       | Key, title, scene, presentation (none / text / cutscene), body, media, start, ending.            |
+| `StoryChoiceEditor`     | Prompt, order, `visibleWhen` and `enabledWhen`.                                                  |
+| `StoryEffectListEditor` | Set, unset, increment, goto, end playthrough, invoke action. Reorder.                            |
+| `StoryVariableEditor`   | Boolean, integer, string, default.                                                               |
+| `StoryActionEditor`     | Named action and its effect list.                                                                |
+| `StoryReactionEditor`   | Trigger, scope node or variable, once, when, effects.                                            |
+| `StoryPlayView`         | Start, current node, enabled choices, Advance, variable bag, event log, causes for one variable. |
 
 ## Dependencies
 

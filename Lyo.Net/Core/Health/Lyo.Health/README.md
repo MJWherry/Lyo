@@ -1,6 +1,7 @@
 # Lyo.Health
 
-Contract for services that report their own health. Implement `IHealth`. There is no central health service. A check returns `HealthResult` with status, timings, and optional metadata.
+Contract for services that report their own health. Implement `IHealth`. There is no central health service. A check returns `HealthResult` with status, timings, and optional
+metadata.
 
 ## Examples
 
@@ -47,20 +48,22 @@ HealthResult.Unhealthy(sw.Elapsed, "Database connection failed", metadata: null,
 
 A probe outcome is an immutable, sealed `HealthResult`:
 
-| Member | Type | Notes |
-| ----------- | --------------------------------------- | ------------------------------------------------------------------------------ |
-| `IsHealthy` | `bool` | `true` when healthy, `false` when not. |
-| `Duration` | `TimeSpan` | Elapsed probe time (usually from `Stopwatch`). |
-| `CheckedAt` | `DateTime` | UTC instant the probe finished (set by the factory helpers). |
-| `Message` | `string?` | Optional human-readable summary; filled with the exception message on failure. |
-| `Metadata` | `IReadOnlyDictionary<string, object?>?` | Schema, version, connection info, key-id, and similar. |
-| `Exception` | `Exception?` | Exception captured when the probe threw. |
+| Member      | Type                                    | Notes                                                                          |
+|-------------|-----------------------------------------|--------------------------------------------------------------------------------|
+| `IsHealthy` | `bool`                                  | `true` when healthy, `false` when not.                                         |
+| `Duration`  | `TimeSpan`                              | Elapsed probe time (usually from `Stopwatch`).                                 |
+| `CheckedAt` | `DateTime`                              | UTC instant the probe finished (set by the factory helpers).                   |
+| `Message`   | `string?`                               | Optional human-readable summary; filled with the exception message on failure. |
+| `Metadata`  | `IReadOnlyDictionary<string, object?>?` | Schema, version, connection info, key-id, and similar.                         |
+| `Exception` | `Exception?`                            | Exception captured when the probe threw.                                       |
 
 Prefer the static factories over constructing the type yourself:
 
 ## How to use it
 
-Ask the service for health directly. Service interfaces (`IFileStorageService`, `ICacheService`, `IMqService`) extend `IHealth`. Health comes from the service. No separate registration. Hosts that want an aggregate view typically resolve `IEnumerable<IHealth>` and fan out `CheckHealthAsync` in parallel, then publish the resulting `HealthResult` collection.
+Ask the service for health directly. Service interfaces (`IFileStorageService`, `ICacheService`, `IMqService`) extend `IHealth`. Health comes from the service. No separate
+registration. Hosts that want an aggregate view typically resolve `IEnumerable<IHealth>` and fan out `CheckHealthAsync` in parallel, then publish the resulting `HealthResult`
+collection.
 
 ## Dependencies
 

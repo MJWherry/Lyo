@@ -3,7 +3,10 @@ using Lyo.Exceptions;
 
 namespace Lyo.IO.FileSystem;
 
-/// <summary><see cref="IFileSystem" /> on <see cref="System.IO" /> with <see cref="PathStyle.Host" />. Listing only; live watch is <c>WatchableLocalFileSystem</c>.</summary>
+/// <summary>
+/// <see cref="IFileSystem" /> on <see cref="System.IO" /> with <see cref="Common.Core.Pathing.PathStyle.Host" />. Listing only; live watch is <c>WatchableLocalFileSystem</c>
+/// .
+/// </summary>
 public sealed class LocalFileSystem : IFileSystem
 {
     private const int BufferSize = 81920;
@@ -30,8 +33,8 @@ public sealed class LocalFileSystem : IFileSystem
 
     /// <inheritdoc />
     public FileSystemCapabilities Capabilities
-        => FileSystemCapabilities.Read | FileSystemCapabilities.Write | FileSystemCapabilities.CreateDirectory | FileSystemCapabilities.Delete
-           | FileSystemCapabilities.Move | FileSystemCapabilities.MoveDirectory | FileSystemCapabilities.Copy | FileSystemCapabilities.Append;
+        => FileSystemCapabilities.Read | FileSystemCapabilities.Write | FileSystemCapabilities.CreateDirectory | FileSystemCapabilities.Delete | FileSystemCapabilities.Move |
+            FileSystemCapabilities.MoveDirectory | FileSystemCapabilities.Copy | FileSystemCapabilities.Append;
 
     /// <inheritdoc />
     public IFileSystemWatch? Watch(string path, bool recursive = true) => null;
@@ -153,7 +156,6 @@ public sealed class LocalFileSystem : IFileSystem
         var src = Jail(source);
         var dst = Jail(dest);
         EnsureParentDirectory(dst);
-
         var sourceIsDirectory = Directory.Exists(src);
         if (!sourceIsDirectory && !File.Exists(src))
             throw new FileNotFoundException($"Source not found: {source}", source);
@@ -210,33 +212,33 @@ public sealed class LocalFileSystem : IFileSystem
     }
 
     /// <inheritdoc />
-    public Stream OpenRead(string path) => OpenRead(path, async: false);
+    public Stream OpenRead(string path) => OpenRead(path, false);
 
     /// <inheritdoc />
     public Task<Stream> OpenReadAsync(string path, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
-        return Task.FromResult(OpenRead(path, async: true));
+        return Task.FromResult(OpenRead(path, true));
     }
 
     /// <inheritdoc />
-    public Stream OpenCreate(string path) => OpenCreate(path, async: false);
+    public Stream OpenCreate(string path) => OpenCreate(path, false);
 
     /// <inheritdoc />
     public Task<Stream> OpenCreateAsync(string path, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
-        return Task.FromResult(OpenCreate(path, async: true));
+        return Task.FromResult(OpenCreate(path, true));
     }
 
     /// <inheritdoc />
-    public Stream OpenAppend(string path) => OpenAppend(path, async: false);
+    public Stream OpenAppend(string path) => OpenAppend(path, false);
 
     /// <inheritdoc />
     public Task<Stream> OpenAppendAsync(string path, CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
-        return Task.FromResult(OpenAppend(path, async: true));
+        return Task.FromResult(OpenAppend(path, true));
     }
 
     /// <inheritdoc />
@@ -311,8 +313,8 @@ public sealed class LocalFileSystem : IFileSystem
     }
 
     /// <summary>
-    /// One stat call for the common case. <see cref="FileSystemInfo" /> caches its attributes on first access, so callers read as many properties as they like off the
-    /// returned instance without paying again.
+    /// One stat call for the common case. <see cref="FileSystemInfo" /> caches its attributes on first access, so callers read as many properties as they like off the returned
+    /// instance without paying again.
     /// </summary>
     private FileSystemInfo StatOrThrow(string path)
     {

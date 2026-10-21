@@ -5,7 +5,6 @@ using Lyo.Api.Mapping;
 using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 using Lyo.Exceptions;
-using Lyo.Ledger;
 using Lyo.Ledger.Postgres;
 using Lyo.Ledger.Postgres.Database;
 using Microsoft.AspNetCore.Builder;
@@ -64,51 +63,52 @@ public static class Extensions
                 ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance,
                 new() { BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateCombPostgres() : ctx.Entity.Id })
             .Build();
+
         app.CreateBuilder<LedgerDbContext, LedgerJournalEntity, LedgerJournalEntity, LedgerJournalEntity, Guid>("Ledger/Journals", "Ledger")
             .WithCrud(ApiFeatureSet.ReadOnly + ExportApiFeature.Instance, new())
             .Build();
+
         app.CreateBuilder<LedgerDbContext, LedgerJournalLineEntity, LedgerJournalLineEntity, LedgerJournalLineEntity, Guid>("Ledger/JournalLines", "Ledger")
             .WithCrud(ApiFeatureSet.ReadOnly + ExportApiFeature.Instance, new())
             .Build();
 
         app.MapPost(
-            "/Ledger/Journals/post",
-            async (PostLedgerJournalRequest req, ILedgerStore store, CancellationToken ct) => {
-                ArgumentHelpers.ThrowIfNull(req);
-                var journal = new LedgerJournalRecord {
-                    Memo = req.Memo,
-                    Source = string.IsNullOrWhiteSpace(req.SourceEntityType) || string.IsNullOrWhiteSpace(req.SourceEntityId)
-                        ? null
-                        : EntityRef.ForKey(req.SourceEntityType, req.SourceEntityId)
-                };
-                var posted = await store.PostJournalAsync(journal, req.Lines ?? [], req.TenantId, ct).ConfigureAwait(false);
-                return Results.Ok(posted);
-            }).WithTags("Ledger");
+                "/Ledger/Journals/post", async (PostLedgerJournalRequest req, ILedgerStore store, CancellationToken ct) => {
+                    ArgumentHelpers.ThrowIfNull(req);
+                    var journal = new LedgerJournalRecord {
+                        Memo = req.Memo,
+                        Source = string.IsNullOrWhiteSpace(req.SourceEntityType) || string.IsNullOrWhiteSpace(req.SourceEntityId)
+                            ? null
+                            : EntityRef.ForKey(req.SourceEntityType, req.SourceEntityId)
+                    };
 
-        app.MapPost(
-            "/Ledger/Journals/{id:guid}/post",
-            async (Guid id, Guid? tenantId, ILedgerStore store, CancellationToken ct)
-                => Results.Ok(await store.PostJournalAsync(id, tenantId, ct).ConfigureAwait(false)))
+                    var posted = await store.PostJournalAsync(journal, req.Lines ?? [], req.TenantId, ct).ConfigureAwait(false);
+                    return Results.Ok(posted);
+                })
             .WithTags("Ledger");
 
         app.MapPost(
-            "/Ledger/Journals/{id:guid}/void",
-            async (Guid id, Guid? tenantId, ILedgerStore store, CancellationToken ct)
-                => Results.Ok(await store.VoidJournalAsync(id, tenantId, ct).ConfigureAwait(false)))
+                "/Ledger/Journals/{id:guid}/post",
+                async (Guid id, Guid? tenantId, ILedgerStore store, CancellationToken ct) => Results.Ok(await store.PostJournalAsync(id, tenantId, ct).ConfigureAwait(false)))
+            .WithTags("Ledger");
+
+        app.MapPost(
+                "/Ledger/Journals/{id:guid}/void",
+                async (Guid id, Guid? tenantId, ILedgerStore store, CancellationToken ct) => Results.Ok(await store.VoidJournalAsync(id, tenantId, ct).ConfigureAwait(false)))
             .WithTags("Ledger");
 
         app.MapGet(
-            "/Ledger/Clients/{clientId:guid}/ar-balance",
-            async (Guid clientId, Guid? tenantId, ILedgerStore store, CancellationToken ct)
-                => Results.Ok(await store.GetClientArBalanceAsync(clientId, tenantId, ct).ConfigureAwait(false)))
+                "/Ledger/Clients/{clientId:guid}/ar-balance",
+                async (Guid clientId, Guid? tenantId, ILedgerStore store, CancellationToken ct)
+                    => Results.Ok(await store.GetClientArBalanceAsync(clientId, tenantId, ct).ConfigureAwait(false)))
             .WithTags("Ledger");
 
         app.MapPost(
-            "/Ledger/ChartOfAccounts/ensure",
-            async (Guid? tenantId, ILedgerStore store, CancellationToken ct) => {
-                await store.EnsureChartOfAccountsAsync(tenantId, ct).ConfigureAwait(false);
-                return Results.NoContent();
-            }).WithTags("Ledger");
+                "/Ledger/ChartOfAccounts/ensure", async (Guid? tenantId, ILedgerStore store, CancellationToken ct) => {
+                    await store.EnsureChartOfAccountsAsync(tenantId, ct).ConfigureAwait(false);
+                    return Results.NoContent();
+                })
+            .WithTags("Ledger");
 
         return app;
     }

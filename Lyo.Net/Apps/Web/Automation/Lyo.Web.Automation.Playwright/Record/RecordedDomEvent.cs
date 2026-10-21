@@ -35,7 +35,10 @@ public sealed record RecordedPick(
     string VariableName,
     string? AttributeName = null);
 
-/// <summary>A step typed into the panel. <see cref="LocatorKind" /> and <see cref="Value" /> locate an element. <see cref="Action" /> is click, input, or clear. <see cref="Text" /> is what an input action types.</summary>
+/// <summary>
+/// A step typed into the panel. <see cref="LocatorKind" /> and <see cref="Value" /> locate an element. <see cref="Action" /> is click, input, or clear. <see cref="Text" />
+/// is what an input action types.
+/// </summary>
 public sealed record RecordedInsert(
     string StepType,
     string? VariableName = null,

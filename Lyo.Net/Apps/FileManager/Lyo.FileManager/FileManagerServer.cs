@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Lyo.Common.Core.Identifiers;
+using Lyo.KeyStore;
 
 namespace Lyo.FileManager;
 
@@ -108,14 +109,15 @@ public sealed class FileManagerServer
     {
         if (!string.IsNullOrWhiteSpace(Passphrase))
             return true;
+
         if (Keys.Any(key => !string.IsNullOrWhiteSpace(key.Id) && !string.IsNullOrWhiteSpace(key.Secret)))
             return true;
+
         return KeyStoreKind == FileManagerKeyStoreKind.Aws;
     }
 
     /// <summary>FileMetadata route with the default filled in.</summary>
-    public string MetadataRouteOrDefault()
-        => string.IsNullOrWhiteSpace(FileMetadataRoute) ? Route.Trim().Trim('/') + "/FileMetadata" : FileMetadataRoute.Trim().Trim('/');
+    public string MetadataRouteOrDefault() => string.IsNullOrWhiteSpace(FileMetadataRoute) ? Route.Trim().Trim('/') + "/FileMetadata" : FileMetadataRoute.Trim().Trim('/');
 
     /// <inheritdoc />
     public override string ToString() => string.IsNullOrWhiteSpace(Name) ? Kind.ToString() : Name;
@@ -204,8 +206,10 @@ public sealed class FileManagerKeyStore
     {
         if (Kind == FileManagerKeyStoreKind.Aws)
             return true;
+
         if (!string.IsNullOrWhiteSpace(Passphrase))
             return true;
+
         return Keys?.Any(key => !string.IsNullOrWhiteSpace(key.Id) && (!string.IsNullOrWhiteSpace(key.Secret) || !string.IsNullOrWhiteSpace(key.RawKey))) == true;
     }
 
@@ -232,7 +236,7 @@ public sealed class FileManagerStoredKey
     public bool Current { get; set; }
 
     /// <summary>Metadata from the key file, including the derivation salt.</summary>
-    public Lyo.KeyStore.KeyMetadata? Metadata { get; set; }
+    public KeyMetadata? Metadata { get; set; }
 }
 
 /// <summary>Metadata database for a local server.</summary>

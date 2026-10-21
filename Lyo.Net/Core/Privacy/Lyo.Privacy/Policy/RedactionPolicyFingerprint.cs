@@ -9,8 +9,8 @@ using Lyo.Privacy.Rules;
 namespace Lyo.Privacy.Policy;
 
 /// <summary>
-/// Stable fingerprints of a <see cref="RedactionPolicy" /> for audit (SHA-256 prefix, lowercase hex). Secret literals from rules are omitted; built-ins append coarse
-/// option data only.
+/// Stable fingerprints of a <see cref="RedactionPolicy" /> for audit (SHA-256 prefix, lowercase hex). Secret literals from rules are omitted; built-ins append coarse option
+/// data only.
 /// </summary>
 public static class RedactionPolicyFingerprint
 {

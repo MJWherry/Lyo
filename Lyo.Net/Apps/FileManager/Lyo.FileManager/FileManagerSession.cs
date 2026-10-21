@@ -3,35 +3,23 @@ using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage;
 using Microsoft.Extensions.Logging;
+using FileStoragePresence = Lyo.Api.FileStorage.Models.FileStoragePresence;
 
 namespace Lyo.FileManager;
 
 /// <summary>Server list, the open folder, and file, folder, transfer, and key actions.</summary>
 public sealed class FileManagerSession : IDisposable
 {
+    private readonly List<FileManagerConnection> _connections = [];
+    private readonly List<FileManagerKeyStore> _keyStores = [];
     private readonly Func<FileManagerServer, IFileManagerApi> _open;
     private readonly List<FileManagerServer> _servers = [];
-    private readonly List<FileManagerKeyStore> _keyStores = [];
-    private readonly List<FileManagerConnection> _connections = [];
     private FileManagerConfiguredHost? _configured;
     private bool _keyStoresLoaded;
     private string? _looseError;
 
-    /// <summary>Opens each server through <c>FileManagerApis.Open</c>. <see cref="Logs" /> is passed into a local host.</summary>
-    public FileManagerSession()
-    {
-        _open = OpenSaved;
-    }
-
     /// <summary>Logger factory for a local host. Null keeps library logs off the screen.</summary>
     public ILoggerFactory? Logs { get; set; }
-
-    /// <summary>Opens each server with <paramref name="open" />. Tests pass a fake.</summary>
-    public FileManagerSession(Func<FileManagerServer, IFileManagerApi> open)
-    {
-        ArgumentHelpers.ThrowIfNull(open);
-        _open = open;
-    }
 
     /// <summary>Saved servers.</summary>
     public IReadOnlyList<FileManagerServer> Servers => _servers;
@@ -86,6 +74,30 @@ public sealed class FileManagerSession : IDisposable
     /// <summary>Counts from the last bulk action.</summary>
     public FileManagerActionResult? LastAction { get; private set; }
 
+    private FileManagerConnection? Current
+        => Active == null ? null : _connections.FirstOrDefault(connection => connection.ServerId == Active.Id && connection.KeyStoreId == OpenKey(Active));
+
+    /// <summary>Opens each server through <c>FileManagerApis.Open</c>. <see cref="Logs" /> is passed into a local host.</summary>
+    public FileManagerSession() => _open = OpenSaved;
+
+    /// <summary>Opens each server with <paramref name="open" />. Tests pass a fake.</summary>
+    public FileManagerSession(Func<FileManagerServer, IFileManagerApi> open)
+    {
+        ArgumentHelpers.ThrowIfNull(open);
+        _open = open;
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        foreach (var connection in _connections)
+            connection.Api.Dispose();
+
+        _connections.Clear();
+        _configured?.Dispose();
+        _configured = null;
+    }
+
     /// <summary>Adds a remote server and selects it.</summary>
     public FileManagerServer AddRemote(string name, string baseUrl, string? route = null, string? metadataRoute = null)
     {
@@ -99,18 +111,14 @@ public sealed class FileManagerSession : IDisposable
             Route = string.IsNullOrWhiteSpace(route) ? "FileStorage" : route.Trim().Trim('/'),
             FileMetadataRoute = metadataRoute?.Trim().Trim('/') ?? ""
         };
+
         _servers.Add(server);
         Active = server;
         return server;
     }
 
     /// <summary>Adds a local server and selects it.</summary>
-    public FileManagerServer AddLocal(
-        string name,
-        string rootDirectory,
-        FileManagerMetadataKind metadata,
-        string? connectionString = null,
-        string? passphrase = null)
+    public FileManagerServer AddLocal(string name, string rootDirectory, FileManagerMetadataKind metadata, string? connectionString = null, string? passphrase = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(rootDirectory);
@@ -123,6 +131,7 @@ public sealed class FileManagerSession : IDisposable
             ConnectionString = string.IsNullOrWhiteSpace(connectionString) ? null : connectionString.Trim(),
             Passphrase = string.IsNullOrWhiteSpace(passphrase) ? null : passphrase
         };
+
         _servers.Add(server);
         Active = server;
         return server;
@@ -139,10 +148,7 @@ public sealed class FileManagerSession : IDisposable
         return server;
     }
 
-    /// <summary>
-    /// Replaces the key store catalog. Used when settings load.
-    /// After this, connect uses <see cref="FileManagerServer.KeyStoreId" /> and ignores a passphrase left on the server.
-    /// </summary>
+    /// <summary>Replaces the key store catalog. Used when settings load. After this, connect uses <see cref="FileManagerServer.KeyStoreId" /> and ignores a passphrase left on the server.</summary>
     public void ReplaceKeyStores(IReadOnlyList<FileManagerKeyStore> stores)
     {
         ArgumentHelpers.ThrowIfNull(stores);
@@ -156,6 +162,7 @@ public sealed class FileManagerSession : IDisposable
     {
         if (server?.KeyStoreId is not Guid id)
             return null;
+
         return _keyStores.FirstOrDefault(store => store.Id == id);
     }
 
@@ -165,6 +172,7 @@ public sealed class FileManagerSession : IDisposable
         ArgumentHelpers.ThrowIfNull(host);
         if (_configured != null)
             throw new InvalidOperationException("Configured stores are already loaded.");
+
         _configured = host;
         foreach (var server in host.Servers)
             Include(server);
@@ -242,13 +250,14 @@ public sealed class FileManagerSession : IDisposable
             if (!health.IsHealthy) {
                 if (existing == null || !ReferenceEquals(api, existing.Api))
                     api.Dispose();
+
                 Error = string.IsNullOrWhiteSpace(health.Message) ? "Unhealthy." : health.Message;
                 return;
             }
 
             if (existing == null) {
                 var keyName = keyId is Guid id ? _keyStores.FirstOrDefault(item => item.Id == id)?.Name : null;
-                existing = new FileManagerConnection(server, api, keyId, keyName);
+                existing = new(server, api, keyId, keyName);
                 _connections.Add(existing);
             }
             else if (!ReferenceEquals(api, existing.Api)) {
@@ -265,6 +274,7 @@ public sealed class FileManagerSession : IDisposable
         catch (Exception ex) {
             if (existing == null || !ReferenceEquals(api, existing.Api))
                 api.Dispose();
+
             Error = ex.Message;
         }
     }
@@ -279,8 +289,7 @@ public sealed class FileManagerSession : IDisposable
     /// <summary>Directory prefixes on the open connection for <paramref name="serverId" />. Does not change the visible folder.</summary>
     public async Task<IReadOnlyList<string>> FolderPrefixesAsync(Guid serverId, CancellationToken ct)
     {
-        var connection = _connections.FirstOrDefault(item => item.ServerId == serverId)
-            ?? throw new InvalidOperationException("Connect that server before listing folders.");
+        var connection = _connections.FirstOrDefault(item => item.ServerId == serverId) ?? throw new InvalidOperationException("Connect that server before listing folders.");
         var found = new List<string>();
         var pending = new Queue<string?>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -292,9 +301,11 @@ public sealed class FileManagerSession : IDisposable
             foreach (var entry in listed.Entries) {
                 if (!entry.IsDirectory)
                     continue;
+
                 var path = string.IsNullOrWhiteSpace(entry.PathPrefix) ? entry.Name : entry.PathPrefix.Trim().Trim('/');
                 if (string.IsNullOrWhiteSpace(path) || !seen.Add(path))
                     continue;
+
                 found.Add(path);
                 pending.Enqueue(path);
             }
@@ -309,7 +320,7 @@ public sealed class FileManagerSession : IDisposable
         var connection = RequireConnection();
         var listed = await connection.Api.ListAsync(pathPrefix, ct).ConfigureAwait(false);
         var entries = MergePending(connection, listed.Entries, pathPrefix);
-        return entries.Count == listed.Entries.Count ? listed : new FileManagerListing(entries, listed.Truncated);
+        return entries.Count == listed.Entries.Count ? listed : new(entries, listed.Truncated);
     }
 
     /// <summary>Opens <paramref name="prefix" />. Pending folders stay until <see cref="RefreshAsync" />.</summary>
@@ -326,6 +337,7 @@ public sealed class FileManagerSession : IDisposable
         ArgumentHelpers.ThrowIfNull(entry);
         if (!entry.IsDirectory)
             return;
+
         RequireConnection().Prefix = entry.PathPrefix;
         await ReloadAsync(ct).ConfigureAwait(false);
     }
@@ -345,9 +357,9 @@ public sealed class FileManagerSession : IDisposable
         var connection = RequireConnection();
         var segment = name.Trim().Trim('/');
         var prefix = string.IsNullOrEmpty(connection.Prefix) ? segment : connection.Prefix + "/" + segment;
-        var entry = new FileManagerEntry(segment, true, prefix, null, Lyo.Api.FileStorage.Models.FileStoragePresence.None, 0, null, true);
+        var entry = new FileManagerEntry(segment, true, prefix, null, FileStoragePresence.None, 0, null, true);
         connection.Pending.Add(entry);
-        connection.Entries = [..connection.Entries, entry];
+        connection.Entries = [.. connection.Entries, entry];
     }
 
     /// <summary>Runs a name and prefix query.</summary>
@@ -358,8 +370,7 @@ public sealed class FileManagerSession : IDisposable
     }
 
     /// <summary>Uploads a file into <see cref="Prefix" />.</summary>
-    public Task UploadAsync(string filePath, FileManagerUploadOptions? options, CancellationToken ct)
-        => UploadAsync(filePath, Current?.Prefix, options, ct);
+    public Task UploadAsync(string filePath, FileManagerUploadOptions? options, CancellationToken ct) => UploadAsync(filePath, Current?.Prefix, options, ct);
 
     /// <summary>Uploads a file onto <paramref name="pathPrefix" /> and leaves <see cref="Prefix" /> unchanged.</summary>
     public async Task UploadAsync(string filePath, string? pathPrefix, FileManagerUploadOptions? options, CancellationToken ct)
@@ -375,9 +386,7 @@ public sealed class FileManagerSession : IDisposable
         ArgumentHelpers.ThrowIfNull(entry);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(destinationPath);
         var api = RequireApi();
-        return entry.FileId is Guid id
-            ? api.DownloadAsync(id, destinationPath, ct)
-            : api.DownloadPhysicalAsync(entry.PhysicalKey ?? entry.Name, destinationPath, ct);
+        return entry.FileId is Guid id ? api.DownloadAsync(id, destinationPath, ct) : api.DownloadPhysicalAsync(entry.PhysicalKey ?? entry.Name, destinationPath, ct);
     }
 
     /// <summary>Zips catalog files, or every file under a folder.</summary>
@@ -395,6 +404,7 @@ public sealed class FileManagerSession : IDisposable
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
         if (entry.FileId is Guid id)
             return RunAsync([token => RequireApi().RenameAsync(id, name.Trim(), token)], ct);
+
         var key = entry.PhysicalKey ?? entry.Name;
         return RunAsync([token => RequireApi().RenamePhysicalAsync(key, name.Trim(), token)], ct);
     }
@@ -417,11 +427,14 @@ public sealed class FileManagerSession : IDisposable
         var files = await FilesUnderAsync(folder, ct).ConfigureAwait(false);
         var source = folder.PathPrefix ?? "";
         var result = await RunAsync(
-                files.Select(file => (Func<CancellationToken, Task>)(token => RequireApi().MoveAsync(
-                    file.FileId!.Value, PrefixRewrite.Rewrite(source, destination, file.PathPrefix), token))).ToList(), ct)
+                files.Select(file => (Func<CancellationToken, Task>)(token
+                        => RequireApi().MoveAsync(file.FileId!.Value, PrefixRewrite.Rewrite(source, destination, file.PathPrefix), token)))
+                    .ToList(), ct)
             .ConfigureAwait(false);
+
         if (result.Failed == 0)
-            RelocatePending(RequireConnection(), source, destination, copy: false);
+            RelocatePending(RequireConnection(), source, destination, false);
+
         return result;
     }
 
@@ -431,11 +444,14 @@ public sealed class FileManagerSession : IDisposable
         var files = await FilesUnderAsync(folder, ct).ConfigureAwait(false);
         var source = folder.PathPrefix ?? "";
         var result = await RunAsync(
-                files.Select(file => (Func<CancellationToken, Task>)(token => RequireApi().CopyAsync(
-                    file.FileId!.Value, PrefixRewrite.Rewrite(source, destination, file.PathPrefix), token))).ToList(), ct)
+                files.Select(file => (Func<CancellationToken, Task>)(token
+                        => RequireApi().CopyAsync(file.FileId!.Value, PrefixRewrite.Rewrite(source, destination, file.PathPrefix), token)))
+                    .ToList(), ct)
             .ConfigureAwait(false);
+
         if (result.Failed == 0)
-            RelocatePending(RequireConnection(), source, destination, copy: true);
+            RelocatePending(RequireConnection(), source, destination, true);
+
         return result;
     }
 
@@ -467,8 +483,7 @@ public sealed class FileManagerSession : IDisposable
     public Task<string> PresignedReadAsync(Guid fileId, CancellationToken ct) => RequireApi().PresignedReadAsync(fileId, ct);
 
     /// <summary>Loads metadata.</summary>
-    public Task<FileStoreResult> GetMetadataAsync(Guid fileId, bool includeDeleted, CancellationToken ct)
-        => RequireApi().GetMetadataAsync(fileId, includeDeleted, ct);
+    public Task<FileStoreResult> GetMetadataAsync(Guid fileId, bool includeDeleted, CancellationToken ct) => RequireApi().GetMetadataAsync(fileId, includeDeleted, ct);
 
     /// <summary>Lists key ids.</summary>
     public Task<IReadOnlyList<string>> ListKeyIdsAsync(CancellationToken ct) => RequireApi().ListKeyIdsAsync(ct);
@@ -483,24 +498,20 @@ public sealed class FileManagerSession : IDisposable
     }
 
     /// <summary>Migrates files off a source key.</summary>
-    public async Task<DekMigrationResult> MigrateAsync(
-        string sourceKeyId,
-        string? sourceKeyVersion,
-        string? targetKeyId,
-        string? targetKeyVersion,
-        CancellationToken ct)
+    public async Task<DekMigrationResult> MigrateAsync(string sourceKeyId, string? sourceKeyVersion, string? targetKeyId, string? targetKeyVersion, CancellationToken ct)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourceKeyId);
         var result = await RequireApi()
             .MigrateAsync(sourceKeyId.Trim(), EmptyToNull(sourceKeyVersion), EmptyToNull(targetKeyId), EmptyToNull(targetKeyVersion), ct)
             .ConfigureAwait(false);
+
         await ReloadAsync(ct).ConfigureAwait(false);
         return result;
     }
 
     /// <summary>
-    /// Copies or moves catalog files onto another open connection. Move tombstones the source only after the destination hashes match. A remote connection throws before any write.
-    /// <paramref name="destinationPrefix" /> places the copies in that folder. Blank keeps each file's current prefix.
+    /// Copies or moves catalog files onto another open connection. Move tombstones the source only after the destination hashes match. A remote connection throws before any
+    /// write. <paramref name="destinationPrefix" /> places the copies in that folder. Blank keeps each file's current prefix.
     /// </summary>
     public async Task<FileStorageTransferResult> TransferAsync(
         Guid destinationServerId,
@@ -518,8 +529,9 @@ public sealed class FileManagerSession : IDisposable
         if (destinationServerId == source.ServerId)
             throw new InvalidOperationException("Transfer needs a different connection.");
 
-        var destination = _connections.FirstOrDefault(connection => connection.ServerId == destinationServerId)
-            ?? throw new InvalidOperationException("Connect the destination before transferring.");
+        var destination = _connections.FirstOrDefault(connection => connection.ServerId == destinationServerId) ??
+            throw new InvalidOperationException("Connect the destination before transferring.");
+
         if (source.Api is not IFileManagerTransfer sourceTransfer || destination.Api is not IFileManagerTransfer destinationTransfer)
             throw new InvalidOperationException("Transfer needs two in-process file stores.");
 
@@ -527,8 +539,7 @@ public sealed class FileManagerSession : IDisposable
         if (ids.Count == 0)
             throw new InvalidOperationException("Select a catalog file.");
 
-        var request = new FileStorageTransferRequest(
-            FileStorageTransferScope.Everything, keyMode, targetKeyId, targetKeyVersion, Disposition: disposition, FileIds: ids.ToArray());
+        var request = new FileStorageTransferRequest(FileStorageTransferScope.Everything, keyMode, targetKeyId, targetKeyVersion, Disposition: disposition, FileIds: ids.ToArray());
         var result = await FileStorageTransfer.TransferAsync(sourceTransfer.Endpoint, destinationTransfer.Endpoint, request, progress, ct).ConfigureAwait(false);
         var prefix = EmptyToNull(destinationPrefix);
         if (prefix != null) {
@@ -546,20 +557,8 @@ public sealed class FileManagerSession : IDisposable
     {
         if (Current?.Api is not IFileManagerTransfer)
             return [];
-        return _connections
-            .Where(connection => connection.ServerId != Active!.Id && connection.Api is IFileManagerTransfer)
-            .Select(connection => connection.Server)
-            .ToArray();
-    }
 
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        foreach (var connection in _connections)
-            connection.Api.Dispose();
-        _connections.Clear();
-        _configured?.Dispose();
-        _configured = null;
+        return _connections.Where(connection => connection.ServerId != Active!.Id && connection.Api is IFileManagerTransfer).Select(connection => connection.Server).ToArray();
     }
 
     private async Task<FileManagerActionResult> RunFilesAsync(
@@ -573,6 +572,7 @@ public sealed class FileManagerSession : IDisposable
         foreach (var file in files) {
             if (file.FileId is not Guid id)
                 continue;
+
             steps.Add(token => call(api, id, token));
         }
 
@@ -591,6 +591,7 @@ public sealed class FileManagerSession : IDisposable
             var key = file.PhysicalKey;
             if (string.IsNullOrWhiteSpace(key))
                 continue;
+
             steps.Add(token => call(api, key, token));
         }
 
@@ -616,6 +617,7 @@ public sealed class FileManagerSession : IDisposable
         Error = errors.Count == 0 ? null : $"{succeeded} succeeded, {errors.Count} failed.";
         if (succeeded > 0)
             await ReloadAsync(ct).ConfigureAwait(false);
+
         return result;
     }
 
@@ -624,6 +626,7 @@ public sealed class FileManagerSession : IDisposable
         ArgumentHelpers.ThrowIfNull(folder);
         if (!folder.IsDirectory || string.IsNullOrWhiteSpace(folder.PathPrefix))
             return [];
+
         var found = new List<FileManagerEntry>();
         var pending = new Stack<string>();
         pending.Push(folder.PathPrefix);
@@ -633,6 +636,7 @@ public sealed class FileManagerSession : IDisposable
             foreach (var entry in listed.Entries) {
                 if (entry.Pending)
                     continue;
+
                 if (entry.IsDirectory && !string.IsNullOrWhiteSpace(entry.PathPrefix))
                     pending.Push(entry.PathPrefix);
                 else if (entry.FileId != null)
@@ -674,6 +678,7 @@ public sealed class FileManagerSession : IDisposable
             var next = PrefixRewrite.Rewrite(sourceFolder, destinationFolder, entry.PathPrefix);
             if (SamePrefix(next, entry.PathPrefix))
                 continue;
+
             var moved = entry with { Name = Segment(next), PathPrefix = next };
             if (copy) {
                 if (pending.All(item => !SamePrefix(item.PathPrefix, next)) && copies.All(item => !SamePrefix(item.PathPrefix, next)))
@@ -690,11 +695,10 @@ public sealed class FileManagerSession : IDisposable
     {
         var parent = string.IsNullOrWhiteSpace(prefix) ? null : prefix.Trim().Trim('/');
         var extras = connection.Pending.Where(entry => PrefixRewrite.Parent(entry.PathPrefix) == parent && listed.All(item => item.PathPrefix != entry.PathPrefix)).ToArray();
-        return extras.Length == 0 ? listed : [..listed, ..extras];
+        return extras.Length == 0 ? listed : [.. listed, .. extras];
     }
 
-    private static bool SamePrefix(string? left, string? right)
-        => string.Equals(left?.Trim().Trim('/') ?? "", right?.Trim().Trim('/') ?? "", StringComparison.Ordinal);
+    private static bool SamePrefix(string? left, string? right) => string.Equals(left?.Trim().Trim('/') ?? "", right?.Trim().Trim('/') ?? "", StringComparison.Ordinal);
 
     private static string Segment(string? prefix)
     {
@@ -703,21 +707,16 @@ public sealed class FileManagerSession : IDisposable
         return slash < 0 ? trimmed : trimmed[(slash + 1)..];
     }
 
-    private FileManagerServer Find(Guid id)
-        => _servers.FirstOrDefault(s => s.Id == id) ?? throw new InvalidOperationException("Server was not found.");
+    private FileManagerServer Find(Guid id) => _servers.FirstOrDefault(s => s.Id == id) ?? throw new InvalidOperationException("Server was not found.");
 
-    private FileManagerServer RequireActive()
-        => Active ?? throw new InvalidOperationException("Select a server.");
-
-    private FileManagerConnection? Current => Active == null
-        ? null
-        : _connections.FirstOrDefault(connection => connection.ServerId == Active.Id && connection.KeyStoreId == OpenKey(Active));
+    private FileManagerServer RequireActive() => Active ?? throw new InvalidOperationException("Select a server.");
 
     private void CloseServer(Guid id)
     {
         for (var index = _connections.Count - 1; index >= 0; index--) {
             if (_connections[index].ServerId != id)
                 continue;
+
             var connection = _connections[index];
             _connections.RemoveAt(index);
             connection.Api.Dispose();
@@ -730,11 +729,9 @@ public sealed class FileManagerSession : IDisposable
             connection.Server.KeyStoreId = connection.KeyStoreId;
     }
 
-    private static Guid? OpenKey(FileManagerServer server)
-        => server.Kind == FileManagerServerKind.Remote ? null : server.KeyStoreId;
+    private static Guid? OpenKey(FileManagerServer server) => server.Kind == FileManagerServerKind.Remote ? null : server.KeyStoreId;
 
-    private FileManagerConnection RequireConnection()
-        => Current ?? throw new InvalidOperationException("Connect before using the server.");
+    private FileManagerConnection RequireConnection() => Current ?? throw new InvalidOperationException("Connect before using the server.");
 
     private IFileManagerApi RequireApi() => RequireConnection().Api;
 
@@ -742,8 +739,10 @@ public sealed class FileManagerSession : IDisposable
     {
         if (server.Configured)
             return OpenConfigured(server);
+
         if (!_keyStoresLoaded)
             return FileManagerApis.Open(server, Logs);
+
         var store = server.KeyStoreId is Guid id ? _keyStores.FirstOrDefault(item => item.Id == id) : null;
         return FileManagerApis.Open(server, Logs, store);
     }
@@ -752,6 +751,7 @@ public sealed class FileManagerSession : IDisposable
     {
         if (_configured == null)
             throw new InvalidOperationException($"File storage '{server.Name}' is not registered.");
+
         var store = _keyStoresLoaded && server.KeyStoreId is Guid id ? _keyStores.FirstOrDefault(item => item.Id == id) : null;
         return _configured.Open(server, store);
     }

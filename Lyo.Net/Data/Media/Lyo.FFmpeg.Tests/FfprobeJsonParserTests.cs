@@ -6,14 +6,15 @@ public class FfprobeJsonParserTests
     public void Parse_AudioOnly_StringSampleRate()
     {
         const string json = """
-            {
-              "format": { "duration": "1.5", "format_name": "mp3", "bit_rate": "128000", "size": "24000",
-                "tags": { "title": "Clip", "artist": "Test" } },
-              "streams": [
-                { "index": 0, "codec_type": "audio", "codec_name": "mp3", "sample_rate": "44100", "channels": 2 }
-              ]
-            }
-            """;
+                            {
+                              "format": { "duration": "1.5", "format_name": "mp3", "bit_rate": "128000", "size": "24000",
+                                "tags": { "title": "Clip", "artist": "Test" } },
+                              "streams": [
+                                { "index": 0, "codec_type": "audio", "codec_name": "mp3", "sample_rate": "44100", "channels": 2 }
+                              ]
+                            }
+                            """;
+
         var result = FfprobeJsonParser.Parse("/tmp/a.mp3", json);
         Assert.True(result.IsSuccess);
         var probe = result.Data!;
@@ -30,16 +31,17 @@ public class FfprobeJsonParserTests
     public void Parse_VideoAndAudio_FpsRational()
     {
         const string json = """
-            {
-              "format": { "duration": "2.0", "format_name": "mov,mp4,m4a,3gp,3g2,mj2" },
-              "streams": [
-                { "index": 0, "codec_type": "video", "codec_name": "h264", "width": 1920, "height": 1080,
-                  "pix_fmt": "yuv420p", "avg_frame_rate": "30/1", "r_frame_rate": "30/1",
-                  "disposition": { "attached_pic": 0 } },
-                { "index": 1, "codec_type": "audio", "codec_name": "aac", "sample_rate": "48000", "channels": 2 }
-              ]
-            }
-            """;
+                            {
+                              "format": { "duration": "2.0", "format_name": "mov,mp4,m4a,3gp,3g2,mj2" },
+                              "streams": [
+                                { "index": 0, "codec_type": "video", "codec_name": "h264", "width": 1920, "height": 1080,
+                                  "pix_fmt": "yuv420p", "avg_frame_rate": "30/1", "r_frame_rate": "30/1",
+                                  "disposition": { "attached_pic": 0 } },
+                                { "index": 1, "codec_type": "audio", "codec_name": "aac", "sample_rate": "48000", "channels": 2 }
+                              ]
+                            }
+                            """;
+
         var probe = FfprobeJsonParser.Parse("clip.mp4", json).Data!;
         Assert.True(probe.HasVideo);
         Assert.True(probe.HasAudio);
@@ -54,15 +56,16 @@ public class FfprobeJsonParserTests
     public void Parse_MultiStream_KeepsAllStreams()
     {
         const string json = """
-            {
-              "format": { "duration": "3.0", "format_name": "matroska,webm" },
-              "streams": [
-                { "index": 0, "codec_type": "video", "codec_name": "vp9", "width": 640, "height": 360, "avg_frame_rate": "24/1" },
-                { "index": 1, "codec_type": "audio", "codec_name": "opus", "sample_rate": "48000", "channels": 2 },
-                { "index": 2, "codec_type": "audio", "codec_name": "opus", "sample_rate": "48000", "channels": 1 }
-              ]
-            }
-            """;
+                            {
+                              "format": { "duration": "3.0", "format_name": "matroska,webm" },
+                              "streams": [
+                                { "index": 0, "codec_type": "video", "codec_name": "vp9", "width": 640, "height": 360, "avg_frame_rate": "24/1" },
+                                { "index": 1, "codec_type": "audio", "codec_name": "opus", "sample_rate": "48000", "channels": 2 },
+                                { "index": 2, "codec_type": "audio", "codec_name": "opus", "sample_rate": "48000", "channels": 1 }
+                              ]
+                            }
+                            """;
+
         var probe = FfprobeJsonParser.Parse("clip.webm", json).Data!;
         Assert.Equal(3, probe.Streams.Count);
         Assert.Equal("vp9", probe.VideoCodec);
@@ -74,15 +77,16 @@ public class FfprobeJsonParserTests
     public void Parse_AttachedPic_IsNotHasVideo()
     {
         const string json = """
-            {
-              "format": { "format_name": "mp3" },
-              "streams": [
-                { "index": 0, "codec_type": "audio", "codec_name": "mp3", "sample_rate": "44100", "channels": 2 },
-                { "index": 1, "codec_type": "video", "codec_name": "mjpeg", "width": 600, "height": 600,
-                  "disposition": { "attached_pic": 1 } }
-              ]
-            }
-            """;
+                            {
+                              "format": { "format_name": "mp3" },
+                              "streams": [
+                                { "index": 0, "codec_type": "audio", "codec_name": "mp3", "sample_rate": "44100", "channels": 2 },
+                                { "index": 1, "codec_type": "video", "codec_name": "mjpeg", "width": 600, "height": 600,
+                                  "disposition": { "attached_pic": 1 } }
+                              ]
+                            }
+                            """;
+
         var probe = FfprobeJsonParser.Parse("song.mp3", json).Data!;
         Assert.True(probe.HasAudio);
         Assert.False(probe.HasVideo);
@@ -91,8 +95,7 @@ public class FfprobeJsonParserTests
     }
 
     [Fact]
-    public void TryParseRational_RejectsZeroOverZero()
-        => Assert.False(FfprobeJsonParser.TryParseRational("0/0", out _));
+    public void TryParseRational_RejectsZeroOverZero() => Assert.False(FfprobeJsonParser.TryParseRational("0/0", out var _));
 
     [Fact]
     public void Parse_StreamSource_FilePathNull()

@@ -4,9 +4,8 @@ using Lyo.Exceptions;
 namespace Lyo.Rfid;
 
 /// <summary>
-/// One ISO 15693 tag on an <see cref="IIso15693Transceiver"/>.
-/// <see cref="OpenAsync"/> runs a one-slot inventory, then GET SYSTEM INFORMATION, and keeps the block size from that response.
-/// A Type 2 NFC reader cannot carry these frames. Place one tag in the field; a second tag collides on the one-slot inventory.
+/// One ISO 15693 tag on an <see cref="IIso15693Transceiver" />. <see cref="OpenAsync" /> runs a one-slot inventory, then GET SYSTEM INFORMATION, and keeps the block size
+/// from that response. A Type 2 NFC reader cannot carry these frames. Place one tag in the field; a second tag collides on the one-slot inventory.
 /// </summary>
 public sealed class Iso15693Tag : IRfidTag
 {
@@ -30,27 +29,6 @@ public sealed class Iso15693Tag : IRfidTag
 
     /// <inheritdoc />
     public int BlockCount { get; }
-
-    /// <summary>
-    /// Inventories the tag in the field and reads its block size.
-    /// The transceiver must already speak ISO 15693. This call does not take ownership of it.
-    /// </summary>
-    public static async Task<Iso15693Tag> OpenAsync(IIso15693Transceiver transceiver, CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        ArgumentHelpers.ThrowIfNull(transceiver);
-        var inventory = await ExchangeAsync(transceiver, Iso15693Frames.Inventory(), cancellationToken).ConfigureAwait(false);
-        if (inventory.Length != 9)
-            throw new RfidException("ISO 15693 inventory response did not include a UID.");
-
-        var uid = new byte[8];
-        for (var i = 0; i < 8; i++)
-            uid[i] = inventory[8 - i];
-
-        var info = await ExchangeAsync(transceiver, Iso15693Frames.GetSystemInformation(uid), cancellationToken).ConfigureAwait(false);
-        var (blockCount, blockSize) = MemorySize(info);
-        return new(transceiver, uid, blockSize, blockCount);
-    }
 
     /// <inheritdoc />
     public async Task<byte[]> ReadBlocksAsync(int startBlock, int blockCount, CancellationToken cancellationToken)
@@ -77,6 +55,24 @@ public sealed class Iso15693Tag : IRfidTag
 
     /// <inheritdoc />
     public ValueTask DisposeAsync() => default;
+
+    /// <summary>Inventories the tag in the field and reads its block size. The transceiver must already speak ISO 15693. This call does not take ownership of it.</summary>
+    public static async Task<Iso15693Tag> OpenAsync(IIso15693Transceiver transceiver, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentHelpers.ThrowIfNull(transceiver);
+        var inventory = await ExchangeAsync(transceiver, Iso15693Frames.Inventory(), cancellationToken).ConfigureAwait(false);
+        if (inventory.Length != 9)
+            throw new RfidException("ISO 15693 inventory response did not include a UID.");
+
+        var uid = new byte[8];
+        for (var i = 0; i < 8; i++)
+            uid[i] = inventory[8 - i];
+
+        var info = await ExchangeAsync(transceiver, Iso15693Frames.GetSystemInformation(uid), cancellationToken).ConfigureAwait(false);
+        var (blockCount, blockSize) = MemorySize(info);
+        return new(transceiver, uid, blockSize, blockCount);
+    }
 
     private static (int BlockCount, int BlockSize) MemorySize(ReadOnlySpan<byte> payload)
     {

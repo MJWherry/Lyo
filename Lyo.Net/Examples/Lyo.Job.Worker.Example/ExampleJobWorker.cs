@@ -1,16 +1,16 @@
-using Lyo.Parameters;
 using Lyo.Common.Metadata.Records;
 using Lyo.Job.Client;
 using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Security;
 using Lyo.MessageQueue;
 using Lyo.Metrics;
+using Lyo.Parameters;
 
 namespace Lyo.Job.Worker.Example;
 
 /// <summary>
-/// Sample consumer for <c>job.run.example</c>. Waits <c>DelaySeconds</c> (2 if omitted), publishes progress, then finishes successfully. Point it at Test API so Test Gateway Jobs can
-/// try dispatch, cancellation, and the worker registry.
+/// Sample consumer for <c>job.run.example</c>. Waits <c>DelaySeconds</c> (2 if omitted), publishes progress, then finishes successfully. Point it at Test API so Test Gateway
+/// Jobs can try dispatch, cancellation, and the worker registry.
 /// </summary>
 public sealed class ExampleJobWorker(
     IMqService mq,

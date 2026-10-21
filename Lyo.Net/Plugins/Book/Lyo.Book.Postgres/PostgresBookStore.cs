@@ -1,13 +1,12 @@
 using Lyo.Book.Enums;
 using Lyo.Book.Postgres.Database;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 using Lyo.Health;
 using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using Npgsql.EntityFrameworkCore.PostgreSQL;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Book.Postgres;
 
@@ -23,20 +22,12 @@ public sealed class PostgresBookStore : IBookStore, IHealth
     }
 
     /// <inheritdoc />
-    public string HealthCheckName => "book-postgres";
-
-    /// <inheritdoc />
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => PostgresHealth.CheckAsync(_contextFactory, PostgresBookOptions.Schema, ct);
-
-    /// <inheritdoc />
     public async Task SaveBookAsync(Book book, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(book);
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var existing = book.Id != Guid.Empty
-            ? await ctx.Books
-                .Include(b => b.AlternateTitles)
+            ? await ctx.Books.Include(b => b.AlternateTitles)
                 .Include(b => b.Identifiers)
                 .Include(b => b.Contributors)
                 .Include(b => b.GenreLinks)
@@ -46,11 +37,10 @@ public sealed class PostgresBookStore : IBookStore, IHealth
 
         var id = existing?.Id ?? (book.Id == Guid.Empty ? LyoGuid.CreateV7() : book.Id);
         if (existing == null)
-            ctx.Books.Add(existing = new BookEntity { Id = id, CreatedTimestamp = DateTime.UtcNow });
+            ctx.Books.Add(existing = new() { Id = id, CreatedTimestamp = DateTime.UtcNow });
 
         ApplyBookFields(existing, book);
         existing.PrimaryAuthor = ComputePrimaryAuthor(book.Contributors);
-
         ctx.AlternateTitles.RemoveRange(existing.AlternateTitles);
         foreach (var alt in book.AlternateTitles)
             ctx.AlternateTitles.Add(ToAlternateTitleEntity(alt, id));
@@ -65,7 +55,7 @@ public sealed class PostgresBookStore : IBookStore, IHealth
 
         ctx.BookGenres.RemoveRange(existing.GenreLinks);
         foreach (var genreId in book.GenreIds.Distinct())
-            ctx.BookGenres.Add(new BookBookGenreEntity { BookId = id, GenreId = genreId });
+            ctx.BookGenres.Add(new() { BookId = id, GenreId = genreId });
 
         await SaveCatchingConflictAsync(ctx, "Book", ct).ConfigureAwait(false);
         book.Id = id;
@@ -101,6 +91,7 @@ public sealed class PostgresBookStore : IBookStore, IHealth
             .Select(i => (Guid?)i.BookId)
             .FirstOrDefaultAsync(ct)
             .ConfigureAwait(false);
+
         return bookId is null ? null : await GetBookByIdAsync(bookId.Value, ct).ConfigureAwait(false);
     }
 
@@ -113,7 +104,6 @@ public sealed class PostgresBookStore : IBookStore, IHealth
 
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var q = LoadBookQuery(ctx);
-
         if (!string.IsNullOrWhiteSpace(query.TitleContains)) {
             var needle = query.TitleContains.ToLowerInvariant();
             q = q.Where(b => b.Title.ToLower().Contains(needle) || b.AlternateTitles.Any(a => a.Title.ToLower().Contains(needle)));
@@ -136,20 +126,28 @@ public sealed class PostgresBookStore : IBookStore, IHealth
 
         if (query.TypeId.HasValue)
             q = q.Where(b => b.TypeId == query.TypeId);
+
         if (query.FormatId.HasValue)
             q = q.Where(b => b.FormatId == query.FormatId);
+
         if (query.SeriesId.HasValue)
             q = q.Where(b => b.SeriesId == query.SeriesId);
+
         if (query.Status.HasValue)
             q = q.Where(b => b.Status == query.Status.Value);
+
         if (!string.IsNullOrWhiteSpace(query.Language))
             q = q.Where(b => b.Language == query.Language);
+
         if (!string.IsNullOrWhiteSpace(query.Audience))
             q = q.Where(b => b.Audience == query.Audience);
+
         if (query.PublishedYearFrom.HasValue)
             q = q.Where(b => b.PublishedYear >= query.PublishedYearFrom);
+
         if (query.PublishedYearTo.HasValue)
             q = q.Where(b => b.PublishedYear <= query.PublishedYearTo);
+
         if (query.GenreIds is { Count: > 0 }) {
             var genreIds = query.GenreIds;
             q = q.Where(b => b.GenreLinks.Any(g => genreIds.Contains(g.GenreId)));
@@ -165,10 +163,9 @@ public sealed class PostgresBookStore : IBookStore, IHealth
 
         if (!string.IsNullOrWhiteSpace(query.FullText)) {
             var tsQuery = query.FullText;
-            q = q.Where(b =>
-                b.Chapters.Any(c =>
-                    EF.Functions.ToTsVector("english", (c.Title ?? "") + " " + (c.Subtitle ?? "")).Matches(EF.Functions.PlainToTsQuery("english", tsQuery))
-                    || c.Pages.Any(p => p.SearchVector.Matches(EF.Functions.PlainToTsQuery("english", tsQuery)))));
+            q = q.Where(b => b.Chapters.Any(c
+                => EF.Functions.ToTsVector("english", (c.Title ?? "") + " " + (c.Subtitle ?? "")).Matches(EF.Functions.PlainToTsQuery("english", tsQuery)) ||
+                c.Pages.Any(p => p.SearchVector.Matches(EF.Functions.PlainToTsQuery("english", tsQuery)))));
         }
 
         q = q.OrderBy(b => b.Title).Skip(query.Skip);
@@ -196,12 +193,10 @@ public sealed class PostgresBookStore : IBookStore, IHealth
     {
         ArgumentHelpers.ThrowIfNull(series);
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var existing = series.Id != Guid.Empty
-            ? await ctx.Series.Include(s => s.AlternateTitles).FirstOrDefaultAsync(s => s.Id == series.Id, ct).ConfigureAwait(false)
-            : null;
+        var existing = series.Id != Guid.Empty ? await ctx.Series.Include(s => s.AlternateTitles).FirstOrDefaultAsync(s => s.Id == series.Id, ct).ConfigureAwait(false) : null;
         var id = existing?.Id ?? (series.Id == Guid.Empty ? LyoGuid.CreateV7() : series.Id);
         if (existing == null)
-            ctx.Series.Add(existing = new BookSeriesEntity { Id = id, CreatedTimestamp = DateTime.UtcNow });
+            ctx.Series.Add(existing = new() { Id = id, CreatedTimestamp = DateTime.UtcNow });
 
         existing.Title = series.Title;
         existing.Slug = series.Slug;
@@ -217,7 +212,6 @@ public sealed class PostgresBookStore : IBookStore, IHealth
         existing.EndedDate = ToDateOnly(series.EndedDate);
         existing.CoverImageRef = series.CoverImageRef;
         existing.Source = series.Source;
-
         ctx.SeriesAlternateTitles.RemoveRange(existing.AlternateTitles);
         foreach (var alt in series.AlternateTitles)
             ctx.SeriesAlternateTitles.Add(ToSeriesAlternateTitleEntity(alt, id));
@@ -274,12 +268,15 @@ public sealed class PostgresBookStore : IBookStore, IHealth
     {
         ArgumentHelpers.ThrowIfNull(type);
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        await UpsertLookupAsync(ctx.Types, type.Id, () => new BookTypeEntity(), e => {
-            e.Slug = type.Slug;
-            e.Name = type.Name;
-            e.Description = type.Description;
-            e.SortOrder = type.SortOrder;
-        }, id => type.Id = id, ct).ConfigureAwait(false);
+        await UpsertLookupAsync(
+                ctx.Types, type.Id, () => new(), e => {
+                    e.Slug = type.Slug;
+                    e.Name = type.Name;
+                    e.Description = type.Description;
+                    e.SortOrder = type.SortOrder;
+                }, id => type.Id = id, ct)
+            .ConfigureAwait(false);
+
         await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 
@@ -319,12 +316,15 @@ public sealed class PostgresBookStore : IBookStore, IHealth
     {
         ArgumentHelpers.ThrowIfNull(format);
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        await UpsertLookupAsync(ctx.Formats, format.Id, () => new BookFormatEntity(), e => {
-            e.Slug = format.Slug;
-            e.Name = format.Name;
-            e.Description = format.Description;
-            e.SortOrder = format.SortOrder;
-        }, id => format.Id = id, ct).ConfigureAwait(false);
+        await UpsertLookupAsync(
+                ctx.Formats, format.Id, () => new(), e => {
+                    e.Slug = format.Slug;
+                    e.Name = format.Name;
+                    e.Description = format.Description;
+                    e.SortOrder = format.SortOrder;
+                }, id => format.Id = id, ct)
+            .ConfigureAwait(false);
+
         await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 
@@ -368,13 +368,16 @@ public sealed class PostgresBookStore : IBookStore, IHealth
         if (genre.ParentGenreId is { } parentId)
             await EnsureNoGenreCycleAsync(ctx, id, parentId, ct).ConfigureAwait(false);
 
-        await UpsertLookupAsync(ctx.Genres, genre.Id, () => new BookGenreEntity(), e => {
-            e.ParentGenreId = genre.ParentGenreId;
-            e.Slug = genre.Slug;
-            e.Name = genre.Name;
-            e.Description = genre.Description;
-            e.SortOrder = genre.SortOrder;
-        }, assigned => genre.Id = assigned, ct).ConfigureAwait(false);
+        await UpsertLookupAsync(
+                ctx.Genres, genre.Id, () => new(), e => {
+                    e.ParentGenreId = genre.ParentGenreId;
+                    e.Slug = genre.Slug;
+                    e.Name = genre.Name;
+                    e.Description = genre.Description;
+                    e.SortOrder = genre.SortOrder;
+                }, assigned => genre.Id = assigned, ct)
+            .ConfigureAwait(false);
+
         await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
     }
 
@@ -398,8 +401,7 @@ public sealed class PostgresBookStore : IBookStore, IHealth
     public async Task DeleteGenreAsync(Guid id, CancellationToken ct = default)
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        if (await ctx.Genres.AnyAsync(g => g.ParentGenreId == id, ct).ConfigureAwait(false)
-            || await ctx.BookGenres.AnyAsync(g => g.GenreId == id, ct).ConfigureAwait(false))
+        if (await ctx.Genres.AnyAsync(g => g.ParentGenreId == id, ct).ConfigureAwait(false) || await ctx.BookGenres.AnyAsync(g => g.GenreId == id, ct).ConfigureAwait(false))
             throw ConflictException.ForResource("BookGenre", id);
 
         var entity = await ctx.Genres.FindAsync([id], ct).ConfigureAwait(false);
@@ -418,7 +420,7 @@ public sealed class PostgresBookStore : IBookStore, IHealth
         var existing = chapter.Id != Guid.Empty ? await ctx.Chapters.FindAsync([chapter.Id], ct).ConfigureAwait(false) : null;
         var id = existing?.Id ?? (chapter.Id == Guid.Empty ? LyoGuid.CreateV7() : chapter.Id);
         if (existing == null)
-            ctx.Chapters.Add(existing = new BookChapterEntity { Id = id, CreatedTimestamp = DateTime.UtcNow });
+            ctx.Chapters.Add(existing = new() { Id = id, CreatedTimestamp = DateTime.UtcNow });
 
         existing.BookId = chapter.BookId;
         existing.ChapterNumber = chapter.ChapterNumber;
@@ -479,7 +481,7 @@ public sealed class PostgresBookStore : IBookStore, IHealth
         var existing = page.Id != Guid.Empty ? await ctx.Pages.FindAsync([page.Id], ct).ConfigureAwait(false) : null;
         var id = existing?.Id ?? (page.Id == Guid.Empty ? LyoGuid.CreateV7() : page.Id);
         if (existing == null)
-            ctx.Pages.Add(existing = new BookPageEntity { Id = id, CreatedTimestamp = DateTime.UtcNow });
+            ctx.Pages.Add(existing = new() { Id = id, CreatedTimestamp = DateTime.UtcNow });
 
         existing.ChapterId = page.ChapterId;
         existing.PageNumber = page.PageNumber;
@@ -548,6 +550,7 @@ public sealed class PostgresBookStore : IBookStore, IHealth
         entity.Text = text;
         if (!string.IsNullOrWhiteSpace(contentType))
             entity.ContentType = contentType;
+
         entity.CharacterCount = BookText.CountCharacters(text);
         entity.WordCount = BookText.CountWords(text);
         await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -570,8 +573,10 @@ public sealed class PostgresBookStore : IBookStore, IHealth
 
         if (query.BookId.HasValue)
             q = q.Where(x => x.c.BookId == query.BookId);
+
         if (query.ChapterId.HasValue)
             q = q.Where(x => x.p.ChapterId == query.ChapterId);
+
         if (!string.IsNullOrWhiteSpace(query.Language))
             q = q.Where(x => x.c.Language == query.Language);
 
@@ -579,8 +584,7 @@ public sealed class PostgresBookStore : IBookStore, IHealth
         if (query.Take.HasValue)
             projected = projected.Take(query.Take.Value);
 
-        var rows = await projected
-            .Select(x => new BookPageHit {
+        var rows = await projected.Select(x => new BookPageHit {
                 PageId = x.p.Id,
                 ChapterId = x.p.ChapterId,
                 BookId = x.c.BookId,
@@ -589,33 +593,30 @@ public sealed class PostgresBookStore : IBookStore, IHealth
             })
             .ToListAsync(ct)
             .ConfigureAwait(false);
+
         return rows;
     }
 
-    private static IQueryable<BookEntity> LoadBookQuery(BookDbContext ctx)
-        => ctx.Books.AsNoTracking()
-            .Include(b => b.AlternateTitles)
-            .Include(b => b.Identifiers)
-            .Include(b => b.Contributors)
-            .Include(b => b.GenreLinks)
-            .ThenInclude(g => g.Genre);
+    /// <inheritdoc />
+    public string HealthCheckName => "book-postgres";
 
-    private static async Task UpsertLookupAsync<T>(
-        DbSet<T> set,
-        Guid requestedId,
-        Func<T> create,
-        Action<T> apply,
-        Action<Guid> assignId,
-        CancellationToken ct) where T : class
+    /// <inheritdoc />
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => PostgresHealth.CheckAsync(_contextFactory, PostgresBookOptions.Schema, ct);
+
+    private static IQueryable<BookEntity> LoadBookQuery(BookDbContext ctx)
+        => ctx.Books.AsNoTracking().Include(b => b.AlternateTitles).Include(b => b.Identifiers).Include(b => b.Contributors).Include(b => b.GenreLinks).ThenInclude(g => g.Genre);
+
+    private static async Task UpsertLookupAsync<T>(DbSet<T> set, Guid requestedId, Func<T> create, Action<T> apply, Action<Guid> assignId, CancellationToken ct)
+        where T : class
     {
         T? existing = null;
         if (requestedId != Guid.Empty)
             existing = await set.FindAsync([requestedId], ct).ConfigureAwait(false);
 
-        var id = existing is BookTypeEntity t ? t.Id
-            : existing is BookFormatEntity f ? f.Id
-            : existing is BookGenreEntity g ? g.Id
-            : requestedId == Guid.Empty ? LyoGuid.CreateV7() : requestedId;
+        var id = existing is BookTypeEntity t ? t.Id :
+            existing is BookFormatEntity f ? f.Id :
+            existing is BookGenreEntity g ? g.Id :
+            requestedId == Guid.Empty ? LyoGuid.CreateV7() : requestedId;
 
         if (existing == null) {
             existing = create();
@@ -649,8 +650,10 @@ public sealed class PostgresBookStore : IBookStore, IHealth
             var next = await ctx.Genres.AsNoTracking().Where(g => g.Id == current).Select(g => g.ParentGenreId).FirstOrDefaultAsync(ct).ConfigureAwait(false);
             if (next == null)
                 return;
+
             if (next == genreId)
                 throw new UnprocessableEntityException("Genre parent would create a cycle.");
+
             current = next.Value;
         }
 
@@ -667,10 +670,10 @@ public sealed class PostgresBookStore : IBookStore, IHealth
         var pages = ctx.Pages.Local.Where(p => p.ChapterId == chapterId).ToArray();
         foreach (var page in pages)
             page.WordCount = BookText.CountWords(page.Text);
+
         chapter.PageCount = pages.Length;
         chapter.WordCount = pages.Sum(p => p.WordCount);
         await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
-
         var book = await ctx.Books.FindAsync([chapter.BookId], ct).ConfigureAwait(false);
         if (book == null)
             return;
@@ -696,9 +699,7 @@ public sealed class PostgresBookStore : IBookStore, IHealth
             await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
         }
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } pg) {
-            var name = pg.ConstraintName?.Contains("identifier", StringComparison.OrdinalIgnoreCase) == true
-                ? "BookIdentifier"
-                : resource;
+            var name = pg.ConstraintName?.Contains("identifier", StringComparison.OrdinalIgnoreCase) == true ? "BookIdentifier" : resource;
             throw ConflictException.ForResource(name, innerException: ex);
         }
     }
@@ -731,11 +732,7 @@ public sealed class PostgresBookStore : IBookStore, IHealth
     }
 
     private static string? ComputePrimaryAuthor(IReadOnlyList<BookContributor> contributors)
-        => contributors
-            .Where(c => c.Role is ContributorRole.Author or ContributorRole.CoAuthor)
-            .OrderBy(c => c.Ordinal)
-            .Select(c => c.DisplayName)
-            .FirstOrDefault();
+        => contributors.Where(c => c.Role is ContributorRole.Author or ContributorRole.CoAuthor).OrderBy(c => c.Ordinal).Select(c => c.DisplayName).FirstOrDefault();
 
     private static DateOnly? ToDateOnly(DateTime? value) => value.HasValue ? DateOnly.FromDateTime(value.Value) : null;
 
@@ -767,7 +764,7 @@ public sealed class PostgresBookStore : IBookStore, IHealth
     {
         var scheme = r.Scheme;
         var value = r.Value;
-        return new BookIdentifierEntity {
+        return new() {
             Id = r.Id == Guid.Empty ? LyoGuid.CreateV7() : r.Id,
             BookId = bookId,
             Scheme = scheme,
@@ -821,35 +818,40 @@ public sealed class PostgresBookStore : IBookStore, IHealth
             Source = e.Source,
             CreatedTimestamp = e.CreatedTimestamp,
             UpdatedTimestamp = e.UpdatedTimestamp,
-            AlternateTitles = e.AlternateTitles.OrderBy(a => a.SortOrder).Select(a => new BookAlternateTitle {
-                Id = a.Id,
-                BookId = a.BookId,
-                Title = a.Title,
-                Language = a.Language,
-                Kind = a.Kind,
-                IsPrimary = a.IsPrimary,
-                SortOrder = a.SortOrder
-            }).ToArray(),
+            AlternateTitles = e.AlternateTitles.OrderBy(a => a.SortOrder)
+                .Select(a => new BookAlternateTitle {
+                    Id = a.Id,
+                    BookId = a.BookId,
+                    Title = a.Title,
+                    Language = a.Language,
+                    Kind = a.Kind,
+                    IsPrimary = a.IsPrimary,
+                    SortOrder = a.SortOrder
+                })
+                .ToArray(),
             Identifiers = e.Identifiers.Select(i => new BookIdentifier {
-                Id = i.Id,
-                BookId = i.BookId,
-                Scheme = i.Scheme,
-                Value = i.Value,
-                NormalizedValue = i.NormalizedValue,
-                IsPrimary = i.IsPrimary,
-                Notes = i.Notes
-            }).ToArray(),
-            Contributors = e.Contributors.OrderBy(c => c.Ordinal).Select(c => new BookContributor {
-                Id = c.Id,
-                BookId = c.BookId,
-                DisplayName = c.DisplayName,
-                SortName = c.SortName,
-                Role = c.Role,
-                Ordinal = c.Ordinal,
-                Language = c.Language,
-                PersonRef = c.PersonRef,
-                Notes = c.Notes
-            }).ToArray(),
+                    Id = i.Id,
+                    BookId = i.BookId,
+                    Scheme = i.Scheme,
+                    Value = i.Value,
+                    NormalizedValue = i.NormalizedValue,
+                    IsPrimary = i.IsPrimary,
+                    Notes = i.Notes
+                })
+                .ToArray(),
+            Contributors = e.Contributors.OrderBy(c => c.Ordinal)
+                .Select(c => new BookContributor {
+                    Id = c.Id,
+                    BookId = c.BookId,
+                    DisplayName = c.DisplayName,
+                    SortName = c.SortName,
+                    Role = c.Role,
+                    Ordinal = c.Ordinal,
+                    Language = c.Language,
+                    PersonRef = c.PersonRef,
+                    Notes = c.Notes
+                })
+                .ToArray(),
             GenreIds = e.GenreLinks.Select(g => g.GenreId).ToArray(),
             Genres = e.GenreLinks.Select(g => g.Genre).Where(g => g != null).Select(ToGenre).ToArray()
         };
@@ -873,23 +875,46 @@ public sealed class PostgresBookStore : IBookStore, IHealth
             Source = e.Source,
             CreatedTimestamp = e.CreatedTimestamp,
             UpdatedTimestamp = e.UpdatedTimestamp,
-            AlternateTitles = e.AlternateTitles.OrderBy(a => a.SortOrder).Select(a => new BookSeriesAlternateTitle {
-                Id = a.Id,
-                SeriesId = a.SeriesId,
-                Title = a.Title,
-                Language = a.Language,
-                Kind = a.Kind,
-                IsPrimary = a.IsPrimary,
-                SortOrder = a.SortOrder
-            }).ToArray()
+            AlternateTitles = e.AlternateTitles.OrderBy(a => a.SortOrder)
+                .Select(a => new BookSeriesAlternateTitle {
+                    Id = a.Id,
+                    SeriesId = a.SeriesId,
+                    Title = a.Title,
+                    Language = a.Language,
+                    Kind = a.Kind,
+                    IsPrimary = a.IsPrimary,
+                    SortOrder = a.SortOrder
+                })
+                .ToArray()
         };
 
-    private static BookType ToType(BookTypeEntity e) => new() { Id = e.Id, Slug = e.Slug, Name = e.Name, Description = e.Description, SortOrder = e.SortOrder };
+    private static BookType ToType(BookTypeEntity e)
+        => new() {
+            Id = e.Id,
+            Slug = e.Slug,
+            Name = e.Name,
+            Description = e.Description,
+            SortOrder = e.SortOrder
+        };
 
-    private static BookFormat ToFormat(BookFormatEntity e) => new() { Id = e.Id, Slug = e.Slug, Name = e.Name, Description = e.Description, SortOrder = e.SortOrder };
+    private static BookFormat ToFormat(BookFormatEntity e)
+        => new() {
+            Id = e.Id,
+            Slug = e.Slug,
+            Name = e.Name,
+            Description = e.Description,
+            SortOrder = e.SortOrder
+        };
 
     private static BookGenre ToGenre(BookGenreEntity e)
-        => new() { Id = e.Id, ParentGenreId = e.ParentGenreId, Slug = e.Slug, Name = e.Name, Description = e.Description, SortOrder = e.SortOrder };
+        => new() {
+            Id = e.Id,
+            ParentGenreId = e.ParentGenreId,
+            Slug = e.Slug,
+            Name = e.Name,
+            Description = e.Description,
+            SortOrder = e.SortOrder
+        };
 
     private static BookChapter ToChapter(BookChapterEntity e)
         => new() {

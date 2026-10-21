@@ -8,8 +8,7 @@ using Lyo.Query.Models.Common.Request;
 
 namespace Lyo.Job.Tests;
 
-/// <summary>Every <see cref="IApiClient" /> member throws. Fakes derive from this and override only the calls the code under test makes, so an unexpected call fails
-/// loudly.</summary>
+/// <summary>Every <see cref="IApiClient" /> member throws. Fakes derive from this and override only the calls the code under test makes, so an unexpected call fails loudly.</summary>
 internal abstract class StubApiClient : IApiClient
 {
     public void Dispose() { }
@@ -29,21 +28,13 @@ internal abstract class StubApiClient : IApiClient
     public Task<HttpClientPlanRunResult> RunAsync(HttpClientPlan plan, HttpClientPlanRuntime? runtime = null, CancellationToken ct = default)
         => throw new NotImplementedException();
 
-    public virtual Task<TResult> PostAsAsync<TRequest, TResult>(
-        string uri,
-        TRequest? request = default,
-        Action<HttpRequestMessage>? before = null,
-        CancellationToken ct = default)
+    public virtual Task<TResult> PostAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException(uri);
 
     public virtual Task<TResult?> GetAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException(uri);
 
-    public virtual Task<TResult> PatchAsAsync<TRequest, TResult>(
-        string uri,
-        TRequest? request = default,
-        Action<HttpRequestMessage>? before = null,
-        CancellationToken ct = default)
+    public virtual Task<TResult> PatchAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException(uri);
 
     public virtual Task<TResult?> GetAsAsync<TRequest, TResult>(
@@ -113,24 +104,12 @@ internal abstract class StubApiClient : IApiClient
 
     public string ToQueryString<T>(T obj, string? enumerableDelimiter = null) => throw new NotImplementedException();
 
-    public Task<TResult?> QueryProjectAsync<TResult>(
-        string route,
-        ProjectionQueryReq request,
-        Action<HttpRequestMessage>? before = null,
-        CancellationToken ct = default)
+    public Task<TResult?> QueryProjectAsync<TResult>(string route, ProjectionQueryReq request, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException(route);
 
-    public Task<TResult?> QueryConcreteAsync<TResult>(
-        string route,
-        QueryConcreteReq request,
-        Action<HttpRequestMessage>? before = null,
-        CancellationToken ct = default)
+    public Task<TResult?> QueryConcreteAsync<TResult>(string route, QueryConcreteReq request, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException(route);
 
-    public Task<TResult?> QuerySqlAsync<TResult>(
-        string route,
-        QueryRequestBase request,
-        Action<HttpRequestMessage>? before = null,
-        CancellationToken ct = default)
+    public Task<TResult?> QuerySqlAsync<TResult>(string route, QueryRequestBase request, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException(route);
 }

@@ -1,6 +1,5 @@
-using Lyo.Note;
-using Microsoft.Extensions.DependencyInjection;
 using Lyo.Common.Core.Identifiers;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Note.Postgres.Tests;
 
@@ -20,8 +19,9 @@ public sealed class NotePostgresStoreTests(NotePostgresFixture fixture)
             SubjectEntityId = subject.ToString(),
             ActorEntityType = "person",
             ActorEntityId = actor.ToString(),
-            Content = "a note",
+            Content = "a note"
         };
+
         await store.SaveAsync(row, ct: ct);
         Assert.NotEqual(Guid.Empty, row.Id);
         var loaded = await store.GetByIdAsync(row.Id, ct: ct);

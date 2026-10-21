@@ -1,6 +1,7 @@
 # Lyo.Idempotency
 
-A scope and key claim one in-progress row. API rows do not steal: a crashed in-progress row stays in progress until expires_at or Abandon. The same hash replays a completed or failed response. A different hash is a conflict. Scopes that start with outbox/ are reserved for the outbox.
+A scope and key claim one in-progress row. API rows do not steal: a crashed in-progress row stays in progress until expires_at or Abandon. The same hash replays a completed or
+failed response. A different hash is a conflict. Scopes that start with outbox/ are reserved for the outbox.
 
 ## Features
 
@@ -22,7 +23,8 @@ await store.CompleteAsync(begin.Id, begin.LeaseToken!.Value, 200, body, "applica
 
 ## Recovery
 
-API rows use a lease that lasts until expires_at. Complete and Fail require that lease token. A wrong token does not change the row. The in-memory store throws NotSupportedException when a DbTransaction is passed. The Postgres store joins a caller transaction with a savepoint so a unique violation does not abort the caller transaction.
+API rows use a lease that lasts until expires_at. Complete and Fail require that lease token. A wrong token does not change the row. The in-memory store throws
+NotSupportedException when a DbTransaction is passed. The Postgres store joins a caller transaction with a savepoint so a unique violation does not abort the caller transaction.
 
 ## Dependencies
 

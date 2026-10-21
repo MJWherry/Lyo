@@ -2,24 +2,24 @@ using System.Linq.Expressions;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Error;
-using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 using Lyo.Api.Services.Crud.Read;
 using Lyo.Api.Services.Crud.Read.Project;
 using Lyo.Api.Services.Crud.Validation;
 using Lyo.Cache;
 using Lyo.Common.Core.Enums;
+using Lyo.Exceptions;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
 using Lyo.Query.Models.Exceptions;
 using Lyo.Query.Services.WhereClause;
+using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 using CacheSnapshotItem = Lyo.Cache.CacheItem;
-using Lyo.Exceptions;
 
 namespace Lyo.Api.Services.Cache;
 
 /// <summary>
-/// In-memory QueryProject over this process's L1 <see cref="ICacheService.Items" />. Redis L2 keys written by other processes are not listed.
-/// The admin query result is never written back into the cache.
+/// In-memory QueryProject over this process's L1 <see cref="ICacheService.Items" />. Redis L2 keys written by other processes are not listed. The admin query result is never
+/// written back into the cache.
 /// </summary>
 public sealed class CacheQueryService(ICacheService cache, IWhereClauseService filterService, IProjectionService projectionService, QueryOptions queryOptions)
 {
@@ -50,7 +50,7 @@ public sealed class CacheQueryService(ICacheService cache, IWhereClauseService f
         }
 
         try {
-            IQueryable<CacheSnapshotItem> source = FilterByKeys(cache.Items, queryRequest.Keys).AsQueryable();
+            var source = FilterByKeys(cache.Items, queryRequest.Keys).AsQueryable();
             source = filterService.ApplyWhereClause(source, queryRequest.WhereClause);
             source = filterService.ApplyOrdering(source, queryRequest.SortBy, DefaultOrder, SortDirection.Desc);
             var filtered = source.ToList();
@@ -58,8 +58,7 @@ public sealed class CacheQueryService(ICacheService cache, IWhereClauseService f
             var start = queryRequest.Start ?? 0;
             var amount = queryRequest.Amount ?? queryOptions.DefaultPageSize;
             var page = filtered.Skip(start).Take(amount).ToList();
-            var projected = projectionService.ProjectEntities(
-                page, specs, QueryIncludeFilterMode.Full, new([], GroupOperatorEnum.And));
+            var projected = projectionService.ProjectEntities(page, specs, QueryIncludeFilterMode.Full, new([]));
             if (queryRequest.ComputedFields.Count > 0)
                 projected = projectionService.ApplyComputedFields(projected, queryRequest.ComputedFields, specs);
 
@@ -69,8 +68,7 @@ public sealed class CacheQueryService(ICacheService cache, IWhereClauseService f
             return ResultFactory.ProjectedQuerySuccess(queryRequest, projected, start, page.Count, total, hasMore, entityTypes: ["CacheItem"]);
         }
         catch (InvalidQueryException ex) {
-            return ResultFactory.ProjectedQueryFailure<object?>(
-                queryRequest, LyoProblemDetails.FromCode(ApiErrorCodes.InvalidQuery, ex.Message, DateTime.UtcNow));
+            return ResultFactory.ProjectedQueryFailure<object?>(queryRequest, LyoProblemDetails.FromCode(ApiErrorCodes.InvalidQuery, ex.Message, DateTime.UtcNow));
         }
     }
 
@@ -82,9 +80,7 @@ public sealed class CacheQueryService(ICacheService cache, IWhereClauseService f
         return new(count);
     }
 
-    /// <summary>
-    /// Same contract as <c>IDeleteService.DeleteAsync</c>: keys or where-clause. <see cref="CacheItemTypeEnum.Key" /> and <see cref="CacheItemTypeEnum.Tag" /> share this path.
-    /// </summary>
+    /// <summary>Same contract as <c>IDeleteService.DeleteAsync</c>: keys or where-clause. <see cref="CacheItemTypeEnum.Key" /> and <see cref="CacheItemTypeEnum.Tag" /> share this path.</summary>
     public async Task<DeleteResult<object?>> DeleteAsync(DeleteRequest request, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(request);
@@ -126,8 +122,8 @@ public sealed class CacheQueryService(ICacheService cache, IWhereClauseService f
             if (items.Count > 1 && !request.AllowMultiple) {
                 results.Add(
                     ResultFactory.DeleteFailure<object?>(
-                        LyoProblemDetails.FromCode(
-                            ApiErrorCodes.InvalidOperation, $"Multiple cache items ({items.Count}) found but AllowMultiple is false.", DateTime.UtcNow)));
+                        LyoProblemDetails.FromCode(ApiErrorCodes.InvalidOperation, $"Multiple cache items ({items.Count}) found but AllowMultiple is false.", DateTime.UtcNow)));
+
                 continue;
             }
 
@@ -154,8 +150,7 @@ public sealed class CacheQueryService(ICacheService cache, IWhereClauseService f
     private static bool TagNamesEqual(string storedName, string logicalTag)
     {
         var stored = NormalizeTagName(storedName);
-        return string.Equals(stored, logicalTag, StringComparison.OrdinalIgnoreCase)
-            || string.Equals(storedName, logicalTag, StringComparison.OrdinalIgnoreCase);
+        return string.Equals(stored, logicalTag, StringComparison.OrdinalIgnoreCase) || string.Equals(storedName, logicalTag, StringComparison.OrdinalIgnoreCase);
     }
 
     private List<CacheSnapshotItem> ResolveDeleteItems(DeleteRequest request)
@@ -173,9 +168,7 @@ public sealed class CacheQueryService(ICacheService cache, IWhereClauseService f
     }
 
     private Task InvalidateItemAsync(CacheSnapshotItem item)
-        => item.Type == CacheItemTypeEnum.Tag
-            ? cache.InvalidateCacheItemByTag(NormalizeTagName(item.Name))
-            : cache.InvalidateCacheItem(item.Name);
+        => item.Type == CacheItemTypeEnum.Tag ? cache.InvalidateCacheItemByTag(NormalizeTagName(item.Name)) : cache.InvalidateCacheItem(item.Name);
 
     private static Dictionary<string, object?> ToRow(CacheSnapshotItem item)
         => new(StringComparer.OrdinalIgnoreCase) {
@@ -212,9 +205,7 @@ public sealed class CacheQueryService(ICacheService cache, IWhereClauseService f
         if (item.Type != type)
             return false;
 
-        return type == CacheItemTypeEnum.Tag
-            ? TagNamesEqual(item.Name, name)
-            : string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase);
+        return type == CacheItemTypeEnum.Tag ? TagNamesEqual(item.Name, name) : string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool TryParseItemType(object? value, out CacheItemTypeEnum type)

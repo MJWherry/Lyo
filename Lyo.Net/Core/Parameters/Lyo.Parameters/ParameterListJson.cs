@@ -40,8 +40,8 @@ public static class ParameterListJson
     }
 
     /// <summary>
-    /// Writes chip/string values as a JSON array. Returns null when kind filtering leaves no non-empty values. <paramref name="kind" /> selects JSON string, number, or bool
-    /// wire shape.
+    /// Writes chip/string values as a JSON array. Returns null when kind filtering leaves no non-empty values. <paramref name="kind" /> selects JSON string, number, or bool wire
+    /// shape.
     /// </summary>
     public static string? Serialize(IEnumerable<string>? values, ParameterListJsonKind kind = ParameterListJsonKind.String)
     {

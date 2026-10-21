@@ -6,19 +6,30 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Lyo.Formatter.Web.Components;
 
 /// <summary>
-/// Formatter-typed parameter editor wired into <c>LyoTypeValueInput</c> through <c>ILyoValueEditorDescriptor</c>. Wraps <see cref="LyoFormatterTemplateEditor" />
-/// with the JSON round-trip a parameter value needs, plus a collapsed live preview and a browsable list of tokens the template can use.
+/// Formatter-typed parameter editor wired into <c>LyoTypeValueInput</c> through <c>ILyoValueEditorDescriptor</c>. Wraps <see cref="LyoFormatterTemplateEditor" /> with the
+/// JSON round-trip a parameter value needs, plus a collapsed live preview and a browsable list of tokens the template can use.
 /// </summary>
 /// <remarks>
-/// Parameter values are stored as JSON, so a template arrives as a JSON string (<c>"Hello {Name}"</c>) and has to be unwrapped for editing and re-serialized on
-/// every change. An empty template stores null rather than <c>""</c>, matching how the other editors treat an unset value.
+/// Parameter values are stored as JSON, so a template arrives as a JSON string (<c>"Hello {Name}"</c>) and has to be unwrapped for editing and re-serialized on every change. An empty
+/// template stores null rather than <c>""</c>, matching how the other editors treat an unset value.
 /// <para>
-/// The token list is the point of this component. Autocomplete only helps once the user knows to type <c>{</c> and roughly what to look for; the list makes the
-/// whole context discoverable, which is the difference between a usable template field and one that requires reading the scheduler source.
+/// The token list is the point of this component. Autocomplete only helps once the user knows to type <c>{</c> and roughly what to look for; the list makes the whole context
+/// discoverable, which is the difference between a usable template field and one that requires reading the scheduler source.
 /// </para>
 /// </remarks>
 public partial class LyoFormatterValueEditor : IDisposable
 {
+    private object? _appliedContext;
+    private bool _hasAppliedContext;
+    private bool _hasLoadedJson;
+    private string? _loadedJson;
+    private string _loadedTemplate = "";
+
+    private LyoFormatterLiveSession _session = null!;
+    private bool _showPreview;
+    private bool _showTokens;
+    private IReadOnlyList<LyoFormatterContextEntry> _tokens = [];
+
     [Inject]
     private IFormatterService Formatter { get; set; } = null!;
 
@@ -49,16 +60,6 @@ public partial class LyoFormatterValueEditor : IDisposable
     /// <summary>View-supplied sample context, layered over the host default. See <see cref="LyoFormatterExampleContext.Merge" />.</summary>
     [Parameter]
     public object? Context { get; set; }
-
-    private LyoFormatterLiveSession _session = null!;
-    private IReadOnlyList<LyoFormatterContextEntry> _tokens = [];
-    private string _loadedTemplate = "";
-    private string? _loadedJson;
-    private bool _hasLoadedJson;
-    private object? _appliedContext;
-    private bool _hasAppliedContext;
-    private bool _showPreview;
-    private bool _showTokens;
 
     /// <inheritdoc />
     public void Dispose()
@@ -119,8 +120,8 @@ public partial class LyoFormatterValueEditor : IDisposable
     }
 
     /// <summary>
-    /// Writes the edited template back out as JSON. Comparing against the template we loaded (rather than against <see cref="Json" />) means loading a value never
-    /// looks like an edit, so opening a definition cannot mark it dirty.
+    /// Writes the edited template back out as JSON. Comparing against the template we loaded (rather than against <see cref="Json" />) means loading a value never looks like an
+    /// edit, so opening a definition cannot mark it dirty.
     /// </summary>
     private async Task CommitTemplateAsync()
     {

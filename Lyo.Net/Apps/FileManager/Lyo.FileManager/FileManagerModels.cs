@@ -1,5 +1,7 @@
 using Lyo.Api.FileStorage.Models;
 using Lyo.FileMetadataStore.Models;
+using Lyo.FileStorage;
+using FileStoragePresence = Lyo.Api.FileStorage.Models.FileStoragePresence;
 
 namespace Lyo.FileManager;
 
@@ -138,17 +140,12 @@ public interface IFileManagerApi : IDisposable
     Task<DekMigrationResult> RotateAsync(IReadOnlyList<Guid> fileIds, string? targetKeyId, string? targetKeyVersion, CancellationToken ct);
 
     /// <summary>Migrates every file wrapped by <paramref name="sourceKeyId" />.</summary>
-    Task<DekMigrationResult> MigrateAsync(
-        string sourceKeyId,
-        string? sourceKeyVersion,
-        string? targetKeyId,
-        string? targetKeyVersion,
-        CancellationToken ct);
+    Task<DekMigrationResult> MigrateAsync(string sourceKeyId, string? sourceKeyVersion, string? targetKeyId, string? targetKeyVersion, CancellationToken ct);
 }
 
 /// <summary>An in-process store that <see cref="Lyo.FileStorage.FileStorageTransfer" /> can copy or move.</summary>
 public interface IFileManagerTransfer
 {
     /// <summary>Storage, catalog, and keys for this connection.</summary>
-    Lyo.FileStorage.FileStorageTransferEndpoint Endpoint { get; }
+    FileStorageTransferEndpoint Endpoint { get; }
 }

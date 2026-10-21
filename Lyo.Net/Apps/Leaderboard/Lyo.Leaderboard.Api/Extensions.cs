@@ -13,7 +13,6 @@ using Lyo.Cache;
 using Lyo.Email;
 using Lyo.Exceptions;
 using Lyo.KeyStore;
-using Lyo.Leaderboard;
 using Lyo.Leaderboard.Api.Endpoints;
 using Lyo.Leaderboard.Postgres;
 using Lyo.QRCode;
@@ -29,8 +28,8 @@ namespace Lyo.Leaderboard.Api;
 public static class Extensions
 {
     /// <summary>
-    /// Adds the leaderboard store, scoring engine, authentication, query services, QR generation, and a persisted ShortUrl service.
-    /// Registers Google/Keycloak OIDC providers when their ClientId is configured.
+    /// Adds the leaderboard store, scoring engine, authentication, query services, QR generation, and a persisted ShortUrl service. Registers Google/Keycloak OIDC providers when
+    /// their ClientId is configured.
     /// </summary>
     public static IServiceCollection AddLeaderboardApi(this IServiceCollection services, IConfiguration configuration)
     {
@@ -39,7 +38,9 @@ public static class Extensions
         services.AddPostgresLeaderboardStoreFromConfiguration(configuration);
         var leaderboard = new PostgresLeaderboardOptions();
         configuration.GetSection(PostgresLeaderboardOptions.SectionName).Bind(leaderboard);
-        services.AddPostgresAlgorithmStore(new PostgresAlgorithmOptions { ConnectionString = leaderboard.ConnectionString, EnableAutoMigrations = leaderboard.EnableAutoMigrations });
+        services.AddPostgresAlgorithmStore(
+            new PostgresAlgorithmOptions { ConnectionString = leaderboard.ConnectionString, EnableAutoMigrations = leaderboard.EnableAutoMigrations });
+
         services.AddAlgorithms();
         services.AddLocalCache();
         services.AddLyoQueryServices();
@@ -50,6 +51,7 @@ public static class Extensions
             ks.AddKey("lyo-sig", "v1", seed);
             ks.SetCurrentVersion("lyo-sig", "v1");
         });
+
         services.AddLyoAuthentication(configuration);
         services.AddPostgresAuthenticationStoresFromConfiguration(configuration);
         services.AddLyoApiTokenAuthentication();
@@ -73,8 +75,8 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Registers the store, query services, QR generator, and persisted ShortUrl for an already-authenticated host (TestApi).
-    /// Does not re-register JWT, OIDC, or Google providers.
+    /// Registers the store, query services, QR generator, and persisted ShortUrl for an already-authenticated host (TestApi). Does not re-register JWT, OIDC, or Google
+    /// providers.
     /// </summary>
     public static IServiceCollection AddLeaderboardApiForWorkbench(this IServiceCollection services, string connectionString, string publicBaseUrl)
     {
@@ -90,18 +92,20 @@ public static class Extensions
             o.ConnectionString = connectionString;
             o.EnableAutoMigrations = true;
         });
+
         services.AddLeaderboardQueryServices();
         services.Configure<LeaderboardApiOptions>(o => {
             o.PublicBaseUrl = publicBaseUrl.TrimEnd('/');
             o.SendInviteEmail = false;
         });
+
         services.AddQRCodeService();
         services.AddPostgresShortUrlService(
             db => {
                 db.ConnectionString = connectionString;
                 db.EnableAutoMigrations = true;
-            },
-            s => s.BaseUrl = publicBaseUrl.TrimEnd('/') + "/s");
+            }, s => s.BaseUrl = publicBaseUrl.TrimEnd('/') + "/s");
+
         return services;
     }
 

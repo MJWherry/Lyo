@@ -3,16 +3,16 @@ using Lyo.Story.Enums;
 
 namespace Lyo.Story.Builders;
 
-/// <summary>Fluent authoring for a <see cref="Story"/> aggregate. Keys are strings; the store assigns Guids.</summary>
+/// <summary>Fluent authoring for a <see cref="Story" /> aggregate. Keys are strings; the store assigns Guids.</summary>
 public sealed class StoryBuilder
 {
-    private readonly Story _story;
-    private readonly List<StoryScene> _scenes = [];
-    private readonly List<StoryNode> _nodes = [];
-    private readonly List<StoryVariable> _variables = [];
     private readonly List<StoryAction> _actions = [];
-    private readonly List<StoryReaction> _reactions = [];
     private readonly List<StoryReaction> _nodeReactions = [];
+    private readonly List<StoryNode> _nodes = [];
+    private readonly List<StoryReaction> _reactions = [];
+    private readonly List<StoryScene> _scenes = [];
+    private readonly Story _story;
+    private readonly List<StoryVariable> _variables = [];
 
     private StoryBuilder(string title)
     {
@@ -20,7 +20,7 @@ public sealed class StoryBuilder
         _story = new() { Title = title, Status = StoryStatus.Draft };
     }
 
-    /// <summary>Starts a story titled <paramref name="title"/>.</summary>
+    /// <summary>Starts a story titled <paramref name="title" />.</summary>
     public static StoryBuilder New(string title) => new(title);
 
     /// <summary>Sets the unique slug.</summary>
@@ -50,20 +50,21 @@ public sealed class StoryBuilder
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         _variables.Add(
-            new StoryVariable {
+            new() {
                 Key = key,
                 Type = type,
                 Name = name,
                 DefaultValue = defaultValue is null ? null : Convert.ToString(defaultValue)
             });
+
         return this;
     }
 
-    /// <summary>Optional scene group. Nodes opt in with <see cref="StoryNodeBuilder.InScene"/>.</summary>
+    /// <summary>Optional scene group. Nodes opt in with <see cref="StoryNodeBuilder.InScene" />.</summary>
     public StoryBuilder Scene(string key, string? title = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
-        _scenes.Add(new StoryScene { Key = key, Title = title, SortOrder = _scenes.Count });
+        _scenes.Add(new() { Key = key, Title = title, SortOrder = _scenes.Count });
         return this;
     }
 
@@ -80,14 +81,14 @@ public sealed class StoryBuilder
     /// <summary>Adds the start node (play cursor at start).</summary>
     public StoryBuilder StartNode(string key, Action<StoryNodeBuilder> configure)
     {
-        AddNode(key, configure, isStart: true);
+        AddNode(key, configure, true);
         return this;
     }
 
     /// <summary>Adds a node.</summary>
     public StoryBuilder Node(string key, Action<StoryNodeBuilder> configure)
     {
-        AddNode(key, configure, isStart: false);
+        AddNode(key, configure, false);
         return this;
     }
 
@@ -106,8 +107,10 @@ public sealed class StoryBuilder
     {
         if (_nodes.Count == 0)
             throw new StoryException("A story requires at least one node.");
+
         if (string.IsNullOrWhiteSpace(_story.StartNodeKey))
             _story.StartNodeKey = _nodes[0].Key;
+
         if (string.IsNullOrWhiteSpace(_story.Slug))
             _story.Slug = Slugify(_story.Title);
 
@@ -132,7 +135,7 @@ public sealed class StoryBuilder
             _story.StartNodeKey = node.Key;
     }
 
-    /// <summary>Rejects unknown start/goto node keys and invoke action keys. Called from <see cref="Build"/> and from the store on save.</summary>
+    /// <summary>Rejects unknown start/goto node keys and invoke action keys. Called from <see cref="Build" /> and from the store on save.</summary>
     public static void ValidateGraph(Story story)
     {
         var nodeKeys = new HashSet<string>(story.Nodes.Select(n => n.Key), StringComparer.Ordinal);
@@ -143,6 +146,7 @@ public sealed class StoryBuilder
         foreach (var effect in EnumerateEffects(story)) {
             if (effect.Kind == StoryEffectKind.GotoNode && !string.IsNullOrWhiteSpace(effect.TargetNodeKey) && !nodeKeys.Contains(effect.TargetNodeKey))
                 throw new StoryException($"Goto targets unknown node '{effect.TargetNodeKey}'.");
+
             if (effect.Kind == StoryEffectKind.InvokeAction && !string.IsNullOrWhiteSpace(effect.InvokeActionKey) && !actionKeys.Contains(effect.InvokeActionKey))
                 throw new StoryException($"Invoke targets unknown action '{effect.InvokeActionKey}'.");
         }

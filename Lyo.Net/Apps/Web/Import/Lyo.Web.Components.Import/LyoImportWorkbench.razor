@@ -10,9 +10,9 @@
 </MudSelect>
 
 <MudText Typo="Typo.subtitle2">Mapping</MudText>
-<MudTextField @bind-Value="_source" Label="Source" />
-<MudTextField @bind-Value="_target" Label="Target property" />
-<MudCheckBox T="bool" @bind-Value="_required" Label="Required" />
+<MudTextField @bind-Value="_source" Label="Source"/>
+<MudTextField @bind-Value="_target" Label="Target property"/>
+<MudCheckBox T="bool" @bind-Value="_required" Label="Required"/>
 <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddField">Add mapping</MudButton>
 @foreach (var field in State.Fields) {
     <MudText Typo="Typo.body2">@field.Source → @field.Target@(field.Required ? " (required)" : "")</MudText>
@@ -31,6 +31,7 @@
 <MudText Typo="Typo.body2">@State.IssueListText()</MudText>
 
 @code {
+
     /// <summary>Form state the tests and the host share.</summary>
     [Parameter]
     public ImportPreviewState State { get; set; } = new();
@@ -54,4 +55,5 @@
         _target = "";
         _required = false;
     }
+
 }

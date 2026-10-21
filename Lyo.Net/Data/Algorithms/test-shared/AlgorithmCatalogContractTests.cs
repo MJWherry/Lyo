@@ -1,8 +1,6 @@
-using Lyo.Algorithms;
 using Lyo.Algorithms.Models;
-using Lyo.Algorithms.Models.Request;
-using Microsoft.Extensions.DependencyInjection;
 using Lyo.Common.Core.Identifiers;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Algorithms.Tests;
 
@@ -21,32 +19,26 @@ public abstract class AlgorithmCatalogContractTests
         var bag = new AlgorithmContextBag();
         bag.Set("Atk", 10d);
         var ct = TestCt;
-
-        var first = await catalog.SaveRevisionAsync(key, new AlgorithmRevisionReq { Kind = AlgorithmKind.Expression, Source = "Atk * 2" }, ct);
+        var first = await catalog.SaveRevisionAsync(key, new() { Kind = AlgorithmKind.Expression, Source = "Atk * 2" }, ct);
         Assert.True(first.IsSuccess);
-        Assert.True((await catalog.SetLabelAsync(key, "game.1.0", new AlgorithmLabelReq { Revision = 1, IsMutable = false }, ct)).IsSuccess);
-        Assert.True((await catalog.SetLabelAsync(key, "live", new AlgorithmLabelReq { Revision = 1, IsMutable = true }, ct)).IsSuccess);
-
-        Assert.True((await catalog.SaveRevisionAsync(key, new AlgorithmRevisionReq { Kind = AlgorithmKind.Expression, Source = "Atk * 3" }, ct)).IsSuccess);
-        Assert.True((await catalog.SetLabelAsync(key, "live", new AlgorithmLabelReq { Revision = 2, IsMutable = true }, ct)).IsSuccess);
-
+        Assert.True((await catalog.SetLabelAsync(key, "game.1.0", new() { Revision = 1, IsMutable = false }, ct)).IsSuccess);
+        Assert.True((await catalog.SetLabelAsync(key, "live", new() { Revision = 1, IsMutable = true }, ct)).IsSuccess);
+        Assert.True((await catalog.SaveRevisionAsync(key, new() { Kind = AlgorithmKind.Expression, Source = "Atk * 3" }, ct)).IsSuccess);
+        Assert.True((await catalog.SetLabelAsync(key, "live", new() { Revision = 2, IsMutable = true }, ct)).IsSuccess);
         Assert.Equal(30d, await registry.ExecuteAsync<AlgorithmContextBag, double>(AlgorithmRef.Latest(key), bag, ct));
         Assert.Equal(30d, await registry.ExecuteAsync<AlgorithmContextBag, double>(AlgorithmRef.Label(key, "live"), bag, ct));
         Assert.Equal(20d, await registry.ExecuteAsync<AlgorithmContextBag, double>(AlgorithmRef.Revision(key, 1), bag, ct));
         Assert.Equal(20d, await registry.ExecuteAsync<AlgorithmContextBag, double>(AlgorithmRef.Label(key, "game.1.0"), bag, ct));
-
-        var broken = await catalog.SaveRevisionAsync(key, new AlgorithmRevisionReq { Kind = AlgorithmKind.Expression, Source = "Atk *" }, ct);
+        var broken = await catalog.SaveRevisionAsync(key, new() { Kind = AlgorithmKind.Expression, Source = "Atk *" }, ct);
         Assert.False(broken.IsSuccess);
         Assert.Equal(30d, await registry.ExecuteAsync<AlgorithmContextBag, double>(AlgorithmRef.Latest(key), bag, ct));
-
-        var reverted = await catalog.RevertToRevisionAsync(key, new AlgorithmRevertReq { Revision = 1 }, ct);
+        var reverted = await catalog.RevertToRevisionAsync(key, new() { Revision = 1 }, ct);
         Assert.True(reverted.IsSuccess);
         Assert.Equal(3, reverted.Data!.CurrentRevision);
         Assert.Equal(20d, await registry.ExecuteAsync<AlgorithmContextBag, double>(AlgorithmRef.Latest(key), bag, ct));
         Assert.Equal(20d, await registry.ExecuteAsync<AlgorithmContextBag, double>(AlgorithmRef.Revision(key, 1), bag, ct));
         Assert.Equal(30d, await registry.ExecuteAsync<AlgorithmContextBag, double>(AlgorithmRef.Revision(key, 2), bag, ct));
-
-        var moved = await catalog.SetLabelAsync(key, "game.1.0", new AlgorithmLabelReq { Revision = 2, IsMutable = false }, ct);
+        var moved = await catalog.SetLabelAsync(key, "game.1.0", new() { Revision = 2, IsMutable = false }, ct);
         Assert.False(moved.IsSuccess);
         Assert.Equal(20d, await registry.ExecuteAsync<AlgorithmContextBag, double>(AlgorithmRef.Label(key, "game.1.0"), bag, ct));
     }
@@ -59,7 +51,7 @@ public abstract class AlgorithmCatalogContractTests
         var key = "fish.type." + LyoGuid.CreateV7().ToString("N");
         var payload = """{"input":"FishType","entries":[{"key":"bass","points":10},{"key":"trout","points":4}]}""";
         var ct = TestCt;
-        var saved = await catalog.SaveRevisionAsync(key, new AlgorithmRevisionReq { Kind = AlgorithmKind.DiscreteMap, Source = "", Payload = payload }, ct);
+        var saved = await catalog.SaveRevisionAsync(key, new() { Kind = AlgorithmKind.DiscreteMap, Source = "", Payload = payload }, ct);
         Assert.True(saved.IsSuccess);
         var revision = Assert.Single(await catalog.GetRevisionsAsync(key, ct));
         Assert.Contains("bass", revision.Payload, StringComparison.Ordinal);

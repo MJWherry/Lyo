@@ -5,6 +5,7 @@
         <MudText Typo="Typo.subtitle1">Invite</MudText>
         @if (Board == null) {
             <MudAlert Severity="Severity.Info" Dense="true">Load a board to create invites.</MudAlert>
+
             return;
         }
         <MudSelect T="InviteShareKind" Label="Share" Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="_kind">
@@ -28,16 +29,21 @@
         </MudButton>
         @if (_created != null) {
             <MudText Typo="Typo.caption">Token (shown once)</MudText>
+
             <MudTextField T="string" Variant="Variant.Outlined" Margin="Margin.Dense" Value="@_created.Token" ReadOnly="true"/>
+
             @if (!string.IsNullOrWhiteSpace(_created.JoinUrl)) {
                 <MudTextField T="string" Label="Join URL" Variant="Variant.Outlined" Margin="Margin.Dense" Value="@_created.JoinUrl" ReadOnly="true"/>
             }
+
             @if (!string.IsNullOrWhiteSpace(_created.ShortUrl)) {
                 <MudTextField T="string" Label="Short URL" Variant="Variant.Outlined" Margin="Margin.Dense" Value="@_created.ShortUrl" ReadOnly="true"/>
             }
+
             @if (_qrSrc != null) {
                 <MudImage Src="@_qrSrc" Alt="Invite QR" Width="192" Height="192" ObjectFit="ObjectFit.Contain"/>
             }
+
             <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" OnClick="RevokeAsync">Revoke</MudButton>
         }
     </MudStack>

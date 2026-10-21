@@ -5,22 +5,14 @@ namespace Lyo.Toml.Tests;
 
 public class TomlServiceTests
 {
-    private sealed class Person
-    {
-        public string? GivenName { get; set; }
-
-        public int? Age { get; set; }
-
-        public string? Note { get; set; }
-    }
-
     [Fact]
     public void ParseString_Person_MatchesJsonContract()
     {
         const string toml = """
-            givenName = "Ada"
-            age = 36
-            """;
+                            givenName = "Ada"
+                            age = 36
+                            """;
+
         var person = new TomlService().ParseString<Person>(toml);
         Assert.Equal("Ada", person.GivenName);
         Assert.Equal(36, person.Age);
@@ -39,12 +31,13 @@ public class TomlServiceTests
     public void ParseString_ArrayOfTables_LoadsAsList()
     {
         const string toml = """
-            [[items]]
-            givenName = "Ada"
+                            [[items]]
+                            givenName = "Ada"
 
-            [[items]]
-            givenName = "Grace"
-            """;
+                            [[items]]
+                            givenName = "Grace"
+                            """;
+
         var people = new TomlService().ParseString<List<Person>>(toml);
         Assert.Equal(2, people.Count);
         Assert.Equal("Ada", people[0].GivenName);
@@ -59,5 +52,14 @@ public class TomlServiceTests
         var person = JsonSerializer.Deserialize<Person>(json, LyoJsonSerializerOptions.Create());
         Assert.Equal("Ada", person!.GivenName);
         Assert.Equal(36, person.Age);
+    }
+
+    private sealed class Person
+    {
+        public string? GivenName { get; set; }
+
+        public int? Age { get; set; }
+
+        public string? Note { get; set; }
     }
 }

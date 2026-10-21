@@ -2,6 +2,12 @@ namespace Lyo.Job.Web.Components;
 
 public partial class JobWorkflowView
 {
+    private bool _loading;
+    private JobWorkflowRes? _selectedWorkflow;
+    private Guid? _selectedWorkflowId;
+    private bool _starting;
+    private IReadOnlyList<JobWorkflowRes> _workflows = [];
+
     [Parameter]
     [EditorRequired]
     public IApiClient ApiClient { get; set; } = null!;
@@ -12,11 +18,14 @@ public partial class JobWorkflowView
 
     private string _workflowRoute => $"{BaseRoute.TrimEnd('/')}/Workflow";
 
-    private bool _loading;
-    private bool _starting;
-    private Guid? _selectedWorkflowId;
-    private JobWorkflowRes? _selectedWorkflow;
-    private IReadOnlyList<JobWorkflowRes> _workflows = [];
+    private IReadOnlyList<JobWorkflowStepDraft> GraphSteps => (_selectedWorkflow?.Steps ?? []).Select(ToDraft).ToArray();
+
+    private IReadOnlyList<JobDefinitionRes> GraphDefinitions
+        => (_selectedWorkflow?.Steps ?? []).Select(step => step.JobDefinition)
+            .OfType<JobDefinitionRes>()
+            .GroupBy(definition => definition.Id)
+            .Select(group => group.First())
+            .ToArray();
 
     protected override async Task OnInitializedAsync() => await LoadWorkflowListAsync();
 
@@ -24,7 +33,9 @@ public partial class JobWorkflowView
     {
         _loading = true;
         try {
-            var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobWorkflowRes>>($"{_workflowRoute}/QueryConcrete", new() { Amount = 200, Include = ["JobWorkflowSteps", "JobWorkflowSteps.JobDefinition"] });
+            var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobWorkflowRes>>(
+                $"{_workflowRoute}/QueryConcrete", new() { Amount = 200, Include = ["JobWorkflowSteps", "JobWorkflowSteps.JobDefinition"] });
+
             _workflows = res?.Items ?? [];
             if (_selectedWorkflowId is null && _workflows.Count > 0)
                 _selectedWorkflowId = _workflows[0].Id;
@@ -70,8 +81,8 @@ public partial class JobWorkflowView
     }
 
     /// <summary>
-    /// Starts an ad-hoc run of the selected workflow. No idempotency key is sent: an operator pressing the button twice means two runs, unlike the scheduler, whose retries
-    /// must collapse onto one.
+    /// Starts an ad-hoc run of the selected workflow. No idempotency key is sent: an operator pressing the button twice means two runs, unlike the scheduler, whose retries must
+    /// collapse onto one.
     /// </summary>
     private async Task StartWorkflowAsync()
     {
@@ -91,21 +102,10 @@ public partial class JobWorkflowView
         }
     }
 
-    private IReadOnlyList<JobWorkflowStepDraft> GraphSteps
-        => (_selectedWorkflow?.Steps ?? []).Select(ToDraft).ToArray();
-
-    private IReadOnlyList<JobDefinitionRes> GraphDefinitions
-        => (_selectedWorkflow?.Steps ?? [])
-            .Select(step => step.JobDefinition)
-            .OfType<JobDefinitionRes>()
-            .GroupBy(definition => definition.Id)
-            .Select(group => group.First())
-            .ToArray();
-
     private static JobWorkflowStepDraft ToDraft(JobWorkflowStepRes step)
     {
         JobWorkflowGraph.TryParseDependencies(step.DependsOnStepIds, out var dependencies);
-        return new JobWorkflowStepDraft {
+        return new() {
             Id = step.Id,
             StepName = step.StepName,
             JobDefinitionId = step.JobDefinitionId,

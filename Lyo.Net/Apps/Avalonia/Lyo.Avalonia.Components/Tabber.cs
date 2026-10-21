@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -18,32 +19,28 @@ public sealed class TabPage
     public bool CanClose { get; init; }
 }
 
-/// <summary>
-/// Horizontal tabs. Each page stays in the body; choosing a tab only shows that page.
-/// Use this when a view switch must not move controls into a second parent.
-/// </summary>
+/// <summary>Horizontal tabs. Each page stays in the body; choosing a tab only shows that page. Use this when a view switch must not move controls into a second parent.</summary>
 public class Tabber : DockPanel
 {
-    private readonly StackPanel _headers = new() { Orientation = Orientation.Horizontal, Spacing = 2, Margin = new(8, 8, 8, 0) };
     private readonly Grid _body = new();
-    private readonly List<TabPage> _pages = [];
     private readonly List<Border> _chrome = [];
+    private readonly StackPanel _headers = new() { Orientation = Orientation.Horizontal, Spacing = 2, Margin = new(8, 8, 8, 0) };
     private readonly List<TextBlock> _labels = [];
-    private int _selected = -1;
+    private readonly List<TabPage> _pages = [];
+
+    /// <summary>Index of the visible page, or -1 when there are no pages.</summary>
+    public int SelectedIndex { get; private set; } = -1;
+
+    /// <summary>Pages in tab order.</summary>
+    public IReadOnlyList<TabPage> Pages => _pages;
 
     public Tabber()
     {
         LastChildFill = true;
-        DockPanel.SetDock(_headers, Dock.Top);
+        SetDock(_headers, Dock.Top);
         Children.Add(_headers);
         Children.Add(_body);
     }
-
-    /// <summary>Index of the visible page, or -1 when there are no pages.</summary>
-    public int SelectedIndex => _selected;
-
-    /// <summary>Pages in tab order.</summary>
-    public IReadOnlyList<TabPage> Pages => _pages;
 
     /// <summary>Raised after the visible page changes, including when the last page closes.</summary>
     public event EventHandler? SelectionChanged;
@@ -60,17 +57,17 @@ public class Tabber : DockPanel
         page.Content.IsVisible = false;
         _body.Children.Add(page.Content);
         _headers.Children.Add(Header(page));
-        if (_selected < 0)
+        if (SelectedIndex < 0)
             Select(0);
     }
 
     /// <summary>Shows the page at <paramref name="index" />. The other pages stay parented and hidden.</summary>
     public void Select(int index)
     {
-        if (index < 0 || index >= _pages.Count || index == _selected)
+        if (index < 0 || index >= _pages.Count || index == SelectedIndex)
             return;
 
-        _selected = index;
+        SelectedIndex = index;
         for (var i = 0; i < _pages.Count; i++) {
             _pages[i].Content.IsVisible = i == index;
             Paint(_chrome[i], i == index);
@@ -91,13 +88,13 @@ public class Tabber : DockPanel
         _headers.Children.RemoveAt(index);
         _chrome.RemoveAt(index);
         _labels.RemoveAt(index);
-        var selected = _selected;
+        var selected = SelectedIndex;
         if (selected > index)
             selected--;
         else if (selected == index)
             selected = _pages.Count == 0 ? -1 : Math.Min(index, _pages.Count - 1);
 
-        _selected = -1;
+        SelectedIndex = -1;
         TabClosed?.Invoke(this, index);
         if (selected >= 0)
             Select(selected);
@@ -106,7 +103,7 @@ public class Tabber : DockPanel
     }
 
     /// <summary>Header index under <paramref name="source" />, or -1 when <paramref name="source" /> is not a tab header.</summary>
-    public int IndexAt(Avalonia.StyledElement? source)
+    public int IndexAt(StyledElement? source)
     {
         var current = source;
         while (current != null && !ReferenceEquals(current, this)) {
@@ -145,7 +142,13 @@ public class Tabber : DockPanel
 
     private Control Header(TabPage page)
     {
-        var label = new TextBlock { Text = page.Header, VerticalAlignment = VerticalAlignment.Center, FontSize = 13, Margin = new(12, 8, 12, 6) };
+        var label = new TextBlock {
+            Text = page.Header,
+            VerticalAlignment = VerticalAlignment.Center,
+            FontSize = 13,
+            Margin = new(12, 8, 12, 6)
+        };
+
         var row = new StackPanel { Orientation = Orientation.Horizontal };
         row.Children.Add(label);
         if (page.CanClose) {
@@ -159,6 +162,7 @@ public class Tabber : DockPanel
                 BorderThickness = new(0),
                 VerticalAlignment = VerticalAlignment.Center
             };
+
             close.Click += (_, _) => Close(_pages.IndexOf(page));
             row.Children.Add(close);
         }

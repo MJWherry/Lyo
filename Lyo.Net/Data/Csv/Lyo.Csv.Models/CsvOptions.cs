@@ -7,8 +7,8 @@ using Lyo.DataTable.Models;
 namespace Lyo.Csv.Models;
 
 /// <summary>
-/// Service-level options for CSV dialect, encoding, and DataTable value pooling. CSV starts with value pooling off (unique-heavy grids); enable via <see cref="Pooling" />
-/// or config when duplication is high.
+/// Service-level options for CSV dialect, encoding, and DataTable value pooling. CSV starts with value pooling off (unique-heavy grids); enable via <see cref="Pooling" /> or
+/// config when duplication is high.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class CsvOptions
@@ -104,6 +104,7 @@ public sealed class CsvOptions
             Pooling = Pooling,
             Order = Order
         };
+
         copy.OrderNames.AddRange(OrderNames);
         return copy;
     }

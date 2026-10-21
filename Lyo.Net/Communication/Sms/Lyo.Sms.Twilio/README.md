@@ -442,7 +442,8 @@ if (!result.IsSuccess && result is TwilioSmsResult twilioResult)
 
 ## Resilience
 
-Built-in retry or timeout logic is not included. Apply resilience at the application layer (e.g. using [Lyo.Resilience](https://www.nuget.org/packages/Lyo.Resilience) with `AddLyoResilienceHandler` on the HttpClient, or by wrapping `ISmsService` calls) as needed.
+Built-in retry or timeout logic is not included. Apply resilience at the application layer (e.g. using [Lyo.Resilience](https://www.nuget.org/packages/Lyo.Resilience) with
+`AddLyoResilienceHandler` on the HttpClient, or by wrapping `ISmsService` calls) as needed.
 
 ## Throughput limits
 
@@ -460,15 +461,15 @@ Built-in retry or timeout logic is not included. Apply resilience at the applica
 
 ## `TwilioOptions` fields
 
-| Property | Type | Required | Default | Description |
-| ------------------------- | --------- | -------- | ------- | ----------------------------------------- |
-| `AccountSid` | `string` | Yes | - | Your Twilio Account SID |
-| `AuthToken` | `string` | Yes | - | Your Twilio Auth Token |
-| `DefaultFromPhoneNumber` | `string?` | No | - | Default sender phone number |
-| `BulkSmsConcurrencyLimit` | `int` | No | 10 | Maximum concurrent bulk SMS requests |
-| `MaxMessageBodyLength` | `int` | No | 1600 | Maximum message body length in characters |
-| `MaxBulkSmsLimit` | `int` | No | 1000 | Maximum messages in one bulk operation |
-| `EnableMetrics` | `bool` | No | false | Turn on metrics collection |
+| Property                  | Type      | Required | Default | Description                               |
+|---------------------------|-----------|----------|---------|-------------------------------------------|
+| `AccountSid`              | `string`  | Yes      | -       | Your Twilio Account SID                   |
+| `AuthToken`               | `string`  | Yes      | -       | Your Twilio Auth Token                    |
+| `DefaultFromPhoneNumber`  | `string?` | No       | -       | Default sender phone number               |
+| `BulkSmsConcurrencyLimit` | `int`     | No       | 10      | Maximum concurrent bulk SMS requests      |
+| `MaxMessageBodyLength`    | `int`     | No       | 1600    | Maximum message body length in characters |
+| `MaxBulkSmsLimit`         | `int`     | No       | 1000    | Maximum messages in one bulk operation    |
+| `EnableMetrics`           | `bool`    | No       | false   | Turn on metrics collection                |
 
 ## Logging
 

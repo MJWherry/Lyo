@@ -35,6 +35,6 @@ public sealed record JobWorkerInstanceRes
     /// <summary>When the row was last patched (heartbeat or a stop).</summary>
     public DateTime? UpdatedTimestamp { get; init; }
 
-    /// <summary>Built-in system info, queue subscriptions, and extras from the host. See <see cref="Lyo.Job.Models.Constants.WorkerMetadata"/>.</summary>
+    /// <summary>Built-in system info, queue subscriptions, and extras from the host. See <see cref="Lyo.Job.Models.Constants.WorkerMetadata" />.</summary>
     public IReadOnlyDictionary<string, string?>? Metadata { get; init; }
 }

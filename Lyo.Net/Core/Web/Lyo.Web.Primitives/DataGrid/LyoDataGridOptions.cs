@@ -3,8 +3,8 @@ using Lyo.Exceptions;
 namespace Lyo.Web.Primitives.DataGrid;
 
 /// <summary>
-/// Host defaults for every <see cref="LyoDataGrid{T}" /> and <see cref="LyoDataGridProjected" />. Register with <c>AddLyoDataGrid</c>; hosts that never register it
-/// receive <see cref="LyoDataGridLayout.Auto" /> with the toolbar toggle available.
+/// Host defaults for every <see cref="LyoDataGrid{T}" /> and <see cref="LyoDataGridProjected" />. Register with <c>AddLyoDataGrid</c>; hosts that never register it receive
+/// <see cref="LyoDataGridLayout.Auto" /> with the toolbar toggle available.
 /// </summary>
 public sealed class LyoDataGridOptions
 {
@@ -17,10 +17,7 @@ public sealed class LyoDataGridOptions
     /// <summary>Show the layout toggle in the grid toolbar. Set false to pin every grid onto <see cref="Layout" />.</summary>
     public bool AllowLayoutToggle { get; set; } = true;
 
-    /// <summary>
-    /// Widest viewport that still gets cards under <see cref="LyoDataGridLayout.Auto" />. <c>Sm</c> covers phones and small tablets; raise to <c>Md</c> to card
-    /// tablets as well.
-    /// </summary>
+    /// <summary>Widest viewport that still gets cards under <see cref="LyoDataGridLayout.Auto" />. <c>Sm</c> covers phones and small tablets; raise to <c>Md</c> to card tablets as well.</summary>
     public Breakpoint CardBreakpoint { get; set; } = Breakpoint.Sm;
 
     /// <summary>Throws when a value is not a declared enum member, which configuration binding can emit.</summary>

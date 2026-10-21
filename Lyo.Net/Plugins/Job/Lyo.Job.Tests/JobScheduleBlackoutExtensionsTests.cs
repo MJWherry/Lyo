@@ -46,12 +46,5 @@ public class JobScheduleBlackoutExtensionsTests
     }
 
     private static JobSchedule ScheduleWithWindow(JobBlackoutWindow window)
-        => new() {
-            TimeZoneId = "UTC",
-            JobBlackoutCalendar = new() {
-                Name = "Test",
-                Enabled = true,
-                JobBlackoutWindows = [window]
-            }
-        };
+        => new() { TimeZoneId = "UTC", JobBlackoutCalendar = new() { Name = "Test", Enabled = true, JobBlackoutWindows = [window] } };
 }

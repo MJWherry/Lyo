@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Formatter;
 using Lyo.Job.Models.Builders;
@@ -8,7 +9,6 @@ using Lyo.Job.Models.Response;
 using Lyo.Metrics;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Enums;
-using Lyo.Common.Core.Identifiers;
 using Constants = Lyo.Job.Models.Constants;
 
 namespace Lyo.Job.Scheduler.Tests;
@@ -155,7 +155,6 @@ public class JobWorkflowEngineTests
         var graph = WorkflowGraph.ConditionalChain();
         var api = new FakeWorkflowApiClient(graph.Run).WithJobRun(FinishedRun(graph.FirstRunId, JobRunResult.Success, ("Status", "ok")));
         await CreateEngine(api).ProcessRunCompletionAsync(graph.FirstRunId);
-
         Assert.Equal(JobWorkflowStepState.Running, api.StepState(graph.StepB!.Id));
         Assert.Equal(JobWorkflowRunState.Running, api.WorkflowRun.State);
     }
@@ -204,7 +203,6 @@ public class JobWorkflowEngineTests
         var graph = WorkflowGraph.ConditionalChain(condition);
         var api = new FakeWorkflowApiClient(graph.Run).WithJobRun(FinishedRun(graph.FirstRunId, JobRunResult.Success, ("Status", "ok"), ("RowCount", "0")));
         await CreateEngine(api).ProcessRunCompletionAsync(graph.FirstRunId);
-
         Assert.Equal(JobWorkflowStepState.ConditionNotMet, api.StepState(graph.StepB!.Id));
     }
 
@@ -218,7 +216,6 @@ public class JobWorkflowEngineTests
         var graph = WorkflowGraph.ConditionalChain(condition);
         var api = new FakeWorkflowApiClient(graph.Run).WithJobRun(FinishedRun(graph.FirstRunId, JobRunResult.Success, ("Status", "ok"), ("RowCount", "42")));
         await CreateEngine(api).ProcessRunCompletionAsync(graph.FirstRunId);
-
         Assert.Equal(JobWorkflowStepState.Running, api.StepState(graph.StepB!.Id));
     }
 
@@ -241,7 +238,6 @@ public class JobWorkflowEngineTests
         var graph = WorkflowGraph.ConditionalChain(condition, """{"Env":"prod"}""");
         var api = new FakeWorkflowApiClient(graph.Run).WithJobRun(FinishedRun(graph.FirstRunId, JobRunResult.Success, ("Status", "ok")));
         await CreateEngine(api).ProcessRunCompletionAsync(graph.FirstRunId);
-
         Assert.Equal(JobWorkflowStepState.Running, api.StepState(graph.StepB!.Id));
     }
 
@@ -316,7 +312,6 @@ public class JobWorkflowEngineTests
         var api = new FakeWorkflowApiClient(graph.Run).WithJobRun(FinishedRun(graph.FirstRunId, JobRunResult.Success));
         var metrics = new RecordingMetrics();
         await CreateEngine(api, metrics).ProcessRunCompletionAsync(graph.FirstRunId);
-
         Assert.Equal(1, metrics.Count(Constants.Metrics.Workflow.RunsFinished));
         Assert.Equal(0, metrics.Count(Constants.Metrics.Workflow.RunsFailed));
     }
@@ -328,7 +323,6 @@ public class JobWorkflowEngineTests
         var api = new FakeWorkflowApiClient(graph.Run).WithJobRun(FinishedRun(graph.FirstRunId, JobRunResult.Failure));
         var metrics = new RecordingMetrics();
         await CreateEngine(api, metrics).ProcessRunCompletionAsync(graph.FirstRunId);
-
         Assert.Equal(1, metrics.Count(Constants.Metrics.Workflow.StepsFailed));
         Assert.Equal(1, metrics.Count(Constants.Metrics.Workflow.RunsFailed));
         Assert.Equal(1, metrics.Count(Constants.Metrics.Workflow.StepsSkipped));
@@ -366,15 +360,13 @@ public class JobWorkflowEngineTests
         var api = new FakeWorkflowApiClient(graph.Run);
         var metrics = new RecordingMetrics();
         await CreateEngine(api, metrics).ProcessWorkflowRunCreatedAsync(graph.Run.Id);
-
         Assert.Equal(1, metrics.Count(Constants.Metrics.Workflow.StepsStarted));
         Assert.Equal(1, metrics.Count(Constants.Metrics.Workflow.RunsStarted));
     }
 
     private static JobWorkflowEngine CreateEngine(FakeWorkflowApiClient api, IMetrics? metrics = null, IJobEventPublisher? eventPublisher = null)
         => new(
-            new() { ApiBaseUrl = "http://localhost/api" }, api, new RecordingDelayedMqService(), new FormatterService(() => DateTimeOffset.UtcNow), null, eventPublisher,
-            metrics);
+            new() { ApiBaseUrl = "http://localhost/api" }, api, new RecordingDelayedMqService(), new FormatterService(() => DateTimeOffset.UtcNow), null, eventPublisher, metrics);
 
     private static JobRunRes FinishedRun(Guid id, JobRunResult? result, params (string Key, string Value)[] results)
         => new() {
@@ -449,7 +441,6 @@ public class JobWorkflowEngineTests
             var stepA = BuildStep(LyoGuid.CreateV7(), workflowId, "A", 0, null);
             var clause = condition ?? JobWorkflowStepCondition.When("A", "Status", ComparisonOperatorEnum.Equals, "ok");
             var stepB = BuildStep(LyoGuid.CreateV7(), workflowId, "B", 1, stepA.Id.ToString()) with { ConditionJson = JsonSerializer.Serialize(clause) };
-
             var stepC = BuildStep(LyoGuid.CreateV7(), workflowId, "C", 2, stepB.Id.ToString());
             var runStepA = new JobWorkflowRunStepRes(LyoGuid.CreateV7(), Guid.Empty, stepA.Id, runId, JobWorkflowStepState.Running);
             var runStepB = new JobWorkflowRunStepRes(LyoGuid.CreateV7(), Guid.Empty, stepB.Id, null, JobWorkflowStepState.Pending);
@@ -492,8 +483,9 @@ public class JobWorkflowEngineTests
             var runId = LyoGuid.CreateV7();
             var workflow = new JobWorkflowRes(workflowId, "Workflow", null, true, steps);
             var started = state == JobWorkflowRunState.Pending ? null : (DateTime?)DateTime.UtcNow.AddMinutes(-5);
-            return new(runId, workflowId, state, started, null, DateTime.UtcNow.AddMinutes(-5),
-                runSteps.Select(s => s with { JobWorkflowRunId = runId }).ToList(), workflow, InputsJson: inputsJson);
+            return new(
+                runId, workflowId, state, started, null, DateTime.UtcNow.AddMinutes(-5), runSteps.Select(s => s with { JobWorkflowRunId = runId }).ToList(), workflow,
+                InputsJson: inputsJson);
         }
     }
 }

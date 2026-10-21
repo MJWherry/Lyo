@@ -25,8 +25,7 @@ public class JobWorkflowRetentionPurgeTests
     public async Task Purge_FinishedRunOlderThanRetention_DeletesRunAndSteps()
     {
         var seeded = await SeedWorkflowRunAsync(JobWorkflowRunState.Finished, DateTime.UtcNow.AddDays(-10));
-        await InvokeMaintenanceAsync(workflowRetentionDays: 1);
-
+        await InvokeMaintenanceAsync(1);
         await using var db = await CreateDbContextAsync();
         Assert.False(await db.JobWorkflowRuns.AnyAsync(r => r.Id == seeded.RunId, TestCt));
         Assert.False(await db.JobWorkflowRunSteps.AnyAsync(s => s.Id == seeded.RunStepId, TestCt));
@@ -36,8 +35,7 @@ public class JobWorkflowRetentionPurgeTests
     public async Task Purge_FailedRunOlderThanRetention_IsAlsoDeleted()
     {
         var seeded = await SeedWorkflowRunAsync(JobWorkflowRunState.Failed, DateTime.UtcNow.AddDays(-10));
-        await InvokeMaintenanceAsync(workflowRetentionDays: 1);
-
+        await InvokeMaintenanceAsync(1);
         await using var db = await CreateDbContextAsync();
         Assert.False(await db.JobWorkflowRuns.AnyAsync(r => r.Id == seeded.RunId, TestCt));
     }
@@ -46,9 +44,8 @@ public class JobWorkflowRetentionPurgeTests
     public async Task Purge_RunningRun_IsNotPurged()
     {
         // Age is measured from FinishedTimestamp, so an in-flight run has no cutoff to be past. Deleting one would orphan the job runs still reporting into it.
-        var seeded = await SeedWorkflowRunAsync(JobWorkflowRunState.Running, finishedTimestamp: null, createdTimestamp: DateTime.UtcNow.AddDays(-30));
-        await InvokeMaintenanceAsync(workflowRetentionDays: 1);
-
+        var seeded = await SeedWorkflowRunAsync(JobWorkflowRunState.Running, null, DateTime.UtcNow.AddDays(-30));
+        await InvokeMaintenanceAsync(1);
         await using var db = await CreateDbContextAsync();
         Assert.True(await db.JobWorkflowRuns.AnyAsync(r => r.Id == seeded.RunId, TestCt));
     }
@@ -57,8 +54,7 @@ public class JobWorkflowRetentionPurgeTests
     public async Task Purge_RetentionDisabled_KeepsEverything()
     {
         var seeded = await SeedWorkflowRunAsync(JobWorkflowRunState.Finished, DateTime.UtcNow.AddDays(-999));
-        await InvokeMaintenanceAsync(workflowRetentionDays: 0);
-
+        await InvokeMaintenanceAsync(0);
         await using var db = await CreateDbContextAsync();
         Assert.True(await db.JobWorkflowRuns.AnyAsync(r => r.Id == seeded.RunId, TestCt));
     }
@@ -67,23 +63,18 @@ public class JobWorkflowRetentionPurgeTests
     public async Task Purge_FinishedRunInsideRetention_IsKept()
     {
         var seeded = await SeedWorkflowRunAsync(JobWorkflowRunState.Finished, DateTime.UtcNow.AddHours(-2));
-        await InvokeMaintenanceAsync(workflowRetentionDays: 7);
-
+        await InvokeMaintenanceAsync(7);
         await using var db = await CreateDbContextAsync();
         Assert.True(await db.JobWorkflowRuns.AnyAsync(r => r.Id == seeded.RunId, TestCt));
     }
 
-    private async Task<(Guid RunId, Guid RunStepId)> SeedWorkflowRunAsync(
-        JobWorkflowRunState state,
-        DateTime? finishedTimestamp,
-        DateTime? createdTimestamp = null)
+    private async Task<(Guid RunId, Guid RunStepId)> SeedWorkflowRunAsync(JobWorkflowRunState state, DateTime? finishedTimestamp, DateTime? createdTimestamp = null)
     {
         var definitionId = LyoGuid.CreateCombPostgres();
         var workflowId = LyoGuid.CreateCombPostgres();
         var stepId = LyoGuid.CreateCombPostgres();
         var runId = LyoGuid.CreateCombPostgres();
         var runStepId = LyoGuid.CreateCombPostgres();
-
         await using var db = await CreateDbContextAsync();
         db.JobDefinitions.Add(
             new() {
@@ -95,7 +86,14 @@ public class JobWorkflowRetentionPurgeTests
                 CreatedTimestamp = DateTime.UtcNow
             });
 
-        db.JobWorkflows.Add(new() { Id = workflowId, Name = $"wf-{workflowId:N}"[..20], Enabled = true, CreatedTimestamp = DateTime.UtcNow });
+        db.JobWorkflows.Add(
+            new() {
+                Id = workflowId,
+                Name = $"wf-{workflowId:N}"[..20],
+                Enabled = true,
+                CreatedTimestamp = DateTime.UtcNow
+            });
+
         db.JobWorkflowSteps.Add(
             new() {
                 Id = stepId,

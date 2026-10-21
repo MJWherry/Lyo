@@ -1,6 +1,6 @@
 using System.Text.Json;
-using Lyo.Json;
 using Lyo.Exceptions;
+using Lyo.Json;
 using Lyo.StateMachine.Models;
 
 namespace Lyo.StateMachine;
@@ -30,8 +30,8 @@ public static class StateMachineDocumentJson
 public static class StateMachineDocumentCompatibility
 {
     /// <summary>
-    /// States in <paramref name="previous" /> that <paramref name="updated" /> no longer declares, in their previous order. Saved instances in those states would fail
-    /// to fire under the new revision; migrate them first.
+    /// States in <paramref name="previous" /> that <paramref name="updated" /> no longer declares, in their previous order. Saved instances in those states would fail to fire
+    /// under the new revision; migrate them first.
     /// </summary>
     public static IReadOnlyList<string> FindRemovedStates(StateMachineDocument previous, StateMachineDocument updated)
     {

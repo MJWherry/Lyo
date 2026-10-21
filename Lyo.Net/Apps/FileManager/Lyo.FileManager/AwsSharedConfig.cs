@@ -17,8 +17,8 @@ public static class AwsSharedConfig
     /// <summary>Merges credential text and config text. Config sections named <c>profile foo</c> match the credentials section <c>foo</c>.</summary>
     public static IReadOnlyList<AwsProfile> Read(string? credentialsText, string? configText)
     {
-        var credentials = Parse(credentialsText, stripProfilePrefix: false);
-        var config = Parse(configText, stripProfilePrefix: true);
+        var credentials = Parse(credentialsText, false);
+        var config = Parse(configText, true);
         var names = new List<string>();
         foreach (var name in credentials.Keys.Concat(config.Keys)) {
             if (!names.Contains(name, StringComparer.Ordinal))
@@ -30,17 +30,15 @@ public static class AwsSharedConfig
             var rightDefault = right.Equals("default", StringComparison.OrdinalIgnoreCase);
             if (leftDefault != rightDefault)
                 return leftDefault ? -1 : 1;
+
             return string.Compare(left, right, StringComparison.Ordinal);
         });
+
         var profiles = new List<AwsProfile>(names.Count);
         foreach (var name in names) {
             credentials.TryGetValue(name, out var cred);
             config.TryGetValue(name, out var cfg);
-            profiles.Add(new(
-                name,
-                Value(cred, "aws_access_key_id"),
-                Value(cred, "aws_secret_access_key"),
-                Value(cred, "region") ?? Value(cfg, "region")));
+            profiles.Add(new(name, Value(cred, "aws_access_key_id"), Value(cred, "aws_secret_access_key"), Value(cred, "region") ?? Value(cfg, "region")));
         }
 
         return profiles;
@@ -53,17 +51,20 @@ public static class AwsSharedConfig
         var sections = new Dictionary<string, Dictionary<string, string>>(StringComparer.Ordinal);
         if (string.IsNullOrWhiteSpace(text))
             return sections;
+
         Dictionary<string, string>? current = null;
-        foreach (var raw in text.Split(['\r', '\n'])) {
+        foreach (var raw in text.Split('\r', '\n')) {
             var line = raw.Trim();
             if (line.Length == 0 || line[0] is '#' or ';')
                 continue;
+
             if (line[0] == '[' && line[^1] == ']') {
                 var name = line[1..^1].Trim();
                 if (stripProfilePrefix && name.StartsWith("profile ", StringComparison.OrdinalIgnoreCase))
                     name = name["profile ".Length..].Trim();
+
                 if (!sections.TryGetValue(name, out current)) {
-                    current = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    current = new(StringComparer.OrdinalIgnoreCase);
                     sections[name] = current;
                 }
 
@@ -72,9 +73,11 @@ public static class AwsSharedConfig
 
             if (current == null)
                 continue;
+
             var eq = line.IndexOf('=');
             if (eq <= 0)
                 continue;
+
             current[line[..eq].Trim()] = line[(eq + 1)..].Trim();
         }
 
@@ -85,6 +88,7 @@ public static class AwsSharedConfig
     {
         if (section == null || !section.TryGetValue(key, out var value) || string.IsNullOrWhiteSpace(value))
             return null;
+
         return value;
     }
 }

@@ -4,8 +4,8 @@ using Lyo.Exceptions;
 namespace Lyo.Http.Client.Pipeline;
 
 /// <summary>
-/// Per-process waiter queue and concurrency cap for one named HTTP client. Handlers are transient; this object is a singleton so the caps survive pooling.
-/// The shared quota itself lives on <c>IRateLimitService</c>.
+/// Per-process waiter queue and concurrency cap for one named HTTP client. Handlers are transient; this object is a singleton so the caps survive pooling. The shared quota
+/// itself lives on <c>IRateLimitService</c>.
 /// </summary>
 public sealed class LyoHttpRateLimitGate
 {
@@ -21,13 +21,10 @@ public sealed class LyoHttpRateLimitGate
         ArgumentHelpers.ThrowIfNull(options);
         _queueLimit = options.QueueLimit;
         if (options.QueueLimit > 0)
-            _queue = new SemaphoreSlim(options.QueueLimit, options.QueueLimit);
+            _queue = new(options.QueueLimit, options.QueueLimit);
 
         if (options.MaxConcurrent > 0) {
-            Concurrency = new ConcurrencyLimiter(new ConcurrencyLimiterOptions {
-                PermitLimit = options.MaxConcurrent,
-                QueueLimit = Math.Max(options.QueueLimit, options.MaxConcurrent)
-            });
+            Concurrency = new(new() { PermitLimit = options.MaxConcurrent, QueueLimit = Math.Max(options.QueueLimit, options.MaxConcurrent) });
         }
     }
 

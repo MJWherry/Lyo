@@ -44,14 +44,19 @@ internal static class FFmpegTagJson
     }
 }
 
-/// <summary>
-/// Reads and writes audio and video tags through ffprobe and a stream-copy ffmpeg. Images are not claimed.
-/// Write uses <c>-c copy</c> and does not re-encode.
-/// </summary>
+/// <summary>Reads and writes audio and video tags through ffprobe and a stream-copy ffmpeg. Images are not claimed. Write uses <c>-c copy</c> and does not re-encode.</summary>
 public sealed class FFmpegFileTagProvider : IFileTagReader, IFileTagWriter
 {
     private static readonly HashSet<string> Extensions = new(StringComparer.OrdinalIgnoreCase) {
-        ".mp3", ".m4a", ".flac", ".wav", ".ogg", ".mp4", ".mov", ".mkv", ".webm"
+        ".mp3",
+        ".m4a",
+        ".flac",
+        ".wav",
+        ".ogg",
+        ".mp4",
+        ".mov",
+        ".mkv",
+        ".webm"
     };
 
     private readonly FFmpegOptions _options;
@@ -62,6 +67,55 @@ public sealed class FFmpegFileTagProvider : IFileTagReader, IFileTagWriter
         ArgumentHelpers.ThrowIfNull(options);
         options.Validate();
         _options = options;
+    }
+
+    /// <inheritdoc />
+    public bool CanRead(string path) => HasExtension(path);
+
+    /// <inheritdoc />
+    public async Task<Result<FileTags>> ReadAsync(string path, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path);
+        var args = new[] { "-hide_banner", "-loglevel", "error", "-print_format", "json", "-show_format", "-show_streams", path };
+        var run = await RunAsync(ProbePath(), args, ct).ConfigureAwait(false);
+        if (run.ExitCode != 0)
+            return Result<FileTags>.Failure(string.IsNullOrWhiteSpace(run.StdErr) ? "ffprobe failed." : run.StdErr.Trim(), "FileTagProbeFailed");
+
+        try {
+            return Result<FileTags>.Success(FFmpegTagJson.Parse(run.StdOut));
+        }
+        catch (JsonException ex) {
+            return Result<FileTags>.Failure(ex, "FileTagProbeFailed");
+        }
+    }
+
+    /// <inheritdoc />
+    public bool CanWrite(string path) => HasExtension(path);
+
+    /// <inheritdoc />
+    public async Task<Result<FileTags>> WriteAsync(string path, FileTagWriteRequest request, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path);
+        ArgumentHelpers.ThrowIfNull(request);
+        if (!request.ClearExisting && request.Tags.Count == 0)
+            return Result<FileTags>.Failure("No tags to write.", "FileTagNothingToWrite");
+
+        var full = Path.GetFullPath(path);
+        var directory = Path.GetDirectoryName(full) ?? ".";
+        var temp = Path.Combine(directory, Path.GetFileNameWithoutExtension(full) + ".lyotag" + Path.GetExtension(full));
+        try {
+            var args = BuildWriteArguments(full, temp, request);
+            var run = await RunAsync(ToolPath(), args, ct).ConfigureAwait(false);
+            if (run.ExitCode != 0)
+                return Result<FileTags>.Failure(string.IsNullOrWhiteSpace(run.StdErr) ? "ffmpeg tag write failed." : run.StdErr.Trim(), "FileTagWriteFailed");
+
+            File.Move(temp, full, true);
+            return Result<FileTags>.Success(new(request.Tags));
+        }
+        finally {
+            if (File.Exists(temp))
+                File.Delete(temp);
+        }
     }
 
     /// <summary>Argument list for a stream-copy tag write. <see cref="FileTagWriteRequest.ClearExisting" /> emits <c>-map_metadata -1</c> before <c>-metadata</c>.</summary>
@@ -87,57 +141,7 @@ public sealed class FFmpegFileTagProvider : IFileTagReader, IFileTagWriter
         return args;
     }
 
-    /// <inheritdoc />
-    public bool CanRead(string path) => HasExtension(path);
-
-    /// <inheritdoc />
-    public bool CanWrite(string path) => HasExtension(path);
-
-    /// <inheritdoc />
-    public async Task<Result<FileTags>> ReadAsync(string path, CancellationToken ct = default)
-    {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path);
-        var args = new[] { "-hide_banner", "-loglevel", "error", "-print_format", "json", "-show_format", "-show_streams", path };
-        var run = await RunAsync(ProbePath(), args, ct).ConfigureAwait(false);
-        if (run.ExitCode != 0)
-            return Result<FileTags>.Failure(string.IsNullOrWhiteSpace(run.StdErr) ? "ffprobe failed." : run.StdErr.Trim(), "FileTagProbeFailed");
-
-        try {
-            return Result<FileTags>.Success(FFmpegTagJson.Parse(run.StdOut));
-        }
-        catch (JsonException ex) {
-            return Result<FileTags>.Failure(ex, "FileTagProbeFailed");
-        }
-    }
-
-    /// <inheritdoc />
-    public async Task<Result<FileTags>> WriteAsync(string path, FileTagWriteRequest request, CancellationToken ct = default)
-    {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path);
-        ArgumentHelpers.ThrowIfNull(request);
-        if (!request.ClearExisting && request.Tags.Count == 0)
-            return Result<FileTags>.Failure("No tags to write.", "FileTagNothingToWrite");
-
-        var full = Path.GetFullPath(path);
-        var directory = Path.GetDirectoryName(full) ?? ".";
-        var temp = Path.Combine(directory, Path.GetFileNameWithoutExtension(full) + ".lyotag" + Path.GetExtension(full));
-        try {
-            var args = BuildWriteArguments(full, temp, request);
-            var run = await RunAsync(ToolPath(), args, ct).ConfigureAwait(false);
-            if (run.ExitCode != 0)
-                return Result<FileTags>.Failure(string.IsNullOrWhiteSpace(run.StdErr) ? "ffmpeg tag write failed." : run.StdErr.Trim(), "FileTagWriteFailed");
-
-            File.Move(temp, full, overwrite: true);
-            return Result<FileTags>.Success(new(request.Tags));
-        }
-        finally {
-            if (File.Exists(temp))
-                File.Delete(temp);
-        }
-    }
-
-    private static bool HasExtension(string path)
-        => !string.IsNullOrWhiteSpace(path) && Extensions.Contains(Path.GetExtension(path));
+    private static bool HasExtension(string path) => !string.IsNullOrWhiteSpace(path) && Extensions.Contains(Path.GetExtension(path));
 
     private string ToolPath() => string.IsNullOrWhiteSpace(_options.FFmpegPath) ? "ffmpeg" : _options.FFmpegPath;
 

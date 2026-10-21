@@ -1,6 +1,8 @@
 # Lyo.Billing.Seed
 
-`BillingEfSeedContributor` writes one biller profile, one invoice sequence, and `options.Count` clients with no tax id and no ciphertext. Each client gets a person, phone, email, and address payload, one draft invoice, and one issued invoice with a line, a charge, and a payment. `JournalId` stays null. `OnClear` deletes children before clients so `--replace` can run.
+`BillingEfSeedContributor` writes one biller profile, one invoice sequence, and `options.Count` clients with no tax id and no ciphertext. Each client gets a person, phone, email,
+and address payload, one draft invoice, and one issued invoice with a line, a charge, and a payment. `JournalId` stays null. `OnClear` deletes children before clients so
+`--replace` can run.
 
 ## Features
 

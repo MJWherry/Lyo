@@ -146,7 +146,9 @@ public sealed class StoryEffectEntityConfiguration : IEntityTypeConfiguration<St
 {
     public void Configure(EntityTypeBuilder<StoryEffectEntity> builder)
     {
-        builder.ToTable("effect", t => t.HasCheckConstraint("ck_story_effect_owner", "((choice_id IS NOT NULL)::int + (action_id IS NOT NULL)::int + (reaction_id IS NOT NULL)::int) = 1"));
+        builder.ToTable(
+            "effect", t => t.HasCheckConstraint("ck_story_effect_owner", "((choice_id IS NOT NULL)::int + (action_id IS NOT NULL)::int + (reaction_id IS NOT NULL)::int) = 1"));
+
         builder.HasKey(e => e.Id);
         builder.Property(e => e.Id).HasColumnName("id").HasColumnType("uuid");
         builder.Property(e => e.ChoiceId).HasColumnName("choice_id").HasColumnType("uuid");

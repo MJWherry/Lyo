@@ -7,11 +7,18 @@ namespace Lyo.Common.Core.Archives;
 
 /// <summary>Reads and extracts a ZIP archive.</summary>
 /// <remarks>
-/// <see cref="OpenEntry" /> returns the archive's entry stream. Dispose that stream before opening another entry. <see cref="ExtractTo" /> refuses an entry whose path escapes the destination directory.
+/// <see cref="OpenEntry" /> returns the archive's entry stream. Dispose that stream before opening another entry. <see cref="ExtractTo" /> refuses an entry whose path
+/// escapes the destination directory.
 /// </remarks>
 public sealed class ZipFileReader : IDisposable
 {
     private readonly ZipArchive _archive;
+
+    /// <summary>Archive comment. Null when the archive has none.</summary>
+    public string? Comment { get; }
+
+    /// <summary>Entries in archive order.</summary>
+    public IReadOnlyList<ZipFileEntry> Entries { get; }
 
     private ZipFileReader(ZipArchive archive, Stream stream)
     {
@@ -25,11 +32,8 @@ public sealed class ZipFileReader : IDisposable
         Entries = entries;
     }
 
-    /// <summary>Archive comment. Null when the archive has none.</summary>
-    public string? Comment { get; }
-
-    /// <summary>Entries in archive order.</summary>
-    public IReadOnlyList<ZipFileEntry> Entries { get; }
+    /// <summary>Closes the archive.</summary>
+    public void Dispose() => _archive.Dispose();
 
     /// <summary>Opens a ZIP file for reading.</summary>
     /// <param name="path">Path of the ZIP file.</param>
@@ -38,7 +42,7 @@ public sealed class ZipFileReader : IDisposable
     {
         ArgumentHelpers.ThrowIfFileNotFound(path);
         var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-        return Open(stream, leaveOpen: false);
+        return Open(stream, false);
     }
 
     /// <summary>Opens a ZIP stream for reading.</summary>
@@ -48,7 +52,7 @@ public sealed class ZipFileReader : IDisposable
     public static ZipFileReader Open(Stream stream, bool leaveOpen = true)
     {
         ArgumentHelpers.ThrowIfNull(stream);
-        return new(new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen), stream);
+        return new(new(stream, ZipArchiveMode.Read, leaveOpen), stream);
     }
 
     /// <summary>Reads one entry into memory.</summary>
@@ -76,7 +80,7 @@ public sealed class ZipFileReader : IDisposable
             var target = TargetPath(root, entry.FullName);
             if (IsDirectory(entry)) {
                 Directory.CreateDirectory(target);
-                Restore(target, entry, directory: true);
+                Restore(target, entry, true);
                 continue;
             }
 
@@ -84,11 +88,12 @@ public sealed class ZipFileReader : IDisposable
             if (!string.IsNullOrEmpty(parent))
                 Directory.CreateDirectory(parent);
 
-            using (var input = entry.Open())
-            using (var output = File.Create(target))
-                input.CopyTo(output);
+            using (var input = entry.Open()) {
+                using (var output = File.Create(target))
+                    input.CopyTo(output);
+            }
 
-            Restore(target, entry, directory: false);
+            Restore(target, entry, false);
         }
     }
 
@@ -103,7 +108,7 @@ public sealed class ZipFileReader : IDisposable
             var target = TargetPath(root, entry.FullName);
             if (IsDirectory(entry)) {
                 Directory.CreateDirectory(target);
-                Restore(target, entry, directory: true);
+                Restore(target, entry, true);
                 continue;
             }
 
@@ -111,21 +116,19 @@ public sealed class ZipFileReader : IDisposable
             if (!string.IsNullOrEmpty(parent))
                 Directory.CreateDirectory(parent);
 
-            using (var input = entry.Open())
-            using (var output = new FileStream(target, FileMode.Create, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous)) {
+            using (var input = entry.Open()) {
+                using (var output = new FileStream(target, FileMode.Create, FileAccess.Write, FileShare.None, 81920, FileOptions.Asynchronous)) {
 #if NETSTANDARD2_0
-                await input.CopyToAsync(output, 81920, ct).ConfigureAwait(false);
+                    await input.CopyToAsync(output, 81920, ct).ConfigureAwait(false);
 #else
                 await input.CopyToAsync(output, ct).ConfigureAwait(false);
 #endif
+                }
             }
 
-            Restore(target, entry, directory: false);
+            Restore(target, entry, false);
         }
     }
-
-    /// <summary>Closes the archive.</summary>
-    public void Dispose() => _archive.Dispose();
 
     private ZipArchiveEntry Require(string entryName)
     {
@@ -212,7 +215,7 @@ public sealed class ZipFileReader : IDisposable
         ReadExactly(stream, tail, 0, tailCount);
         var eocdInTail = FindEocd(tail);
         var commentLength = ReadUInt16(tail, eocdInTail + 20);
-        string? comment = commentLength == 0 ? null : Encoding.UTF8.GetString(tail, eocdInTail + 22, commentLength);
+        var comment = commentLength == 0 ? null : Encoding.UTF8.GetString(tail, eocdInTail + 22, commentLength);
         var cd = ReadCentralDirectory(stream, tail, eocdInTail);
         var cursor = 0;
         var index = 0;
@@ -223,10 +226,7 @@ public sealed class ZipFileReader : IDisposable
             var headerLength = 46 + nameLength + extraLength;
             var mode = ReadInt32(cd, cursor + 38) >> 16;
             var entryComment = entryCommentLength == 0 ? null : Encoding.UTF8.GetString(cd, cursor + headerLength, entryCommentLength);
-            entries[index] = entries[index] with {
-                Comment = string.IsNullOrEmpty(entryComment) ? null : entryComment,
-                UnixMode = mode == 0 ? null : mode
-            };
+            entries[index] = entries[index] with { Comment = string.IsNullOrEmpty(entryComment) ? null : entryComment, UnixMode = mode == 0 ? null : mode };
             cursor += headerLength + entryCommentLength;
             index++;
         }
@@ -289,14 +289,13 @@ public sealed class ZipFileReader : IDisposable
 
     private static ushort ReadUInt16(byte[] buffer, int offset) => (ushort)(buffer[offset] | (buffer[offset + 1] << 8));
 
-    private static int ReadInt32(byte[] buffer, int offset)
-        => buffer[offset] | (buffer[offset + 1] << 8) | (buffer[offset + 2] << 16) | (buffer[offset + 3] << 24);
+    private static int ReadInt32(byte[] buffer, int offset) => buffer[offset] | (buffer[offset + 1] << 8) | (buffer[offset + 2] << 16) | (buffer[offset + 3] << 24);
 
     private static long ReadInt64(byte[] buffer, int offset)
     {
         var low = (uint)ReadInt32(buffer, offset);
         var high = (uint)ReadInt32(buffer, offset + 4);
-        return (long)low | ((long)high << 32);
+        return low | ((long)high << 32);
     }
 #endif
 }

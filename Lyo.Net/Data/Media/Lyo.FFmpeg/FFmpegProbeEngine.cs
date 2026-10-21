@@ -29,7 +29,7 @@ internal sealed class FFmpegProbeEngine
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath);
         FFmpegPathKind.ThrowIfLocalFileMissing(filePath);
         using var timer = _metrics.StartTimer(Constants.Metrics.ProbeDuration);
-        var result = await ProbeCoreAsync(filePath, displayPath: filePath, ct).ConfigureAwait(false);
+        var result = await ProbeCoreAsync(filePath, filePath, ct).ConfigureAwait(false);
         _metrics.IncrementCounter(result.IsSuccess ? Constants.Metrics.ProbeSuccess : Constants.Metrics.ProbeFailure);
         if (!result.IsSuccess && result.Errors?.Count > 0)
             _metrics.RecordError(Constants.Metrics.ProbeDuration, new InvalidOperationException(result.Errors[0].Message));
@@ -44,7 +44,7 @@ internal sealed class FFmpegProbeEngine
         var inputPath = await FFmpegTempHelper.WriteStreamToTempFileAsync(stream, ".tmp", ct).ConfigureAwait(false);
         try {
             using var timer = _metrics.StartTimer(Constants.Metrics.ProbeDuration);
-            var result = await ProbeCoreAsync(inputPath, displayPath: null, ct).ConfigureAwait(false);
+            var result = await ProbeCoreAsync(inputPath, null, ct).ConfigureAwait(false);
             _metrics.IncrementCounter(result.IsSuccess ? Constants.Metrics.ProbeSuccess : Constants.Metrics.ProbeFailure);
             return result;
         }
@@ -59,7 +59,7 @@ internal sealed class FFmpegProbeEngine
         var inputPath = await FFmpegTempHelper.WriteBytesToTempFileAsync(bytes, ".tmp", ct).ConfigureAwait(false);
         try {
             using var timer = _metrics.StartTimer(Constants.Metrics.ProbeDuration);
-            var result = await ProbeCoreAsync(inputPath, displayPath: null, ct).ConfigureAwait(false);
+            var result = await ProbeCoreAsync(inputPath, null, ct).ConfigureAwait(false);
             _metrics.IncrementCounter(result.IsSuccess ? Constants.Metrics.ProbeSuccess : Constants.Metrics.ProbeFailure);
             return result;
         }
@@ -81,6 +81,7 @@ internal sealed class FFmpegProbeEngine
                     CancellationToken = ct
                 })
             .ConfigureAwait(false);
+
         if (run.ExitCode != 0)
             return Result<MediaProbeResult>.Failure($"FFprobe failed: {run.StdErr}", Constants.Errors.FFprobeError);
 

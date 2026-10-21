@@ -8,7 +8,8 @@ Stream wrappers including `TeeStream`, `CountingStream`, `ProgressStream`, and `
 - **CountingStream.** Count bytes read or written.
 - **ProgressStream.** Report progress while the stream is in use.
 - **ConcatenatedStream.** Read several streams one after another.
-- **DeterministicPayloadStream.** From a seed, yields a fixed-length deterministic byte sequence without allocating the full buffer. `DefaultSeed` is shared with `Lyo.Testing.TestData` and `BenchmarkData`.
+- **DeterministicPayloadStream.** From a seed, yields a fixed-length deterministic byte sequence without allocating the full buffer. `DefaultSeed` is shared with
+  `Lyo.Testing.TestData` and `BenchmarkData`.
 - **BoundedReadStream.** Read at most a fixed number of bytes from an inner stream, then return end-of-stream. Disposes the inner stream.
 - **NullingStream.** Write-only sink that discards bytes (throughput / drain consumer).
 - **StreamExtensions.** `CopyToAsync` accepts an optional `IProgress<long>` that reports cumulative bytes written.

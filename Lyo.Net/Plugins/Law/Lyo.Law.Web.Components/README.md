@@ -1,6 +1,7 @@
 # Lyo.Law.Web.Components
 
-`LawNodeGrid` lists nodes with QueryProject and does not select body. `LawNodeView` shows the citation, an encoded body, notes, and child headings, and saves through `ILawClient`. This package has no `AddXxx` DI registration.
+`LawNodeGrid` lists nodes with QueryProject and does not select body. `LawNodeView` shows the citation, an encoded body, notes, and child headings, and saves through `ILawClient`.
+This package has no `AddXxx` DI registration.
 
 ## Features
 

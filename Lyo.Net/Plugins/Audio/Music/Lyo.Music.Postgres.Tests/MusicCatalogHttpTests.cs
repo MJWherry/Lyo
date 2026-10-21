@@ -24,32 +24,32 @@ public sealed class MusicCatalogHttpTests(MusicPostgresFixture fixture)
         var app = builder.Build();
         app.MapPost("/Music/search", async (MusicReleaseQuery query, IMusicStore music, CancellationToken token) => Results.Ok(await music.SearchReleasesAsync(query, token)));
         app.MapPost("/Music/lyrics/search", async (MusicLyricsQuery query, IMusicStore music, CancellationToken token) => Results.Ok(await music.SearchLyricsAsync(query, token)));
-        app.MapPut("/Music/track/{id:guid}/lyrics", async (Guid id, CatalogText text, IMusicStore music, CancellationToken token) => {
-            await music.SaveTrackLyricsAsync(id, text.Text, token);
-            return Results.NoContent();
-        });
+        app.MapPut(
+            "/Music/track/{id:guid}/lyrics", async (Guid id, CatalogText text, IMusicStore music, CancellationToken token) => {
+                await music.SaveTrackLyricsAsync(id, text.Text, token);
+                return Results.NoContent();
+            });
+
         await app.StartAsync(ct);
         try {
-            using var client = new HttpClient { BaseAddress = new Uri(app.Urls.First()) };
-
+            using var client = new HttpClient { BaseAddress = new(app.Urls.First()) };
             var empty = await client.PostAsJsonAsync("/Music/search", new MusicReleaseQuery { FilterIds = [] }, ct);
             empty.EnsureSuccessStatusCode();
             var none = await empty.Content.ReadFromJsonAsync<MusicRelease[]>(ct);
             Assert.NotNull(none);
             Assert.Empty(none);
-
             var tokenText = $"httplyric{LyoGuid.CreateV7():N}";
             var release = new MusicRelease {
                 Title = tokenText,
                 Slug = $"http-{LyoGuid.CreateV7():N}",
                 Kind = MusicReleaseKind.Single,
                 Status = MusicReleaseStatus.Released,
-                Tracks = [new MusicTrack { DiscNumber = 1, TrackNumber = 1, Title = "Song" }]
+                Tracks = [new() { DiscNumber = 1, TrackNumber = 1, Title = "Song" }]
             };
+
             await store.SaveReleaseAsync(release, ct);
             var put = await client.PutAsJsonAsync($"/Music/track/{release.Tracks[0].Id}/lyrics", new CatalogText { Text = $"line about {tokenText}" }, ct);
             Assert.Equal(HttpStatusCode.NoContent, put.StatusCode);
-
             var found = await client.PostAsJsonAsync("/Music/lyrics/search", new MusicLyricsQuery { FullText = tokenText }, ct);
             found.EnsureSuccessStatusCode();
             var hits = await found.Content.ReadFromJsonAsync<MusicLyricsHit[]>(ct);

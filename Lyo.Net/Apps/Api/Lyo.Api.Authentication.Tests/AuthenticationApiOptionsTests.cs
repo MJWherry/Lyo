@@ -1,4 +1,5 @@
 using Lyo.Api.ApiEndpoint;
+using Lyo.Api.Mapping;
 using Lyo.Authentication.Postgres;
 using Lyo.Cache;
 using Microsoft.AspNetCore.Authorization;
@@ -66,15 +67,17 @@ public sealed class AuthenticationApiOptionsTests
             o.ConnectionString = "Host=localhost;Database=test;Username=test;Password=test";
             o.EnableAutoMigrations = false;
         });
+
         builder.Services.AddLyoApiAuthentication();
-        builder.Services.AddScoped<Lyo.Api.Mapping.ILyoMapper>(sp => sp.GetRequiredService<AuthenticationLyoMapper>());
+        builder.Services.AddScoped<ILyoMapper>(sp => sp.GetRequiredService<AuthenticationLyoMapper>());
         return builder.Build();
     }
 
     private static List<Endpoint> MappedAuthEndpoints(WebApplication app)
-        => [.. ((IEndpointRouteBuilder)app).DataSources.SelectMany(source => source.Endpoints)
-            .Where(e => RoutePatternOf(e).Contains("Auth/", StringComparison.OrdinalIgnoreCase) || RoutePatternOf(e).StartsWith("Auth", StringComparison.OrdinalIgnoreCase))];
+        => [
+            .. ((IEndpointRouteBuilder)app).DataSources.SelectMany(source => source.Endpoints)
+            .Where(e => RoutePatternOf(e).Contains("Auth/", StringComparison.OrdinalIgnoreCase) || RoutePatternOf(e).StartsWith("Auth", StringComparison.OrdinalIgnoreCase))
+        ];
 
-    private static string RoutePatternOf(Endpoint endpoint)
-        => endpoint is RouteEndpoint route ? route.RoutePattern.RawText ?? "" : endpoint.DisplayName ?? "";
+    private static string RoutePatternOf(Endpoint endpoint) => endpoint is RouteEndpoint route ? route.RoutePattern.RawText ?? "" : endpoint.DisplayName ?? "";
 }

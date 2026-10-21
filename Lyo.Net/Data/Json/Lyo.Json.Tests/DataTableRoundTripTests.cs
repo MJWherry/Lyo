@@ -42,7 +42,9 @@ public class DataTableRoundTripTests
         table.SetHeader(0, "X");
         table.AddRow().SetCell(0, "");
         var parsed = new JsonService(o => o.IgnoreEmptyStrings = true).ParseStringAsDataTable(
-            new JsonService(o => o.IgnoreEmptyStrings = true).ExportToJsonStringFromDataTable(table)).ValueOrThrow();
+                new JsonService(o => o.IgnoreEmptyStrings = true).ExportToJsonStringFromDataTable(table))
+            .ValueOrThrow();
+
         Assert.Equal("", parsed.Rows[0][0].DisplayValue);
     }
 

@@ -7,8 +7,8 @@ public static class ScalarExtensions
 {
     /// <summary>Parses a string into <typeparamref name="T" /> using invariant culture by default, with extra handling for enums and nullable value types.</summary>
     /// <typeparam name="T">
-    /// Destination type; supports <see cref="string" />, numeric primitives, <see cref="bool" />, <see cref="Guid" />, <see cref="DateTime" />, <see cref="TimeSpan" />,
-    /// enums, and other types via <see cref="Convert.ChangeType(object?, Type, IFormatProvider?)" />.
+    /// Destination type; supports <see cref="string" />, numeric primitives, <see cref="bool" />, <see cref="Guid" />, <see cref="DateTime" />,
+    /// <see cref="TimeSpan" />, enums, and other types via <see cref="Convert.ChangeType(object?, Type, IFormatProvider?)" />.
     /// </typeparam>
     /// <param name="value">String to parse; <see langword="null" /> yields <see langword="default" />.</param>
     /// <param name="format">Optional format applied when the parsed value implements <see cref="IFormattable" /> (round-trip formatting then conversion).</param>

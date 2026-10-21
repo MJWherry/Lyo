@@ -30,6 +30,46 @@ public sealed class PuppeteerSharpBrowser : IWebAutomationBrowser, IDisposable, 
     private PuppeteerSharpTabManager? _nativeTabs;
     private bool _ownsBrowser;
 
+    /// <summary>Correlation id when created from <see cref="IPuppeteerSharpBrowserService.CreateSession(PuppeteerSharpSessionOptions?)" />; otherwise <see cref="Guid.Empty" />.</summary>
+    public Guid SessionId => ExecutionContext?.SessionId ?? Guid.Empty;
+
+    /// <summary>Session-scoped paths when created from the browser service.</summary>
+    public PuppeteerSharpExecutionContext? ExecutionContext { get; }
+
+    /// <summary>Configuration used for this session.</summary>
+    internal PuppeteerSharpBrowserOptions Options { get; }
+
+    internal ILogger<PuppeteerSharpBrowser> Logger { get; }
+
+    internal IMetrics Metrics { get; }
+
+    internal string SessionIdLabel => SessionId == Guid.Empty ? "none" : SessionId.ToString("N");
+
+    internal int LocatorTimeoutMs {
+        get {
+            var ms = (int)Options.LocatorDefaultTimeoutMs;
+            return ms < 1 ? 1 : ms;
+        }
+    }
+
+    /// <summary>Active Puppeteer page.</summary>
+    public IPage? Page { get; private set; }
+
+    /// <summary>Browser context when started.</summary>
+    public IBrowserContext? Context { get; private set; }
+
+    /// <summary>Engine-native tab management. Prefer <see cref="Tabs" /> for cross-engine plans.</summary>
+    public PuppeteerSharpTabManager NativeTabs => _nativeTabs ??= new(this, Logger);
+
+    /// <summary>Nested iframe navigation.</summary>
+    public PuppeteerSharpFrameNavigator Frames => _frames ??= new(this);
+
+    /// <summary>Dialog helpers.</summary>
+    public PuppeteerSharpDialogs Dialogs => _dialogs ??= new(this);
+
+    /// <summary>Keyboard input.</summary>
+    public PuppeteerSharpKeyboard Keyboard => _keyboard ??= new(this);
+
     /// <summary>Creates a browser that <see cref="StartBrowserAsync" /> will launch.</summary>
     public PuppeteerSharpBrowser(
         PuppeteerSharpBrowserOptions options,
@@ -59,62 +99,6 @@ public sealed class PuppeteerSharpBrowser : IWebAutomationBrowser, IDisposable, 
         _ownsBrowser = false;
         ApplyDefaultTimeouts(Page);
     }
-
-    /// <summary>Correlation id when created from <see cref="IPuppeteerSharpBrowserService.CreateSession(PuppeteerSharpSessionOptions?)" />; otherwise <see cref="Guid.Empty" />.</summary>
-    public Guid SessionId => ExecutionContext?.SessionId ?? Guid.Empty;
-
-    /// <summary>Session-scoped paths when created from the browser service.</summary>
-    public PuppeteerSharpExecutionContext? ExecutionContext { get; }
-
-    /// <summary>Configuration used for this session.</summary>
-    internal PuppeteerSharpBrowserOptions Options { get; }
-
-    internal ILogger<PuppeteerSharpBrowser> Logger { get; }
-
-    internal IMetrics Metrics { get; }
-
-    internal string SessionIdLabel => SessionId == Guid.Empty ? "none" : SessionId.ToString("N");
-
-    internal int LocatorTimeoutMs
-    {
-        get {
-            var ms = (int)Options.LocatorDefaultTimeoutMs;
-            return ms < 1 ? 1 : ms;
-        }
-    }
-
-    /// <summary>Active Puppeteer page.</summary>
-    public IPage? Page { get; private set; }
-
-    /// <summary>Browser context when started.</summary>
-    public IBrowserContext? Context { get; private set; }
-
-    /// <summary>Engine-native tab management. Prefer <see cref="Tabs" /> for cross-engine plans.</summary>
-    public PuppeteerSharpTabManager NativeTabs => _nativeTabs ??= new(this, Logger);
-
-    /// <summary>Nested iframe navigation.</summary>
-    public PuppeteerSharpFrameNavigator Frames => _frames ??= new(this);
-
-    /// <summary>Dialog helpers.</summary>
-    public PuppeteerSharpDialogs Dialogs => _dialogs ??= new(this);
-
-    /// <summary>Keyboard input.</summary>
-    public PuppeteerSharpKeyboard Keyboard => _keyboard ??= new(this);
-
-    /// <inheritdoc />
-    public IWebAutomationTabs Tabs => _automationTabs ??= new(this);
-
-    /// <inheritdoc />
-    public IBrowserCookies? CookieJar => Context != null ? _cookieJar ??= new(this) : null;
-
-    /// <inheritdoc />
-    public IBrowserHeaders? ExtraHeaders => Context != null ? _headerStore ??= new(this) : null;
-
-    /// <inheritdoc />
-    public IWebAutomationNavigator Navigator => this;
-
-    /// <inheritdoc />
-    public IWebAutomationPage CurrentPage => this;
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
@@ -156,209 +140,27 @@ public sealed class PuppeteerSharpBrowser : IWebAutomationBrowser, IDisposable, 
         ExecutionContext?.Dispose();
     }
 
+    /// <inheritdoc />
+    public IWebAutomationTabs Tabs => _automationTabs ??= new(this);
+
+    /// <inheritdoc />
+    public IBrowserCookies? CookieJar => Context != null ? _cookieJar ??= new(this) : null;
+
+    /// <inheritdoc />
+    public IBrowserHeaders? ExtraHeaders => Context != null ? _headerStore ??= new(this) : null;
+
+    /// <inheritdoc />
+    public IWebAutomationNavigator Navigator => this;
+
+    /// <inheritdoc />
+    public IWebAutomationPage CurrentPage => this;
+
     /// <summary>Full HTML source of the current page.</summary>
     public async Task<string> GetPageSourceAsync(CancellationToken ct = default)
     {
         EnsureStarted();
         ct.ThrowIfCancellationRequested();
         return await Page!.GetContentAsync().ConfigureAwait(false);
-    }
-
-    /// <summary>Current document URL.</summary>
-    public string GetCurrentUrl()
-    {
-        EnsureStarted();
-        return Page!.Url;
-    }
-
-    /// <summary>Current document title.</summary>
-    public async Task<string> GetTitleAsync(CancellationToken ct = default)
-    {
-        EnsureStarted();
-        ct.ThrowIfCancellationRequested();
-        return await Page!.GetTitleAsync().ConfigureAwait(false);
-    }
-
-    /// <summary>Navigates to a URL.</summary>
-    public async Task NavigateToAsync(string url, CancellationToken ct = default)
-    {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(url);
-        EnsureStarted();
-        await Page!.GoToAsync(url, NavigationOptions(ct)).ConfigureAwait(false);
-        Logger.LogDebug("Navigated to {Url}", BrowserUrlRedaction.ForLog(url, Options.MaskSensitiveUrlsInLogs));
-    }
-
-    /// <summary>Launches Chrome, a browser context, and the initial page.</summary>
-    public async Task StartBrowserAsync(CancellationToken ct = default)
-    {
-        if (Page != null && _ownsBrowser) {
-            Logger.LogDebug("Browser already started");
-            return;
-        }
-
-        OperationHelpers.ThrowIf(Page != null && !_ownsBrowser, "Browser is attached to an external page; do not call StartBrowserAsync.");
-        using var timer = Metrics.StartTimer(_metricNames[nameof(Constants.Metrics.StartBrowserDuration)], PuppeteerSharpMetricTags.ForOperation(this, "start_browser"));
-        ct.ThrowIfCancellationRequested();
-        Options.ApplySessionViewport();
-        var executablePath = ResolveExecutablePath();
-        var launch = new LaunchOptions {
-            Headless = Options.Headless,
-            ExecutablePath = executablePath,
-            Args = Options.ResolveLaunchArguments().ToArray(),
-            SlowMo = Options.SlowMoMilliseconds,
-            UserDataDir = ExecutionContext?.BrowserUserDataDirectory,
-            AcceptInsecureCerts = Options.IgnoreHttpsErrors,
-            DefaultViewport = new ViewPortOptions { Width = Options.ViewportWidth, Height = Options.ViewportHeight },
-            Timeout = Options.NavigationTimeoutMs,
-            WaitForInitialPage = false
-        };
-
-        _browser = await Puppeteer.LaunchAsync(launch).ConfigureAwait(false);
-        var contextOptions = new BrowserContextOptions();
-        if (!string.IsNullOrWhiteSpace(Options.ProxyUrl))
-            contextOptions.ProxyServer = Options.ProxyUrl;
-
-        Context = await _browser.CreateBrowserContextAsync(contextOptions).ConfigureAwait(false);
-        Page = await Context.NewPageAsync().ConfigureAwait(false);
-        await ApplyPageDefaultsAsync(Page).ConfigureAwait(false);
-        _ownsBrowser = true;
-        Logger.LogInformation("PuppeteerSharp browser started ({BrowserKind}) at {BrowserExePath}", Options.BrowserKind, executablePath);
-    }
-
-    /// <summary>Closes the context and browser when this instance owns them.</summary>
-    public async Task StopBrowserAsync(CancellationToken ct = default)
-    {
-        if (!_ownsBrowser) {
-            Logger.LogDebug("Browser not owned by this instance");
-            return;
-        }
-
-        using var timer = Metrics.StartTimer(_metricNames[nameof(Constants.Metrics.StopBrowserDuration)], PuppeteerSharpMetricTags.ForOperation(this, "stop_browser"));
-        ct.ThrowIfCancellationRequested();
-        try {
-            ClearHelpers();
-            await CloseOwnedAsync().ConfigureAwait(false);
-            Logger.LogInformation("PuppeteerSharp browser stopped");
-        }
-        finally {
-            Context = null;
-            _browser = null;
-            Page = null;
-            _ownsBrowser = false;
-        }
-    }
-
-    /// <summary>Captures the visible viewport as PNG.</summary>
-    public async Task<byte[]> TakeViewportSnapshotPngAsync(CancellationToken ct = default)
-    {
-        EnsureStarted();
-        ct.ThrowIfCancellationRequested();
-        return await Page!.ScreenshotDataAsync(new ScreenshotOptions { Type = ScreenshotType.Png }).ConfigureAwait(false);
-    }
-
-    /// <summary>Begins a logging scope with session id, operation, and URL.</summary>
-    public IDisposable? BeginOperationScope(string operation, string? urlOverride = null)
-    {
-        var url = urlOverride ?? TryGetCurrentUrl();
-        return Logger.BeginScope(
-            new Dictionary<string, object?> {
-                ["session_id"] = SessionIdLabel,
-                ["operation"] = operation,
-                ["url"] = url == null ? null : BrowserUrlRedaction.ForLog(url, Options.MaskSensitiveUrlsInLogs)
-            });
-    }
-
-    internal string ResolveMetric(string metricMemberName) => _metricNames[metricMemberName];
-
-    internal string? TryGetCurrentUrl()
-    {
-        try {
-            return Page?.Url;
-        }
-        catch {
-            return null;
-        }
-    }
-
-    internal void SetActivePage(IPage page)
-    {
-        ArgumentHelpers.ThrowIfNull(page);
-        Page = page;
-        ApplyDefaultTimeouts(Page);
-    }
-
-    internal IPage GetRequiredPage()
-    {
-        EnsureStarted();
-        return Page!;
-    }
-
-    internal IBrowserContext GetRequiredContext()
-    {
-        EnsureStarted();
-        return Context ?? Page!.BrowserContext;
-    }
-
-    internal NavigationOptions NavigationOptions(CancellationToken ct)
-        => new() { Timeout = Options.NavigationTimeoutMs, WaitUntil = [Options.NavigationWaitUntil], CancellationToken = ct };
-
-    internal async Task ApplyPageDefaultsAsync(IPage page)
-    {
-        ApplyDefaultTimeouts(page);
-        await page.SetViewportAsync(new ViewPortOptions { Width = Options.ViewportWidth, Height = Options.ViewportHeight }).ConfigureAwait(false);
-        var userAgent = Options.ResolveContextUserAgent();
-        if (userAgent != null)
-            await page.SetUserAgentAsync(userAgent).ConfigureAwait(false);
-
-        if (_extraHeaders.Count > 0)
-            await page.SetExtraHttpHeadersAsync(new Dictionary<string, string>(_extraHeaders)).ConfigureAwait(false);
-
-        if (!string.IsNullOrWhiteSpace(Options.ProxyUsername))
-            await page.AuthenticateAsync(new Credentials { Username = Options.ProxyUsername, Password = Options.ProxyPassword }).ConfigureAwait(false);
-    }
-
-    internal async Task SetExtraHeadersAsync(IReadOnlyDictionary<string, string> headers, CancellationToken ct)
-    {
-        ct.ThrowIfCancellationRequested();
-        _extraHeaders.Clear();
-        foreach (var pair in headers)
-            _extraHeaders[pair.Key] = pair.Value;
-
-        if (Context == null)
-            return;
-
-        var copy = new Dictionary<string, string>(_extraHeaders);
-        foreach (var page in await Context.PagesAsync().ConfigureAwait(false))
-            await page.SetExtraHttpHeadersAsync(copy).ConfigureAwait(false);
-    }
-
-    internal async Task<IWebAutomationElement> PollForDescendantElementAsync(IElementHandle parent, ElementLocator child, CancellationToken ct)
-    {
-        ArgumentHelpers.ThrowIfNull(parent);
-        var locatorTag = $"{child.Kind}:{child.Value}";
-        var pollTags = PuppeteerSharpMetricTags.ForOperation(this, "poll_nested", [("locator", locatorTag)]);
-        using var timer = Metrics.StartTimer(_metricNames[nameof(Constants.Metrics.PollDuration)], pollTags);
-        try {
-            var max = Math.Max(1, Options.PollingMaxAttempts);
-            for (var attempt = 1; attempt <= max; attempt++) {
-                ct.ThrowIfCancellationRequested();
-                var el = await TryWaitAsync(() => parent.WaitForSelectorAsync(PuppeteerSharpLocatorFactory.ToSelector(child), VisibleWait(ct)), ct).ConfigureAwait(false);
-                if (el != null) {
-                    Metrics.IncrementCounter(_metricNames[nameof(Constants.Metrics.PollSuccess)], tags: pollTags);
-                    return new PuppeteerSharpWebAutomationElement(el, this);
-                }
-
-                if (attempt < max)
-                    await Task.Delay(Options.PollingDelayBetweenAttempts, ct).ConfigureAwait(false);
-            }
-
-            throw new InvalidOperationException($"Nested element not found after {max} attempts: {locatorTag}");
-        }
-        catch (Exception ex) {
-            Metrics.IncrementCounter(_metricNames[nameof(Constants.Metrics.PollFailure)], tags: pollTags);
-            Metrics.RecordError(_metricNames[nameof(Constants.Metrics.PollDuration)], ex, pollTags);
-            throw;
-        }
     }
 
     Task IWebAutomationNavigator.NavigateAsync(string url, CancellationToken ct) => NavigateToAsync(url, ct);
@@ -376,6 +178,7 @@ public sealed class PuppeteerSharpBrowser : IWebAutomationBrowser, IDisposable, 
         EnsureStarted();
         ArgumentHelpers.ThrowIfNull(onRequest);
         var done = 0;
+
         void Handle(object? _, RequestEventArgs e)
         {
             if (Volatile.Read(ref done) == 0 && onRequest(e.Request.Url))
@@ -453,13 +256,209 @@ public sealed class PuppeteerSharpBrowser : IWebAutomationBrowser, IDisposable, 
         ArgumentHelpers.ThrowIf(height <= 0, "Height must be positive.", nameof(height));
         EnsureStarted();
         ct.ThrowIfCancellationRequested();
-        await Page!.SetViewportAsync(new ViewPortOptions { Width = width, Height = height }).ConfigureAwait(false);
+        await Page!.SetViewportAsync(new() { Width = width, Height = height }).ConfigureAwait(false);
         Options.ViewportWidth = width;
         Options.ViewportHeight = height;
         if (Options.ScreenWidth < width)
             Options.ScreenWidth = width;
+
         if (Options.ScreenHeight < height)
             Options.ScreenHeight = height;
+    }
+
+    /// <summary>Current document URL.</summary>
+    public string GetCurrentUrl()
+    {
+        EnsureStarted();
+        return Page!.Url;
+    }
+
+    /// <summary>Current document title.</summary>
+    public async Task<string> GetTitleAsync(CancellationToken ct = default)
+    {
+        EnsureStarted();
+        ct.ThrowIfCancellationRequested();
+        return await Page!.GetTitleAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>Navigates to a URL.</summary>
+    public async Task NavigateToAsync(string url, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(url);
+        EnsureStarted();
+        await Page!.GoToAsync(url, NavigationOptions(ct)).ConfigureAwait(false);
+        Logger.LogDebug("Navigated to {Url}", BrowserUrlRedaction.ForLog(url, Options.MaskSensitiveUrlsInLogs));
+    }
+
+    /// <summary>Launches Chrome, a browser context, and the initial page.</summary>
+    public async Task StartBrowserAsync(CancellationToken ct = default)
+    {
+        if (Page != null && _ownsBrowser) {
+            Logger.LogDebug("Browser already started");
+            return;
+        }
+
+        OperationHelpers.ThrowIf(Page != null && !_ownsBrowser, "Browser is attached to an external page; do not call StartBrowserAsync.");
+        using var timer = Metrics.StartTimer(_metricNames[nameof(Constants.Metrics.StartBrowserDuration)], PuppeteerSharpMetricTags.ForOperation(this, "start_browser"));
+        ct.ThrowIfCancellationRequested();
+        Options.ApplySessionViewport();
+        var executablePath = ResolveExecutablePath();
+        var launch = new LaunchOptions {
+            Headless = Options.Headless,
+            ExecutablePath = executablePath,
+            Args = Options.ResolveLaunchArguments().ToArray(),
+            SlowMo = Options.SlowMoMilliseconds,
+            UserDataDir = ExecutionContext?.BrowserUserDataDirectory,
+            AcceptInsecureCerts = Options.IgnoreHttpsErrors,
+            DefaultViewport = new() { Width = Options.ViewportWidth, Height = Options.ViewportHeight },
+            Timeout = Options.NavigationTimeoutMs,
+            WaitForInitialPage = false
+        };
+
+        _browser = await Puppeteer.LaunchAsync(launch).ConfigureAwait(false);
+        var contextOptions = new BrowserContextOptions();
+        if (!string.IsNullOrWhiteSpace(Options.ProxyUrl))
+            contextOptions.ProxyServer = Options.ProxyUrl;
+
+        Context = await _browser.CreateBrowserContextAsync(contextOptions).ConfigureAwait(false);
+        Page = await Context.NewPageAsync().ConfigureAwait(false);
+        await ApplyPageDefaultsAsync(Page).ConfigureAwait(false);
+        _ownsBrowser = true;
+        Logger.LogInformation("PuppeteerSharp browser started ({BrowserKind}) at {BrowserExePath}", Options.BrowserKind, executablePath);
+    }
+
+    /// <summary>Closes the context and browser when this instance owns them.</summary>
+    public async Task StopBrowserAsync(CancellationToken ct = default)
+    {
+        if (!_ownsBrowser) {
+            Logger.LogDebug("Browser not owned by this instance");
+            return;
+        }
+
+        using var timer = Metrics.StartTimer(_metricNames[nameof(Constants.Metrics.StopBrowserDuration)], PuppeteerSharpMetricTags.ForOperation(this, "stop_browser"));
+        ct.ThrowIfCancellationRequested();
+        try {
+            ClearHelpers();
+            await CloseOwnedAsync().ConfigureAwait(false);
+            Logger.LogInformation("PuppeteerSharp browser stopped");
+        }
+        finally {
+            Context = null;
+            _browser = null;
+            Page = null;
+            _ownsBrowser = false;
+        }
+    }
+
+    /// <summary>Captures the visible viewport as PNG.</summary>
+    public async Task<byte[]> TakeViewportSnapshotPngAsync(CancellationToken ct = default)
+    {
+        EnsureStarted();
+        ct.ThrowIfCancellationRequested();
+        return await Page!.ScreenshotDataAsync(new() { Type = ScreenshotType.Png }).ConfigureAwait(false);
+    }
+
+    /// <summary>Begins a logging scope with session id, operation, and URL.</summary>
+    public IDisposable? BeginOperationScope(string operation, string? urlOverride = null)
+    {
+        var url = urlOverride ?? TryGetCurrentUrl();
+        return Logger.BeginScope(
+            new Dictionary<string, object?> {
+                ["session_id"] = SessionIdLabel, ["operation"] = operation, ["url"] = url == null ? null : BrowserUrlRedaction.ForLog(url, Options.MaskSensitiveUrlsInLogs)
+            });
+    }
+
+    internal string ResolveMetric(string metricMemberName) => _metricNames[metricMemberName];
+
+    internal string? TryGetCurrentUrl()
+    {
+        try {
+            return Page?.Url;
+        }
+        catch {
+            return null;
+        }
+    }
+
+    internal void SetActivePage(IPage page)
+    {
+        ArgumentHelpers.ThrowIfNull(page);
+        Page = page;
+        ApplyDefaultTimeouts(Page);
+    }
+
+    internal IPage GetRequiredPage()
+    {
+        EnsureStarted();
+        return Page!;
+    }
+
+    internal IBrowserContext GetRequiredContext()
+    {
+        EnsureStarted();
+        return Context ?? Page!.BrowserContext;
+    }
+
+    internal NavigationOptions NavigationOptions(CancellationToken ct)
+        => new() { Timeout = Options.NavigationTimeoutMs, WaitUntil = [Options.NavigationWaitUntil], CancellationToken = ct };
+
+    internal async Task ApplyPageDefaultsAsync(IPage page)
+    {
+        ApplyDefaultTimeouts(page);
+        await page.SetViewportAsync(new() { Width = Options.ViewportWidth, Height = Options.ViewportHeight }).ConfigureAwait(false);
+        var userAgent = Options.ResolveContextUserAgent();
+        if (userAgent != null)
+            await page.SetUserAgentAsync(userAgent).ConfigureAwait(false);
+
+        if (_extraHeaders.Count > 0)
+            await page.SetExtraHttpHeadersAsync(new(_extraHeaders)).ConfigureAwait(false);
+
+        if (!string.IsNullOrWhiteSpace(Options.ProxyUsername))
+            await page.AuthenticateAsync(new() { Username = Options.ProxyUsername, Password = Options.ProxyPassword }).ConfigureAwait(false);
+    }
+
+    internal async Task SetExtraHeadersAsync(IReadOnlyDictionary<string, string> headers, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        _extraHeaders.Clear();
+        foreach (var pair in headers)
+            _extraHeaders[pair.Key] = pair.Value;
+
+        if (Context == null)
+            return;
+
+        var copy = new Dictionary<string, string>(_extraHeaders);
+        foreach (var page in await Context.PagesAsync().ConfigureAwait(false))
+            await page.SetExtraHttpHeadersAsync(copy).ConfigureAwait(false);
+    }
+
+    internal async Task<IWebAutomationElement> PollForDescendantElementAsync(IElementHandle parent, ElementLocator child, CancellationToken ct)
+    {
+        ArgumentHelpers.ThrowIfNull(parent);
+        var locatorTag = $"{child.Kind}:{child.Value}";
+        var pollTags = PuppeteerSharpMetricTags.ForOperation(this, "poll_nested", [("locator", locatorTag)]);
+        using var timer = Metrics.StartTimer(_metricNames[nameof(Constants.Metrics.PollDuration)], pollTags);
+        try {
+            var max = Math.Max(1, Options.PollingMaxAttempts);
+            for (var attempt = 1; attempt <= max; attempt++) {
+                ct.ThrowIfCancellationRequested();
+                var el = await TryWaitAsync(() => parent.WaitForSelectorAsync(PuppeteerSharpLocatorFactory.ToSelector(child), VisibleWait(ct)), ct).ConfigureAwait(false);
+                if (el != null) {
+                    Metrics.IncrementCounter(_metricNames[nameof(Constants.Metrics.PollSuccess)], tags: pollTags);
+                    return new PuppeteerSharpWebAutomationElement(el, this);
+                }
+
+                if (attempt < max)
+                    await Task.Delay(Options.PollingDelayBetweenAttempts, ct).ConfigureAwait(false);
+            }
+
+            throw new InvalidOperationException($"Nested element not found after {max} attempts: {locatorTag}");
+        }
+        catch (Exception ex) {
+            Metrics.IncrementCounter(_metricNames[nameof(Constants.Metrics.PollFailure)], tags: pollTags);
+            Metrics.RecordError(_metricNames[nameof(Constants.Metrics.PollDuration)], ex, pollTags);
+            throw;
+        }
     }
 
     private async Task<IWebAutomationElement?> GetElementChainAsync(ElementLocatorChain chain, CancellationToken ct)
@@ -495,11 +494,13 @@ public sealed class PuppeteerSharpBrowser : IWebAutomationBrowser, IDisposable, 
         var tags = PuppeteerSharpMetricTags.ForOperation(this, "poll_chain", [("locator", locatorDesc)]);
         using var timer = Metrics.StartTimer(_metricNames[nameof(Constants.Metrics.PollDuration)], tags);
         try {
-            var found = await PollAsync(async () => {
+            var found = await PollAsync(
+                    async () => {
                         var handle = await WaitChainAsync(segments, ct).ConfigureAwait(false);
                         return handle == null ? null : new PuppeteerSharpWebAutomationElement(handle, this);
                     }, locatorDesc, ct)
                 .ConfigureAwait(false);
+
             Metrics.IncrementCounter(_metricNames[nameof(Constants.Metrics.PollSuccess)], tags: tags);
             return found;
         }
@@ -553,7 +554,8 @@ public sealed class PuppeteerSharpBrowser : IWebAutomationBrowser, IDisposable, 
         }
     }
 
-    private async Task<T> PollAsync<T>(Func<Task<T?>> attempt, string locatorDesc, CancellationToken ct) where T : class
+    private async Task<T> PollAsync<T>(Func<Task<T?>> attempt, string locatorDesc, CancellationToken ct)
+        where T : class
     {
         var max = Math.Max(1, Options.PollingMaxAttempts);
         for (var i = 1; i <= max; i++) {
@@ -575,9 +577,9 @@ public sealed class PuppeteerSharpBrowser : IWebAutomationBrowser, IDisposable, 
         IElementHandle? handle = null;
         for (var i = 0; i < segments.Count; i++) {
             var selector = PuppeteerSharpLocatorFactory.ToSelector(segments[i]);
-            handle = await TryWaitAsync(
-                    () => i == 0 ? frame.WaitForSelectorAsync(selector, VisibleWait(ct)) : handle!.WaitForSelectorAsync(selector, VisibleWait(ct)), ct)
+            handle = await TryWaitAsync(() => i == 0 ? frame.WaitForSelectorAsync(selector, VisibleWait(ct)) : handle!.WaitForSelectorAsync(selector, VisibleWait(ct)), ct)
                 .ConfigureAwait(false);
+
             if (handle == null)
                 return null;
         }
@@ -591,17 +593,17 @@ public sealed class PuppeteerSharpBrowser : IWebAutomationBrowser, IDisposable, 
         IElementHandle? parent = null;
         for (var i = 0; i < segments.Count - 1; i++) {
             var selector = PuppeteerSharpLocatorFactory.ToSelector(segments[i]);
-            parent = await TryWaitAsync(
-                    () => i == 0 ? frame.WaitForSelectorAsync(selector, VisibleWait(ct)) : parent!.WaitForSelectorAsync(selector, VisibleWait(ct)), ct)
+            parent = await TryWaitAsync(() => i == 0 ? frame.WaitForSelectorAsync(selector, VisibleWait(ct)) : parent!.WaitForSelectorAsync(selector, VisibleWait(ct)), ct)
                 .ConfigureAwait(false);
+
             if (parent == null)
                 return null;
         }
 
         var last = PuppeteerSharpLocatorFactory.ToSelector(segments[segments.Count - 1]);
-        var first = await TryWaitAsync(
-                () => parent == null ? frame.WaitForSelectorAsync(last, VisibleWait(ct)) : parent.WaitForSelectorAsync(last, VisibleWait(ct)), ct)
+        var first = await TryWaitAsync(() => parent == null ? frame.WaitForSelectorAsync(last, VisibleWait(ct)) : parent.WaitForSelectorAsync(last, VisibleWait(ct)), ct)
             .ConfigureAwait(false);
+
         if (first == null)
             return null;
 

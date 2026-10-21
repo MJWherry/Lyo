@@ -1,7 +1,5 @@
-using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
-using Lyo.Health;
 using Lyo.Ledger.Postgres.Database;
 using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
@@ -26,9 +24,7 @@ public static class Extensions
         }
 
         /// <summary>Registers the Ledger context factory from configuration.</summary>
-        public IServiceCollection AddLedgerDbContextFactoryFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresLedgerOptions.SectionName)
+        public IServiceCollection AddLedgerDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresLedgerOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
@@ -42,7 +38,7 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
-            services.AddPostgresDbContextFactory<Database.LedgerDbContext, PostgresLedgerOptions>(options);
+            services.AddPostgresDbContextFactory<LedgerDbContext, PostgresLedgerOptions>(options);
             services.AddEntityRefOptions();
             return services;
         }
@@ -57,9 +53,7 @@ public static class Extensions
         }
 
         /// <summary>Registers the Ledger Postgres store from configuration.</summary>
-        public IServiceCollection AddPostgresLedgerStoreFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = PostgresLedgerOptions.SectionName)
+        public IServiceCollection AddPostgresLedgerStoreFromConfiguration(IConfiguration configuration, string configSectionName = PostgresLedgerOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);

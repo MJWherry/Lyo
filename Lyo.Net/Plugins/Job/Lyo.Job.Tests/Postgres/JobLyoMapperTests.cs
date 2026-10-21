@@ -1,4 +1,5 @@
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
@@ -6,10 +7,8 @@ using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres.Database;
 using Lyo.Job.Postgres.Mapping;
 using Lyo.Parameters;
-using Lyo.Query.Models.Enums;
 using Lyo.Schedule.Models;
 using JobRunResult = Lyo.Job.Models.Enums.JobRunResult;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Tests.Postgres;
 
@@ -127,15 +126,9 @@ public class JobLyoMapperTests
         Assert.Equal(req.DefaultTemplate, entity.DefaultTemplate);
 
         // Apply has to overwrite and also populate, or clearing an expression default on an existing row would leave the template behind.
-        _mapper.Map(
-            new JobParameterReq {
-                Key = "AsOfDate",
-                Type = LyoTypeInfo.DateTime.FullName
-            }, entity);
-
+        _mapper.Map(new JobParameterReq { Key = "AsOfDate", Type = LyoTypeInfo.DateTime.FullName }, entity);
         Assert.Equal(nameof(LyoParameterDefaultKind.Literal), entity.DefaultKind);
         Assert.Null(entity.DefaultTemplate);
-
         entity.DefaultKind = nameof(LyoParameterDefaultKind.Expression);
         entity.DefaultTemplate = req.DefaultTemplate;
         var res = _mapper.Map<JobParameterRes>(entity);
@@ -147,13 +140,7 @@ public class JobLyoMapperTests
     public void Parameter_UnreadableDefaultKind_ReadsAsLiteral()
     {
         // Rows written before the column existed, or by a client sending garbage, cannot be read as expression-authored.
-        var res = _mapper.Map<JobParameterRes>(
-            new JobParameter {
-                Key = "Code",
-                Type = LyoTypeInfo.String.FullName,
-                DefaultKind = "nonsense"
-            });
-
+        var res = _mapper.Map<JobParameterRes>(new JobParameter { Key = "Code", Type = LyoTypeInfo.String.FullName, DefaultKind = "nonsense" });
         Assert.Equal(LyoParameterDefaultKind.Literal, res.DefaultKind);
     }
 

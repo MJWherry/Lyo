@@ -22,8 +22,8 @@ public partial class ComicSearch
     private ComicBrowseViewMode _viewMode = ComicBrowseViewMode.GridSmall;
 
     /// <summary>
-    /// Runs a search on your data source. Gets a <see cref="ComicSeriesQuery" /> from the current filters plus a <see cref="CancellationToken" />; must
-    /// return matching <see cref="ComicSeries" /> rows.
+    /// Runs a search on your data source. Gets a <see cref="ComicSeriesQuery" /> from the current filters plus a <see cref="CancellationToken" />; must return matching
+    /// <see cref="ComicSeries" /> rows.
     /// </summary>
     [Parameter]
     [EditorRequired]

@@ -28,9 +28,18 @@ public enum NdefTypeNameFormat : byte
     Unchanged = 0x06
 }
 
-/// <summary>One NDEF record. <see cref="NdefTextRecord"/> and <see cref="NdefUriRecord"/> are the typed forms. Anything else stays a raw record.</summary>
+/// <summary>One NDEF record. <see cref="NdefTextRecord" /> and <see cref="NdefUriRecord" /> are the typed forms. Anything else stays a raw record.</summary>
 public class NdefRecord
 {
+    /// <summary>Type-name format.</summary>
+    public NdefTypeNameFormat TypeNameFormat { get; }
+
+    /// <summary>Record type bytes.</summary>
+    public byte[] Type { get; }
+
+    /// <summary>Record payload. For a URI record the first byte is the NFC Forum prefix code.</summary>
+    public byte[] Payload { get; }
+
     /// <param name="typeNameFormat">Header TNF.</param>
     /// <param name="type">Record type bytes. Empty for an empty record.</param>
     /// <param name="payload">Record payload.</param>
@@ -41,26 +50,23 @@ public class NdefRecord
         Payload = payload;
     }
 
-    /// <summary>Type-name format.</summary>
-    public NdefTypeNameFormat TypeNameFormat { get; }
-
-    /// <summary>Record type bytes.</summary>
-    public byte[] Type { get; }
-
-    /// <summary>Record payload. For a URI record the first byte is the NFC Forum prefix code.</summary>
-    public byte[] Payload { get; }
-
     /// <summary>A record the caller already encoded. Text and URI helpers are preferred when the payload is one of those.</summary>
     public static NdefRecord Raw(NdefTypeNameFormat typeNameFormat, ReadOnlySpan<byte> type, ReadOnlySpan<byte> payload)
     {
         ArgumentHelpers.ThrowIfNotDefined(typeNameFormat);
-        return new NdefRecord(typeNameFormat, [.. type], [.. payload]);
+        return new(typeNameFormat, [.. type], [.. payload]);
     }
 }
 
 /// <summary>NFC Forum well-known Text record (<c>T</c>), UTF-8.</summary>
 public sealed class NdefTextRecord : NdefRecord
 {
+    /// <summary>IANA language code stored in the status byte, for example <c>en</c>.</summary>
+    public string Language { get; }
+
+    /// <summary>Decoded text.</summary>
+    public string Text { get; }
+
     private NdefTextRecord(string language, string text, byte[] payload)
         : base(NdefTypeNameFormat.WellKnown, [(byte)'T'], payload)
     {
@@ -68,13 +74,7 @@ public sealed class NdefTextRecord : NdefRecord
         Text = text;
     }
 
-    /// <summary>IANA language code stored in the status byte, for example <c>en</c>.</summary>
-    public string Language { get; }
-
-    /// <summary>Decoded text.</summary>
-    public string Text { get; }
-
-    /// <summary>Builds a UTF-8 Text record. <paramref name="language"/> is 1 to 63 ASCII characters.</summary>
+    /// <summary>Builds a UTF-8 Text record. <paramref name="language" /> is 1 to 63 ASCII characters.</summary>
     public static NdefTextRecord Create(string language, string text)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(language);
@@ -104,6 +104,7 @@ public sealed class NdefTextRecord : NdefRecord
         var text = utf16
             ? Encoding.BigEndianUnicode.GetString(payload, 1 + langLength, payload.Length - 1 - langLength)
             : Encoding.UTF8.GetString(payload, 1 + langLength, payload.Length - 1 - langLength);
+
         return new(language, text, payload);
     }
 }
@@ -111,14 +112,12 @@ public sealed class NdefTextRecord : NdefRecord
 /// <summary>NFC Forum well-known URI record (<c>U</c>).</summary>
 public sealed class NdefUriRecord : NdefRecord
 {
-    private NdefUriRecord(string uri, byte[] payload)
-        : base(NdefTypeNameFormat.WellKnown, [(byte)'U'], payload)
-    {
-        Uri = uri;
-    }
-
     /// <summary>Absolute URI, prefix expanded.</summary>
     public string Uri { get; }
+
+    private NdefUriRecord(string uri, byte[] payload)
+        : base(NdefTypeNameFormat.WellKnown, [(byte)'U'], payload)
+        => Uri = uri;
 
     /// <summary>Builds a URI record. <c>https://</c> uses prefix code <c>0x04</c>.</summary>
     public static NdefUriRecord Create(string uri)
@@ -129,7 +128,7 @@ public sealed class NdefUriRecord : NdefRecord
         var payload = new byte[1 + restBytes.Length];
         payload[0] = code;
         restBytes.CopyTo(payload, 1);
-        return new NdefUriRecord(uri, payload);
+        return new(uri, payload);
     }
 
     internal static NdefUriRecord FromPayload(byte[] payload)
@@ -139,19 +138,19 @@ public sealed class NdefUriRecord : NdefRecord
 
         var prefix = NdefUriPrefixes.Expand(payload[0]);
         var rest = Encoding.UTF8.GetString(payload, 1, payload.Length - 1);
-        return new NdefUriRecord(prefix + rest, payload);
+        return new(prefix + rest, payload);
     }
 }
 
 /// <summary>One or more NDEF records.</summary>
 public sealed class NdefMessage
 {
-    private NdefMessage(NdefRecord[] records) => Records = records;
-
     /// <summary>Records in on-tag order.</summary>
     public IReadOnlyList<NdefRecord> Records { get; }
 
-    /// <summary>A message that owns <paramref name="records"/>.</summary>
+    private NdefMessage(NdefRecord[] records) => Records = records;
+
+    /// <summary>A message that owns <paramref name="records" />.</summary>
     public static NdefMessage Of(params NdefRecord[] records)
     {
         ArgumentHelpers.ThrowIfNullOrEmpty(records);
@@ -163,47 +162,12 @@ public sealed class NdefMessage
 
 internal static class NdefUriPrefixes
 {
-    private readonly struct Prefix(byte code, string value)
-    {
-        public byte Code { get; } = code;
-        public string Value { get; } = value;
-    }
-
     private static readonly Prefix[] Table = [
-        new(0x01, "http://www."),
-        new(0x02, "https://www."),
-        new(0x03, "http://"),
-        new(0x04, "https://"),
-        new(0x05, "tel:"),
-        new(0x06, "mailto:"),
-        new(0x07, "ftp://anonymous:anonymous@"),
-        new(0x08, "ftp://ftp."),
-        new(0x09, "ftps://"),
-        new(0x0A, "sftp://"),
-        new(0x0B, "smb://"),
-        new(0x0C, "nfs://"),
-        new(0x0D, "ftp://"),
-        new(0x0E, "dav://"),
-        new(0x0F, "news:"),
-        new(0x10, "telnet://"),
-        new(0x11, "imap:"),
-        new(0x12, "rtsp://"),
-        new(0x13, "urn:"),
-        new(0x14, "pop:"),
-        new(0x15, "sip:"),
-        new(0x16, "sips:"),
-        new(0x17, "tftp:"),
-        new(0x18, "btspp://"),
-        new(0x19, "btl2cap://"),
-        new(0x1A, "btgoep://"),
-        new(0x1B, "tcpobex://"),
-        new(0x1C, "irdaobex://"),
-        new(0x1D, "file://"),
-        new(0x1E, "urn:epc:id:"),
-        new(0x1F, "urn:epc:tag:"),
-        new(0x20, "urn:epc:pat:"),
-        new(0x21, "urn:epc:raw:"),
-        new(0x22, "urn:epc:"),
+        new(0x01, "http://www."), new(0x02, "https://www."), new(0x03, "http://"), new(0x04, "https://"), new(0x05, "tel:"), new(0x06, "mailto:"),
+        new(0x07, "ftp://anonymous:anonymous@"), new(0x08, "ftp://ftp."), new(0x09, "ftps://"), new(0x0A, "sftp://"), new(0x0B, "smb://"), new(0x0C, "nfs://"), new(0x0D, "ftp://"),
+        new(0x0E, "dav://"), new(0x0F, "news:"), new(0x10, "telnet://"), new(0x11, "imap:"), new(0x12, "rtsp://"), new(0x13, "urn:"), new(0x14, "pop:"), new(0x15, "sip:"),
+        new(0x16, "sips:"), new(0x17, "tftp:"), new(0x18, "btspp://"), new(0x19, "btl2cap://"), new(0x1A, "btgoep://"), new(0x1B, "tcpobex://"), new(0x1C, "irdaobex://"),
+        new(0x1D, "file://"), new(0x1E, "urn:epc:id:"), new(0x1F, "urn:epc:tag:"), new(0x20, "urn:epc:pat:"), new(0x21, "urn:epc:raw:"), new(0x22, "urn:epc:"),
         new(0x23, "urn:nfc:")
     ];
 
@@ -230,5 +194,12 @@ internal static class NdefUriPrefixes
         }
 
         throw new NfcException($"URI prefix code 0x{code:X2} is not in the NFC Forum table.");
+    }
+
+    private readonly struct Prefix(byte code, string value)
+    {
+        public byte Code { get; } = code;
+
+        public string Value { get; } = value;
     }
 }

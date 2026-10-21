@@ -14,7 +14,7 @@
         PointerMoved="OnPointerMoved"
         PointerReleased="OnPointerReleased">
     <Panel Background="#66000000">
-        <Rectangle x:Name="Selection" Stroke="White" StrokeThickness="2" Fill="#22FFFFFF" IsVisible="False" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-        <TextBlock Text="Drag a rectangle. Escape cancels." Foreground="White" Margin="16" VerticalAlignment="Bottom" HorizontalAlignment="Left"/>
+        <Rectangle x:Name="Selection" Stroke="White" StrokeThickness="2" Fill="#22FFFFFF" IsVisible="False" HorizontalAlignment="Left" VerticalAlignment="Top" />
+        <TextBlock Text="Drag a rectangle. Escape cancels." Foreground="White" Margin="16" VerticalAlignment="Bottom" HorizontalAlignment="Left" />
     </Panel>
 </Window>

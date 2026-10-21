@@ -6,23 +6,26 @@ No HTTP stacks and no vendor client packages. Hosts that only need DTOs can refe
 
 ## Where data came from
 
-`IEntitySourceDerived` is implemented by [`Addresses.Address`](Addresses/Address.cs) (`ICollection<EntitySourceRecord> Sources`, optional `LocallyModifiedAt`). Persistence is [`address_source`](../Lyo.Geolocation.Postgres/README.md). The parent `address` carries owner identity (`address_id` FK). External source lives in `source_entity_*` + `imported_at`, for example `GoogleMapsPlace` plus a place id. The importing application chooses `source_entity_type` (for example `Lyo.Google.Geolocation.Client`), not this package. Map vendor DTOs with `EntitySourceRecord.From(source, importedAt)` before persist.
+`IEntitySourceDerived` is implemented by [`Addresses.Address`](Addresses/Address.cs) (`ICollection<EntitySourceRecord> Sources`, optional `LocallyModifiedAt`). Persistence is [
+`address_source`](../Lyo.Geolocation.Postgres/README.md). The parent `address` carries owner identity (`address_id` FK). External source lives in `source_entity_*` + `imported_at`,
+for example `GoogleMapsPlace` plus a place id. The importing application chooses `source_entity_type` (for example `Lyo.Google.Geolocation.Client`), not this package. Map vendor
+DTOs with `EntitySourceRecord.From(source, importedAt)` before persist.
 
 ## Catalog of DTOs
 
 **Geometry and coordinates**
 
-| Type | What it does |
-| --------------------------- | -------------------------------------------------------------------------------------- |
-| `Coordinates.GeoCoordinate` | Longitude / latitude plus optional accuracy, altitude, timestamp. |
-| `BoundingBox` | Northeast/Southwest pair with `Contains`, `Center`, `Intersects`, `Expand`, factories. |
+| Type                        | What it does                                                                           |
+|-----------------------------|----------------------------------------------------------------------------------------|
+| `Coordinates.GeoCoordinate` | Longitude / latitude plus optional accuracy, altitude, timestamp.                      |
+| `BoundingBox`               | Northeast/Southwest pair with `Contains`, `Center`, `Intersects`, `Expand`, factories. |
 
 **Addresses**
 
-| Type | Role |
-|--------------------------------|------------------------------------------------------------------------------------------|
-| `Addresses.Address` | Unified US + international address. Endato-shaped optional enrichment fields. `Sources`. |
-| `Addresses.ContactAddress` | Person to address junction, used by People flows. |
+| Type                       | Role                                                                                     |
+|----------------------------|------------------------------------------------------------------------------------------|
+| `Addresses.Address`        | Unified US + international address. Endato-shaped optional enrichment fields. `Sources`. |
+| `Addresses.ContactAddress` | Person to address junction, used by People flows.                                        |
 
 **Places, routing, geocoding, distance.** See `Place`, `Route`, `GeocodeResult`, and the other types in this package.
 

@@ -6,8 +6,8 @@ using Lyo.Billing;
 using Lyo.Billing.Api;
 using Lyo.Billing.Postgres;
 using Lyo.Cache;
-using Lyo.Json;
 using Lyo.Encryption.Extensions;
+using Lyo.Json;
 using Lyo.KeyStore;
 using Lyo.Ledger.Api;
 using Scalar.AspNetCore;
@@ -26,8 +26,9 @@ builder.Services.AddKeyedLocalKeyStore(
         ks.AddKey(BillingEncryptionKeys.Fields, "v1", seed);
         ks.SetCurrentVersion(BillingEncryptionKeys.Fields, "v1");
     });
+
 builder.Services.AddEncryptionServiceKeyed(BillingEncryptionKeys.Fields, BillingEncryptionKeys.Fields);
-builder.Services.AddBillingFieldEncryption(BillingEncryptionKeys.Fields);
+builder.Services.AddBillingFieldEncryption();
 var application = builder.Build();
 application.UseMiddleware<LoggingMiddleware>();
 application.UseLyoApiCompression();

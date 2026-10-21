@@ -1,7 +1,7 @@
 using System.CommandLine;
 using Avalonia;
-using Lyo.Desktop.Components;
 using Lyo.Desktop;
+using Lyo.Desktop.Components;
 
 namespace Lyo.Web.Automation.Studio;
 

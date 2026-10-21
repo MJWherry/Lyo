@@ -5,17 +5,17 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Runtime;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
+using Lyo.Common.Core.Extensions;
 #if NET10_0_OR_GREATER
 using System.Runtime.Versioning;
 #endif
-using System.Text.RegularExpressions;
-using Lyo.Common.Core.Extensions;
 
 namespace Lyo.SystemInformation;
 
 /// <summary>
-/// Collects hardware, software/runtime, network, and environment facts about the host using only built-in platform APIs. Items that cannot be read on the current
-/// platform are skipped or reported as <see langword="null" /> rather than failing the whole snapshot.
+/// Collects hardware, software/runtime, network, and environment facts about the host using only built-in platform APIs. Items that cannot be read on the current platform
+/// are skipped or reported as <see langword="null" /> rather than failing the whole snapshot.
 /// </summary>
 public static class SystemInfoCollector
 {
@@ -241,8 +241,7 @@ public static class SystemInfoCollector
 
     private static IReadOnlyList<PrinterInfo> GetLinuxPrinters()
         => CupsPrintersConfParser.Parse(
-            TryGet(() => File.ReadAllText("/etc/cups/printers.conf")),
-            TryGet(() => CupsPrintersConfParser.ReadDefaultName(File.ReadAllText("/etc/cups/lpoptions"))));
+            TryGet(() => File.ReadAllText("/etc/cups/printers.conf")), TryGet(() => CupsPrintersConfParser.ReadDefaultName(File.ReadAllText("/etc/cups/lpoptions"))));
 
     private static PowerPolicyInfo GetPowerPolicy()
     {
@@ -343,6 +342,7 @@ public static class SystemInfoCollector
         try {
             if (NativePowerMethods.PowerGetEffectiveOverlayScheme(out var overlay) != 0)
                 return null;
+
             return overlay;
         }
         catch (EntryPointNotFoundException) {
@@ -383,7 +383,7 @@ public static class SystemInfoCollector
         return status.ACLineStatus switch {
             0 => false,
             1 => true,
-            _ => null
+            var _ => null
         };
     }
 
@@ -568,7 +568,12 @@ public static class SystemInfoCollector
 
         [DllImport("powrprof.dll", CharSet = CharSet.Unicode)]
         internal static extern uint PowerReadFriendlyName(
-            IntPtr RootPowerKey, ref Guid SchemeGuid, IntPtr SubGroupOfPowerSettingsGuid, IntPtr PowerSettingGuid, IntPtr Buffer, ref uint BufferSize);
+            IntPtr RootPowerKey,
+            ref Guid SchemeGuid,
+            IntPtr SubGroupOfPowerSettingsGuid,
+            IntPtr PowerSettingGuid,
+            IntPtr Buffer,
+            ref uint BufferSize);
 
         [DllImport("powrprof.dll")]
         internal static extern uint PowerGetEffectiveOverlayScheme(out Guid EffectiveOverlayPolicyGuid);
@@ -604,9 +609,9 @@ public static class SystemInfoCollector
         private const ushort VariantTypeString = 31;
         private const ushort VariantTypeUInt32 = 19;
 
-        private static readonly PropertyKey FriendlyNameKey = new(new Guid("a45c254e-df1c-4efd-8020-67d146a850e0"), 14);
-        private static readonly PropertyKey DeviceDescriptionKey = new(new Guid("a45c254e-df1c-4efd-8020-67d146a850e0"), 2);
-        private static readonly PropertyKey FormFactorKey = new(new Guid("1da5d803-d492-4edd-8c23-e0c0ffee7f0e"), 0);
+        private static readonly PropertyKey FriendlyNameKey = new(new("a45c254e-df1c-4efd-8020-67d146a850e0"), 14);
+        private static readonly PropertyKey DeviceDescriptionKey = new(new("a45c254e-df1c-4efd-8020-67d146a850e0"), 2);
+        private static readonly PropertyKey FormFactorKey = new(new("1da5d803-d492-4edd-8c23-e0c0ffee7f0e"), 0);
 
         internal static IReadOnlyList<AudioDeviceInfo> GetDevices()
         {
@@ -680,7 +685,7 @@ public static class SystemInfoCollector
                 return null;
 
             bool? isDefault = id is null ? null : defaultIds.Contains(id);
-            return new AudioDeviceInfo(name, kind, ReadString(device, DeviceDescriptionKey), ReadFormFactor(device), isDefault);
+            return new(name, kind, ReadString(device, DeviceDescriptionKey), ReadFormFactor(device), isDefault);
         }
 
         private static string? ReadId(IMMDevice device)
@@ -743,7 +748,7 @@ public static class SystemInfoCollector
                 8 => "Spdif",
                 9 => "Hdmi",
                 10 => "Unknown",
-                _ => null
+                var _ => null
             };
 
         [DllImport("ole32.dll")]
@@ -751,9 +756,7 @@ public static class SystemInfoCollector
 
         [ComImport]
         [Guid("BCDE0395-E52F-467C-8E3D-C4579291692E")]
-        private class MMDeviceEnumerator
-        {
-        }
+        private class MMDeviceEnumerator { }
 
         [ComImport]
         [Guid("A95664D2-9614-4F35-A746-DE8DB63617E6")]
@@ -839,13 +842,13 @@ public static class SystemInfoCollector
         internal static IReadOnlyList<PrinterInfo> GetDevices()
         {
             const uint flags = EnumLocal | EnumConnections;
-            _ = EnumPrinters(flags, null, 2, IntPtr.Zero, 0, out var needed, out _);
+            _ = EnumPrinters(flags, null, 2, IntPtr.Zero, 0, out var needed, out var _);
             if (needed == 0)
                 return [];
 
             var buffer = Marshal.AllocHGlobal((int)needed);
             try {
-                if (!EnumPrinters(flags, null, 2, buffer, needed, out _, out var returned) || returned == 0)
+                if (!EnumPrinters(flags, null, 2, buffer, needed, out var _, out var returned) || returned == 0)
                     return [];
 
                 var printers = new List<PrinterInfo>((int)returned);
@@ -859,8 +862,7 @@ public static class SystemInfoCollector
                     if (name is not { Length: > 0 })
                         continue;
 
-                    printers.Add(new PrinterInfo(
-                        name, ReadString(info.DriverName), ReadString(info.PortName), (info.Attributes & DefaultAttribute) != 0, FormatStatus(info.Status)));
+                    printers.Add(new(name, ReadString(info.DriverName), ReadString(info.PortName), (info.Attributes & DefaultAttribute) != 0, FormatStatus(info.Status)));
                 }
 
                 return printers;
@@ -870,8 +872,7 @@ public static class SystemInfoCollector
             }
         }
 
-        private static string? ReadString(IntPtr pointer)
-            => pointer == IntPtr.Zero ? null : Marshal.PtrToStringUni(pointer);
+        private static string? ReadString(IntPtr pointer) => pointer == IntPtr.Zero ? null : Marshal.PtrToStringUni(pointer);
 
         private static string? FormatStatus(uint status)
         {

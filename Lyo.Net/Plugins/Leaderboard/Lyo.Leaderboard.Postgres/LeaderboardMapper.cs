@@ -7,16 +7,16 @@ namespace Lyo.Leaderboard.Postgres;
 
 internal static class LeaderboardMapper
 {
-    public static string EnumText<T>(T value) where T : struct, Enum
+    public static string EnumText<T>(T value)
+        where T : struct, Enum
         => JsonSerializer.Serialize(value, LeaderboardJson.Options).Trim('"');
 
-    public static T ParseEnum<T>(string? text, T fallback) where T : struct, Enum
-        => Enum.TryParse<T>(text, ignoreCase: true, out var parsed) ||
-            TryParseCamel<T>(text, out parsed)
-            ? parsed
-            : fallback;
+    public static T ParseEnum<T>(string? text, T fallback)
+        where T : struct, Enum
+        => Enum.TryParse<T>(text, true, out var parsed) || TryParseCamel(text, out parsed) ? parsed : fallback;
 
-    private static bool TryParseCamel<T>(string? text, out T parsed) where T : struct, Enum
+    private static bool TryParseCamel<T>(string? text, out T parsed)
+        where T : struct, Enum
     {
         parsed = default;
         if (string.IsNullOrWhiteSpace(text))
@@ -82,6 +82,7 @@ internal static class LeaderboardMapper
         dest.TieBreakPropertyKey = src.TieBreakPropertyKey;
         if (!string.IsNullOrWhiteSpace(src.AlgorithmKey))
             dest.AlgorithmKey = src.AlgorithmKey;
+
         dest.StartsAt = src.StartsAt;
         dest.EndsAt = src.EndsAt;
         dest.ArchivedAt = src.ArchivedAt;

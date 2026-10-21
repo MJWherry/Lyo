@@ -1,8 +1,11 @@
 # Lyo.Diagram
 
-Turns a [`DiagramDocument`](../Lyo.Diagram.Models/README.md) into a diagrams.net file and back. `DiagramBuilder` adds rectangle, rounded, ellipse, and diamond shapes plus an orthogonal connector. Any other draw.io style string can be passed through.
+Turns a [`DiagramDocument`](../Lyo.Diagram.Models/README.md) into a diagrams.net file and back. `DiagramBuilder` adds rectangle, rounded, ellipse, and diamond shapes plus an
+orthogonal connector. Any other draw.io style string can be passed through.
 
-`DiagramDrawIo.Export` writes an uncompressed `<mxfile>` that diagrams.net opens directly. `DiagramDrawIo.Import` reads that file and the compressed form diagrams.net saves by default (base64 of raw DEFLATE of `encodeURIComponent` applied to the `mxGraphModel` XML). Import assigns a new document id. The name comes from the `mxfile` `name` attribute, otherwise the first page name.
+`DiagramDrawIo.Export` writes an uncompressed `<mxfile>` that diagrams.net opens directly. `DiagramDrawIo.Import` reads that file and the compressed form diagrams.net saves by
+default (base64 of raw DEFLATE of `encodeURIComponent` applied to the `mxGraphModel` XML). Import assigns a new document id. The name comes from the `mxfile` `name` attribute,
+otherwise the first page name.
 
 `InMemoryDiagramStore` implements `IDiagramStore` for hosts that do not open PostgreSQL. Persist with [`Lyo.Diagram.Postgres`](../Lyo.Diagram.Postgres/README.md).
 
@@ -40,7 +43,8 @@ var summary = (await store.ListAsync(ct)).Single(item => item.Id == diagram.Id);
 
 ## What round-trips
 
-Pages, labels, style strings, bounds, relative edge geometry, waypoints, source and target points, parent links, and edge endpoints. Export always emits the draw.io root cells (`id="0"` and `id="1"`). Import drops them. Editor viewport (`dx` / `dy`) and embedded image binaries are left out.
+Pages, labels, style strings, bounds, relative edge geometry, waypoints, source and target points, parent links, and edge endpoints. Export always emits the draw.io root cells
+(`id="0"` and `id="1"`). Import drops them. Editor viewport (`dx` / `dy`) and embedded image binaries are left out.
 
 ## Dependencies
 

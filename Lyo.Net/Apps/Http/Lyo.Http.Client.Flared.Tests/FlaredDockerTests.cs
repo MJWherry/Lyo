@@ -15,10 +15,8 @@ public sealed class FlaredDockerTests
         var ct = TestCt;
         var container = await ContainerTestHost.TryStartAsync(
             "ghcr.io/flaresolverr/flaresolverr:latest",
-            builder => builder
-                .WithPortBinding(8191, true)
-                .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(8191)),
-            ct);
+            builder => builder.WithPortBinding(8191, true).WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(8191)), ct);
+
         if (container is null)
             Assert.Skip("Docker is not available.");
 

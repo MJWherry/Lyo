@@ -12,10 +12,7 @@ public static class JwksEndpointBuilder
     /// <summary>Default JWKS path.</summary>
     public const string DefaultPath = "/.well-known/jwks.json";
 
-    /// <summary>
-    /// Maps the JWKS endpoint at <paramref name="path" /> (default <c>/.well-known/jwks.json</c>). Anonymous, JSON, and safe to cache for short
-    /// windows.
-    /// </summary>
+    /// <summary>Maps the JWKS endpoint at <paramref name="path" /> (default <c>/.well-known/jwks.json</c>). Anonymous, JSON, and safe to cache for short windows.</summary>
     public static IEndpointConventionBuilder MapLyoJwks(this IEndpointRouteBuilder endpoints, string path = DefaultPath)
     {
         ArgumentHelpers.ThrowIfNull(endpoints);

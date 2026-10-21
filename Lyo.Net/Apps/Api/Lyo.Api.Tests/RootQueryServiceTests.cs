@@ -89,6 +89,7 @@ public sealed class RootQueryServiceTests : IAsyncDisposable
             .AddSelects("p.FirstName", "c.StartDate")
             .SetPagination(0, 50)
             .Build();
+
         var res = await _service.QueryAsync(req, _registry, Ct);
         Assert.True(res.IsSuccess, res.Error?.Detail);
         Assert.Equal(2, res.Items!.Count);
@@ -110,6 +111,7 @@ public sealed class RootQueryServiceTests : IAsyncDisposable
             .AddSelects("p.FirstName", "c.StartDate")
             .SetPagination(0, 50)
             .Build();
+
         var res = await _service.QueryAsync(req, _registry, Ct);
         Assert.True(res.IsSuccess, res.Error?.Detail);
         Assert.Equal(3, res.Items!.Count);

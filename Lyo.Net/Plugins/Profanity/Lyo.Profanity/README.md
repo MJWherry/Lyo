@@ -50,21 +50,24 @@ var result = await _profanityFilter.FilterAsync("some text with bad word", ct);
 
 `Lyo.Profanity.Extensions` exposes three entry points on `IServiceCollection`. Choose exactly one when wiring the host:
 
-| Entry point | Behaviour |
-| ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `services.AddProfanityFilterService()` | Registers a default `FileProfanityFilterOptions` and `FileProfanityFilterService` (resolved as both itself and `IProfanityFilterService`). Useful in tests that only need the methods. |
-| `services.AddProfanityFilterService(Action<FileProfanityFilterOptions> configure)` | The same registration, with an inline options callback. |
-| `services.AddProfanityFilterServiceFromConfiguration(IConfiguration configuration, string sectionName = FileProfanityFilterOptions.SectionName)` | The same registration, binding options from the configuration section (default `"ProfanityFilter"`). |
+| Entry point                                                                                                                                      | Behaviour                                                                                                                                                                              |
+|--------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `services.AddProfanityFilterService()`                                                                                                           | Registers a default `FileProfanityFilterOptions` and `FileProfanityFilterService` (resolved as both itself and `IProfanityFilterService`). Useful in tests that only need the methods. |
+| `services.AddProfanityFilterService(Action<FileProfanityFilterOptions> configure)`                                                               | The same registration, with an inline options callback.                                                                                                                                |
+| `services.AddProfanityFilterServiceFromConfiguration(IConfiguration configuration, string sectionName = FileProfanityFilterOptions.SectionName)` | The same registration, binding options from the configuration section (default `"ProfanityFilter"`).                                                                                   |
 
-`FileProfanityFilterService` resolves an optional `ILogger<FileProfanityFilterService>`, an optional `IMetrics` (used only when `Options.EnableMetrics == true`), and an optional `HttpClient` (used when `WordsUrl` is configured).
+`FileProfanityFilterService` resolves an optional `ILogger<FileProfanityFilterService>`, an optional `IMetrics` (used only when `Options.EnableMetrics == true`), and an optional
+`HttpClient` (used when `WordsUrl` is configured).
 
 ## `IProfanityFilterService` methods
 
-- `Filter(string? input, CancellationToken)` / `Filter(string? input, LanguageCodeInfo language, CancellationToken)` synchronous filtering. Returns `ProfanityFilterResult` (`FilteredText`, `HasProfanity`, `Matches`).
+- `Filter(string? input, CancellationToken)` / `Filter(string? input, LanguageCodeInfo language, CancellationToken)` synchronous filtering. Returns `ProfanityFilterResult`
+  (`FilteredText`, `HasProfanity`, `Matches`).
 - `FilterAsync(string? input, CancellationToken)` / `FilterAsync(string? input, LanguageCodeInfo language, CancellationToken)` the same, async.
 - `ContainsProfanity(string? input, CancellationToken)` / `ContainsProfanity(string? input, LanguageCodeInfo language, CancellationToken)` fast boolean check, no replacement.
 - `ContainsProfanityAsync(string? input, CancellationToken)` / `ContainsProfanityAsync(string? input, LanguageCodeInfo language, CancellationToken)` async variants.
-- `RefreshWords(CancellationToken)` / `RefreshWordsAsync(CancellationToken)` reload from the configured file/URL. No-op when `Options.AllowRefresh` is false or the source doesn't support refresh.
+- `RefreshWords(CancellationToken)` / `RefreshWordsAsync(CancellationToken)` reload from the configured file/URL. No-op when `Options.AllowRefresh` is false or the source doesn't
+  support refresh.
 
 ## Word list formats
 
@@ -74,14 +77,14 @@ var result = await _profanityFilter.FilterAsync("some text with bad word", ct);
 
 ## Replacement strategies
 
-| Strategy | Example (input → output) |
-| ---------------- | --------------------------- |
-| Remove | "bad" → "" |
-| ReplaceWithChar | "bad" → "***" |
-| ReplaceWithWord | "bad" → "***" |
-| Mask | "bad" → "***" |
-| PreserveBoundary | "bad" → "b*d" |
-| DetectOnly | No replacement; only detect |
+| Strategy         | Example (input → output)    |
+|------------------|-----------------------------|
+| Remove           | "bad" → ""                  |
+| ReplaceWithChar  | "bad" → "***"               |
+| ReplaceWithWord  | "bad" → "***"               |
+| Mask             | "bad" → "***"               |
+| PreserveBoundary | "bad" → "b*d"               |
+| DetectOnly       | No replacement; only detect |
 
 ## Dependencies
 

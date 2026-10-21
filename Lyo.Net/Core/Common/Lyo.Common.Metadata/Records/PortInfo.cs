@@ -2,14 +2,13 @@ using System.Diagnostics;
 using Lyo.Common.Core;
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Extensions;
-using Lyo.Common.Metadata.Extensions;
 
 namespace Lyo.Common.Metadata.Records;
 
 /// <summary>Well-known TCP/UDP port catalog, searchable by number, name, alias, or <see cref="PortCategory" />.</summary>
 /// <remarks>
-/// A curated subset used by Lyo packages and common infrastructure — not a complete IANA registry. Implicitly converts to <see cref="int" /> for options defaults (for example
-/// <c>Port = PortInfo.Ssh</c>).
+/// A curated subset used by Lyo packages and common infrastructure — not a complete IANA registry. Implicitly converts to <see cref="int" /> for options defaults (for
+/// example <c>Port = PortInfo.Ssh</c>).
 /// </remarks>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record PortInfo(int Port, string Name, string Description, PortCategory Category, string[] Aliases)
@@ -112,7 +111,6 @@ public sealed record PortInfo(int Port, string Name, string Description, PortCat
     static PortInfo()
     {
         var fields = typeof(PortInfo).PublicStaticFields<PortInfo>();
-
         foreach (var info in fields) {
             if (info == Unknown)
                 continue;

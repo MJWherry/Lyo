@@ -22,8 +22,8 @@ internal static class S3AwsCredentialHelpers
     }
 
     /// <summary>
-    /// Uses explicit <see cref="BasicAWSCredentials" /> when both keys have text; otherwise a named-profile credential when <paramref name="profileName" /> is set;
-    /// otherwise <see langword="null" /> so callers use the default AWS credential chain.
+    /// Uses explicit <see cref="BasicAWSCredentials" /> when both keys have text; otherwise a named-profile credential when <paramref name="profileName" /> is set; otherwise
+    /// <see langword="null" /> so callers use the default AWS credential chain.
     /// </summary>
     /// <exception cref="InvalidOperationException">Raised when <paramref name="profileName" /> is set but the profile is missing from the shared credentials/config files.</exception>
     internal static AWSCredentials? Resolve(string? accessKeyId, string? secretAccessKey, string? profileName, string? profilesLocation = null)
@@ -38,7 +38,6 @@ internal static class S3AwsCredentialHelpers
         if (chain.TryGetAWSCredentials(profileName, out var credentials))
             return credentials;
 
-        throw new InvalidOperationException(
-            $"Unable to find the AWS profile '{profileName}'. Check the shared credentials file (~/.aws/credentials) and config (~/.aws/config).");
+        throw new InvalidOperationException($"Unable to find the AWS profile '{profileName}'. Check the shared credentials file (~/.aws/credentials) and config (~/.aws/config).");
     }
 }

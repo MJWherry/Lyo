@@ -1,20 +1,16 @@
-using Lyo.Api.Client;
-using Lyo.Api.Models.Common.Response;
-using Lyo.Query.Models.Builders;
-using Lyo.Query.Models.Common;
-using Lyo.Query.Models.Common.Request;
-using Lyo.Query.Models.Enums;
-using Lyo.Web.Components.DataGrid;
-using Lyo.Web.Components.Dialog;
-using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using MudBlazor;
 
 namespace Lyo.Billing.Web.Components.Components.Grids;
 
 public partial class InvoiceGrid
 {
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [
+        new("Number"), FilterPropertyDefinition.FromEnum("Status", BillingColorHelper.EnumFilterValues<InvoiceStatus>())
+    ];
+
+    private LyoDataGridProjected? _dataGrid;
+
     [Parameter]
     [EditorRequired]
     public IApiClient ApiClient { get; set; } = null!;
@@ -24,14 +20,6 @@ public partial class InvoiceGrid
 
     [Parameter]
     public EventCallback OnCompose { get; set; }
-
-    private LyoDataGridProjected? _dataGrid;
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions =
-    [
-        new("Number"),
-        FilterPropertyDefinition.FromEnum("Status", BillingColorHelper.EnumFilterValues<InvoiceStatus>())
-    ];
 
     private void ApplyQuery(ProjectionQueryReqBuilder q)
     {
@@ -43,10 +31,8 @@ public partial class InvoiceGrid
     {
         if (!TryGetId(item, out var id))
             return;
-        var parameters = new DialogParameters<InvoiceDetailView> {
-            { d => d.ApiClient, ApiClient },
-            { d => d.InvoiceId, id }
-        };
+
+        var parameters = new DialogParameters<InvoiceDetailView> { { d => d.ApiClient, ApiClient }, { d => d.InvoiceId, id } };
         var dialog = await DialogService.ShowAsync<InvoiceDetailView>("Invoice", parameters, LyoDialogPresets.Large);
         await dialog.Result;
         await RefreshAsync();
@@ -56,10 +42,12 @@ public partial class InvoiceGrid
     {
         if (!TryGetId(item, out var id) || !IsDraft(item))
             return;
+
         var number = ProjectedValueHelper.GetDisplayValue(item, "Number");
         var subject = string.IsNullOrWhiteSpace(number) ? "this draft invoice" : $"draft {number}";
         if (!await DialogService.ConfirmDeleteAsync(subject, "Reserved charges are unbilled again."))
             return;
+
         try {
             await Billing.DeleteDraftAsync(id);
             Snackbar.Add("Draft deleted.", Severity.Info);
@@ -74,9 +62,11 @@ public partial class InvoiceGrid
     {
         if (!TryGetId(item, out var id) || !CanVoid(item))
             return;
+
         var number = ProjectedValueHelper.GetDisplayValue(item, "Number");
         if (!await DialogService.ConfirmAsync("Void invoice", $"Void {(string.IsNullOrWhiteSpace(number) ? "this invoice" : number)}? This posts a reversing journal.", "Void"))
             return;
+
         try {
             await Billing.VoidAsync(id);
             Snackbar.Add("Invoice voided.", Severity.Info);
@@ -172,12 +162,8 @@ public partial class InvoiceGrid
             return [];
 
         var res = await ApiClient.QueryProjectAsync<ProjectedQueryRes<InvoiceGridLookup>>(
-            "Billing/Invoices",
-            new ProjectionQueryReq {
-                Keys = [.. keys],
-                Amount = keys.Count,
-                Select = ["Id", "Status", "Number"]
-            });
+            "Billing/Invoices", new() { Keys = [.. keys], Amount = keys.Count, Select = ["Id", "Status", "Number"] });
+
         return res?.Items ?? [];
     }
 
@@ -191,11 +177,9 @@ public partial class InvoiceGrid
 
     private static bool CanPdf(InvoiceStatus status) => status is InvoiceStatus.Issued or InvoiceStatus.PartiallyPaid or InvoiceStatus.Paid;
 
-    private string? PdfHref(object? item)
-        => TryGetId(item, out var id) ? Billing.InvoicePdfHref(id) : null;
+    private string? PdfHref(object? item) => TryGetId(item, out var id) ? Billing.InvoicePdfHref(id) : null;
 
-    private static bool TryGetId(object? item, out Guid id)
-        => ProjectedValueHelper.TryGetGuid(ProjectedValueHelper.GetValue(item, "Id"), out id);
+    private static bool TryGetId(object? item, out Guid id) => ProjectedValueHelper.TryGetGuid(ProjectedValueHelper.GetValue(item, "Id"), out id);
 
     private static bool TryGetStatus(object? item, out InvoiceStatus status)
     {
@@ -212,7 +196,7 @@ public partial class InvoiceGrid
         }
 
         var text = ProjectedValueHelper.GetDisplayValue(item, "Status");
-        return Enum.TryParse(text, ignoreCase: true, out status);
+        return Enum.TryParse(text, true, out status);
     }
 
     /// <summary>Reloads the grid.</summary>

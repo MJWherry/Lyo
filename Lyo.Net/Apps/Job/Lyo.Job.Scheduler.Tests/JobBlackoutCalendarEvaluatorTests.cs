@@ -2,7 +2,6 @@ using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Identifiers;
 using Lyo.DateAndTime;
 using Lyo.Job.Models;
-using Lyo.Job.Models.Builders;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Response;
 
@@ -126,7 +125,7 @@ public class JobBlackoutCalendarEvaluatorTests
     public void AdjustSlotForBlackout_WhenIndependenceDayObservedOn_SkipsJuly3()
     {
         var slot = new DateTime(2026, 7, 3, 10, 0, 0, DateTimeKind.Utc);
-        var calendar = CreateHolidayCalendar(HolidayInfo.IndependenceDay, includeObservedDate: true);
+        var calendar = CreateHolidayCalendar(HolidayInfo.IndependenceDay, true);
         var result = JobBlackoutCalendarEvaluator.AdjustSlotForBlackout(slot, calendar, Utc);
         Assert.Null(result);
     }
@@ -138,7 +137,12 @@ public class JobBlackoutCalendarEvaluatorTests
         var calendarId = LyoGuid.CreateV7();
         var calendar = new JobBlackoutCalendarRes(
             calendarId, "Bad", null, true,
-            [new(LyoGuid.CreateV7(), calendarId, "Unknown", DayFlags.None, TimeOnly.Parse("00:00"), TimeOnly.Parse("23:59"), JobBlackoutPolicy.Skip, true, HolidaySlug: "not-a-holiday")]);
+            [
+                new(
+                    LyoGuid.CreateV7(), calendarId, "Unknown", DayFlags.None, TimeOnly.Parse("00:00"), TimeOnly.Parse("23:59"), JobBlackoutPolicy.Skip, true,
+                    HolidaySlug: "not-a-holiday")
+            ]);
+
         var result = JobBlackoutCalendarEvaluator.AdjustSlotForBlackout(slot, calendar, Utc);
         Assert.Equal(slot, result);
     }
@@ -183,8 +187,8 @@ public class JobBlackoutCalendarEvaluatorTests
             calendarId, "Holiday calendar", null, true,
             [
                 new(
-                    LyoGuid.CreateV7(), calendarId, holiday.Name, DayFlags.None, TimeOnly.Parse("00:00"), TimeOnly.Parse("23:59"), JobBlackoutPolicy.Skip, true, HolidaySlug: holiday.Slug,
-                    IncludeObservedDate: includeObservedDate)
+                    LyoGuid.CreateV7(), calendarId, holiday.Name, DayFlags.None, TimeOnly.Parse("00:00"), TimeOnly.Parse("23:59"), JobBlackoutPolicy.Skip, true,
+                    HolidaySlug: holiday.Slug, IncludeObservedDate: includeObservedDate)
             ]);
     }
 
@@ -195,8 +199,8 @@ public class JobBlackoutCalendarEvaluatorTests
             calendarId, "Calendar days", null, true,
             [
                 new(
-                    LyoGuid.CreateV7(), calendarId, "Days", DayFlags.None, TimeOnly.Parse("00:00"), TimeOnly.Parse("23:59"), JobBlackoutPolicy.Skip, true, start, end, MonthFlags: months,
-                    DaysOfMonth: days)
+                    LyoGuid.CreateV7(), calendarId, "Days", DayFlags.None, TimeOnly.Parse("00:00"), TimeOnly.Parse("23:59"), JobBlackoutPolicy.Skip, true, start, end,
+                    MonthFlags: months, DaysOfMonth: days)
             ]);
     }
 
@@ -212,6 +216,7 @@ public class JobBlackoutCalendarEvaluatorTests
     {
         var calendarId = LyoGuid.CreateV7();
         return new(
-            calendarId, "Test calendar", null, true, [new(LyoGuid.CreateV7(), calendarId, "Blackout", DayFlags.EveryDay, TimeOnly.Parse(start), TimeOnly.Parse(end), policy, true)]);
+            calendarId, "Test calendar", null, true,
+            [new(LyoGuid.CreateV7(), calendarId, "Blackout", DayFlags.EveryDay, TimeOnly.Parse(start), TimeOnly.Parse(end), policy, true)]);
     }
 }

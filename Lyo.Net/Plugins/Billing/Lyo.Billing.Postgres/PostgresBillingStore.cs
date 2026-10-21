@@ -2,6 +2,7 @@ using System.Data;
 using System.Data.Common;
 using System.Transactions;
 using Lyo.Billing.Postgres.Database;
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.EntityReference.Postgres.Database;
@@ -10,7 +11,7 @@ using Lyo.Health;
 using Lyo.Ledger;
 using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
-using Lyo.Common.Core.Identifiers;
+using IsolationLevel = System.Transactions.IsolationLevel;
 
 namespace Lyo.Billing.Postgres;
 
@@ -18,10 +19,10 @@ namespace Lyo.Billing.Postgres;
 public sealed class PostgresBillingStore : IBillingStore, IHealth
 {
     private readonly IDbContextFactory<BillingDbContext> _contextFactory;
-    private readonly ILedgerStore _ledger;
     private readonly IBillingFieldEncryptionService? _encryption;
     private readonly EntityRefOptions _entityRefOptions;
     private readonly TenancyOptions _featureTenancy;
+    private readonly ILedgerStore _ledger;
 
     /// <summary>Constructs the store.</summary>
     public PostgresBillingStore(
@@ -43,13 +44,6 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
     }
 
     /// <inheritdoc />
-    public string HealthCheckName => "billing-postgres";
-
-    /// <inheritdoc />
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => PostgresHealth.CheckAsync(_contextFactory, PostgresBillingOptions.Schema, ct);
-
-    /// <inheritdoc />
     public async Task SaveClientAsync(BillingClientRecord client, Guid? tenantId = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(client);
@@ -64,7 +58,7 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
                 context.Clients.Add(entity);
         }
         else {
-            entity = new BillingClientEntity { Id = LyoGuid.CreateV7(), CreatedAt = DateTime.UtcNow };
+            entity = new() { Id = LyoGuid.CreateV7(), CreatedAt = DateTime.UtcNow };
             context.Clients.Add(entity);
             client.Id = entity.Id;
         }
@@ -112,6 +106,7 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(charge.Description, nameof(charge.Description));
         if (charge.ClientId == Guid.Empty)
             throw new ArgumentException("Charge requires a client.", nameof(charge));
+
         if (charge.Quantity <= 0)
             throw new ArgumentException("Charge quantity must be positive.", nameof(charge));
 
@@ -128,7 +123,7 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
                 context.Charges.Add(entity);
         }
         else {
-            entity = new ChargeEntity { Id = LyoGuid.CreateV7(), CreatedAt = DateTime.UtcNow };
+            entity = new() { Id = LyoGuid.CreateV7(), CreatedAt = DateTime.UtcNow };
             context.Charges.Add(entity);
             charge.Id = entity.Id;
         }
@@ -168,6 +163,7 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
             .OrderBy(c => c.CreatedAt)
             .ToListAsync(ct)
             .ConfigureAwait(false);
+
         return rows.Select(ToCharge).ToList();
     }
 
@@ -189,6 +185,7 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
         var charges = await context.Charges.Where(c => chargeIds.Contains(c.Id) && c.TenantId == resolvedTenant && c.ClientId == clientId).ToListAsync(ct).ConfigureAwait(false);
         if (charges.Count != chargeIds.Count)
             throw new InvalidOperationException("One or more charges were not found for this client.");
+
         if (charges.Any(c => c.InvoiceId != null))
             throw new BillingInvoiceStateException("A selected charge is already on an invoice.");
 
@@ -202,11 +199,12 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
             Notes = client.DefaultInvoiceNotes,
             CreatedAt = DateTime.UtcNow
         };
+
         var n = 1;
         foreach (var charge in charges.OrderBy(c => c.CreatedAt)) {
             var amount = decimal.Round(charge.Quantity * charge.UnitAmount, 4, MidpointRounding.AwayFromZero);
             invoice.Lines.Add(
-                new InvoiceLineEntity {
+                new() {
                     Id = LyoGuid.CreateV7(),
                     ChargeId = charge.Id,
                     LineNumber = n++,
@@ -225,8 +223,7 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
 
         context.Invoices.Add(invoice);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
-        return await LoadInvoiceAsync(context, invoice.Id, resolvedTenant, ct).ConfigureAwait(false)
-               ?? throw new InvalidOperationException("Draft invoice was not saved.");
+        return await LoadInvoiceAsync(context, invoice.Id, resolvedTenant, ct).ConfigureAwait(false) ?? throw new InvalidOperationException("Draft invoice was not saved.");
     }
 
     /// <inheritdoc />
@@ -245,11 +242,11 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
             Notes = client.DefaultInvoiceNotes,
             CreatedAt = DateTime.UtcNow
         };
+
         RecalcTotals(invoice, client.TaxExempt);
         context.Invoices.Add(invoice);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
-        return await LoadInvoiceAsync(context, invoice.Id, resolvedTenant, ct).ConfigureAwait(false)
-               ?? throw new InvalidOperationException("Draft invoice was not saved.");
+        return await LoadInvoiceAsync(context, invoice.Id, resolvedTenant, ct).ConfigureAwait(false) ?? throw new InvalidOperationException("Draft invoice was not saved.");
     }
 
     /// <inheritdoc />
@@ -258,47 +255,50 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
         ArgumentHelpers.ThrowIfNull(line);
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var invoice = await context.Invoices.FirstOrDefaultAsync(i => i.Id == invoiceId && i.TenantId == resolvedTenant, ct).ConfigureAwait(false)
-                      ?? throw new InvalidOperationException($"Invoice '{invoiceId}' was not found.");
+        var invoice = await context.Invoices.FirstOrDefaultAsync(i => i.Id == invoiceId && i.TenantId == resolvedTenant, ct).ConfigureAwait(false) ??
+            throw new InvalidOperationException($"Invoice '{invoiceId}' was not found.");
+
         if (invoice.Status != (int)InvoiceStatus.Draft)
             throw new BillingInvoiceStateException("Only a draft invoice can be edited.");
-        var client = await RequireClientAsync(context, invoice.ClientId, resolvedTenant, ct).ConfigureAwait(false);
 
-        Guid? chargeId = line.ChargeId;
+        var client = await RequireClientAsync(context, invoice.ClientId, resolvedTenant, ct).ConfigureAwait(false);
+        var chargeId = line.ChargeId;
         var title = line.Title;
         var description = line.Description;
         var quantity = line.Quantity;
         var unitAmount = line.UnitAmount;
         var pricing = line.Pricing;
         if (chargeId is { } cid) {
-            var charge = await context.Charges.FirstOrDefaultAsync(c => c.Id == cid && c.TenantId == resolvedTenant && c.ClientId == invoice.ClientId, ct).ConfigureAwait(false)
-                         ?? throw new InvalidOperationException($"Charge '{cid}' was not found for this client.");
+            var charge = await context.Charges.FirstOrDefaultAsync(c => c.Id == cid && c.TenantId == resolvedTenant && c.ClientId == invoice.ClientId, ct).ConfigureAwait(false) ??
+                throw new InvalidOperationException($"Charge '{cid}' was not found for this client.");
+
             if (charge.InvoiceId != null)
                 throw new BillingInvoiceStateException("A selected charge is already on an invoice.");
+
             if (string.IsNullOrWhiteSpace(title))
                 title = charge.Description;
+
             if (string.IsNullOrWhiteSpace(description))
                 description = charge.Description;
+
             if (quantity == 0)
                 quantity = charge.Quantity;
+
             if (unitAmount == 0)
                 unitAmount = charge.UnitAmount;
+
             pricing = InvoiceLinePricing.Amount;
             charge.InvoiceId = invoice.Id;
         }
 
         if (string.IsNullOrWhiteSpace(title))
             title = description;
+
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(title, nameof(line.Title));
         title = TruncateTitle(title);
         InvoiceLinePricingMath.Validate(pricing, quantity, unitAmount);
         quantity = InvoiceLinePricingMath.NormalizedQuantity(pricing, quantity);
-
-        var nextNumber = await context.InvoiceLines.AsNoTracking()
-            .Where(l => l.InvoiceId == invoice.Id)
-            .Select(l => (int?)l.LineNumber)
-            .MaxAsync(ct)
-            .ConfigureAwait(false);
+        var nextNumber = await context.InvoiceLines.AsNoTracking().Where(l => l.InvoiceId == invoice.Id).Select(l => (int?)l.LineNumber).MaxAsync(ct).ConfigureAwait(false);
         var entity = new InvoiceLineEntity {
             Id = line.Id == Guid.Empty ? LyoGuid.CreateV7() : line.Id,
             InvoiceId = invoice.Id,
@@ -311,6 +311,7 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
             Pricing = (int)pricing,
             Amount = 0m
         };
+
         context.InvoiceLines.Add(entity);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
         await RecalcDraftTotalsAsync(context, invoice.Id, invoice.TaxRate, client.TaxExempt, resolvedTenant, ct).ConfigureAwait(false);
@@ -324,8 +325,7 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var invoice = await RequireDraftInvoiceAsync(context, invoiceId, resolvedTenant, ct).ConfigureAwait(false);
-        var line = invoice.Lines.FirstOrDefault(l => l.Id == lineId)
-                   ?? throw new InvalidOperationException($"Invoice line '{lineId}' was not found.");
+        var line = invoice.Lines.FirstOrDefault(l => l.Id == lineId) ?? throw new InvalidOperationException($"Invoice line '{lineId}' was not found.");
         if (line.ChargeId is { } chargeId) {
             var charge = await context.Charges.FirstOrDefaultAsync(c => c.Id == chargeId && c.TenantId == resolvedTenant, ct).ConfigureAwait(false);
             if (charge != null && charge.InvoiceId == invoice.Id)
@@ -364,15 +364,13 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var invoices = await context.Invoices.AsNoTracking().Where(i => i.TenantId == resolvedTenant).ToListAsync(ct).ConfigureAwait(false);
         var unbilled = await context.Charges.AsNoTracking().Where(c => c.TenantId == resolvedTenant && c.InvoiceId == null).ToListAsync(ct).ConfigureAwait(false);
-        return new BillingSummaryRecord {
+        return new() {
             DraftCount = invoices.Count(i => i.Status == (int)InvoiceStatus.Draft),
             IssuedCount = invoices.Count(i => i.Status == (int)InvoiceStatus.Issued),
             PartiallyPaidCount = invoices.Count(i => i.Status == (int)InvoiceStatus.PartiallyPaid),
             PaidCount = invoices.Count(i => i.Status == (int)InvoiceStatus.Paid),
             VoidCount = invoices.Count(i => i.Status == (int)InvoiceStatus.Void),
-            OutstandingTotal = invoices
-                .Where(i => i.Status is (int)InvoiceStatus.Issued or (int)InvoiceStatus.PartiallyPaid)
-                .Sum(i => i.Total - i.AmountPaid),
+            OutstandingTotal = invoices.Where(i => i.Status is (int)InvoiceStatus.Issued or (int)InvoiceStatus.PartiallyPaid).Sum(i => i.Total - i.AmountPaid),
             PaidTotal = invoices.Where(i => i.Status != (int)InvoiceStatus.Void).Sum(i => i.AmountPaid),
             UnbilledChargeCount = unbilled.Count,
             UnbilledChargeTotal = unbilled.Sum(c => decimal.Round(c.Quantity * c.UnitAmount, 4, MidpointRounding.AwayFromZero))
@@ -393,10 +391,12 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
         var resolvedTenant = ResolveTenant(tenantId);
         using var scope = BeginReadCommittedScope();
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var invoice = await context.Invoices.Include(i => i.Lines).FirstOrDefaultAsync(i => i.Id == invoiceId && i.TenantId == resolvedTenant, ct).ConfigureAwait(false)
-                      ?? throw new InvalidOperationException($"Invoice '{invoiceId}' was not found.");
+        var invoice = await context.Invoices.Include(i => i.Lines).FirstOrDefaultAsync(i => i.Id == invoiceId && i.TenantId == resolvedTenant, ct).ConfigureAwait(false) ??
+            throw new InvalidOperationException($"Invoice '{invoiceId}' was not found.");
+
         if (invoice.Status != (int)InvoiceStatus.Draft)
             throw new BillingInvoiceStateException("Only a draft invoice can be issued.");
+
         if (invoice.Lines.Count == 0)
             throw new BillingInvoiceStateException("An invoice must have lines before it is issued.");
 
@@ -414,45 +414,47 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
         invoice.Status = (int)InvoiceStatus.Issued;
         invoice.IssuedAt = DateTime.UtcNow;
         invoice.DueAt = invoice.IssuedAt.Value.AddDays(client.PaymentTermsDays);
-
         var chargeIds = invoice.Lines.Where(l => l.ChargeId != null).Select(l => l.ChargeId!.Value).ToList();
         if (chargeIds.Count > 0) {
             var claimed = await context.Charges
                 .Where(c => chargeIds.Contains(c.Id) && c.TenantId == resolvedTenant && c.ClientId == invoice.ClientId && (c.InvoiceId == null || c.InvoiceId == invoice.Id))
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
+
             if (claimed.Count != chargeIds.Count)
                 throw new BillingInvoiceStateException("A selected charge is already on an invoice.");
+
             foreach (var charge in claimed)
                 charge.InvoiceId = invoice.Id;
         }
 
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
-
         await _ledger.EnsureChartOfAccountsAsync(resolvedTenant, ct).ConfigureAwait(false);
         var ar = await RequireAccountAsync(LedgerAccountCodes.AccountsReceivable, resolvedTenant, ct).ConfigureAwait(false);
         var revenue = await RequireAccountAsync(LedgerAccountCodes.Revenue, resolvedTenant, ct).ConfigureAwait(false);
         var tax = await RequireAccountAsync(LedgerAccountCodes.TaxPayable, resolvedTenant, ct).ConfigureAwait(false);
         var lines = new List<LedgerJournalLineRecord> {
-            new() { AccountId = ar.Id, Debit = invoice.Total, ClientId = invoice.ClientId, Memo = invoice.Number }
+            new() {
+                AccountId = ar.Id,
+                Debit = invoice.Total,
+                ClientId = invoice.ClientId,
+                Memo = invoice.Number
+            }
         };
-        if (invoice.TaxAmount > 0) {
-            lines.Add(new LedgerJournalLineRecord { AccountId = revenue.Id, Credit = invoice.Subtotal, Memo = invoice.Number });
-            lines.Add(new LedgerJournalLineRecord { AccountId = tax.Id, Credit = invoice.TaxAmount, Memo = invoice.Number });
-        }
-        else {
-            lines.Add(new LedgerJournalLineRecord { AccountId = revenue.Id, Credit = invoice.Total, Memo = invoice.Number });
-        }
 
-        var journal = await _ledger.PostJournalAsync(
-            new LedgerJournalRecord { Memo = $"Issue {invoice.Number}", Source = EntityRef.For<InvoiceRecord>(invoice.Id) },
-            lines,
-            resolvedTenant,
-            ct).ConfigureAwait(false);
+        if (invoice.TaxAmount > 0) {
+            lines.Add(new() { AccountId = revenue.Id, Credit = invoice.Subtotal, Memo = invoice.Number });
+            lines.Add(new() { AccountId = tax.Id, Credit = invoice.TaxAmount, Memo = invoice.Number });
+        }
+        else
+            lines.Add(new() { AccountId = revenue.Id, Credit = invoice.Total, Memo = invoice.Number });
+
+        var journal = await _ledger.PostJournalAsync(new() { Memo = $"Issue {invoice.Number}", Source = EntityRef.For<InvoiceRecord>(invoice.Id) }, lines, resolvedTenant, ct)
+            .ConfigureAwait(false);
+
         invoice.IssueJournalId = journal.Id;
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
-        var issued = await LoadInvoiceAsync(context, invoice.Id, resolvedTenant, ct).ConfigureAwait(false)
-                     ?? throw new InvalidOperationException("Issued invoice was not saved.");
+        var issued = await LoadInvoiceAsync(context, invoice.Id, resolvedTenant, ct).ConfigureAwait(false) ?? throw new InvalidOperationException("Issued invoice was not saved.");
         scope.Complete();
         return issued;
     }
@@ -463,12 +465,15 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
         var resolvedTenant = ResolveTenant(tenantId);
         using var scope = BeginReadCommittedScope();
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var invoice = await context.Invoices.Include(i => i.Lines).FirstOrDefaultAsync(i => i.Id == invoiceId && i.TenantId == resolvedTenant, ct).ConfigureAwait(false)
-                      ?? throw new InvalidOperationException($"Invoice '{invoiceId}' was not found.");
-        if (invoice.Status is not ((int)InvoiceStatus.Issued) and not ((int)InvoiceStatus.PartiallyPaid) and not ((int)InvoiceStatus.Paid))
+        var invoice = await context.Invoices.Include(i => i.Lines).FirstOrDefaultAsync(i => i.Id == invoiceId && i.TenantId == resolvedTenant, ct).ConfigureAwait(false) ??
+            throw new InvalidOperationException($"Invoice '{invoiceId}' was not found.");
+
+        if (invoice.Status is not (int)InvoiceStatus.Issued and not (int)InvoiceStatus.PartiallyPaid and not (int)InvoiceStatus.Paid)
             throw new BillingInvoiceStateException("Only an issued invoice can be voided.");
+
         if (invoice.AmountPaid != 0)
             throw new BillingInvoiceStateException("An invoice with payments cannot be voided.");
+
         if (invoice.IssueJournalId is { } journalId)
             await _ledger.VoidJournalAsync(journalId, resolvedTenant, ct).ConfigureAwait(false);
 
@@ -478,8 +483,7 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
 
         invoice.Status = (int)InvoiceStatus.Void;
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
-        var voided = await LoadInvoiceAsync(context, invoice.Id, resolvedTenant, ct).ConfigureAwait(false)
-                     ?? throw new InvalidOperationException("Voided invoice was not saved.");
+        var voided = await LoadInvoiceAsync(context, invoice.Id, resolvedTenant, ct).ConfigureAwait(false) ?? throw new InvalidOperationException("Voided invoice was not saved.");
         scope.Complete();
         return voided;
     }
@@ -500,9 +504,10 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
         var resolvedTenant = ResolveTenant(tenantId);
         using var scope = BeginReadCommittedScope();
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var invoice = await context.Invoices.FirstOrDefaultAsync(i => i.Id == invoiceId && i.TenantId == resolvedTenant, ct).ConfigureAwait(false)
-                      ?? throw new InvalidOperationException($"Invoice '{invoiceId}' was not found.");
-        if (invoice.Status is not ((int)InvoiceStatus.Issued) and not ((int)InvoiceStatus.PartiallyPaid))
+        var invoice = await context.Invoices.FirstOrDefaultAsync(i => i.Id == invoiceId && i.TenantId == resolvedTenant, ct).ConfigureAwait(false) ??
+            throw new InvalidOperationException($"Invoice '{invoiceId}' was not found.");
+
+        if (invoice.Status is not (int)InvoiceStatus.Issued and not (int)InvoiceStatus.PartiallyPaid)
             throw new BillingInvoiceStateException("Payments can only be recorded against an issued or partially paid invoice.");
 
         var remaining = invoice.Total - invoice.AmountPaid;
@@ -517,13 +522,16 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
         var cash = await RequireAccountAsync(LedgerAccountCodes.Cash, resolvedTenant, ct).ConfigureAwait(false);
         var ar = await RequireAccountAsync(LedgerAccountCodes.AccountsReceivable, resolvedTenant, ct).ConfigureAwait(false);
         var journal = await _ledger.PostJournalAsync(
-            new LedgerJournalRecord { Memo = $"Payment {invoice.Number}", Source = EntityRef.For<InvoiceRecord>(invoice.Id) },
-            [
-                new LedgerJournalLineRecord { AccountId = cash.Id, Debit = amount, Memo = reference },
-                new LedgerJournalLineRecord { AccountId = ar.Id, Credit = amount, ClientId = invoice.ClientId, Memo = invoice.Number }
-            ],
-            resolvedTenant,
-            ct).ConfigureAwait(false);
+                new() { Memo = $"Payment {invoice.Number}", Source = EntityRef.For<InvoiceRecord>(invoice.Id) },
+                [
+                    new() { AccountId = cash.Id, Debit = amount, Memo = reference }, new() {
+                        AccountId = ar.Id,
+                        Credit = amount,
+                        ClientId = invoice.ClientId,
+                        Memo = invoice.Number
+                    }
+                ], resolvedTenant, ct)
+            .ConfigureAwait(false);
 
         var payment = new PaymentEntity {
             Id = LyoGuid.CreateV7(),
@@ -536,6 +544,7 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
             JournalId = journal.Id,
             ReceivedAt = DateTime.UtcNow
         };
+
         context.Payments.Add(payment);
         invoice.AmountPaid += amount;
         invoice.Status = invoice.AmountPaid >= invoice.Total ? (int)InvoiceStatus.Paid : (int)InvoiceStatus.PartiallyPaid;
@@ -562,13 +571,13 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entity = await context.BillerProfiles.FirstOrDefaultAsync(p => p.TenantId == resolvedTenant, ct).ConfigureAwait(false);
         if (entity == null) {
-            entity = new BillerProfileEntity { Id = profile.Id == Guid.Empty ? LyoGuid.CreateV7() : profile.Id, TenantId = resolvedTenant };
+            entity = new() { Id = profile.Id == Guid.Empty ? LyoGuid.CreateV7() : profile.Id, TenantId = resolvedTenant };
             context.BillerProfiles.Add(entity);
         }
 
         entity.DisplayName = profile.DisplayName;
         entity.LegalName = profile.LegalName;
-        EncryptSecret(profile.Remittance, v => entity.Remittance = v, (encrypted) => entity.EncryptedRemittance = encrypted);
+        EncryptSecret(profile.Remittance, v => entity.Remittance = v, encrypted => entity.EncryptedRemittance = encrypted);
         if (!string.IsNullOrWhiteSpace(profile.BankAccountNumber)) {
             entity.BankAccountLast4 = BillingTaxId.Last4(profile.BankAccountNumber);
             EncryptSecret(profile.BankAccountNumber, v => entity.BankAccountNumber = v, encrypted => entity.EncryptedBankAccountNumber = encrypted);
@@ -602,80 +611,114 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
     /// <inheritdoc />
     public Task<BillingPersonRecord> SavePersonAsync(BillingPersonRecord person, Guid? tenantId = null, CancellationToken ct = default)
         => SavePayloadAsync(
-            person, tenantId, ct, c => c.People, p => p.Id, (p, id) => p.Id = id,
-            p => ArgumentHelpers.ThrowIfNullOrWhiteSpace(p.DisplayName, nameof(p.DisplayName)),
-            (r, e) => {
+            person, tenantId, ct, c => c.People, p => p.Id, (p, id) => p.Id = id, p => ArgumentHelpers.ThrowIfNullOrWhiteSpace(p.DisplayName, nameof(p.DisplayName)), (r, e) => {
                 e.DisplayName = r.DisplayName;
                 e.GivenName = r.GivenName;
                 e.FamilyName = r.FamilyName;
                 e.Title = r.Title;
-            },
-            e => new BillingPersonRecord {
-                Id = e.Id, TenantId = e.TenantId, DisplayName = e.DisplayName, GivenName = e.GivenName, FamilyName = e.FamilyName, Title = e.Title,
+            }, e => new() {
+                Id = e.Id,
+                TenantId = e.TenantId,
+                DisplayName = e.DisplayName,
+                GivenName = e.GivenName,
+                FamilyName = e.FamilyName,
+                Title = e.Title,
                 CreatedTimestamp = e.CreatedTimestamp
             });
 
     /// <inheritdoc />
     public Task<BillingPersonRecord?> GetPersonByIdAsync(Guid id, Guid? tenantId = null, CancellationToken ct = default)
-        => GetPayloadAsync(id, tenantId, ct, c => c.People, e => new BillingPersonRecord {
-            Id = e.Id, TenantId = e.TenantId, DisplayName = e.DisplayName, GivenName = e.GivenName, FamilyName = e.FamilyName, Title = e.Title,
-            CreatedTimestamp = e.CreatedTimestamp
-        });
+        => GetPayloadAsync(
+            id, tenantId, ct, c => c.People, e => new BillingPersonRecord {
+                Id = e.Id,
+                TenantId = e.TenantId,
+                DisplayName = e.DisplayName,
+                GivenName = e.GivenName,
+                FamilyName = e.FamilyName,
+                Title = e.Title,
+                CreatedTimestamp = e.CreatedTimestamp
+            });
 
     /// <inheritdoc />
     public Task<BillingPhoneNumberRecord> SavePhoneNumberAsync(BillingPhoneNumberRecord phone, Guid? tenantId = null, CancellationToken ct = default)
         => SavePayloadAsync(
-            phone, tenantId, ct, c => c.PhoneNumbers, p => p.Id, (p, id) => p.Id = id,
-            p => ArgumentHelpers.ThrowIfNullOrWhiteSpace(p.Number, nameof(p.Number)),
-            (r, e) => {
+            phone, tenantId, ct, c => c.PhoneNumbers, p => p.Id, (p, id) => p.Id = id, p => ArgumentHelpers.ThrowIfNullOrWhiteSpace(p.Number, nameof(p.Number)), (r, e) => {
                 e.Number = r.Number;
                 e.Country = r.Country;
-            },
-            e => new BillingPhoneNumberRecord { Id = e.Id, TenantId = e.TenantId, Number = e.Number, Country = e.Country, CreatedTimestamp = e.CreatedTimestamp });
+            }, e => new() {
+                Id = e.Id,
+                TenantId = e.TenantId,
+                Number = e.Number,
+                Country = e.Country,
+                CreatedTimestamp = e.CreatedTimestamp
+            });
 
     /// <inheritdoc />
     public Task<BillingPhoneNumberRecord?> GetPhoneNumberByIdAsync(Guid id, Guid? tenantId = null, CancellationToken ct = default)
         => GetPayloadAsync(
-            id, tenantId, ct, c => c.PhoneNumbers,
-            e => new BillingPhoneNumberRecord { Id = e.Id, TenantId = e.TenantId, Number = e.Number, Country = e.Country, CreatedTimestamp = e.CreatedTimestamp });
+            id, tenantId, ct, c => c.PhoneNumbers, e => new BillingPhoneNumberRecord {
+                Id = e.Id,
+                TenantId = e.TenantId,
+                Number = e.Number,
+                Country = e.Country,
+                CreatedTimestamp = e.CreatedTimestamp
+            });
 
     /// <inheritdoc />
     public Task<BillingEmailAddressRecord> SaveEmailAddressAsync(BillingEmailAddressRecord email, Guid? tenantId = null, CancellationToken ct = default)
         => SavePayloadAsync(
-            email, tenantId, ct, c => c.EmailAddresses, p => p.Id, (p, id) => p.Id = id,
-            p => ArgumentHelpers.ThrowIfNullOrWhiteSpace(p.Email, nameof(p.Email)),
-            (r, e) => e.Email = r.Email,
-            e => new BillingEmailAddressRecord { Id = e.Id, TenantId = e.TenantId, Email = e.Email, CreatedTimestamp = e.CreatedTimestamp });
+            email, tenantId, ct, c => c.EmailAddresses, p => p.Id, (p, id) => p.Id = id, p => ArgumentHelpers.ThrowIfNullOrWhiteSpace(p.Email, nameof(p.Email)),
+            (r, e) => e.Email = r.Email, e => new() {
+                Id = e.Id,
+                TenantId = e.TenantId,
+                Email = e.Email,
+                CreatedTimestamp = e.CreatedTimestamp
+            });
 
     /// <inheritdoc />
     public Task<BillingEmailAddressRecord?> GetEmailAddressByIdAsync(Guid id, Guid? tenantId = null, CancellationToken ct = default)
         => GetPayloadAsync(
-            id, tenantId, ct, c => c.EmailAddresses,
-            e => new BillingEmailAddressRecord { Id = e.Id, TenantId = e.TenantId, Email = e.Email, CreatedTimestamp = e.CreatedTimestamp });
+            id, tenantId, ct, c => c.EmailAddresses, e => new BillingEmailAddressRecord {
+                Id = e.Id,
+                TenantId = e.TenantId,
+                Email = e.Email,
+                CreatedTimestamp = e.CreatedTimestamp
+            });
 
     /// <inheritdoc />
     public Task<BillingAddressRecord> SaveAddressAsync(BillingAddressRecord address, Guid? tenantId = null, CancellationToken ct = default)
         => SavePayloadAsync(
-            address, tenantId, ct, c => c.AddressPayloads, p => p.Id, (p, id) => p.Id = id, _ => { },
-            (r, e) => {
+            address, tenantId, ct, c => c.AddressPayloads, p => p.Id, (p, id) => p.Id = id, _ => { }, (r, e) => {
                 e.Line1 = r.Line1;
                 e.Line2 = r.Line2;
                 e.City = r.City;
                 e.Region = r.Region;
                 e.PostalCode = r.PostalCode;
                 e.Country = r.Country;
-            },
-            e => new BillingAddressRecord {
-                Id = e.Id, TenantId = e.TenantId, Line1 = e.Line1, Line2 = e.Line2, City = e.City, Region = e.Region, PostalCode = e.PostalCode, Country = e.Country,
+            }, e => new() {
+                Id = e.Id,
+                TenantId = e.TenantId,
+                Line1 = e.Line1,
+                Line2 = e.Line2,
+                City = e.City,
+                Region = e.Region,
+                PostalCode = e.PostalCode,
+                Country = e.Country,
                 CreatedTimestamp = e.CreatedTimestamp
             });
 
     /// <inheritdoc />
     public Task<BillingAddressRecord?> GetAddressByIdAsync(Guid id, Guid? tenantId = null, CancellationToken ct = default)
         => GetPayloadAsync(
-            id, tenantId, ct, c => c.AddressPayloads,
-            e => new BillingAddressRecord {
-                Id = e.Id, TenantId = e.TenantId, Line1 = e.Line1, Line2 = e.Line2, City = e.City, Region = e.Region, PostalCode = e.PostalCode, Country = e.Country,
+            id, tenantId, ct, c => c.AddressPayloads, e => new BillingAddressRecord {
+                Id = e.Id,
+                TenantId = e.TenantId,
+                Line1 = e.Line1,
+                Line2 = e.Line2,
+                City = e.City,
+                Region = e.Region,
+                PostalCode = e.PostalCode,
+                Country = e.Country,
                 CreatedTimestamp = e.CreatedTimestamp
             });
 
@@ -696,9 +739,11 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
         var forId = EntityRefPersistedGuid.PersistedEntityId(contact);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         await EnsureClientAsync(context, clientId, resolvedTenant, ct).ConfigureAwait(false);
-        var existing = await context.Contacts.WhereActive().WhereTenant(relationTenant)
+        var existing = await context.Contacts.WhereActive()
+            .WhereTenant(relationTenant)
             .FirstOrDefaultAsync(c => c.ClientId == clientId && c.SubjectEntityType == contact.EntityType && c.SubjectEntityId == forId, ct)
             .ConfigureAwait(false);
+
         if (existing != null) {
             existing.Role = (int)role;
             existing.Title = title;
@@ -724,24 +769,21 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
             CreatedAt = DateTime.UtcNow,
             Visibility = EntityRefVisibility.Private
         };
+
         context.Contacts.Add(entity);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
         return ToContact(entity);
     }
 
     /// <inheritdoc />
-    public Task DetachContactAsync(Guid linkId, Guid? tenantId = null, CancellationToken ct = default)
-        => SoftDeleteAsync(linkId, tenantId, ct, c => c.Contacts);
+    public Task DetachContactAsync(Guid linkId, Guid? tenantId = null, CancellationToken ct = default) => SoftDeleteAsync(linkId, tenantId, ct, c => c.Contacts);
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<BillingContactRecord>> ListContactsAsync(Guid clientId, Guid? tenantId = null, CancellationToken ct = default)
     {
         var relationTenant = ResolveTenant(tenantId) ?? Guid.Empty;
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var rows = await context.Contacts.AsNoTracking().WhereActive().WhereTenant(relationTenant)
-            .Where(c => c.ClientId == clientId)
-            .ToListAsync(ct)
-            .ConfigureAwait(false);
+        var rows = await context.Contacts.AsNoTracking().WhereActive().WhereTenant(relationTenant).Where(c => c.ClientId == clientId).ToListAsync(ct).ConfigureAwait(false);
         return rows.Select(ToContact).ToList();
     }
 
@@ -750,11 +792,14 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
     {
         var relationTenant = ResolveTenant(tenantId) ?? Guid.Empty;
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var row = await context.Contacts.AsNoTracking().WhereActive().WhereTenant(relationTenant)
+        var row = await context.Contacts.AsNoTracking()
+            .WhereActive()
+            .WhereTenant(relationTenant)
             .Where(c => c.ClientId == clientId && c.IsBillingContact)
             .OrderByDescending(c => c.IsPrimary)
             .FirstOrDefaultAsync(ct)
             .ConfigureAwait(false);
+
         return row == null ? null : ToContact(row);
     }
 
@@ -767,13 +812,10 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
         EntityRef? contact = null,
         Guid? tenantId = null,
         CancellationToken ct = default)
-        => AttachUsageLinkAsync(
-            clientId, phone, (int)usage, isPrimary, contact, tenantId, ct, c => c.Phones,
-            (e, u, p, ctRef) => ApplyUsage(e, u, p, ctRef), ToPhoneLink);
+        => AttachUsageLinkAsync(clientId, phone, (int)usage, isPrimary, contact, tenantId, ct, c => c.Phones, (e, u, p, ctRef) => ApplyUsage(e, u, p, ctRef), ToPhoneLink);
 
     /// <inheritdoc />
-    public Task DetachPhoneAsync(Guid linkId, Guid? tenantId = null, CancellationToken ct = default)
-        => SoftDeleteAsync(linkId, tenantId, ct, c => c.Phones);
+    public Task DetachPhoneAsync(Guid linkId, Guid? tenantId = null, CancellationToken ct = default) => SoftDeleteAsync(linkId, tenantId, ct, c => c.Phones);
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<BillingPhoneLinkRecord>> ListPhonesAsync(Guid clientId, Guid? tenantId = null, CancellationToken ct = default)
@@ -793,13 +835,10 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
         EntityRef? contact = null,
         Guid? tenantId = null,
         CancellationToken ct = default)
-        => AttachUsageLinkAsync(
-            clientId, email, (int)usage, isPrimary, contact, tenantId, ct, c => c.Emails,
-            (e, u, p, ctRef) => ApplyUsage(e, u, p, ctRef), ToEmailLink);
+        => AttachUsageLinkAsync(clientId, email, (int)usage, isPrimary, contact, tenantId, ct, c => c.Emails, (e, u, p, ctRef) => ApplyUsage(e, u, p, ctRef), ToEmailLink);
 
     /// <inheritdoc />
-    public Task DetachEmailAsync(Guid linkId, Guid? tenantId = null, CancellationToken ct = default)
-        => SoftDeleteAsync(linkId, tenantId, ct, c => c.Emails);
+    public Task DetachEmailAsync(Guid linkId, Guid? tenantId = null, CancellationToken ct = default) => SoftDeleteAsync(linkId, tenantId, ct, c => c.Emails);
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<BillingEmailLinkRecord>> ListEmailsAsync(Guid clientId, Guid? tenantId = null, CancellationToken ct = default)
@@ -819,13 +858,10 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
         EntityRef? contact = null,
         Guid? tenantId = null,
         CancellationToken ct = default)
-        => AttachUsageLinkAsync(
-            clientId, address, (int)usage, isPrimary, contact, tenantId, ct, c => c.Addresses,
-            (e, u, p, ctRef) => ApplyUsage(e, u, p, ctRef), ToAddressLink);
+        => AttachUsageLinkAsync(clientId, address, (int)usage, isPrimary, contact, tenantId, ct, c => c.Addresses, (e, u, p, ctRef) => ApplyUsage(e, u, p, ctRef), ToAddressLink);
 
     /// <inheritdoc />
-    public Task DetachAddressAsync(Guid linkId, Guid? tenantId = null, CancellationToken ct = default)
-        => SoftDeleteAsync(linkId, tenantId, ct, c => c.Addresses);
+    public Task DetachAddressAsync(Guid linkId, Guid? tenantId = null, CancellationToken ct = default) => SoftDeleteAsync(linkId, tenantId, ct, c => c.Addresses);
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<BillingAddressLinkRecord>> ListAddressesAsync(Guid clientId, Guid? tenantId = null, CancellationToken ct = default)
@@ -841,61 +877,54 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
     {
         var relationTenant = ResolveTenant(tenantId) ?? Guid.Empty;
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var row = await context.Addresses.AsNoTracking().WhereActive().WhereTenant(relationTenant)
+        var row = await context.Addresses.AsNoTracking()
+            .WhereActive()
+            .WhereTenant(relationTenant)
             .Where(c => c.ClientId == clientId && c.Usage == (int)BillingAddressUsage.Billing)
             .OrderByDescending(c => c.IsPrimary)
             .FirstOrDefaultAsync(ct)
             .ConfigureAwait(false);
+
         return row == null ? null : ToAddressLink(row);
     }
 
+    /// <inheritdoc />
+    public string HealthCheckName => "billing-postgres";
+
+    /// <inheritdoc />
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => PostgresHealth.CheckAsync(_contextFactory, PostgresBillingOptions.Schema, ct);
+
     private static TransactionScope BeginReadCommittedScope()
         => new(
-            TransactionScopeOption.Required,
-            new TransactionOptions { IsolationLevel = System.Transactions.IsolationLevel.ReadCommitted, Timeout = TransactionManager.DefaultTimeout },
+            TransactionScopeOption.Required, new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted, Timeout = TransactionManager.DefaultTimeout },
             TransactionScopeAsyncFlowOption.Enabled);
 
     private Guid? ResolveTenant(Guid? tenantId) => TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
 
-    private static async Task RecalcDraftTotalsAsync(
-        BillingDbContext context,
-        Guid invoiceId,
-        decimal taxRate,
-        bool taxExempt,
-        Guid? tenantId,
-        CancellationToken ct)
+    private static async Task RecalcDraftTotalsAsync(BillingDbContext context, Guid invoiceId, decimal taxRate, bool taxExempt, Guid? tenantId, CancellationToken ct)
     {
-        var lines = await context.InvoiceLines
-            .Where(l => l.InvoiceId == invoiceId)
-            .OrderBy(l => l.LineNumber)
-            .ToListAsync(ct)
-            .ConfigureAwait(false);
+        var lines = await context.InvoiceLines.Where(l => l.InvoiceId == invoiceId).OrderBy(l => l.LineNumber).ToListAsync(ct).ConfigureAwait(false);
         ApplyLineAmounts(lines);
         await context.SaveChangesAsync(ct).ConfigureAwait(false);
         var subtotal = lines.Sum(l => l.Amount);
-        var taxAmount = taxExempt || taxRate == 0
-            ? 0m
-            : decimal.Round(subtotal * taxRate, 4, MidpointRounding.AwayFromZero);
+        var taxAmount = taxExempt || taxRate == 0 ? 0m : decimal.Round(subtotal * taxRate, 4, MidpointRounding.AwayFromZero);
         var total = subtotal + taxAmount;
-        var updated = await context.Invoices
-            .Where(i => i.Id == invoiceId && i.TenantId == tenantId)
-            .ExecuteUpdateAsync(
-                s => s
-                    .SetProperty(i => i.Subtotal, subtotal)
-                    .SetProperty(i => i.TaxAmount, taxAmount)
-                    .SetProperty(i => i.Total, total),
-                ct)
+        var updated = await context.Invoices.Where(i => i.Id == invoiceId && i.TenantId == tenantId)
+            .ExecuteUpdateAsync(s => s.SetProperty(i => i.Subtotal, subtotal).SetProperty(i => i.TaxAmount, taxAmount).SetProperty(i => i.Total, total), ct)
             .ConfigureAwait(false);
+
         if (updated != 1)
             throw new InvalidOperationException($"Invoice '{invoiceId}' totals could not be updated.");
     }
 
     private static async Task<InvoiceEntity> RequireDraftInvoiceAsync(BillingDbContext context, Guid invoiceId, Guid? tenantId, CancellationToken ct)
     {
-        var invoice = await context.Invoices.Include(i => i.Lines).FirstOrDefaultAsync(i => i.Id == invoiceId && i.TenantId == tenantId, ct).ConfigureAwait(false)
-                      ?? throw new InvalidOperationException($"Invoice '{invoiceId}' was not found.");
+        var invoice = await context.Invoices.Include(i => i.Lines).FirstOrDefaultAsync(i => i.Id == invoiceId && i.TenantId == tenantId, ct).ConfigureAwait(false) ??
+            throw new InvalidOperationException($"Invoice '{invoiceId}' was not found.");
+
         if (invoice.Status != (int)InvoiceStatus.Draft)
             throw new BillingInvoiceStateException("Only a draft invoice can be edited.");
+
         return invoice;
     }
 
@@ -909,19 +938,18 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
             await connection.OpenAsync(ct).ConfigureAwait(false);
 
         await using var cmd = connection.CreateCommand();
-        cmd.CommandText =
-            """
-            INSERT INTO billing.invoice_sequence (id, tenant_id, year, last_value)
-            VALUES (@id, @tenant, @year, 1)
-            ON CONFLICT (tenant_id, year)
-            DO UPDATE SET last_value = billing.invoice_sequence.last_value + 1
-            RETURNING last_value
-            """;
+        cmd.CommandText = """
+                          INSERT INTO billing.invoice_sequence (id, tenant_id, year, last_value)
+                          VALUES (@id, @tenant, @year, 1)
+                          ON CONFLICT (tenant_id, year)
+                          DO UPDATE SET last_value = billing.invoice_sequence.last_value + 1
+                          RETURNING last_value
+                          """;
+
         AddParameter(cmd, "id", LyoGuid.CreateV7());
         AddParameter(cmd, "tenant", seqTenant);
         AddParameter(cmd, "year", year);
-        var result = await cmd.ExecuteScalarAsync(ct).ConfigureAwait(false)
-                     ?? throw new InvalidOperationException("Invoice sequence did not return a value.");
+        var result = await cmd.ExecuteScalarAsync(ct).ConfigureAwait(false) ?? throw new InvalidOperationException("Invoice sequence did not return a value.");
         suppress.Complete();
         return Convert.ToInt32(result);
     }
@@ -934,12 +962,7 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
         command.Parameters.Add(parameter);
     }
 
-    private async Task SnapshotBillToAsync(
-        BillingDbContext context,
-        InvoiceEntity invoice,
-        BillingClientRecord client,
-        Guid? tenantId,
-        CancellationToken ct)
+    private async Task SnapshotBillToAsync(BillingDbContext context, InvoiceEntity invoice, BillingClientRecord client, Guid? tenantId, CancellationToken ct)
     {
         invoice.BillToName = client.LegalName ?? client.DisplayName;
         invoice.Notes ??= client.DefaultInvoiceNotes;
@@ -950,32 +973,36 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
         invoice.BillToRegion = client.Region;
         invoice.BillToPostalCode = client.PostalCode;
         invoice.BillToCountry = client.Country;
-
         var relationTenant = tenantId ?? Guid.Empty;
-        var contact = await context.Contacts.AsNoTracking().WhereActive().WhereTenant(relationTenant)
+        var contact = await context.Contacts.AsNoTracking()
+            .WhereActive()
+            .WhereTenant(relationTenant)
             .Where(c => c.ClientId == invoice.ClientId && c.IsBillingContact)
             .OrderByDescending(c => c.IsPrimary)
             .FirstOrDefaultAsync(ct)
             .ConfigureAwait(false);
+
         if (contact != null) {
             if (!string.IsNullOrWhiteSpace(contact.Title))
                 invoice.BillToContactName = contact.Title;
-            if (string.Equals(contact.SubjectEntityType, BillingEntityTypes.BillingPerson, StringComparison.Ordinal)
-                && Guid.TryParse(contact.SubjectEntityId, out var personId)) {
+
+            if (string.Equals(contact.SubjectEntityType, BillingEntityTypes.BillingPerson, StringComparison.Ordinal) && Guid.TryParse(contact.SubjectEntityId, out var personId)) {
                 var person = await context.People.AsNoTracking().FirstOrDefaultAsync(p => p.Id == personId, ct).ConfigureAwait(false);
                 if (person != null)
                     invoice.BillToContactName = person.DisplayName;
             }
         }
 
-        var address = await context.Addresses.AsNoTracking().WhereActive().WhereTenant(relationTenant)
+        var address = await context.Addresses.AsNoTracking()
+            .WhereActive()
+            .WhereTenant(relationTenant)
             .Where(c => c.ClientId == invoice.ClientId && c.Usage == (int)BillingAddressUsage.Billing)
             .OrderByDescending(c => c.IsPrimary)
             .FirstOrDefaultAsync(ct)
             .ConfigureAwait(false);
-        if (address != null
-            && string.Equals(address.SubjectEntityType, BillingEntityTypes.BillingAddress, StringComparison.Ordinal)
-            && Guid.TryParse(address.SubjectEntityId, out var addressId)) {
+
+        if (address != null && string.Equals(address.SubjectEntityType, BillingEntityTypes.BillingAddress, StringComparison.Ordinal) &&
+            Guid.TryParse(address.SubjectEntityId, out var addressId)) {
             var payload = await context.AddressPayloads.AsNoTracking().FirstOrDefaultAsync(a => a.Id == addressId, ct).ConfigureAwait(false);
             if (payload != null) {
                 invoice.BillToLine1 = payload.Line1;
@@ -1023,18 +1050,15 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
     }
 
     private async Task<LedgerAccountRecord> RequireAccountAsync(string code, Guid? tenantId, CancellationToken ct)
-        => await _ledger.GetAccountByCodeAsync(code, tenantId, ct).ConfigureAwait(false)
-           ?? throw new InvalidOperationException($"Ledger account '{code}' was not found. Call EnsureChartOfAccountsAsync first.");
+        => await _ledger.GetAccountByCodeAsync(code, tenantId, ct).ConfigureAwait(false) ??
+            throw new InvalidOperationException($"Ledger account '{code}' was not found. Call EnsureChartOfAccountsAsync first.");
 
-    private static string TruncateTitle(string title)
-        => title.Length <= 200 ? title : title[..200].TrimEnd();
+    private static string TruncateTitle(string title) => title.Length <= 200 ? title : title[..200].TrimEnd();
 
     private static void RecalcTotals(InvoiceEntity invoice, bool taxExempt)
     {
         invoice.Subtotal = invoice.Lines.Sum(l => l.Amount);
-        invoice.TaxAmount = taxExempt || invoice.TaxRate == 0
-            ? 0m
-            : decimal.Round(invoice.Subtotal * invoice.TaxRate, 4, MidpointRounding.AwayFromZero);
+        invoice.TaxAmount = taxExempt || invoice.TaxRate == 0 ? 0m : decimal.Round(invoice.Subtotal * invoice.TaxRate, 4, MidpointRounding.AwayFromZero);
         invoice.Total = invoice.Subtotal + invoice.TaxAmount;
     }
 
@@ -1046,8 +1070,9 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
 
     private async Task<BillingClientRecord> RequireClientAsync(BillingDbContext context, Guid clientId, Guid? tenantId, CancellationToken ct)
     {
-        var entity = await context.Clients.AsNoTracking().FirstOrDefaultAsync(c => c.Id == clientId && c.TenantId == tenantId, ct).ConfigureAwait(false)
-                     ?? throw new InvalidOperationException($"Client '{clientId}' was not found.");
+        var entity = await context.Clients.AsNoTracking().FirstOrDefaultAsync(c => c.Id == clientId && c.TenantId == tenantId, ct).ConfigureAwait(false) ??
+            throw new InvalidOperationException($"Client '{clientId}' was not found.");
+
         return ToClient(entity);
     }
 
@@ -1138,8 +1163,15 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
 
     private static PaymentRecord ToPayment(PaymentEntity e)
         => new() {
-            Id = e.Id, TenantId = e.TenantId, InvoiceId = e.InvoiceId, Amount = e.Amount, Currency = e.Currency, Method = (PaymentMethod)e.Method, Reference = e.Reference,
-            JournalId = e.JournalId, ReceivedAt = e.ReceivedAt
+            Id = e.Id,
+            TenantId = e.TenantId,
+            InvoiceId = e.InvoiceId,
+            Amount = e.Amount,
+            Currency = e.Currency,
+            Method = (PaymentMethod)e.Method,
+            Reference = e.Reference,
+            JournalId = e.JournalId,
+            ReceivedAt = e.ReceivedAt
         };
 
     private async Task<TRecord> SavePayloadAsync<TRecord, TEntity>(
@@ -1173,7 +1205,7 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
                 copy(record, entity);
         }
         else {
-            entity = new TEntity();
+            entity = new();
             copy(record, entity);
             var newId = LyoGuid.CreateV7();
             SetPayloadIdAndTenant(entity, newId, resolvedTenant);
@@ -1192,14 +1224,15 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
         CancellationToken ct,
         Func<BillingDbContext, DbSet<TEntity>> set,
         Func<TEntity, TRecord> toRecord)
-        where TRecord : class
-        where TEntity : class
+        where TRecord : class where TEntity : class
     {
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await set(context).AsNoTracking()
+        var entity = await set(context)
+            .AsNoTracking()
             .FirstOrDefaultAsync(e => EF.Property<Guid>(e, "Id") == id && EF.Property<Guid?>(e, "TenantId") == resolvedTenant, ct)
             .ConfigureAwait(false);
+
         return entity == null ? null : toRecord(entity);
     }
 
@@ -1223,9 +1256,11 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         await EnsureClientAsync(context, clientId, resolvedTenant, ct).ConfigureAwait(false);
         var dbSet = set(context);
-        var existing = await dbSet.WhereActive().WhereTenant(relationTenant)
+        var existing = await dbSet.WhereActive()
+            .WhereTenant(relationTenant)
             .FirstOrDefaultAsync(e => EF.Property<Guid>(e, "ClientId") == clientId && e.SubjectEntityType == payload.EntityType && e.SubjectEntityId == forId, ct)
             .ConfigureAwait(false);
+
         if (existing != null) {
             apply(existing, usage, isPrimary, contact);
             await context.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -1243,6 +1278,7 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
             CreatedAt = DateTime.UtcNow,
             Visibility = EntityRefVisibility.Private
         };
+
         typeof(TEntity).GetProperty("ClientId")!.SetValue(entity, clientId);
         apply(entity, usage, isPrimary, contact);
         dbSet.Add(entity);
@@ -1287,30 +1323,33 @@ public sealed class PostgresBillingStore : IBillingStore, IHealth
     {
         e.Usage = usage;
         e.IsPrimary = isPrimary;
-        SetContactRef(e, contact, (row, t, i) => {
-            row.ContactEntityType = t;
-            row.ContactEntityId = i;
-        });
+        SetContactRef(
+            e, contact, (row, t, i) => {
+                row.ContactEntityType = t;
+                row.ContactEntityId = i;
+            });
     }
 
     private static void ApplyUsage(BillingEmailEntity e, int usage, bool isPrimary, EntityRef? contact)
     {
         e.Usage = usage;
         e.IsPrimary = isPrimary;
-        SetContactRef(e, contact, (row, t, i) => {
-            row.ContactEntityType = t;
-            row.ContactEntityId = i;
-        });
+        SetContactRef(
+            e, contact, (row, t, i) => {
+                row.ContactEntityType = t;
+                row.ContactEntityId = i;
+            });
     }
 
     private static void ApplyUsage(BillingAddressEntity e, int usage, bool isPrimary, EntityRef? contact)
     {
         e.Usage = usage;
         e.IsPrimary = isPrimary;
-        SetContactRef(e, contact, (row, t, i) => {
-            row.ContactEntityType = t;
-            row.ContactEntityId = i;
-        });
+        SetContactRef(
+            e, contact, (row, t, i) => {
+                row.ContactEntityType = t;
+                row.ContactEntityId = i;
+            });
     }
 
     private static void SetContactRef<T>(T entity, EntityRef? contact, Action<T, string?, string?> apply)

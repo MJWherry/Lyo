@@ -4,10 +4,10 @@ using Lyo.Encryption.Streaming;
 namespace Lyo.Encryption.AesSiv;
 
 /// <summary>
-/// Per-stream AES-SIV (RFC 5297) cipher for the chunk loop (see <see cref="IAeadStreamCryptor" />). AES-SIV is deterministic and nonce-less, so the stream-supplied
-/// per-chunk value (a 4-byte counter, no random prefix) is fed as associated data to bind each chunk's position while keeping output deterministic for a given key,
-/// plaintext, and chunk size. Stream-level AAD (V2 header) is prepended to the counter in the same S2V component. The 16-byte synthetic IV rides in the trailing
-/// tag slot the codec expects (reassembled internally to RFC 5297 <c>SIV || ciphertext</c>).
+/// Per-stream AES-SIV (RFC 5297) cipher for the chunk loop (see <see cref="IAeadStreamCryptor" />). AES-SIV is deterministic and nonce-less, so the stream-supplied per-chunk
+/// value (a 4-byte counter, no random prefix) is fed as associated data to bind each chunk's position while keeping output deterministic for a given key, plaintext, and chunk size.
+/// Stream-level AAD (V2 header) is prepended to the counter in the same S2V component. The 16-byte synthetic IV rides in the trailing tag slot the codec expects (reassembled
+/// internally to RFC 5297 <c>SIV || ciphertext</c>).
 /// </summary>
 internal sealed class AesSivStreamCryptor(ReadOnlySpan<byte> key) : IAeadStreamCryptor
 {

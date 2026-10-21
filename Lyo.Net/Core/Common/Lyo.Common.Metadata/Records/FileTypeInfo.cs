@@ -22,20 +22,17 @@ public sealed class FileTypeInfo
     public static readonly FileTypeInfo Unknown = new("Unknown", MimeTypeInfo.Unknown, ".unknown", null, FileTypeCategory.Unknown, "Unknown or unsupported file type");
 
     // Document formats
-    public static readonly FileTypeInfo Pdf = new(
-        "PDF", MimeTypeInfo.Pdf, ".pdf", null, FileTypeCategory.Documents, "Adobe PDF document", [FileHeaderSignature.At(0, "%PDF"u8)]);
+    public static readonly FileTypeInfo Pdf = new("PDF", MimeTypeInfo.Pdf, ".pdf", null, FileTypeCategory.Documents, "Adobe PDF document", [FileHeaderSignature.At(0, "%PDF"u8)]);
 
     public static readonly FileTypeInfo Doc = new(
         "DOC", MimeTypeInfo.Doc, ".doc", null, FileTypeCategory.Documents, "Microsoft Word document",
         [FileHeaderSignature.At(0, [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1])]);
 
-    public static readonly FileTypeInfo Docx = new(
-        "DOCX", MimeTypeInfo.Docx, ".docx", null, FileTypeCategory.Documents, "Microsoft Word Open XML document");
+    public static readonly FileTypeInfo Docx = new("DOCX", MimeTypeInfo.Docx, ".docx", null, FileTypeCategory.Documents, "Microsoft Word Open XML document");
 
     public static readonly FileTypeInfo Xls = new("XLS", MimeTypeInfo.Xls, ".xls", null, FileTypeCategory.Documents, "Microsoft Excel spreadsheet");
 
-    public static readonly FileTypeInfo Xlsx = new(
-        "XLSX", MimeTypeInfo.Xlsx, ".xlsx", null, FileTypeCategory.Documents, "Microsoft Excel Open XML spreadsheet");
+    public static readonly FileTypeInfo Xlsx = new("XLSX", MimeTypeInfo.Xlsx, ".xlsx", null, FileTypeCategory.Documents, "Microsoft Excel Open XML spreadsheet");
 
     // Text and structured data
     public static readonly FileTypeInfo Csv = new("CSV", MimeTypeInfo.Csv, ".csv", null, FileTypeCategory.DataFiles, "Comma-separated values file");
@@ -59,14 +56,12 @@ public sealed class FileTypeInfo
     // Web formats
     public static readonly FileTypeInfo Html = new("HTML", MimeTypeInfo.Html, ".html", [".htm"], FileTypeCategory.DataFiles, "HTML web page");
 
-    public static readonly FileTypeInfo JavaScript = new(
-        "JavaScript", MimeTypeInfo.JavaScript, ".js", [".mjs"], FileTypeCategory.DataFiles, "JavaScript source file");
+    public static readonly FileTypeInfo JavaScript = new("JavaScript", MimeTypeInfo.JavaScript, ".js", [".mjs"], FileTypeCategory.DataFiles, "JavaScript source file");
 
     public static readonly FileTypeInfo Graphql = new("GraphQL", MimeTypeInfo.Graphql, ".graphql", [".gql"], FileTypeCategory.DataFiles, "GraphQL schema, query, or request body");
 
     public static readonly FileTypeInfo WwwFormUrlEncoded = new(
-        "WWW form URL-encoded", MimeTypeInfo.WwwFormUrlEncoded, ".form", null, FileTypeCategory.DataFiles,
-        "application/x-www-form-urlencoded HTTP body (common extension .form)");
+        "WWW form URL-encoded", MimeTypeInfo.WwwFormUrlEncoded, ".form", null, FileTypeCategory.DataFiles, "application/x-www-form-urlencoded HTTP body (common extension .form)");
 
     // Binary and dump files
     public static readonly FileTypeInfo Bin = new("BIN", MimeTypeInfo.Unknown, ".bin", null, FileTypeCategory.DataFiles, "Raw binary file");
@@ -85,8 +80,7 @@ public sealed class FileTypeInfo
         "GIF", MimeTypeInfo.Gif, ".gif", null, FileTypeCategory.Images, "Graphics Interchange Format image",
         [FileHeaderSignature.At(0, "GIF87a"u8), FileHeaderSignature.At(0, "GIF89a"u8)]);
 
-    public static readonly FileTypeInfo Bmp = new(
-        "BMP", MimeTypeInfo.Bmp, ".bmp", null, FileTypeCategory.Images, "Bitmap image file", [FileHeaderSignature.At(0, "BM"u8)]);
+    public static readonly FileTypeInfo Bmp = new("BMP", MimeTypeInfo.Bmp, ".bmp", null, FileTypeCategory.Images, "Bitmap image file", [FileHeaderSignature.At(0, "BM"u8)]);
 
     public static readonly FileTypeInfo Svg = new("SVG", MimeTypeInfo.Svg, ".svg", null, FileTypeCategory.Images, "Scalable Vector Graphics image");
 
@@ -106,9 +100,8 @@ public sealed class FileTypeInfo
 
     // Compressed formats
     public static readonly FileTypeInfo Zip = new(
-        "ZIP", MimeTypeInfo.Zip, ".zip", null, FileTypeCategory.Compressed, "ZIP archive file", [
-            FileHeaderSignature.At(0, [0x50, 0x4B, 0x03, 0x04]), FileHeaderSignature.At(0, [0x50, 0x4B, 0x05, 0x06]), FileHeaderSignature.At(0, [0x50, 0x4B, 0x07, 0x08])
-        ]);
+        "ZIP", MimeTypeInfo.Zip, ".zip", null, FileTypeCategory.Compressed, "ZIP archive file",
+        [FileHeaderSignature.At(0, [0x50, 0x4B, 0x03, 0x04]), FileHeaderSignature.At(0, [0x50, 0x4B, 0x05, 0x06]), FileHeaderSignature.At(0, [0x50, 0x4B, 0x07, 0x08])]);
 
     public static readonly FileTypeInfo Rar = new(
         "RAR", MimeTypeInfo.Rar, ".rar", null, FileTypeCategory.Compressed, "RAR archive file", [FileHeaderSignature.At(0, [0x52, 0x61, 0x72, 0x21, 0x1A, 0x07])]);
@@ -163,30 +156,27 @@ public sealed class FileTypeInfo
     public static readonly FileTypeInfo RpmPackage = new(
         "RPM package", MimeTypeInfo.RpmPackage, ".rpm", null, FileTypeCategory.PackageManager, "RPM package", [FileHeaderSignature.At(0, [0xED, 0xAB, 0xEE, 0xDB])]);
 
-    public static readonly FileTypeInfo WindowsInstallerMsi = new("MSI", MimeTypeInfo.WindowsInstallerMsi, ".msi", null, FileTypeCategory.PackageManager, "Windows Installer package (MSI)");
+    public static readonly FileTypeInfo WindowsInstallerMsi = new(
+        "MSI", MimeTypeInfo.WindowsInstallerMsi, ".msi", null, FileTypeCategory.PackageManager, "Windows Installer package (MSI)");
 
     // Encrypted formats
     public static readonly FileTypeInfo Enc = new("ENC", MimeTypeInfo.Unknown, ".enc", [".crypt", ".aes"], FileTypeCategory.Encrypted, "Encrypted file");
 
     public static readonly FileTypeInfo Gpg = new("GPG", MimeTypeInfo.Gpg, ".gpg", [".pgp"], FileTypeCategory.Encrypted, "GPG encrypted file");
 
-    public static readonly FileTypeInfo LyoAesGcm = new(
-        "Lyo AES-GCM", MimeTypeInfo.LyoAesGcm, ".ag", null, FileTypeCategory.Encrypted, "Lyo AES-GCM symmetric ciphertext");
+    public static readonly FileTypeInfo LyoAesGcm = new("Lyo AES-GCM", MimeTypeInfo.LyoAesGcm, ".ag", null, FileTypeCategory.Encrypted, "Lyo AES-GCM symmetric ciphertext");
 
     public static readonly FileTypeInfo LyoChaCha20Poly1305 = new(
         "Lyo ChaCha20-Poly1305", MimeTypeInfo.LyoChaCha20Poly1305, ".chacha", null, FileTypeCategory.Encrypted, "Lyo ChaCha20-Poly1305 symmetric ciphertext");
 
-    public static readonly FileTypeInfo LyoAesCcm = new(
-        "Lyo AES-CCM", MimeTypeInfo.LyoAesCcm, ".ccm", null, FileTypeCategory.Encrypted, "Lyo AES-CCM symmetric ciphertext");
+    public static readonly FileTypeInfo LyoAesCcm = new("Lyo AES-CCM", MimeTypeInfo.LyoAesCcm, ".ccm", null, FileTypeCategory.Encrypted, "Lyo AES-CCM symmetric ciphertext");
 
-    public static readonly FileTypeInfo LyoAesSiv = new(
-        "Lyo AES-SIV", MimeTypeInfo.LyoAesSiv, ".siv", null, FileTypeCategory.Encrypted, "Lyo AES-SIV synthetic IV ciphertext");
+    public static readonly FileTypeInfo LyoAesSiv = new("Lyo AES-SIV", MimeTypeInfo.LyoAesSiv, ".siv", null, FileTypeCategory.Encrypted, "Lyo AES-SIV synthetic IV ciphertext");
 
     public static readonly FileTypeInfo LyoXChaCha20Poly1305 = new(
         "Lyo XChaCha20-Poly1305", MimeTypeInfo.LyoXChaCha20Poly1305, ".xchacha", null, FileTypeCategory.Encrypted, "Lyo XChaCha20-Poly1305 symmetric ciphertext");
 
-    public static readonly FileTypeInfo LyoAesGcmRsa = new(
-        "Lyo AES-GCM+RSA", MimeTypeInfo.LyoAesGcmRsa, ".agr", null, FileTypeCategory.Encrypted, "Lyo AES-GCM with RSA key wrap");
+    public static readonly FileTypeInfo LyoAesGcmRsa = new("Lyo AES-GCM+RSA", MimeTypeInfo.LyoAesGcmRsa, ".agr", null, FileTypeCategory.Encrypted, "Lyo AES-GCM with RSA key wrap");
 
     public static readonly FileTypeInfo LyoRsa = new("Lyo RSA", MimeTypeInfo.LyoRsa, ".rsa", null, FileTypeCategory.Encrypted, "Lyo RSA ciphertext");
 
@@ -200,11 +190,9 @@ public sealed class FileTypeInfo
 
     public static readonly FileTypeInfo Mp3 = new("MP3", MimeTypeInfo.Mp3, ".mp3", null, FileTypeCategory.Audio, "MP3 audio file", [FileHeaderSignature.At(0, "ID3"u8)]);
 
-    public static readonly FileTypeInfo Ogg = new(
-        "OGG", MimeTypeInfo.Ogg, ".ogg", [".oga"], FileTypeCategory.Audio, "OGG audio file", [FileHeaderSignature.At(0, "OggS"u8)]);
+    public static readonly FileTypeInfo Ogg = new("OGG", MimeTypeInfo.Ogg, ".ogg", [".oga"], FileTypeCategory.Audio, "OGG audio file", [FileHeaderSignature.At(0, "OggS"u8)]);
 
-    public static readonly FileTypeInfo Flac = new(
-        "FLAC", MimeTypeInfo.Flac, ".flac", null, FileTypeCategory.Audio, "FLAC audio file", [FileHeaderSignature.At(0, "fLaC"u8)]);
+    public static readonly FileTypeInfo Flac = new("FLAC", MimeTypeInfo.Flac, ".flac", null, FileTypeCategory.Audio, "FLAC audio file", [FileHeaderSignature.At(0, "fLaC"u8)]);
 
     public static readonly FileTypeInfo Aac = new("AAC", MimeTypeInfo.Aac, ".aac", null, FileTypeCategory.Audio, "AAC audio file");
 
@@ -219,8 +207,7 @@ public sealed class FileTypeInfo
 
     // Video formats
     /// <summary>MPEG-4 video (<c>video/mp4</c>, <c>.mp4</c> / <c>.m4v</c>).</summary>
-    public static readonly FileTypeInfo Mp4 = new(
-        "MP4", MimeTypeInfo.Mp4, ".mp4", [".m4v"], FileTypeCategory.Video, "MPEG-4 video file", [FileHeaderSignature.At(4, "ftyp"u8)]);
+    public static readonly FileTypeInfo Mp4 = new("MP4", MimeTypeInfo.Mp4, ".mp4", [".m4v"], FileTypeCategory.Video, "MPEG-4 video file", [FileHeaderSignature.At(4, "ftyp"u8)]);
 
     /// <summary>QuickTime movie (<c>video/quicktime</c>, <c>.mov</c> / <c>.qt</c>).</summary>
     public static readonly FileTypeInfo Mov = new(
@@ -238,15 +225,15 @@ public sealed class FileTypeInfo
     public static readonly FileTypeInfo Mpeg = new("MPEG", MimeTypeInfo.Mpeg, ".mpeg", [".mpg", ".mpe", ".m1v"], FileTypeCategory.Video, "MPEG video file");
 
     /// <summary>
-    /// MPEG transport stream (<c>video/mp2t</c>, <c>.ts</c> / <c>.m2ts</c> / <c>.mts</c>). <c>.ts</c> is also TypeScript in
-    /// <see cref="ProgrammingLanguageInfo" />; this catalog treats it as video for content-type and blob lookup.
+    /// MPEG transport stream (<c>video/mp2t</c>, <c>.ts</c> / <c>.m2ts</c> / <c>.mts</c>). <c>.ts</c> is also TypeScript in <see cref="ProgrammingLanguageInfo" />; this catalog
+    /// treats it as video for content-type and blob lookup.
     /// </summary>
-    public static readonly FileTypeInfo MpegTs = new(
-        "MPEG-TS", MimeTypeInfo.MpegTs, ".ts", [".m2ts", ".mts"], FileTypeCategory.Video, "MPEG transport stream");
+    public static readonly FileTypeInfo MpegTs = new("MPEG-TS", MimeTypeInfo.MpegTs, ".ts", [".m2ts", ".mts"], FileTypeCategory.Video, "MPEG transport stream");
 
     /// <summary>3GPP mobile video (<c>video/3gpp</c>, <c>.3gp</c> / <c>.3gpp</c>).</summary>
     public static readonly FileTypeInfo ThreeGp = new(
-        "3GP", MimeTypeInfo.ThreeGp, ".3gp", [".3gpp"], FileTypeCategory.Video, "3GPP mobile video file", [
+        "3GP", MimeTypeInfo.ThreeGp, ".3gp", [".3gpp"], FileTypeCategory.Video, "3GPP mobile video file",
+        [
             FileHeaderSignature.At(4, "ftyp"u8, 8, "3gp4"u8), FileHeaderSignature.At(4, "ftyp"u8, 8, "3gp5"u8), FileHeaderSignature.At(4, "ftyp"u8, 8, "3gp6"u8),
             FileHeaderSignature.At(4, "ftyp"u8, 8, "3g2a"u8)
         ]);
@@ -327,10 +314,18 @@ public sealed class FileTypeInfo
     /// <summary>Every registered file type in the catalog.</summary>
     public static IReadOnlyList<FileTypeInfo> All => AllTypes;
 
+    /// <summary>True when the payload is character data, so a <c>charset</c> parameter is meaningful. Delegates to <see cref="MimeTypeInfo.IsTextBased" />.</summary>
+    public bool IsTextBased => Mime.IsTextBased;
+
+    /// <summary>
+    /// HTTP <c>Content-Type</c> header value: <see cref="ContentType(string)" /> for text payloads, bare <see cref="MimeType" /> for binary ones. Prefer this over choosing at
+    /// the call site — appending <c>charset</c> to a PDF or spreadsheet is meaningless.
+    /// </summary>
+    public string HttpContentType => Mime.HttpContentType;
+
     static FileTypeInfo()
     {
         var fields = typeof(FileTypeInfo).PublicStaticFields<FileTypeInfo>();
-
         foreach (var fileType in fields) {
             AllTypes.Add(fileType);
             if (!ByMimeValue.ContainsKey(fileType.MimeType))
@@ -355,7 +350,12 @@ public sealed class FileTypeInfo
     /// <param name="description">Human-readable description.</param>
     /// <param name="headerSignatures">Header alternatives. Omit for a type with no magic bytes.</param>
     public FileTypeInfo(
-        string name, MimeTypeInfo mime, string defaultExtension, string[]? aliases, FileTypeCategory category, string description,
+        string name,
+        MimeTypeInfo mime,
+        string defaultExtension,
+        string[]? aliases,
+        FileTypeCategory category,
+        string description,
         IEnumerable<FileHeaderSignature>? headerSignatures = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
@@ -381,22 +381,11 @@ public sealed class FileTypeInfo
     public override string ToString() => $"{Name} ({MimeType})";
 
     /// <summary>
-    /// <see cref="MimeType" /> plus a <c>; charset=</c> parameter, for HTTP <c>Content-Type</c> headers on text payloads (for example
-    /// <c>text/csv; charset=utf-8</c>). Prefer this over concatenating the parameter at the call site.
+    /// <see cref="MimeType" /> plus a <c>; charset=</c> parameter, for HTTP <c>Content-Type</c> headers on text payloads (for example <c>text/csv; charset=utf-8</c>). Prefer
+    /// this over concatenating the parameter at the call site.
     /// </summary>
     /// <param name="charset">Charset name; falls back to <see cref="Utf8Charset" />.</param>
     public string ContentType(string charset = Utf8Charset) => Mime.ContentType(charset);
-
-    /// <summary>
-    /// True when the payload is character data, so a <c>charset</c> parameter is meaningful. Delegates to <see cref="MimeTypeInfo.IsTextBased" />.
-    /// </summary>
-    public bool IsTextBased => Mime.IsTextBased;
-
-    /// <summary>
-    /// HTTP <c>Content-Type</c> header value: <see cref="ContentType(string)" /> for text payloads, bare <see cref="MimeType" /> for binary ones. Prefer this
-    /// over choosing at the call site — appending <c>charset</c> to a PDF or spreadsheet is meaningless.
-    /// </summary>
-    public string HttpContentType => Mime.HttpContentType;
 
     private static string NormalizeExtension(string extension)
     {
@@ -418,8 +407,7 @@ public sealed class FileTypeInfo
     /// <summary>Looks up a catalog row by <see cref="MimeTypeInfo" />.</summary>
     /// <param name="mime">The media-type row.</param>
     /// <returns>The first file type registered with that MIME, or <see cref="Unknown" /> when none match.</returns>
-    public static FileTypeInfo FromMime(MimeTypeInfo? mime)
-        => mime == null || !ByMimeValue.TryGetValue(mime.Value, out var type) ? Unknown : type;
+    public static FileTypeInfo FromMime(MimeTypeInfo? mime) => mime == null || !ByMimeValue.TryGetValue(mime.Value, out var type) ? Unknown : type;
 
     /// <summary>Looks up a catalog row by extension.</summary>
     /// <param name="extension">Extension with or without a leading dot, for example <c>.pdf</c> or <c>pdf</c>.</param>

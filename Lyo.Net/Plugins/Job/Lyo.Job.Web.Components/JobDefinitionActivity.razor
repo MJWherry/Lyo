@@ -19,21 +19,28 @@
             <MudSimpleTable Dense="true" Hover="true" Elevation="0">
                 <tbody>
                 <tr>
-                    <td style="width: 28%;"><MudText Typo="Typo.caption" Class="mud-text-secondary">Last run</MudText></td>
+                    <td style="width: 28%;">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Last run</MudText>
+                    </td>
                     <td>@RunStamp(_latest?.LastRun)</td>
                 </tr>
                 <tr>
-                    <td><MudText Typo="Typo.caption" Class="mud-text-secondary">Last success</MudText></td>
+                    <td>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Last success</MudText>
+                    </td>
                     <td>@RunStamp(_latest?.LastSuccessfulRun)</td>
                 </tr>
                 <tr>
-                    <td><MudText Typo="Typo.caption" Class="mud-text-secondary">Last failure</MudText></td>
+                    <td>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Last failure</MudText>
+                    </td>
                     <td>@RunStamp(_latest?.LastFailedRun)</td>
                 </tr>
                 </tbody>
             </MudSimpleTable>
 
             <MudText Typo="Typo.caption" Class="mud-text-secondary">Next runs</MudText>
+
             @if (_nextRuns.Count == 0) {
                 <MudText Typo="Typo.body2" Class="mud-text-secondary">No upcoming slots</MudText>
             }

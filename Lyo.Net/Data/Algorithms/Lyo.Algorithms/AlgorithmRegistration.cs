@@ -26,7 +26,7 @@ internal sealed class KeyedAlgorithm<TContext, TResult>(string key, IAlgorithm<T
 {
     public string Key { get; } = key;
 
-    public bool CallsChildren { get; } = inner is ICallsChildren calls && calls.CallsChildren;
-
     public TResult Execute(TContext context) => inner.Execute(context);
+
+    public bool CallsChildren { get; } = inner is ICallsChildren calls && calls.CallsChildren;
 }

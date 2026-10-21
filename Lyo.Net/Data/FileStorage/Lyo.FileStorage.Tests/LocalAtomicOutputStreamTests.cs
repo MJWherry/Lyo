@@ -31,10 +31,7 @@ public sealed class LocalAtomicOutputStreamTests
         using var scope = LocalFileStorageTestScope.Create(twoKeyEncryptionService: encryption);
         var payload = TestData.Create(64 * 1024);
         var saved = await scope.Storage.SaveFileAsync(payload, "rotate.bin", encrypt: true, keyId: KeyId, ct: ct);
-
-        using var failingStorage = new LocalFileStorageService(
-            scope.Options, twoKeyEncryptionService: new FailingEncryptToStreamTwoKeyEncryptionService(encryption));
-
+        using var failingStorage = new LocalFileStorageService(scope.Options, twoKeyEncryptionService: new FailingEncryptToStreamTwoKeyEncryptionService(encryption));
         var result = await failingStorage.RotateDeksAsync([saved.Id], ct: ct);
         Assert.Equal(1, result.Failed);
         Assert.Contains(result.Errors, e => e.Contains(FailingEncryptToStreamTwoKeyEncryptionService.FailureMessage, StringComparison.Ordinal));
@@ -55,10 +52,7 @@ public sealed class LocalAtomicOutputStreamTests
         using var scope = LocalFileStorageTestScope.Create(twoKeyEncryptionService: encryption);
         var payload = TestData.Create(64 * 1024);
         var saved = await scope.Storage.SaveFileAsync(payload, "rotate.bin", encrypt: true, keyId: KeyId, ct: ct);
-
-        using var failingStorage = new LocalFileStorageService(
-            scope.Options, twoKeyEncryptionService: new FailingEncryptToStreamTwoKeyEncryptionService(encryption));
-
+        using var failingStorage = new LocalFileStorageService(scope.Options, twoKeyEncryptionService: new FailingEncryptToStreamTwoKeyEncryptionService(encryption));
         await failingStorage.RotateDeksAsync([saved.Id], ct: ct);
         Assert.Empty(Directory.GetFiles(scope.Options.RootDirectoryPath, "*.tmp", SearchOption.AllDirectories));
     }

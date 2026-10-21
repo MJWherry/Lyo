@@ -2,7 +2,6 @@ using Lyo.Exceptions;
 using Lyo.Idempotency.Postgres.Database;
 using Lyo.Metrics;
 using Lyo.Postgres;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -25,9 +24,8 @@ public static class Extensions
             services.TryAddSingleton(options);
             services.AddSingleton(sp => new PostgresIdempotencyStore(options, utcNow, sp.GetService<IMetrics>()));
             services.AddSingleton<IIdempotencyStore>(sp => new ObservingIdempotencyStore(
-                sp.GetRequiredService<PostgresIdempotencyStore>(),
-                sp.GetService<IMetrics>(),
-                sp.GetService<ILoggerFactory>()?.CreateLogger<ObservingIdempotencyStore>()));
+                sp.GetRequiredService<PostgresIdempotencyStore>(), sp.GetService<IMetrics>(), sp.GetService<ILoggerFactory>()?.CreateLogger<ObservingIdempotencyStore>()));
+
             return services;
         }
 

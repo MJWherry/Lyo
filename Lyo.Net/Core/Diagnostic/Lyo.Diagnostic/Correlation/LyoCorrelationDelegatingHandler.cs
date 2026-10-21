@@ -3,14 +3,13 @@ using Lyo.Exceptions;
 namespace Lyo.Diagnostic.Correlation;
 
 /// <summary>
-/// Outbound <see cref="DelegatingHandler" /> that stamps a correlation id on every request flowing through the typed <see cref="HttpClient" /> it is registered on. Pairs with
-/// <c>Lyo.Diagnostic.AspNetCore.HttpContextCorrelationIdResolver</c> on ASP.NET hosts (propagates the inbound id) and with
-/// <see cref="AmbientCorrelationIdResolver" /> everywhere else
-/// (mints a fresh id rooted at <see cref="System.Diagnostics.Activity.Current" />).
+/// Outbound <see cref="DelegatingHandler" /> that stamps a correlation id on every request flowing through the typed <see cref="HttpClient" /> it is registered on. Pairs
+/// with <c>Lyo.Diagnostic.AspNetCore.HttpContextCorrelationIdResolver</c> on ASP.NET hosts (propagates the inbound id) and with <see cref="AmbientCorrelationIdResolver" /> everywhere
+/// else (mints a fresh id rooted at <see cref="System.Diagnostics.Activity.Current" />).
 /// </summary>
 /// <remarks>
-/// Register as the <strong>outermost</strong> handler in the pipeline so any nested handlers (for example <c>LyoAuthDelegatingHandler</c>'s own refresh roundtrip) also carry the
-/// header.
+/// Register as the <strong>outermost</strong> handler in the pipeline so any nested handlers (for example <c>LyoAuthDelegatingHandler</c>'s own refresh roundtrip) also carry
+/// the header.
 /// </remarks>
 public sealed class LyoCorrelationDelegatingHandler : DelegatingHandler
 {

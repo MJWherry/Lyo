@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
@@ -14,8 +13,8 @@ using Lyo.Query.Services.WhereClause;
 namespace Lyo.Query.Services.Aggregate;
 
 /// <summary>
-/// Groups an <see cref="IQueryable{T}" /> by <see cref="ProjectionQueryReq.Select" /> and projects <see cref="ProjectionQueryReq.Aggregates" />. The result is a flat class, one property per
-/// column. Npgsql reads tuple results as a PostgreSQL record, which this host cannot materialize.
+/// Groups an <see cref="IQueryable{T}" /> by <see cref="ProjectionQueryReq.Select" /> and projects <see cref="ProjectionQueryReq.Aggregates" />. The result is a flat class,
+/// one property per column. Npgsql reads tuple results as a PostgreSQL record, which this host cannot materialize.
 /// </summary>
 public static class AggregateQuery
 {
@@ -85,7 +84,10 @@ public static class AggregateQuery
         return errors;
     }
 
-    /// <summary>Runs <paramref name="request" /> against <paramref name="source" />. <paramref name="source" /> is already filtered. Throws <see cref="InvalidQueryException" /> when <see cref="Validate{T}" /> reports errors.</summary>
+    /// <summary>
+    /// Runs <paramref name="request" /> against <paramref name="source" />. <paramref name="source" /> is already filtered. Throws <see cref="InvalidQueryException" /> when
+    /// <see cref="Validate{T}" /> reports errors.
+    /// </summary>
     public static AggregateQueryPage Execute<T>(IQueryable<T> source, ProjectionQueryReq request)
     {
         var errors = Validate<T>(request);
@@ -127,7 +129,7 @@ public static class AggregateQuery
         var field = aggregate.Field?.Trim();
         var hasField = !string.IsNullOrEmpty(field);
         if (aggregate.Function == AggregateFunction.Count) {
-            if (hasField && !TryResolve<T>(field, $"{aggregate.Function} field", countCollection: true, out _, out var countError))
+            if (hasField && !TryResolve<T>(field, $"{aggregate.Function} field", true, out var _, out var countError))
                 errors.Add(countError!);
 
             return;
@@ -176,8 +178,7 @@ public static class AggregateQuery
         return resolved;
     }
 
-    private static bool TryResolve<T>(string? path, string label, out ScalarPath? scalar, out string? error)
-        => TryResolve<T>(path, label, countCollection: false, out scalar, out error);
+    private static bool TryResolve<T>(string? path, string label, out ScalarPath? scalar, out string? error) => TryResolve<T>(path, label, false, out scalar, out error);
 
     private static bool TryResolve<T>(string? path, string label, bool countCollection, out ScalarPath? scalar, out string? error)
     {
@@ -188,7 +189,7 @@ public static class AggregateQuery
         }
 
         var requested = path.Trim();
-        if (!QueryPath.TryBindFactory(typeof(T), requested, requireScalar: true, countCollection, out var bind, out var type, out var collectionSize, out var reason)) {
+        if (!QueryPath.TryBindFactory(typeof(T), requested, true, countCollection, out var bind, out var type, out var collectionSize, out var reason)) {
             error = $"{label} '{requested}' {reason}";
             return false;
         }
@@ -254,11 +255,11 @@ public static class AggregateQuery
             if (aggregate.Field.CollectionSize)
                 return Expression.Call(ScalarAggregate("Sum", elementType, aggregate.Field.Type), group, FieldSelector(elementType, aggregate.Field));
 
-            return CountValues(elementType, group, aggregate.Field, distinct: false);
+            return CountValues(elementType, group, aggregate.Field, false);
         }
 
         if (aggregate.Function == AggregateFunction.CountDistinct)
-            return CountValues(elementType, group, aggregate.Field!, distinct: true);
+            return CountValues(elementType, group, aggregate.Field!, true);
 
         var field = aggregate.Field!;
         var item = Expression.Parameter(elementType, "e");
@@ -318,7 +319,7 @@ public static class AggregateQuery
                 (true, false) => QueryableMethods.OrderBy,
                 (true, true) => QueryableMethods.OrderByDescending,
                 (false, false) => QueryableMethods.ThenBy,
-                _ => QueryableMethods.ThenByDescending
+                var _ => QueryableMethods.ThenByDescending
             };
 
             var parameter = Expression.Parameter(shape.Type, "row");
@@ -346,7 +347,7 @@ public static class AggregateQuery
 
     private static Expression NewKey(ParameterExpression parameter, List<ScalarPath> groups)
     {
-        var shape = AggregateRowFactory.Create(groups.Select((group, index) => ("K" + index, group.Type)).ToArray(), equality: true);
+        var shape = AggregateRowFactory.Create(groups.Select((group, index) => ("K" + index, group.Type)).ToArray(), true);
         var bindings = groups.Select((group, index) => Expression.Bind(shape.Properties[index], Access(parameter, group)));
         return Expression.MemberInit(Expression.New(shape.Constructor), bindings);
     }
@@ -476,10 +477,12 @@ public static class AggregateQuery
             .Single(m => m.Name == nameof(Enumerable.Count) && m.IsGenericMethodDefinition && m.GetParameters().Length == 1);
 
         public static readonly MethodInfo Where = typeof(Enumerable).GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .Single(m => m.Name == nameof(Enumerable.Where) && m.IsGenericMethodDefinition && m.GetParameters().Length == 2 && m.GetParameters()[1].ParameterType.GetGenericArguments().Length == 2);
+            .Single(m => m.Name == nameof(Enumerable.Where) && m.IsGenericMethodDefinition && m.GetParameters().Length == 2 &&
+                m.GetParameters()[1].ParameterType.GetGenericArguments().Length == 2);
 
         public static readonly MethodInfo Select = typeof(Enumerable).GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .Single(m => m.Name == nameof(Enumerable.Select) && m.IsGenericMethodDefinition && m.GetParameters().Length == 2 && m.GetParameters()[1].ParameterType.GetGenericArguments().Length == 2);
+            .Single(m => m.Name == nameof(Enumerable.Select) && m.IsGenericMethodDefinition && m.GetParameters().Length == 2 &&
+                m.GetParameters()[1].ParameterType.GetGenericArguments().Length == 2);
 
         public static readonly MethodInfo Distinct = typeof(Enumerable).GetMethods(BindingFlags.Public | BindingFlags.Static)
             .Single(m => m.Name == nameof(Enumerable.Distinct) && m.IsGenericMethodDefinition && m.GetParameters().Length == 1);

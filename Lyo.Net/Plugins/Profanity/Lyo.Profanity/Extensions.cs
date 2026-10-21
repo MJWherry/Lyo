@@ -49,7 +49,6 @@ public static class Extensions
             configure(options);
             options.Validate();
             services.AddSingleton(options);
-
             AddFileProfanityFilterService(services);
             return services;
         }
@@ -67,7 +66,6 @@ public static class Extensions
             configuration.GetSection(configSectionName).Bind(options);
             options.Validate();
             services.AddSingleton(options);
-
             AddFileProfanityFilterService(services);
             return services;
         }

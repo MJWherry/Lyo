@@ -3,7 +3,8 @@ using Microsoft.AspNetCore.Components;
 namespace Lyo.Web.Primitives;
 
 /// <summary>
-/// Compact menu for a <see cref="LyoToolbar" />. A <see cref="Label" /> uses a dropdown chevron; icon-only menus omit it. Origins and popover placement are typed parameters; remaining attributes (for example <c>MaxHeight</c>) are forwarded onto <c>MudMenu</c>.
+/// Compact menu for a <see cref="LyoToolbar" />. A <see cref="Label" /> uses a dropdown chevron; icon-only menus omit it. Origins and popover placement are typed parameters;
+/// remaining attributes (for example <c>MaxHeight</c>) are forwarded onto <c>MudMenu</c>.
 /// </summary>
 public partial class LyoToolbarMenu
 {
@@ -43,10 +44,7 @@ public partial class LyoToolbarMenu
     [Parameter]
     public string? Class { get; set; }
 
-    /// <summary>
-    /// Popover anchor. Typed here because unmatched Razor attributes are strings, and MudBlazor 9's <c>MudMenu.AnchorOrigin</c> is
-    /// <see cref="Origin" />?.
-    /// </summary>
+    /// <summary>Popover anchor. Typed here because unmatched Razor attributes are strings, and MudBlazor 9's <c>MudMenu.AnchorOrigin</c> is <see cref="Origin" />?.</summary>
     [Parameter]
     public Origin AnchorOrigin { get; set; } = Origin.TopLeft;
 

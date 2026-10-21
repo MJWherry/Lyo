@@ -1,6 +1,6 @@
+using Lyo.Common.Core.Identifiers;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Seed.Tests;
 
@@ -66,7 +66,7 @@ public sealed class EfSeedRunnerTests : IAsyncLifetime
     public async Task SeedAsync_Append_AddsMoreRows()
     {
         await RunAsync(new ParentContributor(2));
-        var second = await RunAsync(new ParentContributor(3), new SeedOptions { Conflict = SeedConflictMode.Append, Count = 3 });
+        var second = await RunAsync(new ParentContributor(3), new() { Conflict = SeedConflictMode.Append, Count = 3 });
         Assert.False(second.Skipped);
         Assert.Equal(5, await _db.Parents.CountAsync(TestCt));
     }
@@ -93,8 +93,7 @@ public sealed class EfSeedRunnerTests : IAsyncLifetime
 
         public override SeedTransportKind SupportedTransports => SeedTransportKind.Ef;
 
-        protected override void Configure(SeedGraph graph, SeedOptions options)
-            => graph.Entity(count, i => new ParentRow { Id = LyoGuid.CreateV7(), Name = $"p-{i}" });
+        protected override void Configure(SeedGraph graph, SeedOptions options) => graph.Entity(count, i => new ParentRow { Id = LyoGuid.CreateV7(), Name = $"p-{i}" });
     }
 
     private sealed class ParentChildContributor : SeedContributor

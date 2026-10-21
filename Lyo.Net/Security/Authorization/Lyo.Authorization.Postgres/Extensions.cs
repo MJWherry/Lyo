@@ -27,10 +27,9 @@ public static class Extensions
             services.AddSingleton(sp => new PostgresGrantStore(sp.GetRequiredService<IDbContextFactory<AuthorizationDbContext>>(), utcNow));
             services.AddSingleton<IGrantStore>(sp => sp.GetRequiredService<PostgresGrantStore>());
             services.TryAddSingleton<IResourceAuthorization>(sp => new ResourceAuthorization(
-                sp.GetRequiredService<IGrantStore>(),
-                sp.GetService<IMetrics>(),
-                sp.GetService<ILoggerFactory>()?.CreateLogger<ResourceAuthorization>(),
+                sp.GetRequiredService<IGrantStore>(), sp.GetService<IMetrics>(), sp.GetService<ILoggerFactory>()?.CreateLogger<ResourceAuthorization>(),
                 sp.GetService<IAuditRecorder>()));
+
             return services;
         }
 

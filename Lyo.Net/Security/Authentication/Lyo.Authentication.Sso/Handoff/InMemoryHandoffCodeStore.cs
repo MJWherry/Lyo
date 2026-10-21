@@ -7,9 +7,8 @@ using Lyo.Exceptions;
 namespace Lyo.Authentication.Sso.Handoff;
 
 /// <summary>
-/// Single-process <see cref="IHandoffCodeStore" /> backed by a <see cref="ConcurrentDictionary{TKey,TValue}" />. Fine for single-instance dev/test and for
-/// hosts where the consumer exchanges the code in the same process that issued it. For multi-instance production use a distributed implementation
-/// (Redis/Postgres).
+/// Single-process <see cref="IHandoffCodeStore" /> backed by a <see cref="ConcurrentDictionary{TKey,TValue}" />. Fine for single-instance dev/test and for hosts where the
+/// consumer exchanges the code in the same process that issued it. For multi-instance production use a distributed implementation (Redis/Postgres).
 /// </summary>
 public sealed class InMemoryHandoffCodeStore : IHandoffCodeStore
 {

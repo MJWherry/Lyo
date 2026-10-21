@@ -1,3 +1,3 @@
-using Lyo.Algorithms.Tests;
+using Lyo.Algorithms.Postgres.Tests;
 
-[assembly: AssemblyFixture(typeof(Lyo.Algorithms.Postgres.Tests.AlgorithmPostgresFixture))]
+[assembly: AssemblyFixture(typeof(AlgorithmPostgresFixture))]

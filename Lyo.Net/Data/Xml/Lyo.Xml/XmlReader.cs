@@ -24,7 +24,7 @@ public sealed class XmlReader : IXmlReader
     public T ParseStream<T>(Stream xmlStream)
     {
         ArgumentHelpers.ThrowIfNull(xmlStream);
-        using var reader = new StreamReader(xmlStream, _engine.Encoding, detectEncodingFromByteOrderMarks: true, 1024, leaveOpen: true);
+        using var reader = new StreamReader(xmlStream, _engine.Encoding, true, 1024, true);
         return ParseString<T>(reader.ReadToEnd());
     }
 
@@ -70,7 +70,7 @@ public sealed class XmlReader : IXmlReader
     public Result<DataTable.Models.DataTable> ParseStreamAsDataTable(Stream xmlStream, bool hasFooterRow = false)
     {
         ArgumentHelpers.ThrowIfNull(xmlStream);
-        using var reader = new StreamReader(xmlStream, _engine.Encoding, detectEncodingFromByteOrderMarks: true, 1024, leaveOpen: true);
+        using var reader = new StreamReader(xmlStream, _engine.Encoding, true, 1024, true);
         return ParseStringAsDataTable(reader.ReadToEnd(), hasFooterRow);
     }
 
@@ -95,7 +95,7 @@ public sealed class XmlReader : IXmlReader
     public async Task<T> ParseStreamAsync<T>(Stream xmlStream, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(xmlStream);
-        using var reader = new StreamReader(xmlStream, _engine.Encoding, detectEncodingFromByteOrderMarks: true, 1024, leaveOpen: true);
+        using var reader = new StreamReader(xmlStream, _engine.Encoding, true, 1024, true);
         var xml = await reader.ReadToEndAsync(ct).ConfigureAwait(false);
         return ParseString<T>(xml);
     }
@@ -125,7 +125,11 @@ public sealed class XmlReader : IXmlReader
     }
 
     /// <inheritdoc />
-    public Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(byte[] xmlBytes, bool hasFooterRow = false, Encoding? encoding = null, CancellationToken ct = default)
+    public Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(
+        byte[] xmlBytes,
+        bool hasFooterRow = false,
+        Encoding? encoding = null,
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(xmlBytes);
         ct.ThrowIfCancellationRequested();
@@ -136,7 +140,7 @@ public sealed class XmlReader : IXmlReader
     public async Task<Result<DataTable.Models.DataTable>> ParseStreamAsDataTableAsync(Stream xmlStream, bool hasFooterRow = false, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(xmlStream);
-        using var reader = new StreamReader(xmlStream, _engine.Encoding, detectEncodingFromByteOrderMarks: true, 1024, leaveOpen: true);
+        using var reader = new StreamReader(xmlStream, _engine.Encoding, true, 1024, true);
         var xml = await reader.ReadToEndAsync(ct).ConfigureAwait(false);
         return ParseStringAsDataTable(xml, hasFooterRow);
     }

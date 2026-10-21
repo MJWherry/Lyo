@@ -5,8 +5,8 @@ using System.Diagnostics.CodeAnalysis;
 namespace Lyo.Encryption.Streaming;
 
 /// <summary>
-/// Per-stream AEAD cipher bound to one key. Reused for every chunk of a streaming encrypt/decrypt so the key schedule is built once and no intermediate
-/// arrays are allocated per chunk. Not thread-safe: one instance is driven sequentially by a single streaming loop and disposed when the stream ends. Created by
+/// Per-stream AEAD cipher bound to one key. Reused for every chunk of a streaming encrypt/decrypt so the key schedule is built once and no intermediate arrays are allocated
+/// per chunk. Not thread-safe: one instance is driven sequentially by a single streaming loop and disposed when the stream ends. Created by
 /// <see cref="EncryptionServiceBase.CreateStreamCryptor" /> on each single-key AEAD service.
 /// </summary>
 public interface IAeadStreamCryptor : IDisposable
@@ -34,8 +34,8 @@ public interface IAeadStreamCryptor : IDisposable
 
 /// <summary>
 /// Encodes and decodes stream chunk frames into caller-owned buffers with no per-chunk heap allocation. Frame layout:
-/// <c>[lengthAndFinalFlag:uint32 LE][ciphertext][tag:TagSize]</c> — nonce is derived (per-stream prefix + chunk counter) and never written; the high bit of the length
-/// prefix marks the last chunk.
+/// <c>[lengthAndFinalFlag:uint32 LE][ciphertext][tag:TagSize]</c> — nonce is derived (per-stream prefix + chunk counter) and never written; the high bit of the length prefix marks
+/// the last chunk.
 /// </summary>
 internal static class AeadChunkCodec
 {
@@ -49,8 +49,8 @@ internal static class AeadChunkCodec
     public static int Overhead(IAeadStreamCryptor cryptor) => LengthPrefixSize + cryptor.TagSize;
 
     /// <summary>
-    /// Writes one frame (<c>[lengthAndFinalFlag][ciphertext][tag]</c>) for <paramref name="plaintext" /> into <paramref name="destination" /> and returns bytes
-    /// written. The caller supplies the nonce (derived, never written) and <paramref name="associatedData" /> is authenticated with the chunk.
+    /// Writes one frame (<c>[lengthAndFinalFlag][ciphertext][tag]</c>) for <paramref name="plaintext" /> into <paramref name="destination" /> and returns bytes written. The
+    /// caller supplies the nonce (derived, never written) and <paramref name="associatedData" /> is authenticated with the chunk.
     /// </summary>
     public static int Encode(
         IAeadStreamCryptor cryptor,
@@ -69,8 +69,7 @@ internal static class AeadChunkCodec
 
     /// <summary>
     /// Decrypts one chunk body (<c>ciphertext + tag</c>) of length <paramref name="bodyLength" /> in <paramref name="body" /> at offset 0 into <paramref name="plaintext" />
-    /// using the caller-derived <paramref name="nonce" /> and <paramref name="associatedData" />; returns plaintext length. The length prefix must already have been read by the
-    /// caller.
+    /// using the caller-derived <paramref name="nonce" /> and <paramref name="associatedData" />; returns plaintext length. The length prefix must already have been read by the caller.
     /// </summary>
     public static int Decode(IAeadStreamCryptor cryptor, ReadOnlySpan<byte> body, int bodyLength, ReadOnlySpan<byte> nonce, ReadOnlySpan<byte> associatedData, Span<byte> plaintext)
     {
@@ -95,9 +94,9 @@ internal static class AeadChunkCodec
     }
 
     /// <summary>
-    /// Reads up to <paramref name="count" /> bytes into <paramref name="buffer" /> at offset 0, looping until <paramref name="count" /> arrive or the stream ends.
-    /// Returns bytes actually read (<paramref name="count" /> on success, 0 on a clean EOF, or a short count if the stream ended mid-read). Tolerates
-    /// streams (for example pipes) that satisfy a read with fewer bytes than requested.
+    /// Reads up to <paramref name="count" /> bytes into <paramref name="buffer" /> at offset 0, looping until <paramref name="count" /> arrive or the stream ends. Returns bytes
+    /// actually read (<paramref name="count" /> on success, 0 on a clean EOF, or a short count if the stream ended mid-read). Tolerates streams (for example pipes) that satisfy a read
+    /// with fewer bytes than requested.
     /// </summary>
     public static async Task<int> ReadAtLeastAsync(Stream input, byte[] buffer, int count, CancellationToken ct)
     {

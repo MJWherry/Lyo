@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Components;
 namespace Lyo.Web.Components.Catalog;
 
 /// <summary>
-/// Absolute URI for a catalog static asset. The injected <see cref="HttpClient" /> is often the API factory client, which has no
-/// <see cref="HttpClient.BaseAddress" />, so a relative <c>_content/...</c> path is rejected.
+/// Absolute URI for a catalog static asset. The injected <see cref="HttpClient" /> is often the API factory client, which has no <see cref="HttpClient.BaseAddress" />, so a
+/// relative <c>_content/...</c> path is rejected.
 /// </summary>
 internal static class CatalogAssetUri
 {

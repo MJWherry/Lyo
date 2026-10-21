@@ -1,8 +1,6 @@
 namespace Lyo.Web.Automation.Plan;
 
-/// <summary>
-/// Holds a plan run between steps. Pause does not cancel a step that has already started. Stop cancels <see cref="WaitIfPausedAsync" /> through the run token.
-/// </summary>
+/// <summary>Holds a plan run between steps. Pause does not cancel a step that has already started. Stop cancels <see cref="WaitIfPausedAsync" /> through the run token.</summary>
 public sealed class AutomationPlanRunGate
 {
     private readonly object _gate = new();
@@ -10,8 +8,7 @@ public sealed class AutomationPlanRunGate
     private bool _paused;
 
     /// <summary>True while the next step is held.</summary>
-    public bool IsPaused
-    {
+    public bool IsPaused {
         get {
             lock (_gate)
                 return _paused;

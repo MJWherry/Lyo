@@ -1,5 +1,4 @@
 using Lyo.PackageMetadata.Postgres.Database;
-using Lyo.PackageMetadata.Seed;
 using Lyo.Seed;
 
 namespace Lyo.PackageMetadata.Seed.Tests;
@@ -12,10 +11,11 @@ public sealed class PackageMetadataEfSeedContributorTests
         var transport = await SeedAsync(new PackageMetadataEfSeedContributor(), 2);
         var packages = transport.Items.OfType<PackageMetadataEntity>().ToList();
         Assert.Equal(2, packages.Count);
-        Assert.All(packages, package => {
-            var prefix = Assert.Single(transport.Items.OfType<PackageStackPrefixEntity>(), row => row.PackageMetadataId == package.Id);
-            Assert.Equal(package.Name + ".", prefix.NormalizedPrefix);
-        });
+        Assert.All(
+            packages, package => {
+                var prefix = Assert.Single(transport.Items.OfType<PackageStackPrefixEntity>(), row => row.PackageMetadataId == package.Id);
+                Assert.Equal(package.Name + ".", prefix.NormalizedPrefix);
+            });
     }
 
     private static async Task<RecordingSeedTransport> SeedAsync(SeedContributor contributor, int count)
@@ -41,6 +41,7 @@ public sealed class PackageMetadataEfSeedContributorTests
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

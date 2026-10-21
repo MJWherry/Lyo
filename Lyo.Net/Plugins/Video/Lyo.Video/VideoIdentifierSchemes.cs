@@ -23,9 +23,8 @@ public static class VideoIdentifierSchemes
         if (trimmed.Length == 0)
             return string.Empty;
 
-        if (string.Equals(scheme, Imdb, StringComparison.OrdinalIgnoreCase)
-            || string.Equals(scheme, Tmdb, StringComparison.OrdinalIgnoreCase)
-            || string.Equals(scheme, Tvdb, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(scheme, Imdb, StringComparison.OrdinalIgnoreCase) || string.Equals(scheme, Tmdb, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(scheme, Tvdb, StringComparison.OrdinalIgnoreCase))
             return trimmed.ToLowerInvariant();
 
         return trimmed;

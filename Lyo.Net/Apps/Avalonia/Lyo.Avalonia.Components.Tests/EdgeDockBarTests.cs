@@ -5,16 +5,13 @@ namespace Lyo.Desktop.Components.Tests;
 public class EdgeDockBarTests
 {
     [Fact]
-    public void ShouldClose_AfterTheOpenGrace_ClosesWhenThePointerHasLeft()
-        => Assert.True(EdgeDockBar.ShouldClose(holdOpen: false, pointerOver: false, sampleInside: true, now: 1_000, leaveAfter: 500));
+    public void ShouldClose_AfterTheOpenGrace_ClosesWhenThePointerHasLeft() => Assert.True(EdgeDockBar.ShouldClose(false, false, true, 1_000, 500));
 
     [Fact]
-    public void ShouldClose_DuringTheOpenGrace_StaysOpenWhenTheCursorHasNotMoved()
-        => Assert.False(EdgeDockBar.ShouldClose(holdOpen: false, pointerOver: false, sampleInside: true, now: 200, leaveAfter: 500));
+    public void ShouldClose_DuringTheOpenGrace_StaysOpenWhenTheCursorHasNotMoved() => Assert.False(EdgeDockBar.ShouldClose(false, false, true, 200, 500));
 
     [Fact]
-    public void ShouldClose_PointerStillOver_StaysOpen()
-        => Assert.False(EdgeDockBar.ShouldClose(holdOpen: false, pointerOver: true, sampleInside: false, now: 1_000, leaveAfter: 500));
+    public void ShouldClose_PointerStillOver_StaysOpen() => Assert.False(EdgeDockBar.ShouldClose(false, true, false, 1_000, 500));
 
     [Fact]
     public void FromButton_LabelInsideAButton_IsTrue()
@@ -25,6 +22,5 @@ public class EdgeDockBarTests
     }
 
     [Fact]
-    public void FromButton_PlainText_IsFalse()
-        => Assert.False(EdgeDockBar.FromButton(new TextBlock { Text = "Region" }));
+    public void FromButton_PlainText_IsFalse() => Assert.False(EdgeDockBar.FromButton(new TextBlock { Text = "Region" }));
 }

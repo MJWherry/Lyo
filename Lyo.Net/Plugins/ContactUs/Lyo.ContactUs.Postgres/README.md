@@ -1,31 +1,36 @@
 # Lyo.ContactUs.Postgres
 
-PostgreSQL and EF Core implementation of [`Lyo.ContactUs.IContactUsService`](../Lyo.ContactUs/README.md) (`PostgresContactUsService`) through `ContactUsDbContext`, `PostgresContactUsOptions`, and `AddPostgresMigrations<ContactUsDbContext, PostgresContactUsOptions>` so the host can apply schema upgrades on startup.
+PostgreSQL and EF Core implementation of [`Lyo.ContactUs.IContactUsService`](../Lyo.ContactUs/README.md) (`PostgresContactUsService`) through `ContactUsDbContext`,
+`PostgresContactUsOptions`, and `AddPostgresMigrations<ContactUsDbContext, PostgresContactUsOptions>` so the host can apply schema upgrades on startup.
 
 ## Package contents
 
-- `ContactUsDbContext` + `ContactUsDbContextFactory` under `Database/`, with a single `DbSet<ContactSubmissionEntity>` (name / email / subject / message / phone / company / created timestamp; lengths match `ContactUsRequest`).
-- `PostgresContactUsService`. A `ContactUsServiceBase` subclass that persists each submission through the registered `IDbContextFactory<ContactUsDbContext>`, logs the new id, loads rows with `AsNoTracking()` (`GetByIdCoreAsync` / `ListCoreAsync`, newest `CreatedTimestamp` first, mapped by `ContactSubmissionEntity.ToSubmission()`), and implements `TestConnectionAsync` by issuing `Database.CanConnectAsync(...)`.
+- `ContactUsDbContext` + `ContactUsDbContextFactory` under `Database/`, with a single `DbSet<ContactSubmissionEntity>` (name / email / subject / message / phone / company / created
+  timestamp; lengths match `ContactUsRequest`).
+- `PostgresContactUsService`. A `ContactUsServiceBase` subclass that persists each submission through the registered `IDbContextFactory<ContactUsDbContext>`, logs the new id, loads
+  rows with `AsNoTracking()` (`GetByIdCoreAsync` / `ListCoreAsync`, newest `CreatedTimestamp` first, mapped by `ContactSubmissionEntity.ToSubmission()`), and implements
+  `TestConnectionAsync` by issuing `Database.CanConnectAsync(...)`.
 - `PostgresContactUsOptions` (`SectionName = "PostgresContactUs"`, `Schema = "contact"`, `ConnectionString`, `EnableAutoMigrations`).
 - `InitialCreate` migration under `Migrations/`.
 
 ## Service registration (`Extensions`)
 
-| Entry point | Effect |
-| ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `AddContactUsDbContext(string connectionString)` | Registers the DbContext factory plus a scoped `ContactUsDbContext` resolved from the factory. Useful for ad-hoc EF code. |
+| Entry point                                                                                                             | Effect                                                                                                                                                                                                                              |
+|-------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AddContactUsDbContext(string connectionString)`                                                                        | Registers the DbContext factory plus a scoped `ContactUsDbContext` resolved from the factory. Useful for ad-hoc EF code.                                                                                                            |
 | `AddContactUsDbContextFactory(Action<PostgresContactUsOptions>)` *(plus `(options)` and `FromConfiguration` overloads)* | Registers `IOptions<PostgresContactUsOptions>`, `AddPostgresMigrations<ContactUsDbContext, PostgresContactUsOptions>()`, and `IDbContextFactory<ContactUsDbContext>` (`UseNpgsql` + migrations history under the `contact` schema). |
-| `AddContactUsPostgres(Action<PostgresContactUsOptions>)` *(plus `(options)` and `FromConfiguration` overloads)* | Calls `AddContactUsDbContextFactory(...)`, ensures a `ContactUsServiceOptions` singleton exists (defaults if not provided), and registers `IContactUsService` → scoped `PostgresContactUsService`. |
+| `AddContactUsPostgres(Action<PostgresContactUsOptions>)` *(plus `(options)` and `FromConfiguration` overloads)*         | Calls `AddContactUsDbContextFactory(...)`, ensures a `ContactUsServiceOptions` singleton exists (defaults if not provided), and registers `IContactUsService` → scoped `PostgresContactUsService`.                                  |
 
-`AddContactUsPostgres(...)` is the usual one-shot registration. Use `AddContactUsDbContextFactory(...)` plus your own service registration when you want to wrap or decorate the service yourself.
+`AddContactUsPostgres(...)` is the usual one-shot registration. Use `AddContactUsDbContextFactory(...)` plus your own service registration when you want to wrap or decorate the
+service yourself.
 
 ## Database schema
 
-| Column | Source |
-| --------------------------------------------------------- | -------------------------------------------------------- |
-| `Id` *(PK, `Guid`)* | Generated in `PostgresContactUsService.SubmitCoreAsync`. |
-| `Name`, `Email`, `Subject`, `Message`, `Phone`, `Company` | Copied verbatim from the validated `ContactUsRequest`. |
-| `CreatedTimestamp` | `DateTime.UtcNow` at insert time. |
+| Column                                                    | Source                                                   |
+|-----------------------------------------------------------|----------------------------------------------------------|
+| `Id` *(PK, `Guid`)*                                       | Generated in `PostgresContactUsService.SubmitCoreAsync`. |
+| `Name`, `Email`, `Subject`, `Message`, `Phone`, `Company` | Copied verbatim from the validated `ContactUsRequest`.   |
+| `CreatedTimestamp`                                        | `DateTime.UtcNow` at insert time.                        |
 
 Migrations history is tracked in `__EFMigrationsHistory` under the `contact` schema configured on `PostgresContactUsOptions.Schema`.
 

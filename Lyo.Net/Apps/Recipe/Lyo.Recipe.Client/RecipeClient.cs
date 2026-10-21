@@ -1,4 +1,3 @@
-using System.Net.Http;
 using Lyo.Api.Client;
 using Lyo.Exceptions;
 using Lyo.Note;
@@ -10,13 +9,13 @@ using Lyo.Tag;
 
 namespace Lyo.Recipe.Client;
 
-/// <summary>Typed facade over extra Recipe routes. Sit it on any <see cref="IApiClient"/> implementation.</summary>
+/// <summary>Typed facade over extra Recipe routes. Sit it on any <see cref="IApiClient" /> implementation.</summary>
 public sealed class RecipeClient : IRecipeClient
 {
     private readonly IApiClient _api;
     private readonly string? _routePrefix;
 
-    /// <summary>Constructs the client. Null <paramref name="options"/> keeps routes relative to the inner client's base address.</summary>
+    /// <summary>Constructs the client. Null <paramref name="options" /> keeps routes relative to the inner client's base address.</summary>
     public RecipeClient(IApiClient apiClient, RecipeClientOptions? options = null)
     {
         ArgumentHelpers.ThrowIfNull(apiClient);
@@ -29,11 +28,13 @@ public sealed class RecipeClient : IRecipeClient
         => await _api.GetAsAsync<List<RecipeIngredientLineRes>>(Route(Constants.Rest.Recipe.IngredientLines(recipeId)), ct: ct).ConfigureAwait(false) ?? [];
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<RecipeIngredientLineRes>> ReplaceIngredientLinesAsync(Guid recipeId, IReadOnlyList<RecipeIngredientLineReq> lines, CancellationToken ct = default)
+    public async Task<IReadOnlyList<RecipeIngredientLineRes>> ReplaceIngredientLinesAsync(
+        Guid recipeId,
+        IReadOnlyList<RecipeIngredientLineReq> lines,
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(lines);
-        return await _api.PutAsAsync<IReadOnlyList<RecipeIngredientLineReq>, List<RecipeIngredientLineRes>>(
-                Route(Constants.Rest.Recipe.IngredientLines(recipeId)), lines, ct: ct)
+        return await _api.PutAsAsync<IReadOnlyList<RecipeIngredientLineReq>, List<RecipeIngredientLineRes>>(Route(Constants.Rest.Recipe.IngredientLines(recipeId)), lines, ct: ct)
             .ConfigureAwait(false) ?? [];
     }
 
@@ -45,9 +46,7 @@ public sealed class RecipeClient : IRecipeClient
     public async Task<IReadOnlyList<RecipeStepRes>> ReplaceStepsAsync(Guid recipeId, IReadOnlyList<RecipeStepReq> steps, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(steps);
-        return await _api.PutAsAsync<IReadOnlyList<RecipeStepReq>, List<RecipeStepRes>>(
-                Route(Constants.Rest.Recipe.Steps(recipeId)), steps, ct: ct)
-            .ConfigureAwait(false) ?? [];
+        return await _api.PutAsAsync<IReadOnlyList<RecipeStepReq>, List<RecipeStepRes>>(Route(Constants.Rest.Recipe.Steps(recipeId)), steps, ct: ct).ConfigureAwait(false) ?? [];
     }
 
     /// <inheritdoc />
@@ -114,6 +113,7 @@ public sealed class RecipeClient : IRecipeClient
         var uri = $"{TagsRoute(parentRoute, id)}/{Uri.EscapeDataString(name)}";
         if (!string.IsNullOrWhiteSpace(tagType))
             uri += $"?tagType={Uri.EscapeDataString(tagType)}";
+
         await _api.DeleteAsAsync<object>(uri, ct: ct).ConfigureAwait(false);
     }
 
@@ -132,20 +132,18 @@ public sealed class RecipeClient : IRecipeClient
         ArgumentHelpers.ThrowIfNull(content);
         var name = string.IsNullOrWhiteSpace(fileName) ? "file.bin" : fileName;
         return _api.PostFileAsAsync<RecipeAttachmentRes>(
-            Route(Constants.Rest.Recipe.AttachmentsUpload),
-            content,
-            name,
-            req => {
+            Route(Constants.Rest.Recipe.AttachmentsUpload), content, name, req => {
                 if (req.Content is not MultipartFormDataContent form)
                     return;
+
                 form.Add(new StringContent(entityType), "entityType");
                 form.Add(new StringContent(entityId.ToString("D")), "entityId");
                 form.Add(new StringContent(role.ToString()), "role");
                 if (caption != null)
                     form.Add(new StringContent(caption), "caption");
+
                 form.Add(new StringContent(isPrimary ? "true" : "false"), "isPrimary");
-            },
-            ct);
+            }, ct);
     }
 
     private string NotesRoute(string parentRoute, Guid id) => Route($"{parentRoute.TrimEnd('/')}/{id:D}/Notes");

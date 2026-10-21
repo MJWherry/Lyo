@@ -13,6 +13,10 @@ namespace Lyo.Authentication.Web.Components;
 
 public partial class AuthScopeGrid
 {
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Name")];
+
+    private LyoDataGridProjected? _dataGrid;
+
     [Parameter]
     [EditorRequired]
     public IApiClient ApiClient { get; set; } = null!;
@@ -25,10 +29,6 @@ public partial class AuthScopeGrid
 
     private string _route => $"{BaseRoute.TrimEnd('/')}/Scope";
 
-    private LyoDataGridProjected? _dataGrid;
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Name")];
-
     public Task RefreshAsync() => _dataGrid is null ? Task.CompletedTask : _dataGrid.RefreshData();
 
     private void ApplyQuery(ProjectionQueryReqBuilder q)
@@ -39,11 +39,7 @@ public partial class AuthScopeGrid
 
     private async Task AddScope()
     {
-        var parameters = new DialogParameters<AuthScopeEditDialog> {
-            { d => d.ApiClient, ApiClient },
-            { d => d.ScopeRoute, _route },
-            { d => d.UserId, UserId ?? Guid.Empty }
-        };
+        var parameters = new DialogParameters<AuthScopeEditDialog> { { d => d.ApiClient, ApiClient }, { d => d.ScopeRoute, _route }, { d => d.UserId, UserId ?? Guid.Empty } };
         var dialog = await DialogService.ShowAsync<AuthScopeEditDialog>("Add scope", parameters, LyoDialogPresets.Small);
         var result = await dialog.Result;
         if (result is { Canceled: false })
@@ -67,6 +63,7 @@ public partial class AuthScopeGrid
             { d => d.UserId, AuthProjectedGuid.TryRead(item, "UserId") ?? UserId ?? Guid.Empty },
             { d => d.Name, ProjectedValueHelper.GetDisplayValue(item, "Name") }
         };
+
         var dialog = await DialogService.ShowAsync<AuthScopeEditDialog>("Edit scope", parameters, LyoDialogPresets.Small);
         var result = await dialog.Result;
         if (result is { Canceled: false })

@@ -2,7 +2,7 @@ using Lyo.Exceptions;
 
 namespace Lyo.Seed;
 
-/// <summary>Stock <see cref="ISeedRunner"/>. Applies skip, replace, or append, then runs graph steps in order.</summary>
+/// <summary>Stock <see cref="ISeedRunner" />. Applies skip, replace, or append, then runs graph steps in order.</summary>
 public sealed class SeedRunner : ISeedRunner
 {
     /// <inheritdoc />

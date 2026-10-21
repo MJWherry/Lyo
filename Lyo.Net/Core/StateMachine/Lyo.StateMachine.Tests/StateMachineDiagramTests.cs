@@ -31,9 +31,7 @@ public class StateMachineDiagramTests
     {
         var builder = new StateMachineBuilder<JobState, JobTrigger, JobContext>("job", JobState.Running);
         builder.Configure(JobState.Running).PermitIf(JobTrigger.Complete, JobState.Done, _ => true).PermitReentry(JobTrigger.Heartbeat);
-
         var mermaid = builder.Build().ToMermaid();
-
         Assert.Contains("    Running --> Done : Complete [guard]\n", mermaid);
         Assert.Contains("    Running --> Running : Heartbeat\n", mermaid);
     }
@@ -42,17 +40,18 @@ public class StateMachineDiagramTests
     public void ToDot_IncludesClustersForSubstates()
     {
         var dot = TestMachines.Character().Build().ToDot();
-
         Assert.StartsWith("digraph \"character\" {\n", dot);
-        Assert.Contains("""
-                            subgraph "cluster_Combat" {
-                                label="Combat";
-                                "Combat";
-                                "Attacking";
-                                "Defending";
-                            }
+        Assert.Contains(
+            """
+                    subgraph "cluster_Combat" {
+                        label="Combat";
+                        "Combat";
+                        "Attacking";
+                        "Defending";
+                    }
 
-                        """.ReplaceLineEndings("\n"), dot);
+                """.ReplaceLineEndings("\n"), dot);
+
         Assert.Contains("    \"__start\" -> \"Idle\";\n", dot);
         Assert.Contains("    \"Combat\" -> \"Dead\" [label=\"Hit [health depleted]\"];\n", dot);
         Assert.EndsWith("}\n", dot);

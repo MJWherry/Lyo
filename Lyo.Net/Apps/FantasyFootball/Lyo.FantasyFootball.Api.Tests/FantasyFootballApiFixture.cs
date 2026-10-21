@@ -1,6 +1,4 @@
 using System.Net;
-using System.Text;
-using Lyo.Espn.Fantasy.Football.Client;
 using Lyo.FantasyFootball.Postgres;
 using Lyo.FantasyFootball.Postgres.Database;
 using Lyo.Testing.Containers;

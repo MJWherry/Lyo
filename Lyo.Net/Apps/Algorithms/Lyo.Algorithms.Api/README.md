@@ -1,6 +1,8 @@
 # Lyo.Algorithms.Api
 
-Maps catalog list, get, revision append, revert, and label routes. Writes go through `IAlgorithmCatalog` so syntax and startup-key checks still run. Reads return the store's `*Res` types with no second mapping. `Kind` is `AlgorithmKind`. Revert takes `AlgorithmRevertReq`. There is no remote Execute. Register with `AddAlgorithmsApiFromConfiguration` (section `PostgresAlgorithms`), then call `BuildAlgorithmsGroup`.
+Maps catalog list, get, revision append, revert, and label routes. Writes go through `IAlgorithmCatalog` so syntax and startup-key checks still run. Reads return the store's `*Res`
+types with no second mapping. `Kind` is `AlgorithmKind`. Revert takes `AlgorithmRevertReq`. There is no remote Execute. Register with `AddAlgorithmsApiFromConfiguration` (section
+`PostgresAlgorithms`), then call `BuildAlgorithmsGroup`.
 
 ## Features
 

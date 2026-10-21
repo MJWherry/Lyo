@@ -1,19 +1,18 @@
 using System.Globalization;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Lyo.Reporting.Models.Controls;
 
 namespace Lyo.Reporting.Models.Composition;
 
 /// <summary>
-/// Builds Chart.js canvas markup for structured <see cref="Block.ChartKind" /> blocks. Does not execute Query or Sproc.
-/// Legacy charts keep HTML in <see cref="Block.Content" /> and skip this helper.
+/// Builds Chart.js canvas markup for structured <see cref="Block.ChartKind" /> blocks. Does not execute Query or Sproc. Legacy charts keep HTML in
+/// <see cref="Block.Content" /> and skip this helper.
 /// </summary>
 public static class ReportChartMarkup
 {
-    /// <summary>
-    /// Canvas HTML for <paramref name="block" />, or null when the kind is unknown or there is no series to draw.
-    /// </summary>
+    /// <summary>Canvas HTML for <paramref name="block" />, or null when the kind is unknown or there is no series to draw.</summary>
     /// <param name="block">Chart block (kind, series, caption, height).</param>
     /// <param name="canvasId">Stable canvas id. Designer paint passes the live block's id so a series copy does not change it.</param>
     public static string? TryBuild(Block block, string? canvasId = null)
@@ -30,19 +29,19 @@ public static class ReportChartMarkup
         var chartId = canvasId ?? StableCanvasId(block);
         var config = block.ChartKind switch {
             ChartKind.Bar => Bar(series),
-            ChartKind.Line => Line(series, sparkline: false),
-            ChartKind.Sparkline => Line(series, sparkline: true),
+            ChartKind.Line => Line(series, false),
+            ChartKind.Sparkline => Line(series, true),
             ChartKind.Doughnut => Doughnut(series),
             ChartKind.Pie => Pie(series),
             ChartKind.Gauge => Gauge(series),
-            _ => null
+            var _ => null
         };
+
         return config is null ? null : Wrap(chartId, title, height, config);
     }
 
     /// <summary>Fills <see cref="Block.ListItems" /> as <c>label|value</c> from dataset rows. Missing data clears the list.</summary>
-    public static void ApplyFromRows(Block block, IReadOnlyList<IReadOnlyDictionary<string, object?>>? rows)
-        => block.ListItems = SeriesFromRows(block, rows);
+    public static void ApplyFromRows(Block block, IReadOnlyList<IReadOnlyDictionary<string, object?>>? rows) => block.ListItems = SeriesFromRows(block, rows);
 
     /// <summary>Builds <c>label|value</c> series without mutating <paramref name="block" />. Used by designer paint.</summary>
     public static List<string> SeriesFromRows(Block block, IReadOnlyList<IReadOnlyDictionary<string, object?>>? rows)
@@ -65,9 +64,15 @@ public static class ReportChartMarkup
     /// <summary>Stable canvas id so Chart.js can redraw the same node after a Blazor re-render.</summary>
     public static string StableCanvasId(Block block)
     {
-        var payload = string.Join("\\n", [block.ChartKind?.ToString() ?? string.Empty, block.Caption ?? string.Empty, block.Level?.ToString(CultureInfo.InvariantCulture) ?? string.Empty, ..block.ListItems ?? []]);
+        var payload = string.Join(
+            "\\n",
+            [
+                block.ChartKind?.ToString() ?? string.Empty, block.Caption ?? string.Empty, block.Level?.ToString(CultureInfo.InvariantCulture) ?? string.Empty,
+                .. block.ListItems ?? []
+            ]);
+
         var content = (uint)StringComparer.Ordinal.GetHashCode(payload);
-        var identity = (uint)System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(block);
+        var identity = (uint)RuntimeHelpers.GetHashCode(block);
         return "chart-" + identity.ToString("x8", CultureInfo.InvariantCulture) + content.ToString("x8", CultureInfo.InvariantCulture);
     }
 
@@ -117,6 +122,7 @@ public static class ReportChartMarkup
         object scales = sparkline
             ? new { x = new { display = false }, y = new { display = false } }
             : new { x = new { display = true }, y = new { display = true, beginAtZero = true } };
+
         return new {
             type = "line",
             data = new {
@@ -181,6 +187,7 @@ public static class ReportChartMarkup
         var value = series.Values.Count > 0 ? series.Values[0] : 0;
         if (value < 0)
             value = 0;
+
         if (value > 100)
             value = 100;
 
@@ -189,13 +196,7 @@ public static class ReportChartMarkup
             type = "doughnut",
             data = new {
                 labels = new[] { series.Labels.Count > 0 ? series.Labels[0] : "Value", "Remaining" },
-                datasets = new[] {
-                    new {
-                        data = new[] { value, rest },
-                        backgroundColor = new[] { "rgba(37, 99, 235, 0.8)", "rgba(226, 232, 240, 1)" },
-                        borderWidth = 0
-                    }
-                }
+                datasets = new[] { new { data = new[] { value, rest }, backgroundColor = new[] { "rgba(37, 99, 235, 0.8)", "rgba(226, 232, 240, 1)" }, borderWidth = 0 } }
             },
             options = new {
                 responsive = true,
@@ -210,24 +211,20 @@ public static class ReportChartMarkup
     private static string Wrap(string chartId, string title, int height, object config)
     {
         var configJson = WebUtility.HtmlEncode(JsonSerializer.Serialize(config));
-        var heading = string.IsNullOrWhiteSpace(title)
-            ? string.Empty
-            : $"<h3 style=\"margin-bottom: 15px; color: #1e293b;\">{WebUtility.HtmlEncode(title)}</h3>";
+        var heading = string.IsNullOrWhiteSpace(title) ? string.Empty : $"<h3 style=\"margin-bottom: 15px; color: #1e293b;\">{WebUtility.HtmlEncode(title)}</h3>";
         return $"""
 
-            <div style="margin: 20px 0;">
-                {heading}
-                <canvas id="{chartId}" style="max-height: {height.ToString(CultureInfo.InvariantCulture)}px;" {Constants.Charts.ConfigAttribute}="{configJson}"></canvas>
-            </div>
-            """;
+                <div style="margin: 20px 0;">
+                    {heading}
+                    <canvas id="{chartId}" style="max-height: {height.ToString(CultureInfo.InvariantCulture)}px;" {Constants.Charts.ConfigAttribute}="{configJson}"></canvas>
+                </div>
+                """;
     }
 
     private static string[] Palette(double alpha)
     {
         var a = alpha.ToString("F1", CultureInfo.InvariantCulture);
-        return [
-            $"rgba(37, 99, 235, {a})", "rgba(16, 185, 129, " + a + ")", "rgba(245, 158, 11, " + a + ")", "rgba(239, 68, 68, " + a + ")", "rgba(139, 92, 246, " + a + ")"
-        ];
+        return [$"rgba(37, 99, 235, {a})", "rgba(16, 185, 129, " + a + ")", "rgba(245, 158, 11, " + a + ")", "rgba(239, 68, 68, " + a + ")", "rgba(139, 92, 246, " + a + ")"];
     }
 
     private static object? Lookup(IReadOnlyDictionary<string, object?> row, string name)

@@ -29,7 +29,8 @@
                     <LyoFormInput TModel="ScoringPropertyRecord" TValue="string?" Model="_edit" PropertyExpression="@(m => m.Unit)" Label="Unit" AllowEditing="true"/>
                 </MudItem>
                 <MudItem xs="12" sm="4">
-                    <LyoFormInput TModel="ScoringPropertyRecord" TValue="bool" Model="_edit" PropertyExpression="@(m => m.Required)" Label="Required" AllowEditing="true" OnValueChanged="@(_ => StateHasChanged())"/>
+                    <LyoFormInput TModel="ScoringPropertyRecord" TValue="bool" Model="_edit" PropertyExpression="@(m => m.Required)" Label="Required" AllowEditing="true"
+                                  OnValueChanged="@(_ => StateHasChanged())"/>
                 </MudItem>
                 <MudItem xs="12" sm="4">
                     <LyoFormInput TModel="ScoringPropertyRecord" TValue="int" Model="_edit" PropertyExpression="@(m => m.SortOrder)" Label="Sort order" AllowEditing="true"/>
@@ -39,6 +40,7 @@
 
         @if (_edit.ValueKind == ScoringValueKind.Choice) {
             <MudText Typo="Typo.subtitle2" Class="mt-3">Choices</MudText>
+
             @foreach (var (choice, index) in _choices.Select((c, i) => (c, i))) {
                 <MudGrid Spacing="1" @key="index">
                     <MudItem xs="4">
@@ -55,6 +57,7 @@
                     </MudItem>
                 </MudGrid>
             }
+
             <MudButton Size="Size.Small" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddChoice">Add choice</MudButton>
         }
     </ChildContent>

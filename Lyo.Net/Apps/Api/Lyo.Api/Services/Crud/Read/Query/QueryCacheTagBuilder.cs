@@ -3,9 +3,11 @@ using System.Security.Cryptography;
 using System.Text;
 using Lyo.Api.Services.Crud.Read.Project;
 using Lyo.Api.Services.TypeConversion;
+using Lyo.Cache;
 using Lyo.Common.Core.Caching;
 using Lyo.Common.Core.Enums;
 using Lyo.Hashing;
+using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Services.WhereClause;
 using Microsoft.EntityFrameworkCore;
@@ -34,12 +36,12 @@ public static class QueryCacheTagBuilder
     /// Tag for all cached entries scoped to a root entity CLR type (e.g. <c>entity:acme.catalog.widget</c>). Keyed on <see cref="Type.FullName" /> rather than
     /// <see cref="Type.Name" />: two entities both called <c>Person</c> in different namespaces otherwise shared one tag, so a write to either invalidated both.
     /// </summary>
-    public static string EntityTypeTag(Type entityClrType) => Lyo.Cache.Constants.Tags.EntityType(entityClrType);
+    public static string EntityTypeTag(Type entityClrType) => Constants.Tags.EntityType(entityClrType);
 
     /// <summary>
     /// Stable segment for primary key values, in EF key property order (same order as <see cref="ITypeConversionService.GetPrimaryKeyValues{TEntity}" />). Each component is
-    /// length-prefixed and rendered invariantly, so a value containing the separator cannot produce the same segment as a different key — <c>["a|b", "c"]</c> and
-    /// <c>["a", "b|c"]</c> used to collide, letting one row's cache entry answer for another.
+    /// length-prefixed and rendered invariantly, so a value containing the separator cannot produce the same segment as a different key — <c>["a|b", "c"]</c> and <c>["a", "b|c"]</c> used
+    /// to collide, letting one row's cache entry answer for another.
     /// </summary>
     public static string FormatPrimaryKeySegment(IReadOnlyList<object?> keyValues) => WhereClauseHelpers.FormatValueCanonical(keyValues);
 
@@ -127,15 +129,15 @@ public static class QueryCacheTagBuilder
 
     /// <summary>
     /// Tags for a cached basic query page: <see cref="QueryScopeTag" />, <see cref="EntityTypeTag" />, one <see cref="EntityInstanceTag" /> per root row, and cascade
-    /// <see cref="EntityInstanceTag" /> for every entity reached via the declared includes (including collection items). The filter tree and computed field templates are
-    /// walked too, so a type the query only filters or formats on is still tagged and still busted when it is written.
+    /// <see cref="EntityInstanceTag" /> for every entity reached via the declared includes (including collection items). The filter tree and computed field templates are walked too, so a
+    /// type the query only filters or formats on is still tagged and still busted when it is written.
     /// </summary>
     public static string[] BuildBasicQueryTags<TDbModel>(
         IReadOnlyList<TDbModel> rows,
         DbContext context,
         ITypeConversionService typeConversion,
         IReadOnlyList<string>? includes = null,
-        Lyo.Query.Models.Common.WhereClause? whereClause = null,
+        WhereClause? whereClause = null,
         IReadOnlyList<ComputedField>? computedFields = null)
         where TDbModel : class
     {
@@ -156,14 +158,13 @@ public static class QueryCacheTagBuilder
 
     /// <summary>
     /// Type-scoped tags for list queries when <see cref="Lyo.Cache.QueryCacheTagGranularity.Broad" /> is configured: <see cref="QueryScopeTag" />, <c>entities</c>, root
-    /// <see cref="EntityTypeTag" />, and one <see cref="EntityTypeTag" /> per CLR type referenced by an include, the filter tree, or a computed field template (no per-row
-    /// instance tags).
+    /// <see cref="EntityTypeTag" />, and one <see cref="EntityTypeTag" /> per CLR type referenced by an include, the filter tree, or a computed field template (no per-row instance tags).
     /// </summary>
     public static string[] BuildBasicQueryTagsBroad<TContext, TDbModel>(
         TContext context,
         IEntityLoaderService loader,
         IReadOnlyList<string>? includes,
-        Lyo.Query.Models.Common.WhereClause? whereClause = null,
+        WhereClause? whereClause = null,
         IReadOnlyList<ComputedField>? computedFields = null)
         where TContext : DbContext where TDbModel : class
     {
@@ -226,9 +227,9 @@ public static class QueryCacheTagBuilder
     /// templates traverse.
     /// </summary>
     /// <remarks>
-    /// Two gaps close here. A filter-only query used to tag only the root entity, so a query on <c>JobDefinition</c> filtering <c>JobRuns.CreatedBy</c> was never invalidated
-    /// by a <c>JobRun</c> write. And include tags were derived from loaded navigation values, so an include whose navigation came back null contributed nothing and the entry
-    /// survived a write that would have populated it.
+    /// Two gaps close here. A filter-only query used to tag only the root entity, so a query on <c>JobDefinition</c> filtering <c>JobRuns.CreatedBy</c> was never invalidated by
+    /// a <c>JobRun</c> write. And include tags were derived from loaded navigation values, so an include whose navigation came back null contributed nothing and the entry survived a
+    /// write that would have populated it.
     /// </remarks>
     /// <param name="tags">Destination tag set.</param>
     /// <param name="rootEntityType">EF metadata for the query root; nothing is added when null.</param>
@@ -239,7 +240,7 @@ public static class QueryCacheTagBuilder
         HashSet<string> tags,
         IEntityType? rootEntityType,
         IReadOnlyList<string>? includes,
-        Lyo.Query.Models.Common.WhereClause? whereClause,
+        WhereClause? whereClause,
         IReadOnlyList<ComputedField>? computedFields)
     {
         if (rootEntityType is null)

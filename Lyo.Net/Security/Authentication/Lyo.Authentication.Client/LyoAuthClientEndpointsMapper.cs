@@ -32,8 +32,7 @@ public static class LyoAuthClientEndpointsMapper
         if (!ctx.Request.Query.TryGetValue(HandoffQueryParameter, out var raw) || raw.Count == 0 || raw[0].IsNullOrWhitespace()) {
             throw ApiErrorException.From(
                 LyoProblemDetails.FromCode(
-                    ApiErrorCodes.InvalidRequest, $"The '{HandoffQueryParameter}' query parameter is missing.",
-                    extensions: new Dictionary<string, object?> { ["error"] = "missing_handoff_code" }));
+                    ApiErrorCodes.InvalidRequest, $"The '{HandoffQueryParameter}' query parameter is missing.", extensions: new() { ["error"] = "missing_handoff_code" }));
         }
 
         // The API stamped this consumer's origin onto the code at issue (from the returnUrl on /auth/login).

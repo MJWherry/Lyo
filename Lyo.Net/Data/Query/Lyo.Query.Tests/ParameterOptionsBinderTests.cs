@@ -1,8 +1,8 @@
 using System.Text.Json;
+using Lyo.Parameters;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
-using Lyo.Parameters;
 using Lyo.Query.Models.Parameters;
 
 namespace Lyo.Query.Tests;
@@ -121,11 +121,15 @@ public sealed class ParameterOptionsBinderTests
     [Trait("Category", "Fast")]
     public void TryBindSprocParameters_ReplacesPlaceholders()
     {
-        Assert.False(ParameterOptionsBinder.TryBindSprocParameters(new Dictionary<string, string> { ["a"] = "{{TenantId}}" }, new Dictionary<string, string?>(), out _, out var missing));
+        Assert.False(
+            ParameterOptionsBinder.TryBindSprocParameters(
+                new Dictionary<string, string> { ["a"] = "{{TenantId}}" }, new Dictionary<string, string?>(), out var _, out var missing));
+
         Assert.Equal(["TenantId"], missing);
         Assert.True(
             ParameterOptionsBinder.TryBindSprocParameters(
                 new Dictionary<string, string> { ["a"] = "{{TenantId}}" }, new Dictionary<string, string?> { ["TenantId"] = "t-1" }, out var bound, out var none));
+
         Assert.Empty(none);
         Assert.Equal("t-1", bound["a"]);
     }

@@ -5,12 +5,12 @@ namespace Lyo.Web.Automation.Postgres.Database;
 /// <summary>Plan rows in the <c>automation</c> schema.</summary>
 public sealed class AutomationPlanDbContext : DbContext
 {
+    /// <summary>Stored plans.</summary>
+    public DbSet<AutomationPlanEntity> Plans => Set<AutomationPlanEntity>();
+
     /// <summary>Creates the context.</summary>
     public AutomationPlanDbContext(DbContextOptions<AutomationPlanDbContext> options)
         : base(options) { }
-
-    /// <summary>Stored plans.</summary>
-    public DbSet<AutomationPlanEntity> Plans => Set<AutomationPlanEntity>();
 
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)

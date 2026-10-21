@@ -879,7 +879,9 @@ public class QueryService<TContext>(
 
         if (queryRequest.ComputedFields.Count > queryOptions.MaxComputedFieldCount) {
             errors.Add(
-                new(ApiErrorCodes.InvalidComputedField, $"Computed field count ({queryRequest.ComputedFields.Count}) exceeds maximum allowed ({queryOptions.MaxComputedFieldCount})."));
+                new(
+                    ApiErrorCodes.InvalidComputedField,
+                    $"Computed field count ({queryRequest.ComputedFields.Count}) exceeds maximum allowed ({queryOptions.MaxComputedFieldCount})."));
         }
 
         foreach (var computedField in queryRequest.ComputedFields) {
@@ -946,12 +948,10 @@ public class QueryService<TContext>(
         return false;
     }
 
-    private readonly record struct QueryCoreCacheAugmentation(IReadOnlyList<string>? SelectForCacheKey, IReadOnlyList<ComputedField>? ComputedForCacheKey);
-
     /// <summary>Thrown when SQL projection fails so we fall through to load-then-project without caching.</summary>
     /// <summary>
-    /// Groups by <see cref="ProjectionQueryReq.Select" /> and projects <see cref="ProjectionQueryReq.Aggregates" /> in SQL. A translation failure is returned to the caller. Grouping a
-    /// page of entities would report the wrong metric.
+    /// Groups by <see cref="ProjectionQueryReq.Select" /> and projects <see cref="ProjectionQueryReq.Aggregates" /> in SQL. A translation failure is returned to the caller.
+    /// Grouping a page of entities would report the wrong metric.
     /// </summary>
     private async Task<ProjectedQueryRes<object?>> QueryAggregated<TDbModel>(ProjectionQueryReq queryRequest, ProjectionQueryReq queryRequestForEcho, CancellationToken ct)
         where TDbModel : class
@@ -1005,8 +1005,7 @@ public class QueryService<TContext>(
         catch (SqlProjectionFallbackException ex) {
             Logger.LogDebug(ex, "Aggregate query could not be translated for {EntityType}", typeof(TDbModel).Name);
             return ResultFactory.ProjectedQueryFailure<object?>(
-                queryRequestForEcho,
-                AggregatedValidationProblemDetails([new(ApiErrorCodes.InvalidQuery, "Aggregate query could not be translated.")], "Invalid projected query."));
+                queryRequestForEcho, AggregatedValidationProblemDetails([new(ApiErrorCodes.InvalidQuery, "Aggregate query could not be translated.")], "Invalid projected query."));
         }
         catch (InvalidQueryException ex) {
             return ResultFactory.ProjectedQueryFailure<object?>(
@@ -1014,12 +1013,7 @@ public class QueryService<TContext>(
         }
     }
 
-    private static async Task<AggregateQueryPage> ExecuteAggregatePlanAsync(
-        AggregateQueryPlan plan,
-        int start,
-        int pageSize,
-        QueryTotalCountMode mode,
-        CancellationToken ct)
+    private static async Task<AggregateQueryPage> ExecuteAggregatePlanAsync(AggregateQueryPlan plan, int start, int pageSize, QueryTotalCountMode mode, CancellationToken ct)
     {
         if (plan.Ungrouped) {
             var one = await MaterializeAsync(plan.Slice(0, 1), plan.RowType, ct).ConfigureAwait(false);
@@ -1052,7 +1046,8 @@ public class QueryService<TContext>(
     private static async Task<int> CountAsync(IQueryable query, Type elementType, CancellationToken ct)
     {
         var method = typeof(EntityFrameworkQueryableExtensions).GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .Single(m => m.Name == nameof(EntityFrameworkQueryableExtensions.CountAsync) && m.IsGenericMethodDefinition && m.GetParameters() is [_, { ParameterType: var second }] && second == typeof(CancellationToken));
+            .Single(m => m.Name == nameof(EntityFrameworkQueryableExtensions.CountAsync) && m.IsGenericMethodDefinition &&
+                m.GetParameters() is [var _, { ParameterType: var second }] && second == typeof(CancellationToken));
 
         var task = (Task)method.MakeGenericMethod(elementType).Invoke(null, [query, ct])!;
         await task.ConfigureAwait(false);
@@ -1062,7 +1057,8 @@ public class QueryService<TContext>(
     private static async Task<List<object?>> MaterializeAsync(IQueryable query, Type elementType, CancellationToken ct)
     {
         var method = typeof(EntityFrameworkQueryableExtensions).GetMethods(BindingFlags.Public | BindingFlags.Static)
-            .Single(m => m.Name == nameof(EntityFrameworkQueryableExtensions.ToListAsync) && m.IsGenericMethodDefinition && m.GetParameters() is [_, { ParameterType: var second }] && second == typeof(CancellationToken));
+            .Single(m => m.Name == nameof(EntityFrameworkQueryableExtensions.ToListAsync) && m.IsGenericMethodDefinition &&
+                m.GetParameters() is [var _, { ParameterType: var second }] && second == typeof(CancellationToken));
 
         var task = (Task)method.MakeGenericMethod(elementType).Invoke(null, [query, ct])!;
         await task.ConfigureAwait(false);
@@ -1070,10 +1066,13 @@ public class QueryService<TContext>(
         return result.Cast<object?>().ToList();
     }
 
+    private readonly record struct QueryCoreCacheAugmentation(IReadOnlyList<string>? SelectForCacheKey, IReadOnlyList<ComputedField>? ComputedForCacheKey);
+
     private sealed class SqlProjectionFallbackException : Exception
     {
         public SqlProjectionFallbackException() { }
 
-        public SqlProjectionFallbackException(Exception inner) : base(inner.Message, inner) { }
+        public SqlProjectionFallbackException(Exception inner)
+            : base(inner.Message, inner) { }
     }
 }

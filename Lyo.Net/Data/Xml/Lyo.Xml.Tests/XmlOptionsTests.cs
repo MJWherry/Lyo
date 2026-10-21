@@ -5,15 +5,6 @@ namespace Lyo.Xml.Tests;
 
 public class XmlOptionsTests
 {
-    private sealed class Person
-    {
-        public string? GivenName { get; set; }
-
-        public int? Age { get; set; }
-
-        public string? Note { get; set; }
-    }
-
     [Fact]
     public void ConvertToJson_ReadNumbersFromStringsFalse_EmitsQuotedAge()
     {
@@ -29,6 +20,7 @@ public class XmlOptionsTests
             o.RootElementName = "customer";
             o.Namespace = "urn:lyo:person";
         }).ExportToXmlString(new Person { GivenName = "Ada" });
+
         Assert.Contains("<customer", xml);
         Assert.Contains("xmlns=\"urn:lyo:person\"", xml);
         Assert.DoesNotContain("<person", xml);
@@ -52,38 +44,9 @@ public class XmlOptionsTests
             Assert.Equal("Ada", back.GivenName);
             Assert.Equal(36, back.Age);
         }
-        finally { File.Delete(path); }
-    }
-
-    private sealed class AttributedPerson
-    {
-        public string? GivenName { get; set; }
-
-        [XmlMember(AsAttribute = true)]
-        public int? Age { get; set; }
-    }
-
-    private sealed class Address
-    {
-        [XmlMember(AsAttribute = true)]
-        public string? Id { get; set; }
-
-        public string? City { get; set; }
-    }
-
-    private sealed class NestedPerson
-    {
-        public string? GivenName { get; set; }
-
-        public Address? Address { get; set; }
-    }
-
-    private sealed class ForcedElement
-    {
-        public string? GivenName { get; set; }
-
-        [XmlMember(AsAttribute = false)]
-        public int? Age { get; set; }
+        finally {
+            File.Delete(path);
+        }
     }
 
     [Fact]
@@ -101,7 +64,7 @@ public class XmlOptionsTests
     [Fact]
     public void ExportToXmlString_TypedMemberConfig_WritesAgeAsAttribute()
     {
-        var service = new XmlService(o => o.Member<Person>(nameof(Person.Age), asAttribute: true));
+        var service = new XmlService(o => o.Member<Person>(nameof(Person.Age), true));
         var xml = service.ExportToXmlString(new Person { GivenName = "Ada", Age = 36 });
         Assert.Contains("age=\"36\"", xml);
         Assert.Contains("<givenName>Ada</givenName>", xml);
@@ -113,7 +76,7 @@ public class XmlOptionsTests
     [Fact]
     public void ExportToXmlString_NameMemberConfig_WritesAgeAttributeFromJson()
     {
-        var xml = new XmlService(o => o.Member("age", asAttribute: true)).ConvertFromJson("{\"age\":36,\"givenName\":\"Ada\"}");
+        var xml = new XmlService(o => o.Member("age", true)).ConvertFromJson("{\"age\":36,\"givenName\":\"Ada\"}");
         Assert.Contains("age=\"36\"", xml);
         Assert.Contains("<givenName>Ada</givenName>", xml);
     }
@@ -121,7 +84,7 @@ public class XmlOptionsTests
     [Fact]
     public void ExportToXmlString_NestedXmlMember_WritesIdOnAddress()
     {
-        var xml = new XmlService().ExportToXmlString(new NestedPerson { GivenName = "Ada", Address = new Address { Id = "a1", City = "London" } });
+        var xml = new XmlService().ExportToXmlString(new NestedPerson { GivenName = "Ada", Address = new() { Id = "a1", City = "London" } });
         Assert.Contains("<address id=\"a1\">", xml);
         Assert.Contains("<city>London</city>", xml);
         Assert.Contains("<givenName>Ada</givenName>", xml);
@@ -168,15 +131,59 @@ public class XmlOptionsTests
     public void Default_ParallelRoundTrip_ReturnsTheDocument()
     {
         var errors = 0;
-        Parallel.For(0, 32, _ => {
-            try {
-                var xml = XmlService.Default.ExportToXmlString(new Person { GivenName = "Ada", Age = 36 });
-                var person = XmlService.Default.ParseString<Person>(xml);
-                if (person.GivenName != "Ada" || person.Age != 36)
+        Parallel.For(
+            0, 32, _ => {
+                try {
+                    var xml = XmlService.Default.ExportToXmlString(new Person { GivenName = "Ada", Age = 36 });
+                    var person = XmlService.Default.ParseString<Person>(xml);
+                    if (person.GivenName != "Ada" || person.Age != 36)
+                        Interlocked.Increment(ref errors);
+                }
+                catch {
                     Interlocked.Increment(ref errors);
-            }
-            catch { Interlocked.Increment(ref errors); }
-        });
+                }
+            });
+
         Assert.Equal(0, errors);
+    }
+
+    private sealed class Person
+    {
+        public string? GivenName { get; set; }
+
+        public int? Age { get; set; }
+
+        public string? Note { get; set; }
+    }
+
+    private sealed class AttributedPerson
+    {
+        public string? GivenName { get; set; }
+
+        [XmlMember(AsAttribute = true)]
+        public int? Age { get; set; }
+    }
+
+    private sealed class Address
+    {
+        [XmlMember(AsAttribute = true)]
+        public string? Id { get; set; }
+
+        public string? City { get; set; }
+    }
+
+    private sealed class NestedPerson
+    {
+        public string? GivenName { get; set; }
+
+        public Address? Address { get; set; }
+    }
+
+    private sealed class ForcedElement
+    {
+        public string? GivenName { get; set; }
+
+        [XmlMember(AsAttribute = false)]
+        public int? Age { get; set; }
     }
 }

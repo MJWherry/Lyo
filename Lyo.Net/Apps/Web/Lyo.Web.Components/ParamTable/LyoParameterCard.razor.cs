@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Components;
 namespace Lyo.Web.Components.ParamTable;
 
 /// <summary>
-/// One parameter rendered as a card for <see cref="LyoParameterLayout.Cards" />. The header wraps instead of overflowing, so this layout survives narrow
-/// viewports and rich value editors that a fixed table column cannot hold.
+/// One parameter rendered as a card for <see cref="LyoParameterLayout.Cards" />. The header wraps instead of overflowing, so this layout survives narrow viewports and rich
+/// value editors that a fixed table column cannot hold.
 /// </summary>
 public partial class LyoParameterCard
 {

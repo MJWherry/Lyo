@@ -2,7 +2,6 @@ using Lyo.Common.Core.Enums;
 using Lyo.Exceptions;
 using Lyo.FileSystemWatcher.Models;
 using Lyo.FileSystemWatcher.Postgres.Database;
-using Lyo.Hashing;
 using Lyo.Hashing.Registration;
 using Lyo.Postgres;
 using Microsoft.Extensions.Configuration;

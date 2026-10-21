@@ -9,11 +9,14 @@ using Lyo.Health;
 namespace Lyo.FileStorage.Tests.Support;
 
 /// <summary>
-/// In-memory backend standing in for S3 or Blob on the direct-upload finalize path. <see cref="ReportedAttributes" /> plays the part of the server-side size and
-/// checksum; leave it null to model a backend that holds no checksum. Body reads are counted and can be made to throw, which is how the tests prove finalize never
-/// pulled the object back through the host.
+/// In-memory backend standing in for S3 or Blob on the direct-upload finalize path. <see cref="ReportedAttributes" /> plays the part of the server-side size and checksum;
+/// leave it null to model a backend that holds no checksum. Body reads are counted and can be made to throw, which is how the tests prove finalize never pulled the object back
+/// through the host.
 /// </summary>
-public sealed class VerifyingFakeFileStorageService(FileStorageServiceBaseOptions options, IFileMetadataStore metadataStore, IEnumerable<IFileAuditEventHandler>? auditHandlers = null)
+public sealed class VerifyingFakeFileStorageService(
+    FileStorageServiceBaseOptions options,
+    IFileMetadataStore metadataStore,
+    IEnumerable<IFileAuditEventHandler>? auditHandlers = null)
     : FileStorageServiceBase(options, metadataStore, auditHandlers: auditHandlers), IDirectUploadVerification
 {
     private readonly Dictionary<Guid, byte[]> _objects = [];
@@ -30,6 +33,16 @@ public sealed class VerifyingFakeFileStorageService(FileStorageServiceBaseOption
     public int BodyReadCount { get; private set; }
 
     public List<int> PrefixRequests { get; } = [];
+
+    Task<DirectUploadObjectAttributes?> IDirectUploadVerification.GetDirectUploadAttributesAsync(Guid fileId, string? pathPrefix, CancellationToken ct)
+        => Task.FromResult(_objects.ContainsKey(fileId) ? ReportedAttributes : null);
+
+    Task<byte[]> IDirectUploadVerification.ReadDirectUploadPrefixAsync(Guid fileId, string? pathPrefix, int maxBytes, CancellationToken ct)
+    {
+        PrefixRequests.Add(maxBytes);
+        var bytes = _objects[fileId];
+        return Task.FromResult(bytes.AsSpan(0, Math.Min(maxBytes, bytes.Length)).ToArray());
+    }
 
     /// <summary>Stands in for the client's PUT to the presigned URL.</summary>
     public void PutObject(Guid fileId, byte[] bytes) => _objects[fileId] = bytes;
@@ -51,17 +64,7 @@ public sealed class VerifyingFakeFileStorageService(FileStorageServiceBaseOption
     public override Task<FileStoreResult> CompleteDirectUploadAsync(Guid fileId, DirectUploadCompleteRequest? completeRequest = null, CancellationToken ct = default)
         => FinalizePendingPlainDirectUploadCoreAsync(fileId, completeRequest, ct);
 
-    Task<DirectUploadObjectAttributes?> IDirectUploadVerification.GetDirectUploadAttributesAsync(Guid fileId, string? pathPrefix, CancellationToken ct)
-        => Task.FromResult(_objects.ContainsKey(fileId) ? ReportedAttributes : null);
-
-    Task<byte[]> IDirectUploadVerification.ReadDirectUploadPrefixAsync(Guid fileId, string? pathPrefix, int maxBytes, CancellationToken ct)
-    {
-        PrefixRequests.Add(maxBytes);
-        var bytes = _objects[fileId];
-        return Task.FromResult(bytes.AsSpan(0, Math.Min(maxBytes, bytes.Length)).ToArray());
-    }
-
-    protected override Task<HealthResult> CheckHealthLightweightAsync(CancellationToken ct) => Task.FromResult(HealthResult.Healthy(TimeSpan.Zero, null, null));
+    protected override Task<HealthResult> CheckHealthLightweightAsync(CancellationToken ct) => Task.FromResult(HealthResult.Healthy(TimeSpan.Zero));
 
     protected override Task<Stream> CreateOutputStreamAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct) => throw new NotSupportedException();
 

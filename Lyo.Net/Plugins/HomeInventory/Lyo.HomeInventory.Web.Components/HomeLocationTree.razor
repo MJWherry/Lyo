@@ -23,6 +23,7 @@
         <MudPaper Class="pa-2" Outlined="true">
             @if (_selected is null) {
                 <MudText Typo="Typo.subtitle1">House</MudText>
+
                 <MudText Typo="Typo.caption" Color="Color.Secondary">Select a room, or add a top-level room.</MudText>
             }
             else {
@@ -30,10 +31,12 @@
             }
             <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Start" Class="mt-2">
                 <MudTextField @bind-Value="_draftName" Label="Room name" Margin="Margin.Dense"/>
-                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" Class="mt-1" OnClick="AddRoom" Disabled="@string.IsNullOrWhiteSpace(_draftName)">Add</MudButton>
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" Class="mt-1" OnClick="AddRoom" Disabled="@string.IsNullOrWhiteSpace(_draftName)">Add
+                </MudButton>
             </MudStack>
             @if (_selected is not null) {
                 <MudText Typo="Typo.subtitle2" Class="mt-3">Items</MudText>
+
                 @if (_items.Count == 0) {
                     <MudText Typo="Typo.caption" Color="Color.Secondary">No items in this room.</MudText>
                 }

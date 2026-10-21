@@ -8,18 +8,21 @@ using Lyo.Media.Models;
 namespace Lyo.FFmpeg;
 
 /// <summary>
-/// Fluent builder that assembles an ffmpeg command line. Flags are emitted only when set.
-/// Do not reuse a builder across threads. Every operation should call <see cref="New" />.
+/// Fluent builder that assembles an ffmpeg command line. Flags are emitted only when set. Do not reuse a builder across threads. Every operation should call
+/// <see cref="New" />.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class FFmpegCommandBuilder
 {
     private static readonly string[] PreInputOrder = ["-hwaccel", "-hwaccel_output_format", "-vaapi_device", "-ss", "-f", "-safe", "-ar", "-ac"];
+
     private static readonly string[] PostInputOrder = [
-        "-t", "-map_metadata", "-c", "-c:a", "-ar", "-ac", "-b:a", "-q:a", "-c:v", "-rc:v", "-cq", "-global_quality", "-qp", "-crf", "-preset", "-b:v", "-r",
-        "-pix_fmt", "-s", "-vf", "-af", "-c:s", "-pass", "-passlogfile", "-movflags", "-hls_time", "-hls_playlist_type", "-hls_segment_filename", "-seg_duration",
-        "-init_seg_name", "-media_seg_name"
+        "-t", "-map_metadata", "-c", "-c:a", "-ar", "-ac", "-b:a", "-q:a", "-c:v", "-rc:v",
+        "-cq", "-global_quality", "-qp", "-crf", "-preset", "-b:v", "-r", "-pix_fmt", "-s", "-vf",
+        "-af", "-c:s", "-pass", "-passlogfile", "-movflags", "-hls_time", "-hls_playlist_type", "-hls_segment_filename", "-seg_duration", "-init_seg_name",
+        "-media_seg_name"
     ];
+
     private static readonly string[] PreOutputOrder = ["-f"];
 
     private readonly List<string> _customArguments = [];
@@ -29,20 +32,20 @@ public sealed class FFmpegCommandBuilder
     private readonly Dictionary<string, string> _postInput = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> _preInput = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> _preOutput = new(StringComparer.Ordinal);
+    private string? _codecId;
+    private bool _dash;
     private FFmpegOptions? _defaults;
     private bool? _dropAudio;
     private bool? _dropVideo;
     private string? _executablePath;
-    private HardwareAccel? _requestedHardware;
-    private HardwareDevice? _requestedDevice;
     private bool _hasUserVideoFilter;
-    private string? _codecId;
-    private string? _segmentName;
     private bool _hls;
-    private bool _dash;
     private string? _inputPath;
-    private bool? _overwrite;
     private string? _outputPath;
+    private bool? _overwrite;
+    private HardwareDevice? _requestedDevice;
+    private HardwareAccel? _requestedHardware;
+    private string? _segmentName;
 
     /// <summary>Allocates a fresh builder.</summary>
     public static FFmpegCommandBuilder New() => new();
@@ -340,22 +343,30 @@ public sealed class FFmpegCommandBuilder
         Apply(options.AudioEncoder, WithAudioCodec);
         if (options.SampleRate is { } sampleRate)
             WithSampleRate(sampleRate.Hertz);
+
         if (options.Channels is { } channels)
             WithChannels(channels.Count);
+
         if (options.AudioBitRate is { } audioBitRate)
             WithAudioBitRate(audioBitRate.Id);
+
         if (options.AudioQuality is { } audioQuality)
             WithAudioQuality(audioQuality.Id);
+
         Apply(options.AudioFilter, WithAudioFilter);
         if (options.VideoEncoder is { } videoEncoder)
             WithVideoCodec(videoEncoder);
+
         if (options.FrameRate is { } frameRate)
             WithFrameRate(frameRate.Value);
+
         Apply(options.PixelFormat, WithPixelFormat);
         if (options.Crf is { } crf)
             WithCrf(crf.Value);
+
         if (options.VideoBitRate is { } videoBitRate)
             WithVideoBitRate(videoBitRate.Id);
+
         Apply(options.Preset, WithPreset);
         Apply(options.DropVideo, DropVideo);
         Apply(options.DropAudio, DropAudio);
@@ -366,8 +377,10 @@ public sealed class FFmpegCommandBuilder
         Apply(options.InputFormat, WithInputFormat);
         if (options.InputSampleRate is { } inputRate)
             WithInputSampleRate(inputRate.Hertz);
+
         if (options.InputChannels is { } inputChannels)
             WithInputChannels(inputChannels.Count);
+
         if (options.Scale == ScaleMode.Stretch && options.Width is { } width && options.Height is { } height)
             WithSize(width, height);
 
@@ -393,8 +406,8 @@ public sealed class FFmpegCommandBuilder
     }
 
     /// <summary>
-    /// Applies <see cref="FFmpegOptions.Hardware" /> when the knobs did not set a device.
-    /// <see cref="HardwareAccel.None" /> on the knobs forces the CPU. A device already set on the knobs is left as-is.
+    /// Applies <see cref="FFmpegOptions.Hardware" /> when the knobs did not set a device. <see cref="HardwareAccel.None" /> on the knobs forces the CPU. A device already set on
+    /// the knobs is left as-is.
     /// </summary>
     internal FFmpegCommandBuilder ApplyHost(FFmpegOptions host)
     {
@@ -455,6 +468,7 @@ public sealed class FFmpegCommandBuilder
 
         if (_dropVideo == true)
             argList.Add("-vn");
+
         if (_dropAudio == true)
             argList.Add("-an");
 
@@ -482,12 +496,16 @@ public sealed class FFmpegCommandBuilder
         var parts = new List<string>();
         if (_inputPath != null)
             parts.Add($"Input: {_inputPath}");
+
         if (_outputPath != null)
             parts.Add($"Output: {_outputPath}");
+
         if (_preOutput.TryGetValue("-f", out var format))
             parts.Add($"Format: {format}");
+
         if (_postInput.TryGetValue("-c:a", out var audioCodec))
             parts.Add($"AudioCodec: {audioCodec}");
+
         if (_postInput.TryGetValue("-c:v", out var videoCodec))
             parts.Add($"VideoCodec: {videoCodec}");
 
@@ -534,7 +552,8 @@ public sealed class FFmpegCommandBuilder
     {
         if (!_postInput.TryGetValue("-crf", out var crf)) {
             if (device == HardwareAccel.Vaapi)
-                ApplyVaapi(devicePath, upload: !_hasUserVideoFilter);
+                ApplyVaapi(devicePath, !_hasUserVideoFilter);
+
             return;
         }
 
@@ -546,12 +565,11 @@ public sealed class FFmpegCommandBuilder
             Pair(_postInput, "-rc:v", "vbr");
             Pair(_postInput, "-cq", crf);
         }
-        else if (device == HardwareAccel.Qsv) {
+        else if (device == HardwareAccel.Qsv)
             Pair(_postInput, "-global_quality", crf);
-        }
         else if (device == HardwareAccel.Vaapi) {
             Pair(_postInput, "-qp", crf);
-            ApplyVaapi(devicePath, upload: !_hasUserVideoFilter);
+            ApplyVaapi(devicePath, !_hasUserVideoFilter);
         }
     }
 
@@ -584,6 +602,7 @@ public sealed class FFmpegCommandBuilder
 
         if (_maps.Count == 0)
             _maps.Add("0");
+
         _maps.Add("1");
     }
 
@@ -591,6 +610,7 @@ public sealed class FFmpegCommandBuilder
     {
         if (options.ClearMetadata)
             Pair(_postInput, "-map_metadata", "-1");
+
         if (options.Metadata == null)
             return;
 
@@ -629,6 +649,7 @@ public sealed class FFmpegCommandBuilder
     {
         if (_hls)
             Pair(_postInput, "-hls_segment_filename", _segmentName ?? Beside(_outputPath!, "seg_%03d.ts"));
+
         if (!_dash)
             return;
 

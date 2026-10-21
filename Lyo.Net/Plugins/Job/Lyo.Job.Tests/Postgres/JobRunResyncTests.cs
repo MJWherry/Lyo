@@ -3,13 +3,13 @@ using Lyo.Cache;
 using Lyo.Common.Core.Identifiers;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
-using JobConstants = Lyo.Job.Models.Constants;
 using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
 using Lyo.MessageQueue;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using JobConstants = Lyo.Job.Models.Constants;
 
 namespace Lyo.Job.Tests.Postgres;
 
@@ -26,9 +26,7 @@ public class JobRunResyncTests
     {
         var runId = await SeedRunAsync(JobState.Queued);
         var publishCountBefore = _fixture.FakePublisher.Published.Count;
-
         var (result, error) = await _fixture.JobService.ResyncQueuedRunsAsync(ct: TestCt);
-
         Assert.Null(error);
         Assert.NotNull(result);
         Assert.True(result.Queued >= 1);
@@ -47,9 +45,7 @@ public class JobRunResyncTests
         using var sp = BuildServiceProvider(publisher, mq);
         using var scope = sp.CreateScope();
         var jobService = scope.ServiceProvider.GetRequiredService<JobService>();
-
         var (result, error) = await jobService.ResyncQueuedRunsAsync(_fixture.JobDefinitionId, TestCt);
-
         Assert.Null(error);
         Assert.NotNull(result);
         Assert.Contains(publisher.Published, e => e.Event == "RunCreated" && e.RunId == missingId);
@@ -67,9 +63,7 @@ public class JobRunResyncTests
         using var sp = BuildServiceProvider(publisher, mq);
         using var scope = sp.CreateScope();
         var jobService = scope.ServiceProvider.GetRequiredService<JobService>();
-
         var (result, error) = await jobService.ResyncQueuedRunsAsync(_fixture.JobDefinitionId, TestCt);
-
         Assert.Null(error);
         Assert.DoesNotContain(publisher.Published, e => e.Event == "RunCreated" && e.RunId == delayedId);
         Assert.True(result!.AlreadyInQueue >= 1);
@@ -84,9 +78,7 @@ public class JobRunResyncTests
         using var sp = BuildServiceProvider(publisher);
         using var scope = sp.CreateScope();
         var jobService = scope.ServiceProvider.GetRequiredService<JobService>();
-
         var (result, error) = await jobService.ResyncQueuedRunsAsync(_fixture.JobDefinitionId, TestCt);
-
         Assert.Null(error);
         Assert.DoesNotContain(publisher.Published, e => e.Event == "RunCreated" && e.RunId == futureId);
         Assert.DoesNotContain(publisher.Published, e => e.Event == "RunCreated" && e.RunId == dryRunId);
@@ -101,9 +93,7 @@ public class JobRunResyncTests
         using var sp = BuildServiceProvider(publisher);
         using var scope = sp.CreateScope();
         var jobService = scope.ServiceProvider.GetRequiredService<JobService>();
-
         var (result, error) = await jobService.ResyncQueuedRunsAsync(ct: TestCt);
-
         Assert.Null(result);
         Assert.NotNull(error);
     }
@@ -118,9 +108,7 @@ public class JobRunResyncTests
         using var sp = BuildServiceProvider(publisher);
         using var scope = sp.CreateScope();
         var jobService = scope.ServiceProvider.GetRequiredService<JobService>();
-
         var (result, error) = await jobService.ResyncQueuedRunsAsync(_fixture.JobDefinitionId, TestCt);
-
         Assert.Null(error);
         Assert.Contains(publisher.Published, e => e.Event == "RunCreated" && e.RunId == scopedId);
         Assert.DoesNotContain(publisher.Published, e => e.Event == "RunCreated" && e.RunId == otherId);
@@ -149,7 +137,7 @@ public class JobRunResyncTests
             JobDefinitionId = _fixture.JobDefinitionId,
             State = state,
             CreatedBy = "test",
-            CreatedTimestamp = DateTime.UtcNow,
+            CreatedTimestamp = DateTime.UtcNow
         };
 
         configure?.Invoke(run);

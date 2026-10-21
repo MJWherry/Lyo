@@ -1,9 +1,10 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.ContactUs.Models;
 using Lyo.ContactUs.Postgres.Database;
 using Lyo.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Lyo.Common.Core.Identifiers;
+
 namespace Lyo.ContactUs.Postgres;
 
 /// <summary>Postgres-backed contact form service.</summary>
@@ -12,10 +13,7 @@ public sealed class PostgresContactUsService : ContactUsServiceBase
     private readonly IDbContextFactory<ContactUsDbContext> _contextFactory;
 
     /// <summary>Constructs the <see cref="PostgresContactUsService" /> class.</summary>
-    public PostgresContactUsService(
-        ContactUsServiceOptions options,
-        IDbContextFactory<ContactUsDbContext> contextFactory,
-        ILogger<PostgresContactUsService>? logger = null)
+    public PostgresContactUsService(ContactUsServiceOptions options, IDbContextFactory<ContactUsDbContext> contextFactory, ILogger<PostgresContactUsService>? logger = null)
         : base(options, logger)
         => _contextFactory = ArgumentHelpers.ThrowIfNullReturn(contextFactory);
 
@@ -43,10 +41,7 @@ public sealed class PostgresContactUsService : ContactUsServiceBase
     protected override async Task<IReadOnlyList<ContactSubmission>> ListCoreAsync(CancellationToken ct)
     {
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.ContactSubmissions.AsNoTracking()
-            .OrderByDescending(e => e.CreatedTimestamp)
-            .ToArrayAsync(ct)
-            .ConfigureAwait(false);
+        var entities = await context.ContactSubmissions.AsNoTracking().OrderByDescending(e => e.CreatedTimestamp).ToArrayAsync(ct).ConfigureAwait(false);
         return Array.ConvertAll(entities, static entity => entity.ToSubmission());
     }
 

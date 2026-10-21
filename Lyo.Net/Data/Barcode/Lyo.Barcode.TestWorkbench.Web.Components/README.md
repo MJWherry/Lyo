@@ -4,8 +4,8 @@ MudBlazor page that puts <BarcodeWorkbench /> from [`Lyo.Barcode.Web.Components`
 
 ## Components
 
-| Component | Purpose |
-| ------------------------ | ------------------------------------------------------------------------------------------------- |
+| Component                | Purpose                                                                                           |
+|--------------------------|---------------------------------------------------------------------------------------------------|
 | <BarcodeTestWorkbench /> | Sets the title to "Barcode test workbench" and renders <BarcodeWorkbench />. No extra parameters. |
 
 ## Services the host must register

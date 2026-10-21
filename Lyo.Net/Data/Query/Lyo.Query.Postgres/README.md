@@ -1,8 +1,10 @@
 # Lyo.Query.Postgres
 
-PostgreSQL adapter for [`Lyo.Query`](../Lyo.Query/README.md). `AddLyoQueryPostgres()` replaces `IWhereClauseService` with `PostgresWhereClauseService`, which rewrites `FuzzyMatch.Similarity` calls to `EF.Functions.TrigramsSimilarity` so Npgsql emits SQL `similarity(col, query) >= threshold`.
+PostgreSQL adapter for [`Lyo.Query`](../Lyo.Query/README.md). `AddLyoQueryPostgres()` replaces `IWhereClauseService` with `PostgresWhereClauseService`, which rewrites
+`FuzzyMatch.Similarity` calls to `EF.Functions.TrigramsSimilarity` so Npgsql emits SQL `similarity(col, query) >= threshold`.
 
-The evaluator stays EF-agnostic: in-memory matchers and `EnumerableQuery` keep the CLR Jaccard implementation. SQL Fuzzy requires `CREATE EXTENSION IF NOT EXISTS pg_trgm` once per database. GIN/GiST `gin_trgm_ops` indexes are not created by this package.
+The evaluator stays EF-agnostic: in-memory matchers and `EnumerableQuery` keep the CLR Jaccard implementation. SQL Fuzzy requires `CREATE EXTENSION IF NOT EXISTS pg_trgm` once per
+database. GIN/GiST `gin_trgm_ops` indexes are not created by this package.
 
 Targets `net10.0`. Call after `AddLyoQueryServices()`.
 
@@ -39,7 +41,8 @@ var filtered = whereClauseService.ApplyWhereClause(db.People, where);
 
 ## Indexes
 
-The `%` operator can use a GIN/GiST `gin_trgm_ops` index more readily than `similarity() >= n`. v1 emits `similarity()` so mixed per-condition thresholds in one tree stay correct. Add `CREATE INDEX … USING gist (lower(name) gist_trgm_ops)` on hot columns if you own the schema; this package does not.
+The `%` operator can use a GIN/GiST `gin_trgm_ops` index more readily than `similarity() >= n`. v1 emits `similarity()` so mixed per-condition thresholds in one tree stay correct.
+Add `CREATE INDEX … USING gist (lower(name) gist_trgm_ops)` on hot columns if you own the schema; this package does not.
 
 ## Dependencies
 

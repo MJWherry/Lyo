@@ -1,6 +1,8 @@
 # Lyo.Web.Automation.Web.Components
 
-AutomationPlanHost is a selection bar plus Manage, Editor, and Runner. Manage is a query grid on Automation/Plans. Editor is AutomationPlanWorkbench. Runner is AutomationPlanRunnerView, a two-pane view of each step screenshot and context. Pass IAutomationPlanClient and IApiClient in. The components do not inject them and do not launch a browser. Recording stays on the TypeScript studio.
+AutomationPlanHost is a selection bar plus Manage, Editor, and Runner. Manage is a query grid on Automation/Plans. Editor is AutomationPlanWorkbench. Runner is
+AutomationPlanRunnerView, a two-pane view of each step screenshot and context. Pass IAutomationPlanClient and IApiClient in. The components do not inject them and do not launch a
+browser. Recording stays on the TypeScript studio.
 
 ## Features
 

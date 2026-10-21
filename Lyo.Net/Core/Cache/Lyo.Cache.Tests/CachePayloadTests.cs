@@ -1,9 +1,9 @@
 using System.Text;
 using Lyo.Cache.Fusion;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Compression;
 using Lyo.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Cache.Tests;
 
@@ -80,8 +80,7 @@ public class CachePayloadTests
         services.AddSingleton(new CacheOptions { Payload = new() { AutoCompress = false } });
         services.AddCompressionService();
         services.AddDefaultCompressionService<CompressionService>();
-        services.AddSingleton<ICachePayloadCodec>(sp => new CachePayloadCodec(
-            sp.GetRequiredService<CacheOptions>(), sp.GetRequiredService<ICompressionService>()));
+        services.AddSingleton<ICachePayloadCodec>(sp => new CachePayloadCodec(sp.GetRequiredService<CacheOptions>(), sp.GetRequiredService<ICompressionService>()));
         var codec = services.BuildServiceProvider().GetRequiredService<ICachePayloadCodec>();
         var framed = codec.Encode([1, 2, 3, 4]);
         codec.IsFramed(framed).ShouldBeTrue();

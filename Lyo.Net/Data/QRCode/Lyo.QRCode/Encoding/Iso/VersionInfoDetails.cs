@@ -17,9 +17,7 @@ internal sealed partial class QRIsoEncoder
         /// <summary>Error-correction level. Controls how robust the symbol is against damage.</summary>
         public ECCLevel ErrorCorrectionLevel { get; }
 
-        /// <summary>
-        /// Capacities of each encoding mode at this error-correction level. Each value is how many characters that mode can encode.
-        /// </summary>
+        /// <summary>Capacities of each encoding mode at this error-correction level. Each value is how many characters that mode can encode.</summary>
         public Dictionary<EncodingMode, int> CapacityDict { get; }
     }
 }

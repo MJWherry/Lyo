@@ -18,6 +18,10 @@ namespace Lyo.Authentication.Web.Components;
 
 public partial class AuthTokenGrid
 {
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("DisplayName", "Name"), new("Kind"), new("Ring")];
+
+    private LyoDataGridProjected? _dataGrid;
+
     [Parameter]
     [EditorRequired]
     public IApiClient ApiClient { get; set; } = null!;
@@ -55,10 +59,6 @@ public partial class AuthTokenGrid
     private IAuthTokenManagementClient? TokenClient => Services.GetService<IAuthTokenManagementClient>();
 
     private string _route => $"{BaseRoute.TrimEnd('/')}/Token";
-
-    private LyoDataGridProjected? _dataGrid;
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("DisplayName", "Name"), new("Kind"), new("Ring")];
 
     public Task RefreshAsync() => _dataGrid is null ? Task.CompletedTask : _dataGrid.RefreshData();
 
@@ -135,8 +135,7 @@ public partial class AuthTokenGrid
         => await DialogService.ConfirmDeleteAsync(
             subject,
             "The secret hash is destroyed and the row cannot be audited as revoked later. Presenting that id later looks like unknown, not revoked (theft-detection for that id is lost).",
-            "Hard-delete token",
-            "Delete permanently");
+            "Hard-delete token", "Delete permanently");
 
     private async Task RevokeIds(IReadOnlyList<string> ids)
     {
@@ -170,6 +169,7 @@ public partial class AuthTokenGrid
             Snackbar.Add("Token(s) permanently deleted.", Severity.Success);
             if (_dataGrid is not null)
                 await _dataGrid.ClearSelectionAsync();
+
             await RefreshAsync();
         }
         catch (Exception ex) {

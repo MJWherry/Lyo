@@ -39,8 +39,7 @@ public static class AutomationPlanInterpolation
     /// <item><c>page.url</c>, <c>page.title</c>. current document (requires <see cref="AutomationPlanInterpolationBindings.Browser" />).</item>
     /// <item><c>elements.ref.text</c> or <c>el.ref.text</c>. visible text of element ref <c>ref</c>.</item> <item><c>elements.ref.attr.href</c>. DOM attribute.</item>
     /// </list>
-    /// If the full selector matches a string variable key (including keys with dots), that value wins first. A SmartFormat format specifier after <c>:</c> is ignored for
-    /// resolution; only
+    /// If the full selector matches a string variable key (including keys with dots), that value wins first. A SmartFormat format specifier after <c>:</c> is ignored for resolution; only
     /// the selector before <c>:</c> is used.
     /// </remarks>
     public static async Task<string> ExpandAsync(string template, AutomationPlanInterpolationBindings bindings, IFormatterService? formatter, CancellationToken ct = default)
@@ -51,7 +50,6 @@ public static class AutomationPlanInterpolation
             return template;
 
         var work = template;
-
         if (formatter != null && !formatter.TryValidateTemplate(work, out var err))
             throw new InvalidOperationException($"Automation plan template is invalid: {err}");
 

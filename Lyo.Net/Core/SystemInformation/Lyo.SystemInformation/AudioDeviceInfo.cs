@@ -5,8 +5,8 @@ namespace Lyo.SystemInformation;
 /// <param name="Kind"><see cref="Playback" />, <see cref="Capture" />, or <see cref="Duplex" />.</param>
 /// <param name="Description">Card long name on Linux, or the Windows device description. Null when the platform does not report one.</param>
 /// <param name="FormFactor">
-/// Windows endpoint form factor (for example <c>Speakers</c>, <c>Headphones</c>, <c>Headset</c>, <c>Microphone</c>, <c>Hdmi</c>). Null on Linux, where ALSA proc does not classify
-/// speakers.
+/// Windows endpoint form factor (for example <c>Speakers</c>, <c>Headphones</c>, <c>Headset</c>, <c>Microphone</c>, <c>Hdmi</c>). Null on Linux, where ALSA
+/// proc does not classify speakers.
 /// </param>
 /// <param name="IsDefault">True when this is the console default for its direction. Null when the platform does not report a default.</param>
 public sealed record AudioDeviceInfo(string Name, string Kind, string? Description, string? FormFactor, bool? IsDefault)

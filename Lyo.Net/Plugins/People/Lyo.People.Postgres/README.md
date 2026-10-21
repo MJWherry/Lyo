@@ -2,7 +2,8 @@
 
 EF Core persistence of Lyo.People.Models in PostgreSQL.
 
-**Archetype E (plugin).** Vendor clients such as [`Lyo.Endato.Client`](../../../Integration/Endato/Lyo.Endato.Client/README.md) map into this schema in the host. See [package layout](../../../docs/package-layout.md).
+**Archetype E (plugin).** Vendor clients such as [`Lyo.Endato.Client`](../../../Integration/Endato/Lyo.Endato.Client/README.md) map into this schema in the host.
+See [package layout](../../../docs/package-layout.md).
 
 ## Features
 
@@ -17,7 +18,8 @@ EF Core persistence of Lyo.People.Models in PostgreSQL.
 - **identification.** ID documents (driver's license, passport, SSN, and similar).
 - **person_relationship.** Links between people.
 - **employment.** Employment history.
-- **person_source, address_source, phone_number_source, email_address_source.** Import provenance via `source_entity_*` plus `imported_at` (see [`PeopleSourceTypes`](../Lyo.People.Models/PeopleSourceTypes.cs)).
+- **person_source, address_source, phone_number_source, email_address_source.** Import provenance via `source_entity_*` plus `imported_at` (see [
+  `PeopleSourceTypes`](../Lyo.People.Models/PeopleSourceTypes.cs)).
 - **contact_address_source, contact_phone_number_source, contact_email_address_source.** Optional junction-level provenance (same shape).
 
 ## Examples
@@ -74,7 +76,8 @@ dotnet ef migrations add MigrationName --project Plugins/People/Lyo.People.Postg
 - **identification.** ID documents (driver's license, passport, SSN, and similar).
 - **person_relationship.** Links between people.
 - **employment.** Employment history.
-- **person_source, address_source, phone_number_source, email_address_source.** Import provenance via `source_entity_*` plus `imported_at` (see [`PeopleSourceTypes`](../Lyo.People.Models/PeopleSourceTypes.cs)).
+- **person_source, address_source, phone_number_source, email_address_source.** Import provenance via `source_entity_*` plus `imported_at` (see [
+  `PeopleSourceTypes`](../Lyo.People.Models/PeopleSourceTypes.cs)).
 - **contact_address_source, contact_phone_number_source, contact_email_address_source.** Optional junction-level provenance (same shape).
 
 ## `IPeopleStore`
@@ -88,7 +91,9 @@ services.AddPostgresPeopleStore();
 
 ## Registration
 
-Everything is an `IServiceCollection` extension. No people-domain service is registered. Consumers resolve `PeopleDbContext` (scoped) or `IDbContextFactory<PeopleDbContext>` (singleton) and write their own repositories. The factory overloads also call `services.AddPostgresMigrations<PeopleDbContext, PostgresPeopleOptions>()` from `Lyo.Postgres`, which honours `PostgresPeopleOptions.EnableAutoMigrations` and stamps the `__EFMigrationsHistory` table inside the `people` schema.
+Everything is an `IServiceCollection` extension. No people-domain service is registered. Consumers resolve `PeopleDbContext` (scoped) or `IDbContextFactory<PeopleDbContext>`
+(singleton) and write their own repositories. The factory overloads also call `services.AddPostgresMigrations<PeopleDbContext, PostgresPeopleOptions>()` from `Lyo.Postgres`, which
+honours `PostgresPeopleOptions.EnableAutoMigrations` and stamps the `__EFMigrationsHistory` table inside the `people` schema.
 
 ## Config section
 

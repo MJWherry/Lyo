@@ -7,9 +7,9 @@ namespace Lyo.Common.Core.Archives;
 
 /// <summary>Fluent builder that packs bytes, streams, text, and disk files into one ZIP archive.</summary>
 /// <remarks>
-/// Call <see cref="Create" /> or <c>Open</c>, then <c>With*</c> for archive options and <c>Add*</c> or <see cref="Remove" /> for entries.
-/// Nothing is written until <see cref="Build" />, <see cref="BuildTo" />, or their async forms.
-/// Streams passed to <c>AddFile</c> stay open and are copied at build time. Adds after build throw. A second build returns the same bytes.
+/// Call <see cref="Create" /> or <c>Open</c>, then <c>With*</c> for archive options and <c>Add*</c> or <see cref="Remove" /> for entries. Nothing is written until
+/// <see cref="Build" />, <see cref="BuildTo" />, or their async forms. Streams passed to <c>AddFile</c> stay open and are copied at build time. Adds after build throw. A second build
+/// returns the same bytes.
 /// </remarks>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class ZipFileBuilder
@@ -25,9 +25,7 @@ public sealed class ZipFileBuilder
     private CompressionLevel _compressionLevel = CompressionLevel.Optimal;
     private byte[]? _built;
 
-    private ZipFileBuilder()
-    {
-    }
+    private ZipFileBuilder() { }
 
     /// <summary>Starts a new builder.</summary>
     /// <returns>An empty builder.</returns>
@@ -184,9 +182,7 @@ public sealed class ZipFileBuilder
     /// <summary>Queues every file under a directory, plus an entry for each empty subdirectory.</summary>
     /// <param name="directoryPath">Directory to include.</param>
     /// <param name="entryPrefix">Prefix prepended to each entry name. Empty leaves paths relative to <paramref name="directoryPath" />.</param>
-    /// <param name="include">
-    /// When set, a file is skipped if this returns false for its relative path (<c>/</c> separators, no leading slash). Empty directories are still included.
-    /// </param>
+    /// <param name="include">When set, a file is skipped if this returns false for its relative path (<c>/</c> separators, no leading slash). Empty directories are still included.</param>
     /// <param name="options">Optional compression, comment, and Unix mode applied to every queued entry. Last-write time and Unix mode fall back to the disk file.</param>
     /// <returns>This builder.</returns>
     public ZipFileBuilder AddDirectory(string directoryPath, string entryPrefix = "", Func<string, bool>? include = null, ZipEntryOptions options = default)
@@ -341,23 +337,14 @@ public sealed class ZipFileBuilder
     /// <returns>Text covering built state and entry count.</returns>
     public override string ToString() => $"ZipFileBuilder: Built={_built is not null}, Entries={_entries.Count}";
 
-    private void AddPending(
-        string name,
-        ZipEntryOptions options,
-        bool isDirectory,
-        byte[]? bytes,
-        Stream? source,
-        string? filePath,
-        DateTimeOffset lastWriteTime,
-        int? unixMode)
+    private void AddPending(string name, ZipEntryOptions options, bool isDirectory, byte[]? bytes, Stream? source, string? filePath, DateTimeOffset lastWriteTime, int? unixMode)
     {
         var key = name.TrimEnd('/');
         ArgumentHelpers.ThrowIf(!_names.Add(key), $"ZIP entry '{name}' is already present.");
         _entries.Add(new(name, options.CompressionLevel, lastWriteTime, options.Comment, unixMode, isDirectory, bytes, source, filePath));
     }
 
-    private void EnsureOpen()
-        => OperationHelpers.ThrowIf(_closed || _built is not null, "ZipFileBuilder has already been built. Create a new instance to build another zip file.");
+    private void EnsureOpen() => OperationHelpers.ThrowIf(_closed || _built is not null, "ZipFileBuilder has already been built. Create a new instance to build another zip file.");
 
     private void Close()
     {
@@ -373,7 +360,7 @@ public sealed class ZipFileBuilder
     private void ReadExisting(Stream stream)
     {
         var position = stream.Position;
-        using var archive = new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen: true);
+        using var archive = new ZipArchive(stream, ZipArchiveMode.Read, true);
 #if !NETSTANDARD2_0
         if (!string.IsNullOrEmpty(archive.Comment))
             _comment = archive.Comment;
@@ -419,7 +406,7 @@ public sealed class ZipFileBuilder
     private void CreateTo(Stream destination)
     {
         var target = BeginCreate(destination, out var buffer);
-        using (var archive = new ZipArchive(target, ZipArchiveMode.Create, leaveOpen: true)) {
+        using (var archive = new ZipArchive(target, ZipArchiveMode.Create, true)) {
             SetArchiveComment(archive);
             foreach (var pending in _entries)
                 WritePending(archive, pending);
@@ -431,7 +418,7 @@ public sealed class ZipFileBuilder
     private async Task CreateToAsync(Stream destination, CancellationToken ct)
     {
         var target = BeginCreate(destination, out var buffer);
-        using (var archive = new ZipArchive(target, ZipArchiveMode.Create, leaveOpen: true)) {
+        using (var archive = new ZipArchive(target, ZipArchiveMode.Create, true)) {
             SetArchiveComment(archive);
             foreach (var pending in _entries)
                 await WritePendingAsync(archive, pending, ct).ConfigureAwait(false);
@@ -446,7 +433,7 @@ public sealed class ZipFileBuilder
         if (!NeedsByteCommentPatch || destination.CanSeek)
             return destination;
 
-        buffer = new MemoryStream();
+        buffer = new();
         return buffer;
     }
 
@@ -464,7 +451,7 @@ public sealed class ZipFileBuilder
 
     private void UpdateInPlace(Stream destination)
     {
-        using var archive = new ZipArchive(destination, ZipArchiveMode.Update, leaveOpen: true);
+        using var archive = new ZipArchive(destination, ZipArchiveMode.Update, true);
         SetArchiveComment(archive);
         DeleteRemoved(archive);
         foreach (var pending in _entries)
@@ -473,7 +460,7 @@ public sealed class ZipFileBuilder
 
     private async Task UpdateInPlaceAsync(Stream destination, CancellationToken ct)
     {
-        using var archive = new ZipArchive(destination, ZipArchiveMode.Update, leaveOpen: true);
+        using var archive = new ZipArchive(destination, ZipArchiveMode.Update, true);
         SetArchiveComment(archive);
         DeleteRemoved(archive);
         foreach (var pending in _entries)
@@ -775,14 +762,13 @@ public sealed class ZipFileBuilder
 
     private static ushort ReadUInt16(byte[] buffer, int offset) => (ushort)(buffer[offset] | (buffer[offset + 1] << 8));
 
-    private static int ReadInt32(byte[] buffer, int offset)
-        => buffer[offset] | (buffer[offset + 1] << 8) | (buffer[offset + 2] << 16) | (buffer[offset + 3] << 24);
+    private static int ReadInt32(byte[] buffer, int offset) => buffer[offset] | (buffer[offset + 1] << 8) | (buffer[offset + 2] << 16) | (buffer[offset + 3] << 24);
 
     private static long ReadInt64(byte[] buffer, int offset)
     {
         var low = (uint)ReadInt32(buffer, offset);
         var high = (uint)ReadInt32(buffer, offset + 4);
-        return (long)low | ((long)high << 32);
+        return low | ((long)high << 32);
     }
 
     private static void WriteInt64(byte[] buffer, int offset, long value)
@@ -878,12 +864,7 @@ public sealed class ZipFileBuilder
             }
         }
 
-        FormatHelpers.ThrowIf(
-            rooted || parent,
-            "ZIP entry name must be a relative path without a '..' segment.",
-            nameof(entryName),
-            entryName,
-            "relative/path/file.txt");
+        FormatHelpers.ThrowIf(rooted || parent, "ZIP entry name must be a relative path without a '..' segment.", nameof(entryName), entryName, "relative/path/file.txt");
         var trimmed = normalized.Trim('/');
         ArgumentHelpers.ThrowIf(trimmed.Length == 0, "ZIP entry name is empty.", nameof(entryName));
         return trimmed;
@@ -927,13 +908,21 @@ public sealed class ZipFileBuilder
         string? filePath)
     {
         public string Name { get; } = name;
+
         public CompressionLevel? Level { get; } = level;
+
         public DateTimeOffset LastWriteTime { get; } = lastWriteTime;
+
         public string? Comment { get; } = comment;
+
         public int? UnixMode { get; } = unixMode;
+
         public bool IsDirectory { get; } = isDirectory;
+
         public byte[]? Bytes { get; } = bytes;
+
         public Stream? Source { get; } = source;
+
         public string? FilePath { get; } = filePath;
     }
 }

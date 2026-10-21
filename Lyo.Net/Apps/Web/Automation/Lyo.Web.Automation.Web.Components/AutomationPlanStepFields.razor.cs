@@ -10,59 +10,60 @@ public partial class AutomationPlanStepFields : ComponentBase
     /// <summary>Action discriminators the runner accepts.</summary>
     public static readonly string[] ActionTypes = ["click", "inputText", "sendKeys", "clear", "submit", "selectByText", "selectByValue", "selectByIndex", "dropdown"];
 
-    private AutomationStepDefinition? _loaded;
-    private string _type = "";
-    private string _name = "";
-    private string _url = "";
-    private string _refName = "";
-    private string _parentRef = "";
-    private ElementLocatorKind _locatorKind = ElementLocatorKind.CssSelector;
-    private string _locatorValue = "";
-    private string _actionType = "click";
     private string _actionText = "";
-    private DropdownSelectionMode _dropdownMode = DropdownSelectionMode.Auto;
-    private bool _clickTrigger = true;
-    private string _scopeParent = "";
-    private string _variable = "";
-    private string _value = "";
-    private string _sourceVariable = "";
-    private int _delayMs = 500;
-    private int _width = 1280;
-    private int _height = 720;
-    private int _jitter;
-    private int _tabIndex;
-    private string _tabKey = "";
-    private string _urlPattern = "";
-    private int _listenMs = 3000;
-    private string _urlListVariable = "urls";
-    private string _targetDirectory = "downloads";
-    private string _filePrefix = "";
-    private string _fromStep = "";
-    private string _values = "";
+    private string _actionType = "click";
+    private bool _append;
+    private string _attribute = "";
     private string _attributes = "";
+    private string _body = "";
+    private bool _clickTrigger = true;
+    private bool _dedupe = true;
+    private int _delayMs = 500;
+    private DropdownSelectionMode _dropdownMode = DropdownSelectionMode.Auto;
     private string _elementsList = "elements";
     private ElementDataExtractKind _extractKind = ElementDataExtractKind.Text;
-    private string _attribute = "";
-    private bool _append;
-    private bool _resolve = true;
-    private bool _dedupe = true;
-    private bool _split = true;
+    private string _filePrefix = "";
+    private string _fromStep = "";
+    private int _height = 720;
+    private int _jitter;
+    private int _listenMs = 3000;
+
+    private AutomationStepDefinition? _loaded;
+    private ElementLocatorKind _locatorKind = ElementLocatorKind.CssSelector;
+    private string _locatorValue = "";
     private string _method = "GET";
-    private string _body = "";
-    private string _statusVariable = "";
+    private string _methodName = "";
+    private string _name = "";
+    private List<PairRow> _pairs = [];
+    private string _parentRef = "";
+    private string _prefix = "";
+    private string _refName = "";
+    private bool _resolve = true;
     private string _responseVariable = "";
+    private string _resultVariable = "";
     private string _savedPathVariable = "";
+    private string _scopeParent = "";
+    private List<SegmentRow> _segments = [];
+    private string _service = "";
+    private List<SizeRow> _sizes = [];
+    private string _sourceVariable = "";
+    private bool _split = true;
+    private string _statusVariable = "";
+    private string _storedList = "";
+    private int _tabIndex;
+    private string _tabKey = "";
+    private string _targetDirectory = "downloads";
     private string _targetFile = "";
     private string _targetName = "";
-    private string _prefix = "";
-    private string _storedList = "";
-    private string _service = "";
-    private string _methodName = "";
     private bool _throwMissing = true;
-    private string _resultVariable = "";
-    private List<SegmentRow> _segments = [];
-    private List<PairRow> _pairs = [];
-    private List<SizeRow> _sizes = [];
+    private string _type = "";
+    private string _url = "";
+    private string _urlListVariable = "urls";
+    private string _urlPattern = "";
+    private string _value = "";
+    private string _values = "";
+    private string _variable = "";
+    private int _width = 1280;
 
     /// <summary>Step being edited.</summary>
     [Parameter]
@@ -71,6 +72,8 @@ public partial class AutomationPlanStepFields : ComponentBase
     /// <summary>Raised with a replacement step after a field changes.</summary>
     [Parameter]
     public EventCallback<AutomationStepDefinition> StepChanged { get; set; }
+
+    private string? NameOrNull => string.IsNullOrWhiteSpace(_name) ? null : _name;
 
     /// <inheritdoc />
     protected override void OnParametersSet()
@@ -81,8 +84,6 @@ public partial class AutomationPlanStepFields : ComponentBase
         _loaded = Step;
         Load(Step);
     }
-
-    private string? NameOrNull => string.IsNullOrWhiteSpace(_name) ? null : _name;
 
     private void Touch()
     {
@@ -150,6 +151,7 @@ public partial class AutomationPlanStepFields : ComponentBase
                 _sizes = (random.Sizes ?? []).Select(size => new SizeRow(size.Width, size.Height)).ToList();
                 if (_sizes.Count == 0)
                     _sizes.Add(new(1280, 720));
+
                 break;
             case SwitchToTabByIndexAutomationStep tab:
                 _tabIndex = tab.TabIndex;
@@ -284,7 +286,7 @@ public partial class AutomationPlanStepFields : ComponentBase
             "upsertJsonRecords" => new UpsertJsonRecordsAutomationStep(_variable, _targetName, name),
             "uploadDirectoryToFileStorage" => new UploadDirectoryToFileStorageAutomationStep(_targetDirectory, _prefix, Blank(_storedList), name),
             "invokeDiMethod" => new InvokeDiMethodAutomationStep(_service, _methodName, Pairs(), _throwMissing, Blank(_resultVariable), name),
-            _ => Step!
+            var _ => Step!
         };
     }
 
@@ -295,8 +297,7 @@ public partial class AutomationPlanStepFields : ComponentBase
         _locatorValue = locator.Value;
     }
 
-    private void LoadChain(ElementLocatorChain chain)
-        => _segments = chain.Segments.Select(segment => new SegmentRow(segment.Kind, segment.Value)).ToList();
+    private void LoadChain(ElementLocatorChain chain) => _segments = chain.Segments.Select(segment => new SegmentRow(segment.Kind, segment.Value)).ToList();
 
     private void LoadAction(ElementAction action)
     {
@@ -349,8 +350,9 @@ public partial class AutomationPlanStepFields : ComponentBase
     {
         var segments = _segments.Where(segment => !string.IsNullOrWhiteSpace(segment.Value)).Select(segment => new ElementLocator(segment.Kind, segment.Value)).ToArray();
         if (segments.Length == 0)
-            segments = [new ElementLocator(ElementLocatorKind.CssSelector, "#main")];
-        return new ElementLocatorChain(segments);
+            segments = [new(ElementLocatorKind.CssSelector, "#main")];
+
+        return new(segments);
     }
 
     private ElementAction Action()
@@ -362,8 +364,9 @@ public partial class AutomationPlanStepFields : ComponentBase
             "selectByText" => new SelectByTextElementAction(_actionText),
             "selectByValue" => new SelectByValueElementAction(_actionText),
             "selectByIndex" => new SelectByIndexElementAction(int.TryParse(_actionText, out var index) ? index : 0),
-            "dropdown" => new DropdownElementAction(_dropdownMode, _actionText, null, null, string.IsNullOrWhiteSpace(_locatorValue) ? null : Locator(), _clickTrigger, Blank(_scopeParent)),
-            _ => new ClickElementAction()
+            "dropdown" => new DropdownElementAction(
+                _dropdownMode, _actionText, null, null, string.IsNullOrWhiteSpace(_locatorValue) ? null : Locator(), _clickTrigger, Blank(_scopeParent)),
+            var _ => new ClickElementAction()
         };
 
     private Dictionary<string, string>? Pairs()
@@ -376,11 +379,9 @@ public partial class AutomationPlanStepFields : ComponentBase
 
     private static string? Blank(string text) => string.IsNullOrWhiteSpace(text) ? null : text;
 
-    private static string[] SplitLines(string text)
-        => text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    private static string[] SplitLines(string text) => text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-    private static string[] SplitCsv(string text)
-        => text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    private static string[] SplitCsv(string text) => text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
     private void AddSegment()
     {
@@ -403,18 +404,21 @@ public partial class AutomationPlanStepFields : ComponentBase
     private sealed class SegmentRow(ElementLocatorKind kind, string value)
     {
         public ElementLocatorKind Kind { get; set; } = kind;
+
         public string Value { get; set; } = value;
     }
 
     private sealed class PairRow(string key, string value)
     {
         public string Key { get; set; } = key;
+
         public string Value { get; set; } = value;
     }
 
     private sealed class SizeRow(int width, int height)
     {
         public int Width { get; set; } = width;
+
         public int Height { get; set; } = height;
     }
 }

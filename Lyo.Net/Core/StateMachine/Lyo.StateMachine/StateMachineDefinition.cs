@@ -7,13 +7,13 @@ namespace Lyo.StateMachine;
 
 /// <summary>An immutable, thread-safe state machine definition built by <see cref="StateMachineBuilder{TState,TTrigger,TContext}" />.</summary>
 /// <remarks>
-/// The definition holds rules only. Per-entity state lives in a <see cref="StateSnapshot{TState}" /> the caller keeps (in memory for a game, in a store for a job).
-/// Firing never mutates the snapshot: a transition or re-entry returns a new one with the version incremented; internal and ignored triggers return the same one.
-/// Invalid transitions come back as a <see cref="TransitionResult{TState}" /> rejection; only programming errors throw.
+/// The definition holds rules only. Per-entity state lives in a <see cref="StateSnapshot{TState}" /> the caller keeps (in memory for a game, in a store for a job). Firing never
+/// mutates the snapshot: a transition or re-entry returns a new one with the version incremented; internal and ignored triggers return the same one. Invalid transitions come back as
+/// a <see cref="TransitionResult{TState}" /> rejection; only programming errors throw.
 /// <para>
-/// Hook order for a transition: exit hooks from the current state up to (not including) the common ancestor, then transition hooks, then entry hooks from below the
-/// common ancestor down to the destination (and on into initial substates), then observers. Hook paths are precomputed at build time. Exceptions from guards,
-/// hooks, and selectors are wrapped in <see cref="StateMachineHookException" />; cancellation is checked before each hook.
+/// Hook order for a transition: exit hooks from the current state up to (not including) the common ancestor, then transition hooks, then entry hooks from below the common
+/// ancestor down to the destination (and on into initial substates), then observers. Hook paths are precomputed at build time. Exceptions from guards, hooks, and selectors are
+/// wrapped in <see cref="StateMachineHookException" />; cancellation is checked before each hook.
 /// </para>
 /// <para>Snapshot times and the clock must be UTC.</para>
 /// </remarks>
@@ -34,6 +34,24 @@ public sealed class StateMachineDefinition<TState, TTrigger, TContext>
     private readonly Action<TContext, TState, TTrigger>? _unhandledCallback;
     private readonly UnhandledTriggerPolicy _unhandledPolicy;
 
+    /// <summary>Machine name. Stores key saved instances by it.</summary>
+    public string Name { get; }
+
+    /// <summary>State new instances start in, before drilling into initial substates.</summary>
+    public TState InitialState { get; }
+
+    /// <summary>Every known state, in the order first mentioned on the builder.</summary>
+    public IReadOnlyList<TState> States { get; }
+
+    /// <summary>True when any hook or internal action is async. Such machines must be fired with <c>FireAsync</c>.</summary>
+    public bool HasAsyncHooks { get; }
+
+    internal IReadOnlyDictionary<TState, StateNode<TState, TTrigger, TContext>> Nodes { get; }
+
+    internal IReadOnlyList<Hook<TState, TTrigger, TContext>> TransitionHooks => _transitionHooks;
+
+    internal IReadOnlyDictionary<TTrigger, Type?> PayloadTypes => _payloadTypes;
+
     internal StateMachineDefinition(DefinitionSettings<TState, TTrigger, TContext> settings)
     {
         Name = settings.Name;
@@ -53,27 +71,9 @@ public sealed class StateMachineDefinition<TState, TTrigger, TContext>
 
         ValidateTimers();
         _initialLeaf = Drill(InitialState);
-        HasAsyncHooks = _transitionHooks.Any(h => h.IsAsync)
-            || Nodes.Values.Any(n => n.Entry.Any(h => h.IsAsync) || n.Exit.Any(h => h.IsAsync) || n.Rules.Any(r => r.Action?.IsAsync == true));
+        HasAsyncHooks = _transitionHooks.Any(h => h.IsAsync) ||
+            Nodes.Values.Any(n => n.Entry.Any(h => h.IsAsync) || n.Exit.Any(h => h.IsAsync) || n.Rules.Any(r => r.Action?.IsAsync == true));
     }
-
-    /// <summary>Machine name. Stores key saved instances by it.</summary>
-    public string Name { get; }
-
-    /// <summary>State new instances start in, before drilling into initial substates.</summary>
-    public TState InitialState { get; }
-
-    /// <summary>Every known state, in the order first mentioned on the builder.</summary>
-    public IReadOnlyList<TState> States { get; }
-
-    /// <summary>True when any hook or internal action is async. Such machines must be fired with <c>FireAsync</c>.</summary>
-    public bool HasAsyncHooks { get; }
-
-    internal IReadOnlyDictionary<TState, StateNode<TState, TTrigger, TContext>> Nodes { get; }
-
-    internal IReadOnlyList<Hook<TState, TTrigger, TContext>> TransitionHooks => _transitionHooks;
-
-    internal IReadOnlyDictionary<TTrigger, Type?> PayloadTypes => _payloadTypes;
 
     /// <summary>A version-0 snapshot in <see cref="InitialState" /> (or its initial substate), with its timer armed.</summary>
     /// <exception cref="StateMachineConfigurationException">The clock returned a non-UTC time.</exception>
@@ -180,7 +180,9 @@ public sealed class StateMachineDefinition<TState, TTrigger, TContext>
             }
         }
 
-        var deadEnds = States.Where(s => !Nodes[s].IsFinal && !Nodes[s].HasInitialSubstate && !_compiled[s].Table.Values.Any(rs => rs.Any(r => r.Rule.Kind is RuleKind.Permit or RuleKind.Dynamic)));
+        var deadEnds = States.Where(s
+            => !Nodes[s].IsFinal && !Nodes[s].HasInitialSubstate && !_compiled[s].Table.Values.Any(rs => rs.Any(r => r.Rule.Kind is RuleKind.Permit or RuleKind.Dynamic)));
+
         return new(States.Where(s => !reached.Contains(s)).ToArray(), deadEnds.ToArray());
 
         void Reach(TState state)
@@ -203,9 +205,8 @@ public sealed class StateMachineDefinition<TState, TTrigger, TContext>
 
     /// <summary>Describes the machine as a <see cref="StateMachineDocument" /> for saving to an <see cref="IStateMachineDefinitionStore" />.</summary>
     /// <remarks>
-    /// Round-trips exactly for machines built by <see cref="StateMachineDocumentLoader" />. For code-built machines, guard descriptions become guard names (an
-    /// undescribed guard is exported as "guard"), and hooks, actions, and selectors without a registry name are left out, so register matching names before loading
-    /// the result.
+    /// Round-trips exactly for machines built by <see cref="StateMachineDocumentLoader" />. For code-built machines, guard descriptions become guard names (an undescribed guard
+    /// is exported as "guard"), and hooks, actions, and selectors without a registry name are left out, so register matching names before loading the result.
     /// </remarks>
     public StateMachineDocument ToDocument(IStateKeyConverter<TState> stateConverter, IStateKeyConverter<TTrigger> triggerConverter, int revision = 0)
     {
@@ -216,30 +217,33 @@ public sealed class StateMachineDefinition<TState, TTrigger, TContext>
             Revision = revision,
             InitialState = stateConverter.ToKey(InitialState),
             OnTransition = Names(_transitionHooks),
-            States = States.Select(s => Nodes[s]).Select(n => new StateDocument {
-                Name = stateConverter.ToKey(n.State),
-                Parent = n.HasParent ? stateConverter.ToKey(n.Parent) : null,
-                InitialSubstate = n.HasInitialSubstate ? stateConverter.ToKey(n.InitialSubstate) : null,
-                IsFinal = n.IsFinal,
-                OnEntry = Names(n.Entry),
-                OnExit = Names(n.Exit),
-                Timers = n.Timers.Select(t => new TimerDocument { After = t.After, Trigger = triggerConverter.ToKey(t.Trigger) }).ToArray(),
-                Transitions = n.Rules.Select(r => new TransitionDocument {
-                    Kind = r.Kind switch {
-                        RuleKind.Permit => TransitionDocumentKind.Permit,
-                        RuleKind.Reentry => TransitionDocumentKind.Reentry,
-                        RuleKind.Internal => TransitionDocumentKind.Internal,
-                        RuleKind.Ignore => TransitionDocumentKind.Ignore,
-                        _ => TransitionDocumentKind.Dynamic
-                    },
-                    Trigger = triggerConverter.ToKey(r.Trigger),
-                    Destination = r.Kind == RuleKind.Permit ? stateConverter.ToKey(r.Destination) : null,
-                    Destinations = r.Destinations.Select(stateConverter.ToKey).ToArray(),
-                    Guard = r.Guard is null ? null : r.GuardDescription ?? "guard",
-                    Action = r.Action?.Name,
-                    Selector = r.SelectorName
-                }).ToArray()
-            }).ToArray()
+            States = States.Select(s => Nodes[s])
+                .Select(n => new StateDocument {
+                    Name = stateConverter.ToKey(n.State),
+                    Parent = n.HasParent ? stateConverter.ToKey(n.Parent) : null,
+                    InitialSubstate = n.HasInitialSubstate ? stateConverter.ToKey(n.InitialSubstate) : null,
+                    IsFinal = n.IsFinal,
+                    OnEntry = Names(n.Entry),
+                    OnExit = Names(n.Exit),
+                    Timers = n.Timers.Select(t => new TimerDocument { After = t.After, Trigger = triggerConverter.ToKey(t.Trigger) }).ToArray(),
+                    Transitions = n.Rules.Select(r => new TransitionDocument {
+                            Kind = r.Kind switch {
+                                RuleKind.Permit => TransitionDocumentKind.Permit,
+                                RuleKind.Reentry => TransitionDocumentKind.Reentry,
+                                RuleKind.Internal => TransitionDocumentKind.Internal,
+                                RuleKind.Ignore => TransitionDocumentKind.Ignore,
+                                var _ => TransitionDocumentKind.Dynamic
+                            },
+                            Trigger = triggerConverter.ToKey(r.Trigger),
+                            Destination = r.Kind == RuleKind.Permit ? stateConverter.ToKey(r.Destination) : null,
+                            Destinations = r.Destinations.Select(stateConverter.ToKey).ToArray(),
+                            Guard = r.Guard is null ? null : r.GuardDescription ?? "guard",
+                            Action = r.Action?.Name,
+                            Selector = r.SelectorName
+                        })
+                        .ToArray()
+                })
+                .ToArray()
         };
 
         static string[] Names(IEnumerable<Hook<TState, TTrigger, TContext>> hooks) => hooks.Where(h => h.Name is not null).Select(h => h.Name!).ToArray();
@@ -249,7 +253,13 @@ public sealed class StateMachineDefinition<TState, TTrigger, TContext>
 
     private static bool IsWrappable(Exception ex) => ex is not (OperationCanceledException or StateMachineReentrancyException);
 
-    private Task<TransitionResult<TState>> FireAnyAsync(TContext context, StateSnapshot<TState> snapshot, TTrigger trigger, object? payload, Type? payloadType, CancellationToken ct)
+    private Task<TransitionResult<TState>> FireAnyAsync(
+        TContext context,
+        StateSnapshot<TState> snapshot,
+        TTrigger trigger,
+        object? payload,
+        Type? payloadType,
+        CancellationToken ct)
     {
         if (HasAsyncHooks)
             return FireCoreAsync(context, snapshot, trigger, payload, payloadType, ct);
@@ -436,7 +446,12 @@ public sealed class StateMachineDefinition<TState, TTrigger, TContext>
         return false;
     }
 
-    private TransitionPath<TState, TTrigger, TContext> ResolvePath(CompiledRule<TState, TTrigger, TContext> compiled, TContext context, TState source, TTrigger trigger, object? payload)
+    private TransitionPath<TState, TTrigger, TContext> ResolvePath(
+        CompiledRule<TState, TTrigger, TContext> compiled,
+        TContext context,
+        TState source,
+        TTrigger trigger,
+        object? payload)
     {
         if (compiled.Path is not null)
             return compiled.Path;
@@ -597,7 +612,7 @@ public sealed class StateMachineDefinition<TState, TTrigger, TContext>
             RuleKind.Permit => new(rule, BuildPath(source, rule.Destination), null),
             RuleKind.Reentry => new(rule, new(source, Steps([source], false), Steps([source], true)), null),
             RuleKind.Dynamic => new(rule, null, rule.Destinations.Distinct().ToDictionary(d => d, d => BuildPath(source, d))),
-            _ => new(rule, null, null)
+            var _ => new(rule, null, null)
         };
 
     private TransitionPath<TState, TTrigger, TContext> BuildPath(TState source, TState destination)
@@ -655,7 +670,8 @@ public sealed class StateMachineDefinition<TState, TTrigger, TContext>
                     throw new StateMachineConfigurationException($"Timer on state '{state}' fires '{trigger}', which is not permitted from that state.");
 
                 if (_payloadTypes.TryGetValue(trigger, out var payloadType) && payloadType is not null)
-                    throw new StateMachineConfigurationException($"Timer on state '{state}' fires '{trigger}', which takes a {payloadType.Name} payload. Timer triggers cannot take a payload.");
+                    throw new StateMachineConfigurationException(
+                        $"Timer on state '{state}' fires '{trigger}', which takes a {payloadType.Name} payload. Timer triggers cannot take a payload.");
             }
         }
     }

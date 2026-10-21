@@ -3,8 +3,8 @@ using Lyo.Http.Client;
 namespace Lyo.Typecast.Client;
 
 /// <summary>
-/// Settings that control Typecast API client. Inherits <see cref="LyoHttpClientOptions" /> for HTTP transport; use <see cref="LyoHttpClientOptions.BaseUrl" /> for the Typecast
-/// service API root.
+/// Settings that control Typecast API client. Inherits <see cref="LyoHttpClientOptions" /> for HTTP transport; use <see cref="LyoHttpClientOptions.BaseUrl" /> for the
+/// Typecast service API root.
 /// </summary>
 public class TypecastClientOptions : LyoHttpClientOptions
 {

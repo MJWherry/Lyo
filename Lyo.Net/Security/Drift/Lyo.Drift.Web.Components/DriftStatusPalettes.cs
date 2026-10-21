@@ -27,9 +27,7 @@ public sealed class DriftSnapshotKindPalette : ILyoStatusPalette
 
     /// <inheritdoc />
     public LyoChipSpec? Resolve(string? status)
-        => TypeConversion.EnumOrNull<DriftSnapshotKind>(status) is { } kind
-            ? DriftHueChips.Of(LyoStatusText.Humanize(status), DriftColorHelper.ForSnapshotKind(kind))
-            : null;
+        => TypeConversion.EnumOrNull<DriftSnapshotKind>(status) is { } kind ? DriftHueChips.Of(LyoStatusText.Humanize(status), DriftColorHelper.ForSnapshotKind(kind)) : null;
 }
 
 /// <summary>Diff sources for <see cref="LyoStatusChip" />, under <c>Palette="drift.diff"</c>.</summary>
@@ -43,9 +41,7 @@ public sealed class DriftDiffSourcePalette : ILyoStatusPalette
 
     /// <inheritdoc />
     public LyoChipSpec? Resolve(string? status)
-        => TypeConversion.EnumOrNull<DriftDiffSource>(status) is { } source
-            ? DriftHueChips.Of(LyoStatusText.Humanize(status), DriftColorHelper.ForDiffSource(source))
-            : null;
+        => TypeConversion.EnumOrNull<DriftDiffSource>(status) is { } source ? DriftHueChips.Of(LyoStatusText.Humanize(status), DriftColorHelper.ForDiffSource(source)) : null;
 }
 
 /// <summary>File-system change kinds for <see cref="LyoStatusChip" />, under <c>Palette="drift.change"</c>.</summary>
@@ -59,9 +55,7 @@ public sealed class DriftChangeKindPalette : ILyoStatusPalette
 
     /// <inheritdoc />
     public LyoChipSpec? Resolve(string? status)
-        => TypeConversion.EnumOrNull<FileSystemChangeKind>(status) is { } kind
-            ? new LyoChipSpec(LyoStatusText.Humanize(status), DriftColorHelper.ForChangeKind(kind))
-            : null;
+        => TypeConversion.EnumOrNull<FileSystemChangeKind>(status) is { } kind ? new LyoChipSpec(LyoStatusText.Humanize(status), DriftColorHelper.ForChangeKind(kind)) : null;
 }
 
 file static class DriftHueChips

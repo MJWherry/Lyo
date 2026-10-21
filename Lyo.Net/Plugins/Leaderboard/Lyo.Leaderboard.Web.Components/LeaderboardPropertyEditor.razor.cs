@@ -3,6 +3,13 @@ namespace Lyo.Leaderboard.Web.Components;
 /// <summary>Add or edit a form field. Choice options store a key and a number the board formula can read.</summary>
 public partial class LeaderboardPropertyEditor
 {
+    private List<ChoiceEdit> _choices = [];
+
+    private ScoringPropertyRecord _edit = new();
+    private bool _formHasChanges;
+    private bool _initialized;
+    private bool _saving;
+
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = null!;
 
@@ -20,15 +27,12 @@ public partial class LeaderboardPropertyEditor
     [Parameter]
     public ScoringPropertyRecord? Property { get; set; }
 
-    private ScoringPropertyRecord _edit = new();
-    private List<ChoiceEdit> _choices = [];
-    private bool _formHasChanges;
-    private bool _saving;
-    private bool _initialized;
-
     private bool IsNew => Property == null || Property.Id == Guid.Empty;
 
     private bool _canSave => !_saving && !string.IsNullOrWhiteSpace(_edit.Key) && !string.IsNullOrWhiteSpace(_edit.Label) && (_formHasChanges || IsNew);
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; } = null!;
 
     /// <inheritdoc />
     protected override void OnParametersSet()
@@ -41,8 +45,7 @@ public partial class LeaderboardPropertyEditor
         _initialized = true;
     }
 
-    private ScoringPropertyRecord NewProperty()
-        => new() { BoardId = BoardId, ValueKind = ScoringValueKind.Number };
+    private ScoringPropertyRecord NewProperty() => new() { BoardId = BoardId, ValueKind = ScoringValueKind.Number };
 
     private static ScoringPropertyRecord Clone(ScoringPropertyRecord src)
         => new() {
@@ -75,9 +78,7 @@ public partial class LeaderboardPropertyEditor
         _saving = true;
         try {
             _edit.BoardId = BoardId;
-            _edit.Choices = _edit.ValueKind == ScoringValueKind.Choice
-                ? _choices.Select(c => new ScoringChoice { Key = c.Key, Label = c.Label, Value = c.Value }).ToList()
-                : [];
+            _edit.Choices = _edit.ValueKind == ScoringValueKind.Choice ? _choices.Select(c => new ScoringChoice { Key = c.Key, Label = c.Label, Value = c.Value }).ToList() : [];
             await Client.SavePropertyAsync(BoardId, _edit);
             MudDialog.Close(DialogResult.Ok(true));
         }
@@ -89,13 +90,12 @@ public partial class LeaderboardPropertyEditor
         }
     }
 
-    [Inject]
-    private ISnackbar Snackbar { get; set; } = null!;
-
     private sealed class ChoiceEdit
     {
         public string Key { get; set; } = string.Empty;
+
         public string Label { get; set; } = string.Empty;
+
         public double Value { get; set; }
     }
 }

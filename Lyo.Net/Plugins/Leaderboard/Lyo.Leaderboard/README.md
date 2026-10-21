@@ -1,6 +1,7 @@
 # Lyo.Leaderboard
 
-Domain for user-created games. Each board has one score formula. Choice options store a key and a number the formula can read. This package aggregates approved entry totals (sum, best, best-N, average, count, latest).
+Domain for user-created games. Each board has one score formula. Choice options store a key and a number the formula can read. This package aggregates approved entry totals (sum,
+best, best-N, average, count, latest).
 
 ## Features
 

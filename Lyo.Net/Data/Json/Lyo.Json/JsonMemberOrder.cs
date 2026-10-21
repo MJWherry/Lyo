@@ -12,8 +12,7 @@ namespace Lyo.Json;
 public static class JsonMemberOrder
 {
     /// <summary>Reorders <paramref name="node" /> and its nested objects. Names in <paramref name="orderNames" /> are written names.</summary>
-    public static JsonNode? Apply(JsonNode? node, MemberOrder order, IReadOnlyList<string> orderNames)
-        => Apply(node, order, orderNames, null, null);
+    public static JsonNode? Apply(JsonNode? node, MemberOrder order, IReadOnlyList<string> orderNames) => Apply(node, order, orderNames, null, null);
 
     internal static JsonNode? Apply(JsonNode? node, MemberOrder order, IReadOnlyList<string> orderNames, Type? type, JsonNamingPolicy? naming)
     {
@@ -90,6 +89,7 @@ public static class JsonMemberOrder
         foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance)) {
             if (property.GetIndexParameters().Length != 0 || !property.CanRead)
                 continue;
+
             if (SerializedName(property, naming) != key)
                 continue;
 

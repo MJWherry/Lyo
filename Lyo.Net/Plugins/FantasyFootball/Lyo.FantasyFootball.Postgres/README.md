@@ -1,6 +1,7 @@
 # Lyo.FantasyFootball.Postgres
 
-Schema `fantasy_football`. `AddPostgresFantasyFootballStore` and `AddPostgresFantasyFootballStoreFromConfiguration` register an `IDbContextFactory` and `IFantasyFootballStore`. Refresh upserts ESPN ids. A later league save does not delete members or teams that were omitted.
+Schema `fantasy_football`. `AddPostgresFantasyFootballStore` and `AddPostgresFantasyFootballStoreFromConfiguration` register an `IDbContextFactory` and `IFantasyFootballStore`.
+Refresh upserts ESPN ids. A later league save does not delete members or teams that were omitted.
 
 ## Features
 

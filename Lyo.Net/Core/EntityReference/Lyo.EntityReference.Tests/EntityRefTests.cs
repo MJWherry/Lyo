@@ -1,6 +1,6 @@
 using System.Text.Json;
-using Lyo.EntityReference.Models;
 using Lyo.Common.Core.Identifiers;
+using Lyo.EntityReference.Models;
 
 // ReSharper disable PropertyCanBeMadeInitOnly.Local
 

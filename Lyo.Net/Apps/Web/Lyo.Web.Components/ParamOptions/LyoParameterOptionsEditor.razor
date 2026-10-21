@@ -1,5 +1,4 @@
 @using Lyo.Parameters
-@using Lyo.Query.Models.Parameters
 @using Lyo.Web.Components.QueryRequestBuilder
 <MudStack Spacing="2">
     @if (ShowKindSelect) {
@@ -45,9 +44,13 @@
     else if (_kind == ParameterOptionsKind.Sproc) {
         <MudTextField T="string" Value="@_storedProcName" ValueChanged="OnStoredProcNameChanged" Label="Stored proc (schema.func)" Variant="Variant.Outlined"
                       Margin="Margin.Dense" HelperText="Qualified PostgreSQL function name"/>
+
         <MudTextField T="string" Value="@_keyField" ValueChanged="OnKeyFieldChanged" Label="Key field" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+
         <MudTextField T="string" Value="@_labelField" ValueChanged="OnLabelFieldChanged" Label="Label field" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+
         <MudText Typo="Typo.caption" Class="mud-text-secondary">Argument values may use @("{{ParamKey}}") to bind sibling parameters.</MudText>
+
         <MudStack Spacing="1">
             @for (var i = 0; i < _sprocArgs.Count; i++) {
                 var index = i;

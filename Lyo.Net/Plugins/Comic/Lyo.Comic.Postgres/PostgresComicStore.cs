@@ -1,9 +1,9 @@
 using Lyo.Comic.Postgres.Database;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Health;
 using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Comic.Postgres;
 
@@ -332,8 +332,7 @@ public sealed class PostgresComicStore : IComicStore, IHealth
     public string HealthCheckName => "comic-postgres";
 
     /// <inheritdoc />
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => PostgresHealth.CheckAsync(_contextFactory, PostgresComicOptions.Schema, ct);
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => PostgresHealth.CheckAsync(_contextFactory, PostgresComicOptions.Schema, ct);
 
     private static SeriesEntity ToSeriesEntity(ComicSeries r, Guid id)
         => new() {

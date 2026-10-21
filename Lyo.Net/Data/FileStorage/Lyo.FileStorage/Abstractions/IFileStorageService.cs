@@ -89,8 +89,8 @@ public interface IFileStorageService : IHealth
 
     /// <summary>
     /// Writes <paramref name="input" /> through the same compress/encrypt pipeline as the other save methods. The caller keeps the stream open; this method does not dispose
-    /// <paramref name="input" />. Optional <paramref name="charset"/> is stored as given after trim and is not converted. Optional <paramref name="metadata"/> is an opaque
-    /// caller JSON bag.
+    /// <paramref name="input" />. Optional <paramref name="charset" /> is stored as given after trim and is not converted. Optional <paramref name="metadata" /> is an opaque caller JSON
+    /// bag.
     /// </summary>
     /// <param name="metadata">Optional opaque caller JSON bag. Lyo does not interpret keys. Null when omitted.</param>
     Task<FileStoreResult> SaveFromStreamAsync(
@@ -129,9 +129,9 @@ public interface IFileStorageService : IHealth
     Task<FileStoreResult> CompleteDirectUploadAsync(Guid fileId, DirectUploadCompleteRequest? completeRequest = null, CancellationToken ct = default);
 
     /// <summary>
-    /// Aborts direct uploads that began more than <see cref="Models.FileStorageServiceBaseOptions.PendingDirectUploadTtl" /> ago and were never finalized: deletes any
-    /// object the client PUT, tombstones the metadata row, and audits <see cref="Audit.FileAuditEventType.DirectUploadFailed" />. Nothing calls this automatically; run it
-    /// on a schedule from the host (for example a hosted service).
+    /// Aborts direct uploads that began more than <see cref="Models.FileStorageServiceBaseOptions.PendingDirectUploadTtl" /> ago and were never finalized: deletes any object the
+    /// client PUT, tombstones the metadata row, and audits <see cref="Audit.FileAuditEventType.DirectUploadFailed" />. Nothing calls this automatically; run it on a schedule from the
+    /// host (for example a hosted service).
     /// </summary>
     /// <param name="maxUploads">Most rows handled in one call. Call again while it returns this many.</param>
     /// <param name="ct">Cancellation token.</param>
@@ -179,12 +179,12 @@ public interface IFileStorageService : IHealth
     /// <exception cref="FileNotFoundException">Raised when the file is missing and ThrowOnDeleteNotFound is true (the default)</exception>
     /// <remarks>
     /// <para>
-    /// <paramref name="mode" /> must come from operator or retention policy. Do not take <see cref="FileDeletionMode.RemoveObjectAndPurgeMetadata" /> from inbound HTTP/API
-    /// client input (queries, bodies, headers, and similar).
+    /// <paramref name="mode" /> must come from operator or retention policy. Do not take <see cref="FileDeletionMode.RemoveObjectAndPurgeMetadata" /> from inbound HTTP/API client
+    /// input (queries, bodies, headers, and similar).
     /// </para>
     /// <para>
-    /// Metadata is tombstoned or purged before the backing object is removed. If this method throws, the delete is only half done: the metadata row is already gone and the
-    /// object may still sit in storage. Treat a throw as "retry or reconcile", not as "nothing happened".
+    /// Metadata is tombstoned or purged before the backing object is removed. If this method throws, the delete is only half done: the metadata row is already gone and the object
+    /// may still sit in storage. Treat a throw as "retry or reconcile", not as "nothing happened".
     /// </para>
     /// </remarks>
     Task<bool> DeleteFileAsync(Guid fileId, FileDeletionMode mode = FileDeletionMode.RemoveObjectAndTombstoneMetadata, CancellationToken ct = default);
@@ -197,8 +197,8 @@ public interface IFileStorageService : IHealth
     Task<FileStoreResult> GetMetadataAsync(Guid fileId, CancellationToken ct = default);
 
     /// <summary>
-    /// Returns the plaintext hash a client can check after download. The digest is <see cref="Lyo.FileMetadataStore.Models.FileStoreResult.OriginalFileHash" />. Wrapped
-    /// key material is not included.
+    /// Returns the plaintext hash a client can check after download. The digest is <see cref="Lyo.FileMetadataStore.Models.FileStoreResult.OriginalFileHash" />. Wrapped key
+    /// material is not included.
     /// </summary>
     /// <param name="fileId">Id of the file.</param>
     /// <param name="ct">Cancellation token.</param>
@@ -207,9 +207,7 @@ public interface IFileStorageService : IHealth
     /// <exception cref="InvalidOperationException">Raised when the row has no plaintext hash.</exception>
     Task<FileContentIntegrity> GetContentIntegrityAsync(Guid fileId, CancellationToken ct = default);
 
-    /// <summary>
-    /// Re-wraps DEKs that were encrypted under a given KEK version onto the current or latest KEK. Use this when rotating keys so older files pick up the newest KEK.
-    /// </summary>
+    /// <summary>Re-wraps DEKs that were encrypted under a given KEK version onto the current or latest KEK. Use this when rotating keys so older files pick up the newest KEK.</summary>
     /// <param name="sourceKeyId">Key id that originally wrapped the files</param>
     /// <param name="sourceKeyVersion">KEK version to migrate from. When null, every version for this keyId is migrated.</param>
     /// <param name="targetKeyId">Key id to migrate onto. When null, <paramref name="sourceKeyId" /> is reused (same key, new version).</param>
@@ -225,14 +223,12 @@ public interface IFileStorageService : IHealth
         int batchSize = 100,
         CancellationToken ct = default);
 
-    /// <summary>
-    /// Builds a new DEK for each listed file by decrypting and re-encrypting the payload. Can also move the files onto a different key id or version in the same pass.
-    /// </summary>
+    /// <summary>Builds a new DEK for each listed file by decrypting and re-encrypting the payload. Can also move the files onto a different key id or version in the same pass.</summary>
     /// <param name="fileIds">File ids whose DEKs should be rebuilt.</param>
     /// <param name="targetKeyId">Optional target key id. When null, each file keeps its current key id.</param>
     /// <param name="targetKeyVersion">
-    /// Optional target key version. When null and <paramref name="targetKeyId" /> is set, that key's current version is used. When both are null,
-    /// each file keeps its current key version.
+    /// Optional target key version. When null and <paramref name="targetKeyId" /> is set, that key's current version is used. When both are null, each file
+    /// keeps its current key version.
     /// </param>
     /// <param name="batchSize">Files processed per batch. Starts as 100.</param>
     /// <param name="ct">Cancellation token.</param>

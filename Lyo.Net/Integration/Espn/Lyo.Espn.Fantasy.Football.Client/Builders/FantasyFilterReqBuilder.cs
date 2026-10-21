@@ -83,7 +83,6 @@ public sealed class FantasyFilterReqBuilder
     public FantasyFilterReq Build()
     {
         OperationHelpers.ThrowIf(_players == null && _transactions == null && _topics == null, "At least one fantasy filter section must be specified.");
-
         return new() { Players = _players, Transactions = _transactions, Topics = _topics };
     }
 

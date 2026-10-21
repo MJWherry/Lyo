@@ -48,7 +48,8 @@ and writes an elapsed-ms trace on success. Failures come back as
 
 ## Passwords and OCR
 
-Protected PDFs need the document `password` argument. Pages are 1-based. Use [`Lyo.Pdf.Ocr`](../Lyo.Pdf.Ocr/README.md) when rasterization should run with `IOcrEngine` and bounding boxes should be projected back into PDF coordinates.
+Protected PDFs need the document `password` argument. Pages are 1-based. Use [`Lyo.Pdf.Ocr`](../Lyo.Pdf.Ocr/README.md) when rasterization should run with `IOcrEngine` and bounding
+boxes should be projected back into PDF coordinates.
 
 ## Dependencies
 

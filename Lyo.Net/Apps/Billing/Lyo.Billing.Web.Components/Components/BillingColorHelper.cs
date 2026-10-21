@@ -1,6 +1,3 @@
-using Lyo.Ledger;
-using MudBlazor;
-
 namespace Lyo.Billing.Web.Components;
 
 /// <summary>MudBlazor colors for billing enums, matching <c>JobColorHelper</c>.</summary>
@@ -56,7 +53,7 @@ public static class BillingColorHelper
             var _ => Color.Default
         };
 
-    /// <summary>Integer-keyed names for <see cref="Lyo.Web.Components.Models.FilterPropertyDefinition.FromEnum"/> against QueryProject int columns.</summary>
+    /// <summary>Integer-keyed names for <see cref="Lyo.Web.Components.Models.FilterPropertyDefinition.FromEnum" /> against QueryProject int columns.</summary>
     public static Dictionary<string, string> EnumFilterValues<T>()
         where T : struct, Enum
         => Enum.GetValues<T>().ToDictionary(v => Convert.ToInt32(v).ToString(), v => v.ToString());

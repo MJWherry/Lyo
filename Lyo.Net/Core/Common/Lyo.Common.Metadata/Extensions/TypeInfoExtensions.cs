@@ -6,8 +6,8 @@ using Lyo.Common.Metadata.Records;
 namespace Lyo.Common.Metadata.Extensions;
 
 /// <summary>
-/// Helpers that resolve paths, MIME strings, HTTP codes, units, and geographic tokens into Lyo metadata records (<see cref="FileTypeInfo" />,
-/// <see cref="MimeTypeInfo" />, <see cref="HttpStatusCodeInfo" />, <see cref="GeographicInfo" />, and related types).
+/// Helpers that resolve paths, MIME strings, HTTP codes, units, and geographic tokens into Lyo metadata records (<see cref="FileTypeInfo" />, <see cref="MimeTypeInfo" />,
+/// <see cref="HttpStatusCodeInfo" />, <see cref="GeographicInfo" />, and related types).
 /// </summary>
 public static class TypeInfoExtensions
 {

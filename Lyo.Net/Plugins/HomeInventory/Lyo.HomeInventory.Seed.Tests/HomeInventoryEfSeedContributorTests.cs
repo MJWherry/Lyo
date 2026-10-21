@@ -1,5 +1,4 @@
 using Lyo.HomeInventory.Postgres.Database;
-using Lyo.HomeInventory.Seed;
 using Lyo.Seed;
 
 namespace Lyo.HomeInventory.Seed.Tests;
@@ -24,11 +23,12 @@ public sealed class HomeInventoryEfSeedContributorTests
         Assert.Equal(3, stock.Count);
         Assert.Equal(3, movements.Count);
         Assert.Equal(3, attachments.Count);
-        Assert.All(items, item => {
-            Assert.Contains(stock, row => row.ItemId == item.Id);
-            Assert.Contains(movements, row => row.ItemId == item.Id);
-            Assert.Contains(attachments, row => row.EntityId == item.Id);
-        });
+        Assert.All(
+            items, item => {
+                Assert.Contains(stock, row => row.ItemId == item.Id);
+                Assert.Contains(movements, row => row.ItemId == item.Id);
+                Assert.Contains(attachments, row => row.EntityId == item.Id);
+            });
     }
 
     private static async Task<RecordingSeedTransport> SeedAsync(SeedContributor contributor, int count)
@@ -54,6 +54,7 @@ public sealed class HomeInventoryEfSeedContributorTests
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

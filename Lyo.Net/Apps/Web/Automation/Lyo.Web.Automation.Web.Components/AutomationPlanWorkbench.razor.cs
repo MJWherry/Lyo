@@ -7,11 +7,11 @@ namespace Lyo.Web.Automation.Web.Components;
 /// <summary>Edits an automation plan. It does not start a browser. Steps without a form stay in the plan and can be changed in the JSON pane.</summary>
 public partial class AutomationPlanWorkbench : ComponentBase
 {
-    private AutomationPlan _plan = new("Untitled", []);
-    private JsonNode? _jsonNode;
-    private string? _jsonError;
-    private int _selected = -1;
     private string _addType = "navigate";
+    private string? _jsonError;
+    private JsonNode? _jsonNode;
+    private AutomationPlan _plan = new("Untitled", []);
+    private int _selected = -1;
 
     /// <summary>Plan to edit. When null, the workbench starts from an empty untitled plan.</summary>
     [Parameter]
@@ -20,6 +20,8 @@ public partial class AutomationPlanWorkbench : ComponentBase
     /// <summary>Raised after an edit so the host can keep the selection.</summary>
     [Parameter]
     public EventCallback<AutomationPlan> PlanChanged { get; set; }
+
+    private AutomationStepDefinition? Selected => _selected >= 0 && _selected < _plan.Steps.Count ? _plan.Steps[_selected] : null;
 
     /// <inheritdoc />
     protected override void OnParametersSet()
@@ -30,8 +32,6 @@ public partial class AutomationPlanWorkbench : ComponentBase
             SyncJson();
         }
     }
-
-    private AutomationStepDefinition? Selected => _selected >= 0 && _selected < _plan.Steps.Count ? _plan.Steps[_selected] : null;
 
     private void AddStep()
     {
@@ -64,10 +64,7 @@ public partial class AutomationPlanWorkbench : ComponentBase
         SyncFromPlan();
     }
 
-    private void Select(int index)
-    {
-        _selected = index;
-    }
+    private void Select(int index) => _selected = index;
 
     private void OnName(string name)
     {

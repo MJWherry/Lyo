@@ -1,20 +1,33 @@
 # Lyo.StateMachine
 
-Build a `StateMachineDefinition<TState, TTrigger, TContext>` once and share it. The definition holds rules only; each entity keeps a small `StateSnapshot<TState>` (from [`Lyo.StateMachine.Models`](../Lyo.StateMachine.Models/README.md)) in memory or in a store. `TContext` is your host object (character, job row, worker), so guards and hooks stay typed without casts. Definitions can also be loaded from data (`StateMachineDocument`) with guards and hooks resolved by name.
+Build a `StateMachineDefinition<TState, TTrigger, TContext>` once and share it. The definition holds rules only; each entity keeps a small `StateSnapshot<TState>` (from [
+`Lyo.StateMachine.Models`](../Lyo.StateMachine.Models/README.md)) in memory or in a store. `TContext` is your host object (character, job row, worker), so guards and hooks stay
+typed without casts. Definitions can also be loaded from data (`StateMachineDocument`) with guards and hooks resolved by name.
 
 ## Features
 
-- **Precompiled and allocation-light.** `Build()` compiles a trigger table per state with inherited rules and flattened exit/entry hook paths. A flat `Fire` is one dictionary lookup (about 55 ns and 152 B). With no async hooks, `FireAsync` runs synchronously and returns a completed task.
-- **Typed payload triggers.** `Trigger<TTrigger, TPayload>` makes the compiler require the payload when firing. Guards, selectors, internal actions, and `OnEntryFrom` hooks receive it typed.
-- **Results, not exceptions.** An unknown trigger or a failed guard returns a `TransitionResult` rejection. `OnUnhandledTrigger(UnhandledTriggerPolicy.Throw)` or a callback changes the unknown-trigger case.
-- **Rule kinds.** `Permit`, `PermitReentry`, `PermitDynamic` (selector picks from declared destinations), `InternalTransition` (action only; same snapshot and version), and `Ignore` (accepted, nothing runs). `TransitionResult.Kind` says which happened.
-- **Hierarchical states.** `SubstateOf(parent)` inherits the parent's transitions (a child rule overrides). `InitialSubstate(child)` drills into a child whenever the parent is entered. Exit runs child to parent, entry runs parent to child, skipping the common ancestor.
+- **Precompiled and allocation-light.** `Build()` compiles a trigger table per state with inherited rules and flattened exit/entry hook paths. A flat `Fire` is one dictionary
+  lookup (about 55 ns and 152 B). With no async hooks, `FireAsync` runs synchronously and returns a completed task.
+- **Typed payload triggers.** `Trigger<TTrigger, TPayload>` makes the compiler require the payload when firing. Guards, selectors, internal actions, and `OnEntryFrom` hooks receive
+  it typed.
+- **Results, not exceptions.** An unknown trigger or a failed guard returns a `TransitionResult` rejection. `OnUnhandledTrigger(UnhandledTriggerPolicy.Throw)` or a callback changes
+  the unknown-trigger case.
+- **Rule kinds.** `Permit`, `PermitReentry`, `PermitDynamic` (selector picks from declared destinations), `InternalTransition` (action only; same snapshot and version), and
+  `Ignore` (accepted, nothing runs). `TransitionResult.Kind` says which happened.
+- **Hierarchical states.** `SubstateOf(parent)` inherits the parent's transitions (a child rule overrides). `InitialSubstate(child)` drills into a child whenever the parent is
+  entered. Exit runs child to parent, entry runs parent to child, skipping the common ancestor.
 - **Timers.** `After(TimeSpan, trigger)` sets `StateSnapshot.DueAtUtc` on entry. The host drives it with `GetDueTrigger` or `StateMachineInstance.FireDueAsync`.
 - **Validation.** `Analyze()` reports unreachable and dead-end states (states marked `AsFinal()` are allowed to be dead ends). `Strict()` makes `Build()` throw for either.
-- **Hardening.** Guard, hook, and selector exceptions are wrapped in `StateMachineHookException` naming the machine, phase, state, and trigger. Cancellation is checked before every hook. Snapshot times and the clock must be UTC. `GuardReentrancy()` detects a hook firing the same context again.
-- **Observers.** `IStateMachineObserver` gets `OnTransitioned` (with kind and measured duration) and `OnRejected`. Built-in `MetricsStateMachineObserver` (`Lyo.Metrics`) and `LoggingStateMachineObserver` (`ILogger`).
-- **Persistence.** `StateMachineInstance` loads, fires, and saves through any `IStateStore<TState>` with optimistic concurrency, optional conflict retries, typed instance data (`GetDataAsync`/`UpdateDataAsync`), and one operation at a time. `InMemoryStateStore` also implements `IStateInstanceQuery`; see [`Lyo.StateMachine.Postgres`](../Lyo.StateMachine.Postgres/README.md) for a database store.
-- **Data-driven definitions.** `StateMachineRegistry` holds named guards, actions, selectors, and payload declarations. `StateMachineDocumentLoader` builds a definition from a `StateMachineDocument`, reporting every missing name at once. `ToDocument` exports, `StateMachineDocumentJson` serializes, `StateMachineDefinitionCache` loads revisions from an `IStateMachineDefinitionStore`.
+- **Hardening.** Guard, hook, and selector exceptions are wrapped in `StateMachineHookException` naming the machine, phase, state, and trigger. Cancellation is checked before every
+  hook. Snapshot times and the clock must be UTC. `GuardReentrancy()` detects a hook firing the same context again.
+- **Observers.** `IStateMachineObserver` gets `OnTransitioned` (with kind and measured duration) and `OnRejected`. Built-in `MetricsStateMachineObserver` (`Lyo.Metrics`) and
+  `LoggingStateMachineObserver` (`ILogger`).
+- **Persistence.** `StateMachineInstance` loads, fires, and saves through any `IStateStore<TState>` with optimistic concurrency, optional conflict retries, typed instance data
+  (`GetDataAsync`/`UpdateDataAsync`), and one operation at a time. `InMemoryStateStore` also implements `IStateInstanceQuery`; see [
+  `Lyo.StateMachine.Postgres`](../Lyo.StateMachine.Postgres/README.md) for a database store.
+- **Data-driven definitions.** `StateMachineRegistry` holds named guards, actions, selectors, and payload declarations. `StateMachineDocumentLoader` builds a definition from a
+  `StateMachineDocument`, reporting every missing name at once. `ToDocument` exports, `StateMachineDocumentJson` serializes, `StateMachineDefinitionCache` loads revisions from an
+  `IStateMachineDefinitionStore`.
 - **Diagrams.** `ToMermaid()` (stateDiagram-v2 with nested states, initial substates, final states, dynamic and internal edges) and `ToDot()` (Graphviz clusters).
 
 ## Examples
@@ -97,8 +110,10 @@ var definition = await cache.GetAsync("job", ct: ct);
 - Two rules for the same trigger on one state are allowed only when both are guarded; the first passing guard wins.
 - `Permit` to the same state is rejected at build time. Use `PermitReentry` so exit and entry hooks run.
 - `CanFire` and `GetPermittedTriggers` cannot evaluate payload guards and report those rules as permitted.
-- `StateMachineInstance` runs hooks before saving. On a concurrency conflict nothing is saved but hook side effects already happened, and `MaxConflictRetries` runs them again, so keep hooks idempotent.
-- Timers are not inherited: `DueAtUtc` comes from the earliest timer on the state actually entered (after drilling into initial substates). Timer triggers must be permitted from that state and take no payload.
+- `StateMachineInstance` runs hooks before saving. On a concurrency conflict nothing is saved but hook side effects already happened, and `MaxConflictRetries` runs them again, so
+  keep hooks idempotent.
+- Timers are not inherited: `DueAtUtc` comes from the earliest timer on the state actually entered (after drilling into initial substates). Timer triggers must be permitted from
+  that state and take no payload.
 - `PermitDynamic` selectors must return one of the declared destinations; anything else throws `InvalidOperationException`.
 - Internal and ignored triggers return the same snapshot and are not saved by `StateMachineInstance`.
 - A clock that returns a non-UTC time throws `StateMachineConfigurationException` on fire; a non-UTC snapshot throws `ArgumentException`.

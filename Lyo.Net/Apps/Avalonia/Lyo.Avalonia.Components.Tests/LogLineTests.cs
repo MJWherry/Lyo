@@ -22,11 +22,10 @@ public class LogLineTests
     public void Format_WritesTimestampLevelSourceAndMessage()
     {
         var withSource = new LogLine(Stamp, LogLevel.Information, "Connected.", "test");
-        var without = new LogLine(Stamp, LogLevel.Warning, "Disk full.", null);
+        var without = new LogLine(Stamp, LogLevel.Warning, "Disk full.");
         var text = LogLine.Format([withSource, without]);
         Assert.Equal(
-            "2026-10-06T22:30:00.0000000+00:00 Information test Connected." + Environment.NewLine
-            + "2026-10-06T22:30:00.0000000+00:00 Warning Disk full." + Environment.NewLine,
+            "2026-10-06T22:30:00.0000000+00:00 Information test Connected." + Environment.NewLine + "2026-10-06T22:30:00.0000000+00:00 Warning Disk full." + Environment.NewLine,
             text);
     }
 

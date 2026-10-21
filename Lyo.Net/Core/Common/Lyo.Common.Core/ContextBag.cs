@@ -6,29 +6,36 @@ using Lyo.Exceptions;
 namespace Lyo.Common.Core;
 
 /// <summary>
-/// Map of keys to values. A factory stored with <see cref="Set(TKey, Func{object?})" /> or <see cref="Set(TKey, Func{ContextBag{TKey}, object?})" /> runs on the first read and is
-/// replaced by its result. <see cref="CreateScope" /> reads missing keys from its parent and writes only its own entries. One bag is used by a single execution. It is not thread-safe.
+/// Map of keys to values. A factory stored with <see cref="Set(TKey, Func{object?})" /> or <see cref="Set(TKey, Func{ContextBag{TKey}, object?})" /> runs on the first read
+/// and is replaced by its result. <see cref="CreateScope" /> reads missing keys from its parent and writes only its own entries. One bag is used by a single execution. It is not
+/// thread-safe.
 /// </summary>
 /// <typeparam name="TKey">Key type. A null reference key is rejected.</typeparam>
 public class ContextBag<TKey> : IReadOnlyDictionary<TKey, object?>
     where TKey : notnull
 {
-    private readonly Dictionary<TKey, Slot> _slots;
     private readonly IEqualityComparer<TKey> _comparer;
     private readonly List<TKey> _reading = [];
+    private readonly Dictionary<TKey, Slot> _slots;
+
+    /// <summary>When true, <see cref="Set(TKey, object?)" />, <see cref="Remove" />, <see cref="Clear" />, and <see cref="Import" /> throw.</summary>
+    private bool _frozen;
 
     /// <summary>Parent consulted when this bag has no entry. A scope write does not change the parent.</summary>
     private ContextBag<TKey>? _parent;
 
-    /// <summary>When true, <see cref="Set(TKey, object?)" />, <see cref="Remove" />, <see cref="Clear" />, and <see cref="Import" /> throw.</summary>
-    private bool _frozen;
+    /// <summary>True when this bag rejects writes. A frozen bag still reads its parent, so a later parent <see cref="Set(TKey, object?)" /> is visible for keys this bag did not store.</summary>
+    protected bool IsFrozen => _frozen;
+
+    /// <summary>Parent consulted when this bag has no entry.</summary>
+    protected ContextBag<TKey>? Parent => _parent;
 
     /// <summary>Creates an empty bag. A null <paramref name="comparer" /> uses <see cref="EqualityComparer{T}.Default" />.</summary>
     /// <param name="comparer">Key comparer. Fixed for the life of the bag.</param>
     public ContextBag(IEqualityComparer<TKey>? comparer = null)
     {
         _comparer = comparer ?? EqualityComparer<TKey>.Default;
-        _slots = new Dictionary<TKey, Slot>(_comparer);
+        _slots = new(_comparer);
     }
 
     /// <summary>Number of entries stored on this bag. Parent entries are not included.</summary>
@@ -38,8 +45,7 @@ public class ContextBag<TKey> : IReadOnlyDictionary<TKey, object?>
     public IEnumerable<TKey> Keys => _slots.Keys;
 
     /// <summary>Values stored on this bag. Pending factories run. Parent values are not included.</summary>
-    public IEnumerable<object?> Values
-    {
+    public IEnumerable<object?> Values {
         get {
             foreach (var key in SnapshotKeys())
                 yield return ReadLocal(key);
@@ -49,13 +55,42 @@ public class ContextBag<TKey> : IReadOnlyDictionary<TKey, object?>
     /// <summary>Value for <paramref name="key" />, or null when the key is missing. A pending factory runs. A missing key is read from the parent.</summary>
     public object? this[TKey key] => TryGetValue(key, out var value) ? value : null;
 
-    /// <summary>True when this bag rejects writes. A frozen bag still reads its parent, so a later parent <see cref="Set(TKey, object?)" /> is visible for keys this bag did not store.</summary>
-    protected bool IsFrozen => _frozen;
+    /// <summary>Reads <paramref name="key" /> on this bag, then the parent. A pending factory runs once and its result is stored.</summary>
+    /// <returns><see langword="false" /> when the key is missing.</returns>
+    public virtual bool TryGetValue(TKey key, out object? value)
+    {
+        GuardKey(key);
+        if (TryGetOwn(key, out value))
+            return true;
 
-    /// <summary>Parent consulted when this bag has no entry.</summary>
-    protected ContextBag<TKey>? Parent => _parent;
+        if (_parent is not null)
+            return _parent.TryGetValue(key, out value);
 
-    /// <summary>Stores <paramref name="value" /> under <paramref name="key" />, replacing any previous entry on this bag. A null literal is ambiguous with a factory overload; cast it to <see cref="object" />.</summary>
+        value = null;
+        return false;
+    }
+
+    /// <inheritdoc />
+    public virtual bool ContainsKey(TKey key)
+    {
+        GuardKey(key);
+        return _slots.ContainsKey(key) || _parent?.ContainsKey(key) == true;
+    }
+
+    /// <inheritdoc />
+    public IEnumerator<KeyValuePair<TKey, object?>> GetEnumerator()
+    {
+        foreach (var key in SnapshotKeys())
+            yield return new(key, ReadLocal(key));
+    }
+
+    /// <inheritdoc />
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+    /// <summary>
+    /// Stores <paramref name="value" /> under <paramref name="key" />, replacing any previous entry on this bag. A null literal is ambiguous with a factory overload; cast it to
+    /// <see cref="object" />.
+    /// </summary>
     public virtual void Set(TKey key, object? value)
     {
         GuardKey(key);
@@ -75,8 +110,8 @@ public class ContextBag<TKey> : IReadOnlyDictionary<TKey, object?>
     }
 
     /// <summary>
-    /// Stores <paramref name="factory" /> under <paramref name="key" /> without running it. The factory receives this bag and may read sibling keys. Reading <paramref name="key" />
-    /// again while the factory is running throws <see cref="ContextBagException" /> and leaves the key unset.
+    /// Stores <paramref name="factory" /> under <paramref name="key" /> without running it. The factory receives this bag and may read sibling keys. Reading
+    /// <paramref name="key" /> again while the factory is running throws <see cref="ContextBagException" /> and leaves the key unset.
     /// </summary>
     public virtual void Set(TKey key, Func<ContextBag<TKey>, object?> factory)
     {
@@ -86,24 +121,9 @@ public class ContextBag<TKey> : IReadOnlyDictionary<TKey, object?>
         _slots[key] = Slot.FromBagFactory(factory);
     }
 
-    /// <summary>Reads <paramref name="key" /> on this bag, then the parent. A pending factory runs once and its result is stored.</summary>
-    /// <returns><see langword="false" /> when the key is missing.</returns>
-    public virtual bool TryGetValue(TKey key, out object? value)
-    {
-        GuardKey(key);
-        if (TryGetOwn(key, out value))
-            return true;
-        if (_parent is not null)
-            return _parent.TryGetValue(key, out value);
-
-        value = null;
-        return false;
-    }
-
     /// <summary>
-    /// Reads <paramref name="key" /> and converts it with <see cref="TypeConversion.TryConvertTo{T}(object?, out T?, bool)" />.
-    /// A missing key, a null stored for a non-nullable value type, or a failed conversion returns <see langword="false" />.
-    /// A stored null is success for a nullable value type or a reference type.
+    /// Reads <paramref name="key" /> and converts it with <see cref="TypeConversion.TryConvertTo{T}(object?, out T?, bool)" />. A missing key, a null stored for a non-nullable
+    /// value type, or a failed conversion returns <see langword="false" />. A stored null is success for a nullable value type or a reference type.
     /// </summary>
     public bool TryGetAs<T>(TKey key, out T? value)
     {
@@ -126,14 +146,19 @@ public class ContextBag<TKey> : IReadOnlyDictionary<TKey, object?>
         return TypeConversion.TryConvertTo(raw, out value);
     }
 
-    /// <summary>Returns the converted value. A missing key, a null stored for a non-nullable value type, or a failed conversion throws <see cref="ContextBagException" /> naming <paramref name="key" />.</summary>
+    /// <summary>
+    /// Returns the converted value. A missing key, a null stored for a non-nullable value type, or a failed conversion throws <see cref="ContextBagException" /> naming
+    /// <paramref name="key" />.
+    /// </summary>
     public T? GetRequired<T>(TKey key)
     {
         GuardKey(key);
         if (!ContainsKey(key))
             throw new ContextBagException($"Key '{key}' is missing.");
+
         if (!TryGetAs<T>(key, out var value))
             throw new ContextBagException($"Key '{key}' cannot be read as {typeof(T).Name}.");
+
         return value;
     }
 
@@ -184,8 +209,8 @@ public class ContextBag<TKey> : IReadOnlyDictionary<TKey, object?>
     }
 
     /// <summary>
-    /// Read-only copy of this bag's entries. Pending factories are copied, not run. The frozen bag keeps this bag's parent, so a later parent write is visible for keys the frozen bag
-    /// did not store. <see cref="Set(TKey, object?)" />, <see cref="Remove" />, <see cref="Clear" />, and <see cref="Import" /> throw <see cref="ContextBagException" />.
+    /// Read-only copy of this bag's entries. Pending factories are copied, not run. The frozen bag keeps this bag's parent, so a later parent write is visible for keys the
+    /// frozen bag did not store. <see cref="Set(TKey, object?)" />, <see cref="Remove" />, <see cref="Clear" />, and <see cref="Import" /> throw <see cref="ContextBagException" />.
     /// </summary>
     public virtual ContextBag<TKey> Freeze()
     {
@@ -198,8 +223,8 @@ public class ContextBag<TKey> : IReadOnlyDictionary<TKey, object?>
     }
 
     /// <summary>
-    /// Copies entries from <paramref name="source" /> into this bag without running factories.
-    /// Keys are stored with this bag's comparer, so an ignore-case bag folds keys from a case-sensitive source.
+    /// Copies entries from <paramref name="source" /> into this bag without running factories. Keys are stored with this bag's comparer, so an ignore-case bag folds keys from a
+    /// case-sensitive source.
     /// </summary>
     public virtual void Import(ContextBag<TKey> source)
     {
@@ -207,23 +232,6 @@ public class ContextBag<TKey> : IReadOnlyDictionary<TKey, object?>
         ThrowIfFrozen();
         source.ForEachSlot((key, slot) => _slots[key] = slot);
     }
-
-    /// <inheritdoc />
-    public virtual bool ContainsKey(TKey key)
-    {
-        GuardKey(key);
-        return _slots.ContainsKey(key) || _parent?.ContainsKey(key) == true;
-    }
-
-    /// <inheritdoc />
-    public IEnumerator<KeyValuePair<TKey, object?>> GetEnumerator()
-    {
-        foreach (var key in SnapshotKeys())
-            yield return new KeyValuePair<TKey, object?>(key, ReadLocal(key));
-    }
-
-    /// <inheritdoc />
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <summary>Empty bag with the same comparer and runtime kind.</summary>
     protected virtual ContextBag<TKey> CreateShell() => new(_comparer);
@@ -266,7 +274,7 @@ public class ContextBag<TKey> : IReadOnlyDictionary<TKey, object?>
     /// <summary>Rejects a null reference key. An empty string key is rejected.</summary>
     protected static void GuardKey(TKey key)
     {
-        ArgumentHelpers.ThrowIfNull((object?)key);
+        ArgumentHelpers.ThrowIfNull(key);
         if (key is string text)
             ArgumentHelpers.ThrowIfNullOrEmpty(text);
     }
@@ -288,6 +296,7 @@ public class ContextBag<TKey> : IReadOnlyDictionary<TKey, object?>
     {
         if (!slot.IsFactory)
             return slot.Value;
+
         if (IsReading(key))
             throw new ContextBagException($"Key '{key}' is already being read.");
 
@@ -349,21 +358,21 @@ public class ContextBag<TKey> : IReadOnlyDictionary<TKey, object?>
 }
 
 /// <summary>
-/// String-keyed <see cref="ContextBag{TKey}" />. <c>new ContextBag()</c> ignores case. Pass <c>caseSensitive: true</c> for ordinal keys.
-/// An empty string key is rejected. <see cref="TryGetPath" /> walks nested bags and dictionaries. <see cref="Prefix" /> reads and writes dotted keys on this bag.
+/// String-keyed <see cref="ContextBag{TKey}" />. <c>new ContextBag()</c> ignores case. Pass <c>caseSensitive: true</c> for ordinal keys. An empty string key is rejected.
+/// <see cref="TryGetPath" /> walks nested bags and dictionaries. <see cref="Prefix" /> reads and writes dotted keys on this bag.
 /// </summary>
 public class ContextBag : ContextBag<string>
 {
     private readonly bool _caseSensitive;
+
+    /// <summary>Ordinal or ordinal-ignore-case comparison, matching this bag's constructor.</summary>
+    protected StringComparison KeyComparison => _caseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
 
     /// <summary>Creates an empty string bag.</summary>
     /// <param name="caseSensitive"><see langword="false" /> uses ordinal ignore-case keys. <see langword="true" /> uses ordinal keys.</param>
     public ContextBag(bool caseSensitive = false)
         : base(caseSensitive ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase)
         => _caseSensitive = caseSensitive;
-
-    /// <summary>Ordinal or ordinal-ignore-case comparison, matching this bag's constructor.</summary>
-    protected StringComparison KeyComparison => _caseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
 
     /// <inheritdoc />
     protected override ContextBag<string> CreateShell() => new ContextBag(_caseSensitive);
@@ -424,8 +433,8 @@ public class ContextBag : ContextBag<string>
 
     private sealed class PrefixBag : ContextBag
     {
-        private readonly ContextBag _root;
         private readonly string _prefix;
+        private readonly ContextBag _root;
 
         public PrefixBag(ContextBag root, string prefix, bool caseSensitive)
             : base(caseSensitive)

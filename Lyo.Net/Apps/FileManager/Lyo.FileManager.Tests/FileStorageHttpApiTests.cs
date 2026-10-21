@@ -59,9 +59,11 @@ public class FileStorageHttpApiTests
         var handler = new RecordingHandler(request => {
             var path = request.RequestUri!.AbsolutePath;
             if (path.EndsWith("/capabilities", StringComparison.Ordinal))
-                return Json(CapabilitiesJson(presignedMultipartParts: true));
-            if (path.EndsWith("/multipart/begin", StringComparison.Ordinal))
-                return Json("""
+                return Json(CapabilitiesJson(true));
+
+            if (path.EndsWith("/multipart/begin", StringComparison.Ordinal)) {
+                return Json(
+                    """
                     {
                       "sessionId": "11111111-1111-1111-1111-111111111111",
                       "targetFileId": "22222222-2222-2222-2222-222222222222",
@@ -70,12 +72,17 @@ public class FileStorageHttpApiTests
                       "providerKind": "Local"
                     }
                     """);
+            }
+
             if (path.Contains("/part-url", StringComparison.Ordinal))
                 return Json("{\"partNumber\":1,\"presignedPutUrl\":\"http://uploads.example/part\",\"httpMethod\":\"PUT\"}");
+
             if (request.RequestUri.Host == "uploads.example")
-                return new HttpResponseMessage(HttpStatusCode.OK) { Headers = { ETag = new("\"etag-1\"") } };
+                return new(HttpStatusCode.OK) { Headers = { ETag = new("\"etag-1\"") } };
+
             return Json("{}");
         });
+
         using var http = Client(handler);
         var path = Path.Combine(Path.GetTempPath(), "lyo-fm-part-" + LyoGuid.CreateV7().ToString("N"));
         await File.WriteAllTextAsync(path, "hi", TestCt);
@@ -100,9 +107,11 @@ public class FileStorageHttpApiTests
         var handler = new RecordingHandler(request => {
             var path = request.RequestUri!.AbsolutePath;
             if (path.EndsWith("/capabilities", StringComparison.Ordinal))
-                return Json(CapabilitiesJson(presignedMultipartParts: false));
+                return Json(CapabilitiesJson(false));
+
             return Json("{}");
         });
+
         using var http = Client(handler);
         var path = Path.Combine(Path.GetTempPath(), "lyo-fm-stream-" + LyoGuid.CreateV7().ToString("N"));
         await File.WriteAllTextAsync(path, "hi", TestCt);
@@ -122,7 +131,7 @@ public class FileStorageHttpApiTests
     [Fact]
     public async Task Download_WritesTheGivenPath()
     {
-        var handler = new RecordingHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent("bytes"u8.ToArray()) });
+        var handler = new RecordingHandler(_ => new(HttpStatusCode.OK) { Content = new ByteArrayContent("bytes"u8.ToArray()) });
         using var http = Client(handler);
         var dest = Path.Combine(Path.GetTempPath(), "lyo-fm-dl-" + LyoGuid.CreateV7().ToString("N"));
         try {
@@ -141,7 +150,7 @@ public class FileStorageHttpApiTests
     [Fact]
     public async Task DownloadMany_RequestsArchiveWithThoseIds()
     {
-        var handler = new RecordingHandler(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent("PK"u8.ToArray()) });
+        var handler = new RecordingHandler(_ => new(HttpStatusCode.OK) { Content = new ByteArrayContent("PK"u8.ToArray()) });
         using var http = Client(handler);
         var dest = Path.Combine(Path.GetTempPath(), "lyo-fm-zip-" + LyoGuid.CreateV7().ToString("N"));
         var first = LyoGuid.CreateV7();
@@ -163,7 +172,8 @@ public class FileStorageHttpApiTests
     [Fact]
     public async Task AccessLink_PostsExpiryAndMaxDownloads()
     {
-        var handler = new RecordingHandler(_ => Json("""
+        var handler = new RecordingHandler(_ => Json(
+            """
             {
               "linkId": "11111111-1111-1111-1111-111111111111",
               "token": "tok",
@@ -172,6 +182,7 @@ public class FileStorageHttpApiTests
               "createdUtc": "2030-01-01T00:00:00Z"
             }
             """));
+
         using var http = Client(handler);
         using var api = new FileStorageHttpApi(Remote(), http);
         var when = new DateTime(2030, 1, 2, 0, 0, 0, DateTimeKind.Utc);
@@ -225,26 +236,25 @@ public class FileStorageHttpApiTests
 
     private static string CapabilitiesJson(bool presignedMultipartParts)
         => $$"""
-            {
-              "presignedRead": true,
-              "directUpload": true,
-              "multipart": true,
-              "presignedMultipartParts": {{(presignedMultipartParts ? "true" : "false")}},
-              "copy": true,
-              "move": true,
-              "physical": true,
-              "encryption": true,
-              "archive": true,
-              "accessLinks": true
-            }
-            """;
+             {
+               "presignedRead": true,
+               "directUpload": true,
+               "multipart": true,
+               "presignedMultipartParts": {{(presignedMultipartParts ? "true" : "false")}},
+               "copy": true,
+               "move": true,
+               "physical": true,
+               "encryption": true,
+               "archive": true,
+               "accessLinks": true
+             }
+             """;
 
     private static FileManagerServer Remote() => new() { Kind = FileManagerServerKind.Remote, BaseUrl = "http://localhost:9", Route = "FileStorage" };
 
-    private static HttpClient Client(RecordingHandler handler) => new(handler) { BaseAddress = new Uri("http://localhost:9/") };
+    private static HttpClient Client(RecordingHandler handler) => new(handler) { BaseAddress = new("http://localhost:9/") };
 
-    private static HttpResponseMessage Json(string body)
-        => new(HttpStatusCode.OK) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
+    private static HttpResponseMessage Json(string body) => new(HttpStatusCode.OK) { Content = new StringContent(body, Encoding.UTF8, "application/json") };
 
     private sealed class RecordingHandler(Func<HttpRequestMessage, HttpResponseMessage> respond) : HttpMessageHandler
     {
@@ -258,5 +268,5 @@ public class FileStorageHttpApiTests
         }
     }
 
-    private sealed record Captured(HttpMethod Method, Uri Uri, System.Net.Http.Headers.HttpRequestHeaders Headers, string Body);
+    private sealed record Captured(HttpMethod Method, Uri Uri, HttpRequestHeaders Headers, string Body);
 }

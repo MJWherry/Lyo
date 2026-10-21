@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Hosting;
 
 namespace Lyo.Web.Automation.Api;
 
@@ -66,23 +65,24 @@ public static class Extensions
         ArgumentHelpers.ThrowIfNull(app);
         var tag = Constants.Rest.Route;
         var group = app.MapGroup("/" + tag).WithTags(tag);
+        group.MapPost(
+                "/Run", (AutomationRunReq? request, AutomationRunRegistry runs) => {
+                    if (request?.Plan is null || request.Plan.Steps is null)
+                        return Results.Problem(title: "Plan is required.", statusCode: StatusCodes.Status400BadRequest);
 
-        group.MapPost("/Run", (AutomationRunReq? request, AutomationRunRegistry runs) => {
-                if (request?.Plan is null || request.Plan.Steps is null)
-                    return Results.Problem(title: "Plan is required.", statusCode: StatusCodes.Status400BadRequest);
-
-                var accepted = runs.TryStart(request);
-                return accepted is null
-                    ? Results.Problem(title: "An automation run is already active.", statusCode: StatusCodes.Status429TooManyRequests)
-                    : Results.Accepted((string?)null, accepted);
-            })
+                    var accepted = runs.TryStart(request);
+                    return accepted is null
+                        ? Results.Problem(title: "An automation run is already active.", statusCode: StatusCodes.Status429TooManyRequests)
+                        : Results.Accepted(null, accepted);
+                })
             .WithName("StartAutomationRun")
             .AllowAnonymous();
 
-        group.MapGet("/Run/{id:guid}", (Guid id, AutomationRunRegistry runs) => {
-                var run = runs.Get(id);
-                return run is null ? Results.NotFound() : Results.Ok(run);
-            })
+        group.MapGet(
+                "/Run/{id:guid}", (Guid id, AutomationRunRegistry runs) => {
+                    var run = runs.Get(id);
+                    return run is null ? Results.NotFound() : Results.Ok(run);
+                })
             .WithName("GetAutomationRun")
             .AllowAnonymous();
 
@@ -90,83 +90,88 @@ public static class Extensions
             .WithName("CancelAutomationRun")
             .AllowAnonymous();
 
-        group.MapGet("/Run/{id:guid}/Log", (Guid id, AutomationRunRegistry runs) => {
-                var path = runs.LogPath(id);
-                return path is null ? Results.NotFound() : Results.Text(File.ReadAllText(path), "text/plain");
-            })
+        group.MapGet(
+                "/Run/{id:guid}/Log", (Guid id, AutomationRunRegistry runs) => {
+                    var path = runs.LogPath(id);
+                    return path is null ? Results.NotFound() : Results.Text(File.ReadAllText(path), "text/plain");
+                })
             .WithName("GetAutomationRunLog")
             .AllowAnonymous();
 
-        group.MapGet("/Run/{id:guid}/Snapshots", (Guid id, AutomationRunRegistry runs) => {
-                var names = runs.ListSnapshots(id);
-                return names is null ? Results.NotFound() : Results.Ok(names);
-            })
+        group.MapGet(
+                "/Run/{id:guid}/Snapshots", (Guid id, AutomationRunRegistry runs) => {
+                    var names = runs.ListSnapshots(id);
+                    return names is null ? Results.NotFound() : Results.Ok(names);
+                })
             .WithName("ListAutomationRunSnapshots")
             .AllowAnonymous();
 
-        group.MapGet("/Run/{id:guid}/Steps/{index:int}/Screenshot", async (Guid id, int index, AutomationRunRegistry runs, IAutomationPlanFileStorage storage, CancellationToken ct) => {
-                var fileId = runs.ScreenshotFileId(id, index);
-                if (string.IsNullOrWhiteSpace(fileId))
-                    return Results.NotFound();
+        group.MapGet(
+                "/Run/{id:guid}/Steps/{index:int}/Screenshot", async (Guid id, int index, AutomationRunRegistry runs, IAutomationPlanFileStorage storage, CancellationToken ct) => {
+                    var fileId = runs.ScreenshotFileId(id, index);
+                    if (string.IsNullOrWhiteSpace(fileId))
+                        return Results.NotFound();
 
-                var bytes = await storage.ReadSnapshotAsync(fileId, ct).ConfigureAwait(false);
-                return bytes is null ? Results.NotFound() : Results.File(bytes, "image/png");
-            })
+                    var bytes = await storage.ReadSnapshotAsync(fileId, ct).ConfigureAwait(false);
+                    return bytes is null ? Results.NotFound() : Results.File(bytes, "image/png");
+                })
             .WithName("GetAutomationRunStepScreenshot")
             .AllowAnonymous();
 
-        group.MapGet("/Run/{id:guid}/Snapshot/{name}", (Guid id, string name, AutomationRunRegistry runs) => {
-                if (!AutomationSnapshotNames.IsSingleFileName(name))
-                    return Results.Problem(title: "Snapshot name is not a single file name.", statusCode: StatusCodes.Status400BadRequest);
+        group.MapGet(
+                "/Run/{id:guid}/Snapshot/{name}", (Guid id, string name, AutomationRunRegistry runs) => {
+                    if (!AutomationSnapshotNames.IsSingleFileName(name))
+                        return Results.Problem(title: "Snapshot name is not a single file name.", statusCode: StatusCodes.Status400BadRequest);
 
-                var path = runs.SnapshotPath(id, name);
-                return path is null ? Results.NotFound() : Results.File(File.ReadAllBytes(path), "image/png");
-            })
+                    var path = runs.SnapshotPath(id, name);
+                    return path is null ? Results.NotFound() : Results.File(File.ReadAllBytes(path), "image/png");
+                })
             .WithName("GetAutomationRunSnapshot")
             .AllowAnonymous();
 
-        group.MapGet("/Plan", (IAutomationPlanStore plans) => Results.Ok(plans.List()))
-            .WithName("ListAutomationPlans")
-            .AllowAnonymous();
-
-        group.MapGet("/Plan/id/{id:guid}", (Guid id, IAutomationPlanStore plans) => {
-                var plan = plans.GetById(id);
-                return plan is null ? Results.NotFound() : Results.Ok(plan);
-            })
+        group.MapGet("/Plan", (IAutomationPlanStore plans) => Results.Ok(plans.List())).WithName("ListAutomationPlans").AllowAnonymous();
+        group.MapGet(
+                "/Plan/id/{id:guid}", (Guid id, IAutomationPlanStore plans) => {
+                    var plan = plans.GetById(id);
+                    return plan is null ? Results.NotFound() : Results.Ok(plan);
+                })
             .WithName("GetAutomationPlanById")
             .AllowAnonymous();
 
-        group.MapPost("/Plan", (AutomationPlanCreateReq? request, IAutomationPlanStore plans) => {
-                if (!AutomationPlanNames.IsSingleSegment(request?.Name))
-                    return Results.Problem(title: "Plan name must be one segment.", statusCode: StatusCodes.Status400BadRequest);
+        group.MapPost(
+                "/Plan", (AutomationPlanCreateReq? request, IAutomationPlanStore plans) => {
+                    if (!AutomationPlanNames.IsSingleSegment(request?.Name))
+                        return Results.Problem(title: "Plan name must be one segment.", statusCode: StatusCodes.Status400BadRequest);
 
-                var plan = plans.Create(request!.Name!);
-                return Results.Created("/" + Constants.Rest.Plan(plan.Name!), plan);
-            })
+                    var plan = plans.Create(request!.Name!);
+                    return Results.Created("/" + Constants.Rest.Plan(plan.Name!), plan);
+                })
             .WithName("CreateAutomationPlan")
             .AllowAnonymous();
 
-        group.MapGet("/Plan/{name}", (string name, IAutomationPlanStore plans) => {
-                if (!AutomationPlanNames.IsSingleSegment(name))
-                    return Results.Problem(title: "Plan name must be one segment.", statusCode: StatusCodes.Status400BadRequest);
+        group.MapGet(
+                "/Plan/{name}", (string name, IAutomationPlanStore plans) => {
+                    if (!AutomationPlanNames.IsSingleSegment(name))
+                        return Results.Problem(title: "Plan name must be one segment.", statusCode: StatusCodes.Status400BadRequest);
 
-                var plan = plans.GetByName(name);
-                return plan is null ? Results.NotFound() : Results.Ok(plan);
-            })
+                    var plan = plans.GetByName(name);
+                    return plan is null ? Results.NotFound() : Results.Ok(plan);
+                })
             .WithName("GetAutomationPlan")
             .AllowAnonymous();
 
-        group.MapPut("/Plan/{name}", async (string name, HttpRequest request, IAutomationPlanStore plans, CancellationToken ct) => {
-                if (!AutomationPlanNames.IsSingleSegment(name))
-                    return Results.Problem(title: "Plan name must be one segment.", statusCode: StatusCodes.Status400BadRequest);
+        group.MapPut(
+                "/Plan/{name}", async (string name, HttpRequest request, IAutomationPlanStore plans, CancellationToken ct) => {
+                    if (!AutomationPlanNames.IsSingleSegment(name))
+                        return Results.Problem(title: "Plan name must be one segment.", statusCode: StatusCodes.Status400BadRequest);
 
-                using var reader = new StreamReader(request.Body);
-                var parsed = AutomationPlanRegistry.Parse(await reader.ReadToEndAsync(ct));
-                if (parsed is null)
-                    return Results.Problem(title: "Plan JSON needs a steps array.", statusCode: StatusCodes.Status400BadRequest);
+                    using var reader = new StreamReader(request.Body);
+                    var parsed = AutomationPlanRegistry.Parse(await reader.ReadToEndAsync(ct));
+                    if (parsed is null)
+                        return Results.Problem(title: "Plan JSON needs a steps array.", statusCode: StatusCodes.Status400BadRequest);
 
-                return plans.TryReplace(name, parsed) ? Results.Ok(plans.GetByName(name)) : Results.NotFound();
-            })
+                    return plans.TryReplace(name, parsed) ? Results.Ok(plans.GetByName(name)) : Results.NotFound();
+                })
             .WithName("SaveAutomationPlan")
             .AllowAnonymous();
 
@@ -178,8 +183,7 @@ public static class Extensions
 internal sealed class MissingPlanFileStorage : IAutomationPlanFileStorage
 {
     /// <inheritdoc />
-    public Task<IReadOnlyList<string>> UploadDirectoryAsync(string sourceDirectory, string destinationPrefix, CancellationToken ct)
-        => Task.FromResult<IReadOnlyList<string>>([]);
+    public Task<IReadOnlyList<string>> UploadDirectoryAsync(string sourceDirectory, string destinationPrefix, CancellationToken ct) => Task.FromResult<IReadOnlyList<string>>([]);
 
     /// <inheritdoc />
     public Task<string?> SaveSnapshotAsync(byte[] png, Guid runId, Guid stepId, CancellationToken ct) => Task.FromResult<string?>(null);

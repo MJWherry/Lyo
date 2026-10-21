@@ -1,7 +1,6 @@
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Metadata.Records;
 using Lyo.IO.FileSystem;
-using Lyo.IO.FileSystem.Web.Components;
 using MudBlazor;
 
 namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
@@ -16,18 +15,15 @@ public static class FileStorageTreeIcons
             return Icons.Material.Filled.Folder;
 
         var name = node.Entry.Name;
-        if (node.Entry.Properties != null
-            && node.Entry.Properties.TryGetValue("OriginalFileName", out var original)
-            && !string.IsNullOrWhiteSpace(original))
+        if (node.Entry.Properties != null && node.Entry.Properties.TryGetValue("OriginalFileName", out var original) && !string.IsNullOrWhiteSpace(original))
             name = original;
 
         var type = FileTypeInfo.FromFilePath(name);
         if (string.Equals(type.Name, "PDF", StringComparison.OrdinalIgnoreCase))
             return Icons.Material.Filled.PictureAsPdf;
 
-        if (string.Equals(type.Name, "CSV", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(type.Name, "XLS", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(type.Name, "XLSX", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(type.Name, "CSV", StringComparison.OrdinalIgnoreCase) || string.Equals(type.Name, "XLS", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(type.Name, "XLSX", StringComparison.OrdinalIgnoreCase))
             return Icons.Material.Filled.TableChart;
 
         return type.Category switch {

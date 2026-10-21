@@ -4,9 +4,9 @@ using Lyo.Api.Client;
 using Lyo.Api.Middleware;
 using Lyo.Api.Models;
 using Lyo.Api.Models.Error;
-using Lyo.Json;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
+using Lyo.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -16,8 +16,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.Api.Tests.Middleware;
 
-/// <summary>End-to-end checks for <see cref="LoggingMiddleware" /> exception-to-status mapping and the empty-body problem details fallback, using an in-memory test
-/// server.</summary>
+/// <summary>End-to-end checks for <see cref="LoggingMiddleware" /> exception-to-status mapping and the empty-body problem details fallback, using an in-memory test server.</summary>
 public class LoggingMiddlewareTests
 {
     private static readonly JsonSerializerOptions SerializerOptions = LyoJsonSerializerOptions.Create();
@@ -38,19 +37,23 @@ public class LoggingMiddlewareTests
                         endpoints.MapGet("/throw/rate-limit", IResult () => throw new RateLimitExceededException(TimeSpan.FromSeconds(30)));
                         endpoints.MapGet("/throw/unhandled", IResult () => throw new InvalidOperationException("boom"));
                         endpoints.MapGet(
-                            "/throw/api-error", IResult () => throw ApiErrorException.From(
+                            "/throw/api-error",
+                            IResult () => throw ApiErrorException.From(
                                 LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidSelectField, "Select field 'Foo.Bar' is not valid for type 'Person'.")));
+
                         endpoints.MapGet(
-                            "/throw/api-error-forbidden", IResult () => throw ApiErrorException.From(
-                                LyoProblemDetails.FromCode(Constants.ApiErrorCodes.Forbidden, "Caller cannot access this resource.")));
+                            "/throw/api-error-forbidden",
+                            IResult () => throw ApiErrorException.From(LyoProblemDetails.FromCode(Constants.ApiErrorCodes.Forbidden, "Caller cannot access this resource.")));
+
                         endpoints.MapGet("/bare/not-found", () => Results.NotFound());
                         endpoints.MapGet("/bare/unauthorized", () => Results.Unauthorized());
                         endpoints.MapGet(
-                            "/challenge/unauthorized", async (HttpContext ctx) => {
+                            "/challenge/unauthorized", async ctx => {
                                 ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
                                 ctx.Response.Headers.WWWAuthenticate = "Bearer";
                                 await ctx.Response.StartAsync();
                             });
+
                         endpoints.MapGet("/ok", () => Results.Ok(new { value = 1 }));
                     });
                 }))

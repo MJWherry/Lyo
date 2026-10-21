@@ -31,9 +31,7 @@ public sealed class Block : Control
     /// <summary>Callout tone: <c>info</c>, <c>success</c>, <c>warning</c>, or <c>error</c>.</summary>
     public string? Tone { get; set; }
 
-    /// <summary>
-    /// When set, the block is kept only if the bound parameters satisfy the condition. Same grammar as <see cref="Section.VisibleWhen" />.
-    /// </summary>
+    /// <summary>When set, the block is kept only if the bound parameters satisfy the condition. Same grammar as <see cref="Section.VisibleWhen" />.</summary>
     public string? VisibleWhen { get; set; }
 
     /// <summary>CLR FullName of an <c>IComponent</c> when <see cref="ContentType" /> is <see cref="ContentType.Component" />.</summary>

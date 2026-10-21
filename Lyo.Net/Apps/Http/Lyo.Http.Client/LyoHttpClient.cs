@@ -2,18 +2,17 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.IO.Compression;
 using System.Net;
-using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Core.Net;
-using Lyo.Json;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
 using Lyo.Http.Client.Plan;
 using Lyo.Http.Client.Session;
+using Lyo.Json;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -21,8 +20,8 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Lyo.Http.Client;
 
 /// <summary>
-/// Generic HTTP client. JSON verbs, query-string GET DTOs, files, compression, session cookies, and plan entry points.
-/// Non-success statuses throw <see cref="LyoHttpException" />. Lyo API problem-details live on <c>ApiClient</c>.
+/// Generic HTTP client. JSON verbs, query-string GET DTOs, files, compression, session cookies, and plan entry points. Non-success statuses throw
+/// <see cref="LyoHttpException" />. Lyo API problem-details live on <c>ApiClient</c>.
 /// </summary>
 public class LyoHttpClient : ILyoHttpClient
 {
@@ -31,10 +30,6 @@ public class LyoHttpClient : ILyoHttpClient
     private const string PutVerb = "PUT";
     private const string PatchVerb = "PATCH";
     private const string DeleteVerb = "DELETE";
-
-    private readonly bool _ownsHttpClient;
-    private readonly ConcurrentDictionary<string, JsonConverter> _savedConverters = new();
-    private readonly int _clientUaSeed = Environment.TickCount;
 
     /// <summary>Transport and JSON options for this instance.</summary>
     protected readonly LyoHttpClientOptions BaseOptions;
@@ -48,9 +43,17 @@ public class LyoHttpClient : ILyoHttpClient
     /// <summary>JSON options used for request and response bodies.</summary>
     public readonly JsonSerializerOptions SerializerOptions;
 
+    private readonly int _clientUaSeed = Environment.TickCount;
+
+    private readonly bool _ownsHttpClient;
+    private readonly ConcurrentDictionary<string, JsonConverter> _savedConverters = new();
+
+    /// <summary>Metrics sink (null-object when unused).</summary>
+    protected IMetrics Metrics { get; }
+
     /// <summary>
-    /// Factory constructor. <paramref name="httpClient" /> is injected by <c>IHttpClientFactory</c>. This is the only public constructor so typed-client activation
-    /// is unambiguous.
+    /// Factory constructor. <paramref name="httpClient" /> is injected by <c>IHttpClientFactory</c>. This is the only public constructor so typed-client activation is
+    /// unambiguous.
     /// </summary>
     public LyoHttpClient(
         HttpClient httpClient,
@@ -89,9 +92,6 @@ public class LyoHttpClient : ILyoHttpClient
         EnsureSessionUserAgent();
     }
 
-    /// <summary>Metrics sink (null-object when unused).</summary>
-    protected IMetrics Metrics { get; }
-
     /// <inheritdoc />
     public ILyoHttpSession Session { get; }
 
@@ -103,42 +103,6 @@ public class LyoHttpClient : ILyoHttpClient
 
     /// <inheritdoc />
     public HttpClient GetClient() => HttpClient;
-
-    /// <summary>Stamps default headers (User-Agent). Api.Client overrides this to use <c>Lyo/{version}</c> without rotation.</summary>
-    protected virtual void ApplyDefaultHeaders()
-    {
-        if (!BaseOptions.UserAgent.Enabled)
-            return;
-
-        var agent = Session.UserAgent ?? ResolveUserAgent();
-        Session.UserAgent = agent;
-        SetUserAgent(agent);
-    }
-
-    /// <summary>Builds an <see cref="HttpRequestMessage" />. Vendors override to add auth headers.</summary>
-    protected virtual HttpRequestMessage CreateRequest(HttpMethod method, string uri)
-        => new(method, uri);
-
-    /// <summary>Throws <see cref="LyoHttpException" /> (or a mapped type) when the status is not success and <see cref="LyoHttpClientOptions.EnsureStatusCode" /> is true.</summary>
-    protected virtual async Task EnsureSuccessAsync(HttpResponseMessage response, CancellationToken ct)
-    {
-        if (response.IsSuccessStatusCode || !BaseOptions.EnsureStatusCode)
-            return;
-
-        var body = await TryReadBodyPreviewAsync(response, ct).ConfigureAwait(false);
-        var message = $"Request failed: {(int)response.StatusCode} {response.ReasonPhrase}";
-        throw MapException(new LyoHttpException((int)response.StatusCode, message, body));
-    }
-
-    /// <summary>Lets subclasses wrap or replace the exception thrown for a failed call.</summary>
-    protected virtual Exception MapException(Exception exception) => exception;
-
-    /// <summary>Deserializes a JSON response. Override to change converters or null handling.</summary>
-    protected virtual async Task<TResult?> DeserializeAsync<TResult>(HttpResponseMessage response, CancellationToken ct)
-        => await DeserializeResponseNullableAsync<TResult>(response, ct).ConfigureAwait(false);
-
-    /// <summary>Serializes a JSON request body, optionally compressing it.</summary>
-    protected virtual HttpContent SerializeBody<TRequest>(TRequest body) => CreateJsonContent(body);
 
     /// <inheritdoc />
     public HttpClientPlanBuilder Get(string uri) => HttpClientPlanBuilder.New(null, this).Get(uri);
@@ -465,6 +429,74 @@ public class LyoHttpClient : ILyoHttpClient
             HttpClient.Dispose();
     }
 
+    /// <inheritdoc />
+    public string ToQueryString<T>(T obj, string? enumerableDelimiter = null)
+    {
+        if (obj == null)
+            return string.Empty;
+
+        var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var queryParameters = new List<string>();
+        foreach (var prop in properties) {
+            var value = prop.GetValue(obj);
+            if (value == null)
+                continue;
+
+            var jsonAttr = prop.GetCustomAttribute<JsonPropertyNameAttribute>();
+            var paramName = jsonAttr?.Name ?? SerializerOptions.PropertyNamingPolicy?.ConvertName(prop.Name) ?? prop.Name;
+            if (value is string strVal)
+                queryParameters.Add($"{WebUtility.UrlEncode(paramName)}={WebUtility.UrlEncode(strVal)}");
+            else if (value is IEnumerable enumerable and not string) {
+                var serializedItems = enumerable.Cast<object>().Where(x => x != null).Select(x => SerializeValue(x, prop));
+                if (string.IsNullOrEmpty(enumerableDelimiter))
+                    queryParameters.AddRange(serializedItems.Select(item => $"{WebUtility.UrlEncode(paramName)}={WebUtility.UrlEncode(item)}"));
+                else
+                    queryParameters.Add($"{WebUtility.UrlEncode(paramName)}={WebUtility.UrlEncode(string.Join(enumerableDelimiter, serializedItems))}");
+            }
+            else {
+                var serializedValue = SerializeValue(value, prop);
+                queryParameters.Add($"{WebUtility.UrlEncode(paramName)}={WebUtility.UrlEncode(serializedValue)}");
+            }
+        }
+
+        return string.Join("&", queryParameters);
+    }
+
+    /// <summary>Stamps default headers (User-Agent). Api.Client overrides this to use <c>Lyo/{version}</c> without rotation.</summary>
+    protected virtual void ApplyDefaultHeaders()
+    {
+        if (!BaseOptions.UserAgent.Enabled)
+            return;
+
+        var agent = Session.UserAgent ?? ResolveUserAgent();
+        Session.UserAgent = agent;
+        SetUserAgent(agent);
+    }
+
+    /// <summary>Builds an <see cref="HttpRequestMessage" />. Vendors override to add auth headers.</summary>
+    protected virtual HttpRequestMessage CreateRequest(HttpMethod method, string uri) => new(method, uri);
+
+    /// <summary>Throws <see cref="LyoHttpException" /> (or a mapped type) when the status is not success and <see cref="LyoHttpClientOptions.EnsureStatusCode" /> is true.</summary>
+    protected virtual async Task EnsureSuccessAsync(HttpResponseMessage response, CancellationToken ct)
+    {
+        if (response.IsSuccessStatusCode || !BaseOptions.EnsureStatusCode)
+            return;
+
+        var body = await TryReadBodyPreviewAsync(response, ct).ConfigureAwait(false);
+        var message = $"Request failed: {(int)response.StatusCode} {response.ReasonPhrase}";
+        throw MapException(new LyoHttpException((int)response.StatusCode, message, body));
+    }
+
+    /// <summary>Lets subclasses wrap or replace the exception thrown for a failed call.</summary>
+    protected virtual Exception MapException(Exception exception) => exception;
+
+    /// <summary>Deserializes a JSON response. Override to change converters or null handling.</summary>
+    protected virtual async Task<TResult?> DeserializeAsync<TResult>(HttpResponseMessage response, CancellationToken ct)
+        => await DeserializeResponseNullableAsync<TResult>(response, ct).ConfigureAwait(false);
+
+    /// <summary>Serializes a JSON request body, optionally compressing it.</summary>
+    protected virtual HttpContent SerializeBody<TRequest>(TRequest body) => CreateJsonContent(body);
+
     /// <summary>POSTs a JSON body when the API sends no response body (for example 204 No Content).</summary>
     protected async Task PostExpectingNoContentAsync<TRequest>(string uri, TRequest? body, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
     {
@@ -493,6 +525,7 @@ public class LyoHttpClient : ILyoHttpClient
             var context = new LyoHttpCallContext(request) { Response = response };
             if (Hooks.AfterResponseAsync != null)
                 await Hooks.AfterResponseAsync(context, ct).ConfigureAwait(false);
+
             if (Hooks.OnResponseObserved != null)
                 await Hooks.OnResponseObserved(context, ct).ConfigureAwait(false);
 
@@ -515,8 +548,7 @@ public class LyoHttpClient : ILyoHttpClient
     }
 
     /// <summary>Internal send used by the plan runner (same pipeline as JSON verbs).</summary>
-    internal Task<HttpResponseMessage> SendPreparedAsync(HttpRequestMessage request, CancellationToken ct)
-        => SendAsync(request, null, ct);
+    internal Task<HttpResponseMessage> SendPreparedAsync(HttpRequestMessage request, CancellationToken ct) => SendAsync(request, null, ct);
 
     internal string? ResolveDownloadDirectory() => BaseOptions.DownloadDirectory;
 
@@ -533,6 +565,7 @@ public class LyoHttpClient : ILyoHttpClient
         var context = new LyoHttpCallContext(request);
         if (Hooks.BeforeSendAsync != null)
             await Hooks.BeforeSendAsync(context, ct).ConfigureAwait(false);
+
         if (Hooks.OnRequestObserved != null)
             await Hooks.OnRequestObserved(context, ct).ConfigureAwait(false);
     }
@@ -578,6 +611,7 @@ public class LyoHttpClient : ILyoHttpClient
             Domain = requestUri.Host,
             Path = "/"
         };
+
         bool? secure = null, httpOnly = null;
         string? domain = cookie.Domain, path = cookie.Path;
         DateTimeOffset? expiry = null;
@@ -642,8 +676,7 @@ public class LyoHttpClient : ILyoHttpClient
         HttpClient.DefaultRequestHeaders.TryAddWithoutValidation(HttpHeaderInfo.UserAgent, agent);
     }
 
-    private void ConfigureAcceptEncodingHeaders()
-        => ApplyAcceptEncodingHeaders(HttpClient, BaseOptions.AcceptEncodings);
+    private void ConfigureAcceptEncodingHeaders() => ApplyAcceptEncodingHeaders(HttpClient, BaseOptions.AcceptEncodings);
 
     /// <summary>Copies supported values from <paramref name="encodings" /> onto <see cref="HttpClient.DefaultRequestHeaders" /> <c>Accept-Encoding</c>.</summary>
     public static void ApplyAcceptEncodingHeaders(HttpClient client, IEnumerable<string>? encodings)
@@ -895,39 +928,6 @@ public class LyoHttpClient : ILyoHttpClient
         return output.ToArray();
     }
 #endif
-
-    /// <inheritdoc />
-    public string ToQueryString<T>(T obj, string? enumerableDelimiter = null)
-    {
-        if (obj == null)
-            return string.Empty;
-
-        var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
-        var queryParameters = new List<string>();
-        foreach (var prop in properties) {
-            var value = prop.GetValue(obj);
-            if (value == null)
-                continue;
-
-            var jsonAttr = prop.GetCustomAttribute<JsonPropertyNameAttribute>();
-            var paramName = jsonAttr?.Name ?? SerializerOptions.PropertyNamingPolicy?.ConvertName(prop.Name) ?? prop.Name;
-            if (value is string strVal)
-                queryParameters.Add($"{WebUtility.UrlEncode(paramName)}={WebUtility.UrlEncode(strVal)}");
-            else if (value is IEnumerable enumerable and not string) {
-                var serializedItems = enumerable.Cast<object>().Where(x => x != null).Select(x => SerializeValue(x, prop));
-                if (string.IsNullOrEmpty(enumerableDelimiter))
-                    queryParameters.AddRange(serializedItems.Select(item => $"{WebUtility.UrlEncode(paramName)}={WebUtility.UrlEncode(item)}"));
-                else
-                    queryParameters.Add($"{WebUtility.UrlEncode(paramName)}={WebUtility.UrlEncode(string.Join(enumerableDelimiter, serializedItems))}");
-            }
-            else {
-                var serializedValue = SerializeValue(value, prop);
-                queryParameters.Add($"{WebUtility.UrlEncode(paramName)}={WebUtility.UrlEncode(serializedValue)}");
-            }
-        }
-
-        return string.Join("&", queryParameters);
-    }
 
     private JsonConverter? GetMatchingConverter(Type type, PropertyInfo prop)
     {

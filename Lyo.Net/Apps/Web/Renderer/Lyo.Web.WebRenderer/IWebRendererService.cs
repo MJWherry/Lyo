@@ -17,14 +17,10 @@ public interface IWebRendererService
     Task<string> RenderToHtmlAsync<T>(Dictionary<string, object>? parameterDictionary = null, CancellationToken ct = default)
         where T : IComponent;
 
-    /// <summary>
-    /// Renders <paramref name="componentType" /> the same way as the generic overload. The type must implement <see cref="IComponent" />.
-    /// </summary>
+    /// <summary>Renders <paramref name="componentType" /> the same way as the generic overload. The type must implement <see cref="IComponent" />.</summary>
     Task<string> RenderToHtmlAsync(Type componentType, Dictionary<string, object>? parameterDictionary = null, CancellationToken ct = default);
 
-    /// <summary>
-    /// Resolves <paramref name="typeFullName" /> with <c>LyoTypeInfo.TryResolveClrType</c> and renders it. The type must implement <see cref="IComponent" />.
-    /// </summary>
+    /// <summary>Resolves <paramref name="typeFullName" /> with <c>LyoTypeInfo.TryResolveClrType</c> and renders it. The type must implement <see cref="IComponent" />.</summary>
     Task<string> RenderToHtmlAsync(string typeFullName, Dictionary<string, object>? parameterDictionary = null, CancellationToken ct = default);
 
     string RenderToHtml<T>(Dictionary<string, object>? parameterDictionary = null)

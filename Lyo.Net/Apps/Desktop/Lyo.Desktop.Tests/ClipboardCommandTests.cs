@@ -96,13 +96,12 @@ public class ClipboardCommandTests
     }
 
     [Fact]
-    public void TextRead_Windows_UsesNativeClipboard()
-        => Assert.IsType<ClipboardRoute.Native>(ClipboardCommand.TextRead(DesktopOs.Windows, _ => false));
+    public void TextRead_Windows_UsesNativeClipboard() => Assert.IsType<ClipboardRoute.Native>(ClipboardCommand.TextRead(DesktopOs.Windows, _ => false));
 
     [Fact]
     public void PngWrite_LinuxWayland_PrefersWlCopyImagePng()
     {
-        var tool = Tool(ClipboardCommand.PngWrite(DesktopOs.Linux, wayland: true, Has("wl-copy", "xclip")));
+        var tool = Tool(ClipboardCommand.PngWrite(DesktopOs.Linux, true, Has("wl-copy", "xclip")));
         Assert.Equal("wl-copy", tool.FileName);
         Assert.Equal("--type image/png", tool.Arguments);
     }
@@ -110,7 +109,7 @@ public class ClipboardCommandTests
     [Fact]
     public void PngWrite_LinuxWithXclip_SetsImagePng()
     {
-        var tool = Tool(ClipboardCommand.PngWrite(DesktopOs.Linux, wayland: false, Has("xclip", "wl-copy")));
+        var tool = Tool(ClipboardCommand.PngWrite(DesktopOs.Linux, false, Has("xclip", "wl-copy")));
         Assert.Equal("xclip", tool.FileName);
         Assert.Equal("-selection clipboard -t image/png", tool.Arguments);
     }
@@ -118,14 +117,13 @@ public class ClipboardCommandTests
     [Fact]
     public void PngWrite_LinuxWithOnlyWlCopy_SetsImagePng()
     {
-        var tool = Tool(ClipboardCommand.PngWrite(DesktopOs.Linux, wayland: false, Has("wl-copy")));
+        var tool = Tool(ClipboardCommand.PngWrite(DesktopOs.Linux, false, Has("wl-copy")));
         Assert.Equal("wl-copy", tool.FileName);
         Assert.Equal("--type image/png", tool.Arguments);
     }
 
     [Fact]
-    public void PngWrite_Windows_UsesNativeBitmap()
-        => Assert.IsType<ClipboardRoute.Native>(ClipboardCommand.PngWrite(DesktopOs.Windows, wayland: false, _ => false));
+    public void PngWrite_Windows_UsesNativeBitmap() => Assert.IsType<ClipboardRoute.Native>(ClipboardCommand.PngWrite(DesktopOs.Windows, false, _ => false));
 
     private static ClipboardRoute.Tool Tool(ClipboardRoute route) => Assert.IsType<ClipboardRoute.Tool>(route);
 

@@ -1,4 +1,3 @@
-using Lyo.HomeInventory.Models.Request;
 using Lyo.Note;
 
 namespace Lyo.HomeInventory.Web.Components;
@@ -6,6 +5,10 @@ namespace Lyo.HomeInventory.Web.Components;
 /// <summary>Nested notes for one inventory subject.</summary>
 public partial class HomeNotesPanel
 {
+    private string _draft = "";
+
+    private List<NoteRecord> _notes = [];
+
     /// <summary>HTTP client.</summary>
     [Parameter]
     [EditorRequired]
@@ -15,9 +18,6 @@ public partial class HomeNotesPanel
     [Parameter]
     [EditorRequired]
     public string NotesRoute { get; set; } = "";
-
-    private List<NoteRecord> _notes = [];
-    private string _draft = "";
 
     protected override Task OnParametersSetAsync() => Reload();
 

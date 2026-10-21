@@ -6,10 +6,9 @@ using Lyo.Images.Builders;
 using Lyo.Images.Models;
 using Lyo.QRCode.Models;
 using Lyo.QRCode.Payloads;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
 using Lyo.Web.Components.FileUpload;
 using Lyo.Web.Components.Models;
+using Lyo.Web.Primitives;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using MudBlazor;
@@ -128,8 +127,8 @@ public partial class QrCodeWorkbench : IAsyncDisposable
     private string _wifiSsid = string.Empty;
 
     /// <summary>
-    /// When non-empty, the Format control lists only these <see cref="QRCodeFormat" /> values (e.g. PNG and SVG for hosts that register only the built-in encoder). When
-    /// null or empty, every enum value is listed.
+    /// When non-empty, the Format control lists only these <see cref="QRCodeFormat" /> values (e.g. PNG and SVG for hosts that register only the built-in encoder). When null or
+    /// empty, every enum value is listed.
     /// </summary>
     [Parameter]
     public IReadOnlyList<QRCodeFormat>? AllowedFormats { get; set; }

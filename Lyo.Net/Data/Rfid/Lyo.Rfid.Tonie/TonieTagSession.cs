@@ -1,12 +1,10 @@
 using Lyo.Exceptions;
-using Lyo.Rfid;
 
 namespace Lyo.Rfid.Tonie;
 
 /// <summary>
-/// Talks to one ICODE SLIX-L tag through <see cref="IIso15693Transceiver"/>.
-/// <see cref="PrepareCustomTagAsync"/> writes 32 bytes of user memory and enables privacy so a Toniebox will accept the tag.
-/// Place audio on the box SD card under <see cref="TonieContentPath"/> for that UID.
+/// Talks to one ICODE SLIX-L tag through <see cref="IIso15693Transceiver" />. <see cref="PrepareCustomTagAsync" /> writes 32 bytes of user memory and enables privacy so a
+/// Toniebox will accept the tag. Place audio on the box SD card under <see cref="TonieContentPath" /> for that UID.
 /// </summary>
 public static class TonieTagSession
 {
@@ -26,15 +24,17 @@ public static class TonieTagSession
         return display;
     }
 
-    /// <summary>
-    /// Unlocks privacy with <paramref name="password"/> (default <see cref="ToniePrivacy.NxpDefault"/> when null) and returns the 32-byte user memory.
-    /// </summary>
-    public static async Task<byte[]> ReadUserMemoryAsync(IIso15693Transceiver transceiver, ReadOnlyMemory<byte> uid, ReadOnlyMemory<byte>? password, CancellationToken cancellationToken)
+    /// <summary>Unlocks privacy with <paramref name="password" /> (default <see cref="ToniePrivacy.NxpDefault" /> when null) and returns the 32-byte user memory.</summary>
+    public static async Task<byte[]> ReadUserMemoryAsync(
+        IIso15693Transceiver transceiver,
+        ReadOnlyMemory<byte> uid,
+        ReadOnlyMemory<byte>? password,
+        CancellationToken cancellationToken)
     {
         ArgumentHelpers.ThrowIfNull(transceiver);
         var key = PasswordOrDefault(password);
         await UnlockAsync(transceiver, uid, key, cancellationToken).ConfigureAwait(false);
-        var payload = await ExchangeAsync(transceiver, SlixFrames.ReadMultipleBlocks(uid.Span, firstBlock: 0, blockCount: 8), cancellationToken).ConfigureAwait(false);
+        var payload = await ExchangeAsync(transceiver, SlixFrames.ReadMultipleBlocks(uid.Span, 0, 8), cancellationToken).ConfigureAwait(false);
         if (payload.Length < 32)
             throw new RfidException("SLIX-L user memory response was short.");
 
@@ -42,8 +42,8 @@ public static class TonieTagSession
     }
 
     /// <summary>
-    /// Writes <paramref name="userMemory"/> (32 bytes, or zeros when null), then enables privacy.
-    /// <paramref name="password"/> defaults to <see cref="ToniePrivacy.NxpDefault"/>.
+    /// Writes <paramref name="userMemory" /> (32 bytes, or zeros when null), then enables privacy. <paramref name="password" /> defaults to
+    /// <see cref="ToniePrivacy.NxpDefault" />.
     /// </summary>
     public static async Task PrepareCustomTagAsync(
         IIso15693Transceiver transceiver,

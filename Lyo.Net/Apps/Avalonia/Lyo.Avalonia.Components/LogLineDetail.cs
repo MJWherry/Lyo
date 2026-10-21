@@ -42,14 +42,8 @@ public sealed record LogLineDetail(
             frames.Add(new(frame.Category.ToString(), frame.ShortMethod, frame.LocationSummary));
 
         return new(
-            line.Message,
-            context,
-            line.ExceptionText,
-            BlankToNull(decoded.ExceptionMessage),
-            decoded.LikelyCrashSite?.ToString(),
-            decoded.CrashSiteConfidence.ToString(),
-            BlankToNull(decoded.Fingerprint),
-            frames);
+            line.Message, context, line.ExceptionText, BlankToNull(decoded.ExceptionMessage), decoded.LikelyCrashSite?.ToString(), decoded.CrashSiteConfidence.ToString(),
+            BlankToNull(decoded.Fingerprint), frames);
     }
 
     private static string? BlankToNull(string? text) => string.IsNullOrWhiteSpace(text) ? null : text;

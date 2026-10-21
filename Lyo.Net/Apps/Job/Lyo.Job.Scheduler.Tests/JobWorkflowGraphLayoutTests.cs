@@ -3,8 +3,8 @@ using Lyo.Job.Web.Components;
 namespace Lyo.Job.Scheduler.Tests;
 
 /// <summary>
-/// The graph draws nodes at absolute coordinates and arrows as precomputed SVG paths, so the layout is pure arithmetic rather than something only a browser can check.
-/// These lock the stage assignment and the edge anchoring that arithmetic produces.
+/// The graph draws nodes at absolute coordinates and arrows as precomputed SVG paths, so the layout is pure arithmetic rather than something only a browser can check. These
+/// lock the stage assignment and the edge anchoring that arithmetic produces.
 /// </summary>
 public class JobWorkflowGraphLayoutTests
 {
@@ -12,7 +12,6 @@ public class JobWorkflowGraphLayoutTests
     public void Build_Chain_PlacesEachStepInItsOwnColumn()
     {
         var layout = JobWorkflowGraphLayout.Build(Steps(("Extract", []), ("Transform", ["Extract"]), ("Load", ["Transform"])));
-
         Assert.Equal(3, layout.Nodes.Count);
         Assert.Equal([0, 1, 2], [.. layout.Nodes.OrderBy(n => n.Column).Select(n => n.Column)]);
         Assert.All(layout.Nodes, n => Assert.Equal(0, n.Row));
@@ -23,9 +22,7 @@ public class JobWorkflowGraphLayoutTests
     [Fact]
     public void Build_FanOutThenFanIn_StacksSiblingsInOneColumn()
     {
-        var layout = JobWorkflowGraphLayout.Build(Steps(
-            ("Extract", []), ("ReportA", ["Extract"]), ("ReportB", ["Extract"]), ("Email", ["ReportA", "ReportB"])));
-
+        var layout = JobWorkflowGraphLayout.Build(Steps(("Extract", []), ("ReportA", ["Extract"]), ("ReportB", ["Extract"]), ("Email", ["ReportA", "ReportB"])));
         Assert.Equal(1, layout.Nodes.Count(n => n.Column == 0));
         Assert.Equal(2, layout.Nodes.Count(n => n.Column == 1));
         Assert.Equal(1, layout.Nodes.Count(n => n.Column == 2));
@@ -38,7 +35,6 @@ public class JobWorkflowGraphLayoutTests
     public void Build_SiblingsInOneColumn_DoNotShareAY()
     {
         var layout = JobWorkflowGraphLayout.Build(Steps(("Extract", []), ("ReportA", ["Extract"]), ("ReportB", ["Extract"])));
-
         var siblings = layout.Nodes.Where(n => n.Column == 1).ToList();
         Assert.Equal(2, siblings.Count);
         Assert.NotEqual(siblings[0].Y, siblings[1].Y);
@@ -48,7 +44,6 @@ public class JobWorkflowGraphLayoutTests
     public void Build_Cycle_ReportsTheStepsAndDrawsNoEdgesIntoThem()
     {
         var layout = JobWorkflowGraphLayout.Build(Steps(("A", ["B"]), ("B", ["A"])));
-
         Assert.Equal(["A", "B"], [.. layout.Cyclic.Order()]);
         Assert.Empty(layout.Nodes);
         Assert.Empty(layout.Edges);
@@ -62,11 +57,9 @@ public class JobWorkflowGraphLayoutTests
     public void Build_Edge_StartsOnSourceRightAndEndsOnTargetLeft()
     {
         var layout = JobWorkflowGraphLayout.Build(Steps(("Extract", []), ("Load", ["Extract"])));
-
         var source = layout.Nodes.Single(n => n.Name == "Extract");
         var target = layout.Nodes.Single(n => n.Name == "Load");
         var edge = Assert.Single(layout.Edges);
-
         Assert.Equal(source.X + JobWorkflowGraphLayout.NodeWidth, edge.StartX);
         Assert.Equal(target.X, edge.EndX);
         Assert.InRange(edge.StartY, source.Y, source.Y + JobWorkflowGraphLayout.NodeHeight);
@@ -79,12 +72,9 @@ public class JobWorkflowGraphLayoutTests
     [Fact]
     public void Build_TwoIncomingEdges_DoNotShareAnEndPoint()
     {
-        var layout = JobWorkflowGraphLayout.Build(Steps(
-            ("Extract", []), ("ReportA", ["Extract"]), ("ReportB", ["Extract"]), ("Email", ["ReportA", "ReportB"])));
-
+        var layout = JobWorkflowGraphLayout.Build(Steps(("Extract", []), ("ReportA", ["Extract"]), ("ReportB", ["Extract"]), ("Email", ["ReportA", "ReportB"])));
         var email = layout.Nodes.Single(n => n.Name == "Email");
         var incoming = layout.Edges.Where(e => e.ToName == "Email").ToList();
-
         Assert.Equal(2, incoming.Count);
         Assert.All(incoming, e => Assert.Equal(email.X, e.EndX));
         Assert.All(incoming, e => Assert.InRange(e.EndY, email.Y, email.Y + JobWorkflowGraphLayout.NodeHeight));
@@ -96,7 +86,6 @@ public class JobWorkflowGraphLayoutTests
     public void Build_Canvas_CoversEveryNode()
     {
         var layout = JobWorkflowGraphLayout.Build(Steps(("Extract", []), ("ReportA", ["Extract"]), ("ReportB", ["Extract"])));
-
         Assert.Equal(layout.Nodes.Max(n => n.X) + JobWorkflowGraphLayout.NodeWidth, layout.Width);
         Assert.Equal(layout.Nodes.Max(n => n.Y) + JobWorkflowGraphLayout.NodeHeight, layout.Height);
     }
@@ -105,7 +94,6 @@ public class JobWorkflowGraphLayoutTests
     public void Build_NoSteps_ProducesAnEmptyLayout()
     {
         var layout = JobWorkflowGraphLayout.Build([]);
-
         Assert.Empty(layout.Nodes);
         Assert.Empty(layout.Edges);
         Assert.Equal(0, layout.Width);
@@ -115,8 +103,7 @@ public class JobWorkflowGraphLayoutTests
     [Fact]
     public void Build_UnknownDependency_IsIgnored()
     {
-        var layout = JobWorkflowGraphLayout.Build([new JobWorkflowStepDraft { StepName = "Load", DependsOn = [Guid.NewGuid()] }]);
-
+        var layout = JobWorkflowGraphLayout.Build([new() { StepName = "Load", DependsOn = [Guid.NewGuid()] }]);
         Assert.Single(layout.Nodes);
         Assert.Empty(layout.Edges);
         Assert.Equal(0, layout.Nodes[0].Column);

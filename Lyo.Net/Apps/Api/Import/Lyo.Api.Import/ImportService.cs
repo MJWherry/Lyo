@@ -39,7 +39,6 @@ public sealed class ImportService : IImportService
     {
         ArgumentHelpers.ThrowIfNull(request);
         _ = _committer;
-
         var duplicate = DuplicateTarget(request.Fields);
         if (duplicate is not null)
             return ImportResult<T>.Fail($"Two sources map to '{duplicate}'.");
@@ -54,13 +53,15 @@ public sealed class ImportService : IImportService
         if (!converted.IsSuccess)
             return ImportResult<T>.Fail(converted.Message ?? "Import document is not valid.");
 
-        var read = _binder.Read<T>(new() {
-            Format = ImportFormat.Json,
-            Content = converted.Json,
-            JsonMode = converted.JsonMode,
-            RowsPath = converted.RowsPath,
-            Fields = request.Fields
-        });
+        var read = _binder.Read<T>(
+            new() {
+                Format = ImportFormat.Json,
+                Content = converted.Json,
+                JsonMode = converted.JsonMode,
+                RowsPath = converted.RowsPath,
+                Fields = request.Fields
+            });
+
         if (!read.IsSuccess)
             return read;
 

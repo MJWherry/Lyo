@@ -1,5 +1,4 @@
 using Lyo.Common.Core.Identifiers;
-using Lyo.Recipe.Models;
 
 namespace Lyo.Recipe.Web.Components;
 
@@ -63,7 +62,7 @@ public partial class RecipeStepsPanel
 
     private async Task Add()
     {
-        Steps.Add(new RecipeStepReq { Id = LyoGuid.CreateV7(), SortOrder = Steps.Count, Instruction = "" });
+        Steps.Add(new() { Id = LyoGuid.CreateV7(), SortOrder = Steps.Count, Instruction = "" });
         if (Changed.HasDelegate)
             await Changed.InvokeAsync();
     }
@@ -73,6 +72,7 @@ public partial class RecipeStepsPanel
         Steps.Remove(step);
         foreach (var line in Lines)
             line.StepIds.Remove(step.Id);
+
         if (Changed.HasDelegate)
             await Changed.InvokeAsync();
     }

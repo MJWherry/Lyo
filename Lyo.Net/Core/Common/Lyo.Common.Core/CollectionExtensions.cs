@@ -123,10 +123,7 @@ public static class CollectionExtensions
         /// <exception cref="ArgumentNullException">The sequence is null; delegates to <see cref="ArgumentHelpers.ThrowIfNull" />.</exception>
         public List<T> AsListOrToList() => ExistingOrMaterializedList(source, static s => s as List<T>);
 
-        /// <summary>
-        /// Returns an <see cref="ICollection{T}" /> without copying when the sequence already exposes one; otherwise materializes via
-        /// <see cref="Enumerable.ToList{TSource}" />.
-        /// </summary>
+        /// <summary>Returns an <see cref="ICollection{T}" /> without copying when the sequence already exposes one; otherwise materializes via <see cref="Enumerable.ToList{TSource}" />.</summary>
         /// <exception cref="ArgumentNullException">The sequence is null; delegates to <see cref="ArgumentHelpers.ThrowIfNull" />.</exception>
         public ICollection<T> AsCollectionOrToList() => ExistingOrMaterializedList(source, static s => s as ICollection<T>);
 

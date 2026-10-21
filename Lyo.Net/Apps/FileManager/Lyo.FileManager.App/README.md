@@ -1,16 +1,34 @@
 # Lyo.FileManager.App
 
-Avalonia window named `lyo-files`. Menus hold the server, file, edit, and key actions. A tab is a key store and a file store. The toolbar is the key store picker, the server picker, Connect, Up, a breadcrumb, and the frequent buttons. Connect opens that pair. The file list stays in the center and follows the selected connection. Tree, metadata, and log dock to the left, right, or bottom, resize, and hide. Drag a title bar to another edge. The log starts on the bottom. Quick search filters the loaded tree, and another box filters the open folder. The file grid sorts and resizes columns. Query uses that grid with a prefix column. Drag a file onto the list to upload it. Double-click a file to open it, or a folder to enter it. Copy and move open a dialog with a local prefix or another open connection. Servers, key stores, and the layout persist under `$XDG_CONFIG_HOME/lyo/file-manager.json` or `%AppData%\Lyo\file-manager.json`. Session logic lives in `Lyo.FileManager`. `appsettings.json` beside the app adds `FileStorage:Stores`. Those names join the server list and are not written back to the settings file. A saved server with the same name throws when the second one is added.
+Avalonia window named `lyo-files`. Menus hold the server, file, edit, and key actions. A tab is a key store and a file store. The toolbar is the key store picker, the server
+picker, Connect, Up, a breadcrumb, and the frequent buttons. Connect opens that pair. The file list stays in the center and follows the selected connection. Tree, metadata, and log
+dock to the left, right, or bottom, resize, and hide. Drag a title bar to another edge. The log starts on the bottom. Quick search filters the loaded tree, and another box filters
+the open folder. The file grid sorts and resizes columns. Query uses that grid with a prefix column. Drag a file onto the list to upload it. Double-click a file to open it, or a
+folder to enter it. Copy and move open a dialog with a local prefix or another open connection. Servers, key stores, and the layout persist under
+`$XDG_CONFIG_HOME/lyo/file-manager.json` or `%AppData%\Lyo\file-manager.json`. Session logic lives in `Lyo.FileManager`. `appsettings.json` beside the app adds
+`FileStorage:Stores`. Those names join the server list and are not written back to the settings file. A saved server with the same name throws when the second one is added.
 
 ## Features
 
-- **Add a server.** A blank name, file folder, or base URL stays in the dialog with the error. Local asks for a file folder, then the catalog folder and filename. Those default to a SQLite file beside the folder. Postgres asks for a connection string instead. S3 asks for a bucket and a catalog. Azure Blob asks for a storage connection string, a container, and a catalog. FTP asks for host, username, password, and a catalog. SFTP also asks for a host-key fingerprint, or a private key instead of a password. The key store is chosen on the toolbar.
-- **Key stores.** Key stores opens a window for the saved list. Add, rename, and remove stores. Load reads a key file: `{ "keys": [ { "keyId", "version", "current", "key", "metadata" } ] }`. `key` is the key bytes, including the salt in metadata. Each store is local keys, with a passphrase and key versions, or AWS Secrets Manager. The toolbar lists `(None)` and every saved name, in front of the server picker. Connect uses that choice. A remote server ignores it. Each open pair is a tab named for the key store and the server. Choosing one shows that pair and does not reconnect. The same server can stay open with another key store.
-- **Dock.** Tree starts on the left, metadata on the right, and the log along the bottom. Each can move to another edge, resize, or hide. Reset layout restores the default. Sizes and edges are saved with the servers.
-- **Tree, list, and query.** The tree loads a folder when it is expanded. Search filters loaded names. The grid supports extended selection. Query runs name and prefix filters in the same grid. The metadata pane lists the selected file.
+- **Add a server.** A blank name, file folder, or base URL stays in the dialog with the error. Local asks for a file folder, then the catalog folder and filename. Those default to
+  a SQLite file beside the folder. Postgres asks for a connection string instead. S3 asks for a bucket and a catalog. Azure Blob asks for a storage connection string, a container,
+  and a catalog. FTP asks for host, username, password, and a catalog. SFTP also asks for a host-key fingerprint, or a private key instead of a password. The key store is chosen on
+  the toolbar.
+- **Key stores.** Key stores opens a window for the saved list. Add, rename, and remove stores. Load reads a key file:
+  `{ "keys": [ { "keyId", "version", "current", "key", "metadata" } ] }`. `key` is the key bytes, including the salt in metadata. Each store is local keys, with a passphrase and
+  key versions, or AWS Secrets Manager. The toolbar lists `(None)` and every saved name, in front of the server picker. Connect uses that choice. A remote server ignores it. Each
+  open pair is a tab named for the key store and the server. Choosing one shows that pair and does not reconnect. The same server can stay open with another key store.
+- **Dock.** Tree starts on the left, metadata on the right, and the log along the bottom. Each can move to another edge, resize, or hide. Reset layout restores the default. Sizes
+  and edges are saved with the servers.
+- **Tree, list, and query.** The tree loads a folder when it is expanded. Search filters loaded names. The grid supports extended selection. Query runs name and prefix filters in
+  the same grid. The metadata pane lists the selected file.
 - **Connections.** The tab strip lists open connections. Choosing a tab shows that store. Closing a tab disconnects it. The server list stays in the picker.
-- **Copy and move.** Copy and move open a dialog with two tabs. Local asks for a destination prefix on this connection. Other connection copies or moves the selection onto another open in-process store, into the target folder you type. Typing suggests existing directories. Dropping the selection on another connection tab opens that move dialog with the tab selected. Copy leaves the source. Move removes it after the hashes match. Preserve keys is the default. New key and existing key are for a store that cannot copy ciphertext, such as FTP or SFTP.
-- **Transfers.** Upload can compress, encrypt, and pick a key id from the connected key store. Encrypt with no key store and no key id is rejected. Dropped files upload into the current prefix.
+- **Copy and move.** Copy and move open a dialog with two tabs. Local asks for a destination prefix on this connection. Other connection copies or moves the selection onto another
+  open in-process store, into the target folder you type. Typing suggests existing directories. Dropping the selection on another connection tab opens that move dialog with the tab
+  selected. Copy leaves the source. Move removes it after the hashes match. Preserve keys is the default. New key and existing key are for a store that cannot copy ciphertext, such
+  as FTP or SFTP.
+- **Transfers.** Upload can compress, encrypt, and pick a key id from the connected key store. Encrypt with no key store and no key id is rejected. Dropped files upload into the
+  current prefix.
 
 ## Examples
 

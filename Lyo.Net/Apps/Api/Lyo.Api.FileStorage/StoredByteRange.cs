@@ -22,8 +22,8 @@ internal readonly record struct StoredDownloadDecision(StoredDownloadKind Kind, 
 internal static class StoredByteRange
 {
     /// <summary>
-    /// True when the object is not compressed and the backend can read a byte slice. Content type does not matter. An encrypted object is decrypted from the chunk that
-    /// holds the requested plaintext offset. A compressed object stays a full body with no <c>Accept-Ranges</c>.
+    /// True when the object is not compressed and the backend can read a byte slice. Content type does not matter. An encrypted object is decrypted from the chunk that holds the
+    /// requested plaintext offset. A compressed object stays a full body with no <c>Accept-Ranges</c>.
     /// </summary>
     public static bool CanServe(bool isCompressed, bool backendSupportsRange) => !isCompressed && backendSupportsRange;
 
@@ -36,10 +36,8 @@ internal static class StoredByteRange
         if (!canServe)
             return new(StoredDownloadKind.Full, false, 0, 0);
 
-        if (string.IsNullOrWhiteSpace(rangeHeader)
-            || !RangeHeaderValue.TryParse(rangeHeader, out var parsed)
-            || parsed.Ranges.Count != 1
-            || !parsed.Unit.Equals("bytes", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrWhiteSpace(rangeHeader) || !RangeHeaderValue.TryParse(rangeHeader, out var parsed) || parsed.Ranges.Count != 1 ||
+            !parsed.Unit.Equals("bytes", StringComparison.OrdinalIgnoreCase))
             return new(StoredDownloadKind.Full, true, 0, 0);
 
         var item = parsed.Ranges.Single();
@@ -62,7 +60,7 @@ internal static class StoredByteRange
         if (start >= total)
             return new(StoredDownloadKind.Unsatisfiable, true, 0, 0);
 
-        var end = item.To ?? (total - 1);
+        var end = item.To ?? total - 1;
         if (end < start)
             return new(StoredDownloadKind.Full, true, 0, 0);
 

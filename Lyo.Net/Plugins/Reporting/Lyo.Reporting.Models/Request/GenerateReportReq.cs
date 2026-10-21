@@ -29,8 +29,8 @@ public sealed class GenerateReportReq
     public string? CreatedBy { get; set; }
 
     /// <summary>
-    /// Echo the resolved composition JSON back on the response. Off by default: the rendered output is the deliverable, and the JSON can reach
-    /// <c>MaxReportDataJsonBytes</c> (5 MB by default). Callers that preview grids client-side set this, or re-read the generation through query or get.
+    /// Echo the resolved composition JSON back on the response. Off by default: the rendered output is the deliverable, and the JSON can reach <c>MaxReportDataJsonBytes</c> (5
+    /// MB by default). Callers that preview grids client-side set this, or re-read the generation through query or get.
     /// </summary>
     public bool IncludeReportData { get; set; }
 }

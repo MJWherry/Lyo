@@ -3,8 +3,8 @@ using Lyo.Formatter.Web.Components;
 namespace Lyo.Formatter.Tests;
 
 /// <summary>
-/// A formatter-typed parameter value is stored as JSON, so the editor unwraps it for editing and re-serializes it on every keystroke. Getting that round-trip wrong
-/// either marks an untouched definition dirty or writes a doubly-escaped template, so the test checks it directly.
+/// A formatter-typed parameter value is stored as JSON, so the editor unwraps it for editing and re-serializes it on every keystroke. Getting that round-trip wrong either
+/// marks an untouched definition dirty or writes a doubly-escaped template, so the test checks it directly.
 /// </summary>
 public class LyoFormatterValueEditorTests
 {
@@ -38,7 +38,6 @@ public class LyoFormatterValueEditorTests
     public void UnwrapJson_ThenToJson_IsStableForAStoredValue()
     {
         const string stored = "\"Run of {Definition.Name}\"";
-
         Assert.Equal(stored, LyoFormatterValueEditor.ToJson(LyoFormatterValueEditor.UnwrapJson(stored)));
     }
 }

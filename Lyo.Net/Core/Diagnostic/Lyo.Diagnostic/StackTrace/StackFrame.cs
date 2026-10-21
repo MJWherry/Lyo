@@ -32,10 +32,7 @@ public sealed record StackFrame(
         }
     }
 
-    /// <summary>
-    /// True when this frame is compiler-generated and does not represent a line the developer wrote directly (async state machines or lambdas without
-    /// PDB source info).
-    /// </summary>
+    /// <summary>True when this frame is compiler-generated and does not represent a line the developer wrote directly (async state machines or lambdas without PDB source info).</summary>
     public bool IsCompilerGenerated => (IsAsync || IsLambda) && SourceFile is null;
 
     public override string ToString() => LocationSummary is null ? $"{ShortMethod} [{Category}]" : $"{ShortMethod} [{Category}] @ {LocationSummary}";

@@ -8,8 +8,8 @@ using System.Collections.Frozen;
 namespace Lyo.TextEncoding;
 
 /// <summary>
-/// Curated charset metadata (well-known statics plus custom instances). Does not replace <see cref="Encoding" /> — use <see cref="ToEncoding" /> or service resolve for the BCL
-/// type.
+/// Curated charset metadata (well-known statics plus custom instances). Does not replace <see cref="Encoding" /> — use <see cref="ToEncoding" /> or service resolve for the
+/// BCL type.
 /// </summary>
 public sealed record CharsetInfo(string Name, string WebName, int? CodePage, string Description, IReadOnlyList<string>? Aliases = null)
 {

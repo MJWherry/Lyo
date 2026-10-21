@@ -90,6 +90,8 @@ public sealed class SingleShotFramingTests
     /// <summary>Surfaces <see cref="EncryptionServiceBase" /> BinaryWriter-string helpers for format-compat asserts.</summary>
     private sealed class FramingProbe : EncryptionServiceBase
     {
+        protected override EncryptionAlgorithmInfo AlgorithmInfo => EncryptionAlgorithmInfo.AesGcm;
+
         public FramingProbe()
             : base(
                 new() {
@@ -104,8 +106,6 @@ public sealed class SingleShotFramingTests
         public override byte[] Decrypt(byte[] encryptedBytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null) => throw new NotSupportedException();
 
         public override IAeadStreamCryptor CreateStreamCryptor(ReadOnlySpan<byte> key) => throw new NotSupportedException();
-
-        protected override EncryptionAlgorithmInfo AlgorithmInfo => EncryptionAlgorithmInfo.AesGcm;
 
         protected override void ValidateSymmetricKey(byte[] key) => throw new NotSupportedException();
 

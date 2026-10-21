@@ -10,30 +10,27 @@ namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
 /// <summary>Tree tab: folder-list API on the left, inspector on the right. The Files grid stays QueryProject.</summary>
 public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
 {
+    private readonly List<StructureRow> _structure = [];
     private FileStorageBrowserActions? _actions;
-    private FileStorageHttpTreeSource? _folderSource;
-    private FileStoragePathTreeNode? _selected;
-    private LyoFileTree? _tree;
-    private IReadOnlyList<FileTreeNode> _checked = [];
+    private string _addGrain = "Value";
+    private string _addKind = "string";
+    private string? _addType;
+    private bool _bulkBusy;
     private int _bulkCatalogCount;
     private int _bulkPhysicalCount;
+    private IReadOnlyList<FileTreeNode> _checked = [];
+    private FileStorageHttpTreeSource? _folderSource;
     private bool _hasCheckedFolder;
-    private bool _bulkBusy;
-    private bool _truncated;
     private int _listingRevision;
-    private readonly List<StructureRow> _structure = [];
+    private FileStoragePathTreeNode? _selected;
     private List<FileStorageTagTypeResponse> _tagTypes = [];
     private List<FileStorageTagValueKindResponse> _tagValueKinds = [];
-    private string? _addType;
-    private string _addKind = "string";
-    private string _addGrain = "Value";
+    private LyoFileTree? _tree;
+    private bool _truncated;
 
     /// <summary>Cascaded parent (API client, dialogs).</summary>
     [CascadingParameter]
     public FileStorageManagement Host { get; set; } = default!;
-
-    /// <inheritdoc />
-    public void Dispose() => Host.FilesChanged -= RefreshAsync;
 
     private bool BlobStructure => _folderSource?.IsBlobStructure != false;
 
@@ -46,10 +43,8 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
 
     private bool SelectedTypeNeedsGrain => SelectedGrains.Any(grain => !string.Equals(grain, "Value", StringComparison.OrdinalIgnoreCase));
 
-    private IReadOnlyList<string> SelectedGrains
-    {
-        get
-        {
+    private IReadOnlyList<string> SelectedGrains {
+        get {
             foreach (var kind in _tagValueKinds) {
                 if (string.Equals(kind.Kind, EffectiveKind, StringComparison.OrdinalIgnoreCase))
                     return kind.Grains;
@@ -59,12 +54,23 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
         }
     }
 
+    private IFileTreeSource FolderSource => _folderSource ??= new(Host.ApiClient, Host.FilesApi);
+
+    private FileStorageBackendKind BackendKind => _folderSource?.BackendKind ?? FileStorageBackendKind.None;
+
+    private bool BulkObjectActionsEnabled => !_bulkBusy && (_bulkCatalogCount > 0 || _bulkPhysicalCount > 0 || _hasCheckedFolder);
+
+    private bool BulkCatalogActionsEnabled => !_bulkBusy && (_bulkCatalogCount > 0 || _hasCheckedFolder);
+
+    /// <inheritdoc />
+    public void Dispose() => Host.FilesChanged -= RefreshAsync;
+
     /// <inheritdoc />
     protected override async Task OnInitializedAsync()
     {
-        _actions = new FileStorageBrowserActions(Host, RefreshAsync);
+        _actions = new(Host, RefreshAsync);
         Host.FilesChanged += RefreshAsync;
-        _folderSource = new FileStorageHttpTreeSource(Host.ApiClient, Host.FilesApi);
+        _folderSource = new(Host.ApiClient, Host.FilesApi);
         _selected = FileStorageHttpTreeSource.DirectoryNode(null);
         await LoadCapabilitiesAsync().ConfigureAwait(true);
     }
@@ -153,10 +159,6 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
             _folderSource.UseTagStructure(_structure.Select(static row => row.Key).ToArray());
     }
 
-    private IFileTreeSource FolderSource => _folderSource ??= new FileStorageHttpTreeSource(Host.ApiClient, Host.FilesApi);
-
-    private FileStorageBackendKind BackendKind => _folderSource?.BackendKind ?? FileStorageBackendKind.None;
-
     private async Task RefreshAsync()
     {
         _listingRevision++;
@@ -193,10 +195,6 @@ public partial class FileStorageTreeBrowser : ComponentBase, IDisposable
 
         await RefreshAsync().ConfigureAwait(true);
     }
-
-    private bool BulkObjectActionsEnabled => !_bulkBusy && (_bulkCatalogCount > 0 || _bulkPhysicalCount > 0 || _hasCheckedFolder);
-
-    private bool BulkCatalogActionsEnabled => !_bulkBusy && (_bulkCatalogCount > 0 || _hasCheckedFolder);
 
     private void OnCheckedChanged(IReadOnlyList<FileTreeNode> nodes)
     {

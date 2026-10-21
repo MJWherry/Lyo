@@ -3,14 +3,14 @@ using Lyo.Result;
 namespace Lyo.Images.OpenCv;
 
 /// <summary>
-/// OpenCV inpaint on a single color PNG ROI. Implementations are thread-safe when underlying OpenCV usage is re-entrant for distinct buffers
-/// (typical for stateless decode/inpaint/encode per call).
+/// OpenCV inpaint on a single color PNG ROI. Implementations are thread-safe when underlying OpenCV usage is re-entrant for distinct buffers (typical for stateless
+/// decode/inpaint/encode per call).
 /// </summary>
 public interface IOpenCvRoiInpaint
 {
     /// <summary>
-    /// Decodes a color PNG ROI, paints a binary mask rectangle as 255 (inpaint) and 0 elsewhere, runs <c>Cv2.Inpaint</c>, and returns PNG-encoded BGR matching the decoded
-    /// ROI size.
+    /// Decodes a color PNG ROI, paints a binary mask rectangle as 255 (inpaint) and 0 elsewhere, runs <c>Cv2.Inpaint</c>, and returns PNG-encoded BGR matching the decoded ROI
+    /// size.
     /// </summary>
     /// <param name="roiColorPng">PNG bytes (e.g. from ImageSharp <c>SaveAsPng</c>).</param>
     /// <param name="maskX">Left of mask rectangle in ROI pixels.</param>

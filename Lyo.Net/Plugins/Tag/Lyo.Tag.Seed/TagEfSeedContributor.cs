@@ -12,11 +12,11 @@ namespace Lyo.Tag.Seed;
 /// <summary>EF seed of tags, each on a different item from a different person.</summary>
 public sealed class TagEfSeedContributor : SeedContributor, IEfSeedSource
 {
-    /// <summary>Tenant id written on every seeded row.</summary>
-    public static readonly Guid TenantId = new("11111111-1111-7111-8111-111111111111");
-
     /// <summary>Subject type written on every seeded row.</summary>
     public const string SubjectType = "item";
+
+    /// <summary>Tenant id written on every seeded row.</summary>
+    public static readonly Guid TenantId = new("11111111-1111-7111-8111-111111111111");
 
     /// <inheritdoc />
     public override string Name => "Tag";
@@ -31,9 +31,7 @@ public sealed class TagEfSeedContributor : SeedContributor, IEfSeedSource
     public DbContext CreateContext(string connectionString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        var options = new DbContextOptionsBuilder<TagDbContext>()
-            .UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<TagDbContext>().UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema)).Options;
         return new TagDbContext(options);
     }
 
@@ -42,22 +40,23 @@ public sealed class TagEfSeedContributor : SeedContributor, IEfSeedSource
     {
         graph.OnClear(ClearAsync);
         var faker = options.RandomSeed is { } seed ? new Faker { Random = new(seed) } : new Faker();
-        graph.Entity(options.Count, i => {
-            var name = faker.Commerce.ProductAdjective();
-            return new TagEntity {
-                Id = LyoGuid.CreateV7(),
-                TenantId = TenantId,
-                SubjectEntityType = SubjectType,
-                SubjectEntityId = $"item-{i}",
-                ActorEntityType = "person",
-                ActorEntityId = $"person-{i}",
-                Visibility = EntityRefVisibility.Public,
-                CreatedAt = DateTime.UtcNow,
-                Name = name,
-                TagType = "tag",
-                Slug = $"{SlugOf(name)}-{i}"
-            };
-        });
+        graph.Entity(
+            options.Count, i => {
+                var name = faker.Commerce.ProductAdjective();
+                return new TagEntity {
+                    Id = LyoGuid.CreateV7(),
+                    TenantId = TenantId,
+                    SubjectEntityType = SubjectType,
+                    SubjectEntityId = $"item-{i}",
+                    ActorEntityType = "person",
+                    ActorEntityId = $"person-{i}",
+                    Visibility = EntityRefVisibility.Public,
+                    CreatedAt = DateTime.UtcNow,
+                    Name = name,
+                    TagType = "tag",
+                    Slug = $"{SlugOf(name)}-{i}"
+                };
+            });
     }
 
     private static async Task ClearAsync(SeedSession session, CancellationToken ct)

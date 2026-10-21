@@ -16,8 +16,8 @@ public static class Extensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers handoff storage, external-login completion, <see cref="SsoBffOptions" />, <see cref="ExternalLoginOptions" />, and <see cref="SsoProtocolRegistry" />.
-        /// Protocols register themselves on top.
+        /// Registers handoff storage, external-login completion, <see cref="SsoBffOptions" />, <see cref="ExternalLoginOptions" />, and <see cref="SsoProtocolRegistry" />. Protocols
+        /// register themselves on top.
         /// </summary>
         public IServiceCollection AddLyoSso()
         {
@@ -32,9 +32,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>
-        /// Like <see cref="AddLyoSso()" /> plus binding <see cref="ExternalLoginOptions" /> from <c>LyoExternalLogin</c> and <see cref="SsoBffOptions" /> from <c>LyoSso</c>.
-        /// </summary>
+        /// <summary>Like <see cref="AddLyoSso()" /> plus binding <see cref="ExternalLoginOptions" /> from <c>LyoExternalLogin</c> and <see cref="SsoBffOptions" /> from <c>LyoSso</c>.</summary>
         public IServiceCollection AddLyoSso(IConfiguration configuration, string externalLoginSectionName = ExternalLoginOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);

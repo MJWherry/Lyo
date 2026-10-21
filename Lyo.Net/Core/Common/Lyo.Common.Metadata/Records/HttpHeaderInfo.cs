@@ -7,8 +7,8 @@ using Lyo.Common.Core.Net;
 namespace Lyo.Common.Metadata.Records;
 
 /// <summary>
-/// Curated HTTP header catalog: RFC names, Lyo contract headers, and common <c>X-</c> names. Vendor wire names belong in that vendor’s
-/// <c>.Models</c> package, not here. Implicitly converts to <see cref="string" /> so <c>Headers.Contains(HttpHeaderInfo.Cookie)</c> stays a one-token call.
+/// Curated HTTP header catalog: RFC names, Lyo contract headers, and common <c>X-</c> names. Vendor wire names belong in that vendor’s <c>.Models</c> package, not here.
+/// Implicitly converts to <see cref="string" /> so <c>Headers.Contains(HttpHeaderInfo.Cookie)</c> stays a one-token call.
 /// </summary>
 /// <remarks>Not a complete IANA field registry. Lookups are case-insensitive (RFC 9110).</remarks>
 [DebuggerDisplay("{ToString(),nq}")]
@@ -57,8 +57,7 @@ public sealed record HttpHeaderInfo(string Name, string Description, HttpHeaderC
         LyoHttpHeaders.Authorization, "Credential with a scheme prefix (for example Bearer)", HttpHeaderCategory.Auth, HttpHeaderPresence.Request, []);
 
     /// <summary>Lyo API key header, carrying the raw secret with no scheme prefix.</summary>
-    public static readonly HttpHeaderInfo ApiKey = new(
-        LyoHttpHeaders.ApiKey, "Lyo API key with no scheme prefix", HttpHeaderCategory.Auth, HttpHeaderPresence.Request, []);
+    public static readonly HttpHeaderInfo ApiKey = new(LyoHttpHeaders.ApiKey, "Lyo API key with no scheme prefix", HttpHeaderCategory.Auth, HttpHeaderPresence.Request, []);
 
     /// <summary>Primary correlation-id header written and read by <c>Lyo.Diagnostic</c>.</summary>
     public static readonly HttpHeaderInfo CorrelationId = new(
@@ -118,8 +117,7 @@ public sealed record HttpHeaderInfo(string Name, string Description, HttpHeaderC
         "X-Frame-Options", "Clickjacking policy (DENY or SAMEORIGIN)", HttpHeaderCategory.Security, HttpHeaderPresence.Response, []);
 
     /// <summary><c>X-XSS-Protection</c> — legacy XSS filter switch; still seen on older stacks.</summary>
-    public static readonly HttpHeaderInfo XssProtection = new(
-        "X-XSS-Protection", "Legacy XSS-filter switch", HttpHeaderCategory.Security, HttpHeaderPresence.Response, []);
+    public static readonly HttpHeaderInfo XssProtection = new("X-XSS-Protection", "Legacy XSS-filter switch", HttpHeaderCategory.Security, HttpHeaderPresence.Response, []);
 
     /// <summary><c>X-RateLimit-Limit</c> — request quota for the current window.</summary>
     public static readonly HttpHeaderInfo RateLimitLimit = new(
@@ -152,7 +150,6 @@ public sealed record HttpHeaderInfo(string Name, string Description, HttpHeaderC
     static HttpHeaderInfo()
     {
         var fields = typeof(HttpHeaderInfo).PublicStaticFields<HttpHeaderInfo>();
-
         foreach (var info in fields) {
             if (info == Unknown)
                 continue;

@@ -150,7 +150,8 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
             using var input = File.OpenRead(mergedPath);
             var result = await _storage.SaveFromStreamAsync(
                     input, mergedInfo.Length, session.OriginalFileName ?? session.TargetFileId.ToString(), session.Compress, session.Encrypt, session.KeyId, session.PathPrefix,
-                    null, session.ContentType, session.Charset, session.TenantId, null, session.TargetFileId, FileStoreResult.DeserializeMetadata(session.MetadataJson), ct)
+                    null,
+                    session.ContentType, session.Charset, session.TenantId, null, session.TargetFileId, FileStoreResult.DeserializeMetadata(session.MetadataJson), ct)
                 .ConfigureAwait(false);
 
             await _sessions.SetStatusAsync(session.SessionId, MultipartSessionStatus.Completed, ct).ConfigureAwait(false);

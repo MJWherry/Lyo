@@ -1,7 +1,6 @@
 using System.Net;
 using Lyo.Common.Core.Net;
 using Lyo.Common.Metadata.Records;
-using Lyo.Http.Client.Pipeline;
 using Lyo.RateLimit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -87,7 +86,7 @@ public sealed class LyoHttpClientFactoryTests
         var factory = Factory();
         factory.RegisterDefault(o => o.WithBaseUrl("https://fallback.test/"));
         var client = factory.Get("missing.example");
-        Assert.Equal(new Uri("https://fallback.test/"), client.GetClient().BaseAddress);
+        Assert.Equal(new("https://fallback.test/"), client.GetClient().BaseAddress);
         Assert.Same(client, factory.Get("another.example"));
     }
 
@@ -129,15 +128,15 @@ public sealed class LyoHttpClientFactoryTests
         var capture = new CaptureHandler();
         var calls = 0;
         var factory = Factory(primary: () => capture);
-        factory.Register("mySite.com", o =>
-        {
-            o.WithBaseUrl("https://mySite.com/");
-            o.UseBearer((_, _) =>
-            {
-                calls++;
-                return new ValueTask<string?>("secret");
+        factory.Register(
+            "mySite.com", o => {
+                o.WithBaseUrl("https://mySite.com/");
+                o.UseBearer((_, _) => {
+                    calls++;
+                    return new("secret");
+                });
             });
-        });
+
         var client = factory.Get("mySite.com");
         using var first = await client.GetClient().GetAsync("/", TestCt);
         using var kept = new HttpRequestMessage(HttpMethod.Get, "/");
@@ -153,12 +152,13 @@ public sealed class LyoHttpClientFactoryTests
     {
         var capture = new CaptureHandler();
         var factory = Factory(primary: () => capture);
-        factory.Register("mySite.com", o =>
-        {
-            o.WithBaseUrl("https://mySite.com/");
-            o.UseApiKey("site-key");
-            o.AcceptJson();
-        });
+        factory.Register(
+            "mySite.com", o => {
+                o.WithBaseUrl("https://mySite.com/");
+                o.UseApiKey("site-key");
+                o.AcceptJson();
+            });
+
         using var response = await factory.Get("mySite.com").GetClient().GetAsync("/", TestCt);
         var request = capture.Requests[0];
         Assert.Equal("site-key", request.Headers.GetValues(LyoHttpHeaders.ApiKey).Single());
@@ -170,16 +170,18 @@ public sealed class LyoHttpClientFactoryTests
     {
         var limiter = new PerPolicyLimiter(TimeSpan.FromSeconds(30));
         var factory = Factory(limiter);
-        factory.Register("a.example", o =>
-        {
-            o.WithBaseUrl("https://a.example/");
-            o.UseRateLimit(1, TimeSpan.FromSeconds(10));
-        });
-        factory.Register("b.example", o =>
-        {
-            o.WithBaseUrl("https://b.example/");
-            o.UseRateLimit(1, TimeSpan.FromSeconds(10));
-        });
+        factory.Register(
+            "a.example", o => {
+                o.WithBaseUrl("https://a.example/");
+                o.UseRateLimit(1, TimeSpan.FromSeconds(10));
+            });
+
+        factory.Register(
+            "b.example", o => {
+                o.WithBaseUrl("https://b.example/");
+                o.UseRateLimit(1, TimeSpan.FromSeconds(10));
+            });
+
         using var a = await factory.Get("a.example").GetClient().GetAsync("/", TestCt);
         using var b = await factory.Get("b.example").GetClient().GetAsync("/", TestCt);
         Assert.Equal(HttpStatusCode.OK, a.StatusCode);
@@ -192,16 +194,18 @@ public sealed class LyoHttpClientFactoryTests
     {
         var capture = new CaptureHandler();
         var limiter = new RecordingLimiter();
-        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
-        {
-            ["LyoHttpClientFactory:Sites:mySite.com:BaseUrl"] = "https://mySite.com/",
-            ["LyoHttpClientFactory:Sites:mySite.com:RequestCompression"] = "Gzip",
-            ["LyoHttpClientFactory:Sites:mySite.com:ApiKey"] = "site-key",
-            ["LyoHttpClientFactory:Sites:mySite.com:Accept"] = "application/json",
-            ["LyoHttpClientFactory:Sites:mySite.com:RateLimit:Enabled"] = "true",
-            ["LyoHttpClientFactory:Sites:mySite.com:RateLimit:PermitLimit"] = "5",
-            ["LyoHttpClientFactory:Sites:mySite.com:RateLimit:Window"] = "00:00:01"
-        }).Build();
+        var config = new ConfigurationBuilder().AddInMemoryCollection(
+                new Dictionary<string, string?> {
+                    ["LyoHttpClientFactory:Sites:mySite.com:BaseUrl"] = "https://mySite.com/",
+                    ["LyoHttpClientFactory:Sites:mySite.com:RequestCompression"] = "Gzip",
+                    ["LyoHttpClientFactory:Sites:mySite.com:ApiKey"] = "site-key",
+                    ["LyoHttpClientFactory:Sites:mySite.com:Accept"] = "application/json",
+                    ["LyoHttpClientFactory:Sites:mySite.com:RateLimit:Enabled"] = "true",
+                    ["LyoHttpClientFactory:Sites:mySite.com:RateLimit:PermitLimit"] = "5",
+                    ["LyoHttpClientFactory:Sites:mySite.com:RateLimit:Window"] = "00:00:01"
+                })
+            .Build();
+
         var services = new ServiceCollection();
         services.AddSingleton<IRateLimitService>(limiter);
         services.AddLyoHttpClientFactoryFromConfiguration(config, (factory, _) => ((LyoHttpClientFactory)factory).PrimaryHandler = () => capture);
@@ -209,7 +213,7 @@ public sealed class LyoHttpClientFactoryTests
         var client = provider.GetRequiredService<ILyoHttpClientFactory>().Get("mySite.com");
         var body = new string('x', 2048);
         _ = await client.PostAsBinaryAsync("/", body, ct: TestCt);
-        Assert.Equal(new Uri("https://mySite.com/"), client.GetClient().BaseAddress);
+        Assert.Equal(new("https://mySite.com/"), client.GetClient().BaseAddress);
         Assert.Equal("site-key", capture.Requests[0].Headers.GetValues(LyoHttpHeaders.ApiKey).Single());
         Assert.Equal("application/json", capture.Requests[0].Headers.GetValues(HttpHeaderInfo.Accept.Name).Single());
         Assert.Equal(LyoContentEncodings.GZip, capture.ContentEncodings[0]);
@@ -235,6 +239,7 @@ public sealed class LyoHttpClientFactoryTests
     private sealed class PerPolicyLimiter(TimeSpan retry) : IRateLimitService
     {
         private readonly Dictionary<string, int> _counts = new(StringComparer.OrdinalIgnoreCase);
+
         public List<string> Policies { get; } = [];
 
         public ValueTask<RateLimitDecision> TryAcquireAsync(RateLimitRequest request, CancellationToken ct = default)
@@ -253,7 +258,9 @@ public sealed class LyoHttpClientFactoryTests
     private sealed class CaptureHandler : HttpMessageHandler
     {
         public List<HttpRequestMessage> Requests { get; } = [];
+
         public List<string> ContentEncodings { get; } = [];
+
         public string? Authorization => Requests.Count == 0 ? null : Requests[0].Headers.TryGetValues(LyoHttpHeaders.Authorization, out var values) ? values.Single() : null;
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
@@ -268,7 +275,9 @@ public sealed class LyoHttpClientFactoryTests
     {
         public List<string> Warnings { get; } = [];
 
-        public IDisposable BeginScope<TState>(TState state) where TState : notnull => NullScope.Instance;
+        public IDisposable BeginScope<TState>(TState state)
+            where TState : notnull
+            => NullScope.Instance;
 
         public bool IsEnabled(LogLevel logLevel) => true;
 
@@ -281,6 +290,7 @@ public sealed class LyoHttpClientFactoryTests
         private sealed class NullScope : IDisposable
         {
             public static readonly NullScope Instance = new();
+
             public void Dispose() { }
         }
     }

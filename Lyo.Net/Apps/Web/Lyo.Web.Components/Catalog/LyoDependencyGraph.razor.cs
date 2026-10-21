@@ -4,11 +4,15 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyo.Web.Components.Catalog;
 
-/// <summary>
-/// Direct dependencies of one catalog package, grouped by kind. Loads the same JSON <see cref="PackageDoc" /> uses so the graph stays aligned with the docs.
-/// </summary>
+/// <summary>Direct dependencies of one catalog package, grouped by kind. Loads the same JSON <see cref="PackageDoc" /> uses so the graph stays aligned with the docs.</summary>
 public partial class LyoDependencyGraph : IDisposable
 {
+    private readonly CatalogLoadGate _gate = new();
+
+    private CatalogPackageDoc? _doc;
+    private string? _error;
+    private bool _loading = true;
+
     /// <summary>Package id whose dependencies to display.</summary>
     [Parameter]
     [EditorRequired]
@@ -31,14 +35,11 @@ public partial class LyoDependencyGraph : IDisposable
     [Inject]
     private ILogger<LyoDependencyGraph> Logger { get; set; } = null!;
 
-    private readonly CatalogLoadGate _gate = new();
-
-    private CatalogPackageDoc? _doc;
-    private bool _loading = true;
-    private string? _error;
-
     private IEnumerable<IGrouping<string, CatalogDependency>> Grouped
         => (_doc?.Dependencies ?? []).GroupBy(dependency => string.IsNullOrWhiteSpace(dependency.Kind) ? "other" : dependency.Kind);
+
+    /// <inheritdoc />
+    public void Dispose() => _gate.Dispose();
 
     /// <inheritdoc />
     protected override Task OnParametersSetAsync()
@@ -49,9 +50,6 @@ public partial class LyoDependencyGraph : IDisposable
 
         return LoadAsync(key);
     }
-
-    /// <inheritdoc />
-    public void Dispose() => _gate.Dispose();
 
     private async Task LoadAsync(string key)
     {
@@ -68,9 +66,7 @@ public partial class LyoDependencyGraph : IDisposable
 
             _doc = doc;
         }
-        catch (OperationCanceledException) when (ct.IsCancellationRequested) {
-            return;
-        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
         catch (Exception ex) {
             if (!_gate.IsCurrent(requestId))
                 return;
@@ -84,6 +80,5 @@ public partial class LyoDependencyGraph : IDisposable
         }
     }
 
-    private static string ChipLabel(CatalogDependency dependency)
-        => string.IsNullOrWhiteSpace(dependency.Version) ? dependency.Name : $"{dependency.Name} {dependency.Version}";
+    private static string ChipLabel(CatalogDependency dependency) => string.IsNullOrWhiteSpace(dependency.Version) ? dependency.Name : $"{dependency.Name} {dependency.Version}";
 }

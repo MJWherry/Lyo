@@ -55,8 +55,8 @@ public static class FusionCacheServiceExtensions
         /// <param name="configureFusionCache">Optional callback that fills FusionCache options</param>
         /// <param name="configureRedisBackplane">Optional Redis backplane callback when Redis is in use</param>
         /// <param name="configureRedis">
-        /// Optional callback that further fills Redis <c>ConfigurationOptions</c> (password from a secret store, for example). <c>Redis:Password</c> from config is
-        /// applied automatically when present.
+        /// Optional callback that further fills Redis <c>ConfigurationOptions</c> (password from a secret store, for example). <c>Redis:Password</c> from config
+        /// is applied automatically when present.
         /// </param>
         /// <param name="redisSectionName">Redis configuration section (default "Redis"). When present, Redis and the backplane are registered.</param>
         /// <returns>The same collection, for chaining</returns>

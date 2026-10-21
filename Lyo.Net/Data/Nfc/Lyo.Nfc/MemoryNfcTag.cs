@@ -2,9 +2,7 @@ using Lyo.Exceptions;
 
 namespace Lyo.Nfc;
 
-/// <summary>
-/// Type 2 tag kept in a byte buffer. Use it for tests and for dump files. <see cref="UidHex"/> is the value passed to the constructor, uppercased, with spaces removed.
-/// </summary>
+/// <summary>Type 2 tag kept in a byte buffer. Use it for tests and for dump files. <see cref="UidHex" /> is the value passed to the constructor, uppercased, with spaces removed.</summary>
 public sealed class MemoryNfcTag : INfcTag
 {
     private readonly NtagLayout _layout;

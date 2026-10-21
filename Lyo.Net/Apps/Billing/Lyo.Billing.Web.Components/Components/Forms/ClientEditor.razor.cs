@@ -1,15 +1,15 @@
-using Lyo.Api.Client;
-using Lyo.Api.Models.Builders;
-using Lyo.Api.Models.Common.Request;
-using Lyo.Api.Models.Common.Response;
-using Lyo.Query.Models.Common.Request;
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 
 namespace Lyo.Billing.Web.Components.Components.Forms;
 
 public partial class ClientEditor
 {
+    private readonly ClientEditModel _edit = new();
+    private bool _formHasChanges;
+    private Guid? _savedId;
+    private bool _saving;
+    private bool _seeded;
+
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = null!;
 
@@ -20,12 +20,6 @@ public partial class ClientEditor
     [Parameter]
     public Guid? ClientId { get; set; }
 
-    private readonly ClientEditModel _edit = new();
-    private bool _formHasChanges;
-    private bool _saving;
-    private bool _seeded;
-    private Guid? _savedId;
-
     private bool _isNew => _savedId is not { } id || id == Guid.Empty;
 
     private bool _canSave => !_saving && !string.IsNullOrWhiteSpace(_edit.DisplayName) && (_isNew || _formHasChanges);
@@ -34,6 +28,7 @@ public partial class ClientEditor
     {
         if (_seeded)
             return;
+
         _seeded = true;
         _savedId = ClientId is { } id && id != Guid.Empty ? id : null;
         if (_savedId is not { } clientId)
@@ -41,17 +36,19 @@ public partial class ClientEditor
 
         var res = await ApiClient.QueryProjectAsync<ProjectedQueryRes<ClientLookup>>(
             "Billing/Clients",
-            new ProjectionQueryReq {
+            new() {
                 Keys = [[clientId]],
                 Amount = 1,
                 Select = [
-                    "Id", "DisplayName", "LegalName", "Status", "TaxExempt", "DefaultCurrency", "PaymentTermsDays", "InvoicePrefix", "DefaultInvoiceNotes",
-                    "ContactName", "Line1", "Line2", "City", "Region", "PostalCode", "Country"
+                    "Id", "DisplayName", "LegalName", "Status", "TaxExempt", "DefaultCurrency", "PaymentTermsDays", "InvoicePrefix", "DefaultInvoiceNotes", "ContactName",
+                    "Line1", "Line2", "City", "Region", "PostalCode", "Country"
                 ]
             });
+
         var row = res?.Items?.FirstOrDefault();
         if (row == null)
             return;
+
         _edit.DisplayName = row.DisplayName ?? string.Empty;
         _edit.LegalName = row.LegalName;
         _edit.Status = (BillingClientStatus)row.Status;
@@ -86,8 +83,7 @@ public partial class ClientEditor
                 Snackbar.Add("Client created. Add contacts on the other tabs, then close.", Severity.Success);
             }
             else {
-                var patch = new PatchRequestBuilder()
-                    .WithKey(_savedId!.Value)
+                var patch = new PatchRequestBuilder().WithKey(_savedId!.Value)
                     .SetProperty("DisplayName", _edit.DisplayName)
                     .SetProperty("LegalName", _edit.LegalName)
                     .SetProperty("Status", (int)_edit.Status)
@@ -103,8 +99,10 @@ public partial class ClientEditor
                     .SetProperty("Region", _edit.Region)
                     .SetProperty("PostalCode", _edit.PostalCode)
                     .SetProperty("Country", _edit.Country);
+
                 if (!string.IsNullOrWhiteSpace(_edit.TaxId))
                     patch.SetProperty("TaxId", _edit.TaxId);
+
                 await ApiClient.PatchAsAsync<PatchRequest, PatchResult<object>>("Billing/Clients", patch.Build());
                 _formHasChanges = false;
                 MudDialog.Close(DialogResult.Ok(true));
@@ -141,20 +139,35 @@ public partial class ClientEditor
     public sealed class ClientEditModel
     {
         public string DisplayName { get; set; } = string.Empty;
+
         public string? LegalName { get; set; }
+
         public BillingClientStatus Status { get; set; } = BillingClientStatus.Active;
+
         public string DefaultCurrency { get; set; } = "USD";
+
         public int PaymentTermsDays { get; set; } = 30;
+
         public bool TaxExempt { get; set; }
+
         public string? InvoicePrefix { get; set; }
+
         public string? DefaultInvoiceNotes { get; set; }
+
         public string? TaxId { get; set; }
+
         public string? ContactName { get; set; }
+
         public string? Line1 { get; set; }
+
         public string? Line2 { get; set; }
+
         public string? City { get; set; }
+
         public string? Region { get; set; }
+
         public string? PostalCode { get; set; }
+
         public string? Country { get; set; }
     }
 }

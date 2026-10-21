@@ -1,10 +1,10 @@
 using System.Net;
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Metrics;
 using Lyo.Metrics.Models;
 using Lyo.Reporting.Models.Builders;
 using Lyo.Reporting.Models.Controls;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Reporting.Models.Extensions;
 
@@ -51,7 +51,8 @@ public static class MetricsExtensions
 
     private static string GenerateGaugeChartHtml(string chartId, string title, string[] labels, double[] values, int height)
         => GenerateChartHtml(
-            chartId, title, height, new {
+            chartId, title, height,
+            new {
                 type = "doughnut",
                 data = new {
                     labels,
@@ -59,9 +60,8 @@ public static class MetricsExtensions
                         new {
                             label = "Value",
                             data = values,
-                            backgroundColor = new[] {
-                                "rgba(37, 99, 235, 0.6)", "rgba(16, 185, 129, 0.6)", "rgba(245, 158, 11, 0.6)", "rgba(239, 68, 68, 0.6)", "rgba(139, 92, 246, 0.6)"
-                            },
+                            backgroundColor =
+                                new[] { "rgba(37, 99, 235, 0.6)", "rgba(16, 185, 129, 0.6)", "rgba(245, 158, 11, 0.6)", "rgba(239, 68, 68, 0.6)", "rgba(139, 92, 246, 0.6)" },
                             borderColor = new[] { "rgba(37, 99, 235, 1)", "rgba(16, 185, 129, 1)", "rgba(245, 158, 11, 1)", "rgba(239, 68, 68, 1)", "rgba(139, 92, 246, 1)" },
                             borderWidth = 1
                         }
@@ -86,7 +86,8 @@ public static class MetricsExtensions
             .ToArray();
 
         return GenerateChartHtml(
-            chartId, title, height, new {
+            chartId, title, height,
+            new {
                 type = "line",
                 data = new { labels, datasets },
                 options = new {

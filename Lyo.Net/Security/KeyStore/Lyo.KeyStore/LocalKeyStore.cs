@@ -2,18 +2,17 @@ using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
 using Lyo.Common.Core.Extensions;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.KeyStore.KeyDerivation;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.KeyStore;
 
 /// <summary>
-/// Local in-memory key store for Key Encryption Keys (KEK) by key ID and version. Fine for development and single-instance use. SECURITY
-/// WARNING: keys sit in plain memory with no encryption. They show up in memory dumps and process memory. For production, consider: - a secure
-/// key management service (e.g., Azure Key Vault, AWS KMS, HashiCorp Vault) - encrypted storage for keys at rest - hardware security modules (HSM) for key storage
-/// This implementation uses a deterministic salt so the same password yields the same key across application restarts. That is a security trade-off for
-/// development convenience. Production keystores should persist random salts.
+/// Local in-memory key store for Key Encryption Keys (KEK) by key ID and version. Fine for development and single-instance use. SECURITY WARNING: keys sit in plain memory
+/// with no encryption. They show up in memory dumps and process memory. For production, consider: - a secure key management service (e.g., Azure Key Vault, AWS KMS, HashiCorp Vault)
+/// - encrypted storage for keys at rest - hardware security modules (HSM) for key storage This implementation uses a deterministic salt so the same password yields the same key
+/// across application restarts. That is a security trade-off for development convenience. Production keystores should persist random salts.
 /// </summary>
 public class LocalKeyStore : IKeyStore, IKeyInventoryStore
 {

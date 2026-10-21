@@ -10,35 +10,25 @@ public static class FileStoragePresenceUi
     /// <summary>Reads <c>Presence</c> from entry properties.</summary>
     public static FileStoragePresence Read(FileSystemEntry entry)
     {
-        if (entry.Properties != null
-            && entry.Properties.TryGetValue("Presence", out var text)
-            && Enum.TryParse<FileStoragePresence>(text, out var parsed))
+        if (entry.Properties != null && entry.Properties.TryGetValue("Presence", out var text) && Enum.TryParse<FileStoragePresence>(text, out var parsed))
             return parsed;
 
         return FileStoragePresence.None;
     }
 
     /// <summary>True when the row is in the metadata catalog (not backend-only).</summary>
-    public static bool InCatalog(FileStoragePresence presence, Guid? fileId)
-        => fileId != null && presence != FileStoragePresence.Physical;
+    public static bool InCatalog(FileStoragePresence presence, Guid? fileId) => fileId != null && presence != FileStoragePresence.Physical;
 
     /// <summary>True when a catalog file id is present on the entry.</summary>
     public static bool TryFileId(FileSystemEntry entry, out Guid fileId)
     {
         fileId = default;
-        return entry.Properties != null
-               && entry.Properties.TryGetValue("FileId", out var text)
-               && Guid.TryParse(text, out fileId)
-               && fileId != Guid.Empty;
+        return entry.Properties != null && entry.Properties.TryGetValue("FileId", out var text) && Guid.TryParse(text, out fileId) && fileId != Guid.Empty;
     }
 
     /// <summary>Physical object key when the folder list supplied one.</summary>
     public static string? PhysicalKey(FileSystemEntry entry)
-        => entry.Properties != null
-           && entry.Properties.TryGetValue("PhysicalKey", out var key)
-           && !string.IsNullOrWhiteSpace(key)
-            ? key
-            : null;
+        => entry.Properties != null && entry.Properties.TryGetValue("PhysicalKey", out var key) && !string.IsNullOrWhiteSpace(key) ? key : null;
 
     /// <summary>Short label for the storage backend.</summary>
     public static string DisplayName(FileStorageBackendKind kind)
@@ -51,13 +41,7 @@ public static class FileStoragePresenceUi
         };
 
     /// <summary>Filled chip for a file row. Directories and unknown presence return false.</summary>
-    public static bool TryChip(
-        FileSystemEntry entry,
-        FileStorageBackendKind backendKind,
-        out string label,
-        out string hint,
-        out Color color,
-        out string icon)
+    public static bool TryChip(FileSystemEntry entry, FileStorageBackendKind backendKind, out string label, out string hint, out Color color, out string icon)
     {
         label = string.Empty;
         hint = string.Empty;

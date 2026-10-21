@@ -1,5 +1,5 @@
-@using Lyo.Common.Core.Enums;
-@using Lyo.Common.Metadata.Extensions;
+@using Lyo.Common.Core.Enums
+@using Lyo.Common.Metadata.Extensions
 @using Lyo.Query.Models.Enums
 @using Lyo.Web.Components.Models
 @using Lyo.Web.Components.UniqueValueSelector
@@ -138,6 +138,7 @@
                                      FullWidth="true"
                                      Class="mb-2"/>
                 }
+
                 @if (ShouldUseTextInput(_currentProperty, _currentComparison)) {
                     <MudTextField @bind-Value="@_currentStringValue"
                                   Label="Value"

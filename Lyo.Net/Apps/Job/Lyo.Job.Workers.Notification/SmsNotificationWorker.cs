@@ -1,3 +1,4 @@
+using Lyo.Exceptions;
 using Lyo.Job.Client;
 using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Security;
@@ -6,8 +7,6 @@ using Lyo.MessageQueue;
 using Lyo.Metrics;
 using Lyo.Sms;
 using Microsoft.Extensions.Logging;
-using Constants = Lyo.Job.Workers.Notification.Constants;
-using Lyo.Exceptions;
 
 namespace Lyo.Job.Workers.Notification;
 
@@ -41,8 +40,7 @@ public class SmsNotificationWorker : JobWorkerBase
 
     protected override async Task ExecuteAsync(IJobWorkerContext ctx)
     {
-        if (!NotificationParameters.TryRequired(ctx, Constants.ParameterKey.To, out var to)
-            || !NotificationParameters.TryRequired(ctx, Constants.ParameterKey.Body, out var body))
+        if (!NotificationParameters.TryRequired(ctx, Constants.ParameterKey.To, out var to) || !NotificationParameters.TryRequired(ctx, Constants.ParameterKey.Body, out var body))
             return;
 
         var from = NotificationParameters.Optional(ctx, Constants.ParameterKey.From) ?? _options.DefaultFrom;

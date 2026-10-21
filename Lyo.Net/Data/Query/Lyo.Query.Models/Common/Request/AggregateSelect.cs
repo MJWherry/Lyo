@@ -4,8 +4,8 @@ using Lyo.Query.Models.Enums;
 namespace Lyo.Query.Models.Common.Request;
 
 /// <summary>
-/// One aggregate column on a <see cref="ProjectionQueryReq" />. When <see cref="ProjectionQueryReq.Aggregates" /> is non-empty, <see cref="ProjectionQueryReq.Select" /> is the
-/// group key and each aggregate is an extra column on the group row. An empty <see cref="ProjectionQueryReq.Select" /> is one summary row over the filtered set.
+/// One aggregate column on a <see cref="ProjectionQueryReq" />. When <see cref="ProjectionQueryReq.Aggregates" /> is non-empty, <see cref="ProjectionQueryReq.Select" /> is
+/// the group key and each aggregate is an extra column on the group row. An empty <see cref="ProjectionQueryReq.Select" /> is one summary row over the filtered set.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class AggregateSelect
@@ -17,8 +17,8 @@ public sealed class AggregateSelect
     public string Name { get; set; } = "";
 
     /// <summary>
-    /// Source path. Optional for <see cref="AggregateFunction.Count" />: omit it to count rows in the group, pass a collection (or a <c>.count</c> path) to total its elements, or pass a
-    /// scalar to count non-null values. Required for every other function.
+    /// Source path. Optional for <see cref="AggregateFunction.Count" />: omit it to count rows in the group, pass a collection (or a <c>.count</c> path) to total its elements,
+    /// or pass a scalar to count non-null values. Required for every other function.
     /// </summary>
     public string? Field { get; set; }
 

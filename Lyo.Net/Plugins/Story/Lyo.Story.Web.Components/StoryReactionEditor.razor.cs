@@ -41,6 +41,7 @@ public partial class StoryReactionEditor
     {
         if (_index < 0 || _index >= Reactions.Count)
             return;
+
         Reactions.RemoveAt(_index);
         _index = Math.Max(0, _index - 1);
         await OnChanged.InvokeAsync();

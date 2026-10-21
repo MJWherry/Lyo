@@ -5,9 +5,7 @@ using System.Text.Json.Nodes;
 
 namespace Lyo.Json;
 
-/// <summary>
-/// Converts between a <see cref="JsonNode" /> and a CLR object graph of dictionaries, lists, and scalars. YAML, XML, and TOML use this so they share the Lyo JSON contract.
-/// </summary>
+/// <summary>Converts between a <see cref="JsonNode" /> and a CLR object graph of dictionaries, lists, and scalars. YAML, XML, and TOML use this so they share the Lyo JSON contract.</summary>
 public static class JsonNodeGraph
 {
     /// <summary>Builds a <see cref="JsonNode" /> from a dictionary, list, or scalar. A null value returns null.</summary>
@@ -50,7 +48,7 @@ public static class JsonNodeGraph
             JsonObject obj => ToDictionary(obj),
             JsonArray array => array.Select(ToClr).ToList(),
             JsonValue value => ScalarFromValue(value),
-            _ => null
+            var _ => null
         };
 
     private static JsonObject FromDictionary(IDictionary dictionary)
@@ -101,6 +99,6 @@ public static class JsonNodeGraph
             JsonValueKind.False => false,
             JsonValueKind.Null => null,
             JsonValueKind.Number => value.TryGetValue<long>(out var whole) ? whole : value.GetValue<double>(),
-            _ => value.ToString()
+            var _ => value.ToString()
         };
 }

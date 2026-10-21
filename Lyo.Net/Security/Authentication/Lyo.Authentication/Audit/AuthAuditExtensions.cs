@@ -1,6 +1,6 @@
 using Lyo.Authentication.Models.Audit;
-using Microsoft.Extensions.Logging;
 using Lyo.Common.Core.Identifiers;
+using Microsoft.Extensions.Logging;
 
 namespace Lyo.Authentication.Audit;
 
@@ -23,7 +23,8 @@ public static class AuthAuditExtensions
         CancellationToken ct = default)
     {
         var evt = new AuthAuditEvent(
-            LyoGuid.CreateV7(), DateTime.UtcNow, kind, userId, subject, provider, outcome, reason, context?.IpAddress, context?.UserAgent, context?.CorrelationId, metadata, tenantId);
+            LyoGuid.CreateV7(), DateTime.UtcNow, kind, userId, subject, provider, outcome, reason, context?.IpAddress, context?.UserAgent, context?.CorrelationId, metadata,
+            tenantId);
 
         return SafeRecordAsync(recorder, evt, logger, ct);
     }

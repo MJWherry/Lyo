@@ -13,9 +13,7 @@ public class KeyStoreMigratorTests
         source.AddKeyFromString("app", "2", "beta-passphrase");
         source.SetCurrentVersion("app", "2");
         var destination = new LocalKeyStore();
-
         await KeyStoreMigrator.CopyAsync(source, destination, ["app"], ct: TestCt);
-
         Assert.Equal(source.GetKey("app", "1"), destination.GetKey("app", "1"));
         Assert.Equal(source.GetKey("app", "2"), destination.GetKey("app", "2"));
         Assert.Equal("2", destination.GetCurrentVersion("app"));
@@ -29,9 +27,7 @@ public class KeyStoreMigratorTests
         var source = new LocalKeyStore();
         source.AddKey("other", "1", TestData.Create(32));
         var destination = new LocalKeyStore();
-
         await Assert.ThrowsAsync<KeyNotFoundException>(() => KeyStoreMigrator.CopyAsync(source, destination, ["missing"], ct: TestCt));
-
         Assert.Empty(await destination.GetAvailableKeyIdsAsync(TestCt));
     }
 
@@ -47,9 +43,7 @@ public class KeyStoreMigratorTests
         var destination = new LocalKeyStore();
         destination.AddKey("app", "1", destinationBytes);
         destination.SetCurrentVersion("app", "1");
-
         await Assert.ThrowsAsync<InvalidOperationException>(() => KeyStoreMigrator.CopyAsync(source, destination, ["app"], ct: TestCt));
-
         Assert.Equal(destinationBytes, destination.GetKey("app", "1"));
         Assert.False(destination.HasKey("app", "2"));
     }
@@ -67,9 +61,7 @@ public class KeyStoreMigratorTests
         destination.AddKey("app", "1", version1);
         destination.AddKey("app", "2", version2);
         destination.SetCurrentVersion("app", "1");
-
         await Assert.ThrowsAsync<InvalidOperationException>(() => KeyStoreMigrator.CopyAsync(source, destination, ["app"], ct: TestCt));
-
         Assert.Equal("1", destination.GetCurrentVersion("app"));
     }
 
@@ -80,9 +72,7 @@ public class KeyStoreMigratorTests
         source.AddKey("app", "1", TestData.Create(32));
         source.SetCurrentVersion("app", "1");
         var destination = new DivergentKeyStore();
-
         await Assert.ThrowsAsync<InvalidOperationException>(() => KeyStoreMigrator.CopyAsync(source, destination, ["app"], ct: TestCt));
-
         Assert.False(destination.CurrentVersionWasSet);
     }
 
@@ -96,9 +86,7 @@ public class KeyStoreMigratorTests
         source.AddKey("other", "2", TestData.Create(32, TestData.Seed + 2));
         source.SetCurrentVersion("other", "2");
         var destination = new LocalKeyStore();
-
         await KeyStoreMigrator.CopyInventoryAsync(source, destination, ct: TestCt);
-
         Assert.Equal(source.GetKey("app", "1"), destination.GetKey("app", "1"));
         Assert.Equal("1", destination.GetCurrentVersion("app"));
         Assert.Equal(source.GetKey("other", "1"), destination.GetKey("other", "1"));
@@ -114,15 +102,15 @@ public class KeyStoreMigratorTests
         source.AddKey("app", "2", TestData.Create(32, TestData.Seed + 1));
         source.SetCurrentVersion("app", "2");
         var reports = new List<KeyStoreMigrationProgress>();
-
         await KeyStoreMigrator.CopyAsync(source, new LocalKeyStore(), ["app"], new ListProgress<KeyStoreMigrationProgress>(reports), TestCt);
-
         Assert.Equal(["1", "2"], reports.Select(report => report.Version).ToArray());
-        Assert.All(reports, report => {
-            Assert.Equal("app", report.KeyId);
-            Assert.Equal(KeyStoreMigrationItemOutcome.Copied, report.Outcome);
-            Assert.Equal(1, report.KeysTotal);
-        });
+        Assert.All(
+            reports, report => {
+                Assert.Equal("app", report.KeyId);
+                Assert.Equal(KeyStoreMigrationItemOutcome.Copied, report.Outcome);
+                Assert.Equal(1, report.KeysTotal);
+            });
+
         Assert.Equal(1, reports[^1].KeysCompleted);
     }
 

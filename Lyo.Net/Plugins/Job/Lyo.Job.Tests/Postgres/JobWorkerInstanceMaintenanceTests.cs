@@ -118,9 +118,7 @@ public class JobWorkerInstanceMaintenanceTests
             LastHeartbeatUtc = now
         };
 
-        var result = await createService.CreateAsync<JobWorkerInstanceReq, JobWorkerInstance, JobWorkerInstanceRes>(
-            req, ctx => ctx.Entity.Id = LyoGuid.CreateV7(), ct: TestCt);
-
+        var result = await createService.CreateAsync<JobWorkerInstanceReq, JobWorkerInstance, JobWorkerInstanceRes>(req, ctx => ctx.Entity.Id = LyoGuid.CreateV7(), ct: TestCt);
         Assert.True(result.IsSuccess);
         return result.Data!.Id;
     }

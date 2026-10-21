@@ -17,7 +17,7 @@ public sealed class BookPageEntityConfiguration : IEntityTypeConfiguration<BookP
         builder.Property(e => e.PageNumber).HasColumnName("page_number");
         builder.Property(e => e.PrintPageLabel).HasMaxLength(32).HasColumnName("print_page_label");
         builder.Property(e => e.Text).HasColumnType("text").HasColumnName("text");
-        builder.Property(e => e.SearchVector).HasColumnName("search_vector").HasColumnType("tsvector").HasComputedColumnSql(SearchVectorSql, stored: true);
+        builder.Property(e => e.SearchVector).HasColumnName("search_vector").HasColumnType("tsvector").HasComputedColumnSql(SearchVectorSql, true);
         builder.Property(e => e.ContentType).IsRequired().HasMaxLength(64).HasColumnName("content_type");
         builder.Property(e => e.CharacterCount).HasColumnName("character_count");
         builder.Property(e => e.WordCount).HasColumnName("word_count");

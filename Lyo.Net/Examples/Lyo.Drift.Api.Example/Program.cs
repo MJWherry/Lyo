@@ -1,9 +1,9 @@
 using Lyo.Api;
 using Lyo.Api.Middleware;
 using Lyo.Cache;
-using Lyo.Json;
 using Lyo.Drift.Api;
 using Lyo.Drift.Postgres;
+using Lyo.Json;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);

@@ -22,20 +22,19 @@ public sealed class AzureBlobFileStorageOptionsTests
 
     [Fact]
     public void SectionName_IsStable()
-    {
-        // SectionName is part of the public appsettings.json binding contract.
-        Assert.Equal("AzureBlobFileStorage", AzureBlobFileStorageOptions.SectionName);
-    }
+        =>
+            // SectionName is part of the public appsettings.json binding contract.
+            Assert.Equal("AzureBlobFileStorage", AzureBlobFileStorageOptions.SectionName);
 
     [Theory]
     [InlineData("BlobFileStorage")]
     [InlineData("AzureFileStorageOptions")]
     public void AddAzureBlobFileStorageService_ObsoleteSection_DoesNotBindConnectionString(string section)
     {
-        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> {
-            [$"{section}:ConnectionString"] = "UseDevelopmentStorage=true",
-            [$"{section}:ContainerName"] = "legacy"
-        }).Build();
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(
+                new Dictionary<string, string?> { [$"{section}:ConnectionString"] = "UseDevelopmentStorage=true", [$"{section}:ContainerName"] = "legacy" })
+            .Build();
+
         var services = new ServiceCollection();
         services.AddSingleton<IConfiguration>(configuration);
         services.AddAzureBlobFileStorageService();

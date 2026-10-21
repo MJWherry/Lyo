@@ -1,10 +1,9 @@
 using Lyo.Common.Core.Extensions;
-using Microsoft.Extensions.Logging;
 using Lyo.Csv.Models;
 using Lyo.DataTable.Models;
 using Lyo.Exceptions;
 using Lyo.Result;
-
+using Microsoft.Extensions.Logging;
 #if NET10_0_OR_GREATER
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -26,8 +25,6 @@ internal sealed class CsvReader : ICsvReader
         _calls = new(getOptions, static options => options.Clone());
         _logger = logger;
     }
-
-    private IDisposable BeginCall() => _calls.Enter();
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvReader.ParseFile``1(System.String)' />
     public IEnumerable<T> ParseFile<T>(string csvFilePath)
@@ -161,6 +158,8 @@ internal sealed class CsvReader : ICsvReader
         using var ms = new MemoryStream(csvBytes);
         return ParseStreamAsDictionary(ms);
     }
+
+    private IDisposable BeginCall() => _calls.Enter();
 
     private IEnumerable<T> ParseReader<T>(TextReader reader, CsvOptions options)
     {

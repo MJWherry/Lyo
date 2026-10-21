@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Metadata.Records;
@@ -24,23 +25,20 @@ public class LyoTypeInfoTests
         Assert.True(LyoTypeInfo.Int.IsScalar);
         Assert.Equal("0", LyoTypeInfo.Int.DefaultJson);
         Assert.Null(LyoTypeInfo.Int.ElementType);
-
         Assert.False(LyoTypeInfo.JsonObject.IsScalar);
         Assert.Equal(LyoTypeEditorKind.JsonObject, LyoTypeInfo.JsonObject.EditorKind);
         Assert.Equal("{}", LyoTypeInfo.JsonObject.DefaultJson);
-
         Assert.True(LyoTypeInfo.StringList.IsCollection);
         Assert.Equal(typeof(string), LyoTypeInfo.StringList.ElementType);
         Assert.Equal("[]", LyoTypeInfo.StringList.DefaultJson);
         Assert.Equal(LyoTypeEditorKind.Collection, LyoTypeInfo.StringList.EditorKind);
-
         Assert.Equal(typeof(Enum), LyoTypeInfo.Enum.Type);
         Assert.Equal(LyoTypeEditorKind.Enum, LyoTypeInfo.Enum.EditorKind);
         Assert.Equal("0", LyoTypeInfo.Enum.DefaultJson);
         Assert.Equal("\"00:00:00\"", LyoTypeInfo.TimeSpan.DefaultJson);
         Assert.Equal(LyoTypeEditorKind.Duration, LyoTypeInfo.TimeSpan.EditorKind);
         Assert.Equal(LyoTypeEditorKind.Regex, LyoTypeInfo.Regex.EditorKind);
-        Assert.Equal(typeof(System.Text.RegularExpressions.Regex), LyoTypeInfo.Regex.Type);
+        Assert.Equal(typeof(Regex), LyoTypeInfo.Regex.Type);
         Assert.Equal(LyoTypeEditorKind.Xml, LyoTypeInfo.Xml.EditorKind);
         Assert.Equal(typeof(XDocument), LyoTypeInfo.Xml.Type);
         Assert.True(LyoTypeInfo.Int.IsClr);
@@ -73,12 +71,10 @@ public class LyoTypeInfoTests
         Assert.Contains(LyoTypeInfo.Int, integers);
         Assert.Contains(LyoTypeInfo.Long, integers);
         Assert.DoesNotContain(LyoTypeInfo.Decimal, integers);
-
         var collections = LyoTypeInfo.ByCategory(LyoTypeCategory.Collection).ToList();
         Assert.Contains(LyoTypeInfo.StringList, collections);
         Assert.Contains(LyoTypeInfo.IntArray, collections);
         Assert.DoesNotContain(LyoTypeInfo.JsonArray, collections);
-
         var text = LyoTypeInfo.ByCategory(LyoTypeCategory.Text).ToList();
         Assert.Contains(LyoTypeInfo.String, text);
         Assert.Contains(LyoTypeInfo.Uri, text);
@@ -224,21 +220,13 @@ public class LyoTypeInfoTests
     public void ArrayOf_Int_ReturnsIntArray() => Assert.Equal(LyoTypeInfo.IntArray, LyoTypeInfo.ArrayOf(typeof(int)));
 
     [Fact]
-    public void NormalizeFullName_KnownAlias_ReturnsCatalogFullName()
-        => Assert.Equal(typeof(int).FullName, LyoTypeInfo.NormalizeFullName("Int"));
+    public void NormalizeFullName_KnownAlias_ReturnsCatalogFullName() => Assert.Equal(typeof(int).FullName, LyoTypeInfo.NormalizeFullName("Int"));
 
     [Fact]
     public void Register_NonClr_DoesNotStealFromTypeString()
     {
         var registered = LyoTypeInfo.Register(
-            "Demo",
-            "Lyo.Tests.DemoType",
-            "Test-only non-CLR catalog type.",
-            LyoTypeCategory.Text,
-            LyoTypeEditorKind.Text,
-            "\"\"",
-            typeof(string),
-            isClr: false,
+            "Demo", "Lyo.Tests.DemoType", "Test-only non-CLR catalog type.", LyoTypeCategory.Text, LyoTypeEditorKind.Text, "\"\"", typeof(string), false,
             aliases: ["demo-lyo-type"]);
 
         Assert.False(registered.IsClr);

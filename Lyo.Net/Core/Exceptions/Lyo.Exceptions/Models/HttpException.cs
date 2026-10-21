@@ -13,8 +13,8 @@ public abstract class HttpException : Exception
     public string? ErrorCode { get; init; }
 
     /// <summary>
-    /// True when the failure is transient and a retry may succeed (for example rate limiting, temporary unavailability). Defaults to false; transient exception
-    /// types override this to return true so retry policies can use a single predicate.
+    /// True when the failure is transient and a retry may succeed (for example rate limiting, temporary unavailability). Defaults to false; transient exception types override
+    /// this to return true so retry policies can use a single predicate.
     /// </summary>
     public virtual bool IsTransient => false;
 

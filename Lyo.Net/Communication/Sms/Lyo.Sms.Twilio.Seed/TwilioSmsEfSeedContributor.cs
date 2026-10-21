@@ -24,9 +24,7 @@ public sealed class TwilioSmsEfSeedContributor : SeedContributor, IEfSeedSource
     public DbContext CreateContext(string connectionString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        var options = new DbContextOptionsBuilder<TwilioSmsDbContext>()
-            .UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<TwilioSmsDbContext>().UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema)).Options;
         return new TwilioSmsDbContext(options);
     }
 
@@ -36,22 +34,23 @@ public sealed class TwilioSmsEfSeedContributor : SeedContributor, IEfSeedSource
         graph.OnClear(ClearAsync);
         var faker = options.RandomSeed is { } seed ? new Faker { Random = new(seed) } : new Faker();
         var now = DateTime.UtcNow;
-        graph.Entity(options.Count, i => new TwilioSmsLogEntity {
-            Id = "SM" + LyoGuid.CreateV7().ToString("N"),
-            To = $"+1412{5550100 + i}",
-            From = "+14125550199",
-            Body = faker.Lorem.Sentence(),
-            IsSuccess = true,
-            Message = "accepted",
-            Status = "sent",
-            Direction = MessageDirection.Outbound,
-            NumSegments = 1,
-            AccountSid = "AC11111111111111111111111111111111",
-            Price = 0.01m,
-            PriceUnit = "USD",
-            DateSent = now,
-            CreatedTimestamp = now
-        });
+        graph.Entity(
+            options.Count, i => new TwilioSmsLogEntity {
+                Id = "SM" + LyoGuid.CreateV7().ToString("N"),
+                To = $"+1412{5550100 + i}",
+                From = "+14125550199",
+                Body = faker.Lorem.Sentence(),
+                IsSuccess = true,
+                Message = "accepted",
+                Status = "sent",
+                Direction = MessageDirection.Outbound,
+                NumSegments = 1,
+                AccountSid = "AC11111111111111111111111111111111",
+                Price = 0.01m,
+                PriceUnit = "USD",
+                DateSent = now,
+                CreatedTimestamp = now
+            });
     }
 
     private static async Task ClearAsync(SeedSession session, CancellationToken ct)

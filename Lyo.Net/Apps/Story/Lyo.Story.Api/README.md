@@ -1,14 +1,19 @@
 # Lyo.Story.Api
 
-Maps Story Req/Res CRUD via `Lyo.Api` `CreateBuilder` (stories, scenes, nodes, variables, actions, choices, reactions, effects, read-only playthroughs). List and filter use Query on those routes. Graph save and load and play routes delegate to `IStoryStore`. Register the store with `AddStoryApiFromConfiguration` (the Postgres package registers CRUD services and `StoryLyoMapper`), then call `BuildStoryGroup`.
+Maps Story Req/Res CRUD via `Lyo.Api` `CreateBuilder` (stories, scenes, nodes, variables, actions, choices, reactions, effects, read-only playthroughs). List and filter use Query
+on those routes. Graph save and load and play routes delegate to `IStoryStore`. Register the store with `AddStoryApiFromConfiguration` (the Postgres package registers CRUD services
+and `StoryLyoMapper`), then call `BuildStoryGroup`.
 
 ## Features
 
-- `BuildStoryGroup` maps Req/Res CRUD, Query, graph save/load/list, and playthrough start/choose/advance/events/causes. Every route allows anonymous callers; put the host's own authorization in front before exposing it.
+- `BuildStoryGroup` maps Req/Res CRUD, Query, graph save/load/list, and playthrough start/choose/advance/events/causes. Every route allows anonymous callers; put the host's own
+  authorization in front before exposing it.
 - `AddStoryApiFromConfiguration` registers the Postgres store. CRUD services and the mapper are registered there, not again in this package.
-- `MapStoryRoutes(routes, authorPolicy)` maps only the graph and play routes over any registered `IStoryStore` (Postgres, SQLite, or a client store), without the CRUD routes or any authorization metadata. Apply the host's policy to the route group; when `authorPolicy` is set, graph save and list also require it. `Lyo.Game.Server` uses this.
+- `MapStoryRoutes(routes, authorPolicy)` maps only the graph and play routes over any registered `IStoryStore` (Postgres, SQLite, or a client store), without the CRUD routes or any
+  authorization metadata. Apply the host's policy to the route group; when `authorPolicy` is set, graph save and list also require it. `Lyo.Game.Server` uses this.
 - Graph requests and responses carry `TenantId` and `GameKey`. `POST Story/graph/list` (`StoryListReq`) lists graph headers for one tenant and game.
-- Known gap: the play routes do not check that a playthrough belongs to the caller or the caller's tenant, and `SetStoryPlaythroughVariables` is open to any caller that can reach the routes.
+- Known gap: the play routes do not check that a playthrough belongs to the caller or the caller's tenant, and `SetStoryPlaythroughVariables` is open to any caller that can reach
+  the routes.
 
 ## Examples
 

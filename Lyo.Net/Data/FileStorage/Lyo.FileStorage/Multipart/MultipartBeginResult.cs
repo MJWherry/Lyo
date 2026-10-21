@@ -6,6 +6,5 @@ namespace Lyo.FileStorage.Multipart;
 public sealed record MultipartBeginResult(Guid SessionId, Guid TargetFileId, int PartSizeBytes, DateTime ExpiresUtc, MultipartUploadProviderKind ProviderKind)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => $"MultipartBeginResult: SessionId={SessionId}, TargetFileId={TargetFileId}, PartSizeBytes={PartSizeBytes}, ProviderKind={ProviderKind}";
+    public override string ToString() => $"MultipartBeginResult: SessionId={SessionId}, TargetFileId={TargetFileId}, PartSizeBytes={PartSizeBytes}, ProviderKind={ProviderKind}";
 }

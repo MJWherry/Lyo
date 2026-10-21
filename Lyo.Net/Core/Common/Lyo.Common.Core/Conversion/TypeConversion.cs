@@ -14,14 +14,14 @@ using System.Collections.Frozen;
 namespace Lyo.Common.Core.Conversion;
 
 /// <summary>
-/// Shared conversion engine for Lyo. Turns CLR objects, strings, spans, and <see cref="JsonElement" /> values into target types, including nullable unwrapping, enums (name or
-/// numeric), and collection materialization. Replaces conversion pipelines that used to be copied across the API, query, and web-component layers.
+/// Shared conversion engine for Lyo. Turns CLR objects, strings, spans, and <see cref="JsonElement" /> values into target types, including nullable unwrapping, enums (name
+/// or numeric), and collection materialization. Replaces conversion pipelines that used to be copied across the API, query, and web-component layers.
 /// </summary>
 /// <remarks>
 /// <para>Throwing APIs raise <see cref="TypeConversionException" />; <c>Try*</c> APIs return <see langword="false" /> instead.</para>
 /// <para>
-/// Failures surface as a return value or exception, not a log line. Log at the call site if you need a record, where surrounding context is available; this package stays free of a
-/// logging dependency.
+/// Failures surface as a return value or exception, not a log line. Log at the call site if you need a record, where surrounding context is available; this package stays free
+/// of a logging dependency.
 /// </para>
 /// <para>Type metadata (nullable unwrapping, enum detection) lives in a static <see cref="ConcurrentDictionary{TKey,TValue}" /> and is immutable per <see cref="Type" />.</para>
 /// </remarks>
@@ -117,7 +117,7 @@ public static class TypeConversion
     /// <returns><see langword="true" /> when conversion succeeded.</returns>
     public static bool TryConvertTo(object? value, Type targetType, out object? result, bool lenientBoolean = false)
     {
-        if (TryConvertCore(value, targetType, lenientBoolean, out result, out _))
+        if (TryConvertCore(value, targetType, lenientBoolean, out result, out var _))
             return true;
 
         result = null;
@@ -166,8 +166,8 @@ public static class TypeConversion
 
     /// <summary>
     /// Converts a value to <paramref name="targetType" />, building collection targets (arrays, <see cref="List{T}" />, <see cref="HashSet{T}" />, interfaces such as
-    /// <see cref="IReadOnlyList{T}" />/<see cref="ISet{T}" />, and other concrete collections with an <see cref="IEnumerable{T}" /> constructor). A scalar is wrapped when the
-    /// target is a collection; each element of an enumerable is converted to the collection element type.
+    /// <see cref="IReadOnlyList{T}" />/<see cref="ISet{T}" />, and other concrete collections with an <see cref="IEnumerable{T}" /> constructor). A scalar is wrapped when the target is a
+    /// collection; each element of an enumerable is converted to the collection element type.
     /// </summary>
     /// <param name="value">Source (scalar, enumerable, or <see cref="JsonElement" />).</param>
     /// <param name="targetType">Destination (scalar or collection).</param>
@@ -304,7 +304,7 @@ public static class TypeConversion
     /// <returns><see langword="true" /> when conversion succeeded.</returns>
     public static bool TryFromJsonElement(in JsonElement element, Type targetType, out object? result)
     {
-        if (TryFromJsonElementCore(in element, targetType, GetMetadata(targetType), out result, out _) && result != null)
+        if (TryFromJsonElementCore(in element, targetType, GetMetadata(targetType), out result, out var _) && result != null)
             return true;
 
         result = null;
@@ -978,7 +978,6 @@ public static class TypeConversion
     [StackTraceHidden]
 #endif
     private static void ThrowConversionFailed(object? value, Type targetType, Exception? inner) => throw ConversionFailed(value, targetType, inner);
-
 
     private sealed record TypeMetadata(Type UnderlyingType, bool IsEnum, bool IsNullable, Type? EnumType);
 }

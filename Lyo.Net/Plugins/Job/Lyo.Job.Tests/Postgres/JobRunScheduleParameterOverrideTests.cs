@@ -16,8 +16,8 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.Job.Tests.Postgres;
 
 /// <summary>
-/// A "run this schedule" request can send only <c>JobScheduleId</c>. CreateJobRun copies enabled schedule parameters onto omitted keys before definition back-fill, so schedule
-/// values win the same way they would when the scheduler fires.
+/// A "run this schedule" request can send only <c>JobScheduleId</c>. CreateJobRun copies enabled schedule parameters onto omitted keys before definition back-fill, so
+/// schedule values win the same way they would when the scheduler fires.
 /// </summary>
 [Trait("Category", "Integration")]
 public class JobRunScheduleParameterOverrideTests
@@ -31,10 +31,8 @@ public class JobRunScheduleParameterOverrideTests
     {
         using var sp = BuildServiceProvider();
         using var scope = sp.CreateScope();
-        var (definitionId, scheduleId) = await CreateDefinitionWithScheduleAsync(sp, definitionValue: "200", scheduleValue: "50", scheduleEnabled: true);
-        var created = await scope.ServiceProvider.GetRequiredService<JobService>()
-            .CreateJobRun(new(definitionId, "test-user", scheduleId: scheduleId), TestCt);
-
+        var (definitionId, scheduleId) = await CreateDefinitionWithScheduleAsync(sp, "200", "50", true);
+        var created = await scope.ServiceProvider.GetRequiredService<JobService>().CreateJobRun(new(definitionId, "test-user", scheduleId), TestCt);
         Assert.True(created.IsSuccess, created.Error?.Detail ?? "create failed");
         Assert.Equal(scheduleId, created.Data!.JobScheduleId);
         Assert.Equal("50", Assert.Single(created.Data.JobRunParameters!, p => p.Key == "PageSize").Value);
@@ -45,10 +43,15 @@ public class JobRunScheduleParameterOverrideTests
     {
         using var sp = BuildServiceProvider();
         using var scope = sp.CreateScope();
-        var (definitionId, scheduleId) = await CreateDefinitionWithScheduleAsync(sp, definitionValue: "200", scheduleValue: "50", scheduleEnabled: true);
-        var request = new JobRunReq(definitionId, "test-user", scheduleId: scheduleId) {
+        var (definitionId, scheduleId) = await CreateDefinitionWithScheduleAsync(sp, "200", "50", true);
+        var request = new JobRunReq(definitionId, "test-user", scheduleId) {
             JobRunParameters = {
-                new() { Key = "PageSize", Type = LyoTypeInfo.Int.FullName, Value = "99", Enabled = true }
+                new() {
+                    Key = "PageSize",
+                    Type = LyoTypeInfo.Int.FullName,
+                    Value = "99",
+                    Enabled = true
+                }
             }
         };
 
@@ -62,10 +65,8 @@ public class JobRunScheduleParameterOverrideTests
     {
         using var sp = BuildServiceProvider();
         using var scope = sp.CreateScope();
-        var (definitionId, scheduleId) = await CreateDefinitionWithScheduleAsync(sp, definitionValue: "200", scheduleValue: "50", scheduleEnabled: false);
-        var created = await scope.ServiceProvider.GetRequiredService<JobService>()
-            .CreateJobRun(new(definitionId, "test-user", scheduleId: scheduleId), TestCt);
-
+        var (definitionId, scheduleId) = await CreateDefinitionWithScheduleAsync(sp, "200", "50", false);
+        var created = await scope.ServiceProvider.GetRequiredService<JobService>().CreateJobRun(new(definitionId, "test-user", scheduleId), TestCt);
         Assert.True(created.IsSuccess, created.Error?.Detail ?? "create failed");
         Assert.Equal("200", Assert.Single(created.Data!.JobRunParameters!, p => p.Key == "PageSize").Value);
     }
@@ -76,9 +77,7 @@ public class JobRunScheduleParameterOverrideTests
         using var sp = BuildServiceProvider();
         using var scope = sp.CreateScope();
         var definitionId = await CreateDefinitionAsync(sp);
-        var created = await scope.ServiceProvider.GetRequiredService<JobService>()
-            .CreateJobRun(new(definitionId, "test-user", scheduleId: LyoGuid.CreateCombPostgres()), TestCt);
-
+        var created = await scope.ServiceProvider.GetRequiredService<JobService>().CreateJobRun(new(definitionId, "test-user", LyoGuid.CreateCombPostgres()), TestCt);
         Assert.False(created.IsSuccess);
         Assert.Contains("was not found", created.Error!.GetFullMessage());
     }
@@ -89,10 +88,8 @@ public class JobRunScheduleParameterOverrideTests
         using var sp = BuildServiceProvider();
         using var scope = sp.CreateScope();
         var definitionId = await CreateDefinitionAsync(sp);
-        var other = await CreateDefinitionWithScheduleAsync(sp, definitionValue: "200", scheduleValue: "50", scheduleEnabled: true);
-        var created = await scope.ServiceProvider.GetRequiredService<JobService>()
-            .CreateJobRun(new(definitionId, "test-user", scheduleId: other.ScheduleId), TestCt);
-
+        var other = await CreateDefinitionWithScheduleAsync(sp, "200", "50", true);
+        var created = await scope.ServiceProvider.GetRequiredService<JobService>().CreateJobRun(new(definitionId, "test-user", other.ScheduleId), TestCt);
         Assert.False(created.IsSuccess);
         Assert.Contains("does not belong", created.Error!.GetFullMessage());
     }
@@ -122,6 +119,7 @@ public class JobRunScheduleParameterOverrideTests
                 Enabled = true,
                 CreatedTimestamp = DateTime.UtcNow
             });
+
         db.JobParameters.Add(
             new() {
                 Id = LyoGuid.CreateCombPostgres(),
@@ -131,12 +129,16 @@ public class JobRunScheduleParameterOverrideTests
                 Value = "200",
                 CreatedTimestamp = DateTime.UtcNow
             });
+
         await db.SaveChangesAsync(TestCt);
         return definitionId;
     }
 
     private static async Task<(Guid DefinitionId, Guid ScheduleId)> CreateDefinitionWithScheduleAsync(
-        ServiceProvider sp, string definitionValue, string scheduleValue, bool scheduleEnabled)
+        ServiceProvider sp,
+        string definitionValue,
+        string scheduleValue,
+        bool scheduleEnabled)
     {
         var definitionId = LyoGuid.CreateCombPostgres();
         var scheduleId = LyoGuid.CreateCombPostgres();
@@ -150,6 +152,7 @@ public class JobRunScheduleParameterOverrideTests
                 Enabled = true,
                 CreatedTimestamp = DateTime.UtcNow
             });
+
         db.JobParameters.Add(
             new() {
                 Id = LyoGuid.CreateCombPostgres(),
@@ -159,6 +162,7 @@ public class JobRunScheduleParameterOverrideTests
                 Value = definitionValue,
                 CreatedTimestamp = DateTime.UtcNow
             });
+
         db.JobSchedules.Add(
             new() {
                 Id = scheduleId,
@@ -170,6 +174,7 @@ public class JobRunScheduleParameterOverrideTests
                 Enabled = true,
                 CreatedTimestamp = DateTime.UtcNow
             });
+
         db.JobScheduleParameters.Add(
             new() {
                 Id = LyoGuid.CreateCombPostgres(),
@@ -180,6 +185,7 @@ public class JobRunScheduleParameterOverrideTests
                 Enabled = scheduleEnabled,
                 CreatedTimestamp = DateTime.UtcNow
             });
+
         await db.SaveChangesAsync(TestCt);
         return (definitionId, scheduleId);
     }

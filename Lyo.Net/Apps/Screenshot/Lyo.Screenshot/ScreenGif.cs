@@ -3,7 +3,10 @@ using SixLabors.ImageSharp.PixelFormats;
 
 namespace Lyo.Screenshot;
 
-/// <summary>Writes a looping GIF one frame at a time. Each frame is reduced to 256 colors with a small histogram, then LZW-compressed, so a large frame is not quantized by ImageSharp.</summary>
+/// <summary>
+/// Writes a looping GIF one frame at a time. Each frame is reduced to 256 colors with a small histogram, then LZW-compressed, so a large frame is not quantized by
+/// ImageSharp.
+/// </summary>
 internal static class ScreenGif
 {
     internal const byte Trailer = 0x3B;
@@ -13,13 +16,17 @@ internal static class ScreenGif
     private const int ClearCode = 256;
     private const int EndCode = 257;
 
-    private static readonly byte[] LoopForever = [0x21, 0xFF, 0x0B, 0x4E, 0x45, 0x54, 0x53, 0x43, 0x41, 0x50, 0x45, 0x32, 0x2E, 0x30, 0x03, 0x01, 0x00, 0x00, 0x00];
+    private static readonly byte[] LoopForever = [
+        0x21, 0xFF, 0x0B, 0x4E, 0x45, 0x54, 0x53, 0x43, 0x41, 0x50,
+        0x45, 0x32, 0x2E, 0x30, 0x03, 0x01, 0x00, 0x00, 0x00
+    ];
 
     internal static void WriteFrame(Stream output, Image<Rgba32> image, int delayCentiseconds, bool first)
     {
         var indices = Index(image, out var palette);
         if (first)
             WriteHeader(output, image.Width, image.Height);
+
         WriteGraphicControl(output, delayCentiseconds);
         WriteImage(output, image.Width, image.Height, palette, indices);
     }
@@ -38,10 +45,12 @@ internal static class ScreenGif
         var ranked = new int[Bins];
         for (var i = 0; i < Bins; i++)
             ranked[i] = i;
+
         Array.Sort(ranked, (left, right) => counts[right].CompareTo(counts[left]));
         var used = 0;
         while (used < 256 && counts[ranked[used]] > 0)
             used++;
+
         if (used == 0)
             used = 1;
 
@@ -58,6 +67,7 @@ internal static class ScreenGif
         for (var bin = 0; bin < Bins; bin++) {
             if (counts[bin] == 0 || chosen[bin])
                 continue;
+
             binIndex[bin] = Nearest(bin, palette, used);
         }
 
@@ -70,6 +80,7 @@ internal static class ScreenGif
                     indices[offset++] = binIndex[Key(row[x])];
             }
         });
+
         return indices;
     }
 
@@ -94,9 +105,10 @@ internal static class ScreenGif
             var deltaRed = red - (palette[i].R >> Shift);
             var deltaGreen = green - (palette[i].G >> Shift);
             var deltaBlue = blue - (palette[i].B >> Shift);
-            var distance = (deltaRed * deltaRed) + (deltaGreen * deltaGreen) + (deltaBlue * deltaBlue);
+            var distance = deltaRed * deltaRed + deltaGreen * deltaGreen + deltaBlue * deltaBlue;
             if (distance >= bestDistance)
                 continue;
+
             best = i;
             bestDistance = distance;
             if (distance == 0)
@@ -146,6 +158,7 @@ internal static class ScreenGif
         lzw.Start();
         foreach (var index in indices)
             lzw.WriteIndex(index);
+
         lzw.Finish();
     }
 
@@ -159,9 +172,9 @@ internal static class ScreenGif
     {
         private readonly byte[] _block = new byte[255];
         private readonly Dictionary<int, int> _codes = new();
-        private int _blockLength;
-        private int _bits;
         private int _bitCount;
+        private int _bits;
+        private int _blockLength;
         private int _codeSize = 9;
         private int _nextCode = EndCode + 1;
         private int _prefix = -1;
@@ -204,9 +217,11 @@ internal static class ScreenGif
         {
             if (_prefix >= 0)
                 WriteCode(_prefix);
+
             WriteCode(EndCode);
             if (_bitCount > 0)
                 Emit((byte)_bits);
+
             if (_blockLength > 0) {
                 output.WriteByte((byte)_blockLength);
                 output.Write(_block, 0, _blockLength);
@@ -235,6 +250,7 @@ internal static class ScreenGif
             _block[_blockLength++] = value;
             if (_blockLength < 255)
                 return;
+
             output.WriteByte(255);
             output.Write(_block, 0, 255);
             _blockLength = 0;

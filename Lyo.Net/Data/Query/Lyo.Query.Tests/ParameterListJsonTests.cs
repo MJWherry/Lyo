@@ -1,5 +1,4 @@
 using Lyo.Parameters;
-using Lyo.Query.Models.Parameters;
 
 namespace Lyo.Query.Tests;
 

@@ -2,7 +2,10 @@ using System.Globalization;
 
 namespace Lyo.Formatter.Web.Components;
 
-/// <summary>Stable per-key hues so editor tokens and preview replacements share a color. Fill and contrast are applied in CSS against the MudBlazor surface so light and dark themes both stay readable.</summary>
+/// <summary>
+/// Stable per-key hues so editor tokens and preview replacements share a color. Fill and contrast are applied in CSS against the MudBlazor surface so light and dark themes
+/// both stay readable.
+/// </summary>
 public static class LyoFormatterPlaceholderPalette
 {
     /// <summary>Inline CSS variables for a token or chip. Unresolved keys omit a hue so CSS can fall back to a muted surface mix.</summary>

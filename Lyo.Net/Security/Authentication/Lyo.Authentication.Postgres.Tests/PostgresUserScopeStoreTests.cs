@@ -1,7 +1,7 @@
 using Lyo.Authentication.Models.Records;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Authentication.Postgres.Tests;
 
@@ -29,17 +29,17 @@ public sealed class PostgresUserScopeStoreTests
     {
         var user = await CreateUserAsync();
         await _fixture.ScopeStore.CreateAsync(new(LyoGuid.CreateV7(), user.Id, "people.read", DateTime.UtcNow, null), null, TestCt);
-        await Assert.ThrowsAsync<ConflictException>(() =>
-            _fixture.ScopeStore.CreateAsync(new(LyoGuid.CreateV7(), user.Id, "people.read", DateTime.UtcNow, null), null, TestCt));
+        await Assert.ThrowsAsync<ConflictException>(() => _fixture.ScopeStore.CreateAsync(new(LyoGuid.CreateV7(), user.Id, "people.read", DateTime.UtcNow, null), null, TestCt));
     }
 
     [Fact]
-    public async Task Delete_Missing_Throws()
-        => await Assert.ThrowsAsync<NotFoundException>(() => _fixture.ScopeStore.DeleteAsync(LyoGuid.CreateV7(), null, TestCt));
+    public async Task Delete_Missing_Throws() => await Assert.ThrowsAsync<NotFoundException>(() => _fixture.ScopeStore.DeleteAsync(LyoGuid.CreateV7(), null, TestCt));
 
     private async Task<LyoUser> CreateUserAsync()
     {
-        var user = new LyoUser(LyoGuid.CreateV7(), "Scope Owner", $"scope-{LyoGuid.CreateV7():N}@example.com", true, null, null, [], null, null, DateTime.UtcNow, null, null, null, null);
+        var user = new LyoUser(
+            LyoGuid.CreateV7(), "Scope Owner", $"scope-{LyoGuid.CreateV7():N}@example.com", true, null, null, [], null, null, DateTime.UtcNow, null, null, null, null);
+
         return await _fixture.UserStore.CreateAsync(user, null, TestCt);
     }
 }

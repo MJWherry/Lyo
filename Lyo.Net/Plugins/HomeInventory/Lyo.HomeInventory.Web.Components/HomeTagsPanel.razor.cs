@@ -1,4 +1,3 @@
-using Lyo.HomeInventory.Models.Request;
 using Lyo.Tag;
 
 namespace Lyo.HomeInventory.Web.Components;
@@ -6,6 +5,10 @@ namespace Lyo.HomeInventory.Web.Components;
 /// <summary>Nested tags for one inventory subject.</summary>
 public partial class HomeTagsPanel
 {
+    private List<string> _tagNames = [];
+
+    private List<TagRecord> _tags = [];
+
     /// <summary>HTTP client.</summary>
     [Parameter]
     [EditorRequired]
@@ -15,9 +18,6 @@ public partial class HomeTagsPanel
     [Parameter]
     [EditorRequired]
     public string TagsRoute { get; set; } = "";
-
-    private List<TagRecord> _tags = [];
-    private List<string> _tagNames = [];
 
     protected override Task OnParametersSetAsync() => Reload();
 
@@ -37,8 +37,10 @@ public partial class HomeTagsPanel
         _tagNames = next;
         foreach (var name in added)
             await ApiClient.PostAsAsync<HomeTagAddReq, List<TagRecord>>(TagsRoute, new() { Name = name });
+
         foreach (var name in removed)
             await ApiClient.DeleteAsAsync<object>($"{TagsRoute}/{Uri.EscapeDataString(name)}");
+
         await Reload();
     }
 }

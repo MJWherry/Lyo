@@ -33,26 +33,29 @@
                 <MudStack Spacing="2">
                     @if (Selected is null) {
                         <MudAlert Severity="Severity.Info">Add a step, or edit the JSON below.</MudAlert>
-                    } else if (!AutomationPlanDraft.HasForm(Selected)) {
+                    }
+                    else if (!AutomationPlanDraft.HasForm(Selected)) {
                         <MudAlert Severity="Severity.Info">This step stays in the plan. Edit it in the JSON pane.</MudAlert>
-                    } else {
+                    }
+                    else {
                         <MudStack Row="true" Spacing="1">
                             <MudButton Disabled="@(_selected <= 0)" OnClick="@(() => Move(_selected - 1))">Up</MudButton>
                             <MudButton Disabled="@(_selected >= _plan.Steps.Count - 1)" OnClick="@(() => Move(_selected + 1))">Down</MudButton>
                             <MudButton Color="Color.Error" OnClick="RemoveSelected">Remove</MudButton>
                         </MudStack>
+
                         <AutomationPlanStepFields Step="Selected" StepChanged="OnStepChanged"/>
                     }
 
                     <JsonEditor T="JsonNode"
-                               Value="_jsonNode"
-                               ValueChanged="OnJsonNode"
-                               ParseErrorChanged="OnJsonError"
-                               JsonOptions="AutomationPlanDraft.JsonOptions"
-                               Editable="true"
-                               AllowTreeEditing="true"
-                               DefaultViewMode="JsonEditorViewMode.Tree"
-                               EditorSurfaceHeight="360px"/>
+                                Value="_jsonNode"
+                                ValueChanged="OnJsonNode"
+                                ParseErrorChanged="OnJsonError"
+                                JsonOptions="AutomationPlanDraft.JsonOptions"
+                                Editable="true"
+                                AllowTreeEditing="true"
+                                DefaultViewMode="JsonEditorViewMode.Tree"
+                                EditorSurfaceHeight="360px"/>
                     @if (_jsonError != null) {
                         <MudAlert Severity="Severity.Error">@_jsonError</MudAlert>
                     }

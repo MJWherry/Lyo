@@ -4,9 +4,7 @@ internal sealed partial class QRIsoEncoder
 {
     private static partial class ModulePlacer
     {
-        /// <summary>
-        /// Writes version information for versions 7 and higher into two small rectangles near the bottom-left and top-right corners, outside the timing patterns.
-        /// </summary>
+        /// <summary>Writes version information for versions 7 and higher into two small rectangles near the bottom-left and top-right corners, outside the timing patterns.</summary>
         /// <param name="qrCode">QR matrix to update.</param>
         /// <param name="versionStr">Bits of the version information.</param>
         /// <param name="offset">If true, apply an offset when placing version information.</param>
@@ -182,9 +180,7 @@ internal sealed partial class QRIsoEncoder
         /// <summary>Writes data bits into the module matrix, skipping blocked modules.</summary>
         /// <param name="qrCode">QR matrix that receives the data bits.</param>
         /// <param name="data">Data bits to place.</param>
-        /// <param name="blockedModules">
-        /// Rectangles that must stay unchanged (format, version, and other reserved areas).
-        /// </param>
+        /// <param name="blockedModules">Rectangles that must stay unchanged (format, version, and other reserved areas).</param>
         public static void PlaceDataWords(QRIsoMatrix qrCode, BitArray data, BlockedModules blockedModules)
         {
             var size = qrCode.ModuleMatrix.Count - 8; // matrix size without quiet zone

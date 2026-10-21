@@ -10,9 +10,7 @@ namespace Lyo.FileSystemWatcher;
 
 // Known bug: a file move also fires Changed, and the source directory reports the same old/new counts as the old count. The destination directory is correct.
 
-/// <summary>
-/// Watches a directory by taking snapshots and comparing them. Batches rapid changes, detects moves and renames with hashes, and raises detailed events.
-/// </summary>
+/// <summary>Watches a directory by taking snapshots and comparing them. Batches rapid changes, detects moves and renames with hashes, and raises detailed events.</summary>
 /// <remarks>
 /// <para>
 /// The watcher takes periodic snapshots of the tree and diffs them to find file and directory changes. That is more reliable than depending only on native FileSystemWatcher
@@ -23,9 +21,7 @@ namespace Lyo.FileSystemWatcher;
 /// <list type="bullet">
 /// <item>Debouncing: rapid changes are batched so event storms do not fire</item>
 /// <item>Hash-based move detection: hashing finds moves and renames even when the file system does not report them</item>
-/// <item>Separate file and directory events with detailed change info</item>
-/// <item>Safe to use from more than one thread</item>
-/// <item>Optional Lyo.Metrics integration</item>
+/// <item>Separate file and directory events with detailed change info</item> <item>Safe to use from more than one thread</item> <item>Optional Lyo.Metrics integration</item>
 /// </list>
 /// </para>
 /// <para>
@@ -77,17 +73,16 @@ public class FileSystemWatcher : IDisposable
     public event EventHandler<Exception>? Error;
 
     /// <summary>
-    /// Raised once per debounce after a scan, with the previous tree, current tree, and the full change list (including directory-content events).
-    /// Copy DTOs immediately if you persist — live <c>FileInfo</c> goes stale. Do not block this handler with I/O.
+    /// Raised once per debounce after a scan, with the previous tree, current tree, and the full change list (including directory-content events). Copy DTOs immediately if you
+    /// persist — live <c>FileInfo</c> goes stale. Do not block this handler with I/O.
     /// </summary>
     public event EventHandler<FileSystemScanCompletedEventArgs>? ScanCompleted;
 
     /// <summary>Last completed snapshot tree (the initial snapshot after construction, then each scan result).</summary>
-    public SnapshotTree CurrentSnapshot => _previousSnapshot;
+    public SnapshotTree CurrentSnapshot { get; private set; }
 
     private readonly System.IO.FileSystemWatcher _watcher;
     private readonly Timer _debounceTimer;
-    private SnapshotTree _previousSnapshot;
     private bool _scanScheduled;
     private readonly ILogger<FileSystemWatcher> _logger;
     private readonly FileSystemWatcherOptions _options;
@@ -116,7 +111,7 @@ public class FileSystemWatcher : IDisposable
         }
     }
 
-    /// <summary>Builds a FileSystemWatcher for <paramref name="path"/>.</summary>
+    /// <summary>Builds a FileSystemWatcher for <paramref name="path" />.</summary>
     /// <param name="path">Directory to watch.</param>
     /// <param name="includeSubDirectories">If true, subdirectories are included.</param>
     /// <param name="debounceTimerDelay">Debounce delay in milliseconds. Starts at 250.</param>
@@ -127,7 +122,7 @@ public class FileSystemWatcher : IDisposable
     public FileSystemWatcher(string path, bool includeSubDirectories, int debounceTimerDelay = 250)
         : this(path, new() { IncludeSubdirectories = includeSubDirectories, DebounceTimerDelay = debounceTimerDelay }, null) { }
 
-    /// <summary>Builds a FileSystemWatcher for <paramref name="path"/> using <paramref name="options"/>.</summary>
+    /// <summary>Builds a FileSystemWatcher for <paramref name="path" /> using <paramref name="options" />.</summary>
     /// <param name="path">Directory to watch.</param>
     /// <param name="options">Watcher settings.</param>
     /// <param name="logger">Optional logger.</param>
@@ -163,14 +158,14 @@ public class FileSystemWatcher : IDisposable
         try {
             using var timer = _metrics.StartTimer(Constants.Metrics.SnapshotDuration);
             var sw = Stopwatch.StartNew();
-            _previousSnapshot = Utilities.TakeSnapshot(Path, _options);
+            CurrentSnapshot = Utilities.TakeSnapshot(Path, _options);
             sw.Stop();
             _logger.LogDebug("Initial snapshot taken for path: {Path}", path);
             _metrics.RecordTiming(Constants.Metrics.SnapshotDuration, sw.Elapsed);
             _metrics.RecordGauge(Constants.Metrics.SnapshotDurationMs, sw.ElapsedMilliseconds);
-            _metrics.RecordGauge(Constants.Metrics.SnapshotFileCount, _previousSnapshot.FileCount);
-            _metrics.RecordGauge(Constants.Metrics.SnapshotDirectoryCount, _previousSnapshot.DirectoryCount);
-            _metrics.RecordGauge(Constants.Metrics.SnapshotItemCount, _previousSnapshot.TotalEntryCount);
+            _metrics.RecordGauge(Constants.Metrics.SnapshotFileCount, CurrentSnapshot.FileCount);
+            _metrics.RecordGauge(Constants.Metrics.SnapshotDirectoryCount, CurrentSnapshot.DirectoryCount);
+            _metrics.RecordGauge(Constants.Metrics.SnapshotItemCount, CurrentSnapshot.TotalEntryCount);
         }
         catch (Exception ex) {
             _logger.LogError(ex, "Failed to take initial snapshot for path: {Path}", path);
@@ -224,7 +219,7 @@ public class FileSystemWatcher : IDisposable
         var snapshotSw = Stopwatch.StartNew();
         try {
             using var snapshotTimer = _metrics.StartTimer(Constants.Metrics.SnapshotDuration);
-            currentSnapshot = Utilities.TakeSnapshot(Path, _options, _ctSource.Token, _previousSnapshot);
+            currentSnapshot = Utilities.TakeSnapshot(Path, _options, _ctSource.Token, CurrentSnapshot);
             snapshotSw.Stop();
             _metrics.RecordTiming(Constants.Metrics.SnapshotDuration, snapshotSw.Elapsed);
             _metrics.RecordGauge(Constants.Metrics.SnapshotDurationMs, snapshotSw.ElapsedMilliseconds);
@@ -254,7 +249,7 @@ public class FileSystemWatcher : IDisposable
         var changeDetectionSw = Stopwatch.StartNew();
         try {
             using var changeDetectionTimer = _metrics.StartTimer(Constants.Metrics.ChangeDetectionDuration);
-            var changes = Utilities.DetectChanges(_previousSnapshot, currentSnapshot, _options.PathComparison, _ctSource.Token);
+            var changes = Utilities.DetectChanges(CurrentSnapshot, currentSnapshot, _options.PathComparison, _ctSource.Token);
             changeDetectionSw.Stop();
             if (changes.Count > 0) {
                 _metrics.RecordGauge(Constants.Metrics.ChangesDetected, changes.Count);
@@ -263,7 +258,7 @@ public class FileSystemWatcher : IDisposable
             }
 
             if (!_ctSource.Token.IsCancellationRequested)
-                CheckDirectoryChanges(_previousSnapshot, currentSnapshot, changes);
+                CheckDirectoryChanges(CurrentSnapshot, currentSnapshot, changes);
 
             IReadOnlyList<FileSystemChangeInfo> batch = changes;
             foreach (var change in batch) {
@@ -273,8 +268,8 @@ public class FileSystemWatcher : IDisposable
                 FireEvent(change);
             }
 
-            var previous = _previousSnapshot;
-            _previousSnapshot = currentSnapshot;
+            var previous = CurrentSnapshot;
+            CurrentSnapshot = currentSnapshot;
             if (!_ctSource.Token.IsCancellationRequested)
                 OnScanCompleted(previous, currentSnapshot, batch);
         }

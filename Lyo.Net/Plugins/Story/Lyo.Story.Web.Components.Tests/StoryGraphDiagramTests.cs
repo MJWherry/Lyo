@@ -1,5 +1,3 @@
-using Lyo.Story.Web.Components;
-
 namespace Lyo.Story.Web.Components.Tests;
 
 public class StoryGraphDiagramTests
@@ -13,8 +11,7 @@ public class StoryGraphDiagramTests
         var startLayout = layout.Nodes.Single(node => node.Key == "vault_door");
         var page = Assert.Single(picture.Document.Pages);
         var start = page.Cells.Single(cell => cell.IsVertex && cell.Value == "vault_door");
-
-        Assert.Equal((double)startLayout.X, start.Geometry!.X!.Value);
-        Assert.Equal((double)startLayout.Y, start.Geometry.Y!.Value);
+        Assert.Equal(startLayout.X, start.Geometry!.X!.Value);
+        Assert.Equal(startLayout.Y, start.Geometry.Y!.Value);
     }
 }

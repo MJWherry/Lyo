@@ -7,7 +7,9 @@
     }
     <div class="lyo-fmt-wrap" @ref="_wrap">
         <div class="lyo-fmt-frame">
-            <pre class="lyo-fmt-highlight" aria-hidden="true">@foreach (var segment in Resolved.TemplateSegments) {<LyoFormatterToken Segment="segment" Session="Resolved" ShowRawToken="true"/>}</pre>
+            <pre class="lyo-fmt-highlight" aria-hidden="true">@foreach (var segment in Resolved.TemplateSegments) {
+                    <LyoFormatterToken Segment="segment" Session="Resolved" ShowRawToken="true"/>
+                }</pre>
             <textarea class="lyo-fmt-input"
                       @ref="_textarea"
                       value="@Resolved.Template"

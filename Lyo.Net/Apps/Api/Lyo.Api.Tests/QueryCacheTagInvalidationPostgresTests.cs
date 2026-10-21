@@ -4,8 +4,8 @@ using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Update;
 using Lyo.Api.Tests.Fixtures;
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
-using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres.Database;
@@ -14,7 +14,6 @@ using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
 using Lyo.Query.Models.Parameters;
 using Lyo.Schedule.Models;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Api.Tests;
 
@@ -194,8 +193,8 @@ public sealed class QueryCacheTagInvalidationPostgresTests
             Options = afterOptions,
             AllowedValues = ParameterOptionsJson.ToAllowedValues(afterOptions)
         };
-        var updateResult = await updateService.UpdateAsync<JobParameterReq, JobParameter, JobParameterRes>(
-            new UpdateRequest<JobParameterReq>(updateReq, paramId), ct: TestCt);
+
+        var updateResult = await updateService.UpdateAsync<JobParameterReq, JobParameter, JobParameterRes>(new(updateReq, paramId), ct: TestCt);
         Assert.Equal(UpdateResultEnum.Updated, updateResult.Result);
         Assert.Equal(afterOptions, await OptionsFromQuery());
     }
@@ -224,11 +223,11 @@ public sealed class QueryCacheTagInvalidationPostgresTests
             Type = ScheduleType.SetTimes,
             DayFlags = DayFlags.EveryDay,
             Description = $"after-{suffix}",
-            Times = [new TimeOnly(9, 0)],
+            Times = [new(9, 0)],
             Enabled = true
         };
-        var updateResult = await updateService.UpdateAsync<JobScheduleReq, JobSchedule, JobScheduleRes>(
-            new UpdateRequest<JobScheduleReq>(updateReq, scheduleId), ct: TestCt);
+
+        var updateResult = await updateService.UpdateAsync<JobScheduleReq, JobSchedule, JobScheduleRes>(new(updateReq, scheduleId), ct: TestCt);
         Assert.Equal(UpdateResultEnum.Updated, updateResult.Result);
         Assert.Equal($"after-{suffix}", await DescriptionFromQuery());
     }
@@ -238,10 +237,6 @@ public sealed class QueryCacheTagInvalidationPostgresTests
             Start = 0,
             Amount = 1,
             Keys = [[defId]],
-            Include = [
-                "JobParameters",
-                "JobSchedules.JobScheduleParameters",
-                "JobSchedules.JobBlackoutCalendar.JobBlackoutWindows"
-            ]
+            Include = ["JobParameters", "JobSchedules.JobScheduleParameters", "JobSchedules.JobBlackoutCalendar.JobBlackoutWindows"]
         };
 }

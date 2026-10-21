@@ -30,9 +30,7 @@ public interface IXmlWriter
     /// <summary>Writes <see cref="ExportFormattedToXmlString{T}" /> to <paramref name="xmlStream" />. The stream is left open.</summary>
     void ExportFormattedToXml<T>(IEnumerable<T> items, IReadOnlyDictionary<string, Func<T, string>> fields, Stream xmlStream);
 
-    /// <summary>
-    /// Writes one object per item. The key is the field name and the value is the property value, in dictionary order. <c>Order</c> does not reorder these keys.
-    /// </summary>
+    /// <summary>Writes one object per item. The key is the field name and the value is the property value, in dictionary order. <c>Order</c> does not reorder these keys.</summary>
     string ExportColumnsToXmlString<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns);
 
     /// <summary>Writes <see cref="ExportColumnsToXmlString{T}" /> to <paramref name="xmlStream" />. The stream is left open.</summary>
@@ -40,8 +38,8 @@ public interface IXmlWriter
 
     /// <summary>
     /// Writes <paramref name="dataTable" /> as repeated item elements under the root. Header text is the element name. A blank header is <c>Column{index}</c>. A repeated header
-    /// throws. Empty cells stay empty elements. A footer is the last item. A header that is not an XML name is encoded with <see cref="System.Xml.XmlConvert.EncodeLocalName" />.
-    /// Naming, member order, and empty-string omission do not apply.
+    /// throws. Empty cells stay empty elements. A footer is the last item. A header that is not an XML name is encoded with <see cref="System.Xml.XmlConvert.EncodeLocalName" />. Naming,
+    /// member order, and empty-string omission do not apply.
     /// </summary>
     string ExportToXmlStringFromDataTable(DataTable.Models.DataTable dataTable);
 

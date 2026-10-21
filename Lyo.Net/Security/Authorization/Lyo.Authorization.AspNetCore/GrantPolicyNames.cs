@@ -8,9 +8,7 @@ public static class GrantPolicyNames
     /// <summary>Prefix for grant policies.</summary>
     public const string Prefix = "grant|";
 
-    /// <summary>
-    /// Builds a policy name. Empty route names are omitted from the end. <c>|</c> is rejected in every segment.
-    /// </summary>
+    /// <summary>Builds a policy name. Empty route names are omitted from the end. <c>|</c> is rejected in every segment.</summary>
     public static string For(string action, string resourceType, string? resourceIdRoute = null, string? tenantRoute = null)
     {
         var actionName = Segment(action, nameof(action));
@@ -19,6 +17,7 @@ public static class GrantPolicyNames
         var tenant = string.IsNullOrWhiteSpace(tenantRoute) ? null : Segment(tenantRoute, nameof(tenantRoute));
         if (resource is null && tenant is null)
             return Prefix + actionName + "|" + typeName;
+
         if (tenant is null)
             return Prefix + actionName + "|" + typeName + "|" + resource;
 
@@ -43,6 +42,7 @@ public static class GrantPolicyNames
         resourceType = parts[2];
         if (parts.Length >= 4 && parts[3].Length > 0)
             resourceIdRoute = parts[3];
+
         if (parts.Length >= 5 && parts[4].Length > 0)
             tenantRoute = parts[4];
 

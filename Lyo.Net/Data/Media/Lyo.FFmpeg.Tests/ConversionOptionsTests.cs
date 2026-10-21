@@ -1,5 +1,4 @@
 using Lyo.Common.Core.Records;
-using Lyo.FFmpeg;
 using Lyo.FFmpeg.Models;
 using Lyo.Media.Models;
 
@@ -43,18 +42,15 @@ public class ConversionOptionsTests
 
     [Theory]
     [MemberData(nameof(InvalidAudioOptions))]
-    public void AudioValidate_InvalidOptions_Throws(AudioConversionOptions opts)
-        => Assert.ThrowsAny<ArgumentException>(opts.Validate);
+    public void AudioValidate_InvalidOptions_Throws(AudioConversionOptions opts) => Assert.ThrowsAny<ArgumentException>(opts.Validate);
 
     [Theory]
     [MemberData(nameof(InvalidVideoOptions))]
-    public void VideoValidate_InvalidOptions_Throws(VideoConversionOptions opts)
-        => Assert.ThrowsAny<ArgumentException>(opts.Validate);
+    public void VideoValidate_InvalidOptions_Throws(VideoConversionOptions opts) => Assert.ThrowsAny<ArgumentException>(opts.Validate);
 
     [Theory]
     [MemberData(nameof(InvalidFFmpegOptions))]
-    public void FFmpegOptions_InvalidOptions_Throws(FFmpegOptions opts)
-        => Assert.ThrowsAny<ArgumentException>(opts.Validate);
+    public void FFmpegOptions_InvalidOptions_Throws(FFmpegOptions opts) => Assert.ThrowsAny<ArgumentException>(opts.Validate);
 
     [Fact]
     public void ForAudio_SetsPcmAndWav()

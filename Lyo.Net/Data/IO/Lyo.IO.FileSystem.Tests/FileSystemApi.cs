@@ -79,8 +79,7 @@ public sealed record FileSystemApi(IFileSystem FileSystem, bool UseAsync)
     }
 
     /// <inheritdoc cref="IFileSystem.OpenReadAsync" />
-    public Task<Stream> OpenReadAsync(string path, CancellationToken ct = default)
-        => UseAsync ? FileSystem.OpenReadAsync(path, ct) : Task.FromResult(FileSystem.OpenRead(path));
+    public Task<Stream> OpenReadAsync(string path, CancellationToken ct = default) => UseAsync ? FileSystem.OpenReadAsync(path, ct) : Task.FromResult(FileSystem.OpenRead(path));
 
     /// <inheritdoc cref="IFileSystem.OpenCreateAsync" />
     public Task<Stream> OpenCreateAsync(string path, CancellationToken ct = default)
@@ -91,8 +90,7 @@ public sealed record FileSystemApi(IFileSystem FileSystem, bool UseAsync)
         => UseAsync ? FileSystem.OpenAppendAsync(path, ct) : Task.FromResult(FileSystem.OpenAppend(path));
 
     /// <inheritdoc cref="IFileSystem.GetLengthAsync" />
-    public Task<long> GetLengthAsync(string path, CancellationToken ct = default)
-        => UseAsync ? FileSystem.GetLengthAsync(path, ct) : Task.FromResult(FileSystem.GetLength(path));
+    public Task<long> GetLengthAsync(string path, CancellationToken ct = default) => UseAsync ? FileSystem.GetLengthAsync(path, ct) : Task.FromResult(FileSystem.GetLength(path));
 
     /// <inheritdoc cref="IFileSystem.GetCreationTimeUtcAsync" />
     public Task<DateTimeOffset> GetCreationTimeUtcAsync(string path, CancellationToken ct = default)
@@ -114,8 +112,7 @@ public sealed record FileSystemApi(IFileSystem FileSystem, bool UseAsync)
     }
 
     /// <summary>Writes <paramref name="text" /> to <paramref name="path" /> as UTF-8.</summary>
-    public Task WriteAllTextAsync(string path, string text, CancellationToken ct = default)
-        => WriteAllBytesAsync(path, Encoding.UTF8.GetBytes(text), ct);
+    public Task WriteAllTextAsync(string path, string text, CancellationToken ct = default) => WriteAllBytesAsync(path, Encoding.UTF8.GetBytes(text), ct);
 
     /// <summary>Reads the whole file at <paramref name="path" />.</summary>
     public async Task<byte[]> ReadAllBytesAsync(string path, CancellationToken ct = default)

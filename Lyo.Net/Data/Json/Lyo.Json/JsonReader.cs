@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -25,7 +26,7 @@ public sealed class JsonReader : IJsonReader
     public T ParseStream<T>(Stream jsonStream)
     {
         ArgumentHelpers.ThrowIfNull(jsonStream);
-        using var reader = new StreamReader(jsonStream, _runtime.Encoding, detectEncodingFromByteOrderMarks: true, 1024, leaveOpen: true);
+        using var reader = new StreamReader(jsonStream, _runtime.Encoding, true, 1024, true);
         return ParseString<T>(reader.ReadToEnd());
     }
 
@@ -61,11 +62,12 @@ public sealed class JsonReader : IJsonReader
     public List<T> ParseNdjsonStream<T>(Stream jsonStream)
     {
         ArgumentHelpers.ThrowIfNull(jsonStream);
-        using var reader = new StreamReader(jsonStream, _runtime.Encoding, detectEncodingFromByteOrderMarks: true, 1024, leaveOpen: true);
+        using var reader = new StreamReader(jsonStream, _runtime.Encoding, true, 1024, true);
         var values = new List<T>();
         while (reader.ReadLine() is { } line) {
             if (string.IsNullOrWhiteSpace(line))
                 continue;
+
             values.Add(ParseString<T>(line));
         }
 
@@ -81,6 +83,7 @@ public sealed class JsonReader : IJsonReader
         while (reader.ReadLine() is { } line) {
             if (string.IsNullOrWhiteSpace(line))
                 continue;
+
             values.Add(ParseString<T>(line));
         }
 
@@ -175,7 +178,7 @@ public sealed class JsonReader : IJsonReader
     public Result<DataTable.Models.DataTable> ParseStreamAsDataTable(Stream jsonStream, bool hasFooterRow = false)
     {
         ArgumentHelpers.ThrowIfNull(jsonStream);
-        using var reader = new StreamReader(jsonStream, _runtime.Encoding, detectEncodingFromByteOrderMarks: true, 1024, leaveOpen: true);
+        using var reader = new StreamReader(jsonStream, _runtime.Encoding, true, 1024, true);
         return ParseStringAsDataTable(reader.ReadToEnd(), hasFooterRow);
     }
 
@@ -214,7 +217,13 @@ public sealed class JsonReader : IJsonReader
         }
         catch (JsonException ex) {
             row = default;
-            issue = new() { Index = index, Field = FieldFromPath(ex.Path), Message = ex.Message, Raw = raw };
+            issue = new() {
+                Index = index,
+                Field = FieldFromPath(ex.Path),
+                Message = ex.Message,
+                Raw = raw
+            };
+
             return false;
         }
     }
@@ -241,7 +250,7 @@ public sealed class JsonReader : IJsonReader
     public async Task<T> ParseStreamAsync<T>(Stream jsonStream, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(jsonStream);
-        using var reader = new StreamReader(jsonStream, _runtime.Encoding, detectEncodingFromByteOrderMarks: true, 1024, leaveOpen: true);
+        using var reader = new StreamReader(jsonStream, _runtime.Encoding, true, 1024, true);
         var text = await reader.ReadToEndAsync(ct).ConfigureAwait(false);
         return ParseString<T>(text);
     }
@@ -263,7 +272,7 @@ public sealed class JsonReader : IJsonReader
     }
 
     /// <inheritdoc />
-    public async IAsyncEnumerable<T> ParseNdjsonFileAsync<T>(string jsonFilePath, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
+    public async IAsyncEnumerable<T> ParseNdjsonFileAsync<T>(string jsonFilePath, [EnumeratorCancellation] CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(jsonFilePath);
         await using var stream = new FileStream(jsonFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous);
@@ -272,17 +281,19 @@ public sealed class JsonReader : IJsonReader
     }
 
     /// <inheritdoc />
-    public async IAsyncEnumerable<T> ParseNdjsonStreamAsync<T>(Stream jsonStream, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
+    public async IAsyncEnumerable<T> ParseNdjsonStreamAsync<T>(Stream jsonStream, [EnumeratorCancellation] CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(jsonStream);
-        using var reader = new StreamReader(jsonStream, _runtime.Encoding, detectEncodingFromByteOrderMarks: true, 1024, leaveOpen: true);
+        using var reader = new StreamReader(jsonStream, _runtime.Encoding, true, 1024, true);
         while (true) {
             ct.ThrowIfCancellationRequested();
             var line = await reader.ReadLineAsync(ct).ConfigureAwait(false);
             if (line is null)
                 yield break;
+
             if (string.IsNullOrWhiteSpace(line))
                 continue;
+
             yield return ParseString<T>(line);
         }
     }
@@ -296,7 +307,11 @@ public sealed class JsonReader : IJsonReader
     }
 
     /// <inheritdoc />
-    public Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(byte[] jsonBytes, bool hasFooterRow = false, Encoding? encoding = null, CancellationToken ct = default)
+    public Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(
+        byte[] jsonBytes,
+        bool hasFooterRow = false,
+        Encoding? encoding = null,
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(jsonBytes);
         ct.ThrowIfCancellationRequested();
@@ -307,7 +322,7 @@ public sealed class JsonReader : IJsonReader
     public async Task<Result<DataTable.Models.DataTable>> ParseStreamAsDataTableAsync(Stream jsonStream, bool hasFooterRow = false, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(jsonStream);
-        using var reader = new StreamReader(jsonStream, _runtime.Encoding, detectEncodingFromByteOrderMarks: true, 1024, leaveOpen: true);
+        using var reader = new StreamReader(jsonStream, _runtime.Encoding, true, 1024, true);
         var text = await reader.ReadToEndAsync(ct).ConfigureAwait(false);
         return ParseStringAsDataTable(text, hasFooterRow);
     }

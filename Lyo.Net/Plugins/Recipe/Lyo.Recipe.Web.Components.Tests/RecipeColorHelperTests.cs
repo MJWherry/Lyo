@@ -1,8 +1,8 @@
 using Lyo.Common.Core.Identifiers;
 using Lyo.Recipe.Models;
 using Lyo.Recipe.Models.Enums;
-using Lyo.Recipe.Web.Components;
 using Lyo.Web.Primitives;
+using MudBlazor;
 
 namespace Lyo.Recipe.Web.Components.Tests;
 
@@ -11,13 +11,13 @@ public sealed class RecipeColorHelperTests
     [Fact]
     public void RecipeColorHelper_StatusAndDifficulty_MapToExpectedColors()
     {
-        Assert.Equal(MudBlazor.Color.Success, RecipeColorHelper.ForStatus(RecipeStatus.Active));
-        Assert.Equal(MudBlazor.Color.Default, RecipeColorHelper.ForStatus(RecipeStatus.Draft));
-        Assert.Equal(MudBlazor.Color.Warning, RecipeColorHelper.ForStatus(RecipeStatus.Archived));
-        Assert.Equal(MudBlazor.Color.Success, RecipeColorHelper.ForStatus("Active"));
-        Assert.Equal(MudBlazor.Color.Success, RecipeColorHelper.ForDifficulty(RecipeDifficulty.Easy));
-        Assert.Equal(MudBlazor.Color.Warning, RecipeColorHelper.ForDifficulty(RecipeDifficulty.Medium));
-        Assert.Equal(MudBlazor.Color.Error, RecipeColorHelper.ForDifficulty(RecipeDifficulty.Hard));
+        Assert.Equal(Color.Success, RecipeColorHelper.ForStatus(RecipeStatus.Active));
+        Assert.Equal(Color.Default, RecipeColorHelper.ForStatus(RecipeStatus.Draft));
+        Assert.Equal(Color.Warning, RecipeColorHelper.ForStatus(RecipeStatus.Archived));
+        Assert.Equal(Color.Success, RecipeColorHelper.ForStatus("Active"));
+        Assert.Equal(Color.Success, RecipeColorHelper.ForDifficulty(RecipeDifficulty.Easy));
+        Assert.Equal(Color.Warning, RecipeColorHelper.ForDifficulty(RecipeDifficulty.Medium));
+        Assert.Equal(Color.Error, RecipeColorHelper.ForDifficulty(RecipeDifficulty.Hard));
         Assert.Equal(LyoChipHue.Lime, RecipeColorHelper.ForRole(RecipeAttachmentRole.Scan));
         Assert.Equal(LyoChipHue.Indigo, RecipeColorHelper.ForRole(RecipeAttachmentRole.Document));
         Assert.Equal(LyoChipHue.Amber, RecipeColorHelper.ForRole(RecipeAttachmentRole.Card));
@@ -37,8 +37,7 @@ public sealed class RecipeFilePathsTests
     }
 
     [Fact]
-    public void ForEntity_Unknown_Throws()
-        => Assert.Throws<ArgumentException>(() => RecipeFilePaths.ForEntity("Nope", LyoGuid.CreateV7()));
+    public void ForEntity_Unknown_Throws() => Assert.Throws<ArgumentException>(() => RecipeFilePaths.ForEntity("Nope", LyoGuid.CreateV7()));
 
     [Fact]
     public void ForEntity_RecipeStep_ReturnsStepPrefix()

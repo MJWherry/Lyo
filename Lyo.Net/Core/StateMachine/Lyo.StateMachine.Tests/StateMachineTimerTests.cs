@@ -49,7 +49,7 @@ public class StateMachineTimerTests
     {
         var definition = Machine().Build();
         var due = definition.GetDueTrigger(new(JobState.Running, 1, T0), T0.AddSeconds(10));
-        Assert.Equal(new StateTimer<JobTrigger>(JobTrigger.Complete, T0.AddSeconds(10)), due);
+        Assert.Equal(new(JobTrigger.Complete, T0.AddSeconds(10)), due);
     }
 
     [Fact]
@@ -73,9 +73,7 @@ public class StateMachineTimerTests
     {
         var definition = Machine().Build();
         _now = T0.AddSeconds(5);
-
         var result = definition.Fire(new(), new(JobState.Running, 1, T0, T0.AddSeconds(10)), JobTrigger.Heartbeat);
-
         Assert.Equal(T0.AddSeconds(5), result.Snapshot.EnteredAtUtc);
         Assert.Equal(T0.AddSeconds(15), result.Snapshot.DueAtUtc);
     }

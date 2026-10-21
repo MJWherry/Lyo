@@ -2,10 +2,7 @@ using System.Collections.Concurrent;
 
 namespace Lyo.Media.Models;
 
-/// <summary>
-/// Audio or video bitrate token passed to ffmpeg (<c>128k</c>, <c>2M</c>). Lookups are thread-safe.
-/// Use <see cref="Custom" /> for a rate that is not listed.
-/// </summary>
+/// <summary>Audio or video bitrate token passed to ffmpeg (<c>128k</c>, <c>2M</c>). Lookups are thread-safe. Use <see cref="Custom" /> for a rate that is not listed.</summary>
 public sealed record MediaBitRate
 {
     private static readonly ConcurrentDictionary<string, MediaBitRate> ById = new(StringComparer.OrdinalIgnoreCase);
@@ -75,7 +72,7 @@ public sealed record MediaBitRate
     public static MediaBitRate Custom(string id)
     {
         _ = BuiltIns;
-        return NamedCatalog.GetOrCustom(ById, id, key => new MediaBitRate(key, key));
+        return NamedCatalog.GetOrCustom(ById, id, key => new(key, key));
     }
 
     /// <inheritdoc />

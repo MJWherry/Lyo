@@ -4,12 +4,10 @@ using MudBlazor;
 
 namespace Lyo.Reporting.Web.Components;
 
-/// <summary>
-/// Report generation statuses for <see cref="LyoStatusChip" />, under <c>Palette="report"</c>. Register with <c>AddLyoReportStatusPalette</c>.
-/// </summary>
+/// <summary>Report generation statuses for <see cref="LyoStatusChip" />, under <c>Palette="report"</c>. Register with <c>AddLyoReportStatusPalette</c>.</summary>
 /// <remarks>
-/// A string-keyed view of <see cref="ReportColorHelper" />, kept apart from the shared vocabulary because reporting colours <c>Pending</c> as a warning rather
-/// than informational.
+/// A string-keyed view of <see cref="ReportColorHelper" />, kept apart from the shared vocabulary because reporting colours <c>Pending</c> as a warning rather than
+/// informational.
 /// </remarks>
 public sealed class ReportStatusPalette : ILyoStatusPalette
 {

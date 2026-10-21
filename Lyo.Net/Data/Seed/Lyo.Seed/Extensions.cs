@@ -6,12 +6,12 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Lyo.Seed;
 
-/// <summary>DI helpers that register <see cref="ISeedRunner"/> plus optional EF and API transports.</summary>
+/// <summary>DI helpers that register <see cref="ISeedRunner" /> plus optional EF and API transports.</summary>
 public static class Extensions
 {
     extension(IServiceCollection services)
     {
-        /// <summary>Registers <see cref="ISeedRunner"/>. Hosts still build or register transports and contributors themselves.</summary>
+        /// <summary>Registers <see cref="ISeedRunner" />. Hosts still build or register transports and contributors themselves.</summary>
         public IServiceCollection AddLyoSeed()
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -19,7 +19,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Adds <typeparamref name="TContributor"/> as a singleton <see cref="SeedContributor"/> (multi-implementation).</summary>
+        /// <summary>Adds <typeparamref name="TContributor" /> as a singleton <see cref="SeedContributor" /> (multi-implementation).</summary>
         public IServiceCollection AddSeedContributor<TContributor>()
             where TContributor : SeedContributor
         {
@@ -28,7 +28,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Adds a scoped <see cref="EfSeedTransport{TContext}"/> built from the <typeparamref name="TContext"/> already in DI.</summary>
+        /// <summary>Adds a scoped <see cref="EfSeedTransport{TContext}" /> built from the <typeparamref name="TContext" /> already in DI.</summary>
         public IServiceCollection AddEfSeedTransport<TContext>()
             where TContext : DbContext
         {
@@ -37,7 +37,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Adds a singleton <see cref="SeedApiCatalog"/> and a scoped <see cref="ApiSeedTransport"/> that uses <see cref="IApiClient"/>.</summary>
+        /// <summary>Adds a singleton <see cref="SeedApiCatalog" /> and a scoped <see cref="ApiSeedTransport" /> that uses <see cref="IApiClient" />.</summary>
         public IServiceCollection AddApiSeedTransport(Action<SeedApiCatalog> configure)
         {
             ArgumentHelpers.ThrowIfNull(services);

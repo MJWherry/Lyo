@@ -22,10 +22,7 @@ public static class PlaywrightServiceExtensions
         return services;
     }
 
-    /// <summary>
-    /// Adds <see cref="PlaywrightBrowserOptions" />, scoped <see cref="PlaywrightBrowser" />, and singleton <see cref="IPlaywrightBrowserService" /> for session-based
-    /// usage.
-    /// </summary>
+    /// <summary>Adds <see cref="PlaywrightBrowserOptions" />, scoped <see cref="PlaywrightBrowser" />, and singleton <see cref="IPlaywrightBrowserService" /> for session-based usage.</summary>
     public static IServiceCollection AddPlaywrightBrowserService(this IServiceCollection services, Action<PlaywrightBrowserOptions>? configure = null)
     {
         ArgumentHelpers.ThrowIfNull(services);

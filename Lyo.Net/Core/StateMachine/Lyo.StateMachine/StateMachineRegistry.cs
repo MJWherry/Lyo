@@ -5,8 +5,8 @@ using Lyo.StateMachine.Models;
 namespace Lyo.StateMachine;
 
 /// <summary>
-/// Named code for data-driven machines: guards, actions (hooks), dynamic selectors, and payload declarations that a <see cref="StateMachineDocument" /> references by
-/// name. Pass it to <see cref="StateMachineDocumentLoader" /> or <see cref="StateMachineDefinitionCache{TState,TTrigger,TContext}" />.
+/// Named code for data-driven machines: guards, actions (hooks), dynamic selectors, and payload declarations that a <see cref="StateMachineDocument" /> references by name.
+/// Pass it to <see cref="StateMachineDocumentLoader" /> or <see cref="StateMachineDefinitionCache{TState,TTrigger,TContext}" />.
 /// </summary>
 /// <remarks>
 /// Register everything once at startup. Names are case-sensitive and unique per kind. A payload-typed guard or selector can only be used on a trigger declared with

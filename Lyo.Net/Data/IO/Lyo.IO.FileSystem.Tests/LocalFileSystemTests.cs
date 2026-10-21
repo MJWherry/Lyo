@@ -20,9 +20,8 @@ public sealed class LocalFileSystemTests : IFileSystemContractTests
         using var fs = NewFileSystem();
         var path = Path.Combine(fs.RootPath, "async-read.bin");
         fs.WriteAllBytes(path, "payload"u8.ToArray());
-
         await using var stream = await fs.OpenReadAsync(path, TestCt);
-        Assert.True(Assert.IsType<FileStream>(stream, exactMatch: false).IsAsync);
+        Assert.True(Assert.IsType<FileStream>(stream, false).IsAsync);
     }
 
     [Fact]
@@ -30,7 +29,7 @@ public sealed class LocalFileSystemTests : IFileSystemContractTests
     {
         using var fs = NewFileSystem();
         await using var stream = await fs.OpenCreateAsync(Path.Combine(fs.RootPath, "async-write.bin"), TestCt);
-        Assert.True(Assert.IsType<FileStream>(stream, exactMatch: false).IsAsync);
+        Assert.True(Assert.IsType<FileStream>(stream, false).IsAsync);
     }
 
     [Fact]
@@ -38,7 +37,7 @@ public sealed class LocalFileSystemTests : IFileSystemContractTests
     {
         using var fs = NewFileSystem();
         await using var stream = await fs.OpenAppendAsync(Path.Combine(fs.RootPath, "async-append.bin"), TestCt);
-        Assert.True(Assert.IsType<FileStream>(stream, exactMatch: false).IsAsync);
+        Assert.True(Assert.IsType<FileStream>(stream, false).IsAsync);
     }
 
     [Fact]
@@ -49,6 +48,5 @@ public sealed class LocalFileSystemTests : IFileSystemContractTests
         Assert.False(Directory.Exists(fs.RootPath));
     }
 
-    private static LocalFileSystem NewFileSystem()
-        => new(Path.Combine(Path.GetTempPath(), "lyo-vfs-local-" + LyoGuid.CreateV7().ToString("N")));
+    private static LocalFileSystem NewFileSystem() => new(Path.Combine(Path.GetTempPath(), "lyo-vfs-local-" + LyoGuid.CreateV7().ToString("N")));
 }

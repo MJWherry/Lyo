@@ -6,9 +6,4 @@ namespace Lyo.FileStorage;
 /// <param name="LogicalPath">Catalog path <c>/{prefix}/{fileId}</c> when known.</param>
 /// <param name="PhysicalKey">Object key relative to the physical root, when known.</param>
 /// <param name="OriginalFileName">Display name from metadata when known.</param>
-public sealed record FileStorageReconcileEntry(
-    FileStoragePresence Presence,
-    Guid? FileId,
-    string? LogicalPath,
-    string? PhysicalKey,
-    string? OriginalFileName);
+public sealed record FileStorageReconcileEntry(FileStoragePresence Presence, Guid? FileId, string? LogicalPath, string? PhysicalKey, string? OriginalFileName);

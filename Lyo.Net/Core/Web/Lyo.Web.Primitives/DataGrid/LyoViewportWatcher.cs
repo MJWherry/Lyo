@@ -3,12 +3,12 @@ using Lyo.Common.Core.Identifiers;
 namespace Lyo.Web.Primitives.DataGrid;
 
 /// <summary>
-/// Tracks the browser breakpoint for a component so layouts can switch between wide and narrow presentations. Wraps MudBlazor's <c>IBrowserViewportService</c>
-/// subscription lifecycle, and stays inert when the host never registered MudBlazor services.
+/// Tracks the browser breakpoint for a component so layouts can switch between wide and narrow presentations. Wraps MudBlazor's <c>IBrowserViewportService</c> subscription
+/// lifecycle, and stays inert when the host never registered MudBlazor services.
 /// </summary>
 /// <remarks>
-/// Start it from <c>OnAfterRenderAsync(firstRender: true)</c>; the callback fires immediately with the current breakpoint and again on every resize. Until the first
-/// callback arrives <see cref="IsAtOrBelow" /> returns false, so components render their wide layout during prerender instead of flashing the narrow one.
+/// Start it from <c>OnAfterRenderAsync(firstRender: true)</c>; the callback fires immediately with the current breakpoint and again on every resize. Until the first callback
+/// arrives <see cref="IsAtOrBelow" /> returns false, so components render their wide layout during prerender instead of flashing the narrow one.
 /// </remarks>
 public sealed class LyoViewportWatcher : IAsyncDisposable
 {

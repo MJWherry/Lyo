@@ -3,6 +3,17 @@ namespace Lyo.Leaderboard.Web.Components;
 /// <summary>Pending entries plus approve/reject and a manual adjustment form.</summary>
 public partial class LeaderboardEntryQueue
 {
+    private decimal _adjustDelta = 40;
+    private Guid _adjustMemberId;
+    private string _adjustReason = "Judge bonus";
+    private bool _adjusting;
+
+    private Guid? _boardId;
+    private int _loadedVersion = -1;
+    private bool _loading;
+    private IReadOnlyList<MemberRecord> _members = [];
+    private IReadOnlyList<EntryRecord> _rows = [];
+
     /// <summary>Typed Leaderboard API client.</summary>
     [Parameter]
     [EditorRequired]
@@ -19,16 +30,6 @@ public partial class LeaderboardEntryQueue
     /// <summary>Raised after verify or adjustment.</summary>
     [Parameter]
     public EventCallback OnChanged { get; set; }
-
-    private Guid? _boardId;
-    private int _loadedVersion = -1;
-    private bool _loading;
-    private bool _adjusting;
-    private IReadOnlyList<EntryRecord> _rows = [];
-    private IReadOnlyList<MemberRecord> _members = [];
-    private Guid _adjustMemberId;
-    private decimal _adjustDelta = 40;
-    private string _adjustReason = "Judge bonus";
 
     /// <inheritdoc />
     protected override async Task OnParametersSetAsync()
@@ -66,8 +67,7 @@ public partial class LeaderboardEntryQueue
         }
     }
 
-    private string MemberName(Guid memberId)
-        => _members.FirstOrDefault(m => m.Id == memberId)?.DisplayName ?? memberId.ToString("N")[..8];
+    private string MemberName(Guid memberId) => _members.FirstOrDefault(m => m.Id == memberId)?.DisplayName ?? memberId.ToString("N")[..8];
 
     private async Task SetStatusAsync(EntryRecord entry, EntryStatus status, string? reason = null)
     {

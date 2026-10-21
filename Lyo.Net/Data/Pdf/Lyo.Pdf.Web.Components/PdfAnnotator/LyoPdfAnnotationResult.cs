@@ -50,8 +50,8 @@ public sealed class LyoPdfAnnotationResult
     public string? TableKeyColumnLabel { get; set; }
 
     /// <summary>
-    /// For <see cref="PdfAnnotationExtractionType.BoundingBoxText" />, how many vertical columns to split the region into (≥ 1). Values &gt; 1 use gutter/band
-    /// detection from the PDF layout.
+    /// For <see cref="PdfAnnotationExtractionType.BoundingBoxText" />, how many vertical columns to split the region into (≥ 1). Values &gt; 1 use gutter/band detection from the
+    /// PDF layout.
     /// </summary>
     public int ColumnCount { get; set; } = 1;
 

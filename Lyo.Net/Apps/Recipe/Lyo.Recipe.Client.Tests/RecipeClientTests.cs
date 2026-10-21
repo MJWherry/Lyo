@@ -5,11 +5,9 @@ using Lyo.Http.Client;
 using Lyo.Http.Client.Plan;
 using Lyo.Http.Client.Session;
 using Lyo.Query.Models.Common.Request;
-using Lyo.Recipe.Client;
 using Lyo.Recipe.Models;
 using Lyo.Recipe.Models.Enums;
 using Lyo.Recipe.Models.Request;
-using Lyo.Recipe.Models.Response;
 
 namespace Lyo.Recipe.Client.Tests;
 
@@ -39,7 +37,7 @@ public sealed class RecipeClientTests
     public async Task ReplaceStepsAsync_WhenPrefix_PostsPrefixedRoute()
     {
         var api = new RecordingApiClient();
-        var client = new RecipeClient(api, new RecipeClientOptions { RoutePrefix = "api" });
+        var client = new RecipeClient(api, new() { RoutePrefix = "api" });
         var id = Guid.Parse("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee");
         var steps = new List<RecipeStepReq> { new() { Instruction = "Mix", SortOrder = 0 } };
         await client.ReplaceStepsAsync(id, steps, TestCt);
@@ -121,7 +119,7 @@ internal sealed class RecordingApiClient : IApiClient
     {
         LastUri = uri;
         LastBody = request;
-        return Task.FromResult(NextResult is TResult next ? next : default(TResult)!);
+        return Task.FromResult(NextResult is TResult next ? next : default!);
     }
 
     public Task<TResult?> GetAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
@@ -151,7 +149,7 @@ internal sealed class RecordingApiClient : IApiClient
     {
         LastUri = uri;
         LastBody = request;
-        return Task.FromResult(NextResult is TResult next ? next : default(TResult)!);
+        return Task.FromResult(NextResult is TResult next ? next : default!);
     }
 
     public Task<byte[]> GetFileAsync(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default) => throw new NotImplementedException(uri);
@@ -182,13 +180,13 @@ internal sealed class RecordingApiClient : IApiClient
         CancellationToken ct = default)
     {
         LastUri = uri;
-        return Task.FromResult(NextResult is TResult next ? next : default(TResult)!);
+        return Task.FromResult(NextResult is TResult next ? next : default!);
     }
 
     public Task<TResult> PostFileAsAsync<TResult>(string uri, Stream stream, string fileName, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
     {
         LastUri = uri;
-        return Task.FromResult(NextResult is TResult next ? next : default(TResult)!);
+        return Task.FromResult(NextResult is TResult next ? next : default!);
     }
 
     public Task<TResult> PostFileAsAsync<TResult>(
@@ -200,19 +198,19 @@ internal sealed class RecordingApiClient : IApiClient
         CancellationToken ct = default)
     {
         LastUri = uri;
-        return Task.FromResult(NextResult is TResult next ? next : default(TResult)!);
+        return Task.FromResult(NextResult is TResult next ? next : default!);
     }
 
     public Task<TResult> PostFileAsAsync<TResult>(string uri, byte[] data, string fileName, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
     {
         LastUri = uri;
-        return Task.FromResult(NextResult is TResult next ? next : default(TResult)!);
+        return Task.FromResult(NextResult is TResult next ? next : default!);
     }
 
     public Task<TResult> PostFileAsAsync<TResult>(string uri, string filePath, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
     {
         LastUri = uri;
-        return Task.FromResult(NextResult is TResult next ? next : default(TResult)!);
+        return Task.FromResult(NextResult is TResult next ? next : default!);
     }
 
     public Task<TResult> DeleteAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)

@@ -1,6 +1,7 @@
 # Lyo.Ledger.Postgres
 
-PostgreSQL storage for Lyo.Ledger. Schema constant: `PostgresLedgerOptions.Schema = "ledger"`. Configuration section: `PostgresLedger`. Journal lines store optional `client_id` without a cross-schema FK.
+PostgreSQL storage for Lyo.Ledger. Schema constant: `PostgresLedgerOptions.Schema = "ledger"`. Configuration section: `PostgresLedger`. Journal lines store optional `client_id`
+without a cross-schema FK.
 
 ## Examples
 

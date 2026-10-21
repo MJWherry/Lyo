@@ -16,13 +16,7 @@ public sealed record LogField(string Name, string Value);
 /// <param name="Source">Logger or component name. Blank is omitted from the row and from <see cref="Format" />.</param>
 /// <param name="Context">Scope and message properties. Null when the line has none.</param>
 /// <param name="ExceptionText"><see cref="Exception.ToString" /> when the line was logged with an exception.</param>
-public sealed record LogLine(
-    DateTimeOffset Timestamp,
-    LogLevel Level,
-    string Message,
-    string? Source = null,
-    IReadOnlyList<LogField>? Context = null,
-    string? ExceptionText = null)
+public sealed record LogLine(DateTimeOffset Timestamp, LogLevel Level, string Message, string? Source = null, IReadOnlyList<LogField>? Context = null, string? ExceptionText = null)
 {
     /// <summary>True when <paramref name="line" /> is at least <paramref name="minLevel" /> and its message or source contains <paramref name="search" />.</summary>
     /// <remarks>A blank search matches every line that passes the level check. Comparison is ordinal and case-insensitive.</remarks>
@@ -31,11 +25,12 @@ public sealed record LogLine(
         ArgumentHelpers.ThrowIfNull(line);
         if (line.Level < minLevel)
             return false;
+
         if (string.IsNullOrWhiteSpace(search))
             return true;
+
         var term = search.Trim();
-        return line.Message.Contains(term, StringComparison.OrdinalIgnoreCase)
-            || (line.Source?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false);
+        return line.Message.Contains(term, StringComparison.OrdinalIgnoreCase) || (line.Source?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false);
     }
 
     /// <summary>Clipboard and export text. Each line is the round-trip timestamp, the level name, the source when it has text, and the message.</summary>
@@ -47,6 +42,7 @@ public sealed record LogLine(
             builder.Append(line.Timestamp.ToString("O")).Append(' ').Append(line.Level);
             if (!string.IsNullOrWhiteSpace(line.Source))
                 builder.Append(' ').Append(line.Source);
+
             builder.Append(' ').AppendLine(line.Message);
         }
 
@@ -54,12 +50,13 @@ public sealed record LogLine(
     }
 
     /// <summary>Short label and hue for <paramref name="level" />. Trace, and any level below it, is a neutral chip.</summary>
-    public static ChipSpec LevelChip(LogLevel level) => level switch {
-        LogLevel.Debug => new("Debug", ChipHues.Cyan),
-        LogLevel.Information => new("Info", ChipHues.Blue),
-        LogLevel.Warning => new("Warn", ChipHues.Amber),
-        LogLevel.Error => new("Error", ChipHues.Coral),
-        LogLevel.Critical => new("Crit", ChipHues.Rose),
-        _ => new("Trace", -1)
-    };
+    public static ChipSpec LevelChip(LogLevel level)
+        => level switch {
+            LogLevel.Debug => new("Debug", ChipHues.Cyan),
+            LogLevel.Information => new("Info", ChipHues.Blue),
+            LogLevel.Warning => new("Warn", ChipHues.Amber),
+            LogLevel.Error => new("Error", ChipHues.Coral),
+            LogLevel.Critical => new("Crit", ChipHues.Rose),
+            var _ => new("Trace", -1)
+        };
 }

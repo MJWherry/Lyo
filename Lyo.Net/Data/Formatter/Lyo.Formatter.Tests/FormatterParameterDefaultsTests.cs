@@ -9,7 +9,7 @@ namespace Lyo.Formatter.Tests;
 /// </summary>
 public sealed class FormatterParameterDefaultsTests
 {
-    private static readonly FormatterService Formatter = new(static () => new DateTimeOffset(2026, 8, 26, 12, 0, 0, TimeSpan.Zero));
+    private static readonly FormatterService Formatter = new(static () => new(2026, 8, 26, 12, 0, 0, TimeSpan.Zero));
 
     [Fact]
     [Trait("Category", "Fast")]
@@ -26,11 +26,10 @@ public sealed class FormatterParameterDefaultsTests
     [InlineData("{DateTime.UtcNow}")]
     [InlineData("{DateTime.Today}")]
     public void TryValidate_BareDateTimeTokenOnADateTimeParameter_Passes(string template)
-    {
-        // Without a format specifier these render through ToString(), which is culture-spelled rather than ISO. That is the template an author writes first,
-        // so it has to succeed.
-        Assert.True(FormatterParameterDefaults.TryValidate(Formatter, LyoTypeInfo.DateTime.FullName, template, out _, out var error), error);
-    }
+        =>
+            // Without a format specifier these render through ToString(), which is culture-spelled rather than ISO. That is the template an author writes first,
+            // so it has to succeed.
+            Assert.True(FormatterParameterDefaults.TryValidate(Formatter, LyoTypeInfo.DateTime.FullName, template, out var _, out var error), error);
 
     /// <summary>
     /// A numeric format specifier is display formatting, not a different type: <c>{Count:N0}</c> on an int parameter is still an int. The editor has to accept it; the
@@ -53,7 +52,7 @@ public sealed class FormatterParameterDefaultsTests
     public void TryValidate_FractionalRenderOnAnIntParameter_StillFails()
     {
         // Leniency about formatting is not leniency about the type: accepting this would drop the ".5" without warning.
-        Assert.False(FormatterParameterDefaults.TryValidate(Formatter, LyoTypeInfo.Int.FullName, "{Total:N2}", out _, out var error, new { Total = 1234.50m }));
+        Assert.False(FormatterParameterDefaults.TryValidate(Formatter, LyoTypeInfo.Int.FullName, "{Total:N2}", out var _, out var error, new { Total = 1234.50m }));
         Assert.Contains("not a valid System.Int32", error);
     }
 
@@ -61,7 +60,7 @@ public sealed class FormatterParameterDefaultsTests
     [Trait("Category", "Fast")]
     public void TryValidate_RenderedValueOfTheWrongType_NamesTheDeclaredType()
     {
-        Assert.False(FormatterParameterDefaults.TryValidate(Formatter, LyoTypeInfo.Int.FullName, "{DateTime.UtcNow:yyyy-MM-dd}", out _, out var error));
+        Assert.False(FormatterParameterDefaults.TryValidate(Formatter, LyoTypeInfo.Int.FullName, "{DateTime.UtcNow:yyyy-MM-dd}", out var _, out var error));
         Assert.Contains("not a valid System.Int32", error);
     }
 
@@ -69,7 +68,7 @@ public sealed class FormatterParameterDefaultsTests
     [Trait("Category", "Fast")]
     public void TryValidate_BlankTemplate_IsReportedRatherThanTreatedAsValid()
     {
-        Assert.False(FormatterParameterDefaults.TryValidate(Formatter, LyoTypeInfo.DateTime.FullName, "  ", out _, out var error));
+        Assert.False(FormatterParameterDefaults.TryValidate(Formatter, LyoTypeInfo.DateTime.FullName, "  ", out var _, out var error));
         Assert.Contains("required", error, StringComparison.OrdinalIgnoreCase);
     }
 

@@ -6,9 +6,4 @@ namespace Lyo.Authentication.Sso.Protocol;
 /// <param name="Query">Query string values.</param>
 /// <param name="Form">Form fields. Empty for GET.</param>
 /// <param name="StateCookie">Sealed OpenID Connect state cookie, when the browser sent one.</param>
-public sealed record SsoCallback(
-    string Provider,
-    string Method,
-    IReadOnlyDictionary<string, string?> Query,
-    IReadOnlyDictionary<string, string?> Form,
-    string? StateCookie);
+public sealed record SsoCallback(string Provider, string Method, IReadOnlyDictionary<string, string?> Query, IReadOnlyDictionary<string, string?> Form, string? StateCookie);

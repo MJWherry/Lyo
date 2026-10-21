@@ -725,8 +725,9 @@ public class SeleniumBrowser : IDisposable, IWebAutomationBrowser
         }
     }
 
-    /// <summary>Waits until at least one match exists, then yields every matching element for the final segment; each attempt runs <see cref="GetElementsChainCoreAsync"
-    /// />.</summary>
+    /// <summary>
+    /// Waits until at least one match exists, then yields every matching element for the final segment; each attempt runs <see cref="GetElementsChainCoreAsync" />.
+    /// </summary>
     public async Task<IReadOnlyList<IWebAutomationElement>> PollForElementsAsync(ElementLocatorChain chain, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(chain);

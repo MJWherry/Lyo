@@ -1,5 +1,4 @@
 using Lyo.Api.Client;
-using Lyo.Config;
 using Lyo.EntityReference.Models;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
@@ -7,8 +6,8 @@ using Lyo.Exceptions.Models;
 namespace Lyo.Config.Api.Client;
 
 /// <summary>
-/// <see cref="IConfigStore" /> that talks to Config.Api / TestApi manage routes. Posts plaintext and <see cref="ConfigDefinitionRecord.IsEncrypted" />; the API encrypts at rest.
-/// The server picks tenancy, so the <c>tenantId</c> argument on binding methods is ignored.
+/// <see cref="IConfigStore" /> that talks to Config.Api / TestApi manage routes. Posts plaintext and <see cref="ConfigDefinitionRecord.IsEncrypted" />; the API encrypts at
+/// rest. The server picks tenancy, so the <c>tenantId</c> argument on binding methods is ignored.
 /// </summary>
 public sealed class ConfigApiStore : IConfigStore
 {
@@ -52,8 +51,7 @@ public sealed class ConfigApiStore : IConfigStore
     }
 
     /// <inheritdoc />
-    public Task DeleteDefinitionAsync(Guid id, CancellationToken ct = default)
-        => _client.DeleteAsAsync<object>(ConfigApiRoutes.Definition(id), ct: ct);
+    public Task DeleteDefinitionAsync(Guid id, CancellationToken ct = default) => _client.DeleteAsAsync<object>(ConfigApiRoutes.Definition(id), ct: ct);
 
     /// <inheritdoc />
     public async Task SaveBindingAsync(ConfigBindingRecord binding, Guid? tenantId, CancellationToken ct = default)

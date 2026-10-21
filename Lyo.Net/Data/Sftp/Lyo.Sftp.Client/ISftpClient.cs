@@ -1,9 +1,6 @@
 namespace Lyo.Sftp.Client;
 
-/// <summary>
-/// Pooled SFTP calls over SSH.NET. Paths use POSIX form and stay under <see cref="RootRemoteDirectory" /> through
-/// <see cref="Lyo.Common.Core.Pathing.PathHelpers" />.
-/// </summary>
+/// <summary>Pooled SFTP calls over SSH.NET. Paths use POSIX form and stay under <see cref="RootRemoteDirectory" /> through <see cref="Lyo.Common.Core.Pathing.PathHelpers" />.</summary>
 /// <remarks>
 /// <para>Hosts and adapters should call the <c>*Async</c> methods. Sync methods park the calling thread while they wait on the async implementation.</para>
 /// <para>

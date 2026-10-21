@@ -3,8 +3,8 @@ using Lyo.Query.Models.Common;
 namespace Lyo.Validation.Models;
 
 /// <summary>
-/// Serializable validation document: a named <see cref="WhereClause" /> tree that an instance must match. Hosts persist and exchange this DTO (API JSON, Postgres JSONB); compile
-/// it with <see cref="IValidationSchemaCompiler" />.
+/// Serializable validation document: a named <see cref="WhereClause" /> tree that an instance must match. Hosts persist and exchange this DTO (API JSON, Postgres JSONB);
+/// compile it with <see cref="IValidationSchemaCompiler" />.
 /// </summary>
 public sealed class ValidationSchema
 {

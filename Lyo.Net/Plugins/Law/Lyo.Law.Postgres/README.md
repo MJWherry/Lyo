@@ -1,6 +1,7 @@
 # Lyo.Law.Postgres
 
-EF Core implementation of `ILawStore` in schema `law`. Register with `AddPostgresLawStore` or `AddPostgresLawStoreFromConfiguration` (section `PostgresLaw`). `PostgresLawStore` implements `Lyo.Health.IHealth` (`law-postgres`). Federal jurisdiction key `US` is rejected before insert.
+EF Core implementation of `ILawStore` in schema `law`. Register with `AddPostgresLawStore` or `AddPostgresLawStoreFromConfiguration` (section `PostgresLaw`). `PostgresLawStore`
+implements `Lyo.Health.IHealth` (`law-postgres`). Federal jurisdiction key `US` is rejected before insert.
 
 ## Features
 

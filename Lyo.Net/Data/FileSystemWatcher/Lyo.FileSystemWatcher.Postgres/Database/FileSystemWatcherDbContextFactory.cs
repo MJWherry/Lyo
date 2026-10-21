@@ -8,6 +8,7 @@ public sealed class FileSystemWatcherDbContextFactory : IDesignTimeDbContextFact
 {
     /// <inheritdoc />
     public FileSystemWatcherDbContext CreateDbContext(string[] args)
-        => new(PostgresDesignTime.CreateOptions<FileSystemWatcherDbContext>(
-            "FILESYSTEM_WATCHER_CONNECTION_STRING", PostgresFileSystemWatcherOptions.Schema, "Host=localhost;Database=lyo;Username=lyo;Password=lyo"));
+        => new(
+            PostgresDesignTime.CreateOptions<FileSystemWatcherDbContext>(
+                "FILESYSTEM_WATCHER_CONNECTION_STRING", PostgresFileSystemWatcherOptions.Schema, "Host=localhost;Database=lyo;Username=lyo;Password=lyo"));
 }

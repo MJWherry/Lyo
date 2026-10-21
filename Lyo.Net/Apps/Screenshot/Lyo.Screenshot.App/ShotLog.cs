@@ -10,15 +10,13 @@ internal static class ShotLog
         try {
             Console.Error.WriteLine("lyo-shot: " + message);
         }
-        catch (IOException) {
-        }
+        catch (IOException) { }
 
         try {
             var path = Path.Combine(ShotSettingsStore.ConfigDirectory(), "screenshot.log");
             lock (Gate)
                 File.AppendAllText(path, line + Environment.NewLine);
         }
-        catch (Exception) {
-        }
+        catch (Exception) { }
     }
 }

@@ -4,14 +4,14 @@ using Lyo.Exceptions.Models;
 namespace Lyo.Encryption;
 
 /// <summary>
-/// Single-shot AEAD without the Lyo envelope: <c>[nonce][tag][ciphertext]</c> (AES-SIV: RFC 5297 <c>SIV || ciphertext</c>). Stock AES-GCM / ChaCha /
-/// AES-SIV clients can decrypt after slicing those regions. Not on <see cref="IEncryptionService" /> — framed <c>Encrypt</c> / <c>Decrypt</c> stay the default, and
-/// file storage / config / jobs must not pick this up by accident.
+/// Single-shot AEAD without the Lyo envelope: <c>[nonce][tag][ciphertext]</c> (AES-SIV: RFC 5297 <c>SIV || ciphertext</c>). Stock AES-GCM / ChaCha / AES-SIV clients can
+/// decrypt after slicing those regions. Not on <see cref="IEncryptionService" /> — framed <c>Encrypt</c> / <c>Decrypt</c> stay the default, and file storage / config / jobs must not
+/// pick this up by accident.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Raw blobs do not record key id or version. <c>keyId</c> uses the <em>current</em> KeyStore key; after rotation pass <c>keyVersion</c> on decrypt (or the raw
-/// key bytes). Caller AAD is authenticated, not stored.
+/// Raw blobs do not record key id or version. <c>keyId</c> uses the <em>current</em> KeyStore key; after rotation pass <c>keyVersion</c> on decrypt (or the raw key bytes).
+/// Caller AAD is authenticated, not stored.
 /// </para>
 /// </remarks>
 public interface IRawAead
@@ -20,9 +20,7 @@ public interface IRawAead
     /// <param name="bytes">Plaintext. Must not be empty.</param>
     /// <param name="keyId">KeyStore id. Null means use <paramref name="key" /> as-is.</param>
     /// <param name="key">Optional raw key. When null and <paramref name="keyId" /> is set, the KeyStore supplies the current key.</param>
-    /// <param name="associatedData">
-    /// Optional AAD authenticated with the ciphertext (not encrypted, not stored). The same value must be passed at decrypt time or authentication fails.
-    /// </param>
+    /// <param name="associatedData">Optional AAD authenticated with the ciphertext (not encrypted, not stored). The same value must be passed at decrypt time or authentication fails.</param>
     /// <returns>Raw blob: nonce, tag, then ciphertext.</returns>
     /// <exception cref="ArgumentOutsideRangeException">Thrown when bytes is empty (below MinInputSize), exceeds MaxInputSize, or the key length is invalid.</exception>
     /// <exception cref="InvalidOperationException">Thrown when no key is available (neither keyId nor key, or keyId missing from the KeyStore).</exception>

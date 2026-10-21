@@ -1,7 +1,8 @@
 using System.Text;
 using System.Text.Json;
-using Lyo.Http.Client;
 using Lyo.Common.Metadata.Records;
+using Lyo.Exceptions;
+using Lyo.Http.Client;
 using Lyo.Job.Client;
 using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Security;
@@ -9,18 +10,14 @@ using Lyo.Job.Worker;
 using Lyo.MessageQueue;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
-using Constants = Lyo.Job.Workers.Notification.Constants;
-using Lyo.Exceptions;
 
 namespace Lyo.Job.Workers.Notification;
 
 /// <summary>
-/// POSTs a run's <c>Body</c> to its <c>Url</c> as a workflow step. This replaces <c>JobDefinition.AlertWebhookUrl</c>: a webhook is now a step in a graph, which means it can
-/// be conditional, can read upstream results through templated parameters, and — the part the column could not do — <b>fails the run when the send fails</b>, so job retry,
-/// backoff, DLQ, and run-log history all apply.
-/// <para>
-/// Uses <see cref="ILyoHttpClient" /> rather than <c>Lyo.Webhook</c>: that package is inbound-only (signature verification and endpoint mapping) and has no sender.
-/// </para>
+/// POSTs a run's <c>Body</c> to its <c>Url</c> as a workflow step. This replaces <c>JobDefinition.AlertWebhookUrl</c>: a webhook is now a step in a graph, which means it can be
+/// conditional, can read upstream results through templated parameters, and — the part the column could not do — <b>fails the run when the send fails</b>, so job retry, backoff, DLQ,
+/// and run-log history all apply.
+/// <para>Uses <see cref="ILyoHttpClient" /> rather than <c>Lyo.Webhook</c>: that package is inbound-only (signature verification and endpoint mapping) and has no sender.</para>
 /// </summary>
 /// <remarks>
 /// Parameters: <c>Url</c> (required), <c>Body</c> (required, sent verbatim), <c>Headers</c> (optional JSON object of header name to value). Results: <c>StatusCode</c> and
@@ -51,8 +48,8 @@ public class WebhookNotificationWorker : JobWorkerBase
 
     protected override async Task ExecuteAsync(IJobWorkerContext ctx)
     {
-        if (!NotificationParameters.TryRequired(ctx, Constants.ParameterKey.Url, out var url)
-            || !NotificationParameters.TryRequired(ctx, Constants.ParameterKey.Body, out var body))
+        if (!NotificationParameters.TryRequired(ctx, Constants.ParameterKey.Url, out var url) ||
+            !NotificationParameters.TryRequired(ctx, Constants.ParameterKey.Body, out var body))
             return;
 
         var headers = ParseHeaders(ctx);
@@ -113,8 +110,8 @@ public class WebhookNotificationWorker : JobWorkerBase
     }
 
     /// <summary>
-    /// Replaces the serialized body with the raw <c>Body</c> parameter. The client's own serializer would JSON-encode the string, so a payload of <c>{"a":1}</c> would arrive
-    /// at the endpoint as the quoted literal <c>"{\"a\":1}"</c>. A webhook body has to go over the wire exactly as the step wrote it.
+    /// Replaces the serialized body with the raw <c>Body</c> parameter. The client's own serializer would JSON-encode the string, so a payload of <c>{"a":1}</c> would arrive at
+    /// the endpoint as the quoted literal <c>"{\"a\":1}"</c>. A webhook body has to go over the wire exactly as the step wrote it.
     /// </summary>
     private static void BuildRequest(HttpRequestMessage request, string body, string contentType, IReadOnlyDictionary<string, string> headers)
     {

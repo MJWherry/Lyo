@@ -1,4 +1,3 @@
-using Lyo.Web.Components.Form;
 using Microsoft.AspNetCore.Components;
 
 namespace Lyo.Web.Components.DataGrid;
@@ -72,9 +71,7 @@ public partial class LyoProjectedColumn
     [Parameter]
     public Func<object?, object?, string>? FormattedValue { get; set; }
 
-    /// <summary>
-    /// If set, the cell renders <see cref="LyoTimestamp" /> for this field (UTC → browser time zone) instead of plain text / <see cref="FormattedValue" />.
-    /// </summary>
+    /// <summary>If set, the cell renders <see cref="LyoTimestamp" /> for this field (UTC → browser time zone) instead of plain text / <see cref="FormattedValue" />.</summary>
     [Parameter]
     public LyoTimestampKind? Timestamp { get; set; }
 
@@ -87,8 +84,8 @@ public partial class LyoProjectedColumn
     public TimeSpan TimestampRelativeWindow { get; set; } = TimeSpan.FromHours(24);
 
     /// <summary>
-    /// If true, the cell renders compact <c>LyoIdField</c> (copy + suffix abbreviation) for this field instead of plain text.
-    /// Ignored when <see cref="CellContent" /> or <see cref="Timestamp" /> is set.
+    /// If true, the cell renders compact <c>LyoIdField</c> (copy + suffix abbreviation) for this field instead of plain text. Ignored when <see cref="CellContent" /> or
+    /// <see cref="Timestamp" /> is set.
     /// </summary>
     [Parameter]
     public bool Identifier { get; set; }
@@ -100,25 +97,13 @@ public partial class LyoProjectedColumn
     [Parameter]
     public RenderFragment<object?>? CellContent { get; set; }
 
-    /// <summary>
-    /// If set, default cell text longer than this is shown with an ellipsis; hover reveals the full value. Ignored when <see cref="CellContent" /> is set.
-    /// </summary>
+    /// <summary>If set, default cell text longer than this is shown with an ellipsis; hover reveals the full value. Ignored when <see cref="CellContent" /> is set.</summary>
     [Parameter]
     public int? MaxDisplayLength { get; set; }
 
-    /// <summary>
-    /// Makes this column the heading of each card in the card layout instead of one more labelled field. Leave false to let the grid pick the most name-like column.
-    /// </summary>
+    /// <summary>Makes this column the heading of each card in the card layout instead of one more labelled field. Leave false to let the grid pick the most name-like column.</summary>
     [Parameter]
     public bool CardTitle { get; set; }
-
-    protected override void OnParametersSet() => ColumnRegistry?.Register(Field, Title, QuickSearchPropertyName, HiddenByDefault, Cell, Identifier, CardTitle, Sortable);
-
-    private void OnHiddenChanged(bool hidden) => VisibilityBinder?.SetHidden(Field, hidden);
-
-    private object GetSortValue(object? item) => ProjectedValueHelper.GetValue(item, Field) ?? string.Empty;
-
-    internal string GetApiSortKey() => SortKey ?? Field;
 
     private string EffectiveHeaderStyle => MergeAlignStyle(HeaderStyle, Align);
 
@@ -127,6 +112,14 @@ public partial class LyoProjectedColumn
     private string EffectiveHeaderClass => MergeAlignClass(HeaderClass, Align);
 
     private string EffectiveCellClass => MergeAlignClass(CellClass, Align);
+
+    protected override void OnParametersSet() => ColumnRegistry?.Register(Field, Title, QuickSearchPropertyName, HiddenByDefault, Cell, Identifier, CardTitle, Sortable);
+
+    private void OnHiddenChanged(bool hidden) => VisibilityBinder?.SetHidden(Field, hidden);
+
+    private object GetSortValue(object? item) => ProjectedValueHelper.GetValue(item, Field) ?? string.Empty;
+
+    internal string GetApiSortKey() => SortKey ?? Field;
 
     private static string MergeAlignStyle(string? style, Align align)
         => align switch {

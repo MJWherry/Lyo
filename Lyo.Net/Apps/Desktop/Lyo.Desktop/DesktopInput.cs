@@ -17,6 +17,7 @@ public static class DesktopInput
         ArgumentHelpers.ThrowIfNull(text);
         if (text.Length == 0)
             return;
+
         Play(DesktopInputSequence.Text(text));
     }
 

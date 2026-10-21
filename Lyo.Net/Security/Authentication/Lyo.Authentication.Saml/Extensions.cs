@@ -14,15 +14,14 @@ public static class Extensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers the SAML service provider on top of <c>AddLyoSso</c>: metadata cache, login tickets, and <see cref="SamlSsoProtocol" />.
-        /// Does not bind BFF options; <c>AddLyoSso(IConfiguration)</c> does that.
+        /// Registers the SAML service provider on top of <c>AddLyoSso</c>: metadata cache, login tickets, and <see cref="SamlSsoProtocol" />. Does not bind BFF options;
+        /// <c>AddLyoSso(IConfiguration)</c> does that.
         /// </summary>
         public IServiceCollection AddLyoSaml()
         {
             ArgumentHelpers.ThrowIfNull(services);
             services.AddLyoSso();
-            services.AddHttpClient<SamlMetadataCache>()
-                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+            services.AddHttpClient<SamlMetadataCache>().ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
             services.TryAddSingleton<ISamlMetadataSource>(sp => sp.GetRequiredService<SamlMetadataCache>());
             services.TryAddSingleton<InMemorySamlLoginTicketStore>();
             services.TryAddSingleton<ISamlLoginTicketStore>(sp => sp.GetRequiredService<InMemorySamlLoginTicketStore>());

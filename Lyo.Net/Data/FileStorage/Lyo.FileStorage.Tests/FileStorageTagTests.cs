@@ -4,7 +4,6 @@ using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Models;
 using Lyo.IO.Temp.Models;
 using Lyo.KeyStore;
-using Lyo.Testing;
 
 namespace Lyo.FileStorage.Tests;
 
@@ -61,7 +60,6 @@ public sealed class FileStorageTagTests : IDisposable
         var imported = Assert.Single(tags, tag => tag.TagType == FileTagTypes.Imported).Value;
         Assert.Equal(FileTagTypes.FormatImported(saved.Timestamp), imported);
         Assert.Null(saved.PathPrefix);
-
         var moved = saved with { Timestamp = saved.Timestamp.AddDays(3) };
         await service.MetadataStore.SaveMetadataAsync(saved.Id, moved, TestCt);
         Assert.Equal(imported, Assert.Single(await service.GetTagsAsync(saved.Id, TestCt), tag => tag.TagType == FileTagTypes.Imported).Value);
@@ -72,11 +70,8 @@ public sealed class FileStorageTagTests : IDisposable
     {
         using var session = new IOTempSession();
         using var service = new LocalFileStorageService(
-            new DiskFileStorageOptions {
-                RootDirectoryPath = session.SessionDirectory,
-                EnableDuplicateDetection = true,
-                DuplicateStrategy = DuplicateHandlingStrategy.Overwrite
-            });
+            new() { RootDirectoryPath = session.SessionDirectory, EnableDuplicateDetection = true, DuplicateStrategy = DuplicateHandlingStrategy.Overwrite });
+
         var payload = "same-bytes"u8.ToArray();
         var first = await service.SaveFileAsync(payload, "report.PDF", ct: TestCt);
         var imported = Assert.Single(await service.GetTagsAsync(first.Id, TestCt), tag => tag.TagType == FileTagTypes.Imported).Value;
@@ -91,7 +86,7 @@ public sealed class FileStorageTagTests : IDisposable
         using var service = Create();
         var saved = await service.SaveFileAsync("pdf"u8.ToArray(), "report.PDF", ct: TestCt);
         var imported = Assert.Single(await service.GetTagsAsync(saved.Id, TestCt), tag => tag.TagType == FileTagTypes.Imported).Value;
-        await service.RenameFileAsync(saved.Id, new RenameFileRequest { OriginalFileName = "notes.txt" }, TestCt);
+        await service.RenameFileAsync(saved.Id, new() { OriginalFileName = "notes.txt" }, TestCt);
         var tags = await service.GetTagsAsync(saved.Id, TestCt);
         Assert.Equal("txt", Assert.Single(tags, tag => tag.TagType == FileTagTypes.FileType).Value);
         Assert.Equal(imported, Assert.Single(tags, tag => tag.TagType == FileTagTypes.Imported).Value);
@@ -116,15 +111,15 @@ public sealed class FileStorageTagTests : IDisposable
     {
         using var sourceSession = new IOTempSession();
         using var destinationSession = new IOTempSession();
-        using var source = new LocalFileStorageService(new DiskFileStorageOptions { RootDirectoryPath = sourceSession.SessionDirectory });
-        using var destination = new LocalFileStorageService(new DiskFileStorageOptions { RootDirectoryPath = destinationSession.SessionDirectory });
+        using var source = new LocalFileStorageService(new() { RootDirectoryPath = sourceSession.SessionDirectory });
+        using var destination = new LocalFileStorageService(new() { RootDirectoryPath = destinationSession.SessionDirectory });
         var saved = await source.SaveFileAsync("pdf"u8.ToArray(), "report.PDF", ct: TestCt);
         await source.AddTagAsync(saved.Id, "client", "clienta", ct: TestCt);
         var imported = Assert.Single(await source.GetTagsAsync(saved.Id, TestCt), tag => tag.TagType == FileTagTypes.Imported).Value;
         var keys = new LocalKeyStore();
         await FileStorageTransfer.TransferAsync(
-            new(source, source.MetadataStore, keys), new(destination, destination.MetadataStore, keys),
-            new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys), TestCt);
+            new(source, source.MetadataStore, keys), new(destination, destination.MetadataStore, keys), new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys),
+            TestCt);
 
         var tags = await destination.GetTagsAsync(saved.Id, TestCt);
         Assert.Contains(tags, tag => tag.TagType == "client" && tag.Value == "clienta");
@@ -151,10 +146,9 @@ public sealed class FileStorageTagTests : IDisposable
         var saved = await service.SaveFileAsync("pdf"u8.ToArray(), "report.PDF", ct: TestCt);
         var stamp = saved.Timestamp.ToUniversalTime();
         var keys = new FileTagGroupKey[] {
-            new(FileTagTypes.Imported, FileTagGrain.Year),
-            new(FileTagTypes.Imported, FileTagGrain.Month),
-            new(FileTagTypes.Imported, FileTagGrain.Day)
+            new(FileTagTypes.Imported, FileTagGrain.Year), new(FileTagTypes.Imported, FileTagGrain.Month), new(FileTagTypes.Imported, FileTagGrain.Day)
         };
+
         var path = $"{stamp:yyyy}/{stamp:MM}/{stamp:dd}";
         Assert.Equal(saved.Id, Assert.Single((await service.ListTagGroupAsync(keys, path, ct: TestCt)).Entries).FileId);
     }
@@ -230,16 +224,13 @@ public sealed class FileStorageTagTests : IDisposable
         var id = LyoGuid.CreateV7();
         var stamp = new DateTime(2024, 3, 2, 8, 0, 0, DateTimeKind.Utc);
         var hash = new byte[] { 1, 2, 3, 4 };
-        var row = new FileStoreResult(
-            id, "report.PDF", 8, hash, id.ToString("N"), 8, hash, false, null, null, null, false, null, null, null, null, null, null, null, null, stamp);
+        var row = new FileStoreResult(id, "report.PDF", 8, hash, id.ToString("N"), 8, hash, false, null, null, null, false, null, null, null, null, null, null, null, null, stamp);
         await service.MetadataStore.SaveMetadataAsync(id, row, TestCt);
         Assert.Empty(await service.GetTagsAsync(id, TestCt));
-
         Assert.Equal(1, await service.StampAutomaticTagsAsync(TestCt));
         var tags = await service.GetTagsAsync(id, TestCt);
         Assert.Equal("pdf", Assert.Single(tags, tag => tag.TagType == FileTagTypes.FileType).Value);
         Assert.Equal(FileTagTypes.FormatImported(stamp), Assert.Single(tags, tag => tag.TagType == FileTagTypes.Imported).Value);
-
         Assert.Equal(1, await service.StampAutomaticTagsAsync(TestCt));
         Assert.Equal(FileTagTypes.FormatImported(stamp), Assert.Single(await service.GetTagsAsync(id, TestCt), tag => tag.TagType == FileTagTypes.Imported).Value);
     }
@@ -252,7 +243,8 @@ public sealed class FileStorageTagTests : IDisposable
         var hash = new byte[] { 1, 2, 3, 4 };
         var row = new FileStoreResult(
             id, "pending.bin", 8, hash, id.ToString("N"), 8, hash, false, null, null, null, false, null, null, null, null, null, null, null, null,
-            new DateTime(2024, 3, 2, 8, 0, 0, DateTimeKind.Utc), Availability: FileAvailability.PendingDirectUpload);
+            new(2024, 3, 2, 8, 0, 0, DateTimeKind.Utc), Availability: FileAvailability.PendingDirectUpload);
+
         await service.MetadataStore.SaveMetadataAsync(id, row, TestCt);
         Assert.Equal(0, await service.StampAutomaticTagsAsync(TestCt));
         Assert.Empty(await service.GetTagsAsync(id, TestCt));
@@ -272,13 +264,12 @@ public sealed class FileStorageTagTests : IDisposable
     public async Task LocalFileStorage_WithCallerMetadataStore_StampsTags()
     {
         var metadata = new LocalFileMetadataStore(_temp.SessionDirectory);
-        using var service = new LocalFileStorageService(new DiskFileStorageOptions { RootDirectoryPath = _temp.SessionDirectory }, metadataService: metadata);
+        using var service = new LocalFileStorageService(new() { RootDirectoryPath = _temp.SessionDirectory }, metadataService: metadata);
         var saved = await service.SaveFileAsync("pdf"u8.ToArray(), "report.PDF", ct: TestCt);
         var tags = await metadata.ListFileTagsAsync(saved.Id, TestCt);
         Assert.Contains(tags, tag => tag.Automatic && tag.TagType == FileTagTypes.FileType && tag.Value == "pdf");
         Assert.Contains(tags, tag => tag.Automatic && tag.TagType == FileTagTypes.Imported && tag.Value == FileTagTypes.FormatImported(saved.Timestamp));
     }
 
-    private LocalFileStorageService Create()
-        => new(new DiskFileStorageOptions { RootDirectoryPath = _temp.SessionDirectory });
+    private LocalFileStorageService Create() => new(new() { RootDirectoryPath = _temp.SessionDirectory });
 }

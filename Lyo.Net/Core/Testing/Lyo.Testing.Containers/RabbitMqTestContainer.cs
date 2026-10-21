@@ -4,8 +4,8 @@ using Testcontainers.RabbitMq;
 namespace Lyo.Testing.Containers;
 
 /// <summary>
-/// Owns a Testcontainers RabbitMQ instance (management-enabled image): start once, expose AMQP and management endpoints, dispose async. The management HTTP API
-/// (<see cref="AdminUrl" />) backs peek and queue-statistics operations.
+/// Owns a Testcontainers RabbitMQ instance (management-enabled image): start once, expose AMQP and management endpoints, dispose async. The management HTTP API (
+/// <see cref="AdminUrl" />) backs peek and queue-statistics operations.
 /// </summary>
 public sealed class RabbitMqTestContainer : IAsyncDisposable
 {

@@ -1,5 +1,4 @@
 using System.Text;
-using Xunit;
 using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.MessageQueue.RabbitMq.Tests;
@@ -220,7 +219,6 @@ public sealed class RabbitMqServiceTests
         Assert.Equal(true, listed.AdditionalProperties[Constants.QueueInfoProperties.Durable]);
         Assert.Equal(false, listed.AdditionalProperties[Constants.QueueInfoProperties.Exclusive]);
         Assert.Equal(false, listed.AdditionalProperties[Constants.QueueInfoProperties.AutoDelete]);
-
         var all = await service.GetAllQueuesInfoAsync(Ct);
         Assert.Contains(all, q => q.Name == queue && Equals(q.AdditionalProperties.GetValueOrDefault(Constants.QueueInfoProperties.Durable), true));
         var missing = await service.GetQueueInfoAsync($"does-not-exist-{LyoGuid.CreateV7():N}", Ct);
@@ -233,8 +231,7 @@ public sealed class RabbitMqServiceTests
         await using var service = _broker.CreateService();
         await service.ConnectAsync(Ct);
         var exchange = UniqueQueue("ex");
-        Assert.True(await service.CreateExchange(exchange, "topic", durable: true, autoDelete: false, ct: Ct));
-
+        Assert.True(await service.CreateExchange(exchange, "topic", true, false, ct: Ct));
         Assert.True(
             await WaitUntilAsync(
                 async () => {
@@ -248,12 +245,10 @@ public sealed class RabbitMqServiceTests
         Assert.True(info.Durable);
         Assert.False(info.AutoDelete);
         Assert.False(info.Internal);
-
         var all = await service.GetAllExchangesInfoAsync(Ct);
         Assert.Contains(all, e => e.Name == exchange && e.Type == "topic");
         var missing = await service.GetExchangeInfoAsync($"does-not-exist-{LyoGuid.CreateV7():N}", Ct);
         Assert.Null(missing);
-
         Assert.True(await service.DeleteExchange(exchange, ct: Ct));
     }
 

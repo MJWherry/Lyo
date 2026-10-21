@@ -6,9 +6,7 @@ namespace Lyo.QRCode.Encoding.Iso;
 
 internal sealed partial class QRIsoEncoder
 {
-    /// <summary>
-    /// One QR codeword block. The symbol is split into blocks for error correction. Each block holds data codewords followed by error-correction codewords.
-    /// </summary>
+    /// <summary>One QR codeword block. The symbol is split into blocks for error correction. Each block holds data codewords followed by error-correction codewords.</summary>
     private readonly struct CodewordBlock
     {
         /// <summary>Builds a CodewordBlock from data-codeword offsets and ECC words.</summary>

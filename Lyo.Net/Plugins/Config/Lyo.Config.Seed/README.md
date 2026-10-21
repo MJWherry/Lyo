@@ -1,6 +1,7 @@
 # Lyo.Config.Seed
 
-`ConfigEfSeedContributor` writes `options.Count` string definitions with a plaintext default and one binding each in schema `config`, plus revision 1 copying the current fields. Definitions are not encrypted. `OnClear` deletes revisions, bindings, then definitions so `--replace` can run.
+`ConfigEfSeedContributor` writes `options.Count` string definitions with a plaintext default and one binding each in schema `config`, plus revision 1 copying the current fields.
+Definitions are not encrypted. `OnClear` deletes revisions, bindings, then definitions so `--replace` can run.
 
 ## Features
 

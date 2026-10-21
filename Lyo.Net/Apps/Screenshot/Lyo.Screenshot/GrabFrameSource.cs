@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Lyo.Exceptions;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -12,13 +13,14 @@ public sealed class GrabFrameSource(IScreenGrabber grabber) : IFrameSource
         CaptureRegion region,
         int framesPerSecond,
         bool includeCursor,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
         ArgumentHelpers.ThrowIfNull(grabber);
         ArgumentHelpers.ThrowIfLessThan(framesPerSecond, 1);
         var delay = TimeSpan.FromSeconds(1d / framesPerSecond);
         while (!cancellationToken.IsCancellationRequested) {
             yield return grabber.Grab(region, includeCursor);
+
             try {
                 await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
             }

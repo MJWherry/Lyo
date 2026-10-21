@@ -1,9 +1,8 @@
 using System.Text;
-using Lyo.Config;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Config.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Config.Postgres.Tests;
 
@@ -103,11 +102,10 @@ public sealed class ConfigPostgresStoreTests
             SubjectEntityId = "gateway:local",
             Value = ConfigValue.From("bound-plain")
         };
-        await store.SaveBindingAsync(binding, null, ct);
 
+        await store.SaveBindingAsync(binding, null, ct);
         definition.IsEncrypted = true;
         await store.SaveDefinitionAsync(definition, ct);
-
         await using (var db = await CreateDbAsync(ct)) {
             var defRow = await db.ConfigDefinitions.AsNoTracking().SingleAsync(d => d.Id == definition.Id, ct);
             Assert.True(defRow.IsEncrypted);
@@ -122,10 +120,8 @@ public sealed class ConfigPostgresStoreTests
 
         var loaded = await store.GetBindingByIdAsync(binding.Id, null, ct);
         Assert.Equal("bound-plain", loaded!.Value.GetValue<string>());
-
         definition.IsEncrypted = false;
         await store.SaveDefinitionAsync(definition, ct);
-
         await using (var db = await CreateDbAsync(ct)) {
             var defRow = await db.ConfigDefinitions.AsNoTracking().SingleAsync(d => d.Id == definition.Id, ct);
             Assert.False(defRow.IsEncrypted);
@@ -150,6 +146,7 @@ public sealed class ConfigPostgresStoreTests
             SubjectEntityId = "gateway:local",
             Value = ConfigValue.From("bound-plain")
         };
+
         await store.SaveBindingAsync(binding, null, ct);
         await using (var db = await CreateDbAsync(ct)) {
             var row = await db.ConfigBindings.SingleAsync(b => b.Id == binding.Id, ct);
@@ -182,13 +179,8 @@ public sealed class ConfigPostgresStoreTests
 
     private IConfigStore Store() => _fixture.ServiceProvider.GetRequiredService<IConfigStore>();
 
-    private Task<ConfigDbContext> CreateDbAsync(CancellationToken ct)
-        => _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ConfigDbContext>>().CreateDbContextAsync(ct);
+    private Task<ConfigDbContext> CreateDbAsync(CancellationToken ct) => _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ConfigDbContext>>().CreateDbContextAsync(ct);
 
     private static ConfigDefinitionRecord NewDefinition(string key, Type valueType)
-        => new() {
-            SubjectEntityType = AppConfigEntity.AppEntityType,
-            Key = $"{key}-{LyoGuid.CreateV7():N}",
-            ForValueType = ConfigValue.GetTypeName(valueType)
-        };
+        => new() { SubjectEntityType = AppConfigEntity.AppEntityType, Key = $"{key}-{LyoGuid.CreateV7():N}", ForValueType = ConfigValue.GetTypeName(valueType) };
 }

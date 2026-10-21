@@ -1,59 +1,40 @@
-using System.Net.Http.Json;
-using Lyo.Api.Client;
 using Lyo.Cache;
-using Lyo.Common.Metadata.Records;
 using Lyo.Health;
-using Lyo.Images;
-using Lyo.Images.Models;
 using Lyo.Metrics;
-using Lyo.TestGateway;
-using Lyo.TestGateway.Components;
-using Lyo.TestGateway.Models;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
-using Lyo.Web.Components.DataGrid;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.Web.Virtualization;
-using Microsoft.JSInterop;
 using MudBlazor;
-using static Microsoft.AspNetCore.Components.Web.RenderMode;
 using CacheConstants = Lyo.Cache.Constants;
 
 namespace Lyo.TestGateway.Components.TestGateway;
 
 public partial class CacheWorkbench
 {
+    private readonly List<DemoEvent> _events = [];
     private bool _busy;
     private string _cacheKey = "workbench:cache";
     private double? _cacheSizeGauge;
     private string _cacheTag = "workbench";
     private int _durationMilliseconds = 2500;
-    private readonly List<DemoEvent> _events = [];
     private int _factoryCallCount;
     private int _factoryDelayMilliseconds = 150;
-    private long _hitSuccess;
-    private int _hitDurationCount;
     private double _hitDurationAverageMs;
+    private int _hitDurationCount;
+    private long _hitSuccess;
     private string _inputValue = "hello from cache workbench";
     private List<CacheItem> _items = [];
     private HealthResult? _lastHealth;
-    private CacheDemoValue? _lastValue;
     private DateTime _lastMetricsRefresh;
-    private long _missSuccess;
-    private int _missDurationCount;
+    private CacheDemoValue? _lastValue;
     private double _missDurationAverageMs;
+    private int _missDurationCount;
+    private long _missSuccess;
     private long _removeByTagItemsRemoved;
     private long _removeByTagSuccess;
-    private long _removeSuccess;
-    private int _removeDurationCount;
     private double _removeDurationAverageMs;
-    private long _setSuccess;
-    private int _setDurationCount;
+    private int _removeDurationCount;
+    private long _removeSuccess;
     private double _setDurationAverageMs;
+    private int _setDurationCount;
+    private long _setSuccess;
 
     private MetricsService? MetricsStore => Metrics as MetricsService;
 
@@ -142,7 +123,10 @@ public partial class CacheWorkbench
 
             _lastValue = second;
             var expired = first?.FactoryCallNumber != second?.FactoryCallNumber;
-            AppendEvent("Expire Demo", expired ? $"Entry expired after {_durationMilliseconds} ms and the second read rebuilt it." : "Entry did not appear to expire before the second read.");
+            AppendEvent(
+                "Expire Demo",
+                expired ? $"Entry expired after {_durationMilliseconds} ms and the second read rebuilt it." : "Entry did not appear to expire before the second read.");
+
             RefreshSnapshot();
             RefreshMetrics();
             SetStatus(expired ? "Expiration demo rebuilt the value after TTL." : "Expiration demo did not rebuild as expected.", expired ? Severity.Success : Severity.Warning);

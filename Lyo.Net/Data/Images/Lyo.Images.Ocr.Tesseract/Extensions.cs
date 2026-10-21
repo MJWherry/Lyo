@@ -7,8 +7,8 @@ namespace Lyo.Images.Ocr.Tesseract;
 
 /// <summary>DI helpers that register <see cref="TesseractOcrEngine" /> as <see cref="IOcrEngine" />.</summary>
 /// <remarks>
-/// Not called by <c>Lyo.Images.Ocr.Tesseract.Tests</c>; tests use <c>TesseractOcrTestFixture</c> plus manual engine constructors. Break here only when debugging host apps that
-/// call these extensions.
+/// Not called by <c>Lyo.Images.Ocr.Tesseract.Tests</c>; tests use <c>TesseractOcrTestFixture</c> plus manual engine constructors. Break here only when debugging host apps
+/// that call these extensions.
 /// </remarks>
 public static class TesseractOcrServiceCollectionExtensions
 {

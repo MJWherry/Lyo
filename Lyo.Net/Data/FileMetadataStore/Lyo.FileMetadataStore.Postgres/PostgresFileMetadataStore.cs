@@ -1,6 +1,5 @@
 using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
-using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.Health;
@@ -11,9 +10,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.FileMetadataStore.Postgres;
 
-/// <summary>
-/// File metadata store backed by PostgreSQL via Entity Framework Core. Faster to query than JSON-on-disk storage.
-/// </summary>
+/// <summary>File metadata store backed by PostgreSQL via Entity Framework Core. Faster to query than JSON-on-disk storage.</summary>
 public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposable
 {
     private readonly FileMetadataStoreDbContext _dbContext;
@@ -160,7 +157,7 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
         }
         else if (normalized != null) {
             var nested = normalized + "/";
-            query = query.Where(e => e.PathPrefix == normalized || e.PathPrefix != null && e.PathPrefix.StartsWith(nested));
+            query = query.Where(e => e.PathPrefix == normalized || (e.PathPrefix != null && e.PathPrefix.StartsWith(nested)));
         }
 
         var entities = await query.OrderBy(e => e.PathPrefix).ThenBy(e => e.Id).Take(maxKeys).ToListAsync(ct).ConfigureAwait(false);
@@ -168,15 +165,11 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
     }
 
     /// <inheritdoc />
-    public string HealthCheckName => "filestore-postgres";
-
-    /// <inheritdoc />
     public async Task<IReadOnlyList<FileStoreResult>> ListPendingDirectUploadsAsync(DateTime beganBefore, int maxKeys, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
         var cutoff = DateTime.SpecifyKind(beganBefore, DateTimeKind.Utc);
-        var entities = await _dbContext.FileMetadata
-            .Where(e => e.DeletedAt == null && e.Availability == nameof(FileAvailability.PendingDirectUpload) && e.Timestamp < cutoff)
+        var entities = await _dbContext.FileMetadata.Where(e => e.DeletedAt == null && e.Availability == nameof(FileAvailability.PendingDirectUpload) && e.Timestamp < cutoff)
             .OrderBy(e => e.Timestamp)
             .Take(maxKeys)
             .ToListAsync(ct)
@@ -190,12 +183,12 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(text);
         ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
-        var entities = await _dbContext.FileMetadata
-            .Where(e => e.DeletedAt == null && e.OriginalFileName != null && e.OriginalFileName.Contains(text))
+        var entities = await _dbContext.FileMetadata.Where(e => e.DeletedAt == null && e.OriginalFileName != null && e.OriginalFileName.Contains(text))
             .OrderBy(e => e.OriginalFileName)
             .Take(maxKeys)
             .ToListAsync(ct)
             .ConfigureAwait(false);
+
         return entities.Select(e => e.ToFileStoreResult()).ToList();
     }
 
@@ -214,6 +207,7 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
             StoredKey = entity.SourceFileName,
             CreatedAt = DateTime.UtcNow
         };
+
         _dbContext.FileRevisions.Add(revision);
         entity.SourceFileName = storedKey;
         await _dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
@@ -226,10 +220,6 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
         var entity = await _dbContext.FileRevisions.AsNoTracking().FirstOrDefaultAsync(e => e.Id == revisionId, ct).ConfigureAwait(false);
         return entity is null ? null : new FileRevision(entity.Id, entity.ParentId, entity.StoredKey, entity.CreatedAt);
     }
-
-    /// <inheritdoc />
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => PostgresHealth.CheckAsync(_dbContext, PostgresFileMetadataStoreOptions.Schema, ct);
 
     /// <inheritdoc />
     public async Task<FileTag> AddFileTagAsync(Guid fileId, string tagType, string value, string? slug, bool automatic, CancellationToken ct = default)
@@ -248,6 +238,7 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
             Slug = slug ?? "",
             Automatic = automatic
         };
+
         _dbContext.FileTags.Add(entity);
         await _dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
         return entity.ToFileTag();
@@ -312,7 +303,12 @@ public class PostgresFileMetadataStore : IFileMetadataStore, IHealth, IDisposabl
         var files = await _dbContext.FileMetadata.AsNoTracking().Where(e => e.DeletedAt == null).ToListAsync(ct).ConfigureAwait(false);
         var ids = files.Select(f => f.Id).ToArray();
         var tagRows = await _dbContext.FileTags.AsNoTracking().Where(t => ids.Contains(t.FileId)).ToListAsync(ct).ConfigureAwait(false);
-        return FileTagGrouper.Group(
-            groupBy, virtualPath, files.Select(static f => f.ToFileStoreResult()).ToArray(), tagRows.Select(static t => t.ToFileTag()).ToArray(), maxKeys);
+        return FileTagGrouper.Group(groupBy, virtualPath, files.Select(static f => f.ToFileStoreResult()).ToArray(), tagRows.Select(static t => t.ToFileTag()).ToArray(), maxKeys);
     }
+
+    /// <inheritdoc />
+    public string HealthCheckName => "filestore-postgres";
+
+    /// <inheritdoc />
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => PostgresHealth.CheckAsync(_dbContext, PostgresFileMetadataStoreOptions.Schema, ct);
 }

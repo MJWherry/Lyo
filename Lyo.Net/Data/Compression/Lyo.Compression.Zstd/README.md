@@ -33,7 +33,8 @@ services.AddDefaultCompressionService<CompressionService>();
 
 ## DI registration
 
-Registration, keyed services, ICompressionResolver, and CompressionServiceOptions binding are covered in [`Lyo.Compression`](../Lyo.Compression/README.md). Historical metadata that names Zstd needs AddZstdCompressor() so file-storage reads can decompress. ICompressionResolver does that work, not only ICompressionService.DefaultAlgorithm.
+Registration, keyed services, ICompressionResolver, and CompressionServiceOptions binding are covered in [`Lyo.Compression`](../Lyo.Compression/README.md). Historical metadata that
+names Zstd needs AddZstdCompressor () so file-storage reads can decompress. ICompressionResolver does that work, not only ICompressionService.DefaultAlgorithm.
 
 ## Dependencies
 

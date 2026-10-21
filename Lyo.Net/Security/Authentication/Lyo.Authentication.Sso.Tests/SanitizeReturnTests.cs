@@ -14,12 +14,10 @@ public sealed class SanitizeReturnTests
     }
 
     [Fact]
-    public void IsAllowedReturnUrl_DocumentedHttpGateway_IsAllowed()
-        => Assert.True(AuthEndpointsMapper.IsAllowedReturnUrl("http://localhost:5138/auth/handoff", GatewayOrigins));
+    public void IsAllowedReturnUrl_DocumentedHttpGateway_IsAllowed() => Assert.True(AuthEndpointsMapper.IsAllowedReturnUrl("http://localhost:5138/auth/handoff", GatewayOrigins));
 
     [Fact]
-    public void IsAllowedReturnUrl_RelativePath_IsAllowed()
-        => Assert.True(AuthEndpointsMapper.IsAllowedReturnUrl("/auth/handoff", GatewayOrigins));
+    public void IsAllowedReturnUrl_RelativePath_IsAllowed() => Assert.True(AuthEndpointsMapper.IsAllowedReturnUrl("/auth/handoff", GatewayOrigins));
 
     [Fact]
     public void SanitizeReturn_OffListAbsolute_FallsBackToDefault()

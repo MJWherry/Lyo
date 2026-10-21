@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using Lyo.FeatureFlags;
 
 namespace Lyo.FeatureFlags.AspNetCore;
 
@@ -23,22 +22,20 @@ internal static class FeatureFlagCaller
         if (userId is not null)
             builder.WithUser(userId);
 
-        if (!string.IsNullOrWhiteSpace(options.TenantClaimType))
-        {
+        if (!string.IsNullOrWhiteSpace(options.TenantClaimType)) {
             var tenant = user.FindFirst(options.TenantClaimType)?.Value;
             if (!string.IsNullOrWhiteSpace(tenant))
                 builder.WithTenant(tenant);
         }
 
-        foreach (var claim in user.Claims)
-        {
+        foreach (var claim in user.Claims) {
             if (string.IsNullOrWhiteSpace(claim.Type) || string.IsNullOrWhiteSpace(claim.Value))
                 continue;
 
-            if (claim.Type == "scope" && claim.Value.Contains(' '))
-            {
+            if (claim.Type == "scope" && claim.Value.Contains(' ')) {
                 foreach (var scope in claim.Value.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
                     builder.WithClaim("scope", scope);
+
                 continue;
             }
 
@@ -50,8 +47,7 @@ internal static class FeatureFlagCaller
 
     private static string? First(ClaimsPrincipal user, params string[] types)
     {
-        foreach (var type in types)
-        {
+        foreach (var type in types) {
             var value = user.FindFirst(type)?.Value;
             if (!string.IsNullOrWhiteSpace(value))
                 return value;

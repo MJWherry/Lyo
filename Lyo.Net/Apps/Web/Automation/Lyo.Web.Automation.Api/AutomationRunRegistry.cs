@@ -3,7 +3,6 @@ using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Web.Automation.Abstractions;
 using Lyo.Web.Automation.Models;
-using Lyo.Web.Automation.Models.Enums;
 using Lyo.Web.Automation.Plan;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -17,11 +16,11 @@ namespace Lyo.Web.Automation.Api;
 /// </summary>
 public sealed class AutomationRunRegistry : IHostedService, IDisposable
 {
-    private readonly IServiceScopeFactory _scopes;
-    private readonly AutomationApiOptions _options;
-    private readonly ILogger<AutomationRunRegistry> _logger;
     private readonly object _gate = new();
+    private readonly ILogger<AutomationRunRegistry> _logger;
+    private readonly AutomationApiOptions _options;
     private readonly Dictionary<Guid, RunSlot> _runs = [];
+    private readonly IServiceScopeFactory _scopes;
     private readonly CancellationTokenSource _sweepCts = new();
     private int _active;
     private int _disposed;
@@ -36,6 +35,16 @@ public sealed class AutomationRunRegistry : IHostedService, IDisposable
         _scopes = scopes;
         _options = options;
         _logger = logger;
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            return;
+
+        _sweepCts.Cancel();
+        _sweepCts.Dispose();
     }
 
     /// <inheritdoc />
@@ -69,16 +78,6 @@ public sealed class AutomationRunRegistry : IHostedService, IDisposable
         }
     }
 
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        if (Interlocked.Exchange(ref _disposed, 1) != 0)
-            return;
-
-        _sweepCts.Cancel();
-        _sweepCts.Dispose();
-    }
-
     /// <summary>Starts <paramref name="request" /> when a slot is free. Returns null when <see cref="AutomationApiOptions.MaxConcurrentRuns" /> is already in use.</summary>
     public AutomationRunAccepted? TryStart(AutomationRunReq request)
     {
@@ -96,7 +95,7 @@ public sealed class AutomationRunRegistry : IHostedService, IDisposable
             var kind = request.BrowserKind ?? AutomationBrowserKind.Chromium;
             var headless = request.Headless ?? true;
             slot.Work = Task.Run(() => ExecuteAsync(slot, plan, kind, headless));
-            return new AutomationRunAccepted { RunId = id, Status = AutomationRunStatus.Queued };
+            return new() { RunId = id, Status = AutomationRunStatus.Queued };
         }
     }
 
@@ -179,8 +178,7 @@ public sealed class AutomationRunRegistry : IHostedService, IDisposable
         }
     }
 
-    private bool IsExpired(RunSlot slot)
-        => slot.FinishedUtc is { } finished && DateTime.UtcNow - finished > _options.RunTtl;
+    private bool IsExpired(RunSlot slot) => slot.FinishedUtc is { } finished && DateTime.UtcNow - finished > _options.RunTtl;
 
     private string RunRoot(Guid runId) => Path.Combine(_options.ArtifactRoot, runId.ToString("N"));
 
@@ -257,7 +255,7 @@ public sealed class AutomationRunRegistry : IHostedService, IDisposable
         Directory.CreateDirectory(destination);
         foreach (var file in Directory.GetFiles(source)) {
             var target = Path.Combine(destination, Path.GetFileName(file));
-            File.Copy(file, target, overwrite: true);
+            File.Copy(file, target, true);
         }
     }
 
@@ -288,6 +286,9 @@ public sealed class AutomationRunRegistry : IHostedService, IDisposable
 
     private sealed class RunSlot(Guid runId)
     {
+        private readonly List<AutomationRunStepRes> _steps = [];
+        private readonly Lock _stepsGate = new();
+
         public Guid RunId { get; } = runId;
 
         public CancellationTokenSource Cancel { get; } = new();
@@ -303,9 +304,6 @@ public sealed class AutomationRunRegistry : IHostedService, IDisposable
         public DateTime? FinishedUtc { get; set; }
 
         public Task? Work { get; set; }
-
-        private readonly List<AutomationRunStepRes> _steps = [];
-        private readonly Lock _stepsGate = new();
 
         public void AddStep(AutomationRunStepRes step)
         {
@@ -325,7 +323,7 @@ public sealed class AutomationRunRegistry : IHostedService, IDisposable
             lock (_stepsGate)
                 steps = _steps.ToArray();
 
-            return new AutomationRunRes {
+            return new() {
                 RunId = RunId,
                 Status = Status,
                 Error = Error,
@@ -339,18 +337,17 @@ public sealed class AutomationRunRegistry : IHostedService, IDisposable
     private sealed class SlotInstrumentation(RunSlot slot) : AutomationPlanInstrumentationBase
     {
         public override void OnStepOutcome(in AutomationPlanStepOutcomeRecord e)
-        {
-            slot.AddStep(new AutomationRunStepRes {
-                Index = e.StepIndex,
-                Name = e.Step.Name,
-                Type = StepType(e.Step),
-                Outcome = e.Outcome.ToString(),
-                DurationMs = (long)e.Duration.TotalMilliseconds,
-                Error = e.Error?.Message,
-                ScreenshotFileId = e.ScreenshotFileId,
-                Context = e.Context
-            });
-        }
+            => slot.AddStep(
+                new() {
+                    Index = e.StepIndex,
+                    Name = e.Step.Name,
+                    Type = StepType(e.Step),
+                    Outcome = e.Outcome.ToString(),
+                    DurationMs = (long)e.Duration.TotalMilliseconds,
+                    Error = e.Error?.Message,
+                    ScreenshotFileId = e.ScreenshotFileId,
+                    Context = e.Context
+                });
 
         private static string StepType(AutomationStepDefinition step)
         {

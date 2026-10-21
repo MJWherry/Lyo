@@ -5,7 +5,6 @@ using Lyo.Diff;
 using Lyo.Drift.Postgres.Database;
 using Lyo.Drift.Postgres.Mapping;
 using Lyo.Exceptions;
-using Lyo.Hashing;
 using Lyo.Hashing.Registration;
 using Lyo.Postgres;
 using Microsoft.Extensions.Configuration;
@@ -17,7 +16,6 @@ namespace Lyo.Drift.Postgres;
 /// <summary>DI registration for the Drift collector store.</summary>
 public static class Extensions
 {
-
     extension(IServiceCollection services)
     {
         /// <summary>Registers Drift DbContext factory, CRUD services, mapper, diff, and <see cref="DriftService" />.</summary>

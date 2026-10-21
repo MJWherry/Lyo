@@ -10,15 +10,12 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Lyo.FileStorage;
 
 /// <summary>
-/// Shared steps for one named store: options, metadata, encryption, and compression. <see cref="FromConfiguration" /> binds a section.
-/// <see cref="Configure" /> runs after that and edits the same options, so inline values win. Encryption and compression services are selected by name. They are not built here.
+/// Shared steps for one named store: options, metadata, encryption, and compression. <see cref="FromConfiguration" /> binds a section. <see cref="Configure" /> runs after
+/// that and edits the same options, so inline values win. Encryption and compression services are selected by name. They are not built here.
 /// </summary>
 public abstract class FileStorageServiceBuilder<TOptions, TBuilder>
-    where TOptions : FileStorageServiceBaseOptions, new()
-    where TBuilder : FileStorageServiceBuilder<TOptions, TBuilder>
+    where TOptions : FileStorageServiceBaseOptions, new() where TBuilder : FileStorageServiceBuilder<TOptions, TBuilder>
 {
-    private bool _archive;
-
     /// <summary>Options bound from configuration and then edited inline.</summary>
     protected TOptions Options { get; } = new();
 
@@ -34,7 +31,9 @@ public abstract class FileStorageServiceBuilder<TOptions, TBuilder>
 
     internal Func<IServiceProvider, ICompressionService>? CompressionFactory { get; private set; }
 
-    internal bool Archive => _archive;
+    internal bool Archive { get; private set; }
+
+    private TBuilder Self => (TBuilder)this;
 
     /// <summary>Edits the options object. Call this after <see cref="FromConfiguration" /> to override individual fields.</summary>
     public TBuilder Configure(Action<TOptions> configure)
@@ -112,11 +111,14 @@ public abstract class FileStorageServiceBuilder<TOptions, TBuilder>
     /// <summary>Registers a keyed archive service for this store when the factory records it. Archive options stay the unkeyed registration.</summary>
     public TBuilder WithArchive()
     {
-        _archive = true;
+        Archive = true;
         return Self;
     }
 
-    /// <summary>Binds <paramref name="section" /> and reads reserved metadata, encryption, and compression keys. Provider packages call this from <see cref="IFileStorageStoreProvider.Create" />.</summary>
+    /// <summary>
+    /// Binds <paramref name="section" /> and reads reserved metadata, encryption, and compression keys. Provider packages call this from
+    /// <see cref="IFileStorageStoreProvider.Create" />.
+    /// </summary>
     public TBuilder ApplySection(IConfiguration section)
     {
         ArgumentHelpers.ThrowIfNull(section);
@@ -126,8 +128,7 @@ public abstract class FileStorageServiceBuilder<TOptions, TBuilder>
     }
 
     /// <summary>Returns the delegate that constructs this store. Call <see cref="EnsureValid" /> first.</summary>
-    public Func<IServiceProvider, IFileStorageService> ToDelegate(string storeName)
-        => services => Create(services, storeName);
+    public Func<IServiceProvider, IFileStorageService> ToDelegate(string storeName) => services => Create(services, storeName);
 
     /// <summary>Copies provider settings from <paramref name="section" /> onto <see cref="Options" />.</summary>
     protected abstract void Bind(IConfiguration section);
@@ -140,8 +141,6 @@ public abstract class FileStorageServiceBuilder<TOptions, TBuilder>
 
     /// <summary>Validates <see cref="Options" /> before the store is recorded.</summary>
     public void EnsureValid() => Validate();
-
-    private TBuilder Self => (TBuilder)this;
 
     private void ReadReserved(IConfiguration section)
     {
@@ -165,8 +164,7 @@ public abstract class FileStorageServiceBuilder<TOptions, TBuilder>
         if (metadata != null)
             return metadata;
 
-        return services.GetService<IFileMetadataStore>()
-            ?? throw new InvalidOperationException($"File storage '{storeName}' metadata store is not registered.");
+        return services.GetService<IFileMetadataStore>() ?? throw new InvalidOperationException($"File storage '{storeName}' metadata store is not registered.");
     }
 
     /// <summary>Resolves the metadata store. Null lets disk open its local catalog.</summary>
@@ -178,8 +176,7 @@ public abstract class FileStorageServiceBuilder<TOptions, TBuilder>
         if (string.IsNullOrWhiteSpace(MetadataKey))
             return null;
 
-        return services.GetKeyedService<IFileMetadataStore>(MetadataKey)
-            ?? throw Missing(storeName, "metadata store", MetadataKey);
+        return services.GetKeyedService<IFileMetadataStore>(MetadataKey) ?? throw Missing(storeName, "metadata store", MetadataKey);
     }
 
     /// <summary>Resolves encryption. Null when the store omitted it, including when an unkeyed encryption service is registered.</summary>
@@ -191,8 +188,7 @@ public abstract class FileStorageServiceBuilder<TOptions, TBuilder>
         if (string.IsNullOrWhiteSpace(EncryptionKey))
             return null;
 
-        return services.GetKeyedService<ITwoKeyEncryptionService>(EncryptionKey)
-            ?? throw Missing(storeName, "encryption service", EncryptionKey);
+        return services.GetKeyedService<ITwoKeyEncryptionService>(EncryptionKey) ?? throw Missing(storeName, "encryption service", EncryptionKey);
     }
 
     /// <summary>Resolves compression. A missing name uses the unkeyed service, which may itself be null.</summary>
@@ -204,10 +200,8 @@ public abstract class FileStorageServiceBuilder<TOptions, TBuilder>
         if (string.IsNullOrWhiteSpace(CompressionKey))
             return services.GetService<ICompressionService>();
 
-        return services.GetKeyedService<ICompressionService>(CompressionKey)
-            ?? throw Missing(storeName, "compression service", CompressionKey);
+        return services.GetKeyedService<ICompressionService>(CompressionKey) ?? throw Missing(storeName, "compression service", CompressionKey);
     }
 
-    private static InvalidOperationException Missing(string storeName, string kind, string key)
-        => new($"File storage '{storeName}' {kind} '{key}' is not registered.");
+    private static InvalidOperationException Missing(string storeName, string kind, string key) => new($"File storage '{storeName}' {kind} '{key}' is not registered.");
 }

@@ -1,6 +1,7 @@
 # Lyo.Music.Postgres
 
-PostgreSQL and EF Core implementation of `Lyo.Music.IMusicStore` (`PostgresMusicStore`) via `MusicDbContext`, schema `music`, and `AddPostgresMigrations`. `PostgresMusicStore` implements `Lyo.Health.IHealth`.
+PostgreSQL and EF Core implementation of `Lyo.Music.IMusicStore` (`PostgresMusicStore`) via `MusicDbContext`, schema `music`, and `AddPostgresMigrations`. `PostgresMusicStore`
+implements `Lyo.Health.IHealth`.
 
 ## Features
 

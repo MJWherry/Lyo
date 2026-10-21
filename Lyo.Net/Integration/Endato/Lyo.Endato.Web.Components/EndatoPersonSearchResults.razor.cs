@@ -1,11 +1,6 @@
-using Lyo.Endato.Client.Models.Enrichment.Response;
 using Lyo.Endato.Client.Models.Person.Response;
 using Lyo.Web.Components.Dialog;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 using MudBlazor;
 using PersonResult = Lyo.Endato.Client.Models.Person.Response.Person;
 

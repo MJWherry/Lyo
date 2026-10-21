@@ -15,8 +15,8 @@ public static class FeatureFlagServiceExtensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers an in-memory <see cref="IFeatureFlagService" /> when none is registered yet.
-        /// This does not watch configuration. A host can still push a document with <see cref="IFeatureFlagUpdater.TryApply" />.
+        /// Registers an in-memory <see cref="IFeatureFlagService" /> when none is registered yet. This does not watch configuration. A host can still push a document with
+        /// <see cref="IFeatureFlagUpdater.TryApply" />.
         /// </summary>
         /// <param name="configure">Optional flag setup after defaults. A flag stays off until a mode method runs.</param>
         public IServiceCollection AddFeatureFlags(Action<FeatureFlagOptions>? configure = null)
@@ -36,20 +36,21 @@ public static class FeatureFlagServiceExtensions
             options.Validate();
             services.TryAddSingleton<IOptions<FeatureFlagOptions>>(Options.Create(options));
             services.TryAddSingleton(options);
-            services.TryAddSingleton<FeatureFlagService>(sp => new FeatureFlagService(sp.GetRequiredService<FeatureFlagOptions>()));
+            services.TryAddSingleton<FeatureFlagService>(sp => new(sp.GetRequiredService<FeatureFlagOptions>()));
             services.TryAddSingleton<IFeatureFlagService>(sp => {
                 _ = sp.GetService<FeatureFlagConfigurationReload>();
                 return sp.GetRequiredService<FeatureFlagService>();
             });
+
             services.TryAddSingleton<IFeatureFlagUpdater>(sp => sp.GetRequiredService<FeatureFlagService>());
             services.TryAddSingleton<IOptionsMonitor<FeatureFlagOptions>>(sp => sp.GetRequiredService<FeatureFlagService>());
             return services;
         }
 
         /// <summary>
-        /// Binds each child of <c>Flags</c> under <paramref name="sectionName" /> and registers the service when none is registered yet.
-        /// A missing section leaves every flag off. An unknown property or a bad mode throws <see cref="ConfigurationException" /> on this call.
-        /// A later reload replaces the whole set when the new document is valid, and keeps the last good snapshot when it is not.
+        /// Binds each child of <c>Flags</c> under <paramref name="sectionName" /> and registers the service when none is registered yet. A missing section leaves every flag off. An
+        /// unknown property or a bad mode throws <see cref="ConfigurationException" /> on this call. A later reload replaces the whole set when the new document is valid, and keeps the last
+        /// good snapshot when it is not.
         /// </summary>
         /// <param name="configuration">Configuration root or section parent. Its reload token drives later updates.</param>
         /// <param name="sectionName">Section to bind. Defaults to <see cref="FeatureFlagOptions.SectionName" />.</param>
@@ -61,10 +62,8 @@ public static class FeatureFlagServiceExtensions
             var options = FeatureFlagConfiguration.Bind(configuration, sectionName);
             services.AddFeatureFlags(options);
             services.TryAddSingleton(sp => new FeatureFlagConfigurationReload(
-                configuration,
-                sectionName,
-                sp.GetRequiredService<IFeatureFlagUpdater>(),
-                sp.GetService<ILogger<FeatureFlagConfigurationReload>>()));
+                configuration, sectionName, sp.GetRequiredService<IFeatureFlagUpdater>(), sp.GetService<ILogger<FeatureFlagConfigurationReload>>()));
+
             return services;
         }
     }

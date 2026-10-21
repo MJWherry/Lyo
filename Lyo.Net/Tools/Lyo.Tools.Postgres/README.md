@@ -1,14 +1,25 @@
 # Lyo.Tools.Postgres
 
-Spectre.Console TUI used for running and rolling back EF Core migrations against Lyo Postgres `DbContext`s, plus seed contributors from `Lyo.Seed`. People can be seeded through EF or `POST Person/Bulk`. Comic, Book, Story, and every other product Postgres context the tool can open are EF-only. Use it to bring a fresh local database up to the latest schema or step one schema back to a specific migration.
+Spectre.Console TUI used for running and rolling back EF Core migrations against Lyo Postgres `DbContext`s, plus seed contributors from `Lyo.Seed`. People can be seeded through EF
+or `POST Person/Bulk`. Comic, Book, Story, and every other product Postgres context the tool can open are EF-only. Use it to bring a fresh local database up to the latest schema or
+step one schema back to a specific migration.
 
 ## Startup path
 
-`Program.cs` builds a default `Microsoft.Extensions.Hosting` host, wires a singleton `ConnectionStringProvider` (initial value from the `ConnectionString` config key, set in `appsettings.Development.json` or environment variables), then either runs `seed …` from argv (`SeedCli`) or hands control to `Menu.RunAsync`. Ctrl+C cancels the host. `MigrationRunner` drives EF migrations. Seed contributors are wired through `AddLyoSeed`. People has EF and API contributors. Comic, Book, and Story live in this tool. The other contributors implement `IEfSeedSource`, so the host opens their context from the connection string. Book migrate also runs `BookDbSeeder` for types, formats, and the genre tree.
+`Program.cs` builds a default `Microsoft.Extensions.Hosting` host, wires a singleton `ConnectionStringProvider` (initial value from the `ConnectionString` config key, set in
+`appsettings.Development.json` or environment variables), then either runs `seed …` from argv (`SeedCli`) or hands control to `Menu.RunAsync`. Ctrl+C cancels the host.
+`MigrationRunner` drives EF migrations. Seed contributors are wired through `AddLyoSeed`. People has EF and API contributors. Comic, Book, and Story live in this tool. The other
+contributors implement `IEfSeedSource`, so the host opens their context from the connection string. Book migrate also runs `BookDbSeeder` for types, formats, and the genre tree.
 
 ## Primary menu
 
-- **Seeds.** Lists every `Lyo.Seed` contributor: People EF, People API, Comic, Book, Story, Comment, Favorite, Note, Rating, Tag, ContactUs, ShortUrl, HomeInventory, Recipe, Config, Job, Reporting, Billing, Ledger, Law, Music, Video, Algorithms, Leaderboard, Authentication, Geolocation, Validation, State machine, Package metadata, File metadata, File system watcher, Email, SMS, Twilio SMS, Discord, Endato, Drift, Audit, and Change tracker. Asks for count, optional random seed, Direct vs API when both are supported, optional skip-if-not-empty, replace for EF contributors that can clear, and API base URL (default `http://localhost:5251/`). CLI: `dotnet run --project Lyo.Tools.Postgres -- seed people --via ef --count 50`. `--skip` skips when rows exist; the default is append. People EF writes an identification per person. Book writes a series alternate title and a book alternate title. Story seeds `StorySamples.TheHeist()` plus one playthrough (count is unused). Reporting seeds `ReportDesignTemplates.Samples` and one succeeded generation each (count is unused). Job definitions, schedules, and workflows stay disabled.
+- **Seeds.** Lists every `Lyo.Seed` contributor: People EF, People API, Comic, Book, Story, Comment, Favorite, Note, Rating, Tag, ContactUs, ShortUrl, HomeInventory, Recipe,
+  Config, Job, Reporting, Billing, Ledger, Law, Music, Video, Algorithms, Leaderboard, Authentication, Geolocation, Validation, State machine, Package metadata, File metadata, File
+  system watcher, Email, SMS, Twilio SMS, Discord, Endato, Drift, Audit, and Change tracker. Asks for count, optional random seed, Direct vs API when both are supported, optional
+  skip-if-not-empty, replace for EF contributors that can clear, and API base URL (default `http://localhost:5251/`). CLI:
+  `dotnet run --project Lyo.Tools.Postgres -- seed people --via ef --count 50`. `--skip` skips when rows exist; the default is append. People EF writes an identification per
+  person. Book writes a series alternate title and a book alternate title. Story seeds `StorySamples.TheHeist()` plus one playthrough (count is unused). Reporting seeds
+  `ReportDesignTemplates.Samples` and one succeeded generation each (count is unused). Job definitions, schedules, and workflows stay disabled.
 - **Migrations.** Covered below.
 - **Change connection string.** Takes a new value and updates `ConnectionStringProvider` in place. The header shows a masked preview (`first 40 chars + ****`).
 
@@ -16,31 +27,31 @@ Spectre.Console TUI used for running and rolling back EF Core migrations against
 
 `MigrationRunner` (see `MigrationRunner.cs`) knows 25 `DbContext`s, each paired with a Postgres schema name used for `__EFMigrationsHistory`:
 
-| Label | DbContext | Schema |
-| ----------------- | ---------------------------- | ---------------- |
-| Audit | `AuditDbContext` | `audit` |
-| ChangeTracker | `ChangeTrackerDbContext` | `change_tracker` |
-| Comic | `ComicDbContext` | `comic` |
-| Comment | `CommentDbContext` | `comment` |
-| Config | `ConfigDbContext` | `config` |
-| ContactUs | `ContactUsDbContext` | `contact` |
-| Discord | `DiscordDbContext` | `discord` |
-| Email | `EmailDbContext` | `email` |
-| Endato | `EndatoDbContext` | `endato` |
-| Favorite | `FavoriteDbContext` | `favorite` |
-| FileMetadataStore | `FileMetadataStoreDbContext` | `filestore` |
-| HomeInventory | `HomeInventoryDbContext` | `home_inventory` |
-| Job | `JobContext` | `job` |
-| Note | `NoteDbContext` | `note` |
-| People | `PeopleDbContext` | `people` |
-| Rating | `RatingDbContext` | `rating` |
-| Recipe | `RecipeDbContext` | `recipe` |
-| Reporting | `ReportingContext` | `reporting` |
-| ShortUrl | `ShortUrlDbContext` | `url` |
-| Sms | `SmsDbContext` | `sms` |
-| SmsTwilio | `TwilioSmsDbContext` | `sms` |
-| Story | `StoryDbContext` | `story` |
-| Tag | `TagDbContext` | `tag` |
+| Label             | DbContext                    | Schema           |
+|-------------------|------------------------------|------------------|
+| Audit             | `AuditDbContext`             | `audit`          |
+| ChangeTracker     | `ChangeTrackerDbContext`     | `change_tracker` |
+| Comic             | `ComicDbContext`             | `comic`          |
+| Comment           | `CommentDbContext`           | `comment`        |
+| Config            | `ConfigDbContext`            | `config`         |
+| ContactUs         | `ContactUsDbContext`         | `contact`        |
+| Discord           | `DiscordDbContext`           | `discord`        |
+| Email             | `EmailDbContext`             | `email`          |
+| Endato            | `EndatoDbContext`            | `endato`         |
+| Favorite          | `FavoriteDbContext`          | `favorite`       |
+| FileMetadataStore | `FileMetadataStoreDbContext` | `filestore`      |
+| HomeInventory     | `HomeInventoryDbContext`     | `home_inventory` |
+| Job               | `JobContext`                 | `job`            |
+| Note              | `NoteDbContext`              | `note`           |
+| People            | `PeopleDbContext`            | `people`         |
+| Rating            | `RatingDbContext`            | `rating`         |
+| Recipe            | `RecipeDbContext`            | `recipe`         |
+| Reporting         | `ReportingContext`           | `reporting`      |
+| ShortUrl          | `ShortUrlDbContext`          | `url`            |
+| Sms               | `SmsDbContext`               | `sms`            |
+| SmsTwilio         | `TwilioSmsDbContext`         | `sms`            |
+| Story             | `StoryDbContext`             | `story`          |
+| Tag               | `TagDbContext`               | `tag`            |
 
 The menu provides **Run All (Latest)**, which calls every `RunXxxAsync` in registration order, or a context-specific submenu with four actions:
 
@@ -63,7 +74,8 @@ call, so the "Change Connection String" menu option takes effect immediately.
 
 ## Configuration
 
-`appsettings.json` declares only `ConnectionString` (empty) and logging defaults. Override locally through `appsettings.Development.json`, environment variables (`ConnectionString=…`), or the interactive **Change Connection String** menu.
+`appsettings.json` declares only `ConnectionString` (empty) and logging defaults. Override locally through `appsettings.Development.json`, environment variables
+(`ConnectionString=…`), or the interactive **Change Connection String** menu.
 
 ## Dependencies
 

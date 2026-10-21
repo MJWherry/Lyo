@@ -1,7 +1,6 @@
 using System.Text.Json;
 using Lyo.Desktop;
 using Lyo.Desktop.Components;
-using Lyo.Screenshot;
 
 namespace Lyo.Screenshot.App;
 
@@ -66,6 +65,7 @@ internal static class ShotSettingsStore
             var path = ConfigPath();
             if (!File.Exists(path))
                 return WithDefaultDirectory(new());
+
             var loaded = JsonSerializer.Deserialize<ShotSettings>(File.ReadAllText(path), Json) ?? new ShotSettings();
             return WithDefaultDirectory(loaded);
         }
@@ -87,6 +87,7 @@ internal static class ShotSettingsStore
         var screenshots = Path.Combine(pictures, "Screenshots");
         if (OperatingSystem.IsWindows() || Directory.Exists(screenshots))
             return screenshots;
+
         return string.IsNullOrEmpty(pictures) ? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) : pictures;
     }
 
@@ -94,12 +95,16 @@ internal static class ShotSettingsStore
     {
         if (string.IsNullOrWhiteSpace(settings.SaveDirectory))
             settings.SaveDirectory = DefaultSaveDirectory();
+
         if (settings.FramesPerSecond < 1)
             settings.FramesPerSecond = 5;
+
         if (settings.DelaySeconds < 0)
             settings.DelaySeconds = 0;
+
         if (settings.DelaySeconds > 10)
             settings.DelaySeconds = 10;
+
         settings.SaveToFile ??= true;
         return settings;
     }

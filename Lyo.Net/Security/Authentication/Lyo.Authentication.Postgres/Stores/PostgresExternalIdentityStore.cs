@@ -1,12 +1,12 @@
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Postgres.Database;
 using Lyo.Authentication.Services.Users;
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 using Microsoft.EntityFrameworkCore;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Authentication.Postgres.Stores;
 

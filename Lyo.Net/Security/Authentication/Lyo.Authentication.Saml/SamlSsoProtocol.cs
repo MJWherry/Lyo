@@ -21,7 +21,6 @@ public sealed class SamlSsoProtocol(
     IAuthAuditContextAccessor auditContext,
     ILogger<SamlSsoProtocol> logger) : ISsoProtocol
 {
-
     /// <inheritdoc />
     public string Name => "saml";
 
@@ -40,20 +39,19 @@ public sealed class SamlSsoProtocol(
         var xml = SamlAuthnRequest.Write(requestId, DateTime.UtcNow, provider.SpEntityId, idp.RedirectSsoUrl, provider.AcsUrl);
         var ticket = tickets.Issue(provider.Name, requestId, returnUrl, "browser");
         var redirect = SamlAuthnRequest.RedirectUrl(idp.RedirectSsoUrl, SamlAuthnRequest.Deflate(xml), ticket.Id);
-        return new SsoLoginStart(redirect, null);
+        return new(redirect, null);
     }
 
     /// <inheritdoc />
     public async Task<ExternalLoginResult> CompleteAsync(SsoCallback callback, CancellationToken ct = default)
     {
-        try
-        {
+        try {
             return await CompleteInnerAsync(callback, ct).ConfigureAwait(false);
         }
-        catch (ExternalLoginRejectedException ex)
-        {
+        catch (ExternalLoginRejectedException ex) {
             await audit.RecordAsync(auditContext, logger, AuthAuditEventKind.ExternalLoginRejected, provider: callback.Provider, outcome: "failure", reason: ex.Reason, ct: ct)
                 .ConfigureAwait(false);
+
             throw;
         }
     }
@@ -73,7 +71,7 @@ public sealed class SamlSsoProtocol(
         var idp = await metadata.GetAsync(provider, ct).ConfigureAwait(false);
         var assertion = validator.Validate(samlResponse, ticket, provider, idp, DateTime.UtcNow, replay);
         var issued = await completion.CompleteAsync(assertion, ct).ConfigureAwait(false);
-        return new ExternalLoginResult(issued, ticket.ReturnUrl, "browser", provider.Name);
+        return new(issued, ticket.ReturnUrl, "browser", provider.Name);
     }
 
     private ISamlIdentityProvider Require(string providerName)
@@ -81,9 +79,9 @@ public sealed class SamlSsoProtocol(
         var match = providers.FirstOrDefault(provider => string.Equals(provider.Name, providerName, StringComparison.Ordinal));
         if (match is null)
             throw new NotFoundException($"SAML provider '{providerName}' is not registered.");
+
         return match;
     }
 
-    private static string? Value(IReadOnlyDictionary<string, string?> form, string key)
-        => form.TryGetValue(key, out var value) ? value : null;
+    private static string? Value(IReadOnlyDictionary<string, string?> form, string key) => form.TryGetValue(key, out var value) ? value : null;
 }

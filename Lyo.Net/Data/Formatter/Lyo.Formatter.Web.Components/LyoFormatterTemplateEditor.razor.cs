@@ -1,22 +1,24 @@
 using System.ComponentModel;
-using Lyo.Formatter;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 
 namespace Lyo.Formatter.Web.Components;
 
-/// <summary>Debounced template text box with an in-place colored overlay of <c>{placeholders}</c>. Pair with <see cref="LyoFormatterPreview" /> through <see cref="LyoFormatterLiveSession" />. Typing <c>{</c> opens a caret-anchored dropdown of context keys and nested object properties.</summary>
+/// <summary>
+/// Debounced template text box with an in-place colored overlay of <c>{placeholders}</c>. Pair with <see cref="LyoFormatterPreview" /> through
+/// <see cref="LyoFormatterLiveSession" />. Typing <c>{</c> opens a caret-anchored dropdown of context keys and nested object properties.
+/// </summary>
 public partial class LyoFormatterTemplateEditor : IAsyncDisposable
 {
     private const string ModuleUrl = "./_content/Lyo.Formatter.Web.Components/scripts/lyoFormatterEditor.js";
 
     private int _activeIndex;
-    private LyoFormatterLiveSession? _bound;
     private int _blurGeneration;
+    private LyoFormatterLiveSession? _bound;
+    private int _caret;
     private IReadOnlyList<LyoFormatterContextEntry> _catalog = [];
     private object? _catalogContext;
-    private int _caret;
     private DotNetObjectReference<LyoFormatterTemplateEditor>? _dotNetRef;
     private IJSObjectReference? _jsModule;
     private bool _keysAttached;
@@ -57,7 +59,20 @@ public partial class LyoFormatterTemplateEditor : IAsyncDisposable
     [Parameter]
     public bool Disabled { get; set; }
 
-    private LyoFormatterLiveSession Resolved => _bound ?? throw new InvalidOperationException("LyoFormatterTemplateEditor requires a Session parameter or a cascaded LyoFormatterLiveSession.");
+    private LyoFormatterLiveSession Resolved
+        => _bound ?? throw new InvalidOperationException("LyoFormatterTemplateEditor requires a Session parameter or a cascaded LyoFormatterLiveSession.");
+
+    private IReadOnlyList<LyoFormatterContextEntry> Catalog {
+        get {
+            var context = Resolved.Context;
+            if (!ReferenceEquals(_catalogContext, context)) {
+                _catalogContext = context;
+                _catalog = LyoFormatterContextCatalog.Build(context);
+            }
+
+            return _catalog;
+        }
+    }
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
@@ -73,7 +88,6 @@ public partial class LyoFormatterTemplateEditor : IAsyncDisposable
             }
 
             _keysAttached = false;
-
             try {
                 await _jsModule.DisposeAsync();
             }
@@ -109,6 +123,7 @@ public partial class LyoFormatterTemplateEditor : IAsyncDisposable
             case "Tab":
                 if ((uint)_activeIndex < (uint)_suggestions.Count)
                     _ = InsertSuggestionAsync(_suggestions[_activeIndex]);
+
                 return true;
             case "Escape":
                 _suggestions = [];
@@ -141,6 +156,7 @@ public partial class LyoFormatterTemplateEditor : IAsyncDisposable
         var next = Session ?? CascadedSession;
         if (next == null)
             throw new InvalidOperationException("LyoFormatterTemplateEditor requires a Session parameter or a cascaded LyoFormatterLiveSession.");
+
         if (!ReferenceEquals(_bound, next)) {
             Unbind();
             _bound = next;
@@ -214,7 +230,6 @@ public partial class LyoFormatterTemplateEditor : IAsyncDisposable
         _pendingCaret = _caret;
         _suggestions = [];
         _blurGeneration++;
-
         await InvokeAsync(StateHasChanged);
     }
 
@@ -238,6 +253,7 @@ public partial class LyoFormatterTemplateEditor : IAsyncDisposable
         _activeIndex = IndexOfPath(_suggestions, previous);
         if (_activeIndex < 0 && span.Closed && span.Key.Length > 0)
             _activeIndex = IndexOfPath(_suggestions, span.Key);
+
         if (_activeIndex < 0)
             _activeIndex = 0;
     }
@@ -253,18 +269,6 @@ public partial class LyoFormatterTemplateEditor : IAsyncDisposable
         }
 
         return -1;
-    }
-
-    private IReadOnlyList<LyoFormatterContextEntry> Catalog {
-        get {
-            var context = Resolved.Context;
-            if (!ReferenceEquals(_catalogContext, context)) {
-                _catalogContext = context;
-                _catalog = LyoFormatterContextCatalog.Build(context);
-            }
-
-            return _catalog;
-        }
     }
 
     private async Task<int> GetCaretAsync()
@@ -338,8 +342,10 @@ public partial class LyoFormatterTemplateEditor : IAsyncDisposable
         var css = "lyo-fmt-chip";
         if (KeyUnresolved(key))
             css += " lyo-fmt-token-unresolved";
+
         if (Resolved.IsHovered(key))
             css += " lyo-fmt-token-active";
+
         return css;
     }
 

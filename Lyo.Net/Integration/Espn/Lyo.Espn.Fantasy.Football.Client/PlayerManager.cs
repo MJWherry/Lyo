@@ -23,8 +23,7 @@ public class PlayerManager(FantasyFootballClient client)
     }
 
     /// <summary>Returns cached player cards for <paramref name="playerIds" /> and calls <see cref="GetInfoAsync" /> only for the ids that are missing.</summary>
-    public async Task<IReadOnlyList<PlayerInfoItemRes>> GetAsync(
-        int leagueId, int seasonId, IEnumerable<int> playerIds, int scoringPeriodId = 18, CancellationToken ct = default)
+    public async Task<IReadOnlyList<PlayerInfoItemRes>> GetAsync(int leagueId, int seasonId, IEnumerable<int> playerIds, int scoringPeriodId = 18, CancellationToken ct = default)
     {
         FantasyFootballClient.ValidateSeason(seasonId, nameof(GetAsync));
         ArgumentHelpers.ThrowIfNull(playerIds);
@@ -44,7 +43,12 @@ public class PlayerManager(FantasyFootballClient client)
 
     /// <summary>Loads free agents and waiver-wire players for one scoring period. A successful read also fills <see cref="FantasyFootballClient.PlayerCache" />.</summary>
     public async Task<IReadOnlyList<PlayerInfoItemRes>?> GetFreeAgentsAsync(
-        int leagueId, int seasonId, int scoringPeriodId, int limit = 50, int offset = 0, CancellationToken ct = default)
+        int leagueId,
+        int seasonId,
+        int scoringPeriodId,
+        int limit = 50,
+        int offset = 0,
+        CancellationToken ct = default)
     {
         FantasyFootballClient.ValidateSeason(seasonId, nameof(GetFreeAgentsAsync));
         var path = client.BuildLeaguePath(leagueId, seasonId, ["kona_player_info"], new Dictionary<string, string?> { ["scoringPeriodId"] = scoringPeriodId.ToString() });

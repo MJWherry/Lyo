@@ -12,14 +12,16 @@ namespace Lyo.Toml;
 
 internal sealed class TomlEngine
 {
-    private readonly JsonService _json;
-    private readonly string _items;
-    private readonly bool _inline;
     private readonly TomlDateStyle _dateStyle;
-    private readonly bool _unix;
-    private readonly global::Tomlyn.TomlSerializerOptions _serializer;
+    private readonly bool _inline;
+    private readonly string _items;
+    private readonly JsonService _json;
     private readonly MemberOrder _order;
     private readonly string[] _orderNames;
+    private readonly TomlSerializerOptions _serializer;
+    private readonly bool _unix;
+
+    public Encoding Encoding { get; }
 
     public TomlEngine(TomlOptions options)
     {
@@ -34,13 +36,12 @@ internal sealed class TomlEngine
         _json = new(Copy(options));
     }
 
-    public Encoding Encoding { get; }
-
     public T Parse<T>(string toml)
     {
         var node = ToNode(toml);
         if (IsList(typeof(T)) && node is JsonObject obj && obj[_items] is JsonArray items)
             node = items;
+
         return node is null ? default! : _json.ParseString<T>(node.ToJsonString());
     }
 
@@ -58,16 +59,17 @@ internal sealed class TomlEngine
     {
         if (string.IsNullOrWhiteSpace(toml))
             return null;
-        var table = global::Tomlyn.TomlSerializer.Deserialize<TomlTable>(toml);
+
+        var table = TomlSerializer.Deserialize<TomlTable>(toml);
         return JsonNodeGraph.FromClr(table);
     }
 
-    private string FromNode(JsonNode? node) => FromNode(node, applyOrder: true);
+    private string FromNode(JsonNode? node) => FromNode(node, true);
 
-    public string ExportPreservingKeys<T>(T value) => FromNode(JsonNode.Parse(_json.ExportPreservingKeyOrder(value)), applyOrder: false);
+    public string ExportPreservingKeys<T>(T value) => FromNode(JsonNode.Parse(_json.ExportPreservingKeyOrder(value)), false);
 
     /// <summary>Writes a data-table row array as <c>[[items]]</c> under <see cref="TomlOptions.ItemsKey" />.</summary>
-    public string ExportRows(JsonArray rows) => FromNode(rows, applyOrder: false);
+    public string ExportRows(JsonArray rows) => FromNode(rows, false);
 
     /// <summary>Reads the items array of tables into a data table. Cell text stays text.</summary>
     public Result<DataTable.Models.DataTable> ParseRows(string toml, bool hasFooterRow)
@@ -75,6 +77,7 @@ internal sealed class TomlEngine
         var node = ToNode(toml);
         if (node is JsonObject obj && obj[_items] is JsonArray items)
             return DataTableDocument.FromRows(items, hasFooterRow);
+
         return Result<DataTable.Models.DataTable>.Failure("Expected an array of tables.", "InvalidDataTable");
     }
 
@@ -82,10 +85,12 @@ internal sealed class TomlEngine
     {
         if (applyOrder)
             node = JsonMemberOrder.Apply(node, _order, _orderNames);
+
         if (node is JsonArray array)
             node = new JsonObject { [_items] = array };
-        var model = ToToml(node, nested: false);
-        return model is null ? "" : global::Tomlyn.TomlSerializer.Serialize(model, _serializer);
+
+        var model = ToToml(node, false);
+        return model is null ? "" : TomlSerializer.Serialize(model, _serializer);
     }
 
     private object? ToToml(JsonNode? node, bool nested)
@@ -94,9 +99,9 @@ internal sealed class TomlEngine
             case null:
                 return null;
             case JsonObject obj: {
-                var table = new TomlTable(inline: nested && _inline);
+                var table = new TomlTable(nested && _inline);
                 foreach (var property in obj) {
-                    var child = property.Value is JsonArray array ? ToArray(array) : ToToml(property.Value, nested: true);
+                    var child = property.Value is JsonArray array ? ToArray(array) : ToToml(property.Value, true);
                     if (child is not null)
                         table[property.Key] = child;
                 }
@@ -124,7 +129,7 @@ internal sealed class TomlEngine
             var tableArray = new TomlTableArray();
             foreach (var item in array) {
                 if (item is JsonObject obj)
-                    tableArray.Add((TomlTable)ToToml(obj, nested: false)!);
+                    tableArray.Add((TomlTable)ToToml(obj, false)!);
             }
 
             return tableArray;
@@ -134,7 +139,8 @@ internal sealed class TomlEngine
         foreach (var item in array) {
             if (item is null)
                 continue;
-            var child = ToToml(item, nested: true);
+
+            var child = ToToml(item, true);
             if (child is not null)
                 list.Add(child);
         }
@@ -146,6 +152,7 @@ internal sealed class TomlEngine
     {
         if (!_unix && value.GetValueKind() == JsonValueKind.String && TryDate(value.GetValue<string>(), out var date))
             return date;
+
         return JsonNodeGraph.ToClr(value);
     }
 
@@ -154,13 +161,16 @@ internal sealed class TomlEngine
         date = default;
         if (text.Length < 8 || !char.IsDigit(text[0]))
             return false;
+
         if (!DateTimeOffset.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var dto))
             return false;
+
         date = _dateStyle switch {
             TomlDateStyle.Local => new(DateTime.SpecifyKind(dto.DateTime, DateTimeKind.Unspecified)),
             TomlDateStyle.LocalDate => new(dto.Year, dto.Month, dto.Day),
-            _ => new(dto, 0, dto.Offset == TimeSpan.Zero ? global::Tomlyn.TomlDateTimeKind.OffsetDateTimeByZ : global::Tomlyn.TomlDateTimeKind.OffsetDateTimeByNumber)
+            var _ => new(dto, 0, dto.Offset == TimeSpan.Zero ? TomlDateTimeKind.OffsetDateTimeByZ : TomlDateTimeKind.OffsetDateTimeByNumber)
         };
+
         return true;
     }
 
@@ -168,8 +178,10 @@ internal sealed class TomlEngine
     {
         if (type == typeof(string))
             return false;
+
         if (type.IsArray)
             return true;
+
         foreach (var iface in type.GetInterfaces()) {
             if (iface.IsGenericType && iface.GetGenericTypeDefinition() == typeof(IEnumerable<>))
                 return true;

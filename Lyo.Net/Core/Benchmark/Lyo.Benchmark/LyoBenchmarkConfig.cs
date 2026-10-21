@@ -6,8 +6,8 @@ using Lyo.Benchmark.Export;
 namespace Lyo.Benchmark;
 
 /// <summary>
-/// Common BenchmarkDotNet setup applied to all Lyo suites: default job, memory diagnoser, and <see cref="LyoBenchmarkExporter" /> for the shared report format. Use this instead
-/// of repeating <c>[SimpleJob]</c> / <c>[MemoryDiagnoser]</c> on each class.
+/// Common BenchmarkDotNet setup applied to all Lyo suites: default job, memory diagnoser, and <see cref="LyoBenchmarkExporter" /> for the shared report format. Use this
+/// instead of repeating <c>[SimpleJob]</c> / <c>[MemoryDiagnoser]</c> on each class.
 /// </summary>
 public static class LyoBenchmarkConfig
 {

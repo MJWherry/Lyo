@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Components;
 namespace Lyo.Web.Primitives;
 
 /// <summary>
-/// Compact outlined button for a <see cref="LyoToolbar" />. Size is always small. <see cref="Disabled" /> ORs with the owning toolbar's cascade.
-/// Extra attributes are forwarded onto <c>MudButton</c>.
+/// Compact outlined button for a <see cref="LyoToolbar" />. Size is always small. <see cref="Disabled" /> ORs with the owning toolbar's cascade. Extra attributes are
+/// forwarded onto <c>MudButton</c>.
 /// </summary>
 public partial class LyoToolbarButton
 {

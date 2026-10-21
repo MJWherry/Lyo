@@ -10,21 +10,18 @@ public class FileProfanityFilterOptions : ProfanityFilterOptions
     /// <summary>Options binding. Default: "ProfanityFilter" configuration section name.</summary>
     public new const string SectionName = "ProfanityFilter";
 
-    /// <summary>
-    /// JSON file of profane words as an array, for example ["word1", "word2", ...]. Used when WordsByLanguage is empty or has no entry for the
-    /// configured Language value.
-    /// </summary>
+    /// <summary>JSON file of profane words as an array, for example ["word1", "word2", ...]. Used when WordsByLanguage is empty or has no entry for the configured Language value.</summary>
     public string WordsFilePath { get; set; } = string.Empty;
 
     /// <summary>
-    /// URL of a JSON word list (for example https://raw.githubusercontent.com/.../words.json). URL words merge with WordsFilePath and AdditionalWords when both are
-    /// set. Used when WordsByLanguage is empty or has no entry for the configured Language.
+    /// URL of a JSON word list (for example https://raw.githubusercontent.com/.../words.json). URL words merge with WordsFilePath and AdditionalWords when both are set. Used
+    /// when WordsByLanguage is empty or has no entry for the configured Language.
     /// </summary>
     public string WordsUrl { get; set; } = string.Empty;
 
     /// <summary>
-    /// Word sources by language. Keys are BCP 47 (for example "en-US"), ISO 639-1 (for example "en"), or ISO 639-3 (for example "eng"). Language picks which entry to
-    /// use. Filter(input, language) overloads can then pick another language.
+    /// Word sources by language. Keys are BCP 47 (for example "en-US"), ISO 639-1 (for example "en"), or ISO 639-3 (for example "eng"). Language picks which entry to use.
+    /// Filter(input, language) overloads can then pick another language.
     /// </summary>
     public Dictionary<string, LanguageWordSourceConfig>? WordsByLanguage { get; set; }
 

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Lyo.Api.Client;
-using Lyo.Json;
 using Lyo.Exceptions;
+using Lyo.Json;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Cli.Services;

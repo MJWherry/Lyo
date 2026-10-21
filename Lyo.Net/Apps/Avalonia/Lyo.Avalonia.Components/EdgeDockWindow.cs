@@ -3,37 +3,46 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Platform;
 using Avalonia.Threading;
-using Lyo.Desktop;
 
 namespace Lyo.Desktop.Components;
 
 /// <summary>
-/// Parks a window on a screen edge as an <see cref="EdgeDockBar" /> and puts the window back when the user pulls it off.
-/// The app still sets the icon, the buttons, and what a click does.
+/// Parks a window on a screen edge as an <see cref="EdgeDockBar" /> and puts the window back when the user pulls it off. The app still sets the icon, the buttons, and what a
+/// click does.
 /// </summary>
 public sealed class EdgeDockWindow
 {
-    private readonly Window _window;
     private readonly EdgeDockBar _bar;
-    private readonly Control _shell;
-    private readonly EdgeDockRest _rest;
     private readonly bool _canResizeWhenOpen;
     private readonly double? _minWidthWhenOpen;
+    private readonly EdgeDockRest _rest;
+    private readonly Control _shell;
+    private readonly Window _window;
     private ScreenEdgeAnchor _collapsed;
+    private bool _decorationRetried;
     private bool _fitting;
     private bool _offEdge;
-    private bool _previewing;
-    private bool _stopped;
+    private bool _placeDecorations;
+    private int _placeHeight;
+    private PixelPoint _placePoint;
     private DispatcherTimer? _placeTimer;
+    private int _placeWidth;
+    private bool _previewing;
     private int _settleId;
     private int _settleTicks;
     private bool _settling;
-    private PixelPoint _placePoint;
-    private int _placeWidth;
-    private int _placeHeight;
-    private bool _placeDecorations;
-    private bool _decorationRetried;
+    private bool _stopped;
+
+    /// <summary>Saved edge and rest position. The host updates it while the user drags.</summary>
+    public EdgeDockPlacement Placement { get; } = new();
+
+    /// <summary>True while the window is the edge bubble.</summary>
+    public bool Docked { get; private set; }
+
+    /// <summary>True while the title bar is being asked for again. An <c>Opened</c> handler should return so it does not dock a second time.</summary>
+    public bool Restoring { get; private set; }
 
     /// <summary>Attaches <paramref name="bar" /> to <paramref name="window" />. <paramref name="shell" /> hides while the bubble is showing.</summary>
     public EdgeDockWindow(Window window, EdgeDockBar bar, Control shell, EdgeDockRest rest, bool canResizeWhenOpen = true, double? minWidthWhenOpen = null)
@@ -49,18 +58,10 @@ public sealed class EdgeDockWindow
         _bar.LayoutChanged += (_, _) => {
             if (!Docked || _fitting || _previewing)
                 return;
-            ApplyShape(_collapsed, settle: true);
+
+            ApplyShape(_collapsed, true);
         };
     }
-
-    /// <summary>Saved edge and rest position. The host updates it while the user drags.</summary>
-    public EdgeDockPlacement Placement { get; } = new();
-
-    /// <summary>True while the window is the edge bubble.</summary>
-    public bool Docked { get; private set; }
-
-    /// <summary>True while the title bar is being asked for again. An <c>Opened</c> handler should return so it does not dock a second time.</summary>
-    public bool Restoring { get; private set; }
 
     /// <summary>The docked flag or the rest position changed, including a drag that ended on the edge.</summary>
     public event EventHandler? DockedChanged;
@@ -70,9 +71,11 @@ public sealed class EdgeDockWindow
     {
         if (Docked)
             return;
+
         var screen = Screen();
         if (screen is null)
             return;
+
         if (!saved) {
             Placement.RestX = _window.Position.X;
             Placement.RestY = _window.Position.Y;
@@ -110,6 +113,7 @@ public sealed class EdgeDockWindow
     {
         if (!Docked)
             return;
+
         ApplyChrome(_collapsed);
     }
 
@@ -134,7 +138,7 @@ public sealed class EdgeDockWindow
         _window.ClearValue(Layoutable.MaxHeightProperty);
         _window.Background = Brushes.Transparent;
         _window.SizeToContent = SizeToContent.Manual;
-        ApplyShape(anchor, settle: true);
+        ApplyShape(anchor, true);
         _window.Topmost = true;
         _window.Opacity = 1;
     }
@@ -143,12 +147,13 @@ public sealed class EdgeDockWindow
     {
         if (_fitting)
             return;
+
         _fitting = true;
         try {
             _collapsed = anchor;
             _bar.Edge = anchor.Edge;
             _bar.InvalidateMeasure();
-            _bar.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            _bar.Measure(new(double.PositiveInfinity, double.PositiveInfinity));
             var screen = Screen();
             var shown = anchor;
             var side = anchor.Edge is ScreenEdge.Left or ScreenEdge.Right;
@@ -158,10 +163,7 @@ public sealed class EdgeDockWindow
                 dipWidth = _bar.DesiredSize.Width;
                 dipHeight = _bar.DesiredSize.Height;
                 var area = screen.WorkingArea;
-                shown = ScreenEdgeDock.Fit(
-                    anchor,
-                    Scale(screen, (int)Math.Ceiling(dipWidth)),
-                    Scale(screen, (int)Math.Ceiling(dipHeight)));
+                shown = ScreenEdgeDock.Fit(anchor, Scale(screen, (int)Math.Ceiling(dipWidth)), Scale(screen, (int)Math.Ceiling(dipHeight)));
                 shown = ScreenEdgeDock.Clamp(shown, area.X, area.Y, area.Width, area.Height);
             }
 
@@ -175,7 +177,8 @@ public sealed class EdgeDockWindow
             _window.Position = point;
             PlaceNative(point, shown.Width, shown.Height);
             if (settle)
-                BeginSettle(point, shown.Width, shown.Height, decorations: false);
+                BeginSettle(point, shown.Width, shown.Height, false);
+
             Placement.Edge = anchor.Edge;
             Placement.X = anchor.X;
             Placement.Y = anchor.Y;
@@ -185,10 +188,11 @@ public sealed class EdgeDockWindow
         }
     }
 
-    private double IconSlideFor(ScreenEdgeAnchor anchor, Avalonia.Platform.Screen? screen)
+    private double IconSlideFor(ScreenEdgeAnchor anchor, Screen? screen)
     {
         if (screen == null)
             return 0;
+
         var area = screen.WorkingArea;
         var side = anchor.Edge is ScreenEdge.Left or ScreenEdge.Right;
         var start = side ? anchor.Y - area.Y : anchor.X - area.X;
@@ -204,6 +208,7 @@ public sealed class EdgeDockWindow
         var screen = Screen();
         if (screen is null)
             return;
+
         var area = screen.WorkingArea;
         _offEdge = ScreenEdgeDock.AwayFromEdges(area.X, area.Y, area.Width, area.Height, point.X, point.Y, ScreenEdgeDock.OffEdge);
         if (_offEdge) {
@@ -213,7 +218,8 @@ public sealed class EdgeDockWindow
 
         if (_previewing)
             EndPreview();
-        ApplyShape(AnchorAt(screen, point.X, point.Y), settle: true);
+
+        ApplyShape(AnchorAt(screen, point.X, point.Y), true);
     }
 
     private void FinishDrag()
@@ -231,7 +237,7 @@ public sealed class EdgeDockWindow
         if (_previewing) {
             EndPreview();
             if (Docked)
-                ApplyShape(_collapsed, settle: true);
+                ApplyShape(_collapsed, true);
         }
 
         if (Docked)
@@ -250,7 +256,7 @@ public sealed class EdgeDockWindow
             _window.TransparencyLevelHint = [WindowTransparencyLevel.None];
             _window.Background = new SolidColorBrush(Color.Parse("#16181D"));
             _window.Opacity = 0.92;
-            _window.Cursor = new Cursor(StandardCursorType.SizeAll);
+            _window.Cursor = new(StandardCursorType.SizeAll);
             ApplyOpenSize();
         }
 
@@ -285,6 +291,7 @@ public sealed class EdgeDockWindow
             _window.MinWidth = min;
         else
             _window.ClearValue(Layoutable.MinWidthProperty);
+
         _window.ClearValue(Layoutable.MaxWidthProperty);
         _window.ClearValue(Layoutable.MaxHeightProperty);
         _window.Width = _rest.Width;
@@ -303,6 +310,7 @@ public sealed class EdgeDockWindow
         try {
             if (_window.IsVisible)
                 _window.Hide();
+
             _window.WindowDecorations = WindowDecorations.None;
             _window.WindowDecorations = WindowDecorations.Full;
             _window.Show();
@@ -314,7 +322,7 @@ public sealed class EdgeDockWindow
         _window.Position = point;
         var pixels = _rest.Pixels(Screen()?.Scaling ?? 1);
         PlaceNative(point, pixels.Width, pixels.Height);
-        BeginSettle(point, pixels.Width, pixels.Height, decorations: true);
+        BeginSettle(point, pixels.Width, pixels.Height, true);
     }
 
     private void BeginSettle(PixelPoint point, int width, int height, bool decorations)
@@ -333,9 +341,10 @@ public sealed class EdgeDockWindow
     {
         if (id != _settleId || _stopped)
             return;
+
         _settleTicks = 0;
         ApplySettledPlace();
-        _placeTimer ??= new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
+        _placeTimer ??= new() { Interval = TimeSpan.FromMilliseconds(50) };
         _placeTimer.Tick -= OnPlaceTick;
         _placeTimer.Tick += OnPlaceTick;
         _placeTimer.Start();
@@ -357,6 +366,7 @@ public sealed class EdgeDockWindow
     {
         if (_placeDecorations && !Docked)
             KeepRestoredSize();
+
         if (_placeDecorations && !Docked && !_decorationRetried && _settleTicks >= 4 && !TitlePresent()) {
             _decorationRetried = true;
             RestoreFrame();
@@ -372,9 +382,11 @@ public sealed class EdgeDockWindow
         _window.Width = _rest.Width;
         if (_minWidthWhenOpen is double min)
             _window.MinWidth = min;
+
         if (_rest.HeightToContent) {
             if (_window.SizeToContent != SizeToContent.Height)
                 _window.SizeToContent = SizeToContent.Height;
+
             _placeHeight = 0;
         }
         else {
@@ -403,47 +415,44 @@ public sealed class EdgeDockWindow
     {
         if (!OperatingSystem.IsLinux())
             return;
+
         var handle = _window.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
         if (handle == IntPtr.Zero)
             return;
+
         X11WindowPlace.TryPlace(handle, point.X, point.Y, width, height);
     }
 
-    private ScreenEdgeAnchor AnchorFromWindow(Avalonia.Platform.Screen screen)
+    private ScreenEdgeAnchor AnchorFromWindow(Screen screen)
     {
         var area = screen.WorkingArea;
         var origin = _window.Position;
-        var far = _window.PointToScreen(new Point(Math.Max(_window.Bounds.Width, 1), Math.Max(_window.Bounds.Height, 1)));
+        var far = _window.PointToScreen(new(Math.Max(_window.Bounds.Width, 1), Math.Max(_window.Bounds.Height, 1)));
         var (thickness, diameter) = BubblePixels(screen);
-        return ScreenEdgeDock.Place(
-            area.X, area.Y, area.Width, area.Height,
-            origin.X, origin.Y, Math.Max(1, far.X - origin.X), Math.Max(1, far.Y - origin.Y),
-            thickness, diameter);
+        return ScreenEdgeDock.Place(area.X, area.Y, area.Width, area.Height, origin.X, origin.Y, Math.Max(1, far.X - origin.X), Math.Max(1, far.Y - origin.Y), thickness, diameter);
     }
 
-    private ScreenEdgeAnchor AnchorSaved(Avalonia.Platform.Screen screen)
+    private ScreenEdgeAnchor AnchorSaved(Screen screen)
     {
         var area = screen.WorkingArea;
         var (thickness, diameter) = BubblePixels(screen);
         return ScreenEdgeDock.Along(Placement.Edge, area.X, area.Y, area.Width, area.Height, Placement.Along, thickness, diameter);
     }
 
-    private ScreenEdgeAnchor AnchorAt(Avalonia.Platform.Screen screen, int x, int y)
+    private ScreenEdgeAnchor AnchorAt(Screen screen, int x, int y)
     {
         var area = screen.WorkingArea;
         var (thickness, diameter) = BubblePixels(screen);
         return ScreenEdgeDock.Place(area.X, area.Y, area.Width, area.Height, x, y, 1, 1, thickness, diameter);
     }
 
-    private (int Thickness, int Diameter) BubblePixels(Avalonia.Platform.Screen screen)
-        => (Scale(screen, (int)Math.Round(_bar.Thickness)), Scale(screen, (int)Math.Round(_bar.Length)));
+    private (int Thickness, int Diameter) BubblePixels(Screen screen) => (Scale(screen, (int)Math.Round(_bar.Thickness)), Scale(screen, (int)Math.Round(_bar.Length)));
 
-    private static int Scale(Avalonia.Platform.Screen screen, int dip)
+    private static int Scale(Screen screen, int dip)
     {
         var scale = screen.Scaling <= 0 ? 1d : screen.Scaling;
         return Math.Max(1, (int)Math.Round(dip * scale));
     }
 
-    private Avalonia.Platform.Screen? Screen()
-        => _window.Screens?.ScreenFromWindow(_window) ?? _window.Screens?.Primary;
+    private Screen? Screen() => _window.Screens?.ScreenFromWindow(_window) ?? _window.Screens?.Primary;
 }

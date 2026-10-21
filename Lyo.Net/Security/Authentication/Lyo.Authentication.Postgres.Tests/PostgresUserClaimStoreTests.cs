@@ -1,6 +1,6 @@
 using Lyo.Authentication.Models.Records;
-using Lyo.Exceptions;
 using Lyo.Common.Core.Identifiers;
+using Lyo.Exceptions;
 
 namespace Lyo.Authentication.Postgres.Tests;
 
@@ -24,8 +24,7 @@ public sealed class PostgresUserClaimStoreTests
     }
 
     [Fact]
-    public async Task Delete_Missing_Throws()
-        => await Assert.ThrowsAsync<NotFoundException>(() => _fixture.ClaimStore.DeleteAsync(LyoGuid.CreateV7(), null, TestCt));
+    public async Task Delete_Missing_Throws() => await Assert.ThrowsAsync<NotFoundException>(() => _fixture.ClaimStore.DeleteAsync(LyoGuid.CreateV7(), null, TestCt));
 
     [Fact]
     public async Task ListForUser_DoesNotLeakOtherUsers()
@@ -40,7 +39,9 @@ public sealed class PostgresUserClaimStoreTests
 
     private async Task<LyoUser> CreateUserAsync()
     {
-        var user = new LyoUser(LyoGuid.CreateV7(), "Claim Owner", $"claim-{LyoGuid.CreateV7():N}@example.com", true, null, null, [], null, null, DateTime.UtcNow, null, null, null, null);
+        var user = new LyoUser(
+            LyoGuid.CreateV7(), "Claim Owner", $"claim-{LyoGuid.CreateV7():N}@example.com", true, null, null, [], null, null, DateTime.UtcNow, null, null, null, null);
+
         return await _fixture.UserStore.CreateAsync(user, null, TestCt);
     }
 }

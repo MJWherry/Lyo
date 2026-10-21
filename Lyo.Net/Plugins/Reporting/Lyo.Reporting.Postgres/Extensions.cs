@@ -11,10 +11,10 @@ using Lyo.Reporting.Postgres.Database;
 using Lyo.Reporting.Postgres.Mapping;
 using Lyo.Reporting.Postgres.Rendering;
 using Lyo.Xlsx;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+
 namespace Lyo.Reporting.Postgres;
 
 /// <summary>DI registration for PostgreSQL reporting (service layer only. Endpoints live in Lyo.Reporting.Api).</summary>
@@ -37,7 +37,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(configuration);
             var options = new PostgresReportingOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddReportingDbContextFactory(options);
         }
 
@@ -46,7 +45,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPostgresDbContextFactory<ReportingContext, PostgresReportingOptions>(options);
-
             return services;
         }
 
@@ -64,14 +62,13 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(configuration);
             var options = new PostgresReportingOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddPostgresReportingManagement(options);
         }
 
         /// <summary>
         /// Drop-and-play reporting: DbContextFactory, migrations, CRUD services, mapper, CSV/XLSX/JSON <see cref="IReportRenderer" />s, <see cref="ReportService" />,
-        /// <see cref="ReportGenerationThrottle" />, <see cref="ReportGenerationLiveTracker" />, and <see cref="ReportRetentionService" />. Requires AddLyoQueryServices, cache,
-        /// and IIOTempService for generate staging. For HTML/PDF, call <c>AddReportingWebRenderer()</c> from Lyo.Reporting.Web on the host. Persist outputs with
+        /// <see cref="ReportGenerationThrottle" />, <see cref="ReportGenerationLiveTracker" />, and <see cref="ReportRetentionService" />. Requires AddLyoQueryServices, cache, and
+        /// IIOTempService for generate staging. For HTML/PDF, call <c>AddReportingWebRenderer()</c> from Lyo.Reporting.Web on the host. Persist outputs with
         /// <see cref="AddReportingGenerationHooks" />. Map HTTP endpoints via <c>Lyo.Reporting.Api</c> <c>BuildReportingGroup</c>.
         /// </summary>
         public IServiceCollection AddPostgresReportingManagement(PostgresReportingOptions options)
@@ -96,8 +93,8 @@ public static class Extensions
 
         /// <summary>
         /// Opt-in hosted worker that runs <see cref="ReportRetentionService" /> maintenance (retention cleanup and stuck-generation recovery) every
-        /// <see cref="PostgresReportingOptions.MaintenanceInterval" />. Call after <see cref="AddPostgresReportingManagement(PostgresReportingOptions)" />. Not needed on hosts
-        /// that already schedule <see cref="ReportRetentionService.CleanupAsync(CancellationToken)" /> on their own.
+        /// <see cref="PostgresReportingOptions.MaintenanceInterval" />. Call after <see cref="AddPostgresReportingManagement(PostgresReportingOptions)" />. Not needed on hosts that already
+        /// schedule <see cref="ReportRetentionService.CleanupAsync(CancellationToken)" /> on their own.
         /// </summary>
         public IServiceCollection AddReportingMaintenanceWorker()
         {

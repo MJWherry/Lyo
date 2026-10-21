@@ -15,10 +15,7 @@ public sealed class PrivacyRedactorOptions
     /// <summary>A name from <see cref="PrivacyPresetNames" />.</summary>
     public string DefaultPreset { get; set; } = PrivacyPresetNames.Logging;
 
-    /// <summary>
-    /// Metrics tag <c>policy</c> and <see cref="RedactionResult.PolicyName" /> for text and JSON redactors. Null or whitespace falls back to
-    /// <see cref="DefaultPreset" />.
-    /// </summary>
+    /// <summary>Metrics tag <c>policy</c> and <see cref="RedactionResult.PolicyName" /> for text and JSON redactors. Null or whitespace falls back to <see cref="DefaultPreset" />.</summary>
     public string? PolicyName { get; set; }
 
     /// <summary>When true, JSON string values are piped through <see cref="ITextRedactor" />.</summary>

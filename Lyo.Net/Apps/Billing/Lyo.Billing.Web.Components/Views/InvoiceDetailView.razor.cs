@@ -1,14 +1,13 @@
-using Lyo.Api.Client;
-using Lyo.Billing.Client;
-using Lyo.Payments;
-using Lyo.Web.Components.Dialog;
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 
 namespace Lyo.Billing.Web.Components.Views;
 
 public partial class InvoiceDetailView
 {
+    private bool _busy;
+
+    private InvoiceRecord? _invoice;
+
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = null!;
 
@@ -20,39 +19,38 @@ public partial class InvoiceDetailView
     [Parameter]
     public Guid InvoiceId { get; set; }
 
-    private InvoiceRecord? _invoice;
-    private bool _busy;
-
     protected override Task OnParametersSetAsync() => ReloadAsync();
 
-    private async Task ReloadAsync()
-        => _invoice = await Billing.GetInvoiceAsync(InvoiceId);
+    private async Task ReloadAsync() => _invoice = await Billing.GetInvoiceAsync(InvoiceId);
 
     private async Task PayAsync()
     {
         if (_invoice == null)
             return;
+
         var remaining = _invoice.Total - _invoice.AmountPaid;
-        var parameters = new DialogParameters<PaymentEditor> {
-            { d => d.Amount, remaining },
-            { d => d.Method, PaymentMethod.Internal }
-        };
+        var parameters = new DialogParameters<PaymentEditor> { { d => d.Amount, remaining }, { d => d.Method, PaymentMethod.Internal } };
         var dialog = await DialogService.ShowAsync<PaymentEditor>("Record payment", parameters, LyoDialogPresets.Small);
         var result = await dialog.Result;
         if (result is { Canceled: false, Data: PaymentEditor.PaymentEditModel pay }) {
             _busy = true;
             try {
                 if (pay.Method == PaymentMethod.Internal) {
-                    var collected = await Collector.CollectAsync(
-                        new PaymentCollectionRequest { InvoiceId = _invoice.Id, Amount = pay.Amount, Currency = _invoice.Currency });
+                    var collected = await Collector.CollectAsync(new() { InvoiceId = _invoice.Id, Amount = pay.Amount, Currency = _invoice.Currency });
                     if (!collected.Succeeded)
                         throw new InvalidOperationException(collected.FailureReason ?? "Collection failed.");
+
                     pay.Reference = collected.Reference;
                 }
 
                 await Billing.PayAsync(
-                    _invoice.Id,
-                    new RecordInvoicePaymentRequest { Amount = pay.Amount, Currency = _invoice.Currency, Method = pay.Method, Reference = pay.Reference });
+                    _invoice.Id, new() {
+                        Amount = pay.Amount,
+                        Currency = _invoice.Currency,
+                        Method = pay.Method,
+                        Reference = pay.Reference
+                    });
+
                 Snackbar.Add("Payment recorded.", Severity.Success);
                 await ReloadAsync();
             }
@@ -69,8 +67,10 @@ public partial class InvoiceDetailView
     {
         if (_invoice == null)
             return;
+
         if (!await DialogService.ConfirmAsync("Void invoice", $"Void {_invoice.Number ?? "this invoice"}? This posts a reversing journal.", "Void"))
             return;
+
         _busy = true;
         try {
             await Billing.VoidAsync(_invoice.Id);
@@ -89,8 +89,10 @@ public partial class InvoiceDetailView
     {
         if (_invoice == null)
             return;
+
         if (!await DialogService.ConfirmDeleteAsync("this draft invoice", "Reserved charges are unbilled again."))
             return;
+
         _busy = true;
         try {
             await Billing.DeleteDraftAsync(_invoice.Id);

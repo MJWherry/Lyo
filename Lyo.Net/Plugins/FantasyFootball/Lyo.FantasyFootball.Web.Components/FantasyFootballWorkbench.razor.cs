@@ -7,6 +7,25 @@ namespace Lyo.FantasyFootball.Web.Components;
 /// <summary>Chat and trade workbench. Reads and writes the FantasyFootball HTTP API.</summary>
 public partial class FantasyFootballWorkbench
 {
+    private readonly HashSet<int> _receive = [];
+
+    private readonly HashSet<int> _send = [];
+    private bool _busy;
+    private string? _comment;
+    private IReadOnlyList<FantasyConversationRecord> _conversations = [];
+    private string? _draft;
+    private string? _error;
+    private string _leagueLabel = "";
+    private int _loadedLeagueId;
+    private int _loadedSeasonId;
+    private IReadOnlyList<FantasyMessageRecord> _messages = [];
+    private int _otherTeamId;
+    private int _scoringPeriodId = 1;
+    private string? _selectedTopicId;
+    private int _teamId;
+    private IReadOnlyList<FantasyTeamRecord> _teams = [];
+    private IReadOnlyList<FantasyTradeRecord> _trades = [];
+
     [Inject]
     public IApiClient ApiClient { get; set; } = null!;
 
@@ -31,24 +50,6 @@ public partial class FantasyFootballWorkbench
     /// <summary>ESPN <c>SWID</c> cookie. Blank keeps the cookie configured on the API host.</summary>
     [Parameter]
     public string? Swid { get; set; }
-
-    private readonly HashSet<int> _send = [];
-    private readonly HashSet<int> _receive = [];
-    private IReadOnlyList<FantasyConversationRecord> _conversations = [];
-    private IReadOnlyList<FantasyMessageRecord> _messages = [];
-    private IReadOnlyList<FantasyTradeRecord> _trades = [];
-    private IReadOnlyList<FantasyTeamRecord> _teams = [];
-    private string? _selectedTopicId;
-    private string? _draft;
-    private string? _comment;
-    private string? _error;
-    private string _leagueLabel = "";
-    private int _teamId;
-    private int _otherTeamId;
-    private int _scoringPeriodId = 1;
-    private bool _busy;
-    private int _loadedLeagueId;
-    private int _loadedSeasonId;
 
     /// <inheritdoc />
     protected override async Task OnParametersSetAsync()
@@ -91,6 +92,7 @@ public partial class FantasyFootballWorkbench
         _scoringPeriodId = league?.ScoringPeriodId > 0 ? league.ScoringPeriodId : 1;
         if (_teams.Count > 0 && _teamId == 0)
             _teamId = _teams[0].EspnTeamId;
+
         if (_teams.Count > 1 && _otherTeamId == 0)
             _otherTeamId = _teams[1].EspnTeamId;
 
@@ -114,7 +116,7 @@ public partial class FantasyFootballWorkbench
         _busy = true;
         _error = null;
         try {
-            await ApiClient.PostAsAsync<PostChatBody, FantasyMessageRecord>(Path($"conversations/{Uri.EscapeDataString(_selectedTopicId)}/messages"), new PostChatBody(_draft), Authenticate);
+            await ApiClient.PostAsAsync<PostChatBody, FantasyMessageRecord>(Path($"conversations/{Uri.EscapeDataString(_selectedTopicId)}/messages"), new(_draft), Authenticate);
             _draft = "";
             await OpenConversationAsync(_selectedTopicId);
         }
@@ -131,7 +133,9 @@ public partial class FantasyFootballWorkbench
         _busy = true;
         _error = null;
         try {
-            await ApiClient.PostAsAsync<ProposeBody, FantasyTradeRecord>(Path("trades"), new ProposeBody(_teamId, _otherTeamId, _scoringPeriodId, _send.ToArray(), _receive.ToArray(), _comment), Authenticate);
+            await ApiClient.PostAsAsync<ProposeBody, FantasyTradeRecord>(
+                Path("trades"), new(_teamId, _otherTeamId, _scoringPeriodId, _send.ToArray(), _receive.ToArray(), _comment), Authenticate);
+
             _send.Clear();
             _receive.Clear();
             _comment = null;
@@ -151,7 +155,9 @@ public partial class FantasyFootballWorkbench
         _busy = true;
         _error = null;
         try {
-            await ApiClient.PostAsAsync<RespondBody, FantasyTradeRecord>(Path($"trades/{Uri.EscapeDataString(trade.EspnTransactionId)}/respond"), new RespondBody(_teamId, _scoringPeriodId, action, null), Authenticate);
+            await ApiClient.PostAsAsync<RespondBody, FantasyTradeRecord>(
+                Path($"trades/{Uri.EscapeDataString(trade.EspnTransactionId)}/respond"), new(_teamId, _scoringPeriodId, action, null), Authenticate);
+
             _trades = await ApiClient.GetAsAsync<List<FantasyTradeRecord>>(Path("trades")) ?? [];
         }
         catch (Exception ex) {
@@ -162,8 +168,7 @@ public partial class FantasyFootballWorkbench
         }
     }
 
-    private IEnumerable<FantasyRosterEntryRecord> Roster(int teamId)
-        => _teams.FirstOrDefault(team => team.EspnTeamId == teamId)?.Roster ?? [];
+    private IEnumerable<FantasyRosterEntryRecord> Roster(int teamId) => _teams.FirstOrDefault(team => team.EspnTeamId == teamId)?.Roster ?? [];
 
     private static string TeamLabel(FantasyTeamRecord team) => string.IsNullOrWhiteSpace(team.Name) ? $"Team {team.EspnTeamId}" : team.Name;
 
@@ -192,6 +197,7 @@ public partial class FantasyFootballWorkbench
     {
         if (!string.IsNullOrWhiteSpace(EspnS2))
             request.Headers.TryAddWithoutValidation("X-Espn-S2", EspnS2);
+
         if (!string.IsNullOrWhiteSpace(Swid))
             request.Headers.TryAddWithoutValidation("X-Swid", Swid);
     }

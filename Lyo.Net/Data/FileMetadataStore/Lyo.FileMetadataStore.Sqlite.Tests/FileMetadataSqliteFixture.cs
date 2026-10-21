@@ -1,9 +1,9 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.FileMetadataStore.Sqlite.Database;
 using Lyo.Lock;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.FileMetadataStore.Sqlite.Tests;
 
@@ -13,7 +13,7 @@ public sealed class FileMetadataSqliteFixture : IAsyncLifetime
 
     public IServiceProvider ServiceProvider { get; private set; } = null!;
 
-    /// <summary>Current xUnit cancellation token. Reads <see cref="TestContext.Current"/> when accessed, so each test gets that test's token.</summary>
+    /// <summary>Current xUnit cancellation token. Reads <see cref="TestContext.Current" /> when accessed, so each test gets that test's token.</summary>
     public CancellationToken TestCt => TestContext.Current.CancellationToken;
 
     public async ValueTask InitializeAsync()

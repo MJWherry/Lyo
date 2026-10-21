@@ -8,6 +8,7 @@ public sealed class AlgorithmDbContextFactory : IDesignTimeDbContextFactory<Algo
 {
     /// <inheritdoc />
     public AlgorithmDbContext CreateDbContext(string[] args)
-        => new(PostgresDesignTime.CreateOptions<AlgorithmDbContext>(
-            "ALGORITHMS_CONNECTION_STRING", PostgresAlgorithmOptions.Schema, "Host=127.0.0.1;Port=5432;Database=lyo;Username=postgres;Password=postgres"));
+        => new(
+            PostgresDesignTime.CreateOptions<AlgorithmDbContext>(
+                "ALGORITHMS_CONNECTION_STRING", PostgresAlgorithmOptions.Schema, "Host=127.0.0.1;Port=5432;Database=lyo;Username=postgres;Password=postgres"));
 }

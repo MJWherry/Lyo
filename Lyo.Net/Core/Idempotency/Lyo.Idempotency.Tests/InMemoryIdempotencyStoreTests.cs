@@ -1,8 +1,6 @@
 using System.Data;
 using System.Data.Common;
-using System.Text;
 using Lyo.Health;
-using Lyo.Idempotency;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 
@@ -18,14 +16,17 @@ public sealed class InMemoryIdempotencyStoreTests
         var store = Store();
         var hash = IdempotencyHash.Of("body"u8.ToArray());
         var runs = 0;
-        var first = await RunOnceAsync(store, "api|user|POST|/pay", "k1", hash, () => {
-            runs++;
-            return (200, "ok"u8.ToArray(), "text/plain");
-        });
-        var second = await RunOnceAsync(store, "api|user|POST|/pay", "k1", hash, () => {
-            runs++;
-            return (200, "ok"u8.ToArray(), "text/plain");
-        });
+        var first = await RunOnceAsync(
+            store, "api|user|POST|/pay", "k1", hash, () => {
+                runs++;
+                return (200, "ok"u8.ToArray(), "text/plain");
+            });
+
+        var second = await RunOnceAsync(
+            store, "api|user|POST|/pay", "k1", hash, () => {
+                runs++;
+                return (200, "ok"u8.ToArray(), "text/plain");
+            });
 
         Assert.Equal(IdempotencyOutcome.Began, first.Outcome);
         Assert.Equal(IdempotencyOutcome.Replay, second.Outcome);
@@ -56,7 +57,6 @@ public sealed class InMemoryIdempotencyStoreTests
         var hash = IdempotencyHash.Of("a"u8.ToArray());
         var first = await store.TryBeginAsync("scope", "key", hash, ct: TestCt);
         var second = await store.TryBeginAsync("scope", "key", hash, ct: TestCt);
-
         Assert.Equal(IdempotencyOutcome.Began, first.Outcome);
         Assert.Equal(IdempotencyOutcome.InProgress, second.Outcome);
         Assert.NotEqual(first.LeaseToken, second.LeaseToken);
@@ -68,13 +68,11 @@ public sealed class InMemoryIdempotencyStoreTests
         var clock = Now;
         var store = Store(() => clock);
         var hash = IdempotencyHash.Of("a"u8.ToArray());
-        var began = await store.TryBeginAsync("scope", "key", hash, expiresAt: Now, ct: TestCt);
+        var began = await store.TryBeginAsync("scope", "key", hash, Now, ct: TestCt);
         Assert.True(await store.CompleteAsync(began.Id, began.LeaseToken!.Value, 200, "old"u8.ToArray(), "text/plain", TestCt));
-
         var blocked = await store.TryBeginAsync("scope", "key", hash, ct: TestCt);
         Assert.NotEqual(IdempotencyOutcome.Replay, blocked.Outcome);
         Assert.NotEqual(IdempotencyOutcome.Began, blocked.Outcome);
-
         await store.SweepExpiredAsync(TestCt);
         var again = await store.TryBeginAsync("scope", "key", hash, ct: TestCt);
         Assert.Equal(IdempotencyOutcome.Began, again.Outcome);
@@ -86,7 +84,6 @@ public sealed class InMemoryIdempotencyStoreTests
         var store = Store();
         var hash = IdempotencyHash.Of("a"u8.ToArray());
         var results = await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => store.TryBeginAsync("scope", "key", hash, ct: TestCt)));
-
         Assert.Single(results, r => r.Outcome == IdempotencyOutcome.Began);
         Assert.All(results.Where(r => r.Outcome != IdempotencyOutcome.Began), r => Assert.Equal(IdempotencyOutcome.InProgress, r.Outcome));
     }
@@ -97,15 +94,13 @@ public sealed class InMemoryIdempotencyStoreTests
         var clock = Now;
         var store = Store(() => clock);
         var hash = IdempotencyHash.Of("old"u8.ToArray());
-        var first = await store.TryBeginAsync("scope", "key", hash, expiresAt: Now, ct: TestCt);
+        var first = await store.TryBeginAsync("scope", "key", hash, Now, ct: TestCt);
         Assert.True(await store.CompleteAsync(first.Id, first.LeaseToken!.Value, 200, "old-body"u8.ToArray(), "text/plain", TestCt));
         await store.SweepExpiredAsync(TestCt);
-
         clock = Now.AddMinutes(1);
         var liveHash = IdempotencyHash.Of("new"u8.ToArray());
         var live = await store.TryBeginAsync("scope", "key", liveHash, ct: TestCt);
         var again = await store.TryBeginAsync("scope", "key", liveHash, ct: TestCt);
-
         Assert.Equal(IdempotencyOutcome.InProgress, again.Outcome);
         Assert.Null(again.ResponseBody);
         Assert.NotEqual(first.Id, live.Id);
@@ -118,7 +113,6 @@ public sealed class InMemoryIdempotencyStoreTests
         var hash = IdempotencyHash.Of("a"u8.ToArray());
         var began = await store.TryBeginAsync("scope", "key", hash, ct: TestCt);
         Assert.True(await store.CompleteAsync(began.Id, began.LeaseToken!.Value, 200, "kept"u8.ToArray(), "text/plain", TestCt));
-
         Assert.False(await store.CompleteAsync(began.Id, Guid.NewGuid(), 500, "nope"u8.ToArray(), "text/plain", TestCt));
         var replay = await store.TryBeginAsync("scope", "key", hash, ct: TestCt);
         Assert.Equal(IdempotencyOutcome.Replay, replay.Outcome);
@@ -129,23 +123,27 @@ public sealed class InMemoryIdempotencyStoreTests
     public async Task TryBegin_WithTransaction_Throws()
     {
         var store = Store();
-        await Assert.ThrowsAsync<NotSupportedException>(() => store.TryBeginAsync("scope", "key", IdempotencyHash.Of("a"u8.ToArray()), transaction: new UnusedTransaction(), ct: TestCt));
+        await Assert.ThrowsAsync<NotSupportedException>(() => store.TryBeginAsync(
+            "scope", "key", IdempotencyHash.Of("a"u8.ToArray()), transaction: new UnusedTransaction(), ct: TestCt));
     }
 
     [Fact]
     public async Task Complete_OverCap_OmitsBodyAndDoesNotReexecute()
     {
-        var store = new InMemoryIdempotencyStore(new IdempotencyOptions { MaxResponseBytes = 4 }, () => Now);
+        var store = new InMemoryIdempotencyStore(new() { MaxResponseBytes = 4 }, () => Now);
         var hash = IdempotencyHash.Of("a"u8.ToArray());
         var runs = 0;
-        await RunOnceAsync(store, "scope", "key", hash, () => {
-            runs++;
-            return (200, "too-big"u8.ToArray(), "text/plain");
-        });
-        var replay = await RunOnceAsync(store, "scope", "key", hash, () => {
-            runs++;
-            return (200, "too-big"u8.ToArray(), "text/plain");
-        });
+        await RunOnceAsync(
+            store, "scope", "key", hash, () => {
+                runs++;
+                return (200, "too-big"u8.ToArray(), "text/plain");
+            });
+
+        var replay = await RunOnceAsync(
+            store, "scope", "key", hash, () => {
+                runs++;
+                return (200, "too-big"u8.ToArray(), "text/plain");
+            });
 
         Assert.Equal(IdempotencyOutcome.Replay, replay.Outcome);
         Assert.True(replay.ResponseOmitted);
@@ -169,7 +167,7 @@ public sealed class InMemoryIdempotencyStoreTests
     {
         var store = Store();
         var local = DateTime.SpecifyKind(Now, DateTimeKind.Local);
-        await Assert.ThrowsAsync<ArgumentException>(() => store.TryBeginAsync("scope", "key", IdempotencyHash.Of("a"u8.ToArray()), expiresAt: local, ct: TestCt));
+        await Assert.ThrowsAsync<ArgumentException>(() => store.TryBeginAsync("scope", "key", IdempotencyHash.Of("a"u8.ToArray()), local, ct: TestCt));
     }
 
     [Fact]
@@ -179,8 +177,9 @@ public sealed class InMemoryIdempotencyStoreTests
         var logger = new ListLogger();
         var inner = new ThrowingStore("secret-subject");
         var store = new ObservingIdempotencyStore(inner, metrics, logger);
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => store.TryBeginAsync(
+            "api|secret-subject|POST|/pay", "key", IdempotencyHash.Of("a"u8.ToArray()), ct: TestCt));
 
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => store.TryBeginAsync("api|secret-subject|POST|/pay", "key", IdempotencyHash.Of("a"u8.ToArray()), ct: TestCt));
         Assert.Contains("secret-subject", ex.Message, StringComparison.Ordinal);
         Assert.DoesNotContain(metrics.Counters.Values, c => c.Tags?.Values.Any(v => v.Contains("secret-subject", StringComparison.Ordinal)) == true);
         Assert.Contains(metrics.Counters.Values, c => c.Tags?["error_message"] == ObservingIdempotencyStore.StoreFailedMessage);
@@ -218,10 +217,17 @@ public sealed class InMemoryIdempotencyStoreTests
     {
         public string HealthCheckName => "idempotency";
 
-        public Task<IdempotencyBeginResult> TryBeginAsync(string scope, string key, byte[] requestHash, DateTime? expiresAt = null, DbTransaction? transaction = null, CancellationToken ct = default)
+        public Task<IdempotencyBeginResult> TryBeginAsync(
+            string scope,
+            string key,
+            byte[] requestHash,
+            DateTime? expiresAt = null,
+            DbTransaction? transaction = null,
+            CancellationToken ct = default)
             => throw new InvalidOperationException("failed for " + subject);
 
-        public Task<bool> CompleteAsync(Guid id, Guid leaseToken, int status, byte[]? body, string? contentType, CancellationToken ct = default) => throw new NotSupportedException();
+        public Task<bool> CompleteAsync(Guid id, Guid leaseToken, int status, byte[]? body, string? contentType, CancellationToken ct = default)
+            => throw new NotSupportedException();
 
         public Task<bool> FailAsync(Guid id, Guid leaseToken, int status, byte[]? body, string? contentType, CancellationToken ct = default) => throw new NotSupportedException();
 
@@ -238,7 +244,9 @@ public sealed class InMemoryIdempotencyStoreTests
 
         public List<string> Debug { get; } = [];
 
-        public IDisposable BeginScope<TState>(TState state) where TState : notnull => NullScope.Instance;
+        public IDisposable BeginScope<TState>(TState state)
+            where TState : notnull
+            => NullScope.Instance;
 
         public bool IsEnabled(LogLevel logLevel) => true;
 
@@ -250,6 +258,7 @@ public sealed class InMemoryIdempotencyStoreTests
 
             if (logLevel == LogLevel.Information)
                 Information.Add(text);
+
             if (logLevel == LogLevel.Debug)
                 Debug.Add(text);
         }

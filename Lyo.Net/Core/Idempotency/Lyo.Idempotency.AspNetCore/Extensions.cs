@@ -8,9 +8,7 @@ public static class Extensions
     /// <param name="app">Application pipeline.</param>
     extension(IApplicationBuilder app)
     {
-        /// <summary>
-        /// Adds <see cref="IdempotencyMiddleware" />. Call this after <c>UseRouting</c> and after authentication.
-        /// </summary>
+        /// <summary>Adds <see cref="IdempotencyMiddleware" />. Call this after <c>UseRouting</c> and after authentication.</summary>
         public IApplicationBuilder UseIdempotency()
         {
             ArgumentHelpers.ThrowIfNull(app);

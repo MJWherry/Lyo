@@ -1,7 +1,6 @@
 using System.Reflection;
 using System.Text;
 using Lyo.Exceptions;
-using Lyo.Json;
 using Lyo.Result;
 
 namespace Lyo.Yaml;
@@ -9,14 +8,14 @@ namespace Lyo.Yaml;
 /// <summary>Facade over <see cref="YamlReader" /> and <see cref="YamlWriter" />, plus JSON conversion. One instance is safe for concurrent calls.</summary>
 public sealed class YamlService : IYamlService
 {
-    /// <summary>Shared service with the default options. Do not change it.</summary>
-    public static YamlService Default { get; } = new();
-
     private readonly YamlEngine _engine;
     private readonly YamlReader _reader;
     private readonly YamlWriter _writer;
 
-    static YamlService() => System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+    /// <summary>Shared service with the default options. Do not change it.</summary>
+    public static YamlService Default { get; } = new();
+
+    static YamlService() => Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
     /// <summary>Builds a service. <paramref name="configure" /> runs before validation.</summary>
     public YamlService(Action<YamlOptions>? configure = null)
@@ -82,16 +81,14 @@ public sealed class YamlService : IYamlService
     public bool TryExport<T>(T value, Span<byte> destination, out int bytesWritten, Encoding? encoding = null) => _writer.TryExport(value, destination, out bytesWritten, encoding);
 
     /// <inheritdoc />
-    public string ExportFormattedToYamlString<T>(IEnumerable<T> items, IReadOnlyDictionary<string, Func<T, string>> fields)
-        => _writer.ExportFormattedToYamlString(items, fields);
+    public string ExportFormattedToYamlString<T>(IEnumerable<T> items, IReadOnlyDictionary<string, Func<T, string>> fields) => _writer.ExportFormattedToYamlString(items, fields);
 
     /// <inheritdoc />
     public void ExportFormattedToYaml<T>(IEnumerable<T> items, IReadOnlyDictionary<string, Func<T, string>> fields, Stream yamlStream)
         => _writer.ExportFormattedToYaml(items, fields, yamlStream);
 
     /// <inheritdoc />
-    public string ExportColumnsToYamlString<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns)
-        => _writer.ExportColumnsToYamlString(items, columns);
+    public string ExportColumnsToYamlString<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns) => _writer.ExportColumnsToYamlString(items, columns);
 
     /// <inheritdoc />
     public void ExportColumnsToYaml<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns, Stream yamlStream)
@@ -174,7 +171,7 @@ public sealed class YamlService : IYamlService
 
     private static string Read(Stream stream)
     {
-        using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, 1024, leaveOpen: true);
+        using var reader = new StreamReader(stream, Encoding.UTF8, true, 1024, true);
         return reader.ReadToEnd();
     }
 
@@ -232,7 +229,11 @@ public sealed class YamlService : IYamlService
         => _reader.ParseStringAsDataTableAsync(yaml, hasFooterRow, ct);
 
     /// <inheritdoc />
-    public Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(byte[] yamlBytes, bool hasFooterRow = false, Encoding? encoding = null, CancellationToken ct = default)
+    public Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(
+        byte[] yamlBytes,
+        bool hasFooterRow = false,
+        Encoding? encoding = null,
+        CancellationToken ct = default)
         => _reader.ParseBytesAsDataTableAsync(yamlBytes, hasFooterRow, encoding, ct);
 
     /// <inheritdoc />

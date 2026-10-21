@@ -1,6 +1,7 @@
 # Lyo.Idempotency.Postgres
 
-PostgresIdempotencyStore writes kind=api from TryBegin and kind=outbox from InsertOutbox. A caller transaction gets a savepoint around the insert. On 23505 the store rolls back to that savepoint and re-reads the live row. The caller transaction stays open.
+PostgresIdempotencyStore writes kind=api from TryBegin and kind=outbox from InsertOutbox. A caller transaction gets a savepoint around the insert. On 23505 the store rolls back to
+that savepoint and re-reads the live row. The caller transaction stays open.
 
 ## Features
 

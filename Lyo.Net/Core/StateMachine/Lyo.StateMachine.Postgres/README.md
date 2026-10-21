@@ -1,14 +1,18 @@
 # Lyo.StateMachine.Postgres
 
-PostgreSQL + EF Core implementation of `IStateStore<TState>`, `IStateInstanceQuery<TState>`, and `IStateMachineDefinitionStore` from [`Lyo.StateMachine.Models`](../Lyo.StateMachine.Models/README.md). Use it with `StateMachineInstance` and `StateMachineDefinitionCache` from [`Lyo.StateMachine`](../Lyo.StateMachine/README.md) for jobs, workers, and other entities whose state must survive restarts, and for machines defined as data.
+PostgreSQL + EF Core implementation of `IStateStore<TState>`, `IStateInstanceQuery<TState>`, and `IStateMachineDefinitionStore` from [
+`Lyo.StateMachine.Models`](../Lyo.StateMachine.Models/README.md). Use it with `StateMachineInstance` and `StateMachineDefinitionCache` from [
+`Lyo.StateMachine`](../Lyo.StateMachine/README.md) for jobs, workers, and other entities whose state must survive restarts, and for machines defined as data.
 
 ## Features
 
 - **Optimistic concurrency.** The version check, instance write, and history row commit in one transaction. A stale writer gets `false` and nothing is written.
-- **Data and timers.** Instance data is stored as `jsonb`; the timer due time is indexed with the machine name so a scheduler can poll `ListAsync(new() { DueBeforeUtc = now })` cheaply.
+- **Data and timers.** Instance data is stored as `jsonb`; the timer due time is indexed with the machine name so a scheduler can poll `ListAsync(new() { DueBeforeUtc = now })`
+  cheaply.
 - **Queries.** List by states, due time, or update time with paging; count by state; page history oldest first; delete an instance and its history with an optional version check.
 - **Transition history.** Each save with a `TransitionRecord` adds a row, unique per (machine, instance, version).
-- **Definition documents.** `PostgresStateMachineDefinitionStore` saves each `StateMachineDocument` revision as an immutable `jsonb` row; a publish only succeeds when `expectedRevision` is still the latest.
+- **Definition documents.** `PostgresStateMachineDefinitionStore` saves each `StateMachineDocument` revision as an immutable `jsonb` row; a publish only succeeds when
+  `expectedRevision` is still the latest.
 - **Any state type.** Enum states are stored by member name. Supply an `IStateKeyConverter<TState>` for other types.
 - **UTC only.** Snapshot, transition, and filter times must be UTC (`ArgumentException` otherwise).
 
@@ -36,11 +40,16 @@ foreach (var item in due)
 
 ## Database schema
 
-PostgreSQL schema `state_machine`. Table `instance`: primary key (`machine_name`, `instance_key`), `state`, `version` (concurrency token), `entered_timestamp`, `updated_timestamp`, `due_at`, `data_json` (`jsonb`); indexes on (`machine_name`, `state`) and (`machine_name`, `due_at`). Table `transition`: `id`, `machine_name`, `instance_key`, `from_state`, `to_state`, `trigger`, `version`, `occurred_timestamp`. Table `definition`: primary key (`name`, `revision`), `document` (`jsonb`), `created_timestamp`. Migrations history lives in `__EFMigrationsHistory` in the same schema.
+PostgreSQL schema `state_machine`. Table `instance`: primary key (`machine_name`, `instance_key`), `state`, `version` (concurrency token), `entered_timestamp`, `updated_timestamp`,
+`due_at`, `data_json` (`jsonb`); indexes on (`machine_name`, `state`) and (`machine_name`, `due_at`). Table `transition`: `id`, `machine_name`, `instance_key`, `from_state`,
+`to_state`, `trigger`, `version`, `occurred_timestamp`. Table `definition`: primary key (`name`, `revision`), `document` (`jsonb`), `created_timestamp`. Migrations history lives in
+`__EFMigrationsHistory` in the same schema.
 
 ## Migrations
 
-At design time set `STATE_MACHINE_CONNECTION_STRING` and run `dotnet ef migrations add MigrationName --project Core/StateMachine/Lyo.StateMachine.Postgres --context StateMachineDbContext`. Set `EnableAutoMigrations` to apply them at host start.
+At design time set `STATE_MACHINE_CONNECTION_STRING` and run
+`dotnet ef migrations add MigrationName --project Core/StateMachine/Lyo.StateMachine.Postgres --context StateMachineDbContext`. Set `EnableAutoMigrations` to apply them at host
+start.
 
 ## Dependencies
 

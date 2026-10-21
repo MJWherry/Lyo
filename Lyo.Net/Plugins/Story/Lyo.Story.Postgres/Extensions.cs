@@ -15,7 +15,7 @@ public static class Extensions
 {
     extension(IServiceCollection services)
     {
-        /// <summary>Registers <see cref="StoryDbContext"/> from a configure delegate.</summary>
+        /// <summary>Registers <see cref="StoryDbContext" /> from a configure delegate.</summary>
         public IServiceCollection AddStoryDbContextFactory(Action<PostgresStoryOptions> configure)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -25,7 +25,7 @@ public static class Extensions
             return services.AddStoryDbContextFactory(options);
         }
 
-        /// <summary>Registers <see cref="StoryDbContext"/> from configuration section <see cref="PostgresStoryOptions.SectionName"/>.</summary>
+        /// <summary>Registers <see cref="StoryDbContext" /> from configuration section <see cref="PostgresStoryOptions.SectionName" />.</summary>
         public IServiceCollection AddStoryDbContextFactoryFromConfiguration(IConfiguration configuration, string configSectionName = PostgresStoryOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -36,7 +36,7 @@ public static class Extensions
             return services.AddStoryDbContextFactory(options);
         }
 
-        /// <summary>Registers <see cref="StoryDbContext"/> from an options instance.</summary>
+        /// <summary>Registers <see cref="StoryDbContext" /> from an options instance.</summary>
         public IServiceCollection AddStoryDbContextFactory(PostgresStoryOptions options)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -45,7 +45,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Registers <see cref="IStoryStore"/> as <see cref="PostgresStoryStore"/> from a configure delegate.</summary>
+        /// <summary>Registers <see cref="IStoryStore" /> as <see cref="PostgresStoryStore" /> from a configure delegate.</summary>
         public IServiceCollection AddPostgresStoryStore(Action<PostgresStoryOptions> configure)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -55,7 +55,7 @@ public static class Extensions
             return services.AddPostgresStoryStore(options);
         }
 
-        /// <summary>Registers <see cref="IStoryStore"/> from configuration section <see cref="PostgresStoryOptions.SectionName"/>.</summary>
+        /// <summary>Registers <see cref="IStoryStore" /> from configuration section <see cref="PostgresStoryOptions.SectionName" />.</summary>
         public IServiceCollection AddPostgresStoryStoreFromConfiguration(IConfiguration configuration, string configSectionName = PostgresStoryOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -66,7 +66,7 @@ public static class Extensions
             return services.AddPostgresStoryStore(options);
         }
 
-        /// <summary>Registers <see cref="IStoryStore"/> as <see cref="PostgresStoryStore"/> from an options instance.</summary>
+        /// <summary>Registers <see cref="IStoryStore" /> as <see cref="PostgresStoryStore" /> from an options instance.</summary>
         public IServiceCollection AddPostgresStoryStore(PostgresStoryOptions options)
         {
             ArgumentHelpers.ThrowIfNull(services);

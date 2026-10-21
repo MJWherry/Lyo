@@ -4,12 +4,14 @@ using Lyo.Story.Enums;
 
 namespace Lyo.Story.Builders;
 
-/// <summary>Builds a <see cref="StoryNode"/> with optional presentation and choices.</summary>
+/// <summary>Builds a <see cref="StoryNode" /> with optional presentation and choices.</summary>
 public sealed class StoryNodeBuilder
 {
-    private readonly StoryNode _node;
     private readonly List<StoryChoice> _choices = [];
+    private readonly StoryNode _node;
     private readonly List<StoryReaction> _scopedReactions = [];
+
+    internal IReadOnlyList<StoryReaction> ScopedReactions => _scopedReactions;
 
     internal StoryNodeBuilder(string key)
     {
@@ -57,8 +59,8 @@ public sealed class StoryNodeBuilder
         return this;
     }
 
-    /// <summary>Adds a player choice. Prompt defaults to <paramref name="key"/> when omitted.</summary>
-    public StoryNodeBuilder Choice(string key, Action<StoryChoiceBuilder> configure) => Choice(key, prompt: null, configure);
+    /// <summary>Adds a player choice. Prompt defaults to <paramref name="key" /> when omitted.</summary>
+    public StoryNodeBuilder Choice(string key, Action<StoryChoiceBuilder> configure) => Choice(key, null, configure);
 
     /// <summary>Adds a player choice with an explicit prompt.</summary>
     public StoryNodeBuilder Choice(string key, string? prompt, Action<StoryChoiceBuilder> configure)
@@ -70,7 +72,7 @@ public sealed class StoryNodeBuilder
         return this;
     }
 
-    /// <summary>Adds a node-scoped reaction for <paramref name="trigger"/> (for example Advanced on a cutscene).</summary>
+    /// <summary>Adds a node-scoped reaction for <paramref name="trigger" /> (for example Advanced on a cutscene).</summary>
     public StoryNodeBuilder On(StoryTrigger trigger, Action<StoryReactionBuilder> configure)
     {
         ArgumentHelpers.ThrowIfNull(configure);
@@ -87,6 +89,4 @@ public sealed class StoryNodeBuilder
         _node.Choices = [.. _choices];
         return _node;
     }
-
-    internal IReadOnlyList<StoryReaction> ScopedReactions => _scopedReactions;
 }

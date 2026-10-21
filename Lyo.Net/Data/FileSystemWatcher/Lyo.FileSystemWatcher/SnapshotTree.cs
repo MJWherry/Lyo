@@ -1,11 +1,12 @@
 namespace Lyo.FileSystemWatcher;
 
-/// <summary>
-/// Hierarchical snapshot of a directory. One <see cref="SnapshotDirectoryNode" /> per subdirectory, files grouped under their parent. Avoids a flat map keyed by full
-/// path.
-/// </summary>
+/// <summary>Hierarchical snapshot of a directory. One <see cref="SnapshotDirectoryNode" /> per subdirectory, files grouped under their parent. Avoids a flat map keyed by full path.</summary>
 public sealed class SnapshotTree
 {
+    private Dictionary<string, List<string>>? _fingerprintIndex;
+
+    private Dictionary<string, List<string>>? _hashIndex;
+
     /// <summary>Root directory this snapshot was taken from.</summary>
     public string RootPath { get; }
 
@@ -27,6 +28,15 @@ public sealed class SnapshotTree
     /// <summary>Files plus directories, excluding the snapshot root node. Matches the old flat-dictionary key count.</summary>
     public int TotalEntryCount => FileCount + DirectoryCount;
 
+    /// <summary>
+    /// File paths grouped by full-content hash, built on first use and reused afterwards. A diff reads this on every poll, so it is an index over the snapshot rather than
+    /// something a caller rebuilds. Treat the lists as read-only.
+    /// </summary>
+    public IReadOnlyDictionary<string, List<string>> FileHashIndex => _hashIndex ??= BuildIndex(e => e.Hash);
+
+    /// <summary>File paths grouped by sparse fingerprint. Same lifetime and read-only rule as <see cref="FileHashIndex" />.</summary>
+    public IReadOnlyDictionary<string, List<string>> FileFingerprintIndex => _fingerprintIndex ??= BuildIndex(e => e.Fingerprint);
+
     /// <summary>Builds a snapshot descriptor. Prefer <see cref="Utilities.TakeSnapshot" /> to construct one.</summary>
     public SnapshotTree(string rootPath, StringComparison pathComparison, SnapshotDirectoryNode root, int fileCount, int directoryCount)
     {
@@ -37,18 +47,6 @@ public sealed class SnapshotTree
         FileCount = fileCount;
         DirectoryCount = directoryCount;
     }
-
-    /// <summary>
-    /// File paths grouped by full-content hash, built on first use and reused afterwards. A diff reads this on every poll, so it is an index over the snapshot rather
-    /// than something a caller rebuilds. Treat the lists as read-only.
-    /// </summary>
-    public IReadOnlyDictionary<string, List<string>> FileHashIndex => _hashIndex ??= BuildIndex(e => e.Hash);
-
-    /// <summary>File paths grouped by sparse fingerprint. Same lifetime and read-only rule as <see cref="FileHashIndex" />.</summary>
-    public IReadOnlyDictionary<string, List<string>> FileFingerprintIndex => _fingerprintIndex ??= BuildIndex(e => e.Fingerprint);
-
-    private Dictionary<string, List<string>>? _hashIndex;
-    private Dictionary<string, List<string>>? _fingerprintIndex;
 
     private Dictionary<string, List<string>> BuildIndex(Func<DirectorySnapshotEntry, string?> selectKey)
     {

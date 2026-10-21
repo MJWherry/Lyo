@@ -35,8 +35,7 @@ public sealed class S3AwsCredentialHelpersTests
     }
 
     [Fact]
-    public void Resolve_NoKeysNoProfile_ReturnsNull()
-        => Assert.Null(S3AwsCredentialHelpers.Resolve(null, null, null));
+    public void Resolve_NoKeysNoProfile_ReturnsNull() => Assert.Null(S3AwsCredentialHelpers.Resolve(null, null, null));
 
     [Fact]
     public void Resolve_NamedProfile_ReturnsProfileCredentials()

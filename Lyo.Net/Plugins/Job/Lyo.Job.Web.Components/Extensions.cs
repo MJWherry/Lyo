@@ -9,8 +9,8 @@ public static class Extensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Adds the job run and worker palettes so <see cref="LyoStatusChip" /> paints job statuses with the same colours and icons as
-        /// <see cref="JobColorHelper" />. Skip this and a chip uses the shared status vocabulary instead.
+        /// Adds the job run and worker palettes so <see cref="LyoStatusChip" /> paints job statuses with the same colours and icons as <see cref="JobColorHelper" />. Skip this and a
+        /// chip uses the shared status vocabulary instead.
         /// </summary>
         public IServiceCollection AddLyoJobStatusPalettes()
         {

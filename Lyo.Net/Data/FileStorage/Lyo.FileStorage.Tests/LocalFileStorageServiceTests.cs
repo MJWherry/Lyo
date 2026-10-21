@@ -1,4 +1,5 @@
 using System.Text;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Compression;
 using Lyo.Compression.Compressors;
 using Lyo.Compression.Lz4;
@@ -17,7 +18,6 @@ using Lyo.Testing;
 using Microsoft.Extensions.Logging;
 using HashAlgorithm = Lyo.FileMetadataStore.Models.HashAlgorithm;
 using LocalDiskFileStorageOptions = Lyo.FileStorage.Models.DiskFileStorageOptions;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.FileStorage.Tests;
 
@@ -27,14 +27,13 @@ public class LocalFileStorageServiceTests : IDisposable
     private readonly IOTempSession _tempSession = new();
 
     public LocalFileStorageServiceTests(ITestOutputHelper output)
-    {
-        // Logger factory that pipes into the xUnit output helper
-        _loggerFactory = LoggerFactory.Create(builder => {
-            //builder.AddConsole();
-            builder.AddProvider(new XunitLoggerProvider(output));
-            builder.SetMinimumLevel(LogLevel.Debug);
-        });
-    }
+        =>
+            // Logger factory that pipes into the xUnit output helper
+            _loggerFactory = LoggerFactory.Create(builder => {
+                //builder.AddConsole();
+                builder.AddProvider(new XunitLoggerProvider(output));
+                builder.SetMinimumLevel(LogLevel.Debug);
+            });
 
     public void Dispose()
     {
@@ -1345,8 +1344,8 @@ public class LocalFileStorageServiceTests : IDisposable
     }
 
     /// <summary>
-    /// Crossing KEKs that differ in AES Key Wrap eligibility changes the DEK blob encoding; the rewritten on-disk header must store the recomputed DekEncoding byte (a
-    /// leftover byte from the previous header leaves the file unreadable).
+    /// Crossing KEKs that differ in AES Key Wrap eligibility changes the DEK blob encoding; the rewritten on-disk header must store the recomputed DekEncoding byte (a leftover
+    /// byte from the previous header leaves the file unreadable).
     /// </summary>
     [Fact]
     public async Task MigrateDeksAsync_KekChangesDekEncoding_RewritesHeaderEncodingAndStillDecrypts()

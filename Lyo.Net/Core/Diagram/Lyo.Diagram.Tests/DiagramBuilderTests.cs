@@ -1,5 +1,3 @@
-using Lyo.Diagram.Models;
-
 namespace Lyo.Diagram.Tests;
 
 public class DiagramBuilderTests
@@ -7,15 +5,14 @@ public class DiagramBuilderTests
     [Fact]
     public void Builder_Presets_WritesDrawIoStyles()
     {
-        var diagram = new DiagramBuilder("Styles")
-            .Page("page", "Page", page =>
-            {
-                page.Shape("rect", "R", 0, 0, 80, 40, DiagramShapeKind.Rectangle);
-                page.Shape("round", "U", 0, 0, 80, 40, DiagramShapeKind.Rounded);
-                page.Shape("ellipse", "E", 0, 0, 80, 40, DiagramShapeKind.Ellipse);
-                page.Shape("diamond", "D", 0, 0, 80, 40, DiagramShapeKind.Diamond);
-                page.Connect("link", "rect", "ellipse", "go");
-            })
+        var diagram = new DiagramBuilder("Styles").Page(
+                "page", "Page", page => {
+                    page.Shape("rect", "R", 0, 0, 80, 40, DiagramShapeKind.Rectangle);
+                    page.Shape("round", "U", 0, 0, 80, 40, DiagramShapeKind.Rounded);
+                    page.Shape("ellipse", "E", 0, 0, 80, 40, DiagramShapeKind.Ellipse);
+                    page.Shape("diamond", "D", 0, 0, 80, 40, DiagramShapeKind.Diamond);
+                    page.Connect("link", "rect", "ellipse", "go");
+                })
             .Build();
 
         var cells = diagram.Pages[0].Cells;
@@ -32,21 +29,13 @@ public class DiagramBuilderTests
     [Fact]
     public void Builder_SizeAndWaypoints_AreOnTheDocument()
     {
-        var diagram = new DiagramBuilder("Checkout")
-            .Page("flow", "Flow", page =>
-            {
-                page.Size(600, 400);
-                page.Shape("start", "Start", 40, 40, 120, 60, DiagramShapeKind.Rectangle);
-                page.Shape("end", "End", 240, 40, 120, 60, DiagramShapeKind.Rectangle);
-                page.Connect(
-                    "go",
-                    "start",
-                    "end",
-                    [new DiagramPoint { X = 180, Y = 70 }, new DiagramPoint { X = 180, Y = 70 }],
-                    new DiagramPoint { X = 160, Y = 70 },
-                    new DiagramPoint { X = 240, Y = 70 },
-                    "next");
-            })
+        var diagram = new DiagramBuilder("Checkout").Page(
+                "flow", "Flow", page => {
+                    page.Size(600, 400);
+                    page.Shape("start", "Start", 40, 40, 120, 60, DiagramShapeKind.Rectangle);
+                    page.Shape("end", "End", 240, 40, 120, 60, DiagramShapeKind.Rectangle);
+                    page.Connect("go", "start", "end", [new() { X = 180, Y = 70 }, new() { X = 180, Y = 70 }], new() { X = 160, Y = 70 }, new() { X = 240, Y = 70 }, "next");
+                })
             .Build();
 
         var page = diagram.Pages[0];

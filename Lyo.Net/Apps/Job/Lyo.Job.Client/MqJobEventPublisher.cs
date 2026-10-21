@@ -1,11 +1,12 @@
 using System.Diagnostics;
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Job.Models;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
 using Lyo.MessageQueue;
 using Microsoft.Extensions.Logging;
-using Lyo.Common.Core.Identifiers;
+
 namespace Lyo.Job.Client;
 
 /// <summary>
@@ -74,8 +75,7 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
     public async Task PublishWorkflowRunCreatedAsync(Guid workflowRunId, CancellationToken ct = default)
     {
         _logger.LogDebug("Publishing workflow run {WorkflowRunId} created", workflowRunId);
-        await _mqService.SendToExchange(
-                Constants.Mq.JobEventExchange, Constants.Mq.JobWorkflowRunCreatedRoutingKey, JsonSerializer.SerializeToUtf8Bytes(workflowRunId))
+        await _mqService.SendToExchange(Constants.Mq.JobEventExchange, Constants.Mq.JobWorkflowRunCreatedRoutingKey, JsonSerializer.SerializeToUtf8Bytes(workflowRunId))
             .ConfigureAwait(false);
     }
 

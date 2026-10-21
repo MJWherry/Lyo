@@ -19,12 +19,14 @@ public static class FileManagerSettingsStore
         try {
             if (!File.Exists(path))
                 return new();
+
             var text = File.ReadAllText(path).TrimStart();
             FileManagerSettingsDocument document;
             if (text.StartsWith('['))
                 document = new() { Servers = JsonSerializer.Deserialize<List<FileManagerServer>>(text, Json) ?? [] };
             else
                 document = JsonSerializer.Deserialize<FileManagerSettingsDocument>(text, Json) ?? new();
+
             return document;
         }
         catch (Exception) {
@@ -42,8 +44,8 @@ public static class FileManagerSettingsStore
     }
 
     /// <summary>
-    /// Writes <paramref name="servers" />, <paramref name="layout" />, and <paramref name="keyStores" /> to <paramref name="path" />.
-    /// A null key-store list keeps the stores already in the file.
+    /// Writes <paramref name="servers" />, <paramref name="layout" />, and <paramref name="keyStores" /> to <paramref name="path" />. A null key-store list keeps the stores
+    /// already in the file.
     /// </summary>
     public static void Save(
         string path,
@@ -59,14 +61,16 @@ public static class FileManagerSettingsStore
         var directory = Path.GetDirectoryName(path);
         if (!string.IsNullOrEmpty(directory))
             Directory.CreateDirectory(directory);
+
         var kept = keyStores ?? (File.Exists(path) ? LoadDocument(path).KeyStores : []);
         var document = new FileManagerSettingsDocument {
-            Servers = [..servers],
+            Servers = [.. servers],
             Layout = layout,
             Bubble = bubble ?? new(),
             ShowTreeFiles = showTreeFiles,
-            KeyStores = [..kept]
+            KeyStores = [.. kept]
         };
+
         File.WriteAllText(path, JsonSerializer.Serialize(document, Json));
     }
 

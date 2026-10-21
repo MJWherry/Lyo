@@ -3,9 +3,8 @@ using System.Globalization;
 namespace Lyo.Web.Primitives;
 
 /// <summary>
-/// Named HSL hue for identity chips (formats, kinds). <see cref="LyoChip" /> mixes <see cref="Style" /> into
-/// <c>--mud-palette-surface</c> so light and dark themes keep contrast. Prefer these over Mud Primary/Secondary/Tertiary —
-/// those slots are green, gray, and surface in the default Lyo palette.
+/// Named HSL hue for identity chips (formats, kinds). <see cref="LyoChip" /> mixes <see cref="Style" /> into <c>--mud-palette-surface</c> so light and dark themes keep
+/// contrast. Prefer these over Mud Primary/Secondary/Tertiary — those slots are green, gray, and surface in the default Lyo palette.
 /// </summary>
 /// <param name="Degrees">Hue on the color wheel. Values outside 0–359 wrap via <see cref="Normalized" />.</param>
 public sealed record LyoChipHue(int Degrees)
@@ -57,28 +56,24 @@ public sealed record LyoChipHue(int Degrees)
 
     /// <summary>Named hues in increasing wheel order, from <see cref="Coral" /> through <see cref="Rose" />.</summary>
     public static IReadOnlyList<LyoChipHue> All { get; } = [
-        Coral, Amber, Lime, Green, Teal, Cyan, Blue, Indigo, Violet, Purple, Magenta, Rose
+        Coral, Amber, Lime, Green, Teal, Cyan, Blue, Indigo, Violet, Purple,
+        Magenta, Rose
     ];
 
     /// <summary><see cref="Degrees" /> wrapped onto 0–359.</summary>
-    public int Normalized
-    {
-        get
-        {
+    public int Normalized {
+        get {
             var hue = Degrees % CircleDegrees;
             if (hue < 0)
                 hue += CircleDegrees;
+
             return hue;
         }
     }
 
-    /// <summary>
-    /// Inline style for the chip. Sets <see cref="CssVariable" /> and mixes that hue into the Mud surface, so the same style follows light and dark themes.
-    /// </summary>
-    public string Style
-    {
-        get
-        {
+    /// <summary>Inline style for the chip. Sets <see cref="CssVariable" /> and mixes that hue into the Mud surface, so the same style follows light and dark themes.</summary>
+    public string Style {
+        get {
             var color = string.Create(CultureInfo.InvariantCulture, $"hsl(var({CssVariable}) 72% 50%)");
             var fill = string.Create(CultureInfo.InvariantCulture, $"color-mix(in srgb, {color} 62%, var(--mud-palette-surface))");
             var edge = string.Create(CultureInfo.InvariantCulture, $"color-mix(in srgb, {color} 80%, var(--mud-palette-lines-default))");

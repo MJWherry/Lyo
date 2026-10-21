@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Text;
 using EasyCompressor;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Compression.Models;
 using Lyo.Exceptions;
@@ -10,14 +11,10 @@ using Lyo.Metrics;
 using Lyo.Streams;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Compression;
 
-/// <summary>
-/// Default <see cref="ICompressionService" /> backed by registered <see cref="ICompressorFactory" /> instances, with optional
-/// <see cref="Lyo.Metrics.IMetrics" /> emission.
-/// </summary>
+/// <summary>Default <see cref="ICompressionService" /> backed by registered <see cref="ICompressorFactory" /> instances, with optional <see cref="Lyo.Metrics.IMetrics" /> emission.</summary>
 /// <remarks>
 /// <para>
 /// The compressor and algorithm are fixed after construction. Safe to resolve as a singleton and call concurrently; batch APIs use parallel workers bounded by
@@ -184,10 +181,7 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
     // even though we only write.
     private FileStream CreateAsyncWriteStream(string filePath) => new(filePath, FileMode.Create, FileAccess.ReadWrite, FileShare.None, _options.AsyncFileBufferSize, true);
 
-    /// <summary>
-    /// Runs an atomic file operation by writing to a temporary file first, then renaming it onto the target. If the operation fails, no
-    /// partial file is left at the target path.
-    /// </summary>
+    /// <summary>Runs an atomic file operation by writing to a temporary file first, then renaming it onto the target. If the operation fails, no partial file is left at the target path.</summary>
     private static void AtomicFileOperation(string targetFilePath, Action<string> writeOperation)
     {
         // GUID-based temp name to avoid clashes with existing files.
@@ -795,7 +789,7 @@ public sealed class CompressionService : ICompressionService, ICompressionResolv
         }
     }
 
-    public bool IsLikelyCompressed(byte[]? data) => TryDetectAlgorithm(data, out _);
+    public bool IsLikelyCompressed(byte[]? data) => TryDetectAlgorithm(data, out var _);
 
     /// <inheritdoc />
     public bool TryDetectAlgorithm(byte[]? data, out CompressionAlgorithm? algorithm)

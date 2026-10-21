@@ -5,12 +5,20 @@
             <MudSpacer/>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="Create">New story</MudButton>
         </MudStack>
+
         @if (_stories.Count == 0) {
             <MudText Typo="Typo.body2" Class="mud-text-secondary">No stories for this tenant and game.</MudText>
         }
         else {
             <MudSimpleTable Hover="true" Dense="true">
-                <thead><tr><th>Title</th><th>Slug</th><th>Status</th><th></th></tr></thead>
+                <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Slug</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+                </thead>
                 <tbody>
                 @foreach (var story in _stories) {
                     <tr>
@@ -30,6 +38,7 @@
     }
     else {
         <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="Close">Library</MudButton>
+
         <StoryBuilderWorkbench StoryClient="StoryClient" BaseRoute="@BaseRoute" Draft="_open" Saved="OnSaved"/>
     }
 </MudStack>

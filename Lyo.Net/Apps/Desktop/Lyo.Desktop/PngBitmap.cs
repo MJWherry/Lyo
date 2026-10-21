@@ -42,6 +42,7 @@ internal static class PngBitmap
             var length = ReadInt(png, offset);
             if (length < 0 || offset + 12 + length > png.Length)
                 throw new InvalidOperationException("PNG chunk is truncated.");
+
             var type = Encoding.ASCII.GetString(png, offset + 4, 4);
             var data = png.AsSpan(offset + 8, length);
             if (type == "IHDR") {
@@ -51,23 +52,22 @@ internal static class PngBitmap
                 colorType = data[9];
                 interlace = data[12];
             }
-            else if (type == "PLTE") {
+            else if (type == "PLTE")
                 palette = data.ToArray();
-            }
-            else if (type == "IDAT") {
+            else if (type == "IDAT")
                 idat.Write(data);
-            }
-            else if (type == "IEND") {
+            else if (type == "IEND")
                 break;
-            }
 
             offset += 12 + length;
         }
 
         if (width < 1 || height < 1)
             throw new InvalidOperationException("PNG has no image.");
+
         if (bitDepth != 8)
             throw new InvalidOperationException("Only 8-bit PNG images can be placed on the clipboard.");
+
         if (interlace != 0)
             throw new InvalidOperationException("Interlaced PNG images are not supported.");
 
@@ -94,19 +94,21 @@ internal static class PngBitmap
         return new(width, height, bgra);
     }
 
-    private static int Channels(int colorType) => colorType switch {
-        0 => 1,
-        2 => 3,
-        3 => 1,
-        4 => 2,
-        6 => 4,
-        _ => throw new InvalidOperationException($"PNG color type {colorType} is not supported.")
-    };
+    private static int Channels(int colorType)
+        => colorType switch {
+            0 => 1,
+            2 => 3,
+            3 => 1,
+            4 => 2,
+            6 => 4,
+            var _ => throw new InvalidOperationException($"PNG color type {colorType} is not supported.")
+        };
 
     private static byte[] Inflate(byte[] zlib)
     {
         if (zlib.Length < 6)
             throw new InvalidOperationException("PNG image data is truncated.");
+
         using var input = new MemoryStream(zlib, 2, zlib.Length - 6);
         using var deflate = new DeflateStream(input, CompressionMode.Decompress);
         using var output = new MemoryStream();
@@ -124,10 +126,11 @@ internal static class PngBitmap
                 0 => scan[i],
                 1 => scan[i] + left,
                 2 => scan[i] + up,
-                3 => scan[i] + ((left + up) / 2),
+                3 => scan[i] + (left + up) / 2,
                 4 => scan[i] + Paeth(left, up, upperLeft),
-                _ => throw new InvalidOperationException($"PNG filter {filter} is not supported.")
+                var _ => throw new InvalidOperationException($"PNG filter {filter} is not supported.")
             };
+
             current[i] = (byte)value;
         }
     }
@@ -140,6 +143,7 @@ internal static class PngBitmap
         var distanceUpperLeft = Math.Abs(estimate - upperLeft);
         if (distanceLeft <= distanceUp && distanceLeft <= distanceUpperLeft)
             return left;
+
         return distanceUp <= distanceUpperLeft ? up : upperLeft;
     }
 
@@ -162,9 +166,8 @@ internal static class PngBitmap
                 blue = row[i++];
                 alpha = row[i++];
             }
-            else if (colorType == 0) {
+            else if (colorType == 0)
                 blue = green = red = row[i++];
-            }
             else if (colorType == 4) {
                 blue = green = red = row[i++];
                 alpha = row[i++];
@@ -172,9 +175,11 @@ internal static class PngBitmap
             else {
                 if (palette is null)
                     throw new InvalidOperationException("PNG palette is missing.");
+
                 var index = row[i++] * 3;
                 if (index + 2 >= palette.Length)
                     throw new InvalidOperationException("PNG palette index is out of range.");
+
                 red = palette[index];
                 green = palette[index + 1];
                 blue = palette[index + 2];
@@ -189,8 +194,7 @@ internal static class PngBitmap
         }
     }
 
-    private static int ReadInt(ReadOnlySpan<byte> data, int offset)
-        => (data[offset] << 24) | (data[offset + 1] << 16) | (data[offset + 2] << 8) | data[offset + 3];
+    private static int ReadInt(ReadOnlySpan<byte> data, int offset) => (data[offset] << 24) | (data[offset + 1] << 16) | (data[offset + 2] << 8) | data[offset + 3];
 
     private static int ReadInt(byte[] data, int offset) => ReadInt(data.AsSpan(), offset);
 

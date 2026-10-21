@@ -1,21 +1,23 @@
 # Lyo.Privacy.Web.Components
 
-Blazor (Server / Interactive) workbench components for [`Lyo.Privacy`](../Lyo.Privacy/README.md). Operators can preview, compare, and tune redaction policies without a host config round-trip.
+Blazor (Server / Interactive) workbench components for [`Lyo.Privacy`](../Lyo.Privacy/README.md). Operators can preview, compare, and tune redaction policies without a host config
+round-trip.
 
 ## Components
 
-| Component | What it does |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `PrivacyWorkbench` | Top-level workbench shell. Arranges the panels below into a side-by-side review layout. |
-| `RedactionPolicyBuilderPanel` | Interactive `RedactionPolicyBuilder` editor: turn categories on or off, configure custom regex rules, tweak placeholders. |
-| `RedactionPresetToolbar` | Preset buttons such as "PII only", "Strict", and "Permissive". Fires a completed policy. |
-| `TextRedactionPanel` | Free-text input plus a preview of `ITextRedactor.Redact(...)` output and a `RedactionOutcome` summary (categories matched, counts). |
-| `JsonRedactionPanel` | JSON input plus a preview of `IStructuredRedactor.Redact(...)` output with per-path redaction highlights. |
-| `PolicyFingerprintChip` | Shows the active policy's name and fingerprint hash so reviewers can compare what production applied against the workbench. |
+| Component                     | What it does                                                                                                                        |
+|-------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| `PrivacyWorkbench`            | Top-level workbench shell. Arranges the panels below into a side-by-side review layout.                                             |
+| `RedactionPolicyBuilderPanel` | Interactive `RedactionPolicyBuilder` editor: turn categories on or off, configure custom regex rules, tweak placeholders.           |
+| `RedactionPresetToolbar`      | Preset buttons such as "PII only", "Strict", and "Permissive". Fires a completed policy.                                            |
+| `TextRedactionPanel`          | Free-text input plus a preview of `ITextRedactor.Redact(...)` output and a `RedactionOutcome` summary (categories matched, counts). |
+| `JsonRedactionPanel`          | JSON input plus a preview of `IStructuredRedactor.Redact(...)` output with per-path redaction highlights.                           |
+| `PolicyFingerprintChip`       | Shows the active policy's name and fingerprint hash so reviewers can compare what production applied against the workbench.         |
 
 ## Wiring into a host
 
-These components take `ITextRedactor` and `IStructuredRedactor` from DI; register them via [`Lyo.Privacy.AspNetCore`](../Lyo.Privacy.AspNetCore/README.md) before mounting `<PrivacyWorkbench />` on a route. Layout and dialog plumbing use MudBlazor (via `Lyo.Web.Components`).
+These components take `ITextRedactor` and `IStructuredRedactor` from DI; register them via [`Lyo.Privacy.AspNetCore`](../Lyo.Privacy.AspNetCore/README.md) before mounting
+`<PrivacyWorkbench />` on a route. Layout and dialog plumbing use MudBlazor (via `Lyo.Web.Components`).
 
 ## Dependencies
 

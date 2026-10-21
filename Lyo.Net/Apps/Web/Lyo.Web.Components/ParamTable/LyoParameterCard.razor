@@ -1,5 +1,4 @@
 @namespace Lyo.Web.Components.ParamTable
-@using Microsoft.AspNetCore.Components.Web
 
 <div class="@DropClass"
      style="@DragStyle"
@@ -42,6 +41,7 @@
                     @if (AllowReorder) {
                         <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Size="Size.Small" title="Move up"
                                        Disabled="@(!CanMoveUp)" OnClick="@(() => OnMoveUp.InvokeAsync())"/>
+
                         <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward" Size="Size.Small" title="Move down"
                                        Disabled="@(!CanMoveDown)" OnClick="@(() => OnMoveDown.InvokeAsync())"/>
                     }

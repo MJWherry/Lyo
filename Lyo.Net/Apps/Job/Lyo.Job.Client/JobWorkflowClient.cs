@@ -17,7 +17,7 @@ public sealed class JobWorkflowClient(IApiClient client, string? routePrefix = n
     /// </summary>
     public Task<CreateResult<JobWorkflowRunRes>> StartAsync(Guid workflowId, string? idempotencyKey = null, CancellationToken ct = default)
         => client.PostAsAsync<JobWorkflowStartReq, CreateResult<JobWorkflowRunRes>>(
-            ApiRouteBuilder.Build(routePrefix, JobRoutes.WorkflowStart(workflowId)), new JobWorkflowStartReq { IdempotencyKey = idempotencyKey }, ct: ct);
+            ApiRouteBuilder.Build(routePrefix, JobRoutes.WorkflowStart(workflowId)), new() { IdempotencyKey = idempotencyKey }, ct: ct);
 
     /// <summary>Reads one workflow run with its steps, their step definitions, and the owning workflow — the graph the engine works against.</summary>
     public Task<JobWorkflowRunRes?> GetRunAsync(Guid workflowRunId, CancellationToken ct = default)

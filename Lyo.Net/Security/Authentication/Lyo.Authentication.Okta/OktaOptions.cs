@@ -4,8 +4,8 @@ using Lyo.Exceptions;
 namespace Lyo.Authentication.Okta;
 
 /// <summary>
-/// Okta SAML app settings. <see cref="AppId" /> is the public <c>exk…</c> key from "View IdP metadata", not the <c>0oa…</c> application id.
-/// The IdP Identifier / Audience and the Single sign-on URL must match <see cref="EntityId" /> and <see cref="AcsUrl" /> exactly. Leave request signing and assertion encryption off.
+/// Okta SAML app settings. <see cref="AppId" /> is the public <c>exk…</c> key from "View IdP metadata", not the <c>0oa…</c> application id. The IdP Identifier / Audience and
+/// the Single sign-on URL must match <see cref="EntityId" /> and <see cref="AcsUrl" /> exactly. Leave request signing and assertion encryption off.
 /// </summary>
 public sealed class OktaOptions
 {

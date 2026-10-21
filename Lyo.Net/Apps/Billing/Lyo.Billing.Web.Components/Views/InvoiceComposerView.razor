@@ -27,6 +27,7 @@
                         <InvoiceLineEditor Lines="_invoice.Lines" AllowEdit="@(_invoice.Status == InvoiceStatus.Draft)" Add="AddLineAsync" Remove="RemoveLineAsync"/>
                         @if (_unbilled.Count > 0) {
                             <MudText Typo="Typo.subtitle2" Class="mt-3">Unbilled charges</MudText>
+
                             @foreach (var charge in _unbilled) {
                                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                                     <MudText>@charge.Description — @BillingMoney.Format(charge.Quantity * charge.UnitAmount, charge.Currency)</MudText>

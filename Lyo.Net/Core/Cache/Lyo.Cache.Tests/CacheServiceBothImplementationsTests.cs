@@ -1,10 +1,10 @@
 using Lyo.Cache.Fusion;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Testing;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ZiggyCreatures.Caching.Fusion;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Cache.Tests;
 
@@ -178,7 +178,7 @@ public class CacheServiceBothImplementationsTests : IDisposable
         service.TryGetValue<string>(key, out var first).ShouldBeTrue();
         first.ShouldBe("value");
         Thread.Sleep(550);
-        service.TryGetValue<string>(key, out _).ShouldBeFalse();
+        service.TryGetValue<string>(key, out var _).ShouldBeFalse();
     }
 
     [Theory]
@@ -205,16 +205,22 @@ public class CacheServiceBothImplementationsTests : IDisposable
         var key = $"both-sliding-getorset-{implementation}-{LyoGuid.CreateV7():N}";
         var ttl = TimeSpan.FromMilliseconds(500);
         var factoryCalls = 0;
-        service.GetOrSet(key, _ => {
-            factoryCalls++;
-            return "value";
-        }, o => o.SetSlidingExpiration(ttl)).ShouldBe("value");
+        service.GetOrSet(
+                key, _ => {
+                    factoryCalls++;
+                    return "value";
+                }, o => o.SetSlidingExpiration(ttl))
+            .ShouldBe("value");
+
         factoryCalls.ShouldBe(1);
         Thread.Sleep(150);
-        service.GetOrSet(key, _ => {
-            factoryCalls++;
-            return "other";
-        }, o => o.SetSlidingExpiration(ttl)).ShouldBe("value");
+        service.GetOrSet(
+                key, _ => {
+                    factoryCalls++;
+                    return "other";
+                }, o => o.SetSlidingExpiration(ttl))
+            .ShouldBe("value");
+
         factoryCalls.ShouldBe(1);
         Thread.Sleep(400);
         service.TryGetValue<string>(key, out var still).ShouldBeTrue();
@@ -230,9 +236,9 @@ public class CacheServiceBothImplementationsTests : IDisposable
         var ttl = TimeSpan.FromMilliseconds(400);
         service.Set(key, "value", ttl);
         Thread.Sleep(150);
-        service.TryGetValue<string>(key, out _).ShouldBeTrue();
+        service.TryGetValue<string>(key, out var _).ShouldBeTrue();
         Thread.Sleep(400);
-        service.TryGetValue<string>(key, out _).ShouldBeFalse();
+        service.TryGetValue<string>(key, out var _).ShouldBeFalse();
     }
 
     [Theory]
@@ -246,7 +252,7 @@ public class CacheServiceBothImplementationsTests : IDisposable
         service.TryGetValue<string>(key, out var hit).ShouldBeTrue();
         hit.ShouldBe("value");
         await service.InvalidateCacheItemByTag(tag);
-        service.TryGetValue<string>(key, out _).ShouldBeFalse();
+        service.TryGetValue<string>(key, out var _).ShouldBeFalse();
     }
 
     [Fact]
@@ -256,7 +262,7 @@ public class CacheServiceBothImplementationsTests : IDisposable
         var service = new LocalCacheService(_memoryCache, _localLogger, disabled);
         var key = $"both-sliding-disabled-{LyoGuid.CreateV7():N}";
         service.Set(key, "value", o => o.SetSlidingExpiration(TimeSpan.FromHours(1)));
-        service.TryGetValue<string>(key, out _).ShouldBeFalse();
+        service.TryGetValue<string>(key, out var _).ShouldBeFalse();
     }
 
     [Theory]
@@ -296,8 +302,8 @@ public class CacheServiceBothImplementationsTests : IDisposable
         service.GetOrSet<string>(key2, _ => "default").ShouldBe("v2");
         service.Items.Count.ShouldBeGreaterThan(0);
         await service.ClearAsync();
-        service.TryGetValue<string>(key1, out _).ShouldBeFalse();
-        service.TryGetValue<string>(key2, out _).ShouldBeFalse();
+        service.TryGetValue<string>(key1, out var _).ShouldBeFalse();
+        service.TryGetValue<string>(key2, out var _).ShouldBeFalse();
         service.Items.Count.ShouldBe(0);
     }
 

@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Lyo.Exceptions;
-using Lyo.FileStorage;
 using Lyo.FileStorage.Abstractions;
 using Lyo.Recipe.Models;
 using Lyo.Recipe.Models.Enums;
@@ -29,7 +28,7 @@ public interface IRecipeAttachmentFiles
     Task DeleteAsync(Guid attachmentId, bool deleteStoredFile = true, Guid? tenantId = null, CancellationToken ct = default);
 }
 
-/// <summary>Default <see cref="IRecipeAttachmentFiles"/> over <see cref="IFileStorageService"/> and <see cref="IRecipeStore"/>.</summary>
+/// <summary>Default <see cref="IRecipeAttachmentFiles" /> over <see cref="IFileStorageService" /> and <see cref="IRecipeStore" />.</summary>
 public sealed class RecipeAttachmentFiles : IRecipeAttachmentFiles
 {
     private readonly IFileStorageService _files;
@@ -63,14 +62,10 @@ public sealed class RecipeAttachmentFiles : IRecipeAttachmentFiles
             throw new ArgumentException("Entity id is required.", nameof(entityId));
 
         var prefix = RecipeFilePaths.ForEntity(entityType, entityId);
-        var metadata = JsonSerializer.SerializeToElement(new Dictionary<string, string> {
-            ["entityType"] = entityType,
-            ["entityId"] = entityId.ToString("D"),
-            ["role"] = role.ToString()
-        });
-        var stored = await _files.SaveFromStreamAsync(
-                content, length, fileName, pathPrefix: prefix, metadata: metadata, ct: ct)
-            .ConfigureAwait(false);
+        var metadata = JsonSerializer.SerializeToElement(
+            new Dictionary<string, string> { ["entityType"] = entityType, ["entityId"] = entityId.ToString("D"), ["role"] = role.ToString() });
+
+        var stored = await _files.SaveFromStreamAsync(content, length, fileName, pathPrefix: prefix, metadata: metadata, ct: ct).ConfigureAwait(false);
         var row = new RecipeAttachmentRecord {
             EntityType = entityType,
             EntityId = entityId,
@@ -79,6 +74,7 @@ public sealed class RecipeAttachmentFiles : IRecipeAttachmentFiles
             Caption = caption,
             IsPrimary = isPrimary
         };
+
         await _store.SaveAttachmentAsync(row, tenantId, ct).ConfigureAwait(false);
         var listed = await _store.ListAttachmentsAsync(entityType, entityId, tenantId, ct).ConfigureAwait(false);
         return listed.FirstOrDefault(a => a.FileId == stored.Id) ?? row;
@@ -99,13 +95,11 @@ public static class Extensions
 {
     extension(IServiceCollection services)
     {
-        /// <summary>Registers <see cref="IRecipeAttachmentFiles"/>. Requires <see cref="IFileStorageService"/> and <see cref="IRecipeStore"/>.</summary>
+        /// <summary>Registers <see cref="IRecipeAttachmentFiles" />. Requires <see cref="IFileStorageService" /> and <see cref="IRecipeStore" />.</summary>
         public IServiceCollection AddRecipeFileStorage()
         {
             ArgumentHelpers.ThrowIfNull(services);
-            services.TryAddScoped<IRecipeAttachmentFiles>(sp => new RecipeAttachmentFiles(
-                sp.GetRequiredService<IFileStorageService>(),
-                sp.GetRequiredService<IRecipeStore>()));
+            services.TryAddScoped<IRecipeAttachmentFiles>(sp => new RecipeAttachmentFiles(sp.GetRequiredService<IFileStorageService>(), sp.GetRequiredService<IRecipeStore>()));
             return services;
         }
     }

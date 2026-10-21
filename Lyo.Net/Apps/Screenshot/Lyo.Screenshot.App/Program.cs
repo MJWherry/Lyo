@@ -1,6 +1,6 @@
 using Avalonia;
-using Lyo.Desktop.Components;
 using Lyo.Desktop;
+using Lyo.Desktop.Components;
 
 namespace Lyo.Screenshot.App;
 

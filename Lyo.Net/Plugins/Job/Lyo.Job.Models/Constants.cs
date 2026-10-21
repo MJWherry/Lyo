@@ -9,18 +9,17 @@ public static class Constants
     public static class Mq
     {
         /// <summary>
-        /// Queue for finished-run notifications, consumed by scheduler instances. With multiple schedulers this is a competing-consumer queue: each completion is handled by
-        /// exactly one instance. Retry and trigger creation are deduplicated across instances via idempotency keys on the resulting run requests.
+        /// Queue for finished-run notifications, consumed by scheduler instances. With multiple schedulers this is a competing-consumer queue: each completion is handled by exactly
+        /// one instance. Retry and trigger creation are deduplicated across instances via idempotency keys on the resulting run requests.
         /// </summary>
         public const string QueueJobRunFinish = "job.run.complete";
 
-        /// <summary>
-        /// Fan-in exchange for job lifecycle notifications. Declared at API and worker startup when missing (direct, durable). Bindings use the routing keys below.
-        /// </summary>
+        /// <summary>Fan-in exchange for job lifecycle notifications. Declared at API and worker startup when missing (direct, durable). Bindings use the routing keys below.</summary>
         public const string JobEventExchange = "job.events";
 
         /// <summary>AMQP type for <see cref="JobEventExchange" />. Direct because every binding uses an exact routing key.</summary>
         public const string JobEventExchangeType = "direct";
+
         public const string JobDefinitionChangeKey = "job.notifications.definition.updated";
         public const string JobRunCreatedRoutingKey = "job.notifications.run.created";
         public const string JobRunStartedRoutingKey = "job.notifications.run.started";
@@ -132,6 +131,7 @@ public static class Constants
 
             /// <summary>The breaker threshold was reached but the definition could not be disabled, so it remains enabled.</summary>
             public const string CircuitBreakerTripFailed = "job.scheduler.circuit_breaker.trip.failed";
+
             public const string MisfiresCaughtUp = "job.scheduler.misfires.caught_up";
             public const string MisfiresSkipped = "job.scheduler.misfires.skipped";
         }
@@ -146,6 +146,7 @@ public static class Constants
 
             /// <summary>A run started, but its advisory started event could not be published.</summary>
             public const string RunStartedPublishFailed = "job.service.run.started.publish.failed";
+
             public const string RunCreateRejected = "job.service.run.create.rejected";
             public const string RunDispatchDeferred = "job.service.run.dispatch.deferred";
             public const string RunRequeued = "job.service.run.requeued";
@@ -181,6 +182,7 @@ public static class Constants
 
             /// <summary>A workflow run reached <c>Failed</c>.</summary>
             public const string RunsFailed = "job.workflow.runs.failed";
+
             public const string StepsStarted = "job.workflow.steps.started";
             public const string StepsFailed = "job.workflow.steps.failed";
 
@@ -208,6 +210,7 @@ public static class Constants
 
             /// <summary>A dispatch message pointed at a run that no longer exists, so it was dropped without consuming the requeue budget.</summary>
             public const string RunNotFound = "job.worker.run.not_found";
+
             public const string LateFinishDropped = "job.worker.late_finish.dropped";
         }
 
@@ -222,6 +225,7 @@ public static class Constants
 
             /// <summary>Workflow runs deleted by <c>WorkflowRetentionDays</c>. Counted separately from job runs because the two have independent retention policies.</summary>
             public const string WorkflowRunsPurged = "job.maintenance.workflow_runs.purged";
+
             public const string RunsRedispatched = "job.maintenance.runs.redispatched";
             public const string WorkerInstancesPruned = "job.maintenance.worker_instances.pruned";
 
@@ -290,8 +294,8 @@ public static class Constants
 
         /// <summary>Host/runtime keys (CPU, memory, OS). Anything else is worker/queue metadata or a host extra.</summary>
         public static readonly string[] SystemKeys = [
-            Os, OsPlatform, OsVersion, Framework, RuntimeIdentifier, ClrVersion, ProcessArchitecture, OsArchitecture, ProcessorCount, CpuModel, TotalPhysicalMemoryBytes,
-            WorkingSetBytes, GcHeapBytes, IsServerGc, ProcessName, AssemblyVersion
+            Os, OsPlatform, OsVersion, Framework, RuntimeIdentifier, ClrVersion, ProcessArchitecture, OsArchitecture, ProcessorCount, CpuModel,
+            TotalPhysicalMemoryBytes, WorkingSetBytes, GcHeapBytes, IsServerGc, ProcessName, AssemblyVersion
         ];
 
         /// <summary>True when <paramref name="key" /> is a built-in system-info key.</summary>

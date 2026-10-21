@@ -5,21 +5,6 @@ namespace Lyo.FileManager;
 /// <summary>Files and folders that a drop into one folder should move or copy.</summary>
 public sealed class FileManagerDropPlan
 {
-    /// <summary>Builds a plan. <paramref name="destination" /> null is the root.</summary>
-    public FileManagerDropPlan(
-        string? destination,
-        IReadOnlyList<FileManagerEntry> folders,
-        IReadOnlyList<FileManagerEntry> files,
-        IReadOnlyList<FileManagerEntry> physical,
-        IReadOnlyList<string> rejected)
-    {
-        Destination = destination;
-        Folders = folders;
-        Files = files;
-        Physical = physical;
-        Rejected = rejected;
-    }
-
     /// <summary>Folder the items are dropped into. Null is the root.</summary>
     public string? Destination { get; }
 
@@ -37,6 +22,21 @@ public sealed class FileManagerDropPlan
 
     /// <summary>True when at least one item can move or copy.</summary>
     public bool HasWork => Folders.Count > 0 || Files.Count > 0 || Physical.Count > 0;
+
+    /// <summary>Builds a plan. <paramref name="destination" /> null is the root.</summary>
+    public FileManagerDropPlan(
+        string? destination,
+        IReadOnlyList<FileManagerEntry> folders,
+        IReadOnlyList<FileManagerEntry> files,
+        IReadOnlyList<FileManagerEntry> physical,
+        IReadOnlyList<string> rejected)
+    {
+        Destination = destination;
+        Folders = folders;
+        Files = files;
+        Physical = physical;
+        Rejected = rejected;
+    }
 
     /// <summary>Prefix <paramref name="folder" /> occupies after it is placed under <see cref="Destination" />.</summary>
     public string FolderPrefix(FileManagerEntry folder)
@@ -56,16 +56,12 @@ public sealed class FileManagerDropPlan
 /// <summary>Decides where a drag of files and folders lands. The window performs the move.</summary>
 public static class FileManagerDrop
 {
-    /// <summary>
-    /// Folder a drop lands in. A directory row is that folder. A file row is the folder that contains the file.
-    /// No row uses <paramref name="openPrefix" />.
-    /// </summary>
-    public static string? Target(FileManagerEntry? hovered, string? openPrefix)
-        => Normalize(hovered == null ? openPrefix : hovered.PathPrefix);
+    /// <summary>Folder a drop lands in. A directory row is that folder. A file row is the folder that contains the file. No row uses <paramref name="openPrefix" />.</summary>
+    public static string? Target(FileManagerEntry? hovered, string? openPrefix) => Normalize(hovered == null ? openPrefix : hovered.PathPrefix);
 
     /// <summary>
-    /// Splits <paramref name="entries" /> for a drop into <paramref name="destination" />.
-    /// A folder dropped onto itself or a descendant is rejected. An item that already lives there is left out.
+    /// Splits <paramref name="entries" /> for a drop into <paramref name="destination" />. A folder dropped onto itself or a descendant is rejected. An item that already lives
+    /// there is left out.
     /// </summary>
     public static FileManagerDropPlan Plan(IReadOnlyList<FileManagerEntry> entries, string? destination)
     {
@@ -84,12 +80,14 @@ public static class FileManagerDrop
 
                 if (Same(FileManagerDropPlan.Join(dest, entry.Name), entry.PathPrefix))
                     continue;
+
                 folders.Add(entry);
                 continue;
             }
 
             if (Same(entry.PathPrefix, dest))
                 continue;
+
             if (entry.FileId != null)
                 files.Add(entry);
             else if (!string.IsNullOrWhiteSpace(entry.PhysicalKey))
@@ -104,6 +102,7 @@ public static class FileManagerDrop
         var folder = Trim(folderPrefix);
         if (folder.Length == 0)
             return true;
+
         var dest = Trim(target);
         return dest.Equals(folder, StringComparison.Ordinal) || dest.StartsWith(folder + "/", StringComparison.Ordinal);
     }

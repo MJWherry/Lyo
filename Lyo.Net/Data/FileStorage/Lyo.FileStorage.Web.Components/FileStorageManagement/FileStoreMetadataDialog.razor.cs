@@ -1,6 +1,5 @@
 using Lyo.FileMetadataStore.Models;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 
 namespace Lyo.FileStorage.Web.Components.FileStorageManagement;

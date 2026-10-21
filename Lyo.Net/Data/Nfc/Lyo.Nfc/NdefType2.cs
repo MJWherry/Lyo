@@ -2,13 +2,10 @@ using Lyo.Exceptions;
 
 namespace Lyo.Nfc;
 
-/// <summary>
-/// Type 2 Tag TLV around an NDEF message: <c>0x03</c>, length, message, <c>0xFE</c>.
-/// <see cref="Decode"/> throws <see cref="NfcException"/> when the terminator is missing.
-/// </summary>
+/// <summary>Type 2 Tag TLV around an NDEF message: <c>0x03</c>, length, message, <c>0xFE</c>. <see cref="Decode" /> throws <see cref="NfcException" /> when the terminator is missing.</summary>
 public static class NdefType2
 {
-    /// <summary>Wraps <paramref name="message"/> in a Type 2 NDEF TLV.</summary>
+    /// <summary>Wraps <paramref name="message" /> in a Type 2 NDEF TLV.</summary>
     public static byte[] Encode(NdefMessage message)
     {
         ArgumentHelpers.ThrowIfNull(message);
@@ -32,7 +29,7 @@ public static class NdefType2
         return longTlv;
     }
 
-    /// <summary>Reads the first NDEF TLV in <paramref name="userMemory"/>. Bytes after the terminator are ignored.</summary>
+    /// <summary>Reads the first NDEF TLV in <paramref name="userMemory" />. Bytes after the terminator are ignored.</summary>
     public static NdefMessage Decode(ReadOnlySpan<byte> userMemory)
     {
         var index = 0;
@@ -87,16 +84,17 @@ public static class NdefType2
         var header = (byte)record.TypeNameFormat;
         if (first)
             header |= 0x80;
+
         if (last)
             header |= 0x40;
+
         if (shortRecord)
             header |= 0x10;
 
         buffer.WriteByte(header);
         buffer.WriteByte((byte)type.Length);
-        if (shortRecord) {
+        if (shortRecord)
             buffer.WriteByte((byte)payload.Length);
-        }
         else {
             buffer.WriteByte((byte)(payload.Length >> 24));
             buffer.WriteByte((byte)(payload.Length >> 16));
@@ -193,18 +191,14 @@ public static class NdefType2
 /// <summary>Reads and writes an NDEF message in the user pages of an NTAG21x tag.</summary>
 public static class NfcNdef
 {
-    /// <summary>
-    /// Reads user pages four at a time and decodes the NDEF TLV. Stops at the <c>0xFE</c> terminator, so a short message does not pull the rest of the tag.
-    /// </summary>
+    /// <summary>Reads user pages four at a time and decodes the NDEF TLV. Stops at the <c>0xFE</c> terminator, so a short message does not pull the rest of the tag.</summary>
     public static async Task<NdefMessage> ReadAsync(INfcTag tag, NtagLayout layout, CancellationToken cancellationToken)
     {
         var user = await ReadUserAreaAsync(tag, layout, cancellationToken).ConfigureAwait(false);
         return NdefType2.Decode(user);
     }
 
-    /// <summary>
-    /// Reads user pages four at a time. Stops when the NDEF terminator is present. A tag with no complete NDEF TLV returns the whole user area, read once.
-    /// </summary>
+    /// <summary>Reads user pages four at a time. Stops when the NDEF terminator is present. A tag with no complete NDEF TLV returns the whole user area, read once.</summary>
     public static async Task<byte[]> ReadUserAreaAsync(INfcTag tag, NtagLayout layout, CancellationToken cancellationToken)
     {
         ArgumentHelpers.ThrowIfNull(tag);
@@ -260,9 +254,7 @@ public static class NfcNdef
         return userMemory[index + length] == 0xFE;
     }
 
-    /// <summary>
-    /// Encodes <paramref name="message"/> and writes it from page 4. The last page is zero-padded. Config pages are left alone.
-    /// </summary>
+    /// <summary>Encodes <paramref name="message" /> and writes it from page 4. The last page is zero-padded. Config pages are left alone.</summary>
     public static async Task WriteAsync(INfcTag tag, NtagLayout layout, NdefMessage message, CancellationToken cancellationToken)
     {
         ArgumentHelpers.ThrowIfNull(tag);
@@ -272,11 +264,11 @@ public static class NfcNdef
         if (tlv.Length > layout.UserCapacityBytes)
             throw new NfcException("NDEF message does not fit in the tag user memory.");
 
-        var pageBytes = ((tlv.Length + 3) / 4) * 4;
+        var pageBytes = (tlv.Length + 3) / 4 * 4;
         var padded = new byte[pageBytes];
         tlv.CopyTo(padded, 0);
         for (var offset = 0; offset < padded.Length; offset += 4) {
-            var page = layout.UserStartPage + (offset / 4);
+            var page = layout.UserStartPage + offset / 4;
             await tag.WritePageAsync(page, padded.AsMemory(offset, 4), cancellationToken).ConfigureAwait(false);
         }
     }

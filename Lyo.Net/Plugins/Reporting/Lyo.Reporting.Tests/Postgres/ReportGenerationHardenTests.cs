@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Reporting.Models;
 using Lyo.Reporting.Models.Builders;
@@ -10,7 +11,7 @@ using Lyo.Reporting.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Lyo.Common.Core.Identifiers;
+
 namespace Lyo.Reporting.Tests.Postgres;
 
 [Trait("Category", "Integration")]
@@ -33,8 +34,7 @@ public sealed class ReportGenerationHardenTests(ReportingPostgresFixture fixture
         await db.SaveChangesAsync(TestCt);
         using var scope = fixture.CreateScope();
         var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
-        await Assert.ThrowsAsync<ReportValidationException>(() => reportService.GenerateAsync(
-            new() { ReportDefinitionId = definition.Id, Format = ReportFormat.Csv }, ct: TestCt));
+        await Assert.ThrowsAsync<ReportValidationException>(() => reportService.GenerateAsync(new() { ReportDefinitionId = definition.Id, Format = ReportFormat.Csv }, ct: TestCt));
     }
 
     [Fact]
@@ -42,8 +42,8 @@ public sealed class ReportGenerationHardenTests(ReportingPostgresFixture fixture
     {
         using var scope = fixture.CreateScope();
         var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
-        await Assert.ThrowsAsync<InvalidOperationException>(() => reportService.GenerateAsync(
-            new() { ReportDataJson = """{"Title":"x"}""", Format = ReportFormat.Pdf }, ct: TestCt));
+        await Assert.ThrowsAsync<InvalidOperationException>(()
+            => reportService.GenerateAsync(new() { ReportDataJson = """{"Title":"x"}""", Format = ReportFormat.Pdf }, ct: TestCt));
 
         await using var db = await fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>().CreateDbContextAsync(TestCt);
         var failed = await db.ReportGenerations.AsNoTracking()
@@ -76,11 +76,10 @@ public sealed class ReportGenerationHardenTests(ReportingPostgresFixture fixture
         var sp = scope.ServiceProvider;
         var reportService = new ReportService(
             sp.GetRequiredService<IDbContextFactory<ReportingContext>>(), sp.GetServices<IReportRenderer>(), [new StubProvider()],
-            [new() { Key = "stub-profile", DefaultFormat = ReportFormat.Csv, DefaultFileName = "from-profile.csv" }], sp,
-            sp.GetRequiredService<PostgresReportingOptions>(), sp.GetRequiredService<ILogger<ReportService>>());
+            [new() { Key = "stub-profile", DefaultFormat = ReportFormat.Csv, DefaultFileName = "from-profile.csv" }], sp, sp.GetRequiredService<PostgresReportingOptions>(),
+            sp.GetRequiredService<ILogger<ReportService>>());
 
-        var result = await reportService.GenerateAsync(
-            new() { ReportDefinitionId = definition.Id, CreatedBy = "worker-a", IncludeReportData = true }, ct: TestCt);
+        var result = await reportService.GenerateAsync(new() { ReportDefinitionId = definition.Id, CreatedBy = "worker-a", IncludeReportData = true }, ct: TestCt);
         Assert.Equal(ReportGenerationStatus.Succeeded, result.Status);
         Assert.Equal(ReportFormat.Csv, result.Format);
         Assert.Equal("from-profile.csv", result.OriginalFileName);
@@ -159,9 +158,7 @@ public sealed class ReportGenerationHardenTests(ReportingPostgresFixture fixture
         Assert.NotNull(result.Parameters);
         Assert.Single(result.Parameters!);
         Assert.Equal(LyoTypeInfo.String.ToJson("override-client"), result.Parameters![0].Value);
-        await using var verify = await fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>()
-            .CreateDbContextAsync(TestCt);
-
+        await using var verify = await fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>().CreateDbContextAsync(TestCt);
         var stored = await verify.ReportGenerationParameters.AsNoTracking().Where(p => p.ReportGenerationId == result.Id).ToListAsync(TestCt);
         Assert.Single(stored);
         Assert.Equal(LyoTypeInfo.String.ToJson("override-client"), stored[0].Value);

@@ -9,6 +9,9 @@ namespace Lyo.Query.Models.Common;
 [DebuggerDisplay("{ToString(),nq}")]
 public class ConditionClause : WhereClause, IEquatable<ConditionClause>
 {
+    /// <summary>Default Fuzzy / NotFuzzy cutoff when <see cref="Threshold" /> is omitted. Matches Postgres <c>pg_trgm.similarity_threshold</c>.</summary>
+    public const double DefaultFuzzyThreshold = 0.3;
+
     /// <summary>Dotted property path on the entity (optional collection navigation), e.g. <c>Status</c> or <c>Lines.Quantity</c>.</summary>
     public string Field { get; set; }
 
@@ -26,9 +29,6 @@ public class ConditionClause : WhereClause, IEquatable<ConditionClause>
     /// <see cref="DefaultFuzzyThreshold" /> (Postgres <c>pg_trgm.similarity_threshold</c> default). Ignored for every other operator.
     /// </summary>
     public double? Threshold { get; set; }
-
-    /// <summary>Default Fuzzy / NotFuzzy cutoff when <see cref="Threshold" /> is omitted. Matches Postgres <c>pg_trgm.similarity_threshold</c>.</summary>
-    public const double DefaultFuzzyThreshold = 0.3;
 
     /// <summary>Builds a condition with an empty field and default <see cref="ComparisonOperatorEnum.Equals" />.</summary>
     public ConditionClause()
@@ -115,6 +115,5 @@ public class ConditionClause : WhereClause, IEquatable<ConditionClause>
         return v.GetHashCode();
     }
 
-    private string ThresholdSuffix()
-        => Comparison is ComparisonOperatorEnum.Fuzzy or ComparisonOperatorEnum.NotFuzzy && Threshold is { } t ? $" threshold={t}" : string.Empty;
+    private string ThresholdSuffix() => Comparison is ComparisonOperatorEnum.Fuzzy or ComparisonOperatorEnum.NotFuzzy && Threshold is { } t ? $" threshold={t}" : string.Empty;
 }

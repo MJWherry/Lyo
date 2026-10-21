@@ -14,9 +14,7 @@ public sealed class CrossSchemaNavigationBuilder<TContext>
 
     internal CrossSchemaNavigationBuilder(CrossSchemaNavigationOptions<TContext> options) => _options = options;
 
-    /// <summary>
-    /// Adds a relationship to a related type already mapped on <typeparamref name="TContext" /> (same database model). Does not change table mapping or migrations.
-    /// </summary>
+    /// <summary>Adds a relationship to a related type already mapped on <typeparamref name="TContext" /> (same database model). Does not change table mapping or migrations.</summary>
     public CrossSchemaNavigationBuilder<TContext> AddSameContext<TRoot, TRelated>(Expression<Func<TRoot, TRelated?>> navigation, Expression<Func<TRoot, object?>> foreignKey)
         where TRoot : class where TRelated : class
     {

@@ -1,10 +1,12 @@
 # Lyo.Scheduler
 
-In-process scheduler that runs actions at scheduled times. Supports **SetTimes**, **Interval**, **OneShot**, and **Cron** schedules (5- or 6-field expressions) with logging, metrics, and optional state persistence via `ISchedulerStateStore`.
+In-process scheduler that runs actions at scheduled times. Supports **SetTimes**, **Interval**, **OneShot**, and **Cron** schedules (5- or 6-field expressions) with logging,
+metrics, and optional state persistence via `ISchedulerStateStore`.
 
 ## Features
 
-- **Schedule types.** `Interval` (periodic inside a window), `SetTimes` (explicit daily times), `OneShot` (single run), `Cron` (5- or 6-field expressions via [`Lyo.Schedule.Models.CronExpression`](../../Schedule/Lyo.Schedule.Models/README.md)).
+- **Schedule types.** `Interval` (periodic inside a window), `SetTimes` (explicit daily times), `OneShot` (single run), `Cron` (5- or 6-field expressions via [
+  `Lyo.Schedule.Models.CronExpression`](../../Schedule/Lyo.Schedule.Models/README.md)).
 - **State persistence.** In-memory by default. Pluggable `ISchedulerStateStore` (e.g. cache-backed) so state survives a restart.
 - **Logging and metrics.** `ILogger` and `IMetrics`.
 - **Background execution.** Actions run in the background by default. Optional action timeout.
@@ -50,14 +52,14 @@ await scheduler.StartAsync();
 
 ## `ISchedulerService` methods
 
-| Member | What it does |
-| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Member                                                                                             | What it does                                                                                     |
+|----------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
 | `AddSchedule(string id, string name, ScheduleDefinition def, Func<CancellationToken,Task> action)` | Add a scheduled action. `true` when the id is new; `false` when that `id` is already registered. |
-| `RemoveSchedule(string id)` | Drop a schedule. |
-| `TryGetSchedule(string id, out ScheduledAction action)` / `GetSchedules()` | Inspection. |
-| `StartAsync(CancellationToken)` / `StopAsync(CancellationToken)` | Lifecycle. |
-| `TriggerNowAsync(string id, CancellationToken)` | Run an existing schedule immediately, ignoring cadence. |
-| `GetNextRun(string id, DateTimeOffset? from = null)` | `ScheduleCalculator` yields the next occurrence for all four schedule types. |
+| `RemoveSchedule(string id)`                                                                        | Drop a schedule.                                                                                 |
+| `TryGetSchedule(string id, out ScheduledAction action)` / `GetSchedules()`                         | Inspection.                                                                                      |
+| `StartAsync(CancellationToken)` / `StopAsync(CancellationToken)`                                   | Lifecycle.                                                                                       |
+| `TriggerNowAsync(string id, CancellationToken)`                                                    | Run an existing schedule immediately, ignoring cadence.                                          |
+| `GetNextRun(string id, DateTimeOffset? from = null)`                                               | `ScheduleCalculator` yields the next occurrence for all four schedule types.                     |
 
 `ScheduleCalculator` is the evaluator underneath: it dispatches to `GetNextRunSetTimes` / `GetNextRunInterval` / `GetNextRunOneShot` / `GetNextRunCron`. Cron evaluation first tries
 `CronFormat.IncludeSeconds` (6 fields) and falls back to the standard 5-field format.
@@ -68,16 +70,18 @@ await scheduler.StartAsync();
 - **Interval.** Fire every N minutes/hours inside a daily window.
 - **OneShot.** Fire once at a specific time.
 - **Cron.** 5-field or 6-field cron (`"0 8 * * MON-FRI"`, `"*/30 * * * * *"`).
-- **Calendar.** `ScheduleCalendar.From(definition, year, month, zone)` places fires on a `Calendar`. A disabled schedule yields an empty grid. An interval schedule also places its daily window as a span. The entry title is the schedule description when one is set. Pass a hue and `EntityRef` list when the schedule stands in for a meeting. `keyScope` keeps two schedules that share an instant from using the same key.
+- **Calendar.** `ScheduleCalendar.From(definition, year, month, zone)` places fires on a `Calendar`. A disabled schedule yields an empty grid. An interval schedule also places its
+  daily window as a span. The entry title is the schedule description when one is set. Pass a hue and `EntityRef` list when the schedule stands in for a meeting. `keyScope` keeps
+  two schedules that share an instant from using the same key.
 
 ## Options
 
-| Option | Default | What it controls |
-| --------------- | ------- | ---------------------------------------------- |
-| CheckIntervalMs | 10000 | How often (ms) to look for due schedules |
-| EnableMetrics | true | Turn metrics on (when IMetrics is registered) |
-| RunInBackground | true | Fire-and-forget actions vs await them |
-| ActionTimeout | 120 min | Longest each action may run; null = no timeout |
+| Option          | Default | What it controls                               |
+|-----------------|---------|------------------------------------------------|
+| CheckIntervalMs | 10000   | How often (ms) to look for due schedules       |
+| EnableMetrics   | true    | Turn metrics on (when IMetrics is registered)  |
+| RunInBackground | true    | Fire-and-forget actions vs await them          |
+| ActionTimeout   | 120 min | Longest each action may run; null = no timeout |
 
 ## Dependencies
 

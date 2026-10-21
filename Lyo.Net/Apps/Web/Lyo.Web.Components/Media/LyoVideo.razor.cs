@@ -2,10 +2,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace Lyo.Web.Components.Media;
 
-/// <summary>
-/// Video viewer. A blank <see cref="Src" /> renders “No video.” and ignores <see cref="Poster" />.
-/// Controls are on unless turned off.
-/// </summary>
+/// <summary>Video viewer. A blank <see cref="Src" /> renders “No video.” and ignores <see cref="Poster" />. Controls are on unless turned off.</summary>
 public partial class LyoVideo
 {
     /// <summary>Media URL. Blank renders the empty state.</summary>

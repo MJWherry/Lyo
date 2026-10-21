@@ -20,34 +20,19 @@ public static class StorySamples
             .Variable("lock_picked", StoryVariableType.Boolean, false)
             .Variable("door_locked", StoryVariableType.Boolean, true)
             .Variable("attempts", StoryVariableType.Integer, 0)
-            .Action("raise_alarm", a => a.Do(d => d
-                .Set("alarm", true)
-                .Increment("heat")
-                .GoesTo("alarm_cutscene")))
-            .StartNode("vault_door", n => n
-                .Choice("pick_lock", "Pick the lock", c => c
-                    .WhenAll(w => w
-                        .Flag("has_lockpick")
-                        .NotFlag("alarm"))
-                    .WhenOneOf(w => w
-                        .Flag("is_night")
-                        .Flag("guards_away"))
-                    .Do(d => d
-                        .Set("lock_picked", true)
-                        .Unset("door_locked")
-                        .Increment("attempts")
-                        .GoesTo("inside")))
-                .Choice("smash", "Smash the glass", c => c.Do(d => d.Invoke("raise_alarm")))
-                .Choice("admire", "Admire the door", c => { }))
+            .Action("raise_alarm", a => a.Do(d => d.Set("alarm", true).Increment("heat").GoesTo("alarm_cutscene")))
+            .StartNode(
+                "vault_door",
+                n => n.Choice(
+                        "pick_lock", "Pick the lock",
+                        c => c.WhenAll(w => w.Flag("has_lockpick").NotFlag("alarm"))
+                            .WhenOneOf(w => w.Flag("is_night").Flag("guards_away"))
+                            .Do(d => d.Set("lock_picked", true).Unset("door_locked").Increment("attempts").GoesTo("inside")))
+                    .Choice("smash", "Smash the glass", c => c.Do(d => d.Invoke("raise_alarm")))
+                    .Choice("admire", "Admire the door", c => { }))
             .Node("inside", n => n.Ending())
-            .Node("alarm_cutscene", n => n
-                .Cutscene("media:heist-alarm")
-                .On(StoryTrigger.Advanced, r => r.Do(d => d.GoesTo("guards"))))
+            .Node("alarm_cutscene", n => n.Cutscene("media:heist-alarm").On(StoryTrigger.Advanced, r => r.Do(d => d.GoesTo("guards"))))
             .Node("guards", n => n.Ending())
-            .React("alarm_watch", r => r
-                .On(StoryTrigger.VariableChanged, "alarm")
-                .WhenAll(w => w.Eq("alarm", true))
-                .Once()
-                .Do(d => d.GoesTo("alarm_cutscene")))
+            .React("alarm_watch", r => r.On(StoryTrigger.VariableChanged, "alarm").WhenAll(w => w.Eq("alarm", true)).Once().Do(d => d.GoesTo("alarm_cutscene")))
             .Build();
 }

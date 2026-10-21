@@ -7,8 +7,8 @@ namespace Lyo.FileStorage.Policy;
 public static class FileSignatureAlignment
 {
     /// <summary>
-    /// Throws when the header disagrees with the claimed type. The claim is the filename extension when that extension is known, otherwise the declared content type.
-    /// A claimed type with a signature must match that signature (or its family). A claimed type with no signature is rejected when the header is some other known type.
+    /// Throws when the header disagrees with the claimed type. The claim is the filename extension when that extension is known, otherwise the declared content type. A claimed
+    /// type with a signature must match that signature (or its family). A claimed type with no signature is rejected when the header is some other known type.
     /// </summary>
     /// <param name="sniffer">Header identifier.</param>
     /// <param name="header">Leading bytes of the payload.</param>

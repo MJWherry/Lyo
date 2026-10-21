@@ -1,6 +1,7 @@
 # Lyo.Note.Seed
 
-`NoteEfSeedContributor` writes `options.Count` public notes for tenant `NoteEfSeedContributor.TenantId` and subject `seed` / `seed`. Bogus supplies the text when the host passes `SeedOptions.RandomSeed`. `OnClear` deletes notes so `--replace` can run.
+`NoteEfSeedContributor` writes `options.Count` public notes for tenant `NoteEfSeedContributor.TenantId` and subject `seed` / `seed`. Bogus supplies the text when the host passes
+`SeedOptions.RandomSeed`. `OnClear` deletes notes so `--replace` can run.
 
 ## Features
 

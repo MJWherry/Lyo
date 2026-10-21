@@ -56,8 +56,8 @@ public static class JobScheduleDatabaseExtensions
         }
 
         /// <summary>
-        /// Applies the schedule's optional blackout calendar to <paramref name="utcTime" />. Returns null when the slot should be skipped, the original instant when it may
-        /// fire, or a deferred UTC instant when a matching window uses Defer. When no calendar is attached, returns <paramref name="utcTime" />.
+        /// Applies the schedule's optional blackout calendar to <paramref name="utcTime" />. Returns null when the slot should be skipped, the original instant when it may fire, or
+        /// a deferred UTC instant when a matching window uses Defer. When no calendar is attached, returns <paramref name="utcTime" />.
         /// </summary>
         public DateTime? AdjustSlotForBlackout(DateTime utcTime)
         {
@@ -70,8 +70,8 @@ public static class JobScheduleDatabaseExtensions
         }
 
         /// <summary>
-        /// Returns whether <paramref name="utcTime" /> is allowed by the schedule's optional blackout calendar windows. Skip windows return false; Defer windows still
-        /// count as allowed (the fire time is shifted). When no blackout calendar is attached, every time is allowed.
+        /// Returns whether <paramref name="utcTime" /> is allowed by the schedule's optional blackout calendar windows. Skip windows return false; Defer windows still count as
+        /// allowed (the fire time is shifted). When no blackout calendar is attached, every time is allowed.
         /// </summary>
         public bool IsAllowedByBlackoutCalendar(DateTime utcTime) => jobSchedule.AdjustSlotForBlackout(utcTime).HasValue;
     }

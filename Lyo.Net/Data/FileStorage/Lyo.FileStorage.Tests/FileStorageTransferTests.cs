@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text.Json;
 using Lyo.Common.Core.Identifiers;
 using Lyo.Compression;
@@ -10,6 +11,7 @@ using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Tests.Support;
 using Lyo.KeyStore;
 using Lyo.Testing;
+using HashAlgorithm = Lyo.FileMetadataStore.Models.HashAlgorithm;
 using KeyNotFoundException = Lyo.KeyStore.Exceptions.KeyNotFoundException;
 
 namespace Lyo.FileStorage.Tests;
@@ -24,11 +26,9 @@ public sealed class FileStorageTransferTests
         await AddKeyAsync(pair.SourceKeys, "app", "2", 12);
         await pair.SourceKeys.SetCurrentVersionAsync("app", "2", TestCt);
         await AddKeyAsync(pair.SourceKeys, "unused", "1", 13);
-        var payload = TestData.Create(64, TestData.Seed);
+        var payload = TestData.Create(64);
         var saved = await SaveAsync(pair.Source, payload, "notes.bin", encrypt: true, keyId: "app");
-
         var result = await TransferAsync(pair, new(FileStorageTransferScope.KeysOnly, FileStorageKeyMode.PreserveKeys));
-
         Assert.Equal(0, result.FilesCopied);
         Assert.Equal(0, result.FilesFailed);
         Assert.Equal(2, result.KeysCopied);
@@ -50,9 +50,8 @@ public sealed class FileStorageTransferTests
         var payload = TestData.Create(48, TestData.Seed + 1);
         var saved = await SaveAsync(source, payload, "secret.bin", encrypt: true, keyId: "app");
         var sourceEndpoint = new FileStorageTransferEndpoint(source.Storage, source.Storage.MetadataStore, pair.SourceKeys);
-
-        var error = await Assert.ThrowsAsync<KeyNotFoundException>(
-            () => FileStorageTransfer.TransferAsync(sourceEndpoint, pair.DestinationEndpoint, new(FileStorageTransferScope.KeysOnly, FileStorageKeyMode.PreserveKeys), TestCt));
+        var error = await Assert.ThrowsAsync<KeyNotFoundException>(() => FileStorageTransfer.TransferAsync(
+            sourceEndpoint, pair.DestinationEndpoint, new(FileStorageTransferScope.KeysOnly, FileStorageKeyMode.PreserveKeys), TestCt));
 
         Assert.Contains("app", error.Message, StringComparison.Ordinal);
         Assert.Empty(await pair.DestinationKeys.GetAvailableKeyIdsAsync(TestCt));
@@ -65,10 +64,7 @@ public sealed class FileStorageTransferTests
         using var pair = CreatePair();
         await AddKeyAsync(pair.SourceKeys, "app", "1", 31);
         var saved = await SaveAsync(pair.Source, TestData.Create(32, TestData.Seed + 2), "a.bin", encrypt: true, keyId: "app");
-
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => TransferAsync(pair, new(FileStorageTransferScope.KeysOnly, FileStorageKeyMode.NewKey, TargetKeyId: "fresh")));
-
+        await Assert.ThrowsAsync<InvalidOperationException>(() => TransferAsync(pair, new(FileStorageTransferScope.KeysOnly, FileStorageKeyMode.NewKey, "fresh")));
         Assert.False(await pair.DestinationKeys.HasKeyAsync("fresh", ct: TestCt));
         Assert.False(File.Exists(ObjectPath(pair.Destination, saved)));
     }
@@ -80,9 +76,7 @@ public sealed class FileStorageTransferTests
         await AddKeyAsync(pair.SourceKeys, "app", "1", 41);
         var payload = TestData.Create(96, TestData.Seed + 3);
         var saved = await SaveAsync(pair.Source, payload, "blob.bin", encrypt: true, keyId: "app");
-
         var result = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys));
-
         Assert.Equal(1, result.FilesCopied);
         Assert.Equal(0, result.FilesFailed);
         Assert.Equal(await File.ReadAllBytesAsync(ObjectPath(pair.Source, saved), TestCt), await File.ReadAllBytesAsync(ObjectPath(pair.Destination, saved), TestCt));
@@ -95,9 +89,7 @@ public sealed class FileStorageTransferTests
         await AddKeyAsync(pair.SourceKeys, "app", "1", 51);
         var payload = TestData.Create(80, TestData.Seed + 4);
         var saved = await SaveAsync(pair.Source, payload, "plain.bin", encrypt: true, keyId: "app");
-
         await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys));
-
         Assert.Equal(payload, await pair.Destination.Storage.GetFileAsync(saved.Id, ct: TestCt));
     }
 
@@ -108,9 +100,7 @@ public sealed class FileStorageTransferTests
         await AddKeyAsync(pair.SourceKeys, "app", "1", 61);
         var payload = TestData.Create(80, TestData.Seed + 5);
         var saved = await SaveAsync(pair.Source, payload, "sealed.bin", encrypt: true, keyId: "app");
-
-        var result = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.NewKey, TargetKeyId: "app-2026"));
-
+        var result = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.NewKey, "app-2026"));
         Assert.Equal(1, result.FilesCopied);
         Assert.Equal(payload, await pair.Destination.Storage.GetFileAsync(saved.Id, ct: TestCt));
         var sourceObject = await File.ReadAllBytesAsync(ObjectPath(pair.Source, saved), TestCt);
@@ -133,13 +123,12 @@ public sealed class FileStorageTransferTests
         var plainRow = await SaveAsync(
             pair.Source, plain, "note.txt", pathPrefix: "incoming", contentType: "text/plain", charset: "utf-8", metadata: callerJson, ownerId: ownerId,
             availability: FileAvailability.PendingScan);
-        var compressedRow = await SaveAsync(pair.Source, compressed, "note.gz", compress: true, pathPrefix: "incoming");
+
+        var compressedRow = await SaveAsync(pair.Source, compressed, "note.gz", true, pathPrefix: "incoming");
         var encryptedRow = await SaveAsync(pair.Source, encrypted, "note.enc", encrypt: true, keyId: "app", pathPrefix: "incoming", ownerId: ownerId);
         await AddKeyAsync(pair.SourceKeys, "app", "2", 72);
         await pair.SourceKeys.SetCurrentVersionAsync("app", "2", TestCt);
-
         var result = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys));
-
         Assert.Equal(3, result.FilesCopied);
         Assert.Equal(0, result.FilesFailed);
         var destPlain = await pair.Destination.Storage.MetadataStore.GetMetadataAsync(plainRow.Id, TestCt);
@@ -163,13 +152,11 @@ public sealed class FileStorageTransferTests
     {
         var metaRoot = NewDirectory();
         var shared = new LocalFileMetadataStore(metaRoot);
-        using var pair = CreatePair(sharedMetadata: shared, extraDirectories: [metaRoot]);
+        using var pair = CreatePair(shared, extraDirectories: [metaRoot]);
         var payload = TestData.Create(70, TestData.Seed + 9);
         var saved = await SaveAsync(pair.Source, payload, "shared.bin");
         var before = (await shared.GetMetadataAsync(saved.Id, TestCt)).Timestamp;
-
         var result = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys));
-
         Assert.Equal(1, result.FilesCopied);
         Assert.Equal(0, result.FilesSkipped);
         Assert.Equal(before, (await shared.GetMetadataAsync(saved.Id, TestCt)).Timestamp);
@@ -182,9 +169,7 @@ public sealed class FileStorageTransferTests
     {
         using var pair = CreatePair();
         var saved = await SaveAsync(pair.Source, TestData.Create(24, TestData.Seed + 10), "rel.bin", pathPrefix: "incoming");
-
         await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys));
-
         var key = CloudObjectKeyBuilder.FromMetadata(saved.Id, saved.SourceFileName, saved.PathPrefix);
         Assert.StartsWith("incoming/", key, StringComparison.Ordinal);
         Assert.True(File.Exists(Path.Combine(pair.Destination.Options.RootDirectoryPath, key.Replace('/', Path.DirectorySeparatorChar))));
@@ -202,9 +187,7 @@ public sealed class FileStorageTransferTests
         var plainRow = await SaveAsync(pair.Source, plain, "open.bin");
         var sealedRow = await SaveAsync(pair.Source, sealedBytes, "closed.bin", encrypt: true, keyId: "app", ownerId: ownerId);
         var sourceBefore = await pair.Source.Storage.MetadataStore.GetMetadataAsync(sealedRow.Id, TestCt);
-
-        var result = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.NewKey, TargetKeyId: "app-2026"));
-
+        var result = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.NewKey, "app-2026"));
         Assert.Equal(2, result.FilesCopied);
         var destPlain = await pair.Destination.Storage.MetadataStore.GetMetadataAsync(plainRow.Id, TestCt);
         var destSealed = await pair.Destination.Storage.MetadataStore.GetMetadataAsync(sealedRow.Id, TestCt);
@@ -227,10 +210,7 @@ public sealed class FileStorageTransferTests
         await AddKeyAsync(pair.SourceKeys, "app", "1", 91);
         await AddKeyAsync(pair.DestinationKeys, "app-2026", "1", 92);
         var saved = await SaveAsync(pair.Source, TestData.Create(28, TestData.Seed + 13), "a.bin", encrypt: true, keyId: "app");
-
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.NewKey, TargetKeyId: "app-2026")));
-
+        await Assert.ThrowsAsync<InvalidOperationException>(() => TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.NewKey, "app-2026")));
         await Assert.ThrowsAsync<FileNotFoundException>(() => pair.Destination.Storage.MetadataStore.GetMetadataAsync(saved.Id, TestCt));
         Assert.False(File.Exists(ObjectPath(pair.Destination, saved)));
     }
@@ -240,13 +220,10 @@ public sealed class FileStorageTransferTests
     {
         var metaRoot = NewDirectory();
         var shared = new LocalFileMetadataStore(metaRoot);
-        using var pair = CreatePair(sharedMetadata: shared, extraDirectories: [metaRoot]);
+        using var pair = CreatePair(shared, extraDirectories: [metaRoot]);
         await AddKeyAsync(pair.SourceKeys, "app", "1", 101);
         var saved = await SaveAsync(pair.Source, TestData.Create(28, TestData.Seed + 14), "a.bin", encrypt: true, keyId: "app");
-
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.NewKey, TargetKeyId: "app-2026")));
-
+        await Assert.ThrowsAsync<InvalidOperationException>(() => TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.NewKey, "app-2026")));
         Assert.False(await pair.DestinationKeys.HasKeyAsync("app-2026", ct: TestCt));
         Assert.Equal("app", (await shared.GetMetadataAsync(saved.Id, TestCt)).DataEncryptionKeyId);
     }
@@ -257,18 +234,16 @@ public sealed class FileStorageTransferTests
         using var missingKey = CreatePair();
         await AddKeyAsync(missingKey.SourceKeys, "app", "1", 111);
         var missingKeyFile = await SaveAsync(missingKey.Source, TestData.Create(24, TestData.Seed + 15), "a.bin", encrypt: true, keyId: "app");
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            TransferAsync(missingKey, new(FileStorageTransferScope.Everything, FileStorageKeyMode.ExistingKey, TargetKeyId: "app", TargetKeyVersion: "1")));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => TransferAsync(missingKey, new(FileStorageTransferScope.Everything, FileStorageKeyMode.ExistingKey, "app", "1")));
         Assert.False(File.Exists(ObjectPath(missingKey.Destination, missingKeyFile)));
-
         using var missingVersion = CreatePair();
         await AddKeyAsync(missingVersion.SourceKeys, "app", "1", 112);
         await AddKeyAsync(missingVersion.DestinationKeys, "app", "1", 113);
         var missingVersionFile = await SaveAsync(missingVersion.Source, TestData.Create(24, TestData.Seed + 16), "b.bin", encrypt: true, keyId: "app");
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => TransferAsync(missingVersion, new(FileStorageTransferScope.Everything, FileStorageKeyMode.ExistingKey, TargetKeyId: "app", TargetKeyVersion: "9")));
-        Assert.False(File.Exists(ObjectPath(missingVersion.Destination, missingVersionFile)));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => TransferAsync(
+            missingVersion, new(FileStorageTransferScope.Everything, FileStorageKeyMode.ExistingKey, "app", "9")));
 
+        Assert.False(File.Exists(ObjectPath(missingVersion.Destination, missingVersionFile)));
         using var pair = CreatePair();
         await AddKeyAsync(pair.SourceKeys, "app", "1", 114);
         await AddKeyAsync(pair.DestinationKeys, "app", "1", 115);
@@ -276,9 +251,7 @@ public sealed class FileStorageTransferTests
         await pair.DestinationKeys.SetCurrentVersionAsync("app", "1", TestCt);
         var payload = TestData.Create(44, TestData.Seed + 17);
         var saved = await SaveAsync(pair.Source, payload, "c.bin", encrypt: true, keyId: "app");
-
-        var result = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.ExistingKey, TargetKeyId: "app", TargetKeyVersion: "2"));
-
+        var result = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.ExistingKey, "app", "2"));
         Assert.Equal(1, result.FilesCopied);
         Assert.Equal(0, result.KeysCopied);
         var destination = await pair.Destination.Storage.MetadataStore.GetMetadataAsync(saved.Id, TestCt);
@@ -296,9 +269,7 @@ public sealed class FileStorageTransferTests
         var payload = TestData.Create(52, TestData.Seed + 18);
         await SaveAsync(pair.Destination, payload, "existing.bin");
         var source = await SaveAsync(pair.Source, payload, "incoming.bin");
-
-        var result = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.ExistingKey, TargetKeyId: "app"));
-
+        var result = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.ExistingKey, "app"));
         Assert.Equal(0, result.FilesCopied);
         Assert.Equal(1, result.FilesFailed);
         Assert.Contains(result.Errors, error => error.FileId == source.Id);
@@ -312,9 +283,7 @@ public sealed class FileStorageTransferTests
         await AddKeyAsync(pair.SourceKeys, "app", "1", 131);
         var first = await SaveAsync(pair.Source, TestData.Create(16, TestData.Seed + 19), "a.bin", encrypt: true, keyId: "app");
         var second = await SaveAsync(pair.Source, TestData.Create(16, TestData.Seed + 20), "b.bin", encrypt: true, keyId: "app");
-
         await Assert.ThrowsAsync<InvalidOperationException>(() => TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys, ListCap: 1)));
-
         Assert.Empty(await pair.DestinationKeys.GetAvailableKeyIdsAsync(TestCt));
         Assert.False(File.Exists(ObjectPath(pair.Destination, first)));
         Assert.False(File.Exists(ObjectPath(pair.Destination, second)));
@@ -325,10 +294,8 @@ public sealed class FileStorageTransferTests
     {
         using var pair = CreatePair();
         var saved = await SaveAsync(pair.Source, TestData.Create(20, TestData.Seed + 21), "a.bin");
-
         var first = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys));
         var second = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys));
-
         Assert.Equal(1, first.FilesCopied);
         Assert.Equal(0, second.FilesCopied);
         Assert.Equal(1, second.FilesSkipped);
@@ -344,9 +311,7 @@ public sealed class FileStorageTransferTests
         var tweaked = saved with { OriginalFileHash = TestData.Create(saved.OriginalFileHash.Length, TestData.Seed + 23) };
         await pair.Destination.Storage.MetadataStore.SaveMetadataAsync(saved.Id, tweaked, TestCt);
         var before = (await pair.Destination.Storage.MetadataStore.GetMetadataAsync(saved.Id, TestCt)).OriginalFileHash;
-
         var result = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys));
-
         Assert.Equal(0, result.FilesCopied);
         Assert.Equal(1, result.FilesFailed);
         Assert.Equal(before, (await pair.Destination.Storage.MetadataStore.GetMetadataAsync(saved.Id, TestCt)).OriginalFileHash);
@@ -358,15 +323,13 @@ public sealed class FileStorageTransferTests
     {
         var metaRoot = NewDirectory();
         var inner = new LocalFileMetadataStore(metaRoot);
-        var gated = new SaveGateMetadataStore(inner, throwOnSave: 2);
+        var gated = new SaveGateMetadataStore(inner, 2);
         using var pair = CreatePair(destinationMetadata: gated, extraDirectories: [metaRoot]);
         var first = TestData.Create(18, TestData.Seed + 24);
         var second = TestData.Create(18, TestData.Seed + 25);
         var firstRow = await SaveAsync(pair.Source, first, "a.bin");
         var secondRow = await SaveAsync(pair.Source, second, "b.bin");
-
         var result = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys));
-
         Assert.Equal(1, result.FilesCopied);
         Assert.Equal(1, result.FilesFailed);
         Assert.Single(result.Errors);
@@ -379,9 +342,8 @@ public sealed class FileStorageTransferTests
     {
         using var pair = CreatePair();
         var endpoint = pair.SourceEndpoint;
-
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            FileStorageTransfer.TransferAsync(endpoint, endpoint, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys), TestCt));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => FileStorageTransfer.TransferAsync(
+            endpoint, endpoint, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys), TestCt));
     }
 
     [Fact]
@@ -392,9 +354,7 @@ public sealed class FileStorageTransferTests
         var pending = await SaveAsync(pair.Source, TestData.Create(16, TestData.Seed + 27), "pending.bin", availability: FileAvailability.PendingDirectUpload);
         var tombstone = await SaveAsync(pair.Source, TestData.Create(16, TestData.Seed + 28), "gone.bin");
         Assert.True(await pair.Source.Storage.DeleteFileAsync(tombstone.Id, ct: TestCt));
-
         var result = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys));
-
         Assert.Equal(1, result.FilesCopied);
         Assert.Equal(0, result.FilesFailed);
         Assert.Equal(live.OriginalFileHash, (await pair.Destination.Storage.MetadataStore.GetMetadataAsync(live.Id, TestCt)).OriginalFileHash);
@@ -409,10 +369,8 @@ public sealed class FileStorageTransferTests
         var saved = await SaveAsync(pair.Source, TestData.Create(16, TestData.Seed + 29), "a.bin");
         using var cts = new CancellationTokenSource();
         await cts.CancelAsync();
-
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => FileStorageTransfer.TransferAsync(
-                pair.SourceEndpoint, pair.DestinationEndpoint, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys), cts.Token));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => FileStorageTransfer.TransferAsync(
+            pair.SourceEndpoint, pair.DestinationEndpoint, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys), cts.Token));
 
         await Assert.ThrowsAsync<FileNotFoundException>(() => pair.Destination.Storage.MetadataStore.GetMetadataAsync(saved.Id, TestCt));
     }
@@ -426,12 +384,11 @@ public sealed class FileStorageTransferTests
         var request = new FileStorageTransferRequest(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys);
         var first = await TransferAsync(pair, request);
         Assert.Equal(2, first.FilesCopied);
-
         var progress = new RecordingProgress();
         var second = await FileStorageTransfer.TransferAsync(pair.SourceEndpoint, pair.DestinationEndpoint, request, progress, TestCt);
         var snapshots = progress.Snapshots;
-        var firstFinish = snapshots.FindIndex(snapshot =>
-            snapshot.ItemOutcome is FileStorageTransferItemOutcome.Copied or FileStorageTransferItemOutcome.Skipped or FileStorageTransferItemOutcome.Failed);
+        var firstFinish = snapshots.FindIndex(snapshot
+            => snapshot.ItemOutcome is FileStorageTransferItemOutcome.Copied or FileStorageTransferItemOutcome.Skipped or FileStorageTransferItemOutcome.Failed);
 
         Assert.True(firstFinish > 0);
         Assert.Contains(snapshots.Take(firstFinish), snapshot => snapshot.FilesTotal == 2);
@@ -452,9 +409,7 @@ public sealed class FileStorageTransferTests
         await SaveAsync(pair.Source, payload, "wide.bin");
         var progress = new RecordingProgress();
         var request = new FileStorageTransferRequest(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys, ProgressByteInterval: 1);
-
         var result = await FileStorageTransfer.TransferAsync(pair.SourceEndpoint, pair.DestinationEndpoint, request, progress, TestCt);
-
         Assert.Equal(1, result.FilesCopied);
         var snapshots = progress.Snapshots;
         var mid = snapshots.FindIndex(snapshot => snapshot.CurrentFileBytesCopied > 0 && snapshot.CurrentFileBytesCopied < snapshot.CurrentFileBytesTotal);
@@ -473,9 +428,7 @@ public sealed class FileStorageTransferTests
         var dropPayload = TestData.Create(48, TestData.Seed + 41);
         var keep = await SaveAsync(pair.Source, keepPayload, "keep.bin", encrypt: true, keyId: "app");
         var drop = await SaveAsync(pair.Source, dropPayload, "drop.bin", encrypt: true, keyId: "other");
-
         var result = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys, FileIds: [keep.Id]));
-
         Assert.Equal(1, result.FilesCopied);
         Assert.Equal(0, result.FilesFailed);
         Assert.Equal(keepPayload, await pair.Destination.Storage.GetFileAsync(keep.Id, ct: TestCt));
@@ -491,9 +444,8 @@ public sealed class FileStorageTransferTests
         using var pair = CreatePair();
         await AddKeyAsync(pair.SourceKeys, "app", "1", 211);
         var saved = await SaveAsync(pair.Source, TestData.Create(24, TestData.Seed + 42), "a.bin", encrypt: true, keyId: "app");
-
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys, FileIds: [LyoGuid.CreateV7()])));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => TransferAsync(
+            pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys, FileIds: [LyoGuid.CreateV7()])));
 
         Assert.Empty(await pair.DestinationKeys.GetAvailableKeyIdsAsync(TestCt));
         Assert.False(File.Exists(ObjectPath(pair.Destination, saved)));
@@ -506,9 +458,7 @@ public sealed class FileStorageTransferTests
         await AddKeyAsync(pair.SourceKeys, "app", "1", 221);
         var payload = TestData.Create(64, TestData.Seed + 43);
         var saved = await SaveAsync(pair.Source, payload, "move.bin", encrypt: true, keyId: "app");
-
         var result = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys, Disposition: FileStorageTransferDisposition.Move));
-
         Assert.Equal(1, result.FilesCopied);
         Assert.Equal(1, result.FilesRemoved);
         Assert.Equal(0, result.FilesFailed);
@@ -525,16 +475,14 @@ public sealed class FileStorageTransferTests
         using var pair = CreatePair();
         await AddKeyAsync(pair.SourceKeys, "app", "1", 231);
         var payload = TestData.Create(72, TestData.Seed + 44);
-        var saved = await SaveAsync(pair.Source, payload, "both.bin", compress: true, encrypt: true, keyId: "app");
-
+        var saved = await SaveAsync(pair.Source, payload, "both.bin", true, true, "app");
         var result = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys, Disposition: FileStorageTransferDisposition.Move));
-
         Assert.Equal(1, result.FilesRemoved);
         var destination = await pair.Destination.Storage.MetadataStore.GetMetadataAsync(saved.Id, TestCt);
         Assert.True(destination.IsCompressed);
         Assert.True(destination.IsEncrypted);
         Assert.Equal(saved.SourceFileHash, destination.SourceFileHash);
-        Assert.Equal(saved.SourceFileHash, System.Security.Cryptography.SHA256.HashData(await File.ReadAllBytesAsync(ObjectPath(pair.Destination, destination), TestCt)));
+        Assert.Equal(saved.SourceFileHash, SHA256.HashData(await File.ReadAllBytesAsync(ObjectPath(pair.Destination, destination), TestCt)));
         Assert.Equal(payload, await pair.Destination.Storage.GetFileAsync(saved.Id, ct: TestCt));
         await Assert.ThrowsAsync<FileNotFoundException>(() => pair.Source.Storage.GetFileAsync(saved.Id, ct: TestCt));
     }
@@ -545,12 +493,9 @@ public sealed class FileStorageTransferTests
         using var pair = CreatePair();
         await AddKeyAsync(pair.SourceKeys, "app", "1", 241);
         var payload = TestData.Create(72, TestData.Seed + 45);
-        var saved = await SaveAsync(pair.Source, payload, "sealed.gz", compress: true, encrypt: true, keyId: "app");
+        var saved = await SaveAsync(pair.Source, payload, "sealed.gz", true, true, "app");
         var sourceObject = await File.ReadAllBytesAsync(ObjectPath(pair.Source, saved), TestCt);
-
-        var result = await TransferAsync(
-            pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.NewKey, TargetKeyId: "app-2026", Disposition: FileStorageTransferDisposition.Move));
-
+        var result = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.NewKey, "app-2026", Disposition: FileStorageTransferDisposition.Move));
         Assert.Equal(1, result.FilesCopied);
         Assert.Equal(1, result.FilesRemoved);
         var destination = await pair.Destination.Storage.MetadataStore.GetMetadataAsync(saved.Id, TestCt);
@@ -570,9 +515,7 @@ public sealed class FileStorageTransferTests
         var payload = TestData.Create(32, TestData.Seed + 46);
         var saved = await SaveAsync(pair.Source, payload, "again.bin");
         var copied = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys));
-
         var moved = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys, Disposition: FileStorageTransferDisposition.Move));
-
         Assert.Equal(1, copied.FilesCopied);
         Assert.Equal(0, moved.FilesCopied);
         Assert.Equal(1, moved.FilesSkipped);
@@ -590,9 +533,7 @@ public sealed class FileStorageTransferTests
         var saved = await SaveAsync(pair.Source, payload, "clash.bin");
         var tweaked = saved with { OriginalFileHash = TestData.Create(saved.OriginalFileHash.Length, TestData.Seed + 48) };
         await pair.Destination.Storage.MetadataStore.SaveMetadataAsync(saved.Id, tweaked, TestCt);
-
         var result = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys, Disposition: FileStorageTransferDisposition.Move));
-
         Assert.Equal(0, result.FilesCopied);
         Assert.Equal(0, result.FilesRemoved);
         Assert.Equal(1, result.FilesFailed);
@@ -606,15 +547,13 @@ public sealed class FileStorageTransferTests
     {
         var metaRoot = NewDirectory();
         var inner = new LocalFileMetadataStore(metaRoot);
-        var gated = new SaveGateMetadataStore(inner, throwOnSave: 2);
+        var gated = new SaveGateMetadataStore(inner, 2);
         using var pair = CreatePair(destinationMetadata: gated, extraDirectories: [metaRoot]);
         var first = TestData.Create(18, TestData.Seed + 49);
         var second = TestData.Create(18, TestData.Seed + 50);
         var firstRow = await SaveAsync(pair.Source, first, "a.bin");
         var secondRow = await SaveAsync(pair.Source, second, "b.bin");
-
         var result = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys, Disposition: FileStorageTransferDisposition.Move));
-
         Assert.Equal(1, result.FilesCopied);
         Assert.Equal(1, result.FilesFailed);
         Assert.Equal(1, result.FilesRemoved);
@@ -631,12 +570,11 @@ public sealed class FileStorageTransferTests
     {
         var metaRoot = NewDirectory();
         var shared = new LocalFileMetadataStore(metaRoot);
-        using var pair = CreatePair(sharedMetadata: shared, extraDirectories: [metaRoot]);
+        using var pair = CreatePair(shared, extraDirectories: [metaRoot]);
         var payload = TestData.Create(24, TestData.Seed + 51);
         var saved = await SaveAsync(pair.Source, payload, "shared.bin");
-
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys, Disposition: FileStorageTransferDisposition.Move)));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => TransferAsync(
+            pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys, Disposition: FileStorageTransferDisposition.Move)));
 
         Assert.Equal(payload, await pair.Source.Storage.GetFileAsync(saved.Id, ct: TestCt));
         Assert.False(File.Exists(ObjectPath(pair.Destination, saved)));
@@ -649,9 +587,8 @@ public sealed class FileStorageTransferTests
         await AddKeyAsync(pair.SourceKeys, "app", "1", 261);
         var payload = TestData.Create(24, TestData.Seed + 52);
         var saved = await SaveAsync(pair.Source, payload, "keys.bin", encrypt: true, keyId: "app");
-
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => TransferAsync(pair, new(FileStorageTransferScope.KeysOnly, FileStorageKeyMode.PreserveKeys, Disposition: FileStorageTransferDisposition.Move)));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => TransferAsync(
+            pair, new(FileStorageTransferScope.KeysOnly, FileStorageKeyMode.PreserveKeys, Disposition: FileStorageTransferDisposition.Move)));
 
         Assert.Empty(await pair.DestinationKeys.GetAvailableKeyIdsAsync(TestCt));
         Assert.Equal(payload, await pair.Source.Storage.GetFileAsync(saved.Id, ct: TestCt));
@@ -664,10 +601,8 @@ public sealed class FileStorageTransferTests
         using var pair = CreatePair();
         await AddKeyAsync(pair.SourceKeys, "app", "1", 271);
         var payload = TestData.Create(56, TestData.Seed + 53);
-        var saved = await SaveAsync(pair.Source, payload, "stay.bin", compress: true, encrypt: true, keyId: "app");
-
+        var saved = await SaveAsync(pair.Source, payload, "stay.bin", true, true, "app");
         var result = await TransferAsync(pair, new(FileStorageTransferScope.Everything, FileStorageKeyMode.PreserveKeys));
-
         Assert.Equal(1, result.FilesCopied);
         Assert.Equal(0, result.FilesRemoved);
         Assert.Equal(payload, await pair.Source.Storage.GetFileAsync(saved.Id, ct: TestCt));
@@ -681,13 +616,11 @@ public sealed class FileStorageTransferTests
         using var pair = CreatePair();
         var payload = TestData.Create(40, TestData.Seed + 54);
         var saved = await SaveAsync(pair.Source, payload, "hash.bin");
-
         var integrity = await pair.Source.Storage.GetContentIntegrityAsync(saved.Id, TestCt);
-
         Assert.Equal(saved.OriginalFileHash, integrity.OriginalFileHash);
         Assert.Equal(saved.OriginalFileSize, integrity.OriginalFileSize);
         Assert.Equal(saved.HashAlgorithm ?? HashAlgorithm.Sha256, integrity.HashAlgorithm);
-        Assert.Equal(System.Security.Cryptography.SHA256.HashData(payload), integrity.OriginalFileHash);
+        Assert.Equal(SHA256.HashData(payload), integrity.OriginalFileHash);
     }
 
     private static async Task<bool> SourceMissingAsync(TransferPair pair, Guid fileId)
@@ -701,8 +634,8 @@ public sealed class FileStorageTransferTests
         }
     }
 
-    private static async Task<FileStorageTransferResult> TransferAsync(TransferPair pair, FileStorageTransferRequest request) =>
-        await FileStorageTransfer.TransferAsync(pair.SourceEndpoint, pair.DestinationEndpoint, request, TestCt);
+    private static async Task<FileStorageTransferResult> TransferAsync(TransferPair pair, FileStorageTransferRequest request)
+        => await FileStorageTransfer.TransferAsync(pair.SourceEndpoint, pair.DestinationEndpoint, request, TestCt);
 
     private static async Task AddKeyAsync(LocalKeyStore store, string keyId, string version, int seed)
     {
@@ -726,6 +659,7 @@ public sealed class FileStorageTransferTests
     {
         var saved = await scope.Storage.SaveFileAsync(
             payload, name, compress, encrypt, keyId, pathPrefix, contentType: contentType, charset: charset, metadata: metadata, ct: TestCt);
+
         if (ownerId is null && availability is null)
             return saved;
 
@@ -765,11 +699,12 @@ public sealed class FileStorageTransferTests
         var encryption = new TwoKeyEncryptionService<IEncryptionService, IEncryptionService>(new AesGcmEncryptionService(keys), keys);
         var compression = new CompressionService([new GZipCompressorFactory(), new DeflateCompressorFactory(), new BrotliCompressorFactory(), new ZLibCompressorFactory()]);
         return LocalFileStorageTestScope.Create(
-            builder: duplicates ? options =>
-            {
-                options.EnableDuplicateDetection = true;
-                return options;
-            } : null, metadataService: metadata, compressionService: compression, twoKeyEncryptionService: encryption);
+            duplicates
+                ? options => {
+                    options.EnableDuplicateDetection = true;
+                    return options;
+                }
+                : null, metadataService: metadata, compressionService: compression, twoKeyEncryptionService: encryption);
     }
 
     private sealed class TransferPair(
@@ -800,8 +735,7 @@ public sealed class FileStorageTransferTests
                     if (Directory.Exists(extra))
                         Directory.Delete(extra, true);
                 }
-                catch (IOException) {
-                }
+                catch (IOException) { }
             }
         }
     }
@@ -852,13 +786,11 @@ public sealed class FileStorageTransferTests
         public Task<FileTag> AddFileTagAsync(Guid fileId, string tagType, string value, string? slug, bool automatic, CancellationToken ct = default)
             => inner.AddFileTagAsync(fileId, tagType, value, slug, automatic, ct);
 
-        public Task<bool> RemoveFileTagAsync(Guid fileId, string tagType, string value, CancellationToken ct = default)
-            => inner.RemoveFileTagAsync(fileId, tagType, value, ct);
+        public Task<bool> RemoveFileTagAsync(Guid fileId, string tagType, string value, CancellationToken ct = default) => inner.RemoveFileTagAsync(fileId, tagType, value, ct);
 
         public Task<IReadOnlyList<FileTag>> ListFileTagsAsync(Guid fileId, CancellationToken ct = default) => inner.ListFileTagsAsync(fileId, ct);
 
-        public Task CopyFileTagsAsync(Guid sourceFileId, Guid destinationFileId, CancellationToken ct = default)
-            => inner.CopyFileTagsAsync(sourceFileId, destinationFileId, ct);
+        public Task CopyFileTagsAsync(Guid sourceFileId, Guid destinationFileId, CancellationToken ct = default) => inner.CopyFileTagsAsync(sourceFileId, destinationFileId, ct);
 
         public Task DeleteFileTagsAsync(Guid fileId, CancellationToken ct = default) => inner.DeleteFileTagsAsync(fileId, ct);
 

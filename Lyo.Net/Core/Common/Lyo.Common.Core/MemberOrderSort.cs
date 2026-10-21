@@ -51,19 +51,22 @@ public static class MemberOrderSort
             ranked.Add(new(item, key, group, rank, i));
         }
 
-        if (order == MemberOrder.Alphabetical)
+        if (order == MemberOrder.Alphabetical) {
             ranked.Sort(static (left, right) => {
                 var compared = string.CompareOrdinal(left.Key, right.Key);
                 return compared != 0 ? compared : left.Index.CompareTo(right.Index);
             });
-        else
+        }
+        else {
             ranked.Sort(static (left, right) => {
                 var compared = left.Group.CompareTo(right.Group);
                 if (compared != 0)
                     return compared;
+
                 compared = left.Rank.CompareTo(right.Rank);
                 return compared != 0 ? compared : left.Index.CompareTo(right.Index);
             });
+        }
 
         var result = new List<T>(ranked.Count);
         foreach (var entry in ranked)

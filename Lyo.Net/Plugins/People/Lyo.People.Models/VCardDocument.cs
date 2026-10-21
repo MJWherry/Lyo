@@ -15,10 +15,12 @@ public sealed class VCardDocument
             var colon = line.IndexOf(':');
             if (colon <= 0)
                 continue;
+
             var name = line[..colon];
             var semi = name.IndexOf(';');
             if (semi >= 0)
                 name = name[..semi];
+
             var value = Unescape(line[(colon + 1)..]);
             switch (name.ToUpperInvariant()) {
                 case "FN":
@@ -61,20 +63,38 @@ public sealed class VCardDocument
         builder.Append("BEGIN:VCARD\r\nVERSION:3.0\r\n");
         if (!string.IsNullOrEmpty(card.FormattedName))
             builder.Append("FN:").Append(Escape(card.FormattedName!)).Append("\r\n");
+
         if (!string.IsNullOrEmpty(card.FamilyName) || !string.IsNullOrEmpty(card.GivenName))
             builder.Append("N:").Append(Escape(card.FamilyName ?? "")).Append(';').Append(Escape(card.GivenName ?? "")).Append(";;;\r\n");
+
         foreach (var telephone in card.Telephones)
             builder.Append("TEL:").Append(Escape(telephone)).Append("\r\n");
+
         foreach (var email in card.Emails)
             builder.Append("EMAIL:").Append(Escape(email)).Append("\r\n");
+
         foreach (var address in card.Addresses)
-            builder.Append("ADR:;;").Append(Escape(address.Street)).Append(';').Append(Escape(address.Locality)).Append(';').Append(Escape(address.Region)).Append(';').Append(Escape(address.PostalCode)).Append(';').Append(Escape(address.Country)).Append("\r\n");
+            builder.Append("ADR:;;")
+                .Append(Escape(address.Street))
+                .Append(';')
+                .Append(Escape(address.Locality))
+                .Append(';')
+                .Append(Escape(address.Region))
+                .Append(';')
+                .Append(Escape(address.PostalCode))
+                .Append(';')
+                .Append(Escape(address.Country))
+                .Append("\r\n");
+
         if (!string.IsNullOrEmpty(card.Organization))
             builder.Append("ORG:").Append(Escape(card.Organization!)).Append("\r\n");
+
         if (!string.IsNullOrEmpty(card.Title))
             builder.Append("TITLE:").Append(Escape(card.Title!)).Append("\r\n");
+
         if (!string.IsNullOrEmpty(card.Url))
             builder.Append("URL:").Append(Escape(card.Url!)).Append("\r\n");
+
         builder.Append("END:VCARD\r\n");
         return builder.ToString();
     }
@@ -91,8 +111,7 @@ public sealed class VCardDocument
         };
     }
 
-    private static string? Part(string[] parts, int index)
-        => index < parts.Length && parts[index].Length > 0 ? parts[index] : null;
+    private static string? Part(string[] parts, int index) => index < parts.Length && parts[index].Length > 0 ? parts[index] : null;
 
     private static List<string> Unfold(string text)
     {
@@ -101,6 +120,7 @@ public sealed class VCardDocument
         foreach (var rawLine in raw) {
             if (rawLine.Length == 0)
                 continue;
+
             if ((rawLine[0] == ' ' || rawLine[0] == '\t') && lines.Count > 0)
                 lines[lines.Count - 1] += rawLine.Substring(1);
             else
@@ -110,9 +130,7 @@ public sealed class VCardDocument
         return lines;
     }
 
-    private static string Escape(string? value)
-        => (value ?? "").Replace("\\", "\\\\").Replace("\n", "\\n").Replace(",", "\\,").Replace(";", "\\;");
+    private static string Escape(string? value) => (value ?? "").Replace("\\", "\\\\").Replace("\n", "\\n").Replace(",", "\\,").Replace(";", "\\;");
 
-    private static string Unescape(string value)
-        => value.Replace("\\n", "\n").Replace("\\,", ",").Replace("\\;", ";").Replace("\\\\", "\\");
+    private static string Unescape(string value) => value.Replace("\\n", "\n").Replace("\\,", ",").Replace("\\;", ";").Replace("\\\\", "\\");
 }

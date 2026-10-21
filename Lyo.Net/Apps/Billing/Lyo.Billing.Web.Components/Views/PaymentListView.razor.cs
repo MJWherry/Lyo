@@ -1,4 +1,3 @@
-using Lyo.Api.Client;
 using Microsoft.AspNetCore.Components;
 
 namespace Lyo.Billing.Web.Components.Views;

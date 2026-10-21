@@ -160,7 +160,7 @@ public sealed class LocalRateLimitServiceTests
         for (var i = 0; i < 4; i++)
             await sut.TryAcquireAsync(Req(RateLimitWindow.Fixed, Epoch), TestCt);
 
-        Assert.True((await sut.TryAcquireAsync(Req(RateLimitWindow.Fixed, Epoch, policy: "other"), TestCt)).Allowed);
+        Assert.True((await sut.TryAcquireAsync(Req(RateLimitWindow.Fixed, Epoch, "other"), TestCt)).Allowed);
     }
 
     [Fact]
@@ -171,7 +171,6 @@ public sealed class LocalRateLimitServiceTests
         var denied = await sut.TryAcquireAsync(Req(RateLimitWindow.Fixed, Epoch, limit: 2), TestCt);
         Assert.False(denied.Allowed);
         Assert.Equal(Window, denied.RetryAfter);
-
         for (var i = 0; i < 3; i++)
             Assert.True((await sut.TryAcquireAsync(Req(RateLimitWindow.Fixed, Epoch), TestCt)).Allowed);
 
@@ -183,11 +182,13 @@ public sealed class LocalRateLimitServiceTests
     {
         var sut = New();
         var allowed = 0;
-        var tasks = Enumerable.Range(0, 32).Select(async _ => {
-            var decision = await sut.TryAcquireAsync(Req(RateLimitWindow.TokenBucket, Epoch), TestCt);
-            if (decision.Allowed)
-                Interlocked.Increment(ref allowed);
-        });
+        var tasks = Enumerable.Range(0, 32)
+            .Select(async _ => {
+                var decision = await sut.TryAcquireAsync(Req(RateLimitWindow.TokenBucket, Epoch), TestCt);
+                if (decision.Allowed)
+                    Interlocked.Increment(ref allowed);
+            });
+
         await Task.WhenAll(tasks);
         Assert.Equal(4, allowed);
     }
@@ -202,14 +203,8 @@ public sealed class LocalRateLimitServiceTests
         Assert.True((await sut.TryAcquireAsync(Req(RateLimitWindow.Fixed, Epoch), TestCt)).Allowed);
     }
 
-    private static LocalRateLimitService New() => new(new RateLimitOptions());
+    private static LocalRateLimitService New() => new(new());
 
-    private static RateLimitRequest Req(
-        RateLimitWindow pattern,
-        long now,
-        string policy = "uploads",
-        string partition = "user",
-        int limit = 4,
-        TimeSpan? window = null)
+    private static RateLimitRequest Req(RateLimitWindow pattern, long now, string policy = "uploads", string partition = "user", int limit = 4, TimeSpan? window = null)
         => new(policy, partition, limit, window ?? Window, pattern, now);
 }

@@ -33,8 +33,8 @@ public sealed record StateTransitionRejected<TState, TTrigger>(string MachineNam
 /// <summary>Cross-cutting listener (logging, metrics, events) called after every fire, once all hooks have run.</summary>
 /// <remarks>
 /// Called synchronously on both the sync and async fire paths, so keep it fast; hand slow work to a queue. Register with <c>AddStateMachineObserver</c>,
-/// <c>AddStateMachineMetrics</c>, <c>AddStateMachineLogging</c>, or <see cref="StateMachineBuilder{TState,TTrigger,TContext}.AddObserver" />. Exceptions propagate to
-/// the caller of <c>Fire</c>.
+/// <c>AddStateMachineMetrics</c>, <c>AddStateMachineLogging</c>, or <see cref="StateMachineBuilder{TState,TTrigger,TContext}.AddObserver" />. Exceptions propagate to the caller of
+/// <c>Fire</c>.
 /// </remarks>
 public interface IStateMachineObserver<TState, TTrigger>
     where TState : notnull where TTrigger : notnull

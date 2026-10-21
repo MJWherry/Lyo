@@ -1,8 +1,8 @@
 namespace Lyo.KeyStore;
 
 /// <summary>
-/// Store and retrieve Key Encryption Keys (KEK) by key ID and version. Supports multi-tenant setups where each client/tenant has its own keys. Each
-/// key ID can have multiple versions for rotation.
+/// Store and retrieve Key Encryption Keys (KEK) by key ID and version. Supports multi-tenant setups where each client/tenant has its own keys. Each key ID can have multiple
+/// versions for rotation.
 /// </summary>
 public interface IKeyStore
 {
@@ -54,10 +54,7 @@ public interface IKeyStore
     /// <param name="ct">Cancellation token</param>
     Task AddKeyAsync(string keyId, string version, byte[] key, CancellationToken ct = default);
 
-    /// <summary>
-    /// Adds or replaces a Key Encryption Key (KEK) for a given key ID and version from a string. The string is derived to a key using the same method as the encryption
-    /// service.
-    /// </summary>
+    /// <summary>Adds or replaces a Key Encryption Key (KEK) for a given key ID and version from a string. The string is derived to a key using the same method as the encryption service.</summary>
     /// <param name="keyId">Key identifier</param>
     /// <param name="version">Key version</param>
     /// <param name="keyString">KEK string to derive</param>
@@ -147,8 +144,8 @@ public interface IKeyStore
     Task<string> UpdateKeyAsync(string keyId, byte[] key, CancellationToken ct = default);
 
     /// <summary>
-    /// Updates a key for a given key ID by incrementing the version and making it current from a string. The string is derived to a key using the same method as the
-    /// encryption service. If no key exists for this keyId, starts at version 1.
+    /// Updates a key for a given key ID by incrementing the version and making it current from a string. The string is derived to a key using the same method as the encryption
+    /// service. If no key exists for this keyId, starts at version 1.
     /// </summary>
     /// <param name="keyId">Key identifier</param>
     /// <param name="keyString">New KEK string to derive</param>
@@ -156,8 +153,8 @@ public interface IKeyStore
     string UpdateKeyFromString(string keyId, string keyString);
 
     /// <summary>
-    /// Updates a key for a given key ID by incrementing the version and making it current from a string asynchronously. The string is derived to a key using the same
-    /// method as the encryption service. If no key exists for this keyId, starts at version 1.
+    /// Updates a key for a given key ID by incrementing the version and making it current from a string asynchronously. The string is derived to a key using the same method as
+    /// the encryption service. If no key exists for this keyId, starts at version 1.
     /// </summary>
     /// <param name="keyId">Key identifier</param>
     /// <param name="keyString">New KEK string to derive</param>

@@ -27,13 +27,10 @@ public sealed class ReportEmbedBinderTests
     public void Bind_ParamAndLiteral_Resolves()
     {
         var type = typeof(HelloRenderComponent);
-        var bindings = new Dictionary<string, ComponentBinding> {
-            ["Name"] = new() { Kind = ComponentBindingKind.Param, Value = "Who" }
-        };
+        var bindings = new Dictionary<string, ComponentBinding> { ["Name"] = new() { Kind = ComponentBindingKind.Param, Value = "Who" } };
         var bound = ReportEmbedBinder.Bind(type, bindings, new Dictionary<string, string?> { ["Who"] = "Ada" }, out var error);
         Assert.Null(error);
         Assert.Equal("Ada", bound["Name"]);
-
         bindings["Name"] = new() { Kind = ComponentBindingKind.Literal, Value = "Lin" };
         bound = ReportEmbedBinder.Bind(type, bindings, new Dictionary<string, string?>(), out error);
         Assert.Null(error);
@@ -45,20 +42,10 @@ public sealed class ReportEmbedBinderTests
     {
         var renderer = WebRendererTestHost.CreateService();
         var report = new Report<object> {
-            Title = "Hybrid",
-            Sections = [
-                new() {
-                    Controls = [
-                        new Block {
-                            ContentType = ContentType.Component,
-                            ComponentType = "Lyo.Does.Not.Exist.Invoice"
-                        }
-                    ]
-                }
-            ]
+            Title = "Hybrid", Sections = [new() { Controls = [new Block { ContentType = ContentType.Component, ComponentType = "Lyo.Does.Not.Exist.Invoice" }] }]
         };
 
-        var html = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new Dictionary<string, object> { ["Report"] = report }, TestCt);
+        var html = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = report }, TestCt);
         Assert.Contains("Hybrid", html, StringComparison.Ordinal);
         Assert.Contains("Could not resolve", html, StringComparison.Ordinal);
         Assert.DoesNotContain("Unhandled", html, StringComparison.OrdinalIgnoreCase);

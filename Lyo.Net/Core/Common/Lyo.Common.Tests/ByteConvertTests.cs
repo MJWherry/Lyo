@@ -39,11 +39,10 @@ public class ByteConvertTests
         Span<char> upper = stackalloc char[4];
         Assert.True(ByteConvert.TryToHex(bytes, upper, out var written));
         Assert.Equal(4, written);
-        Assert.Equal("AB0F", new string(upper));
-
+        Assert.Equal("AB0F", new(upper));
         Span<char> lower = stackalloc char[4];
         Assert.True(ByteConvert.TryToHex(bytes, lower, out written, TextLetterCase.Lower));
-        Assert.Equal("ab0f", new string(lower));
+        Assert.Equal("ab0f", new(lower));
     }
 
     [Fact]
@@ -122,7 +121,7 @@ public class ByteConvertTests
     }
 
     [Fact]
-    public void GetBytes_Null_ThrowsArgumentNullException() => Assert.Throws<ArgumentNullException>(() => ByteConvert.GetBytes((string)null!));
+    public void GetBytes_Null_ThrowsArgumentNullException() => Assert.Throws<ArgumentNullException>(() => ByteConvert.GetBytes(null!));
 
     [Fact]
     public void TryGetBytes_ShortDestination_ReturnsFalse()
@@ -139,6 +138,6 @@ public class ByteConvertTests
         Span<char> destination = stackalloc char[2];
         Assert.True(ByteConvert.TryGetString(bytes, destination, out var written));
         Assert.Equal(2, written);
-        Assert.Equal("hi", new string(destination));
+        Assert.Equal("hi", new(destination));
     }
 }

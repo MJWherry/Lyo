@@ -16,8 +16,8 @@ public sealed class JobAlertsOptions
     public TimeSpan WebhookTimeout { get; set; } = TimeSpan.FromSeconds(10);
 
     /// <summary>
-    /// Extra webhook tries after the first failure. Covers transient failures (connection resets, 5xx, timeouts) without putting the message back on the queue.
-    /// Zero turns retries off. Default 2.
+    /// Extra webhook tries after the first failure. Covers transient failures (connection resets, 5xx, timeouts) without putting the message back on the queue. Zero turns
+    /// retries off. Default 2.
     /// </summary>
     public int WebhookRetryCount { get; set; } = 2;
 
@@ -34,8 +34,8 @@ public sealed class JobAlertsOptions
     public int DedupCacheLimit { get; set; } = 5_000;
 
     /// <summary>
-    /// Queue that gets the raw bytes of alert messages that cannot be deserialized. Without it a poison message is acked and lost. Null or empty drops poison
-    /// messages instead of keeping them. Default <c>job.notifications.alert.dlq</c>.
+    /// Queue that gets the raw bytes of alert messages that cannot be deserialized. Without it a poison message is acked and lost. Null or empty drops poison messages instead of
+    /// keeping them. Default <c>job.notifications.alert.dlq</c>.
     /// </summary>
     public string? DeadLetterQueueName { get; set; } = "job.notifications.alert.dlq";
 
@@ -58,7 +58,7 @@ public sealed class JobAlertsOptions
         if (DedupCacheLimit <= 0)
             errors.Add($"{nameof(DedupCacheLimit)} must be greater than zero.");
 
-        if (!string.IsNullOrWhiteSpace(AlertWebhookUrl) && !Uri.TryCreate(AlertWebhookUrl, UriKind.Absolute, out _))
+        if (!string.IsNullOrWhiteSpace(AlertWebhookUrl) && !Uri.TryCreate(AlertWebhookUrl, UriKind.Absolute, out var _))
             errors.Add($"{nameof(AlertWebhookUrl)} must be an absolute URL.");
 
         return errors;

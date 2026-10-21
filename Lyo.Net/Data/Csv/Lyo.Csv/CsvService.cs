@@ -10,7 +10,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Lyo.Csv;
 
 /// <summary>Facade over the owned CSV reader/writer stack for export, import, validation, and batch work (sync and async).</summary>
-/// <remarks>Safe for concurrent use. A call clones the options it starts with and keeps that clone. <see cref="SetEncoding" /> and <see cref="SetOptions" /> publish a new instance for later calls.</remarks>
+/// <remarks>
+/// Safe for concurrent use. A call clones the options it starts with and keeps that clone. <see cref="SetEncoding" /> and <see cref="SetOptions" /> publish a new instance
+/// for later calls.
+/// </remarks>
 public sealed class CsvService : ICsvService
 {
     private readonly HttpClient? _httpClient;
@@ -237,6 +240,9 @@ public sealed class CsvService : ICsvService
 
         return results;
     }
+
+    /// <inheritdoc cref="ICsvService.ParseStringAsResult{T}" />
+    public CsvParseResult<T> ParseStringAsResult<T>(string csv) => _reader.ParseStringAsResult<T>(csv);
 
     // ReSharper disable once UnusedParameter.Local
     private async Task<byte[]> FetchBytesFromUrlAsync(string url, CancellationToken ct)
@@ -721,7 +727,4 @@ public sealed class CsvService : ICsvService
         return parts;
     }
 #endif
-
-    /// <inheritdoc cref="ICsvService.ParseStringAsResult{T}" />
-    public CsvParseResult<T> ParseStringAsResult<T>(string csv) => _reader.ParseStringAsResult<T>(csv);
 }

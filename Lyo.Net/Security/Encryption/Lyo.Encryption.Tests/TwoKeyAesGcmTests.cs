@@ -623,7 +623,6 @@ public class TwoKeyAesGcmTests
         using var decryptedStream = new MemoryStream();
 
         // must throw because DEK magic/algorithm does not match
-        await Assert.ThrowsAnyAsync<InvalidDataException>(async ()
-            => await decryptService.DecryptToStreamAsync(encryptedStream, decryptedStream, keyId, ct: TestCt));
+        await Assert.ThrowsAnyAsync<InvalidDataException>(async () => await decryptService.DecryptToStreamAsync(encryptedStream, decryptedStream, keyId, ct: TestCt));
     }
 }

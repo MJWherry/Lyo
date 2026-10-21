@@ -1,9 +1,9 @@
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Job.Models;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Response;
 using Lyo.Schedule.Models;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Scheduler.Tests;
 
@@ -83,9 +83,7 @@ public class JobScheduleSlotCalculatorTests
     {
         var schedule = CronSchedule("0 3 * * *");
         var lookbackStart = Now.AddHours(-2);
-        var missed = JobScheduleSlotCalculator.FindMostRecentMissedSlot(
-            schedule.ToScheduleDefinition(), schedule, null, TimeZoneInfo.Utc, Now.AddDays(-1), lookbackStart, Now);
-
+        var missed = JobScheduleSlotCalculator.FindMostRecentMissedSlot(schedule.ToScheduleDefinition(), schedule, null, TimeZoneInfo.Utc, Now.AddDays(-1), lookbackStart, Now);
         Assert.Null(missed);
     }
 
@@ -111,10 +109,8 @@ public class JobScheduleSlotCalculatorTests
     {
         var schedule = CronSchedule("0 12 * * *") with { TimeZoneId = "America/New_York" };
         var definition = schedule.ToScheduleDefinition();
-
         var summer = JobScheduleSlotCalculator.GetDueSlot(definition, schedule, null, null, new(2026, 7, 7, 0, 0, 0, DateTimeKind.Utc), new(2026, 7, 8, 0, 0, 0, DateTimeKind.Utc));
         var winter = JobScheduleSlotCalculator.GetDueSlot(definition, schedule, null, null, new(2026, 1, 7, 0, 0, 0, DateTimeKind.Utc), new(2026, 1, 8, 0, 0, 0, DateTimeKind.Utc));
-
         Assert.Equal(new DateTime(2026, 7, 7, 16, 0, 0, DateTimeKind.Utc), summer); // EDT, UTC-4
         Assert.Equal(new DateTime(2026, 1, 7, 17, 0, 0, DateTimeKind.Utc), winter); // EST, UTC-5
     }
@@ -145,8 +141,7 @@ public class JobScheduleSlotCalculatorTests
     }
 
     private static JobScheduleRes CronSchedule(string cron)
-        => new(
-            LyoGuid.CreateV7(), LyoGuid.CreateV7(), MonthFlags.EveryMonth, DayFlags.EveryDay, ScheduleType.Cron, null, null, null, null, cron, true, null, cron);
+        => new(LyoGuid.CreateV7(), LyoGuid.CreateV7(), MonthFlags.EveryMonth, DayFlags.EveryDay, ScheduleType.Cron, null, null, null, null, cron, true, null, cron);
 
     private static JobBlackoutCalendarRes DeferCalendar(string start, string end) => Calendar(JobBlackoutPolicy.Defer, start, end);
 
@@ -156,6 +151,7 @@ public class JobScheduleSlotCalculatorTests
     {
         var calendarId = LyoGuid.CreateV7();
         return new(
-            calendarId, "Test calendar", null, true, [new(LyoGuid.CreateV7(), calendarId, "Blackout", DayFlags.EveryDay, TimeOnly.Parse(start), TimeOnly.Parse(end), policy, true)]);
+            calendarId, "Test calendar", null, true,
+            [new(LyoGuid.CreateV7(), calendarId, "Blackout", DayFlags.EveryDay, TimeOnly.Parse(start), TimeOnly.Parse(end), policy, true)]);
     }
 }

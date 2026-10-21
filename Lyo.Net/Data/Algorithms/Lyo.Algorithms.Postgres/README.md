@@ -1,6 +1,8 @@
 # Lyo.Algorithms.Postgres
 
-IAlgorithmDefinitionStore on PostgreSQL. Tables algorithm_definition, algorithm_definition_revision, and algorithm_definition_label live in schema algorithms. Reads are AsNoTracking. SaveRevision locks the definition row, then allocates the next revision inside a transaction. Revision rows have an optional payload column for structured scorers. The store also implements IHealth.
+IAlgorithmDefinitionStore on PostgreSQL. Tables algorithm_definition, algorithm_definition_revision, and algorithm_definition_label live in schema algorithms. Reads are
+AsNoTracking. SaveRevision locks the definition row, then allocates the next revision inside a transaction. Revision rows have an optional payload column for structured scorers.
+The store also implements IHealth.
 
 ## Features
 
@@ -19,7 +21,8 @@ services.AddPostgresAlgorithmStoreFromConfiguration(configuration);
 
 ## When to use
 
-Use this package when more than one process shares the catalog. SQLite is single-writer. Product tables keep their own algorithm key and optional revision or label; this schema stores the source.
+Use this package when more than one process shares the catalog. SQLite is single-writer. Product tables keep their own algorithm key and optional revision or label; this schema
+stores the source.
 
 ## Dependencies
 

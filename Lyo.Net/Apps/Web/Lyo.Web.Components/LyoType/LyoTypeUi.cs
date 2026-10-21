@@ -10,15 +10,18 @@ public static class LyoTypeUi
     /// <summary>Sentinel FullName for the Custom… picker row (not a real CLR type).</summary>
     public const string CustomTypeToken = "__custom__";
 
+    /// <summary>SmartFormat token examples (clock / definition). Not injected into pickers. templates are free text.</summary>
+    public static readonly IReadOnlyList<string> FormatterTokens = ["{DateTime.UtcNow}", "{DateTime.Now}", "{DateTime.Now.AddDays(-1)}", "{Definition.Name}"];
+
     /// <summary>
-    /// Stored type name of the registered template type, or null when no formatter package is loaded. Looked up by editor kind instead of by name so this package does not
-    /// depend on the formatter.
+    /// Stored type name of the registered template type, or null when no formatter package is loaded. Looked up by editor kind instead of by name so this package does not depend
+    /// on the formatter.
     /// </summary>
     public static string? TemplateTypeName => LyoTypeInfo.All.FirstOrDefault(t => t.EditorKind == LyoTypeEditorKind.Formatter)?.FullName;
 
     /// <summary>
-    /// Chip spec for a stored type name. Regex and Xml stay <see cref="Color.Warning" />. Formatter uses <see cref="LyoChipHue.Rose" />.
-    /// Other categories use <see cref="ForCategory" />.
+    /// Chip spec for a stored type name. Regex and Xml stay <see cref="Color.Warning" />. Formatter uses <see cref="LyoChipHue.Rose" />. Other categories use
+    /// <see cref="ForCategory" />.
     /// </summary>
     public static LyoChipSpec ForType(string? typeName)
     {
@@ -26,8 +29,10 @@ public static class LyoTypeUi
         var label = DisplayName(typeName);
         if (info.EditorKind == LyoTypeEditorKind.Formatter)
             return LyoChips.Of(label, LyoChipHue.Rose);
+
         if (info.EditorKind is LyoTypeEditorKind.Regex or LyoTypeEditorKind.Xml)
             return LyoChips.Of(label, Color.Warning);
+
         var hue = ForCategory(info.Category);
         return hue is null ? LyoChips.Of(label) : LyoChips.Of(label, hue);
     }
@@ -77,10 +82,7 @@ public static class LyoTypeUi
             if (category is LyoTypeCategory.Unknown or LyoTypeCategory.Collection)
                 continue;
 
-            var types = LyoTypeInfo.ByCategory(category)
-                .Where(t => !t.IsCollection)
-                .OrderBy(t => DisplayName(t), StringComparer.OrdinalIgnoreCase)
-                .ToList();
+            var types = LyoTypeInfo.ByCategory(category).Where(t => !t.IsCollection).OrderBy(t => DisplayName(t), StringComparer.OrdinalIgnoreCase).ToList();
             if (types.Count > 0)
                 yield return (category, types);
         }
@@ -88,13 +90,9 @@ public static class LyoTypeUi
 
     /// <summary>True when <paramref name="info" /> can be wrapped as <c>List&lt;T&gt;</c> or <c>T[]</c> in the picker.</summary>
     public static bool CanWrapInCollection(LyoTypeInfo info)
-        => info != LyoTypeInfo.Unknown
-            && info != LyoTypeInfo.Enum
-            && info.IsClr
-            && !info.IsCollection
-            && info.Category is LyoTypeCategory.Text or LyoTypeCategory.Boolean or LyoTypeCategory.Integer or LyoTypeCategory.Number
-                or LyoTypeCategory.Temporal or LyoTypeCategory.Identifier
-            && info.EditorKind is not (LyoTypeEditorKind.Regex or LyoTypeEditorKind.Xml or LyoTypeEditorKind.Formatter);
+        => info != LyoTypeInfo.Unknown && info != LyoTypeInfo.Enum && info.IsClr && !info.IsCollection &&
+            info.Category is LyoTypeCategory.Text or LyoTypeCategory.Boolean or LyoTypeCategory.Integer or LyoTypeCategory.Number or LyoTypeCategory.Temporal
+                or LyoTypeCategory.Identifier && info.EditorKind is not (LyoTypeEditorKind.Regex or LyoTypeEditorKind.Xml or LyoTypeEditorKind.Formatter);
 
     /// <summary>List/array shape encoded in a stored FullName. Byte[] stays a scalar binary type.</summary>
     public static LyoTypeCollectionShape CollectionShape(string? typeName)
@@ -147,8 +145,7 @@ public static class LyoTypeUi
 
     /// <summary>Empty string for the CLR FullName field when the stored type is the Enum catalog sentinel.</summary>
     public static string ConcreteFullNameDisplay(string? typeName)
-        => string.IsNullOrWhiteSpace(typeName) || typeName == CustomTypeToken
-            || string.Equals(typeName.Trim(), LyoTypeInfo.Enum.FullName, StringComparison.Ordinal)
+        => string.IsNullOrWhiteSpace(typeName) || typeName == CustomTypeToken || string.Equals(typeName.Trim(), LyoTypeInfo.Enum.FullName, StringComparison.Ordinal)
             ? ""
             : typeName.Trim();
 
@@ -170,8 +167,7 @@ public static class LyoTypeUi
             LyoTypeCategory.Integer => ("^[+-]?\\d+$", "Enter an integer."),
             LyoTypeCategory.Number => ("^[+-]?(?:\\d+\\.?\\d*|\\.\\d+)$", "Enter a number."),
             LyoTypeCategory.Boolean => ("^(?i:true|false)$", "Enter true or false."),
-            LyoTypeCategory.Identifier when element == LyoTypeInfo.Guid => (
-                "(?i)^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$", "Enter a GUID."),
+            LyoTypeCategory.Identifier when element == LyoTypeInfo.Guid => ("(?i)^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$", "Enter a GUID."),
             var _ => (null, null)
         };
     }
@@ -187,7 +183,7 @@ public static class LyoTypeUi
         if (from == LyoTypeInfo.Unknown && to == LyoTypeInfo.Unknown)
             return false;
 
-        if (from == LyoTypeInfo.Enum && to == LyoTypeInfo.Unknown || from == LyoTypeInfo.Unknown && to == LyoTypeInfo.Enum)
+        if ((from == LyoTypeInfo.Enum && to == LyoTypeInfo.Unknown) || (from == LyoTypeInfo.Unknown && to == LyoTypeInfo.Enum))
             return false;
 
         return from != to || CollectionShape(fromType) != CollectionShape(toType);
@@ -212,8 +208,8 @@ public static class LyoTypeUi
         if (info == LyoTypeInfo.Unknown)
             return true;
 
-        return info.EditorKind is LyoTypeEditorKind.JsonObject or LyoTypeEditorKind.JsonArray or LyoTypeEditorKind.Xml or LyoTypeEditorKind.Collection
-            or LyoTypeEditorKind.Binary or LyoTypeEditorKind.Formatter or LyoTypeEditorKind.Regex;
+        return info.EditorKind is LyoTypeEditorKind.JsonObject or LyoTypeEditorKind.JsonArray or LyoTypeEditorKind.Xml or LyoTypeEditorKind.Collection or LyoTypeEditorKind.Binary
+            or LyoTypeEditorKind.Formatter or LyoTypeEditorKind.Regex;
     }
 
     /// <summary>Short preview of stored JSON for a collapsed value cell.</summary>
@@ -225,14 +221,6 @@ public static class LyoTypeUi
         var trimmed = json.Trim();
         return trimmed.Length <= maxChars ? trimmed : trimmed[..maxChars] + "…";
     }
-
-    /// <summary>SmartFormat token examples (clock / definition). Not injected into pickers. templates are free text.</summary>
-    public static readonly IReadOnlyList<string> FormatterTokens = [
-        "{DateTime.UtcNow}",
-        "{DateTime.Now}",
-        "{DateTime.Now.AddDays(-1)}",
-        "{Definition.Name}"
-    ];
 
     /// <summary>True when <paramref name="typeName" /> is a catalog collection (or synthesized <c>List&lt;T&gt;</c> / array).</summary>
     public static bool IsCollection(string? typeName) => LyoTypeInfo.FromName(typeName).IsCollection;
@@ -247,6 +235,5 @@ public static class LyoTypeUi
         return known == LyoTypeInfo.Unknown ? "null" : known.DefaultJson;
     }
 
-    private static string Capitalize(string value)
-        => string.IsNullOrEmpty(value) || !char.IsLower(value[0]) ? value : char.ToUpperInvariant(value[0]) + value[1..];
+    private static string Capitalize(string value) => string.IsNullOrEmpty(value) || !char.IsLower(value[0]) ? value : char.ToUpperInvariant(value[0]) + value[1..];
 }

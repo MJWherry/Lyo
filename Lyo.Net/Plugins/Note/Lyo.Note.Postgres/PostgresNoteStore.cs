@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
@@ -6,7 +7,6 @@ using Lyo.Note.Postgres.Database;
 using Lyo.Postgres;
 using Lyo.Search.Postgres;
 using Microsoft.EntityFrameworkCore;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Note.Postgres;
 
@@ -32,8 +32,7 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
     public string HealthCheckName => "note-postgres";
 
     /// <inheritdoc />
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => PostgresHealth.CheckAsync(_contextFactory, PostgresNoteOptions.Schema, ct);
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => PostgresHealth.CheckAsync(_contextFactory, PostgresNoteOptions.Schema, ct);
 
     /// <inheritdoc />
     public async Task SaveAsync(NoteRecord note, Guid? tenantId = null, CancellationToken ct = default)
@@ -92,7 +91,8 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
         var tenant = ResolveTenant(tenantId);
         var forId = EntityRefPersistedGuid.PersistedEntityId(forEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Notes.AsNoTracking().WhereActive()
+        var entities = await context.Notes.AsNoTracking()
+            .WhereActive()
             .WhereTenant(tenant)
             .Where(n => n.SubjectEntityType == forEntity.EntityType && n.SubjectEntityId == forId)
             .OrderBy(n => n.CreatedAt)
@@ -109,7 +109,8 @@ public sealed class PostgresNoteStore : EntityRefPostgresStoreBase, INoteStore, 
         var tenant = ResolveTenant(tenantId);
         var fromId = EntityRefPersistedGuid.PersistedEntityId(fromEntity);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.Notes.AsNoTracking().WhereActive()
+        var entities = await context.Notes.AsNoTracking()
+            .WhereActive()
             .WhereTenant(tenant)
             .Where(n => n.ActorEntityType == fromEntity.EntityType && n.ActorEntityId == fromId)
             .OrderBy(n => n.CreatedAt)

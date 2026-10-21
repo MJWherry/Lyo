@@ -57,7 +57,7 @@ public sealed record SubtitleCodec
     public static SubtitleCodec Custom(string id)
     {
         _ = BuiltIns;
-        return NamedCatalog.GetOrCustom(ById, id, key => new SubtitleCodec(key, key));
+        return NamedCatalog.GetOrCustom(ById, id, key => new(key, key));
     }
 
     /// <inheritdoc />

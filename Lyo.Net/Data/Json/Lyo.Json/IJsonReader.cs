@@ -37,8 +37,8 @@ public interface IJsonReader
     List<T> ParseNdjsonBytes<T>(byte[] ndjson);
 
     /// <summary>
-    /// Walks a JSON array element by element. One bad element does not drop the rest. A root object is read only when <paramref name="rowsPath" /> names an array property.
-    /// JSON <c>null</c>, an empty document, and a root object without that path fail the document.
+    /// Walks a JSON array element by element. One bad element does not drop the rest. A root object is read only when <paramref name="rowsPath" /> names an array property. JSON
+    /// <c>null</c>, an empty document, and a root object without that path fail the document.
     /// </summary>
     JsonImportResult<T> ParseArrayAsResult<T>(string json, string? rowsPath = null);
 

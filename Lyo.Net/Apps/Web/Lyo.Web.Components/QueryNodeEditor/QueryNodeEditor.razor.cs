@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
@@ -66,8 +68,7 @@ public partial class QueryNodeEditor
         if (value is string)
             return $" {value}";
 
-        if (value is System.Collections.IEnumerable and not byte[]
-            || value is System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.Array }) {
+        if (value is IEnumerable and not byte[] || value is JsonElement { ValueKind: JsonValueKind.Array }) {
             var multi = Extensions.ToMultiValueStrings(value);
             return $" [{string.Join(", ", multi)}]";
         }

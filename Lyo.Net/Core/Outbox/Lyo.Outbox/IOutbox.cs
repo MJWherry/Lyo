@@ -4,15 +4,14 @@ using Lyo.Health;
 namespace Lyo.Outbox;
 
 /// <summary>
-/// Records an outbox row on a caller transaction and does not commit it. Delivery is at-least-once: a crash after a successful send and before
-/// the row is completed publishes again after the lease expires.
+/// Records an outbox row on a caller transaction and does not commit it. Delivery is at-least-once: a crash after a successful send and before the row is completed publishes
+/// again after the lease expires.
 /// </summary>
 public interface IOutbox : IHealth
 {
     /// <summary>
-    /// Inserts <paramref name="message" /> on <paramref name="transaction" />. Does not commit.
-    /// The same payload returns <see cref="OutboxEnqueueResult.Inserted" /> false and leaves the transaction open.
-    /// A different payload rolls the transaction back and throws <see cref="Lyo.Exceptions.Models.ConflictException" />.
+    /// Inserts <paramref name="message" /> on <paramref name="transaction" />. Does not commit. The same payload returns <see cref="OutboxEnqueueResult.Inserted" /> false and
+    /// leaves the transaction open. A different payload rolls the transaction back and throws <see cref="Lyo.Exceptions.Models.ConflictException" />.
     /// </summary>
     Task<OutboxEnqueueResult> EnqueueAsync(DbTransaction transaction, OutboxMessage message, CancellationToken ct = default);
 

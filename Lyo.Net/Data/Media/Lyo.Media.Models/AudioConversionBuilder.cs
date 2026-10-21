@@ -9,25 +9,25 @@ public sealed class AudioConversionBuilder
 {
     private readonly List<string> _inputs = [];
     private readonly Dictionary<FileTagKey, string> _metadata = [];
-    private AudioEncoder? _encoder;
-    private MediaContainer? _format;
-    private AudioSampleRate? _sampleRate;
-    private ChannelLayout? _channels;
     private MediaBitRate? _bitRate;
-    private AudioVbrQuality? _quality;
-    private string? _filter;
+    private ChannelLayout? _channels;
+    private bool _clearMetadata;
+    private bool _concat;
     private bool _copy;
-    private TimeSpan? _start;
     private TimeSpan? _duration;
-    private MediaIoMode _ioMode = MediaIoMode.TempFile;
+    private AudioEncoder? _encoder;
+    private string? _filter;
+    private MediaContainer? _format;
+    private ChannelLayout? _inputChannels;
     private MediaContainer? _inputFormat;
     private AudioSampleRate? _inputSampleRate;
-    private ChannelLayout? _inputChannels;
-    private bool _clearMetadata;
+    private MediaIoMode _ioMode = MediaIoMode.TempFile;
     private LoudnessTarget? _loudness;
-    private bool _overwrite = true;
     private string? _output;
-    private bool _concat;
+    private bool _overwrite = true;
+    private AudioVbrQuality? _quality;
+    private AudioSampleRate? _sampleRate;
+    private TimeSpan? _start;
 
     private AudioConversionBuilder() { }
 
@@ -228,6 +228,7 @@ public sealed class AudioConversionBuilder
             _output = output,
             _concat = concat
         };
+
         if (inputs != null)
             builder._inputs.AddRange(inputs);
         else if (!string.IsNullOrWhiteSpace(input))

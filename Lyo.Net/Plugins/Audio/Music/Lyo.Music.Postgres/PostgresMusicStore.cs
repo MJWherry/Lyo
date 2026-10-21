@@ -25,8 +25,7 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
     public string HealthCheckName => "music-postgres";
 
     /// <inheritdoc />
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => PostgresHealth.CheckAsync(_contextFactory, PostgresMusicOptions.Schema, ct);
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => PostgresHealth.CheckAsync(_contextFactory, PostgresMusicOptions.Schema, ct);
 
     /// <inheritdoc />
     public async Task SaveReleaseAsync(MusicRelease release, CancellationToken ct = default)
@@ -34,10 +33,10 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
         ArgumentHelpers.ThrowIfNull(release);
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var existing = release.Id != Guid.Empty
-            ? await ctx.Releases
-                .Include(r => r.Identifiers)
+            ? await ctx.Releases.Include(r => r.Identifiers)
                 .Include(r => r.Credits)
-                .Include(r => r.Tracks).ThenInclude(t => t.Credits)
+                .Include(r => r.Tracks)
+                .ThenInclude(t => t.Credits)
                 .Include(r => r.GenreLinks)
                 .FirstOrDefaultAsync(r => r.Id == release.Id, ct)
                 .ConfigureAwait(false)
@@ -45,11 +44,10 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
 
         var id = existing?.Id ?? (release.Id == Guid.Empty ? LyoGuid.CreateV7() : release.Id);
         if (existing == null)
-            ctx.Releases.Add(existing = new MusicReleaseEntity { Id = id, CreatedTimestamp = DateTime.UtcNow });
+            ctx.Releases.Add(existing = new() { Id = id, CreatedTimestamp = DateTime.UtcNow });
 
         ApplyReleaseFields(existing, release);
         existing.PrimaryArtist = ComputePrimaryArtist(release.Credits);
-
         ctx.Identifiers.RemoveRange(existing.Identifiers);
         foreach (var ident in release.Identifiers)
             ctx.Identifiers.Add(ToIdentifierEntity(ident, id));
@@ -61,7 +59,7 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
         ReplaceTracks(ctx, existing, release.Tracks, id);
         ctx.ReleaseGenres.RemoveRange(existing.GenreLinks);
         foreach (var genreId in release.GenreIds.Distinct())
-            ctx.ReleaseGenres.Add(new MusicReleaseGenreEntity { ReleaseId = id, GenreId = genreId });
+            ctx.ReleaseGenres.Add(new() { ReleaseId = id, GenreId = genreId });
 
         await SaveCatchingConflictAsync(ctx, "MusicRelease", ct).ConfigureAwait(false);
         release.Id = id;
@@ -97,6 +95,7 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
             .Select(i => (Guid?)i.ReleaseId)
             .FirstOrDefaultAsync(ct)
             .ConfigureAwait(false);
+
         return releaseId is null ? null : await GetReleaseByIdAsync(releaseId.Value, ct).ConfigureAwait(false);
     }
 
@@ -117,12 +116,10 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
     {
         ArgumentHelpers.ThrowIfNull(group);
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var existing = group.Id != Guid.Empty
-            ? await ctx.ReleaseGroups.FirstOrDefaultAsync(g => g.Id == group.Id, ct).ConfigureAwait(false)
-            : null;
+        var existing = group.Id != Guid.Empty ? await ctx.ReleaseGroups.FirstOrDefaultAsync(g => g.Id == group.Id, ct).ConfigureAwait(false) : null;
         var id = existing?.Id ?? (group.Id == Guid.Empty ? LyoGuid.CreateV7() : group.Id);
         if (existing == null)
-            ctx.ReleaseGroups.Add(existing = new MusicReleaseGroupEntity { Id = id, CreatedTimestamp = DateTime.UtcNow });
+            ctx.ReleaseGroups.Add(existing = new() { Id = id, CreatedTimestamp = DateTime.UtcNow });
 
         existing.Title = group.Title;
         existing.Slug = group.Slug;
@@ -184,7 +181,7 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
 
         var existing = genre.Id != Guid.Empty ? await ctx.Genres.FirstOrDefaultAsync(g => g.Id == genre.Id, ct).ConfigureAwait(false) : null;
         if (existing == null)
-            ctx.Genres.Add(existing = new MusicGenreEntity { Id = id });
+            ctx.Genres.Add(existing = new() { Id = id });
 
         existing.ParentGenreId = genre.ParentGenreId;
         existing.Slug = genre.Slug;
@@ -214,8 +211,7 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
     public async Task DeleteGenreAsync(Guid id, CancellationToken ct = default)
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        if (await ctx.Genres.AnyAsync(g => g.ParentGenreId == id, ct).ConfigureAwait(false)
-            || await ctx.ReleaseGenres.AnyAsync(g => g.GenreId == id, ct).ConfigureAwait(false))
+        if (await ctx.Genres.AnyAsync(g => g.ParentGenreId == id, ct).ConfigureAwait(false) || await ctx.ReleaseGenres.AnyAsync(g => g.GenreId == id, ct).ConfigureAwait(false))
             throw ConflictException.ForResource("MusicGenre", id);
 
         var entity = await ctx.Genres.FirstOrDefaultAsync(g => g.Id == id, ct).ConfigureAwait(false);
@@ -234,7 +230,7 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
         var id = format.Id == Guid.Empty ? LyoGuid.CreateV7() : format.Id;
         var existing = format.Id != Guid.Empty ? await ctx.Formats.FirstOrDefaultAsync(f => f.Id == format.Id, ct).ConfigureAwait(false) : null;
         if (existing == null)
-            ctx.Formats.Add(existing = new MusicFormatEntity { Id = id });
+            ctx.Formats.Add(existing = new() { Id = id });
 
         existing.Slug = format.Slug;
         existing.Name = format.Name;
@@ -248,7 +244,14 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entity = await ctx.Formats.AsNoTracking().FirstOrDefaultAsync(f => f.Id == id, ct).ConfigureAwait(false);
-        return entity == null ? null : new MusicFormat { Id = entity.Id, Slug = entity.Slug, Name = entity.Name, SortOrder = entity.SortOrder };
+        return entity == null
+            ? null
+            : new MusicFormat {
+                Id = entity.Id,
+                Slug = entity.Slug,
+                Name = entity.Name,
+                SortOrder = entity.SortOrder
+            };
     }
 
     /// <inheritdoc />
@@ -256,7 +259,13 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var rows = await ctx.Formats.AsNoTracking().OrderBy(f => f.SortOrder).ThenBy(f => f.Name).ToListAsync(ct).ConfigureAwait(false);
-        return rows.Select(f => new MusicFormat { Id = f.Id, Slug = f.Slug, Name = f.Name, SortOrder = f.SortOrder }).ToArray();
+        return rows.Select(f => new MusicFormat {
+                Id = f.Id,
+                Slug = f.Slug,
+                Name = f.Name,
+                SortOrder = f.SortOrder
+            })
+            .ToArray();
     }
 
     /// <inheritdoc />
@@ -290,12 +299,16 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
 
         if (query.Kind is MusicReleaseKind kind)
             q = q.Where(r => r.Kind == kind);
+
         if (query.FormatId is Guid formatId)
             q = q.Where(r => r.FormatId == formatId);
+
         if (query.GenreId is Guid genreId)
             q = q.Where(r => r.GenreLinks.Any(g => g.GenreId == genreId));
+
         if (query.Year is int year)
             q = q.Where(r => r.ReleaseDate != null && r.ReleaseDate.Value.Year == year);
+
         if (!string.IsNullOrWhiteSpace(query.IdentifierScheme) && !string.IsNullOrWhiteSpace(query.IdentifierValue)) {
             var normalized = MusicIdentifierSchemes.Normalize(query.IdentifierScheme, query.IdentifierValue);
             q = q.Where(r => r.Identifiers.Any(i => i.Scheme == query.IdentifierScheme && i.NormalizedValue == normalized));
@@ -323,9 +336,7 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
             .ThenBy(t => t.DiscNumber)
             .ThenBy(t => t.TrackNumber)
             .Select(t => new MusicLyricsHit {
-                TrackId = t.Id,
-                ReleaseId = t.ReleaseId,
-                Snippet = EF.Functions.PlainToTsQuery("english", fullText).GetResultHeadline(t.Lyrics ?? "")
+                TrackId = t.Id, ReleaseId = t.ReleaseId, Snippet = EF.Functions.PlainToTsQuery("english", fullText).GetResultHeadline(t.Lyrics ?? "")
             })
             .ToListAsync(ct)
             .ConfigureAwait(false);
@@ -338,6 +349,7 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
         var row = await ctx.Tracks.AsNoTracking().Where(t => t.Id == trackId).Select(t => new { t.Lyrics }).FirstOrDefaultAsync(ct).ConfigureAwait(false);
         if (row == null)
             throw NotFoundException.ForResource("MusicTrack", trackId);
+
         return row.Lyrics;
     }
 
@@ -348,6 +360,7 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
         var entity = await ctx.Tracks.FirstOrDefaultAsync(t => t.Id == trackId, ct).ConfigureAwait(false);
         if (entity == null)
             throw NotFoundException.ForResource("MusicTrack", trackId);
+
         entity.Lyrics = lyrics;
         await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
     }
@@ -360,7 +373,8 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
         var id = recording.Id == Guid.Empty ? LyoGuid.CreateV7() : recording.Id;
         var existing = recording.Id != Guid.Empty ? await ctx.Recordings.FirstOrDefaultAsync(r => r.Id == recording.Id, ct).ConfigureAwait(false) : null;
         if (existing == null)
-            ctx.Recordings.Add(existing = new MusicRecordingEntity { Id = id });
+            ctx.Recordings.Add(existing = new() { Id = id });
+
         existing.Title = recording.Title;
         await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
         recording.Id = id;
@@ -375,20 +389,21 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
             return null;
 
         var tracks = await ctx.Tracks.AsNoTracking().Where(t => t.RecordingId == id).OrderBy(t => t.Title).ToListAsync(ct).ConfigureAwait(false);
-        return new MusicRecording {
+        return new() {
             Id = entity.Id,
             Title = entity.Title,
             Tracks = tracks.Select(t => new MusicTrack {
-                Id = t.Id,
-                ReleaseId = t.ReleaseId,
-                DiscNumber = t.DiscNumber,
-                TrackNumber = t.TrackNumber,
-                Title = t.Title,
-                DurationSeconds = t.DurationSeconds,
-                Isrc = t.Isrc,
-                AudioFileRef = t.AudioFileRef,
-                RecordingId = t.RecordingId
-            }).ToArray()
+                    Id = t.Id,
+                    ReleaseId = t.ReleaseId,
+                    DiscNumber = t.DiscNumber,
+                    TrackNumber = t.TrackNumber,
+                    Title = t.Title,
+                    DurationSeconds = t.DurationSeconds,
+                    Isrc = t.Isrc,
+                    AudioFileRef = t.AudioFileRef,
+                    RecordingId = t.RecordingId
+                })
+                .ToArray()
         };
     }
 
@@ -403,8 +418,10 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
             var next = await ctx.Genres.AsNoTracking().Where(g => g.Id == current).Select(g => g.ParentGenreId).FirstOrDefaultAsync(ct).ConfigureAwait(false);
             if (next == null)
                 return;
+
             if (next == genreId)
                 throw new UnprocessableEntityException("Genre parent would create a cycle.");
+
             current = next.Value;
         }
 
@@ -421,7 +438,7 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
             var match = track.Id != Guid.Empty ? existing.Tracks.FirstOrDefault(t => t.Id == track.Id) : null;
             if (match == null) {
                 var trackId = track.Id == Guid.Empty ? LyoGuid.CreateV7() : track.Id;
-                match = new MusicTrackEntity { Id = trackId, ReleaseId = releaseId, CreatedTimestamp = DateTime.UtcNow };
+                match = new() { Id = trackId, ReleaseId = releaseId, CreatedTimestamp = DateTime.UtcNow };
                 ctx.Tracks.Add(match);
                 track.Id = trackId;
             }
@@ -435,6 +452,7 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
             match.RecordingId = track.RecordingId;
             if (track.Lyrics != null)
                 match.Lyrics = track.Lyrics;
+
             ctx.Credits.RemoveRange(match.Credits);
             foreach (var credit in track.Credits)
                 ctx.Credits.Add(ToCreditEntity(credit, null, match.Id));
@@ -442,14 +460,16 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
     }
 
     private static MusicGenre ToGenre(MusicGenreEntity entity)
-        => new() { Id = entity.Id, ParentGenreId = entity.ParentGenreId, Slug = entity.Slug, Name = entity.Name, SortOrder = entity.SortOrder };
+        => new() {
+            Id = entity.Id,
+            ParentGenreId = entity.ParentGenreId,
+            Slug = entity.Slug,
+            Name = entity.Name,
+            SortOrder = entity.SortOrder
+        };
 
     private static IQueryable<MusicReleaseEntity> LoadReleaseQuery(MusicDbContext ctx)
-        => ctx.Releases.AsNoTracking()
-            .Include(r => r.Identifiers)
-            .Include(r => r.Credits)
-            .Include(r => r.Tracks).ThenInclude(t => t.Credits)
-            .Include(r => r.GenreLinks);
+        => ctx.Releases.AsNoTracking().Include(r => r.Identifiers).Include(r => r.Credits).Include(r => r.Tracks).ThenInclude(t => t.Credits).Include(r => r.GenreLinks);
 
     private static async Task SaveCatchingConflictAsync(MusicDbContext ctx, string resource, CancellationToken ct)
     {
@@ -476,11 +496,7 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
     }
 
     private static string? ComputePrimaryArtist(IReadOnlyList<MusicCredit> credits)
-        => credits
-            .Where(c => c.Role is MusicCreditRole.Artist or MusicCreditRole.Featured)
-            .OrderBy(c => c.Ordinal)
-            .Select(c => c.DisplayName)
-            .FirstOrDefault();
+        => credits.Where(c => c.Role is MusicCreditRole.Artist or MusicCreditRole.Featured).OrderBy(c => c.Ordinal).Select(c => c.DisplayName).FirstOrDefault();
 
     private static string? NormalizeIsrc(string? isrc)
     {
@@ -496,9 +512,7 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
             ReleaseId = releaseId,
             Scheme = identifier.Scheme,
             Value = identifier.Value,
-            NormalizedValue = string.IsNullOrEmpty(identifier.NormalizedValue)
-                ? MusicIdentifierSchemes.Normalize(identifier.Scheme, identifier.Value)
-                : identifier.NormalizedValue,
+            NormalizedValue = string.IsNullOrEmpty(identifier.NormalizedValue) ? MusicIdentifierSchemes.Normalize(identifier.Scheme, identifier.Value) : identifier.NormalizedValue,
             IsPrimary = identifier.IsPrimary
         };
 
@@ -531,16 +545,16 @@ public sealed class PostgresMusicStore : IMusicStore, IHealth
             CreatedTimestamp = entity.CreatedTimestamp,
             UpdatedTimestamp = entity.UpdatedTimestamp,
             Identifiers = entity.Identifiers.Select(i => new MusicIdentifier {
-                Id = i.Id,
-                ReleaseId = i.ReleaseId,
-                Scheme = i.Scheme,
-                Value = i.Value,
-                NormalizedValue = i.NormalizedValue,
-                IsPrimary = i.IsPrimary
-            }).ToArray(),
+                    Id = i.Id,
+                    ReleaseId = i.ReleaseId,
+                    Scheme = i.Scheme,
+                    Value = i.Value,
+                    NormalizedValue = i.NormalizedValue,
+                    IsPrimary = i.IsPrimary
+                })
+                .ToArray(),
             Credits = entity.Credits.OrderBy(c => c.Ordinal).Select(ToCredit).ToArray(),
-            Tracks = entity.Tracks
-                .OrderBy(t => t.DiscNumber)
+            Tracks = entity.Tracks.OrderBy(t => t.DiscNumber)
                 .ThenBy(t => t.TrackNumber)
                 .Select(t => new MusicTrack {
                     Id = t.Id,

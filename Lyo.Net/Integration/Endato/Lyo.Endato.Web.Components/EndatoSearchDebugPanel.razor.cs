@@ -4,16 +4,16 @@ using Lyo.Endato.Client.Models.Enrichment.Response;
 using Lyo.Endato.Client.Models.Person.Request;
 using Lyo.Endato.Client.Models.Person.Response;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
-using MudBlazor;
 
 namespace Lyo.Endato.Web.Components;
 
 public partial class EndatoSearchDebugPanel
 {
+    private bool _busy;
+    private string? _requestParseError;
+    private int _responseEditorKey;
+    private JsonElement _responseJson;
+
     [Parameter]
     public EndatoSearchMode SearchMode { get; set; }
 
@@ -48,11 +48,6 @@ public partial class EndatoSearchDebugPanel
 
     [Parameter]
     public long? LastElapsedMs { get; set; }
-
-    private bool _busy;
-    private string? _requestParseError;
-    private int _responseEditorKey;
-    private JsonElement _responseJson;
 
     protected override void OnParametersSet()
     {

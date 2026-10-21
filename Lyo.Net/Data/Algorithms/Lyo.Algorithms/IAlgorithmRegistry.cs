@@ -18,6 +18,9 @@ public interface IAlgorithmRegistry
     /// <summary>Runs the revision selected by <paramref name="reference" />. A cache hit does not await.</summary>
     Task<TResult> ExecuteAsync<TContext, TResult>(AlgorithmRef reference, TContext context, CancellationToken ct = default);
 
-    /// <summary>Runs <paramref name="reference" /> and returns the value plus one step per scorer. The value-only <see cref="Execute{TContext,TResult}(AlgorithmRef,TContext)" /> path does not build steps.</summary>
+    /// <summary>
+    /// Runs <paramref name="reference" /> and returns the value plus one step per scorer. The value-only <see cref="Execute{TContext,TResult}(AlgorithmRef,TContext)" /> path
+    /// does not build steps.
+    /// </summary>
     Task<AlgorithmExecution<TResult>> ExecuteWithBreakdownAsync<TContext, TResult>(AlgorithmRef reference, TContext context, CancellationToken ct = default);
 }

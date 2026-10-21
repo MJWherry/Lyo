@@ -25,8 +25,7 @@ public class CurrencyDenominationInfoTests
     }
 
     [Fact]
-    public void FromCode_GetDenominations_MatchesUsd()
-        => Assert.Equal(CurrencyInfo.Usd.GetDenominations(), CurrencyInfo.FromCode("USD").GetDenominations());
+    public void FromCode_GetDenominations_MatchesUsd() => Assert.Equal(CurrencyInfo.Usd.GetDenominations(), CurrencyInfo.FromCode("USD").GetDenominations());
 
     [Fact]
     public void UnknownCurrency_GetDenominations_IsEmpty()
@@ -43,7 +42,6 @@ public class CurrencyDenominationInfoTests
         Assert.True(CurrencyInfo.Usd.TryGetDenomination("nickel", out var byKey));
         Assert.Equal(0.05m, byKey.Value);
         Assert.Equal(CurrencyDenominationKind.Coin, byKey.Kind);
-
         Assert.True(CurrencyInfo.Usd.TryGetDenomination(0.05m, CurrencyDenominationKind.Coin, out var byValue));
         Assert.Equal(byKey, byValue);
     }
@@ -68,6 +66,7 @@ public class CurrencyDenominationInfoTests
         foreach (var value in values) {
             if (previous is { } p && value > p)
                 return false;
+
             previous = value;
         }
 

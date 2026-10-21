@@ -4,8 +4,8 @@ namespace Lyo.Authentication.Services.Users;
 
 /// <summary>Persistence boundary for <see cref="LyoUser" />. In-memory for tests; <c>Lyo.Authentication.Postgres</c> in production.</summary>
 /// <remarks>
-/// Every method takes a <c>Guid? tenantId</c> resolved against the store's <c>TenancyOptions</c>: <c>SystemOnly</c> matches null-tenant rows,
-/// <c>SingleTenantDefault</c> falls back to the configured default, and <c>MultiTenantStrict</c> requires a non-empty value.
+/// Every method takes a <c>Guid? tenantId</c> resolved against the store's <c>TenancyOptions</c>: <c>SystemOnly</c> matches null-tenant rows, <c>SingleTenantDefault</c>
+/// falls back to the configured default, and <c>MultiTenantStrict</c> requires a non-empty value.
 /// </remarks>
 public interface IUserStore
 {

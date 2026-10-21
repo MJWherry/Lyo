@@ -14,13 +14,16 @@ builder.Services.AddLyoDiff(); // ITextTokenizer, ITextDiffService, IObjectGraph
 
 ## Diffing text (`Lyo.Diff.Text`)
 
-- **`ITextTokenizer` (`TextTokenizer`).** Uses `TextDiffOptions` to split input into `TextToken[]` (`TextTokenizeMode` chooses line, word, or character; ignore case; ignore whitespace; `MaxTokensPerSide` safety cap). The cap throws when exceeded so pathological input cannot run away with memory.
-- **`ITextDiffService` (`TextDiffService`).** Myers-diffs two parallel token streams and returns a `TextDiffResult` whose ordered `TextDiffChunk` segments carry a `TextDiffKind` (equal, insert, delete).
+- **`ITextTokenizer` (`TextTokenizer`).** Uses `TextDiffOptions` to split input into `TextToken[]` (`TextTokenizeMode` chooses line, word, or character; ignore case; ignore
+  whitespace; `MaxTokensPerSide` safety cap). The cap throws when exceeded so pathological input cannot run away with memory.
+- **`ITextDiffService` (`TextDiffService`).** Myers-diffs two parallel token streams and returns a `TextDiffResult` whose ordered `TextDiffChunk` segments carry a `TextDiffKind`
+  (equal, insert, delete).
 - **`MyersDiffCalculator`.** The algorithm, applied to spans that are already tokenized.
 
 ## Diffing object graphs (`Lyo.Diff.ObjectGraph`)
 
-- **`IObjectGraphDiffService` (`ObjectGraphDiffService`).** Walks two instances of the same nominal type (or compatible graphs), compares reachable properties and nested objects under `ObjectGraphDiffOptions`, and yields `ObjectGraphDifference` entries (path/context plus old/new leaf values).
+- **`IObjectGraphDiffService` (`ObjectGraphDiffService`).** Walks two instances of the same nominal type (or compatible graphs), compares reachable properties and nested objects
+  under `ObjectGraphDiffOptions`, and yields `ObjectGraphDifference` entries (path/context plus old/new leaf values).
 - **`ObjectGraphLeafContext`.** Records where in the graph the change happened, for UI or logging.
 
 ## Facade

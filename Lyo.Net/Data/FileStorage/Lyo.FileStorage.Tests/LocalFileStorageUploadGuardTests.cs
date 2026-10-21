@@ -1,4 +1,3 @@
-using Lyo.FileStorage.Models;
 using Lyo.FileStorage.Policy;
 using Lyo.FileStorage.Tests.Support;
 
@@ -19,7 +18,6 @@ public sealed class LocalFileStorageUploadGuardTests
         await Assert.ThrowsAsync<FilePolicyRejectedException>(() => scope.Storage.SaveFileAsync(zip, "report.pdf", ct: TestCt));
         var afterReject = Directory.GetFiles(scope.Options.RootDirectoryPath, "*", SearchOption.AllDirectories);
         Assert.Equal(before, afterReject);
-
         var pdf = "%PDF-1.4\n"u8.ToArray();
         var saved = await scope.Storage.SaveFileAsync(pdf, "report.pdf", ct: TestCt);
         Assert.Equal("report.pdf", saved.OriginalFileName);
@@ -34,7 +32,6 @@ public sealed class LocalFileStorageUploadGuardTests
         });
 
         var saved = await scope.Storage.SaveFileAsync("hello"u8.ToArray(), "notes.txt", ct: TestCt);
-        await Assert.ThrowsAsync<FilePolicyRejectedException>(() =>
-            scope.Storage.RenameFileAsync(saved.Id, new RenameFileRequest { OriginalFileName = "virus.exe" }, TestCt));
+        await Assert.ThrowsAsync<FilePolicyRejectedException>(() => scope.Storage.RenameFileAsync(saved.Id, new() { OriginalFileName = "virus.exe" }, TestCt));
     }
 }

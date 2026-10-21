@@ -8,12 +8,12 @@ public class CupsPrintersConfParserTests
     public void Parse_PrinterBlock_ReadsNamePortAndState()
     {
         const string conf = """
-            <Printer Office>
-            Info Office printer
-            DeviceURI ipp://print.example/ipp
-            State Idle
-            </Printer>
-            """;
+                            <Printer Office>
+                            Info Office printer
+                            DeviceURI ipp://print.example/ipp
+                            State Idle
+                            </Printer>
+                            """;
 
         var printer = Assert.Single(CupsPrintersConfParser.Parse(conf, null));
         Assert.Equal("Office", printer.Name);

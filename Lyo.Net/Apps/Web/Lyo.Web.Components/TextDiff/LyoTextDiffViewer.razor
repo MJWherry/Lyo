@@ -1,55 +1,57 @@
 @{
-    RenderFragment<LivePane> livePane = pane =>
-        @<div class="@($"lyo-textdiff-panel lyo-textdiff-split-pane lyo-textdiff-split-pane-{pane.PositionClass}")">
-            <div class="lyo-textdiff-header lyo-textdiff-header-toolbar">
-                <span class="lyo-textdiff-header-title">@pane.Title</span>
-                <div class="lyo-textdiff-header-search">
-                    <MudTextField T="string"
-                                  Value="@pane.SearchText"
-                                  ValueChanged="@pane.SearchTextChanged"
-                                  OnKeyDown="@pane.SearchKeyDown"
-                                  Placeholder="Search"
-                                  Variant="Variant.Outlined"
-                                  Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Search"
-                                  Immediate="true"
-                                  Margin="Margin.Dense"
-                                  Class="lyo-textdiff-header-search-field"/>
-                    <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowUp" Size="Size.Small" Disabled="@(pane.SearchTotal == 0)" OnClick="@pane.PreviousSearch"/>
-                    <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowDown" Size="Size.Small" Disabled="@(pane.SearchTotal == 0)" OnClick="@pane.NextSearch"/>
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">@($"{pane.SearchCurrent}/{pane.SearchTotal}")</MudText>
-                </div>
-            </div>
-            <div class="lyo-textdiff-editor-shell" data-lyo-diff-editor>
-                <div class="lyo-textdiff-gutter" data-role="gutter">
-                    @for (var line = 1; line <= pane.LineCount; line++) {
-                        <div class="lyo-textdiff-gutter-line">@line</div>
-                    }
-                </div>
-                <div class="lyo-textdiff-editor-wrap">
-                    <div class="lyo-textdiff-highlight" data-role="highlight">
-                        @for (var idx = 0; idx < pane.LineCount; idx++) {
-                            <div class="@($"lyo-textdiff-highlight-line {GetHighlightClass(GetLineType(pane.LineTypes, idx))}")"></div>
-                        }
-                    </div>
-                    <div class="lyo-textdiff-content" data-role="content">
-                        @foreach (var line in pane.Lines) {
-                            <div class="@($"lyo-textdiff-content-line {GetHighlightClass(line.Type)} {(line.IsActiveSearchRow ? "search-current" : string.Empty)}")">
-                                @foreach (var segment in line.Segments) {
-                                    <span class="@GetTextSegmentClass(segment)">@segment.Text</span>
-                                }
-                            </div>
-                        }
-                    </div>
-                    <textarea class="lyo-textdiff-textarea"
-                              data-role="textarea"
-                              data-editor-index="@pane.EditorIndex"
-                              spellcheck="false"
-                              wrap="off"
-                              value="@pane.EditorText"></textarea>
-                </div>
-            </div>
-        </div>;
+    RenderFragment<LivePane> livePane = pane => @<div class="@($"lyo-textdiff-panel lyo-textdiff-split-pane lyo-textdiff-split-pane-{pane.PositionClass}")">
+                                                    <div class="lyo-textdiff-header lyo-textdiff-header-toolbar">
+                                                        <span class="lyo-textdiff-header-title">@pane.Title</span>
+                                                        <div class="lyo-textdiff-header-search">
+                                                            <MudTextField T="string"
+                                                                          Value="@pane.SearchText"
+                                                                          ValueChanged="@pane.SearchTextChanged"
+                                                                          OnKeyDown="@pane.SearchKeyDown"
+                                                                          Placeholder="Search"
+                                                                          Variant="Variant.Outlined"
+                                                                          Adornment="Adornment.Start"
+                                                                          AdornmentIcon="@Icons.Material.Filled.Search"
+                                                                          Immediate="true"
+                                                                          Margin="Margin.Dense"
+                                                                          Class="lyo-textdiff-header-search-field"/>
+                                                            <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowUp" Size="Size.Small" Disabled="@(pane.SearchTotal == 0)"
+                                                                           OnClick="@pane.PreviousSearch"/>
+                                                            <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowDown" Size="Size.Small" Disabled="@(pane.SearchTotal == 0)"
+                                                                           OnClick="@pane.NextSearch"/>
+                                                            <MudText Typo="Typo.caption" Color="Color.Secondary">@($"{pane.SearchCurrent}/{pane.SearchTotal}")</MudText>
+                                                        </div>
+                                                    </div>
+                                                    <div class="lyo-textdiff-editor-shell" data-lyo-diff-editor>
+                                                        <div class="lyo-textdiff-gutter" data-role="gutter">
+                                                            @for (var line = 1; line <= pane.LineCount; line++) {
+                                                                <div class="lyo-textdiff-gutter-line">@line</div>
+                                                            }
+                                                        </div>
+                                                        <div class="lyo-textdiff-editor-wrap">
+                                                            <div class="lyo-textdiff-highlight" data-role="highlight">
+                                                                @for (var idx = 0; idx < pane.LineCount; idx++) {
+                                                                    <div class="@($"lyo-textdiff-highlight-line {GetHighlightClass(GetLineType(pane.LineTypes, idx))}")"></div>
+                                                                }
+                                                            </div>
+                                                            <div class="lyo-textdiff-content" data-role="content">
+                                                                @foreach (var line in pane.Lines) {
+                                                                    <div
+                                                                        class="@($"lyo-textdiff-content-line {GetHighlightClass(line.Type)} {(line.IsActiveSearchRow ? "search-current" : string.Empty)}")">
+                                                                        @foreach (var segment in line.Segments) {
+                                                                            <span class="@GetTextSegmentClass(segment)">@segment.Text</span>
+                                                                        }
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                            <textarea class="lyo-textdiff-textarea"
+                                                                      data-role="textarea"
+                                                                      data-editor-index="@pane.EditorIndex"
+                                                                      spellcheck="false"
+                                                                      wrap="off"
+                                                                      value="@pane.EditorText"></textarea>
+                                                        </div>
+                                                    </div>
+                                                </div>;
 }
 
 <div id="@RootId" @ref="_rootRef">

@@ -37,8 +37,7 @@ public class PostgresHealthTests
 
     [Fact]
     public async Task CheckAsync_ThrowsWhenTheFactoryIsNull()
-        => await Assert.ThrowsAsync<ArgumentNullException>(
-            () => PostgresHealth.CheckAsync<TestDbContext>(null!, TestPostgresOptions.Schema, TestCt));
+        => await Assert.ThrowsAsync<ArgumentNullException>(() => PostgresHealth.CheckAsync<TestDbContext>(null!, TestPostgresOptions.Schema, TestCt));
 
     private sealed class TestDbContextFactory(string connectionString) : IDbContextFactory<TestDbContext>
     {

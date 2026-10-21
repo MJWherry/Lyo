@@ -1,6 +1,5 @@
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using Lyo.Desktop.Components;
 using ShapePath = Avalonia.Controls.Shapes.Path;
 
 namespace Lyo.FileManager.App;
@@ -17,6 +16,7 @@ public partial class MainWindow
             Fill = Brushes.White,
             Data = Geometry.Parse("M1,3 H7 L9,5 H17 V15 H1 Z")
         };
+
         DockBar.Background = new SolidColorBrush(Color.Parse("#2a3140"));
         DockBar.Click += (_, _) => _edge.Undock();
         _edge.DockedChanged += (_, _) => SaveSettings();
@@ -26,15 +26,17 @@ public partial class MainWindow
     {
         if (_edge.Restoring)
             return;
+
         if (_edge.Placement.Docked)
-            _edge.Show(saved: true);
+            _edge.Show(true);
     }
 
     private void OnDock(object? sender, RoutedEventArgs e)
     {
         if (_edge.Docked)
             return;
-        _edge.Show(saved: false);
+
+        _edge.Show(false);
     }
 
     private void CopyBubble()

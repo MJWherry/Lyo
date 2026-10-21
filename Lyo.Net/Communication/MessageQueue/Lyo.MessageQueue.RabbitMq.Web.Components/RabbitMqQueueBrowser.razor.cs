@@ -1,14 +1,4 @@
-using System.Net.Http.Json;
-using Lyo.Common.Metadata.Records;
-using Lyo.MessageQueue;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
-using Lyo.Web.Components.DataGrid;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Lyo.MessageQueue.RabbitMq.Web.Components;
@@ -104,20 +94,15 @@ public partial class RabbitMqQueueBrowser
     [Parameter]
     public EventCallback OnBind { get; set; }
 
-    private MessageQueueInfo? SelectedQueue
-        => string.IsNullOrWhiteSpace(SelectedName) ? null : Queues.FirstOrDefault(q => q.Name == SelectedName);
+    private MessageQueueInfo? SelectedQueue => string.IsNullOrWhiteSpace(SelectedName) ? null : Queues.FirstOrDefault(q => q.Name == SelectedName);
 
-    private Task OnQueueChanged(MessageQueueInfo? queue)
-        => SelectedNameChanged.InvokeAsync(queue?.Name ?? "");
+    private Task OnQueueChanged(MessageQueueInfo? queue) => SelectedNameChanged.InvokeAsync(queue?.Name ?? "");
 
-    private Task PeekSelectedAsync()
-        => SelectedQueue is { } queue ? OnPeek.InvokeAsync(queue) : Task.CompletedTask;
+    private Task PeekSelectedAsync() => SelectedQueue is { } queue ? OnPeek.InvokeAsync(queue) : Task.CompletedTask;
 
-    private Task ClearSelectedAsync()
-        => SelectedQueue is { } queue ? OnClear.InvokeAsync(queue) : Task.CompletedTask;
+    private Task ClearSelectedAsync() => SelectedQueue is { } queue ? OnClear.InvokeAsync(queue) : Task.CompletedTask;
 
-    private Task DeleteSelectedAsync()
-        => SelectedQueue is { } queue ? OnDelete.InvokeAsync(queue) : Task.CompletedTask;
+    private Task DeleteSelectedAsync() => SelectedQueue is { } queue ? OnDelete.InvokeAsync(queue) : Task.CompletedTask;
 
     private async Task CopySelectedNameAsync()
     {
@@ -139,8 +124,7 @@ public partial class RabbitMqQueueBrowser
         return Task.FromResult(items);
     }
 
-    private Task<IEnumerable<string>> SearchBindExchanges(string? value, CancellationToken ct)
-        => Task.FromResult(FilterNames(ExchangeNames, value));
+    private Task<IEnumerable<string>> SearchBindExchanges(string? value, CancellationToken ct) => Task.FromResult(FilterNames(ExchangeNames, value));
 
     private static IEnumerable<string> FilterNames(IEnumerable<string> names, string? value)
     {

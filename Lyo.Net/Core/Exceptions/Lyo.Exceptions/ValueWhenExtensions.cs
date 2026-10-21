@@ -4,17 +4,18 @@ using System.Runtime.CompilerServices;
 namespace Lyo.Exceptions;
 
 /// <summary>
-/// Fluent null coalescing and conditional value picks. Same-type <c>OrIfNull</c> returns the receiver's type.
-/// Checks that return a different type return <see cref="ValueOrChain{TSubject,TResult}" />.
+/// Fluent null coalescing and conditional value picks. Same-type <c>OrIfNull</c> returns the receiver's type. Checks that return a different type return
+/// <see cref="ValueOrChain{TSubject,TResult}" />.
 /// </summary>
 /// <remarks>
 /// Ordering uses <see cref="IComparable{T}" />, so numbers, <see cref="string" />, <see cref="DateTime" />, <see cref="DateTimeOffset" />, <see cref="TimeSpan" />,
-/// <c>DateOnly</c>, and <c>TimeOnly</c> share one range implementation. Empty and whitespace strings stay present for <c>OrIfNull</c>;
-/// use <see cref="StringOrExtensions" /> when empty or whitespace should count as missing.
+/// <c>DateOnly</c>, and <c>TimeOnly</c> share one range implementation. Empty and whitespace strings stay present for <c>OrIfNull</c>; use <see cref="StringOrExtensions" /> when
+/// empty or whitespace should count as missing.
 /// </remarks>
 public static partial class ValueWhenExtensions
 {
-    extension<T>(T? value) where T : class
+    extension<T>(T? value)
+        where T : class
     {
         /// <summary>Returns <paramref name="value" /> when it is not null; otherwise <paramref name="alternative" />.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -48,7 +49,8 @@ public static partial class ValueWhenExtensions
         }
     }
 
-    extension<T>(T? value) where T : struct
+    extension<T>(T? value)
+        where T : struct
     {
         /// <summary>Returns <paramref name="value" /> when it has a value; otherwise <paramref name="alternative" />. Zero is present.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -106,10 +108,7 @@ public static partial class ValueWhenExtensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ValueOrChain<TSubject, TResult> OrWhen(bool condition, TResult result) => chain.IsChosen ? chain : chain.Choose(condition, result);
 
-        /// <summary>
-        /// When the chain is still open and <paramref name="condition" /> is true, invokes <paramref name="result" />.
-        /// A chosen chain does not invoke the factory.
-        /// </summary>
+        /// <summary>When the chain is still open and <paramref name="condition" /> is true, invokes <paramref name="result" />. A chosen chain does not invoke the factory.</summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ValueOrChain<TSubject, TResult> OrWhen(bool condition, Func<TResult> result) => chain.IsChosen ? chain : chain.Choose(condition, result);
 

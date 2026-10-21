@@ -1,5 +1,5 @@
+using Lyo.Audiobook.Enums;
 using Lyo.Audiobook.Postgres.Database;
-using Lyo.Audiobook.Seed;
 using Lyo.Seed;
 
 namespace Lyo.Audiobook.Seed.Tests;
@@ -15,7 +15,7 @@ public sealed class AudiobookEfSeedContributorTests
         var work = Assert.Single(transport.Items.OfType<AudiobookWorkEntity>());
         Assert.Equal(series.Id, work.SeriesId);
         Assert.Contains(transport.Items.OfType<AudiobookWorkGenreEntity>(), row => row.WorkId == work.Id);
-        Assert.Contains(transport.Items.OfType<AudiobookCreditEntity>(), row => row.WorkId == work.Id && row.Role == Enums.AudiobookCreditRole.Narrator);
+        Assert.Contains(transport.Items.OfType<AudiobookCreditEntity>(), row => row.WorkId == work.Id && row.Role == AudiobookCreditRole.Narrator);
         var identifier = Assert.Single(transport.Items.OfType<AudiobookIdentifierEntity>(), row => row.WorkId == work.Id);
         Assert.Equal(AudiobookIdentifierSchemes.Isbn, identifier.Scheme);
         Assert.Equal(work.Id.ToString("N"), identifier.NormalizedValue);
@@ -46,6 +46,7 @@ public sealed class AudiobookEfSeedContributorTests
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

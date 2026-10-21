@@ -6,8 +6,7 @@ namespace Lyo.FeatureFlags;
 public static class FeatureFlagUpdate
 {
     /// <summary>
-    /// Copies <paramref name="current" /> and sets <paramref name="name" /> to on or off.
-    /// Percentage, stickiness, and rules on that flag are cleared. Other flags are copied.
+    /// Copies <paramref name="current" /> and sets <paramref name="name" /> to on or off. Percentage, stickiness, and rules on that flag are cleared. Other flags are copied.
     /// Returns null when the name is missing. A null document or a whitespace name throws.
     /// </summary>
     public static FeatureFlagOptions? WithEnabled(FeatureFlagOptions current, string name, bool enabled)
@@ -15,8 +14,7 @@ public static class FeatureFlagUpdate
         ArgumentHelpers.ThrowIfNull(current);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
         string? key = null;
-        foreach (var existing in current.Flags.Keys)
-        {
+        foreach (var existing in current.Flags.Keys) {
             if (!string.Equals(existing, name, StringComparison.OrdinalIgnoreCase))
                 continue;
 
@@ -34,11 +32,7 @@ public static class FeatureFlagUpdate
         return next;
     }
 
-    private static FeatureFlagDefinition Enabled(string name, bool enabled) => new()
-    {
-        Name = name,
-        Mode = enabled ? FeatureFlagMode.On : FeatureFlagMode.Off
-    };
+    private static FeatureFlagDefinition Enabled(string name, bool enabled) => new() { Name = name, Mode = enabled ? FeatureFlagMode.On : FeatureFlagMode.Off };
 
     private static FeatureFlagDefinition Copy(FeatureFlagDefinition source)
     {
@@ -46,8 +40,7 @@ public static class FeatureFlagUpdate
         foreach (var rule in source.Rules)
             rules.Add(Copy(rule));
 
-        return new FeatureFlagDefinition
-        {
+        return new() {
             Name = source.Name,
             Mode = source.Mode,
             Percentage = source.Percentage,
@@ -61,14 +54,13 @@ public static class FeatureFlagUpdate
     {
         var claims = new List<FeatureFlagClaim>(source.Claims.Count);
         foreach (var claim in source.Claims)
-            claims.Add(new FeatureFlagClaim { Type = claim.Type, Value = claim.Value });
+            claims.Add(new() { Type = claim.Type, Value = claim.Value });
 
         var attributes = new List<FeatureFlagAttribute>(source.Attributes.Count);
         foreach (var attribute in source.Attributes)
-            attributes.Add(new FeatureFlagAttribute { Key = attribute.Key, Value = attribute.Value });
+            attributes.Add(new() { Key = attribute.Key, Value = attribute.Value });
 
-        return new FeatureFlagRule
-        {
+        return new() {
             UserId = source.UserId,
             TenantId = source.TenantId,
             Claims = claims,

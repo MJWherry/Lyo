@@ -12,22 +12,24 @@ internal readonly record struct DesktopInputStep(DesktopInputKind Kind, int X, i
 /// <summary>Builds the pointer and key events. Platforms play the list.</summary>
 internal static class DesktopInputSequence
 {
-    internal static IReadOnlyList<DesktopInputStep> Click(int x, int y, DesktopMouseButton button) => [
-        new(DesktopInputKind.Move, x, y, button, "", false, false),
-        new(DesktopInputKind.Button, x, y, button, "", true, false),
-        new(DesktopInputKind.Button, x, y, button, "", false, false)
-    ];
+    internal static IReadOnlyList<DesktopInputStep> Click(int x, int y, DesktopMouseButton button)
+        => [
+            new(DesktopInputKind.Move, x, y, button, "", false, false), new(DesktopInputKind.Button, x, y, button, "", true, false),
+            new(DesktopInputKind.Button, x, y, button, "", false, false)
+        ];
 
     internal static IReadOnlyList<DesktopInputStep> Chord(HotkeyChord chord)
     {
         var mods = ModifierNames(chord.Modifiers);
         var steps = new List<DesktopInputStep>(mods.Count * 2 + 2);
         foreach (var name in mods)
-            steps.Add(Key(name, down: true));
-        steps.Add(Key(chord.Key, down: true));
-        steps.Add(Key(chord.Key, down: false));
+            steps.Add(Key(name, true));
+
+        steps.Add(Key(chord.Key, true));
+        steps.Add(Key(chord.Key, false));
         for (var i = mods.Count - 1; i >= 0; i--)
-            steps.Add(Key(mods[i], down: false));
+            steps.Add(Key(mods[i], false));
+
         return steps;
     }
 
@@ -50,12 +52,16 @@ internal static class DesktopInputSequence
         var names = new List<string>(4);
         if (mods.HasFlag(HotkeyModifiers.Ctrl))
             names.Add("Control");
+
         if (mods.HasFlag(HotkeyModifiers.Shift))
             names.Add("Shift");
+
         if (mods.HasFlag(HotkeyModifiers.Alt))
             names.Add("Alt");
+
         if (mods.HasFlag(HotkeyModifiers.Meta))
             names.Add("Super");
+
         return names;
     }
 }

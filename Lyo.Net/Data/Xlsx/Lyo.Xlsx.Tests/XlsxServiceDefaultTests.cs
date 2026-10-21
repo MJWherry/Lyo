@@ -4,11 +4,6 @@ namespace Lyo.Xlsx.Tests;
 
 public class XlsxServiceDefaultTests
 {
-    private sealed class Person
-    {
-        public string? Name { get; set; }
-    }
-
     [Fact]
     public void Default_RoundTripsSheet()
     {
@@ -23,17 +18,24 @@ public class XlsxServiceDefaultTests
     {
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         var errors = 0;
-        Parallel.For(0, 4, _ => {
-            try {
-                var bytes = XlsxService.Default.ExportToXlsxBytes(new[] { new Person { Name = "Ada" } });
-                var table = XlsxService.Default.ParseXlsxBytesAsDataTable(bytes).ValueOrThrow();
-                if (table.Rows[0][0].DisplayValue != "Ada")
+        Parallel.For(
+            0, 4, _ => {
+                try {
+                    var bytes = XlsxService.Default.ExportToXlsxBytes(new[] { new Person { Name = "Ada" } });
+                    var table = XlsxService.Default.ParseXlsxBytesAsDataTable(bytes).ValueOrThrow();
+                    if (table.Rows[0][0].DisplayValue != "Ada")
+                        Interlocked.Increment(ref errors);
+                }
+                catch {
                     Interlocked.Increment(ref errors);
-            }
-            catch {
-                Interlocked.Increment(ref errors);
-            }
-        });
+                }
+            });
+
         Assert.Equal(0, errors);
+    }
+
+    private sealed class Person
+    {
+        public string? Name { get; set; }
     }
 }

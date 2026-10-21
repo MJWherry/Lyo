@@ -25,11 +25,9 @@ public sealed class EncryptedByteRangeTests
         const int chunkIndex = 2;
         const long start = chunkIndex * 32 + 4;
         const long end = start + 7;
-
         await using var slice = await scope.Storage.OpenPlainByteRangeAsync(saved, start, end, TestCt);
         using var buffered = new MemoryStream();
         await slice!.CopyToAsync(buffered, TestCt);
-
         Assert.Equal(payload[(int)start..((int)end + 1)], buffered.ToArray());
         Assert.Equal(layout.HeaderLength + chunkIndex * layout.FrameSize, scope.Storage.PlainByteRangeReadStart);
     }

@@ -1,15 +1,14 @@
-using Lyo.Common.Core.Conversion;
 using System.Globalization;
 using System.Text.Json;
 using Lyo.Api.Mapping;
+using Lyo.Common.Core.Conversion;
 using Lyo.Common.Core.Enums;
-using Lyo.Parameters;
 using Lyo.Common.Metadata.Records;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres.Database;
-using Lyo.Query.Models.Enums;
+using Lyo.Parameters;
 using Lyo.Schedule.Models;
 using JobRunResultEntity = Lyo.Job.Postgres.Database.JobRunResult;
 
@@ -364,9 +363,9 @@ public sealed class JobLyoMapper : ILyoMapper
 
     internal static JobDefinitionRes ToRes(JobDefinition e)
         => new(
-            e.Id, e.Name, e.Description, e.Type, e.WorkerType, e.Enabled, e.JobParameters.OrderBy(p => p.Order).ThenBy(p => p.Key).Select(ToRes).ToList(), e.JobSchedules.Select(ToRes).ToList(),
-            e.JobParallelRestrictionBaseJobDefinitions.Select(ToRes).ToList(), e.MaxRetryCount, e.RetryBackoffSeconds,
-            e.TimeoutMinutes, e.MaxConcurrentRuns, e.CircuitBreakerThreshold, e.CircuitBreakerResetMinutes, e.CircuitBreakerTrippedAt,
+            e.Id, e.Name, e.Description, e.Type, e.WorkerType, e.Enabled, e.JobParameters.OrderBy(p => p.Order).ThenBy(p => p.Key).Select(ToRes).ToList(),
+            e.JobSchedules.Select(ToRes).ToList(), e.JobParallelRestrictionBaseJobDefinitions.Select(ToRes).ToList(), e.MaxRetryCount, e.RetryBackoffSeconds, e.TimeoutMinutes,
+            e.MaxConcurrentRuns, e.CircuitBreakerThreshold, e.CircuitBreakerResetMinutes, e.CircuitBreakerTrippedAt,
             TypeConversion.EnumOrDefault<JobRetryBackoffType>(e.RetryBackoffType), e.Priority, e.RetentionDays, e.MaxRunsPerHour, e.ExpectedDurationMinutes, e.MustStartByMinutes,
             e.DefinitionVersion);
 
@@ -378,10 +377,11 @@ public sealed class JobLyoMapper : ILyoMapper
 
     internal static JobScheduleRes ToRes(JobSchedule e)
         => new(
-            e.Id, e.JobDefinitionId, TypeConversion.EnumOrDefault<MonthFlags>(e.MonthFlags), TypeConversion.EnumOrDefault<DayFlags>(e.DayFlags), TypeConversion.EnumOrDefault<ScheduleType>(e.Type),
-            (e.Times ?? []).Select(ParseTime).ToList(), ParseTimeOrNull(e.StartTime), ParseTimeOrNull(e.EndTime), e.IntervalMinutes, e.Description, e.Enabled,
-            e.JobScheduleParameters.Select(ToRes).ToList(), e.CronExpression, TypeConversion.EnumOrDefault<JobMisfirePolicy>(e.MisfirePolicy), e.StartDateUtc, e.EndDateUtc, e.TimeZoneId,
-            e.JobBlackoutCalendarId, e.JobBlackoutCalendar is null ? null : ToRes(e.JobBlackoutCalendar), e.JobWorkflowId);
+            e.Id, e.JobDefinitionId, TypeConversion.EnumOrDefault<MonthFlags>(e.MonthFlags), TypeConversion.EnumOrDefault<DayFlags>(e.DayFlags),
+            TypeConversion.EnumOrDefault<ScheduleType>(e.Type), (e.Times ?? []).Select(ParseTime).ToList(), ParseTimeOrNull(e.StartTime), ParseTimeOrNull(e.EndTime),
+            e.IntervalMinutes, e.Description, e.Enabled, e.JobScheduleParameters.Select(ToRes).ToList(), e.CronExpression,
+            TypeConversion.EnumOrDefault<JobMisfirePolicy>(e.MisfirePolicy), e.StartDateUtc, e.EndDateUtc, e.TimeZoneId, e.JobBlackoutCalendarId,
+            e.JobBlackoutCalendar is null ? null : ToRes(e.JobBlackoutCalendar), e.JobWorkflowId);
 
     internal static JobScheduleParameterRes ToRes(JobScheduleParameter e)
         => new(e.Id, e.JobScheduleId, e.Key, LyoTypeInfo.NormalizeFullName(e.Type), e.Value, e.Description, null, e.Enabled);
@@ -400,8 +400,8 @@ public sealed class JobLyoMapper : ILyoMapper
 
     internal static JobWorkflowStepRes ToRes(JobWorkflowStep e)
         => new(
-            e.Id, e.JobWorkflowId, e.JobDefinitionId, e.StepName, e.StepOrder, e.DependsOnStepIds, TypeConversion.EnumOrDefault<JobWorkflowFailurePolicy>(e.FailurePolicy), e.ParametersJson,
-            e.Enabled, ConditionJson: e.ConditionJson);
+            e.Id, e.JobWorkflowId, e.JobDefinitionId, e.StepName, e.StepOrder, e.DependsOnStepIds, TypeConversion.EnumOrDefault<JobWorkflowFailurePolicy>(e.FailurePolicy),
+            e.ParametersJson, e.Enabled, ConditionJson: e.ConditionJson);
 
     internal static JobWorkflowRunRes ToRes(JobWorkflowRun e)
         => new(
@@ -698,8 +698,7 @@ public sealed class JobLyoMapper : ILyoMapper
             e.MetadataJson = SerializeMetadata(r.Metadata);
     }
 
-    private static string? SerializeMetadata(IReadOnlyDictionary<string, string?>? metadata)
-        => metadata is { Count: > 0 } ? JsonSerializer.Serialize(metadata) : null;
+    private static string? SerializeMetadata(IReadOnlyDictionary<string, string?>? metadata) => metadata is { Count: > 0 } ? JsonSerializer.Serialize(metadata) : null;
 
     private static IReadOnlyDictionary<string, string?>? DeserializeMetadata(string? json)
     {

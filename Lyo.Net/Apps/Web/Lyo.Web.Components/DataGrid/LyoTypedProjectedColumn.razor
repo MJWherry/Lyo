@@ -22,17 +22,17 @@
 @code {
 
     /// <summary>Cell markup for one row, rendered by the table cell and by the mobile card layout so a value looks the same in both.</summary>
-    internal RenderFragment<object?> Cell => item =>
-        @<text>
-            @{
-                var displayText = DisplayText(item);
-            }
-            @if (!string.IsNullOrEmpty(QuickSearchPropertyName) && !string.IsNullOrEmpty(QuickSearchText)) {
-                <MudHighlighter Text="@displayText" HighlightedText="@QuickSearchText"/>
-            }
-            else {
-                <text>@displayText</text>
-            }
-        </text>;
+    internal RenderFragment<object?> Cell
+        => item => @<text>
+                        @{
+                            var displayText = DisplayText(item);
+                        }
+                        @if (!string.IsNullOrEmpty(QuickSearchPropertyName) && !string.IsNullOrEmpty(QuickSearchText)) {
+                            <MudHighlighter Text="@displayText" HighlightedText="@QuickSearchText"/>
+                        }
+                        else {
+                            <text>@displayText</text>
+                        }
+    </text>;
 
 }

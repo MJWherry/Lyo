@@ -14,6 +14,9 @@ public sealed class SeleniumWebAutomationTestEngineFixture : IWebAutomationTestE
     private ILoggerFactory _loggerFactory;
     private ServiceProvider _provider;
 
+    /// <summary>Current xUnit cancellation token. Reads <see cref="TestContext.Current" /> when accessed, so each test gets that test's token.</summary>
+    public CancellationToken TestCt => TestContext.Current.CancellationToken;
+
     public SeleniumWebAutomationTestEngineFixture()
     {
         _root = Path.Combine(Path.GetTempPath(), "lyo-web-automation-tests", "selenium");
@@ -29,9 +32,6 @@ public sealed class SeleniumWebAutomationTestEngineFixture : IWebAutomationTestE
     }
 
     public string EngineName => "Selenium";
-
-    /// <summary>Current xUnit cancellation token. Reads <see cref="TestContext.Current"/> when accessed, so each test gets that test's token.</summary>
-    public CancellationToken TestCt => TestContext.Current.CancellationToken;
 
     public Task<IWebAutomationSession> CreateSessionAsync(CancellationToken ct = default)
     {

@@ -1,14 +1,4 @@
-using System.Net.Http.Json;
-using Lyo.Common.Metadata.Records;
-using Lyo.MessageQueue;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
-using Lyo.Web.Components.DataGrid;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Lyo.MessageQueue.RabbitMq.Web.Components;
@@ -80,17 +70,13 @@ public partial class RabbitMqExchangeBrowser
     [Parameter]
     public EventCallback OnBind { get; set; }
 
-    private IReadOnlyList<MessageExchangeInfo> VisibleExchanges
-        => ShowDefaults ? Exchanges : Exchanges.Where(e => !RabbitMqColorHelper.IsDefaultExchange(e.Name)).ToList();
+    private IReadOnlyList<MessageExchangeInfo> VisibleExchanges => ShowDefaults ? Exchanges : Exchanges.Where(e => !RabbitMqColorHelper.IsDefaultExchange(e.Name)).ToList();
 
-    private MessageExchangeInfo? SelectedExchange
-        => string.IsNullOrWhiteSpace(SelectedName) ? null : VisibleExchanges.FirstOrDefault(e => e.Name == SelectedName);
+    private MessageExchangeInfo? SelectedExchange => string.IsNullOrWhiteSpace(SelectedName) ? null : VisibleExchanges.FirstOrDefault(e => e.Name == SelectedName);
 
-    private Task OnExchangeChanged(MessageExchangeInfo? exchange)
-        => SelectedNameChanged.InvokeAsync(exchange?.Name ?? "");
+    private Task OnExchangeChanged(MessageExchangeInfo? exchange) => SelectedNameChanged.InvokeAsync(exchange?.Name ?? "");
 
-    private Task DeleteSelectedAsync()
-        => SelectedExchange is { } exchange ? OnDelete.InvokeAsync(exchange) : Task.CompletedTask;
+    private Task DeleteSelectedAsync() => SelectedExchange is { } exchange ? OnDelete.InvokeAsync(exchange) : Task.CompletedTask;
 
     private async Task CopySelectedNameAsync()
     {
@@ -103,7 +89,7 @@ public partial class RabbitMqExchangeBrowser
 
     private Task<IEnumerable<MessageExchangeInfo>> SearchExchanges(string? value, CancellationToken ct)
     {
-        IEnumerable<MessageExchangeInfo> items = VisibleExchanges.Where(e => !string.IsNullOrEmpty(e.Name));
+        var items = VisibleExchanges.Where(e => !string.IsNullOrEmpty(e.Name));
         if (!string.IsNullOrWhiteSpace(value)) {
             var term = value.Trim();
             items = items.Where(e => e.Name.Contains(term, StringComparison.OrdinalIgnoreCase));
@@ -112,8 +98,7 @@ public partial class RabbitMqExchangeBrowser
         return Task.FromResult(items);
     }
 
-    private Task<IEnumerable<string>> SearchBindQueues(string? value, CancellationToken ct)
-        => Task.FromResult(FilterNames(QueueNames, value));
+    private Task<IEnumerable<string>> SearchBindQueues(string? value, CancellationToken ct) => Task.FromResult(FilterNames(QueueNames, value));
 
     private static IEnumerable<string> FilterNames(IEnumerable<string> names, string? value)
     {
@@ -124,9 +109,7 @@ public partial class RabbitMqExchangeBrowser
         return names.Where(n => n.Contains(term, StringComparison.OrdinalIgnoreCase));
     }
 
-    private static string ExchangeDisplay(string? name)
-        => string.IsNullOrEmpty(name) ? "(default)" : name;
+    private static string ExchangeDisplay(string? name) => string.IsNullOrEmpty(name) ? "(default)" : name;
 
-    private static string ExchangeName(MessageExchangeInfo? exchange)
-        => exchange is null ? "" : ExchangeDisplay(exchange.Name);
+    private static string ExchangeName(MessageExchangeInfo? exchange) => exchange is null ? "" : ExchangeDisplay(exchange.Name);
 }

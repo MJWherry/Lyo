@@ -1,8 +1,8 @@
 namespace Lyo.Rfid;
 
 /// <summary>
-/// Sends one ISO 15693 command and returns the tag response. Both buffers include the CRC-16 the caller already appended.
-/// A PN5180 or other 15693 reader implements this. Type 2 NFC readers do not.
+/// Sends one ISO 15693 command and returns the tag response. Both buffers include the CRC-16 the caller already appended. A PN5180 or other 15693 reader implements this.
+/// Type 2 NFC readers do not.
 /// </summary>
 public interface IIso15693Transceiver
 {

@@ -13,8 +13,6 @@ public sealed record FileManagerCommandState(bool PresignedRead, bool Copy, bool
         return new(capabilities.PresignedRead, capabilities.Copy, capabilities.Move, capabilities.AccessLinks, capabilities.Encryption);
     }
 
-    /// <summary>
-    /// Encrypt stays off when the server has no key store. It also stays off when this server has no local key and <paramref name="keyIdCount" /> is zero.
-    /// </summary>
+    /// <summary>Encrypt stays off when the server has no key store. It also stays off when this server has no local key and <paramref name="keyIdCount" /> is zero.</summary>
     public bool CanEncrypt(bool hasKeyStore, int keyIdCount) => Encryption && (hasKeyStore || keyIdCount > 0);
 }

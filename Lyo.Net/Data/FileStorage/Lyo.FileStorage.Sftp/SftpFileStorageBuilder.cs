@@ -29,8 +29,8 @@ public sealed class SftpFileStorageBuilder : FileStorageServiceBuilder<SftpFileS
         var loggerFactory = services.GetService<ILoggerFactory>();
         var client = new SftpClient(Options.Sftp, loggerFactory, metrics);
         return new SftpFileStorageService(
-            Options, ResolveRequiredMetadata(services, storeName), client, loggerFactory, ResolveCompression(services, storeName), ResolveEncryption(services, storeName),
-            metrics, services.GetService<IFileOperationContextAccessor>(), services.GetServices<IFileAuditEventHandler>(), services.GetService<IFileContentPolicy>(),
-            services.GetService<IFileTypeSniffer>(), ownsClient: true);
+            Options, ResolveRequiredMetadata(services, storeName), client, loggerFactory, ResolveCompression(services, storeName), ResolveEncryption(services, storeName), metrics,
+            services.GetService<IFileOperationContextAccessor>(), services.GetServices<IFileAuditEventHandler>(), services.GetService<IFileContentPolicy>(),
+            services.GetService<IFileTypeSniffer>(), true);
     }
 }

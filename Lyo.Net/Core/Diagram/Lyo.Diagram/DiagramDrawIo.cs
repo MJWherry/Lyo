@@ -10,9 +10,9 @@ namespace Lyo.Diagram;
 
 /// <summary>Reads and writes a <see cref="DiagramDocument" /> as a draw.io <c>.drawio</c> mxfile.</summary>
 /// <remarks>
-/// <see cref="Export" /> writes an uncompressed mxfile that diagrams.net opens directly. <see cref="Import" /> accepts that file and the compressed form
-/// diagrams.net saves by default: base64 of raw DEFLATE of <c>encodeURIComponent</c> applied to the <c>mxGraphModel</c> XML. Import assigns a new document id.
-/// The document name comes from the <c>mxfile</c> <c>name</c> attribute, otherwise the first page name. Root cells <c>0</c> and <c>1</c> are not stored.
+/// <see cref="Export" /> writes an uncompressed mxfile that diagrams.net opens directly. <see cref="Import" /> accepts that file and the compressed form diagrams.net saves
+/// by default: base64 of raw DEFLATE of <c>encodeURIComponent</c> applied to the <c>mxGraphModel</c> XML. Import assigns a new document id. The document name comes from the
+/// <c>mxfile</c> <c>name</c> attribute, otherwise the first page name. Root cells <c>0</c> and <c>1</c> are not stored.
 /// </remarks>
 public static class DiagramDrawIo
 {
@@ -39,7 +39,6 @@ public static class DiagramDrawIo
         var pages = file.Elements().Where(element => element.Name.LocalName == "diagram").Select(ReadPage).ToArray();
         var rawName = file.Attribute("name")?.Value;
         var name = string.IsNullOrWhiteSpace(rawName) ? pages.FirstOrDefault()?.Name ?? "Diagram" : rawName!;
-
         return new() { Id = LyoGuid.CreateV7(), Name = name, Pages = pages };
     }
 
@@ -49,28 +48,17 @@ public static class DiagramDrawIo
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(page.Id);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(page.Name);
         ArgumentHelpers.ThrowIfNull(page.Cells);
-        var model = new XElement("mxGraphModel",
-            new XAttribute("grid", "1"),
-            new XAttribute("gridSize", "10"),
-            new XAttribute("guides", "1"),
-            new XAttribute("tooltips", "1"),
-            new XAttribute("connect", "1"),
-            new XAttribute("arrows", "1"),
-            new XAttribute("fold", "1"),
-            new XAttribute("page", "1"),
-            new XAttribute("pageScale", "1"),
-            new XAttribute("pageWidth", Format(page.PageWidth)),
-            new XAttribute("pageHeight", Format(page.PageHeight)),
-            new XAttribute("math", "0"),
-            new XAttribute("shadow", "0"));
-        var root = new XElement("root",
-            new XElement("mxCell", new XAttribute("id", "0")),
-            new XElement("mxCell", new XAttribute("id", "1"), new XAttribute("parent", "0")));
+        var model = new XElement(
+            "mxGraphModel", new XAttribute("grid", "1"), new XAttribute("gridSize", "10"), new XAttribute("guides", "1"), new XAttribute("tooltips", "1"),
+            new XAttribute("connect", "1"), new XAttribute("arrows", "1"), new XAttribute("fold", "1"), new XAttribute("page", "1"), new XAttribute("pageScale", "1"),
+            new XAttribute("pageWidth", Format(page.PageWidth)), new XAttribute("pageHeight", Format(page.PageHeight)), new XAttribute("math", "0"), new XAttribute("shadow", "0"));
+
+        var root = new XElement("root", new XElement("mxCell", new XAttribute("id", "0")), new XElement("mxCell", new XAttribute("id", "1"), new XAttribute("parent", "0")));
         foreach (var cell in page.Cells)
             root.Add(WriteCell(cell));
 
         model.Add(root);
-        return new XElement("diagram", new XAttribute("id", page.Id), new XAttribute("name", page.Name), model);
+        return new("diagram", new XAttribute("id", page.Id), new XAttribute("name", page.Name), model);
     }
 
     private static XElement WriteCell(DiagramCell cell)
@@ -81,17 +69,23 @@ public static class DiagramDrawIo
         var element = new XElement("mxCell", new XAttribute("id", cell.Id));
         if (cell.Value != null)
             element.SetAttributeValue("value", cell.Value);
+
         if (!string.IsNullOrEmpty(cell.Style))
             element.SetAttributeValue("style", cell.Style);
+
         if (cell.IsVertex)
             element.SetAttributeValue("vertex", "1");
+
         if (cell.IsEdge)
             element.SetAttributeValue("edge", "1");
+
         element.SetAttributeValue("parent", string.IsNullOrEmpty(cell.ParentId) ? "1" : cell.ParentId);
         if (cell.SourceId != null)
             element.SetAttributeValue("source", cell.SourceId);
+
         if (cell.TargetId != null)
             element.SetAttributeValue("target", cell.TargetId);
+
         if (cell.Geometry != null)
             element.Add(WriteGeometry(cell.Geometry));
 
@@ -107,14 +101,18 @@ public static class DiagramDrawIo
         WriteCoord(element, "height", geometry.Height);
         if (geometry.Relative)
             element.SetAttributeValue("relative", "1");
+
         if (geometry.SourcePoint != null)
             element.Add(WritePoint(geometry.SourcePoint, "sourcePoint"));
+
         if (geometry.TargetPoint != null)
             element.Add(WritePoint(geometry.TargetPoint, "targetPoint"));
+
         if (geometry.Points is { Count: > 0 }) {
             var array = new XElement("Array", new XAttribute("as", "points"));
             foreach (var point in geometry.Points)
                 array.Add(WritePoint(point, null));
+
             element.Add(array);
         }
 
@@ -132,6 +130,7 @@ public static class DiagramDrawIo
         var element = new XElement("mxPoint", new XAttribute("x", Format(point.X)), new XAttribute("y", Format(point.Y)));
         if (role != null)
             element.SetAttributeValue("as", role);
+
         return element;
     }
 
@@ -140,13 +139,10 @@ public static class DiagramDrawIo
         var id = Required(diagram.Attribute("id")?.Value);
         var rawName = diagram.Attribute("name")?.Value;
         var name = string.IsNullOrWhiteSpace(rawName) ? "Page" : rawName!;
-
         var model = diagram.Elements().FirstOrDefault(element => element.Name.LocalName == "mxGraphModel") ?? ParseCompressed(diagram.Value);
         var root = model.Elements().FirstOrDefault(element => element.Name.LocalName == "root");
-        var cells = root == null
-            ? []
-            : root.Elements().Where(element => element.Name.LocalName == "mxCell").Select(ReadCell).OfType<DiagramCell>().ToArray();
-        return new DiagramPage {
+        var cells = root == null ? [] : root.Elements().Where(element => element.Name.LocalName == "mxCell").Select(ReadCell).OfType<DiagramCell>().ToArray();
+        return new() {
             Id = id,
             Name = name,
             PageWidth = ReadDouble(model.Attribute("pageWidth")) ?? 850,
@@ -162,9 +158,8 @@ public static class DiagramDrawIo
             return null;
 
         var id = rawId!;
-
         var parent = element.Attribute("parent")?.Value;
-        return new DiagramCell {
+        return new() {
             Id = id,
             ParentId = string.IsNullOrEmpty(parent) || parent is "0" or "1" ? null : parent,
             Value = element.Attribute("value")?.Value,
@@ -183,7 +178,7 @@ public static class DiagramDrawIo
             return null;
 
         var points = element.Elements().FirstOrDefault(child => child.Name.LocalName == "Array" && child.Attribute("as")?.Value == "points");
-        return new DiagramGeometry {
+        return new() {
             X = ReadDouble(element.Attribute("x")),
             Y = ReadDouble(element.Attribute("y")),
             Width = ReadDouble(element.Attribute("width")),
@@ -201,8 +196,7 @@ public static class DiagramDrawIo
         return point == null ? null : ReadPoint(point);
     }
 
-    private static DiagramPoint ReadPoint(XElement point)
-        => new() { X = ReadDouble(point.Attribute("x")) ?? 0, Y = ReadDouble(point.Attribute("y")) ?? 0 };
+    private static DiagramPoint ReadPoint(XElement point) => new() { X = ReadDouble(point.Attribute("x")) ?? 0, Y = ReadDouble(point.Attribute("y")) ?? 0 };
 
     private static XElement ParseCompressed(string payload)
     {
@@ -244,15 +238,15 @@ public static class DiagramDrawIo
     private static string StripWhitespace(string value)
     {
         var sb = new StringBuilder(value.Length);
-        foreach (var c in value)
+        foreach (var c in value) {
             if (!char.IsWhiteSpace(c))
                 sb.Append(c);
+        }
 
         return sb.ToString();
     }
 
-    private static bool IsHex(char c)
-        => c is (>= '0' and <= '9') or (>= 'a' and <= 'f') or (>= 'A' and <= 'F');
+    private static bool IsHex(char c) => c is >= '0' and <= '9' or >= 'a' and <= 'f' or >= 'A' and <= 'F';
 
     private static string Required(string? value)
     {

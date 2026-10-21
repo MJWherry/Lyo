@@ -26,9 +26,7 @@ internal static class AzuriteTestHost
             return null;
 
         var endpoint = $"http://{container.Hostname}:{container.GetMappedPublicPort(BlobPort)}/{AccountName}";
-        var connectionString =
-            $"DefaultEndpointsProtocol=http;AccountName={AccountName};AccountKey={AccountKey};BlobEndpoint={endpoint};";
-
+        var connectionString = $"DefaultEndpointsProtocol=http;AccountName={AccountName};AccountKey={AccountKey};BlobEndpoint={endpoint};";
         return (container, connectionString);
     }
 }

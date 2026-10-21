@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
 using DynamicExpresso;
@@ -12,10 +11,28 @@ namespace Lyo.Algorithms;
 public sealed class ExpressionCompiler : IExpressionCompiler
 {
     private static readonly HashSet<string> AllowedMethods = new(StringComparer.Ordinal) {
-        "Abs", "Min", "Max", "Round", "Floor", "Ceiling", "Pow", "Sqrt", "Sign", "ToDouble", "ToDecimal", "ToInt32", "ToInt64"
+        "Abs",
+        "Min",
+        "Max",
+        "Round",
+        "Floor",
+        "Ceiling",
+        "Pow",
+        "Sqrt",
+        "Sign",
+        "ToDouble",
+        "ToDecimal",
+        "ToInt32",
+        "ToInt64"
     };
 
-    private static readonly HashSet<string> Builtins = new(StringComparer.Ordinal) { "Math", "Convert", "true", "false", "null" };
+    private static readonly HashSet<string> Builtins = new(StringComparer.Ordinal) {
+        "Math",
+        "Convert",
+        "true",
+        "false",
+        "null"
+    };
 
     private readonly ConcurrentDictionary<CacheKey, object> _cache = new();
 
@@ -25,9 +42,7 @@ public sealed class ExpressionCompiler : IExpressionCompiler
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(source);
         try {
             var lambda = ParseLoose(source);
-            return IsAllowed(lambda.Expression, out var error) 
-                ? Result<Unit>.Success(default) 
-                : Result<Unit>.Failure(error!, "algorithm.expression.denied");
+            return IsAllowed(lambda.Expression, out var error) ? Result<Unit>.Success(default) : Result<Unit>.Failure(error!, "algorithm.expression.denied");
         }
         catch (Exception ex) {
             return Result<Unit>.Failure(ex.Message, "algorithm.expression.parse");
@@ -63,6 +78,7 @@ public sealed class ExpressionCompiler : IExpressionCompiler
         var properties = typeof(TContext).GetProperties(BindingFlags.Instance | BindingFlags.Public)
             .Where(p => p.CanRead && p.GetIndexParameters().Length == 0 && AlgorithmContextBag.IsIdentifier(p.Name) && p.GetGetMethod() is not null)
             .ToArray();
+
         var interpreter = CreateInterpreter();
         var parameters = properties.Select(p => new Parameter(p.Name, Nullable.GetUnderlyingType(p.PropertyType) ?? p.PropertyType)).ToArray();
         var lambda = interpreter.Parse(source, parameters);
@@ -75,6 +91,7 @@ public sealed class ExpressionCompiler : IExpressionCompiler
             Expression access = Expression.Property(context, properties[i]);
             if (access.Type != parameters[i].Type)
                 access = Expression.Convert(access, parameters[i].Type);
+
             map[parameters[i].Expression] = access;
         }
 
@@ -107,10 +124,10 @@ public sealed class ExpressionCompiler : IExpressionCompiler
 
     private static CompiledAlgorithm<TContext, TResult> CompileBody<TContext, TResult>(string key, ParameterExpression context, Expression body)
     {
-        Expression result = body.Type == typeof(TResult) ? body : Expression.Convert(body, typeof(TResult));
+        var result = body.Type == typeof(TResult) ? body : Expression.Convert(body, typeof(TResult));
         var del = Expression.Lambda<Func<TContext, TResult>>(result, context).Compile();
         var callsChildren = key.IndexOf("Algo(\"", StringComparison.Ordinal) >= 0 || key.IndexOf("score(\"", StringComparison.Ordinal) >= 0;
-        return new CompiledAlgorithm<TContext, TResult>(key, del, callsChildren);
+        return new(key, del, callsChildren);
     }
 
     private static Lambda ParseLoose(string source)
@@ -121,8 +138,7 @@ public sealed class ExpressionCompiler : IExpressionCompiler
         return interpreter.Parse(source, parameters);
     }
 
-    private static Parameter ParameterFor(string name)
-        => new(name, name.EndsWith("_key", StringComparison.Ordinal) ? typeof(string) : typeof(double));
+    private static Parameter ParameterFor(string name) => new(name, name.EndsWith("_key", StringComparison.Ordinal) ? typeof(string) : typeof(double));
 
     private static List<string> UnknownNames(Interpreter interpreter, string source)
     {
@@ -131,6 +147,7 @@ public sealed class ExpressionCompiler : IExpressionCompiler
         foreach (var name in info.UnknownIdentifiers) {
             if (Builtins.Contains(name) || !AlgorithmContextBag.IsIdentifier(name))
                 continue;
+
             names.Add(name);
         }
 
@@ -138,8 +155,7 @@ public sealed class ExpressionCompiler : IExpressionCompiler
     }
 
     private static Interpreter CreateInterpreter()
-        => new Interpreter(InterpreterOptions.Default)
-            .Reference(typeof(Math))
+        => new Interpreter(InterpreterOptions.Default).Reference(typeof(Math))
             .Reference(typeof(Convert))
             .SetFunction("Algo", (Func<string, double>)AlgorithmCallScope.Call)
             .SetFunction("score", (Func<string, double>)AlgorithmCallScope.Call);
@@ -154,12 +170,12 @@ public sealed class ExpressionCompiler : IExpressionCompiler
 
     private readonly record struct CacheKey(string Source, Type Context, Type Result);
 
-    private sealed class ExpressionDeniedException(string message) : Exception(message);
+    private sealed class ExpressionDeniedException(string message)
+        : Exception(message);
 
     private sealed class ParameterRewriter(Dictionary<ParameterExpression, Expression> map) : ExpressionVisitor
     {
-        protected override Expression VisitParameter(ParameterExpression node)
-            => map.TryGetValue(node, out var replacement) ? replacement : base.VisitParameter(node);
+        protected override Expression VisitParameter(ParameterExpression node) => map.TryGetValue(node, out var replacement) ? replacement : base.VisitParameter(node);
     }
 
     private sealed class AllowlistVisitor : ExpressionVisitor
@@ -170,11 +186,14 @@ public sealed class ExpressionCompiler : IExpressionCompiler
         {
             if (Rejected is not null)
                 return node;
+
             var name = node.Method.Name;
             if (name is "Algo" or "score")
                 return base.VisitMethodCall(node);
+
             if (node.Method.IsSpecialName && (name.StartsWith("get_", StringComparison.Ordinal) || name.StartsWith("op_", StringComparison.Ordinal)))
                 return base.VisitMethodCall(node);
+
             if (!AllowedMethods.Contains(name)) {
                 Rejected = $"Method '{name}' is not allowed in algorithm expressions.";
                 return node;
@@ -187,6 +206,7 @@ public sealed class ExpressionCompiler : IExpressionCompiler
         {
             if (Rejected is not null)
                 return node;
+
             var declaring = node.Member.DeclaringType;
             if (declaring != typeof(Math) && declaring != typeof(Convert)) {
                 Rejected = $"Member '{node.Member.Name}' is not allowed in algorithm expressions.";
@@ -200,9 +220,11 @@ public sealed class ExpressionCompiler : IExpressionCompiler
         {
             if (Rejected is not null)
                 return node;
+
             var type = node.Type;
             if (type == typeof(decimal) || type.IsPrimitive)
                 return base.VisitNew(node);
+
             Rejected = $"Creating '{type.Name}' is not allowed in algorithm expressions.";
             return node;
         }
@@ -212,9 +234,9 @@ public sealed class ExpressionCompiler : IExpressionCompiler
     {
         public string Key { get; } = key;
 
-        public bool CallsChildren { get; } = callsChildren;
-
         public TResult Execute(TContext context) => execute(context);
+
+        public bool CallsChildren { get; } = callsChildren;
     }
 }
 

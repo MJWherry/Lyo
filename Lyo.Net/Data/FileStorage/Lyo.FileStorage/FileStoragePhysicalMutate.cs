@@ -14,40 +14,27 @@ public static class FileStoragePhysicalMutate
     }
 
     /// <summary>Moves the object to <c>{destinationPathPrefix}/{leaf}</c> (root when the prefix is empty). Returns the new key.</summary>
-    public static Task<string> MoveToPrefixAsync(
-        IFileStorageService fileStorage,
-        string physicalKey,
-        string? destinationPathPrefix,
-        CancellationToken ct = default)
-        => RelocateAsync(fileStorage, physicalKey, FileStoragePhysicalPath.JoinKey(destinationPathPrefix, FileStoragePhysicalPath.Leaf(FileHelpers.NormalizeAndValidatePathPrefix(physicalKey))), copy: false, ct);
+    public static Task<string> MoveToPrefixAsync(IFileStorageService fileStorage, string physicalKey, string? destinationPathPrefix, CancellationToken ct = default)
+        => RelocateAsync(
+            fileStorage, physicalKey, FileStoragePhysicalPath.JoinKey(destinationPathPrefix, FileStoragePhysicalPath.Leaf(FileHelpers.NormalizeAndValidatePathPrefix(physicalKey))),
+            false, ct);
 
     /// <summary>Copies the object to <c>{destinationPathPrefix}/{leaf}</c>. Returns the new key.</summary>
-    public static Task<string> CopyToPrefixAsync(
-        IFileStorageService fileStorage,
-        string physicalKey,
-        string? destinationPathPrefix,
-        CancellationToken ct = default)
-        => RelocateAsync(fileStorage, physicalKey, FileStoragePhysicalPath.JoinKey(destinationPathPrefix, FileStoragePhysicalPath.Leaf(FileHelpers.NormalizeAndValidatePathPrefix(physicalKey))), copy: true, ct);
+    public static Task<string> CopyToPrefixAsync(IFileStorageService fileStorage, string physicalKey, string? destinationPathPrefix, CancellationToken ct = default)
+        => RelocateAsync(
+            fileStorage, physicalKey, FileStoragePhysicalPath.JoinKey(destinationPathPrefix, FileStoragePhysicalPath.Leaf(FileHelpers.NormalizeAndValidatePathPrefix(physicalKey))),
+            true, ct);
 
     /// <summary>Renames the last segment of <paramref name="physicalKey" />. Returns the new key.</summary>
-    public static Task<string> RenameAsync(
-        IFileStorageService fileStorage,
-        string physicalKey,
-        string newFileName,
-        CancellationToken ct = default)
+    public static Task<string> RenameAsync(IFileStorageService fileStorage, string physicalKey, string newFileName, CancellationToken ct = default)
     {
         var sourceKey = FileHelpers.NormalizeAndValidatePathPrefix(physicalKey);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(sourceKey);
         var destKey = FileStoragePhysicalPath.JoinKey(FileStoragePhysicalPath.ParentKey(sourceKey), newFileName);
-        return RelocateAsync(fileStorage, sourceKey, destKey, copy: false, ct);
+        return RelocateAsync(fileStorage, sourceKey, destKey, false, ct);
     }
 
-    private static async Task<string> RelocateAsync(
-        IFileStorageService fileStorage,
-        string physicalKey,
-        string destKey,
-        bool copy,
-        CancellationToken ct)
+    private static async Task<string> RelocateAsync(IFileStorageService fileStorage, string physicalKey, string destKey, bool copy, CancellationToken ct)
     {
         var (fs, sourcePath, sourceKey) = await FileStoragePhysicalPath.ResolveExistingAsync(fileStorage, physicalKey, ct).ConfigureAwait(false);
         if (string.Equals(sourceKey, destKey, StringComparison.Ordinal))

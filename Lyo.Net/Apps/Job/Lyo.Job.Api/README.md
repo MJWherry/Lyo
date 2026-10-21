@@ -1,6 +1,7 @@
 # Lyo.Job.Api
 
-Maps job definition CRUD, run lifecycle, stats, next-runs, and scheduler batch routes. Register the store with `AddPostgresJobManagement` from `Lyo.Job.Postgres` first, then call `BuildJobGroup`. Example host: `Lyo.Job.Api.Example`.
+Maps job definition CRUD, run lifecycle, stats, next-runs, and scheduler batch routes. Register the store with `AddPostgresJobManagement` from `Lyo.Job.Postgres` first, then call
+`BuildJobGroup`. Example host: `Lyo.Job.Api.Example`.
 
 ## Features
 
@@ -21,20 +22,20 @@ app.BuildJobGroup();
 
 Tag `"Job"`. Definitions get CRUD + export; runs expose Query/Get/Delete/DeleteBulk + export.
 
-| Route prefix | Entity | Notes |
-| ---------------------------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `Job/Definition` | `JobDefinition` | Version bump + audit on update |
-| `Job/Definition/Parameter` | `JobParameter` | Encryption on write |
-| `Job/Schedule` | `JobSchedule` | Misfire policy, calendar link, cron |
-| `Job/BlackoutCalendar`, `Job/BlackoutCalendar/Window` | Blackout calendars | |
-| `Job/Workflow`, `Job/Workflow/Step`, `Job/Workflow/Run`, … | Workflows | |
-| `Job/WorkerInstance` | Worker registry | Created by workers |
-| `Job/Run` | `JobRun` | Progress, SLA, idempotency fields |
-| `Job/Run/{id}/Children` | Batch fan-out | `JobCreateChildRunsReq` |
-| `POST Job/Definition/LatestRuns` | Batch latest-runs | Latest / latest-successful / latest-failed run per definition id (scheduler refresh) |
-| `GET Job/Definition/{id}/Stats` | Stats projection | Rolling window aggregates plus current `RunningCount` / `QueuedCount` |
-| `GET Job/Definition/{id}/NextRuns` | Upcoming slots | Merged next-run timestamps across enabled schedules (blackout-aware) |
-| `POST Job/Run/Resync` | Queued-run resync | Optional `definitionId`; peeks worker + `.wait` queues and republishes missing due `Queued` runs (`JobRunResyncRes`) |
+| Route prefix                                               | Entity             | Notes                                                                                                                |
+|------------------------------------------------------------|--------------------|----------------------------------------------------------------------------------------------------------------------|
+| `Job/Definition`                                           | `JobDefinition`    | Version bump + audit on update                                                                                       |
+| `Job/Definition/Parameter`                                 | `JobParameter`     | Encryption on write                                                                                                  |
+| `Job/Schedule`                                             | `JobSchedule`      | Misfire policy, calendar link, cron                                                                                  |
+| `Job/BlackoutCalendar`, `Job/BlackoutCalendar/Window`      | Blackout calendars |                                                                                                                      |
+| `Job/Workflow`, `Job/Workflow/Step`, `Job/Workflow/Run`, … | Workflows          |                                                                                                                      |
+| `Job/WorkerInstance`                                       | Worker registry    | Created by workers                                                                                                   |
+| `Job/Run`                                                  | `JobRun`           | Progress, SLA, idempotency fields                                                                                    |
+| `Job/Run/{id}/Children`                                    | Batch fan-out      | `JobCreateChildRunsReq`                                                                                              |
+| `POST Job/Definition/LatestRuns`                           | Batch latest-runs  | Latest / latest-successful / latest-failed run per definition id (scheduler refresh)                                 |
+| `GET Job/Definition/{id}/Stats`                            | Stats projection   | Rolling window aggregates plus current `RunningCount` / `QueuedCount`                                                |
+| `GET Job/Definition/{id}/NextRuns`                         | Upcoming slots     | Merged next-run timestamps across enabled schedules (blackout-aware)                                                 |
+| `POST Job/Run/Resync`                                      | Queued-run resync  | Optional `definitionId`; peeks worker + `.wait` queues and republishes missing due `Queued` runs (`JobRunResyncRes`) |
 
 Alongside CRUD, lifecycle routes (`RunStarted`, `RunFinished`, `RunRequeue`, `RunsResync`, `RunHeartbeat`, `RunLog`, …) are mapped for scheduler/worker hosts.
 

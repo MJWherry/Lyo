@@ -1,8 +1,8 @@
 namespace Lyo.Rfid.Tonie;
 
 /// <summary>
-/// SLIX-L privacy password used when programming a blank tag. <see cref="NxpDefault"/> is the NXP production value <c>0F0F0F0F</c> from the SLIX-L datasheet.
-/// Identifier <see cref="PrivacyIdentifier"/> selects that password on GET RANDOM and SET PASSWORD.
+/// SLIX-L privacy password used when programming a blank tag. <see cref="NxpDefault" /> is the NXP production value <c>0F0F0F0F</c> from the SLIX-L datasheet. Identifier
+/// <see cref="PrivacyIdentifier" /> selects that password on GET RANDOM and SET PASSWORD.
 /// </summary>
 public static class ToniePrivacy
 {

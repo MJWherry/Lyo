@@ -7,12 +7,15 @@ using Lyo.KeyStore;
 namespace Lyo.Encryption.AesSiv;
 
 /// <summary>
-/// AES-SIV (RFC 5297) via Dorssel.Security.Cryptography.AesExtra. The 16-byte synthetic IV lives in the header "nonce" field; ciphertext is CTR payload only (no
-/// separate tag). V1 uses empty associated data (<see cref="ReadOnlySpan{T}.Empty" />).
+/// AES-SIV (RFC 5297) via Dorssel.Security.Cryptography.AesExtra. The 16-byte synthetic IV lives in the header "nonce" field; ciphertext is CTR payload only (no separate
+/// tag). V1 uses empty associated data (<see cref="ReadOnlySpan{T}.Empty" />).
 /// </summary>
 public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMaterialSize
 {
     public AesSivKeySizeBits AesSivKeySize { get; }
+
+    /// <inheritdoc />
+    protected override EncryptionAlgorithmInfo AlgorithmInfo => EncryptionAlgorithmInfo.AesSiv;
 
     public AesSivEncryptionService(IKeyStore keyStore)
         : this(keyStore, AesSivKeySizeBits.Bits256) { }
@@ -36,9 +39,6 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
 
     public int RequiredKeyBytes => AesSivKeySize.GetKeyLengthBytes();
 
-    /// <inheritdoc />
-    protected override EncryptionAlgorithmInfo AlgorithmInfo => EncryptionAlgorithmInfo.AesSiv;
-
     protected override byte GetAlgorithmId() => (byte)EncryptionAlgorithm.AesSiv;
 
     /// <summary>Builds a per-stream AES-SIV cipher bound to <paramref name="key" /> for the deterministic chunk loop.</summary>
@@ -53,14 +53,7 @@ public class AesSivEncryptionService : EncryptionServiceBase, ISymmetricKeyMater
         => ArgumentHelpers.ThrowIf(key.Length != RequiredKeyBytes, $"AES-SIV key must be exactly {RequiredKeyBytes} bytes for the configured key size.", nameof(key));
 
     /// <inheritdoc />
-    protected override void Seal(
-        ReadOnlySpan<byte> plaintext,
-        byte[] key,
-        Span<byte> nonce,
-        Span<byte> authenticator,
-        Span<byte> payload,
-        Span<byte> body,
-        byte[]? associatedData)
+    protected override void Seal(ReadOnlySpan<byte> plaintext, byte[] key, Span<byte> nonce, Span<byte> authenticator, Span<byte> payload, Span<byte> body, byte[]? associatedData)
     {
         using var siv = new Dorssel.Security.Cryptography.AesSiv(key);
         siv.Encrypt(plaintext, body, associatedData is { Length: > 0 } ? associatedData : ReadOnlySpan<byte>.Empty);

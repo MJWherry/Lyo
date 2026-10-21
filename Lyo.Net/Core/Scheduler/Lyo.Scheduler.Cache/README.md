@@ -1,6 +1,8 @@
 # Lyo.Scheduler.Cache
 
-Cache-backed `ISchedulerStateStore` for [`Lyo.Scheduler`](../Lyo.Scheduler/README.md). Each schedule's `LastRunUtc` / `NextRunUtc` / state markers go through [ `Lyo.Cache`](../../Cache/Lyo.Cache/README.md), so cron/interval/one-shot schedules survive process restarts without extra infrastructure beyond whatever already backs your cache (Fusion in-memory, Postgres, Redis, …).
+Cache-backed `ISchedulerStateStore` for [`Lyo.Scheduler`](../Lyo.Scheduler/README.md). Each schedule's `LastRunUtc` / `NextRunUtc` / state markers go through [
+`Lyo.Cache`](../../Cache/Lyo.Cache/README.md), so cron/interval/one-shot schedules survive process restarts without extra infrastructure beyond whatever already backs your cache
+(Fusion in-memory, Postgres, Redis, …).
 
 ## Examples
 
@@ -21,14 +23,15 @@ services.AddSchedulerWithCache(o =>
 
 ## Types
 
-| Type | What it does |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Type                       | What it does                                                                                                          |
+|----------------------------|-----------------------------------------------------------------------------------------------------------------------|
 | `CacheSchedulerStateStore` | An `ISchedulerStateStore` that persists scheduler state via `ICacheService`. Each schedule id gets its own key scope. |
-| `SchedulerCacheExtensions` | DI extensions: `AddSchedulerWithCache`. |
+| `SchedulerCacheExtensions` | DI extensions: `AddSchedulerWithCache`.                                                                               |
 
 ## Dependency injection
 
-`AddSchedulerWithCache` is a convenience over `services.AddScheduler(sp => new CacheSchedulerStateStore(sp.GetRequiredService<ICacheService>()), ...)`. Register `ICacheService` first.
+`AddSchedulerWithCache` is a convenience over `services.AddScheduler(sp => new CacheSchedulerStateStore(sp.GetRequiredService<ICacheService>()), ...)`. Register `ICacheService`
+first.
 
 ## Dependencies
 

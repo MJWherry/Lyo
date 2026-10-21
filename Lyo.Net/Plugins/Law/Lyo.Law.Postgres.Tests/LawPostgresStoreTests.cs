@@ -1,7 +1,6 @@
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Identifiers;
-using Lyo.Law;
 using Lyo.Law.Models.Enums;
 using Lyo.Law.Models.Request;
 using Lyo.Law.Postgres.Database;
@@ -19,7 +18,7 @@ public sealed class LawPostgresStoreTests(LawPostgresFixture fixture)
     public async Task SaveJurisdiction_FederalKey_Throws()
     {
         var store = fixture.ServiceProvider.GetRequiredService<ILawStore>();
-        await Assert.ThrowsAsync<ArgumentException>(() => store.SaveJurisdictionAsync(new LawJurisdictionReq { Key = "US", Name = "United States" }, TestCt));
+        await Assert.ThrowsAsync<ArgumentException>(() => store.SaveJurisdictionAsync(new() { Key = "US", Name = "United States" }, TestCt));
     }
 
     [Fact]
@@ -27,12 +26,19 @@ public sealed class LawPostgresStoreTests(LawPostgresFixture fixture)
     {
         var ct = TestCt;
         var store = fixture.ServiceProvider.GetRequiredService<ILawStore>();
-        await store.SaveJurisdictionAsync(new LawJurisdictionReq { Key = "US-PA", Name = "Pennsylvania" }, ct);
-        await store.SaveJurisdictionAsync(new LawJurisdictionReq { Key = "US-CA", Name = "California" }, ct);
+        await store.SaveJurisdictionAsync(new() { Key = "US-PA", Name = "Pennsylvania" }, ct);
+        await store.SaveJurisdictionAsync(new() { Key = "US-CA", Name = "California" }, ct);
         var paKey = Unique("consolidated-statutes");
         var caKey = Unique("penal");
-        await store.SaveCodeAsync("US-PA", new LawCodeReq { Key = paKey, Name = "Pennsylvania Consolidated Statutes", CitationPrefix = "Pa.C.S.", SourceHost = "www.palegis.us" }, ct);
-        await store.SaveCodeAsync("US-CA", new LawCodeReq { Key = caKey, Name = "Penal Code", CitationPrefix = "Cal. Penal Code" }, ct);
+        await store.SaveCodeAsync(
+            "US-PA", new() {
+                Key = paKey,
+                Name = "Pennsylvania Consolidated Statutes",
+                CitationPrefix = "Pa.C.S.",
+                SourceHost = "www.palegis.us"
+            }, ct);
+
+        await store.SaveCodeAsync("US-CA", new() { Key = caKey, Name = "Penal Code", CitationPrefix = "Cal. Penal Code" }, ct);
         var pa = await store.GetCodeAsync("US-PA", paKey, ct);
         var ca = await store.GetCodeAsync("US-CA", caKey, ct);
         Assert.NotNull(pa);
@@ -51,38 +57,44 @@ public sealed class LawPostgresStoreTests(LawPostgresFixture fixture)
         var ct = TestCt;
         var store = fixture.ServiceProvider.GetRequiredService<ILawStore>();
         var (paKey, caKey) = await SavePaAndCaAsync(store, ct);
-        var title = await store.UpsertNodeBySourceKeyAsync(new LawNodeUpsertReq {
-            JurisdictionKey = "US-PA",
-            CodeKey = paKey,
-            SourceKey = "ttl=67",
-            Kind = LawNodeKind.Title,
-            Label = "67",
-            Heading = "PUBLIC WELFARE"
-        }, ct);
-        var section = await store.UpsertNodeBySourceKeyAsync(new LawNodeUpsertReq {
-            JurisdictionKey = "US-PA",
-            CodeKey = paKey,
-            SourceKey = "ttl=67&div=0&chpt=11&sctn=5&subsctn=0",
-            ParentSourceKey = "ttl=67",
-            Kind = LawNodeKind.Section,
-            Label = "1105",
-            Heading = "Medical assistance",
-            Citation = "67 Pa.C.S. § 1105",
-            Body = "The department shall administer medical assistance.",
-            SourceUrl = "https://www.palegis.us/statutes/consolidated/view-statute?txtType=HTM&ttl=67&div=0&chpt=11&sctn=5&subsctn=0",
-            Annotations = [new LawAnnotationReq { Kind = LawAnnotationKind.History, Ordinal = 0, Body = "1972, Dec. 6, P.L. 1482, No. 334" }]
-        }, ct);
-        var california = await store.UpsertNodeBySourceKeyAsync(new LawNodeUpsertReq {
-            JurisdictionKey = "US-CA",
-            CodeKey = caKey,
-            SourceKey = "section=187",
-            Kind = LawNodeKind.Section,
-            Label = "187",
-            Heading = "Murder",
-            Citation = "Cal. Penal Code § 187",
-            Body = "Murder is the unlawful killing of a human being.",
-            Annotations = [new LawAnnotationReq { Kind = LawAnnotationKind.History, Ordinal = 0, Body = "Enacted 1872" }]
-        }, ct);
+        var title = await store.UpsertNodeBySourceKeyAsync(
+            new() {
+                JurisdictionKey = "US-PA",
+                CodeKey = paKey,
+                SourceKey = "ttl=67",
+                Kind = LawNodeKind.Title,
+                Label = "67",
+                Heading = "PUBLIC WELFARE"
+            }, ct);
+
+        var section = await store.UpsertNodeBySourceKeyAsync(
+            new() {
+                JurisdictionKey = "US-PA",
+                CodeKey = paKey,
+                SourceKey = "ttl=67&div=0&chpt=11&sctn=5&subsctn=0",
+                ParentSourceKey = "ttl=67",
+                Kind = LawNodeKind.Section,
+                Label = "1105",
+                Heading = "Medical assistance",
+                Citation = "67 Pa.C.S. § 1105",
+                Body = "The department shall administer medical assistance.",
+                SourceUrl = "https://www.palegis.us/statutes/consolidated/view-statute?txtType=HTM&ttl=67&div=0&chpt=11&sctn=5&subsctn=0",
+                Annotations = [new() { Kind = LawAnnotationKind.History, Ordinal = 0, Body = "1972, Dec. 6, P.L. 1482, No. 334" }]
+            }, ct);
+
+        var california = await store.UpsertNodeBySourceKeyAsync(
+            new() {
+                JurisdictionKey = "US-CA",
+                CodeKey = caKey,
+                SourceKey = "section=187",
+                Kind = LawNodeKind.Section,
+                Label = "187",
+                Heading = "Murder",
+                Citation = "Cal. Penal Code § 187",
+                Body = "Murder is the unlawful killing of a human being.",
+                Annotations = [new() { Kind = LawAnnotationKind.History, Ordinal = 0, Body = "Enacted 1872" }]
+            }, ct);
+
         var paLoaded = await store.GetNodeByCitationAsync("US-PA", paKey, "67 Pa.C.S. § 1105", ct);
         var caLoaded = await store.GetNodeByCitationAsync("US-CA", caKey, "Cal. Penal Code § 187", ct);
         Assert.NotNull(paLoaded);
@@ -152,14 +164,16 @@ public sealed class LawPostgresStoreTests(LawPostgresFixture fixture)
         var store = fixture.ServiceProvider.GetRequiredService<ILawStore>();
         var (paKey, _) = await SavePaAndCaAsync(store, ct);
         var parentKey = Unique("parent");
-        var parent = await store.UpsertNodeBySourceKeyAsync(new LawNodeUpsertReq {
-            JurisdictionKey = "US-PA",
-            CodeKey = paKey,
-            SourceKey = parentKey,
-            Kind = LawNodeKind.Chapter,
-            Label = "11",
-            Heading = "Chapter"
-        }, ct);
+        var parent = await store.UpsertNodeBySourceKeyAsync(
+            new() {
+                JurisdictionKey = "US-PA",
+                CodeKey = paKey,
+                SourceKey = parentKey,
+                Kind = LawNodeKind.Chapter,
+                Label = "11",
+                Heading = "Chapter"
+            }, ct);
+
         await store.UpsertNodeBySourceKeyAsync(Child(paKey, parentKey, Unique("later"), 2, "b", "Later"), ct);
         await store.UpsertNodeBySourceKeyAsync(Child(paKey, parentKey, Unique("earlier"), 0, "a", "Earlier"), ct);
         var children = await store.GetChildrenAsync(parent.Id, ct);
@@ -203,6 +217,7 @@ public sealed class LawPostgresStoreTests(LawPostgresFixture fixture)
                 b.Add(WhereClauseBuilder.Condition("Citation", ComparisonOperatorEnum.Equals, citation));
             })
         };
+
         var result = await query.QueryProjected<LawNodeEntity>(request, n => n.Heading, SortDirection.Asc, ct);
         Assert.True(result.IsSuccess);
         var row = Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(Assert.Single(result.Items!));
@@ -213,12 +228,19 @@ public sealed class LawPostgresStoreTests(LawPostgresFixture fixture)
 
     private static async Task<(string PaKey, string CaKey)> SavePaAndCaAsync(ILawStore store, CancellationToken ct)
     {
-        await store.SaveJurisdictionAsync(new LawJurisdictionReq { Key = "US-PA", Name = "Pennsylvania" }, ct);
-        await store.SaveJurisdictionAsync(new LawJurisdictionReq { Key = "US-CA", Name = "California" }, ct);
+        await store.SaveJurisdictionAsync(new() { Key = "US-PA", Name = "Pennsylvania" }, ct);
+        await store.SaveJurisdictionAsync(new() { Key = "US-CA", Name = "California" }, ct);
         var paKey = Unique("consolidated-statutes");
         var caKey = Unique("penal");
-        await store.SaveCodeAsync("US-PA", new LawCodeReq { Key = paKey, Name = "Pennsylvania Consolidated Statutes", CitationPrefix = "Pa.C.S.", SourceHost = "www.palegis.us" }, ct);
-        await store.SaveCodeAsync("US-CA", new LawCodeReq { Key = caKey, Name = "Penal Code", CitationPrefix = "Cal. Penal Code" }, ct);
+        await store.SaveCodeAsync(
+            "US-PA", new() {
+                Key = paKey,
+                Name = "Pennsylvania Consolidated Statutes",
+                CitationPrefix = "Pa.C.S.",
+                SourceHost = "www.palegis.us"
+            }, ct);
+
+        await store.SaveCodeAsync("US-CA", new() { Key = caKey, Name = "Penal Code", CitationPrefix = "Cal. Penal Code" }, ct);
         return (paKey, caKey);
     }
 
@@ -239,7 +261,7 @@ public sealed class LawPostgresStoreTests(LawPostgresFixture fixture)
             Heading = heading,
             Body = body,
             Citation = citation,
-            Annotations = annotation is null ? [] : [new LawAnnotationReq { Kind = LawAnnotationKind.History, Ordinal = 0, Body = annotation }]
+            Annotations = annotation is null ? [] : [new() { Kind = LawAnnotationKind.History, Ordinal = 0, Body = annotation }]
         };
 
     private static LawNodeUpsertReq Child(string codeKey, string parentSourceKey, string sourceKey, int sortOrder, string label, string heading)

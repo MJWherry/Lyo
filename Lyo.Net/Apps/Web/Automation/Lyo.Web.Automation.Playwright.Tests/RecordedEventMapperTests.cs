@@ -11,7 +11,6 @@ public sealed class RecordedEventMapperTests
     {
         var mapper = new RecordedEventMapper();
         mapper.Apply(new(RecordedDomEventKind.Click, "save", ElementLocator.CssSelector("[data-testid=\"save\"]")));
-
         var step = Assert.IsType<FindAndActAutomationStep>(Assert.Single(mapper.Build().Steps));
         Assert.Equal("el1", step.RefName);
         Assert.Equal(ElementLocatorKind.CssSelector, step.Locator.Kind);
@@ -25,11 +24,10 @@ public sealed class RecordedEventMapperTests
         var mapper = new RecordedEventMapper();
         var locator = ElementLocator.Id("searchInput");
         mapper.Apply(new(RecordedDomEventKind.Click, "searchInput", locator));
-        mapper.Apply(new(RecordedDomEventKind.Input, "searchInput", locator, Text: "c"));
-        mapper.Apply(new(RecordedDomEventKind.Input, "searchInput", locator, Text: "co"));
-        mapper.Apply(new(RecordedDomEventKind.Input, "searchInput", locator, Text: "comics"));
+        mapper.Apply(new(RecordedDomEventKind.Input, "searchInput", locator, "c"));
+        mapper.Apply(new(RecordedDomEventKind.Input, "searchInput", locator, "co"));
+        mapper.Apply(new(RecordedDomEventKind.Input, "searchInput", locator, "comics"));
         mapper.Apply(new(RecordedDomEventKind.Blur, "searchInput", locator));
-
         var step = Assert.IsType<FindAndActAutomationStep>(Assert.Single(mapper.Build().Steps));
         var input = Assert.IsType<InputTextElementAction>(step.Action);
         Assert.Equal("comics", input.Text);
@@ -44,13 +42,12 @@ public sealed class RecordedEventMapperTests
         var mapper = new RecordedEventMapper();
         var locator = ElementLocator.Id("search_form_input");
         mapper.Apply(new(RecordedDomEventKind.Click, "search_form_input", locator));
-        mapper.Apply(new(RecordedDomEventKind.Input, "search_form_input", locator, Text: "c"));
+        mapper.Apply(new(RecordedDomEventKind.Input, "search_form_input", locator, "c"));
         mapper.Apply(new(RecordedDomEventKind.Blur, "search_form_input", locator));
-        mapper.Apply(new(RecordedDomEventKind.Input, "search_form_input", locator, Text: "co"));
+        mapper.Apply(new(RecordedDomEventKind.Input, "search_form_input", locator, "co"));
         mapper.Apply(new(RecordedDomEventKind.Blur, "search_form_input", locator));
-        mapper.Apply(new(RecordedDomEventKind.Input, "search_form_input", locator, Text: "comics"));
+        mapper.Apply(new(RecordedDomEventKind.Input, "search_form_input", locator, "comics"));
         mapper.Apply(new(RecordedDomEventKind.Blur, "search_form_input", locator));
-
         var shown = Assert.IsType<InputTextElementAction>(Assert.IsType<FindAndActAutomationStep>(Assert.Single(mapper.Preview().Steps)).Action);
         Assert.Equal("comics", shown.Text);
         var saved = Assert.IsType<InputTextElementAction>(Assert.IsType<FindAndActAutomationStep>(Assert.Single(mapper.Build().Steps)).Action);
@@ -63,7 +60,6 @@ public sealed class RecordedEventMapperTests
     {
         var mapper = new RecordedEventMapper();
         mapper.Apply(new(RecordedDomEventKind.Select, "planNativeSel", ElementLocator.Id("planNativeSel"), Value: "b"));
-
         var step = Assert.IsType<FindAndActAutomationStep>(Assert.Single(mapper.Build().Steps));
         var select = Assert.IsType<SelectByValueElementAction>(step.Action);
         Assert.Equal("b", select.Value);
@@ -76,7 +72,6 @@ public sealed class RecordedEventMapperTests
         var mapper = new RecordedEventMapper();
         mapper.Apply(new(RecordedDomEventKind.Click, "next", ElementLocator.Id("nextPageLink")));
         mapper.Apply(new(RecordedDomEventKind.Navigate, Url: "https://example.com/next", CausedByRecordedAction: true));
-
         var step = Assert.IsType<FindAndActAutomationStep>(Assert.Single(mapper.Build().Steps));
         Assert.IsType<ClickElementAction>(step.Action);
     }
@@ -85,13 +80,10 @@ public sealed class RecordedEventMapperTests
     public void RecordedEventMapper_ImagePick_EmitsFindElementsAndExtractSources()
     {
         var repeating = new RecordedEventMapper();
-        repeating.Apply(new(RecordedDomEventKind.Pick, Pick: new RecordedPick(
-            RecordedPickTool.Images,
-            Repeating: true,
-            ParentLocator: ElementLocator.Id("assetContainer"),
-            DescendantTag: "img",
-            TargetLocator: ElementLocator.CssSelector("img.asset-image"),
-            VariableName: "images")));
+        repeating.Apply(
+            new(
+                RecordedDomEventKind.Pick,
+                Pick: new(RecordedPickTool.Images, true, ElementLocator.Id("assetContainer"), "img", ElementLocator.CssSelector("img.asset-image"), "images")));
 
         var repeatingPlan = repeating.Build();
         Assert.Equal(2, repeatingPlan.Steps.Count);
@@ -105,16 +97,8 @@ public sealed class RecordedEventMapperTests
         Assert.Equal("el1", sources.ElementsListRefName);
         Assert.Equal("images", sources.VariableName);
         Assert.Equal(["src", "data-src", "data-lazy-src", "srcset"], sources.AttributeNames);
-
         var single = new RecordedEventMapper();
-        single.Apply(new(RecordedDomEventKind.Pick, Pick: new RecordedPick(
-            RecordedPickTool.Images,
-            Repeating: false,
-            ParentLocator: null,
-            DescendantTag: "img",
-            TargetLocator: ElementLocator.CssSelector("img.solo"),
-            VariableName: "images")));
-
+        single.Apply(new(RecordedDomEventKind.Pick, Pick: new(RecordedPickTool.Images, false, null, "img", ElementLocator.CssSelector("img.solo"), "images")));
         var singlePlan = single.Build();
         var found = Assert.IsType<FindElementAutomationStep>(singlePlan.Steps[0]);
         Assert.Equal("img.solo", found.Locator.Value);
@@ -130,14 +114,7 @@ public sealed class RecordedEventMapperTests
     public void RecordedEventMapper_GridLinkPick_EmitsFindElementsAndExtractHref()
     {
         var mapper = new RecordedEventMapper();
-        mapper.Apply(new(RecordedDomEventKind.Pick, Pick: new RecordedPick(
-            RecordedPickTool.Links,
-            Repeating: true,
-            ParentLocator: ElementLocator.Id("grid"),
-            DescendantTag: "a",
-            TargetLocator: ElementLocator.CssSelector("a.row"),
-            VariableName: "links")));
-
+        mapper.Apply(new(RecordedDomEventKind.Pick, Pick: new(RecordedPickTool.Links, true, ElementLocator.Id("grid"), "a", ElementLocator.CssSelector("a.row"), "links")));
         var plan = mapper.Build();
         var list = Assert.IsType<FindElementsChainAutomationStep>(plan.Steps[0]);
         Assert.Equal("grid", list.Chain.Segments[0].Value);
@@ -155,9 +132,8 @@ public sealed class RecordedEventMapperTests
         var mapper = new RecordedEventMapper();
         var locator = ElementLocator.CssSelector("input[name=\"q\"][placeholder=\"second\"]");
         mapper.Apply(new(RecordedDomEventKind.Click, "q", locator));
-        mapper.Apply(new(RecordedDomEventKind.Input, "q", locator, Text: "z"));
-        mapper.Apply(new(RecordedDomEventKind.Key, "q", locator, Text: "Enter"));
-
+        mapper.Apply(new(RecordedDomEventKind.Input, "q", locator, "z"));
+        mapper.Apply(new(RecordedDomEventKind.Key, "q", locator, "Enter"));
         var plan = mapper.Build();
         Assert.Equal(2, plan.Steps.Count);
         var input = Assert.IsType<InputTextElementAction>(Assert.IsType<FindAndActAutomationStep>(plan.Steps[0]).Action);
@@ -174,12 +150,10 @@ public sealed class RecordedEventMapperTests
         mapper.Apply(new(RecordedDomEventKind.Click, "first", ElementLocator.Id("first")));
         mapper.Apply(new(RecordedDomEventKind.Click, "second", ElementLocator.Id("second")));
         mapper.Apply(new(RecordedDomEventKind.Blur, "second", ElementLocator.Id("second")));
-
         mapper.Move(1, 0);
         var moved = mapper.Preview();
         Assert.Equal("second", Assert.IsType<FindAndActAutomationStep>(moved.Steps[0]).Locator.Value);
         Assert.Equal("first", Assert.IsType<FindAndActAutomationStep>(moved.Steps[1]).Locator.Value);
-
         mapper.RemoveAt(0);
         var left = Assert.IsType<FindAndActAutomationStep>(Assert.Single(mapper.Preview().Steps));
         Assert.Equal("first", left.Locator.Value);
@@ -192,12 +166,10 @@ public sealed class RecordedEventMapperTests
         mapper.Apply(new(RecordedDomEventKind.Click, "save", ElementLocator.Id("save")));
         var before = mapper.Build();
         Assert.IsType<FindAndActAutomationStep>(Assert.Single(before.Steps));
-
         var invalid = mapper.ApplyJson("{");
         Assert.False(invalid.Applied);
         Assert.False(string.IsNullOrWhiteSpace(invalid.Error));
         Assert.IsType<FindAndActAutomationStep>(Assert.Single(mapper.Build().Steps));
-
         const string json = """
                             {
                               "name": "edited",
@@ -206,6 +178,7 @@ public sealed class RecordedEventMapperTests
                               ]
                             }
                             """;
+
         var applied = mapper.ApplyJson(json);
         Assert.True(applied.Applied);
         Assert.Null(applied.Error);
@@ -218,7 +191,6 @@ public sealed class RecordedEventMapperTests
     {
         var mapper = new RecordedEventMapper();
         mapper.Apply(new(RecordedDomEventKind.Insert, Insert: new("storeStringList", "urls", Values: ["https://cdn.example/a.png", "https://cdn.example/b.png"])));
-
         var step = Assert.IsType<StoreStringListAutomationStep>(Assert.Single(mapper.Build().Steps));
         Assert.Equal("urls", step.VariableName);
         Assert.Equal(["https://cdn.example/a.png", "https://cdn.example/b.png"], step.Values);
@@ -230,7 +202,6 @@ public sealed class RecordedEventMapperTests
         var mapper = new RecordedEventMapper("named");
         mapper.Apply(new(RecordedDomEventKind.Click, "save", ElementLocator.Id("save")));
         mapper.Reset("https://example.com/next");
-
         var plan = mapper.Build();
         Assert.Equal("named", plan.Name);
         var step = Assert.IsType<NavigateAutomationStep>(Assert.Single(plan.Steps));
@@ -242,7 +213,6 @@ public sealed class RecordedEventMapperTests
     {
         var mapper = new RecordedEventMapper();
         mapper.Apply(new(RecordedDomEventKind.Insert, Insert: new("navigate", Value: "https://example.com")));
-
         var step = Assert.IsType<NavigateAutomationStep>(Assert.Single(mapper.Build().Steps));
         Assert.Equal("https://example.com", step.Url);
     }
@@ -252,7 +222,6 @@ public sealed class RecordedEventMapperTests
     {
         var mapper = new RecordedEventMapper();
         mapper.Apply(new(RecordedDomEventKind.Insert, Insert: new("reload")));
-
         Assert.IsType<ReloadAutomationStep>(Assert.Single(mapper.Build().Steps));
     }
 
@@ -261,7 +230,6 @@ public sealed class RecordedEventMapperTests
     {
         var mapper = new RecordedEventMapper();
         mapper.Apply(new(RecordedDomEventKind.Insert, Insert: new("findElement", Value: ".card", LocatorKind: ElementLocatorKind.CssSelector)));
-
         var step = Assert.IsType<FindElementAutomationStep>(Assert.Single(mapper.Build().Steps));
         Assert.Equal(ElementLocatorKind.CssSelector, step.Locator.Kind);
         Assert.Equal(".card", step.Locator.Value);
@@ -271,12 +239,7 @@ public sealed class RecordedEventMapperTests
     public void RecordedEventMapper_InsertFindAndClick_AddsAFindAndActStep()
     {
         var mapper = new RecordedEventMapper();
-        mapper.Apply(new(RecordedDomEventKind.Insert, Insert: new(
-            "findAndAct",
-            Value: ".card",
-            LocatorKind: ElementLocatorKind.CssSelector,
-            Action: "click")));
-
+        mapper.Apply(new(RecordedDomEventKind.Insert, Insert: new("findAndAct", Value: ".card", LocatorKind: ElementLocatorKind.CssSelector, Action: "click")));
         var step = Assert.IsType<FindAndActAutomationStep>(Assert.Single(mapper.Build().Steps));
         Assert.Equal(ElementLocatorKind.CssSelector, step.Locator.Kind);
         Assert.Equal(".card", step.Locator.Value);

@@ -86,8 +86,7 @@ public sealed class LocalFileStorageDuplicateProfileTests
 
         var payload = "key-mismatch"u8.ToArray();
         await scope.Storage.SaveFileAsync(payload, "first.txt", encrypt: true, keyId: "key-a", ct: TestCt);
-        await Assert.ThrowsAsync<ConflictException>(() => scope.Storage.SaveFileAsync(
-            payload, "second.txt", encrypt: true, keyId: "key-b", ct: TestCt));
+        await Assert.ThrowsAsync<ConflictException>(() => scope.Storage.SaveFileAsync(payload, "second.txt", encrypt: true, keyId: "key-b", ct: TestCt));
     }
 
     [Fact]
@@ -161,7 +160,6 @@ public sealed class LocalFileStorageDuplicateProfileTests
         var payload = "overwrite-source-name-plain"u8.ToArray();
         await scope.Storage.SaveFileAsync(payload, "compressed.txt", true, ct: TestCt);
         var plain = await scope.Storage.SaveFileAsync(payload, "plain.txt", ct: TestCt);
-
         Assert.StartsWith(plain.Id.ToString(), plain.SourceFileName, StringComparison.Ordinal);
         Assert.Equal("", CloudObjectKeyBuilder.InferTrailingSuffixAfterFileId(plain.Id, plain.SourceFileName));
     }

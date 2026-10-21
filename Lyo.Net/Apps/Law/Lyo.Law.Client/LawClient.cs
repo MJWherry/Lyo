@@ -6,13 +6,13 @@ using Lyo.Law.Models.Response;
 
 namespace Lyo.Law.Client;
 
-/// <summary>Typed facade over Law upsert and lookup routes. Sit it on any <see cref="IApiClient"/> implementation.</summary>
+/// <summary>Typed facade over Law upsert and lookup routes. Sit it on any <see cref="IApiClient" /> implementation.</summary>
 public sealed class LawClient : ILawClient
 {
     private readonly IApiClient _api;
     private readonly string? _routePrefix;
 
-    /// <summary>Constructs the client. Null <paramref name="options"/> keeps routes relative to the inner client's base address.</summary>
+    /// <summary>Constructs the client. Null <paramref name="options" /> keeps routes relative to the inner client's base address.</summary>
     public LawClient(IApiClient apiClient, LawClientOptions? options = null)
     {
         ArgumentHelpers.ThrowIfNull(apiClient);
@@ -28,8 +28,7 @@ public sealed class LawClient : ILawClient
     }
 
     /// <inheritdoc />
-    public Task<LawNodeDetailRes?> GetNodeAsync(Guid id, CancellationToken ct = default)
-        => _api.GetAsAsync<LawNodeDetailRes>(Route(Constants.Rest.Law.Node(id)), ct: ct);
+    public Task<LawNodeDetailRes?> GetNodeAsync(Guid id, CancellationToken ct = default) => _api.GetAsAsync<LawNodeDetailRes>(Route(Constants.Rest.Law.Node(id)), ct: ct);
 
     /// <inheritdoc />
     public Task<LawNodeDetailRes?> GetByCitationAsync(string jurisdictionKey, string codeKey, string citation, CancellationToken ct = default)

@@ -56,9 +56,7 @@ public sealed class DriftAgentOptions
     /// <summary>If true, compute file/system diffs locally and POST them. Structure snapshots are still posted.</summary>
     public bool ComputeDiffsLocally { get; set; } = true;
 
-    /// <summary>
-    /// Include globs for attaching file bytes. Default off — v1 posts metadata and hashes only; this does not add bytes until a content field exists on the snapshot DTO.
-    /// </summary>
+    /// <summary>Include globs for attaching file bytes. Default off — v1 posts metadata and hashes only; this does not add bytes until a content field exists on the snapshot DTO.</summary>
     public IList<string> CaptureContentPatterns { get; set; } = [];
 
     /// <summary>Maximum captured file size when <see cref="CaptureContentPatterns" /> is used. Unused while content capture is off.</summary>
@@ -84,8 +82,7 @@ public sealed class DriftAgentOptions
     }
 
     /// <summary>Resolved include groups for system-info projection.</summary>
-    public IReadOnlyList<SystemInfoDriftGroup> ResolvedSystemInfoInclude()
-        => SystemInfoDriftGroups.Parse(SystemInfo.Include);
+    public IReadOnlyList<SystemInfoDriftGroup> ResolvedSystemInfoInclude() => SystemInfoDriftGroups.Parse(SystemInfo.Include);
 }
 
 /// <summary>Agent-side include list for the system-info projection.</summary>

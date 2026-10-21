@@ -23,9 +23,7 @@ public sealed class ValidationEfSeedContributor : SeedContributor, IEfSeedSource
     public DbContext CreateContext(string connectionString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        var options = new DbContextOptionsBuilder<ValidationDbContext>()
-            .UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<ValidationDbContext>().UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema)).Options;
         return new ValidationDbContext(options);
     }
 
@@ -34,14 +32,15 @@ public sealed class ValidationEfSeedContributor : SeedContributor, IEfSeedSource
     {
         graph.OnClear(ClearAsync);
         var now = DateTime.UtcNow;
-        graph.Entity(options.Count, i => new ValidationSchemaEntity {
-            Id = LyoGuid.CreateV7(),
-            Key = $"contact.schema.{i}",
-            TargetTypeName = "ContactForm",
-            Description = "Requires a name",
-            ConstraintsJson = """{"required":["name"]}""",
-            CreatedTimestamp = now
-        });
+        graph.Entity(
+            options.Count, i => new ValidationSchemaEntity {
+                Id = LyoGuid.CreateV7(),
+                Key = $"contact.schema.{i}",
+                TargetTypeName = "ContactForm",
+                Description = "Requires a name",
+                ConstraintsJson = """{"required":["name"]}""",
+                CreatedTimestamp = now
+            });
     }
 
     private static async Task ClearAsync(SeedSession session, CancellationToken ct)

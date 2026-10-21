@@ -1,16 +1,8 @@
-using System.Net.Http.Json;
 using System.Text;
-using Lyo.Common.Core.Enums;
 using Lyo.Common.Metadata.Records;
 using Lyo.Web.Components.FileUpload;
 using Lyo.Web.Components.Models;
-using Lyo.Web.WebRenderer;
 using Lyo.Web.WebRenderer.Models;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Lyo.Pdf.Web.Components;
@@ -18,14 +10,14 @@ namespace Lyo.Pdf.Web.Components;
 public partial class HtmlToPdfWorkbench
 {
     private bool _busy;
-    private WebRenderFormat _format = WebRenderFormat.Pdf;
-    private string _paper = "Letter";
-    private string _orientation = "Portrait";
-    private string? _previewUrl;
     private CancellationTokenSource? _convertCts;
+    private WebRenderFormat _format = WebRenderFormat.Pdf;
 
     private string _inputSource = "Editor";
+    private string _orientation = "Portrait";
     private byte[]? _output;
+    private string _paper = "Letter";
+    private string? _previewUrl;
     private string _uploadStatus = "No HTML file uploaded.";
 
     private string OutputFileName
@@ -106,7 +98,7 @@ public partial class HtmlToPdfWorkbench
 
         _convertCts?.Cancel();
         _convertCts?.Dispose();
-        _convertCts = new CancellationTokenSource();
+        _convertCts = new();
         _busy = true;
         try {
             var request = new WebRenderReq {
@@ -116,6 +108,7 @@ public partial class HtmlToPdfWorkbench
                 PreferCssPageSize = string.Equals(_paper, "CSS", StringComparison.OrdinalIgnoreCase),
                 Quality = _format is WebRenderFormat.Jpeg or WebRenderFormat.WebP ? 80 : null
             };
+
             using var buffer = new MemoryStream();
             await WebRendererService.CopyCaptureToAsync(_htmlContent, buffer, request, _convertCts.Token);
             _output = buffer.ToArray();

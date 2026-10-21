@@ -10,26 +10,25 @@ namespace Lyo.FileSystemWatcher;
 /// <summary>Helpers for snapshotting a directory tree, diffing two snapshots, hashing, and fingerprints.</summary>
 public static class Utilities
 {
-    /// <summary>
-    /// Walks <paramref name="path" /> recursively and builds a <see cref="SnapshotTree" />, optionally hashing and reusing data from <paramref name="oldTree" />.
-    /// </summary>
+    /// <summary>Walks <paramref name="path" /> recursively and builds a <see cref="SnapshotTree" />, optionally hashing and reusing data from <paramref name="oldTree" />.</summary>
     /// <param name="path">Root directory to scan.</param>
     /// <param name="enableHashing">If true, fingerprints and hashes each file for move detection. Slower.</param>
     /// <param name="pathComparison">How path segments are compared in the dictionaries.</param>
     /// <param name="ct">Token that cancels the walk.</param>
     /// <param name="oldTree">Previous snapshot. When hashing is on, metadata may be reused for unchanged files.</param>
-    /// <remarks>This overload always walks subdirectories. Prefer <see cref="TakeSnapshot(string, FileSystemWatcherOptions, CancellationToken, SnapshotTree?)" /> to honor include/exclude regexes and <c>IncludeSubdirectories</c>.</remarks>
+    /// <remarks>
+    /// This overload always walks subdirectories. Prefer <see cref="TakeSnapshot(string, FileSystemWatcherOptions, CancellationToken, SnapshotTree?)" /> to honor include/exclude
+    /// regexes and <c>IncludeSubdirectories</c>.
+    /// </remarks>
     public static SnapshotTree TakeSnapshot(
         string path,
         bool enableHashing = true,
         StringComparison pathComparison = StringComparison.OrdinalIgnoreCase,
         CancellationToken ct = default,
         SnapshotTree? oldTree = null)
-        => TakeSnapshot(path, new FileSystemWatcherOptions { EnableFileHashing = enableHashing, PathComparison = pathComparison, IncludeSubdirectories = true }, ct, oldTree);
+        => TakeSnapshot(path, new() { EnableFileHashing = enableHashing, PathComparison = pathComparison, IncludeSubdirectories = true }, ct, oldTree);
 
-    /// <summary>
-    /// Walks <paramref name="path" /> according to <paramref name="options" /> (recursion, include/exclude regexes, hashing) and builds a <see cref="SnapshotTree" />.
-    /// </summary>
+    /// <summary>Walks <paramref name="path" /> according to <paramref name="options" /> (recursion, include/exclude regexes, hashing) and builds a <see cref="SnapshotTree" />.</summary>
     public static SnapshotTree TakeSnapshot(string path, FileSystemWatcherOptions options, CancellationToken ct = default, SnapshotTree? oldTree = null)
     {
         ArgumentHelpers.ThrowIfNull(options);
@@ -59,7 +58,7 @@ public static class Utilities
         var root = new SnapshotDirectoryNode(null, "", path, segmentComparer);
         var fileCount = 0;
         var directoryCount = 0;
-        WalkDirectory(root, path, options, oldTree, ct, sizeLookup, fingerprintLookup, segmentComparer, isRoot: true, ref fileCount, ref directoryCount);
+        WalkDirectory(root, path, options, oldTree, ct, sizeLookup, fingerprintLookup, segmentComparer, true, ref fileCount, ref directoryCount);
         return new(path, pathComparison, root, fileCount, directoryCount);
     }
 
@@ -100,7 +99,7 @@ public static class Utilities
             node.Directories[name] = child;
             directoryCount++;
             if (options.IncludeSubdirectories)
-                WalkDirectory(child, rootPath, options, oldTree, ct, sizeLookup, fingerprintLookup, segmentComparer, isRoot: false, ref fileCount, ref directoryCount);
+                WalkDirectory(child, rootPath, options, oldTree, ct, sizeLookup, fingerprintLookup, segmentComparer, false, ref fileCount, ref directoryCount);
         }
 
         string[] files;
@@ -201,7 +200,6 @@ public static class Utilities
         var processedPaths = new HashSet<string>(stringComparer);
         var fileHashLookup = oldTree.FileHashIndex;
         var fileFingerprintLookup = oldTree.FileFingerprintIndex;
-
         foreach (var (path, entry) in EnumerateNewSnapshotEntries(newTree.Root)) {
             ct.ThrowIfCancellationRequested();
             if (TryGetSnapshotEntry(oldTree, path, out var value) && value != null) {

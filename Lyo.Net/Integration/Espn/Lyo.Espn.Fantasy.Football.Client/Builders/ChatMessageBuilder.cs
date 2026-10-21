@@ -5,12 +5,21 @@ using Lyo.Exceptions;
 namespace Lyo.Espn.Fantasy.Football.Client.Builders;
 
 /// <summary>
-/// Builds the JSON body for a Fantasy Chat text message. <c>messageTypeId</c> is <c>0</c>, the user text the chat app shows.
-/// <see cref="For" /> picks a <see cref="ChatTopics" /> audience. <see cref="To(string)" /> picks another league member for a direct message.
+/// Builds the JSON body for a Fantasy Chat text message. <c>messageTypeId</c> is <c>0</c>, the user text the chat app shows. <see cref="For" /> picks a
+/// <see cref="ChatTopics" /> audience. <see cref="To(string)" /> picks another league member for a direct message.
 /// </summary>
 public sealed class ChatMessageBuilder
 {
     private string? _content;
+
+    /// <summary>Conversation UUID or topic type. Null when the message was started with <see cref="To(string)" />.</summary>
+    public string? TopicId { get; }
+
+    /// <summary>League member selected with <see cref="To(MemberRes)" />.</summary>
+    public MemberRes? Recipient { get; internal set; }
+
+    /// <summary>Display name or SWID selected with <see cref="To(string)" />.</summary>
+    public string? RecipientName { get; internal set; }
 
     private ChatMessageBuilder() { }
 
@@ -28,24 +37,15 @@ public sealed class ChatMessageBuilder
     public static ChatMessageBuilder To(MemberRes member)
     {
         ArgumentHelpers.ThrowIfNull(member);
-        return new ChatMessageBuilder { Recipient = member };
+        return new() { Recipient = member };
     }
 
     /// <summary>Starts a direct message to a member SWID or a unique display name.</summary>
     public static ChatMessageBuilder To(string nameOrSwid)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(nameOrSwid);
-        return new ChatMessageBuilder { RecipientName = nameOrSwid };
+        return new() { RecipientName = nameOrSwid };
     }
-
-    /// <summary>Conversation UUID or topic type. Null when the message was started with <see cref="To(string)" />.</summary>
-    public string? TopicId { get; }
-
-    /// <summary>League member selected with <see cref="To(MemberRes)" />.</summary>
-    public MemberRes? Recipient { get; internal set; }
-
-    /// <summary>Display name or SWID selected with <see cref="To(string)" />.</summary>
-    public string? RecipientName { get; internal set; }
 
     /// <summary>Sets the text the other members will see.</summary>
     public ChatMessageBuilder Content(string content)

@@ -72,7 +72,7 @@ public sealed record AudioVbrQuality
     public static AudioVbrQuality Custom(string id)
     {
         _ = BuiltIns;
-        return NamedCatalog.GetOrCustom(ById, id, key => new AudioVbrQuality(key, key));
+        return NamedCatalog.GetOrCustom(ById, id, key => new(key, key));
     }
 
     /// <inheritdoc />

@@ -20,7 +20,6 @@ public sealed class CatalogSectionTests
                             """;
 
         var section = JsonSerializer.Deserialize<CatalogSection>(json, CatalogJson.Options);
-
         Assert.NotNull(section);
         Assert.Equal("table", section.Type);
         Assert.Equal("Contracts", section.Title);

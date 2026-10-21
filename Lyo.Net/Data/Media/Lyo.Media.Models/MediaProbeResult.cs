@@ -3,8 +3,8 @@ using System.Diagnostics;
 namespace Lyo.Media.Models;
 
 /// <summary>
-/// Metadata returned after probing an audio or video file. Muxed files list every stream.
-/// <see cref="HasVideo" /> ignores album art. Each prober flattens the first real audio vs first real video stream.
+/// Metadata returned after probing an audio or video file. Muxed files list every stream. <see cref="HasVideo" /> ignores album art. Each prober flattens the first real
+/// audio vs first real video stream.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record MediaProbeResult
@@ -61,8 +61,7 @@ public sealed record MediaProbeResult
     public MediaStreamInfo? FirstAudio => Streams.FirstOrDefault(s => string.Equals(s.CodecType, "audio", StringComparison.OrdinalIgnoreCase));
 
     /// <summary>First real video stream (not album art), or null.</summary>
-    public MediaStreamInfo? FirstVideo
-        => Streams.FirstOrDefault(s => string.Equals(s.CodecType, "video", StringComparison.OrdinalIgnoreCase) && !s.IsAttachedPicture);
+    public MediaStreamInfo? FirstVideo => Streams.FirstOrDefault(s => string.Equals(s.CodecType, "video", StringComparison.OrdinalIgnoreCase) && !s.IsAttachedPicture);
 
     /// <inheritdoc />
     public override string ToString()

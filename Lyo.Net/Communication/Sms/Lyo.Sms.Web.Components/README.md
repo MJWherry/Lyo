@@ -13,10 +13,10 @@ Shows a small operator panel:
 
 Actions:
 
-| Button | Behavior |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Send SMS / MMS | Constructs `BulkSmsBuilder` and adds one row per recipient with a shared body. For each recipient, every configured media chip is appended via `AddAttachment`, so the same media URL is attached once per recipient. Adjust that if you fork the component. |
-| Test SMS Connection | Invokes `SmsService.TestConnectionAsync()`. |
+| Button              | Behavior                                                                                                                                                                                                                                                     |
+|---------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Send SMS / MMS      | Constructs `BulkSmsBuilder` and adds one row per recipient with a shared body. For each recipient, every configured media chip is appended via `AddAttachment`, so the same media URL is attached once per recipient. Adjust that if you fork the component. |
+| Test SMS Connection | Invokes `SmsService.TestConnectionAsync()`.                                                                                                                                                                                                                  |
 
 The outcome panel lists a `BulkResult<SmsRequest>` summary (total/success/failure/error strings) plus a per-row table using `LyoResultErrorFormatter` on failures.
 
@@ -24,11 +24,18 @@ The outcome panel lists a `BulkResult<SmsRequest>` summary (total/success/failur
 
 ## `TwilioSmsLogGrid`
 
-Projected grid against `POST {BaseRoute}/TwilioSmsLogEntity/QueryProject` (default base `Twilio`). SID and Account SID use compact `LyoIdField`. Sent, Logged, and the hidden Created column use `LyoTimestamp` (nullable). Received, Direction, and Status are color chips. Body is truncated with ellipsis. Hover shows the full text. Quick search ORs SID (`Id`), From, To, and Body. Row menu Open chat queries `To` or `From` = that person (outbound uses row To, inbound uses row From) and pages until all matching log rows are loaded. Header Refresh re-runs that query. Composer sends via `ISmsService.SendSmsAsync`, then POSTs the existing create route. Pass `IApiClient`. The host must also register `ISmsService`.
+Projected grid against `POST {BaseRoute}/TwilioSmsLogEntity/QueryProject` (default base `Twilio`). SID and Account SID use compact `LyoIdField`. Sent, Logged, and the hidden
+Created column use `LyoTimestamp` (nullable). Received, Direction, and Status are color chips. Body is truncated with ellipsis. Hover shows the full text. Quick search ORs SID
+(`Id`), From, To, and Body. Row menu Open chat queries `To` or `From` = that person (outbound uses row To, inbound uses row From) and pages until all matching log rows are loaded.
+Header Refresh re-runs that query. Composer sends via `ISmsService.SendSmsAsync`, then POSTs the existing create route. Pass `IApiClient`. The host must also register
+`ISmsService`.
 
 ## Host wiring
 
-In the host's `Program.cs` / startup: 1. Register a real `ISmsService` (for example `AddTwilioSmsService*`). 2. Add MudBlazor plus [`Lyo.Web.Components`](../../../Apps/Web/Lyo.Web.Components/README.md) services the host already uses. 3. Render `<SmsWorkbench />` and/or `<TwilioSmsLogGrid ApiClient="…" />` inside an authenticated or internal-only area. These components have no rate limiting UI. MMS media must be publicly reachable by the SMS aggregator. Unsupported providers ignore attachments.
+In the host's `Program.cs` / startup: 1. Register a real `ISmsService` (for example `AddTwilioSmsService*`). 2. Add MudBlazor plus [
+`Lyo.Web.Components`](../../../Apps/Web/Lyo.Web.Components/README.md) services the host already uses. 3. Render `<SmsWorkbench />` and/or `<TwilioSmsLogGrid ApiClient="…" />`
+inside an authenticated or internal-only area. These components have no rate limiting UI. MMS media must be publicly reachable by the SMS aggregator. Unsupported providers ignore
+attachments.
 
 ## Dependencies
 

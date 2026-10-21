@@ -1,4 +1,5 @@
 using Lyo.Api.Client;
+using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Exceptions;
 using Lyo.Query.Models.Common.Request;
@@ -15,25 +16,21 @@ public sealed class SeedApiCatalog
 
     internal IReadOnlyDictionary<Type, SeedApiBinding> Bindings => _bindings;
 
-    /// <summary>Maps <typeparamref name="TRequest"/> to <paramref name="route"/>. Bulk create and query share that CLR type for the response body.</summary>
+    /// <summary>Maps <typeparamref name="TRequest" /> to <paramref name="route" />. Bulk create and query share that CLR type for the response body.</summary>
     public SeedApiCatalog Map<TRequest>(string route)
         where TRequest : class
         => Map<TRequest, TRequest>(route);
 
     /// <summary>
-    /// Maps generated <typeparamref name="TRequest"/> items to <c>{route}/Bulk</c> and emptiness checks to <c>{route}/QueryConcrete</c>, which returns
-    /// <typeparamref name="TResponse"/>.
+    /// Maps generated <typeparamref name="TRequest" /> items to <c>{route}/Bulk</c> and emptiness checks to <c>{route}/QueryConcrete</c>, which returns
+    /// <typeparamref name="TResponse" />.
     /// </summary>
     public SeedApiCatalog Map<TRequest, TResponse>(string route, bool allowDeleteBulk = false)
         where TRequest : class
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(route);
         var trimmed = route.Trim().Trim('/');
-        _bindings[typeof(TRequest)] = new(
-            trimmed,
-            PersistCore<TRequest, TResponse>,
-            IsEmptyCore<TResponse>,
-            allowDeleteBulk ? DeleteCore<TResponse> : null);
+        _bindings[typeof(TRequest)] = new(trimmed, PersistCore<TRequest, TResponse>, IsEmptyCore<TResponse>, allowDeleteBulk ? DeleteCore<TResponse> : null);
         return this;
     }
 
@@ -90,8 +87,7 @@ public sealed class SeedApiCatalog
         if (query.Total is not > 0 && (query.Items == null || query.Items.Count == 0))
             return;
 
-        await client.DeleteAsAsync<object, object>($"{route}/Bulk", new List<Lyo.Api.Models.Common.Request.DeleteRequest> { new(allowMultiple: true) }, ct: ct)
-            .ConfigureAwait(false);
+        await client.DeleteAsAsync<object, object>($"{route}/Bulk", new List<DeleteRequest> { new(allowMultiple: true) }, ct: ct).ConfigureAwait(false);
     }
 }
 

@@ -22,15 +22,12 @@ public sealed class FantasyFootballCredentials
     public static FantasyFootballCredentials? From(HttpRequest request)
     {
         ArgumentHelpers.ThrowIfNull(request);
-        return Normalize(new FantasyFootballCredentials {
-            EspnS2 = request.Headers[EspnS2Header].ToString(),
-            Swid = request.Headers[SwidHeader].ToString()
-        });
+        return Normalize(new() { EspnS2 = request.Headers[EspnS2Header].ToString(), Swid = request.Headers[SwidHeader].ToString() });
     }
 
     /// <summary>
-    /// Trims a pasted cookie. A value that already contains <c>espn_s2=</c> and <c>SWID=</c> is split.
-    /// A bare SWID guid is wrapped in braces. Blank stays blank so the host cookie is kept.
+    /// Trims a pasted cookie. A value that already contains <c>espn_s2=</c> and <c>SWID=</c> is split. A bare SWID guid is wrapped in braces. Blank stays blank so the host
+    /// cookie is kept.
     /// </summary>
     public static FantasyFootballCredentials? Normalize(FantasyFootballCredentials? credentials)
     {
@@ -45,7 +42,7 @@ public sealed class FantasyFootballCredentials
         if (espnS2 == null && swid == null)
             return null;
 
-        return new FantasyFootballCredentials { EspnS2 = espnS2, Swid = swid };
+        return new() { EspnS2 = espnS2, Swid = swid };
     }
 
     private static void TakeCookiePair(ref string? espnS2, ref string? swid)
@@ -76,6 +73,7 @@ public sealed class FantasyFootballCredentials
 
         if (foundS2 != null)
             espnS2 = foundS2;
+
         if (foundSwid != null)
             swid = foundSwid;
     }
@@ -100,7 +98,7 @@ public sealed class FantasyFootballCredentials
             return null;
 
         var bare = value.Trim().TrimStart('{').TrimEnd('}');
-        if (Guid.TryParse(bare, out _))
+        if (Guid.TryParse(bare, out var _))
             return "{" + bare + "}";
 
         return value;

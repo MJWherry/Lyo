@@ -1,16 +1,16 @@
 using System.Diagnostics;
 using System.Text.Json;
-using Lyo.Json;
 using Lyo.Common.Core.Conversion;
 using Lyo.Common.Core.Extensions;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Health;
+using Lyo.Json;
 using Lyo.Metrics;
 using Lyo.Result;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.MessageQueue;
 
@@ -26,9 +26,8 @@ internal static class QueueWorkerHelpers
     }
 
     /// <summary>
-    /// Deserializes a queue message. Envelope-shaped JSON is tried first as a full <see cref="QueueMessageEnvelope{T}" />; on failure the
-    /// <c>Payload</c> element is deserialized as <typeparamref name="TRequest" /> and envelope metadata is rebuilt from the root JSON.
-    /// JSON that is not an envelope is poison.
+    /// Deserializes a queue message. Envelope-shaped JSON is tried first as a full <see cref="QueueMessageEnvelope{T}" />; on failure the <c>Payload</c> element is deserialized
+    /// as <typeparamref name="TRequest" /> and envelope metadata is rebuilt from the root JSON. JSON that is not an envelope is poison.
     /// </summary>
     internal static bool TryDeserializeMessage<TRequest>(byte[] messageBytes, JsonSerializerOptions options, out TRequest? payload, out QueueMessageEnvelope<TRequest>? envelope)
     {
@@ -130,10 +129,7 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
     private CancellationTokenSource? _cancellationTokenSource;
     private bool _disposed;
 
-    /// <summary>
-    /// How many messages are in flight. Raised when a handler starts and lowered when it finishes. <see cref="StopAsync" />
-    /// waits for this to reach zero before the host exits.
-    /// </summary>
+    /// <summary>How many messages are in flight. Raised when a handler starts and lowered when it finishes. <see cref="StopAsync" /> waits for this to reach zero before the host exits.</summary>
     private int _inFlight;
 
     /// <summary>How many messages this worker is handling right now. Intended for health checks and monitoring.</summary>
@@ -145,15 +141,15 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
     public bool IsRunning { get; private set; }
 
     /// <summary>
-    /// Base delay between retries, scaled linearly by attempt number. Applied only when the transport supports delayed delivery (<see cref="IDelayedMqService" />);
-    /// otherwise retries republish immediately. Null or zero means no delay. Assigned by DI (for example <c>AddJobWorker</c> from <see cref="QueueWorkerOptions.RequeueDelay" />) rather than
-    /// the constructor to keep binary compatibility; workers may also assign it themselves.
+    /// Base delay between retries, scaled linearly by attempt number. Applied only when the transport supports delayed delivery (<see cref="IDelayedMqService" />); otherwise
+    /// retries republish immediately. Null or zero means no delay. Assigned by DI (for example <c>AddJobWorker</c> from <see cref="QueueWorkerOptions.RequeueDelay" />) rather than the
+    /// constructor to keep binary compatibility; workers may also assign it themselves.
     /// </summary>
     public TimeSpan? RequeueDelay { get; set; }
 
     /// <summary>
-    /// Drain budget for <see cref="StopAsync" />. Assigned by DI (for example <c>AddJobWorker</c> from <see cref="QueueWorkerOptions.DrainTimeout" />) rather
-    /// than the constructor to keep binary compatibility. Null uses <see cref="QueueWorkerOptions.DefaultDrainTimeout" />. Increasing this without also increasing the host's
+    /// Drain budget for <see cref="StopAsync" />. Assigned by DI (for example <c>AddJobWorker</c> from <see cref="QueueWorkerOptions.DrainTimeout" />) rather than the
+    /// constructor to keep binary compatibility. Null uses <see cref="QueueWorkerOptions.DefaultDrainTimeout" />. Increasing this without also increasing the host's
     /// <c>ShutdownTimeout</c> does nothing, because the host cancels the stop token first.
     /// </summary>
     public TimeSpan? DrainTimeout { get; set; }
@@ -171,12 +167,12 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
     /// <param name="metrics">Optional metrics sink.</param>
     /// <param name="serializerOptions">Optional JSON serializer options.</param>
     /// <param name="maxRequeueCount">
-    /// Max requeues before the DLQ (or drop). Null means unlimited. DI paths (for example <c>AddJobWorker</c>) resolve a
-    /// default from <see cref="QueueWorkerOptions.DefaultMaxRequeueCount" /> before calling this constructor.
+    /// Max requeues before the DLQ (or drop). Null means unlimited. DI paths (for example <c>AddJobWorker</c>) resolve a default from
+    /// <see cref="QueueWorkerOptions.DefaultMaxRequeueCount" /> before calling this constructor.
     /// </param>
     /// <param name="dlqName">
-    /// Dead-letter queue. When <paramref name="maxRequeueCount" /> is reached, the message is published here instead of dropped. When null, messages that
-    /// exceed the requeue limit are dropped (logged at Error).
+    /// Dead-letter queue. When <paramref name="maxRequeueCount" /> is reached, the message is published here instead of dropped. When null, messages that exceed the
+    /// requeue limit are dropped (logged at Error).
     /// </param>
     protected QueueWorkerBase(
         IMqService mqService,
@@ -259,8 +255,8 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
     }
 
     /// <summary>
-    /// Stops the worker cleanly. Signals cancellation, then waits up to <see cref="DrainTimeoutMs" /> milliseconds for in-flight messages to finish before
-    /// returning. The host invokes this on shutdown.
+    /// Stops the worker cleanly. Signals cancellation, then waits up to <see cref="DrainTimeoutMs" /> milliseconds for in-flight messages to finish before returning. The host
+    /// invokes this on shutdown.
     /// </summary>
     public async Task StopAsync(CancellationToken ct = default)
     {
@@ -298,8 +294,8 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
     protected abstract Task<TResult> DoWorkAsync(TRequest request, CancellationToken ct);
 
     /// <summary>
-    /// Subscription handler. Always returns false (ack) except during host shutdown — retries use counted application-level requeues
-    /// (<see cref="ApplicationRequeueAsync" />) so a poison message or a <see cref="DoWorkAsync" /> that keeps throwing cannot loop forever on broker redelivery.
+    /// Subscription handler. Always returns false (ack) except during host shutdown — retries use counted application-level requeues (<see cref="ApplicationRequeueAsync" />) so
+    /// a poison message or a <see cref="DoWorkAsync" /> that keeps throwing cannot loop forever on broker redelivery.
     /// </summary>
     private async Task<bool> ProcessMessageAsync(byte[] messageBytes)
     {
@@ -353,9 +349,8 @@ public abstract class QueueWorkerBase<TRequest, TResult> : IHostedService, IDisp
     }
 
     /// <summary>
-    /// Retries a failed message by republishing with an incremented <see cref="QueueMessageEnvelope{T}.RequeueCount" />.
-    /// When the count hits the max requeue limit the message goes to the DLQ (or is dropped). Always returns false — the original delivery is acked
-    /// and the republished copy is the retry.
+    /// Retries a failed message by republishing with an incremented <see cref="QueueMessageEnvelope{T}.RequeueCount" />. When the count hits the max requeue limit the message
+    /// goes to the DLQ (or is dropped). Always returns false — the original delivery is acked and the republished copy is the retry.
     /// </summary>
     private async Task<bool> ApplicationRequeueAsync(TRequest payload, QueueMessageEnvelope<TRequest>? envelope, byte[] originalBytes)
     {

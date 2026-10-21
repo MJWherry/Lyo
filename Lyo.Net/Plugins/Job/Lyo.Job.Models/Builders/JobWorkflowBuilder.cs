@@ -11,12 +11,12 @@ namespace Lyo.Job.Models.Builders;
 /// <summary>
 /// Builds a whole workflow — steps, dependencies, conditions, parameters, and schedules — as one <see cref="JobWorkflowReq" /> that a single POST can create.
 /// <para>
-/// Step ids are minted client-side, so dependencies and conditions are written by <b>step name</b> and resolved to those ids in <see cref="Build" />. Without that a caller
-/// has to create the workflow, read back the server-assigned ids, and PATCH each step's <c>DependsOnStepIds</c> — three round trips to express one graph.
+/// Step ids are minted client-side, so dependencies and conditions are written by <b>step name</b> and resolved to those ids in <see cref="Build" />. Without that a caller has
+/// to create the workflow, read back the server-assigned ids, and PATCH each step's <c>DependsOnStepIds</c> — three round trips to express one graph.
 /// </para>
 /// <para>
-/// <see cref="Build" /> is the validation gate: unique names, known condition and dependency names, a gate that only reads steps it waits for, at least one enabled step,
-/// and an acyclic graph. Each of those would otherwise surface much later as a workflow run that fails or hangs, with nothing pointing back at the typo that caused it.
+/// <see cref="Build" /> is the validation gate: unique names, known condition and dependency names, a gate that only reads steps it waits for, at least one enabled step, and an
+/// acyclic graph. Each of those would otherwise surface much later as a workflow run that fails or hangs, with nothing pointing back at the typo that caused it.
 /// </para>
 /// </summary>
 /// <example>
@@ -53,9 +53,7 @@ public class JobWorkflowBuilder
         return this;
     }
 
-    /// <summary>
-    /// Adds a step. The step's id is minted now so later steps can depend on it by name.
-    /// </summary>
+    /// <summary>Adds a step. The step's id is minted now so later steps can depend on it by name.</summary>
     /// <param name="stepName">Name other steps reference. Must be unique within the workflow.</param>
     /// <param name="jobDefinitionId">Definition this step runs.</param>
     /// <param name="dependsOn">Names of steps that must finish first. Resolved to ids in <see cref="Build" />.</param>
@@ -101,12 +99,8 @@ public class JobWorkflowBuilder
         return this;
     }
 
-    /// <summary>
-    /// Resolves dependency and condition names to step ids and validates the result.
-    /// </summary>
-    /// <exception cref="ValidationException">
-    /// A dependency or condition names a step that does not exist, no step is enabled, or the dependencies form a cycle.
-    /// </exception>
+    /// <summary>Resolves dependency and condition names to step ids and validates the result.</summary>
+    /// <exception cref="ValidationException">A dependency or condition names a step that does not exist, no step is enabled, or the dependencies form a cycle.</exception>
     public JobWorkflowReq Build()
     {
         var byName = _steps.ToDictionary(s => s.Step.StepName, s => s.Step, StringComparer.OrdinalIgnoreCase);
@@ -142,8 +136,8 @@ public class JobWorkflowBuilder
     }
 
     /// <summary>
-    /// Every <c>Step.{name}</c> path in a gate must name a known step that the gated step also waits for. The engine evaluates a gate as soon as the step's own dependencies
-    /// are satisfied, so a gate reading a step it does not depend on would test a run that has not happened yet and skip the step for the wrong reason.
+    /// Every <c>Step.{name}</c> path in a gate must name a known step that the gated step also waits for. The engine evaluates a gate as soon as the step's own dependencies are
+    /// satisfied, so a gate reading a step it does not depend on would test a run that has not happened yet and skip the step for the wrong reason.
     /// </summary>
     /// <exception cref="ValidationException">A referenced step is unknown, or is not a declared dependency of the gated step.</exception>
     private void ValidateConditionStepReferences(string stepName, WhereClause condition, IReadOnlyDictionary<string, JobWorkflowStepReq> byName, string[] dependsOn)

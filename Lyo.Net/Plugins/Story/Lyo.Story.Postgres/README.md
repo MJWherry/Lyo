@@ -1,11 +1,14 @@
 # Lyo.Story.Postgres
 
-PostgreSQL and EF Core implementation of `Lyo.Story.IStoryStore` (`PostgresStoryStore`) via `StoryDbContext`, `PostgresStoryOptions`, and `AddPostgresMigrations<StoryDbContext, PostgresStoryOptions>`. Schema `story`. Condition trees are jsonb `WhereClause` JSON. Response steps are `effect` rows. Play consequences live on `playthrough_event.caused_by_event_id`. `PostgresStoryStore` implements `Lyo.Health.IHealth`.
+PostgreSQL and EF Core implementation of `Lyo.Story.IStoryStore` (`PostgresStoryStore`) via `StoryDbContext`, `PostgresStoryOptions`, and
+`AddPostgresMigrations<StoryDbContext, PostgresStoryOptions>`. Schema `story`. Condition trees are jsonb `WhereClause` JSON. Response steps are `effect` rows. Play consequences
+live on `playthrough_event.caused_by_event_id`. `PostgresStoryStore` implements `Lyo.Health.IHealth`.
 
 ## Features
 
 - **Schema `story`.** Story, optional scenes, nodes (with optional presentation), variables, actions, choices, reactions, effects, playthroughs, and event log.
-- **DI.** `AddStoryDbContextFactory` / `AddPostgresStoryStore` and `FromConfiguration` overloads (section `PostgresStory`). The store registers `StoryLyoMapper` and `AddLyoCrudServices<StoryDbContext>`.
+- **DI.** `AddStoryDbContextFactory` / `AddPostgresStoryStore` and `FromConfiguration` overloads (section `PostgresStory`). The store registers `StoryLyoMapper` and
+  `AddLyoCrudServices<StoryDbContext>`.
 - **Row delete.** `DeleteStoryAsync` clears `StartNodeId`, then deletes the story row; child rows cascade. List and filter stay on Lyo.Query. Graph save and play stay explicit EF.
 - **Play.** `StartPlaythroughAsync` / `TakeChoiceAsync` / `AdvanceAsync` run `StoryPlayEngine` then persist the snapshot.
 - **Tenancy.** Columns `tenant_id` and `game_key` with index `ix_story_story_tenant_game` back `ListStoriesAsync` (migration `StoryTenancy`).

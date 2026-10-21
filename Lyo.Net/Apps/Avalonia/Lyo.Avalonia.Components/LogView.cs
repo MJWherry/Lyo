@@ -9,17 +9,16 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
-using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Microsoft.Extensions.Logging;
+using Path = Avalonia.Controls.Shapes.Path;
 
 namespace Lyo.Desktop.Components;
 
 /// <summary>
-/// Virtualized log. Rows show a timestamp, a level chip, an optional source, and the message.
-/// The toolbar filters by minimum level and text, follows the tail, and copies or exports the visible lines.
-/// The eye at the left of a row opens <see cref="LogLineView" /> for that line. Lines come from a <see cref="LogSink" />.
+/// Virtualized log. Rows show a timestamp, a level chip, an optional source, and the message. The toolbar filters by minimum level and text, follows the tail, and copies or
+/// exports the visible lines. The eye at the left of a row opens <see cref="LogLineView" /> for that line. Lines come from a <see cref="LogSink" />.
 /// </summary>
 public class LogView : UserControl
 {
@@ -28,26 +27,32 @@ public class LogView : UserControl
     private static readonly IBrush Dim = new SolidColorBrush(Color.FromRgb(0x9A, 0xA4, 0xB2));
 
     private readonly Dictionary<LogLevel, Chip> _chips = [];
-    private readonly List<LogLine> _lines = [];
-    private readonly ObservableCollection<LogLine> _visible = [];
-    private readonly ListBox _list;
-    private readonly TextBox _search;
-    private readonly CheckBox _followBox;
     private readonly Button _copy;
-    private readonly Button _export;
-    private readonly MenuItem _copyItem;
     private readonly MenuItem _copyAllItem;
-    private readonly MenuItem _exportItem;
+    private readonly MenuItem _copyItem;
     private readonly StackPanel _empty;
     private readonly TextBlock _emptyHint;
-    private LogSink? _sink;
-    private ScrollViewer? _scroll;
+    private readonly Button _export;
+    private readonly MenuItem _exportItem;
+    private readonly CheckBox _followBox;
+    private readonly List<LogLine> _lines = [];
+    private readonly ListBox _list;
+    private readonly TextBox _search;
+    private readonly ObservableCollection<LogLine> _visible = [];
+    private bool _applyingFollow;
     private Window? _detail;
     private LogLineView? _detailView;
+    private bool _follow = true;
     private LogLevel _minLevel = LogLevel.Trace;
     private string? _query;
-    private bool _follow = true;
-    private bool _applyingFollow;
+    private ScrollViewer? _scroll;
+    private LogSink? _sink;
+
+    /// <summary>Source of lines. Replacing it stops listening to the previous sink and shows the new buffer. Set this on the UI thread.</summary>
+    public LogSink? Sink {
+        get => _sink;
+        set => ApplySink(value);
+    }
 
     public LogView()
     {
@@ -55,12 +60,13 @@ public class LogView : UserControl
         _copyAllItem = CommandItem("Copy all", () => CopyAsync(_visible.ToArray()));
         _exportItem = CommandItem("Export", ExportAsync);
         _list = CreateList();
-        _search = new TextBox { PlaceholderText = "Search", MinWidth = 120, VerticalAlignment = VerticalAlignment.Center };
+        _search = new() { PlaceholderText = "Search", MinWidth = 120, VerticalAlignment = VerticalAlignment.Center };
         _search.TextChanged += (_, _) => {
             _query = _search.Text;
             Rebuild();
         };
-        _followBox = new CheckBox { Content = "Follow", IsChecked = true, VerticalAlignment = VerticalAlignment.Center };
+
+        _followBox = new() { Content = "Follow", IsChecked = true, VerticalAlignment = VerticalAlignment.Center };
         _followBox.IsCheckedChanged += OnFollowChanged;
         _copy = Tool("Copy", () => CopyAsync(LinesToCopy()));
         _export = Tool("Export", ExportAsync);
@@ -70,12 +76,13 @@ public class LogView : UserControl
         var bar = Toolbar(clear);
         DockPanel.SetDock(bar, Dock.Top);
         root.Children.Add(bar);
-        _emptyHint = new TextBlock {
+        _emptyHint = new() {
             HorizontalAlignment = HorizontalAlignment.Center,
             Opacity = 0.7,
             TextWrapping = TextWrapping.Wrap,
             TextAlignment = TextAlignment.Center
         };
+
         _empty = EmptyState();
         var body = new Grid();
         body.Children.Add(_list);
@@ -84,13 +91,6 @@ public class LogView : UserControl
         Content = root;
         PaintChips();
         UpdateChrome();
-    }
-
-    /// <summary>Source of lines. Replacing it stops listening to the previous sink and shows the new buffer. Set this on the UI thread.</summary>
-    public LogSink? Sink
-    {
-        get => _sink;
-        set => ApplySink(value);
     }
 
     private ListBox CreateList()
@@ -103,15 +103,18 @@ public class LogView : UserControl
             ItemTemplate = new FuncDataTemplate<LogLine>((line, _) => line == null ? new Panel() : Row(line)),
             ItemsPanel = new FuncTemplate<Panel?>(() => new VirtualizingStackPanel())
         };
+
         ScrollViewer.SetHorizontalScrollBarVisibility(list, ScrollBarVisibility.Disabled);
         ScrollViewer.SetVerticalScrollBarVisibility(list, ScrollBarVisibility.Auto);
         list.ContainerPrepared += (_, e) => {
             if (e.Container is not ListBoxItem item)
                 return;
+
             item.Padding = new(0);
             item.MinHeight = 28;
             item.HorizontalContentAlignment = HorizontalAlignment.Stretch;
         };
+
         list.TemplateApplied += (_, _) => AttachScroll(list);
         list.AddHandler(KeyDownEvent, OnListKey, RoutingStrategies.Tunnel);
         var menu = new ContextMenu();
@@ -127,10 +130,10 @@ public class LogView : UserControl
 
     private Control Toolbar(Button clear)
     {
-        var bar = new Grid { Margin = new Thickness(4), ColumnSpacing = 8 };
-        bar.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
-        bar.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
-        bar.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        var bar = new Grid { Margin = new(4), ColumnSpacing = 8 };
+        bar.ColumnDefinitions.Add(new(GridLength.Auto));
+        bar.ColumnDefinitions.Add(new(GridLength.Star));
+        bar.ColumnDefinitions.Add(new(GridLength.Auto));
         bar.Children.Add(LevelFilters());
         Grid.SetColumn(_search, 1);
         bar.Children.Add(_search);
@@ -149,14 +152,16 @@ public class LogView : UserControl
         var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
         foreach (var level in Levels) {
             var spec = LogLine.LevelChip(level);
-            var chip = new Chip { Text = spec.Label, Cursor = new Cursor(StandardCursorType.Hand) };
+            var chip = new Chip { Text = spec.Label, Cursor = new(StandardCursorType.Hand) };
             var chosen = level;
             chip.PointerPressed += (_, e) => {
                 if (!e.GetCurrentPoint(chip).Properties.IsLeftButtonPressed)
                     return;
+
                 SetLevel(chosen);
                 e.Handled = true;
             };
+
             _chips[level] = chip;
             panel.Children.Add(chip);
         }
@@ -171,9 +176,10 @@ public class LogView : UserControl
             Spacing = 4,
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(12),
+            Margin = new(12),
             IsHitTestVisible = false
         };
+
         panel.Children.Add(title);
         panel.Children.Add(_emptyHint);
         return panel;
@@ -183,6 +189,7 @@ public class LogView : UserControl
     {
         if (ReferenceEquals(_sink, value))
             return;
+
         if (_sink != null) {
             _sink.Written -= OnWritten;
             _sink.Cleared -= OnCleared;
@@ -228,6 +235,7 @@ public class LogView : UserControl
 
         if (LogLine.Matches(line, _minLevel, _query))
             _visible.Add(line);
+
         UpdateChrome();
         FollowTail();
     }
@@ -249,9 +257,11 @@ public class LogView : UserControl
     private void Rebuild()
     {
         _visible.Clear();
-        foreach (var line in _lines)
+        foreach (var line in _lines) {
             if (LogLine.Matches(line, _minLevel, _query))
                 _visible.Add(line);
+        }
+
         UpdateChrome();
         FollowTail();
     }
@@ -282,6 +292,7 @@ public class LogView : UserControl
         var on = _followBox.IsChecked == true;
         if (on == _follow)
             return;
+
         _follow = on;
         if (on)
             FollowTail();
@@ -291,12 +302,14 @@ public class LogView : UserControl
     {
         if (!_follow || _visible.Count == 0)
             return;
+
         var last = _visible[^1];
         _applyingFollow = true;
-        Dispatcher.UIThread.Post(() => {
-            _list.ScrollIntoView(last);
-            Dispatcher.UIThread.Post(() => _applyingFollow = false, DispatcherPriority.Background);
-        }, DispatcherPriority.Background);
+        Dispatcher.UIThread.Post(
+            () => {
+                _list.ScrollIntoView(last);
+                Dispatcher.UIThread.Post(() => _applyingFollow = false, DispatcherPriority.Background);
+            }, DispatcherPriority.Background);
     }
 
     private void AttachScroll(ListBox list)
@@ -304,8 +317,10 @@ public class LogView : UserControl
         var scroll = list.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
         if (scroll == null || ReferenceEquals(scroll, _scroll))
             return;
+
         if (_scroll != null)
             _scroll.ScrollChanged -= OnScrollChanged;
+
         _scroll = scroll;
         _scroll.ScrollChanged += OnScrollChanged;
     }
@@ -314,11 +329,14 @@ public class LogView : UserControl
     {
         if (_applyingFollow || !_follow || _scroll == null)
             return;
+
         if (e.OffsetDelta.Y == 0 || e.ExtentDelta.Y != 0)
             return;
+
         var max = Math.Max(0, _scroll.Extent.Height - _scroll.Viewport.Height);
         if (_scroll.Offset.Y >= max - 8)
             return;
+
         _follow = false;
         _followBox.IsChecked = false;
     }
@@ -328,8 +346,8 @@ public class LogView : UserControl
         var owner = TopLevel.GetTopLevel(this) as Window;
         var created = false;
         if (_detail == null) {
-            _detailView = new LogLineView();
-            _detail = new Window {
+            _detailView = new();
+            _detail = new() {
                 Width = 760,
                 Height = 640,
                 MinWidth = 480,
@@ -337,11 +355,13 @@ public class LogView : UserControl
                 WindowStartupLocation = owner == null ? WindowStartupLocation.CenterScreen : WindowStartupLocation.CenterOwner,
                 Content = _detailView
             };
+
             PromptDialog.ApplyChrome(_detail);
             _detail.Closed += (_, _) => {
                 _detail = null;
                 _detailView = null;
             };
+
             created = true;
         }
 
@@ -368,6 +388,7 @@ public class LogView : UserControl
         if (Chord(e, Key.C)) {
             if (TextHasSelection())
                 return;
+
             e.Handled = true;
             _ = CopyAsync(LinesToCopy());
             return;
@@ -375,20 +396,20 @@ public class LogView : UserControl
 
         if (!Chord(e, Key.A))
             return;
+
         e.Handled = true;
         _list.SelectAll();
     }
 
-    private static bool Chord(KeyEventArgs e, Key key)
-        => e.Key == key && (e.KeyModifiers.HasFlag(KeyModifiers.Control) || e.KeyModifiers.HasFlag(KeyModifiers.Meta));
+    private static bool Chord(KeyEventArgs e, Key key) => e.Key == key && (e.KeyModifiers.HasFlag(KeyModifiers.Control) || e.KeyModifiers.HasFlag(KeyModifiers.Meta));
 
-    private bool TextHasSelection()
-        => TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() is SelectableTextBlock text && !string.IsNullOrEmpty(text.SelectedText);
+    private bool TextHasSelection() => TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() is SelectableTextBlock text && !string.IsNullOrEmpty(text.SelectedText);
 
     private IReadOnlyList<LogLine> LinesToCopy()
     {
         if (_list.SelectedItems is not { Count: > 0 } selected)
             return _visible.ToArray();
+
         var chosen = selected.OfType<LogLine>().ToArray();
         return _visible.Where(line => chosen.Any(item => ReferenceEquals(item, line))).ToArray();
     }
@@ -397,9 +418,11 @@ public class LogView : UserControl
     {
         if (lines.Count == 0)
             return;
+
         var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
         if (clipboard == null)
             return;
+
         var transfer = new DataTransfer();
         var item = new DataTransferItem();
         item.SetText(LogLine.Format(lines));
@@ -411,12 +434,15 @@ public class LogView : UserControl
     {
         if (_visible.Count == 0)
             return;
+
         var storage = TopLevel.GetTopLevel(this)?.StorageProvider;
         if (storage == null)
             return;
-        var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions { Title = "Export log", SuggestedFileName = "log.txt", DefaultExtension = "txt" });
+
+        var file = await storage.SaveFilePickerAsync(new() { Title = "Export log", SuggestedFileName = "log.txt", DefaultExtension = "txt" });
         if (file == null)
             return;
+
         await using var stream = await file.OpenWriteAsync();
         await using var writer = new StreamWriter(stream, new UTF8Encoding(false));
         await writer.WriteAsync(LogLine.Format(_visible));
@@ -426,14 +452,22 @@ public class LogView : UserControl
     {
         if (line == null)
             return new Panel();
+
         var spec = LogLine.LevelChip(line.Level);
-        var grid = new Grid { Height = 28, Margin = new Thickness(4, 0, 8, 0), ColumnSpacing = 8, HorizontalAlignment = HorizontalAlignment.Stretch };
+        var grid = new Grid {
+            Height = 28,
+            Margin = new(4, 0, 8, 0),
+            ColumnSpacing = 8,
+            HorizontalAlignment = HorizontalAlignment.Stretch
+        };
+
         var column = 0;
         Add(grid, Eye(line), column++);
         Add(grid, Stamp(line), column++);
         Add(grid, new Chip { Text = spec.Label, Hue = spec.Hue, VerticalAlignment = VerticalAlignment.Center }, column++);
         if (!string.IsNullOrWhiteSpace(line.Source))
             Add(grid, Source(line.Source!), column++);
+
         var message = new SelectableTextBlock {
             Text = line.Message,
             FontFamily = Mono,
@@ -443,7 +477,8 @@ public class LogView : UserControl
             TextTrimming = TextTrimming.CharacterEllipsis,
             HorizontalAlignment = HorizontalAlignment.Stretch
         };
-        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+
+        grid.ColumnDefinitions.Add(new(GridLength.Star));
         Grid.SetColumn(message, column);
         grid.Children.Add(message);
         return grid;
@@ -452,33 +487,48 @@ public class LogView : UserControl
     private Button Eye(LogLine line)
     {
         var button = new Button {
-            Padding = new Thickness(2),
+            Padding = new(2),
             Width = 22,
             Height = 22,
             VerticalAlignment = VerticalAlignment.Center,
-            Cursor = new Cursor(StandardCursorType.Hand)
+            Cursor = new(StandardCursorType.Hand)
         };
+
         button.Content = EyeIcon(button);
         ToolTip.SetTip(button, "Show log line");
         button.Click += (_, e) => {
             Open(line);
             e.Handled = true;
         };
+
         return button;
     }
 
     private static Control EyeIcon(Button button)
     {
-        var icon = new Grid { Width = 16, Height = 16, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-        var outline = new Avalonia.Controls.Shapes.Path {
+        var icon = new Grid {
+            Width = 16,
+            Height = 16,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        var outline = new Path {
             Data = Geometry.Parse("M1,8 C3.2,4.2 12.8,4.2 15,8 C12.8,11.8 3.2,11.8 1,8"),
             StrokeThickness = 1.4,
             StrokeLineCap = PenLineCap.Round,
             Stretch = Stretch.Uniform
         };
-        outline.Bind(Shape.StrokeProperty, button.GetObservable(TemplatedControl.ForegroundProperty));
-        var pupil = new Ellipse { Width = 4, Height = 4, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center };
-        pupil.Bind(Shape.FillProperty, button.GetObservable(TemplatedControl.ForegroundProperty));
+
+        outline.Bind(Shape.StrokeProperty, button.GetObservable(ForegroundProperty));
+        var pupil = new Ellipse {
+            Width = 4,
+            Height = 4,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        pupil.Bind(Shape.FillProperty, button.GetObservable(ForegroundProperty));
         icon.Children.Add(outline);
         icon.Children.Add(pupil);
         return icon;
@@ -486,7 +536,7 @@ public class LogView : UserControl
 
     private static void Add(Grid grid, Control child, int column)
     {
-        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+        grid.ColumnDefinitions.Add(new(GridLength.Auto));
         Grid.SetColumn(child, column);
         grid.Children.Add(child);
     }
@@ -514,9 +564,16 @@ public class LogView : UserControl
 
     private static Button Tool(string label, Func<Task>? action)
     {
-        var button = new Button { Content = label, Padding = new Thickness(8, 0), Height = 26, FontSize = 12 };
+        var button = new Button {
+            Content = label,
+            Padding = new(8, 0),
+            Height = 26,
+            FontSize = 12
+        };
+
         if (action != null)
             button.Click += (_, _) => _ = action();
+
         return button;
     }
 

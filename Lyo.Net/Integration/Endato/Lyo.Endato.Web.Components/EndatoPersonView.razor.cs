@@ -1,13 +1,6 @@
-using Lyo.Endato.Client.Models.Enrichment.Response;
-using Lyo.Endato.Client.Models.Person.Response;
 using Lyo.Web.Components;
-using Lyo.Web.Primitives;
 using Lyo.Web.Components.Dialog;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 using MudBlazor;
 using PersonResult = Lyo.Endato.Client.Models.Person.Response.Person;
 
@@ -28,8 +21,7 @@ public partial class EndatoPersonView
 
     private IReadOnlyList<string> PhoneTypes => EndatoViewHelpers.PhoneTypeOptions(null, Person.PhoneNumbers?.Select(p => p.PhoneType) ?? []);
 
-    private string LocationText
-        => Person.Locations is { Count: > 0 } ? string.Join("; ", Person.Locations.Select(l => $"{l.City}, {l.State}")) : "";
+    private string LocationText => Person.Locations is { Count: > 0 } ? string.Join("; ", Person.Locations.Select(l => $"{l.City}, {l.State}")) : "";
 
     private async Task ShowPersonJson()
     {

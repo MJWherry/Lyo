@@ -4,8 +4,8 @@ using Lyo.Exceptions;
 namespace Lyo.Http.Client;
 
 /// <summary>
-/// HTTP transport settings for <see cref="LyoHttpClient" />. Vendor option types subclass this so compression, Accept-Encoding, rate limit, and
-/// <see cref="BaseUrl" /> bind the same way from configuration.
+/// HTTP transport settings for <see cref="LyoHttpClient" />. Vendor option types subclass this so compression, Accept-Encoding, rate limit, and <see cref="BaseUrl" /> bind
+/// the same way from configuration.
 /// </summary>
 public partial class LyoHttpClientOptions
 {
@@ -16,8 +16,8 @@ public partial class LyoHttpClientOptions
     public string? BaseUrl { get; set; }
 
     /// <summary>
-    /// Whether non-success statuses throw <see cref="LyoHttpException" />. When false, the response is returned so the caller can read the body
-    /// while still seeing the real status code.
+    /// Whether non-success statuses throw <see cref="LyoHttpException" />. When false, the response is returned so the caller can read the body while still seeing the real
+    /// status code.
     /// </summary>
     public bool EnsureStatusCode { get; set; } = true;
 
@@ -29,8 +29,8 @@ public partial class LyoHttpClientOptions
 #endif
 
     /// <summary>
-    /// Whether <see cref="LyoHttpClientHandler" /> turns on <see cref="System.Net.Http.HttpClientHandler.AutomaticDecompression" /> from
-    /// <see cref="AcceptEncodings" />. Default true.
+    /// Whether <see cref="LyoHttpClientHandler" /> turns on <see cref="System.Net.Http.HttpClientHandler.AutomaticDecompression" /> from <see cref="AcceptEncodings" />. Default
+    /// true.
     /// </summary>
     public bool EnableAutoResponseDecompression { get; set; } = true;
 
@@ -44,8 +44,8 @@ public partial class LyoHttpClientOptions
     public string? DownloadDirectory { get; set; }
 
     /// <summary>
-    /// Optional HTTP proxy for the primary handler. Flared also sends this to FlareSolverr so solver, StreamBinary, and Replay share the same exit IP
-    /// (<c>cf_clearance</c> is IP-bound).
+    /// Optional HTTP proxy for the primary handler. Flared also sends this to FlareSolverr so solver, StreamBinary, and Replay share the same exit IP (<c>cf_clearance</c> is
+    /// IP-bound).
     /// </summary>
     public string? ProxyUrl { get; set; }
 
@@ -64,9 +64,7 @@ public partial class LyoHttpClientOptions
     /// <summary>User-Agent pool. Default off. Flared uses PerSession then pins the solver UA.</summary>
     public LyoHttpUserAgentOptions UserAgent { get; set; } = new();
 
-    /// <summary>
-    /// Validates nested option objects. Call from DI registration; Flared overrides this to reject <see cref="LyoHttpUserAgentRotation.PerRequest" />.
-    /// </summary>
+    /// <summary>Validates nested option objects. Call from DI registration; Flared overrides this to reject <see cref="LyoHttpUserAgentRotation.PerRequest" />.</summary>
     public virtual void Validate()
     {
         ArgumentHelpers.ThrowIf(RequestCompressionMinBytes < 0, "RequestCompressionMinBytes must be >= 0.");

@@ -1,6 +1,7 @@
 # Lyo.Idempotency.AspNetCore
 
-UseIdempotency runs after routing so Endpoint.Metadata includes RequireIdempotencyKey on a controller, an action, or a minimal API. Safe methods ignore the header. The scope is api|{subject}|{method}|{path}. Subject is the lyo:user claim, otherwise sub.
+UseIdempotency runs after routing so Endpoint.Metadata includes RequireIdempotencyKey on a controller, an action, or a minimal API. Safe methods ignore the header. The scope is
+api|{subject}|{method}|{path}. Subject is the lyo:user claim, otherwise sub.
 
 ## Features
 
@@ -25,7 +26,8 @@ app.MapPost("/pay", Pay).WithMetadata(new RequireIdempotencyKeyAttribute());
 
 ## Headers
 
-The request headers are Idempotency-Key and X-Idempotency-Key. A missing subject with a present header returns 400 idempotency_subject_required. GET, HEAD, OPTIONS, and TRACE ignore the header.
+The request headers are Idempotency-Key and X-Idempotency-Key. A missing subject with a present header returns 400 idempotency_subject_required. GET, HEAD, OPTIONS, and TRACE
+ignore the header.
 
 ## Dependencies
 

@@ -12,9 +12,6 @@ public static class MediaSource
         return src.Trim();
     }
 
-    /// <summary>
-    /// Image URL: <paramref name="src" /> when it is present, otherwise <paramref name="poster" />.
-    /// Both blank means there is nothing to show.
-    /// </summary>
+    /// <summary>Image URL: <paramref name="src" /> when it is present, otherwise <paramref name="poster" />. Both blank means there is nothing to show.</summary>
     public static string? ImageSrc(string? src, string? poster) => Normalize(src) ?? Normalize(poster);
 }

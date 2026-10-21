@@ -1,3 +1,5 @@
+using System.Net;
+using System.Text.Json;
 using Lyo.Common.Core.Identifiers;
 using Lyo.Web.Automation.Abstractions;
 using Lyo.Web.Automation.Models;
@@ -20,12 +22,12 @@ public sealed class RandomizeViewportPlanTests
                             }
                             """;
 
-        var plan = System.Text.Json.JsonSerializer.Deserialize<AutomationPlan>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var plan = JsonSerializer.Deserialize<AutomationPlan>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         Assert.NotNull(plan);
         Assert.IsType<SetViewportSizeAutomationStep>(plan.Steps[0]);
         var step = Assert.IsType<RandomizeViewportAutomationStep>(plan.Steps[1]);
         Assert.Equal(4, step.JitterPixels);
-        Assert.Equal(new DesktopDisplaySize(1920, 1080), Assert.Single(step.Sizes!));
+        Assert.Equal(new(1920, 1080), Assert.Single(step.Sizes!));
     }
 
     [Fact]
@@ -34,11 +36,7 @@ public sealed class RandomizeViewportPlanTests
         using var session = new RecordingSession();
         using var httpClient = new HttpClient(new StubHandler());
         var runner = new AutomationPlanRunner(httpClient, new NullSink(), new NullStorage(), new EmptyServices());
-        var plan = AutomationPlanBuilder.New()
-            .ResizeWindow(1280, 800)
-            .RandomizeViewport([new DesktopDisplaySize(1600, 900)])
-            .Build();
-
+        var plan = AutomationPlanBuilder.New().ResizeWindow(1280, 800).RandomizeViewport([new(1600, 900)]).Build();
         await runner.RunWithResultAsync(session, plan, null, null, CancellationToken.None);
         Assert.Equal((1280, 800), session.Browser.Sizes[0]);
         Assert.Equal((1600, 900), session.Browser.Sizes[1]);
@@ -47,7 +45,7 @@ public sealed class RandomizeViewportPlanTests
     private sealed class StubHandler : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-            => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK));
+            => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
     }
 
     private sealed class NullSink : IAutomationPlanDataSink
@@ -74,11 +72,11 @@ public sealed class RandomizeViewportPlanTests
 
     private sealed class RecordingSession : IWebAutomationSession
     {
+        public RecordingBrowser Browser { get; } = new();
+
         public Guid SessionId { get; } = LyoGuid.CreateV7();
 
         public string? SessionDirectory => null;
-
-        public RecordingBrowser Browser { get; } = new();
 
         IWebAutomationBrowser IWebAutomationSession.Browser => Browser;
 
@@ -138,8 +136,7 @@ public sealed class RandomizeViewportPlanTests
 
     private sealed class FakeTabs : IWebAutomationTabs
     {
-        public Task<IReadOnlyList<AutomationTabInfo>> ListTabsAsync(CancellationToken ct = default)
-            => Task.FromResult<IReadOnlyList<AutomationTabInfo>>([]);
+        public Task<IReadOnlyList<AutomationTabInfo>> ListTabsAsync(CancellationToken ct = default) => Task.FromResult<IReadOnlyList<AutomationTabInfo>>([]);
 
         public Task<AutomationTabInfo> GetCurrentTabAsync(CancellationToken ct = default) => Task.FromResult(new AutomationTabInfo(0, true, "k", "about:blank", "tab"));
 

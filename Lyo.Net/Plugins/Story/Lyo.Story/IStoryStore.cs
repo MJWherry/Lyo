@@ -14,8 +14,8 @@ public interface IStoryStore
     Task<Story?> GetStoryBySlugAsync(string slug, CancellationToken ct = default);
 
     /// <summary>
-    /// Lists story headers (no scenes, nodes, variables, actions, or reactions) in <paramref name="tenantId" />; a null tenant lists only stories with no tenant.
-    /// When <paramref name="gameKey" /> is set, only that game's stories are listed. Ordered by title.
+    /// Lists story headers (no scenes, nodes, variables, actions, or reactions) in <paramref name="tenantId" />; a null tenant lists only stories with no tenant. When
+    /// <paramref name="gameKey" /> is set, only that game's stories are listed. Ordered by title.
     /// </summary>
     Task<IReadOnlyList<Story>> ListStoriesAsync(Guid? tenantId, string? gameKey, CancellationToken ct = default);
 
@@ -35,8 +35,8 @@ public interface IStoryStore
     Task<StoryPlayState> AdvanceAsync(Guid playthroughId, CancellationToken ct = default);
 
     /// <summary>
-    /// Writes externally owned values, such as game facts, into the playthrough's variable bag. Changed values are logged and fire VariableChanged
-    /// reactions (see <see cref="StoryPlayEngine.SetVariables" />).
+    /// Writes externally owned values, such as game facts, into the playthrough's variable bag. Changed values are logged and fire VariableChanged reactions (see
+    /// <see cref="StoryPlayEngine.SetVariables" />).
     /// </summary>
     /// <exception cref="Lyo.Exceptions.Models.NotFoundException">The playthrough does not exist.</exception>
     Task<StoryPlayState> SetVariablesAsync(Guid playthroughId, IReadOnlyDictionary<string, string?> values, CancellationToken ct = default);
@@ -44,6 +44,6 @@ public interface IStoryStore
     /// <summary>Append-only event log for a playthrough, ordered by sequence.</summary>
     Task<IReadOnlyList<StoryPlaythroughEvent>> GetEventsAsync(Guid playthroughId, CancellationToken ct = default);
 
-    /// <summary>Walks <see cref="StoryPlaythroughEvent.CausedByEventId"/> for the given variable.</summary>
+    /// <summary>Walks <see cref="StoryPlaythroughEvent.CausedByEventId" /> for the given variable.</summary>
     Task<IReadOnlyList<StoryPlaythroughEvent>> GetCausesAsync(Guid playthroughId, string variableKey, CancellationToken ct = default);
 }

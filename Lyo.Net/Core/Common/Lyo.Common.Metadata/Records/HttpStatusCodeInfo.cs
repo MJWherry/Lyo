@@ -245,7 +245,6 @@ public record HttpStatusCodeInfo(int Code, string Name, string Description, Http
     static HttpStatusCodeInfo()
     {
         var fields = typeof(HttpStatusCodeInfo).PublicStaticFields<HttpStatusCodeInfo>();
-
         foreach (var statusCode in fields) {
             AllCodes.Add(statusCode);
             ByCode[statusCode.Code] = statusCode;

@@ -13,8 +13,8 @@ namespace Lyo.Api;
 public static class RateLimitEndpointExtensions
 {
     /// <summary>
-    /// Counts this route against <paramref name="policy" /> unless it is on <paramref name="whitelist" />. A denial throws
-    /// <see cref="RateLimitExceededException" /> so <c>LoggingMiddleware</c> can write <c>Retry-After</c>. Runs as an endpoint filter, after authentication.
+    /// Counts this route against <paramref name="policy" /> unless it is on <paramref name="whitelist" />. A denial throws <see cref="RateLimitExceededException" /> so
+    /// <c>LoggingMiddleware</c> can write <c>Retry-After</c>. Runs as an endpoint filter, after authentication.
     /// </summary>
     /// <param name="builder">Route being limited.</param>
     /// <param name="policy">Quota name. Routes that share a name share one bucket.</param>
@@ -46,17 +46,17 @@ public static class RateLimitEndpointExtensions
             if (RateLimitEndpointMatcher.IsWhitelisted(metadata.Whitelist, name, http.Request.Method, template, http.Request.Path.Value))
                 return await next(context);
 
-            var service = http.RequestServices.GetService<IRateLimitService>()
-                ?? throw new InvalidOperationException("Rate limiting is enabled but IRateLimitService is not registered. Call AddLocalRateLimit or AddRedisRateLimit.");
+            var service = http.RequestServices.GetService<IRateLimitService>() ?? throw new InvalidOperationException(
+                "Rate limiting is enabled but IRateLimitService is not registered. Call AddLocalRateLimit or AddRedisRateLimit.");
+
             var key = metadata.Partition(http);
-            var decision = await service.TryAcquireAsync(
-                new RateLimitRequest(metadata.Policy, key, metadata.PermitLimit, metadata.Window, metadata.Pattern),
-                http.RequestAborted);
+            var decision = await service.TryAcquireAsync(new(metadata.Policy, key, metadata.PermitLimit, metadata.Window, metadata.Pattern), http.RequestAborted);
             if (!decision.Allowed)
                 throw new RateLimitExceededException(decision.RetryAfter, metadata.PermitLimit, metadata.Window);
 
             return await next(context);
         });
+
         return builder;
     }
 }
@@ -65,20 +65,15 @@ public static class RateLimitEndpointExtensions
 public static class RateLimitPartitions
 {
     /// <summary>
-    /// <c>lyo:user</c>, else <c>lyo:token_id</c>, else <c>sub</c>, else <see cref="ClaimTypes.NameIdentifier" />, else <see cref="ClaimsIdentity.Name" />,
-    /// else the remote IP, else <c>anonymous</c>.
+    /// <c>lyo:user</c>, else <c>lyo:token_id</c>, else <c>sub</c>, else <see cref="ClaimTypes.NameIdentifier" />, else <see cref="ClaimsIdentity.Name" />, else the remote IP,
+    /// else <c>anonymous</c>.
     /// </summary>
     public static string Caller(HttpContext http)
     {
         ArgumentHelpers.ThrowIfNull(http);
         var user = http.User;
-        return First(user, "lyo:user")
-            ?? First(user, "lyo:token_id")
-            ?? First(user, "sub")
-            ?? First(user, ClaimTypes.NameIdentifier)
-            ?? NullIfEmpty(user.Identity?.Name)
-            ?? http.Connection.RemoteIpAddress?.ToString()
-            ?? "anonymous";
+        return First(user, "lyo:user") ?? First(user, "lyo:token_id") ?? First(user, "sub") ??
+            First(user, ClaimTypes.NameIdentifier) ?? NullIfEmpty(user.Identity?.Name) ?? http.Connection.RemoteIpAddress?.ToString() ?? "anonymous";
     }
 
     private static string? First(ClaimsPrincipal user, string claimType) => NullIfEmpty(user.FindFirst(claimType)?.Value);

@@ -1,5 +1,3 @@
-using Lyo.IO.FileSystem;
-
 namespace Lyo.IO.FileSystem.Tests;
 
 public sealed class FileSystemTreeSourceTests

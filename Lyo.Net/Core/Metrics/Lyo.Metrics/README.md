@@ -10,7 +10,8 @@ Thread-safe counters, gauges, histograms, timings, errors, and events — in-mem
 - **Bounds.** `MaxHistogramValues`, `MaxEventQueueSize`, and key-lock cleanup on `KeyLockCleanupIntervalMinutes`.
 - **Safety.** Bounded collections and overflow protection on counters.
 - **Options.** `ValidateTags`, `SamplingRate`, `ThrowOnConversionErrors`, `InvalidTagCharacters`.
-- **No dependencies.** Only `Lyo.Exceptions`, no NuGet packages. Service registration lives in [Lyo.Metrics.DependencyInjection](../Lyo.Metrics.DependencyInjection/README.md) so instrumenting a low-dependency package stays cheap.
+- **No dependencies.** Only `Lyo.Exceptions`, no NuGet packages. Service registration lives in [Lyo.Metrics.DependencyInjection](../Lyo.Metrics.DependencyInjection/README.md) so
+  instrumenting a low-dependency package stays cheap.
 - **Values.** Accepts `IConvertible` numbers (long, int, decimal, float, and similar).
 
 ## Examples
@@ -440,7 +441,9 @@ Tune `MetricsService` here:
 
 ## DI configuration
 
-Registrations on `IServiceCollection` moved to [Lyo.Metrics.DependencyInjection](../Lyo.Metrics.DependencyInjection/README.md). They still sit in `namespace Lyo.Metrics`, so an existing `using Lyo.Metrics;` keeps working — only the `ProjectReference` changes. This package itself has no NuGet dependencies, which is what lets `Lyo.Query.Evaluation` and other low-dependency packages instrument themselves without inheriting `Microsoft.Extensions.Configuration.Binder`.
+Registrations on `IServiceCollection` moved to [Lyo.Metrics.DependencyInjection](../Lyo.Metrics.DependencyInjection/README.md). They still sit in `namespace Lyo.Metrics`, so an
+existing `using Lyo.Metrics;` keeps working — only the `ProjectReference` changes. This package itself has no NuGet dependencies, which is what lets `Lyo.Query.Evaluation` and
+other low-dependency packages instrument themselves without inheriting `Microsoft.Extensions.Configuration.Binder`.
 
 ## MetricsService (in-memory)
 
@@ -454,7 +457,8 @@ var metrics = new MetricsService(new MetricsOptions { ... });
 
 ## OpenTelemetryMetrics
 
-OpenTelemetry is the export path for this `IMetrics` implementation. Reach for it when Prometheus scrapes the process, OTLP ships elsewhere, or several processes need a shared collector.
+OpenTelemetry is the export path for this `IMetrics` implementation. Reach for it when Prometheus scrapes the process, OTLP ships elsewhere, or several processes need a shared
+collector.
 
 ```csharp
 using Lyo.Metrics.OpenTelemetry;
@@ -501,7 +505,8 @@ IMetrics metrics = NullMetrics.Instance;
 ## Statistics on histograms (`MathExtensions`)
 
 Histogram samples become [`Lyo.Mathematics.Functions`](../../Mathematics/Lyo.Mathematics.Functions/README.md)
-(`StatisticsFunctions`) through `Lyo.Metrics.MathExtensions`. The same helpers attach to `HistogramData?` (cached snapshots) and to `MetricsService` (lookup by name + tags). Missing or empty histograms yield `null` / empty arrays rather than exceptions.
+(`StatisticsFunctions`) through `Lyo.Metrics.MathExtensions`. The same helpers attach to `HistogramData?` (cached snapshots) and to `MetricsService` (lookup by name + tags).
+Missing or empty histograms yield `null` / empty arrays rather than exceptions.
 
 ```csharp
 // On a HistogramData? (e.g. from snapshot.Histograms.Values or MetricsService.GetHistogram(...))

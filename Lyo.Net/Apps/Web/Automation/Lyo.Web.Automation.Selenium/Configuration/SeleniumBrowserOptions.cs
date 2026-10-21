@@ -1,5 +1,4 @@
 using Lyo.Exceptions.Models;
-using Lyo.Web.Automation.Models;
 using Lyo.Web.Automation.Selenium.Browser;
 using Lyo.Web.Automation.Selenium.Service;
 using Lyo.Web.Automation.Selenium.WebDriver;
@@ -46,8 +45,8 @@ public class SeleniumBrowserOptions
     public string? ArtifactsDirectory { get; set; }
 
     /// <summary>
-    /// Chrome WebDriver arguments. Do not add <c>disable-gpu</c> unless you need software GL: that flag forces SwiftShader, which bot-detection sites flag. Docker hosts
-    /// without a GPU still use SwiftShader even without the flag; do not spoof <c>WEBGL_UNMASKED_RENDERER</c>.
+    /// Chrome WebDriver arguments. Do not add <c>disable-gpu</c> unless you need software GL: that flag forces SwiftShader, which bot-detection sites flag. Docker hosts without
+    /// a GPU still use SwiftShader even without the flag; do not spoof <c>WEBGL_UNMASKED_RENDERER</c>.
     /// </summary>
     public List<string> WebDriverArguments { get; set; } = ["disable-infobars", "disable-extensions", "disable-dev-shm-usage", "no-sandbox"];
 
@@ -59,10 +58,8 @@ public class SeleniumBrowserOptions
 
     /// <summary>
     /// When true (default), enables Chrome/Edge performance logging via Chrome DevTools Protocol. This is required for network request monitoring in
-    /// <see cref="Lyo.Web.Automation.Abstractions.IWebAutomationNavigator.NavigateAsync(string, Func{string, bool}, CancellationToken)" /> unless a JS request-interception
-    /// startup script
-    /// populates <c>window.__lyoCapturedUrls</c>. Disable on sites that detect CDP as "DevTools open" and redirect or block scraping. When disabled, add a JS interception script
-    /// to
+    /// <see cref="Lyo.Web.Automation.Abstractions.IWebAutomationNavigator.NavigateAsync(string, Func{string, bool}, CancellationToken)" /> unless a JS request-interception startup script
+    /// populates <c>window.__lyoCapturedUrls</c>. Disable on sites that detect CDP as "DevTools open" and redirect or block scraping. When disabled, add a JS interception script to
     /// <see cref="StartupScripts" /> so network requests can still be observed without CDP.
     /// </summary>
     public bool EnablePerformanceLogging { get; set; } = true;
@@ -73,9 +70,7 @@ public class SeleniumBrowserOptions
     /// <summary>Browser window height passed as Chrome <c>--window-size</c> and <c>Manage().Window.Size</c>.</summary>
     public int BrowserWindowHeight { get; set; } = 1080;
 
-    /// <summary>
-    /// When true, <see cref="ApplySessionViewport" /> picks from <see cref="ViewportSizes" /> (or <see cref="DesktopDisplaySize.Common" />) once per browser start.
-    /// </summary>
+    /// <summary>When true, <see cref="ApplySessionViewport" /> picks from <see cref="ViewportSizes" /> (or <see cref="DesktopDisplaySize.Common" />) once per browser start.</summary>
     public bool RandomizeViewportOnSessionStart { get; set; }
 
     /// <summary>Pool used when <see cref="RandomizeViewportOnSessionStart" /> is true. Empty means <see cref="DesktopDisplaySize.Common" />.</summary>

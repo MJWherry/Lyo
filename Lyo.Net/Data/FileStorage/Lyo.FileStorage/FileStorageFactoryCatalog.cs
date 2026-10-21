@@ -3,15 +3,14 @@ namespace Lyo.FileStorage;
 /// <summary>Startup list of stores. Filled while the service collection is built. Read by each scoped <see cref="FileStorageFactory" />.</summary>
 public sealed class FileStorageFactoryCatalog
 {
-    private readonly List<FileStorageFactoryRegistration> _registrations = [];
     private readonly object _gate = new();
+    private readonly List<FileStorageFactoryRegistration> _registrations = [];
 
     /// <summary>Store served by the bare route. Null when <c>FileStorage:Default</c> was not set.</summary>
     public string? DefaultName { get; set; }
 
     /// <summary>Registered names, ordinal-sorted.</summary>
-    public IReadOnlyCollection<string> Names
-    {
+    public IReadOnlyCollection<string> Names {
         get {
             lock (_gate)
                 return _registrations.Select(static registration => registration.Name).OrderBy(static name => name, StringComparer.Ordinal).ToArray();

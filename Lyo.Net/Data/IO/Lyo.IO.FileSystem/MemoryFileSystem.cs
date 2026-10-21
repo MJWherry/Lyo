@@ -4,18 +4,16 @@ using Lyo.Exceptions;
 
 namespace Lyo.IO.FileSystem;
 
-/// <summary>
-/// In-memory <see cref="IFileSystem" />. Use it in Blazor WASM, unit tests, or anywhere without a writable disk. Data lasts for this instance's lifetime.
-/// </summary>
+/// <summary>In-memory <see cref="IFileSystem" />. Use it in Blazor WASM, unit tests, or anywhere without a writable disk. Data lasts for this instance's lifetime.</summary>
 /// <remarks>
 /// Storage is a hybrid: a flat map from full path to node gives O(1) point lookups, and each directory node holds the set of its immediate children so listing costs
-/// O(children) and a subtree walk costs O(subtree) rather than a scan of the whole store. A single <see cref="ReaderWriterLockSlim" /> guards both, which also makes the
-/// compound operations (create the parent chain, move a subtree, append to a file) atomic against each other.
+/// O(children) and a subtree walk costs O(subtree) rather than a scan of the whole store. A single <see cref="ReaderWriterLockSlim" /> guards both, which also makes the compound
+/// operations (create the parent chain, move a subtree, append to a file) atomic against each other.
 /// </remarks>
 public sealed class MemoryFileSystem : IFileSystem
 {
-    private readonly Dictionary<string, Node> _nodes = new(StringComparer.Ordinal);
     private readonly ReaderWriterLockSlim _lock = new();
+    private readonly Dictionary<string, Node> _nodes = new(StringComparer.Ordinal);
     private bool _disposed;
 
     /// <summary>Opens an in-memory store with a unique synthetic <see cref="RootPath" />.</summary>
@@ -27,7 +25,7 @@ public sealed class MemoryFileSystem : IFileSystem
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(rootPath);
         RootPath = FileSystemPath.NormalizeRoot(PathStyle.Posix, rootPath);
-        _nodes[RootPath] = new(isDirectory: true);
+        _nodes[RootPath] = new(true);
     }
 
     /// <inheritdoc />
@@ -38,8 +36,8 @@ public sealed class MemoryFileSystem : IFileSystem
 
     /// <inheritdoc />
     public FileSystemCapabilities Capabilities
-        => FileSystemCapabilities.Read | FileSystemCapabilities.Write | FileSystemCapabilities.CreateDirectory | FileSystemCapabilities.Delete
-           | FileSystemCapabilities.Move | FileSystemCapabilities.MoveDirectory | FileSystemCapabilities.Copy | FileSystemCapabilities.Append;
+        => FileSystemCapabilities.Read | FileSystemCapabilities.Write | FileSystemCapabilities.CreateDirectory | FileSystemCapabilities.Delete | FileSystemCapabilities.Move |
+            FileSystemCapabilities.MoveDirectory | FileSystemCapabilities.Copy | FileSystemCapabilities.Append;
 
     /// <inheritdoc />
     public IFileSystemWatch? Watch(string path, bool recursive = true) => null;
@@ -118,7 +116,7 @@ public sealed class MemoryFileSystem : IFileSystem
         var target = Jail(path);
         _lock.EnterReadLock();
         try {
-            return SnapshotLocked(target, recursive: false);
+            return SnapshotLocked(target, false);
         }
         finally {
             _lock.ExitReadLock();
@@ -281,7 +279,7 @@ public sealed class MemoryFileSystem : IFileSystem
             if (!_nodes.TryGetValue(target, out var node) || node.IsDirectory)
                 throw new FileNotFoundException($"File not found: {path}", path);
 
-            return new MemoryStream(node.Content ?? [], writable: false);
+            return new MemoryStream(node.Content ?? [], false);
         }
         finally {
             _lock.ExitReadLock();
@@ -309,7 +307,7 @@ public sealed class MemoryFileSystem : IFileSystem
         }
 
         // Commit by path, not by holding the node captured at open time: a concurrent delete-and-recreate must not receive this stream's bytes.
-        return new CommitOnCloseStream(bytes => Commit(target, bytes, append: false));
+        return new CommitOnCloseStream(bytes => Commit(target, bytes, false));
     }
 
     /// <inheritdoc />
@@ -334,7 +332,7 @@ public sealed class MemoryFileSystem : IFileSystem
         }
 
         // The existing content is read at commit time, under the write lock. Reading it at open time loses whatever another writer appended in between.
-        return new CommitOnCloseStream(bytes => Commit(target, bytes, append: true));
+        return new CommitOnCloseStream(bytes => Commit(target, bytes, true));
     }
 
     /// <inheritdoc />
@@ -442,7 +440,7 @@ public sealed class MemoryFileSystem : IFileSystem
     {
         EnsureParentDirectoryLocked(target);
         _nodes.TryGetValue(target, out var previous);
-        _nodes[target] = new(isDirectory: false, previous is { IsDirectory: false } ? previous.CreatedAt : null) { Content = content };
+        _nodes[target] = new(false, previous is { IsDirectory: false } ? previous.CreatedAt : null) { Content = content };
         LinkChildLocked(target);
     }
 
@@ -456,7 +454,7 @@ public sealed class MemoryFileSystem : IFileSystem
         }
 
         EnsureParentDirectoryLocked(target);
-        _nodes[target] = new(isDirectory: true);
+        _nodes[target] = new(true);
         LinkChildLocked(target);
     }
 
@@ -568,7 +566,7 @@ public sealed class MemoryFileSystem : IFileSystem
         return idx switch {
             < 0 => null,
             0 => "/",
-            _ => normalizedPath.Substring(0, idx)
+            var _ => normalizedPath.Substring(0, idx)
         };
     }
 

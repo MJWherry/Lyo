@@ -18,7 +18,7 @@ public static class FeatureFlagOptionExtensions
 
             var definition = new FeatureFlagDefinition { Name = name };
             options.Flags[name] = definition;
-            return new FeatureFlagBuilder(options, definition);
+            return new(options, definition);
         }
     }
 }
@@ -26,8 +26,8 @@ public static class FeatureFlagOptionExtensions
 /// <summary>Sets the mode, stickiness, and rules for one flag. The last mode call clears the others. The last stickiness call wins.</summary>
 public sealed class FeatureFlagBuilder
 {
-    private readonly FeatureFlagOptions _options;
     private readonly FeatureFlagDefinition _definition;
+    private readonly FeatureFlagOptions _options;
 
     internal FeatureFlagBuilder(FeatureFlagOptions options, FeatureFlagDefinition definition)
     {
@@ -77,7 +77,7 @@ public sealed class FeatureFlagBuilder
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(userId);
         EnsureRules();
-        _definition.Rules.Add(new FeatureFlagRule { UserId = userId });
+        _definition.Rules.Add(new() { UserId = userId });
         return this;
     }
 
@@ -86,7 +86,7 @@ public sealed class FeatureFlagBuilder
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(tenantId);
         EnsureRules();
-        _definition.Rules.Add(new FeatureFlagRule { TenantId = tenantId });
+        _definition.Rules.Add(new() { TenantId = tenantId });
         return this;
     }
 
@@ -96,7 +96,7 @@ public sealed class FeatureFlagBuilder
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(type);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(value);
         EnsureRules();
-        _definition.Rules.Add(new FeatureFlagRule { Claims = [new FeatureFlagClaim { Type = type, Value = value }] });
+        _definition.Rules.Add(new() { Claims = [new() { Type = type, Value = value }] });
         return this;
     }
 
@@ -106,7 +106,7 @@ public sealed class FeatureFlagBuilder
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(value);
         EnsureRules();
-        _definition.Rules.Add(new FeatureFlagRule { Attributes = [new FeatureFlagAttribute { Key = key, Value = value }] });
+        _definition.Rules.Add(new() { Attributes = [new() { Key = key, Value = value }] });
         return this;
     }
 
@@ -116,7 +116,7 @@ public sealed class FeatureFlagBuilder
         ArgumentHelpers.ThrowIfNull(configure);
         EnsureRules();
         var rule = new FeatureFlagRule();
-        configure(new FeatureFlagRuleBuilder(rule));
+        configure(new(rule));
         _definition.Rules.Add(rule);
         return this;
     }
@@ -165,7 +165,7 @@ public sealed class FeatureFlagRuleBuilder
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(type);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(value);
-        _rule.Claims.Add(new FeatureFlagClaim { Type = type, Value = value });
+        _rule.Claims.Add(new() { Type = type, Value = value });
         return this;
     }
 
@@ -174,7 +174,7 @@ public sealed class FeatureFlagRuleBuilder
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(value);
-        _rule.Attributes.Add(new FeatureFlagAttribute { Key = key, Value = value });
+        _rule.Attributes.Add(new() { Key = key, Value = value });
         return this;
     }
 }

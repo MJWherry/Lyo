@@ -7,9 +7,7 @@ internal sealed partial class QRIsoEncoder
 {
     /// <summary>
     /// Galois field of 256 elements (GF(256)) for finite-field arithmetic, typically Reed-Solomon error correction.
-    /// <para>
-    /// Maps exponential and integer forms of field elements using a primitive element (α). Built around a generator polynomial for encode and decode work.
-    /// </para>
+    /// <para>Maps exponential and integer forms of field elements using a primitive element (α). Built around a generator polynomial for encode and decode work.</para>
     /// </summary>
     internal static class GaloisField
     {
@@ -81,23 +79,17 @@ internal sealed partial class QRIsoEncoder
                 244, 234, 168, 80, 88, 175
             ];
 
-        /// <summary>
-        /// Integer value in the Galois field for a given exponent. Used in Reed-Solomon and other GF error-correction math.
-        /// </summary>
+        /// <summary>Integer value in the Galois field for a given exponent. Used in Reed-Solomon and other GF error-correction math.</summary>
         public static int GetIntValFromAlphaExp(int exp) => GaloisFieldByExponentAlpha[exp];
 
-        /// <summary>
-        /// Exponent in the Galois field for a given integer value. Raises if the integer is zero, because zero has no logarithm in the field.
-        /// </summary>
+        /// <summary>Exponent in the Galois field for a given integer value. Raises if the integer is zero, because zero has no logarithm in the field.</summary>
         public static int GetAlphaExpFromIntVal(int intVal)
         {
             ArgumentHelpers.ThrowIfZero(intVal);
             return GaloisFieldByIntegerValue[intVal];
         }
 
-        /// <summary>
-        /// Wraps a Galois field exponent so it stays inside the field size. Needed after multiplications that can push exponents past the field maximum.
-        /// </summary>
+        /// <summary>Wraps a Galois field exponent so it stays inside the field size. Needed after multiplications that can push exponents past the field maximum.</summary>
         public static int ShrinkAlphaExp(int alphaExp)
         {
             Debug.Assert(alphaExp >= 0);

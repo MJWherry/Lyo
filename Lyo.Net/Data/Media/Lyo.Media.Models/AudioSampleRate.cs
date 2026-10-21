@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Globalization;
 using Lyo.Exceptions;
 
 namespace Lyo.Media.Models;
@@ -44,7 +45,7 @@ public sealed record AudioSampleRate
         ArgumentHelpers.ThrowIfLessThan(hertz, 1);
         Name = name;
         Hertz = hertz;
-        Id = hertz.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        Id = hertz.ToString(CultureInfo.InvariantCulture);
         NamedCatalog.Register(ByName, ById, this, Name, Id);
     }
 
@@ -67,8 +68,8 @@ public sealed record AudioSampleRate
     {
         _ = BuiltIns;
         ArgumentHelpers.ThrowIfLessThan(hertz, 1);
-        var key = hertz.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        return NamedCatalog.GetOrCustom(ById, key, _ => new AudioSampleRate(key, hertz));
+        var key = hertz.ToString(CultureInfo.InvariantCulture);
+        return NamedCatalog.GetOrCustom(ById, key, _ => new(key, hertz));
     }
 
     /// <inheritdoc />

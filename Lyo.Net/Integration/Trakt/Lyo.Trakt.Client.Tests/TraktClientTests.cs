@@ -16,8 +16,7 @@ public sealed class TraktClientTests
     }
 
     [Fact]
-    public void Constructor_MissingClientId_Throws()
-        => Assert.ThrowsAny<ArgumentException>(() => new TraktClient(new TraktClientOptions()));
+    public void Constructor_MissingClientId_Throws() => Assert.ThrowsAny<ArgumentException>(() => new TraktClient(new()));
 
     [Fact]
     public async Task SearchMoviesAsync_Query_GetsSearchMovieWithClientHeaders()
@@ -25,7 +24,6 @@ public sealed class TraktClientTests
         var handler = new RecordingHandler { Respond = _ => Json("[]") };
         var client = Client(handler);
         await client.Search.SearchMoviesAsync("weapons", TestCt);
-
         var call = handler.Calls[0];
         Assert.Equal(HttpMethod.Get, call.Method);
         Assert.Equal("api.trakt.tv", call.Uri.Host);
@@ -41,7 +39,6 @@ public sealed class TraktClientTests
         var handler = new RecordingHandler { Respond = _ => Json("[]") };
         var client = Client(handler);
         await client.Search.LookupAsync("imdb", "tt0133093", TestCt);
-
         var call = handler.Calls[0];
         Assert.Equal(HttpMethod.Get, call.Method);
         Assert.EndsWith("/search/imdb/tt0133093", call.Uri.AbsolutePath);
@@ -53,7 +50,6 @@ public sealed class TraktClientTests
         var handler = new RecordingHandler { Respond = _ => Json("""{"title":"The Matrix","ids":{"trakt":1,"imdb":"tt0133093"}}""") };
         var client = Client(handler);
         var movie = await client.Movies.GetAsync("tt0133093", TestCt);
-
         Assert.EndsWith("/movies/tt0133093", handler.Calls[0].Uri.AbsolutePath);
         Assert.Equal("The Matrix", movie!.Title);
         Assert.Equal("tt0133093", movie.Ids!.Imdb);
@@ -64,15 +60,12 @@ public sealed class TraktClientTests
     {
         var handler = new RecordingHandler {
             Respond = _ => Json(
-                """[{"watchers":12,"movie":{"title":"The Matrix"}}]""",
-                ("X-Pagination-Page", "2"),
-                ("X-Pagination-Limit", "10"),
-                ("X-Pagination-Page-Count", "4"),
+                """[{"watchers":12,"movie":{"title":"The Matrix"}}]""", ("X-Pagination-Page", "2"), ("X-Pagination-Limit", "10"), ("X-Pagination-Page-Count", "4"),
                 ("X-Pagination-Item-Count", "40"))
         };
+
         var client = Client(handler);
         var page = await client.Movies.TrendingAsync(TestCt);
-
         Assert.EndsWith("/movies/trending", handler.Calls[0].Uri.AbsolutePath);
         Assert.Equal(12, page.Items[0].Watchers);
         Assert.Equal("The Matrix", page.Items[0].Movie!.Title);
@@ -88,7 +81,6 @@ public sealed class TraktClientTests
         var handler = new RecordingHandler { Respond = _ => Json("""[{"season":1,"number":1,"title":"Pilot"}]""") };
         var client = Client(handler);
         var episodes = await client.Shows.GetSeasonAsync("breaking-bad", 1, TestCt);
-
         Assert.EndsWith("/shows/breaking-bad/seasons/1", handler.Calls[0].Uri.AbsolutePath);
         Assert.Equal(1, episodes[0].Season);
         Assert.Equal(1, episodes[0].Number);
@@ -98,12 +90,9 @@ public sealed class TraktClientTests
     [Fact]
     public async Task ExchangeCodeAsync_PostsAuthHostAndReadsRefreshToken()
     {
-        var handler = new RecordingHandler {
-            Respond = _ => Json("""{"access_token":"access-1","refresh_token":"refresh-1","expires_in":604800,"created_at":1700000000}""")
-        };
-        var client = Client(handler, secret: "secret", redirectUri: "https://app.example/callback");
+        var handler = new RecordingHandler { Respond = _ => Json("""{"access_token":"access-1","refresh_token":"refresh-1","expires_in":604800,"created_at":1700000000}""") };
+        var client = Client(handler, "secret", "https://app.example/callback");
         var token = await client.Auth.ExchangeCodeAsync("auth-code", TestCt);
-
         var call = handler.Calls[0];
         Assert.Equal(HttpMethod.Post, call.Method);
         Assert.Equal("auth.trakt.tv", call.Uri.Host);
@@ -118,28 +107,24 @@ public sealed class TraktClientTests
     public async Task PollDeviceTokenAsync_PendingAndSlowDown_ReturnsStatusWithoutThrowing()
     {
         var statuses = new Queue<HttpStatusCode>([HttpStatusCode.BadRequest, (HttpStatusCode)429]);
-        var handler = new RecordingHandler {
-            Respond = _ => new HttpResponseMessage(statuses.Dequeue()) { Content = new StringContent("{}", Encoding.UTF8, "application/json") }
-        };
+        var handler = new RecordingHandler { Respond = _ => new(statuses.Dequeue()) { Content = new StringContent("{}", Encoding.UTF8, "application/json") } };
         var services = new ServiceCollection();
-        services.AddTraktClient(Options(secret: "secret")).ConfigurePrimaryHttpMessageHandler(() => handler);
+        services.AddTraktClient(Options("secret")).ConfigurePrimaryHttpMessageHandler(() => handler);
         using var provider = services.BuildServiceProvider();
         var client = provider.GetRequiredService<TraktClient>();
-
         var pending = await client.Auth.PollDeviceTokenAsync("device-code", TestCt);
         var slow = await client.Auth.PollDeviceTokenAsync("device-code", TestCt);
-
         Assert.Equal(TraktDevicePollStatus.Pending, pending.Status);
         Assert.Equal(TraktDevicePollStatus.SlowDown, slow.Status);
         Assert.Equal(2, handler.Calls.Count);
-        Assert.All(handler.Calls, call => {
-            Assert.Equal("auth.trakt.tv", call.Uri.Host);
-            Assert.EndsWith("/oauth/device/token", call.Uri.AbsolutePath);
-        });
+        Assert.All(
+            handler.Calls, call => {
+                Assert.Equal("auth.trakt.tv", call.Uri.Host);
+                Assert.EndsWith("/oauth/device/token", call.Uri.AbsolutePath);
+            });
     }
 
-    private static TraktClient Client(HttpMessageHandler handler, string? secret = null, string? redirectUri = null)
-        => new(Options(secret, redirectUri), httpClient: new HttpClient(handler));
+    private static TraktClient Client(HttpMessageHandler handler, string? secret = null, string? redirectUri = null) => new(Options(secret, redirectUri), httpClient: new(handler));
 
     private static TraktClientOptions Options(string? secret = null, string? redirectUri = null)
         => new() {

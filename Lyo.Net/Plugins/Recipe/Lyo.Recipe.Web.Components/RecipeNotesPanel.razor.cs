@@ -5,6 +5,10 @@ namespace Lyo.Recipe.Web.Components;
 /// <summary>Nested notes for one recipe subject.</summary>
 public partial class RecipeNotesPanel
 {
+    private string _draft = "";
+
+    private List<NoteRecord> _notes = [];
+
     /// <summary>Typed client.</summary>
     [Parameter]
     [EditorRequired]
@@ -18,9 +22,6 @@ public partial class RecipeNotesPanel
     /// <summary>Subject id.</summary>
     [Parameter]
     public Guid EntityId { get; set; }
-
-    private List<NoteRecord> _notes = [];
-    private string _draft = "";
 
     protected override Task OnParametersSetAsync() => Reload();
 

@@ -32,7 +32,9 @@ public static class Extensions
         }
 
         /// <summary>Adds <see cref="IAutomationPlanClient" /> on the <typeparamref name="TApiClient" /> already in the container, binding route options from configuration.</summary>
-        public IServiceCollection AddAutomationPlanClientFromConfiguration<TApiClient>(IConfiguration configuration, string configSectionName = AutomationPlanClientOptions.SectionName)
+        public IServiceCollection AddAutomationPlanClientFromConfiguration<TApiClient>(
+            IConfiguration configuration,
+            string configSectionName = AutomationPlanClientOptions.SectionName)
             where TApiClient : class, IApiClient
         {
             ArgumentHelpers.ThrowIfNull(services);

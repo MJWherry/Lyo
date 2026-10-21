@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reflection;
+using Lyo.Exceptions;
 using Lyo.Images.Ocr.Models;
 using Lyo.Metrics;
 using Lyo.Result;
@@ -8,7 +9,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Tesseract;
 using static Lyo.Images.Ocr.OcrErrorCodes;
-using Lyo.Exceptions;
 
 namespace Lyo.Images.Ocr.Tesseract;
 

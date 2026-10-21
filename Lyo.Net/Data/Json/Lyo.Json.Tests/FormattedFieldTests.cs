@@ -5,15 +5,6 @@ namespace Lyo.Json.Tests;
 
 public class FormattedFieldTests
 {
-    private sealed class Person
-    {
-        public string? GivenName { get; set; }
-
-        public int Age { get; set; }
-
-        public string? Note { get; set; }
-    }
-
     [Fact]
     public void ExportFormattedToJsonString_AlphabeticalService_KeepsCallerOrderAndFormattedText()
     {
@@ -35,9 +26,9 @@ public class FormattedFieldTests
     public void ExportColumnsToJsonString_AlphabeticalService_KeepsHeaderOrderAndNumbers()
     {
         var columns = new Dictionary<string, PropertyInfo> {
-            ["note"] = typeof(Person).GetProperty(nameof(Person.Note))!,
-            ["age"] = typeof(Person).GetProperty(nameof(Person.Age))!
+            ["note"] = typeof(Person).GetProperty(nameof(Person.Note))!, ["age"] = typeof(Person).GetProperty(nameof(Person.Age))!
         };
+
         var json = new JsonService(o => o.Order = MemberOrder.Alphabetical).ExportColumnsToJsonString(Sample(), columns);
         Assert.True(json.IndexOf("\"note\"", StringComparison.Ordinal) < json.IndexOf("\"age\"", StringComparison.Ordinal));
         Assert.Contains("\"age\":36", json, StringComparison.Ordinal);
@@ -53,9 +44,14 @@ public class FormattedFieldTests
 
     private static Person[] Sample() => [new() { GivenName = "Ada", Age = 36, Note = "hi" }];
 
-    private static Dictionary<string, Func<Person, string>> Fields()
-        => new() {
-            ["note"] = person => person.Note ?? "",
-            ["fullName"] = person => person.GivenName + " Lovelace"
-        };
+    private static Dictionary<string, Func<Person, string>> Fields() => new() { ["note"] = person => person.Note ?? "", ["fullName"] = person => person.GivenName + " Lovelace" };
+
+    private sealed class Person
+    {
+        public string? GivenName { get; set; }
+
+        public int Age { get; set; }
+
+        public string? Note { get; set; }
+    }
 }

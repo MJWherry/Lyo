@@ -1,15 +1,14 @@
-using Lyo.Exceptions.Models;
+using Lyo.Common.Core.Identifiers;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Models;
 using Lyo.FileStorage.Policy;
 using Lyo.FileStorage.Tests.Support;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.FileStorage.Tests;
 
 /// <summary>
-/// Coverage for the streaming save/read API, default-mode delete tombstones, duplicate strategies, availability policy plumbing, and cancellation propagation that used
-/// to be exercised only through the byte[] save path.
+/// Coverage for the streaming save/read API, default-mode delete tombstones, duplicate strategies, availability policy plumbing, and cancellation propagation that used to be
+/// exercised only through the byte[] save path.
 /// </summary>
 public sealed class LocalFileStorageStreamHealthPolicyTests
 {
@@ -98,7 +97,8 @@ public sealed class LocalFileStorageStreamHealthPolicyTests
 
         var result = await scope.Storage.CheckHealthAsync(TestCt);
         Assert.True(result.IsHealthy, result.Message);
-        Assert.False(Directory.Exists(Path.Combine(scope.Options.RootDirectoryPath, ".lyo-health")) &&
+        Assert.False(
+            Directory.Exists(Path.Combine(scope.Options.RootDirectoryPath, ".lyo-health")) &&
             Directory.EnumerateFiles(Path.Combine(scope.Options.RootDirectoryPath, ".lyo-health")).Any());
     }
 

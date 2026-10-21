@@ -1,6 +1,7 @@
 # Lyo.Google.Youtube.Client
 
-Calls the YouTube Data API v3 and returns models from `Lyo.Google.Youtube.Models`. Does not reference `Lyo.Video`. The host receives models and passes a `YoutubeVideoLink` into the video store. There is no YouTube schema and no sync worker.
+Calls the YouTube Data API v3 and returns models from `Lyo.Google.Youtube.Models`. Does not reference `Lyo.Video`. The host receives models and passes a `YoutubeVideoLink` into the
+video store. There is no YouTube schema and no sync worker.
 
 ## Features
 

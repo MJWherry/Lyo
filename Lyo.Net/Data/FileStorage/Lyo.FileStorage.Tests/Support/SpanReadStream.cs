@@ -1,8 +1,8 @@
 namespace Lyo.FileStorage.Tests.Support;
 
 /// <summary>
-/// Read-only pass-through that routes async reads at the inner stream's span overload. Sources such as <c>DeterministicPayloadStream</c> only avoid per-read array
-/// allocation on that overload, so allocation measurements otherwise charge the generator's buffers to the code under test.
+/// Read-only pass-through that routes async reads at the inner stream's span overload. Sources such as <c>DeterministicPayloadStream</c> only avoid per-read array allocation
+/// on that overload, so allocation measurements otherwise charge the generator's buffers to the code under test.
 /// </summary>
 public sealed class SpanReadStream(Stream inner) : Stream
 {
@@ -14,7 +14,10 @@ public sealed class SpanReadStream(Stream inner) : Stream
 
     public override long Length => throw new NotSupportedException();
 
-    public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+    public override long Position {
+        get => throw new NotSupportedException();
+        set => throw new NotSupportedException();
+    }
 
     public override int Read(byte[] buffer, int offset, int count) => inner.Read(buffer.AsSpan(offset, count));
 

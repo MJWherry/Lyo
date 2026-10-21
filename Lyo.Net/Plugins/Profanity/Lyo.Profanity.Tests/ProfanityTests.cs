@@ -1,6 +1,6 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Profanity.Models;
 using Microsoft.Extensions.DependencyInjection;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Profanity.Tests;
 

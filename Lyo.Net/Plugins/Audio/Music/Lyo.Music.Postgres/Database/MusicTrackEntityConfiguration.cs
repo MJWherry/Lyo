@@ -21,7 +21,7 @@ public sealed class MusicTrackEntityConfiguration : IEntityTypeConfiguration<Mus
         builder.Property(e => e.AudioFileRef).HasMaxLength(512).HasColumnName("audio_file_ref");
         builder.Property(e => e.RecordingId).HasColumnName("recording_id").HasColumnType("uuid");
         builder.Property(e => e.Lyrics).HasColumnType("text").HasColumnName("lyrics");
-        builder.Property(e => e.SearchVector).HasColumnName("search_vector").HasColumnType("tsvector").HasComputedColumnSql(SearchVectorSql, stored: true);
+        builder.Property(e => e.SearchVector).HasColumnName("search_vector").HasColumnType("tsvector").HasComputedColumnSql(SearchVectorSql, true);
         builder.Property(e => e.CreatedTimestamp).IsRequired().HasColumnType("timestamp with time zone").HasColumnName("created_timestamp");
         builder.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
         builder.HasIndex(e => new { e.ReleaseId, e.DiscNumber, e.TrackNumber }).IsUnique().HasDatabaseName("ix_music_track_position");

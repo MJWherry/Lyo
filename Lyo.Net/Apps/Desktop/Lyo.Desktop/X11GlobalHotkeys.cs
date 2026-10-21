@@ -14,31 +14,23 @@ internal sealed partial class X11GlobalHotkeys : IGlobalHotkeys
     private static IntPtr _previousHandler;
     private static readonly XErrorHandler ErrorCallback = OnError;
     private static readonly int ErrorCodeOffset = (int)Marshal.OffsetOf<XErrorEventNative>(nameof(XErrorEventNative.ErrorCode));
-    private readonly Lock _gate = new();
+    private readonly List<Grabbed> _active = [];
     private readonly ManualResetEvent _applyDone = new(true);
+    private readonly Lock _gate = new();
     private readonly AutoResetEvent _pulse = new(false);
     private readonly Thread _thread;
-    private readonly List<Grabbed> _active = [];
-    private List<HotkeyBinding> _requested = [];
-    private IntPtr _display;
-    private IntPtr _root;
     private bool _apply;
-    private bool _running = true;
-    private bool _openFailed;
     private string? _applyError;
+    private IntPtr _display;
+    private bool _openFailed;
+    private List<HotkeyBinding> _requested = [];
+    private IntPtr _root;
+    private bool _running = true;
 
     public X11GlobalHotkeys()
     {
-        _thread = new Thread(Loop) { IsBackground = true, Name = "lyo-hotkeys" };
+        _thread = new(Loop) { IsBackground = true, Name = "lyo-hotkeys" };
         _thread.Start();
-    }
-
-    /// <summary>Call before any other X11 use, including Avalonia startup. Xlib is not thread-safe until this runs.</summary>
-    internal static void InitializeThreading()
-    {
-        if (!OperatingSystem.IsLinux())
-            return;
-        XInitThreads();
     }
 
     public void Bind(IReadOnlyList<HotkeyBinding> bindings)
@@ -47,6 +39,7 @@ internal sealed partial class X11GlobalHotkeys : IGlobalHotkeys
         lock (_gate) {
             if (_openFailed)
                 throw new InvalidOperationException("Could not open the X11 display for hotkeys.");
+
             _requested = [.. bindings];
             _apply = true;
             _applyDone.Reset();
@@ -63,6 +56,15 @@ internal sealed partial class X11GlobalHotkeys : IGlobalHotkeys
         _running = false;
         _pulse.Set();
         _thread.Join(TimeSpan.FromSeconds(2));
+    }
+
+    /// <summary>Call before any other X11 use, including Avalonia startup. Xlib is not thread-safe until this runs.</summary>
+    internal static void InitializeThreading()
+    {
+        if (!OperatingSystem.IsLinux())
+            return;
+
+        XInitThreads();
     }
 
     private void Loop()
@@ -85,6 +87,7 @@ internal sealed partial class X11GlobalHotkeys : IGlobalHotkeys
         while (_running) {
             if (_apply)
                 ApplyOnThread();
+
             Drain();
             _pulse.WaitOne(30);
         }
@@ -140,6 +143,7 @@ internal sealed partial class X11GlobalHotkeys : IGlobalHotkeys
         _error = 0;
         foreach (var grabbed in previous)
             GrabCode(grabbed.Code, grabbed.Mods);
+
         XSync(_display, 0);
         _active.Clear();
         _active.AddRange(previous);
@@ -162,9 +166,8 @@ internal sealed partial class X11GlobalHotkeys : IGlobalHotkeys
         }
     }
 
-    private static string Describe(int code, int request) => code == 10
-        ? $"That shortcut is already in use (X11 error {code}, request {request})."
-        : $"Could not register the shortcut (X11 error {code}, request {request}).";
+    private static string Describe(int code, int request)
+        => code == 10 ? $"That shortcut is already in use (X11 error {code}, request {request})." : $"Could not register the shortcut (X11 error {code}, request {request}).";
 
     private void Drain()
     {
@@ -175,10 +178,12 @@ internal sealed partial class X11GlobalHotkeys : IGlobalHotkeys
                 var key = Marshal.PtrToStructure<XKeyEventNative>(ev);
                 if (key.Type != KeyPress)
                     continue;
+
                 var code = (int)key.KeyCode;
                 foreach (var grabbed in _active) {
                     if (grabbed.Code != code || !X11ModifierMatch.Same(key.State, grabbed.Mods))
                         continue;
+
                     try {
                         grabbed.Handler();
                     }
@@ -213,6 +218,7 @@ internal sealed partial class X11GlobalHotkeys : IGlobalHotkeys
     {
         if (_display == IntPtr.Zero)
             return;
+
         XUngrabKey(_display, 0, AnyModifier, _root);
     }
 
@@ -221,9 +227,11 @@ internal sealed partial class X11GlobalHotkeys : IGlobalHotkeys
         var sym = XStringToKeysym(key);
         if (sym == 0)
             throw new InvalidOperationException($"Unknown key '{key}'.");
+
         var code = XKeysymToKeycode(_display, sym);
         if (code == 0)
             throw new InvalidOperationException($"Unknown key '{key}'.");
+
         return code;
     }
 
@@ -232,12 +240,16 @@ internal sealed partial class X11GlobalHotkeys : IGlobalHotkeys
         uint mods = 0;
         if (chord.Modifiers.HasFlag(HotkeyModifiers.Shift))
             mods |= X11ModifierMatch.ShiftMask;
+
         if (chord.Modifiers.HasFlag(HotkeyModifiers.Ctrl))
             mods |= X11ModifierMatch.ControlMask;
+
         if (chord.Modifiers.HasFlag(HotkeyModifiers.Alt))
             mods |= X11ModifierMatch.Mod1Mask;
+
         if (chord.Modifiers.HasFlag(HotkeyModifiers.Meta))
             mods |= X11ModifierMatch.Mod4Mask;
+
         return mods;
     }
 
@@ -253,51 +265,10 @@ internal sealed partial class X11GlobalHotkeys : IGlobalHotkeys
 
         if (_previousHandler == IntPtr.Zero)
             return 0;
+
         var previous = Marshal.GetDelegateForFunctionPointer<XErrorHandler>(_previousHandler);
         return previous(display, ev);
     }
-
-    private sealed class Grabbed(int code, uint mods, Action handler)
-    {
-        public int Code { get; } = code;
-        public uint Mods { get; } = mods;
-        public Action Handler { get; } = handler;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct XErrorEventNative
-    {
-        public int Type;
-        public IntPtr Display;
-        public IntPtr ResourceId;
-        public IntPtr Serial;
-        public byte ErrorCode;
-        public byte RequestCode;
-        public byte MinorCode;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct XKeyEventNative
-    {
-        public int Type;
-        public IntPtr Serial;
-        public int SendEvent;
-        public IntPtr Display;
-        public IntPtr Window;
-        public IntPtr Root;
-        public IntPtr Subwindow;
-        public IntPtr Time;
-        public int X;
-        public int Y;
-        public int XRoot;
-        public int YRoot;
-        public uint State;
-        public uint KeyCode;
-        public int SameScreen;
-    }
-
-    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    private delegate int XErrorHandler(IntPtr display, IntPtr ev);
 
     [LibraryImport("libX11.so.6")]
     private static partial int XInitThreads();
@@ -337,4 +308,48 @@ internal sealed partial class X11GlobalHotkeys : IGlobalHotkeys
 
     [LibraryImport("libX11.so.6")]
     private static partial IntPtr XSetErrorHandler(IntPtr handler);
+
+    private sealed class Grabbed(int code, uint mods, Action handler)
+    {
+        public int Code { get; } = code;
+
+        public uint Mods { get; } = mods;
+
+        public Action Handler { get; } = handler;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct XErrorEventNative
+    {
+        public int Type;
+        public IntPtr Display;
+        public IntPtr ResourceId;
+        public IntPtr Serial;
+        public byte ErrorCode;
+        public byte RequestCode;
+        public byte MinorCode;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct XKeyEventNative
+    {
+        public int Type;
+        public IntPtr Serial;
+        public int SendEvent;
+        public IntPtr Display;
+        public IntPtr Window;
+        public IntPtr Root;
+        public IntPtr Subwindow;
+        public IntPtr Time;
+        public int X;
+        public int Y;
+        public int XRoot;
+        public int YRoot;
+        public uint State;
+        public uint KeyCode;
+        public int SameScreen;
+    }
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate int XErrorHandler(IntPtr display, IntPtr ev);
 }

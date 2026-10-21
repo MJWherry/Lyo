@@ -7,8 +7,13 @@ namespace Lyo.Web.Components;
 
 public partial class JsonViewDialog<T>
 {
+    private string? jsonString;
+    private string? parseError;
+
+    private JsonNode? rootNode;
+
     [CascadingParameter]
-    IMudDialogInstance MudDialog { get; set; } = default!;
+    private IMudDialogInstance MudDialog { get; set; } = default!;
 
     /// <summary>Optional HTML <c>id</c> override for the root node.</summary>
     [Parameter]
@@ -29,10 +34,6 @@ public partial class JsonViewDialog<T>
     /// <summary>Optional status chips (elapsed time, HTTP status, row counts) displayed after the title.</summary>
     [Parameter]
     public IReadOnlyList<JsonViewChip>? Chips { get; set; }
-
-    private JsonNode? rootNode;
-    private string? parseError;
-    private string? jsonString;
 
     private string ResolvedTitle => !string.IsNullOrWhiteSpace(Title) ? Title : MudDialog.Title ?? "JSON Viewer";
 

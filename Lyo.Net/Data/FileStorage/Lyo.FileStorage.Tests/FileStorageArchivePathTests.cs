@@ -1,4 +1,3 @@
-using Lyo.FileStorage;
 using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.FileStorage.Tests;
@@ -6,22 +5,17 @@ namespace Lyo.FileStorage.Tests;
 public sealed class FileStorageArchivePathTests
 {
     [Fact]
-    public void SanitizeZipFileName_AddsZipExtension()
-        => Assert.Equal("chapter.zip", FileStorageArchivePath.SanitizeZipFileName("chapter"));
+    public void SanitizeZipFileName_AddsZipExtension() => Assert.Equal("chapter.zip", FileStorageArchivePath.SanitizeZipFileName("chapter"));
 
     [Fact]
-    public void SanitizeZipFileName_StripsPathSegments()
-        => Assert.Equal("Q1-reports.zip", FileStorageArchivePath.SanitizeZipFileName("exports/Q1-reports.zip"));
+    public void SanitizeZipFileName_StripsPathSegments() => Assert.Equal("Q1-reports.zip", FileStorageArchivePath.SanitizeZipFileName("exports/Q1-reports.zip"));
 
     [Fact]
-    public void NormalizeZipPath_RejectsParentSegments()
-        => Assert.Throws<ArgumentException>(() => FileStorageArchivePath.NormalizeZipPath("../x", LyoGuid.CreateV7()));
+    public void NormalizeZipPath_RejectsParentSegments() => Assert.Throws<ArgumentException>(() => FileStorageArchivePath.NormalizeZipPath("../x", LyoGuid.CreateV7()));
 
     [Fact]
-    public void NormalizeZipPath_UsesForwardSlashes()
-        => Assert.Equal("Vol. 01/Ch. 001/001", FileStorageArchivePath.NormalizeZipPath(@"Vol. 01\Ch. 001\001", LyoGuid.CreateV7()));
+    public void NormalizeZipPath_UsesForwardSlashes() => Assert.Equal("Vol. 01/Ch. 001/001", FileStorageArchivePath.NormalizeZipPath(@"Vol. 01\Ch. 001\001", LyoGuid.CreateV7()));
 
     [Fact]
-    public void SanitizePathSegment_ReplacesInvalidChars()
-        => Assert.Equal("a_b", FileStorageArchivePath.SanitizePathSegment("a/b"));
+    public void SanitizePathSegment_ReplacesInvalidChars() => Assert.Equal("a_b", FileStorageArchivePath.SanitizePathSegment("a/b"));
 }

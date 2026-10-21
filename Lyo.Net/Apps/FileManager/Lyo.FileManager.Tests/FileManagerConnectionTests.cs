@@ -15,16 +15,13 @@ public class FileManagerConnectionTests
         var second = session.AddRemote("two", "http://two");
         one.Folders[""] = new([RecordingFileManagerApi.Stored("from-one", null, LyoGuid.CreateV7())], false);
         two.Folders[""] = new([RecordingFileManagerApi.Stored("from-two", null, LyoGuid.CreateV7())], false);
-
         session.Select(first.Id);
         await session.ConnectAsync(TestCt);
         Assert.Equal("from-one", session.Entries[0].Name);
-
         session.Select(second.Id);
         await session.ConnectAsync(TestCt);
         Assert.Equal("from-two", session.Entries[0].Name);
         Assert.Equal(2, session.Connections.Count);
-
         session.Select(first.Id);
         Assert.Equal("from-one", session.Entries[0].Name);
         Assert.Equal(first.Id, session.Active!.Id);
@@ -48,10 +45,8 @@ public class FileManagerConnectionTests
             var other = session.Entries.Single(entry => entry.Name == Path.GetFileName(otherPath));
             var destination = session.AddLocal("dest", destRoot, FileManagerMetadataKind.Sqlite);
             await session.ConnectAsync(TestCt);
-
             session.Select(source.Id);
             var result = await session.TransferAsync(destination.Id, [keep], FileStorageTransferDisposition.Copy, ct: TestCt);
-
             Assert.Equal(1, result.FilesCopied);
             Assert.Equal(0, result.FilesRemoved);
             Assert.Equal(0, result.FilesFailed);
@@ -91,10 +86,8 @@ public class FileManagerConnectionTests
             var file = session.Entries.Single(entry => entry.FileId != null);
             var destination = session.AddLocal("dest", destRoot, FileManagerMetadataKind.Sqlite);
             await session.ConnectAsync(TestCt);
-
             session.Select(source.Id);
             await session.TransferAsync(destination.Id, [file], FileStorageTransferDisposition.Copy, destinationPrefix: "inbox", ct: TestCt);
-
             session.Select(destination.Id);
             await session.OpenAsync("inbox", TestCt);
             var copied = session.Entries.Single(entry => entry.FileId == file.FileId);
@@ -125,10 +118,8 @@ public class FileManagerConnectionTests
             var file = session.Entries.Single(entry => entry.FileId != null);
             var destination = session.AddLocal("dest", destRoot, FileManagerMetadataKind.Sqlite);
             await session.ConnectAsync(TestCt);
-
             session.Select(source.Id);
             var result = await session.TransferAsync(destination.Id, [file], FileStorageTransferDisposition.Move, ct: TestCt);
-
             Assert.Equal(1, result.FilesCopied);
             Assert.Equal(1, result.FilesRemoved);
             session.Select(source.Id);
@@ -154,20 +145,15 @@ public class FileManagerConnectionTests
         var sourceRoot = TempDir();
         var payload = TempFile("stay");
         try {
-            var session = new FileManagerSession(server => server.Kind == FileManagerServerKind.Local
-                ? FileStorageLocalHost.Open(server)
-                : new RecordingFileManagerApi());
+            var session = new FileManagerSession(server => server.Kind == FileManagerServerKind.Local ? FileStorageLocalHost.Open(server) : new RecordingFileManagerApi());
             var source = session.AddLocal("source", sourceRoot, FileManagerMetadataKind.Sqlite);
             await session.ConnectAsync(TestCt);
             await session.UploadAsync(payload, new(), TestCt);
             var file = session.Entries.Single(entry => entry.FileId != null);
             var remote = session.AddRemote("remote", "http://localhost");
             await session.ConnectAsync(TestCt);
-
             session.Select(source.Id);
-            await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                session.TransferAsync(remote.Id, [file], FileStorageTransferDisposition.Move, ct: TestCt));
-
+            await Assert.ThrowsAsync<InvalidOperationException>(() => session.TransferAsync(remote.Id, [file], FileStorageTransferDisposition.Move, ct: TestCt));
             await session.RefreshAsync(TestCt);
             Assert.Contains(session.Entries, entry => entry.FileId == file.FileId);
         }
@@ -188,28 +174,24 @@ public class FileManagerConnectionTests
             api.Folders[""] = new([RecordingFileManagerApi.Stored(label, null, LyoGuid.CreateV7())], false);
             return api;
         });
+
         session.ReplaceKeyStores([comic, desk]);
         var server = session.AddLocal("photos", Path.Combine(Path.GetTempPath(), "lyo-fm-tabs"), FileManagerMetadataKind.Sqlite);
-
         server.KeyStoreId = comic.Id;
         await session.ConnectAsync(TestCt);
         Assert.Equal("from-comic", Assert.Single(session.Entries).Name);
         Assert.Equal("comic + photos", Assert.Single(session.Connections).Title);
-
         server.KeyStoreId = desk.Id;
         await session.ConnectAsync(TestCt);
         Assert.Equal(2, session.Connections.Count);
         Assert.Equal("from-desk", Assert.Single(session.Entries).Name);
         Assert.Equal("desk + photos", session.Connections[1].Title);
-
         server.KeyStoreId = comic.Id;
         session.Select(server.Id);
         Assert.Equal("from-comic", Assert.Single(session.Entries).Name);
         Assert.Equal(2, session.Connections.Count);
-
         await session.ConnectAsync(TestCt);
         Assert.Equal(2, session.Connections.Count);
-
         session.CloseConnection(server.Id, comic.Id);
         Assert.Equal(desk.Id, Assert.Single(session.Connections).KeyStoreId);
         Assert.Equal("from-desk", Assert.Single(session.Entries).Name);
@@ -226,10 +208,7 @@ public class FileManagerConnectionTests
             await session.ConnectAsync(TestCt);
             await session.UploadAsync(payload, new(), TestCt);
             var file = session.Entries.Single(entry => entry.FileId != null);
-
-            await Assert.ThrowsAsync<InvalidOperationException>(() =>
-                session.TransferAsync(source.Id, [file], FileStorageTransferDisposition.Move, ct: TestCt));
-
+            await Assert.ThrowsAsync<InvalidOperationException>(() => session.TransferAsync(source.Id, [file], FileStorageTransferDisposition.Move, ct: TestCt));
             await session.RefreshAsync(TestCt);
             Assert.Contains(session.Entries, entry => entry.FileId == file.FileId);
         }
@@ -264,6 +243,7 @@ public class FileManagerConnectionTests
         var database = FileManagerPaths.DefaultSqliteFile(root);
         if (File.Exists(database))
             File.Delete(database);
+
         if (Directory.Exists(root))
             Directory.Delete(root, true);
     }

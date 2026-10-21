@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text.Json.Serialization;
 using Lyo.Common.Core.Extensions;
-using Lyo.Common.Metadata.Extensions;
 using Lyo.Common.Core.Net;
 using Lyo.Common.Metadata.Records;
 using Lyo.Compression.JsonConverters;
@@ -31,8 +30,7 @@ public abstract record CompressionAlgorithm
     private static readonly ConcurrentDictionary<string, CompressionAlgorithm> ByName = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>GZIP container around DEFLATE; common <c>.gz</c> format.</summary>
-    public static readonly CompressionAlgorithm GZip = new BuiltInCompressionAlgorithm(
-        "GZip", ".gz", LyoContentEncodings.GZip, [[0x1F, 0x8B]]); // RFC 1952 header.
+    public static readonly CompressionAlgorithm GZip = new BuiltInCompressionAlgorithm("GZip", ".gz", LyoContentEncodings.GZip, [[0x1F, 0x8B]]); // RFC 1952 header.
 
     /// <summary>Raw DEFLATE bitstream (no zlib or gzip wrapper).</summary>
     public static readonly CompressionAlgorithm Deflate = new BuiltInCompressionAlgorithm("Deflate", ".deflate", LyoContentEncodings.Deflate);
@@ -44,14 +42,14 @@ public abstract record CompressionAlgorithm
     public string Extension { get; }
 
     /// <summary>
-    /// HTTP <c>Content-Encoding</c> token for this algorithm (see <see cref="LyoContentEncodings" />), or <see langword="null" /> when the format has no registered token and must
-    /// not be advertised over HTTP.
+    /// HTTP <c>Content-Encoding</c> token for this algorithm (see <see cref="LyoContentEncodings" />), or <see langword="null" /> when the format has no registered token and
+    /// must not be advertised over HTTP.
     /// </summary>
     public string? ContentEncoding { get; }
 
     /// <summary>
-    /// Magic-number prefixes that identify this format at the head of a stream, used by content sniffing. Empty for formats with no header at all — raw DEFLATE and Brotli
-    /// have none, so any "detection" for them is guesswork.
+    /// Magic-number prefixes that identify this format at the head of a stream, used by content sniffing. Empty for formats with no header at all — raw DEFLATE and Brotli have
+    /// none, so any "detection" for them is guesswork.
     /// </summary>
     public IReadOnlyList<byte[]> MagicPrefixes { get; }
 
@@ -67,8 +65,8 @@ public abstract record CompressionAlgorithm
 
     /// <summary>
     /// True when the compressor's fast binary (<c>byte[]</c>) Compress emits the same wire format its stream Decompress reads. If true, <see cref="CompressionService" /> uses
-    /// the binary API for <c>byte[]</c> compression (block codecs like LZ4/Snappy/Zstd are near memcpy-speed there); if false, it falls back to the stream path so every API produces
-    /// one consistent format per algorithm. Override to false only for codecs whose binary and stream formats differ (e.g. Snappy's raw block vs framed format).
+    /// the binary API for <c>byte[]</c> compression (block codecs like LZ4/Snappy/Zstd are near memcpy-speed there); if false, it falls back to the stream path so every API produces one
+    /// consistent format per algorithm. Override to false only for codecs whose binary and stream formats differ (e.g. Snappy's raw block vs framed format).
     /// </summary>
     public virtual bool BinaryCompressMatchesStreamFormat => true;
 

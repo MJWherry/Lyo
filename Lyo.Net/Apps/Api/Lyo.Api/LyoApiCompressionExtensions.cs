@@ -12,8 +12,8 @@ public static class LyoApiCompressionExtensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers Brotli and gzip response compression (HTTPS included) for almost all MIME types, plus request decompression for gzip/br/deflate bodies.
-        /// Exclusions come from <see cref="LyoApiCompressionDefaults.ExcludedMimeTypes" />. Call <see cref="UseLyoApiCompression" /> in the pipeline.
+        /// Registers Brotli and gzip response compression (HTTPS included) for almost all MIME types, plus request decompression for gzip/br/deflate bodies. Exclusions come from
+        /// <see cref="LyoApiCompressionDefaults.ExcludedMimeTypes" />. Call <see cref="UseLyoApiCompression" /> in the pipeline.
         /// </summary>
         public IServiceCollection AddLyoApiCompression()
         {
@@ -25,6 +25,7 @@ public static class LyoApiCompressionExtensions
                 options.MimeTypes = LyoApiCompressionDefaults.MimeTypes;
                 options.ExcludedMimeTypes = LyoApiCompressionDefaults.ExcludedMimeTypes;
             });
+
             services.Configure<BrotliCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
             services.Configure<GzipCompressionProviderOptions>(options => options.Level = CompressionLevel.Fastest);
             services.AddRequestDecompression();

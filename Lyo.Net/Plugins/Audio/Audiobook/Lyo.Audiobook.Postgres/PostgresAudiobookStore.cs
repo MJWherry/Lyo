@@ -1,4 +1,3 @@
-using Lyo.Audiobook.Enums;
 using Lyo.Audiobook.Postgres.Database;
 using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
@@ -22,24 +21,14 @@ public sealed class PostgresAudiobookStore : IAudiobookStore, IHealth
     }
 
     /// <inheritdoc />
-    public string HealthCheckName => "audiobook-postgres";
-
-    /// <inheritdoc />
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => PostgresHealth.CheckAsync(_contextFactory, PostgresAudiobookOptions.Schema, ct);
-
-    /// <inheritdoc />
     public async Task SaveWorkAsync(Audiobook work, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(work);
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var existing = work.Id != Guid.Empty
-            ? await LoadWorkQuery(ctx, tracking: true).FirstOrDefaultAsync(w => w.Id == work.Id, ct).ConfigureAwait(false)
-            : null;
-
+        var existing = work.Id != Guid.Empty ? await LoadWorkQuery(ctx, true).FirstOrDefaultAsync(w => w.Id == work.Id, ct).ConfigureAwait(false) : null;
         var id = existing?.Id ?? (work.Id == Guid.Empty ? LyoGuid.CreateV7() : work.Id);
         if (existing == null)
-            ctx.Works.Add(existing = new AudiobookWorkEntity { Id = id, CreatedTimestamp = DateTime.UtcNow });
+            ctx.Works.Add(existing = new() { Id = id, CreatedTimestamp = DateTime.UtcNow });
 
         existing.Title = work.Title;
         existing.Subtitle = work.Subtitle;
@@ -66,7 +55,7 @@ public sealed class PostgresAudiobookStore : IAudiobookStore, IHealth
         ReplaceChapters(ctx, existing, work.Chapters, id);
         ctx.WorkGenres.RemoveRange(existing.GenreLinks);
         foreach (var genreId in work.GenreIds.Distinct())
-            ctx.WorkGenres.Add(new AudiobookWorkGenreEntity { WorkId = id, GenreId = genreId });
+            ctx.WorkGenres.Add(new() { WorkId = id, GenreId = genreId });
 
         await SaveCatchingConflictAsync(ctx, ct).ConfigureAwait(false);
         work.Id = id;
@@ -76,7 +65,7 @@ public sealed class PostgresAudiobookStore : IAudiobookStore, IHealth
     public async Task<Audiobook?> GetWorkByIdAsync(Guid id, CancellationToken ct = default)
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await LoadWorkQuery(ctx, tracking: false).FirstOrDefaultAsync(w => w.Id == id, ct).ConfigureAwait(false);
+        var entity = await LoadWorkQuery(ctx, false).FirstOrDefaultAsync(w => w.Id == id, ct).ConfigureAwait(false);
         return entity == null ? null : ToWork(entity);
     }
 
@@ -85,7 +74,7 @@ public sealed class PostgresAudiobookStore : IAudiobookStore, IHealth
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(slug);
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await LoadWorkQuery(ctx, tracking: false).FirstOrDefaultAsync(w => w.Slug == slug, ct).ConfigureAwait(false);
+        var entity = await LoadWorkQuery(ctx, false).FirstOrDefaultAsync(w => w.Slug == slug, ct).ConfigureAwait(false);
         return entity == null ? null : ToWork(entity);
     }
 
@@ -101,6 +90,7 @@ public sealed class PostgresAudiobookStore : IAudiobookStore, IHealth
             .Select(i => (Guid?)i.WorkId)
             .FirstOrDefaultAsync(ct)
             .ConfigureAwait(false);
+
         return workId is null ? null : await GetWorkByIdAsync(workId.Value, ct).ConfigureAwait(false);
     }
 
@@ -124,7 +114,7 @@ public sealed class PostgresAudiobookStore : IAudiobookStore, IHealth
             return [];
 
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var q = LoadWorkQuery(ctx, tracking: false);
+        var q = LoadWorkQuery(ctx, false);
         if (!string.IsNullOrWhiteSpace(query.TitleContains)) {
             var needle = query.TitleContains.ToLowerInvariant();
             q = q.Where(w => w.Title.ToLower().Contains(needle) || (w.Subtitle != null && w.Subtitle.ToLower().Contains(needle)));
@@ -132,8 +122,10 @@ public sealed class PostgresAudiobookStore : IAudiobookStore, IHealth
 
         if (query.GenreId is Guid genreId)
             q = q.Where(w => w.GenreLinks.Any(g => g.GenreId == genreId));
+
         if (query.Year is int year)
             q = q.Where(w => w.Year == year);
+
         if (!string.IsNullOrWhiteSpace(query.IdentifierScheme) && !string.IsNullOrWhiteSpace(query.IdentifierValue)) {
             var normalized = AudiobookIdentifierSchemes.Normalize(query.IdentifierScheme, query.IdentifierValue);
             q = q.Where(w => w.Identifiers.Any(i => i.Scheme == query.IdentifierScheme && i.NormalizedValue == normalized));
@@ -154,7 +146,8 @@ public sealed class PostgresAudiobookStore : IAudiobookStore, IHealth
         var id = series.Id == Guid.Empty ? LyoGuid.CreateV7() : series.Id;
         var existing = series.Id != Guid.Empty ? await ctx.Series.FirstOrDefaultAsync(s => s.Id == series.Id, ct).ConfigureAwait(false) : null;
         if (existing == null)
-            ctx.Series.Add(existing = new AudiobookSeriesEntity { Id = id });
+            ctx.Series.Add(existing = new() { Id = id });
+
         existing.Title = series.Title;
         existing.Slug = series.Slug;
         await SaveCatchingConflictAsync(ctx, ct).ConfigureAwait(false);
@@ -195,9 +188,11 @@ public sealed class PostgresAudiobookStore : IAudiobookStore, IHealth
         var id = genre.Id == Guid.Empty ? LyoGuid.CreateV7() : genre.Id;
         if (genre.ParentGenreId is Guid parent)
             await EnsureNoGenreCycleAsync(ctx, id, parent, ct).ConfigureAwait(false);
+
         var existing = genre.Id != Guid.Empty ? await ctx.Genres.FirstOrDefaultAsync(g => g.Id == genre.Id, ct).ConfigureAwait(false) : null;
         if (existing == null)
-            ctx.Genres.Add(existing = new AudiobookGenreEntity { Id = id });
+            ctx.Genres.Add(existing = new() { Id = id });
+
         existing.ParentGenreId = genre.ParentGenreId;
         existing.Slug = genre.Slug;
         existing.Name = genre.Name;
@@ -211,7 +206,15 @@ public sealed class PostgresAudiobookStore : IAudiobookStore, IHealth
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entity = await ctx.Genres.AsNoTracking().FirstOrDefaultAsync(g => g.Id == id, ct).ConfigureAwait(false);
-        return entity == null ? null : new AudiobookGenre { Id = entity.Id, ParentGenreId = entity.ParentGenreId, Slug = entity.Slug, Name = entity.Name, SortOrder = entity.SortOrder };
+        return entity == null
+            ? null
+            : new AudiobookGenre {
+                Id = entity.Id,
+                ParentGenreId = entity.ParentGenreId,
+                Slug = entity.Slug,
+                Name = entity.Name,
+                SortOrder = entity.SortOrder
+            };
     }
 
     /// <inheritdoc />
@@ -219,19 +222,27 @@ public sealed class PostgresAudiobookStore : IAudiobookStore, IHealth
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var rows = await ctx.Genres.AsNoTracking().OrderBy(g => g.Name).ToListAsync(ct).ConfigureAwait(false);
-        return rows.Select(g => new AudiobookGenre { Id = g.Id, ParentGenreId = g.ParentGenreId, Slug = g.Slug, Name = g.Name, SortOrder = g.SortOrder }).ToArray();
+        return rows.Select(g => new AudiobookGenre {
+                Id = g.Id,
+                ParentGenreId = g.ParentGenreId,
+                Slug = g.Slug,
+                Name = g.Name,
+                SortOrder = g.SortOrder
+            })
+            .ToArray();
     }
 
     /// <inheritdoc />
     public async Task DeleteGenreAsync(Guid id, CancellationToken ct = default)
     {
         await using var ctx = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        if (await ctx.Genres.AnyAsync(g => g.ParentGenreId == id, ct).ConfigureAwait(false)
-            || await ctx.WorkGenres.AnyAsync(g => g.GenreId == id, ct).ConfigureAwait(false))
+        if (await ctx.Genres.AnyAsync(g => g.ParentGenreId == id, ct).ConfigureAwait(false) || await ctx.WorkGenres.AnyAsync(g => g.GenreId == id, ct).ConfigureAwait(false))
             throw ConflictException.ForResource("AudiobookGenre", id);
+
         var entity = await ctx.Genres.FirstOrDefaultAsync(g => g.Id == id, ct).ConfigureAwait(false);
         if (entity == null)
             return;
+
         ctx.Genres.Remove(entity);
         await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
     }
@@ -248,17 +259,15 @@ public sealed class PostgresAudiobookStore : IAudiobookStore, IHealth
         var works = ctx.Works.AsNoTracking()
             .Where(w => w.SearchVector.Matches(EF.Functions.PlainToTsQuery("english", fullText)))
             .Select(w => new AudiobookTranscriptHit {
-                WorkId = w.Id,
-                ChapterId = null,
-                Snippet = EF.Functions.PlainToTsQuery("english", fullText).GetResultHeadline(w.Transcript ?? "")
+                WorkId = w.Id, ChapterId = null, Snippet = EF.Functions.PlainToTsQuery("english", fullText).GetResultHeadline(w.Transcript ?? "")
             });
+
         var chapters = ctx.Chapters.AsNoTracking()
             .Where(c => c.SearchVector.Matches(EF.Functions.PlainToTsQuery("english", fullText)))
             .Select(c => new AudiobookTranscriptHit {
-                WorkId = c.WorkId,
-                ChapterId = c.Id,
-                Snippet = EF.Functions.PlainToTsQuery("english", fullText).GetResultHeadline(c.Transcript ?? "")
+                WorkId = c.WorkId, ChapterId = c.Id, Snippet = EF.Functions.PlainToTsQuery("english", fullText).GetResultHeadline(c.Transcript ?? "")
             });
+
         return await works.Concat(chapters).ToListAsync(ct).ConfigureAwait(false);
     }
 
@@ -269,6 +278,7 @@ public sealed class PostgresAudiobookStore : IAudiobookStore, IHealth
         var row = await ctx.Works.AsNoTracking().Where(w => w.Id == workId).Select(w => new { w.Transcript }).FirstOrDefaultAsync(ct).ConfigureAwait(false);
         if (row == null)
             throw NotFoundException.ForResource("Audiobook", workId);
+
         return row.Transcript;
     }
 
@@ -279,6 +289,7 @@ public sealed class PostgresAudiobookStore : IAudiobookStore, IHealth
         var entity = await ctx.Works.FirstOrDefaultAsync(w => w.Id == workId, ct).ConfigureAwait(false);
         if (entity == null)
             throw NotFoundException.ForResource("Audiobook", workId);
+
         entity.Transcript = transcript;
         await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
     }
@@ -290,6 +301,7 @@ public sealed class PostgresAudiobookStore : IAudiobookStore, IHealth
         var row = await ctx.Chapters.AsNoTracking().Where(c => c.Id == chapterId).Select(c => new { c.Transcript }).FirstOrDefaultAsync(ct).ConfigureAwait(false);
         if (row == null)
             throw NotFoundException.ForResource("AudiobookChapter", chapterId);
+
         return row.Transcript;
     }
 
@@ -300,9 +312,16 @@ public sealed class PostgresAudiobookStore : IAudiobookStore, IHealth
         var entity = await ctx.Chapters.FirstOrDefaultAsync(c => c.Id == chapterId, ct).ConfigureAwait(false);
         if (entity == null)
             throw NotFoundException.ForResource("AudiobookChapter", chapterId);
+
         entity.Transcript = transcript;
         await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
     }
+
+    /// <inheritdoc />
+    public string HealthCheckName => "audiobook-postgres";
+
+    /// <inheritdoc />
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => PostgresHealth.CheckAsync(_contextFactory, PostgresAudiobookOptions.Schema, ct);
 
     private static async Task EnsureNoGenreCycleAsync(AudiobookDbContext ctx, Guid genreId, Guid parentId, CancellationToken ct)
     {
@@ -315,8 +334,10 @@ public sealed class PostgresAudiobookStore : IAudiobookStore, IHealth
             var next = await ctx.Genres.AsNoTracking().Where(g => g.Id == current).Select(g => g.ParentGenreId).FirstOrDefaultAsync(ct).ConfigureAwait(false);
             if (next == null)
                 return;
+
             if (next == genreId)
                 throw new UnprocessableEntityException("Genre parent would create a cycle.");
+
             current = next.Value;
         }
 
@@ -333,7 +354,7 @@ public sealed class PostgresAudiobookStore : IAudiobookStore, IHealth
             var match = chapter.Id != Guid.Empty ? existing.Chapters.FirstOrDefault(c => c.Id == chapter.Id) : null;
             if (match == null) {
                 var chapterId = chapter.Id == Guid.Empty ? LyoGuid.CreateV7() : chapter.Id;
-                match = new AudiobookChapterEntity { Id = chapterId, WorkId = workId, CreatedTimestamp = DateTime.UtcNow };
+                match = new() { Id = chapterId, WorkId = workId, CreatedTimestamp = DateTime.UtcNow };
                 ctx.Chapters.Add(match);
                 chapter.Id = chapterId;
             }
@@ -350,11 +371,7 @@ public sealed class PostgresAudiobookStore : IAudiobookStore, IHealth
 
     private static IQueryable<AudiobookWorkEntity> LoadWorkQuery(AudiobookDbContext ctx, bool tracking)
     {
-        var query = ctx.Works
-            .Include(w => w.Credits)
-            .Include(w => w.Identifiers)
-            .Include(w => w.Chapters)
-            .Include(w => w.GenreLinks);
+        var query = ctx.Works.Include(w => w.Credits).Include(w => w.Identifiers).Include(w => w.Chapters).Include(w => w.GenreLinks);
         return tracking ? query : query.AsNoTracking();
     }
 
@@ -408,29 +425,34 @@ public sealed class PostgresAudiobookStore : IAudiobookStore, IHealth
             GenreIds = entity.GenreLinks.Select(g => g.GenreId).ToArray(),
             CreatedTimestamp = entity.CreatedTimestamp,
             UpdatedTimestamp = entity.UpdatedTimestamp,
-            Credits = entity.Credits.OrderBy(c => c.Ordinal).Select(c => new AudiobookCredit {
-                Id = c.Id,
-                DisplayName = c.DisplayName,
-                SortName = c.SortName,
-                Role = c.Role,
-                Ordinal = c.Ordinal,
-                PersonRef = c.PersonRef
-            }).ToArray(),
+            Credits = entity.Credits.OrderBy(c => c.Ordinal)
+                .Select(c => new AudiobookCredit {
+                    Id = c.Id,
+                    DisplayName = c.DisplayName,
+                    SortName = c.SortName,
+                    Role = c.Role,
+                    Ordinal = c.Ordinal,
+                    PersonRef = c.PersonRef
+                })
+                .ToArray(),
             Identifiers = entity.Identifiers.Select(i => new AudiobookIdentifier {
-                Id = i.Id,
-                Scheme = i.Scheme,
-                Value = i.Value,
-                NormalizedValue = i.NormalizedValue,
-                IsPrimary = i.IsPrimary
-            }).ToArray(),
-            Chapters = entity.Chapters.OrderBy(c => c.Number).Select(c => new AudiobookChapter {
-                Id = c.Id,
-                WorkId = c.WorkId,
-                Number = c.Number,
-                Title = c.Title,
-                StartSeconds = c.StartSeconds,
-                DurationSeconds = c.DurationSeconds,
-                AudioFileRef = c.AudioFileRef
-            }).ToArray()
+                    Id = i.Id,
+                    Scheme = i.Scheme,
+                    Value = i.Value,
+                    NormalizedValue = i.NormalizedValue,
+                    IsPrimary = i.IsPrimary
+                })
+                .ToArray(),
+            Chapters = entity.Chapters.OrderBy(c => c.Number)
+                .Select(c => new AudiobookChapter {
+                    Id = c.Id,
+                    WorkId = c.WorkId,
+                    Number = c.Number,
+                    Title = c.Title,
+                    StartSeconds = c.StartSeconds,
+                    DurationSeconds = c.DurationSeconds,
+                    AudioFileRef = c.AudioFileRef
+                })
+                .ToArray()
         };
 }

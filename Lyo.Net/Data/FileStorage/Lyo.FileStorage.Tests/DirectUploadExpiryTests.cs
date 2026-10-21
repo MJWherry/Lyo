@@ -10,13 +10,12 @@ namespace Lyo.FileStorage.Tests;
 
 public sealed class DirectUploadExpiryTests : IDisposable
 {
+    private readonly CaptureAuditHandler _audit = new();
     private readonly string _root = Path.Combine(Path.GetTempPath(), "lyo-fs-expiry-" + LyoGuid.CreateV7().ToString("N"));
 
-    private readonly CaptureAuditHandler _audit = new();
+    private readonly VerifyingFakeFileStorageService _service;
 
     private readonly LocalFileMetadataStore _store;
-
-    private readonly VerifyingFakeFileStorageService _service;
 
     public DirectUploadExpiryTests()
     {
@@ -44,9 +43,7 @@ public sealed class DirectUploadExpiryTests : IDisposable
     {
         var fileId = await BeginBackdatedAsync(TimeSpan.FromHours(2));
         _service.PutObject(fileId, TestData.Create(100));
-
         var swept = await _service.SweepExpiredDirectUploadsAsync(ct: TestCt);
-
         Assert.Equal(1, swept);
         Assert.False(_service.HasObject(fileId));
         await Assert.ThrowsAsync<FileNotFoundException>(() => _store.GetMetadataAsync(fileId, TestCt));

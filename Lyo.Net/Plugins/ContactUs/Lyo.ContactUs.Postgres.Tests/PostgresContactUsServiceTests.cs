@@ -1,7 +1,5 @@
 using Lyo.Common.Core.Identifiers;
-using Lyo.ContactUs;
 using Lyo.ContactUs.Models;
-using Lyo.ContactUs.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,11 +13,11 @@ public sealed class PostgresContactUsServiceTests(ContactUsPostgresFixture fixtu
     {
         var ct = TestCt;
         var service = fixture.ServiceProvider.GetRequiredService<IContactUsService>();
-        var submitted = await service.SubmitAsync(Request("Ada Lovelace", "ada@example.com", "Question", "I have a question about your product.", "+1-555-0100", "Analytical Engines"), ct);
+        var submitted = await service.SubmitAsync(
+            Request("Ada Lovelace", "ada@example.com", "Question", "I have a question about your product.", "+1-555-0100", "Analytical Engines"), ct);
 
         Assert.True(submitted.IsSuccess);
         var loaded = await service.GetByIdAsync(submitted.SubmissionId!.Value, ct);
-
         Assert.NotNull(loaded);
         Assert.Equal(submitted.SubmissionId, loaded.Id);
         Assert.Equal("Ada Lovelace", loaded.Name);
@@ -36,9 +34,7 @@ public sealed class PostgresContactUsServiceTests(ContactUsPostgresFixture fixtu
     {
         var ct = TestCt;
         var service = fixture.ServiceProvider.GetRequiredService<IContactUsService>();
-
         var loaded = await service.GetByIdAsync(LyoGuid.CreateV7(), ct);
-
         Assert.Null(loaded);
     }
 
@@ -46,7 +42,6 @@ public sealed class PostgresContactUsServiceTests(ContactUsPostgresFixture fixtu
     public async Task GetByIdAsync_EmptyId_Throws()
     {
         var service = fixture.ServiceProvider.GetRequiredService<IContactUsService>();
-
         await Assert.ThrowsAsync<ArgumentException>(() => service.GetByIdAsync(Guid.Empty, TestCt));
     }
 
@@ -61,9 +56,7 @@ public sealed class PostgresContactUsServiceTests(ContactUsPostgresFixture fixtu
         var older = await service.SubmitAsync(Request("Older", "older@example.com", "First", "This is the older message."), ct);
         await Task.Delay(TimeSpan.FromMilliseconds(20), ct);
         var newer = await service.SubmitAsync(Request("Newer", "newer@example.com", "Second", "This is the newer message."), ct);
-
         var listed = await service.ListAsync(ct);
-
         Assert.Equal(2, listed.Count);
         Assert.Equal(newer.SubmissionId, listed[0].Id);
         Assert.Equal(older.SubmissionId, listed[1].Id);

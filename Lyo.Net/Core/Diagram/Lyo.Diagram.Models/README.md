@@ -1,8 +1,10 @@
 # Lyo.Diagram.Models
 
-The stored diagram model. A `DiagramDocument` has a name and one or more `DiagramPage` values. Each page holds vertex and edge `DiagramCell` values with draw.io geometry (bounds, relative connectors, waypoints, floating endpoints). Parent links express groups. Cell ids `0` and `1` stay reserved for the draw.io root and are not stored.
+The stored diagram model. A `DiagramDocument` has a name and one or more `DiagramPage` values. Each page holds vertex and edge `DiagramCell` values with draw.io geometry (bounds,
+relative connectors, waypoints, floating endpoints). Parent links express groups. Cell ids `0` and `1` stay reserved for the draw.io root and are not stored.
 
-`IDiagramStore` loads and saves documents. `ListAsync` returns `DiagramSummary` (id, name, last saved) and leaves the cell payload out. The in-memory store lives in [`Lyo.Diagram`](../Lyo.Diagram/README.md). PostgreSQL lives in [`Lyo.Diagram.Postgres`](../Lyo.Diagram.Postgres/README.md).
+`IDiagramStore` loads and saves documents. `ListAsync` returns `DiagramSummary` (id, name, last saved) and leaves the cell payload out. The in-memory store lives in [
+`Lyo.Diagram`](../Lyo.Diagram/README.md). PostgreSQL lives in [`Lyo.Diagram.Postgres`](../Lyo.Diagram.Postgres/README.md).
 
 ## Features
 

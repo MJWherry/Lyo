@@ -48,6 +48,9 @@ public static class Constants
         /// <summary>Stored plans. <c>GET</c> lists names. <c>POST</c> creates an empty plan.</summary>
         public const string Plans = "Automation/Plan";
 
+        /// <summary>Queryable stored plans. <c>POST .../QueryProject</c> lists them.</summary>
+        public const string PlanRecords = "Automation/Plans";
+
         /// <summary>One stored plan. <paramref name="name" /> is a single segment.</summary>
         public static string Plan(string name) => $"{Plans}/{Uri.EscapeDataString(name)}";
 
@@ -71,8 +74,5 @@ public static class Constants
 
         /// <summary>Viewport PNG for one finished step, read back from file storage.</summary>
         public static string StepScreenshot(Guid runId, int index) => $"{Runs}/{runId}/Steps/{index}/Screenshot";
-
-        /// <summary>Queryable stored plans. <c>POST .../QueryProject</c> lists them.</summary>
-        public const string PlanRecords = "Automation/Plans";
     }
 }

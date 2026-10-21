@@ -8,8 +8,10 @@ public static class FileManagerFolders
     {
         if (string.IsNullOrEmpty(typed))
             return true;
+
         if (folder.StartsWith(typed, StringComparison.OrdinalIgnoreCase))
             return true;
+
         var slash = folder.LastIndexOf('/');
         var name = slash < 0 ? folder : folder[(slash + 1)..];
         return name.StartsWith(typed, StringComparison.OrdinalIgnoreCase);

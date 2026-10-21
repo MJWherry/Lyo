@@ -1,8 +1,10 @@
 # Lyo.Diagram.Postgres
 
-PostgreSQL + EF Core implementation of [`IDiagramStore`](../Lyo.Diagram.Models/README.md). Each diagram is one row in schema `diagram`, table `diagram`. The `name` column is indexed so a list does not read the cell payload. `document` is jsonb holding the pages and cells.
+PostgreSQL + EF Core implementation of [`IDiagramStore`](../Lyo.Diagram.Models/README.md). Each diagram is one row in schema `diagram`, table `diagram`. The `name` column is
+indexed so a list does not read the cell payload. `document` is jsonb holding the pages and cells.
 
-Register with `AddPostgresDiagramStore` or `AddPostgresDiagramStoreFromConfiguration`. The configuration section is `PostgresDiagram`. A missing section keeps the declared defaults. The context is an `IDbContextFactory<DiagramDbContext>`, opened per call.
+Register with `AddPostgresDiagramStore` or `AddPostgresDiagramStoreFromConfiguration`. The configuration section is `PostgresDiagram`. A missing section keeps the declared
+defaults. The context is an `IDbContextFactory<DiagramDbContext>`, opened per call.
 
 ## Features
 
@@ -20,7 +22,8 @@ services.AddPostgresDiagramStoreFromConfiguration(configuration);
 
 ## Database schema
 
-PostgreSQL schema `diagram`. Table `diagram` columns: `id`, `name`, `document` (pages and cells), `created_timestamp`, `updated_timestamp`. Migrations history lives in `__EFMigrationsHistory` in the same schema.
+PostgreSQL schema `diagram`. Table `diagram` columns: `id`, `name`, `document` (pages and cells), `created_timestamp`, `updated_timestamp`. Migrations history lives in
+`__EFMigrationsHistory` in the same schema.
 
 ## Migrations
 

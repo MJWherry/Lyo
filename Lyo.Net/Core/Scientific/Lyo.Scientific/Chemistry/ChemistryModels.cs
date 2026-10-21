@@ -26,9 +26,7 @@ public sealed record ChemicalElement
     /// <param name="symbol">Non-empty IUPAC symbol.</param>
     /// <param name="name">Non-empty English name.</param>
     /// <param name="atomicMass">Optional mass; when supplied, must be strictly greater than zero.</param>
-    /// <exception cref="ArgumentOutsideRangeException">
-    /// <paramref name="atomicNumber" /> is not positive, or <paramref name="atomicMass" /> is present and not strictly positive.
-    /// </exception>
+    /// <exception cref="ArgumentOutsideRangeException"><paramref name="atomicNumber" /> is not positive, or <paramref name="atomicMass" /> is present and not strictly positive.</exception>
     /// <exception cref="ArgumentException"><paramref name="symbol" /> or <paramref name="name" /> is null or whitespace.</exception>
     public ChemicalElement(int atomicNumber, string symbol, string name, double? atomicMass = null)
     {

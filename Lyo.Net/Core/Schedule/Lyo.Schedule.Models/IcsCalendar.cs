@@ -16,15 +16,8 @@ public sealed class IcsCalendar
         ArgumentHelpers.ThrowIfNull(ics);
         var fields = ReadEvent(ics);
         var start = ParseStamp(Required(fields, "DTSTART"), out var allDay);
-        var end = fields.TryGetValue("DTEND", out var endText)
-            ? ParseStamp(endText, out _)
-            : allDay ? start.AddDays(1) : start;
-        return new(
-            start,
-            end,
-            Required(fields, "UID"),
-            Required(fields, "SUMMARY"),
-            fields.TryGetValue("DESCRIPTION", out var description) ? description : null);
+        var end = fields.TryGetValue("DTEND", out var endText) ? ParseStamp(endText, out var _) : allDay ? start.AddDays(1) : start;
+        return new(start, end, Required(fields, "UID"), Required(fields, "SUMMARY"), fields.TryGetValue("DESCRIPTION", out var description) ? description : null);
     }
 
     /// <summary>Writes one timed or all-day event. All-day entries use <c>VALUE=DATE</c>.</summary>
@@ -37,6 +30,7 @@ public sealed class IcsCalendar
         builder.Append("SUMMARY:").Append(Escape(entry.Title)).Append("\r\n");
         if (!string.IsNullOrEmpty(entry.Description))
             builder.Append("DESCRIPTION:").Append(Escape(entry.Description!)).Append("\r\n");
+
         AppendStamp(builder, "DTSTART", entry.Start);
         AppendStamp(builder, "DTEND", entry.End);
         builder.Append("END:VEVENT\r\nEND:VCALENDAR\r\n");
@@ -44,14 +38,15 @@ public sealed class IcsCalendar
     }
 
     /// <summary>
-    /// Expands one <c>RRULE</c> of daily, weekly, or monthly inside <paramref name="until" /> or <paramref name="count" />.
-    /// More than <see cref="MaxOccurrences" /> throws <see cref="IcsCalendarException" /> instead of returning a shorter list.
+    /// Expands one <c>RRULE</c> of daily, weekly, or monthly inside <paramref name="until" /> or <paramref name="count" />. More than <see cref="MaxOccurrences" /> throws
+    /// <see cref="IcsCalendarException" /> instead of returning a shorter list.
     /// </summary>
     public IReadOnlyList<CalendarEntry> Expand(string ics, DateTime? until, int? count)
     {
         ArgumentHelpers.ThrowIfNull(ics);
         if (until is null && count is null)
             throw new IcsCalendarException("Expansion requires until or count.");
+
         if (count is < 1)
             throw new IcsCalendarException("Count must be at least 1.");
 
@@ -93,21 +88,25 @@ public sealed class IcsCalendar
 
             if (line.Equals("END:VEVENT", StringComparison.OrdinalIgnoreCase))
                 break;
+
             if (!inside)
                 continue;
 
             var colon = line.IndexOf(':');
             if (colon <= 0)
                 continue;
+
             var name = line.Substring(0, colon);
             var semi = name.IndexOf(';');
             if (semi >= 0)
                 name = name.Substring(0, semi);
+
             fields[name] = line.Substring(colon + 1);
         }
 
         if (fields.Count == 0)
             throw new IcsCalendarException("Calendar has no VEVENT.");
+
         return fields;
     }
 
@@ -118,6 +117,7 @@ public sealed class IcsCalendar
         foreach (var rawLine in raw) {
             if (rawLine.Length == 0)
                 continue;
+
             if ((rawLine[0] == ' ' || rawLine[0] == '\t') && lines.Count > 0)
                 lines[lines.Count - 1] += rawLine.Substring(1);
             else
@@ -128,13 +128,12 @@ public sealed class IcsCalendar
     }
 
     private static string Required(Dictionary<string, string> fields, string name)
-        => fields.TryGetValue(name, out var value) && value.Length > 0
-            ? value
-            : throw new IcsCalendarException($"VEVENT is missing {name}.");
+        => fields.TryGetValue(name, out var value) && value.Length > 0 ? value : throw new IcsCalendarException($"VEVENT is missing {name}.");
 
     private static DateTime ParseStamp(string text, out bool allDay)
     {
-        if (text.Length == 8 && DateTime.TryParseExact(text, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var date)) {
+        if (text.Length == 8 && DateTime.TryParseExact(
+            text, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var date)) {
             allDay = true;
             return date;
         }
@@ -143,6 +142,7 @@ public sealed class IcsCalendar
         var format = text.EndsWith("Z", StringComparison.Ordinal) ? "yyyyMMdd'T'HHmmss'Z'" : "yyyyMMdd'T'HHmmss";
         if (!DateTime.TryParseExact(text, format, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var instant))
             throw new IcsCalendarException($"Cannot read '{text}' as a calendar time.");
+
         return instant;
     }
 
@@ -161,6 +161,7 @@ public sealed class IcsCalendar
             var eq = part.IndexOf('=');
             if (eq <= 0)
                 continue;
+
             var key = part.Substring(0, eq).Trim();
             var val = part.Substring(eq + 1).Trim();
             if (key.Equals("FREQ", StringComparison.OrdinalIgnoreCase))
@@ -168,10 +169,10 @@ public sealed class IcsCalendar
         }
 
         return freq?.ToUpperInvariant() switch {
-            "DAILY" => new Rule(date => date.AddDays(1)),
-            "WEEKLY" => new Rule(date => date.AddDays(7)),
-            "MONTHLY" => new Rule(date => date.AddMonths(1)),
-            _ => throw new IcsCalendarException("RRULE must be daily, weekly, or monthly.")
+            "DAILY" => new(date => date.AddDays(1)),
+            "WEEKLY" => new(date => date.AddDays(7)),
+            "MONTHLY" => new(date => date.AddMonths(1)),
+            var _ => throw new IcsCalendarException("RRULE must be daily, weekly, or monthly.")
         };
     }
 

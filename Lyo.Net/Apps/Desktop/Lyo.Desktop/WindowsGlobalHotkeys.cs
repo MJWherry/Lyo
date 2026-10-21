@@ -15,24 +15,24 @@ internal sealed partial class WindowsGlobalHotkeys : IGlobalHotkeys
     private const uint ModShift = 0x0004;
     private const uint ModWin = 0x0008;
     private const uint ModNorepeat = 0x4000;
-    private readonly Lock _gate = new();
-    private readonly ManualResetEvent _ready = new(false);
     private readonly ManualResetEvent _applyDone = new(true);
-    private readonly Thread _thread;
+    private readonly Lock _gate = new();
     private readonly WndProc _proc;
-    private IntPtr _hwnd;
-    private uint _threadId;
-    private HotkeyBinding[] _requested = [];
-    private Action[] _handlers = [];
-    private HotkeyChord[] _chords = [];
-    private int _registered;
+    private readonly ManualResetEvent _ready = new(false);
+    private readonly Thread _thread;
     private bool _apply;
     private string? _applyError;
+    private HotkeyChord[] _chords = [];
+    private Action[] _handlers = [];
+    private IntPtr _hwnd;
+    private int _registered;
+    private HotkeyBinding[] _requested = [];
+    private uint _threadId;
 
     public WindowsGlobalHotkeys()
     {
         _proc = WindowProc;
-        _thread = new Thread(Loop) { IsBackground = true, Name = "lyo-hotkeys" };
+        _thread = new(Loop) { IsBackground = true, Name = "lyo-hotkeys" };
         _thread.SetApartmentState(ApartmentState.STA);
         _thread.Start();
         _ready.WaitOne();
@@ -59,6 +59,7 @@ internal sealed partial class WindowsGlobalHotkeys : IGlobalHotkeys
     {
         if (_threadId != 0)
             PostThreadMessage(_threadId, WmQuit, IntPtr.Zero, IntPtr.Zero);
+
         _thread.Join(TimeSpan.FromSeconds(2));
     }
 
@@ -74,8 +75,9 @@ internal sealed partial class WindowsGlobalHotkeys : IGlobalHotkeys
                 Instance = GetModuleHandle(null),
                 ClassName = classNamePtr
             };
+
             RegisterClassEx(ref cls);
-            _hwnd = CreateWindowEx(0, className, "", 0, 0, 0, 0, 0, new IntPtr(-3), IntPtr.Zero, cls.Instance, IntPtr.Zero);
+            _hwnd = CreateWindowEx(0, className, "", 0, 0, 0, 0, 0, new(-3), IntPtr.Zero, cls.Instance, IntPtr.Zero);
         }
         finally {
             Marshal.FreeHGlobal(classNamePtr);
@@ -85,6 +87,7 @@ internal sealed partial class WindowsGlobalHotkeys : IGlobalHotkeys
         while (GetMessage(out var msg, IntPtr.Zero, 0, 0) > 0) {
             if (msg.Message == WmUser && _apply)
                 ApplyOnThread();
+
             TranslateMessage(ref msg);
             DispatchMessage(ref msg);
         }
@@ -119,8 +122,10 @@ internal sealed partial class WindowsGlobalHotkeys : IGlobalHotkeys
         if (!ok) {
             for (var id = 1; id <= requested.Length; id++)
                 UnregisterHotKey(_hwnd, id);
+
             for (var i = 0; i < previousChords.Length; i++)
                 Register(previousChords[i], i + 1);
+
             _applyError = "That shortcut is already in use.";
         }
         else {
@@ -141,12 +146,16 @@ internal sealed partial class WindowsGlobalHotkeys : IGlobalHotkeys
         var mods = ModNorepeat;
         if (chord.Modifiers.HasFlag(HotkeyModifiers.Alt))
             mods |= ModAlt;
+
         if (chord.Modifiers.HasFlag(HotkeyModifiers.Ctrl))
             mods |= ModControl;
+
         if (chord.Modifiers.HasFlag(HotkeyModifiers.Shift))
             mods |= ModShift;
+
         if (chord.Modifiers.HasFlag(HotkeyModifiers.Meta))
             mods |= ModWin;
+
         return RegisterHotKey(_hwnd, id, mods, WindowsVirtualKey.Code(chord.Key)) != 0;
     }
 
@@ -166,6 +175,54 @@ internal sealed partial class WindowsGlobalHotkeys : IGlobalHotkeys
 
         return DefWindowProc(hwnd, msg, wParam, lParam);
     }
+
+    [LibraryImport("user32.dll")]
+    private static partial ushort RegisterClassEx(ref WndClassEx cls);
+
+    [LibraryImport("user32.dll", StringMarshalling = StringMarshalling.Utf16)]
+    private static partial IntPtr CreateWindowEx(
+        uint exStyle,
+        string className,
+        string windowName,
+        uint style,
+        int x,
+        int y,
+        int width,
+        int height,
+        IntPtr parent,
+        IntPtr menu,
+        IntPtr instance,
+        IntPtr param);
+
+    [LibraryImport("user32.dll")]
+    private static partial int DestroyWindow(IntPtr hwnd);
+
+    [LibraryImport("user32.dll")]
+    private static partial int GetMessage(out Msg msg, IntPtr hwnd, uint filterMin, uint filterMax);
+
+    [LibraryImport("user32.dll")]
+    private static partial int TranslateMessage(ref Msg msg);
+
+    [LibraryImport("user32.dll")]
+    private static partial IntPtr DispatchMessage(ref Msg msg);
+
+    [LibraryImport("user32.dll")]
+    private static partial IntPtr DefWindowProc(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
+
+    [LibraryImport("user32.dll")]
+    private static partial int PostThreadMessage(uint threadId, int msg, IntPtr wParam, IntPtr lParam);
+
+    [LibraryImport("user32.dll")]
+    private static partial int RegisterHotKey(IntPtr hwnd, int id, uint modifiers, uint key);
+
+    [LibraryImport("user32.dll")]
+    private static partial int UnregisterHotKey(IntPtr hwnd, int id);
+
+    [LibraryImport("kernel32.dll")]
+    private static partial uint GetCurrentThreadId();
+
+    [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
+    private static partial IntPtr GetModuleHandle(string? module);
 
     private delegate IntPtr WndProc(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
 
@@ -197,40 +254,4 @@ internal sealed partial class WindowsGlobalHotkeys : IGlobalHotkeys
         public int X;
         public int Y;
     }
-
-    [LibraryImport("user32.dll")]
-    private static partial ushort RegisterClassEx(ref WndClassEx cls);
-
-    [LibraryImport("user32.dll", StringMarshalling = StringMarshalling.Utf16)]
-    private static partial IntPtr CreateWindowEx(uint exStyle, string className, string windowName, uint style, int x, int y, int width, int height, IntPtr parent, IntPtr menu, IntPtr instance, IntPtr param);
-
-    [LibraryImport("user32.dll")]
-    private static partial int DestroyWindow(IntPtr hwnd);
-
-    [LibraryImport("user32.dll")]
-    private static partial int GetMessage(out Msg msg, IntPtr hwnd, uint filterMin, uint filterMax);
-
-    [LibraryImport("user32.dll")]
-    private static partial int TranslateMessage(ref Msg msg);
-
-    [LibraryImport("user32.dll")]
-    private static partial IntPtr DispatchMessage(ref Msg msg);
-
-    [LibraryImport("user32.dll")]
-    private static partial IntPtr DefWindowProc(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
-
-    [LibraryImport("user32.dll")]
-    private static partial int PostThreadMessage(uint threadId, int msg, IntPtr wParam, IntPtr lParam);
-
-    [LibraryImport("user32.dll")]
-    private static partial int RegisterHotKey(IntPtr hwnd, int id, uint modifiers, uint key);
-
-    [LibraryImport("user32.dll")]
-    private static partial int UnregisterHotKey(IntPtr hwnd, int id);
-
-    [LibraryImport("kernel32.dll")]
-    private static partial uint GetCurrentThreadId();
-
-    [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
-    private static partial IntPtr GetModuleHandle(string? module);
 }

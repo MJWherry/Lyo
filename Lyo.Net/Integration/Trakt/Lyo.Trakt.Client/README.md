@@ -2,9 +2,11 @@
 
 Typed HTTP client for [Trakt](https://trakt.tv/) catalog search and OAuth.
 
-**Archetype C (vendor client).** Catalog calls use `https://api.trakt.tv` with `trakt-api-version: 2` and `trakt-api-key`. OAuth calls use `https://auth.trakt.tv`. The client returns access and refresh tokens and does not store a user bearer. Refresh tokens are single-use.
+**Archetype C (vendor client).** Catalog calls use `https://api.trakt.tv` with `trakt-api-version: 2` and `trakt-api-key`. OAuth calls use `https://auth.trakt.tv`. The client
+returns access and refresh tokens and does not store a user bearer. Refresh tokens are single-use.
 
-Device-token polling returns pending, expired, denied, and slow-down as `TraktDevicePoll.Status`. List calls return `TraktPage<T>` from the `X-Pagination-*` headers. Trending and search rows are wrappers. `GET /shows/{id}/seasons/{season}` returns episodes. Show status stays the API string, including `returning series`.
+Device-token polling returns pending, expired, denied, and slow-down as `TraktDevicePoll.Status`. List calls return `TraktPage<T>` from the `X-Pagination-*` headers. Trending and
+search rows are wrappers. `GET /shows/{id}/seasons/{season}` returns episodes. Show status stays the API string, including `returning series`.
 
 ## Features
 

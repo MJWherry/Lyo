@@ -2,7 +2,6 @@ using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 using Lyo.Exceptions.Models;
-using Lyo.Tag;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Tag.Postgres.Tests;
@@ -31,13 +30,10 @@ public sealed class TagPostgresStoreTests(TagPostgresFixture fixture)
         await AddManyAsync(store, entityType, "beta", 3, ct);
         await AddManyAsync(store, entityType, "alpha", 2, ct);
         await AddManyAsync(store, entityType, "gamma", 1, ct);
-
         var top = await store.GetTopTagsAsync(2, TagSort.Count, SortDirection.Desc, entityType, ct: ct);
-
         Assert.Equal(2, top.Count);
         Assert.Equal(("beta", 3), (top[0].Name, top[0].Count));
         Assert.Equal(("alpha", 2), (top[1].Name, top[1].Count));
-
         var tieType = EntityType();
         await AddManyAsync(store, tieType, "cedar", 2, ct);
         await AddManyAsync(store, tieType, "alder", 2, ct);
@@ -54,9 +50,7 @@ public sealed class TagPostgresStoreTests(TagPostgresFixture fixture)
         await AddManyAsync(store, entityType, "beta", 3, ct);
         await AddManyAsync(store, entityType, "alpha", 2, ct);
         await AddManyAsync(store, entityType, "gamma", 1, ct);
-
         var top = await store.GetTopTagsAsync(2, TagSort.Count, SortDirection.Asc, entityType, ct: ct);
-
         Assert.Equal(("gamma", 1), (top[0].Name, top[0].Count));
         Assert.Equal(("alpha", 2), (top[1].Name, top[1].Count));
     }
@@ -70,9 +64,7 @@ public sealed class TagPostgresStoreTests(TagPostgresFixture fixture)
         await AddManyAsync(store, entityType, "zeta", 1, ct);
         await AddManyAsync(store, entityType, "alpha", 3, ct);
         await AddManyAsync(store, entityType, "mid", 2, ct);
-
         var top = await store.GetTopTagsAsync(10, TagSort.Name, SortDirection.Asc, entityType, ct: ct);
-
         Assert.Equal(["alpha", "mid", "zeta"], top.Select(t => t.Name));
     }
 
@@ -85,9 +77,7 @@ public sealed class TagPostgresStoreTests(TagPostgresFixture fixture)
         await AddManyAsync(store, entityType, "zeta", 1, ct);
         await AddManyAsync(store, entityType, "alpha", 3, ct);
         await AddManyAsync(store, entityType, "mid", 2, ct);
-
         var top = await store.GetTopTagsAsync(10, TagSort.Name, SortDirection.Desc, entityType, ct: ct);
-
         Assert.Equal(["zeta", "mid", "alpha"], top.Select(t => t.Name));
     }
 
@@ -101,16 +91,13 @@ public sealed class TagPostgresStoreTests(TagPostgresFixture fixture)
         await AddManyAsync(store, typeA, "shared", 2, ct);
         await AddManyAsync(store, typeA, "shared", 1, ct, "label");
         await AddManyAsync(store, typeB, "shared", 4, ct);
-
         var byType = await store.GetTopTagsAsync(10, forEntityType: typeA, ct: ct);
         Assert.Equal(2, byType.Count);
         Assert.Equal(2, byType.Single(t => t.TagType == "tag").Count);
         Assert.Equal(1, byType.Single(t => t.TagType == "label").Count);
-
         var labels = await store.GetTopTagsAsync(10, tagType: "label", forEntityType: typeA, ct: ct);
         var label = Assert.Single(labels);
         Assert.Equal(1, label.Count);
-
         var otherEntity = await store.GetTopTagsAsync(10, forEntityType: typeB, ct: ct);
         var row = Assert.Single(otherEntity);
         Assert.Equal(4, row.Count);
@@ -124,15 +111,12 @@ public sealed class TagPostgresStoreTests(TagPostgresFixture fixture)
         var entityType = EntityType();
         await AddManyAsync(store, entityType, "alpha", 2, ct);
         await AddManyAsync(store, entityType, "beta", 3, ct);
-
         var all = await store.GetTopTagsAsync(10, name: null, forEntityType: entityType, ct: ct);
         Assert.Equal(2, all.Count);
-
         var named = await store.GetTopTagsAsync(10, name: "alpha", forEntityType: entityType, ct: ct);
         var only = Assert.Single(named);
         Assert.Equal("alpha", only.Name);
         Assert.Equal(2, only.Count);
-
         var blank = await store.GetTopTagsAsync(10, name: "  ", forEntityType: entityType, ct: ct);
         Assert.Equal(2, blank.Count);
     }
@@ -147,15 +131,12 @@ public sealed class TagPostgresStoreTests(TagPostgresFixture fixture)
         await AddManyAsync(store, entityType, "alpine", 3, ct);
         await AddManyAsync(store, entityType, "beta", 4, ct);
         await AddManyAsync(store, entityType, "genre", 1, ct, "label");
-
         var byName = await store.GetTopTagsAsync(10, text: "alp", forEntityType: entityType, ct: ct);
         Assert.Equal(["alpine", "alpha"], byName.Select(t => t.Name).ToArray());
-
         var byType = await store.GetTopTagsAsync(10, text: "lab", forEntityType: entityType, ct: ct);
         var label = Assert.Single(byType);
         Assert.Equal("genre", label.Name);
         Assert.Equal("label", label.TagType);
-
         var all = await store.GetTopTagsAsync(10, text: null, forEntityType: entityType, ct: ct);
         Assert.Equal(4, all.Count);
     }
@@ -169,12 +150,9 @@ public sealed class TagPostgresStoreTests(TagPostgresFixture fixture)
         var subject = EntityRef.ForGuid(entityType, LyoGuid.CreateV7());
         await store.AddTagAsync(subject, "gone", ct: ct);
         await store.AddTagAsync(EntityRef.ForGuid(entityType, LyoGuid.CreateV7()), "gone", ct: ct);
-
         var before = Assert.Single(await store.GetTopTagsAsync(10, forEntityType: entityType, ct: ct));
         Assert.Equal(2, before.Count);
-
         await store.RemoveTagAsync(subject, "gone", ct: ct);
-
         var after = Assert.Single(await store.GetTopTagsAsync(10, forEntityType: entityType, ct: ct));
         Assert.Equal(1, after.Count);
     }
@@ -188,12 +166,10 @@ public sealed class TagPostgresStoreTests(TagPostgresFixture fixture)
         await AddManyAsync(store, entityType, "beta", 3, ct);
         await AddManyAsync(store, entityType, "alpha", 2, ct);
         await AddManyAsync(store, entityType, "gamma", 1, ct);
-
         var page = await store.GetTopTagsAsync(1, skip: 1, forEntityType: entityType, ct: ct);
         var row = Assert.Single(page);
         Assert.Equal("alpha", row.Name);
         Assert.Equal(2, row.Count);
-
         var pastEnd = await store.GetTopTagsAsync(1, skip: 3, forEntityType: entityType, ct: ct);
         Assert.Empty(pastEnd);
     }

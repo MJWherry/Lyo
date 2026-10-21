@@ -7,9 +7,9 @@ namespace Lyo.Screenshot;
 public sealed class ShotSession(IFrameSource source)
 {
     /// <summary>
-    /// Still returns the first frame as PNG. GIF writes each frame into the animation as it arrives, and keeps the first frame as <see cref="CapturedShot.PreviewPng" />.
-    /// Receipt writes each frame to a temp file and drops it before the next, then stitches one frame at a time and deletes the file.
-    /// Throws <see cref="InvalidOperationException" /> when no frame was captured.
+    /// Still returns the first frame as PNG. GIF writes each frame into the animation as it arrives, and keeps the first frame as <see cref="CapturedShot.PreviewPng" />. Receipt
+    /// writes each frame to a temp file and drops it before the next, then stitches one frame at a time and deletes the file. Throws <see cref="InvalidOperationException" /> when no
+    /// frame was captured.
     /// </summary>
     public async Task<CapturedShot> CaptureAsync(ShotKind kind, CaptureRegion region, int framesPerSecond, bool includeCursor, CancellationToken cancellationToken = default)
     {
@@ -17,6 +17,7 @@ public sealed class ShotSession(IFrameSource source)
         ArgumentHelpers.ThrowIfLessThan(framesPerSecond, 1);
         if (kind == ShotKind.Gif)
             return await CaptureGifAsync(region, framesPerSecond, includeCursor, cancellationToken).ConfigureAwait(false);
+
         if (kind == ShotKind.Receipt)
             return await CaptureReceiptAsync(region, framesPerSecond, includeCursor, cancellationToken).ConfigureAwait(false);
 
@@ -34,12 +35,12 @@ public sealed class ShotSession(IFrameSource source)
                     ShotEncoder.WriteGifFrame(output, frame, framesPerSecond, count == 0);
                     if (count == 0)
                         preview = await ShotEncoder.EncodePngAsync(frame, CancellationToken.None).ConfigureAwait(false);
+
                     count++;
                 }
             }
         }
-        catch (OperationCanceledException) when (count > 0) {
-        }
+        catch (OperationCanceledException) when (count > 0) { }
 
         if (count == 0 || preview is null)
             throw new InvalidOperationException("No frames were captured.");
@@ -81,8 +82,7 @@ public sealed class ShotSession(IFrameSource source)
                     count++;
                 }
             }
-            catch (OperationCanceledException) when (count > 0) {
-            }
+            catch (OperationCanceledException) when (count > 0) { }
 
             if (count == 0)
                 throw new InvalidOperationException("No frames were captured.");
@@ -96,10 +96,8 @@ public sealed class ShotSession(IFrameSource source)
             try {
                 File.Delete(path);
             }
-            catch (IOException) {
-            }
-            catch (UnauthorizedAccessException) {
-            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
         }
     }
 }

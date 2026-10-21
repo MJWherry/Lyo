@@ -6,6 +6,6 @@ namespace Lyo.People.Postgres.Tests;
 
 public sealed class PeoplePostgresFixture : PostgresServiceFixtureBase<PeopleDbContext>
 {
-    protected override void ConfigureServices(IServiceCollection services, string connectionString) =>
-        services.AddPeopleDbContextFactory(new PostgresPeopleOptions { ConnectionString = connectionString, EnableAutoMigrations = true });
+    protected override void ConfigureServices(IServiceCollection services, string connectionString)
+        => services.AddPeopleDbContextFactory(new PostgresPeopleOptions { ConnectionString = connectionString, EnableAutoMigrations = true });
 }

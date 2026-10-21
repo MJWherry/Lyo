@@ -7,6 +7,5 @@ namespace Lyo.Diagram.Postgres.Database;
 public sealed class DiagramDbContextFactory : IDesignTimeDbContextFactory<DiagramDbContext>
 {
     /// <inheritdoc />
-    public DiagramDbContext CreateDbContext(string[] args)
-        => new(PostgresDesignTime.CreateOptions<DiagramDbContext>("DIAGRAM_CONNECTION_STRING", PostgresDiagramOptions.Schema));
+    public DiagramDbContext CreateDbContext(string[] args) => new(PostgresDesignTime.CreateOptions<DiagramDbContext>("DIAGRAM_CONNECTION_STRING", PostgresDiagramOptions.Schema));
 }

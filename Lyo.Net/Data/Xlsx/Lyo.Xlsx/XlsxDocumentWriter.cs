@@ -38,13 +38,10 @@ internal sealed class XlsxDocumentWriter : IXlsxDocumentWriter
     {
         ArgumentHelpers.ThrowIfNull(rows);
         var properties = XlsxWriter.ReadableProperties<T>();
-        if (_options.Order != MemberOrder.Defined && properties.Count > 1)
+        if (_options.Order != MemberOrder.Defined && properties.Count > 1) {
             properties = MemberOrderSort.Sort(
-                properties,
-                static property => property.Name,
-                static property => property.GetCustomAttribute<MemberOrderAttribute>()?.Order,
-                _options.Order,
-                _options.OrderNames);
+                properties, static property => property.Name, static property => property.GetCustomAttribute<MemberOrderAttribute>()?.Order, _options.Order, _options.OrderNames);
+        }
 
         WriteSheet(sheetName, XlsxWriter.HeaderNames(properties), XlsxWriter.RowsFromProperties(rows, properties), ct);
     }

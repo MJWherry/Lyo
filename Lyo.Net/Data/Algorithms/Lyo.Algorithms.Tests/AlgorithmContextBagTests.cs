@@ -8,7 +8,6 @@ public class AlgorithmContextBagTests
     public void Set_DottedKey_Throws()
     {
         var bag = new AlgorithmContextBag();
-
         Assert.Throws<ArgumentException>(() => bag.Set("Docket.Number", 1));
         Assert.Throws<ArgumentException>(() => bag.Set("Docket.Number", () => 1));
     }
@@ -18,12 +17,13 @@ public class AlgorithmContextBagTests
     {
         var bag = new AlgorithmContextBag();
         var calls = 0;
-        bag.Set("Atk", () => {
-            calls++;
-            return 10d;
-        });
-        var compiled = _compiler.Compile<AlgorithmContextBag, double>("Atk * 2");
+        bag.Set(
+            "Atk", () => {
+                calls++;
+                return 10d;
+            });
 
+        var compiled = _compiler.Compile<AlgorithmContextBag, double>("Atk * 2");
         Assert.Equal(20d, compiled.Data!.Execute(bag));
         Assert.Equal(20d, compiled.Data.Execute(bag));
         Assert.Equal(1, calls);
@@ -36,7 +36,6 @@ public class AlgorithmContextBagTests
         bag.Set("Def", 3d);
         bag.Set("Atk", current => current.GetRequired<double>("Def") * 2);
         var compiled = _compiler.Compile<AlgorithmContextBag, double>("Atk + 1");
-
         Assert.Equal(7d, compiled.Data!.Execute(bag));
     }
 
@@ -45,7 +44,6 @@ public class AlgorithmContextBagTests
     {
         var bag = new AlgorithmContextBag();
         bag.Set("Atk", "15");
-
         Assert.True(bag.TryGetAs<double>("Atk", out var value));
         Assert.Equal(15d, value);
     }

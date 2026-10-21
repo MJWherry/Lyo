@@ -1,9 +1,9 @@
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Encryption;
 using Lyo.FileMetadataStore.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.FileMetadataStore.Tests;
 
@@ -379,9 +379,7 @@ public abstract class FileMetadataStoreContractTests
             await store.SaveMetadataAsync(row.Id, row, TestCt);
 
         await store.DeleteMetadataAsync(tombstoned.Id, TestCt);
-
         var expired = await store.ListPendingDirectUploadsAsync(now.AddHours(-1), 1000, TestCt);
-
         Assert.Contains(expired, r => r.Id == stale.Id);
         Assert.DoesNotContain(expired, r => r.Id == fresh.Id || r.Id == finalized.Id || r.Id == tombstoned.Id);
     }

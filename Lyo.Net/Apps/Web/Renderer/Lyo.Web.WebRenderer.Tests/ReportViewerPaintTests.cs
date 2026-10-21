@@ -12,7 +12,7 @@ public sealed class ReportViewerPaintTests
     [Fact]
     public void GetRootStyles_PreviewLayout_HasNoDesignRing()
     {
-        var paint = new ReportViewPainter(new Layout { Padding = "12px" });
+        var paint = new ReportViewPainter(new() { Padding = "12px" });
         var css = paint.GetRootStyles();
         Assert.DoesNotContain("outline", css, StringComparison.Ordinal);
         Assert.DoesNotContain("grab", css, StringComparison.Ordinal);
@@ -23,10 +23,7 @@ public sealed class ReportViewerPaintTests
     public async Task RenderToHtmlAsync_ReportViewer_HasNoDesignChrome()
     {
         var renderer = WebRendererTestHost.CreateService();
-        var report = new Report<object> {
-            Title = "Quarterly",
-            Sections = [new() { Title = "Body", Controls = [new Block { Content = "Hello block" }] }]
-        };
+        var report = new Report<object> { Title = "Quarterly", Sections = [new() { Title = "Body", Controls = [new Block { Content = "Hello block" }] }] };
         var html = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = report }, TestCt);
         Assert.Contains("Hello block", html, StringComparison.Ordinal);
         Assert.DoesNotContain("cursor: grab", html, StringComparison.Ordinal);
@@ -39,17 +36,17 @@ public sealed class ReportViewerPaintTests
     public void P_PreviewParameters_InterpolateWithoutMutating()
     {
         var block = new Block { Content = "Hello {Name}" };
-        var paint = new ReportViewPainter(new Layout(), previewParameters: new Dictionary<string, string?> { ["Name"] = "Ada" });
+        var paint = new ReportViewPainter(new(), previewParameters: new Dictionary<string, string?> { ["Name"] = "Ada" });
         Assert.Equal("Hello Ada", paint.P(block.Content));
         Assert.Equal("Hello {Name}", block.Content);
-        var generate = new ReportViewPainter(new Layout());
+        var generate = new ReportViewPainter(new());
         Assert.Equal("Hello {Name}", generate.P(block.Content));
     }
 
     [Fact]
     public void GetContentBlockStyles_DefaultChartAndComponent_KeepTogether()
     {
-        var paint = new ReportViewPainter(new Layout());
+        var paint = new ReportViewPainter(new());
         Assert.Contains("break-inside: avoid", paint.GetContentBlockStyles(new() { ContentType = ContentType.Chart, ChartKind = ChartKind.Bar }), StringComparison.Ordinal);
         Assert.Contains("break-inside: avoid", paint.GetContentBlockStyles(new() { ContentType = ContentType.Component, ComponentType = "X" }), StringComparison.Ordinal);
         Assert.DoesNotContain("break-inside", paint.GetContentBlockStyles(new() { ContentType = ContentType.PageBreak }), StringComparison.Ordinal);
@@ -58,27 +55,27 @@ public sealed class ReportViewerPaintTests
     [Fact]
     public void GetTableWrapperStyles_DefaultTable_SplitsUnlessKeepTogether()
     {
-        var paint = new ReportViewPainter(new Layout());
-        Assert.DoesNotContain("break-inside", paint.GetTableWrapperStyles(new Table()), StringComparison.Ordinal);
-        Assert.Contains("break-inside: avoid", paint.GetTableWrapperStyles(new Table { KeepTogether = true }), StringComparison.Ordinal);
+        var paint = new ReportViewPainter(new());
+        Assert.DoesNotContain("break-inside", paint.GetTableWrapperStyles(new()), StringComparison.Ordinal);
+        Assert.Contains("break-inside: avoid", paint.GetTableWrapperStyles(new() { KeepTogether = true }), StringComparison.Ordinal);
     }
 
     [Fact]
     public void GetGridWrapperStyles_DefaultGrid_IsDisplayGridAndKeepTogether()
     {
-        var paint = new ReportViewPainter(new Layout());
-        var css = paint.GetGridWrapperStyles(new Grid());
+        var paint = new ReportViewPainter(new());
+        var css = paint.GetGridWrapperStyles(new());
         Assert.Contains("display:grid", css.Replace(" ", string.Empty), StringComparison.Ordinal);
         Assert.Contains("repeat(2, 1fr)", css, StringComparison.Ordinal);
         Assert.Contains("break-inside: avoid", css, StringComparison.Ordinal);
-        Assert.DoesNotContain("break-inside", paint.GetGridWrapperStyles(new Grid { KeepTogether = false }), StringComparison.Ordinal);
+        Assert.DoesNotContain("break-inside", paint.GetGridWrapperStyles(new() { KeepTogether = false }), StringComparison.Ordinal);
     }
 
     [Fact]
     public void GetGridWrapperStyles_BareIntegerTemplate_UsesColumnCount()
     {
-        var paint = new ReportViewPainter(new Layout());
-        var css = paint.GetGridWrapperStyles(new Grid { ColumnCount = 2, TemplateColumns = "2" });
+        var paint = new ReportViewPainter(new());
+        var css = paint.GetGridWrapperStyles(new() { ColumnCount = 2, TemplateColumns = "2" });
         Assert.Contains("repeat(2, 1fr)", css, StringComparison.Ordinal);
         Assert.DoesNotContain("grid-template-columns:2", css.Replace(" ", string.Empty), StringComparison.Ordinal);
     }
@@ -86,8 +83,8 @@ public sealed class ReportViewerPaintTests
     [Fact]
     public void GetGridWrapperStyles_TrackList_IsKept()
     {
-        var paint = new ReportViewPainter(new Layout());
-        var css = paint.GetGridWrapperStyles(new Grid { TemplateColumns = "1fr 2fr" });
+        var paint = new ReportViewPainter(new());
+        var css = paint.GetGridWrapperStyles(new() { TemplateColumns = "1fr 2fr" });
         Assert.Contains("grid-template-columns: 1fr 2fr", css, StringComparison.Ordinal);
     }
 
@@ -95,20 +92,17 @@ public sealed class ReportViewerPaintTests
     public async Task RenderToHtmlAsync_InteractiveGrid_DoesNotSpanDropSlotsAcrossColumns()
     {
         var renderer = WebRendererTestHost.CreateService();
-        var grid = new Grid {
-            ColumnCount = 2,
-            Controls = [new Card { Label = "A", Value = "1" }, new Card { Label = "B", Value = "2" }]
-        };
+        var grid = new Grid { ColumnCount = 2, Controls = [new Card { Label = "A", Value = "1" }, new Card { Label = "B", Value = "2" }] };
         var section = new Section { Controls = [grid] };
         var sink = new GridDropSink();
         var html = await renderer.RenderToHtmlAsync<ReportBodyItemView>(
             new() {
-                ["Painter"] = new ReportViewPainter(new Layout()),
+                ["Painter"] = new ReportViewPainter(new()),
                 ["Item"] = new SectionBodyItem { Kind = SectionBodyKind.Control, Section = section, Control = grid },
                 ["OnHit"] = EventCallback.Factory.Create<ReportDesignHit>(sink, sink.OnHit),
                 ["OnCardDrop"] = EventCallback.Factory.Create<ReportDesignCardDrop>(sink, sink.OnCardDrop)
-            },
-            TestCt);
+            }, TestCt);
+
         Assert.Contains("display:grid", html.Replace(" ", string.Empty), StringComparison.Ordinal);
         Assert.Contains("repeat(2, 1fr)", html, StringComparison.Ordinal);
         Assert.DoesNotContain("grid-column: 1 / -1", html, StringComparison.Ordinal);
@@ -125,20 +119,38 @@ public sealed class ReportViewerPaintTests
                 new() {
                     Title = "Body",
                     Controls = [
-                        new Block { ContentType = ContentType.Chart, ChartKind = ChartKind.Bar, Caption = "Sales", ListItems = ["A|1"] },
+                        new Block {
+                            ContentType = ContentType.Chart,
+                            ChartKind = ChartKind.Bar,
+                            Caption = "Sales",
+                            ListItems = ["A|1"]
+                        },
                         new Block { ContentType = ContentType.Component, ComponentType = "Missing.Type" },
                         new Table { Title = "Split me", Columns = [new() { Header = "H" }], Rows = [new() { Cells = ["v"] }] }
                     ]
                 }
             ]
         };
+
         var html = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = report }, TestCt);
         Assert.Contains("break-inside: avoid", html, StringComparison.Ordinal);
         Assert.Contains("<table", html, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("lyo-design", html, StringComparison.Ordinal);
         var tableOn = new Report<object> {
-            Sections = [new() { Controls = [new Table { Title = "Together", KeepTogether = true, Columns = [new() { Header = "H" }], Rows = [new() { Cells = ["v"] }] }] }]
+            Sections = [
+                new() {
+                    Controls = [
+                        new Table {
+                            Title = "Together",
+                            KeepTogether = true,
+                            Columns = [new() { Header = "H" }],
+                            Rows = [new() { Cells = ["v"] }]
+                        }
+                    ]
+                }
+            ]
         };
+
         var together = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = tableOn }, TestCt);
         Assert.Contains("break-inside: avoid", together, StringComparison.Ordinal);
     }
@@ -159,6 +171,7 @@ public sealed class ReportViewerPaintTests
                 }
             ]
         };
+
         var html = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = report }, TestCt);
         Assert.Contains("Bill to", html, StringComparison.Ordinal);
         Assert.Contains("Acme", html, StringComparison.Ordinal);
@@ -176,7 +189,7 @@ public sealed class ReportViewerPaintTests
     {
         var section = new Section { Styles = { ["background"] = "url(javascript:alert(1))" } };
         var block = new Block { Styles = { ["color"] = "expression(alert(1))" } };
-        var paint = new ReportViewPainter(new Layout());
+        var paint = new ReportViewPainter(new());
         Assert.DoesNotContain("javascript", paint.GetSectionStyles(section, 0), StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("expression", paint.GetContentBlockStyles(block), StringComparison.OrdinalIgnoreCase);
     }
@@ -191,15 +204,15 @@ public sealed class ReportViewerPaintTests
             Columns = [new() { Header = "Name", Field = "Name" }],
             Rows = [new() { Cells = ["stored"] }]
         };
+
         var heading = new Section { Title = "Intro", Controls = [new Block { ContentType = ContentType.Heading, Content = "Detail", Level = 3 }, toc, table] };
-        var paint = new ReportViewPainter(
-            new Layout(),
-            previewParameters: new Dictionary<string, string?> { ["Lines"] = """[{"Name":"Ada"}]""" },
-            previewSections: [heading]);
-        var html = await RenderPaintAsync(paint, (b, p) => {
-            p.WriteTableOfContents(b, toc);
-            p.WriteTable(b, table);
-        });
+        var paint = new ReportViewPainter(new(), previewParameters: new Dictionary<string, string?> { ["Lines"] = """[{"Name":"Ada"}]""" }, previewSections: [heading]);
+        var html = await RenderPaintAsync(
+            paint, (b, p) => {
+                p.WriteTableOfContents(b, toc);
+                p.WriteTable(b, table);
+            });
+
         Assert.Contains("Intro", html, StringComparison.Ordinal);
         Assert.Contains("Detail", html, StringComparison.Ordinal);
         Assert.Contains("Ada", html, StringComparison.Ordinal);
@@ -211,9 +224,9 @@ public sealed class ReportViewerPaintTests
     public async Task WriteContentBlock_PageBreak_PlaceholderOnlyInPreview()
     {
         var block = new Block { ContentType = ContentType.PageBreak };
-        var generate = await RenderPaintAsync(new ReportViewPainter(new Layout()), (b, p) => p.WriteContentBlock(b, block));
+        var generate = await RenderPaintAsync(new(new()), (b, p) => p.WriteContentBlock(b, block));
         Assert.DoesNotContain("Page break", generate, StringComparison.Ordinal);
-        var preview = await RenderPaintAsync(new ReportViewPainter(new Layout(), previewParameters: new Dictionary<string, string?>()), (b, p) => p.WriteContentBlock(b, block));
+        var preview = await RenderPaintAsync(new(new(), previewParameters: new Dictionary<string, string?>()), (b, p) => p.WriteContentBlock(b, block));
         Assert.Contains("Page break", preview, StringComparison.Ordinal);
     }
 
@@ -221,7 +234,7 @@ public sealed class ReportViewerPaintTests
     public async Task WriteComponent_PreviewType_InterpolatesWithoutMutating()
     {
         var block = new Block { ContentType = ContentType.Component, ComponentType = "{TypeName}" };
-        var paint = new ReportViewPainter(new Layout(), previewParameters: new Dictionary<string, string?> { ["TypeName"] = "Missing.Preview.Type" });
+        var paint = new ReportViewPainter(new(), previewParameters: new Dictionary<string, string?> { ["TypeName"] = "Missing.Preview.Type" });
         var html = await RenderPaintAsync(paint, (b, p) => p.WriteComponent(b, block));
         Assert.Contains("Missing.Preview.Type", html, StringComparison.Ordinal);
         Assert.Equal("{TypeName}", block.ComponentType);
@@ -233,9 +246,10 @@ public sealed class ReportViewerPaintTests
         var renderer = WebRendererTestHost.CreateService();
         var report = new Report<object> {
             Title = "Paged",
-            Layout = new Layout { PageSize = "Letter", Margin = "1in" },
+            Layout = new() { PageSize = "Letter", Margin = "1in" },
             Sections = [new() { Title = "Body", Styles = { ["background"] = "url(javascript:alert(1))" }, Controls = [new Block { Content = "Hello" }] }]
         };
+
         var html = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = report }, TestCt);
         Assert.Contains("@page", html, StringComparison.Ordinal);
         Assert.DoesNotContain("javascript", html, StringComparison.OrdinalIgnoreCase);
@@ -259,6 +273,7 @@ public sealed class ReportViewerPaintTests
                 }
             ]
         };
+
         var html = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = report }, TestCt);
         Assert.Contains("display:grid", html.Replace(" ", string.Empty), StringComparison.Ordinal);
         Assert.Contains("Revenue", html, StringComparison.Ordinal);
@@ -273,7 +288,6 @@ public sealed class ReportViewerPaintTests
         Assert.Contains("<table", invoiceHtml, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Invoice", invoiceHtml, StringComparison.Ordinal);
         Assert.Contains("display:grid", invoiceHtml.Replace(" ", string.Empty), StringComparison.Ordinal);
-
         var galleryHtml = await renderer.RenderToHtmlAsync<ReportViewer<object>>(new() { ["Report"] = ReportDesignTemplates.ControlsGallery() }, TestCt);
         Assert.Contains("<table", galleryHtml, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Period", galleryHtml, StringComparison.Ordinal);
@@ -281,8 +295,7 @@ public sealed class ReportViewerPaintTests
     }
 
     private static Task<string> RenderPaintAsync(ReportViewPainter paint, Action<RenderTreeBuilder, ReportViewPainter> draw)
-        => WebRendererTestHost.CreateService()
-            .RenderToHtmlAsync<ReportPaintProbe>(new() { ["Paint"] = paint, ["Draw"] = draw }, TestCt);
+        => WebRendererTestHost.CreateService().RenderToHtmlAsync<ReportPaintProbe>(new() { ["Paint"] = paint, ["Draw"] = draw }, TestCt);
 
     private sealed class GridDropSink
     {

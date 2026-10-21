@@ -9,7 +9,7 @@ public sealed class LyoBrowserTimeZone(IJsInterop js) : ILyoTimeZone
     private readonly SemaphoreSlim _gate = new(1, 1);
     private TimeZoneInfo? _zone;
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public async Task<TimeZoneInfo> GetAsync(CancellationToken cancellationToken = default)
     {
         ArgumentHelpers.ThrowIfNull(js);

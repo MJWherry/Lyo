@@ -9,9 +9,8 @@ using Lyo.Reporting.Models.Response;
 namespace Lyo.Reporting.Models.Composition;
 
 /// <summary>
-/// Binds generation or example parameter values into a report composition: interpolates <c>{Key}</c> placeholders and hides blocks whose
-/// <c>VisibleWhen</c> condition fails. Call this before generate or file render so the viewer stays a dumb layout engine. The design canvas
-/// interpolates at paint time on the live graph instead of cloning.
+/// Binds generation or example parameter values into a report composition: interpolates <c>{Key}</c> placeholders and hides blocks whose <c>VisibleWhen</c> condition fails.
+/// Call this before generate or file render so the viewer stays a dumb layout engine. The design canvas interpolates at paint time on the live graph instead of cloning.
 /// </summary>
 public static class ReportCompositionProcessor
 {
@@ -38,8 +37,7 @@ public static class ReportCompositionProcessor
     }
 
     /// <summary>Binds using generation-parameter rows (null or empty is treated as no values).</summary>
-    public static Report<object> BindJson(string json, IEnumerable<ReportGenerationParameterRes>? parameters)
-        => BindJson(json, ToMap(parameters));
+    public static Report<object> BindJson(string json, IEnumerable<ReportGenerationParameterRes>? parameters) => BindJson(json, ToMap(parameters));
 
     /// <summary>Builds a case-insensitive key/value map from generation parameters.</summary>
     public static IReadOnlyDictionary<string, string?> ToMap(IEnumerable<ReportGenerationParameterRes>? parameters)
@@ -299,7 +297,7 @@ public static class ReportCompositionProcessor
                 if (block.ListItems is { Count: > 0 })
                     continue;
 
-                block.ListItems = [..titles];
+                block.ListItems = [.. titles];
             }
         }
     }
@@ -311,7 +309,9 @@ public static class ReportCompositionProcessor
             if (!string.IsNullOrWhiteSpace(section.Title))
                 yield return section.Title!;
 
-            foreach (var heading in SectionBody.WalkControls(section.Controls).OfType<Block>().Where(b => b.ContentType == ContentType.Heading && !string.IsNullOrWhiteSpace(b.Content)))
+            foreach (var heading in SectionBody.WalkControls(section.Controls)
+                .OfType<Block>()
+                .Where(b => b.ContentType == ContentType.Heading && !string.IsNullOrWhiteSpace(b.Content)))
                 yield return heading.Content!;
 
             foreach (var nested in CollectHeadings(section.Subsections))

@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Components;
 namespace Lyo.Web.Primitives;
 
 /// <summary>
-/// One record as a card: an optional heading, an actions slot, and <see cref="LyoRecordField" /> children for the label/value pairs. Matches the cards the shared
-/// data grids render, so hand-rolled tables wrapped in <see cref="LyoResponsiveTable" /> look the same on a phone as the grids do.
+/// One record as a card: an optional heading, an actions slot, and <see cref="LyoRecordField" /> children for the label/value pairs. Matches the cards the shared data grids
+/// render, so hand-rolled tables wrapped in <see cref="LyoResponsiveTable" /> look the same on a phone as the grids do.
 /// </summary>
 public partial class LyoRecordCard
 {
@@ -44,8 +44,7 @@ public partial class LyoRecordCard
 
     private bool HasHeader => !string.IsNullOrWhiteSpace(Title) || !string.IsNullOrWhiteSpace(Subtitle) || TitleContent is not null || Actions is not null;
 
-    private string CardCssClass
-    {
+    private string CardCssClass {
         get {
             var css = Selected ? "lyo-record-card lyo-record-card-selected" : "lyo-record-card";
             return string.IsNullOrWhiteSpace(Class) ? css : $"{css} {Class}";

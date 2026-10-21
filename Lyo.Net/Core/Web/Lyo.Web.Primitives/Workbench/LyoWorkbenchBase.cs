@@ -3,17 +3,17 @@ using Microsoft.AspNetCore.Components;
 namespace Lyo.Web.Primitives;
 
 /// <summary>
-/// Base class for the interactive <c>*Workbench</c> components (the try-it panels for TTS, barcodes, RabbitMQ, locks, and so on). It owns the transient status banner those panels
-/// all show after an operation: the message is mirrored to a snackbar and clears itself after <see cref="StatusAutoClearDelay" /> unless a newer message arrives sooner.
+/// Base class for the interactive <c>*Workbench</c> components (the try-it panels for TTS, barcodes, RabbitMQ, locks, and so on). It owns the transient status banner those
+/// panels all show after an operation: the message is mirrored to a snackbar and clears itself after <see cref="StatusAutoClearDelay" /> unless a newer message arrives sooner.
 /// </summary>
 /// <remarks>
 /// Inherit and render the banner with <c>LyoWorkbenchStatus</c>:
 /// <code>
 /// @inherits LyoWorkbenchBase
-///
+/// 
 /// &lt;LyoWorkbenchStatus Message="@StatusMessage" Severity="@StatusSeverity"/&gt;
 /// &lt;MudButton OnClick="RunAsync"&gt;Run&lt;/MudButton&gt;
-///
+/// 
 /// @code {
 ///     private async Task RunAsync()
 ///     {
@@ -47,8 +47,8 @@ public abstract class LyoWorkbenchBase : ComponentBase
     protected virtual TimeSpan StatusAutoClearDelay => TimeSpan.FromMilliseconds(2500);
 
     /// <summary>
-    /// Shows <paramref name="message" /> in the panel banner and the snackbar, and schedules it to clear. Safe to call from any handler; the clear is versioned, so a later message
-    /// always beats an earlier one's expiry.
+    /// Shows <paramref name="message" /> in the panel banner and the snackbar, and schedules it to clear. Safe to call from any handler; the clear is versioned, so a later
+    /// message always beats an earlier one's expiry.
     /// </summary>
     /// <param name="message">Text to display.</param>
     /// <param name="severity">Severity driving the banner and snackbar colour.</param>

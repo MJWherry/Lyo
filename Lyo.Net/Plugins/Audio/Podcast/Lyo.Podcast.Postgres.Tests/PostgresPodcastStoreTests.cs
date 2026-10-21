@@ -17,22 +17,19 @@ public sealed class PostgresPodcastStoreTests(PodcastPostgresFixture fixture)
         var show = NewShow($"show-{LyoGuid.CreateV7():N}");
         show.Subtitle = "Weekly";
         show.Seasons = [
-            new PodcastSeason {
+            new() {
                 SeasonNumber = 2,
                 Episodes = [
-                    new PodcastEpisode { EpisodeNumber = 2, Title = "S2E2" },
-                    new PodcastEpisode {
+                    new() { EpisodeNumber = 2, Title = "S2E2" },
+                    new() {
                         EpisodeNumber = 1,
                         Title = "S2E1",
-                        Credits = [new PodcastCredit { DisplayName = "Guest", Role = PodcastCreditRole.Guest, Ordinal = 1 }],
-                        Identifiers = [new PodcastIdentifier { Scheme = PodcastIdentifierSchemes.EpisodeGuid, Value = "EP-ABC", IsPrimary = true }]
+                        Credits = [new() { DisplayName = "Guest", Role = PodcastCreditRole.Guest, Ordinal = 1 }],
+                        Identifiers = [new() { Scheme = PodcastIdentifierSchemes.EpisodeGuid, Value = "EP-ABC", IsPrimary = true }]
                     }
                 ]
             },
-            new PodcastSeason {
-                SeasonNumber = 1,
-                Episodes = [new PodcastEpisode { EpisodeNumber = 1, Title = "S1E1" }]
-            }
+            new() { SeasonNumber = 1, Episodes = [new() { EpisodeNumber = 1, Title = "S1E1" }] }
         ];
 
         await Store.SaveShowAsync(show, ct);
@@ -51,33 +48,20 @@ public sealed class PostgresPodcastStoreTests(PodcastPostgresFixture fixture)
     {
         var ct = TestCt;
         var duplicateSeason = NewShow($"season-dup-{LyoGuid.CreateV7():N}");
-        duplicateSeason.Seasons = [
-            new PodcastSeason { SeasonNumber = 1, Episodes = [] },
-            new PodcastSeason { SeasonNumber = 1, Episodes = [] }
-        ];
+        duplicateSeason.Seasons = [new() { SeasonNumber = 1, Episodes = [] }, new() { SeasonNumber = 1, Episodes = [] }];
         await Assert.ThrowsAsync<ConflictException>(() => Store.SaveShowAsync(duplicateSeason, ct));
-
         var twoSeasons = NewShow($"two-seasons-{LyoGuid.CreateV7():N}");
         twoSeasons.Seasons = [
-            new PodcastSeason { SeasonNumber = 1, Episodes = [new PodcastEpisode { EpisodeNumber = 1, Title = "A" }] },
-            new PodcastSeason { SeasonNumber = 2, Episodes = [new PodcastEpisode { EpisodeNumber = 1, Title = "B" }] }
+            new() { SeasonNumber = 1, Episodes = [new() { EpisodeNumber = 1, Title = "A" }] }, new() { SeasonNumber = 2, Episodes = [new() { EpisodeNumber = 1, Title = "B" }] }
         ];
+
         await Store.SaveShowAsync(twoSeasons, ct);
         var loaded = await Store.GetShowByIdAsync(twoSeasons.Id, ct);
         Assert.NotNull(loaded);
         Assert.Equal(2, loaded.Seasons.Count);
         Assert.All(loaded.Seasons, s => Assert.Equal(1, Assert.Single(s.Episodes).EpisodeNumber));
-
         var duplicateEpisode = NewShow($"ep-dup-{LyoGuid.CreateV7():N}");
-        duplicateEpisode.Seasons = [
-            new PodcastSeason {
-                SeasonNumber = 1,
-                Episodes = [
-                    new PodcastEpisode { EpisodeNumber = 1, Title = "A" },
-                    new PodcastEpisode { EpisodeNumber = 1, Title = "B" }
-                ]
-            }
-        ];
+        duplicateEpisode.Seasons = [new() { SeasonNumber = 1, Episodes = [new() { EpisodeNumber = 1, Title = "A" }, new() { EpisodeNumber = 1, Title = "B" }] }];
         await Assert.ThrowsAsync<ConflictException>(() => Store.SaveShowAsync(duplicateEpisode, ct));
     }
 
@@ -88,20 +72,18 @@ public sealed class PostgresPodcastStoreTests(PodcastPostgresFixture fixture)
         var slug = $"slug-{LyoGuid.CreateV7():N}";
         await Store.SaveShowAsync(NewShow(slug), ct);
         await Assert.ThrowsAsync<ConflictException>(() => Store.SaveShowAsync(NewShow(slug), ct));
-
         var first = NewShow($"itunes-a-{LyoGuid.CreateV7():N}");
-        first.Identifiers = [new PodcastIdentifier { Scheme = PodcastIdentifierSchemes.Itunes, Value = "ABC", IsPrimary = true }];
+        first.Identifiers = [new() { Scheme = PodcastIdentifierSchemes.Itunes, Value = "ABC", IsPrimary = true }];
         await Store.SaveShowAsync(first, ct);
         var second = NewShow($"itunes-b-{LyoGuid.CreateV7():N}");
-        second.Identifiers = [new PodcastIdentifier { Scheme = PodcastIdentifierSchemes.Itunes, Value = "abc", IsPrimary = true }];
+        second.Identifiers = [new() { Scheme = PodcastIdentifierSchemes.Itunes, Value = "abc", IsPrimary = true }];
         await Assert.ThrowsAsync<ConflictException>(() => Store.SaveShowAsync(second, ct));
-
         var custom = NewShow($"custom-a-{LyoGuid.CreateV7():N}");
-        custom.Identifiers = [new PodcastIdentifier { Scheme = PodcastIdentifierSchemes.Custom, Value = "AbC", IsPrimary = true }];
+        custom.Identifiers = [new() { Scheme = PodcastIdentifierSchemes.Custom, Value = "AbC", IsPrimary = true }];
         await Store.SaveShowAsync(custom, ct);
         Assert.Null(await Store.GetShowByIdentifierAsync(PodcastIdentifierSchemes.Custom, "abc", ct));
         var other = NewShow($"custom-b-{LyoGuid.CreateV7():N}");
-        other.Identifiers = [new PodcastIdentifier { Scheme = PodcastIdentifierSchemes.Custom, Value = "abc", IsPrimary = true }];
+        other.Identifiers = [new() { Scheme = PodcastIdentifierSchemes.Custom, Value = "abc", IsPrimary = true }];
         await Store.SaveShowAsync(other, ct);
     }
 
@@ -110,7 +92,7 @@ public sealed class PostgresPodcastStoreTests(PodcastPostgresFixture fixture)
     {
         var ct = TestCt;
         var show = NewShow($"del-{LyoGuid.CreateV7():N}");
-        show.Seasons = [new PodcastSeason { SeasonNumber = 1, Episodes = [new PodcastEpisode { EpisodeNumber = 1, Title = "Pilot" }] }];
+        show.Seasons = [new() { SeasonNumber = 1, Episodes = [new() { EpisodeNumber = 1, Title = "Pilot" }] }];
         await Store.SaveShowAsync(show, ct);
         await Store.DeleteShowAsync(show.Id, ct);
         Assert.Null(await Store.GetShowByIdAsync(show.Id, ct));
@@ -122,19 +104,16 @@ public sealed class PostgresPodcastStoreTests(PodcastPostgresFixture fixture)
         var ct = TestCt;
         var token = $"tr{LyoGuid.CreateV7():N}";
         var other = NewShow($"other-{LyoGuid.CreateV7():N}");
-        other.Seasons = [new PodcastSeason { SeasonNumber = 1, Episodes = [new PodcastEpisode { EpisodeNumber = 1, Title = "Quiet", Transcript = "a quiet unrelated scene" }] }];
+        other.Seasons = [new() { SeasonNumber = 1, Episodes = [new() { EpisodeNumber = 1, Title = "Quiet", Transcript = "a quiet unrelated scene" }] }];
         await Store.SaveShowAsync(other, ct);
-
         var show = NewShow($"keep-{LyoGuid.CreateV7():N}");
-        show.Seasons = [new PodcastSeason { SeasonNumber = 1, Episodes = [new PodcastEpisode { EpisodeNumber = 1, Title = "Pilot", Transcript = $"the witness says {token} aloud" }] }];
+        show.Seasons = [new() { SeasonNumber = 1, Episodes = [new() { EpisodeNumber = 1, Title = "Pilot", Transcript = $"the witness says {token} aloud" }] }];
         await Store.SaveShowAsync(show, ct);
-
         var loaded = await Store.GetShowByIdAsync(show.Id, ct);
         Assert.NotNull(loaded);
         Assert.Null(loaded.Seasons[0].Episodes[0].Transcript);
         await Store.SaveShowAsync(loaded, ct);
-
-        var hits = await Store.SearchTranscriptsAsync(new PodcastTranscriptQuery { FullText = token }, ct);
+        var hits = await Store.SearchTranscriptsAsync(new() { FullText = token }, ct);
         var hit = Assert.Single(hits);
         Assert.Equal(show.Id, hit.ShowId);
         Assert.Equal(loaded.Seasons[0].Episodes[0].Id, hit.EpisodeId);
@@ -160,10 +139,9 @@ public sealed class PostgresPodcastStoreTests(PodcastPostgresFixture fixture)
         await Store.SaveShowAsync(ongoing, ct);
         await Store.SaveShowAsync(hiatus, ct);
         await Store.SaveShowAsync(unknown, ct);
-
-        var results = await Store.SearchShowsAsync(new PodcastShowQuery { TitleContains = prefix, Status = PodcastShowStatus.Ongoing }, ct);
+        var results = await Store.SearchShowsAsync(new() { TitleContains = prefix, Status = PodcastShowStatus.Ongoing }, ct);
         Assert.Equal(ongoing.Id, Assert.Single(results).Id);
-        Assert.Empty(await Store.SearchShowsAsync(new PodcastShowQuery { FilterIds = [] }, ct));
+        Assert.Empty(await Store.SearchShowsAsync(new() { FilterIds = [] }, ct));
     }
 
     [Fact]
@@ -178,6 +156,5 @@ public sealed class PostgresPodcastStoreTests(PodcastPostgresFixture fixture)
         await Assert.ThrowsAsync<UnprocessableEntityException>(() => Store.SaveGenreAsync(parent, ct));
     }
 
-    private static PodcastShow NewShow(string slug)
-        => new() { Title = slug, Slug = slug };
+    private static PodcastShow NewShow(string slug) => new() { Title = slug, Slug = slug };
 }

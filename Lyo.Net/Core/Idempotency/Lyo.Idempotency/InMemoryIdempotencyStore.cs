@@ -5,16 +5,13 @@ using Lyo.Health;
 
 namespace Lyo.Idempotency;
 
-/// <summary>
-/// Process-local idempotency store. One lock covers claim, finish, and sweep. A <see cref="DbTransaction" /> is rejected:
-/// rollback safety exists only on the Postgres store.
-/// </summary>
+/// <summary>Process-local idempotency store. One lock covers claim, finish, and sweep. A <see cref="DbTransaction" /> is rejected: rollback safety exists only on the Postgres store.</summary>
 public sealed class InMemoryIdempotencyStore : IIdempotencyStore
 {
+    private readonly List<IdempotencyEntry> _entries = [];
+    private readonly object _gate = new();
     private readonly IdempotencyOptions _options;
     private readonly Func<DateTime> _utcNow;
-    private readonly object _gate = new();
-    private readonly List<IdempotencyEntry> _entries = [];
 
     /// <summary>Builds a store. <paramref name="utcNow" /> defaults to <see cref="DateTime.UtcNow" />.</summary>
     public InMemoryIdempotencyStore(IdempotencyOptions? options = null, Func<DateTime>? utcNow = null)
@@ -135,8 +132,7 @@ public sealed class InMemoryIdempotencyStore : IIdempotencyStore
         entry.ResponseOmitted = false;
     }
 
-    private IdempotencyEntry? FindLive(string scope, string key)
-        => _entries.FirstOrDefault(e => e.Scope == scope && e.Key == key && e.IsLive);
+    private IdempotencyEntry? FindLive(string scope, string key) => _entries.FirstOrDefault(e => e.Scope == scope && e.Key == key && e.IsLive);
 
     private IdempotencyEntry NewApiEntry(string scope, string key, byte[] requestHash, DateTime expiry, DateTime now)
         => new() {

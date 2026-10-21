@@ -1,14 +1,19 @@
 # Lyo.Api.Client
 
-Lyo-specific HTTP client on top of `LyoHttpClient`. Non-success responses throw `ApiException` with RFC 7807 problem-details when the body parses. `QueryProjectAsync` / `QueryConcreteAsync` / `QuerySqlAsync` POST to `{route}/QueryProject`, `{route}/QueryConcrete`, and `{route}/QuerySql`.
+Lyo-specific HTTP client on top of `LyoHttpClient`. Non-success responses throw `ApiException` with RFC 7807 problem-details when the body parses. `QueryProjectAsync` /
+`QueryConcreteAsync` / `QuerySqlAsync` POST to `{route}/QueryProject`, `{route}/QueryConcrete`, and `{route}/QuerySql`.
 
-Vendor clients (Endato, Typecast, ESPN, Discord, Google Maps) now inherit `LyoHttpClient` in `Lyo.Http.Client`. Config.Api.Client stays on `ApiClient`. Resolve via `IHttpClientFactory`.
+Vendor clients (Endato, Typecast, ESPN, Discord, Google Maps) now inherit `LyoHttpClient` in `Lyo.Http.Client`. Config.Api.Client stays on `ApiClient`. Resolve via
+`IHttpClientFactory`.
 
 ## Features
 
-- **`IApiClient` / `ApiClient`.** Subclass of `LyoHttpClient`. JSON verbs inherited; `EnsureSuccessAsync` maps problem-details to `ApiException`. User-Agent is `Lyo/{version}` (no UA rotation).
-- **`QueryProjectAsync` / `QueryConcreteAsync` / `QuerySqlAsync`.** `POST {route}/QueryProject`, `POST {route}/QueryConcrete`, and `POST {route}/QuerySql`. QuerySql returns the SQL preview and does not run the query.
-- **`ApiRouteBuilder`.** `Build(routePrefix, relativePath)` applies the host's configured mount point, and `WithIncludes(route, includes)` appends one `include` query parameter per navigation to expand.
+- **`IApiClient` / `ApiClient`.** Subclass of `LyoHttpClient`. JSON verbs inherited; `EnsureSuccessAsync` maps problem-details to `ApiException`. User-Agent is `Lyo/{version}` (no
+  UA rotation).
+- **`QueryProjectAsync` / `QueryConcreteAsync` / `QuerySqlAsync`.** `POST {route}/QueryProject`, `POST {route}/QueryConcrete`, and `POST {route}/QuerySql`. QuerySql returns the SQL
+  preview and does not run the query.
+- **`ApiRouteBuilder`.** `Build(routePrefix, relativePath)` applies the host's configured mount point, and `WithIncludes(route, includes)` appends one `include` query parameter per
+  navigation to expand.
 - **`AddLyoApiClient`.** Factory registration for `IApiClient` plus optional correlation handler. Vendor `AddLyoApiClient<T,T>` is obsolete — use `AddLyoHttpClient`.
 
 ## Examples
@@ -53,7 +58,8 @@ services.AddEndatoClientFromConfiguration(configuration)
 
 **Files**
 
-- **`GetFileAsync` / `GetFileWithTypeAsync`** buffer the payload as the `HttpClient` already decoded it. Use `AddLyoApiClient` / `LyoHttpClientHandler` so gzip/br/deflate transport encoding is stripped. A stored `.gz` without `Content-Encoding` is left as-is.
+- **`GetFileAsync` / `GetFileWithTypeAsync`** buffer the payload as the `HttpClient` already decoded it. Use `AddLyoApiClient` / `LyoHttpClientHandler` so gzip/br/deflate transport
+  encoding is stripped. A stored `.gz` without `Content-Encoding` is left as-is.
 - `GetFileStreamAsync` returns **`Stream` + filename + length** without forcing memory spikes. Dispose the stream to release the response.
 - `PostFileAsAsync` overloads stream/byte[]/path + `FileTypeInfo` for MIME + extension hints.
 
@@ -71,38 +77,44 @@ automatically.
 Bind from `ApiClientOptions.SectionName = "ApiClient"`. Clients for a specific integration (Discord, Endato, ESPN, Typecast, …) subclass the options type and shadow `SectionName`
 so transport flags land under that integration's own section.
 
-| Property | Default | Description |
-| --------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `BaseUrl` | `null` | When set, becomes `HttpClient.BaseAddress` (trailing `/` enforced); relative URIs resolve against it. |
-| `EnsureStatusCode` | `true` | Calls `EnsureSuccessStatusCode` after each response. Set `false` when the server returns problem-details bodies on non-success codes that the caller wants to inspect. |
-| `AcceptEncodings` | `["gzip","deflate","br"]`* | Sent as `Accept-Encoding`. *On `netstandard2.0` the default drops `br` (Brotli is not built in there). Duplicates are removed and normalized to lowercase. |
-| `EnableAutoResponseDecompression` | `true` | Enables `LyoHttpClientHandler.AutomaticDecompression` for `gzip`/`deflate`/`br` when the client uses that primary handler (`AddLyoApiClient` / `CreateHttpClient`). Replacing the primary handler drops decompression unless the replacement sets it. |
-| `RequestCompression` | `None` | `LyoHttpRequestCompressionType` for outgoing JSON bodies: `None`, `Gzip`, `Deflate`, `Brotli`. Sets `Content-Encoding` accordingly. |
-| `RequestCompressionMinBytes` | `1024` | Minimum serialized payload size before compression applies (skips CPU on tiny bodies). |
+| Property                          | Default                    | Description                                                                                                                                                                                                                                           |
+|-----------------------------------|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `BaseUrl`                         | `null`                     | When set, becomes `HttpClient.BaseAddress` (trailing `/` enforced); relative URIs resolve against it.                                                                                                                                                 |
+| `EnsureStatusCode`                | `true`                     | Calls `EnsureSuccessStatusCode` after each response. Set `false` when the server returns problem-details bodies on non-success codes that the caller wants to inspect.                                                                                |
+| `AcceptEncodings`                 | `["gzip","deflate","br"]`* | Sent as `Accept-Encoding`. *On `netstandard2.0` the default drops `br` (Brotli is not built in there). Duplicates are removed and normalized to lowercase.                                                                                            |
+| `EnableAutoResponseDecompression` | `true`                     | Enables `LyoHttpClientHandler.AutomaticDecompression` for `gzip`/`deflate`/`br` when the client uses that primary handler (`AddLyoApiClient` / `CreateHttpClient`). Replacing the primary handler drops decompression unless the replacement sets it. |
+| `RequestCompression`              | `None`                     | `LyoHttpRequestCompressionType` for outgoing JSON bodies: `None`, `Gzip`, `Deflate`, `Brotli`. Sets `Content-Encoding` accordingly.                                                                                                                   |
+| `RequestCompressionMinBytes`      | `1024`                     | Minimum serialized payload size before compression applies (skips CPU on tiny bodies).                                                                                                                                                                |
 
 Request compression only works if the host also registers `AddRequestDecompression` (ASP.NET Core 7+) and can decode the compressed body.
 
 ## Compression and performance
 
 - Adds `Accept-Encoding` headers from `AcceptEncodings` (duplicates removed, case normalized).
-- Uses `LyoHttpClientHandler` as the `IHttpClientFactory` primary handler (`UseLyoHttpClientHandler` / `UseLyoHttpClientHandler<TOptions>`). Other typed clients (Config, etc.) should call the same helper instead of copying `AutomaticDecompression` setup.
+- Uses `LyoHttpClientHandler` as the `IHttpClientFactory` primary handler (`UseLyoHttpClientHandler` / `UseLyoHttpClientHandler<TOptions>`). Other typed clients (Config, etc.)
+  should call the same helper instead of copying `AutomaticDecompression` setup.
 - JSON methods still sniff gzip/deflate magic bytes and strip a BOM. File/binary methods do not: they return whatever the handler already decoded.
-- A later `ConfigurePrimaryHttpMessageHandler` replaces decompression. Subclass `LyoHttpClientHandler` or set `AutomaticDecompression` on the replacement. Do not add a second decompressing `DelegatingHandler`.
+- A later `ConfigurePrimaryHttpMessageHandler` replaces decompression. Subclass `LyoHttpClientHandler` or set `AutomaticDecompression` on the replacement. Do not add a second
+  decompressing `DelegatingHandler`.
 - Returns the underlying `IHttpClientBuilder` so callers can chain resilience, message handlers, or named-client overrides.
 
 ## Register in DI
 
-The default `clientName` is `nameof(IApiClient)` for named `HttpClientFactory` resolution. Bind from configuration with the standard `services.Configure<ApiClientOptions>(config.GetSection(ApiClientOptions.SectionName))` if you prefer the section route.
+The default `clientName` is `nameof(IApiClient)` for named `HttpClientFactory` resolution. Bind from configuration with the standard
+`services.Configure<ApiClientOptions>(config.GetSection(ApiClientOptions.SectionName))` if you prefer the section route.
 
 ## Vendor client registration (`AddLyoApiClient<TClient, TOptions>`)
 
-Vendor clients (Endato, Typecast, ESPN Fantasy Football, Discord, Google Maps) inherit `LyoHttpClient` and register with `AddLyoHttpClient<TClient, TOptions>`, which returns `IHttpClientBuilder`.
+Vendor clients (Endato, Typecast, ESPN Fantasy Football, Discord, Google Maps) inherit `LyoHttpClient` and register with `AddLyoHttpClient<TClient, TOptions>`, which returns
+`IHttpClientBuilder`.
 
-The obsolete `AddLyoApiClient<TClient, TOptions>` overloads on this package forward to that factory path so older hosts still compile. Do not use singleton + `GetService<HttpClient>()`.
+The obsolete `AddLyoApiClient<TClient, TOptions>` overloads on this package forward to that factory path so older hosts still compile. Do not use singleton +
+`GetService<HttpClient>()`.
 
 ## Typical integration tests
 
-Stand the API up under `WebApplicationFactory`, talk to it through `IApiClient`, then assert `ApiException.StatusCode` and ProblemDetails payloads with types from [`Lyo.Api.Models`](../Lyo.Api.Models/README.md).
+Stand the API up under `WebApplicationFactory`, talk to it through `IApiClient`, then assert `ApiException.StatusCode` and ProblemDetails payloads with types from [
+`Lyo.Api.Models`](../Lyo.Api.Models/README.md).
 
 ## Related
 

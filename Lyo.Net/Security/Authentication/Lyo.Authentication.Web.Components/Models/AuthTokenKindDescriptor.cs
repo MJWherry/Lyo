@@ -3,8 +3,8 @@ using System.Text.Json.Serialization;
 namespace Lyo.Authentication.Web.Components.Models;
 
 /// <summary>
-/// Mirror of the JSON from <c>GET /tokens/kinds</c>. Tells the UI which token kinds the API understands, whether the current caller may issue each kind, and which
-/// scope they would need to unlock the ones currently disallowed. The components library re-declares this shape so it can stay independent of <c>Lyo.Authentication.AspNetCore</c>.
+/// Mirror of the JSON from <c>GET /tokens/kinds</c>. Tells the UI which token kinds the API understands, whether the current caller may issue each kind, and which scope they
+/// would need to unlock the ones currently disallowed. The components library re-declares this shape so it can stay independent of <c>Lyo.Authentication.AspNetCore</c>.
 /// </summary>
 /// <param name="Kind">Kind name (<c>pat</c>, <c>svc</c>, <c>cli</c>, <c>webhook</c>).</param>
 /// <param name="Description">Human-readable explanation suitable for inline help on the create form.</param>

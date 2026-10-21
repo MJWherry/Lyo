@@ -1,5 +1,4 @@
 using Lyo.Common.Core.Identifiers;
-using Lyo.Encryption;
 using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Models;
 
@@ -30,9 +29,7 @@ public class FileMetadataNameAndVersionTests : IDisposable
         var other = Meta(LyoGuid.CreateV7(), "notes.txt");
         await store.SaveMetadataAsync(match.Id, match, TestCt);
         await store.SaveMetadataAsync(other.Id, other, TestCt);
-
         var found = await store.SearchByNameAsync("report", 20, TestCt);
-
         Assert.Contains(found, row => row.Id == match.Id);
         Assert.DoesNotContain(found, row => row.Id == other.Id);
     }
@@ -43,11 +40,9 @@ public class FileMetadataNameAndVersionTests : IDisposable
         var store = new LocalFileMetadataStore(_root);
         var file = Meta(LyoGuid.CreateV7(), "a.txt") with { SourceFileName = "old-key.bin" };
         await store.SaveMetadataAsync(file.Id, file, TestCt);
-
         var revision = await store.SaveNewVersionAsync(file.Id, "new-key.bin", TestCt);
         var loaded = await store.GetVersionAsync(revision.Id, TestCt);
         var current = await store.GetMetadataAsync(file.Id, TestCt);
-
         Assert.NotNull(loaded);
         Assert.Equal("old-key.bin", loaded.StoredKey);
         Assert.Equal(file.Id, loaded.ParentId);

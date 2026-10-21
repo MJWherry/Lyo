@@ -1,6 +1,8 @@
 # Lyo.Nfc.Pcsc
 
-`AddPcscNfc` registers `PcscNfcReader` as `INfcReader`. Connect with a reader name, or null to use the first reader. On Linux install and start `pcscd` (`libpcsclite`). The APDUs are the ACR122U Type 2 set: GET UID `FF CA 00 00 00`, read four pages `FF B0 00 page 10`, write one page `FF D6 00 page 04` plus four data bytes. This driver does not speak ISO 15693, so it cannot see a Tonie figure.
+`AddPcscNfc` registers `PcscNfcReader` as `INfcReader`. Connect with a reader name, or null to use the first reader. On Linux install and start `pcscd` (`libpcsclite`). The APDUs
+are the ACR122U Type 2 set: GET UID `FF CA 00 00 00`, read four pages `FF B0 00 page 10`, write one page `FF D6 00 page 04` plus four data bytes. This driver does not speak ISO
+15693, so it cannot see a Tonie figure.
 
 ## Features
 

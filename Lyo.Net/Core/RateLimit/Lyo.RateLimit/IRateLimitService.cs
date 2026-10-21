@@ -1,8 +1,8 @@
 namespace Lyo.RateLimit;
 
 /// <summary>
-/// Atomic permit check for one process or, with <c>Lyo.RateLimit.Redis</c>, every host that shares the quota. Never waits. Callers that must wait
-/// sleep on <see cref="RateLimitDecision.RetryAfter" /> and call again.
+/// Atomic permit check for one process or, with <c>Lyo.RateLimit.Redis</c>, every host that shares the quota. Never waits. Callers that must wait sleep on
+/// <see cref="RateLimitDecision.RetryAfter" /> and call again.
 /// </summary>
 public interface IRateLimitService
 {

@@ -9,13 +9,10 @@ internal static class S3UploadServerSideEncryption
     /// <summary>Signed into presigned PUTs when the client declares a SHA-256; S3 rejects a body that does not match it.</summary>
     internal const string ChecksumSha256Header = "x-amz-checksum-sha256";
 
-    /// <summary>
-    /// Headers a V4-signed PUT must send unchanged when the URL came from <see cref="ApplyToPresignedPut" />. Returns
-    /// <see langword="null" /> when no extra signed headers apply.
-    /// </summary>
+    /// <summary>Headers a V4-signed PUT must send unchanged when the URL came from <see cref="ApplyToPresignedPut" />. Returns <see langword="null" /> when no extra signed headers apply.</summary>
     /// <remarks>
-    /// V4 signatures include headers captured at presign time. Changing signed SSE or content-type values after the fact yields
-    /// <c>SignatureDoesNotMatch</c>. An empty map means only <c>Host</c> is required.
+    /// V4 signatures include headers captured at presign time. Changing signed SSE or content-type values after the fact yields <c>SignatureDoesNotMatch</c>. An empty map means
+    /// only <c>Host</c> is required.
     /// </remarks>
     internal static IReadOnlyDictionary<string, string>? BuildRequiredPutHeaders(S3FileStorageOptions o, string? signedContentType, string? checksumSha256Base64 = null)
     {

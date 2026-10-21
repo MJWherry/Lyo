@@ -10,8 +10,8 @@ using Avalonia.Media;
 namespace Lyo.Desktop.Components;
 
 /// <summary>
-/// Read-only JSON document. A JSON body opens as a virtualized tree with search, expand, collapse, and per-node copy.
-/// Anything else stays as text. Network bodies and captured payloads use it.
+/// Read-only JSON document. A JSON body opens as a virtualized tree with search, expand, collapse, and per-node copy. Anything else stays as text. Network bodies and
+/// captured payloads use it.
 /// </summary>
 public class JsonEditor : UserControl
 {
@@ -25,16 +25,13 @@ public class JsonEditor : UserControl
     /// <summary>Document text. JSON opens in the tree. Other text opens as raw.</summary>
     public static readonly StyledProperty<string?> TextProperty = AvaloniaProperty.Register<JsonEditor, string?>(nameof(Text));
 
-    private readonly ObservableCollection<JsonTreeRow> _rows = [];
-    private readonly TextBox _search;
-    private readonly TextBlock _count;
-    private readonly Button _previous;
-    private readonly Button _next;
-    private readonly Button _expand;
     private readonly Button _collapse;
-    private readonly Button _treeButton;
-    private readonly Button _rawButton;
+    private readonly TextBlock _count;
+    private readonly Button _expand;
     private readonly ListBox _list;
+    private readonly Button _next;
+    private readonly Button _previous;
+
     private readonly TextBox _raw = new() {
         IsReadOnly = true,
         AcceptsReturn = true,
@@ -45,27 +42,44 @@ public class JsonEditor : UserControl
         Background = Brushes.Transparent
     };
 
+    private readonly Button _rawButton;
+
+    private readonly ObservableCollection<JsonTreeRow> _rows = [];
+    private readonly TextBox _search;
+    private readonly Button _treeButton;
+
     private JsonTreeDocument? _document;
     private bool _showingTree;
 
+    /// <summary>Document text.</summary>
+    public string? Text {
+        get => GetValue(TextProperty);
+        set => SetValue(TextProperty, value);
+    }
+
     public JsonEditor()
     {
-        _search = new TextBox { PlaceholderText = "Search", MinWidth = 140, VerticalAlignment = VerticalAlignment.Center };
+        _search = new() { PlaceholderText = "Search", MinWidth = 140, VerticalAlignment = VerticalAlignment.Center };
         _search.TextChanged += (_, _) => {
             _document?.Search(_search.Text);
             ShowRows();
         };
-        _count = new TextBlock { Text = "0/0", VerticalAlignment = VerticalAlignment.Center, Opacity = 0.7 };
+
+        _count = new() { Text = "0/0", VerticalAlignment = VerticalAlignment.Center, Opacity = 0.7 };
         _previous = Tool("Prev", () => Step(false));
         _next = Tool("Next", () => Step(true));
-        _expand = Tool("Expand", () => {
-            _document?.ExpandAll();
-            ShowRows();
-        });
-        _collapse = Tool("Collapse", () => {
-            _document?.CollapseAll();
-            ShowRows();
-        });
+        _expand = Tool(
+            "Expand", () => {
+                _document?.ExpandAll();
+                ShowRows();
+            });
+
+        _collapse = Tool(
+            "Collapse", () => {
+                _document?.CollapseAll();
+                ShowRows();
+            });
+
         _treeButton = new() { Content = "Tree", Padding = new(8, 2) };
         _rawButton = new() { Content = "Raw", Padding = new(8, 2) };
         _treeButton.Click += (_, _) => Show(true);
@@ -91,13 +105,6 @@ public class JsonEditor : UserControl
         Show(false);
     }
 
-    /// <summary>Document text.</summary>
-    public string? Text
-    {
-        get => GetValue(TextProperty);
-        set => SetValue(TextProperty, value);
-    }
-
     /// <inheritdoc />
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
@@ -115,15 +122,18 @@ public class JsonEditor : UserControl
             ItemTemplate = new FuncDataTemplate<JsonTreeRow>((row, _) => row == null ? new Panel() : Row(row)),
             ItemsPanel = new FuncTemplate<Panel?>(() => new VirtualizingStackPanel())
         };
+
         ScrollViewer.SetHorizontalScrollBarVisibility(list, ScrollBarVisibility.Disabled);
         ScrollViewer.SetVerticalScrollBarVisibility(list, ScrollBarVisibility.Auto);
         list.ContainerPrepared += (_, e) => {
             if (e.Container is not ListBoxItem item)
                 return;
+
             item.Padding = new(0);
             item.MinHeight = 28;
             item.HorizontalContentAlignment = HorizontalAlignment.Stretch;
         };
+
         return list;
     }
 
@@ -138,6 +148,7 @@ public class JsonEditor : UserControl
         _collapse.IsEnabled = json;
         if (json && !string.IsNullOrWhiteSpace(_search.Text))
             _document!.Search(_search.Text);
+
         ShowRows();
         Show(json);
     }
@@ -146,10 +157,12 @@ public class JsonEditor : UserControl
     {
         if (_document == null)
             return;
+
         if (next)
             _document.NextMatch();
         else
             _document.PreviousMatch();
+
         ShowRows();
         var hit = _rows.FirstOrDefault(row => row.SearchHit);
         if (hit != null)
@@ -168,6 +181,7 @@ public class JsonEditor : UserControl
 
         foreach (var row in _document.VisibleRows)
             _rows.Add(row);
+
         _count.Text = _document.SearchCurrent + "/" + _document.SearchTotal;
         var any = _document.SearchTotal > 0;
         _previous.IsEnabled = any;
@@ -186,13 +200,14 @@ public class JsonEditor : UserControl
         var grid = new Grid {
             Height = 28,
             ColumnSpacing = 6,
-            Margin = new Thickness(4 + row.Depth * 16, 0, 4, 0),
+            Margin = new(4 + row.Depth * 16, 0, 4, 0),
             Background = row.SearchHit ? Hit : Brushes.Transparent
         };
-        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
-        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
-        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
-        grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+
+        grid.ColumnDefinitions.Add(new(GridLength.Auto));
+        grid.ColumnDefinitions.Add(new(GridLength.Auto));
+        grid.ColumnDefinitions.Add(new(GridLength.Star));
+        grid.ColumnDefinitions.Add(new(GridLength.Auto));
         var toggle = new Button {
             Content = !row.Expandable ? "" : row.Expanded ? "▾" : "▸",
             Width = 22,
@@ -202,6 +217,7 @@ public class JsonEditor : UserControl
             Background = Brushes.Transparent,
             VerticalAlignment = VerticalAlignment.Center
         };
+
         if (row.Expandable) {
             var path = row.Path;
             toggle.Click += (_, _) => {
@@ -219,6 +235,7 @@ public class JsonEditor : UserControl
             FontWeight = FontWeight.SemiBold,
             VerticalAlignment = VerticalAlignment.Center
         };
+
         Grid.SetColumn(key, 1);
         grid.Children.Add(key);
         var value = new TextBlock {
@@ -229,9 +246,16 @@ public class JsonEditor : UserControl
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis
         };
+
         Grid.SetColumn(value, 2);
         grid.Children.Add(value);
-        var copy = new Button { Content = "Copy", Padding = new(6, 0), Height = 22, VerticalAlignment = VerticalAlignment.Center };
+        var copy = new Button {
+            Content = "Copy",
+            Padding = new(6, 0),
+            Height = 22,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
         var text = row.CopyText;
         copy.Click += (_, _) => _ = CopyAsync(text);
         Grid.SetColumn(copy, 3);
@@ -239,13 +263,14 @@ public class JsonEditor : UserControl
         return grid;
     }
 
-    private static IBrush Brush(JsonTreeKind kind) => kind switch {
-        JsonTreeKind.String => StringBrush,
-        JsonTreeKind.Number => NumberBrush,
-        JsonTreeKind.Boolean => BooleanBrush,
-        JsonTreeKind.Null => NullBrush,
-        _ => Brushes.White
-    };
+    private static IBrush Brush(JsonTreeKind kind)
+        => kind switch {
+            JsonTreeKind.String => StringBrush,
+            JsonTreeKind.Number => NumberBrush,
+            JsonTreeKind.Boolean => BooleanBrush,
+            JsonTreeKind.Null => NullBrush,
+            var _ => Brushes.White
+        };
 
     private static Button Tool(string text, Action click)
     {
@@ -259,6 +284,7 @@ public class JsonEditor : UserControl
         var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
         if (clipboard == null)
             return;
+
         var transfer = new DataTransfer();
         var item = new DataTransferItem();
         item.SetText(text);

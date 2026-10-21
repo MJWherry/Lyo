@@ -19,10 +19,8 @@ public sealed class ImportResult<T>
     public IReadOnlyList<ImportIssue> Issues { get; init; } = [];
 
     /// <summary>Success, including a partial success.</summary>
-    public static ImportResult<T> Ok(IReadOnlyList<T> rows, IReadOnlyList<ImportIssue>? issues = null)
-        => new() { IsSuccess = true, Rows = rows, Issues = issues ?? [] };
+    public static ImportResult<T> Ok(IReadOnlyList<T> rows, IReadOnlyList<ImportIssue>? issues = null) => new() { IsSuccess = true, Rows = rows, Issues = issues ?? [] };
 
     /// <summary>Document failure. Rows stay empty.</summary>
-    public static ImportResult<T> Fail(string message)
-        => new() { IsSuccess = false, Message = message };
+    public static ImportResult<T> Fail(string message) => new() { IsSuccess = false, Message = message };
 }

@@ -4,9 +4,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace Lyo.Web.Components.ParamTable;
 
-/// <summary>
-/// Value editor for a typed parameter: password when encrypting at run time, Options/AllowedValues select, or <see cref="LyoTypeValueInput" />.
-/// </summary>
+/// <summary>Value editor for a typed parameter: password when encrypting at run time, Options/AllowedValues select, or <see cref="LyoTypeValueInput" />.</summary>
 public partial class LyoParameterValueField
 {
     /// <summary>Stored CLR FullName (or catalog name) for the JSON payload.</summary>

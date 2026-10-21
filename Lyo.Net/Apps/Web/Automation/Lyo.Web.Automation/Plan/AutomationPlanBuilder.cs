@@ -54,8 +54,8 @@ public sealed class AutomationPlanBuilder
     public AutomationPlanBuilder ResizeWindow(int width, int height, string? stepName = null) => SetViewportSize(width, height, stepName);
 
     /// <summary>
-    /// Picks a desktop size from <paramref name="sizes" /> (or <see cref="DesktopDisplaySize.Common" />) with optional ±<paramref name="jitterPixels" />, then resizes.
-    /// Pair with <see cref="Delay" /> if the site should see a pause before the resize.
+    /// Picks a desktop size from <paramref name="sizes" /> (or <see cref="DesktopDisplaySize.Common" />) with optional ±<paramref name="jitterPixels" />, then resizes. Pair with
+    /// <see cref="Delay" /> if the site should see a pause before the resize.
     /// </summary>
     public AutomationPlanBuilder RandomizeViewport(IReadOnlyList<DesktopDisplaySize>? sizes = null, int jitterPixels = 0, string? stepName = null)
     {
@@ -129,8 +129,7 @@ public sealed class AutomationPlanBuilder
         return this;
     }
 
-    /// <summary>Polls for a descendant of an existing element ref (see <see cref="FindDescendantAutomationStep" />). Locator <c>Value</c> may contain <c>{{var}}</c>
-    /// placeholders.</summary>
+    /// <summary>Polls for a descendant of an existing element ref (see <see cref="FindDescendantAutomationStep" />). Locator <c>Value</c> may contain <c>{{var}}</c> placeholders.</summary>
     public AutomationPlanBuilder FindDescendant(string parentRefName, string refName, ElementLocator locator, string? stepName = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(parentRefName);

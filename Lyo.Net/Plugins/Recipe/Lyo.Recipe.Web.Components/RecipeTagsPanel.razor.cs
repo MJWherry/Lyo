@@ -5,6 +5,10 @@ namespace Lyo.Recipe.Web.Components;
 /// <summary>Nested tags for one recipe subject.</summary>
 public partial class RecipeTagsPanel
 {
+    private List<string> _tagNames = [];
+
+    private List<TagRecord> _tags = [];
+
     /// <summary>Typed client.</summary>
     [Parameter]
     [EditorRequired]
@@ -18,9 +22,6 @@ public partial class RecipeTagsPanel
     /// <summary>Subject id.</summary>
     [Parameter]
     public Guid EntityId { get; set; }
-
-    private List<TagRecord> _tags = [];
-    private List<string> _tagNames = [];
 
     protected override Task OnParametersSetAsync() => Reload();
 
@@ -40,8 +41,10 @@ public partial class RecipeTagsPanel
         _tagNames = next;
         foreach (var name in added)
             await RecipeClient.AddTagAsync(ParentRoute, EntityId, new() { Name = name });
+
         foreach (var name in removed)
             await RecipeClient.RemoveTagAsync(ParentRoute, EntityId, name);
+
         await Reload();
     }
 }

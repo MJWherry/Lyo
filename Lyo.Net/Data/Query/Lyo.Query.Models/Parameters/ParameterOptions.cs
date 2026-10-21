@@ -1,14 +1,14 @@
-using Lyo.Parameters;
 using System.Diagnostics;
 using System.Text.Json.Serialization;
 using Lyo.Common.Core.Extensions;
+using Lyo.Parameters;
 using Lyo.Query.Models.Common.Request;
 
 namespace Lyo.Query.Models.Parameters;
 
 /// <summary>
-/// Picker source for definition parameters. Stored as JSON on the definition parameter <c>Options</c> column. Does not replace the scalar <c>Value</c> (default /
-/// selected key). Query and Sproc kinds can also materialize row JSON for report grids.
+/// Picker source for definition parameters. Stored as JSON on the definition parameter <c>Options</c> column. Does not replace the scalar <c>Value</c> (default / selected
+/// key). Query and Sproc kinds can also materialize row JSON for report grids.
 /// </summary>
 [DebuggerDisplay("{Kind}")]
 public sealed class ParameterOptions
@@ -23,8 +23,8 @@ public sealed class ParameterOptions
     public string? QueryRoute { get; set; }
 
     /// <summary>
-    /// Root <see cref="QueryReq" /> template. Table is <see cref="QueryReq.From" />.<c>EntityType</c>. Where values may hold <c>{{SiblingParamKey}}</c> placeholders for
-    /// live input binding.
+    /// Root <see cref="QueryReq" /> template. Table is <see cref="QueryReq.From" />.<c>EntityType</c>. Where values may hold <c>{{SiblingParamKey}}</c> placeholders for live
+    /// input binding.
     /// </summary>
     public QueryReq? Query { get; set; }
 

@@ -6,9 +6,8 @@ namespace Lyo.StateMachine;
 
 /// <summary>Configures one state: its outgoing rules, its parent and initial substate, timers, and entry/exit hooks. Obtain from <c>StateMachineBuilder.Configure</c>.</summary>
 /// <remarks>
-/// A guard is a pure check on the context (and payload). When several guarded rules exist for one trigger, the first registered rule whose guard passes wins.
-/// Rules on a substate are tried before the parent's, so a child can override a parent transition. Guard descriptions double as guard names in
-/// <see cref="StateMachineDocument" /> exports.
+/// A guard is a pure check on the context (and payload). When several guarded rules exist for one trigger, the first registered rule whose guard passes wins. Rules on a
+/// substate are tried before the parent's, so a child can override a parent transition. Guard descriptions double as guard names in <see cref="StateMachineDocument" /> exports.
 /// </remarks>
 public sealed class StateConfiguration<TState, TTrigger, TContext>
     where TState : notnull where TTrigger : notnull
@@ -16,14 +15,14 @@ public sealed class StateConfiguration<TState, TTrigger, TContext>
     private readonly StateMachineBuilder<TState, TTrigger, TContext> _builder;
     private readonly StateNode<TState, TTrigger, TContext> _node;
 
+    /// <summary>The state being configured.</summary>
+    public TState State => _node.State;
+
     internal StateConfiguration(StateMachineBuilder<TState, TTrigger, TContext> builder, StateNode<TState, TTrigger, TContext> node)
     {
         _builder = builder;
         _node = node;
     }
-
-    /// <summary>The state being configured.</summary>
-    public TState State => _node.State;
 
     /// <summary>On <paramref name="trigger" />, move to <paramref name="destination" />. Use <see cref="PermitReentry" /> to stay in the same state.</summary>
     public StateConfiguration<TState, TTrigger, TContext> Permit(TTrigger trigger, TState destination)
@@ -37,14 +36,27 @@ public sealed class StateConfiguration<TState, TTrigger, TContext>
     public StateConfiguration<TState, TTrigger, TContext> PermitIf(TTrigger trigger, TState destination, Func<TContext, bool> guard, string? guardDescription = null)
     {
         ArgumentHelpers.ThrowIfNull(guard);
-        return AddRule(new() { Trigger = trigger, Kind = RuleKind.Permit, Destination = destination, Guard = (c, _) => guard(c), GuardDescription = guardDescription });
+        return AddRule(
+            new() {
+                Trigger = trigger,
+                Kind = RuleKind.Permit,
+                Destination = destination,
+                Guard = (c, _) => guard(c),
+                GuardDescription = guardDescription
+            });
     }
 
     /// <summary>On a payload trigger, move to <paramref name="destination" />. The trigger must then be fired with a <typeparamref name="TPayload" />.</summary>
     public StateConfiguration<TState, TTrigger, TContext> Permit<TPayload>(Trigger<TTrigger, TPayload> trigger, TState destination)
     {
         ArgumentHelpers.ThrowIfNull(trigger);
-        return AddRule(new() { Trigger = trigger.Value, Kind = RuleKind.Permit, Destination = destination, PayloadType = typeof(TPayload) });
+        return AddRule(
+            new() {
+                Trigger = trigger.Value,
+                Kind = RuleKind.Permit,
+                Destination = destination,
+                PayloadType = typeof(TPayload)
+            });
     }
 
     /// <summary>On a payload trigger, move to <paramref name="destination" /> when <paramref name="guard" /> accepts the context and payload.</summary>
@@ -57,15 +69,16 @@ public sealed class StateConfiguration<TState, TTrigger, TContext>
     {
         ArgumentHelpers.ThrowIfNull(trigger);
         ArgumentHelpers.ThrowIfNull(guard);
-        return AddRule(new() {
-            Trigger = trigger.Value,
-            Kind = RuleKind.Permit,
-            Destination = destination,
-            Guard = (c, p) => guard(c, (TPayload)p!),
-            GuardNeedsPayload = true,
-            GuardDescription = guardDescription,
-            PayloadType = typeof(TPayload)
-        });
+        return AddRule(
+            new() {
+                Trigger = trigger.Value,
+                Kind = RuleKind.Permit,
+                Destination = destination,
+                Guard = (c, p) => guard(c, (TPayload)p!),
+                GuardNeedsPayload = true,
+                GuardDescription = guardDescription,
+                PayloadType = typeof(TPayload)
+            });
     }
 
     /// <summary>On <paramref name="trigger" />, exit and re-enter this state. Exit and entry hooks run, timers re-arm, and the version increments.</summary>
@@ -75,18 +88,31 @@ public sealed class StateConfiguration<TState, TTrigger, TContext>
     public StateConfiguration<TState, TTrigger, TContext> PermitReentryIf(TTrigger trigger, Func<TContext, bool> guard, string? guardDescription = null)
     {
         ArgumentHelpers.ThrowIfNull(guard);
-        return AddRule(new() { Trigger = trigger, Kind = RuleKind.Reentry, Destination = State, Guard = (c, _) => guard(c), GuardDescription = guardDescription });
+        return AddRule(
+            new() {
+                Trigger = trigger,
+                Kind = RuleKind.Reentry,
+                Destination = State,
+                Guard = (c, _) => guard(c),
+                GuardDescription = guardDescription
+            });
     }
 
     /// <summary>
-    /// On <paramref name="trigger" />, move to the state <paramref name="selector" /> returns. It must return one of <paramref name="possibleDestinations" />, which
-    /// drive diagrams, validation, and precomputed hook paths.
+    /// On <paramref name="trigger" />, move to the state <paramref name="selector" /> returns. It must return one of <paramref name="possibleDestinations" />, which drive
+    /// diagrams, validation, and precomputed hook paths.
     /// </summary>
     /// <exception cref="StateMachineConfigurationException">No possible destination was given.</exception>
     public StateConfiguration<TState, TTrigger, TContext> PermitDynamic(TTrigger trigger, Func<TContext, TState> selector, params TState[] possibleDestinations)
     {
         ArgumentHelpers.ThrowIfNull(selector);
-        return AddRule(new() { Trigger = trigger, Kind = RuleKind.Dynamic, Destinations = possibleDestinations, Selector = (c, _) => selector(c) });
+        return AddRule(
+            new() {
+                Trigger = trigger,
+                Kind = RuleKind.Dynamic,
+                Destinations = possibleDestinations,
+                Selector = (c, _) => selector(c)
+            });
     }
 
     /// <summary>Payload form of <see cref="PermitDynamic(TTrigger, Func{TContext, TState}, TState[])" />: the selector also receives the typed payload.</summary>
@@ -97,13 +123,14 @@ public sealed class StateConfiguration<TState, TTrigger, TContext>
     {
         ArgumentHelpers.ThrowIfNull(trigger);
         ArgumentHelpers.ThrowIfNull(selector);
-        return AddRule(new() {
-            Trigger = trigger.Value,
-            Kind = RuleKind.Dynamic,
-            Destinations = possibleDestinations,
-            Selector = (c, p) => selector(c, (TPayload)p!),
-            PayloadType = typeof(TPayload)
-        });
+        return AddRule(
+            new() {
+                Trigger = trigger.Value,
+                Kind = RuleKind.Dynamic,
+                Destinations = possibleDestinations,
+                Selector = (c, p) => selector(c, (TPayload)p!),
+                PayloadType = typeof(TPayload)
+            });
     }
 
     /// <summary>Accepts <paramref name="trigger" /> and does nothing: no hooks, same snapshot, <see cref="TransitionKind.Ignored" />.</summary>
@@ -117,7 +144,9 @@ public sealed class StateConfiguration<TState, TTrigger, TContext>
     }
 
     /// <summary>Async form of <see cref="InternalTransition(TTrigger, Action{TransitionInfo{TState, TTrigger, TContext}})" />.</summary>
-    public StateConfiguration<TState, TTrigger, TContext> InternalTransitionAsync(TTrigger trigger, Func<TransitionInfo<TState, TTrigger, TContext>, CancellationToken, Task> action)
+    public StateConfiguration<TState, TTrigger, TContext> InternalTransitionAsync(
+        TTrigger trigger,
+        Func<TransitionInfo<TState, TTrigger, TContext>, CancellationToken, Task> action)
     {
         ArgumentHelpers.ThrowIfNull(action);
         return AddRule(new() { Trigger = trigger, Kind = RuleKind.Internal, Action = new(null, action) });
@@ -132,7 +161,14 @@ public sealed class StateConfiguration<TState, TTrigger, TContext>
     {
         ArgumentHelpers.ThrowIfNull(guard);
         ArgumentHelpers.ThrowIfNull(action);
-        return AddRule(new() { Trigger = trigger, Kind = RuleKind.Internal, Action = new(action, null), Guard = (c, _) => guard(c), GuardDescription = guardDescription });
+        return AddRule(
+            new() {
+                Trigger = trigger,
+                Kind = RuleKind.Internal,
+                Action = new(action, null),
+                Guard = (c, _) => guard(c),
+                GuardDescription = guardDescription
+            });
     }
 
     /// <summary>Internal transition on a payload trigger; the action receives the typed payload.</summary>
@@ -142,7 +178,13 @@ public sealed class StateConfiguration<TState, TTrigger, TContext>
     {
         ArgumentHelpers.ThrowIfNull(trigger);
         ArgumentHelpers.ThrowIfNull(action);
-        return AddRule(new() { Trigger = trigger.Value, Kind = RuleKind.Internal, Action = new(info => action(info, (TPayload)info.Payload!), null), PayloadType = typeof(TPayload) });
+        return AddRule(
+            new() {
+                Trigger = trigger.Value,
+                Kind = RuleKind.Internal,
+                Action = new(info => action(info, (TPayload)info.Payload!), null),
+                PayloadType = typeof(TPayload)
+            });
     }
 
     /// <summary>Async form of <see cref="InternalTransition{TPayload}" />.</summary>
@@ -152,17 +194,18 @@ public sealed class StateConfiguration<TState, TTrigger, TContext>
     {
         ArgumentHelpers.ThrowIfNull(trigger);
         ArgumentHelpers.ThrowIfNull(action);
-        return AddRule(new() {
-            Trigger = trigger.Value,
-            Kind = RuleKind.Internal,
-            Action = new(null, (info, ct) => action(info, (TPayload)info.Payload!, ct)),
-            PayloadType = typeof(TPayload)
-        });
+        return AddRule(
+            new() {
+                Trigger = trigger.Value,
+                Kind = RuleKind.Internal,
+                Action = new(null, (info, ct) => action(info, (TPayload)info.Payload!, ct)),
+                PayloadType = typeof(TPayload)
+            });
     }
 
     /// <summary>
-    /// Fires <paramref name="trigger" /> once the state has been current for <paramref name="after" />. The earliest timer sets
-    /// <see cref="StateSnapshot{TState}.DueAtUtc" />; the host drives it with <c>GetDueTrigger</c> or <c>StateMachineInstance.FireDueAsync</c>.
+    /// Fires <paramref name="trigger" /> once the state has been current for <paramref name="after" />. The earliest timer sets <see cref="StateSnapshot{TState}.DueAtUtc" />;
+    /// the host drives it with <c>GetDueTrigger</c> or <c>StateMachineInstance.FireDueAsync</c>.
     /// </summary>
     /// <remarks>The trigger must be permitted from this state and take no payload; <c>Build</c> checks both. Timers are not inherited by substates.</remarks>
     public StateConfiguration<TState, TTrigger, TContext> After(TimeSpan after, TTrigger trigger)
@@ -217,7 +260,9 @@ public sealed class StateConfiguration<TState, TTrigger, TContext>
     }
 
     /// <summary>Runs on entry only when the state was entered through <paramref name="trigger" />, with its payload typed.</summary>
-    public StateConfiguration<TState, TTrigger, TContext> OnEntryFrom<TPayload>(Trigger<TTrigger, TPayload> trigger, Action<TransitionInfo<TState, TTrigger, TContext>, TPayload> action)
+    public StateConfiguration<TState, TTrigger, TContext> OnEntryFrom<TPayload>(
+        Trigger<TTrigger, TPayload> trigger,
+        Action<TransitionInfo<TState, TTrigger, TContext>, TPayload> action)
     {
         ArgumentHelpers.ThrowIfNull(trigger);
         ArgumentHelpers.ThrowIfNull(action);

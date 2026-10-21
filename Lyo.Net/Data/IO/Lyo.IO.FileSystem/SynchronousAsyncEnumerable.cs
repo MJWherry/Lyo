@@ -6,8 +6,8 @@ namespace Lyo.IO.FileSystem;
 internal static class SynchronousAsyncEnumerable
 {
     /// <summary>
-    /// Yields <paramref name="source" /> as an async sequence, checking <paramref name="ct" /> before each element. Used by backends whose enumeration is genuinely
-    /// synchronous (local disk, in-memory) so they can satisfy <see cref="IFileSystem.EnumerateDirectoryAsync" /> without pretending to do I/O.
+    /// Yields <paramref name="source" /> as an async sequence, checking <paramref name="ct" /> before each element. Used by backends whose enumeration is genuinely synchronous
+    /// (local disk, in-memory) so they can satisfy <see cref="IFileSystem.EnumerateDirectoryAsync" /> without pretending to do I/O.
     /// </summary>
     public static async IAsyncEnumerable<T> Create<T>(IEnumerable<T> source, [EnumeratorCancellation] CancellationToken ct = default)
     {

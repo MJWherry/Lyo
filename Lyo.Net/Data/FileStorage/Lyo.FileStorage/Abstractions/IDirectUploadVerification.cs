@@ -3,9 +3,9 @@ using Lyo.FileStorage.Models;
 namespace Lyo.FileStorage.Abstractions;
 
 /// <summary>
-/// Implemented by storage backends that can describe a client-uploaded object without transferring its body. When a <see cref="FileStorageServiceBase" /> subclass
-/// implements this, <see cref="IFileStorageService.CompleteDirectUploadAsync" /> finalizes from the reported size and checksum instead of downloading the object back
-/// through the host to hash it. Backends that cannot report a checksum keep the download-and-hash path.
+/// Implemented by storage backends that can describe a client-uploaded object without transferring its body. When a <see cref="FileStorageServiceBase" /> subclass implements
+/// this, <see cref="IFileStorageService.CompleteDirectUploadAsync" /> finalizes from the reported size and checksum instead of downloading the object back through the host to hash
+/// it. Backends that cannot report a checksum keep the download-and-hash path.
 /// </summary>
 public interface IDirectUploadVerification
 {

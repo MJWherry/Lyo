@@ -14,6 +14,7 @@ public class XlsxImportResultTests
             sheet.Cell(2, 1).Value = 1;
             sheet.Cell(2, 2).Value = "Alice";
         });
+
         var result = new XlsxService().ParseBytesAsResult<TestModel>(bytes, "Missing");
         Assert.False(result.IsSuccess);
         Assert.True(result.Data is null || result.Data.Count == 0);
@@ -32,6 +33,7 @@ public class XlsxImportResultTests
             Write(sheet, 5, 4, "Dana", "nope");
             Write(sheet, 6, 5, "Eve", 22);
         });
+
         var result = new XlsxService().ParseBytesAsResult<TestModel>(bytes);
         Assert.True(result.IsSuccess);
         Assert.Equal(["Alice", "Charlie", "Eve"], result.Data!.Select(row => row.Name!).ToArray());

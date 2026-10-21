@@ -5,14 +5,14 @@ namespace Lyo.TestGateway.Components.TestGateway;
 
 public partial class ReportDesignHost
 {
+    private string _apiBase = "http://localhost:5251";
+    private string _baseRoute = "Reporting";
+
     [Parameter]
     public Guid? DefinitionId { get; set; }
 
     [Inject]
     private IApiClient ApiClient { get; set; } = null!;
-
-    private string _apiBase = "http://localhost:5251";
-    private string _baseRoute = "Reporting";
 
     protected override void OnInitialized()
     {

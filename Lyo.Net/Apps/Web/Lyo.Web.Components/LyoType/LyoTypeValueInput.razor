@@ -1,8 +1,8 @@
-@namespace Lyo.Web.Components.LyoType
 @using System.Text.Json.Nodes
-@using Lyo.Common.Core.Enums;
-@using Lyo.Web.Primitives.ChipInput
+@using Lyo.Common.Core.Enums
 @using Lyo.Web.Components.JsonEditor
+@using Lyo.Web.Primitives.ChipInput
+@namespace Lyo.Web.Components.LyoType
 
 <MudStack Spacing="2">
     @if (_mode == EditorMode.JsonTree) {
@@ -29,28 +29,34 @@
         @switch (_editorKind) {
             case LyoTypeEditorKind.Boolean:
                 <MudSwitch T="bool" Value="@_boolValue" ValueChanged="OnBoolChanged" Color="Color.Primary" Label="@ResolvedLabel" Disabled="@ReadOnly"/>
+
                 break;
             case LyoTypeEditorKind.Integer:
                 <MudNumericField T="long?" Value="@_longValue" ValueChanged="OnLongChanged" Label="@ResolvedLabel" Variant="Variant.Outlined" Margin="Margin.Dense"
                                  Disabled="@ReadOnly" Required="@Required" Clearable="@AllowUnset"/>
+
                 break;
             case LyoTypeEditorKind.Decimal:
                 <MudNumericField T="decimal?" Value="@_decimalValue" ValueChanged="OnDecimalChanged" Label="@ResolvedLabel" Variant="Variant.Outlined"
                                  Margin="Margin.Dense" Disabled="@ReadOnly" Required="@Required" Clearable="@AllowUnset"/>
+
                 break;
             case LyoTypeEditorKind.DateTime:
                 <MudStack Row="true" Spacing="1">
                     <MudDatePicker Date="@_dateValue" DateChanged="OnDateChanged" Label="Date" Editable Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="@ReadOnly"/>
                     <MudTimePicker Time="@_timeValue" TimeChanged="OnTimeChanged" Label="Time" Editable Variant="Variant.Outlined" Margin="Margin.Dense" Disabled="@ReadOnly"/>
                 </MudStack>
+
                 break;
             case LyoTypeEditorKind.DateOnly:
                 <MudDatePicker Date="@_dateValue" DateChanged="OnDateOnlyChanged" Label="@ResolvedLabel" Editable Clearable Variant="Variant.Outlined" Margin="Margin.Dense"
                                Disabled="@ReadOnly"/>
+
                 break;
             case LyoTypeEditorKind.TimeOnly:
                 <MudTimePicker Time="@_timeValue" TimeChanged="OnTimeOnlyChanged" Label="@ResolvedLabel" Editable Clearable Variant="Variant.Outlined" Margin="Margin.Dense"
                                Disabled="@ReadOnly"/>
+
                 break;
             case LyoTypeEditorKind.Enum:
                 @if (_enumNames.Length > 0) {
@@ -82,6 +88,7 @@
                                   Value="@_textValue"
                                   ValueChanged="OnTextChanged"/>
                 }
+
                 break;
             case LyoTypeEditorKind.Guid:
                 <MudTextField T="string"
@@ -98,6 +105,7 @@
                               InputType="@(IsEncrypted ? InputType.Password : InputType.Text)"
                               Value="@_textValue"
                               ValueChanged="OnTextChanged"/>
+
                 break;
             case LyoTypeEditorKind.Uri:
                 <MudTextField T="string"
@@ -113,9 +121,11 @@
                               ErrorText="@_scalarError"
                               Value="@_textValue"
                               ValueChanged="OnTextChanged"/>
+
                 break;
             case LyoTypeEditorKind.Formatter when FormatterEditorType is not null:
                 <DynamicComponent Type="@FormatterEditorType" Parameters="@FormatterEditorParameters"/>
+
                 break;
             case LyoTypeEditorKind.Regex:
             case LyoTypeEditorKind.Xml:
@@ -131,6 +141,7 @@
                               HelperText="@(_editorKind == LyoTypeEditorKind.Formatter ? "SmartFormat template. Unresolved {tokens} stay until run." : null)"
                               Value="@_textValue"
                               ValueChanged="OnTextChanged"/>
+
                 break;
             default:
                 <MudTextField T="string"
@@ -143,6 +154,7 @@
                               InputType="@(IsEncrypted ? InputType.Password : InputType.Text)"
                               Value="@_textValue"
                               ValueChanged="OnTextChanged"/>
+
                 break;
         }
     }

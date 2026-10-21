@@ -1,17 +1,16 @@
 using System.Text;
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Csv;
 using Lyo.Csv.Models;
 using Lyo.Reporting.Models;
 using Lyo.Reporting.Models.Builders;
 using Lyo.Reporting.Models.Composition;
 using Lyo.Reporting.Models.Enums;
-using Lyo.Reporting.Models.Response;
 using Lyo.Reporting.Postgres.Rendering;
 using Lyo.Xlsx;
 using Lyo.Xlsx.Models;
 using Microsoft.Extensions.DependencyInjection;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Reporting.Tests;
 
@@ -91,9 +90,7 @@ public sealed class ReportRendererTests : IDisposable
         var xlsx = _provider.GetRequiredService<IXlsxService>();
         var renderer = new XlsxReportRenderer(xlsx);
         var outputPath = Path.Combine(_tempDir, "dupes.xlsx");
-        await renderer.RenderAsync(
-            new() { ReportDataJson = ReportJson.Serialize(report), Format = ReportFormat.Xlsx, OutputFilePath = outputPath }, TestCt);
-
+        await renderer.RenderAsync(new() { ReportDataJson = ReportJson.Serialize(report), Format = ReportFormat.Xlsx, OutputFilePath = outputPath }, TestCt);
         var sheetNames = xlsx.Reader.ListSheetNames(outputPath);
         Assert.Equal(3, sheetNames.Count);
         Assert.Equal(sheetNames.Count, sheetNames.Distinct(StringComparer.OrdinalIgnoreCase).Count());
@@ -141,9 +138,7 @@ public sealed class ReportRendererTests : IDisposable
 
         var renderer = new CsvReportRenderer(_provider.GetRequiredService<ICsvService>());
         var outputPath = Path.Combine(_tempDir, "big.csv");
-        await renderer.RenderAsync(
-            new() { ReportDataJson = json, Format = ReportFormat.Csv, OutputFilePath = outputPath }, TestCt);
-
+        await renderer.RenderAsync(new() { ReportDataJson = json, Format = ReportFormat.Csv, OutputFilePath = outputPath }, TestCt);
         var lines = await File.ReadAllLinesAsync(outputPath, TestCt);
         var dataLines = lines.Where(l => !string.IsNullOrWhiteSpace(l)).ToList();
         Assert.Equal(rowCount + 1, dataLines.Count);

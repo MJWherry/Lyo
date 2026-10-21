@@ -2,8 +2,8 @@ using System.Text.Json;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Cache;
 using Lyo.Common.Core.Identifiers;
-using Lyo.Json;
 using Lyo.Exceptions;
+using Lyo.Json;
 using Lyo.Web.Automation.Models;
 using Lyo.Web.Automation.Plan;
 using Lyo.Web.Automation.Postgres.Database;
@@ -50,13 +50,15 @@ public sealed class PostgresAutomationPlanStore(IDbContextFactory<AutomationPlan
             return Read(existing.Document)!;
 
         var plan = new AutomationPlan(name, []);
-        db.Plans.Add(new AutomationPlanEntity {
-            Id = LyoGuid.CreateV7(),
-            Name = name,
-            Document = JsonSerializer.Serialize(plan, Json),
-            StepCount = 0,
-            UpdatedUtc = DateTime.UtcNow
-        });
+        db.Plans.Add(
+            new() {
+                Id = LyoGuid.CreateV7(),
+                Name = name,
+                Document = JsonSerializer.Serialize(plan, Json),
+                StepCount = 0,
+                UpdatedUtc = DateTime.UtcNow
+            });
+
         db.SaveChanges();
         InvalidateQueries();
         return plan;

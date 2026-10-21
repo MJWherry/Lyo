@@ -1,10 +1,9 @@
 namespace Lyo.Job.Web.Components;
 
-/// <summary>
-/// Pan and zoom for the workflow diagram. Screen position is <c>diagram * Zoom + pan</c>, in CSS pixels, with the origin at the viewport's top left.
-/// </summary>
+/// <summary>Pan and zoom for the workflow diagram. Screen position is <c>diagram * Zoom + pan</c>, in CSS pixels, with the origin at the viewport's top left.</summary>
 /// <remarks>
-/// <see cref="ZoomAt" /> keeps the diagram point under the cursor fixed, which is what a scroll-to-zoom gesture has to do. <see cref="Pan" /> adds a pointer delta in screen pixels.
+/// <see cref="ZoomAt" /> keeps the diagram point under the cursor fixed, which is what a scroll-to-zoom gesture has to do. <see cref="Pan" /> adds a pointer delta in screen
+/// pixels.
 /// </remarks>
 public sealed class JobWorkflowGraphCamera
 {
@@ -34,8 +33,8 @@ public sealed class JobWorkflowGraphCamera
     }
 
     /// <summary>
-    /// Multiplies <see cref="Zoom" /> by <paramref name="factor" />, clamped to <see cref="MinZoom" /> and <see cref="MaxZoom" />, keeping the diagram point under
-    /// (<paramref name="originX" />, <paramref name="originY" />) on that same screen point. The origin is in viewport pixels.
+    /// Multiplies <see cref="Zoom" /> by <paramref name="factor" />, clamped to <see cref="MinZoom" /> and <see cref="MaxZoom" />, keeping the diagram point under (
+    /// <paramref name="originX" />, <paramref name="originY" />) on that same screen point. The origin is in viewport pixels.
     /// </summary>
     public void ZoomAt(double factor, double originX, double originY)
     {
@@ -46,8 +45,8 @@ public sealed class JobWorkflowGraphCamera
         var diagramX = (originX - PanX) / Zoom;
         var diagramY = (originY - PanY) / Zoom;
         Zoom = next;
-        PanX = originX - (diagramX * next);
-        PanY = originY - (diagramY * next);
+        PanX = originX - diagramX * next;
+        PanY = originY - diagramY * next;
     }
 
     /// <summary>Puts the camera back to 1:1 with the diagram origin at (<paramref name="panX" />, <paramref name="panY" />).</summary>
@@ -59,5 +58,5 @@ public sealed class JobWorkflowGraphCamera
     }
 
     /// <summary>Where a diagram point lands in the viewport.</summary>
-    public (double X, double Y) ToScreen(double diagramX, double diagramY) => ((diagramX * Zoom) + PanX, (diagramY * Zoom) + PanY);
+    public (double X, double Y) ToScreen(double diagramX, double diagramY) => (diagramX * Zoom + PanX, diagramY * Zoom + PanY);
 }

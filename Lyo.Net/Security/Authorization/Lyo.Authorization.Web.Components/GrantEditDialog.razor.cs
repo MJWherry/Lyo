@@ -7,6 +7,12 @@ namespace Lyo.Authorization.Web.Components;
 /// <summary>Creates one grant. A conflict leaves the dialog open.</summary>
 public partial class GrantEditDialog
 {
+    private readonly GrantForm _form = new();
+
+    private bool _busy;
+
+    private bool _lockSubject;
+
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = null!;
 
@@ -29,12 +35,6 @@ public partial class GrantEditDialog
     /// <summary>Actor stored on the grant.</summary>
     [Parameter]
     public string? GrantedBy { get; set; }
-
-    private readonly GrantForm _form = new();
-
-    private bool _lockSubject;
-
-    private bool _busy;
 
     /// <inheritdoc />
     protected override void OnParametersSet()
@@ -66,6 +66,7 @@ public partial class GrantEditDialog
                 await Authorization.SaveAsync(write);
             else
                 await Store.SaveAsync(write);
+
             MudDialog.Close(DialogResult.Ok(true));
         }
         catch (ConflictException ex) {

@@ -1,7 +1,5 @@
 using System.IO.Compression;
-using System.Net.Http.Headers;
 using System.Text;
-using Lyo.Api;
 using Lyo.Common.Metadata.Records;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -63,14 +61,13 @@ public sealed class LyoApiCompressionMiddlewareTests
     private static async Task<HttpResponseMessage> SendAsync(WebApplication app, string path)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, path);
-        request.Headers.AcceptEncoding.Add(new StringWithQualityHeaderValue("br"));
+        request.Headers.AcceptEncoding.Add(new("br"));
         var response = await app.GetTestClient().SendAsync(request, TestCt);
         response.EnsureSuccessStatusCode();
         return response;
     }
 
-    private static void AssertCompressed(HttpResponseMessage response)
-        => Assert.Contains("br", response.Content.Headers.ContentEncoding, StringComparer.OrdinalIgnoreCase);
+    private static void AssertCompressed(HttpResponseMessage response) => Assert.Contains("br", response.Content.Headers.ContentEncoding, StringComparer.OrdinalIgnoreCase);
 
     private static byte[] DecompressBrotli(byte[] data)
     {

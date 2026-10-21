@@ -7,9 +7,9 @@ using Lyo.Testing;
 namespace Lyo.Encryption.Tests;
 
 /// <summary>
-/// Confirms encrypt stays thread-safe with stateless random_base nonces: many concurrent single-shot and streaming encrypts on one shared KeyStore key
-/// must never reuse a nonce and must always round-trip. Covers a shared singleton service and transient instances that share the KeyStore (the case the old, racy
-/// KeyStore-backed nonce counter could corrupt).
+/// Confirms encrypt stays thread-safe with stateless random_base nonces: many concurrent single-shot and streaming encrypts on one shared KeyStore key must never reuse a
+/// nonce and must always round-trip. Covers a shared singleton service and transient instances that share the KeyStore (the case the old, racy KeyStore-backed nonce counter could
+/// corrupt).
 /// </summary>
 public class EncryptionConcurrencyTests
 {
@@ -157,8 +157,8 @@ public class EncryptionConcurrencyTests
     }
 
     /// <summary>
-    /// Reads the streaming header (per-stream nonce prefix) then walks compact frames (<c>[lengthAndFinalFlag:4][ciphertext][tag]</c>),
-    /// deriving each chunk nonce as <c>prefix || counter</c> the same way the codec does — the wire stores no nonces.
+    /// Reads the streaming header (per-stream nonce prefix) then walks compact frames (<c>[lengthAndFinalFlag:4][ciphertext][tag]</c>), deriving each chunk nonce as
+    /// <c>prefix || counter</c> the same way the codec does — the wire stores no nonces.
     /// </summary>
     private static List<byte[]> ExtractStreamNonces(byte[] encrypted)
     {

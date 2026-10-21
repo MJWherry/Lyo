@@ -10,10 +10,7 @@ public static class DesktopConfig
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
         return File(
-            name,
-            OperatingSystem.IsWindows(),
-            Environment.GetEnvironmentVariable("XDG_CONFIG_HOME"),
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            name, OperatingSystem.IsWindows(), Environment.GetEnvironmentVariable("XDG_CONFIG_HOME"), Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
     }
 
@@ -21,6 +18,7 @@ public static class DesktopConfig
     {
         if (windows)
             return Path.Combine(appData, "Lyo", name);
+
         var root = string.IsNullOrWhiteSpace(xdg) ? Path.Combine(profile, ".config") : xdg;
         return Path.Combine(root, "lyo", name);
     }

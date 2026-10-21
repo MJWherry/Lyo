@@ -33,19 +33,12 @@ public partial class FileStoreProtocolUploads : ComponentBase, IAsyncDisposable
     [Parameter]
     public FileStoreProtocolUploadMode Mode { get; set; }
 
-    protected override void OnParametersSet()
-    {
-        if (_stagingSession != null)
-            return;
-
-        _stagingSession = Host.TempService.CreateSession();
-    }
-
     private string Title => Mode == FileStoreProtocolUploadMode.Direct ? "Direct PUT" : "Multipart";
 
-    private string Help => Mode == FileStoreProtocolUploadMode.Direct
-        ? "Begin a client PUT, upload bytes to the returned URL, then complete. Plain objects only."
-        : "Begin a multipart session, PUT each part, then complete.";
+    private string Help
+        => Mode == FileStoreProtocolUploadMode.Direct
+            ? "Begin a client PUT, upload bytes to the returned URL, then complete. Plain objects only."
+            : "Begin a multipart session, PUT each part, then complete.";
 
     public async ValueTask DisposeAsync()
     {
@@ -54,6 +47,14 @@ public partial class FileStoreProtocolUploads : ComponentBase, IAsyncDisposable
 
         await _stagingSession.DisposeAsync();
         _stagingSession = null;
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (_stagingSession != null)
+            return;
+
+        _stagingSession = Host.TempService.CreateSession();
     }
 
     private Task OnFileReadyAsync(LocalBrowserFilePath file)
@@ -90,10 +91,7 @@ public partial class FileStoreProtocolUploads : ComponentBase, IAsyncDisposable
             var length = stream.Length;
             var name = string.IsNullOrWhiteSpace(_originalFileName) ? _file.FileName : _originalFileName;
             var prefix = string.IsNullOrWhiteSpace(_pathPrefix) ? null : _pathPrefix.Trim();
-            FileStoreResult? result = Mode == FileStoreProtocolUploadMode.Direct
-                ? await RunDirectAsync(stream, length, name, prefix)
-                : await RunMultipartAsync(stream, length, name, prefix);
-
+            var result = Mode == FileStoreProtocolUploadMode.Direct ? await RunDirectAsync(stream, length, name, prefix) : await RunMultipartAsync(stream, length, name, prefix);
             _status = result == null ? "Upload finished." : $"Saved {result.OriginalFileName ?? result.SourceFileName} ({result.Id}).";
             Host.Snackbar.Add(_status, Severity.Success);
             await Host.NotifyFilesChangedAsync();
@@ -110,30 +108,22 @@ public partial class FileStoreProtocolUploads : ComponentBase, IAsyncDisposable
     private async Task<FileStoreResult?> RunDirectAsync(Stream stream, long length, string name, string? prefix)
     {
         var begin = await Host.ApiClient.PostAsAsync<DirectUploadBeginRequest, DirectUploadBeginResult>(
-            Host.FilesApi("direct-upload/begin"),
-            new() { OriginalFileName = name, PathPrefix = prefix, DeclaredMaxSizeBytes = length });
+            Host.FilesApi("direct-upload/begin"), new() { OriginalFileName = name, PathPrefix = prefix, DeclaredMaxSizeBytes = length });
+
         if (begin == null)
             throw new InvalidOperationException("Direct upload begin returned no result.");
 
         await PutAsync(begin.PresignedPutUrl, stream, begin.RequiredPutHeaders);
         return await Host.ApiClient.PostAsAsync<DirectUploadCompleteRequest, FileStoreResult>(
-            Host.FilesApi($"direct-upload/{begin.FileId:D}/complete"),
-            new() { ExpectedByteLength = length, OriginalFileName = name });
+            Host.FilesApi($"direct-upload/{begin.FileId:D}/complete"), new() { ExpectedByteLength = length, OriginalFileName = name });
     }
 
     private async Task<FileStoreResult?> RunMultipartAsync(Stream stream, long length, string name, string? prefix)
     {
         const int partSize = 8 * 1024 * 1024;
         var begin = await Host.ApiClient.PostAsAsync<BeginMultipartRequest, MultipartBeginResponse>(
-            Host.FilesApi("multipart/begin"),
-            new(
-                PartSizeBytes: partSize,
-                Compress: _compress,
-                Encrypt: _encrypt,
-                KeyId: _encrypt ? _keyId : null,
-                PathPrefix: prefix,
-                OriginalFileName: name,
-                DeclaredContentLength: length));
+            Host.FilesApi("multipart/begin"), new(partSize, _compress, _encrypt, _encrypt ? _keyId : null, prefix, OriginalFileName: name, DeclaredContentLength: length));
+
         if (begin == null)
             throw new InvalidOperationException("Multipart begin returned no result.");
 
@@ -142,8 +132,7 @@ public partial class FileStoreProtocolUploads : ComponentBase, IAsyncDisposable
         var remaining = length;
         while (remaining > 0) {
             var take = (int)Math.Min(partSize, remaining);
-            var descriptor = await Host.ApiClient.GetAsAsync<MultipartPartUrlResponse>(
-                Host.FilesApi($"multipart/{begin.SessionId:D}/part-url?partNumber={partNumber}"));
+            var descriptor = await Host.ApiClient.GetAsAsync<MultipartPartUrlResponse>(Host.FilesApi($"multipart/{begin.SessionId:D}/part-url?partNumber={partNumber}"));
             if (descriptor?.PresignedPutUrl == null)
                 throw new InvalidOperationException($"No PUT URL for part {partNumber}.");
 
@@ -158,9 +147,7 @@ public partial class FileStoreProtocolUploads : ComponentBase, IAsyncDisposable
             partNumber++;
         }
 
-        return await Host.ApiClient.PostAsAsync<CompleteMultipartRequest, FileStoreResult>(
-            Host.FilesApi("multipart/complete"),
-            new(begin.SessionId, parts));
+        return await Host.ApiClient.PostAsAsync<CompleteMultipartRequest, FileStoreResult>(Host.FilesApi("multipart/complete"), new(begin.SessionId, parts));
     }
 
     private async Task<string?> PutAsync(string url, Stream body, IReadOnlyDictionary<string, string>? headers)
@@ -187,6 +174,6 @@ public partial class FileStoreProtocolUploads : ComponentBase, IAsyncDisposable
             return absolute;
 
         var relative = url.TrimStart('/');
-        return baseAddress == null ? new Uri(relative, UriKind.Relative) : new Uri(baseAddress, relative);
+        return baseAddress == null ? new(relative, UriKind.Relative) : new Uri(baseAddress, relative);
     }
 }

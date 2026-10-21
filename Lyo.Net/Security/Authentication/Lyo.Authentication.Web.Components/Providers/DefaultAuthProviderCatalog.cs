@@ -2,6 +2,7 @@ using Lyo.Authentication.Web.Components.Abstractions;
 using Lyo.Authentication.Web.Components.Models;
 using Lyo.Authentication.Web.Components.Options;
 using Lyo.Exceptions;
+
 namespace Lyo.Authentication.Web.Components.Providers;
 
 /// <summary>

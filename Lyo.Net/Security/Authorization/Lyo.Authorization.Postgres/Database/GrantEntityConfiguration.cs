@@ -21,7 +21,13 @@ public sealed class GrantEntityConfiguration : IEntityTypeConfiguration<GrantEnt
         builder.Property(e => e.ExpiresAt).HasColumnName("expires_at").HasColumnType("timestamp with time zone");
         builder.Property(e => e.RevokedAt).HasColumnName("revoked_at").HasColumnType("timestamp with time zone");
         builder.Property(e => e.CreatedTimestamp).HasColumnName("created_timestamp").HasColumnType("timestamp with time zone");
-        builder.HasIndex(e => new { e.Subject, e.Action, e.ResourceType, e.ResourceId, e.TenantId })
+        builder.HasIndex(e => new {
+                e.Subject,
+                e.Action,
+                e.ResourceType,
+                e.ResourceId,
+                e.TenantId
+            })
             .IsUnique()
             .HasFilter("revoked_at IS NULL")
             .AreNullsDistinct(false)

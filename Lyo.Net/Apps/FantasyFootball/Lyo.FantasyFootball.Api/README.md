@@ -1,6 +1,8 @@
 # Lyo.FantasyFootball.Api
 
-Reads come from `IFantasyFootballStore`. Refresh and writes call `FantasyFootballClient`, then upsert what ESPN returns. ESPN cookies stay on the host. `AddFantasyFootballApiForWorkbench` registers the store with automatic migrations. `MapFantasyFootballApi` maps group `FantasyFootball`. A production host should require auth: these routes can post chat messages and trades.
+Reads come from `IFantasyFootballStore`. Refresh and writes call `FantasyFootballClient`, then upsert what ESPN returns. ESPN cookies stay on the host.
+`AddFantasyFootballApiForWorkbench` registers the store with automatic migrations. `MapFantasyFootballApi` maps group `FantasyFootball`. A production host should require auth:
+these routes can post chat messages and trades.
 
 ## Features
 

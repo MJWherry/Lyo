@@ -1,11 +1,10 @@
 using Lyo.Exceptions;
-using Lyo.Http.Client;
 
 namespace Lyo.Http.Client.Flared;
 
 /// <summary>
-/// Options for <see cref="FlaredHttpMessageHandler" />. Timing, rate limit, and PerSession UA are on by default.
-/// <see cref="LyoHttpClientOptions.ProxyUrl" /> is sent to FlareSolverr and to the primary handler.
+/// Options for <see cref="FlaredHttpMessageHandler" />. Timing, rate limit, and PerSession UA are on by default. <see cref="LyoHttpClientOptions.ProxyUrl" /> is sent to
+/// FlareSolverr and to the primary handler.
 /// </summary>
 public class FlaredHttpOptions : LyoHttpClientOptions
 {

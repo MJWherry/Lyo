@@ -32,7 +32,6 @@ public static class Extensions
         ArgumentHelpers.ThrowIfNull(configuration);
         var options = new XlsxOptions();
         configuration.GetSection(sectionName).Bind(options);
-
         var poolingSection = configuration.GetSection(DataTablePoolingOptions.SectionName);
         if (poolingSection.Exists())
             poolingSection.Bind(options.Pooling);

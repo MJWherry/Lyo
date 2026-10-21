@@ -24,9 +24,7 @@ public sealed class ContactUsEfSeedContributor : SeedContributor, IEfSeedSource
     public DbContext CreateContext(string connectionString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        var options = new DbContextOptionsBuilder<ContactUsDbContext>()
-            .UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<ContactUsDbContext>().UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema)).Options;
         return new ContactUsDbContext(options);
     }
 
@@ -35,16 +33,17 @@ public sealed class ContactUsEfSeedContributor : SeedContributor, IEfSeedSource
     {
         graph.OnClear(ClearAsync);
         var faker = options.RandomSeed is { } seed ? new Faker { Random = new(seed) } : new Faker();
-        graph.Entity(options.Count, _ => new ContactSubmissionEntity {
-            Id = LyoGuid.CreateV7(),
-            Name = faker.Name.FullName(),
-            Email = faker.Internet.Email(),
-            Subject = faker.Lorem.Sentence(4).TrimEnd('.'),
-            Message = faker.Lorem.Paragraph(),
-            Phone = faker.Phone.PhoneNumber("###-###-####"),
-            Company = faker.Company.CompanyName(),
-            CreatedTimestamp = DateTime.UtcNow
-        });
+        graph.Entity(
+            options.Count, _ => new ContactSubmissionEntity {
+                Id = LyoGuid.CreateV7(),
+                Name = faker.Name.FullName(),
+                Email = faker.Internet.Email(),
+                Subject = faker.Lorem.Sentence(4).TrimEnd('.'),
+                Message = faker.Lorem.Paragraph(),
+                Phone = faker.Phone.PhoneNumber("###-###-####"),
+                Company = faker.Company.CompanyName(),
+                CreatedTimestamp = DateTime.UtcNow
+            });
     }
 
     private static async Task ClearAsync(SeedSession session, CancellationToken ct)

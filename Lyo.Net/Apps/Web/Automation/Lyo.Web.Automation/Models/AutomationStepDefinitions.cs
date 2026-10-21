@@ -178,10 +178,7 @@ public sealed record SetViewportSizeAutomationStep(int Width, int Height, string
 /// <see cref="SetViewportSizeAutomationStep" />. Use after navigate (optionally after <see cref="DelayAutomationStep" />) to mimic a user resizing the window.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record RandomizeViewportAutomationStep(
-    IReadOnlyList<DesktopDisplaySize>? Sizes = null,
-    int JitterPixels = 0,
-    string? Name = null)
+public sealed record RandomizeViewportAutomationStep(IReadOnlyList<DesktopDisplaySize>? Sizes = null, int JitterPixels = 0, string? Name = null)
     : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />

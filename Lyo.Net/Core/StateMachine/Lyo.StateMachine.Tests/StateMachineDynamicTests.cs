@@ -32,7 +32,6 @@ public class StateMachineDynamicTests
     {
         var definition = Machine().Build();
         var context = new JobContext { MaxAttempts = 3 };
-
         Assert.Equal(JobState.Queued, definition.Fire(new(), At(JobState.Running), Retry, new(1)).To);
         Assert.Equal(JobState.Failed, definition.Fire(context, At(JobState.Running), Retry, new(3)).To);
         Assert.Equal(["exit:Running", "enter:Failed"], context.Log);
@@ -43,9 +42,7 @@ public class StateMachineDynamicTests
     {
         var builder = new StateMachineBuilder<JobState, JobTrigger, JobContext>("job", JobState.Running);
         builder.Configure(JobState.Running).PermitDynamic(JobTrigger.Complete, _ => JobState.Paused, JobState.Done);
-
         var ex = Assert.Throws<InvalidOperationException>(() => builder.Build().Fire(new(), At(JobState.Running), JobTrigger.Complete));
-
         Assert.Contains("Paused", ex.Message);
         Assert.Contains("Complete", ex.Message);
     }

@@ -30,6 +30,7 @@ public class ShotEncoderTests
             var bluePath = Path.Combine(directory.FullName, "blue.png");
             using (var red = Frames.Flat(8, 8, new(255, 0, 0, 255)))
                 await red.SaveAsPngAsync(redPath, TestCt);
+
             using (var blue = Frames.Flat(8, 8, new(0, 0, 255, 255)))
                 await blue.SaveAsPngAsync(bluePath, TestCt);
 
@@ -55,7 +56,8 @@ public class ShotEncoderTests
     {
         var colors = new Rgba32[16];
         for (var i = 0; i < colors.Length; i++)
-            colors[i] = new((byte)(i * 16), (byte)(255 - (i * 8)), (byte)(i * 8), 255);
+            colors[i] = new((byte)(i * 16), (byte)(255 - i * 8), (byte)(i * 8), 255);
+
         using var frame = new Image<Rgba32>(80, 80);
         var seed = 17;
         for (var y = 0; y < frame.Height; y++) {

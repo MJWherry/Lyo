@@ -1,3 +1,4 @@
+using Lyo.Api.FileStorage.Models;
 using Lyo.Desktop.Components;
 
 namespace Lyo.FileManager.App;
@@ -69,7 +70,7 @@ public sealed class FileRow
             ShowEncryption = false,
             Prefix = row.PathPrefix ?? "",
             Query = row,
-            Entry = new(name, false, row.PathPrefix, row.Id, Lyo.Api.FileStorage.Models.FileStoragePresence.Store, row.OriginalFileSize, null)
+            Entry = new(name, false, row.PathPrefix, row.Id, FileStoragePresence.Store, row.OriginalFileSize, null)
         };
     }
 

@@ -1,12 +1,12 @@
 namespace Lyo.Recipe.Client;
 
-/// <summary>Settings used to build <see cref="RecipeClient"/> routes.</summary>
+/// <summary>Settings used to build <see cref="RecipeClient" /> routes.</summary>
 public sealed class RecipeClientOptions
 {
     /// <summary>Configuration section this type binds from.</summary>
     public const string SectionName = "RecipeClientOptions";
 
-    /// <summary>Optional URL prefix put in front of every recipe route. When empty, routes are relative and use <see cref="System.Net.Http.HttpClient.BaseAddress"/>.</summary>
+    /// <summary>Optional URL prefix put in front of every recipe route. When empty, routes are relative and use <see cref="System.Net.Http.HttpClient.BaseAddress" />.</summary>
     public string? RoutePrefix { get; set; }
 
     /// <summary>Rejects a prefix that would make a malformed route. Called by the <c>AddRecipeClient</c> overloads before registration.</summary>

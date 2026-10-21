@@ -1,6 +1,8 @@
 # Lyo.HomeInventory.Web.Components
 
-Drop `HomeInventoryManagement` on a host page for Items, Locations (rooms), Categories, and Movements. The Locations tab is a selectable room tree plus inspector (items in the selected room). Item editor is a medium dialog with category, product-key rows, stock, notes, `LyoChipInput` tags, and `LyoFileUpload` attachments via FileStorage `save-stream`. Uses an injected `IApiClient`. This package has no `AddXxx` DI registration.
+Drop `HomeInventoryManagement` on a host page for Items, Locations (rooms), Categories, and Movements. The Locations tab is a selectable room tree plus inspector (items in the
+selected room). Item editor is a medium dialog with category, product-key rows, stock, notes, `LyoChipInput` tags, and `LyoFileUpload` attachments via FileStorage `save-stream`.
+Uses an injected `IApiClient`. This package has no `AddXxx` DI registration.
 
 ## Features
 

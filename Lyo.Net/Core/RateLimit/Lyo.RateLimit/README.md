@@ -1,6 +1,7 @@
 # Lyo.RateLimit
 
-TryAcquireAsync takes one permit or returns a denial with Retry-After. The store does not wait. Use it only where a caller already has a quota. AddRedisRateLimit replaces this registration when more than one host must share that quota.
+TryAcquireAsync takes one permit or returns a denial with Retry-After. The store does not wait. Use it only where a caller already has a quota. AddRedisRateLimit replaces this
+registration when more than one host must share that quota.
 
 ## Features
 

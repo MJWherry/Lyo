@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions.Models;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Abstractions;
@@ -5,7 +6,6 @@ using Lyo.FileStorage.Models;
 using Lyo.IO.Temp.Models;
 using Lyo.Testing;
 using Microsoft.Extensions.Logging;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.FileStorage.Tests;
 
@@ -85,8 +85,7 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
     {
         using var service = CreateService(o => o.AllowFileUriPresignedUrls = true);
         var saved = await service.SaveFileAsync("x"u8.ToArray(), "a.bin", ct: TestCt);
-        await Assert.ThrowsAsync<ArgumentException>(
-            () => service.GetPreSignedReadUrlAsync(saved.Id, TimeSpan.FromMinutes(5), "../secrets", TestCt));
+        await Assert.ThrowsAsync<ArgumentException>(() => service.GetPreSignedReadUrlAsync(saved.Id, TimeSpan.FromMinutes(5), "../secrets", TestCt));
     }
 
     [Fact]
@@ -94,7 +93,7 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
     {
         using var service = CreateService(o => o.AllowFileUriPresignedUrls = true);
         var saved = await service.SaveFileAsync("x"u8.ToArray(), "a.bin", pathPrefix: "reports", ct: TestCt);
-        var url = await service.GetPreSignedReadUrlAsync(saved.Id, TimeSpan.FromMinutes(5), pathPrefix: null, TestCt);
+        var url = await service.GetPreSignedReadUrlAsync(saved.Id, TimeSpan.FromMinutes(5), null, TestCt);
         Assert.StartsWith("file://", url, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("reports", url, StringComparison.OrdinalIgnoreCase);
     }
@@ -190,8 +189,7 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
     public async Task BeginDirectUpload_NoReceiveUri_ThrowsNotSupported()
     {
         using var service = CreateService();
-        await Assert.ThrowsAsync<NotSupportedException>(() => service.BeginDirectUploadAsync(
-            new() { DeclaredMaxSizeBytes = 10, OriginalFileName = "n.bin" }, TestCt));
+        await Assert.ThrowsAsync<NotSupportedException>(() => service.BeginDirectUploadAsync(new() { DeclaredMaxSizeBytes = 10, OriginalFileName = "n.bin" }, TestCt));
     }
 
     [Fact]
@@ -302,8 +300,7 @@ public sealed class LocalFileStorageDiagnosticsCopyDirectUploadTests : IDisposab
         using var service = CreateService(o => o.AllowFileUriPresignedUrls = true);
         var id = (await service.SaveFileAsync([9, 8, 7], "signed.dat", ct: TestCt)).Id;
         var url = await service.GetPreSignedReadUrlAsync(
-            id, TimeSpan.FromHours(1), null, new() { ContentDisposition = "attachment; filename=a.dat", ContentType = "application/octet-stream" },
-            TestCt);
+            id, TimeSpan.FromHours(1), null, new() { ContentDisposition = "attachment; filename=a.dat", ContentType = "application/octet-stream" }, TestCt);
 
         Assert.StartsWith("file:", url, StringComparison.Ordinal);
     }

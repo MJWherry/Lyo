@@ -1,44 +1,14 @@
 using System.Diagnostics;
-using Lyo.Espn.Fantasy.Football.Client;
 
 namespace Lyo.Espn.Fantasy.Football.Client.Models.Response;
 
 /// <summary>
-/// One Fantasy Chat topic. Ids and unix times stay on the suffixed properties. <see cref="Author" />, <see cref="Date" />, <see cref="DateEdited" />, and <see cref="Members" />
-/// are the same values in a form you can use. The chat methods fill those from the league index when it already has them.
+/// One Fantasy Chat topic. Ids and unix times stay on the suffixed properties. <see cref="Author" />, <see cref="Date" />, <see cref="DateEdited" />, and
+/// <see cref="Members" /> are the same values in a form you can use. The chat methods fill those from the league index when it already has them.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class ChatConversationRes
 {
-    /// <summary>Builds a conversation from values already taken off the ESPN payload.</summary>
-    public ChatConversationRes(
-        string Id,
-        string? AuthorId,
-        long? DateUnix,
-        long? DateEditedUnix,
-        bool IsDeleted,
-        bool IsEdited,
-        IReadOnlyList<ChatMessageRes>? Messages,
-        int TotalMessageCount,
-        string? Type,
-        int UnreadMessageCount,
-        string? Subject = null,
-        IReadOnlyList<string>? ViewableByIds = null)
-    {
-        this.Id = Id;
-        this.AuthorId = AuthorId;
-        this.DateUnix = DateUnix;
-        this.DateEditedUnix = DateEditedUnix;
-        this.IsDeleted = IsDeleted;
-        this.IsEdited = IsEdited;
-        this.Messages = Messages;
-        this.TotalMessageCount = TotalMessageCount;
-        this.Type = Type;
-        this.UnreadMessageCount = UnreadMessageCount;
-        this.Subject = Subject;
-        this.ViewableByIds = ViewableByIds ?? [];
-    }
-
     /// <summary>ESPN topic id.</summary>
     public string Id { get; }
 
@@ -89,6 +59,35 @@ public sealed class ChatConversationRes
 
     /// <summary><see cref="ViewableByIds" /> resolved to league members. Ids the index does not know stay on <see cref="ViewableByIds" /> only.</summary>
     public IReadOnlyList<MemberRes> Members { get; internal set; } = [];
+
+    /// <summary>Builds a conversation from values already taken off the ESPN payload.</summary>
+    public ChatConversationRes(
+        string Id,
+        string? AuthorId,
+        long? DateUnix,
+        long? DateEditedUnix,
+        bool IsDeleted,
+        bool IsEdited,
+        IReadOnlyList<ChatMessageRes>? Messages,
+        int TotalMessageCount,
+        string? Type,
+        int UnreadMessageCount,
+        string? Subject = null,
+        IReadOnlyList<string>? ViewableByIds = null)
+    {
+        this.Id = Id;
+        this.AuthorId = AuthorId;
+        this.DateUnix = DateUnix;
+        this.DateEditedUnix = DateEditedUnix;
+        this.IsDeleted = IsDeleted;
+        this.IsEdited = IsEdited;
+        this.Messages = Messages;
+        this.TotalMessageCount = TotalMessageCount;
+        this.Type = Type;
+        this.UnreadMessageCount = UnreadMessageCount;
+        this.Subject = Subject;
+        this.ViewableByIds = ViewableByIds ?? [];
+    }
 
     /// <summary>Topic id, type, and message count, for logs and the debugger.</summary>
     public override string ToString() => $"Conversation Id={Id} Type={Type} Messages={Messages?.Count ?? 0} Total={TotalMessageCount}";

@@ -48,7 +48,7 @@ public sealed record HardwareDevice
     public static HardwareDevice Custom(string path)
     {
         _ = BuiltIns;
-        return NamedCatalog.GetOrCustom(ById, path, key => new HardwareDevice(key, key));
+        return NamedCatalog.GetOrCustom(ById, path, key => new(key, key));
     }
 
     /// <inheritdoc />

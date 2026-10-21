@@ -11,17 +11,18 @@ using Lyo.Api.Models.Error;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Export;
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Csv;
 using Lyo.Csv.Models;
 using Lyo.Formatter;
+using Lyo.Json;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Testing;
 using Lyo.Xlsx;
 using Lyo.Xlsx.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Api.Tests.Services.Export;
 
@@ -45,9 +46,7 @@ public sealed class ExportServiceTests
         _csvService = new CsvService(loggerFactory.CreateLogger<CsvService>());
         _xlsxService = new XlsxService(loggerFactory.CreateLogger<XlsxService>());
         _formatterService = new FormatterService();
-        _formatHandlers = [
-            new JsonExportFormatHandler(new Lyo.Json.JsonService()), new CsvExportFormatHandler(_csvService), new XlsxExportFormatHandler(_xlsxService)
-        ];
+        _formatHandlers = [new JsonExportFormatHandler(new JsonService()), new CsvExportFormatHandler(_csvService), new XlsxExportFormatHandler(_xlsxService)];
     }
 
     [Fact]
@@ -144,14 +143,12 @@ public sealed class ExportServiceTests
     [Fact]
     public async Task ExportAsync_Csv_WithoutCsvHandler_ThrowsNotSupportedException()
     {
-        var jsonOnlyHandlers = new IExportFormatHandler[] { new JsonExportFormatHandler(new Lyo.Json.JsonService()) };
+        var jsonOnlyHandlers = new IExportFormatHandler[] { new JsonExportFormatHandler(new JsonService()) };
         var items = new[] { new TestExportItem(LyoGuid.CreateV7(), "Alice", "Smith", new(2024, 1, 15)) };
         var queryService = new FakeQueryService<TestDbContext, TestExportItem>(items);
         var exportService = new ExportService<TestDbContext>(queryService, jsonOnlyHandlers, new(), _formatterService, _logger);
         var request = new ExportRequest { Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Csv };
-        var ex = await Assert.ThrowsAsync<NotSupportedException>(()
-            => exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestCt));
-
+        var ex = await Assert.ThrowsAsync<NotSupportedException>(() => exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestCt));
         Assert.Contains("AddCsvExport()", ex.Message, StringComparison.Ordinal);
     }
 
@@ -196,8 +193,7 @@ public sealed class ExportServiceTests
         var queryService = new FailingQueryService<TestDbContext>();
         var exportService = new ExportService<TestDbContext>(queryService, _formatHandlers, new(), _formatterService, _logger);
         var request = new ExportRequest { Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Csv };
-        await Assert.ThrowsAsync<ApiErrorException>(()
-            => exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestCt));
+        await Assert.ThrowsAsync<ApiErrorException>(() => exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestCt));
     }
 
     private sealed record TestExportItem(Guid Id, string FirstName, string LastName, DateTime CreatedAt);

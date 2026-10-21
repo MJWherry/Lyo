@@ -1,4 +1,3 @@
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -13,11 +12,8 @@ internal sealed class NetworkRowView : Grid
     private readonly Chip _method = new();
     private readonly Chip _status = new();
     private readonly Chip _type = new();
-    private readonly TextBlock _url = new() {
-        VerticalAlignment = VerticalAlignment.Center,
-        TextTrimming = TextTrimming.CharacterEllipsis,
-        Margin = new(4, 0, 0, 0)
-    };
+
+    private readonly TextBlock _url = new() { VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis, Margin = new(4, 0, 0, 0) };
 
     public NetworkRowView(AutomationStudioNetworkRow row)
     {
@@ -50,9 +46,10 @@ internal sealed class NetworkRowView : Grid
 
     private void Set(int column, Control child)
     {
-        Grid.SetColumn(child, column);
+        SetColumn(child, column);
         if (column < 3)
             child.Margin = new(0, 0, 4, 0);
+
         Children.Add(child);
     }
 }

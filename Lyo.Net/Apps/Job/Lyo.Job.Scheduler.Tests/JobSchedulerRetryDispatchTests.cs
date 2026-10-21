@@ -1,19 +1,18 @@
 using System.Collections;
 using System.Reflection;
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Formatter;
 using Lyo.Job.Models;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Response;
 using Lyo.MessageQueue;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Scheduler.Tests;
 
 /// <summary>
 /// Regression tests for the scheduler review fixes: retry backoff produces exactly one dispatch path (delayed-MQ envelope or future slot. never an immediate publish plus a
-/// delayed one), retry/trigger creation is idempotent across duplicate completion messages, timeouts count as failures, and deleted definitions are evicted from the in-memory
-/// cache
+/// delayed one), retry/trigger creation is idempotent across duplicate completion messages, timeouts count as failures, and deleted definitions are evicted from the in-memory cache
 /// on 404.
 /// </summary>
 public class JobSchedulerRetryDispatchTests

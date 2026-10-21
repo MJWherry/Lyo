@@ -18,9 +18,12 @@ app.Run();
 
 ## What's included
 
-- `DiscordDbContext` ([`Database/DiscordDbContext.cs`](Database/DiscordDbContext.cs)) exposes `DbSet`s for `DiscordUser`, `DiscordGuild`, `DiscordChannel`, `DiscordEmoji`, `DiscordRole`, `DiscordInteraction`, `DiscordMessage`, `DiscordAttachment`, `DiscordReaction` (composite key `(MessageId, ReactorId, EmojiId)`), and `DiscordMember` (composite key `(UserId, GuildId)`). Find the model snapshot under [`Migrations/`](Migrations).
+- `DiscordDbContext` ([`Database/DiscordDbContext.cs`](Database/DiscordDbContext.cs)) exposes `DbSet`s for `DiscordUser`, `DiscordGuild`, `DiscordChannel`, `DiscordEmoji`,
+  `DiscordRole`, `DiscordInteraction`, `DiscordMessage`, `DiscordAttachment`, `DiscordReaction` (composite key `(MessageId, ReactorId, EmojiId)`), and `DiscordMember` (composite
+  key `(UserId, GuildId)`). Find the model snapshot under [`Migrations/`](Migrations).
 - `DiscordDbContextFactory` for design-time tools.
-- `PostgresDiscordOptions` ([`PostgresDiscordOptions.cs`](PostgresDiscordOptions.cs)). `IPostgresMigrationConfig`. Section `"PostgresDiscord"`. Properties: `ConnectionString`, `EnableAutoMigrations` (default `false`); `Schema = "discord"` stays constant.
+- `PostgresDiscordOptions` ([`PostgresDiscordOptions.cs`](PostgresDiscordOptions.cs)). `IPostgresMigrationConfig`. Section `"PostgresDiscord"`. Properties: `ConnectionString`,
+  `EnableAutoMigrations` (default `false`); `Schema = "discord"` stays constant.
 - **Helpers that map endpoints** in [`Extensions.cs`](Extensions.cs) and [`DiscordGuildSettingsEndpoints.cs`](DiscordGuildSettingsEndpoints.cs).
 - `DiscordGuildSettingsHelper` resolves / seeds default `DiscordGuildSettings` bindings.
 - `DiscordGuildSettingsDefinitionSeeder`. An `IHostedService` that registers the settings document definition with `Lyo.Config`.
@@ -29,21 +32,24 @@ app.Run();
 
 Every registration is an `IServiceCollection` extension (declared inside `extension(IServiceCollection services)` blocks):
 
-| Method | Description |
-| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `AddDiscordDbContext(string connectionString)` | Shortcut: registers the DbContext factory plus a scoped `DiscordDbContext` resolved from that factory. |
-| `AddDiscordDbContextFactory(Action<PostgresDiscordOptions>)` | Constructs options in place. |
-| `AddDiscordDbContextFactoryFromConfiguration(config, sectionName?)` | Reads options from the supplied configuration (default section `"PostgresDiscord"`). |
-| `AddDiscordDbContextFactory(PostgresDiscordOptions)` | Registers the factory and `Npgsql` provider, points the migrations history table at the `discord` schema, and wires `AddPostgresMigrations<DiscordDbContext, …>`. |
-| `AddPostgresDiscord(...)` (3 overloads) | The factory method above **plus** `AddLyoCrudServices<DiscordDbContext>()`. Use this when hosting the Discord REST API. |
-| `AddDiscordGuildSettingsInfrastructure()` | Registers the hosted seeder so `Lyo.Config` knows about `DiscordGuildSettings` (requires `AddPostgresConfigStore`). |
+| Method                                                              | Description                                                                                                                                                       |
+|---------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AddDiscordDbContext(string connectionString)`                      | Shortcut: registers the DbContext factory plus a scoped `DiscordDbContext` resolved from that factory.                                                            |
+| `AddDiscordDbContextFactory(Action<PostgresDiscordOptions>)`        | Constructs options in place.                                                                                                                                      |
+| `AddDiscordDbContextFactoryFromConfiguration(config, sectionName?)` | Reads options from the supplied configuration (default section `"PostgresDiscord"`).                                                                              |
+| `AddDiscordDbContextFactory(PostgresDiscordOptions)`                | Registers the factory and `Npgsql` provider, points the migrations history table at the `discord` schema, and wires `AddPostgresMigrations<DiscordDbContext, …>`. |
+| `AddPostgresDiscord(...)` (3 overloads)                             | The factory method above **plus** `AddLyoCrudServices<DiscordDbContext>()`. Use this when hosting the Discord REST API.                                           |
+| `AddDiscordGuildSettingsInfrastructure()`                           | Registers the hosted seeder so `Lyo.Config` knows about `DiscordGuildSettings` (requires `AddPostgresConfigStore`).                                               |
 
-`AddPostgresDiscord` expects the host to have already registered `AddLyoQueryServices`, a cache implementation, and an `ILyoMapper` (for example via `MapsterLyoMapper` configured by
+`AddPostgresDiscord` expects the host to have already registered `AddLyoQueryServices`, a cache implementation, and an `ILyoMapper` (for example via `MapsterLyoMapper` configured
+by
 `ConfigureDiscordMappings`).
 
 ## Mapster mappings (`ConfigureDiscordMappings`)
 
-Call once on your `TypeAdapterConfig` to connect the `*Req` ↔ EF ↔ `*Res` mappings used by `Lyo.Api` CRUD. Two name-sanitizers run for nullable input: `DiscordUsernameOrPlaceholder` (≤ 35 chars, falls back to `"(unknown)"`) and `DiscordGuildNameOrPlaceholder` (≤ 50 chars). Audit timestamps (`CreatedTimestamp`, `UpdatedTimestamp`) are ignored on request DTOs because the CRUD hooks stamp them.
+Call once on your `TypeAdapterConfig` to connect the `*Req` ↔ EF ↔ `*Res` mappings used by `Lyo.Api` CRUD. Two name-sanitizers run for nullable input:
+`DiscordUsernameOrPlaceholder` (≤ 35 chars, falls back to `"(unknown)"`) and `DiscordGuildNameOrPlaceholder` (≤ 50 chars). Audit timestamps (`CreatedTimestamp`, `UpdatedTimestamp`)
+are ignored on request DTOs because the CRUD hooks stamp them.
 
 ## Endpoint mapping (`app.BuildDiscordGroup()`)
 
@@ -51,25 +57,25 @@ Maps Discord REST endpoints under group `"Discord"` through the typed `CreateBui
 UpsertInheritUpdate | PatchInheritsUpdate` plus a `CrudConfiguration<DiscordDbContext, T, TReq>` that stamps `CreatedTimestamp` / `UpdatedTimestamp` in `BeforeCreate` /
 `BeforeUpdate`:
 
-| Route segment | EF entity | Notes |
-| --------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `Discord/User` | `DiscordUser` | Audit hook only. |
-| `Discord/Guild` | `DiscordGuild` | Audit hook **and** `AfterUpsert` that calls `DiscordGuildSettingsHelper.EnsureDefaultBindingAsync` if `IConfigStore` is registered. |
-| `Discord/Channel` | `DiscordChannel` | Audit hook only. |
-| `Discord/Emoji` | `DiscordEmoji` | Audit hook only. |
-| `Discord/Role` | `DiscordRole` | Audit hook only. |
-| `Discord/Interaction` | `DiscordInteraction` | Default config (this entity has no audit columns). |
-| `Discord/Message` | `DiscordMessage` | Audit hook only. |
-| `Discord/Attachment` | `DiscordAttachment` | Default config. |
-| `Discord/Member` | `DiscordMember` | Composite PK `(UserId, GuildId)` → only `Query`, `Upsert`/`UpsertBulk`, `Patch`/`PatchBulk` (no GET-by-id). |
+| Route segment         | EF entity            | Notes                                                                                                                               |
+|-----------------------|----------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| `Discord/User`        | `DiscordUser`        | Audit hook only.                                                                                                                    |
+| `Discord/Guild`       | `DiscordGuild`       | Audit hook **and** `AfterUpsert` that calls `DiscordGuildSettingsHelper.EnsureDefaultBindingAsync` if `IConfigStore` is registered. |
+| `Discord/Channel`     | `DiscordChannel`     | Audit hook only.                                                                                                                    |
+| `Discord/Emoji`       | `DiscordEmoji`       | Audit hook only.                                                                                                                    |
+| `Discord/Role`        | `DiscordRole`        | Audit hook only.                                                                                                                    |
+| `Discord/Interaction` | `DiscordInteraction` | Default config (this entity has no audit columns).                                                                                  |
+| `Discord/Message`     | `DiscordMessage`     | Audit hook only.                                                                                                                    |
+| `Discord/Attachment`  | `DiscordAttachment`  | Default config.                                                                                                                     |
+| `Discord/Member`      | `DiscordMember`      | Composite PK `(UserId, GuildId)` → only `Query`, `Upsert`/`UpsertBulk`, `Patch`/`PatchBulk` (no GET-by-id).                         |
 
 `BuildDiscordGroup` also invokes `MapDiscordGuildSettingsEndpoints`, which (only when an `IConfigStore` is registered) maps:
 
-| Method | Route |
+| Method | Route                                                              |
 |--------|--------------------------------------------------------------------|
-| `GET` | `Discord/Guild/{guildId:long}/GuildSettings` |
-| `PUT` | `Discord/Guild/{guildId:long}/GuildSettings` |
-| `GET` | `Discord/Guild/{guildId:long}/GuildSettings/Revisions` |
+| `GET`  | `Discord/Guild/{guildId:long}/GuildSettings`                       |
+| `PUT`  | `Discord/Guild/{guildId:long}/GuildSettings`                       |
+| `GET`  | `Discord/Guild/{guildId:long}/GuildSettings/Revisions`             |
 | `POST` | `Discord/Guild/{guildId:long}/GuildSettings/Revert/{revision:int}` |
 
 The PUT route checks the guild exists, clears `Revision` before save, calls `NormalizeForPersistence`, and returns the persisted value to the caller. The host is

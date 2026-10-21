@@ -82,8 +82,7 @@ public sealed class XmlWriter : IXmlWriter
     }
 
     /// <inheritdoc />
-    public void ExportToXmlFromDataTable(DataTable.Models.DataTable dataTable, Stream xmlStream)
-        => Write(ExportToXmlStringFromDataTable(dataTable), xmlStream);
+    public void ExportToXmlFromDataTable(DataTable.Models.DataTable dataTable, Stream xmlStream) => Write(ExportToXmlStringFromDataTable(dataTable), xmlStream);
 
     /// <inheritdoc />
     public byte[] ExportToXmlBytesFromDataTable(DataTable.Models.DataTable dataTable, Encoding? encoding = null)
@@ -127,11 +126,7 @@ public sealed class XmlWriter : IXmlWriter
     }
 
     /// <inheritdoc />
-    public async Task ExportFormattedToXmlAsync<T>(
-        IEnumerable<T> items,
-        IReadOnlyDictionary<string, Func<T, string>> fields,
-        Stream xmlStream,
-        CancellationToken ct = default)
+    public async Task ExportFormattedToXmlAsync<T>(IEnumerable<T> items, IReadOnlyDictionary<string, Func<T, string>> fields, Stream xmlStream, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(xmlStream);
         var bytes = _engine.Encoding.GetBytes(ExportFormattedToXmlString(items, fields));
@@ -139,11 +134,7 @@ public sealed class XmlWriter : IXmlWriter
     }
 
     /// <inheritdoc />
-    public async Task ExportColumnsToXmlAsync<T>(
-        IEnumerable<T> items,
-        IReadOnlyDictionary<string, PropertyInfo> columns,
-        Stream xmlStream,
-        CancellationToken ct = default)
+    public async Task ExportColumnsToXmlAsync<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns, Stream xmlStream, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(xmlStream);
         var bytes = _engine.Encoding.GetBytes(ExportColumnsToXmlString(items, columns));

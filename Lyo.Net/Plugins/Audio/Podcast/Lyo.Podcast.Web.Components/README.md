@@ -1,6 +1,7 @@
 # Lyo.Podcast.Web.Components
 
-Blazor components for browsing a podcast catalog. `PodcastShowSearch` asks the host to search. `PodcastShowDetail` shows a season and episode list. Cover URLs and tag lists come from the host. Components do not take a database context.
+Blazor components for browsing a podcast catalog. `PodcastShowSearch` asks the host to search. `PodcastShowDetail` shows a season and episode list. Cover URLs and tag lists come
+from the host. Components do not take a database context.
 
 ## Features
 

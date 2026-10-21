@@ -1,6 +1,6 @@
 namespace Lyo.Billing;
 
-/// <summary>How an invoice line's <see cref="InvoiceLineRecord.Amount"/> is derived from quantity and unit amount.</summary>
+/// <summary>How an invoice line's <see cref="InvoiceLineRecord.Amount" /> is derived from quantity and unit amount.</summary>
 public enum InvoiceLinePricing
 {
     /// <summary>Quantity × unit amount (the default).</summary>

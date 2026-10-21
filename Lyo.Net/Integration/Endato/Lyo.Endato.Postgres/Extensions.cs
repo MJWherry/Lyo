@@ -4,6 +4,7 @@ using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace Lyo.Endato.Postgres;
 
 /// <summary>DI helpers for PostgreSQL Endato database context registration.</summary>
@@ -46,7 +47,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresEndatoOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddEndatoDbContextFactory(options);
         }
 
@@ -58,7 +58,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPostgresDbContextFactory<EndatoDbContext, PostgresEndatoOptions>(options);
-
             return services;
         }
     }

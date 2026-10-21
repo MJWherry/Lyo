@@ -18,7 +18,7 @@ public static class Constants
             /// <summary>Named statutory compilations inside a state.</summary>
             public const string Codes = $"{Route}/Codes";
 
-            /// <summary>Statute nodes. Query and get only; body changes go through <see cref="NodesBySource"/>.</summary>
+            /// <summary>Statute nodes. Query and get only; body changes go through <see cref="NodesBySource" />.</summary>
             public const string Nodes = $"{Route}/Nodes";
 
             /// <summary>Official notes. Query and get only; upsert replaces the set.</summary>

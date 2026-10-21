@@ -9,8 +9,8 @@ using System.Diagnostics;
 namespace Lyo.Exceptions;
 
 /// <summary>
-/// Guards for operation validation that throw <see cref="InvalidOperationException" />, <see cref="ObjectDisposedException" />,
-/// <see cref="OperationCanceledException" />, or <see cref="NotSupportedException" />.
+/// Guards for operation validation that throw <see cref="InvalidOperationException" />, <see cref="ObjectDisposedException" />, <see cref="OperationCanceledException" />, or
+/// <see cref="NotSupportedException" />.
 /// </summary>
 /// <remarks>
 /// Unlike <see cref="ArgumentHelpers" />, this type signals invalid runtime state with <see cref="InvalidOperationException" /> (including null references for most checks
@@ -268,10 +268,7 @@ public static class OperationHelpers
         ThrowIfNotInRange(value.Value, min, max, paramName, message);
     }
 
-    /// <summary>
-    /// Throws <see cref="InvalidOperationException" /> when the value is not within the specified range. Overload for non-nullable values, where the null
-    /// check is vacuous.
-    /// </summary>
+    /// <summary>Throws <see cref="InvalidOperationException" /> when the value is not within the specified range. Overload for non-nullable values, where the null check is vacuous.</summary>
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
 #endif

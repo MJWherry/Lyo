@@ -22,8 +22,8 @@ public sealed class JobRunClient(IApiClient client, string? routePrefix = null)
         => client.PostAsAsync<QueryConcreteReq, QueryRes<JobRunRes>>(ApiRouteBuilder.Build(routePrefix, JobRoutes.RunsQuery), request, ct: ct);
 
     /// <summary>
-    /// Sets the run to <c>Running</c>. Pass <paramref name="request" /> so the API can snapshot the worker instance that claimed the run.
-    /// Older callers may still send an empty body.
+    /// Sets the run to <c>Running</c>. Pass <paramref name="request" /> so the API can snapshot the worker instance that claimed the run. Older callers may still send an empty
+    /// body.
     /// </summary>
     public Task<JobRunRes> StartAsync(Guid runId, IEnumerable<string>? includes = null, CancellationToken ct = default, JobRunStartedReq? request = null)
         => request is null

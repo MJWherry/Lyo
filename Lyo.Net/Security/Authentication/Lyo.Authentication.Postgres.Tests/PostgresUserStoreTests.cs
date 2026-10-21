@@ -1,8 +1,8 @@
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Postgres.Stores;
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 using Microsoft.Extensions.Logging.Abstractions;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Authentication.Postgres.Tests;
 
@@ -83,8 +83,7 @@ public sealed class PostgresUserStoreTests
     public async Task MultiTenantStrict_ThrowsWhenCallerOmitsTenant()
     {
         var strictStore = new PostgresUserStore(
-            _fixture.ContextFactory, NullLogger<PostgresUserStore>.Instance, new EntityRefOptions(),
-            new PostgresUserOptions { Tenancy = new() { Mode = TenancyMode.MultiTenantStrict } });
+            _fixture.ContextFactory, NullLogger<PostgresUserStore>.Instance, new(), new() { Tenancy = new() { Mode = TenancyMode.MultiTenantStrict } });
 
         var user = NewUser($"strict-{LyoGuid.CreateV7():N}@example.com");
         await Assert.ThrowsAsync<ArgumentNullException>(() => strictStore.CreateAsync(user, null, TestCt));
@@ -95,8 +94,7 @@ public sealed class PostgresUserStoreTests
     public async Task SystemOnly_StoresAndRetrievesWithNullTenant()
     {
         var systemStore = new PostgresUserStore(
-            _fixture.ContextFactory, NullLogger<PostgresUserStore>.Instance, new EntityRefOptions(),
-            new PostgresUserOptions { Tenancy = new() { Mode = TenancyMode.SystemOnly } });
+            _fixture.ContextFactory, NullLogger<PostgresUserStore>.Instance, new(), new() { Tenancy = new() { Mode = TenancyMode.SystemOnly } });
 
         var user = NewUser($"system-{LyoGuid.CreateV7():N}@example.com");
         await systemStore.CreateAsync(user, LyoGuid.CreateV7(), TestCt);
@@ -105,5 +103,6 @@ public sealed class PostgresUserStoreTests
         Assert.Equal(user.Email, loaded.Email);
     }
 
-    private static LyoUser NewUser(string email) => new(LyoGuid.CreateV7(), "Alice", email, true, null, "en-US", ["people.read"], null, null, DateTime.UtcNow, null, null, null, null);
+    private static LyoUser NewUser(string email)
+        => new(LyoGuid.CreateV7(), "Alice", email, true, null, "en-US", ["people.read"], null, null, DateTime.UtcNow, null, null, null, null);
 }

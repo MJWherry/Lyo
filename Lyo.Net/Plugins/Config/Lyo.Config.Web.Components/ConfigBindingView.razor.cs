@@ -2,8 +2,15 @@ namespace Lyo.Config.Web.Components;
 
 public partial class ConfigBindingView
 {
+    private ConfigBindingRecord _edit = new();
+    private int _historyVersion;
+    private bool _initialized;
+    private bool _jsonParseError;
+    private bool _saving;
+    private bool _valueDirty;
+
     [CascadingParameter]
-    IMudDialogInstance MudDialog { get; set; } = null!;
+    private IMudDialogInstance MudDialog { get; set; } = null!;
 
     /// <summary>Store used to save the binding.</summary>
     [Parameter]
@@ -28,13 +35,6 @@ public partial class ConfigBindingView
     /// <summary>The definition and entity existing binding to edit. Null creates a new binding.</summary>
     [Parameter]
     public ConfigBindingRecord? Binding { get; set; }
-
-    private ConfigBindingRecord _edit = new();
-    private bool _valueDirty;
-    private bool _jsonParseError;
-    private bool _saving;
-    private bool _initialized;
-    private int _historyVersion;
 
     private bool IsNew => Binding == null || Binding.Id == default;
 
@@ -70,8 +70,7 @@ public partial class ConfigBindingView
             UpdatedTimestamp = src.UpdatedTimestamp
         };
 
-    private static ConfigValue? CloneValue(ConfigValue? src)
-        => src == null ? null : new() { TypeName = src.TypeName, Json = src.Json };
+    private static ConfigValue? CloneValue(ConfigValue? src) => src == null ? null : new() { TypeName = src.TypeName, Json = src.Json };
 
     private object DebugModel()
     {
@@ -109,7 +108,6 @@ public partial class ConfigBindingView
         _edit.SubjectEntityType = SubjectEntityType.Trim();
         _edit.SubjectEntityId = SubjectEntityId.Trim();
         _edit.Value.TypeName = Definition.ForValueType;
-
         _saving = true;
         try {
             await Store.SaveBindingAsync(_edit, null);

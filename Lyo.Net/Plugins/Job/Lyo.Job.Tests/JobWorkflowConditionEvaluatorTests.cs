@@ -21,7 +21,6 @@ public class JobWorkflowConditionEvaluatorTests
     {
         var context = new JobContextBag().WithUpstreamRun("Extract", RunWith(("RowCount", "42")));
         var step = BuildStep(Condition("Step.Extract.Result.RowCount", ComparisonOperatorEnum.GreaterThan, "0"));
-
         Assert.Equal(JobWorkflowConditionOutcome.Run, JobWorkflowConditionEvaluator.Evaluate(step, context));
     }
 
@@ -31,8 +30,7 @@ public class JobWorkflowConditionEvaluatorTests
         var context = new JobContextBag().WithUpstreamRun("Extract", RunWith(("RowCount", "42"), ("Status", "failed")));
         var step = BuildStep(
             Group(
-                GroupOperatorEnum.And,
-                Condition("Step.Extract.Result.RowCount", ComparisonOperatorEnum.GreaterThan, "0"),
+                GroupOperatorEnum.And, Condition("Step.Extract.Result.RowCount", ComparisonOperatorEnum.GreaterThan, "0"),
                 Condition("Step.Extract.Result.Status", ComparisonOperatorEnum.Equals, "ok")));
 
         Assert.Equal(JobWorkflowConditionOutcome.Skip, JobWorkflowConditionEvaluator.Evaluate(step, context));
@@ -44,8 +42,7 @@ public class JobWorkflowConditionEvaluatorTests
         var context = new JobContextBag().WithUpstreamRun("Extract", RunWith(("RowCount", "0"), ("Status", "ok")));
         var step = BuildStep(
             Group(
-                GroupOperatorEnum.Or,
-                Condition("Step.Extract.Result.RowCount", ComparisonOperatorEnum.GreaterThan, "0"),
+                GroupOperatorEnum.Or, Condition("Step.Extract.Result.RowCount", ComparisonOperatorEnum.GreaterThan, "0"),
                 Condition("Step.Extract.Result.Status", ComparisonOperatorEnum.Equals, "ok")));
 
         Assert.Equal(JobWorkflowConditionOutcome.Run, JobWorkflowConditionEvaluator.Evaluate(step, context));
@@ -57,11 +54,9 @@ public class JobWorkflowConditionEvaluatorTests
         var context = new JobContextBag().WithUpstreamRun("Extract", RunWith(("RowCount", "42"), ("Status", "warn")));
         var step = BuildStep(
             Group(
-                GroupOperatorEnum.And,
-                Condition("Step.Extract.Result.RowCount", ComparisonOperatorEnum.GreaterThan, "0"),
+                GroupOperatorEnum.And, Condition("Step.Extract.Result.RowCount", ComparisonOperatorEnum.GreaterThan, "0"),
                 Group(
-                    GroupOperatorEnum.Or,
-                    Condition("Step.Extract.Result.Status", ComparisonOperatorEnum.Equals, "ok"),
+                    GroupOperatorEnum.Or, Condition("Step.Extract.Result.Status", ComparisonOperatorEnum.Equals, "ok"),
                     Condition("Step.Extract.Result.Status", ComparisonOperatorEnum.Equals, "warn"))));
 
         Assert.Equal(JobWorkflowConditionOutcome.Run, JobWorkflowConditionEvaluator.Evaluate(step, context));
@@ -73,11 +68,9 @@ public class JobWorkflowConditionEvaluatorTests
         var context = new JobContextBag().WithUpstreamRun("Extract", RunWith(("RowCount", "42"), ("Status", "failed")));
         var step = BuildStep(
             Group(
-                GroupOperatorEnum.And,
-                Condition("Step.Extract.Result.RowCount", ComparisonOperatorEnum.GreaterThan, "0"),
+                GroupOperatorEnum.And, Condition("Step.Extract.Result.RowCount", ComparisonOperatorEnum.GreaterThan, "0"),
                 Group(
-                    GroupOperatorEnum.Or,
-                    Condition("Step.Extract.Result.Status", ComparisonOperatorEnum.Equals, "ok"),
+                    GroupOperatorEnum.Or, Condition("Step.Extract.Result.Status", ComparisonOperatorEnum.Equals, "ok"),
                     Condition("Step.Extract.Result.Status", ComparisonOperatorEnum.Equals, "warn"))));
 
         Assert.Equal(JobWorkflowConditionOutcome.Skip, JobWorkflowConditionEvaluator.Evaluate(step, context));
@@ -89,7 +82,6 @@ public class JobWorkflowConditionEvaluatorTests
         var context = new JobContextBag();
         context.Set("Input.Env", "prod");
         var step = BuildStep(Condition("Input.Env", ComparisonOperatorEnum.Equals, "prod"));
-
         Assert.Equal(JobWorkflowConditionOutcome.Run, JobWorkflowConditionEvaluator.Evaluate(step, context));
     }
 
@@ -100,7 +92,6 @@ public class JobWorkflowConditionEvaluatorTests
         var workflow = new JobWorkflowRes(LyoGuid.CreateV7(), "Nightly ETL", null, true, null);
         var context = new JobContextBag().WithWorkflow(workflow, null);
         var step = BuildStep(Condition("Workflow.Name", ComparisonOperatorEnum.Equals, "Nightly ETL"));
-
         Assert.Equal(JobWorkflowConditionOutcome.Run, JobWorkflowConditionEvaluator.Evaluate(step, context));
     }
 
@@ -110,7 +101,6 @@ public class JobWorkflowConditionEvaluatorTests
         // Nothing seeded the path, so the gate cannot be read. Running the step would ignore the condition in exactly the case its author cared about.
         var context = new JobContextBag().WithUpstreamRun("Extract", RunWith(("RowCount", "42")));
         var step = BuildStep(Condition("Step.Missing.Result.RowCount", ComparisonOperatorEnum.GreaterThan, "0"));
-
         Assert.Equal(JobWorkflowConditionOutcome.Skip, JobWorkflowConditionEvaluator.Evaluate(step, context));
     }
 
@@ -122,8 +112,7 @@ public class JobWorkflowConditionEvaluatorTests
     }
 
     [Fact]
-    public void Evaluate_NoConditionJson_ReturnsRun()
-        => Assert.Equal(JobWorkflowConditionOutcome.Run, JobWorkflowConditionEvaluator.Evaluate(BuildStepJson(null), new()));
+    public void Evaluate_NoConditionJson_ReturnsRun() => Assert.Equal(JobWorkflowConditionOutcome.Run, JobWorkflowConditionEvaluator.Evaluate(BuildStepJson(null), new()));
 
     [Fact]
     public void Evaluate_EmptyGroup_ReturnsRun()
@@ -157,7 +146,6 @@ public class JobWorkflowConditionEvaluatorTests
     {
         var context = new JobContextBag().WithUpstreamRun("Source", RunWith((key, resultValue)));
         var step = BuildStep(Condition($"Step.Source.Result.{key}", comparator, conditionValue));
-
         Assert.Equal(expected, JobWorkflowConditionEvaluator.Evaluate(step, context));
     }
 
@@ -167,7 +155,6 @@ public class JobWorkflowConditionEvaluatorTests
         // Ordinal string comparison would call "90" greater than "100". Numbers have to compare as numbers or every row-count gate is subtly wrong.
         var context = new JobContextBag().WithUpstreamRun("Source", RunWith(("RowCount", "90")));
         var step = BuildStep(Condition("Step.Source.Result.RowCount", ComparisonOperatorEnum.GreaterThan, "100"));
-
         Assert.Equal(JobWorkflowConditionOutcome.Skip, JobWorkflowConditionEvaluator.Evaluate(step, context));
     }
 
@@ -177,7 +164,6 @@ public class JobWorkflowConditionEvaluatorTests
         // Fuzzy needs the database's trigram support; there is no honest in-process answer, so the safe reading of the gate is "do not run".
         var context = new JobContextBag().WithUpstreamRun("Source", RunWith(("Status", "ok")));
         var step = BuildStep(Condition("Step.Source.Result.Status", ComparisonOperatorEnum.Fuzzy, "ok"));
-
         Assert.Equal(JobWorkflowConditionOutcome.Skip, JobWorkflowConditionEvaluator.Evaluate(step, context));
     }
 

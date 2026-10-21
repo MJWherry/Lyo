@@ -12,15 +12,16 @@ public static class Extensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Replaces plan file storage with <paramref name="resolve" />. Call this after <c>AddWebAutomationPlanRunner</c>. The host chooses which
-        /// <see cref="IFileStorageService" /> to use, including a keyed service.
+        /// Replaces plan file storage with <paramref name="resolve" />. Call this after <c>AddWebAutomationPlanRunner</c>. The host chooses which <see cref="IFileStorageService" />
+        /// to use, including a keyed service.
         /// </summary>
         public IServiceCollection AddAutomationPlanFileStorage(Func<IServiceProvider, IFileStorageService> resolve)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(resolve);
-            services.Replace(ServiceDescriptor.Singleton<IAutomationPlanFileStorage>(sp =>
-                new FileStorageAutomationPlanFileStorage(sp.GetRequiredService<IServiceScopeFactory>(), resolve)));
+            services.Replace(
+                ServiceDescriptor.Singleton<IAutomationPlanFileStorage>(sp => new FileStorageAutomationPlanFileStorage(sp.GetRequiredService<IServiceScopeFactory>(), resolve)));
+
             return services;
         }
     }

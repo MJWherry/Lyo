@@ -26,8 +26,7 @@ public partial class StoryGraphView
     /// <inheritdoc />
     protected override void OnParametersSet() => _picture = StoryGraphDiagram.Create(Draft.Title, Draft);
 
-    private static string ViewBox(DiagramPage page)
-        => string.Create(CultureInfo.InvariantCulture, $"0 0 {page.PageWidth} {page.PageHeight}");
+    private static string ViewBox(DiagramPage page) => string.Create(CultureInfo.InvariantCulture, $"0 0 {page.PageWidth} {page.PageHeight}");
 
     private bool IsSelected(DiagramCell node) => KeyOf(node) == SelectedNodeKey;
 
@@ -37,8 +36,7 @@ public partial class StoryGraphView
         return key is null ? Task.CompletedTask : OnNodeSelected.InvokeAsync(key);
     }
 
-    private Task OnNodeKeyDown(KeyboardEventArgs args, DiagramCell node)
-        => args.Key is "Enter" or " " ? SelectAsync(node) : Task.CompletedTask;
+    private Task OnNodeKeyDown(KeyboardEventArgs args, DiagramCell node) => args.Key is "Enter" or " " ? SelectAsync(node) : Task.CompletedTask;
 
     private static string Polyline(DiagramCell edge)
     {
@@ -62,9 +60,9 @@ public partial class StoryGraphView
         return string.Create(CultureInfo.InvariantCulture, $"{x},{y} {x - 8},{y - 4} {x - 8},{y + 4}");
     }
 
-    private static double TextX(DiagramCell node) => node.Geometry!.X!.Value + (node.Geometry.Width!.Value / 2);
+    private static double TextX(DiagramCell node) => node.Geometry!.X!.Value + node.Geometry.Width!.Value / 2;
 
-    private static double TextY(DiagramCell node, double fraction) => node.Geometry!.Y!.Value + (node.Geometry.Height!.Value * fraction);
+    private static double TextY(DiagramCell node, double fraction) => node.Geometry!.Y!.Value + node.Geometry.Height!.Value * fraction;
 
     private string Stroke(DiagramCell node)
     {
@@ -78,6 +76,7 @@ public partial class StoryGraphView
         var index = Draft.Scenes.FindIndex(item => item.Key == scene);
         if (index < 0)
             index = Math.Abs(StringComparer.Ordinal.GetHashCode(scene));
+
         return SceneStrokes[index % SceneStrokes.Length];
     }
 
@@ -96,8 +95,10 @@ public partial class StoryGraphView
         var parts = new List<string>();
         if (draft.Key == Draft.StartNodeKey)
             parts.Add("Start");
+
         if (draft.IsEnding)
             parts.Add("Ending");
+
         parts.Add(draft.PresentationKind.ToString());
         return string.Join(" · ", parts);
     }
@@ -118,6 +119,5 @@ public partial class StoryGraphView
         return key is null ? null : Draft.Nodes.FirstOrDefault(item => item.Key == key);
     }
 
-    private static string? KeyOf(DiagramCell node)
-        => node.Id is { } id && id.StartsWith("k-", StringComparison.Ordinal) ? id[2..] : node.Value;
+    private static string? KeyOf(DiagramCell node) => node.Id is { } id && id.StartsWith("k-", StringComparison.Ordinal) ? id[2..] : node.Value;
 }

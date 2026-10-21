@@ -12,9 +12,7 @@ public class StateMachineIgnoreTests
         builder.Configure(JobState.Done).Ignore(JobTrigger.Heartbeat);
         var context = new JobContext();
         var snapshot = At(JobState.Done, 3);
-
         var result = builder.Build().Fire(context, snapshot, JobTrigger.Heartbeat);
-
         Assert.True(result.Succeeded);
         Assert.False(result.Changed);
         Assert.Equal(TransitionKind.Ignored, result.Kind);
@@ -44,9 +42,7 @@ public class StateMachineIgnoreTests
     {
         var seen = new List<(JobState, JobTrigger)>();
         var definition = Job().OnUnhandledTrigger((_, state, trigger) => seen.Add((state, trigger))).Build();
-
         var result = definition.Fire(new(), At(JobState.Done), JobTrigger.Start);
-
         Assert.Equal(TransitionRejection.NoTransition, result.Rejection);
         Assert.Equal([(JobState.Done, JobTrigger.Start)], seen);
     }

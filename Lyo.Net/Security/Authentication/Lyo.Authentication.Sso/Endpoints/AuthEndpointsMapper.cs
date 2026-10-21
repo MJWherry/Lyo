@@ -1,6 +1,4 @@
 using System.Text.Json.Serialization;
-using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
-using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Error;
 using Lyo.Authentication.Audit;
 using Lyo.Authentication.Format;
@@ -20,12 +18,13 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 
 namespace Lyo.Authentication.Sso.Endpoints;
 
 /// <summary>
-/// SSO endpoints shared by every protocol. Browser flow: <c>GET /auth/login/{provider}</c> → IdP → callback → 302 to <c>{returnUrl}?lyo_handoff=lyoh_...</c>.
-/// OpenID Connect completes on GET. SAML completes on POST. <c>mode=api</c> returns JSON and is honored for OpenID Connect.
+/// SSO endpoints shared by every protocol. Browser flow: <c>GET /auth/login/{provider}</c> → IdP → callback → 302 to <c>{returnUrl}?lyo_handoff=lyoh_...</c>. OpenID Connect
+/// completes on GET. SAML completes on POST. <c>mode=api</c> returns JSON and is honored for OpenID Connect.
 /// </summary>
 public static class AuthEndpointsMapper
 {

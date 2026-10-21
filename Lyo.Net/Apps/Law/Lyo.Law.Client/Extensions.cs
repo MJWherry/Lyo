@@ -7,12 +7,12 @@ using Microsoft.Extensions.Options;
 
 namespace Lyo.Law.Client;
 
-/// <summary>DI helpers for <see cref="LawClient"/>.</summary>
+/// <summary>DI helpers for <see cref="LawClient" />.</summary>
 public static class Extensions
 {
     extension(IServiceCollection services)
     {
-        /// <summary>Adds <see cref="ILawClient"/> on the <typeparamref name="TApiClient"/> already in the container.</summary>
+        /// <summary>Adds <see cref="ILawClient" /> on the <typeparamref name="TApiClient" /> already in the container.</summary>
         public IServiceCollection AddLawClient<TApiClient>(Action<LawClientOptions> configure)
             where TApiClient : class, IApiClient
         {
@@ -23,7 +23,7 @@ public static class Extensions
             return services.AddLawClient<TApiClient>(options);
         }
 
-        /// <summary>Adds <see cref="ILawClient"/> on the <typeparamref name="TApiClient"/> already in the container.</summary>
+        /// <summary>Adds <see cref="ILawClient" /> on the <typeparamref name="TApiClient" /> already in the container.</summary>
         public IServiceCollection AddLawClient<TApiClient>(LawClientOptions? options = null)
             where TApiClient : class, IApiClient
         {
@@ -33,7 +33,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Adds <see cref="ILawClient"/> on the <typeparamref name="TApiClient"/> already in the container, binding route options from configuration.</summary>
+        /// <summary>Adds <see cref="ILawClient" /> on the <typeparamref name="TApiClient" /> already in the container, binding route options from configuration.</summary>
         public IServiceCollection AddLawClientFromConfiguration<TApiClient>(IConfiguration configuration, string configSectionName = LawClientOptions.SectionName)
             where TApiClient : class, IApiClient
         {
@@ -45,7 +45,7 @@ public static class Extensions
             return services.AddLawClient<TApiClient>(options);
         }
 
-        /// <summary>Adds <see cref="ILawClient"/> on an API client resolved by <paramref name="apiClientFactory"/>.</summary>
+        /// <summary>Adds <see cref="ILawClient" /> on an API client resolved by <paramref name="apiClientFactory" />.</summary>
         public IServiceCollection AddLawClient(Func<IServiceProvider, IApiClient> apiClientFactory, Action<LawClientOptions> configure)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -55,7 +55,7 @@ public static class Extensions
             return services.AddLawClient(apiClientFactory, options);
         }
 
-        /// <summary>Adds <see cref="ILawClient"/> on an API client resolved by <paramref name="apiClientFactory"/>.</summary>
+        /// <summary>Adds <see cref="ILawClient" /> on an API client resolved by <paramref name="apiClientFactory" />.</summary>
         public IServiceCollection AddLawClient(Func<IServiceProvider, IApiClient> apiClientFactory, LawClientOptions? options = null)
         {
             ArgumentHelpers.ThrowIfNull(services);
@@ -65,7 +65,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Adds <see cref="ILawClient"/> on an API client resolved by <paramref name="apiClientFactory"/>, binding route options from configuration.</summary>
+        /// <summary>Adds <see cref="ILawClient" /> on an API client resolved by <paramref name="apiClientFactory" />, binding route options from configuration.</summary>
         public IServiceCollection AddLawClientFromConfiguration(
             Func<IServiceProvider, IApiClient> apiClientFactory,
             IConfiguration configuration,

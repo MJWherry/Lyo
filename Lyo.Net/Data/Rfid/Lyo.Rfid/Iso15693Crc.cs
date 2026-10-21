@@ -3,7 +3,7 @@ namespace Lyo.Rfid;
 /// <summary>ISO 15693 CRC-16 (poly 0x8408, init 0xFFFF), transmitted least-significant byte first.</summary>
 public static class Iso15693Crc
 {
-    /// <summary>Appends the CRC to <paramref name="body"/>.</summary>
+    /// <summary>Appends the CRC to <paramref name="body" />.</summary>
     public static byte[] Append(ReadOnlySpan<byte> body)
     {
         var crc = Compute(body);
@@ -14,7 +14,7 @@ public static class Iso15693Crc
         return frame;
     }
 
-    /// <summary>Throws <see cref="RfidException"/> when the trailing CRC does not match the body.</summary>
+    /// <summary>Throws <see cref="RfidException" /> when the trailing CRC does not match the body.</summary>
     public static void Verify(ReadOnlySpan<byte> frame)
     {
         if (frame.Length < 3)

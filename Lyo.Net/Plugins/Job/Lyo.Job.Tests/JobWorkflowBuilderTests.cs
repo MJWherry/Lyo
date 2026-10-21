@@ -18,8 +18,7 @@ public class JobWorkflowBuilderTests
     [Fact]
     public void AddStep_DependsOnByName_ResolvesToStepId()
     {
-        var req = JobWorkflowBuilder.New("etl").AddStep("Extract", LyoGuid.CreateV7()).AddStep("Load", LyoGuid.CreateV7(), dependsOn: ["Extract"]).Build();
-
+        var req = JobWorkflowBuilder.New("etl").AddStep("Extract", LyoGuid.CreateV7()).AddStep("Load", LyoGuid.CreateV7(), ["Extract"]).Build();
         var extract = req.CreateSteps.Single(s => s.StepName == "Extract");
         var load = req.CreateSteps.Single(s => s.StepName == "Load");
         Assert.NotEqual(Guid.Empty, extract.Id);
@@ -29,12 +28,7 @@ public class JobWorkflowBuilderTests
     [Fact]
     public void AddStep_MultipleDependencies_JoinsIdsWithCommas()
     {
-        var req = JobWorkflowBuilder.New("fan-in")
-            .AddStep("A", LyoGuid.CreateV7())
-            .AddStep("B", LyoGuid.CreateV7())
-            .AddStep("C", LyoGuid.CreateV7(), dependsOn: ["A", "B"])
-            .Build();
-
+        var req = JobWorkflowBuilder.New("fan-in").AddStep("A", LyoGuid.CreateV7()).AddStep("B", LyoGuid.CreateV7()).AddStep("C", LyoGuid.CreateV7(), ["A", "B"]).Build();
         var expected = $"{StepId(req, "A")},{StepId(req, "B")}";
         Assert.Equal(expected, req.CreateSteps.Single(s => s.StepName == "C").DependsOnStepIds);
     }
@@ -42,7 +36,7 @@ public class JobWorkflowBuilderTests
     [Fact]
     public void AddStep_UnknownDependencyName_Throws()
     {
-        var builder = JobWorkflowBuilder.New("etl").AddStep("Load", LyoGuid.CreateV7(), dependsOn: ["Extarct"]);
+        var builder = JobWorkflowBuilder.New("etl").AddStep("Load", LyoGuid.CreateV7(), ["Extarct"]);
 
         // A typo has to fail at build time. Left alone it becomes a DependsOnStepIds nobody can satisfy, and the run fails as a malformed graph in production.
         var ex = Assert.Throws<ValidationException>(builder.Build);
@@ -61,7 +55,6 @@ public class JobWorkflowBuilderTests
     public void Build_StepOrderNotSupplied_DefaultsToInsertionOrder()
     {
         var req = JobWorkflowBuilder.New("etl").AddStep("A", LyoGuid.CreateV7()).AddStep("B", LyoGuid.CreateV7()).AddStep("C", LyoGuid.CreateV7()).Build();
-
         Assert.Equal([0, 1, 2], req.CreateSteps.Select(s => s.StepOrder).ToArray());
     }
 
@@ -69,7 +62,6 @@ public class JobWorkflowBuilderTests
     public void Build_ExplicitStepOrder_IsPreserved()
     {
         var req = JobWorkflowBuilder.New("etl").AddStep("A", LyoGuid.CreateV7(), stepOrder: 10).AddStep("B", LyoGuid.CreateV7()).Build();
-
         Assert.Equal(10, req.CreateSteps.Single(s => s.StepName == "A").StepOrder);
         Assert.Equal(1, req.CreateSteps.Single(s => s.StepName == "B").StepOrder);
     }
@@ -88,7 +80,7 @@ public class JobWorkflowBuilderTests
     {
         var req = JobWorkflowBuilder.New("etl")
             .AddStep("Extract", LyoGuid.CreateV7())
-            .AddStep("Notify", LyoGuid.CreateV7(), dependsOn: ["Extract"], condition: JobWorkflowStepCondition.When("Extract", "RowCount", ComparisonOperatorEnum.GreaterThan, "0"))
+            .AddStep("Notify", LyoGuid.CreateV7(), ["Extract"], JobWorkflowStepCondition.When("Extract", "RowCount", ComparisonOperatorEnum.GreaterThan, "0"))
             .Build();
 
         var clause = Assert.IsType<ConditionClause>(Parse(req, "Notify"));
@@ -104,11 +96,7 @@ public class JobWorkflowBuilderTests
             JobWorkflowStepCondition.When("Extract", "RowCount", ComparisonOperatorEnum.GreaterThan, "0"),
             JobWorkflowStepCondition.WhenPath("Input.Env", ComparisonOperatorEnum.Equals, "prod"));
 
-        var req = JobWorkflowBuilder.New("etl")
-            .AddStep("Extract", LyoGuid.CreateV7())
-            .AddStep("Notify", LyoGuid.CreateV7(), dependsOn: ["Extract"], condition: condition)
-            .Build();
-
+        var req = JobWorkflowBuilder.New("etl").AddStep("Extract", LyoGuid.CreateV7()).AddStep("Notify", LyoGuid.CreateV7(), ["Extract"], condition).Build();
         var group = Assert.IsType<GroupClause>(Parse(req, "Notify"));
         Assert.Equal(GroupOperatorEnum.And, group.Operator);
         Assert.Equal(2, group.Children.Count);
@@ -121,11 +109,7 @@ public class JobWorkflowBuilderTests
             JobWorkflowStepCondition.When("Extract", "Status", ComparisonOperatorEnum.Equals, "ok"),
             JobWorkflowStepCondition.When("Extract", "Status", ComparisonOperatorEnum.Equals, "warn"));
 
-        var req = JobWorkflowBuilder.New("etl")
-            .AddStep("Extract", LyoGuid.CreateV7())
-            .AddStep("Notify", LyoGuid.CreateV7(), dependsOn: ["Extract"], condition: condition)
-            .Build();
-
+        var req = JobWorkflowBuilder.New("etl").AddStep("Extract", LyoGuid.CreateV7()).AddStep("Notify", LyoGuid.CreateV7(), ["Extract"], condition).Build();
         var group = Assert.IsType<GroupClause>(Parse(req, "Notify"));
         Assert.Equal(GroupOperatorEnum.Or, group.Operator);
         Assert.Equal(2, group.Children.Count);
@@ -179,8 +163,7 @@ public class JobWorkflowBuilderTests
     [Fact]
     public void Build_CyclicDependencies_Throws()
     {
-        var builder = JobWorkflowBuilder.New("etl").AddStep("A", LyoGuid.CreateV7(), dependsOn: ["B"]).AddStep("B", LyoGuid.CreateV7(), dependsOn: ["A"]);
-
+        var builder = JobWorkflowBuilder.New("etl").AddStep("A", LyoGuid.CreateV7(), ["B"]).AddStep("B", LyoGuid.CreateV7(), ["A"]);
         var ex = Assert.Throws<ValidationException>(builder.Build);
         Assert.Contains("circular", ex.Message, StringComparison.OrdinalIgnoreCase);
     }

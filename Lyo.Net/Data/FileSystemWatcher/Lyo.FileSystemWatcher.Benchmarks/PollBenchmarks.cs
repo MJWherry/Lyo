@@ -15,10 +15,10 @@ namespace Lyo.FileSystemWatcher.Benchmarks;
 [BenchmarkParameter("Event", Description = "Change applied between the two snapshots: none, one file changed, created, deleted, renamed, or moved, or a mixed batch.")]
 public class PollBenchmarks
 {
-    private IOTempSession _session = null!;
-    private FileSystemWatcherOptions _options = null!;
-    private SnapshotTree _before = null!;
     private SnapshotTree _after = null!;
+    private SnapshotTree _before = null!;
+    private FileSystemWatcherOptions _options = null!;
+    private IOTempSession _session = null!;
 
     [Params(200, 2000)]
     public int FileCount { get; set; }

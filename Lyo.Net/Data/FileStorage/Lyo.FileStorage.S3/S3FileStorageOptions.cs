@@ -14,8 +14,8 @@ public sealed class S3FileStorageOptions : FileStorageServiceBaseOptions
     public string? Region { get; set; }
 
     /// <summary>
-    /// Optional AWS access key ID. When set with <see cref="SecretAccessKey" />, used instead of <see cref="Profile" /> or the default credential chain. When both keys are null or
-    /// whitespace, <see cref="Profile" /> is used if set; otherwise the default AWS chain (environment, shared credentials file, IAM role).
+    /// Optional AWS access key ID. When set with <see cref="SecretAccessKey" />, used instead of <see cref="Profile" /> or the default credential chain. When both keys are null
+    /// or whitespace, <see cref="Profile" /> is used if set; otherwise the default AWS chain (environment, shared credentials file, IAM role).
     /// </summary>
     public string? AccessKeyId { get; set; }
 
@@ -23,8 +23,8 @@ public sealed class S3FileStorageOptions : FileStorageServiceBaseOptions
     public string? SecretAccessKey { get; set; }
 
     /// <summary>
-    /// Named profile from the shared credentials/config files (<c>~/.aws/credentials</c> and <c>~/.aws/config</c>). Used when static keys are omitted. When unset, the AWS default
-    /// chain is used (which looks for the <c>default</c> profile). If set but the profile is missing, client construction fails rather than falling back to <c>default</c>.
+    /// Named profile from the shared credentials/config files (<c>~/.aws/credentials</c> and <c>~/.aws/config</c>). Used when static keys are omitted. When unset, the AWS
+    /// default chain is used (which looks for the <c>default</c> profile). If set but the profile is missing, client construction fails rather than falling back to <c>default</c>.
     /// </summary>
     public string? Profile { get; set; }
 

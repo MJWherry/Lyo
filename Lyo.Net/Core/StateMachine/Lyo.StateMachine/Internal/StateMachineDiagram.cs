@@ -98,12 +98,15 @@ internal static class StateMachineDiagram
                 switch (rule.Kind) {
                     case RuleKind.Permit:
                         yield return (source, rule.Destination, label);
+
                         break;
                     case RuleKind.Reentry:
                         yield return (source, source, label);
+
                         break;
                     case RuleKind.Internal:
                         yield return (source, source, $"{label} (internal)");
+
                         break;
                     case RuleKind.Dynamic:
                         foreach (var destination in rule.Destinations.Distinct())

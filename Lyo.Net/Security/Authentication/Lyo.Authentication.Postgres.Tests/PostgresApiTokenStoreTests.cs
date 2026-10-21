@@ -1,12 +1,13 @@
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Models.Records;
-using Lyo.Testing;
 using Lyo.Common.Core.Identifiers;
+using Lyo.Testing;
 
 namespace Lyo.Authentication.Postgres.Tests;
 
 public sealed class PostgresApiTokenStoreTests
 {
+    private static int _idSeq;
     private readonly AuthenticationPostgresFixture _fixture;
 
     public PostgresApiTokenStoreTests(AuthenticationPostgresFixture fixture) => _fixture = fixture;
@@ -114,7 +115,9 @@ public sealed class PostgresApiTokenStoreTests
 
     private async Task<LyoUser> CreateUserAsync()
     {
-        var user = new LyoUser(LyoGuid.CreateV7(), "Token Owner", $"owner-{LyoGuid.CreateV7():N}@example.com", true, null, null, [], null, null, DateTime.UtcNow, null, null, null, null);
+        var user = new LyoUser(
+            LyoGuid.CreateV7(), "Token Owner", $"owner-{LyoGuid.CreateV7():N}@example.com", true, null, null, [], null, null, DateTime.UtcNow, null, null, null, null);
+
         return await _fixture.UserStore.CreateAsync(user, null, TestCt);
     }
 
@@ -139,8 +142,6 @@ public sealed class PostgresApiTokenStoreTests
             Assert.NotNull(await _fixture.TokenStore.GetByIdAsync(id, null, TestCt));
     }
 
-    private static int _idSeq;
-
     private static string NewId()
     {
         const string alphabet = "0123456789abcdefghjkmnpqrstvwxyz";
@@ -162,6 +163,6 @@ public sealed class PostgresApiTokenStoreTests
         string? kind = null,
         IReadOnlyDictionary<string, object?>? metadata = null)
         => new(
-            id, TestData.Create(32, TestData.Seed + id.GetHashCode()), kind ?? ApiTokenKind.Pat, ApiTokenRing.Live, userId, "test token", scopes ?? [], metadata,
-            DateTime.UtcNow, null, null, null, null, null, rotatedFromId);
+            id, TestData.Create(32, TestData.Seed + id.GetHashCode()), kind ?? ApiTokenKind.Pat, ApiTokenRing.Live, userId, "test token", scopes ?? [], metadata, DateTime.UtcNow,
+            null, null, null, null, null, rotatedFromId);
 }

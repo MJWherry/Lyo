@@ -38,18 +38,13 @@ public partial class JobWorkflowRunGrid
             new() {
                 Keys = [[id]],
                 Amount = 1,
-                Include = [
-                    "JobWorkflow", "JobWorkflow.JobWorkflowSteps", "JobWorkflowRunSteps", "JobWorkflowRunSteps.JobWorkflowStep", "JobWorkflowRunSteps.JobRun"
-                ]
+                Include = ["JobWorkflow", "JobWorkflow.JobWorkflowSteps", "JobWorkflowRunSteps", "JobWorkflowRunSteps.JobWorkflowStep", "JobWorkflowRunSteps.JobRun"]
             });
 
         if (res?.Items?.FirstOrDefault() is not { } run)
             return;
 
-        var parameters = new DialogParameters<JobWorkflowRunDetailView> {
-            { d => d.Run, run }, { d => d.ApiClient, ApiClient }, { d => d.BaseRoute, BaseRoute }
-        };
-
+        var parameters = new DialogParameters<JobWorkflowRunDetailView> { { d => d.Run, run }, { d => d.ApiClient, ApiClient }, { d => d.BaseRoute, BaseRoute } };
         await DialogService.ShowAsync<JobWorkflowRunDetailView>("Workflow run", parameters, LyoDialogPresets.Large);
     }
 }

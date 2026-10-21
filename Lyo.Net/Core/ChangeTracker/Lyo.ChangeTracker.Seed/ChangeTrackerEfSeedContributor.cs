@@ -24,9 +24,7 @@ public sealed class ChangeTrackerEfSeedContributor : SeedContributor, IEfSeedSou
     public DbContext CreateContext(string connectionString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        var options = new DbContextOptionsBuilder<ChangeTrackerDbContext>()
-            .UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<ChangeTrackerDbContext>().UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema)).Options;
         return new ChangeTrackerDbContext(options);
     }
 
@@ -36,19 +34,20 @@ public sealed class ChangeTrackerEfSeedContributor : SeedContributor, IEfSeedSou
         graph.OnClear(ClearAsync);
         var faker = options.RandomSeed is { } seed ? new Faker { Random = new(seed) } : new Faker();
         var now = DateTime.UtcNow;
-        graph.Entity(options.Count, i => new ChangeEntryEntity {
-            Id = LyoGuid.CreateV7(),
-            Timestamp = now,
-            ChangeType = "Updated",
-            Message = faker.Lorem.Sentence(),
-            OldValuesJson = "{}",
-            ChangedPropertiesJson = """{"title":"renamed"}""",
-            SubjectEntityType = "order",
-            SubjectEntityId = $"order-{i}",
-            ActorEntityType = "person",
-            ActorEntityId = $"person-{i}",
-            CreatedTimestamp = now
-        });
+        graph.Entity(
+            options.Count, i => new ChangeEntryEntity {
+                Id = LyoGuid.CreateV7(),
+                Timestamp = now,
+                ChangeType = "Updated",
+                Message = faker.Lorem.Sentence(),
+                OldValuesJson = "{}",
+                ChangedPropertiesJson = """{"title":"renamed"}""",
+                SubjectEntityType = "order",
+                SubjectEntityId = $"order-{i}",
+                ActorEntityType = "person",
+                ActorEntityId = $"person-{i}",
+                CreatedTimestamp = now
+            });
     }
 
     private static async Task ClearAsync(SeedSession session, CancellationToken ct)

@@ -7,8 +7,7 @@ public interface IWebAutomationNavigator
 
     /// <summary>
     /// Navigates to <paramref name="url" />, calling <paramref name="onRequest" /> with the URL of each outgoing network request observed before, during, and after the page
-    /// load. Continues observing until <paramref name="onRequest" /> yields <see langword="true" /> (signalling the caller found what it needed) or <paramref name="ct" /> is
-    /// cancelled.
+    /// load. Continues observing until <paramref name="onRequest" /> yields <see langword="true" /> (signalling the caller found what it needed) or <paramref name="ct" /> is cancelled.
     /// For Chromium-based Selenium sessions this requires performance logging to be enabled.
     /// </summary>
     Task NavigateAsync(string url, Func<string, bool> onRequest, CancellationToken ct = default);
@@ -17,9 +16,8 @@ public interface IWebAutomationNavigator
     Task ReloadAsync(CancellationToken ct = default);
 
     /// <summary>
-    /// Listens for outgoing request URLs for <paramref name="durationMilliseconds" /> and returns the distinct matches.
-    /// A null or blank <paramref name="urlPattern" /> keeps every URL. Otherwise the pattern is a regular expression, matched without case.
-    /// Chromium Selenium sessions need performance logging enabled.
+    /// Listens for outgoing request URLs for <paramref name="durationMilliseconds" /> and returns the distinct matches. A null or blank <paramref name="urlPattern" /> keeps
+    /// every URL. Otherwise the pattern is a regular expression, matched without case. Chromium Selenium sessions need performance logging enabled.
     /// </summary>
     Task<IReadOnlyList<string>> CaptureNetworkAsync(string? urlPattern, int durationMilliseconds, CancellationToken ct = default);
 }

@@ -40,8 +40,8 @@ public sealed class FtpClientOptions
     public int MaxPooledClients { get; set; } = 4;
 
     /// <summary>
-    /// Optional inclusive PASV data-port range advertised by the server. When set, FluentFTP uses PASV and callers should publish the same host ports one-to-one for
-    /// NAT or Testcontainers.
+    /// Optional inclusive PASV data-port range advertised by the server. When set, FluentFTP uses PASV and callers should publish the same host ports one-to-one for NAT or
+    /// Testcontainers.
     /// </summary>
     public (int Min, int Max)? PassivePortRange { get; set; }
 

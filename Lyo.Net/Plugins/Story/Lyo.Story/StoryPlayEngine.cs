@@ -1,7 +1,7 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Story.Builders;
 using Lyo.Story.Enums;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Story;
 
@@ -24,9 +24,9 @@ public static class StoryPlayEngine
                 snapshot.Variables[variable.Key] = variable.DefaultValue;
         }
 
-        var cause = snapshot.Append(StoryPlaythroughEventKind.StoryStarted, causedBy: null);
-        FireReactions(story, snapshot, StoryTrigger.StoryStarted, cause, changedVariable: null);
-        EnterNode(story, snapshot, story.StartNodeKey!, cause, depth: 0);
+        var cause = snapshot.Append(StoryPlaythroughEventKind.StoryStarted, null);
+        FireReactions(story, snapshot, StoryTrigger.StoryStarted, cause, null);
+        EnterNode(story, snapshot, story.StartNodeKey!, cause, 0);
         return snapshot;
     }
 
@@ -40,8 +40,15 @@ public static class StoryPlayEngine
         foreach (var choice in node.Choices.OrderBy(c => c.SortOrder)) {
             if (!StoryWhere.Matches(choice.VisibleWhen, snapshot.Variables, snapshot.Chose, snapshot.Visited))
                 continue;
+
             var enabled = StoryWhere.Matches(choice.EnabledWhen, snapshot.Variables, snapshot.Chose, snapshot.Visited);
-            moves.Add(new() { Kind = StoryMoveKind.Choice, ChoiceKey = choice.Key, Prompt = choice.Prompt, Enabled = enabled });
+            moves.Add(
+                new() {
+                    Kind = StoryMoveKind.Choice,
+                    ChoiceKey = choice.Key,
+                    Prompt = choice.Prompt,
+                    Enabled = enabled
+                });
         }
 
         if (node.PresentationKind == StoryPresentationKind.Cutscene || (moves.Count == 0 && !node.IsEnding))
@@ -58,20 +65,23 @@ public static class StoryPlayEngine
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(choiceKey);
         EnsureInProgress(snapshot);
         var node = RequireCurrentNode(story, snapshot);
-        var choice = node.Choices.FirstOrDefault(c => string.Equals(c.Key, choiceKey, StringComparison.Ordinal))
-            ?? throw new StoryException($"Choice '{choiceKey}' is not on node '{node.Key}'.");
+        var choice = node.Choices.FirstOrDefault(c => string.Equals(c.Key, choiceKey, StringComparison.Ordinal)) ??
+            throw new StoryException($"Choice '{choiceKey}' is not on node '{node.Key}'.");
+
         if (!StoryWhere.Matches(choice.VisibleWhen, snapshot.Variables, snapshot.Chose, snapshot.Visited))
             throw new StoryException($"Choice '{choiceKey}' is not visible.");
+
         if (!StoryWhere.Matches(choice.EnabledWhen, snapshot.Variables, snapshot.Chose, snapshot.Visited))
             throw new StoryException($"Choice '{choiceKey}' is not enabled.");
 
-        var cause = snapshot.Append(StoryPlaythroughEventKind.ChoiceTaken, causedBy: null, nodeKey: node.Key, choiceKey: choice.Key);
+        var cause = snapshot.Append(StoryPlaythroughEventKind.ChoiceTaken, null, node.Key, choice.Key);
         snapshot.Chose.Add(choice.Key);
-        ApplyEffects(story, snapshot, choice.Effects, cause, depth: 0);
-        FireReactions(story, snapshot, StoryTrigger.ChoiceTaken, cause, changedVariable: null);
+        ApplyEffects(story, snapshot, choice.Effects, cause, 0);
+        FireReactions(story, snapshot, StoryTrigger.ChoiceTaken, cause, null);
         if (string.IsNullOrWhiteSpace(snapshot.PendingGoto) && !string.IsNullOrWhiteSpace(choice.TargetNodeKey))
             snapshot.PendingGoto = choice.TargetNodeKey;
-        ApplyPendingGoto(story, snapshot, cause, depth: 0);
+
+        ApplyPendingGoto(story, snapshot, cause, 0);
         return snapshot;
     }
 
@@ -86,15 +96,15 @@ public static class StoryPlayEngine
             throw new StoryException("Advance is not available at this node.");
 
         var node = RequireCurrentNode(story, snapshot);
-        var cause = snapshot.Append(StoryPlaythroughEventKind.Advanced, causedBy: null, nodeKey: node.Key);
-        FireReactions(story, snapshot, StoryTrigger.Advanced, cause, changedVariable: null);
-        ApplyPendingGoto(story, snapshot, cause, depth: 0);
+        var cause = snapshot.Append(StoryPlaythroughEventKind.Advanced, null, node.Key);
+        FireReactions(story, snapshot, StoryTrigger.Advanced, cause, null);
+        ApplyPendingGoto(story, snapshot, cause, 0);
         return snapshot;
     }
 
     /// <summary>
-    /// Writes externally owned values (for example game facts) into the variable bag. Each changed value logs a VariableChanged event with no cause and fires
-    /// VariableChanged reactions, which may move the cursor. Unchanged values are skipped.
+    /// Writes externally owned values (for example game facts) into the variable bag. Each changed value logs a VariableChanged event with no cause and fires VariableChanged
+    /// reactions, which may move the cursor. Unchanged values are skipped.
     /// </summary>
     public static StoryPlaySnapshot SetVariables(Story story, StoryPlaySnapshot snapshot, IReadOnlyDictionary<string, string?> values)
     {
@@ -103,14 +113,15 @@ public static class StoryPlayEngine
         ArgumentHelpers.ThrowIfNull(values);
         EnsureInProgress(snapshot);
         foreach (var pair in values.OrderBy(p => p.Key, StringComparer.Ordinal))
-            SetVariable(story, snapshot, pair.Key, pair.Value, causedBy: null);
-        ApplyPendingGoto(story, snapshot, causedBy: null, depth: 0);
+            SetVariable(story, snapshot, pair.Key, pair.Value, null);
+
+        ApplyPendingGoto(story, snapshot, null, 0);
         return snapshot;
     }
 
     /// <summary>
-    /// Rebuilds a live snapshot from a stored playthrough and its event log so the next move behaves as it would on the original snapshot. Use to preview a
-    /// move before a store commits it.
+    /// Rebuilds a live snapshot from a stored playthrough and its event log so the next move behaves as it would on the original snapshot. Use to preview a move before a store
+    /// commits it.
     /// </summary>
     public static StoryPlaySnapshot Restore(Story story, StoryPlaythrough playthrough, IReadOnlyList<StoryPlaythroughEvent> events)
     {
@@ -121,12 +132,15 @@ public static class StoryPlayEngine
         var snapshot = new StoryPlaySnapshot { CurrentNodeKey = playthrough.CurrentNodeKey, Status = playthrough.Status };
         foreach (var variable in playthrough.Variables)
             snapshot.Variables[variable.VariableKey] = variable.Value;
+
         foreach (var evt in events.OrderBy(e => e.Sequence)) {
             snapshot.Events.Add(evt);
             if (evt.Kind == StoryPlaythroughEventKind.ChoiceTaken && evt.ChoiceKey is { } choiceKey)
                 snapshot.Chose.Add(choiceKey);
+
             if (evt.Kind == StoryPlaythroughEventKind.NodeEntered && evt.NodeKey is { } nodeKey)
                 snapshot.Visited.Add(nodeKey);
+
             if (evt.Kind == StoryPlaythroughEventKind.ReactionFired && evt.ReactionKey is { } reactionKey && onceReactions.Contains(reactionKey))
                 snapshot.FiredOnce.Add(reactionKey);
         }
@@ -138,12 +152,12 @@ public static class StoryPlayEngine
     {
         if (depth > MaxChainDepth)
             throw new StoryException("Reaction or goto chain exceeded the maximum depth.");
-        var node = story.Nodes.FirstOrDefault(n => string.Equals(n.Key, nodeKey, StringComparison.Ordinal))
-            ?? throw new StoryException($"Unknown node '{nodeKey}'.");
+
+        var node = story.Nodes.FirstOrDefault(n => string.Equals(n.Key, nodeKey, StringComparison.Ordinal)) ?? throw new StoryException($"Unknown node '{nodeKey}'.");
         snapshot.CurrentNodeKey = node.Key;
         snapshot.Visited.Add(node.Key);
-        var cause = snapshot.Append(StoryPlaythroughEventKind.NodeEntered, causedBy, nodeKey: node.Key);
-        FireReactions(story, snapshot, StoryTrigger.EnterNode, cause, changedVariable: null);
+        var cause = snapshot.Append(StoryPlaythroughEventKind.NodeEntered, causedBy, node.Key);
+        FireReactions(story, snapshot, StoryTrigger.EnterNode, cause, null);
         ApplyPendingGoto(story, snapshot, cause, depth + 1);
     }
 
@@ -157,12 +171,14 @@ public static class StoryPlayEngine
 
         if (string.IsNullOrWhiteSpace(snapshot.PendingGoto))
             return;
+
         var target = snapshot.PendingGoto;
         snapshot.PendingGoto = null;
         if (string.Equals(target, snapshot.CurrentNodeKey, StringComparison.Ordinal))
             return;
-        var leaveCause = snapshot.Append(StoryPlaythroughEventKind.TriggerFired, causedBy, nodeKey: snapshot.CurrentNodeKey);
-        FireReactions(story, snapshot, StoryTrigger.LeaveNode, leaveCause, changedVariable: null);
+
+        var leaveCause = snapshot.Append(StoryPlaythroughEventKind.TriggerFired, causedBy, snapshot.CurrentNodeKey);
+        FireReactions(story, snapshot, StoryTrigger.LeaveNode, leaveCause, null);
         EnterNode(story, snapshot, target!, causedBy, depth + 1);
     }
 
@@ -170,6 +186,7 @@ public static class StoryPlayEngine
     {
         if (depth > MaxChainDepth)
             throw new StoryException("Action invoke chain exceeded the maximum depth.");
+
         foreach (var effect in effects.OrderBy(e => e.SortOrder)) {
             switch (effect.Kind) {
                 case StoryEffectKind.Set:
@@ -181,6 +198,7 @@ public static class StoryPlayEngine
                         snapshot.Append(StoryPlaythroughEventKind.VariableChanged, causedBy, variableKey: effect.VariableKey, oldValue: oldUnset, newValue: null);
                         FireReactions(story, snapshot, StoryTrigger.VariableChanged, causedBy, effect.VariableKey);
                     }
+
                     break;
                 case StoryEffectKind.Increment:
                     IncrementVariable(story, snapshot, effect.VariableKey, effect.Value, causedBy);
@@ -192,8 +210,9 @@ public static class StoryPlayEngine
                     snapshot.PendingEnd = true;
                     break;
                 case StoryEffectKind.InvokeAction:
-                    var action = story.Actions.FirstOrDefault(a => string.Equals(a.Key, effect.InvokeActionKey, StringComparison.Ordinal))
-                        ?? throw new StoryException($"Unknown action '{effect.InvokeActionKey}'.");
+                    var action = story.Actions.FirstOrDefault(a => string.Equals(a.Key, effect.InvokeActionKey, StringComparison.Ordinal)) ??
+                        throw new StoryException($"Unknown action '{effect.InvokeActionKey}'.");
+
                     var invokeCause = snapshot.Append(StoryPlaythroughEventKind.ActionInvoked, causedBy, actionKey: action.Key);
                     ApplyEffects(story, snapshot, action.Effects, invokeCause, depth + 1);
                     break;
@@ -206,20 +225,22 @@ public static class StoryPlayEngine
         foreach (var reaction in story.Reactions.Where(r => r.Trigger == trigger).OrderBy(r => r.Key, StringComparer.Ordinal)) {
             if (reaction.Once && snapshot.FiredOnce.Contains(reaction.Key))
                 continue;
-            if (!string.IsNullOrWhiteSpace(reaction.ScopeNodeKey)
-                && !string.Equals(reaction.ScopeNodeKey, snapshot.CurrentNodeKey, StringComparison.Ordinal))
+
+            if (!string.IsNullOrWhiteSpace(reaction.ScopeNodeKey) && !string.Equals(reaction.ScopeNodeKey, snapshot.CurrentNodeKey, StringComparison.Ordinal))
                 continue;
-            if (trigger == StoryTrigger.VariableChanged
-                && !string.IsNullOrWhiteSpace(reaction.ScopeVariableKey)
-                && !string.Equals(reaction.ScopeVariableKey, changedVariable, StringComparison.Ordinal))
+
+            if (trigger == StoryTrigger.VariableChanged && !string.IsNullOrWhiteSpace(reaction.ScopeVariableKey) &&
+                !string.Equals(reaction.ScopeVariableKey, changedVariable, StringComparison.Ordinal))
                 continue;
+
             if (!StoryWhere.Matches(reaction.When, snapshot.Variables, snapshot.Chose, snapshot.Visited))
                 continue;
 
             if (reaction.Once)
                 snapshot.FiredOnce.Add(reaction.Key);
-            var cause = snapshot.Append(StoryPlaythroughEventKind.ReactionFired, causedBy, nodeKey: snapshot.CurrentNodeKey, reactionKey: reaction.Key);
-            ApplyEffects(story, snapshot, reaction.Effects, cause, depth: 0);
+
+            var cause = snapshot.Append(StoryPlaythroughEventKind.ReactionFired, causedBy, snapshot.CurrentNodeKey, reactionKey: reaction.Key);
+            ApplyEffects(story, snapshot, reaction.Effects, cause, 0);
         }
     }
 
@@ -227,9 +248,11 @@ public static class StoryPlayEngine
     {
         if (string.IsNullOrWhiteSpace(key))
             throw new StoryException("Set effect requires a variable key.");
+
         snapshot.Variables.TryGetValue(key, out var old);
         if (string.Equals(old, value, StringComparison.Ordinal))
             return;
+
         snapshot.Variables[key] = value;
         var change = snapshot.Append(StoryPlaythroughEventKind.VariableChanged, causedBy, variableKey: key, oldValue: old, newValue: value);
         FireReactions(story, snapshot, StoryTrigger.VariableChanged, change, key);
@@ -239,13 +262,16 @@ public static class StoryPlayEngine
     {
         if (string.IsNullOrWhiteSpace(key))
             throw new StoryException("Increment effect requires a variable key.");
+
         snapshot.Variables.TryGetValue(key, out var old);
         var current = 0;
         if (!string.IsNullOrWhiteSpace(old) && !int.TryParse(old, out current))
             throw new StoryException($"Cannot increment variable '{key}': its value '{old}' is not an integer.");
+
         var by = 1;
         if (!string.IsNullOrWhiteSpace(byText) && !int.TryParse(byText, out by))
             throw new StoryException($"Cannot increment variable '{key}' by '{byText}': the amount is not an integer.");
+
         var next = (current + by).ToString();
         snapshot.Variables[key] = next;
         var change = snapshot.Append(StoryPlaythroughEventKind.VariableChanged, causedBy, variableKey: key, oldValue: old, newValue: next);
@@ -256,16 +282,18 @@ public static class StoryPlayEngine
     {
         if (snapshot.Status == StoryPlaythroughStatus.Completed)
             return;
+
         snapshot.Status = StoryPlaythroughStatus.Completed;
-        snapshot.Append(StoryPlaythroughEventKind.PlaythroughEnded, causedBy, nodeKey: snapshot.CurrentNodeKey);
+        snapshot.Append(StoryPlaythroughEventKind.PlaythroughEnded, causedBy, snapshot.CurrentNodeKey);
     }
 
     private static StoryNode RequireCurrentNode(Story story, StoryPlaySnapshot snapshot)
     {
         if (string.IsNullOrWhiteSpace(snapshot.CurrentNodeKey))
             throw new StoryException("Playthrough has no current node.");
-        return story.Nodes.FirstOrDefault(n => string.Equals(n.Key, snapshot.CurrentNodeKey, StringComparison.Ordinal))
-            ?? throw new StoryException($"Unknown current node '{snapshot.CurrentNodeKey}'.");
+
+        return story.Nodes.FirstOrDefault(n => string.Equals(n.Key, snapshot.CurrentNodeKey, StringComparison.Ordinal)) ??
+            throw new StoryException($"Unknown current node '{snapshot.CurrentNodeKey}'.");
     }
 
     private static void EnsureInProgress(StoryPlaySnapshot snapshot)
@@ -274,7 +302,7 @@ public static class StoryPlayEngine
             throw new StoryException($"Playthrough is {snapshot.Status}.");
     }
 
-    /// <summary>Walks consequence pointers for <paramref name="variableKey"/> (the variable-changed event plus its cause chain).</summary>
+    /// <summary>Walks consequence pointers for <paramref name="variableKey" /> (the variable-changed event plus its cause chain).</summary>
     public static IReadOnlyList<StoryPlaythroughEvent> GetCauses(IReadOnlyList<StoryPlaythroughEvent> events, string variableKey)
     {
         ArgumentHelpers.ThrowIfNull(events);
@@ -288,9 +316,11 @@ public static class StoryPlayEngine
             while (true) {
                 if (!seen.Add(current.Id))
                     break;
+
                 chain.Add(current);
                 if (current.CausedByEventId is not Guid parentId || !byId.TryGetValue(parentId, out var parent))
                     break;
+
                 current = parent;
             }
         }
@@ -299,7 +329,7 @@ public static class StoryPlayEngine
     }
 }
 
-/// <summary>In-memory playthrough used by <see cref="StoryPlayEngine"/>.</summary>
+/// <summary>In-memory playthrough used by <see cref="StoryPlayEngine" />.</summary>
 public sealed class StoryPlaySnapshot
 {
     public string? CurrentNodeKey { get; set; }
@@ -347,6 +377,7 @@ public sealed class StoryPlaySnapshot
                 CausedByEventId = causedBy,
                 OccurredAt = DateTime.UtcNow
             });
+
         return id;
     }
 }

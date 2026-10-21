@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using Amazon.S3;
-using Amazon.S3.Model;
 using Lyo.FileMetadataStore;
 using Lyo.FileStorage.S3.Tests.Support;
 using Lyo.IO.Temp.Models;
@@ -24,9 +23,8 @@ public sealed class S3PlainByteRangeTests : IDisposable
         var begin = await service.BeginDirectUploadAsync(
             new() { DeclaredMaxSizeBytes = payload.Length, OriginalFileName = "clip.mp4", ExpectedSha256 = SHA256.HashData(payload) }, TestCt);
 
-        fake.OnGetObjectAttributes = _ => new GetObjectAttributesResponse {
-            ObjectSize = payload.Length,
-            Checksum = new() { ChecksumSHA256 = Convert.ToBase64String(SHA256.HashData(payload)), ChecksumType = ChecksumType.FULL_OBJECT }
+        fake.OnGetObjectAttributes = _ => new() {
+            ObjectSize = payload.Length, Checksum = new() { ChecksumSHA256 = Convert.ToBase64String(SHA256.HashData(payload)), ChecksumType = ChecksumType.FULL_OBJECT }
         };
 
         await service.CompleteDirectUploadAsync(begin.FileId, ct: TestCt);
@@ -43,7 +41,6 @@ public sealed class S3PlainByteRangeTests : IDisposable
         await using var slice = await service.OpenPlainByteRangeAsync(begin.FileId, null, 2, 5, TestCt);
         using var buffered = new MemoryStream();
         await slice!.CopyToAsync(buffered, TestCt);
-
         Assert.Equal(payload[2..6], buffered.ToArray());
         var get = Assert.Single(fake.GetObjectRequests);
         Assert.Equal(2, get.ByteRange.Start);

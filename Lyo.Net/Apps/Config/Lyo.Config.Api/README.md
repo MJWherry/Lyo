@@ -1,8 +1,11 @@
 # Lyo.Config.Api
 
-HTTP host for central app configuration, backed by PostgreSQL and [`Lyo.Config`](../../../Plugins/Config/Lyo.Config/README.md). Microservices resolve merged config per deployment identity and poll using ETags or an optional `version` query mirror.
+HTTP host for central app configuration, backed by PostgreSQL and [`Lyo.Config`](../../../Plugins/Config/Lyo.Config/README.md). Microservices resolve merged config per deployment
+identity and poll using ETags or an optional `version` query mirror.
 
-Resolution contracts (`ConfigResolveConditionalResult`) live in [`Lyo.Config.Api.Models`](../Lyo.Config.Api.Models/README.md). The HTTP typed client and `AddConfigApiClientFromConfiguration` live in `Lyo.Config.Api.Client` ([readme](../Lyo.Config.Api.Client/README.md)). Route slug to `EntityRef` mapping uses `AppConfigEntity` from `Lyo.Config`. Polling plus `IOptionsMonitor<T>` is [`Lyo.Config.Api.Hosting`](../Lyo.Config.Api.Hosting/README.md).
+Resolution contracts (`ConfigResolveConditionalResult`) live in [`Lyo.Config.Api.Models`](../Lyo.Config.Api.Models/README.md). The HTTP typed client and
+`AddConfigApiClientFromConfiguration` live in `Lyo.Config.Api.Client` ([readme](../Lyo.Config.Api.Client/README.md)). Route slug to `EntityRef` mapping uses `AppConfigEntity` from
+`Lyo.Config`. Polling plus `IOptionsMonitor<T>` is [`Lyo.Config.Api.Hosting`](../Lyo.Config.Api.Hosting/README.md).
 
 ## Examples
 
@@ -40,47 +43,54 @@ curl -sSI "http://localhost:5088/api/config/gateway/prod-west?version=A1B2C3D4..
 
 ## Embed the host (DI + middleware pipeline)
 
-`Lyo.Config.Api` can run as an example host (see [`Lyo.Config.Api.Example`](../../../Examples/Lyo.Config.Api.Example/README.md)) or be embedded into another host that already owns the WebApplication pipeline. Two extensions plus one middleware, all in `Lyo.Config.Api`, are the registration surface:
+`Lyo.Config.Api` can run as an example host (see [`Lyo.Config.Api.Example`](../../../Examples/Lyo.Config.Api.Example/README.md)) or be embedded into another host that already owns
+the WebApplication pipeline. Two extensions plus one middleware, all in `Lyo.Config.Api`, are the registration surface:
 
-| Member | Defined in | Purpose |
-| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `services.AddConfigApi(IConfiguration)` | [`Extensions.cs`](./Extensions.cs) | Registers `IConfigStore` via `AddPostgresConfigStoreFromConfiguration`, local cache, Lyo.Query, config query services, keyed `IEncryptionService` (`config-values`), and binds `ConfigApiSecurityOptions` / `ConfigApiHostingOptions`. |
-| `app.MapConfigApiEndpoints(prefix = "/api/config", requireAuthentication = true)` | [`Extensions.cs`](./Extensions.cs) | Maps query/get/export at `Config/Definition` and `Config/Binding`, then mounts manage + resolve routes under `prefix`. The default prefix is `/api/config`. Pass `requireAuthentication: false` on TestApi so the Gateway workbench can call manage routes without scopes. |
-| `UseMiddleware<RequireConfigApiKeyMiddleware>()` | [`Security/RequireConfigApiKeyMiddleware.cs`](./Security/RequireConfigApiKeyMiddleware.cs) | Path-scoped API-key gate (see below). Must run before `MapConfigApiEndpoints` in the request pipeline. |
+| Member                                                                            | Defined in                                                                                 | Purpose                                                                                                                                                                                                                                                                    |
+|-----------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `services.AddConfigApi(IConfiguration)`                                           | [`Extensions.cs`](./Extensions.cs)                                                         | Registers `IConfigStore` via `AddPostgresConfigStoreFromConfiguration`, local cache, Lyo.Query, config query services, keyed `IEncryptionService` (`config-values`), and binds `ConfigApiSecurityOptions` / `ConfigApiHostingOptions`.                                     |
+| `app.MapConfigApiEndpoints(prefix = "/api/config", requireAuthentication = true)` | [`Extensions.cs`](./Extensions.cs)                                                         | Maps query/get/export at `Config/Definition` and `Config/Binding`, then mounts manage + resolve routes under `prefix`. The default prefix is `/api/config`. Pass `requireAuthentication: false` on TestApi so the Gateway workbench can call manage routes without scopes. |
+| `UseMiddleware<RequireConfigApiKeyMiddleware>()`                                  | [`Security/RequireConfigApiKeyMiddleware.cs`](./Security/RequireConfigApiKeyMiddleware.cs) | Path-scoped API-key gate (see below). Must run before `MapConfigApiEndpoints` in the request pipeline.                                                                                                                                                                     |
 
 How the standalone host is composed (and the pattern any embedding host should follow):
 
 ## `RequireConfigApiKeyMiddleware` ordering and behavior
 
-- Registered as a **pipeline middleware** (not an authorization filter). It checks `HttpContext.Request.Path.StartsWithSegments("/api/config", …)` and **silently passes through any request outside that prefix**. If you relocate the API by passing a non-default prefix to `MapConfigApiEndpoints`, the middleware will not match it. `/api/config` is the hard-coded path check.
-- When `ConfigApiSecurity.RequireApiKey == false`, the middleware short-circuits to `_next` without inspecting headers. Toggling `RequireApiKey` to `true` requires the host to configure a non-empty `ApiKey`; otherwise matching requests get `500 Internal Server Error` with `{ "detail": "API key enforcement is enabled but no server key has been configured." }`.
-- When enabled, the middleware accepts the secret via `X-Api-Key: <value>` or `Authorization: Bearer <value>` (other schemes are rejected). Comparison uses `CryptographicOperations.FixedTimeEquals` over UTF-8 bytes; missing / empty / mismatching credentials produce `401 Unauthorized` with no body.
-- Place this middleware **after** any TLS termination / proxy header middleware and **before** any logging that might leak request bodies, since it always returns before the endpoint runs on rejection.
+- Registered as a **pipeline middleware** (not an authorization filter). It checks `HttpContext.Request.Path.StartsWithSegments("/api/config", …)` and **silently passes through any
+  request outside that prefix**. If you relocate the API by passing a non-default prefix to `MapConfigApiEndpoints`, the middleware will not match it. `/api/config` is the
+  hard-coded path check.
+- When `ConfigApiSecurity.RequireApiKey == false`, the middleware short-circuits to `_next` without inspecting headers. Toggling `RequireApiKey` to `true` requires the host to
+  configure a non-empty `ApiKey`; otherwise matching requests get `500 Internal Server Error` with
+  `{ "detail": "API key enforcement is enabled but no server key has been configured." }`.
+- When enabled, the middleware accepts the secret via `X-Api-Key: <value>` or `Authorization: Bearer <value>` (other schemes are rejected). Comparison uses
+  `CryptographicOperations.FixedTimeEquals` over UTF-8 bytes; missing / empty / mismatching credentials produce `401 Unauthorized` with no body.
+- Place this middleware **after** any TLS termination / proxy header middleware and **before** any logging that might leak request bodies, since it always returns before the
+  endpoint runs on rejection.
 
 ## Security options (`ConfigApiSecurityOptions`, section `ConfigApiSecurity`)
 
-| Key | Type | Default | Purpose |
-| --------------------------------- | -------- | ------- | ---------------------------------------------------------------------------------------- |
-| `ConfigApiSecurity:RequireApiKey` | `bool` | `false` | Master switch. When `false`, all routes are anonymous and the middleware is a no-op. |
-| `ConfigApiSecurity:ApiKey` | `string` | `""` | Shared secret compared in constant time. Must be non-empty when `RequireApiKey == true`. |
+| Key                               | Type     | Default | Purpose                                                                                  |
+|-----------------------------------|----------|---------|------------------------------------------------------------------------------------------|
+| `ConfigApiSecurity:RequireApiKey` | `bool`   | `false` | Master switch. When `false`, all routes are anonymous and the middleware is a no-op.     |
+| `ConfigApiSecurity:ApiKey`        | `string` | `""`    | Shared secret compared in constant time. Must be non-empty when `RequireApiKey == true`. |
 
 > **Note:** this project has no authorization policy or scopes/role check, only the constant-time secret comparison above. If you need finer-grained access control,
 > register your own auth middleware **before** `RequireConfigApiKeyMiddleware`, or replace it entirely.
 
 ## Hosting options (`ConfigApiHostingOptions`, section `ConfigApiHosting`)
 
-| Key | Type | Default | Purpose |
-| --------------------------------------------------- | ------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `ConfigApiHosting:PollIntervalAdvisoryMilliseconds` | `int?` | `null` | When > 0, emitted on every resolve response as the `X-Config-Poll-Interval-Ms` header. Purely advisory, clients are free to ignore it. |
+| Key                                                 | Type   | Default | Purpose                                                                                                                                |
+|-----------------------------------------------------|--------|---------|----------------------------------------------------------------------------------------------------------------------------------------|
+| `ConfigApiHosting:PollIntervalAdvisoryMilliseconds` | `int?` | `null`  | When > 0, emitted on every resolve response as the `X-Config-Poll-Interval-Ms` header. Purely advisory, clients are free to ignore it. |
 
 ## How routes map to `Lyo.Config`
 
 A single store entity type `App` (`AppConfigEntity.AppEntityType`) is used for all API traffic for app config.
 
-| URL segment | Meaning |
-| ----------- | ---------------------------------------------------------------------------------------------------------- |
+| URL segment | Meaning                                                                                                    |
+|-------------|------------------------------------------------------------------------------------------------------------|
 | `{appKind}` | Taxonomy for the process (e.g. `api`, `gateway`, `worker`). Lowercase slug: letters, digits, `-`, `_`, `.` |
-| `{appId}` | Instance id (e.g. `checkout`, `550e8400-e29b-41d4-a716-446655440000`). Same slug rules after URL decode. |
+| `{appId}`   | Instance id (e.g. `checkout`, `550e8400-e29b-41d4-a716-446655440000`). Same slug rules after URL decode.   |
 
 The persisted compound id:
 
@@ -105,24 +115,26 @@ Base path (default): `/api/config`.
 
 The same auth as the rest of `/api/config` is required when `ConfigApiSecurity.RequireApiKey` is true (`X-Api-Key` or `Authorization: Bearer`).
 
-| Method | Path | Notes |
-| ------ | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| GET | `/definitions` | Lists definitions. Optional `?subjectEntityType=` (defaults to `App`). |
-| PUT | `/definitions` | Body: `ConfigDefinitionRecord`. `IsEncrypted` requires a registered encryption service on this host. Returns the saved record (with Id). Appends a definition revision. Toggling Encrypted rewrites stored defaults and all binding revisions for that definition. |
-| GET | `/definitions/{definitionId}/revisions` | Definition metadata history, newest first. |
-| POST | `/definitions/{definitionId}/revert` | Body: `{ "revision": <int> }`. Copies the snapshot and appends a new revision. |
-| DELETE | `/definitions/{definitionId}` | |
-| PUT | `/bindings` | Body: `ConfigBindingRecord`. Returns the saved record. Encryption follows the definition flag on this host. |
-| DELETE | `/bindings/{bindingId}` | |
-| GET | `/bindings/{bindingId}/revisions` | |
-| POST | `/bindings/{bindingId}/revert` | Body: `{ "revision": <int> }` |
-| GET | `/apps/{appKind}/{appId}/bindings` | Convenience list for one app identity. |
-| GET | `/apps/{appKind}/{appId}/bindings/{key}/revisions` | |
-| POST | `/apps/{appKind}/{appId}/bindings/{key}/revert` | Body: `{ "revision": <int> }` |
+| Method | Path                                               | Notes                                                                                                                                                                                                                                                              |
+|--------|----------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| GET    | `/definitions`                                     | Lists definitions. Optional `?subjectEntityType=` (defaults to `App`).                                                                                                                                                                                             |
+| PUT    | `/definitions`                                     | Body: `ConfigDefinitionRecord`. `IsEncrypted` requires a registered encryption service on this host. Returns the saved record (with Id). Appends a definition revision. Toggling Encrypted rewrites stored defaults and all binding revisions for that definition. |
+| GET    | `/definitions/{definitionId}/revisions`            | Definition metadata history, newest first.                                                                                                                                                                                                                         |
+| POST   | `/definitions/{definitionId}/revert`               | Body: `{ "revision": <int> }`. Copies the snapshot and appends a new revision.                                                                                                                                                                                     |
+| DELETE | `/definitions/{definitionId}`                      |                                                                                                                                                                                                                                                                    |
+| PUT    | `/bindings`                                        | Body: `ConfigBindingRecord`. Returns the saved record. Encryption follows the definition flag on this host.                                                                                                                                                        |
+| DELETE | `/bindings/{bindingId}`                            |                                                                                                                                                                                                                                                                    |
+| GET    | `/bindings/{bindingId}/revisions`                  |                                                                                                                                                                                                                                                                    |
+| POST   | `/bindings/{bindingId}/revert`                     | Body: `{ "revision": <int> }`                                                                                                                                                                                                                                      |
+| GET    | `/apps/{appKind}/{appId}/bindings`                 | Convenience list for one app identity.                                                                                                                                                                                                                             |
+| GET    | `/apps/{appKind}/{appId}/bindings/{key}/revisions` |                                                                                                                                                                                                                                                                    |
+| POST   | `/apps/{appKind}/{appId}/bindings/{key}/revert`    | Body: `{ "revision": <int> }`                                                                                                                                                                                                                                      |
 
 ## Query routes and encryption
 
-Lyo.Query get/query/export at `Config/Definition` and `Config/Binding` (no generic CRUD writes) are also mapped by `MapConfigApiEndpoints`. Those queries deny `DefaultValueJson` and `EncryptedDefaultValue`. Value encryption uses a keyed `IEncryptionService` named `config-values` on this host and TestApi only. Clients send plaintext plus `IsEncrypted`; the API encrypts at rest. TestGateway does not register encryption — its workbench uses `ConfigApiStore` over HTTP so encryption still happens in TestApi.
+Lyo.Query get/query/export at `Config/Definition` and `Config/Binding` (no generic CRUD writes) are also mapped by `MapConfigApiEndpoints`. Those queries deny `DefaultValueJson`
+and `EncryptedDefaultValue`. Value encryption uses a keyed `IEncryptionService` named `config-values` on this host and TestApi only. Clients send plaintext plus `IsEncrypted`; the
+API encrypts at rest. TestGateway does not register encryption — its workbench uses `ConfigApiStore` over HTTP so encryption still happens in TestApi.
 
 ## Configuration (`appsettings`)
 

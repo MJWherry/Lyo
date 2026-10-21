@@ -16,7 +16,7 @@ public sealed class FormatterExpressionEvaluator : IFormatterExpressionEvaluator
     public FormatterExpressionEvaluator(Func<DateTimeOffset> clock)
     {
         ArgumentHelpers.ThrowIfNull(clock);
-        _engine = new FormatterExpressionEngine(clock);
+        _engine = new(clock);
     }
 
     /// <inheritdoc />

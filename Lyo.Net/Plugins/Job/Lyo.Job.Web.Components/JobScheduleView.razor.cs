@@ -9,9 +9,30 @@ namespace Lyo.Job.Web.Components;
 /// </summary>
 public partial class JobScheduleView
 {
-    static JobScheduleView() => FormatterLyoType.EnsureRegistered();
+    private static readonly TimeZoneInfo[] TimeZones = [.. TimeZoneInfo.GetSystemTimeZones()];
+    private TimeZoneInfo? _browserZone;
+    private ScheduleEditModel? _edit;
 
-    private static readonly TimeZoneInfo[] TimeZones = [..TimeZoneInfo.GetSystemTimeZones()];
+    /// <summary>
+    /// Rebuilt only when the selection changes, so the selected schedule's own parameters appear as <c>Schedule_Parameter_*</c> keys. Must not be a computed property: the
+    /// formatter editor treats a new context instance as a change and rebuilds its token catalog, which a per-render instance would do on each render.
+    /// </summary>
+    private object? _formatterContext;
+
+    private TimeSpan? _newTime;
+    private List<LyoParameterEditRow> _paramRows = [];
+    private bool _paramsDirty;
+    private bool _running;
+
+    private List<JobScheduleRes> _schedules = [];
+
+    /// <summary>Definition the current <see cref="_schedules" /> list was seeded from, so a definition switch reseeds instead of showing the previous one's schedules.</summary>
+    private Guid? _seededDefinitionId;
+
+    /// <summary>The exact <see cref="JobSchedules" /> instance already seeded. Compared by reference: the parent hands over a fresh list on each reload.</summary>
+    private IReadOnlyList<JobScheduleRes>? _seededSchedules;
+
+    private JobScheduleRes? _selected;
 
     [Inject]
     private ISnackbar Snackbar { get; set; } = null!;
@@ -39,8 +60,8 @@ public partial class JobScheduleView
     public Guid JobDefinitionId { get; set; }
 
     /// <summary>
-    /// Owning workflow id, for a workflow-owned schedule. A schedule has exactly one owner — a definition or a workflow — enforced by a database check constraint, so
-    /// supplying this instead of <see cref="JobDefinitionId" /> is what makes the view create workflow schedules rather than definition schedules.
+    /// Owning workflow id, for a workflow-owned schedule. A schedule has exactly one owner — a definition or a workflow — enforced by a database check constraint, so supplying
+    /// this instead of <see cref="JobDefinitionId" /> is what makes the view create workflow schedules rather than definition schedules.
     /// </summary>
     [Parameter]
     public Guid? JobWorkflowId { get; set; }
@@ -79,71 +100,19 @@ public partial class JobScheduleView
 
     private string WindowRoute => $"{CalendarRoute}/Window";
 
-    private sealed class ScheduleEditModel
-    {
-        public ScheduleType Type { get; set; }
+    private IReadOnlyList<LyoParameterEditRow> InheritRows
+        => (JobParameters ?? []).Select(p => new LyoParameterEditRow {
+                Key = p.Key,
+                Type = p.Type,
+                Options = p.Options,
+                AllowedValues = p.AllowedValues,
+                Description = p.Description
+            })
+            .ToList();
 
-        public string? Description { get; set; }
+    static JobScheduleView() => FormatterLyoType.EnsureRegistered();
 
-        public bool Enabled { get; set; }
-
-        public IReadOnlyCollection<DayFlags> Days { get; set; } = [];
-
-        public IReadOnlyCollection<MonthFlags> Months { get; set; } = [];
-
-        public string? CronExpression { get; set; }
-
-        public TimeSpan? StartTime { get; set; }
-
-        public TimeSpan? EndTime { get; set; }
-
-        public int? IntervalMinutes { get; set; }
-
-        public List<TimeSpan> Times { get; set; } = [];
-
-        public JobMisfirePolicy MisfirePolicy { get; set; }
-
-        public DateTime? StartDate { get; set; }
-
-        public DateTime? EndDate { get; set; }
-
-        public string? TimeZoneId { get; set; }
-
-        public Guid? JobBlackoutCalendarId { get; set; }
-    }
-
-    private List<JobScheduleRes> _schedules = [];
-
-    /// <summary>Definition the current <see cref="_schedules" /> list was seeded from, so a definition switch reseeds instead of showing the previous one's schedules.</summary>
-    private Guid? _seededDefinitionId;
-
-    /// <summary>The exact <see cref="JobSchedules" /> instance already seeded. Compared by reference: the parent hands over a fresh list on each reload.</summary>
-    private IReadOnlyList<JobScheduleRes>? _seededSchedules;
-
-    private JobScheduleRes? _selected;
-    private ScheduleEditModel? _edit;
-    private TimeSpan? _newTime;
-    private List<LyoParameterEditRow> _paramRows = [];
-    private bool _paramsDirty;
-    private bool _running;
-    private TimeZoneInfo? _browserZone;
-
-    /// <summary>
-    /// Rebuilt only when the selection changes, so the selected schedule's own parameters appear as <c>Schedule_Parameter_*</c> keys. Must not be a computed property:
-    /// the formatter editor treats a new context instance as a change and rebuilds its token catalog, which a per-render instance would do on each render.
-    /// </summary>
-    private object? _formatterContext;
-
-    private IReadOnlyList<LyoParameterEditRow> InheritRows =>
-        (JobParameters ?? []).Select(p => new LyoParameterEditRow {
-            Key = p.Key,
-            Type = p.Type,
-            Options = p.Options,
-            AllowedValues = p.AllowedValues,
-            Description = p.Description
-        }).ToList();
-
-    /// <inheritdoc/>
+    /// <inheritdoc />
     protected override async Task OnParametersSetAsync()
     {
         _browserZone ??= await BrowserTimeZone.GetAsync();
@@ -198,15 +167,10 @@ public partial class JobScheduleView
     {
         var def = FindDefinitionParam(p.Key);
         return LyoParameterEditRow.FromMasked(
-            p.Id, p.Key, p.Type, p.Value, p.Description,
-            encryptedValue: p.EncryptedValue,
-            allowedValues: def?.AllowedValues,
-            options: def?.Options,
-            enabled: p.Enabled);
+            p.Id, p.Key, p.Type, p.Value, p.Description, encryptedValue: p.EncryptedValue, allowedValues: def?.AllowedValues, options: def?.Options, enabled: p.Enabled);
     }
 
-    private JobParameterRes? FindDefinitionParam(string key)
-        => JobParameters?.FirstOrDefault(p => string.Equals(p.Key, key, StringComparison.OrdinalIgnoreCase));
+    private JobParameterRes? FindDefinitionParam(string key) => JobParameters?.FirstOrDefault(p => string.Equals(p.Key, key, StringComparison.OrdinalIgnoreCase));
 
     private bool DaysMatch(DayFlags preset) => _edit != null && FlagEnumUi.MatchesPreset(_edit.Days, preset);
 
@@ -246,8 +210,7 @@ public partial class JobScheduleView
     {
         IEnumerable<TimeZoneInfo> query = TimeZones;
         if (!string.IsNullOrWhiteSpace(value)) {
-            query = query.Where(z =>
-                z.Id.Contains(value, StringComparison.OrdinalIgnoreCase) || z.DisplayName.Contains(value, StringComparison.OrdinalIgnoreCase));
+            query = query.Where(z => z.Id.Contains(value, StringComparison.OrdinalIgnoreCase) || z.DisplayName.Contains(value, StringComparison.OrdinalIgnoreCase));
         }
 
         return Task.FromResult(query.Take(40).Select(z => z.Id));
@@ -259,10 +222,8 @@ public partial class JobScheduleView
             try {
                 return TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
             }
-            catch (TimeZoneNotFoundException) {
-            }
-            catch (InvalidTimeZoneException) {
-            }
+            catch (TimeZoneNotFoundException) { }
+            catch (InvalidTimeZoneException) { }
         }
 
         return _browserZone ?? TimeZoneInfo.Utc;
@@ -273,9 +234,7 @@ public partial class JobScheduleView
         if (utc is null)
             return null;
 
-        var instant = utc.Value.Kind == DateTimeKind.Unspecified
-            ? DateTime.SpecifyKind(utc.Value, DateTimeKind.Utc)
-            : utc.Value.ToUniversalTime();
+        var instant = utc.Value.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(utc.Value, DateTimeKind.Utc) : utc.Value.ToUniversalTime();
         var local = TimeZoneInfo.ConvertTimeFromUtc(instant, zone);
         return DateTime.SpecifyKind(local.Date, DateTimeKind.Unspecified);
     }
@@ -313,10 +272,9 @@ public partial class JobScheduleView
 
         try {
             var req = new QueryConcreteReq {
-                Keys = [[JobDefinitionId]],
-                Amount = 1,
-                Include = ["JobSchedules.JobScheduleParameters", "JobSchedules.JobBlackoutCalendar.JobBlackoutWindows"]
+                Keys = [[JobDefinitionId]], Amount = 1, Include = ["JobSchedules.JobScheduleParameters", "JobSchedules.JobBlackoutCalendar.JobBlackoutWindows"]
             };
+
             var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobDefinitionRes>>($"{DefinitionRoute.TrimEnd('/')}/QueryConcrete", req);
             _schedules = res?.Items?.FirstOrDefault()?.JobSchedules?.ToList() ?? [];
             SelectSchedule(_schedules.FirstOrDefault(s => s.Id == id) ?? _schedules.FirstOrDefault());
@@ -357,6 +315,7 @@ public partial class JobScheduleView
                     TimeZoneId = _browserZone?.Id,
                     Times = []
                 });
+
             var newId = created?.Data?.Id;
             Snackbar.Add("Schedule added", Severity.Success);
             await ReloadSchedulesAsync(newId);
@@ -423,10 +382,7 @@ public partial class JobScheduleView
             return;
         }
 
-        if (!await DialogService.ConfirmAsync(
-                "Run schedule",
-                "Create a job run now using this schedule's stored parameters?",
-                "Run now"))
+        if (!await DialogService.ConfirmAsync("Run schedule", "Create a job run now using this schedule's stored parameters?", "Run now"))
             return;
 
         _running = true;
@@ -501,5 +457,38 @@ public partial class JobScheduleView
         catch (Exception ex) {
             Snackbar.Add($"Save failed: {ex.Message}", Severity.Error);
         }
+    }
+
+    private sealed class ScheduleEditModel
+    {
+        public ScheduleType Type { get; set; }
+
+        public string? Description { get; set; }
+
+        public bool Enabled { get; set; }
+
+        public IReadOnlyCollection<DayFlags> Days { get; set; } = [];
+
+        public IReadOnlyCollection<MonthFlags> Months { get; set; } = [];
+
+        public string? CronExpression { get; set; }
+
+        public TimeSpan? StartTime { get; set; }
+
+        public TimeSpan? EndTime { get; set; }
+
+        public int? IntervalMinutes { get; set; }
+
+        public List<TimeSpan> Times { get; set; } = [];
+
+        public JobMisfirePolicy MisfirePolicy { get; set; }
+
+        public DateTime? StartDate { get; set; }
+
+        public DateTime? EndDate { get; set; }
+
+        public string? TimeZoneId { get; set; }
+
+        public Guid? JobBlackoutCalendarId { get; set; }
     }
 }

@@ -11,7 +11,11 @@ public static class EspnLookups
 {
     /// <summary>Copies each item on <paramref name="transaction" /> with its from team, to team, and player. Missing player cards are loaded once.</summary>
     public static async Task<IReadOnlyList<TransactionItemView>> ToItemViewsAsync(
-        this TransactionRes transaction, FantasyFootballClient client, int leagueId, int seasonId, CancellationToken ct = default)
+        this TransactionRes transaction,
+        FantasyFootballClient client,
+        int leagueId,
+        int seasonId,
+        CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(transaction);
         ArgumentHelpers.ThrowIfNull(client);
@@ -29,7 +33,12 @@ public static class EspnLookups
     }
 
     private static async Task<IReadOnlyDictionary<int, PlayerInfoItemRes>> LoadPlayersAsync(
-        FantasyFootballClient client, int leagueId, int seasonId, LeagueIndex? index, IReadOnlyList<int> playerIds, CancellationToken ct)
+        FantasyFootballClient client,
+        int leagueId,
+        int seasonId,
+        LeagueIndex? index,
+        IReadOnlyList<int> playerIds,
+        CancellationToken ct)
     {
         if (playerIds.Count == 0)
             return new Dictionary<int, PlayerInfoItemRes>();

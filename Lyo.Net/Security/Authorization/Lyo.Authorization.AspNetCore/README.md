@@ -1,13 +1,15 @@
 # Lyo.Authorization.AspNetCore
 
-Call AddLyoApiTokenAuthentication and then AddLyoGrantAuthorization. The grant policy provider forwards every name that does not start with grant|, including scope policies, role policies, the default policy, and the fallback policy. A second call is a no-op.
+Call AddLyoApiTokenAuthentication and then AddLyoGrantAuthorization. The grant policy provider forwards every name that does not start with grant|, including scope policies, role
+policies, the default policy, and the fallback policy. A second call is a no-op.
 
 ## Features
 
-- **[RequireGrant] and .RequireGrant()** share one handler. Several attributes on one action are combined with AND.
+- **[RequireGrant] and .RequireGrant ()** share one handler. Several attributes on one action are combined with AND.
 - **Subject is lyo:user when that claim is set, otherwise sub.** A grant stored only for sub does not match when lyo:user is a different value.
 - **Anonymous is 401. Authenticated without a grant is 403.** A store exception is 500. A missing or non-guid tenant route does not succeed and does not throw.
-- **MapGrantEndpoints** lists, saves, revokes, and checks grants for an already authenticated caller. Subject is `lyo:user` or else `sub`. Save, revoke, and another subject's list or check require `authorization.grants.manage` when the host passes that policy.
+- **MapGrantEndpoints** lists, saves, revokes, and checks grants for an already authenticated caller. Subject is `lyo:user` or else `sub`. Save, revoke, and another subject's list
+  or check require `authorization.grants.manage` when the host passes that policy.
 
 ## Examples
 

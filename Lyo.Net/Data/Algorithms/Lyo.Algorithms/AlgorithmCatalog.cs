@@ -6,11 +6,11 @@ namespace Lyo.Algorithms;
 /// <summary>Checks syntax and startup shadowing, then writes through <see cref="IAlgorithmDefinitionStore" />.</summary>
 public sealed class AlgorithmCatalog : IAlgorithmCatalog
 {
-    private readonly IAlgorithmDefinitionStore _store;
     private readonly IExpressionCompiler _compiler;
     private readonly AlgorithmOptions _options;
-    private readonly IAlgorithmStartupStore _startup;
     private readonly RuntimeAlgorithmStore _runtime;
+    private readonly IAlgorithmStartupStore _startup;
+    private readonly IAlgorithmDefinitionStore _store;
 
     /// <summary>Creates a catalog. <paramref name="startup" /> is the frozen store used for the shadow check.</summary>
     public AlgorithmCatalog(IAlgorithmDefinitionStore store, IExpressionCompiler compiler, AlgorithmOptions options, IAlgorithmStartupStore startup, RuntimeAlgorithmStore runtime)
@@ -34,15 +34,18 @@ public sealed class AlgorithmCatalog : IAlgorithmCatalog
         var denied = Deny(key, request);
         if (denied is not null)
             return denied;
+
         var saved = await _store.SaveRevisionAsync(key, request, ct).ConfigureAwait(false);
-        _runtime.NoteLatest(saved, new() {
-            DefinitionId = saved.Id,
-            Revision = saved.CurrentRevision,
-            Kind = request.Kind,
-            Source = request.Source,
-            Payload = request.Payload,
-            CreatedTimestamp = saved.UpdatedTimestamp ?? saved.CreatedTimestamp
-        });
+        _runtime.NoteLatest(
+            saved, new() {
+                DefinitionId = saved.Id,
+                Revision = saved.CurrentRevision,
+                Kind = request.Kind,
+                Source = request.Source,
+                Payload = request.Payload,
+                CreatedTimestamp = saved.UpdatedTimestamp ?? saved.CreatedTimestamp
+            });
+
         return Result<AlgorithmDefinitionRes>.Success(saved);
     }
 
@@ -61,6 +64,7 @@ public sealed class AlgorithmCatalog : IAlgorithmCatalog
             var snapshot = await _store.GetRevisionAsync(key, saved.CurrentRevision, ct).ConfigureAwait(false);
             if (snapshot is not null)
                 _runtime.NoteLatest(saved, snapshot);
+
             return Result<AlgorithmDefinitionRes>.Success(saved);
         }
         catch (AlgorithmException ex) {
@@ -79,6 +83,7 @@ public sealed class AlgorithmCatalog : IAlgorithmCatalog
             var snapshot = await _store.GetRevisionAsync(key, saved.Revision, ct).ConfigureAwait(false);
             if (snapshot is not null)
                 _runtime.NoteLabel(key, saved, snapshot);
+
             return Result<AlgorithmLabelRes>.Success(saved);
         }
         catch (AlgorithmException ex) {
@@ -93,11 +98,14 @@ public sealed class AlgorithmCatalog : IAlgorithmCatalog
     {
         if (!AlgorithmKeys.IsKey(key))
             return Result<AlgorithmDefinitionRes>.Failure($"Algorithm key '{key}' must match {AlgorithmKeys.KeyPattern}.", "algorithm.key.invalid");
+
         if (!_options.AllowRuntimeOverride && _startup.ContainsKey(key))
             return Result<AlgorithmDefinitionRes>.Failure($"Algorithm '{key}' is a startup algorithm and cannot be replaced from the catalog.", "algorithm.key.shadows");
+
         if (request.Kind is AlgorithmKind.Expression or AlgorithmKind.Named) {
             if (string.IsNullOrWhiteSpace(request.Source))
                 return Result<AlgorithmDefinitionRes>.Failure("Algorithm source is required.", "algorithm.expression.parse");
+
             if (request.Kind == AlgorithmKind.Expression) {
                 var validated = _compiler.Validate(request.Source);
                 if (!validated.IsSuccess)
@@ -108,8 +116,6 @@ public sealed class AlgorithmCatalog : IAlgorithmCatalog
         }
 
         var checkedPayload = AlgorithmPayload.Validate(request.Kind, request.Payload);
-        return !checkedPayload.IsSuccess 
-            ? Result<AlgorithmDefinitionRes>.Failure(checkedPayload.Errors![0].Message, checkedPayload.Errors[0].Code) 
-            : null;
+        return !checkedPayload.IsSuccess ? Result<AlgorithmDefinitionRes>.Failure(checkedPayload.Errors![0].Message, checkedPayload.Errors[0].Code) : null;
     }
 }

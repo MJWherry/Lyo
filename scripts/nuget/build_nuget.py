@@ -428,12 +428,12 @@ def _msbuild_version_args(version: str, version_props: Path | None) -> list[str]
 
 
 def build_project(
-    csproj_file: Path,
-    *,
-    version: str,
-    config: str,
-    incremental: bool,
-    version_props: Path | None = None,
+        csproj_file: Path,
+        *,
+        version: str,
+        config: str,
+        incremental: bool,
+        version_props: Path | None = None,
 ) -> bool:
     name = get_project_name(csproj_file)
     label = "incremental" if incremental else "version " + version
@@ -457,13 +457,13 @@ def has_build_output(csproj_file: Path, config: str) -> bool:
 
 
 def pack_project(
-    csproj_file: Path,
-    *,
-    version: str,
-    config: str,
-    output_dir: Path,
-    dep_targets: Path | None,
-    version_props: Path | None = None,
+        csproj_file: Path,
+        *,
+        version: str,
+        config: str,
+        output_dir: Path,
+        dep_targets: Path | None,
+        version_props: Path | None = None,
 ) -> bool:
     name = get_project_name(csproj_file)
     print_info(f"Packing {name} (version {version})...")
@@ -492,16 +492,16 @@ def pack_project(
 
 class Builder:
     def __init__(
-        self,
-        *,
-        version: str,
-        force: bool,
-        config: str,
-        output_dir: Path,
-        dep_targets: Path | None,
-        version_props: Path | None = None,
-        do_compile: bool = True,
-        do_pack: bool = True,
+            self,
+            *,
+            version: str,
+            force: bool,
+            config: str,
+            output_dir: Path,
+            dep_targets: Path | None,
+            version_props: Path | None = None,
+            do_compile: bool = True,
+            do_pack: bool = True,
     ) -> None:
         self.version = version
         self.force = force
@@ -542,11 +542,11 @@ class Builder:
         if self.do_compile:
             if source_changed:
                 if not build_project(
-                    csproj_file,
-                    version=self.version,
-                    config=self.config,
-                    incremental=False,
-                    version_props=self.version_props,
+                        csproj_file,
+                        version=self.version,
+                        config=self.config,
+                        incremental=False,
+                        version_props=self.version_props,
                 ):
                     self.failed.add(csproj_file)
                     self.visited.add(csproj_file)
@@ -554,11 +554,11 @@ class Builder:
             else:
                 print_pack_only(f"{name} — source unchanged, rebuilding for new version {self.version}")
                 if not build_project(
-                    csproj_file,
-                    version=self.version,
-                    config=self.config,
-                    incremental=True,
-                    version_props=self.version_props,
+                        csproj_file,
+                        version=self.version,
+                        config=self.config,
+                        incremental=True,
+                        version_props=self.version_props,
                 ):
                     self.failed.add(csproj_file)
                     self.visited.add(csproj_file)
@@ -571,12 +571,12 @@ class Builder:
 
         if self.do_pack:
             if not pack_project(
-                csproj_file,
-                version=self.version,
-                config=self.config,
-                output_dir=self.output_dir,
-                dep_targets=self.dep_targets,
-                version_props=self.version_props,
+                    csproj_file,
+                    version=self.version,
+                    config=self.config,
+                    output_dir=self.output_dir,
+                    dep_targets=self.dep_targets,
+                    version_props=self.version_props,
             ):
                 self.failed.add(csproj_file)
                 self.visited.add(csproj_file)
@@ -601,19 +601,19 @@ def _refresh_tooling_docs() -> None:
 
 
 def write_pack_report(
-    path: Path,
-    *,
-    version: str,
-    since: str,
-    force: bool,
-    compile_only: bool,
-    pack_only: bool,
-    selected: list[str],
-    built: list[str] | None = None,
-    repacked: list[str] | None = None,
-    skipped: list[str] | None = None,
-    failed: list[str] | None = None,
-    output_dir: Path | None = None,
+        path: Path,
+        *,
+        version: str,
+        since: str,
+        force: bool,
+        compile_only: bool,
+        pack_only: bool,
+        selected: list[str],
+        built: list[str] | None = None,
+        repacked: list[str] | None = None,
+        skipped: list[str] | None = None,
+        failed: list[str] | None = None,
+        output_dir: Path | None = None,
 ) -> None:
     """Write a JSON report of this pack/compile run for the CI summary job."""
     packed = [] if compile_only else list(built or []) + list(repacked or [])
@@ -689,9 +689,9 @@ def main(argv: list[str] | None = None) -> int:
     report_path = output_dir / "pack-report.json"
 
     def emit_report(
-        selected: list[Path] | None = None,
-        builder: Builder | None = None,
-        failed: list[str] | None = None,
+            selected: list[Path] | None = None,
+            builder: Builder | None = None,
+            failed: list[str] | None = None,
     ) -> None:
         write_pack_report(
             report_path,

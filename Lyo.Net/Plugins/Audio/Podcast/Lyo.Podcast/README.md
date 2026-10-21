@@ -1,6 +1,7 @@
 # Lyo.Podcast
 
-Domain contracts for a podcast catalog. Episodes live on seasons. A show may have zero seasons. Credits use an opaque `PersonRef`. `CoverImageRef` and `AudioFileRef` are opaque file refs. Favorite and Tag attach via `PodcastEntityTypes`.
+Domain contracts for a podcast catalog. Episodes live on seasons. A show may have zero seasons. Credits use an opaque `PersonRef`. `CoverImageRef` and `AudioFileRef` are opaque
+file refs. Favorite and Tag attach via `PodcastEntityTypes`.
 
 ## Features
 

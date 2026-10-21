@@ -1,6 +1,7 @@
 # Lyo.Law
 
-`ILawStore` saves jurisdictions and codes and upserts statute nodes by an opaque source key. An unchanged content hash leaves the row alone. A changed hash keeps the previous text. `LawJurisdictionKey.ThrowIfFederal` rejects `US`. Listing belongs in Lyo Query. Persistence is `Lyo.Law.Postgres`.
+`ILawStore` saves jurisdictions and codes and upserts statute nodes by an opaque source key. An unchanged content hash leaves the row alone. A changed hash keeps the previous text.
+`LawJurisdictionKey.ThrowIfFederal` rejects `US`. Listing belongs in Lyo Query. Persistence is `Lyo.Law.Postgres`.
 
 ## Features
 

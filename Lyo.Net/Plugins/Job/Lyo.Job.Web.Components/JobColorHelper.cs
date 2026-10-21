@@ -1,10 +1,12 @@
 using Lyo.Common.Core.Conversion;
-using Lyo.Web.Components.DataGrid;
 
 namespace Lyo.Job.Web.Components;
 
 public static class JobColorHelper
 {
+    /// <summary>A heartbeat older than this is treated as stale even if the instance row still exists.</summary>
+    public static readonly TimeSpan WorkerHeartbeatStaleAfter = TimeSpan.FromSeconds(90);
+
     public static Color ForState(JobState state)
         => state switch {
             JobState.Queued => Color.Info,
@@ -14,8 +16,7 @@ public static class JobColorHelper
             var _ => Color.Default
         };
 
-    public static Color ForState(string? text)
-        => TypeConversion.EnumOrNull<JobState>(text) is { } state ? ForState(state) : Color.Default;
+    public static Color ForState(string? text) => TypeConversion.EnumOrNull<JobState>(text) is { } state ? ForState(state) : Color.Default;
 
     public static Color ForWorkflowRunState(JobWorkflowRunState state)
         => state switch {
@@ -26,8 +27,7 @@ public static class JobColorHelper
             var _ => Color.Default
         };
 
-    public static Color ForWorkflowRunState(string? text)
-        => TypeConversion.EnumOrNull<JobWorkflowRunState>(text) is { } state ? ForWorkflowRunState(state) : Color.Default;
+    public static Color ForWorkflowRunState(string? text) => TypeConversion.EnumOrNull<JobWorkflowRunState>(text) is { } state ? ForWorkflowRunState(state) : Color.Default;
 
     public static string WorkflowRunStateIcon(JobWorkflowRunState state)
         => state switch {
@@ -54,8 +54,7 @@ public static class JobColorHelper
             var _ => Color.Default
         };
 
-    public static Color ForWorkflowStepState(string? text)
-        => TypeConversion.EnumOrNull<JobWorkflowStepState>(text) is { } state ? ForWorkflowStepState(state) : Color.Default;
+    public static Color ForWorkflowStepState(string? text) => TypeConversion.EnumOrNull<JobWorkflowStepState>(text) is { } state ? ForWorkflowStepState(state) : Color.Default;
 
     public static string WorkflowStepStateIcon(JobWorkflowStepState state)
         => state switch {
@@ -70,9 +69,6 @@ public static class JobColorHelper
     public static string WorkflowStepStateIcon(string? text)
         => TypeConversion.EnumOrNull<JobWorkflowStepState>(text) is { } state ? WorkflowStepStateIcon(state) : Icons.Material.Filled.Schedule;
 
-    /// <summary>A heartbeat older than this is treated as stale even if the instance row still exists.</summary>
-    public static readonly TimeSpan WorkerHeartbeatStaleAfter = TimeSpan.FromSeconds(90);
-
     /// <summary>MudBlazor color for a live worker-instance state.</summary>
     public static Color ForWorkerState(JobWorkerInstanceState state)
         => state switch {
@@ -82,8 +78,7 @@ public static class JobColorHelper
             var _ => Color.Default
         };
 
-    public static Color ForWorkerState(string? text)
-        => TypeConversion.EnumOrNull<JobWorkerInstanceState>(text) is { } state ? ForWorkerState(state) : Color.Default;
+    public static Color ForWorkerState(string? text) => TypeConversion.EnumOrNull<JobWorkerInstanceState>(text) is { } state ? ForWorkerState(state) : Color.Default;
 
     public static string WorkerStateIcon(JobWorkerInstanceState state)
         => state switch {
@@ -114,8 +109,7 @@ public static class JobColorHelper
             var _ => Color.Default
         };
 
-    public static Color ForResult(string? text)
-        => TypeConversion.EnumOrNull<JobRunResult>(text) is { } result ? ForResult(result) : Color.Default;
+    public static Color ForResult(string? text) => TypeConversion.EnumOrNull<JobRunResult>(text) is { } result ? ForResult(result) : Color.Default;
 
     public static Color ForDuration(DateTime? started, DateTime? finished) => LyoDurationDisplay.ForDuration(started, finished);
 

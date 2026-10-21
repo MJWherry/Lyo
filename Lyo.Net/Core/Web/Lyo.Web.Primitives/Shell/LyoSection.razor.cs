@@ -7,8 +7,8 @@ namespace Lyo.Web.Primitives;
 /// <c>MudCard</c> and <c>MudCardHeader</c> by hand, which is where the current pages disagree on padding and title size.
 /// </summary>
 /// <remarks>
-/// Set <see cref="Flush" /> when the body is a table or grid that supplies its own padding, otherwise the block gains a double margin. Omit
-/// <see cref="Title" /> and the header disappears, leaving a plain padded surface.
+/// Set <see cref="Flush" /> when the body is a table or grid that supplies its own padding, otherwise the block gains a double margin. Omit <see cref="Title" /> and the header
+/// disappears, leaving a plain padded surface.
 /// <code>
 /// &lt;LyoSection Title="Parameters" Description="Values used on the next run"&gt;
 ///     &lt;Actions&gt;&lt;MudButton Size="Size.Small" OnClick="AddAsync"&gt;Add&lt;/MudButton&gt;&lt;/Actions&gt;

@@ -250,11 +250,7 @@ internal sealed class XlsxWriter : IXlsxWriter
             return properties;
 
         return MemberOrderSort.Sort(
-            properties,
-            static property => property.Name,
-            static property => property.GetCustomAttribute<MemberOrderAttribute>()?.Order,
-            _options.Order,
-            _options.OrderNames);
+            properties, static property => property.Name, static property => property.GetCustomAttribute<MemberOrderAttribute>()?.Order, _options.Order, _options.OrderNames);
     }
 
     internal static IReadOnlyList<PropertyInfo> ReadableProperties<T>() => typeof(T).GetProperties().Where(p => p.CanRead).ToList();
@@ -337,15 +333,8 @@ internal sealed class XlsxWriter : IXlsxWriter
         return (headers, rows, footer);
     }
 
-    internal static (
-        List<string> Headers,
-        List<XlsxCell[]> Rows,
-        List<DataTableCellFormat?>? HeaderFormats,
-        XlsxCell[]? Footer,
-        List<DataTableCellFormat?>? FooterFormats) BuildFromDataTable(
-        DataTable.Models.DataTable dataTable,
-        MemberOrder order = MemberOrder.Defined,
-        IReadOnlyList<string>? orderNames = null)
+    internal static ( List<string> Headers, List<XlsxCell[]> Rows, List<DataTableCellFormat?>? HeaderFormats, XlsxCell[]? Footer, List<DataTableCellFormat?>? FooterFormats)
+        BuildFromDataTable(DataTable.Models.DataTable dataTable, MemberOrder order = MemberOrder.Defined, IReadOnlyList<string>? orderNames = null)
     {
         var maxCol = dataTable.MaxColumn >= 0 ? dataTable.MaxColumn + 1 : 0;
         var columns = DataTableColumnOrder(dataTable, maxCol, order, orderNames ?? []);
@@ -425,7 +414,7 @@ internal sealed class XlsxWriter : IXlsxWriter
         if (order == MemberOrder.Defined || maxCol <= 1)
             return indexes;
 
-        return MemberOrderSort.Sort(indexes, index => names[index] ?? "", static _ => (int?)null, order, orderNames).ToArray();
+        return MemberOrderSort.Sort(indexes, index => names[index] ?? "", static _ => null, order, orderNames).ToArray();
     }
 
 #if !NETSTANDARD2_0

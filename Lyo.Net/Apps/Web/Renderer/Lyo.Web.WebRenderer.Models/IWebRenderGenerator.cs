@@ -4,8 +4,8 @@ namespace Lyo.Web.WebRenderer.Models;
 public interface IWebRenderGenerator
 {
     /// <summary>
-    /// Captures <paramref name="request" /> and writes the file. The implementation owns the browser.
-    /// Callers that only need HTML rendering use the in-process renderer instead of this contract.
+    /// Captures <paramref name="request" /> and writes the file. The implementation owns the browser. Callers that only need HTML rendering use the in-process renderer instead
+    /// of this contract.
     /// </summary>
     /// <param name="request">HTML, format, and destination path.</param>
     /// <param name="ct">Token used to cancel the capture.</param>

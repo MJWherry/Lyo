@@ -1,4 +1,3 @@
-@using Lyo.Reporting.Models
 @typeparam T
 
 @* ReportViewer.razor - Generic component for rendering Report<T> *@
@@ -15,7 +14,7 @@
     @if (!string.IsNullOrEmpty(Layout.HeaderText) || !string.IsNullOrEmpty(Layout.LogoUrl)) {
         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 20px;">
             @if (!string.IsNullOrEmpty(SafeLogoUrl)) {
-                <img src="@SafeLogoUrl" alt="" style="max-height: 48px; max-width: 160px;" />
+                <img src="@SafeLogoUrl" alt="" style="max-height: 48px; max-width: 160px;"/>
             }
             @if (!string.IsNullOrEmpty(Layout.HeaderText)) {
                 <div style="font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: @AccentColor;">@Layout.HeaderText</div>

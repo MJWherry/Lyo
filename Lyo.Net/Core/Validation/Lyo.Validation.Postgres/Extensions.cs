@@ -2,10 +2,10 @@ using Lyo.Exceptions;
 using Lyo.Postgres;
 using Lyo.Validation.Models;
 using Lyo.Validation.Postgres.Database;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+
 namespace Lyo.Validation.Postgres;
 
 /// <summary>Helpers that register PostgreSQL validation schema storage.</summary>
@@ -31,7 +31,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresValidationOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddValidationDbContextFactory(options);
         }
 
@@ -62,7 +61,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresValidationOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddPostgresValidationStore(options);
         }
 

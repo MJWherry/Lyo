@@ -8,11 +8,11 @@ public sealed class StoryResponseBuilder
 {
     private readonly List<StoryEffect> _effects = [];
 
-    /// <summary>Sets a variable to <paramref name="value"/>.</summary>
+    /// <summary>Sets a variable to <paramref name="value" />.</summary>
     public StoryResponseBuilder Set(string key, object? value)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
-        Add(StoryEffectKind.Set, key, value is null ? null : Convert.ToString(value), targetNodeKey: null, invokeActionKey: null);
+        Add(StoryEffectKind.Set, key, value is null ? null : Convert.ToString(value), null, null);
         return this;
     }
 
@@ -24,7 +24,7 @@ public sealed class StoryResponseBuilder
         return this;
     }
 
-    /// <summary>Adds <paramref name="by"/> to an integer variable (default 1).</summary>
+    /// <summary>Adds <paramref name="by" /> to an integer variable (default 1).</summary>
     public StoryResponseBuilder Increment(string key, int by = 1)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
@@ -32,7 +32,7 @@ public sealed class StoryResponseBuilder
         return this;
     }
 
-    /// <summary>Moves the play cursor to <paramref name="nodeKey"/>.</summary>
+    /// <summary>Moves the play cursor to <paramref name="nodeKey" />.</summary>
     public StoryResponseBuilder GoesTo(string nodeKey)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(nodeKey);
@@ -58,9 +58,8 @@ public sealed class StoryResponseBuilder
     internal IReadOnlyList<StoryEffect> Build() => _effects.ToArray();
 
     private void Add(StoryEffectKind kind, string? variableKey, string? value, string? targetNodeKey, string? invokeActionKey)
-    {
-        _effects.Add(
-            new StoryEffect {
+        => _effects.Add(
+            new() {
                 Kind = kind,
                 SortOrder = _effects.Count,
                 VariableKey = variableKey,
@@ -68,5 +67,4 @@ public sealed class StoryResponseBuilder
                 TargetNodeKey = targetNodeKey,
                 InvokeActionKey = invokeActionKey
             });
-    }
 }

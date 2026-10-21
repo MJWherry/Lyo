@@ -65,7 +65,7 @@ function getCaretCoordinates(element, position) {
 
 export function getCaretClientRect(el, position) {
     if (!el)
-        return { top: 0, left: 0, height: 0 };
+        return {top: 0, left: 0, height: 0};
 
     const pos = Math.max(0, Math.min(position, el.value.length));
     const coords = getCaretCoordinates(el, pos);
@@ -131,7 +131,7 @@ export function placeSuggest(list, textarea, caretPos) {
 export function scrollItemIntoView(list, index) {
     const item = list?.children?.[index];
     if (item && typeof item.scrollIntoView === "function")
-        item.scrollIntoView({ block: "nearest" });
+        item.scrollIntoView({block: "nearest"});
 }
 
 const editorListeners = new WeakMap();
@@ -164,11 +164,11 @@ export function attachEditor(el, wrap, dotnetRef) {
 
     el.addEventListener("keydown", onKeyDown, true);
     el.addEventListener("input", onInput);
-    wrap?.addEventListener("scroll", onViewChange, { passive: true });
+    wrap?.addEventListener("scroll", onViewChange, {passive: true});
     window.addEventListener("scroll", onViewChange, true);
     window.addEventListener("resize", onViewChange);
 
-    editorListeners.set(el, { onKeyDown, onInput, onViewChange, wrap });
+    editorListeners.set(el, {onKeyDown, onInput, onViewChange, wrap});
 }
 
 export function detachEditor(el) {

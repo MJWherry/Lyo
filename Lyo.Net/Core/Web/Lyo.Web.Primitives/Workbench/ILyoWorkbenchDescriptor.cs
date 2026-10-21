@@ -1,8 +1,6 @@
 namespace Lyo.Web.Primitives;
 
-/// <summary>
-/// Describes one embeddable workbench so a host can list it in <see cref="LyoNavMenu" /> and render it from <see cref="LyoWorkbenchHost" /> without a dedicated page.
-/// </summary>
+/// <summary>Describes one embeddable workbench so a host can list it in <see cref="LyoNavMenu" /> and render it from <see cref="LyoWorkbenchHost" /> without a dedicated page.</summary>
 public interface ILyoWorkbenchDescriptor
 {
     /// <summary>Title used in nav and on the page.</summary>

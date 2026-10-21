@@ -1,5 +1,5 @@
+using System.Net;
 using Lyo.Common.Core.Identifiers;
-using Lyo.Testing;
 using Lyo.Web.Automation.Abstractions;
 using Lyo.Web.Automation.Models;
 using Lyo.Web.Automation.Models.Enums;
@@ -20,13 +20,8 @@ public sealed class AutomationPlanSnapshotTests
         var runner = new AutomationPlanRunner(http, new NullSink(), storage, EmptyServices.Instance);
         var root = NewRoot();
         var plan = new AutomationPlan("greet", [new StoreLiteralAutomationStep("greeting", "hello")]);
-        var runtime = new AutomationPlanRuntimeOptions {
-            PlanRunDirectory = new AutomationPlanRunDirectoryOptions { RootDirectory = root },
-            Instrumentation = new CollectingInstrumentation(outcomes)
-        };
-
+        var runtime = new AutomationPlanRuntimeOptions { PlanRunDirectory = new() { RootDirectory = root }, Instrumentation = new CollectingInstrumentation(outcomes) };
         var result = await runner.RunWithResultAsync(session, plan, runtime, null, TestCt);
-
         var outcome = Assert.Single(outcomes);
         Assert.Equal(storage.LastId, outcome.ScreenshotFileId);
         Assert.Equal(outcome.RunId, storage.LastRunId);
@@ -49,14 +44,11 @@ public sealed class AutomationPlanSnapshotTests
         using var http = new HttpClient(new OkHandler());
         var runner = new AutomationPlanRunner(http, new NullSink(), storage, EmptyServices.Instance);
         var root = NewRoot();
-        var plan = new AutomationPlan("fail", [
-            new StoreLiteralAutomationStep("greeting", "hello"),
-            new CaptureNetworkAutomationStep("urls", "(", 10)
-        ]);
+        var plan = new AutomationPlan("fail", [new StoreLiteralAutomationStep("greeting", "hello"), new CaptureNetworkAutomationStep("urls", "(", 10)]);
         var runtime = new AutomationPlanRuntimeOptions {
-            PlanRunDirectory = new AutomationPlanRunDirectoryOptions { RootDirectory = root },
+            PlanRunDirectory = new() { RootDirectory = root },
             Instrumentation = new CollectingInstrumentation(outcomes),
-            Hooks = new AutomationPlanHooks {
+            Hooks = new() {
                 OnFailureAsync = (ctx, _) => {
                     failed = ctx.ExecutionContext;
                     return ValueTask.CompletedTask;
@@ -65,7 +57,6 @@ public sealed class AutomationPlanSnapshotTests
         };
 
         var error = await Assert.ThrowsAsync<InvalidOperationException>(() => runner.RunWithResultAsync(session, plan, runtime, null, TestCt));
-
         Assert.Contains("(", error.Message);
         Assert.Equal(2, outcomes.Count);
         var failedOutcome = outcomes[1];
@@ -137,7 +128,7 @@ public sealed class AutomationPlanSnapshotTests
     private sealed class OkHandler : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-            => Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK));
+            => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
     }
 
     private sealed class SnapshotSession(byte[] png) : IWebAutomationSession

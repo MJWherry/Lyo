@@ -52,8 +52,8 @@ public static class Extensions
             => services.AddPostgresStateStore(EnumStateKeyConverter<TState>.Instance);
 
         /// <summary>
-        /// Registers <see cref="IStateStore{TState}" /> and <see cref="IStateInstanceQuery{TState}" /> (one shared <see cref="PostgresStateStore{TState}" />) for any
-        /// state type using a custom key converter. Requires <c>AddStateMachinePostgres</c>.
+        /// Registers <see cref="IStateStore{TState}" /> and <see cref="IStateInstanceQuery{TState}" /> (one shared <see cref="PostgresStateStore{TState}" />) for any state type
+        /// using a custom key converter. Requires <c>AddStateMachinePostgres</c>.
         /// </summary>
         public IServiceCollection AddPostgresStateStore<TState>(IStateKeyConverter<TState> converter)
             where TState : notnull

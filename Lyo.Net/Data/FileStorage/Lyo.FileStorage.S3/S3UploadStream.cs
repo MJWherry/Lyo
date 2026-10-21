@@ -33,8 +33,8 @@ internal sealed class S3UploadStream : Stream
     private bool _uploaded;
 
     /// <summary>
-    /// True when dispose still owes S3 an object. A flushed stream counts even at zero length: an empty save is a real object, and skipping the PUT would leave
-    /// metadata pointing at a missing key. An unflushed, unwritten stream is an abandoned write and uploads nothing.
+    /// True when dispose still owes S3 an object. A flushed stream counts even at zero length: an empty save is a real object, and skipping the PUT would leave metadata pointing
+    /// at a missing key. An unflushed, unwritten stream is an abandoned write and uploads nothing.
     /// </summary>
     private bool UploadPending => !_uploaded && (_flushed || _innerStream.Length > 0);
 

@@ -16,27 +16,30 @@ public sealed class SftpFileStorageFactoryTests
             services.AddSingleton(Metadata());
             services.AddSingleton<ITwoKeyEncryptionService>(_ => throw new InvalidOperationException("unkeyed"));
             services.AddFileStorageFactory(stores => {
-                stores.AddSftp("east", options => {
-                    options.Sftp.Host = "east.example";
-                    options.Sftp.Username = "u";
-                    options.Sftp.Password = "p";
-                    options.Sftp.RootRemoteDirectory = "/east";
-                    options.Sftp.HostKeyPolicy = SftpHostKeyPolicy.AcceptAny;
-                });
-                stores.AddSftp("west", builder => builder.Configure(options => {
-                    options.Sftp.Host = "west.example";
-                    options.Sftp.Username = "u";
-                    options.Sftp.Password = "p";
-                    options.Sftp.RootRemoteDirectory = "/west";
-                    options.Sftp.HostKeyPolicy = SftpHostKeyPolicy.AcceptAny;
-                }));
+                stores.AddSftp(
+                    "east", options => {
+                        options.Sftp.Host = "east.example";
+                        options.Sftp.Username = "u";
+                        options.Sftp.Password = "p";
+                        options.Sftp.RootRemoteDirectory = "/east";
+                        options.Sftp.HostKeyPolicy = SftpHostKeyPolicy.AcceptAny;
+                    });
+
+                stores.AddSftp(
+                    "west", builder => builder.Configure(options => {
+                        options.Sftp.Host = "west.example";
+                        options.Sftp.Username = "u";
+                        options.Sftp.Password = "p";
+                        options.Sftp.RootRemoteDirectory = "/west";
+                        options.Sftp.HostKeyPolicy = SftpHostKeyPolicy.AcceptAny;
+                    }));
             });
         });
+
         using var scope = provider.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IFileStorageFactory>();
         var east = factory.Get("east");
         var west = factory.Get("west");
-
         Assert.Equal("east.example", Options(east).Sftp.Host);
         Assert.Equal("west.example", Options(west).Sftp.Host);
         Assert.Null(Field(east, "TwoKeyEncryptionService"));

@@ -97,7 +97,9 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
                     if (i < startIndex) {
                         var skippedId = AutomationGuid.CreateTimeOrdered();
                         var skippedPlanStepId = step.StepId ?? Guid.Empty;
-                        instr?.OnStepOutcome(new(runId, skippedPlanStepId, skippedId, i, AutomationPlanStepOutcome.Skipped, TimeSpan.Zero, step, null, null, state.ToContextSnapshot()));
+                        instr?.OnStepOutcome(
+                            new(runId, skippedPlanStepId, skippedId, i, AutomationPlanStepOutcome.Skipped, TimeSpan.Zero, step, null, null, state.ToContextSnapshot()));
+
                         artifacts?.LogLine($"STEP_SKIPPED index={i} stepExecutionId={skippedId:N}");
                         continue;
                     }
@@ -138,7 +140,8 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
                             await before(stepContext, runCt).ConfigureAwait(false);
 
                         if (artifacts != null && dirOpts!.WriteSnapshots && dirOpts.SnapshotBeforeEachStep)
-                            await TryWritePlanStepSnapshotAsync(session.Browser, artifacts.SnapshotsDirectory, runId, i, stepExecutionId, "before", logger, runCt).ConfigureAwait(false);
+                            await TryWritePlanStepSnapshotAsync(session.Browser, artifacts.SnapshotsDirectory, runId, i, stepExecutionId, "before", logger, runCt)
+                                .ConfigureAwait(false);
 
                         var sw = Stopwatch.StartNew();
                         Exception? failure = null;
@@ -162,7 +165,8 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
                         if (failure != null) {
                             string? failedSnapshot = null;
                             if (artifacts != null && dirOpts!.WriteSnapshots && dirOpts.SnapshotOnStepFailure) {
-                                failedSnapshot = await TryWritePlanStepSnapshotAsync(session.Browser, artifacts.SnapshotsDirectory, runId, i, stepExecutionId, "failed", logger, runCt)
+                                failedSnapshot = await TryWritePlanStepSnapshotAsync(
+                                        session.Browser, artifacts.SnapshotsDirectory, runId, i, stepExecutionId, "failed", logger, runCt)
                                     .ConfigureAwait(false);
                             }
 
@@ -203,13 +207,16 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
                         var stepResult = new AutomationPlanStepResult(sw.Elapsed);
                         string? afterSnapshot = null;
                         if (artifacts != null && dirOpts!.WriteSnapshots && dirOpts.SnapshotAfterEachSuccessfulStep)
-                            afterSnapshot = await TryWritePlanStepSnapshotAsync(session.Browser, artifacts.SnapshotsDirectory, runId, i, stepExecutionId, "after", logger, runCt).ConfigureAwait(false);
+                            afterSnapshot = await TryWritePlanStepSnapshotAsync(session.Browser, artifacts.SnapshotsDirectory, runId, i, stepExecutionId, "after", logger, runCt)
+                                .ConfigureAwait(false);
 
                         if (artifacts != null && dirOpts!.WriteVariables && dirOpts.VariablesAfterEachSuccessfulStep)
                             await TryWritePlanVariablesAsync(artifacts, dirOpts, state, runId, i, "after", logger, runCt).ConfigureAwait(false);
 
                         instr?.OnStepCompleted(new(runId, stepExecutionId, planStepId, i, step, sw.Elapsed));
-                        instr?.OnStepOutcome(new(runId, planStepId, stepExecutionId, i, AutomationPlanStepOutcome.Success, sw.Elapsed, step, null, afterSnapshot, state.ToContextSnapshot()));
+                        instr?.OnStepOutcome(
+                            new(runId, planStepId, stepExecutionId, i, AutomationPlanStepOutcome.Success, sw.Elapsed, step, null, afterSnapshot, state.ToContextSnapshot()));
+
                         logger?.LogInformation(
                             "Automation step completed {AutomationRunId} {AutomationStepExecutionId} {PlanStepId} index={StepIndex} step={AutomationStep} outcome={StepOutcome} durationMs={DurationMs}",
                             runId, stepExecutionId, planStepId == Guid.Empty ? null : planStepId, i, label, AutomationPlanStepOutcome.Success, sw.ElapsedMilliseconds);
@@ -1175,8 +1182,8 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
             foreach (var pair in ContextItems)
                 items[pair.Key] = FormatContextItem(pair.Value);
 
-            return new AutomationPlanContextSnapshot {
-                Strings = new Dictionary<string, string>(Strings, StringComparer.Ordinal),
+            return new() {
+                Strings = new(Strings, StringComparer.Ordinal),
                 StringLists = StringLists.ToDictionary(static kvp => kvp.Key, static kvp => kvp.Value.ToList(), StringComparer.Ordinal),
                 ContextItems = items,
                 ElementRefs = Elements.Keys.OrderBy(static name => name, StringComparer.Ordinal).ToList()
@@ -1187,6 +1194,7 @@ public sealed class AutomationPlanRunner : IAutomationPlanRunner
         {
             if (value is null)
                 return null;
+
             if (value is string text)
                 return text;
 

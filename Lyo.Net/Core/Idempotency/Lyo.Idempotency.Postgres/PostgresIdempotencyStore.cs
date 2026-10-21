@@ -10,14 +10,14 @@ using Npgsql;
 namespace Lyo.Idempotency.Postgres;
 
 /// <summary>
-/// Postgres idempotency store. A caller transaction gets a savepoint around the insert so a unique violation can be re-read
-/// without aborting the caller's transaction. Outbox rows are inserted only through <see cref="InsertOutboxAsync" />.
+/// Postgres idempotency store. A caller transaction gets a savepoint around the insert so a unique violation can be re-read without aborting the caller's transaction. Outbox
+/// rows are inserted only through <see cref="InsertOutboxAsync" />.
 /// </summary>
 public sealed class PostgresIdempotencyStore : IIdempotencyStore
 {
+    private readonly IMetrics _metrics;
     private readonly PostgresIdempotencyOptions _options;
     private readonly Func<DateTime> _utcNow;
-    private readonly IMetrics _metrics;
 
     /// <summary>Builds a store over <paramref name="options" />.</summary>
     public PostgresIdempotencyStore(PostgresIdempotencyOptions options, Func<DateTime>? utcNow = null, IMetrics? metrics = null)
@@ -43,54 +43,11 @@ public sealed class PostgresIdempotencyStore : IIdempotencyStore
         IdempotencyRules.ThrowIfApiScope(scope, key, requestHash, _options.Limits);
         var now = IdempotencyRules.AsUtc(_utcNow(), "utcNow");
         var expiry = IdempotencyRules.ResolveExpiry(expiresAt, now, _options.Limits.DefaultLifetime);
-        var entry = NewEntry(IdempotencyKind.Api, scope, key, requestHash, expiry, now, destination: null, payload: null);
+        var entry = NewEntry(IdempotencyKind.Api, scope, key, requestHash, expiry, now, null, null);
         if (transaction is null)
             return await BeginOwnedAsync(entry, ct).ConfigureAwait(false);
 
         return await BeginJoinedAsync(entry, transaction, ct).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    /// Inserts an outbox row on <paramref name="transaction" /> and does not commit it. The hash is SHA-256 of <paramref name="payload" />.
-    /// A different hash rolls the caller transaction back and throws <see cref="ConflictException" />.
-    /// </summary>
-    public async Task<IdempotencyOutboxInsert> InsertOutboxAsync(
-        DbTransaction transaction,
-        string destination,
-        string callerScope,
-        string key,
-        byte[] payload,
-        CancellationToken ct = default)
-    {
-        ArgumentHelpers.ThrowIfNull(transaction);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(destination);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(callerScope);
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
-        ArgumentHelpers.ThrowIfNull(payload);
-        if (destination.Contains('/') || destination.Contains('|'))
-            throw new ArgumentException("Destination cannot contain '/' or '|'.", nameof(destination));
-
-        if (payload.Length > _options.Limits.MaxPayloadBytes)
-            throw new ArgumentException($"Payload length {payload.Length} exceeds {_options.Limits.MaxPayloadBytes}.", nameof(payload));
-
-        var scope = IdempotencyRules.OutboxPrefix + destination + "/" + callerScope;
-        IdempotencyRules.ThrowIfScopeAndKey(scope, key, _options.Limits);
-        var hash = IdempotencyHash.Of(payload);
-        var now = IdempotencyRules.AsUtc(_utcNow(), "utcNow");
-        var entry = NewEntry(IdempotencyKind.Outbox, scope, key, hash, expiresAt: null, now, destination, payload);
-        var conn = RequireConnection(transaction);
-        var inserted = await TryInsertAsync(conn, transaction, entry, joined: true, ct).ConfigureAwait(false);
-        if (inserted)
-            return new IdempotencyOutboxInsert { Inserted = true, Id = entry.Id, Outcome = IdempotencyOutcome.Began };
-
-        var live = await ReadLiveAsync(conn, transaction, scope, key, ct).ConfigureAwait(false)
-            ?? throw new InvalidOperationException("Idempotency unique violation had no live row.");
-        if (IdempotencyHash.Matches(live.RequestHash, hash))
-            return new IdempotencyOutboxInsert { Inserted = false, Id = live.Id, Outcome = IdempotencyOutcome.Replay };
-
-        _metrics.IncrementCounter("outbox.enqueue", tags: [("outcome", "conflict")]);
-        await transaction.RollbackAsync(ct).ConfigureAwait(false);
-        throw new ConflictException("An outbox message already exists for this key with a different payload.");
     }
 
     /// <inheritdoc />
@@ -119,6 +76,7 @@ public sealed class PostgresIdempotencyStore : IIdempotencyStore
               WHERE scope = @scope AND key = @key AND kind = 'api' AND state IN ('in_progress', 'completed', 'failed')
                 AND lease_token = @token
               """;
+
         cmd.Parameters.AddWithValue("scope", scope);
         cmd.Parameters.AddWithValue("key", key);
         if (!force)
@@ -134,13 +92,14 @@ public sealed class PostgresIdempotencyStore : IIdempotencyStore
         await using var conn = await OpenAsync(ct).ConfigureAwait(false);
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            UPDATE idempotency.entry
-            SET state = 'expired'
-            WHERE kind = 'api'
-              AND state IN ('in_progress', 'completed', 'failed')
-              AND expires_at IS NOT NULL
-              AND expires_at <= @now
-            """;
+                          UPDATE idempotency.entry
+                          SET state = 'expired'
+                          WHERE kind = 'api'
+                            AND state IN ('in_progress', 'completed', 'failed')
+                            AND expires_at IS NOT NULL
+                            AND expires_at <= @now
+                          """;
+
         cmd.Parameters.AddWithValue("now", now);
         await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
     }
@@ -161,6 +120,50 @@ public sealed class PostgresIdempotencyStore : IIdempotencyStore
         }
     }
 
+    /// <summary>
+    /// Inserts an outbox row on <paramref name="transaction" /> and does not commit it. The hash is SHA-256 of <paramref name="payload" />. A different hash rolls the caller
+    /// transaction back and throws <see cref="ConflictException" />.
+    /// </summary>
+    public async Task<IdempotencyOutboxInsert> InsertOutboxAsync(
+        DbTransaction transaction,
+        string destination,
+        string callerScope,
+        string key,
+        byte[] payload,
+        CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(transaction);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(destination);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(callerScope);
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        ArgumentHelpers.ThrowIfNull(payload);
+        if (destination.Contains('/') || destination.Contains('|'))
+            throw new ArgumentException("Destination cannot contain '/' or '|'.", nameof(destination));
+
+        if (payload.Length > _options.Limits.MaxPayloadBytes)
+            throw new ArgumentException($"Payload length {payload.Length} exceeds {_options.Limits.MaxPayloadBytes}.", nameof(payload));
+
+        var scope = IdempotencyRules.OutboxPrefix + destination + "/" + callerScope;
+        IdempotencyRules.ThrowIfScopeAndKey(scope, key, _options.Limits);
+        var hash = IdempotencyHash.Of(payload);
+        var now = IdempotencyRules.AsUtc(_utcNow(), "utcNow");
+        var entry = NewEntry(IdempotencyKind.Outbox, scope, key, hash, null, now, destination, payload);
+        var conn = RequireConnection(transaction);
+        var inserted = await TryInsertAsync(conn, transaction, entry, true, ct).ConfigureAwait(false);
+        if (inserted)
+            return new() { Inserted = true, Id = entry.Id, Outcome = IdempotencyOutcome.Began };
+
+        var live = await ReadLiveAsync(conn, transaction, scope, key, ct).ConfigureAwait(false) ??
+            throw new InvalidOperationException("Idempotency unique violation had no live row.");
+
+        if (IdempotencyHash.Matches(live.RequestHash, hash))
+            return new() { Inserted = false, Id = live.Id, Outcome = IdempotencyOutcome.Replay };
+
+        _metrics.IncrementCounter("outbox.enqueue", tags: [("outcome", "conflict")]);
+        await transaction.RollbackAsync(ct).ConfigureAwait(false);
+        throw new ConflictException("An outbox message already exists for this key with a different payload.");
+    }
+
     /// <summary>Claims due outbox rows and commits the new leases before returning. Does not publish.</summary>
     public async Task<IReadOnlyList<IdempotencyOutboxClaim>> ClaimDueOutboxAsync(int batch, TimeSpan lease, CancellationToken ct = default)
     {
@@ -175,16 +178,17 @@ public sealed class PostgresIdempotencyStore : IIdempotencyStore
         await using (var select = conn.CreateCommand()) {
             select.Transaction = tx;
             select.CommandText = """
-                SELECT id
-                FROM idempotency.entry
-                WHERE kind = 'outbox'
-                  AND state = 'in_progress'
-                  AND (available_at IS NULL OR available_at <= @now)
-                  AND (lease_until IS NULL OR lease_until <= @now)
-                ORDER BY created_timestamp
-                LIMIT @batch
-                FOR UPDATE SKIP LOCKED
-                """;
+                                 SELECT id
+                                 FROM idempotency.entry
+                                 WHERE kind = 'outbox'
+                                   AND state = 'in_progress'
+                                   AND (available_at IS NULL OR available_at <= @now)
+                                   AND (lease_until IS NULL OR lease_until <= @now)
+                                 ORDER BY created_timestamp
+                                 LIMIT @batch
+                                 FOR UPDATE SKIP LOCKED
+                                 """;
+
             select.Parameters.AddWithValue("now", now);
             select.Parameters.AddWithValue("batch", batch);
             await using var reader = await select.ExecuteReaderAsync(ct).ConfigureAwait(false);
@@ -198,11 +202,12 @@ public sealed class PostgresIdempotencyStore : IIdempotencyStore
             await using var update = conn.CreateCommand();
             update.Transaction = tx;
             update.CommandText = """
-                UPDATE idempotency.entry
-                SET lease_token = @token, lease_until = @until
-                WHERE id = @id
-                RETURNING destination, payload, attempt_count
-                """;
+                                 UPDATE idempotency.entry
+                                 SET lease_token = @token, lease_until = @until
+                                 WHERE id = @id
+                                 RETURNING destination, payload, attempt_count
+                                 """;
+
             update.Parameters.AddWithValue("token", token);
             update.Parameters.AddWithValue("until", until);
             update.Parameters.AddWithValue("id", id);
@@ -210,34 +215,34 @@ public sealed class PostgresIdempotencyStore : IIdempotencyStore
             if (!await reader.ReadAsync(ct).ConfigureAwait(false))
                 continue;
 
-            claims.Add(new IdempotencyOutboxClaim {
-                Id = id,
-                LeaseToken = token,
-                Destination = reader.GetString(0),
-                Payload = (byte[])reader.GetValue(1),
-                AttemptCount = reader.GetInt32(2)
-            });
+            claims.Add(
+                new() {
+                    Id = id,
+                    LeaseToken = token,
+                    Destination = reader.GetString(0),
+                    Payload = (byte[])reader.GetValue(1),
+                    AttemptCount = reader.GetInt32(2)
+                });
         }
 
         await tx.CommitAsync(ct).ConfigureAwait(false);
         return claims;
     }
 
-    /// <summary>
-    /// Backs off a failed publish. The update matches <paramref name="leaseToken" />. Zero rows means the lease was stolen and nothing changes.
-    /// </summary>
+    /// <summary>Backs off a failed publish. The update matches <paramref name="leaseToken" />. Zero rows means the lease was stolen and nothing changes.</summary>
     public async Task<bool> ScheduleOutboxRetryAsync(Guid id, Guid leaseToken, DateTime availableAt, CancellationToken ct = default)
     {
         await using var conn = await OpenAsync(ct).ConfigureAwait(false);
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            UPDATE idempotency.entry
-            SET attempt_count = attempt_count + 1,
-                available_at = @available,
-                lease_token = NULL,
-                lease_until = NULL
-            WHERE id = @id AND lease_token = @token AND kind = 'outbox' AND state = 'in_progress'
-            """;
+                          UPDATE idempotency.entry
+                          SET attempt_count = attempt_count + 1,
+                              available_at = @available,
+                              lease_token = NULL,
+                              lease_until = NULL
+                          WHERE id = @id AND lease_token = @token AND kind = 'outbox' AND state = 'in_progress'
+                          """;
+
         cmd.Parameters.AddWithValue("available", IdempotencyRules.AsUtc(availableAt, nameof(availableAt)));
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("token", leaseToken);
@@ -250,12 +255,13 @@ public sealed class PostgresIdempotencyStore : IIdempotencyStore
         await using var conn = await OpenAsync(ct).ConfigureAwait(false);
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            UPDATE idempotency.entry
-            SET state = 'in_progress', attempt_count = 0, lease_token = NULL, lease_until = NULL,
-                available_at = NULL, completed_timestamp = NULL, response_status = NULL, response_body = NULL,
-                response_content_type = NULL, response_omitted = FALSE
-            WHERE id = @id AND kind = 'outbox' AND state = 'failed'
-            """;
+                          UPDATE idempotency.entry
+                          SET state = 'in_progress', attempt_count = 0, lease_token = NULL, lease_until = NULL,
+                              available_at = NULL, completed_timestamp = NULL, response_status = NULL, response_body = NULL,
+                              response_content_type = NULL, response_omitted = FALSE
+                          WHERE id = @id AND kind = 'outbox' AND state = 'failed'
+                          """;
+
         cmd.Parameters.AddWithValue("id", id);
         return await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false) == 1;
     }
@@ -264,27 +270,29 @@ public sealed class PostgresIdempotencyStore : IIdempotencyStore
     {
         await using var conn = await OpenAsync(ct).ConfigureAwait(false);
         await using var tx = await conn.BeginTransactionAsync(ct).ConfigureAwait(false);
-        var inserted = await TryInsertAsync(conn, tx, entry, joined: false, ct).ConfigureAwait(false);
+        var inserted = await TryInsertAsync(conn, tx, entry, false, ct).ConfigureAwait(false);
         if (inserted) {
             await tx.CommitAsync(ct).ConfigureAwait(false);
             return IdempotencyDecision.Began(entry);
         }
 
         await tx.RollbackAsync(ct).ConfigureAwait(false);
-        var live = await ReadLiveAsync(conn, transaction: null, entry.Scope, entry.Key, ct).ConfigureAwait(false)
-            ?? throw new InvalidOperationException("Idempotency unique violation had no live row.");
+        var live = await ReadLiveAsync(conn, null, entry.Scope, entry.Key, ct).ConfigureAwait(false) ??
+            throw new InvalidOperationException("Idempotency unique violation had no live row.");
+
         return IdempotencyDecision.FromLive(live, entry.RequestHash, IdempotencyRules.AsUtc(_utcNow(), "utcNow"));
     }
 
     private async Task<IdempotencyBeginResult> BeginJoinedAsync(IdempotencyEntry entry, DbTransaction transaction, CancellationToken ct)
     {
         var conn = RequireConnection(transaction);
-        var inserted = await TryInsertAsync(conn, transaction, entry, joined: true, ct).ConfigureAwait(false);
+        var inserted = await TryInsertAsync(conn, transaction, entry, true, ct).ConfigureAwait(false);
         if (inserted)
             return IdempotencyDecision.Began(entry);
 
-        var live = await ReadLiveAsync(conn, transaction, entry.Scope, entry.Key, ct).ConfigureAwait(false)
-            ?? throw new InvalidOperationException("Idempotency unique violation had no live row.");
+        var live = await ReadLiveAsync(conn, transaction, entry.Scope, entry.Key, ct).ConfigureAwait(false) ??
+            throw new InvalidOperationException("Idempotency unique violation had no live row.");
+
         return IdempotencyDecision.FromLive(live, entry.RequestHash, IdempotencyRules.AsUtc(_utcNow(), "utcNow"));
     }
 
@@ -298,13 +306,14 @@ public sealed class PostgresIdempotencyStore : IIdempotencyStore
             await using var cmd = conn.CreateCommand();
             cmd.Transaction = (NpgsqlTransaction)transaction;
             cmd.CommandText = """
-                INSERT INTO idempotency.entry (
-                    id, kind, scope, key, request_hash, state, lease_token, lease_until,
-                    response_omitted, destination, payload, attempt_count, expires_at, created_timestamp)
-                VALUES (
-                    @id, @kind, @scope, @key, @hash, @state, @token, @until,
-                    FALSE, @destination, @payload, @attempts, @expires, @created)
-                """;
+                              INSERT INTO idempotency.entry (
+                                  id, kind, scope, key, request_hash, state, lease_token, lease_until,
+                                  response_omitted, destination, payload, attempt_count, expires_at, created_timestamp)
+                              VALUES (
+                                  @id, @kind, @scope, @key, @hash, @state, @token, @until,
+                                  FALSE, @destination, @payload, @attempts, @expires, @created)
+                              """;
+
             cmd.Parameters.AddWithValue("id", entry.Id);
             cmd.Parameters.AddWithValue("kind", entry.Kind == IdempotencyKind.Outbox ? "outbox" : "api");
             cmd.Parameters.AddWithValue("scope", entry.Scope);
@@ -340,15 +349,16 @@ public sealed class PostgresIdempotencyStore : IIdempotencyStore
         await using var conn = await OpenAsync(ct).ConfigureAwait(false);
         await using var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            UPDATE idempotency.entry
-            SET state = @state,
-                response_status = @status,
-                response_body = @body,
-                response_content_type = @content_type,
-                response_omitted = @omitted,
-                completed_timestamp = @completed
-            WHERE id = @id AND lease_token = @token AND state = 'in_progress'
-            """;
+                          UPDATE idempotency.entry
+                          SET state = @state,
+                              response_status = @status,
+                              response_body = @body,
+                              response_content_type = @content_type,
+                              response_omitted = @omitted,
+                              completed_timestamp = @completed
+                          WHERE id = @id AND lease_token = @token AND state = 'in_progress'
+                          """;
+
         cmd.Parameters.AddWithValue("state", state);
         cmd.Parameters.AddWithValue("status", status);
         cmd.Parameters.AddWithValue("body", (object?)stored ?? DBNull.Value);
@@ -365,20 +375,21 @@ public sealed class PostgresIdempotencyStore : IIdempotencyStore
         await using var cmd = conn.CreateCommand();
         cmd.Transaction = transaction as NpgsqlTransaction;
         cmd.CommandText = """
-            SELECT id, kind, scope, key, request_hash, state, lease_token, response_status, response_body,
-                   response_content_type, response_omitted, expires_at
-            FROM idempotency.entry
-            WHERE scope = @scope AND key = @key AND state IN ('in_progress', 'completed', 'failed')
-            ORDER BY created_timestamp DESC
-            LIMIT 1
-            """;
+                          SELECT id, kind, scope, key, request_hash, state, lease_token, response_status, response_body,
+                                 response_content_type, response_omitted, expires_at
+                          FROM idempotency.entry
+                          WHERE scope = @scope AND key = @key AND state IN ('in_progress', 'completed', 'failed')
+                          ORDER BY created_timestamp DESC
+                          LIMIT 1
+                          """;
+
         cmd.Parameters.AddWithValue("scope", scope);
         cmd.Parameters.AddWithValue("key", key);
         await using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
         if (!await reader.ReadAsync(ct).ConfigureAwait(false))
             return null;
 
-        return new IdempotencyEntry {
+        return new() {
             Id = reader.GetGuid(0),
             Kind = reader.GetString(1) == "outbox" ? IdempotencyKind.Outbox : IdempotencyKind.Api,
             Scope = reader.GetString(2),
@@ -394,22 +405,15 @@ public sealed class PostgresIdempotencyStore : IIdempotencyStore
         };
     }
 
-    private static IdempotencyState ParseState(string state) => state switch {
-        "in_progress" => IdempotencyState.InProgress,
-        "completed" => IdempotencyState.Completed,
-        "failed" => IdempotencyState.Failed,
-        _ => IdempotencyState.Expired
-    };
+    private static IdempotencyState ParseState(string state)
+        => state switch {
+            "in_progress" => IdempotencyState.InProgress,
+            "completed" => IdempotencyState.Completed,
+            "failed" => IdempotencyState.Failed,
+            var _ => IdempotencyState.Expired
+        };
 
-    private static IdempotencyEntry NewEntry(
-        IdempotencyKind kind,
-        string scope,
-        string key,
-        byte[] hash,
-        DateTime? expiresAt,
-        DateTime now,
-        string? destination,
-        byte[]? payload)
+    private static IdempotencyEntry NewEntry(IdempotencyKind kind, string scope, string key, byte[] hash, DateTime? expiresAt, DateTime now, string? destination, byte[]? payload)
         => new() {
             Id = LyoGuid.CreateV7(),
             Kind = kind,

@@ -2,9 +2,9 @@ using System.Globalization;
 using System.Reflection;
 using System.Text.Json;
 using Lyo.Api.Models.Common.Request;
-using Lyo.Exceptions;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Enums;
+using Lyo.Exceptions;
 using Lyo.Json;
 
 namespace Lyo.Api.Import;
@@ -39,7 +39,7 @@ public sealed class JsonImportFormatHandler : IImportFormatHandler
         var parsed = request.JsonMode switch {
             ImportJsonMode.Ndjson => _json.ParseNdjsonAsResult<JsonElement>(content),
             ImportJsonMode.Wrapped => _json.ParseArrayAsResult<JsonElement>(content, request.RowsPath),
-            _ => _json.ParseArrayAsResult<JsonElement>(content)
+            var _ => _json.ParseArrayAsResult<JsonElement>(content)
         };
 
         if (!parsed.IsSuccess)
@@ -123,7 +123,13 @@ public sealed class JsonImportFormatHandler : IImportFormatHandler
                 if (!field.Required)
                     continue;
 
-                issue = new() { Index = index, Field = field.Source, Message = $"Required field '{field.Source}' is missing.", Raw = element.GetRawText() };
+                issue = new() {
+                    Index = index,
+                    Field = field.Source,
+                    Message = $"Required field '{field.Source}' is missing.",
+                    Raw = element.GetRawText()
+                };
+
                 return false;
             }
 
@@ -158,7 +164,13 @@ public sealed class JsonImportFormatHandler : IImportFormatHandler
             return true;
         }
         catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException or ArgumentException or JsonException) {
-            issue = new() { Index = index, Field = field, Message = ex.Message, Raw = value.GetRawText() };
+            issue = new() {
+                Index = index,
+                Field = field,
+                Message = ex.Message,
+                Raw = value.GetRawText()
+            };
+
             return false;
         }
     }
@@ -179,7 +191,13 @@ public sealed class JsonImportFormatHandler : IImportFormatHandler
     {
         var copy = new List<ImportIssue>(issues.Count);
         foreach (var issue in issues)
-            copy.Add(new() { Index = issue.Index, Field = issue.Field, Message = issue.Message, Raw = issue.Raw });
+            copy.Add(
+                new() {
+                    Index = issue.Index,
+                    Field = issue.Field,
+                    Message = issue.Message,
+                    Raw = issue.Raw
+                });
 
         return copy;
     }

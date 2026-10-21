@@ -1,6 +1,7 @@
 # Lyo.Outbox.Postgres
 
-AddPostgresOutbox requires PostgresIdempotencyStore. The stored scope is outbox/{destination}/{callerScope}. There is no second table and no published_at column. Unpublished means kind=outbox and state=in_progress.
+AddPostgresOutbox requires PostgresIdempotencyStore. The stored scope is outbox/{destination}/{callerScope}. There is no second table and no published_at column. Unpublished means
+kind=outbox and state=in_progress.
 
 ## Features
 

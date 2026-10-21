@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Lyo.Authentication.Seed;
 
 /// <summary>
-/// EF seed of local users. <see cref="Password" /> is hashed with <see cref="ApiTokenCodec.ComputeSecretHash" /> and stored as an expired token secret hash.
-/// The plaintext token is not persisted. Schema <c>user</c>.
+/// EF seed of local users. <see cref="Password" /> is hashed with <see cref="ApiTokenCodec.ComputeSecretHash" /> and stored as an expired token secret hash. The plaintext
+/// token is not persisted. Schema <c>user</c>.
 /// </summary>
 public sealed class AuthenticationEfSeedContributor : SeedContributor, IEfSeedSource
 {
@@ -33,9 +33,7 @@ public sealed class AuthenticationEfSeedContributor : SeedContributor, IEfSeedSo
     public DbContext CreateContext(string connectionString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        var options = new DbContextOptionsBuilder<UserDbContext>()
-            .UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<UserDbContext>().UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema)).Options;
         return new UserDbContext(options);
     }
 
@@ -47,62 +45,75 @@ public sealed class AuthenticationEfSeedContributor : SeedContributor, IEfSeedSo
         var now = DateTime.UtcNow;
         var hash = ApiTokenCodec.ComputeSecretHash(Password);
         var userIndex = new Dictionary<Guid, int>();
-        var users = graph.Entity(options.Count, i => {
-            var local = faker.Internet.UserName();
-            if (local.Length > 40)
-                local = local[..40];
-            var user = new UserEntity {
+        var users = graph.Entity(
+            options.Count, i => {
+                var local = faker.Internet.UserName();
+                if (local.Length > 40)
+                    local = local[..40];
+
+                var user = new UserEntity {
+                    Id = LyoGuid.CreateV7(),
+                    DisplayName = faker.Name.FullName(),
+                    Email = $"{local}.{i}@example.com",
+                    EmailVerified = true,
+                    ScopesJson = "[\"boards.read\"]",
+                    CreatedTimestamp = now
+                };
+
+                userIndex[user.Id] = i;
+                return user;
+            });
+
+        users.ForEach(
+            _ => 1, (user, _) => new TokenEntity {
+                Id = TokenId(userIndex[user.Id]),
+                SecretHash = hash,
+                Kind = ApiTokenKind.Pat,
+                Ring = ApiTokenRing.Test,
+                UserId = user.Id,
+                DisplayName = "Laptop",
+                ScopesJson = "[]",
+                CreatedTimestamp = now.AddDays(-2),
+                ExpiresTimestamp = now.AddDays(-1)
+            });
+
+        users.ForEach(
+            _ => 1, (user, _) => new LinkedIdentityEntity {
                 Id = LyoGuid.CreateV7(),
-                DisplayName = faker.Name.FullName(),
-                Email = $"{local}.{i}@example.com",
-                EmailVerified = true,
-                ScopesJson = "[\"boards.read\"]",
+                UserId = user.Id,
+                Provider = "local",
+                Subject = user.Id.ToString("N"),
+                EmailAtLink = user.Email,
+                ScopesJson = "[]",
+                LinkedTimestamp = now
+            });
+
+        users.ForEach(
+            _ => 1, (user, _) => new UserClaimEntity {
+                Id = LyoGuid.CreateV7(),
+                UserId = user.Id,
+                Type = "locale",
+                Value = "en",
                 CreatedTimestamp = now
-            };
-            userIndex[user.Id] = i;
-            return user;
-        });
-        users.ForEach(_ => 1, (user, _) => new TokenEntity {
-            Id = TokenId(userIndex[user.Id]),
-            SecretHash = hash,
-            Kind = ApiTokenKind.Pat,
-            Ring = ApiTokenRing.Test,
-            UserId = user.Id,
-            DisplayName = "Laptop",
-            ScopesJson = "[]",
-            CreatedTimestamp = now.AddDays(-2),
-            ExpiresTimestamp = now.AddDays(-1)
-        });
-        users.ForEach(_ => 1, (user, _) => new LinkedIdentityEntity {
-            Id = LyoGuid.CreateV7(),
-            UserId = user.Id,
-            Provider = "local",
-            Subject = user.Id.ToString("N"),
-            EmailAtLink = user.Email,
-            ScopesJson = "[]",
-            LinkedTimestamp = now
-        });
-        users.ForEach(_ => 1, (user, _) => new UserClaimEntity {
-            Id = LyoGuid.CreateV7(),
-            UserId = user.Id,
-            Type = "locale",
-            Value = "en",
-            CreatedTimestamp = now
-        });
-        users.ForEach(_ => 1, (user, _) => new UserScopeEntity {
-            Id = LyoGuid.CreateV7(),
-            UserId = user.Id,
-            Name = "boards.read",
-            CreatedTimestamp = now
-        });
-        users.ForEach(_ => 1, (user, _) => new UserEventEntity {
-            Id = LyoGuid.CreateV7(),
-            Timestamp = now,
-            Kind = AuthAuditEventKind.UserProvisioned,
-            UserId = user.Id,
-            Provider = "local",
-            Outcome = "success"
-        });
+            });
+
+        users.ForEach(
+            _ => 1, (user, _) => new UserScopeEntity {
+                Id = LyoGuid.CreateV7(),
+                UserId = user.Id,
+                Name = "boards.read",
+                CreatedTimestamp = now
+            });
+
+        users.ForEach(
+            _ => 1, (user, _) => new UserEventEntity {
+                Id = LyoGuid.CreateV7(),
+                Timestamp = now,
+                Kind = AuthAuditEventKind.UserProvisioned,
+                UserId = user.Id,
+                Provider = "local",
+                Outcome = "success"
+            });
     }
 
     private static string TokenId(int index)

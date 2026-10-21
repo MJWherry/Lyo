@@ -28,8 +28,7 @@ public sealed class StoryClient : IStoryClient
     }
 
     /// <inheritdoc />
-    public Task<StoryGraphRes?> GetGraphAsync(Guid id, CancellationToken ct = default)
-        => _api.GetAsAsync<StoryGraphRes>(Route(Constants.Rest.Story.GraphById(id)), ct: ct);
+    public Task<StoryGraphRes?> GetGraphAsync(Guid id, CancellationToken ct = default) => _api.GetAsAsync<StoryGraphRes>(Route(Constants.Rest.Story.GraphById(id)), ct: ct);
 
     /// <inheritdoc />
     public Task<StoryGraphRes?> GetGraphBySlugAsync(string slug, CancellationToken ct = default)

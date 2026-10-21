@@ -1,7 +1,7 @@
+using System.Text.Json;
 using Lyo.Api.Client;
 using Lyo.Exceptions;
 using Lyo.Http.Client;
-using Lyo.Leaderboard;
 using Lyo.Leaderboard.Api.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -81,7 +81,7 @@ public interface ILeaderboardApiClient : IApiClient
 public sealed class LeaderboardApiClient : ApiClient, ILeaderboardApiClient
 {
     /// <summary>Creates the typed client.</summary>
-    public LeaderboardApiClient(HttpClient httpClient, IOptions<LeaderboardApiClientOptions> options, System.Text.Json.JsonSerializerOptions? serializerOptions = null)
+    public LeaderboardApiClient(HttpClient httpClient, IOptions<LeaderboardApiClientOptions> options, JsonSerializerOptions? serializerOptions = null)
         : base(httpClient: httpClient, options: options.Value, serializerOptions: serializerOptions) { }
 
     /// <inheritdoc />
@@ -92,8 +92,7 @@ public sealed class LeaderboardApiClient : ApiClient, ILeaderboardApiClient
     }
 
     /// <inheritdoc />
-    public Task<BoardRecord?> GetBoardAsync(Guid boardId, CancellationToken ct = default)
-        => GetAsAsync<BoardRecord>($"api/leaderboard/boards/{boardId:D}", ct: ct);
+    public Task<BoardRecord?> GetBoardAsync(Guid boardId, CancellationToken ct = default) => GetAsAsync<BoardRecord>($"api/leaderboard/boards/{boardId:D}", ct: ct);
 
     /// <inheritdoc />
     public Task<BoardRecord?> GetBoardBySlugAsync(string slug, CancellationToken ct = default)
@@ -110,13 +109,11 @@ public sealed class LeaderboardApiClient : ApiClient, ILeaderboardApiClient
     }
 
     /// <inheritdoc />
-    public Task ArchiveBoardAsync(Guid boardId, CancellationToken ct = default)
-        => PostExpectingNoContentAsync<object>($"api/leaderboard/boards/{boardId:D}/archive", null, ct: ct);
+    public Task ArchiveBoardAsync(Guid boardId, CancellationToken ct = default) => PostExpectingNoContentAsync<object>($"api/leaderboard/boards/{boardId:D}/archive", null, ct: ct);
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<ScoringPropertyRecord>> ListPropertiesAsync(Guid boardId, CancellationToken ct = default)
-        => await GetAsAsync<IReadOnlyList<ScoringPropertyRecord>>($"api/leaderboard/boards/{boardId:D}/properties", ct: ct).ConfigureAwait(false)
-           ?? [];
+        => await GetAsAsync<IReadOnlyList<ScoringPropertyRecord>>($"api/leaderboard/boards/{boardId:D}/properties", ct: ct).ConfigureAwait(false) ?? [];
 
     /// <inheritdoc />
     public Task<ScoringPropertyRecord> SavePropertyAsync(Guid boardId, ScoringPropertyRecord property, CancellationToken ct = default)
@@ -131,13 +128,11 @@ public sealed class LeaderboardApiClient : ApiClient, ILeaderboardApiClient
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<MemberRecord>> ListMembersAsync(Guid boardId, CancellationToken ct = default)
-        => await GetAsAsync<IReadOnlyList<MemberRecord>>($"api/leaderboard/boards/{boardId:D}/members", ct: ct).ConfigureAwait(false)
-           ?? [];
+        => await GetAsAsync<IReadOnlyList<MemberRecord>>($"api/leaderboard/boards/{boardId:D}/members", ct: ct).ConfigureAwait(false) ?? [];
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<StandingRecord>> GetStandingsAsync(Guid boardId, CancellationToken ct = default)
-        => await GetAsAsync<IReadOnlyList<StandingRecord>>($"api/leaderboard/boards/{boardId:D}/standings", ct: ct).ConfigureAwait(false)
-           ?? [];
+        => await GetAsAsync<IReadOnlyList<StandingRecord>>($"api/leaderboard/boards/{boardId:D}/standings", ct: ct).ConfigureAwait(false) ?? [];
 
     /// <inheritdoc />
     public Task<InviteCreatedResponse> CreateInviteAsync(Guid boardId, CreateInviteApiRequest request, CancellationToken ct = default)
@@ -151,33 +146,28 @@ public sealed class LeaderboardApiClient : ApiClient, ILeaderboardApiClient
         => PostExpectingNoContentAsync<object>($"api/leaderboard/invites/{inviteId:D}/revoke", null, ct: ct);
 
     /// <inheritdoc />
-    public Task<byte[]> GetInviteQrAsync(Guid inviteId, CancellationToken ct = default)
-        => GetFileAsync($"api/leaderboard/invites/{inviteId:D}/qr", ct: ct);
+    public Task<byte[]> GetInviteQrAsync(Guid inviteId, CancellationToken ct = default) => GetFileAsync($"api/leaderboard/invites/{inviteId:D}/qr", ct: ct);
 
     /// <inheritdoc />
     public Task<MemberRecord> RedeemInviteAsync(string token, bool asGuest = false, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(token);
-        return PostAsAsync<RedeemInviteRequest, MemberRecord>(
-            "api/leaderboard/join", new() { Token = token }, before: asGuest ? ApplyGuestActor : null, ct: ct);
+        return PostAsAsync<RedeemInviteRequest, MemberRecord>("api/leaderboard/join", new() { Token = token }, asGuest ? ApplyGuestActor : null, ct);
     }
 
     /// <inheritdoc />
     public Task<EntryRecord> CreateEntryAsync(Guid boardId, CreateEntryRequest request, bool asGuest = false, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(request);
-        return PostAsAsync<CreateEntryRequest, EntryRecord>(
-            $"api/leaderboard/boards/{boardId:D}/entries", request, before: asGuest ? ApplyGuestActor : null, ct: ct);
+        return PostAsAsync<CreateEntryRequest, EntryRecord>($"api/leaderboard/boards/{boardId:D}/entries", request, asGuest ? ApplyGuestActor : null, ct);
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<EntryRecord>> ListEntriesAsync(Guid boardId, CancellationToken ct = default)
-        => await GetAsAsync<IReadOnlyList<EntryRecord>>($"api/leaderboard/boards/{boardId:D}/entries", ct: ct).ConfigureAwait(false)
-           ?? [];
+        => await GetAsAsync<IReadOnlyList<EntryRecord>>($"api/leaderboard/boards/{boardId:D}/entries", ct: ct).ConfigureAwait(false) ?? [];
 
     /// <inheritdoc />
-    public Task<EntryRecord?> GetEntryAsync(Guid entryId, CancellationToken ct = default)
-        => GetAsAsync<EntryRecord>($"api/leaderboard/entries/{entryId:D}", ct: ct);
+    public Task<EntryRecord?> GetEntryAsync(Guid entryId, CancellationToken ct = default) => GetAsAsync<EntryRecord>($"api/leaderboard/entries/{entryId:D}", ct: ct);
 
     /// <inheritdoc />
     public Task<EntryRecord> SetEntryStatusAsync(Guid entryId, EntryStatusChange change, CancellationToken ct = default)
@@ -220,10 +210,11 @@ public static class LeaderboardApiHttpClientRegistration
         configuration.GetSection(configSectionName).Bind(options);
         services.TryAddSingleton(Options.Create(options));
         return services.AddHttpClient<ILeaderboardApiClient, LeaderboardApiClient>(client => {
-            if (!string.IsNullOrWhiteSpace(options.BaseUrl))
-                client.BaseAddress = new(options.BaseUrl!.TrimEnd('/') + "/");
+                if (!string.IsNullOrWhiteSpace(options.BaseUrl))
+                    client.BaseAddress = new(options.BaseUrl!.TrimEnd('/') + "/");
 
-            LyoHttpClient.ApplyAcceptEncodingHeaders(client, options.AcceptEncodings);
-        }).UseLyoHttpClientHandler<LeaderboardApiClientOptions>();
+                LyoHttpClient.ApplyAcceptEncodingHeaders(client, options.AcceptEncodings);
+            })
+            .UseLyoHttpClientHandler<LeaderboardApiClientOptions>();
     }
 }

@@ -5,7 +5,7 @@ namespace Lyo.Recipe.Models.Request;
 /// <summary>Link a FileStorage file to a recipe subject.</summary>
 public sealed class RecipeAttachmentReq
 {
-    /// <summary>Subject type from <see cref="RecipeEntityTypes"/>.</summary>
+    /// <summary>Subject type from <see cref="RecipeEntityTypes" />.</summary>
     public string EntityType { get; set; } = string.Empty;
 
     /// <summary>Subject id.</summary>

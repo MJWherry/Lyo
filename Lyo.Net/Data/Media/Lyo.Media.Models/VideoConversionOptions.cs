@@ -5,10 +5,7 @@ using Lyo.FileTags;
 
 namespace Lyo.Media.Models;
 
-/// <summary>
-/// Convert knobs for <see cref="IVideoConverter" />.
-/// A bare instance does not force a codec or size. A null <see cref="Hardware" /> inherits the host device.
-/// </summary>
+/// <summary>Convert knobs for <see cref="IVideoConverter" />. A bare instance does not force a codec or size. A null <see cref="Hardware" /> inherits the host device.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record VideoConversionOptions
 {
@@ -151,10 +148,7 @@ public sealed record VideoConversionOptions
         };
     }
 
-    /// <summary>
-    /// Remux for a live stream. Copy codecs, pipe I/O. Defaults to fragmented mp4.
-    /// Pass <see cref="MediaContainer.WebM" /> for copy plus pipe without fragmented mp4.
-    /// </summary>
+    /// <summary>Remux for a live stream. Copy codecs, pipe I/O. Defaults to fragmented mp4. Pass <see cref="MediaContainer.WebM" /> for copy plus pipe without fragmented mp4.</summary>
     public static VideoConversionOptions ForStreamingVideo(MediaContainer? format = null)
     {
         var container = format ?? MediaContainer.Mp4;
@@ -211,10 +205,7 @@ public sealed record VideoConversionOptions
         ArgumentHelpers.ThrowIf(TwoPass && VideoBitRate == null, "TwoPass requires VideoBitRate.", nameof(TwoPass));
         ArgumentHelpers.ThrowIf(TwoPass && Crf != null, "TwoPass cannot be combined with Crf.", nameof(TwoPass));
         ArgumentHelpers.ThrowIf(TwoPass && Hardware != null && Hardware != HardwareAccel.None, "TwoPass cannot use hardware.", nameof(TwoPass));
-        ArgumentHelpers.ThrowIf(
-            TwoPass && Encoder != null && Encoder != VideoEncoder.H264 && Encoder != VideoEncoder.Hevc,
-            "TwoPass requires H264 or Hevc.",
-            nameof(TwoPass));
+        ArgumentHelpers.ThrowIf(TwoPass && Encoder != null && Encoder != VideoEncoder.H264 && Encoder != VideoEncoder.Hevc, "TwoPass requires H264 or Hevc.", nameof(TwoPass));
         ValidateSize();
         ArgumentHelpers.ThrowIf(FragmentedOutput && Format != null && !Format.IsMp4, "FragmentedOutput requires Format Mp4.", nameof(FragmentedOutput));
         ArgumentHelpers.ThrowIf(Encoder == VideoEncoder.Av1 && Preset is { IsX264: true }, "AV1 does not accept an x264 preset. Use EncoderPreset.Svt8.", nameof(Preset));
@@ -228,6 +219,7 @@ public sealed record VideoConversionOptions
     {
         if (Width is { } width)
             ArgumentHelpers.ThrowIfLessThan(width, 1);
+
         if (Height is { } height)
             ArgumentHelpers.ThrowIfLessThan(height, 1);
 

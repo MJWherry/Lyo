@@ -1,4 +1,3 @@
-using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Models;
 
 namespace Lyo.FileStorage.Abstractions;
@@ -19,8 +18,8 @@ public interface IFileStorageTags
     Task<IReadOnlyList<FileTagTypeInfo>> GetTagTypesAsync(CancellationToken ct = default);
 
     /// <summary>
-    /// Writes missing <c>file-type</c> and <c>imported</c> tags for every stored file. An existing import time is left as it is.
-    /// Pending direct uploads are skipped. Returns how many stored files were checked.
+    /// Writes missing <c>file-type</c> and <c>imported</c> tags for every stored file. An existing import time is left as it is. Pending direct uploads are skipped. Returns how
+    /// many stored files were checked.
     /// </summary>
     Task<int> StampAutomaticTagsAsync(CancellationToken ct = default);
 

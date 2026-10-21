@@ -1,7 +1,7 @@
 using System.Text;
 using Lyo.Common.Core.Enums;
-using Lyo.Testing;
 using Lyo.Common.Core.Identifiers;
+using Lyo.Testing;
 
 namespace Lyo.TextEncoding.Tests;
 

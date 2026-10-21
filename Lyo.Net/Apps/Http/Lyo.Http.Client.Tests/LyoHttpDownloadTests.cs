@@ -1,9 +1,4 @@
 using System.Net;
-using Lyo.Common.Metadata.Records;
-using Lyo.Exceptions.Models;
-using Lyo.Http.Client;
-using Lyo.Http.Client.Pipeline;
-using Lyo.Http.Client.Plan;
 using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Http.Client.Tests;
@@ -15,7 +10,7 @@ public sealed class LyoHttpDownloadTests
     {
         var payload = "hello-file"u8.ToArray();
         var inner = new StubBytesHandler(payload, "gallery.bin");
-        using var client = new LyoHttpClient(new HttpClient(inner) { BaseAddress = new("https://example.test/") });
+        using var client = new LyoHttpClient(new(inner) { BaseAddress = new("https://example.test/") });
         var (stream, fileName, length) = await client.GetFileStreamAsync("/dl/gallery.bin", ct: TestCt);
         await using (stream) {
             using var ms = new MemoryStream();
@@ -31,7 +26,7 @@ public sealed class LyoHttpDownloadTests
     public async Task GetFileAsync_MarksStreamBinary()
     {
         var inner = new MarkerHandler();
-        using var client = new LyoHttpClient(new HttpClient(inner) { BaseAddress = new("https://example.test/") });
+        using var client = new LyoHttpClient(new(inner) { BaseAddress = new("https://example.test/") });
         await client.GetFileAsync("/dl/a.bin", ct: TestCt);
         Assert.True(inner.StreamBinary);
     }
@@ -40,7 +35,7 @@ public sealed class LyoHttpDownloadTests
     public async Task GetFileWithTypeAsync_MarksStreamBinary()
     {
         var inner = new MarkerHandler();
-        using var client = new LyoHttpClient(new HttpClient(inner) { BaseAddress = new("https://example.test/") });
+        using var client = new LyoHttpClient(new(inner) { BaseAddress = new("https://example.test/") });
         await client.GetFileWithTypeAsync("/dl/a.bin", ct: TestCt);
         Assert.True(inner.StreamBinary);
     }
@@ -64,6 +59,7 @@ public sealed class LyoHttpDownloadTests
         finally {
             if (File.Exists(dest))
                 File.Delete(dest);
+
             var dir = Path.GetDirectoryName(dest);
             if (dir != null && Directory.Exists(dir))
                 Directory.Delete(dir);
@@ -74,9 +70,7 @@ public sealed class LyoHttpDownloadTests
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
         {
-            var response = new HttpResponseMessage(HttpStatusCode.OK) {
-                Content = new ByteArrayContent(payload)
-            };
+            var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(payload) };
             response.Content.Headers.ContentLength = payload.Length;
             response.Content.Headers.ContentDisposition = new("attachment") { FileName = fileName };
             return Task.FromResult(response);
@@ -91,9 +85,8 @@ public sealed class LyoHttpDownloadTests
         {
             StreamBinary = LyoHttpRequestMarkers.IsStreamBinary(request);
             var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent([1, 2, 3]) };
-            response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+            response.Content.Headers.ContentType = new("application/octet-stream");
             return Task.FromResult(response);
         }
     }
 }
-

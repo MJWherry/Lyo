@@ -9,7 +9,7 @@ using Lyo.Job.Models.Response;
 namespace Lyo.Job.Worker;
 
 /// <summary>
-/// Seeds <c>jobrun</c> (properties plus a coerced <c>Parameters</c> map) and re-formats <see cref="FormatterLyoType.IsFormattable"/> values that contain <c>{</c> whenever
+/// Seeds <c>jobrun</c> (properties plus a coerced <c>Parameters</c> map) and re-formats <see cref="FormatterLyoType.IsFormattable" /> values that contain <c>{</c> whenever
 /// context grows (CLR strings and formatter editor-kind types). Json, Xml, and collection values stay as-is so JSON braces are not treated as placeholders.
 /// </summary>
 internal sealed class JobWorkerParameterFormatter
@@ -22,6 +22,8 @@ internal sealed class JobWorkerParameterFormatter
     private readonly IFormatterService? _formatter;
     private readonly Dictionary<string, string> _originals = new(StringComparer.OrdinalIgnoreCase);
 
+    public JobRunRes Run { get; private set; }
+
     public JobWorkerParameterFormatter(IFormatterService? formatter, JobRunRes run)
     {
         ArgumentHelpers.ThrowIfNull(run);
@@ -32,8 +34,6 @@ internal sealed class JobWorkerParameterFormatter
         ReformatStringParameters();
     }
 
-    public JobRunRes Run { get; private set; }
-
     /// <summary>Adds or replaces a named context object, then re-formats string parameters from their original templates.</summary>
     public void AddContext(string name, object? value)
     {
@@ -42,7 +42,7 @@ internal sealed class JobWorkerParameterFormatter
         ReformatStringParameters();
     }
 
-    /// <summary>Formats <paramref name="template"/> against the current bag. Without a formatter, the template is returned unchanged.</summary>
+    /// <summary>Formats <paramref name="template" /> against the current bag. Without a formatter, the template is returned unchanged.</summary>
     public string Format(string template)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(template);
@@ -75,6 +75,7 @@ internal sealed class JobWorkerParameterFormatter
                 var parameter = list[i];
                 if (!IsFormattableString(parameter))
                     continue;
+
                 if (!_originals.TryGetValue(parameter.Key, out var original))
                     continue;
 
@@ -89,6 +90,7 @@ internal sealed class JobWorkerParameterFormatter
                 var wrapped = LyoTypeInfo.String.ToJson(formatted);
                 if (string.Equals(wrapped, parameter.Value, StringComparison.Ordinal))
                     continue;
+
                 list[i] = parameter with { Value = wrapped };
                 changed = true;
             }

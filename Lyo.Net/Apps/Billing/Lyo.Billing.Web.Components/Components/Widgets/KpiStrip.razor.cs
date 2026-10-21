@@ -1,18 +1,17 @@
-using Lyo.Api.Client;
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 
 namespace Lyo.Billing.Web.Components.Components.Widgets;
 
 public partial class KpiStrip
 {
+    private string? _error;
+    private bool _loading = true;
+
+    private BillingSummaryRecord? _summary;
+
     [Parameter]
     [EditorRequired]
     public IApiClient ApiClient { get; set; } = null!;
-
-    private BillingSummaryRecord? _summary;
-    private bool _loading = true;
-    private string? _error;
 
     protected override Task OnInitializedAsync() => LoadAsync();
 

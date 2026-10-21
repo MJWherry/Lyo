@@ -2,8 +2,14 @@ namespace Lyo.Job.Web.Components;
 
 public partial class JobDefinitionView
 {
+    private EditModel? _edit;
+
+    private LyoForm<EditModel>? _form;
+    private bool _hasChanges;
+    private bool _saving;
+
     [CascadingParameter]
-    IMudDialogInstance MudDialog { get; set; } = null!;
+    private IMudDialogInstance MudDialog { get; set; } = null!;
 
     [Parameter]
     [EditorRequired]
@@ -17,35 +23,7 @@ public partial class JobDefinitionView
     public string ScheduleRoute { get; set; } = "";
 
     [Inject]
-    IApiClient ApiClient { get; set; } = null!;
-
-    private LyoForm<EditModel>? _form;
-    private EditModel? _edit;
-    private bool _hasChanges;
-    private bool _saving;
-
-    private class EditModel
-    {
-        public Guid Id { get; set; }
-
-        public string Name { get; set; } = "";
-
-        public string? Description { get; set; }
-
-        public string Type { get; set; } = "";
-
-        public string WorkerType { get; set; } = "";
-
-        public bool Enabled { get; set; }
-
-        public int MaxRetryCount { get; set; }
-
-        public int RetryBackoffSeconds { get; set; }
-
-        public int TimeoutMinutes { get; set; }
-
-        public int MaxConcurrentRuns { get; set; }
-    }
+    private IApiClient ApiClient { get; set; } = null!;
 
     protected override void OnParametersSet()
     {
@@ -91,5 +69,28 @@ public partial class JobDefinitionView
         finally {
             _saving = false;
         }
+    }
+
+    private class EditModel
+    {
+        public Guid Id { get; set; }
+
+        public string Name { get; set; } = "";
+
+        public string? Description { get; set; }
+
+        public string Type { get; set; } = "";
+
+        public string WorkerType { get; set; } = "";
+
+        public bool Enabled { get; set; }
+
+        public int MaxRetryCount { get; set; }
+
+        public int RetryBackoffSeconds { get; set; }
+
+        public int TimeoutMinutes { get; set; }
+
+        public int MaxConcurrentRuns { get; set; }
     }
 }

@@ -3,6 +3,7 @@
 <MudStack Spacing="2" Class="mt-3">
     @if (Board == null) {
         <MudAlert Severity="Severity.Info" Dense="true">Load a board to submit an entry.</MudAlert>
+
         return;
     }
     <MudPaper Class="pa-4" Outlined="true">
@@ -23,7 +24,8 @@
             <MudDatePicker Label="Occurred" Date="_occurredDate" DateChanged="OnOccurredChanged" Variant="Variant.Outlined" Margin="Margin.Dense"/>
             @foreach (var field in _fields) {
                 <MudStack Spacing="1" @key="field.Property.Id">
-                    <MudText Typo="Typo.caption">@field.Property.Label @(field.Property.Required ? "*" : "") @(string.IsNullOrWhiteSpace(field.Property.Unit) ? "" : $"({field.Property.Unit})")</MudText>
+                    <MudText
+                        Typo="Typo.caption">@field.Property.Label @(field.Property.Required ? "*" : "") @(string.IsNullOrWhiteSpace(field.Property.Unit) ? "" : $"({field.Property.Unit})")</MudText>
                     @if (field.Property.ValueKind == ScoringValueKind.Choice) {
                         <MudSelect T="string" Variant="Variant.Outlined" Margin="Margin.Dense" Value="field.ChoiceKey" ValueChanged="v => field.ChoiceKey = v">
                             @foreach (var choice in field.Property.Choices) {

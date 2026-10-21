@@ -9,10 +9,5 @@ public sealed class AuthorizationPostgresFixture : PostgresServiceFixtureBase<Au
     public PostgresGrantStore Store => ServiceProvider.GetRequiredService<PostgresGrantStore>();
 
     protected override void ConfigureServices(IServiceCollection services, string connectionString)
-    {
-        services.AddPostgresAuthorization(new PostgresAuthorizationOptions {
-            ConnectionString = connectionString,
-            EnableAutoMigrations = true
-        });
-    }
+        => services.AddPostgresAuthorization(new() { ConnectionString = connectionString, EnableAutoMigrations = true });
 }

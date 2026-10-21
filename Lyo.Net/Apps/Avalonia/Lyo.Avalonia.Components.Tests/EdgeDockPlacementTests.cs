@@ -13,7 +13,6 @@ public class EdgeDockPlacementTests
         placement.Apply(true, 0, 4, 8, 10, 20);
         Assert.Equal((true, 0, 4, 8, 10, 20), placement.Values());
         Assert.Equal(8, placement.Along);
-
         placement.Edge = ScreenEdge.Top;
         Assert.Equal(4, placement.Along);
     }
@@ -31,7 +30,15 @@ public class EdgeDockPlacementTests
     [Fact]
     public void Json_RoundTripsEdgeAsANumber()
     {
-        var placement = new EdgeDockPlacement { Docked = true, Edge = ScreenEdge.Left, X = 4, Y = 8, RestX = 10, RestY = 20 };
+        var placement = new EdgeDockPlacement {
+            Docked = true,
+            Edge = ScreenEdge.Left,
+            X = 4,
+            Y = 8,
+            RestX = 10,
+            RestY = 20
+        };
+
         var json = JsonSerializer.Serialize(placement, Json);
         Assert.Contains("\"edge\":0", json.Replace(" ", ""));
         var again = JsonSerializer.Deserialize<EdgeDockPlacement>(json, Json);

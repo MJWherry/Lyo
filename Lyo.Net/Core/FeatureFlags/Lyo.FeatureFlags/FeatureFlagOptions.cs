@@ -12,21 +12,19 @@ public sealed class FeatureFlagOptions
     public Dictionary<string, FeatureFlagDefinition> Flags { get; set; } = new(StringComparer.Ordinal);
 
     /// <summary>
-    /// Checks names, modes, percentages, and rules, then stores <see cref="Flags" /> with an ordinal-ignore-case comparer.
-    /// Call this before <see cref="FeatureFlagService" /> reads the options. Registration does that.
+    /// Checks names, modes, percentages, and rules, then stores <see cref="Flags" /> with an ordinal-ignore-case comparer. Call this before <see cref="FeatureFlagService" />
+    /// reads the options. Registration does that.
     /// </summary>
     public void Validate()
     {
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var key in Flags.Keys)
-        {
+        foreach (var key in Flags.Keys) {
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
             ArgumentHelpers.ThrowIf(!seen.Add(key), $"Flag '{key}' is defined more than once.");
         }
 
         var normalized = new Dictionary<string, FeatureFlagDefinition>(StringComparer.OrdinalIgnoreCase);
-        foreach (var pair in Flags)
-        {
+        foreach (var pair in Flags) {
             var definition = pair.Value;
             ArgumentHelpers.ThrowIfNull(definition);
             definition.Name = pair.Key;
@@ -41,16 +39,14 @@ public sealed class FeatureFlagOptions
     private static void ValidateDefinition(FeatureFlagDefinition definition)
     {
         var rules = definition.Rules;
-        foreach (var rule in rules)
-        {
+        foreach (var rule in rules) {
             ArgumentHelpers.ThrowIfNull(rule);
             rule.Claims ??= [];
             rule.Attributes ??= [];
             ValidateRule(rule);
         }
 
-        if (definition.Mode == FeatureFlagMode.Percentage)
-        {
+        if (definition.Mode == FeatureFlagMode.Percentage) {
             ArgumentHelpers.ThrowIf(definition.Percentage is null || definition.Percentage < 0 || definition.Percentage > 100, "Percentage must be from 0 through 100.");
             ArgumentHelpers.ThrowIf(
                 definition.Stickiness == FeatureFlagStickiness.Attribute && string.IsNullOrWhiteSpace(definition.StickinessAttribute),
@@ -69,19 +65,18 @@ public sealed class FeatureFlagOptions
     {
         if (rule.UserId is not null)
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(rule.UserId);
+
         if (rule.TenantId is not null)
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(rule.TenantId);
 
         var predicates = (rule.UserId is not null ? 1 : 0) + (rule.TenantId is not null ? 1 : 0);
-        foreach (var claim in rule.Claims)
-        {
+        foreach (var claim in rule.Claims) {
             ArgumentHelpers.ThrowIfNull(claim);
             ArgumentHelpers.ThrowIf(string.IsNullOrWhiteSpace(claim.Type) || string.IsNullOrWhiteSpace(claim.Value), "A claim rule needs both a type and a value.");
             predicates++;
         }
 
-        foreach (var attribute in rule.Attributes)
-        {
+        foreach (var attribute in rule.Attributes) {
             ArgumentHelpers.ThrowIfNull(attribute);
             ArgumentHelpers.ThrowIf(string.IsNullOrWhiteSpace(attribute.Key) || string.IsNullOrWhiteSpace(attribute.Value), "An attribute rule needs both a key and a value.");
             predicates++;

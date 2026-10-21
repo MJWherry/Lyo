@@ -16,25 +16,28 @@ public sealed class FtpFileStorageFactoryTests
             services.AddSingleton(Metadata());
             services.AddSingleton<ITwoKeyEncryptionService>(_ => throw new InvalidOperationException("unkeyed"));
             services.AddFileStorageFactory(stores => {
-                stores.AddFtp("east", options => {
-                    options.Ftp.Host = "east.example";
-                    options.Ftp.Username = "u";
-                    options.Ftp.Password = "p";
-                    options.Ftp.RootRemoteDirectory = "/east";
-                });
-                stores.AddFtp("west", builder => builder.Configure(options => {
-                    options.Ftp.Host = "west.example";
-                    options.Ftp.Username = "u";
-                    options.Ftp.Password = "p";
-                    options.Ftp.RootRemoteDirectory = "/west";
-                }));
+                stores.AddFtp(
+                    "east", options => {
+                        options.Ftp.Host = "east.example";
+                        options.Ftp.Username = "u";
+                        options.Ftp.Password = "p";
+                        options.Ftp.RootRemoteDirectory = "/east";
+                    });
+
+                stores.AddFtp(
+                    "west", builder => builder.Configure(options => {
+                        options.Ftp.Host = "west.example";
+                        options.Ftp.Username = "u";
+                        options.Ftp.Password = "p";
+                        options.Ftp.RootRemoteDirectory = "/west";
+                    }));
             });
         });
+
         using var scope = provider.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IFileStorageFactory>();
         var east = factory.Get("east");
         var west = factory.Get("west");
-
         Assert.Equal("east.example", Options(east).Ftp.Host);
         Assert.Equal("west.example", Options(west).Ftp.Host);
         Assert.Null(Field(east, "TwoKeyEncryptionService"));

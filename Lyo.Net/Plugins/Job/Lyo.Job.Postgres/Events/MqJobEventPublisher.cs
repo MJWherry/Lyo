@@ -1,6 +1,7 @@
 using System.Data.Common;
 using System.Diagnostics;
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Job.Models;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
@@ -9,15 +10,13 @@ using Lyo.MessageQueue;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Lyo.Common.Core.Identifiers;
+
 namespace Lyo.Job.Postgres.Events;
 
 /// <summary>
-/// Default <see cref="IJobEventPublisher" /> for API hosts with a job database, backed by <see cref="IMqService" /> and optional EF <c>JobContext</c> for worker-type
-/// discovery. Uses the standard job MQ topology (exchange <c>job.events</c>, routing keys, and per-worker-type queues) defined in <see cref="Constants.Mq" />.
-/// <para>
-/// Register via <c>services.AddMqJobEventPublisher()</c> after registering your <see cref="IMqService" /> implementation (for example <c>services.AddRabbitMq(...)</c>).
-/// </para>
+/// Default <see cref="IJobEventPublisher" /> for API hosts with a job database, backed by <see cref="IMqService" /> and optional EF <c>JobContext</c> for worker-type discovery. Uses
+/// the standard job MQ topology (exchange <c>job.events</c>, routing keys, and per-worker-type queues) defined in <see cref="Constants.Mq" />.
+/// <para>Register via <c>services.AddMqJobEventPublisher()</c> after registering your <see cref="IMqService" /> implementation (for example <c>services.AddRabbitMq(...)</c>).</para>
 /// <para>Scheduler and worker hosts must not use this type. Use <c>Lyo.Job.Client.AddMqJobEventPublisher*</c> (IMqService + Job.Client) instead.</para>
 /// </summary>
 public sealed class MqJobEventPublisher : IJobEventPublisher
@@ -85,8 +84,7 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
     public async Task PublishWorkflowRunCreatedAsync(Guid workflowRunId, CancellationToken ct = default)
     {
         _logger.LogDebug("Publishing workflow run {WorkflowRunId} created", workflowRunId);
-        await _mqService.SendToExchange(
-                Constants.Mq.JobEventExchange, Constants.Mq.JobWorkflowRunCreatedRoutingKey, JsonSerializer.SerializeToUtf8Bytes(workflowRunId))
+        await _mqService.SendToExchange(Constants.Mq.JobEventExchange, Constants.Mq.JobWorkflowRunCreatedRoutingKey, JsonSerializer.SerializeToUtf8Bytes(workflowRunId))
             .ConfigureAwait(false);
     }
 

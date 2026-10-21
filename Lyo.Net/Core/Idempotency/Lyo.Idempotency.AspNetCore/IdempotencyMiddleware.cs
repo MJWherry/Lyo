@@ -1,11 +1,12 @@
+using System.Security.Claims;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
 
 namespace Lyo.Idempotency.AspNetCore;
 
 /// <summary>
-/// Claims an idempotency key before the endpoint runs and replays the stored response on a later call.
-/// Register it after <c>UseRouting</c> so endpoint metadata is visible, and after authentication so the subject claim is set.
+/// Claims an idempotency key before the endpoint runs and replays the stored response on a later call. Register it after <c>UseRouting</c> so endpoint metadata is visible,
+/// and after authentication so the subject claim is set.
 /// </summary>
 public sealed class IdempotencyMiddleware(RequestDelegate next)
 {
@@ -70,7 +71,9 @@ public sealed class IdempotencyMiddleware(RequestDelegate next)
         try {
             await next(context).ConfigureAwait(false);
             var captured = buffer.ToArray();
-            await store.CompleteAsync(begin.Id, begin.LeaseToken!.Value, context.Response.StatusCode, captured, context.Response.ContentType, context.RequestAborted).ConfigureAwait(false);
+            await store.CompleteAsync(begin.Id, begin.LeaseToken!.Value, context.Response.StatusCode, captured, context.Response.ContentType, context.RequestAborted)
+                .ConfigureAwait(false);
+
             buffer.Position = 0;
             context.Response.Body = original;
             await buffer.CopyToAsync(original, context.RequestAborted).ConfigureAwait(false);
@@ -79,14 +82,15 @@ public sealed class IdempotencyMiddleware(RequestDelegate next)
             var captured = buffer.ToArray();
             context.Response.Body = original;
             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-            await store.FailAsync(begin.Id, begin.LeaseToken!.Value, StatusCodes.Status500InternalServerError, captured, context.Response.ContentType, context.RequestAborted).ConfigureAwait(false);
+            await store.FailAsync(begin.Id, begin.LeaseToken!.Value, StatusCodes.Status500InternalServerError, captured, context.Response.ContentType, context.RequestAborted)
+                .ConfigureAwait(false);
+
             if (captured.Length > 0)
                 await original.WriteAsync(captured, context.RequestAborted).ConfigureAwait(false);
         }
     }
 
-    private static bool IsSafe(string method)
-        => HttpMethods.IsGet(method) || HttpMethods.IsHead(method) || HttpMethods.IsOptions(method) || HttpMethods.IsTrace(method);
+    private static bool IsSafe(string method) => HttpMethods.IsGet(method) || HttpMethods.IsHead(method) || HttpMethods.IsOptions(method) || HttpMethods.IsTrace(method);
 
     private static string? ReadKey(HttpRequest request)
     {
@@ -100,7 +104,7 @@ public sealed class IdempotencyMiddleware(RequestDelegate next)
         return null;
     }
 
-    private static string? Subject(System.Security.Claims.ClaimsPrincipal user)
+    private static string? Subject(ClaimsPrincipal user)
     {
         var lyoUser = user.FindFirst("lyo:user")?.Value;
         if (!string.IsNullOrWhiteSpace(lyoUser))

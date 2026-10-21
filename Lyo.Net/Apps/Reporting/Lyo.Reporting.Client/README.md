@@ -2,7 +2,8 @@
 
 Typed HTTP client targeting the Lyo Reporting API (`netstandard2.0;net10.0`).
 
-Workers and Discord bots should call Generate through this client against an API host that runs [`Lyo.Reporting.Api`](../Lyo.Reporting.Api/README.md). Do **not** host `ReportService` in the worker.
+Workers and Discord bots should call Generate through this client against an API host that runs [`Lyo.Reporting.Api`](../Lyo.Reporting.Api/README.md). Do **not** host
+`ReportService` in the worker.
 
 ```csharp services.AddReportingClient<MyApiClient>(); services.AddReportingClient<MyApiClient>(o => o.RoutePrefix = "api"); services.AddReportingClientFromConfiguration<MyApiClient>(configuration); // section ReportingClientOptions // or resolve the API client through a factory: services.AddReportingClient(sp => sp.GetRequiredService<IApiClient>()); ```
 

@@ -1,14 +1,14 @@
 namespace Lyo.Recipe;
 
 /// <summary>
-/// Stores household recipes, ingredient catalog rows, categories, ordered lines and steps, and FileStorage attachment links.
-/// Listing and search belong in the query layer. Free-text comments and labels go through <c>INoteStore</c> / <c>ITagStore</c>.
+/// Stores household recipes, ingredient catalog rows, categories, ordered lines and steps, and FileStorage attachment links. Listing and search belong in the query layer.
+/// Free-text comments and labels go through <c>INoteStore</c> / <c>ITagStore</c>.
 /// </summary>
 public interface IRecipeStore
 {
 #region Categories
 
-    /// <summary>Upserts a category. Generates <see cref="RecipeCategoryRecord.Id"/> when empty.</summary>
+    /// <summary>Upserts a category. Generates <see cref="RecipeCategoryRecord.Id" /> when empty.</summary>
     Task SaveCategoryAsync(RecipeCategoryRecord category, Guid? tenantId, CancellationToken ct = default);
 
     /// <summary>One category by id.</summary>
@@ -24,7 +24,7 @@ public interface IRecipeStore
 
 #region Ingredients
 
-    /// <summary>Upserts an ingredient. Generates <see cref="IngredientRecord.Id"/> when empty.</summary>
+    /// <summary>Upserts an ingredient. Generates <see cref="IngredientRecord.Id" /> when empty.</summary>
     Task SaveIngredientAsync(IngredientRecord ingredient, Guid? tenantId, CancellationToken ct = default);
 
     /// <summary>One ingredient by id.</summary>
@@ -46,7 +46,7 @@ public interface IRecipeStore
 
 #region Units
 
-    /// <summary>Upserts a unit. Generates <see cref="UnitRecord.Id"/> when empty and writes it back.</summary>
+    /// <summary>Upserts a unit. Generates <see cref="UnitRecord.Id" /> when empty and writes it back.</summary>
     Task SaveUnitAsync(UnitRecord unit, Guid? tenantId, CancellationToken ct = default);
 
     /// <summary>Units for the tenant, sort order then abbreviation.</summary>
@@ -59,7 +59,7 @@ public interface IRecipeStore
 
 #region Recipes
 
-    /// <summary>Upserts a recipe. Generates <see cref="RecipeRecord.Id"/> when empty.</summary>
+    /// <summary>Upserts a recipe. Generates <see cref="RecipeRecord.Id" /> when empty.</summary>
     Task SaveRecipeAsync(RecipeRecord recipe, Guid? tenantId, CancellationToken ct = default);
 
     /// <summary>One recipe by id.</summary>
@@ -79,9 +79,9 @@ public interface IRecipeStore
     Task<IReadOnlyList<RecipeIngredientLineRecord>> GetIngredientLinesAsync(Guid recipeId, Guid? tenantId, CancellationToken ct = default);
 
     /// <summary>
-    /// Replaces every line on a recipe in one transaction. A non-empty <see cref="RecipeIngredientLineRecord.Id"/> updates that row.
-    /// Each line needs <see cref="RecipeIngredientLineRecord.IngredientId"/> or <see cref="RecipeIngredientLineRecord.IngredientText"/>.
-    /// <see cref="RecipeIngredientLineRecord.StepIds"/> must belong to this recipe.
+    /// Replaces every line on a recipe in one transaction. A non-empty <see cref="RecipeIngredientLineRecord.Id" /> updates that row. Each line needs
+    /// <see cref="RecipeIngredientLineRecord.IngredientId" /> or <see cref="RecipeIngredientLineRecord.IngredientText" />. <see cref="RecipeIngredientLineRecord.StepIds" /> must belong
+    /// to this recipe.
     /// </summary>
     Task ReplaceIngredientLinesAsync(Guid recipeId, IReadOnlyList<RecipeIngredientLineRecord> lines, Guid? tenantId, CancellationToken ct = default);
 
@@ -89,8 +89,8 @@ public interface IRecipeStore
     Task<IReadOnlyList<RecipeStepRecord>> GetStepsAsync(Guid recipeId, Guid? tenantId, CancellationToken ct = default);
 
     /// <summary>
-    /// Replaces every step on a recipe in one transaction. A non-empty <see cref="RecipeStepRecord.Id"/> updates that row.
-    /// Omitted steps are deleted, along with their attachment rows and ingredient-line links.
+    /// Replaces every step on a recipe in one transaction. A non-empty <see cref="RecipeStepRecord.Id" /> updates that row. Omitted steps are deleted, along with their
+    /// attachment rows and ingredient-line links.
     /// </summary>
     Task ReplaceStepsAsync(Guid recipeId, IReadOnlyList<RecipeStepRecord> steps, Guid? tenantId, CancellationToken ct = default);
 
@@ -98,13 +98,13 @@ public interface IRecipeStore
 
 #region Attachments
 
-    /// <summary>Upserts an attachment link. Generates <see cref="RecipeAttachmentRecord.Id"/> when empty.</summary>
+    /// <summary>Upserts an attachment link. Generates <see cref="RecipeAttachmentRecord.Id" /> when empty.</summary>
     Task SaveAttachmentAsync(RecipeAttachmentRecord attachment, Guid? tenantId, CancellationToken ct = default);
 
     /// <summary>One attachment by id.</summary>
     Task<RecipeAttachmentRecord?> GetAttachmentByIdAsync(Guid id, Guid? tenantId, CancellationToken ct = default);
 
-    /// <summary>Attachments for a subject, ordered by <see cref="RecipeAttachmentRecord.SortOrder"/> then created.</summary>
+    /// <summary>Attachments for a subject, ordered by <see cref="RecipeAttachmentRecord.SortOrder" /> then created.</summary>
     Task<IReadOnlyList<RecipeAttachmentRecord>> ListAttachmentsAsync(string entityType, Guid entityId, Guid? tenantId, CancellationToken ct = default);
 
     /// <summary>Removes an attachment link. FileStorage bytes stay unless a FileStorage helper deletes them.</summary>

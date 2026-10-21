@@ -14,8 +14,7 @@ public sealed class ReportKeepTogetherTests
     [InlineData(ContentType.Checkbox, true)]
     [InlineData(ContentType.Notes, true)]
     [InlineData(ContentType.PageBreak, false)]
-    public void Effective_DefaultBlock_ReturnsExpected(ContentType type, bool expected)
-        => Assert.Equal(expected, ReportKeepTogether.Effective(new Block { ContentType = type }));
+    public void Effective_DefaultBlock_ReturnsExpected(ContentType type, bool expected) => Assert.Equal(expected, ReportKeepTogether.Effective(new Block { ContentType = type }));
 
     [Fact]
     public void Effective_PageBreakKeepTogetherTrue_ReturnsFalse()
@@ -53,14 +52,11 @@ public sealed class ReportKeepTogetherTests
         var report = new Report<object> {
             Sections = [
                 new() {
-                    Controls = [
-                        new Block { Content = "Hi", KeepTogether = false },
-                        new Table { Title = "T", KeepTogether = true },
-                        new Grid { Title = "G", KeepTogether = false }
-                    ]
+                    Controls = [new Block { Content = "Hi", KeepTogether = false }, new Table { Title = "T", KeepTogether = true }, new Grid { Title = "G", KeepTogether = false }]
                 }
             ]
         };
+
         var back = ReportJson.Deserialize<object>(ReportJson.Serialize(report));
         Assert.False(Assert.Single(back.Sections[0].Controls.OfType<Block>()).KeepTogether);
         Assert.True(Assert.Single(back.Sections[0].Controls.OfType<Table>()).KeepTogether);

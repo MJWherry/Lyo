@@ -1,16 +1,16 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Lock.Abstractions;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using StackExchange.Redis;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Lock.Redis;
 
 /// <summary>
-/// Distributed exclusive lock on Redis: acquire is <c>SET key token NX PX ttl</c>; release is a Lua script so only the token owner deletes the key. Waiters can use
-/// pub/sub on a companion notify channel to cut polling latency.
+/// Distributed exclusive lock on Redis: acquire is <c>SET key token NX PX ttl</c>; release is a Lua script so only the token owner deletes the key. Waiters can use pub/sub
+/// on a companion notify channel to cut polling latency.
 /// </summary>
 /// <remarks>
 /// Register through <see cref="RedisLockServiceExtensions" /> with an existing <see cref="IConnectionMultiplexer" /> or a connection string. Pick

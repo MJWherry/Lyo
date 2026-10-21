@@ -23,7 +23,8 @@
         <MudItem xs="12" md="8">
             @if (_selectedStep is null) {
                 <MudAlert Severity="Severity.Info">Select a step to see its screenshot and context.</MudAlert>
-            } else {
+            }
+            else {
                 <MudStack Spacing="2">
                     <MudText Typo="Typo.subtitle1">@_selectedStep.Outcome · @_selectedStep.DurationMs ms</MudText>
                     @if (!string.IsNullOrEmpty(_selectedStep.Error)) {
@@ -38,6 +39,7 @@
             }
             @if (_latest is not null) {
                 <MudText Typo="Typo.subtitle2" Class="mt-4">Overall context</MudText>
+
                 <pre style="white-space: pre-wrap;">@ContextJson(_latest.Context)</pre>
             }
         </MudItem>

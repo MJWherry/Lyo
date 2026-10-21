@@ -1,7 +1,5 @@
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
-using Lyo.Story;
-using Lyo.Story.Enums;
 
 namespace Lyo.Story.Web.Components;
 
@@ -15,6 +13,7 @@ public static class StoryConditionCatalog
         List<FilterPropertyDefinition> fields = [];
         foreach (var variable in draft.Variables.Where(variable => !string.IsNullOrWhiteSpace(variable.Key)))
             fields.Add(new(StoryConditionFields.Var(variable.Key), variable.Name ?? variable.Key, TypeOf(variable.Type)));
+
         foreach (var node in draft.Nodes.Where(node => !string.IsNullOrWhiteSpace(node.Key))) {
             fields.Add(new(StoryConditionFields.Visited(node.Key), "Visited " + node.Key, LyoTypeInfo.Bool));
             foreach (var choice in node.Choices.Where(choice => !string.IsNullOrWhiteSpace(choice.Key)))

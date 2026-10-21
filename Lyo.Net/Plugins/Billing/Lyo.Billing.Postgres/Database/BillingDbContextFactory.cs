@@ -7,6 +7,5 @@ namespace Lyo.Billing.Postgres.Database;
 public class BillingDbContextFactory : IDesignTimeDbContextFactory<BillingDbContext>
 {
     /// <inheritdoc />
-    public BillingDbContext CreateDbContext(string[] args)
-        => new(PostgresDesignTime.CreateOptions<BillingDbContext>("BILLING_CONNECTION_STRING", PostgresBillingOptions.Schema));
+    public BillingDbContext CreateDbContext(string[] args) => new(PostgresDesignTime.CreateOptions<BillingDbContext>("BILLING_CONNECTION_STRING", PostgresBillingOptions.Schema));
 }

@@ -1,13 +1,12 @@
 using System.Net;
 using System.Net.Http.Json;
 using Lyo.Api.Middleware;
-using Lyo.Authentication;
 using Lyo.Authentication.Sso;
 using Lyo.Authentication.Sso.Endpoints;
 using Lyo.KeyStore;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Authentication.Saml.Tests;
@@ -18,7 +17,7 @@ public class SamlCallbackTests
     public async Task HttpPost_ValidAssertion_MintsHandoff()
     {
         await using var host = await SamlCallbackHost.StartAsync();
-        var location = await PostValidAsync(host.Client, signResponse: false);
+        var location = await PostValidAsync(host.Client, false);
         Assert.StartsWith("https://app.example/done?", location);
         Assert.Contains("lyo_handoff=", location);
     }
@@ -29,7 +28,6 @@ public class SamlCallbackTests
         await using var host = await SamlCallbackHost.StartAsync();
         var location = await PostValidAsync(host.Client, origin: "https://idp.example");
         var code = LocationQuery(location, "lyo_handoff");
-
         using var exchange = new HttpRequestMessage(HttpMethod.Post, "/auth/handoff/exchange");
         exchange.Headers.Add("Origin", "https://app.example");
         exchange.Content = JsonContent.Create(new { code });
@@ -52,8 +50,14 @@ public class SamlCallbackTests
     {
         await using var host = await SamlCallbackHost.StartAsync();
         var (relay, requestId) = await LoginAsync(host.Client);
-        var spec = new SamlResponseSpec { RequestId = requestId, Now = DateTime.UtcNow, CorruptSignature = true, Signature = SamlSignatureKind.Response };
-        var response = await PostAsync(host.Client, relay, spec.ToBase64(), origin: null);
+        var spec = new SamlResponseSpec {
+            RequestId = requestId,
+            Now = DateTime.UtcNow,
+            CorruptSignature = true,
+            Signature = SamlSignatureKind.Response
+        };
+
+        var response = await PostAsync(host.Client, relay, spec.ToBase64(), null);
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         Assert.Null(response.Headers.Location);
     }
@@ -84,12 +88,7 @@ public class SamlCallbackTests
     private static async Task<HttpResponseMessage> PostValidResponseAsync(HttpClient client, bool signResponse = true, string? origin = null)
     {
         var (relay, requestId) = await LoginAsync(client);
-        var spec = new SamlResponseSpec
-        {
-            RequestId = requestId,
-            Now = DateTime.UtcNow,
-            Signature = signResponse ? SamlSignatureKind.Response : SamlSignatureKind.Assertion
-        };
+        var spec = new SamlResponseSpec { RequestId = requestId, Now = DateTime.UtcNow, Signature = signResponse ? SamlSignatureKind.Response : SamlSignatureKind.Assertion };
         return await PostAsync(client, relay, spec.ToBase64(), origin);
     }
 
@@ -106,13 +105,14 @@ public class SamlCallbackTests
         using var request = new HttpRequestMessage(HttpMethod.Post, "/auth/callback/okta");
         if (origin is not null)
             request.Headers.Add("Origin", origin);
+
         request.Content = new FormUrlEncodedContent(new Dictionary<string, string> { ["SAMLResponse"] = samlResponse, ["RelayState"] = relay });
         return await client.SendAsync(request, TestCt);
     }
 
     private static string LocationQuery(string location, string name)
     {
-        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(new Uri(location).Query);
+        var query = QueryHelpers.ParseQuery(new Uri(location).Query);
         return query[name].ToString();
     }
 }
@@ -123,6 +123,12 @@ internal sealed class SamlCallbackHost : IAsyncDisposable
 
     public HttpClient Client => App.GetTestClient();
 
+    public async ValueTask DisposeAsync()
+    {
+        await App.StopAsync();
+        await App.DisposeAsync();
+    }
+
     public static async Task<SamlCallbackHost> StartAsync()
     {
         var builder = WebApplication.CreateBuilder();
@@ -131,7 +137,9 @@ internal sealed class SamlCallbackHost : IAsyncDisposable
         builder.Services.AddLocalKeyStore();
         builder.Services.AddLyoAuthentication();
         builder.Services.AddInMemoryAuthenticationStores();
-        builder.Services.AddSingleton<ISamlMetadataSource>(new StaticSamlMetadata(new SamlIdpMetadata(SamlTestProvider.Issuer, SamlTestProvider.SsoRedirect, [SamlTestCertificate.Signing.RawData])));
+        builder.Services.AddSingleton<ISamlMetadataSource>(
+            new StaticSamlMetadata(new(SamlTestProvider.Issuer, SamlTestProvider.SsoRedirect, [SamlTestCertificate.Signing.RawData])));
+
         builder.Services.AddSingleton<ISamlIdentityProvider>(SamlTestProvider.Default);
         builder.Services.AddLyoSaml();
         builder.Services.Configure<SsoBffOptions>(options => options.AllowedReturnOrigins.Add("https://app.example"));
@@ -139,12 +147,6 @@ internal sealed class SamlCallbackHost : IAsyncDisposable
         app.UseMiddleware<LoggingMiddleware>();
         app.MapLyoAuthEndpoints();
         await app.StartAsync();
-        return new SamlCallbackHost { App = app };
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await App.StopAsync();
-        await App.DisposeAsync();
+        return new() { App = app };
     }
 }

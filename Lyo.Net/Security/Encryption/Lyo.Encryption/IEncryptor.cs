@@ -9,8 +9,8 @@ namespace Lyo.Encryption;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Supply <c>keyId</c> to load material from <see cref="Lyo.KeyStore.IKeyStore" /> when the service was built with a store; supply <c>key</c> for inline
-/// symmetric keys. Streaming helpers emit a short versioned header then length-prefixed ciphertext chunks.
+/// Supply <c>keyId</c> to load material from <see cref="Lyo.KeyStore.IKeyStore" /> when the service was built with a store; supply <c>key</c> for inline symmetric keys.
+/// Streaming helpers emit a short versioned header then length-prefixed ciphertext chunks.
 /// </para>
 /// </remarks>
 public interface IEncryptor
@@ -30,14 +30,11 @@ public interface IEncryptor
     /// <param name="keyId">KeyStore id. Null means use <paramref name="key" /> as-is.</param>
     /// <param name="key">Optional raw key. When null and <paramref name="keyId" /> is set, the KeyStore supplies the key.</param>
     /// <param name="associatedData">
-    /// Optional AAD authenticated with the ciphertext (not encrypted, not stored). The same value must be passed at decrypt time or
-    /// authentication fails. Only AEAD implementations accept it; others throw <see cref="NotSupportedException" /> if the value is non-null.
+    /// Optional AAD authenticated with the ciphertext (not encrypted, not stored). The same value must be passed at decrypt time or authentication fails.
+    /// Only AEAD implementations accept it; others throw <see cref="NotSupportedException" /> if the value is non-null.
     /// </param>
     /// <returns>Ciphertext</returns>
-    /// <exception cref="ArgumentOutsideRangeException">
-    /// Thrown when bytes is empty (below MinInputSize), exceeds MaxInputSize, or the key
-    /// length is invalid
-    /// </exception>
+    /// <exception cref="ArgumentOutsideRangeException">Thrown when bytes is empty (below MinInputSize), exceeds MaxInputSize, or the key length is invalid</exception>
     /// <exception cref="InvalidOperationException">Thrown when no key is available (neither keyId nor key, or keyId missing from the KeyStore)</exception>
     /// <exception cref="NotSupportedException">Thrown when associatedData is set but this implementation has no AAD support</exception>
     byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null);
@@ -48,10 +45,7 @@ public interface IEncryptor
     /// <param name="key">Optional raw key. When null and <paramref name="keyId" /> is set, the KeyStore supplies the key.</param>
     /// <param name="associatedData">Optional AAD authenticated with the ciphertext (not encrypted or stored); see <see cref="Encrypt(byte[], string, byte[], byte[])" />.</param>
     /// <returns>Ciphertext.</returns>
-    /// <exception cref="ArgumentOutsideRangeException">
-    /// Thrown when plaintext is empty (below MinInputSize), exceeds MaxInputSize, or the key
-    /// length is invalid.
-    /// </exception>
+    /// <exception cref="ArgumentOutsideRangeException">Thrown when plaintext is empty (below MinInputSize), exceeds MaxInputSize, or the key length is invalid.</exception>
     /// <exception cref="InvalidOperationException">Thrown when no key is available (neither keyId nor key, or keyId missing from the KeyStore).</exception>
     /// <exception cref="NotSupportedException">Thrown when associatedData is set but this implementation has no AAD support.</exception>
     byte[] Encrypt(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null, byte[]? associatedData = null);
@@ -63,8 +57,8 @@ public interface IEncryptor
     /// <param name="encoding">Optional encoding. Null uses the encrypt encoding (see <see cref="GetEncryptionEncoding" />).</param>
     /// <returns>Ciphertext</returns>
     /// <exception cref="ArgumentOutsideRangeException">
-    /// Thrown when text is empty, the encoded bytes are empty (below MinInputSize), the encoded bytes exceed
-    /// MaxInputSize, or the key length is invalid
+    /// Thrown when text is empty, the encoded bytes are empty (below MinInputSize), the encoded bytes exceed MaxInputSize, or the key
+    /// length is invalid
     /// </exception>
     /// <exception cref="InvalidOperationException">Thrown when no key is available (neither keyId nor key, or keyId missing from the KeyStore)</exception>
     byte[] EncryptString(string text, string? keyId = null, byte[]? key = null, Encoding? encoding = null);

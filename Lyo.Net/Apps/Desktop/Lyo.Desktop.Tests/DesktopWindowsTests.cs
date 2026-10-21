@@ -5,13 +5,8 @@ public class DesktopWindowsTests
     [Fact]
     public void Find_Substring_MatchesTitle()
     {
-        DesktopWindow[] windows = [
-            new(1, "   ", new(0, 0, 10, 10)),
-            new(4, "Editor", new(0, 0, 10, 10))
-        ];
-
+        DesktopWindow[] windows = [new(1, "   ", new(0, 0, 10, 10)), new(4, "Editor", new(0, 0, 10, 10))];
         var found = DesktopWindows.Find(windows, "edit");
-
         Assert.NotNull(found);
         Assert.Equal(4L, found.Value.Id);
     }
@@ -31,6 +26,5 @@ public class DesktopWindowsTests
     }
 
     [Fact]
-    public void Activate_ZeroId_Throws()
-        => Assert.Throws<ArgumentException>(() => DesktopWindows.Activate(0));
+    public void Activate_ZeroId_Throws() => Assert.Throws<ArgumentException>(() => DesktopWindows.Activate(0));
 }

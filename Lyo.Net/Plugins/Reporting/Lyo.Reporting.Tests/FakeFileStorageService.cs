@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Compression.Models;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage;
@@ -6,7 +7,6 @@ using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Models;
 using Lyo.Health;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Reporting.Tests;
 
@@ -51,7 +51,9 @@ public sealed class FakeFileStorageService : IFileStorageService
         string? tenantId = null,
         JsonElement? metadata = null,
         CancellationToken ct = default)
-        => SaveFileAsync(File.ReadAllBytes(filePath), originalFileName ?? Path.GetFileName(filePath), compress, encrypt, keyId, pathPrefix, chunkSize, contentType, charset, tenantId, metadata, ct);
+        => SaveFileAsync(
+            File.ReadAllBytes(filePath), originalFileName ?? Path.GetFileName(filePath), compress, encrypt, keyId, pathPrefix, chunkSize, contentType, charset, tenantId, metadata,
+            ct);
 
     public Task<FileStoreResult> SaveFromStreamAsync(
         Stream input,

@@ -1,15 +1,15 @@
 using Lyo.Api.Client;
 using Lyo.Book.Postgres.Database;
 using Lyo.Comic.Postgres.Database;
-using Lyo.Story.Postgres.Database;
 using Lyo.People.Postgres.Database;
 using Lyo.Seed;
+using Lyo.Story.Postgres.Database;
 using Lyo.Tools.Postgres.Seeds;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Tools.Postgres;
 
-/// <summary>Constructs EF/API transports and executes a <see cref="SeedContributor"/>.</summary>
+/// <summary>Constructs EF/API transports and executes a <see cref="SeedContributor" />.</summary>
 internal static class SeedExecution
 {
     public const string DefaultApiBaseUrl = "http://localhost:5251/";
@@ -74,12 +74,7 @@ internal static class SeedExecution
         return await runner.SeedAsync(contributor, transport, options, ct).ConfigureAwait(false);
     }
 
-    private static async Task<SeedResult> RunApiAsync(
-        SeedContributor contributor,
-        ISeedRunner runner,
-        SeedOptions options,
-        string? apiBaseUrl,
-        CancellationToken ct)
+    private static async Task<SeedResult> RunApiAsync(SeedContributor contributor, ISeedRunner runner, SeedOptions options, string? apiBaseUrl, CancellationToken ct)
     {
         var baseUrl = string.IsNullOrWhiteSpace(apiBaseUrl) ? DefaultApiBaseUrl : apiBaseUrl.Trim();
         using var http = new HttpClient { BaseAddress = new(baseUrl.TrimEnd('/') + "/") };

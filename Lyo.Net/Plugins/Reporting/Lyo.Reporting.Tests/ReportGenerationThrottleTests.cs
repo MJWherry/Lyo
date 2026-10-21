@@ -1,13 +1,12 @@
 using Lyo.Reporting.Models;
 using Lyo.Reporting.Postgres;
+
 namespace Lyo.Reporting.Tests;
 
 public sealed class ReportGenerationThrottleTests
 {
     private static ReportGenerationThrottle Create(int maxConcurrent)
-        => new(new PostgresReportingOptions { ConnectionString = "unused", MaxConcurrentGenerations = maxConcurrent }) {
-            AcquireTimeout = TimeSpan.FromMilliseconds(100)
-        };
+        => new(new() { ConnectionString = "unused", MaxConcurrentGenerations = maxConcurrent }) { AcquireTimeout = TimeSpan.FromMilliseconds(100) };
 
     [Fact]
     public async Task AcquireAsync_Unlimited_ReturnsNullReleaser() => Assert.Null(await Create(0).AcquireAsync(TestCt));

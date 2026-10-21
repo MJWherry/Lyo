@@ -7,7 +7,7 @@ namespace Lyo.Query.Services.Aggregate;
 /// <summary>Builds a flat class for an aggregate result row. One property per group key and aggregate, so the provider materializes columns instead of a record.</summary>
 internal static class AggregateRowFactory
 {
-    private static readonly ModuleBuilder Module = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("Lyo.Query.AggregateRows"), AssemblyBuilderAccess.Run).DefineDynamicModule("Rows");
+    private static readonly ModuleBuilder Module = AssemblyBuilder.DefineDynamicAssembly(new("Lyo.Query.AggregateRows"), AssemblyBuilderAccess.Run).DefineDynamicModule("Rows");
     private static readonly ConcurrentDictionary<string, AggregateRowShape> Cache = new(StringComparer.Ordinal);
     private static int _next;
 
@@ -27,13 +27,17 @@ internal static class AggregateRowFactory
             propertyTypes[i] = properties[i].Type;
             fields[i] = typeBuilder.DefineField("_" + properties[i].Name, propertyTypes[i], FieldAttributes.Private);
             var property = typeBuilder.DefineProperty(properties[i].Name, PropertyAttributes.None, propertyTypes[i], null);
-            var getter = typeBuilder.DefineMethod("get_" + properties[i].Name, MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig, propertyTypes[i], Type.EmptyTypes);
+            var getter = typeBuilder.DefineMethod(
+                "get_" + properties[i].Name, MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig, propertyTypes[i], Type.EmptyTypes);
+
             var getterIl = getter.GetILGenerator();
             getterIl.Emit(OpCodes.Ldarg_0);
             getterIl.Emit(OpCodes.Ldfld, fields[i]);
             getterIl.Emit(OpCodes.Ret);
             property.SetGetMethod(getter);
-            var setter = typeBuilder.DefineMethod("set_" + properties[i].Name, MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig, null, [propertyTypes[i]]);
+            var setter = typeBuilder.DefineMethod(
+                "set_" + properties[i].Name, MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.HideBySig, null, [propertyTypes[i]]);
+
             var setterIl = setter.GetILGenerator();
             setterIl.Emit(OpCodes.Ldarg_0);
             setterIl.Emit(OpCodes.Ldarg_1);
@@ -89,7 +93,6 @@ internal static class AggregateRowFactory
         equalsIl.Emit(OpCodes.Ldc_I4_0);
         equalsIl.Emit(OpCodes.Ret);
         typeBuilder.DefineMethodOverride(equals, typeof(object).GetMethod(nameof(object.Equals), [typeof(object)])!);
-
         var hash = typeBuilder.DefineMethod("GetHashCode", MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.HideBySig, typeof(int), Type.EmptyTypes);
         var hashIl = hash.GetILGenerator();
         hashIl.DeclareLocal(typeof(HashCode));
@@ -106,7 +109,7 @@ internal static class AggregateRowFactory
         hashIl.Emit(OpCodes.Ldloca_S, 0);
         hashIl.Emit(OpCodes.Call, typeof(HashCode).GetMethod(nameof(HashCode.ToHashCode))!);
         hashIl.Emit(OpCodes.Ret);
-        typeBuilder.DefineMethodOverride(hash, typeof(object).GetMethod(nameof(object.GetHashCode))!);
+        typeBuilder.DefineMethodOverride(hash, typeof(object).GetMethod(nameof(GetHashCode))!);
     }
 }
 

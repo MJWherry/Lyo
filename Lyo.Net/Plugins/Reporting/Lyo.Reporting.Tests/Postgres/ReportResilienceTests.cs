@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Reporting.Models.Builders;
 using Lyo.Reporting.Models.Composition;
@@ -9,7 +10,7 @@ using Lyo.Reporting.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Lyo.Common.Core.Identifiers;
+
 namespace Lyo.Reporting.Tests.Postgres;
 
 /// <summary>
@@ -88,7 +89,6 @@ public sealed class ReportResilienceTests(ReportingPostgresFixture fixture) : IC
         using var _ = tracker.Track(live.Id);
         var service = CreateRetentionService(new() { ConnectionString = "unused", StuckGenerationTimeout = TimeSpan.FromHours(1) }, tracker);
         await service.RecoverStuckGenerationsAsync(TestCt);
-
         await using var verify = await DbFactory.CreateDbContextAsync(TestCt);
         var liveRow = await verify.ReportGenerations.AsNoTracking().FirstAsync(g => g.Id == live.Id, TestCt);
         var abandonedRow = await verify.ReportGenerations.AsNoTracking().FirstAsync(g => g.Id == abandoned.Id, TestCt);
@@ -104,9 +104,7 @@ public sealed class ReportResilienceTests(ReportingPostgresFixture fixture) : IC
         var running = NewGeneration(nameof(ReportGenerationStatus.Running), DateTime.UtcNow.AddHours(-2), DateTime.UtcNow.AddHours(-2));
         db.ReportGenerations.Add(running);
         await db.SaveChangesAsync(TestCt);
-        var service = CreateRetentionService(
-            new() { ConnectionString = "unused", StuckGenerationTimeout = TimeSpan.FromHours(1), GenerationTimeout = TimeSpan.FromHours(6) });
-
+        var service = CreateRetentionService(new() { ConnectionString = "unused", StuckGenerationTimeout = TimeSpan.FromHours(1), GenerationTimeout = TimeSpan.FromHours(6) });
         await service.RecoverStuckGenerationsAsync(TestCt);
         await using var verify = await DbFactory.CreateDbContextAsync(TestCt);
         var row = await verify.ReportGenerations.AsNoTracking().FirstAsync(g => g.Id == running.Id, TestCt);

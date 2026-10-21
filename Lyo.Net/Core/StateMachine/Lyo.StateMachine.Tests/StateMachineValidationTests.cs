@@ -18,9 +18,7 @@ public class StateMachineValidationTests
         var builder = Machine();
         builder.Configure(JobState.Failed);
         builder.Configure(JobState.Paused).Permit(JobTrigger.Resume, JobState.Running);
-
         var analysis = builder.Build().Analyze();
-
         Assert.False(analysis.IsClean);
         Assert.Equal([JobState.Failed, JobState.Paused], analysis.UnreachableStates);
         Assert.Equal([JobState.Failed], analysis.DeadEndStates);
@@ -31,9 +29,7 @@ public class StateMachineValidationTests
     {
         var builder = Machine().Strict();
         builder.Configure(JobState.Paused).Permit(JobTrigger.Resume, JobState.Running);
-
         var ex = Assert.Throws<StateMachineConfigurationException>(() => builder.Build());
-
         Assert.Contains("Paused", ex.Message);
     }
 

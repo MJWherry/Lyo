@@ -25,8 +25,8 @@ public sealed class SftpFileSystem : IFileSystem
 
     /// <inheritdoc />
     public FileSystemCapabilities Capabilities
-        => FileSystemCapabilities.Read | FileSystemCapabilities.Write | FileSystemCapabilities.CreateDirectory | FileSystemCapabilities.Delete
-           | FileSystemCapabilities.Move | FileSystemCapabilities.MoveDirectory | FileSystemCapabilities.Copy | FileSystemCapabilities.Append;
+        => FileSystemCapabilities.Read | FileSystemCapabilities.Write | FileSystemCapabilities.CreateDirectory | FileSystemCapabilities.Delete | FileSystemCapabilities.Move |
+            FileSystemCapabilities.MoveDirectory | FileSystemCapabilities.Copy | FileSystemCapabilities.Append;
 
     /// <inheritdoc />
     public IFileSystemWatch? Watch(string path, bool recursive = true) => null;
@@ -80,8 +80,7 @@ public sealed class SftpFileSystem : IFileSystem
     }
 
     /// <inheritdoc />
-    public async IAsyncEnumerable<FileSystemEntry> EnumerateDirectoryAsync(
-        string path, bool recursive = false, [EnumeratorCancellation] CancellationToken ct = default)
+    public async IAsyncEnumerable<FileSystemEntry> EnumerateDirectoryAsync(string path, bool recursive = false, [EnumeratorCancellation] CancellationToken ct = default)
     {
         var pending = new Queue<string>();
         pending.Enqueue(path);
@@ -90,6 +89,7 @@ public sealed class SftpFileSystem : IFileSystem
             foreach (var entry in await ListDirectoryAsync(pending.Dequeue(), ct).ConfigureAwait(false)) {
                 ct.ThrowIfCancellationRequested();
                 yield return entry;
+
                 if (recursive && entry.IsDirectory)
                     pending.Enqueue(entry.Path);
             }
@@ -145,7 +145,7 @@ public sealed class SftpFileSystem : IFileSystem
                 throw new IOException($"Destination already exists: {dest}");
 
             if (destIsDirectory)
-                _client.DeleteDirectory(dest, true);
+                _client.DeleteDirectory(dest);
             else
                 _client.DeleteFile(dest);
         }
@@ -287,10 +287,9 @@ public sealed class SftpFileSystem : IFileSystem
     private static IReadOnlyList<FileSystemEntry> Map(IReadOnlyList<SftpEntryInfo> entries)
     {
         List<FileSystemEntry> mapped = new(entries.Count);
-        foreach (var e in entries)
-            mapped.Add(
-                new(
-                    e.FullPath, PathHelpers.GetFileName(PathStyle.Posix, e.FullPath), e.IsDirectory, e.Length, e.LastWriteTimeUtc, e.LastWriteTimeUtc));
+        foreach (var e in entries) {
+            mapped.Add(new(e.FullPath, PathHelpers.GetFileName(PathStyle.Posix, e.FullPath), e.IsDirectory, e.Length, e.LastWriteTimeUtc, e.LastWriteTimeUtc));
+        }
 
         return mapped;
     }

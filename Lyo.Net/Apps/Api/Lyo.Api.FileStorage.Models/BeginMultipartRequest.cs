@@ -18,10 +18,10 @@ public sealed record BeginMultipartRequest(
     long? DeclaredContentLength = null,
     double? SessionTtlHours = null)
 {
+    /// <summary>Opaque caller JSON bag. Lyo does not interpret keys. Null when omitted.</summary>
+    public JsonElement? Metadata { get; init; }
+
     /// <inheritdoc />
     public override string ToString()
         => $"BeginMultipartRequest: OriginalFileName={OriginalFileName ?? "(none)"}, PartSizeBytes={PartSizeBytes}, compress={Compress}, encrypt={Encrypt}";
-
-    /// <summary>Opaque caller JSON bag. Lyo does not interpret keys. Null when omitted.</summary>
-    public JsonElement? Metadata { get; init; }
 }

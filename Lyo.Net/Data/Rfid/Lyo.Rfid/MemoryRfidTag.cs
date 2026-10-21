@@ -2,13 +2,10 @@ using Lyo.Exceptions;
 
 namespace Lyo.Rfid;
 
-/// <summary>
-/// ISO 15693 tag kept in a byte buffer. Use it for tests and for dump files.
-/// <see cref="UidHex"/> is the value passed to the constructor, uppercased, with spaces removed.
-/// </summary>
+/// <summary>ISO 15693 tag kept in a byte buffer. Use it for tests and for dump files. <see cref="UidHex" /> is the value passed to the constructor, uppercased, with spaces removed.</summary>
 public sealed class MemoryRfidTag : IRfidTag
 {
-    readonly byte[] _memory;
+    private readonly byte[] _memory;
 
     /// <param name="blockSize">Bytes per block. ICODE SLIX uses 4.</param>
     /// <param name="blockCount">Number of blocks. At most 256, which is the 8-bit GET SYSTEM INFORMATION field.</param>

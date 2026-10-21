@@ -1,9 +1,8 @@
 namespace Lyo.Compression;
 
 /// <summary>
-/// Write-only pass-through stream that throws <see cref="InvalidDataException" /> as soon as total bytes written exceed a limit. Wrapped around decompression
-/// output streams so a decompression bomb is stopped mid-flight — including for non-seekable outputs where an after-the-fact position check is impossible. Does not own or dispose the
-/// inner stream.
+/// Write-only pass-through stream that throws <see cref="InvalidDataException" /> as soon as total bytes written exceed a limit. Wrapped around decompression output streams
+/// so a decompression bomb is stopped mid-flight — including for non-seekable outputs where an after-the-fact position check is impossible. Does not own or dispose the inner stream.
 /// </summary>
 internal sealed class MaxLengthStream : Stream
 {

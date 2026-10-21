@@ -259,7 +259,7 @@ internal static class ProjectionCollectionZip
         if (SharedEntityMetadataCache.IsCollectionType(rootType))
             return false;
 
-        if (!QueryPath.TryParseSegment(firstSegment, out var segmentName, out var window, out _) || window is { IsSingle: true })
+        if (!QueryPath.TryParseSegment(firstSegment, out var segmentName, out var window, out var _) || window is { IsSingle: true })
             return false;
 
         var property = SharedEntityMetadataCache.ResolveProperty(rootType, segmentName);
@@ -394,7 +394,7 @@ internal static class ProjectionCollectionZip
             if (SharedEntityMetadataCache.IsCollectionType(current))
                 current = SharedEntityMetadataCache.GetCollectionElementType(current);
 
-            if (!QueryPath.TryParseSegment(part, out var segmentName, out var window, out _))
+            if (!QueryPath.TryParseSegment(part, out var segmentName, out var window, out var _))
                 return false;
 
             var property = SharedEntityMetadataCache.ResolveProperty(current, segmentName);
@@ -513,7 +513,7 @@ internal static class ProjectionCollectionZip
             if (SharedEntityMetadataCache.IsCollectionType(current))
                 current = SharedEntityMetadataCache.GetCollectionElementType(current);
 
-            if (!QueryPath.TryParseSegment(part, out var segmentName, out var window, out _))
+            if (!QueryPath.TryParseSegment(part, out var segmentName, out var window, out var _))
                 return false;
 
             var property = SharedEntityMetadataCache.ResolveProperty(current, segmentName);

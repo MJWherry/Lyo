@@ -1,12 +1,12 @@
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions.Models;
 using Lyo.Reporting.Models;
-using Lyo.Reporting.Models.Enums;
 using Lyo.Reporting.Models.Providers;
 using Lyo.Reporting.Postgres;
 using Lyo.Reporting.Postgres.Database;
-using Lyo.Common.Core.Identifiers;
+
 namespace Lyo.Reporting.Tests;
 
 public sealed class ReportServiceUnitTests
@@ -15,7 +15,7 @@ public sealed class ReportServiceUnitTests
     public void Constructor_DuplicateProviderKeys_FailsWithActionableMessage()
     {
         var ex = Assert.Throws<ConflictException>(() => new ReportService(
-            null!, [], [new FakeProvider("dup-key"), new FakeProvider("DUP-KEY")], [], null!, new PostgresReportingOptions { ConnectionString = "x" }, null!));
+            null!, [], [new FakeProvider("dup-key"), new FakeProvider("DUP-KEY")], [], null!, new() { ConnectionString = "x" }, null!));
 
         Assert.Contains("dup-key", ex.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("unique", ex.Message, StringComparison.OrdinalIgnoreCase);
@@ -25,7 +25,7 @@ public sealed class ReportServiceUnitTests
     public void Constructor_DuplicateProfileKeys_FailsWithActionableMessage()
     {
         var ex = Assert.Throws<ConflictException>(() => new ReportService(
-            null!, [], [], [new() { Key = "profile-a" }, new() { Key = "Profile-A" }], null!, new PostgresReportingOptions { ConnectionString = "x" }, null!));
+            null!, [], [], [new() { Key = "profile-a" }, new() { Key = "Profile-A" }], null!, new() { ConnectionString = "x" }, null!));
 
         Assert.Contains("profile-a", ex.Message, StringComparison.OrdinalIgnoreCase);
     }

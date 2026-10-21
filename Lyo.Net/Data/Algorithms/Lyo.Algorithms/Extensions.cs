@@ -50,31 +50,32 @@ public static class Extensions
                 var compiled = compiler.Compile<AlgorithmContextBag, object>(expression.Expression);
                 if (!compiled.IsSuccess || compiled.Data is null)
                     AlgorithmHelpers.Throw(compiled.Errors?[0].Message ?? $"Expression '{expression.Key}' failed to compile.");
-                services.AddSingleton<IAlgorithmRegistration>(new AlgorithmRegistration<AlgorithmContextBag, object>(
-                    expression.Key, new KeyedAlgorithm<AlgorithmContextBag, object>(expression.Key, compiled.Data)));
+
+                services.AddSingleton<IAlgorithmRegistration>(
+                    new AlgorithmRegistration<AlgorithmContextBag, object>(expression.Key, new KeyedAlgorithm<AlgorithmContextBag, object>(expression.Key, compiled.Data)));
             }
 
             services.AddSingleton(Options.Create(options));
             services.TryAddSingleton(options);
             services.TryAddSingleton<IExpressionCompiler>(compiler);
-            services.TryAddSingleton<StartupAlgorithmStore>(sp => new StartupAlgorithmStore(sp.GetServices<IAlgorithmRegistration>()));
+            services.TryAddSingleton<StartupAlgorithmStore>(sp => new(sp.GetServices<IAlgorithmRegistration>()));
             services.TryAddSingleton<IAlgorithmStartupStore>(sp => sp.GetRequiredService<StartupAlgorithmStore>());
-            services.TryAddSingleton<RuntimeAlgorithmStore>(sp => new RuntimeAlgorithmStore(
+            services.TryAddSingleton<RuntimeAlgorithmStore>(sp => new(
                 sp.GetRequiredService<IExpressionCompiler>(), sp.GetRequiredService<IAlgorithmStartupStore>(), sp.GetRequiredService<AlgorithmOptions>(),
                 sp.GetService<IAlgorithmDefinitionStore>()));
+
             services.TryAddSingleton<IAlgorithmRuntimeStore>(sp => sp.GetRequiredService<RuntimeAlgorithmStore>());
             services.TryAddSingleton<IAlgorithmRegistry, AlgorithmRegistry>();
             services.TryAddSingleton<IAlgorithmCatalog>(sp => {
                 var store = sp.GetService<IAlgorithmDefinitionStore>();
                 if (store is null)
                     AlgorithmHelpers.Throw("No IAlgorithmDefinitionStore is registered. Call AddMemoryAlgorithmStore, AddPostgresAlgorithmStore, or AddSqliteAlgorithmStore.");
+
                 return new AlgorithmCatalog(
-                    store,
-                    sp.GetRequiredService<IExpressionCompiler>(),
-                    sp.GetRequiredService<AlgorithmOptions>(),
-                    sp.GetRequiredService<IAlgorithmStartupStore>(),
+                    store, sp.GetRequiredService<IExpressionCompiler>(), sp.GetRequiredService<AlgorithmOptions>(), sp.GetRequiredService<IAlgorithmStartupStore>(),
                     sp.GetRequiredService<RuntimeAlgorithmStore>());
             });
+
             return services;
         }
 
@@ -88,7 +89,8 @@ public static class Extensions
         }
 
         /// <summary>Freezes a named C# algorithm into the startup store. Duplicate key and type pairs fail when the registry is created.</summary>
-        public IServiceCollection AddNamedAlgorithm<TImpl, TContext, TResult>(string key) where TImpl : class, INamedAlgorithm<TContext, TResult>
+        public IServiceCollection AddNamedAlgorithm<TImpl, TContext, TResult>(string key)
+            where TImpl : class, INamedAlgorithm<TContext, TResult>
         {
             ArgumentHelpers.ThrowIfNull(services);
             AlgorithmKeys.ThrowIfInvalidKey(key);
@@ -106,6 +108,7 @@ public static class Extensions
             var compiled = new ExpressionCompiler().Compile<TContext, TResult>(expression);
             if (!compiled.IsSuccess || compiled.Data is null)
                 AlgorithmHelpers.Throw(compiled.Errors?[0].Message ?? $"Expression '{key}' failed to compile.");
+
             services.AddSingleton<IAlgorithmRegistration>(new AlgorithmRegistration<TContext, TResult>(key, new KeyedAlgorithm<TContext, TResult>(key, compiled.Data)));
             return services;
         }

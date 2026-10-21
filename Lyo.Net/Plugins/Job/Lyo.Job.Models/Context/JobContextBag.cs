@@ -7,15 +7,15 @@ using Lyo.Job.Models.Response;
 namespace Lyo.Job.Models.Context;
 
 /// <summary>
-/// The template context every job stage resolves against: the scheduler when it builds a run request, the worker when it re-formats string parameters, the workflow engine
-/// when it starts a step, and the parameter editor when it advertises tokens. One type with one set of seeders, so the four cannot drift apart.
+/// The template context every job stage resolves against: the scheduler when it builds a run request, the worker when it re-formats string parameters, the workflow engine when it
+/// starts a step, and the parameter editor when it advertises tokens. One type with one set of seeders, so the four cannot drift apart.
 /// <para>
 /// Nested data is stored under dotted keys (<c>LastRun.Result.RowCount</c>), which <c>IFormatterService</c> resolves both as a whole key and segment by segment, so
 /// <c>{LastRun.Result.RowCount}</c> works.
 /// </para>
 /// <para>
-/// Inherited from <see cref="ContextBag" />: not thread-safe, and intended for one execution. Build a fresh bag per run creation and per step start rather than caching one
-/// on a scheduler or engine, both of which process messages concurrently.
+/// Inherited from <see cref="ContextBag" />: not thread-safe, and intended for one execution. Build a fresh bag per run creation and per step start rather than caching one on a
+/// scheduler or engine, both of which process messages concurrently.
 /// </para>
 /// </summary>
 public sealed class JobContextBag : ContextBag
@@ -66,8 +66,8 @@ public sealed class JobContextBag : ContextBag
     }
 
     /// <summary>
-    /// Seeds <c>Input.{key}</c> from a workflow run's stored inputs, the flat string map the start call resolved from the caller's inputs over the schedule's enabled
-    /// parameters. This is what a step condition reads to branch on something the run was started with rather than on an upstream result.
+    /// Seeds <c>Input.{key}</c> from a workflow run's stored inputs, the flat string map the start call resolved from the caller's inputs over the schedule's enabled parameters.
+    /// This is what a step condition reads to branch on something the run was started with rather than on an upstream result.
     /// </summary>
     /// <param name="inputsJson">Serialized <c>Dictionary&lt;string, string&gt;</c>, or null for a run with no inputs.</param>
     /// <returns>This bag.</returns>
@@ -132,8 +132,8 @@ public sealed class JobContextBag : ContextBag
 
     /// <summary>
     /// An isolated copy holding everything one workflow step resolves against: the run-level seeds already on this bag, the step itself, its job definition, and each
-    /// dependency's completed run keyed by that dependency's step name. Both the engine (when it starts the step) and the editor (when it advertises tokens) call this,
-    /// so the paths a template or a condition gate can read are defined in one place.
+    /// dependency's completed run keyed by that dependency's step name. Both the engine (when it starts the step) and the editor (when it advertises tokens) call this, so the paths a
+    /// template or a condition gate can read are defined in one place.
     /// </summary>
     /// <param name="step">Step being scoped. Readable from the scope as <see cref="CurrentStepKey" />.</param>
     /// <param name="definition">Job definition the step runs, or null when it could not be loaded.</param>
@@ -174,8 +174,7 @@ public sealed class JobContextBag : ContextBag
     }
 
     /// <summary>Stores <c>{prefix}.{section}.{key}</c>.</summary>
-    private void SetNested(string prefix, string section, string key, object? value)
-        => Set($"{prefix}.{section}.{key}", value);
+    private void SetNested(string prefix, string section, string key, object? value) => Set($"{prefix}.{section}.{key}", value);
 
     private static Dictionary<string, string?> ParseInputs(string? inputsJson)
     {

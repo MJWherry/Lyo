@@ -1,6 +1,7 @@
 # Lyo.Tag.Postgres
 
-Entity Framework Core store for `Lyo.Tag` on PostgreSQL. Rows live in `tag.tag` (`PostgresTagOptions.Schema = "tag"`), and the package includes migrations. Each row carries a **subject** and an optional **actor** (`for_entity_*` / `from_entity_*`). Per tenant, uniqueness is `(for_entity_type, for_entity_id, name, tag_type, slug)`.
+Entity Framework Core store for `Lyo.Tag` on PostgreSQL. Rows live in `tag.tag` (`PostgresTagOptions.Schema = "tag"`), and the package includes migrations. Each row carries a
+**subject** and an optional **actor** (`for_entity_*` / `from_entity_*`). Per tenant, uniqueness is `(for_entity_type, for_entity_id, name, tag_type, slug)`.
 
 `PostgresTagStore` implements `ITagStore` and `Lyo.Health.IHealth` (`HealthCheckName = "tag-postgres"`). Registering the store also registers a liveness probe.
 
@@ -63,10 +64,12 @@ dotnet ef migrations add MigrationName --project Plugins/Tag/Lyo.Tag.Postgres
 
 ## Service registration
 
-- `AddTagDbContextFactory(Action<PostgresTagOptions>)` / `AddTagDbContextFactory(PostgresTagOptions)` register the `IDbContextFactory<TagDbContext>` only. Handy when you consume the schema from migrations or another store.
+- `AddTagDbContextFactory(Action<PostgresTagOptions>)` / `AddTagDbContextFactory(PostgresTagOptions)` register the `IDbContextFactory<TagDbContext>` only. Handy when you consume
+  the schema from migrations or another store.
 - `AddTagDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresTagOptions.SectionName)` does the same, bound from configuration.
 - `AddPostgresTagStore(Action<PostgresTagOptions>)` / `AddPostgresTagStore(PostgresTagOptions)` register the DbContext factory **and** the `ITagStore` singleton.
-- `AddPostgresTagStoreFromConfiguration(IConfiguration, string sectionName = PostgresTagOptions.SectionName)` registers the store by binding configuration. The default section name is `PostgresTag`.
+- `AddPostgresTagStoreFromConfiguration(IConfiguration, string sectionName = PostgresTagOptions.SectionName)` registers the store by binding configuration. The default section name
+  is `PostgresTag`.
 
 ## From configuration
 
@@ -88,14 +91,18 @@ var fromEntity = EntityRef.ForKey("User", "123");
 
 ## Database schema
 
-- **tag.tag.** `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id`, nullable varchar 128/256), `name`, `slug`, `tag_type`, `tenant_id` (uuid), lifecycle from `EntityRelationEntityBase`, plus tag-specific indexes
+- **tag.tag.** `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id`, nullable varchar 128/256), `name`, `slug`, `tag_type`,
+  `tenant_id` (uuid), lifecycle from `EntityRelationEntityBase`, plus tag-specific indexes
 - Unique index on (for_entity_type, for_entity_id, tag)
 - Index on (for_entity_type, for_entity_id)
 - Index on tag
 
 ## Tenant isolation
 
-Every read and write on `PostgresTagStore` takes an optional `Guid? tenantId` (same shape as `IFavoriteStore`). `TenancyResolver` applies the policy in `PostgresTagOptions.Tenancy`. When that is unset, it inherits `EntityRefOptions.Mode`. Because `tenant_id` is non-null, only `SingleTenantDefault` and `MultiTenantStrict` are valid. Construction rejects `SystemOnly`. Every query gets a `WhereTenant` filter. The policy matrix and an `appsettings.json` snippet live in [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy).
+Every read and write on `PostgresTagStore` takes an optional `Guid? tenantId` (same shape as `IFavoriteStore`). `TenancyResolver` applies the policy in
+`PostgresTagOptions.Tenancy`. When that is unset, it inherits `EntityRefOptions.Mode`. Because `tenant_id` is non-null, only `SingleTenantDefault` and `MultiTenantStrict` are
+valid. Construction rejects `SystemOnly`. Every query gets a `WhereTenant` filter. The policy matrix and an `appsettings.json` snippet live in [
+`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy).
 
 ```json
 {

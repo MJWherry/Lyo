@@ -17,8 +17,7 @@ public sealed class MagicFileTypeSnifferTests
     public void Identify_ShortBuffer_ReturnsUnknown() => Assert.Equal(FileTypeInfo.Unknown, _sniffer.Identify([0x01]));
 
     [Fact]
-    public void Identify_PngHeader_ReturnsPng()
-        => Assert.Equal(FileTypeInfo.Png, _sniffer.Identify([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]));
+    public void Identify_PngHeader_ReturnsPng() => Assert.Equal(FileTypeInfo.Png, _sniffer.Identify([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]));
 
     [Fact]
     public void Identify_JpegHeader_ReturnsJpeg() => Assert.Equal(FileTypeInfo.Jpeg, _sniffer.Identify([0xFF, 0xD8, 0xFF, 0xE0]));

@@ -1,10 +1,6 @@
-@using System.Security.Claims
-@using Lyo.Authentication.Models.Records
-@using Lyo.Authentication.Web.Components.Abstractions
-@using Lyo.Web.Components
-@using Lyo.Web.Host
-@using Constants = Constants
 @inherits LayoutComponentBase
+@using Lyo.Authentication.Web.Components.Abstractions
+@using Lyo.Web.Host
 @implements IDisposable
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IAuthSignInLauncher SignInLauncher
@@ -51,7 +47,7 @@
             @if (!HasVisibleNav) {
                 <MudText Typo="Typo.caption" Class="px-4 py-2">No pages match.</MudText>
             }
-            @foreach (var item in Visible(Pinned, group: null)) {
+            @foreach (var item in Visible(Pinned, null)) {
                 <MudNavLink Href="@item.Href" Icon="@item.Icon" Match="@item.Match">@item.Title</MudNavLink>
             }
             @if (ShowSignIn) {
@@ -67,6 +63,7 @@
             @foreach (var group in NavGroups) {
                 if (!Visible(group.Items, group.Title).Any())
                     continue;
+
                 <MudNavGroup Title="@group.Title" Icon="@group.Icon" Expanded="@IsGroupOpen(group)" ExpandedChanged="open => SetGroupOpen(group, open)">
                     @foreach (var item in Visible(group.Items, group.Title)) {
                         <MudNavLink Href="@item.Href" Icon="@item.Icon" Match="@item.Match">@item.Title</MudNavLink>

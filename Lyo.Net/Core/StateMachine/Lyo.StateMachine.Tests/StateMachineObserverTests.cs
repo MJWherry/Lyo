@@ -11,10 +11,8 @@ public class StateMachineObserverTests
     {
         var log = new List<string>();
         var definition = Job().AddObserver(new RecordingObserver(log)).Build();
-
         definition.Fire(new(), At(JobState.Queued), JobTrigger.Complete);
         definition.Fire(new() { CanFail = false }, At(JobState.Queued), JobTrigger.Fail);
-
         Assert.Equal(["rejected:Queued:Complete:NoTransition", "rejected:Queued:Fail:GuardFailed"], log);
     }
 
@@ -23,19 +21,18 @@ public class StateMachineObserverTests
     {
         var metrics = new RecordingMetrics();
         var definition = Job().AddObserver(new MetricsStateMachineObserver<JobState, JobTrigger>(metrics)).Build();
-
         definition.Fire(new(), At(JobState.Queued), JobTrigger.Start);
         definition.Fire(new(), At(JobState.Queued), JobTrigger.Complete);
-
         var transition = Assert.Single(metrics.Calls, c => c.Name == "statemachine.transitions");
         Assert.Equal("counter", transition.Kind);
-        Assert.Equal(new Dictionary<string, string> {
-            ["machine"] = "job",
-            ["from"] = "Queued",
-            ["to"] = "Running",
-            ["trigger"] = "Start",
-            ["kind"] = "Transition"
-        }, transition.Tags);
+        Assert.Equal(
+            new() {
+                ["machine"] = "job",
+                ["from"] = "Queued",
+                ["to"] = "Running",
+                ["trigger"] = "Start",
+                ["kind"] = "Transition"
+            }, transition.Tags);
 
         Assert.Single(metrics.Calls, c => c.Kind == "timing" && c.Name == "statemachine.fire");
         var rejection = Assert.Single(metrics.Calls, c => c.Name == "statemachine.rejections");
@@ -47,17 +44,13 @@ public class StateMachineObserverTests
     {
         var logger = new ListLogger<LoggingStateMachineObserver<JobState, JobTrigger>>();
         var definition = Job().AddObserver(new LoggingStateMachineObserver<JobState, JobTrigger>(logger)).Build();
-
         definition.Fire(new(), At(JobState.Queued), JobTrigger.Start);
         definition.Fire(new(), At(JobState.Queued), JobTrigger.Complete);
-
         Assert.Collection(
-            logger.Entries,
-            e => {
+            logger.Entries, e => {
                 Assert.Equal(LogLevel.Debug, e.Level);
                 Assert.Equal("State machine job: Queued -> Running on Start (Transition, v1)", e.Message);
-            },
-            e => {
+            }, e => {
                 Assert.Equal(LogLevel.Information, e.Level);
                 Assert.Equal("State machine job: rejected Complete in Queued (NoTransition)", e.Message);
             });

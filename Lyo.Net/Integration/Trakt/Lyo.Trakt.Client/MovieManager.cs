@@ -13,6 +13,5 @@ public sealed class MovieManager(TraktClient client)
     }
 
     /// <summary>Returns trending movies. Each row is a watcher count plus the movie.</summary>
-    public Task<TraktPage<TraktTrendingMovie>> TrendingAsync(CancellationToken ct = default)
-        => client.GetPageAsync<TraktTrendingMovie>("movies/trending", ct);
+    public Task<TraktPage<TraktTrendingMovie>> TrendingAsync(CancellationToken ct = default) => client.GetPageAsync<TraktTrendingMovie>("movies/trending", ct);
 }

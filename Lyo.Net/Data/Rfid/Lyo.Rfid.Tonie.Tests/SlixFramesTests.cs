@@ -15,8 +15,7 @@ public sealed class SlixFramesTests
     }
 
     [Fact]
-    public void ReadMultipleBlocks_AllEight_Frame() =>
-        Assert.Equal("222378563412500304E00007357A", Convert.ToHexString(SlixFrames.ReadMultipleBlocks(Uid, firstBlock: 0, blockCount: 8)));
+    public void ReadMultipleBlocks_AllEight_Frame() => Assert.Equal("222378563412500304E00007357A", Convert.ToHexString(SlixFrames.ReadMultipleBlocks(Uid, 0, 8)));
 
     [Fact]
     public void EnablePrivacy_Frame()

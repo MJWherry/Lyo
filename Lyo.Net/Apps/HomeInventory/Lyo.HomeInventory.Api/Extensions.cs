@@ -4,7 +4,6 @@ using Lyo.Api.Mapping;
 using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 using Lyo.Exceptions;
-using Lyo.HomeInventory;
 using Lyo.HomeInventory.FileStorage;
 using Lyo.HomeInventory.Models;
 using Lyo.HomeInventory.Models.Enums;
@@ -67,31 +66,39 @@ public static class Extensions
         var tag = Constants.Rest.HomeInventory.Route;
         app.CreateBuilder<HomeInventoryDbContext, HomeCategoryEntity, HomeCategoryReq, HomeCategoryRes, Guid>(Constants.Rest.HomeInventory.Categories, tag)
             .WithCrud(
-                ApiFeatureSet.DefaultCrud, new() {
+                ApiFeatureSet.DefaultCrud,
+                new() {
                     BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateCombPostgres() : ctx.Entity.Id,
                     BeforeDeleteAsync = (ctx, ct) => CascadeNotesAndTagsAsync(ctx.Services, HomeInventoryEntityTypes.Category, ctx.Entity.Id, ct)
                 })
             .Build();
+
         app.CreateBuilder<HomeInventoryDbContext, HomeLocationEntity, HomeLocationReq, HomeLocationRes, Guid>(Constants.Rest.HomeInventory.Locations, tag)
             .WithCrud(
-                ApiFeatureSet.DefaultCrud, new() {
+                ApiFeatureSet.DefaultCrud,
+                new() {
                     BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateCombPostgres() : ctx.Entity.Id,
                     BeforeDeleteAsync = (ctx, ct) => CascadeNotesAndTagsAsync(ctx.Services, HomeInventoryEntityTypes.Location, ctx.Entity.Id, ct)
                 })
             .Build();
+
         app.CreateBuilder<HomeInventoryDbContext, HomeItemEntity, HomeItemReq, HomeItemRes, Guid>(Constants.Rest.HomeInventory.Items, tag)
             .WithCrud(
-                ApiFeatureSet.DefaultCrud, new() {
+                ApiFeatureSet.DefaultCrud,
+                new() {
                     BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateCombPostgres() : ctx.Entity.Id,
                     BeforeDeleteAsync = (ctx, ct) => CascadeNotesAndTagsAsync(ctx.Services, HomeInventoryEntityTypes.Item, ctx.Entity.Id, ct)
                 })
             .Build();
+
         app.CreateReadOnlyBuilder<HomeInventoryDbContext, HomeItemMovementEntity, HomeItemMovementRes, Guid>(Constants.Rest.HomeInventory.Movements, tag)
             .WithCrud(ApiFeatureSet.ReadOnly, new())
             .Build();
+
         app.CreateBuilder<HomeInventoryDbContext, HomeAttachmentEntity, HomeAttachmentReq, HomeAttachmentRes, Guid>(Constants.Rest.HomeInventory.Attachments, tag)
             .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateCombPostgres() : ctx.Entity.Id })
             .Build();
+
         MapStockEndpoints(app);
         MapNotesAndTags(app, Constants.Rest.HomeInventory.Items, HomeInventoryEntityTypes.Item);
         MapNotesAndTags(app, Constants.Rest.HomeInventory.Locations, HomeInventoryEntityTypes.Location);
@@ -105,16 +112,15 @@ public static class Extensions
         var tag = Constants.Rest.HomeInventory.Route;
         var items = Constants.Rest.HomeInventory.Items;
         app.MapGet(
-                $"/{items}/{{id:guid}}/Stock",
-                async (Guid id, IHomeInventoryStore store, ILyoMapper mapper, Guid? tenantId, CancellationToken ct) => {
+                $"/{items}/{{id:guid}}/Stock", async (Guid id, IHomeInventoryStore store, ILyoMapper mapper, Guid? tenantId, CancellationToken ct) => {
                     var rows = await store.GetStockForItemAsync(id, tenantId, ct).ConfigureAwait(false);
                     return Results.Ok(rows.Select(mapper.Map<HomeItemStockRes>).ToList());
                 })
             .WithTags(tag)
             .WithName("GetHomeInventoryItemStock");
+
         app.MapPost(
-                $"/{items}/{{id:guid}}/Stock",
-                async (Guid id, HomeItemStockReq req, IHomeInventoryStore store, ILyoMapper mapper, Guid? tenantId, CancellationToken ct) => {
+                $"/{items}/{{id:guid}}/Stock", async (Guid id, HomeItemStockReq req, IHomeInventoryStore store, ILyoMapper mapper, Guid? tenantId, CancellationToken ct) => {
                     ArgumentHelpers.ThrowIfNull(req);
                     await store.UpsertStockAsync(id, req.LocationId, req.QuantityOnHand, req.QuantityReserved, req.ReorderPoint, tenantId, ct).ConfigureAwait(false);
                     var row = await store.GetStockAsync(id, req.LocationId, tenantId, ct).ConfigureAwait(false);
@@ -122,23 +128,24 @@ public static class Extensions
                 })
             .WithTags(tag)
             .WithName("UpsertHomeInventoryItemStock");
+
         app.MapPost(
-                $"/{items}/{{id:guid}}/Stock/Adjust",
-                async (Guid id, HomeItemStockAdjustReq req, IHomeInventoryStore store, ILyoMapper mapper, Guid? tenantId, CancellationToken ct) => {
+                $"/{items}/{{id:guid}}/Stock/Adjust", async (
+                        Guid id, HomeItemStockAdjustReq req, IHomeInventoryStore store, ILyoMapper mapper, Guid? tenantId, CancellationToken ct)
+                    => {
                     ArgumentHelpers.ThrowIfNull(req);
-                    await store.AdjustStockAsync(id, req.LocationId, req.QuantityDelta, req.MovementType, req.ReferenceNumber, req.CreatedBy, tenantId, ct)
-                        .ConfigureAwait(false);
+                    await store.AdjustStockAsync(id, req.LocationId, req.QuantityDelta, req.MovementType, req.ReferenceNumber, req.CreatedBy, tenantId, ct).ConfigureAwait(false);
                     var row = await store.GetStockAsync(id, req.LocationId, tenantId, ct).ConfigureAwait(false);
                     return Results.Ok(row == null ? null : mapper.Map<HomeItemStockRes>(row));
                 })
             .WithTags(tag)
             .WithName("AdjustHomeInventoryItemStock");
+
         app.MapPost(
-                $"/{items}/{{id:guid}}/Stock/Transfer",
-                async (Guid id, HomeItemStockTransferReq req, IHomeInventoryStore store, ILyoMapper mapper, Guid? tenantId, CancellationToken ct) => {
+                $"/{items}/{{id:guid}}/Stock/Transfer", async (
+                    Guid id, HomeItemStockTransferReq req, IHomeInventoryStore store, ILyoMapper mapper, Guid? tenantId, CancellationToken ct) => {
                     ArgumentHelpers.ThrowIfNull(req);
-                    await store.TransferStockAsync(id, req.FromLocationId, req.ToLocationId, req.Quantity, req.ReferenceNumber, req.CreatedBy, tenantId, ct)
-                        .ConfigureAwait(false);
+                    await store.TransferStockAsync(id, req.FromLocationId, req.ToLocationId, req.Quantity, req.ReferenceNumber, req.CreatedBy, tenantId, ct).ConfigureAwait(false);
                     var rows = await store.GetStockForItemAsync(id, tenantId, ct).ConfigureAwait(false);
                     return Results.Ok(rows.Select(mapper.Map<HomeItemStockRes>).ToList());
                 })
@@ -154,9 +161,9 @@ public static class Extensions
                 async (Guid id, INoteStore notes, Guid? tenantId, CancellationToken ct)
                     => Results.Ok(await notes.GetForEntityAsync(EntityRef.ForGuid(entityType, id), tenantId, ct).ConfigureAwait(false)))
             .WithTags(tag);
+
         app.MapPost(
-                $"/{parentRoute}/{{id:guid}}/Notes",
-                async (Guid id, HomeNoteCreateReq req, INoteStore notes, Guid? tenantId, CancellationToken ct) => {
+                $"/{parentRoute}/{{id:guid}}/Notes", async (Guid id, HomeNoteCreateReq req, INoteStore notes, Guid? tenantId, CancellationToken ct) => {
                     ArgumentHelpers.ThrowIfNull(req);
                     var note = new NoteRecord {
                         Id = LyoGuid.CreateV7(),
@@ -166,38 +173,40 @@ public static class Extensions
                         ActorEntityId = EntityRefWellKnown.SystemActorId.ToString(),
                         Content = req.Content
                     };
+
                     await notes.SaveAsync(note, tenantId, ct).ConfigureAwait(false);
                     return Results.Ok(note);
                 })
             .WithTags(tag);
+
         app.MapDelete(
-                $"/{parentRoute}/{{id:guid}}/Notes/{{noteId:guid}}",
-                async (Guid id, Guid noteId, INoteStore notes, Guid? tenantId, CancellationToken ct) => {
+                $"/{parentRoute}/{{id:guid}}/Notes/{{noteId:guid}}", async (Guid id, Guid noteId, INoteStore notes, Guid? tenantId, CancellationToken ct) => {
                     var existing = await notes.GetByIdAsync(noteId, tenantId, ct).ConfigureAwait(false);
-                    if (existing == null || !string.Equals(existing.SubjectEntityType, entityType, StringComparison.Ordinal)
-                        || !string.Equals(existing.SubjectEntityId, id.ToString(), StringComparison.Ordinal))
+                    if (existing == null || !string.Equals(existing.SubjectEntityType, entityType, StringComparison.Ordinal) ||
+                        !string.Equals(existing.SubjectEntityId, id.ToString(), StringComparison.Ordinal))
                         return Results.NotFound();
 
                     await notes.DeleteAsync(noteId, tenantId, ct).ConfigureAwait(false);
                     return Results.NoContent();
                 })
             .WithTags(tag);
+
         app.MapGet(
                 $"/{parentRoute}/{{id:guid}}/Tags",
-                async (Guid id, ITagStore tags, Guid? tenantId, CancellationToken ct)
-                    => Results.Ok(await tags.GetTagsForEntityAsync(EntityRef.ForGuid(entityType, id), tenantId: tenantId, ct: ct).ConfigureAwait(false)))
+                async (Guid id, ITagStore tags, Guid? tenantId, CancellationToken ct) => Results.Ok(
+                    await tags.GetTagsForEntityAsync(EntityRef.ForGuid(entityType, id), tenantId: tenantId, ct: ct).ConfigureAwait(false)))
             .WithTags(tag);
+
         app.MapPost(
-                $"/{parentRoute}/{{id:guid}}/Tags",
-                async (Guid id, HomeTagAddReq req, ITagStore tags, Guid? tenantId, CancellationToken ct) => {
+                $"/{parentRoute}/{{id:guid}}/Tags", async (Guid id, HomeTagAddReq req, ITagStore tags, Guid? tenantId, CancellationToken ct) => {
                     ArgumentHelpers.ThrowIfNull(req);
                     await tags.AddTagAsync(EntityRef.ForGuid(entityType, id), req.Name, req.TagType, slug: req.Slug, tenantId: tenantId, ct: ct).ConfigureAwait(false);
                     return Results.Ok(await tags.GetTagsForEntityAsync(EntityRef.ForGuid(entityType, id), tenantId: tenantId, ct: ct).ConfigureAwait(false));
                 })
             .WithTags(tag);
+
         app.MapDelete(
-                $"/{parentRoute}/{{id:guid}}/Tags/{{name}}",
-                async (Guid id, string name, ITagStore tags, string? tagType, Guid? tenantId, CancellationToken ct) => {
+                $"/{parentRoute}/{{id:guid}}/Tags/{{name}}", async (Guid id, string name, ITagStore tags, string? tagType, Guid? tenantId, CancellationToken ct) => {
                     await tags.RemoveTagAsync(EntityRef.ForGuid(entityType, id), name, tagType ?? "tag", tenantId: tenantId, ct: ct).ConfigureAwait(false);
                     return Results.NoContent();
                 })
@@ -208,8 +217,7 @@ public static class Extensions
     {
         var tag = Constants.Rest.HomeInventory.Route;
         app.MapPost(
-                $"/{Constants.Rest.HomeInventory.Attachments}/upload",
-                async (
+                $"/{Constants.Rest.HomeInventory.Attachments}/upload", async (
                     HttpContext http, [FromForm] string entityType, [FromForm] Guid entityId, [FromForm] string? role, [FromForm] string? caption, [FromForm] bool isPrimary,
                     IFormFile file, Guid? tenantId, CancellationToken ct) => {
                     var helper = http.RequestServices.GetService<IHomeInventoryAttachmentFiles>();
@@ -217,10 +225,9 @@ public static class Extensions
                         return Results.StatusCode(StatusCodes.Status501NotImplemented);
 
                     ArgumentHelpers.ThrowIfNull(file);
-                    var parsedRole = Enum.TryParse<HomeAttachmentRole>(role, ignoreCase: true, out var parsed) ? parsed : HomeAttachmentRole.Document;
+                    var parsedRole = Enum.TryParse<HomeAttachmentRole>(role, true, out var parsed) ? parsed : HomeAttachmentRole.Document;
                     await using var stream = file.OpenReadStream();
-                    var row = await helper.SaveAsync(entityType, entityId, stream, file.Length, file.FileName, parsedRole, caption, isPrimary, tenantId, ct)
-                        .ConfigureAwait(false);
+                    var row = await helper.SaveAsync(entityType, entityId, stream, file.Length, file.FileName, parsedRole, caption, isPrimary, tenantId, ct).ConfigureAwait(false);
                     return Results.Ok(row);
                 })
             .DisableAntiforgery()

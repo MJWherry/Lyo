@@ -29,7 +29,9 @@ services.AddDefaultCompressionService<CompressionService>();
 
 ## DI registration
 
-Keyed services, ICompressionResolver, and CompressionOptions in appsettings.json are documented in [`Lyo.Compression`](../Lyo.Compression/README.md). When stored metadata might name BZip2, file-storage reads need AddBZip2Compressor(). On read, [ICompressionResolver](../Lyo.Compression/README.md#icompressionresolver-per-algorithm-dispatch) decompresses from that metadata.
+Keyed services, ICompressionResolver, and CompressionOptions in appsettings.json are documented in [`Lyo.Compression`](../Lyo.Compression/README.md). When stored metadata might
+name BZip2, file-storage reads need AddBZip2Compressor (). On read, [ICompressionResolver](../Lyo.Compression/README.md#icompressionresolver-per-algorithm-dispatch) decompresses
+from that metadata.
 
 ## Dependencies
 

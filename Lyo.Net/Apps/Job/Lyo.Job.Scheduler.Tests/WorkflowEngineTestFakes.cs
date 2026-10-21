@@ -2,6 +2,7 @@ using System.Text.Json;
 using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Http.Client;
 using Lyo.Http.Client.Plan;
@@ -13,12 +14,10 @@ using Lyo.Metrics;
 using Lyo.Metrics.Models;
 using Lyo.Query.Models.Common.Request;
 using Constants = Lyo.Job.Models.Constants;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Job.Scheduler.Tests;
 
-/// <summary>Every <see cref="IApiClient" /> member throws. Fakes derive from this and override only the calls the code under test makes, so an unexpected call fails
-/// loudly.</summary>
+/// <summary>Every <see cref="IApiClient" /> member throws. Fakes derive from this and override only the calls the code under test makes, so an unexpected call fails loudly.</summary>
 internal abstract class StubApiClient : IApiClient
 {
     public void Dispose() { }
@@ -38,20 +37,13 @@ internal abstract class StubApiClient : IApiClient
     public Task<HttpClientPlanRunResult> RunAsync(HttpClientPlan plan, HttpClientPlanRuntime? runtime = null, CancellationToken ct = default)
         => throw new NotImplementedException();
 
-    public virtual Task<TResult> PostAsAsync<TRequest, TResult>(
-        string uri,
-        TRequest? request = default,
-        Action<HttpRequestMessage>? before = null,
-        CancellationToken ct = default)
+    public virtual Task<TResult> PostAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException(uri);
 
-    public virtual Task<TResult?> GetAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default) => throw new NotImplementedException(uri);
+    public virtual Task<TResult?> GetAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        => throw new NotImplementedException(uri);
 
-    public virtual Task<TResult> PatchAsAsync<TRequest, TResult>(
-        string uri,
-        TRequest? request = default,
-        Action<HttpRequestMessage>? before = null,
-        CancellationToken ct = default)
+    public virtual Task<TResult> PatchAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException(uri);
 
     public virtual Task<TResult?> GetAsAsync<TRequest, TResult>(
@@ -121,38 +113,24 @@ internal abstract class StubApiClient : IApiClient
 
     public string ToQueryString<T>(T obj, string? enumerableDelimiter = null) => throw new NotImplementedException();
 
-    public Task<TResult?> QueryProjectAsync<TResult>(
-        string route,
-        ProjectionQueryReq request,
-        Action<HttpRequestMessage>? before = null,
-        CancellationToken ct = default)
+    public Task<TResult?> QueryProjectAsync<TResult>(string route, ProjectionQueryReq request, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException(route);
 
-    public Task<TResult?> QueryConcreteAsync<TResult>(
-        string route,
-        QueryConcreteReq request,
-        Action<HttpRequestMessage>? before = null,
-        CancellationToken ct = default)
+    public Task<TResult?> QueryConcreteAsync<TResult>(string route, QueryConcreteReq request, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException(route);
 
-    public Task<TResult?> QuerySqlAsync<TResult>(
-        string route,
-        QueryRequestBase request,
-        Action<HttpRequestMessage>? before = null,
-        CancellationToken ct = default)
+    public Task<TResult?> QuerySqlAsync<TResult>(string route, QueryRequestBase request, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException(route);
 }
 
 /// <summary>
-/// In-memory backing store for one workflow run. Patches are applied to the stored state, so a <c>GET</c> issued after a step patch observes the new step state exactly as the
-/// real API would. which is what makes finalization assertions meaningful.
+/// In-memory backing store for one workflow run. Patches are applied to the stored state, so a <c>GET</c> issued after a step patch observes the new step state exactly as
+/// the real API would. which is what makes finalization assertions meaningful.
 /// </summary>
 internal sealed class FakeWorkflowApiClient : StubApiClient
 {
     private readonly Dictionary<Guid, JobDefinitionRes> _definitions = [];
     private readonly Dictionary<Guid, JobRunRes> _jobRuns = [];
-
-    public FakeWorkflowApiClient(JobWorkflowRunRes workflowRun) => WorkflowRun = workflowRun;
 
     /// <summary>Current workflow run state, including patches applied through this client.</summary>
     public JobWorkflowRunRes WorkflowRun { get; private set; }
@@ -162,6 +140,8 @@ internal sealed class FakeWorkflowApiClient : StubApiClient
     public List<(Guid Id, PatchRequest Patch)> WorkflowRunPatches { get; } = [];
 
     public List<(Guid Id, PatchRequest Patch)> StepPatches { get; } = [];
+
+    public FakeWorkflowApiClient(JobWorkflowRunRes workflowRun) => WorkflowRun = workflowRun;
 
     /// <summary>Registers the finished job run that <c>GET Job/Run/{id}</c> returns.</summary>
     public FakeWorkflowApiClient WithJobRun(JobRunRes run)
@@ -179,11 +159,7 @@ internal sealed class FakeWorkflowApiClient : StubApiClient
 
     public JobWorkflowStepState StepState(Guid workflowStepId) => WorkflowRun.RunSteps!.First(s => s.JobWorkflowStepId == workflowStepId).State;
 
-    public override Task<TResult> PostAsAsync<TRequest, TResult>(
-        string uri,
-        TRequest? request = default,
-        Action<HttpRequestMessage>? before = null,
-        CancellationToken ct = default)
+    public override Task<TResult> PostAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         where TRequest : default
     {
         if (uri.Contains($"{Constants.Rest.Job.WorkflowRunSteps}/QueryConcrete", StringComparison.OrdinalIgnoreCase)) {
@@ -277,7 +253,8 @@ internal sealed class FakeWorkflowApiClient : StubApiClient
     {
         var json = JsonSerializer.Serialize(request);
         return [
-            .. json.Split(['"', ',', ':', '{', '}', '[', ']'], StringSplitOptions.RemoveEmptyEntries).Select(c => Guid.TryParse(c, out var id) ? id : (Guid?)null)
+            .. json.Split(['"', ',', ':', '{', '}', '[', ']'], StringSplitOptions.RemoveEmptyEntries)
+                .Select(c => Guid.TryParse(c, out var id) ? id : (Guid?)null)
                 .Where(id => id is not null)
                 .Select(id => id!.Value)
         ];
@@ -290,9 +267,6 @@ internal sealed class FakeWorkflowApiClient : StubApiClient
 internal sealed class RecordingMetrics : IMetrics
 {
     private readonly Dictionary<string, long> _counters = [];
-
-    /// <summary>Total increments recorded for <paramref name="name" />, or zero when it was never touched.</summary>
-    public long Count(string name) => _counters.TryGetValue(name, out var value) ? value : 0;
 
     public void IncrementCounter(string name, IConvertible? value = null, IEnumerable<(string, string)>? tags = null)
         => _counters[name] = Count(name) + (value is null ? 1L : Convert.ToInt64(value));
@@ -311,4 +285,7 @@ internal sealed class RecordingMetrics : IMetrics
     public void RecordError(string name, Exception exception, IEnumerable<(string, string)>? tags = null) { }
 
     public void RecordEvent(string name, IConvertible? value = null, IEnumerable<(string, string)>? tags = null) { }
+
+    /// <summary>Total increments recorded for <paramref name="name" />, or zero when it was never touched.</summary>
+    public long Count(string name) => _counters.TryGetValue(name, out var value) ? value : 0;
 }

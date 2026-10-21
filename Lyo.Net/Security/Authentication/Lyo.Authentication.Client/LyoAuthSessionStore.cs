@@ -1,13 +1,13 @@
 using System.Collections.Concurrent;
 using System.Security.Claims;
-using Lyo.Exceptions;
 using Lyo.Common.Core.Identifiers;
+using Lyo.Exceptions;
 
 namespace Lyo.Authentication.Client;
 
 /// <summary>
-/// In-process store for active <see cref="LyoAuthSession" /> values, keyed by session id. Multi-instance production should swap this for a distributed
-/// implementation (Redis/Postgres) — the interface is kept small so that swap is easy. For a single-instance Gateway-style host this in-memory store is enough.
+/// In-process store for active <see cref="LyoAuthSession" /> values, keyed by session id. Multi-instance production should swap this for a distributed implementation
+/// (Redis/Postgres) — the interface is kept small so that swap is easy. For a single-instance Gateway-style host this in-memory store is enough.
 /// </summary>
 public class LyoAuthSessionStore
 {

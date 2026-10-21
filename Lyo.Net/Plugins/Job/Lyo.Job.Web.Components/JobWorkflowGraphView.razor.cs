@@ -6,12 +6,12 @@ using Microsoft.JSInterop;
 namespace Lyo.Job.Web.Components;
 
 /// <summary>
-/// Draws the workflow from a <see cref="DiagramDocument" />: one rounded shape per step and an orthogonal connector per dependency. A tooltip says when each step runs.
-/// When <see cref="StepStates" /> is supplied the same picture doubles as a run view. Drag the viewport to move the picture; scroll or the zoom controls to scale it.
+/// Draws the workflow from a <see cref="DiagramDocument" />: one rounded shape per step and an orthogonal connector per dependency. A tooltip says when each step runs. When
+/// <see cref="StepStates" /> is supplied the same picture doubles as a run view. Drag the viewport to move the picture; scroll or the zoom controls to scale it.
 /// </summary>
 /// <remarks>
-/// <see cref="JobWorkflowDiagram" /> builds the document from <see cref="JobWorkflowGraphLayout" />. The view draws that document as one SVG, including the arrowhead, so
-/// the picture does not depend on an SVG marker URL (those break under the gateway's <c>&lt;base href&gt;</c>). The SVG stays at the layout's pixel size, and
+/// <see cref="JobWorkflowDiagram" /> builds the document from <see cref="JobWorkflowGraphLayout" />. The view draws that document as one SVG, including the arrowhead, so the
+/// picture does not depend on an SVG marker URL (those break under the gateway's <c>&lt;base href&gt;</c>). The SVG stays at the layout's pixel size, and
 /// <see cref="JobWorkflowGraphCamera" /> pans and zooms it, so the labels do not shrink to fit the column.
 /// </remarks>
 public partial class JobWorkflowGraphView : IAsyncDisposable
@@ -20,17 +20,17 @@ public partial class JobWorkflowGraphView : IAsyncDisposable
     private const double DragSlop = 4;
 
     private readonly JobWorkflowGraphCamera _camera = new();
-    private JobWorkflowPicture _picture = JobWorkflowDiagram.Create("Workflow", []);
-    private ElementReference _viewport;
-    private IJSObjectReference? _module;
-    private Task<IJSObjectReference?>? _moduleTask;
-    private bool _pressed;
-    private bool _panning;
-    private bool _suppressClick;
-    private long _pointerId;
+    private double _dragDistance;
     private double _lastX;
     private double _lastY;
-    private double _dragDistance;
+    private IJSObjectReference? _module;
+    private Task<IJSObjectReference?>? _moduleTask;
+    private bool _panning;
+    private JobWorkflowPicture _picture = JobWorkflowDiagram.Create("Workflow", []);
+    private long _pointerId;
+    private bool _pressed;
+    private bool _suppressClick;
+    private ElementReference _viewport;
 
     [Parameter]
     [EditorRequired]
@@ -52,6 +52,24 @@ public partial class JobWorkflowGraphView : IAsyncDisposable
     [Parameter]
     public EventCallback<Guid> OnStepSelected { get; set; }
 
+    private string ViewportClass => _panning ? "workflow-graph-viewport panning" : "workflow-graph-viewport";
+
+    private string Transform => string.Create(CultureInfo.InvariantCulture, $"translate({_camera.PanX:0.###}px, {_camera.PanY:0.###}px) scale({_camera.Zoom:0.####})");
+
+    private string ZoomLabel => string.Create(CultureInfo.InvariantCulture, $"{_camera.Zoom * 100:0}%");
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        if (_module is null)
+            return;
+
+        try {
+            await _module.DisposeAsync();
+        }
+        catch (JSDisconnectedException) { }
+    }
+
     protected override void OnInitialized() => _camera.Reset(ContentMargin, ContentMargin);
 
     protected override void OnParametersSet() => _picture = JobWorkflowDiagram.Create("Workflow", Steps);
@@ -61,13 +79,6 @@ public partial class JobWorkflowGraphView : IAsyncDisposable
         if (firstRender)
             await EnsureModuleAsync();
     }
-
-    private string ViewportClass => _panning ? "workflow-graph-viewport panning" : "workflow-graph-viewport";
-
-    private string Transform
-        => string.Create(CultureInfo.InvariantCulture, $"translate({_camera.PanX:0.###}px, {_camera.PanY:0.###}px) scale({_camera.Zoom:0.####})");
-
-    private string ZoomLabel => string.Create(CultureInfo.InvariantCulture, $"{_camera.Zoom * 100:0}%");
 
     private void OnPointerDown(PointerEventArgs e)
     {
@@ -123,13 +134,13 @@ public partial class JobWorkflowGraphView : IAsyncDisposable
 
     private async Task OnWheel(WheelEventArgs e)
     {
-        var origin = await ViewportPointAsync(center: false, e.ClientX, e.ClientY);
+        var origin = await ViewportPointAsync(false, e.ClientX, e.ClientY);
         _camera.ZoomAt(WheelFactor(e), origin.X, origin.Y);
     }
 
     private async Task ZoomAroundCenterAsync(double factor)
     {
-        var origin = await ViewportPointAsync(center: true, 0, 0);
+        var origin = await ViewportPointAsync(true, 0, 0);
         _camera.ZoomAt(factor, origin.X, origin.Y);
     }
 
@@ -156,23 +167,20 @@ public partial class JobWorkflowGraphView : IAsyncDisposable
         try {
             await _module.InvokeVoidAsync("capture", _viewport, pointerId);
         }
-        catch (JSException) {
-        }
+        catch (JSException) { }
     }
 
     private async Task<ViewportPoint> ViewportPointAsync(bool center, double clientX, double clientY)
     {
         await EnsureModuleAsync();
         if (_module is null)
-            return new ViewportPoint();
+            return new();
 
         try {
-            return center
-                ? await _module.InvokeAsync<ViewportPoint>("center", _viewport)
-                : await _module.InvokeAsync<ViewportPoint>("origin", _viewport, clientX, clientY);
+            return center ? await _module.InvokeAsync<ViewportPoint>("center", _viewport) : await _module.InvokeAsync<ViewportPoint>("origin", _viewport, clientX, clientY);
         }
         catch (JSException) {
-            return new ViewportPoint();
+            return new();
         }
     }
 
@@ -199,24 +207,9 @@ public partial class JobWorkflowGraphView : IAsyncDisposable
         }
     }
 
-    /// <inheritdoc />
-    public async ValueTask DisposeAsync()
-    {
-        if (_module is null)
-            return;
+    private static string ViewBox(DiagramPage page) => string.Create(CultureInfo.InvariantCulture, $"0 0 {page.PageWidth} {page.PageHeight}");
 
-        try {
-            await _module.DisposeAsync();
-        }
-        catch (JSDisconnectedException) {
-        }
-    }
-
-    private static string ViewBox(DiagramPage page)
-        => string.Create(CultureInfo.InvariantCulture, $"0 0 {page.PageWidth} {page.PageHeight}");
-
-    private string NodeClass(DiagramCell node)
-        => OnStepSelected.HasDelegate ? "workflow-graph-node-clickable" : "";
+    private string NodeClass(DiagramCell node) => OnStepSelected.HasDelegate ? "workflow-graph-node-clickable" : "";
 
     private bool IsSelected(DiagramCell node) => TryStepId(node, out var id) && id == SelectedStepId;
 
@@ -235,8 +228,8 @@ public partial class JobWorkflowGraphView : IAsyncDisposable
     {
         var text = Fit(edge.Value, 36);
         var (x, y) = EdgeLabelAt(edge);
-        var width = Math.Max(44, (text.Length * 6.4) + 12);
-        return new(x - (width / 2), y - 16, width, text);
+        var width = Math.Max(44, text.Length * 6.4 + 12);
+        return new(x - width / 2, y - 16, width, text);
     }
 
     private static (double X, double Y) EdgeLabelAt(DiagramCell edge)
@@ -250,8 +243,6 @@ public partial class JobWorkflowGraphView : IAsyncDisposable
         return vertical ? (x + 28, y) : (x, y - 14);
     }
 
-    private readonly record struct EdgeCaption(double X, double Y, double Width, string Text);
-
     /// <summary>Keeps a label inside the node. The tooltip still carries the full text.</summary>
     private static string Fit(string? value, int max)
     {
@@ -261,8 +252,7 @@ public partial class JobWorkflowGraphView : IAsyncDisposable
         return string.Concat(value.AsSpan(0, max - 1), "…");
     }
 
-    private Task OnNodeKeyDown(KeyboardEventArgs args, DiagramCell node)
-        => args.Key is "Enter" or " " ? SelectAsync(node) : Task.CompletedTask;
+    private Task OnNodeKeyDown(KeyboardEventArgs args, DiagramCell node) => args.Key is "Enter" or " " ? SelectAsync(node) : Task.CompletedTask;
 
     private static string Polyline(DiagramCell edge)
     {
@@ -287,16 +277,18 @@ public partial class JobWorkflowGraphView : IAsyncDisposable
         return string.Create(CultureInfo.InvariantCulture, $"{x},{y} {x - 8},{y - 4} {x - 8},{y + 4}");
     }
 
-    private static double TextX(DiagramCell node) => node.Geometry!.X!.Value + (node.Geometry.Width!.Value / 2);
+    private static double TextX(DiagramCell node) => node.Geometry!.X!.Value + node.Geometry.Width!.Value / 2;
 
-    private static double TextY(DiagramCell node, double fraction) => node.Geometry!.Y!.Value + (node.Geometry.Height!.Value * fraction);
+    private static double TextY(DiagramCell node, double fraction) => node.Geometry!.Y!.Value + node.Geometry.Height!.Value * fraction;
 
     private string Stroke(DiagramCell node)
     {
         if (!TryStepId(node, out var id))
             return "var(--mud-palette-lines-default)";
+
         if (id == SelectedStepId)
             return "var(--mud-palette-primary)";
+
         if (!StepStates.TryGetValue(id, out var state))
             return "var(--mud-palette-lines-default)";
 
@@ -305,7 +297,7 @@ public partial class JobWorkflowGraphView : IAsyncDisposable
             JobWorkflowStepState.Failed => "var(--mud-palette-error)",
             JobWorkflowStepState.Running => "var(--mud-palette-info)",
             JobWorkflowStepState.Skipped or JobWorkflowStepState.ConditionNotMet => "var(--mud-palette-warning)",
-            _ => "var(--mud-palette-lines-default)"
+            var _ => "var(--mud-palette-lines-default)"
         };
     }
 
@@ -344,10 +336,11 @@ public partial class JobWorkflowGraphView : IAsyncDisposable
         return count == 0 ? "Starts with the workflow" : $"After {count} {(count == 1 ? "step" : "steps")}";
     }
 
-    private JobWorkflowStepDraft? StepOf(DiagramCell node)
-        => TryStepId(node, out var id) ? Steps.FirstOrDefault(step => step.Id == id) : null;
+    private JobWorkflowStepDraft? StepOf(DiagramCell node) => TryStepId(node, out var id) ? Steps.FirstOrDefault(step => step.Id == id) : null;
 
     private static bool TryStepId(DiagramCell node, out Guid id) => Guid.TryParseExact(node.Id, "N", out id);
+
+    private readonly record struct EdgeCaption(double X, double Y, double Width, string Text);
 
     private sealed class ViewportPoint
     {

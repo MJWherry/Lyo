@@ -5,7 +5,6 @@ using Lyo.Encryption;
 using Lyo.Encryption.AesGcm;
 using Lyo.Encryption.TwoKey;
 using Lyo.FileMetadataStore.Models;
-using Lyo.FileStorage.Models;
 using Lyo.FileStorage.Tests.Support;
 using Lyo.KeyStore;
 using Lyo.Streams;
@@ -57,11 +56,10 @@ public sealed class FileStorageSavePipelineMemoryTests
     [Fact]
     public async Task SaveFromStreamAsync_DeclaredLengthFarExceedsActual_DoesNotPreallocateDeclaredSize()
     {
-        using var scope = LocalFileStorageTestScope.Create(
-            o => {
-                o.EnableDuplicateDetection = true;
-                return o;
-            });
+        using var scope = LocalFileStorageTestScope.Create(o => {
+            o.EnableDuplicateDetection = true;
+            return o;
+        });
 
         // Warm the pipeline so first-call JIT and static initialisation stay out of the measurement.
         using (var warmup = new MemoryStream(TestData.Create(16), false))
@@ -69,7 +67,6 @@ public sealed class FileStorageSavePipelineMemoryTests
 
         const long declaredSize = 64L * 1024 * 1024;
         var payload = TestData.Create(10);
-
         long allocated;
         FileStoreResult saved;
         using (var input = new MemoryStream(payload, false)) {
@@ -91,10 +88,8 @@ public sealed class FileStorageSavePipelineMemoryTests
         using var scope = LocalFileStorageTestScope.Create(compressionService: CreateCompressionService());
         var payload = TestData.Create(256 * 1024);
         var expectedOriginalHash = SHA256.HashData(payload);
-
         using var input = new MemoryStream(payload, false);
         var saved = await scope.Storage.SaveFromStreamAsync(input, payload.LongLength, "compress-only.bin", true, ct: TestCt);
-
         Assert.True(saved.IsCompressed);
         Assert.False(saved.IsEncrypted);
         Assert.Equal(expectedOriginalHash, saved.OriginalFileHash);
@@ -113,10 +108,8 @@ public sealed class FileStorageSavePipelineMemoryTests
         using var scope = LocalFileStorageTestScope.Create(twoKeyEncryptionService: CreateEncryptionService("enc-key"));
         var payload = TestData.Create(256 * 1024);
         var expectedOriginalHash = SHA256.HashData(payload);
-
         using var input = new MemoryStream(payload, false);
         var saved = await scope.Storage.SaveFromStreamAsync(input, payload.LongLength, "encrypt-only.bin", encrypt: true, keyId: "enc-key", ct: TestCt);
-
         Assert.True(saved.IsEncrypted);
         Assert.False(saved.IsCompressed);
         Assert.Equal(expectedOriginalHash, saved.OriginalFileHash);
@@ -135,14 +128,10 @@ public sealed class FileStorageSavePipelineMemoryTests
     [InlineData(true, true)]
     public async Task SaveFromStreamAsync_NonSeekableSourceWithDedupOff_RoundTrips(bool compress, bool encrypt)
     {
-        using var scope = LocalFileStorageTestScope.Create(
-            compressionService: CreateCompressionService(), twoKeyEncryptionService: CreateEncryptionService("enc-key"));
-
+        using var scope = LocalFileStorageTestScope.Create(compressionService: CreateCompressionService(), twoKeyEncryptionService: CreateEncryptionService("enc-key"));
         var payload = TestData.Create(128 * 1024);
         using var input = new NonSeekableReadStream(new MemoryStream(payload, false));
-        var saved = await scope.Storage.SaveFromStreamAsync(
-            input, payload.LongLength, "non-seekable.bin", compress, encrypt, encrypt ? "enc-key" : null, ct: TestCt);
-
+        var saved = await scope.Storage.SaveFromStreamAsync(input, payload.LongLength, "non-seekable.bin", compress, encrypt, encrypt ? "enc-key" : null, ct: TestCt);
         Assert.Equal(payload.LongLength, saved.OriginalFileSize);
         Assert.Equal(SHA256.HashData(payload), saved.OriginalFileHash);
         Assert.Equal(payload, await scope.Storage.GetFileAsync(saved.Id, ct: TestCt));

@@ -1,6 +1,6 @@
+using Lyo.Leaderboard.Enums;
 using Lyo.Leaderboard.Postgres;
 using Lyo.Leaderboard.Postgres.Database;
-using Lyo.Leaderboard.Seed;
 using Lyo.Seed;
 
 namespace Lyo.Leaderboard.Seed.Tests;
@@ -18,28 +18,32 @@ public sealed class LeaderboardEfSeedContributorTests
         var values = transport.Items.OfType<EntryValueEntity>().ToList();
         var standings = transport.Items.OfType<StandingEntity>().ToList();
         Assert.Equal(2, boards.Count);
-        Assert.All(boards, board => {
-            Assert.Equal(LeaderboardEfSeedContributor.TenantId, board.TenantId);
-            Assert.Equal(LeaderboardEfSeedContributor.OwnerUserId, board.OwnerUserId);
-            Assert.Equal(LeaderboardCatalog.KeyFor(board.Slug), board.AlgorithmKey);
-            Assert.Equal(3, properties.Count(row => row.BoardId == board.Id));
-            Assert.Contains(properties, row => row.BoardId == board.Id && row.Key == "fish_type" && row.ChoicesJson != null);
-            var boardMembers = members.Where(row => row.BoardId == board.Id).ToList();
-            Assert.Equal(3, boardMembers.Count);
-            Assert.Contains(transport.Items.OfType<InviteEntity>(), row => row.BoardId == board.Id);
-            var boardEntries = entries.Where(row => row.BoardId == board.Id).ToList();
-            Assert.Equal(2, boardEntries.Count);
-            Assert.All(boardEntries, entry => {
-                Assert.Equal(nameof(Lyo.Leaderboard.Enums.EntryStatus.Approved), entry.Status);
-                Assert.Equal(LeaderboardEfSeedContributor.BassScore, entry.ComputedScore);
-                Assert.Equal(3, values.Count(row => row.EntryId == entry.Id));
-                Assert.Contains(values, row => row.EntryId == entry.Id && row.ChoiceKey == "bass");
-                Assert.Contains(values, row => row.EntryId == entry.Id && row.NumberValue == 6m);
-                Assert.Contains(values, row => row.EntryId == entry.Id && row.NumberValue == 15m);
+        Assert.All(
+            boards, board => {
+                Assert.Equal(LeaderboardEfSeedContributor.TenantId, board.TenantId);
+                Assert.Equal(LeaderboardEfSeedContributor.OwnerUserId, board.OwnerUserId);
+                Assert.Equal(LeaderboardCatalog.KeyFor(board.Slug), board.AlgorithmKey);
+                Assert.Equal(3, properties.Count(row => row.BoardId == board.Id));
+                Assert.Contains(properties, row => row.BoardId == board.Id && row.Key == "fish_type" && row.ChoicesJson != null);
+                var boardMembers = members.Where(row => row.BoardId == board.Id).ToList();
+                Assert.Equal(3, boardMembers.Count);
+                Assert.Contains(transport.Items.OfType<InviteEntity>(), row => row.BoardId == board.Id);
+                var boardEntries = entries.Where(row => row.BoardId == board.Id).ToList();
+                Assert.Equal(2, boardEntries.Count);
+                Assert.All(
+                    boardEntries, entry => {
+                        Assert.Equal(nameof(EntryStatus.Approved), entry.Status);
+                        Assert.Equal(LeaderboardEfSeedContributor.BassScore, entry.ComputedScore);
+                        Assert.Equal(3, values.Count(row => row.EntryId == entry.Id));
+                        Assert.Contains(values, row => row.EntryId == entry.Id && row.ChoiceKey == "bass");
+                        Assert.Contains(values, row => row.EntryId == entry.Id && row.NumberValue == 6m);
+                        Assert.Contains(values, row => row.EntryId == entry.Id && row.NumberValue == 15m);
+                    });
+
+                Assert.Contains(transport.Items.OfType<AdjustmentEntity>(), row => row.BoardId == board.Id);
+                Assert.Equal(3, standings.Count(row => row.BoardId == board.Id));
             });
-            Assert.Contains(transport.Items.OfType<AdjustmentEntity>(), row => row.BoardId == board.Id);
-            Assert.Equal(3, standings.Count(row => row.BoardId == board.Id));
-        });
+
         var first = Assert.Single(boards, row => row.Slug == "seed-fishing-0");
         Assert.Equal("leaderboard.seed_fishing_0", first.AlgorithmKey);
         var hashes = transport.Items.OfType<InviteEntity>().Select(row => row.TokenHash).ToList();
@@ -69,6 +73,7 @@ public sealed class LeaderboardEfSeedContributorTests
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

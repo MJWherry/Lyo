@@ -25,7 +25,7 @@ public sealed class FileStorageCapabilitiesComposerTests : IDisposable
         var options = new DiskFileStorageOptions { RootDirectoryPath = _root };
         using var storage = new LocalFileStorageService(options);
         var multipart = new LocalMultipartUploadService(storage, new InMemoryMultipartUploadSessionStore(), options);
-        var composed = FileStorageCapabilitiesComposer.Compose(storage, multipart, encryption: false, archive: true, accessLinks: true);
+        var composed = FileStorageCapabilitiesComposer.Compose(storage, multipart, false, true, true);
         Assert.True(composed.Multipart);
         Assert.False(composed.PresignedMultipartParts);
         Assert.False(composed.Encryption);
@@ -45,7 +45,7 @@ public sealed class FileStorageCapabilitiesComposerTests : IDisposable
         var options = new DiskFileStorageOptions { RootDirectoryPath = _root };
         using var storage = new LocalFileStorageService(options);
         var keys = new LocalKeyStore();
-        var composed = FileStorageCapabilitiesComposer.Compose(storage, new PresignedMultipart(), encryption: true, archive: false, accessLinks: false);
+        var composed = FileStorageCapabilitiesComposer.Compose(storage, new PresignedMultipart(), true, false, false);
         Assert.True(composed.Multipart);
         Assert.True(composed.PresignedMultipartParts);
         Assert.True(composed.Encryption);

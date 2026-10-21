@@ -1,14 +1,9 @@
 namespace Lyo.Rfid;
 
-/// <summary>
-/// Checks an ISO 15693 tag response. The buffer includes the flags byte and the CRC the reader returned.
-/// </summary>
+/// <summary>Checks an ISO 15693 tag response. The buffer includes the flags byte and the CRC the reader returned.</summary>
 public static class Iso15693Response
 {
-    /// <summary>
-    /// Verifies the CRC and rejects a response whose error flag is set.
-    /// The returned buffer is the bytes between the flags and the CRC.
-    /// </summary>
+    /// <summary>Verifies the CRC and rejects a response whose error flag is set. The returned buffer is the bytes between the flags and the CRC.</summary>
     public static byte[] Payload(ReadOnlySpan<byte> response)
     {
         if (response.Length < 3)

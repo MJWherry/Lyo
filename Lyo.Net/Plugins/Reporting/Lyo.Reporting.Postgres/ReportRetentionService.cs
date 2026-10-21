@@ -25,14 +25,14 @@ public sealed class ReportRetentionService(
 {
     private const int BatchSize = 100;
 
+    /// <summary>Safety valve: most rows skipped by cleanup-hook failures in a single pass before the pass stops.</summary>
+    private const int MaxSkippedPerPass = 500;
+
     /// <summary>
     /// Slack added to <see cref="PostgresReportingOptions.GenerationTimeout" /> when deriving the recovery cutoff. A generation cancelled at its timeout still needs a moment to
     /// unwind and persist Failed, and recovery must not race that write.
     /// </summary>
     private static readonly TimeSpan RecoveryGrace = TimeSpan.FromMinutes(5);
-
-    /// <summary>Safety valve: most rows skipped by cleanup-hook failures in a single pass before the pass stops.</summary>
-    private const int MaxSkippedPerPass = 500;
 
     private static readonly string[] TerminalStatuses = [nameof(ReportGenerationStatus.Succeeded), nameof(ReportGenerationStatus.Failed)];
 
@@ -110,8 +110,8 @@ public sealed class ReportRetentionService(
     /// </summary>
     /// <remarks>
     /// Age alone does not mean stuck. Generations executing in this process are skipped via <see cref="ReportGenerationLiveTracker" />, and when
-    /// <see cref="PostgresReportingOptions.GenerationTimeout" /> is longer than the stuck timeout the cutoff stretches to the timeout plus grace. Otherwise recovery would fail
-    /// runs that are still legitimately working.
+    /// <see cref="PostgresReportingOptions.GenerationTimeout" /> is longer than the stuck timeout the cutoff stretches to the timeout plus grace. Otherwise recovery would fail runs that
+    /// are still legitimately working.
     /// </remarks>
     public async Task<int> RecoverStuckGenerationsAsync(CancellationToken ct = default)
     {
@@ -137,7 +137,7 @@ public sealed class ReportRetentionService(
         while (!ct.IsCancellationRequested) {
             var batch = await db.ReportGenerations
                 .Where(g => ((g.Status == nameof(ReportGenerationStatus.Running) && (g.StartedTimestamp ?? g.CreatedTimestamp) < cutoff) ||
-                        (g.Status == nameof(ReportGenerationStatus.Pending) && g.CreatedTimestamp < cutoff)) && !liveIds.Contains(g.Id))
+                    (g.Status == nameof(ReportGenerationStatus.Pending) && g.CreatedTimestamp < cutoff)) && !liveIds.Contains(g.Id))
                 .OrderBy(g => g.CreatedTimestamp)
                 .Take(BatchSize)
                 .ToListAsync(ct)

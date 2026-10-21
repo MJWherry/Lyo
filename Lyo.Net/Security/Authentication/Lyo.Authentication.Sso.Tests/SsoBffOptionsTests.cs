@@ -9,12 +9,14 @@ public sealed class SsoBffOptionsTests
     [Fact]
     public void Bind_LyoOidcBff_LeavesDefaults()
     {
-        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> {
-            ["LyoOidcBff:AllowedReturnOrigins:0"] = "https://app.example",
-            ["LyoOidcBff:DefaultReturnUrl"] = "/app",
-            ["LyoOidcBff:HandoffCodeTtl"] = "00:00:45",
-            ["LyoExternalLogin:Policy"] = "RequireExistingUser"
-        }).Build();
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(
+                new Dictionary<string, string?> {
+                    ["LyoOidcBff:AllowedReturnOrigins:0"] = "https://app.example",
+                    ["LyoOidcBff:DefaultReturnUrl"] = "/app",
+                    ["LyoOidcBff:HandoffCodeTtl"] = "00:00:45",
+                    ["LyoExternalLogin:Policy"] = "RequireExistingUser"
+                })
+            .Build();
 
         var services = new ServiceCollection();
         services.AddLogging();
@@ -30,12 +32,14 @@ public sealed class SsoBffOptionsTests
     [Fact]
     public void Bind_LyoSsoPresentAndEmpty_DoesNotReadLyoOidcBff()
     {
-        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?> {
-            ["LyoSso:DefaultReturnUrl"] = "/",
-            ["LyoOidcBff:AllowedReturnOrigins:0"] = "https://old.example",
-            ["LyoOidcBff:DefaultReturnUrl"] = "/old",
-            ["LyoOidcBff:HandoffCodeTtl"] = "00:02:00"
-        }).Build();
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(
+                new Dictionary<string, string?> {
+                    ["LyoSso:DefaultReturnUrl"] = "/",
+                    ["LyoOidcBff:AllowedReturnOrigins:0"] = "https://old.example",
+                    ["LyoOidcBff:DefaultReturnUrl"] = "/old",
+                    ["LyoOidcBff:HandoffCodeTtl"] = "00:02:00"
+                })
+            .Build();
 
         var options = new SsoBffOptions();
         Extensions.BindBff(configuration, options);

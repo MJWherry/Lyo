@@ -1,6 +1,5 @@
 using System.Text.Json;
 using ClosedXML.Excel;
-using Lyo.Api.Import;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Enums;
 
@@ -28,6 +27,7 @@ public sealed class XlsxImportFormatHandler : IImportFormatHandler
             var sheet = string.IsNullOrWhiteSpace(request.SheetName)
                 ? workbook.Worksheets.FirstOrDefault()
                 : workbook.Worksheets.FirstOrDefault(item => string.Equals(item.Name, request.SheetName, StringComparison.OrdinalIgnoreCase));
+
             if (sheet is null)
                 return ImportJsonConversion.Fail(string.IsNullOrWhiteSpace(request.SheetName) ? "Workbook has no worksheets." : $"Worksheet '{request.SheetName}' was not found.");
 

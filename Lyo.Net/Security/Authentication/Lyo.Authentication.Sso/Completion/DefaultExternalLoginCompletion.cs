@@ -65,11 +65,16 @@ public sealed class DefaultExternalLoginCompletion : IExternalLoginCompletion
         var newlyProvisioned = false;
         if (link is null) {
             user = await ResolveOrProvisionAsync(assertion, ct).ConfigureAwait(false);
-            await _identities.LinkAsync(user.Id, assertion.Provider, assertion.Subject, assertion.Email, assertion.ProviderScopes, assertion.RawClaims, null, ct).ConfigureAwait(false);
+            await _identities.LinkAsync(user.Id, assertion.Provider, assertion.Subject, assertion.Email, assertion.ProviderScopes, assertion.RawClaims, null, ct)
+                .ConfigureAwait(false);
+
             _logger.LogInformation("Provisioned and linked Lyo user {UserId} for {Provider}", user.Id, assertion.Provider);
             newlyProvisioned = true;
-            await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.UserProvisioned, user.Id, assertion.Subject, assertion.Provider, "success", ct: ct).ConfigureAwait(false);
-            await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.IdentityLinked, user.Id, assertion.Subject, assertion.Provider, "success", ct: ct).ConfigureAwait(false);
+            await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.UserProvisioned, user.Id, assertion.Subject, assertion.Provider, "success", ct: ct)
+                .ConfigureAwait(false);
+
+            await _audit.RecordAsync(_auditContext, _logger, AuthAuditEventKind.IdentityLinked, user.Id, assertion.Subject, assertion.Provider, "success", ct: ct)
+                .ConfigureAwait(false);
         }
         else {
             user = await _users.GetByIdAsync(link.UserId, null, ct).ConfigureAwait(false) ??
@@ -78,7 +83,8 @@ public sealed class DefaultExternalLoginCompletion : IExternalLoginCompletion
             if (user.IsDisabled)
                 throw new ExternalLoginRejectedException("UserDisabled", "Lyo user is disabled");
 
-            await _identities.LinkAsync(user.Id, assertion.Provider, assertion.Subject, assertion.Email, assertion.ProviderScopes, assertion.RawClaims, null, ct).ConfigureAwait(false);
+            await _identities.LinkAsync(user.Id, assertion.Provider, assertion.Subject, assertion.Email, assertion.ProviderScopes, assertion.RawClaims, null, ct)
+                .ConfigureAwait(false);
         }
 
         await _users.UpdateLastLoginAsync(user.Id, DateTime.UtcNow, null, ct).ConfigureAwait(false);
@@ -89,7 +95,8 @@ public sealed class DefaultExternalLoginCompletion : IExternalLoginCompletion
         await _tokens.RevokeRefreshTokensForUserAsync(user.Id, assertion.Provider, DateTime.UtcNow, "login_replaced", null, ct).ConfigureAwait(false);
         var issued = await _jwtIssuer.IssueAsync(user, effective, assertion.Provider, assertion.Subject, true, ct).ConfigureAwait(false);
         await _audit.RecordAsync(
-                _auditContext, _logger, AuthAuditEventKind.ExternalLoginSucceeded, user.Id, assertion.Subject, assertion.Provider, "success", newlyProvisioned ? "jit_provisioned" : null, ct: ct)
+                _auditContext, _logger, AuthAuditEventKind.ExternalLoginSucceeded, user.Id, assertion.Subject, assertion.Provider, "success",
+                newlyProvisioned ? "jit_provisioned" : null, ct: ct)
             .ConfigureAwait(false);
 
         return issued;
@@ -152,7 +159,8 @@ public sealed class DefaultExternalLoginCompletion : IExternalLoginCompletion
         var baselineScopes = _options.DefaultUserScopes.Count == 0 ? Array.Empty<string>() : _options.DefaultUserScopes.Distinct(StringComparer.Ordinal).ToArray();
         var display = assertion.DisplayName.IsNullOrWhitespace() ? assertion.Email : assertion.DisplayName;
         var user = new LyoUser(
-            LyoGuid.CreateV7(), display, assertion.Email, assertion.EmailVerified, assertion.AvatarUrl, assertion.PreferredLanguageBcp47, baselineScopes, null, null, now, null, null, null, null);
+            LyoGuid.CreateV7(), display, assertion.Email, assertion.EmailVerified, assertion.AvatarUrl, assertion.PreferredLanguageBcp47, baselineScopes, null, null, now, null,
+            null, null, null);
 
         return await _users.CreateAsync(user, null, ct).ConfigureAwait(false);
     }

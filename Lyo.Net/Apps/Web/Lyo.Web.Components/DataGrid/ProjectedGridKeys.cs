@@ -1,8 +1,8 @@
 namespace Lyo.Web.Components.DataGrid;
 
 /// <summary>
-/// Row-key selectors for projected grids. <c>LyoDataGridProjected</c> needs an <c>object[]</c> key per row so selection and expansion survive a refresh; projected rows are loose
-/// dictionaries, so the key has to be read by field name.
+/// Row-key selectors for projected grids. <c>LyoDataGridProjected</c> needs an <c>object[]</c> key per row so selection and expansion survive a refresh; projected rows are
+/// loose dictionaries, so the key has to be read by field name.
 /// </summary>
 public static class ProjectedGridKeys
 {
@@ -10,8 +10,8 @@ public static class ProjectedGridKeys
     public const string IdField = "Id";
 
     /// <summary>
-    /// Key from an id field, normalized to <see cref="Guid" /> when it parses. Normalizing matters because the same row can arrive as a <see cref="Guid" /> from one projection and
-    /// as a string from another; without it the grid treats them as distinct rows.
+    /// Key from an id field, normalized to <see cref="Guid" /> when it parses. Normalizing matters because the same row can arrive as a <see cref="Guid" /> from one projection
+    /// and as a string from another; without it the grid treats them as distinct rows.
     /// </summary>
     /// <param name="item">Projected row.</param>
     /// <param name="field">Field holding the identifier.</param>
@@ -50,9 +50,7 @@ public static class ProjectedGridKeys
         return key;
     }
 
-    /// <summary>
-    /// Stand-in projected rows from selected keys so bulk handlers can read an id field without depending on current-page row objects, which are replaced on every reload.
-    /// </summary>
+    /// <summary>Stand-in projected rows from selected keys so bulk handlers can read an id field without depending on current-page row objects, which are replaced on every reload.</summary>
     /// <param name="keys">Selected keys from <c>LyoDataGridProjected.SelectedKeys</c>.</param>
     /// <param name="field">Field name to populate on each stand-in row. Defaults to <see cref="IdField" />.</param>
     public static IReadOnlyList<object?> RowsFromKeys(IReadOnlyList<object[]>? keys, string field = IdField)

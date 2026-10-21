@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -516,9 +515,9 @@ public sealed class RootQueryService<TContext>(
     }
 
     /// <summary>
-    /// Tags a cached root-query page. Beyond the type tags for every entity in the shape, this emits an instance tag per returned From row when the projection carries that
-    /// row's primary key. Granular invalidation after a single-row patch fires instance tags only, so a page carrying nothing but type tags survived the write and kept serving
-    /// the pre-patch row.
+    /// Tags a cached root-query page. Beyond the type tags for every entity in the shape, this emits an instance tag per returned From row when the projection carries that row's
+    /// primary key. Granular invalidation after a single-row patch fires instance tags only, so a page carrying nothing but type tags survived the write and kept serving the pre-patch
+    /// row.
     /// </summary>
     private static string[] BuildTags(RootQueryEntityRegistry registry, RootQueryShapePlan plan, RootQueryEntityEntry fromEntry, ProjectedQueryRes<object?>? result)
     {

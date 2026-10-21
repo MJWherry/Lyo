@@ -3,13 +3,13 @@ using Lyo.Api.Services.Crud.Read.Project;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Tests.Fixtures;
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres.Database;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
 using Microsoft.EntityFrameworkCore;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Api.Tests;
 
@@ -79,7 +79,6 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         var id1 = await fixture.SeedJobDefinitionAsync(prefix + "a");
         var id2 = await fixture.SeedJobDefinitionAsync(prefix + "b");
         var id3 = await fixture.SeedJobDefinitionAsync(prefix + "c");
-
         using var scope = fixture.ServiceProvider.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
         await using (var context = await factory.CreateDbContextAsync(TestCt)) {
@@ -127,7 +126,6 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         var aa1 = await fixture.SeedJobDefinitionAsync("Aa" + token + "1", token);
         var aa2 = await fixture.SeedJobDefinitionAsync("Aa" + token + "2", token);
         var bb = await fixture.SeedJobDefinitionAsync("Bb" + token, token);
-
         using var scope = fixture.ServiceProvider.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
         await using (var context = await factory.CreateDbContextAsync(TestCt)) {
@@ -170,7 +168,6 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         await fixture.SeedJobParameterAsync(two, "a-" + token);
         await fixture.SeedJobParameterAsync(two, "b-" + token);
         await fixture.SeedJobParameterAsync(one, "c-" + token);
-
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var request = new ProjectionQueryReq {
@@ -206,7 +203,6 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         await fixture.SeedJobParameterAsync(id, "a-" + token);
         await fixture.SeedJobParameterAsync(id, "b-" + token);
         await fixture.SeedJobScheduleAsync(id, token);
-
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var request = new ProjectionQueryReq {
@@ -245,7 +241,6 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         Assert.NotNull(build.Projection);
         Assert.NotNull(build.ConversionPlan);
         Assert.Equal(12, build.ConversionPlan!.Slots.Count);
-
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
         await using var context = await factory.CreateDbContextAsync(TestCt);
         context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
@@ -256,7 +251,6 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         Assert.Equal(runId, sqlRow["Id"]);
         Assert.Equal(defId, sqlRow["JobDefinitionId"]);
         Assert.Equal(createdBy, sqlRow["CreatedBy"]?.ToString());
-
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var request = new ProjectionQueryReq {
             Start = 0,
@@ -264,6 +258,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             Select = select,
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, runId)
         };
+
         var result = await queryService.QueryProjected<JobRun>(request, x => x.CreatedTimestamp, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
@@ -292,7 +287,6 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         var build = projectionService.TryBuildSqlProjectionExpression<JobRun>(specs);
         Assert.NotNull(build.Projection);
         Assert.NotNull(build.ConversionPlan);
-
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
         await using var context = await factory.CreateDbContextAsync(TestCt);
         context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
@@ -304,7 +298,6 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         Assert.Equal(defName, sqlRow["JobDefinition.Name"]?.ToString());
         Assert.Equal(0, Convert.ToInt32(sqlRow["JobRunResults.Count"]));
         Assert.Equal(0, Convert.ToInt32(sqlRow["JobRunLogs.Count"]));
-
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var request = new ProjectionQueryReq {
             Start = 0,
@@ -312,6 +305,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             Select = select,
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, runId)
         };
+
         var result = await queryService.QueryProjected<JobRun>(request, x => x.CreatedTimestamp, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         var apiRow = Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(result.Items![0]);
@@ -448,8 +442,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         var defId = await fixture.SeedJobDefinitionAsync("GetInvalidInclude");
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        await Assert.ThrowsAsync<ApiErrorException>(()
-            => queryService.Get<JobDefinition, JobDefinitionRes>([defId], ["NotANavigation"], null, null, TestCt));
+        await Assert.ThrowsAsync<ApiErrorException>(() => queryService.Get<JobDefinition, JobDefinitionRes>([defId], ["NotANavigation"], null, null, TestCt));
     }
 
     [Fact]

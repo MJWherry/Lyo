@@ -5,15 +5,13 @@ namespace Lyo.Postgres;
 
 /// <summary>Shared PostgreSQL helpers that keep each Lyo <c>*.Postgres</c> package inside its own schema.</summary>
 /// <remarks>
-/// Every Lyo package owns one schema and stores migration history there. The two operations every package needs are building
-/// <see cref="DbContextOptions{TContext}" /> aimed at that schema, and creating the schema before the first migration. Both sit here so the convention is written once.
+/// Every Lyo package owns one schema and stores migration history there. The two operations every package needs are building <see cref="DbContextOptions{TContext}" /> aimed
+/// at that schema, and creating the schema before the first migration. Both sit here so the convention is written once.
 /// </remarks>
 public static class PostgresSchema
 {
     /// <summary>EF Core migration-history table name used inside each package schema.</summary>
-    /// <remarks>
-    /// Packages keep EF Core's default table name but put it in their own schema, so they can share a database without sharing migration state.
-    /// </remarks>
+    /// <remarks>Packages keep EF Core's default table name but put it in their own schema, so they can share a database without sharing migration state.</remarks>
     public const string MigrationsHistoryTable = "__EFMigrationsHistory";
 
     /// <summary>Builds <see cref="DbContextOptions{TContext}" /> for a connection string and pins the history table to <paramref name="schema" />.</summary>
@@ -25,9 +23,7 @@ public static class PostgresSchema
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(schema);
-        return new DbContextOptionsBuilder<TContext>()
-            .UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable(MigrationsHistoryTable, schema))
-            .Options;
+        return new DbContextOptionsBuilder<TContext>().UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable(MigrationsHistoryTable, schema)).Options;
     }
 
     /// <summary>Creates a <typeparamref name="TContext" /> without going through DI.</summary>
@@ -43,9 +39,7 @@ public static class PostgresSchema
         => (TContext)Activator.CreateInstance(typeof(TContext), BuildOptions<TContext>(connectionString, schema))!;
 
     /// <summary>Creates <paramref name="schema" /> when it is missing.</summary>
-    /// <remarks>
-    /// <c>MigrateAsync</c> will not create the schema that holds the migration-history table, so this must run first on an empty database.
-    /// </remarks>
+    /// <remarks><c>MigrateAsync</c> will not create the schema that holds the migration-history table, so this must run first on an empty database.</remarks>
     /// <param name="context">Context already pointed at the target database.</param>
     /// <param name="schema">Schema to create.</param>
     /// <param name="ct">Token that cancels the DDL.</param>

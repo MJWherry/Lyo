@@ -12,6 +12,7 @@ public readonly record struct CaptureRegion(int X, int Y, int Width, int Height)
         var bottom = Math.Min((long)Y + Height, (long)screen.Y + screen.Height);
         if (right <= left || bottom <= top)
             return new(left, top, 0, 0);
+
         return new(left, top, (int)(right - left), (int)(bottom - top));
     }
 }

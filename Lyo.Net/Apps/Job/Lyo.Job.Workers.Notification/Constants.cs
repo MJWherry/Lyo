@@ -3,6 +3,9 @@ namespace Lyo.Job.Workers.Notification;
 /// <summary>Worker types and parameter keys for the notification workers. One shared job definition per channel serves every workflow, so the keys are part of the contract.</summary>
 public static class Constants
 {
+    /// <summary>Content type a webhook body is sent with when the step does not name one.</summary>
+    public const string DefaultContentType = "application/json";
+
     /// <summary>Worker type strings. These must match <c>WorkerType</c> on the job definitions the workflow steps point at.</summary>
     public static class WorkerType
     {
@@ -28,9 +31,6 @@ public static class Constants
         public const string From = "From";
         public const string FromName = "FromName";
     }
-
-    /// <summary>Content type a webhook body is sent with when the step does not name one.</summary>
-    public const string DefaultContentType = "application/json";
 
     /// <summary>Result keys each worker reports, so a downstream step can condition on the send outcome.</summary>
     public static class ResultKey

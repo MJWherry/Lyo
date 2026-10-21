@@ -4,8 +4,8 @@ using Lyo.Reporting.Models.Controls;
 namespace Lyo.Reporting.Models.Composition;
 
 /// <summary>
-/// Print/PDF keep-together: whether a control should avoid splitting across pages.
-/// Null <c>KeepTogether</c> on the model means the type default — on for cards, blocks, and grids; off for tables. Page breaks never keep together.
+/// Print/PDF keep-together: whether a control should avoid splitting across pages. Null <c>KeepTogether</c> on the model means the type default — on for cards, blocks, and
+/// grids; off for tables. Page breaks never keep together.
 /// </summary>
 public static class ReportKeepTogether
 {
@@ -19,7 +19,7 @@ public static class ReportKeepTogether
         return control switch {
             Block { ContentType: ContentType.PageBreak } => false,
             Table table => table.KeepTogether ?? false,
-            _ => control.KeepTogether ?? true
+            var _ => control.KeepTogether ?? true
         };
     }
 

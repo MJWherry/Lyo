@@ -1,6 +1,9 @@
 # Lyo.Web.Automation.Api
 
-Maps `POST /Automation/Run` and the status, cancel, log, snapshot, and per-step screenshot reads. Finished steps appear on the run while it is still going. Plans are stored through `IAutomationPlanStore` at `GET/POST /Automation/Plan`, `GET/PUT /Automation/Plan/{name}`, and `GET /Automation/Plan/id/{id}`. The default store is in memory. `Lyo.Web.Automation.Postgres` replaces it and maps `Automation/Plans` for the grid. The host registers `IAutomationBrowserSessionFactory` and `IAutomationPlanRunner`. This package does not reference Playwright, Selenium, or PuppeteerSharp.
+Maps `POST /Automation/Run` and the status, cancel, log, snapshot, and per-step screenshot reads. Finished steps appear on the run while it is still going. Plans are stored through
+`IAutomationPlanStore` at `GET/POST /Automation/Plan`, `GET/PUT /Automation/Plan/{name}`, and `GET /Automation/Plan/id/{id}`. The default store is in memory.
+`Lyo.Web.Automation.Postgres` replaces it and maps `Automation/Plans` for the grid. The host registers `IAutomationBrowserSessionFactory` and `IAutomationPlanRunner`. This package
+does not reference Playwright, Selenium, or PuppeteerSharp.
 
 ## Features
 
@@ -24,7 +27,8 @@ app.BuildAutomationGroup();
 
 ## Artifacts
 
-The runner writes `logs/run.log` and `snapshots/*.png` under the session directory. The registry copies those files out before the session is disposed, then serves the copies until `RunTtl` elapses.
+The runner writes `logs/run.log` and `snapshots/*.png` under the session directory. The registry copies those files out before the session is disposed, then serves the copies until
+`RunTtl` elapses.
 
 ## Dependencies
 

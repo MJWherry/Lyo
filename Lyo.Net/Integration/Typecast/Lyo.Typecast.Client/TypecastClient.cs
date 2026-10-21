@@ -1,8 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Lyo.Http.Client;
 using Lyo.Common.Core.Extensions;
 using Lyo.Exceptions;
+using Lyo.Http.Client;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 

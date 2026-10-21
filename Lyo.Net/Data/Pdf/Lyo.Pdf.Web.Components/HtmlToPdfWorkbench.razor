@@ -1,11 +1,11 @@
-@using System.Text
-@using Lyo.Common.Core.Enums;
-@using Lyo.Web.Components.FileUpload
-@using Lyo.Web.WebRenderer
-@using Lyo.Web.WebRenderer.Models
 @inject IWebRendererService WebRendererService
 @inject IJsInterop Js
 @inherits LyoWorkbenchBase
+@using System.Text
+@using Lyo.Common.Core.Enums
+@using Lyo.Web.Components.FileUpload
+@using Lyo.Web.WebRenderer
+@using Lyo.Web.WebRenderer.Models
 @implements IDisposable
 
 <MudPaper Class="pa-4">
@@ -121,6 +121,7 @@
                             </tr>
                             </tbody>
                         </MudSimpleTable>
+
                         @if (_format == WebRenderFormat.Pdf) {
                             <iframe title="PDF preview" src="@_previewUrl" style="width:100%;min-height:480px;border:0;"></iframe>
                         }
@@ -135,7 +136,8 @@
 </MudPaper>
 
 @code {
-        private string _htmlContent = """
+
+    private string _htmlContent = """
     <!DOCTYPE html>
     <html>
     <head>
@@ -148,4 +150,5 @@
     </body>
     </html>
     """;
+
 }

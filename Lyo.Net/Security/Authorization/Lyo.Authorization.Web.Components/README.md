@@ -1,11 +1,13 @@
 # Lyo.Authorization.Web.Components
 
-Blazor UI for IGrantStore and IResourceAuthorization. The panel lists grants, the dialog saves one, and the check form asks whether a subject is allowed. A host without the store shows a warning. This package does not call HTTP and does not reference Lyo.Authentication.
+Blazor UI for IGrantStore and IResourceAuthorization. The panel lists grants, the dialog saves one, and the check form asks whether a subject is allowed. A host without the store
+shows a warning. This package does not call HTTP and does not reference Lyo.Authentication.
 
 ## Features
 
 - **GrantPanel** lists grants. Null resource id and tenant render as any. Include revoked and expired are off until toggled. AllowEdit defaults to false.
-- **GrantEditDialog** treats a blank resource id or tenant as a wildcard, stores a guid resource id as lowercase D, and marks a local expiry as UTC without shifting the clock. A conflict leaves the dialog open.
+- **GrantEditDialog** treats a blank resource id or tenant as a wildcard, stores a guid resource id as lowercase D, and marks a local expiry as UTC without shifting the clock. A
+  conflict leaves the dialog open.
 - **GrantCheckForm** shows allow or deny. A store exception is an error, not a deny.
 
 ## Examples

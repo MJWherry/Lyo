@@ -1,6 +1,5 @@
 using Lyo.Api.Mapping;
 using Lyo.EntityReference.Models;
-using Lyo.HomeInventory;
 using Lyo.HomeInventory.Models;
 using Lyo.HomeInventory.Models.Enums;
 using Lyo.HomeInventory.Models.Request;
@@ -54,8 +53,7 @@ public sealed class HomeInventoryLyoMapper : ILyoMapper
         }
     }
 
-    private static InvalidOperationException Unmapped(Type source, Type dest)
-        => new($"No mapping configured from {source.Name} to {dest.Name}.");
+    private static InvalidOperationException Unmapped(Type source, Type dest) => new($"No mapping configured from {source.Name} to {dest.Name}.");
 
     private static DateTime UtcNow() => DateTime.UtcNow;
 
@@ -233,6 +231,5 @@ public sealed class HomeInventoryLyoMapper : ILyoMapper
         e.ReorderPoint = r.ReorderPoint;
     }
 
-    private static EntityRef? ToOwner(string? type, string? id)
-        => string.IsNullOrWhiteSpace(type) || string.IsNullOrWhiteSpace(id) ? null : new EntityRef(type, id);
+    private static EntityRef? ToOwner(string? type, string? id) => string.IsNullOrWhiteSpace(type) || string.IsNullOrWhiteSpace(id) ? null : new EntityRef(type, id);
 }

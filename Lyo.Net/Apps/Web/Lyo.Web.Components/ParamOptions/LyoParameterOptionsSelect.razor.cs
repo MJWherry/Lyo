@@ -2,8 +2,8 @@ using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Metadata.Records;
-using Lyo.Query.Models.Common.Request;
 using Lyo.Parameters;
+using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Parameters;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
@@ -72,6 +72,8 @@ public partial class LyoParameterOptionsSelect : ComponentBase, IAsyncDisposable
 
     private IReadOnlyCollection<string> SelectedValues => ParameterListJson.Parse(Value);
 
+    private bool IsFormatterType => LyoTypeInfo.FromName(TypeName).EditorKind == LyoTypeEditorKind.Formatter;
+
     public async ValueTask DisposeAsync()
     {
         if (_loadCts is not null) {
@@ -112,11 +114,9 @@ public partial class LyoParameterOptionsSelect : ComponentBase, IAsyncDisposable
 
     private Task<IEnumerable<string>> SearchItems(string? value, CancellationToken ct)
     {
-        IEnumerable<string> keys = _items.Select(i => i.Key);
+        var keys = _items.Select(i => i.Key);
         if (!string.IsNullOrWhiteSpace(value)) {
-            keys = _items
-                .Where(i => i.Key.Contains(value, StringComparison.OrdinalIgnoreCase) || i.Label.Contains(value, StringComparison.OrdinalIgnoreCase))
-                .Select(i => i.Key);
+            keys = _items.Where(i => i.Key.Contains(value, StringComparison.OrdinalIgnoreCase) || i.Label.Contains(value, StringComparison.OrdinalIgnoreCase)).Select(i => i.Key);
             if (keys.All(k => !string.Equals(k, value, StringComparison.Ordinal)))
                 keys = keys.Prepend(value);
         }
@@ -221,7 +221,10 @@ public partial class LyoParameterOptionsSelect : ComponentBase, IAsyncDisposable
         }
 
         var siblings = SiblingValues ?? new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
-        var req = new ParameterOptionsResolveReq { OptionsJson = ParameterOptionsJson.Serialize(options), SiblingValues = siblings.ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase) };
+        var req = new ParameterOptionsResolveReq {
+            OptionsJson = ParameterOptionsJson.Serialize(options), SiblingValues = siblings.ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase)
+        };
+
         var res = await ApiClient.PostAsAsync<ParameterOptionsResolveReq, ParameterOptionsResolveRes>(ResolveOptionsRoute, req, ct: ct);
         if (res is null) {
             _helper = "Options resolve failed.";
@@ -237,8 +240,6 @@ public partial class LyoParameterOptionsSelect : ComponentBase, IAsyncDisposable
         if (_items.Count == 0)
             _helper = "No options returned.";
     }
-
-    private bool IsFormatterType => LyoTypeInfo.FromName(TypeName).EditorKind == LyoTypeEditorKind.Formatter;
 
     private void PruneStaleSelection()
     {

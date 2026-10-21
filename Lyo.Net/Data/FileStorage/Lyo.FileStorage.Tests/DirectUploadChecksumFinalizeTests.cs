@@ -13,9 +13,8 @@ namespace Lyo.FileStorage.Tests;
 
 public sealed class DirectUploadChecksumFinalizeTests : IDisposable
 {
-    private readonly string _root = Path.Combine(Path.GetTempPath(), "lyo-fs-direct-" + LyoGuid.CreateV7().ToString("N"));
-
     private readonly CaptureAuditHandler _audit = new();
+    private readonly string _root = Path.Combine(Path.GetTempPath(), "lyo-fs-direct-" + LyoGuid.CreateV7().ToString("N"));
 
     public DirectUploadChecksumFinalizeTests() => Directory.CreateDirectory(_root);
 
@@ -43,9 +42,7 @@ public sealed class DirectUploadChecksumFinalizeTests : IDisposable
         service.PutObject(begin.FileId, payload);
         service.ReportedAttributes = new(payload.Length, sha, HashAlgorithm.Sha256);
         service.ThrowOnBodyRead = true;
-
         var done = await service.CompleteDirectUploadAsync(begin.FileId, ct: TestCt);
-
         Assert.Equal(FileAvailability.Available, done.Availability);
         Assert.Equal(payload.Length, done.OriginalFileSize);
         Assert.Equal(sha, done.OriginalFileHash);
@@ -63,9 +60,7 @@ public sealed class DirectUploadChecksumFinalizeTests : IDisposable
         service.PutObject(begin.FileId, payload);
         service.ReportedAttributes = new(payload.Length, md5, HashAlgorithm.Md5);
         service.ThrowOnBodyRead = true;
-
         var done = await service.CompleteDirectUploadAsync(begin.FileId, ct: TestCt);
-
         Assert.Equal(md5, done.OriginalFileHash);
         Assert.Equal(HashAlgorithm.Md5, done.HashAlgorithm);
         Assert.Equal(HashAlgorithm.Md5, (await service.GetMetadataAsync(begin.FileId, TestCt)).HashAlgorithm);
@@ -83,9 +78,7 @@ public sealed class DirectUploadChecksumFinalizeTests : IDisposable
         service.PutObject(begin.FileId, payload);
         service.ReportedAttributes = new(payload.Length, SHA256.HashData(TestData.Create(4096, 14)), HashAlgorithm.Sha256);
         service.ThrowOnBodyRead = true;
-
         await Assert.ThrowsAsync<InvalidDataException>(() => service.CompleteDirectUploadAsync(begin.FileId, ct: TestCt));
-
         Assert.Equal(FileAvailability.PendingDirectUpload, (await service.GetMetadataAsync(begin.FileId, TestCt)).Availability);
         Assert.Contains(_audit.Events, e => e.EventType == FileAuditEventType.DirectUploadFailed && e.FileId == begin.FileId && e.Outcome == FileAuditOutcome.Failure);
     }
@@ -97,9 +90,7 @@ public sealed class DirectUploadChecksumFinalizeTests : IDisposable
         var payload = TestData.Create(4096, 15);
         var begin = await service.BeginDirectUploadAsync(new() { DeclaredMaxSizeBytes = payload.Length, OriginalFileName = "a.bin" }, TestCt);
         service.PutObject(begin.FileId, payload);
-
         var done = await service.CompleteDirectUploadAsync(begin.FileId, ct: TestCt);
-
         Assert.Equal(1, service.BodyReadCount);
         Assert.Equal(SHA256.HashData(payload), done.OriginalFileHash);
         Assert.Equal(HashAlgorithm.Sha256, done.HashAlgorithm);
@@ -115,9 +106,7 @@ public sealed class DirectUploadChecksumFinalizeTests : IDisposable
         service.PutObject(begin.FileId, payload);
         service.ReportedAttributes = new(payload.Length, sha, HashAlgorithm.Sha256);
         service.ThrowOnBodyRead = true;
-
         var done = await service.CompleteDirectUploadAsync(begin.FileId, ct: TestCt);
-
         Assert.Equal(FileAvailability.Available, done.Availability);
         var requested = Assert.Single(service.PrefixRequests);
         Assert.InRange(requested, 1, 1024);
@@ -132,9 +121,7 @@ public sealed class DirectUploadChecksumFinalizeTests : IDisposable
         service.PutObject(begin.FileId, zip);
         service.ReportedAttributes = new(zip.Length, SHA256.HashData(zip), HashAlgorithm.Sha256);
         service.ThrowOnBodyRead = true;
-
         await Assert.ThrowsAsync<FilePolicyRejectedException>(() => service.CompleteDirectUploadAsync(begin.FileId, ct: TestCt));
-
         Assert.False(service.HasObject(begin.FileId));
     }
 
@@ -147,9 +134,7 @@ public sealed class DirectUploadChecksumFinalizeTests : IDisposable
         service.PutObject(begin.FileId, payload);
         service.ReportedAttributes = new(payload.Length, SHA256.HashData(payload), HashAlgorithm.Sha256);
         service.ThrowOnBodyRead = true;
-
         var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => service.CompleteDirectUploadAsync(begin.FileId, new() { ExpectedByteLength = 99 }, TestCt));
-
         Assert.Contains("Expected byte length", ex.Message, StringComparison.Ordinal);
         Assert.Equal(FileAvailability.PendingDirectUpload, (await service.GetMetadataAsync(begin.FileId, TestCt)).Availability);
     }
@@ -172,7 +157,6 @@ public sealed class DirectUploadChecksumFinalizeTests : IDisposable
             await scope.Storage.ReceiveDirectPutAsync(begin.FileId, ms, TestCt);
 
         await Assert.ThrowsAsync<InvalidDataException>(() => scope.Storage.CompleteDirectUploadAsync(begin.FileId, ct: TestCt));
-
         Assert.Equal(FileAvailability.PendingDirectUpload, (await scope.Storage.GetMetadataAsync(begin.FileId, TestCt)).Availability);
     }
 

@@ -32,47 +32,47 @@ public sealed class FFmpegAudioConverter : IAudioConverter
 
     /// <inheritdoc />
     public Task<Result<bool>> ConvertFileToFileAsync(string inputPath, string outputPath, AudioConversionOptions? options = null, CancellationToken ct = default)
-        => _engine.ConvertFileToFileAsync(inputPath, outputPath, Prepare(options, fileToFile: true), ct);
+        => _engine.ConvertFileToFileAsync(inputPath, outputPath, Prepare(options, true), ct);
 
     /// <inheritdoc />
     public Task<Result<bool>> ConvertFileToStreamAsync(string inputPath, Stream outputStream, AudioConversionOptions? options = null, CancellationToken ct = default)
-        => _engine.ConvertFileToStreamAsync(inputPath, outputStream, Prepare(options, fileToFile: false), ct);
+        => _engine.ConvertFileToStreamAsync(inputPath, outputStream, Prepare(options, false), ct);
 
     /// <inheritdoc />
     public Task<Result<byte[]>> ConvertFileToBytesAsync(string inputPath, AudioConversionOptions? options = null, CancellationToken ct = default)
-        => _engine.ConvertFileToBytesAsync(inputPath, Prepare(options, fileToFile: false), ct);
+        => _engine.ConvertFileToBytesAsync(inputPath, Prepare(options, false), ct);
 
     /// <inheritdoc />
     public Task<Result<bool>> ConvertStreamToStreamAsync(Stream inputStream, Stream outputStream, AudioConversionOptions? options = null, CancellationToken ct = default)
-        => _engine.ConvertStreamToStreamAsync(inputStream, outputStream, Prepare(options, fileToFile: false), ct);
+        => _engine.ConvertStreamToStreamAsync(inputStream, outputStream, Prepare(options, false), ct);
 
     /// <inheritdoc />
     public Task<Result<bool>> ConvertStreamToFileAsync(Stream inputStream, string outputPath, AudioConversionOptions? options = null, CancellationToken ct = default)
-        => _engine.ConvertStreamToFileAsync(inputStream, outputPath, Prepare(options, fileToFile: false), ct);
+        => _engine.ConvertStreamToFileAsync(inputStream, outputPath, Prepare(options, false), ct);
 
     /// <inheritdoc />
     public Task<Result<byte[]>> ConvertStreamToBytesAsync(Stream inputStream, AudioConversionOptions? options = null, CancellationToken ct = default)
-        => _engine.ConvertStreamToBytesAsync(inputStream, Prepare(options, fileToFile: false), ct);
+        => _engine.ConvertStreamToBytesAsync(inputStream, Prepare(options, false), ct);
 
     /// <inheritdoc />
     public Task<Result<byte[]>> ConvertBytesToBytesAsync(byte[] inputBytes, AudioConversionOptions? options = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(inputBytes);
-        return ConvertStreamToBytesAsync(new MemoryStream(inputBytes, writable: false), options, ct);
+        return ConvertStreamToBytesAsync(new MemoryStream(inputBytes, false), options, ct);
     }
 
     /// <inheritdoc />
     public Task<Result<bool>> ConvertBytesToStreamAsync(byte[] inputBytes, Stream outputStream, AudioConversionOptions? options = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(inputBytes);
-        return ConvertStreamToStreamAsync(new MemoryStream(inputBytes, writable: false), outputStream, options, ct);
+        return ConvertStreamToStreamAsync(new MemoryStream(inputBytes, false), outputStream, options, ct);
     }
 
     /// <inheritdoc />
     public Task<Result<bool>> ConvertBytesToFileAsync(byte[] inputBytes, string outputPath, AudioConversionOptions? options = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(inputBytes);
-        return ConvertStreamToFileAsync(new MemoryStream(inputBytes, writable: false), outputPath, options, ct);
+        return ConvertStreamToFileAsync(new MemoryStream(inputBytes, false), outputPath, options, ct);
     }
 
     /// <inheritdoc />
@@ -118,9 +118,7 @@ public sealed class FFmpegAudioConverter : IAudioConverter
 
     private AudioConversionOptions DefaultAudio()
         => AudioConversionOptions.ForAudio(
-            _options.DefaultSampleRate,
-            _options.DefaultChannels,
-            AudioEncoder.TryFromId(FFmpegCodecMap.FromFfmpegAudio(_options.DefaultCodec)) ?? AudioEncoder.PcmS16le,
+            _options.DefaultSampleRate, _options.DefaultChannels, AudioEncoder.TryFromId(FFmpegCodecMap.FromFfmpegAudio(_options.DefaultCodec)) ?? AudioEncoder.PcmS16le,
             MediaContainer.TryFromFormat(_options.DefaultFormat) ?? MediaContainer.Wav) with {
             Overwrite = _options.DefaultOverwrite
         };

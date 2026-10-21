@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Lyo.Algorithms.Client;
 using Lyo.Algorithms.Models;
 using Lyo.Algorithms.Models.Request;
 using Lyo.Api.Client;
@@ -36,7 +35,7 @@ public sealed class AlgorithmClientTests
     public async Task SetLabelAsync_WhenPrefix_PutsPrefixedRoute()
     {
         var api = new RecordingApiClient();
-        var client = new AlgorithmClient(api, new AlgorithmClientOptions { RoutePrefix = "api" });
+        var client = new AlgorithmClient(api, new() { RoutePrefix = "api" });
         var req = new AlgorithmLabelReq { Revision = 1, IsMutable = false };
         await client.SetLabelAsync("attack.physical", "game.1.0", req, TestCt);
         Assert.Equal("api/Algorithms/attack.physical/labels/game.1.0", api.LastUri);
@@ -166,8 +165,7 @@ internal sealed class RecordingApiClient : IApiClient
     public Task<TResult> DeleteAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException(uri);
 
-    public Task<TResult> DeleteAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
-        => throw new NotImplementedException(uri);
+    public Task<TResult> DeleteAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default) => throw new NotImplementedException(uri);
 
     public string ToQueryString<T>(T obj, string? enumerableDelimiter = null) => throw new NotImplementedException();
 

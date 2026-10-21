@@ -4,8 +4,8 @@ using System.Text.Json;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
-using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Sas;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Core.Pathing;
 using Lyo.Common.Metadata.Records;
 using Lyo.Compression;
@@ -25,7 +25,6 @@ using Lyo.IO.FileSystem;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.FileStorage.AzureBlob;
 
@@ -34,6 +33,11 @@ public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileS
 {
     private readonly AzureBlobFileStorageOptions _blobOptions;
     private readonly BlobContainerClient _containerClient;
+
+    private IFileSystem? _physicalFs;
+
+    /// <inheritdoc />
+    public override bool SupportsPlainByteRange => true;
 
     public AzureBlobFileStorageService(
         AzureBlobFileStorageOptions options,
@@ -59,10 +63,28 @@ public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileS
         MetricNames[nameof(FileStorage.Constants.Metrics.FileStoragePreSignedUrlGenerationFailed)] = Constants.Metrics.FileStoragePreSignedUrlGenerationFailed;
     }
 
-    /// <inheritdoc />
-    public IFileSystem Physical => _physicalFs ??= new AzureBlobFileSystem(_containerClient, _blobOptions.BlobPrefix);
+    /// <remarks>
+    /// A single-shot Put Blob stores Content-MD5 even when the client did not send one. Blobs committed from staged blocks have none unless the client set
+    /// <c>x-ms-blob-content-md5</c>; those fall back to download-and-hash.
+    /// </remarks>
+    async Task<DirectUploadObjectAttributes?> IDirectUploadVerification.GetDirectUploadAttributesAsync(Guid fileId, string? pathPrefix, CancellationToken ct)
+    {
+        BlobProperties properties;
+        try {
+            properties = (await GetBlobClient(fileId, "", pathPrefix).GetPropertiesAsync(cancellationToken: ct).ConfigureAwait(false)).Value;
+        }
+        catch (RequestFailedException ex) when (ex.Status == 404) {
+            return null;
+        }
 
-    private IFileSystem? _physicalFs;
+        return properties.ContentHash is { Length: 16 } md5 ? new(properties.ContentLength, md5, HashAlgorithm.Md5) : null;
+    }
+
+    async Task<byte[]> IDirectUploadVerification.ReadDirectUploadPrefixAsync(Guid fileId, string? pathPrefix, int maxBytes, CancellationToken ct)
+    {
+        var response = await GetBlobClient(fileId, "", pathPrefix).DownloadContentAsync(new BlobDownloadOptions { Range = new(0, maxBytes) }, ct).ConfigureAwait(false);
+        return response.Value.Content.ToArray();
+    }
 
     /// <inheritdoc />
     async Task<IReadOnlyList<string>> IFileStorageDiagnosticsService.ListStorageKeysAsync(string? prefix, int maxKeys, CancellationToken ct)
@@ -80,6 +102,9 @@ public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileS
 
         return list;
     }
+
+    /// <inheritdoc />
+    public IFileSystem Physical => _physicalFs ??= new AzureBlobFileSystem(_containerClient, _blobOptions.BlobPrefix);
 
     protected override async Task<HealthResult> CheckHealthLightweightAsync(CancellationToken ct)
     {
@@ -205,9 +230,7 @@ public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileS
         }
     }
 
-    /// <summary>
-    /// Presigned read, direct upload, copy, move, and physical listing are supported. An account that uses SSE-C still rejects a presigned read when that call runs.
-    /// </summary>
+    /// <summary>Presigned read, direct upload, copy, move, and physical listing are supported. An account that uses SSE-C still rejects a presigned read when that call runs.</summary>
     public override FileStorageCapabilities GetCapabilities() => new(true, true, true, true, true);
 
     /// <inheritdoc />
@@ -277,34 +300,8 @@ public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileS
         => FinalizePendingPlainDirectUploadCoreAsync(fileId, completeRequest, ct);
 
     /// <remarks>
-    /// A single-shot Put Blob stores Content-MD5 even when the client did not send one. Blobs committed from staged blocks have none unless the client set
-    /// <c>x-ms-blob-content-md5</c>; those fall back to download-and-hash.
-    /// </remarks>
-    async Task<DirectUploadObjectAttributes?> IDirectUploadVerification.GetDirectUploadAttributesAsync(Guid fileId, string? pathPrefix, CancellationToken ct)
-    {
-        BlobProperties properties;
-        try {
-            properties = (await GetBlobClient(fileId, "", pathPrefix).GetPropertiesAsync(cancellationToken: ct).ConfigureAwait(false)).Value;
-        }
-        catch (RequestFailedException ex) when (ex.Status == 404) {
-            return null;
-        }
-
-        return properties.ContentHash is { Length: 16 } md5 ? new(properties.ContentLength, md5, HashAlgorithm.Md5) : null;
-    }
-
-    async Task<byte[]> IDirectUploadVerification.ReadDirectUploadPrefixAsync(Guid fileId, string? pathPrefix, int maxBytes, CancellationToken ct)
-    {
-        var response = await GetBlobClient(fileId, "", pathPrefix)
-            .DownloadContentAsync(new BlobDownloadOptions { Range = new(0, maxBytes) }, ct)
-            .ConfigureAwait(false);
-
-        return response.Value.Content.ToArray();
-    }
-
-    /// <remarks>
-    /// <c>OpenWriteAsync(overwrite: true)</c> writes a zero-byte blob before returning the stream, so an empty save still leaves an object instead of metadata
-    /// pointing at a missing blob.
+    /// <c>OpenWriteAsync(overwrite: true)</c> writes a zero-byte blob before returning the stream, so an empty save still leaves an object instead of metadata pointing at a
+    /// missing blob.
     /// </remarks>
     protected override Task<Stream> CreateOutputStreamAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct)
     {
@@ -313,9 +310,8 @@ public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileS
     }
 
     /// <summary>
-    /// Completes a multipart staging blob with Azure server-side <c>StartCopyFromUriAsync</c> instead of pulling bytes through the client. Hash
-    /// still download locally; the upload that <see cref="FileStorageServiceBase.SaveFromStreamAsync" /> would have done is an in-account copy. Only the
-    /// no-compress/no-encrypt finalize path.
+    /// Completes a multipart staging blob with Azure server-side <c>StartCopyFromUriAsync</c> instead of pulling bytes through the client. Hash still download locally; the
+    /// upload that <see cref="FileStorageServiceBase.SaveFromStreamAsync" /> would have done is an in-account copy. Only the no-compress/no-encrypt finalize path.
     /// </summary>
     internal async Task<FileStoreResult> FinalizeMultipartFromStagingAsync(
         string stagingBlobName,
@@ -411,9 +407,6 @@ public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileS
             }
         }
     }
-
-    /// <inheritdoc />
-    public override bool SupportsPlainByteRange => true;
 
     protected override async Task<Stream?> ReadFromStorageAsync(Guid fileId, string? pathPrefix, CancellationToken ct)
     {
@@ -670,8 +663,8 @@ public sealed class AzureBlobFileStorageService : FileStorageServiceBase, IFileS
     }
 
     /// <summary>
-    /// Storage suffix stored in metadata <c>SourceFileName</c> for <paramref name="fileId" />, or <see langword="null" /> when metadata is unreachable, the file-id
-    /// prefix is missing, or the row is absent. Lets <see cref="FindBlobNameAsync" /> skip the N+1 HEAD probes.
+    /// Storage suffix stored in metadata <c>SourceFileName</c> for <paramref name="fileId" />, or <see langword="null" /> when metadata is unreachable, the file-id prefix is
+    /// missing, or the row is absent. Lets <see cref="FindBlobNameAsync" /> skip the N+1 HEAD probes.
     /// </summary>
     private async Task<string?> TryGetSuffixHintFromMetadataAsync(Guid fileId, CancellationToken ct)
     {

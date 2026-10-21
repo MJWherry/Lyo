@@ -16,6 +16,7 @@
                 <MudSelectItem Value="@loc.Id">@loc.Name</MudSelectItem>
             }
         </MudSelect>
-        <MudButton Size="Size.Small" Variant="Variant.Outlined" Class="mt-1" OnClick="Transfer" Disabled="@(_locationId == Guid.Empty || _toLocationId == Guid.Empty)">Transfer</MudButton>
+        <MudButton Size="Size.Small" Variant="Variant.Outlined" Class="mt-1" OnClick="Transfer" Disabled="@(_locationId == Guid.Empty || _toLocationId == Guid.Empty)">Transfer
+        </MudButton>
     </MudStack>
 </MudStack>

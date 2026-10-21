@@ -1,7 +1,6 @@
 using Lyo.Reporting.Models.Composition;
 using Lyo.Reporting.Models.Enums;
 using Lyo.Reporting.Postgres.Database;
-using Lyo.Reporting.Seed;
 using Lyo.Seed;
 
 namespace Lyo.Reporting.Seed.Tests;
@@ -48,6 +47,7 @@ public sealed class ReportingEfSeedContributorTests
         {
             foreach (var item in items)
                 Items.Add(item);
+
             return Task.CompletedTask;
         }
     }

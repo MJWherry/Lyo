@@ -2,7 +2,7 @@ using Lyo.EntityReference.Models;
 
 namespace Lyo.Billing;
 
-/// <summary>Link from a billing client to a party (People <c>Person</c> or <see cref="BillingPersonRecord"/>).</summary>
+/// <summary>Link from a billing client to a party (People <c>Person</c> or <see cref="BillingPersonRecord" />).</summary>
 public sealed class BillingContactRecord
 {
     /// <summary>Link row id.</summary>
@@ -11,7 +11,7 @@ public sealed class BillingContactRecord
     /// <summary>Owning billing client.</summary>
     public Guid ClientId { get; set; }
 
-    /// <summary>The party. Type is <see cref="BillingEntityTypes.Person"/> or <see cref="BillingEntityTypes.BillingPerson"/>.</summary>
+    /// <summary>The party. Type is <see cref="BillingEntityTypes.Person" /> or <see cref="BillingEntityTypes.BillingPerson" />.</summary>
     public EntityRef Contact { get; set; }
 
     /// <summary>Role at this client.</summary>

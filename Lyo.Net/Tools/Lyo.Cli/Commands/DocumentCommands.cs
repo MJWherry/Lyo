@@ -21,15 +21,18 @@ internal static class DocumentCommands
             ("to-toml", "Convert JSON to TOML", text => toml.ConvertFromJson(text)));
 
         yield return Format(
-            "yaml", "YAML convert", ("to-json", "Convert YAML to JSON", text => yaml.ConvertToJson(text)), ("to-xml", "Convert YAML to XML", text => xml.ConvertFromJson(yaml.ConvertToJson(text))),
+            "yaml", "YAML convert", ("to-json", "Convert YAML to JSON", text => yaml.ConvertToJson(text)),
+            ("to-xml", "Convert YAML to XML", text => xml.ConvertFromJson(yaml.ConvertToJson(text))),
             ("to-toml", "Convert YAML to TOML", text => toml.ConvertFromJson(yaml.ConvertToJson(text))));
 
         yield return Format(
-            "xml", "XML convert", ("to-json", "Convert XML to JSON", text => xml.ConvertToJson(text)), ("to-yaml", "Convert XML to YAML", text => yaml.ConvertFromJson(xml.ConvertToJson(text))),
+            "xml", "XML convert", ("to-json", "Convert XML to JSON", text => xml.ConvertToJson(text)),
+            ("to-yaml", "Convert XML to YAML", text => yaml.ConvertFromJson(xml.ConvertToJson(text))),
             ("to-toml", "Convert XML to TOML", text => toml.ConvertFromJson(xml.ConvertToJson(text))));
 
         yield return Format(
-            "toml", "TOML convert", ("to-json", "Convert TOML to JSON", text => toml.ConvertToJson(text)), ("to-yaml", "Convert TOML to YAML", text => yaml.ConvertFromJson(toml.ConvertToJson(text))),
+            "toml", "TOML convert", ("to-json", "Convert TOML to JSON", text => toml.ConvertToJson(text)),
+            ("to-yaml", "Convert TOML to YAML", text => yaml.ConvertFromJson(toml.ConvertToJson(text))),
             ("to-xml", "Convert TOML to XML", text => xml.ConvertFromJson(toml.ConvertToJson(text))));
     }
 
@@ -60,7 +63,7 @@ internal static class DocumentCommands
     private static async Task<string> ReadInputAsync(string? path, CancellationToken ct)
     {
         var (stream, leaveOpen, _) = CliIO.OpenInput(path);
-        using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: leaveOpen);
+        using var reader = new StreamReader(stream, Encoding.UTF8, true, 1024, leaveOpen);
         return await reader.ReadToEndAsync(ct).ConfigureAwait(false);
     }
 }

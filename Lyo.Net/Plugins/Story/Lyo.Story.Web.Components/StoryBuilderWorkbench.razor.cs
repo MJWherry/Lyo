@@ -12,14 +12,14 @@ public partial class StoryBuilderWorkbench : IDisposable
     private static readonly JsonSerializerOptions JsonOptions = LyoJsonSerializerOptions.Create(options => options.WriteIndented = true);
 
     private readonly JsonSerializerOptions _json = JsonOptions;
-    private StoryGraphReq _request = new();
-    private string _csharp = "";
-    private string? _selectedKey;
     private int _choiceIndex;
-    private List<string> _issues = [];
+    private string _csharp = "";
     private IReadOnlyList<FilterPropertyDefinition> _fields = [];
-    private bool _saving;
+    private List<string> _issues = [];
+    private StoryGraphReq _request = new();
     private CancellationTokenSource? _saveDebounceCts;
+    private bool _saving;
+    private string? _selectedKey;
 
     /// <summary>Client that saves and loads the graph.</summary>
     [Parameter]
@@ -54,15 +54,24 @@ public partial class StoryBuilderWorkbench : IDisposable
     private StoryNodeDraft? Selected => Draft.Nodes.FirstOrDefault(node => node.Key == _selectedKey);
 
     /// <inheritdoc />
+    public void Dispose()
+    {
+        _saveDebounceCts?.Cancel();
+        _saveDebounceCts?.Dispose();
+    }
+
+    /// <inheritdoc />
     protected override async Task OnInitializedAsync()
     {
         try {
             var json = await ClientStore.GetStoryBuilderStateAsync().ConfigureAwait(false);
             if (string.IsNullOrWhiteSpace(json))
                 return;
+
             var stored = JsonSerializer.Deserialize<StoryGraphReq>(json, JsonOptions);
             if (stored is null || stored.Id != Draft.Id)
                 return;
+
             await ApplyRequest(stored).ConfigureAwait(false);
         }
         catch (Exception ex) {
@@ -72,13 +81,6 @@ public partial class StoryBuilderWorkbench : IDisposable
 
     /// <inheritdoc />
     protected override void OnParametersSet() => Rebuild();
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-        _saveDebounceCts?.Cancel();
-        _saveDebounceCts?.Dispose();
-    }
 
     private void Rebuild()
     {
@@ -151,6 +153,7 @@ public partial class StoryBuilderWorkbench : IDisposable
     {
         if (Selected is not { } node)
             return Task.CompletedTask;
+
         var key = "choice_" + (node.Choices.Count + 1);
         node.Choices.Add(new() { Key = key, Prompt = key });
         _choiceIndex = node.Choices.Count - 1;
@@ -161,6 +164,7 @@ public partial class StoryBuilderWorkbench : IDisposable
     {
         if (Selected is not { } node || _choiceIndex < 0 || _choiceIndex >= node.Choices.Count)
             return Task.CompletedTask;
+
         node.Choices.RemoveAt(_choiceIndex);
         _choiceIndex = Math.Max(0, _choiceIndex - 1);
         return Touch();
@@ -170,9 +174,11 @@ public partial class StoryBuilderWorkbench : IDisposable
     {
         if (Selected is not { } node)
             return Task.CompletedTask;
+
         Draft.Nodes.Remove(node);
         if (Draft.StartNodeKey == node.Key)
             Draft.StartNodeKey = Draft.Nodes.FirstOrDefault()?.Key;
+
         _selectedKey = Draft.StartNodeKey;
         return Touch();
     }
@@ -181,6 +187,7 @@ public partial class StoryBuilderWorkbench : IDisposable
     {
         if (Selected is { } node)
             Draft.StartNodeKey = node.Key;
+
         return Touch();
     }
 
@@ -195,6 +202,7 @@ public partial class StoryBuilderWorkbench : IDisposable
     {
         if (request is null)
             return Task.CompletedTask;
+
         var id = Draft.Id;
         var tenant = Draft.TenantId;
         var game = Draft.GameKey;
@@ -221,6 +229,7 @@ public partial class StoryBuilderWorkbench : IDisposable
     {
         if (string.IsNullOrWhiteSpace(Draft.Slug) && !string.IsNullOrWhiteSpace(Draft.Title))
             Draft.Slug = Slugify(Draft.Title);
+
         Rebuild();
         if (_issues.Count > 0)
             return;

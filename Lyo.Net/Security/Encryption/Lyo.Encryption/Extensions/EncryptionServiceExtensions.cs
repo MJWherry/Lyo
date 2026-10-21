@@ -29,8 +29,8 @@ public static class EncryptionServiceExtensions
     public static EncryptionAlgorithm? DetermineKekAlgorithm(ITwoKeyEncryptionService? twoKeyService) => twoKeyService?.KekAlgorithm;
 
     /// <summary>
-    /// Creates one of the encryption services shipped in the base <c>Lyo.Encryption</c> package (AES-GCM or ChaCha20-Poly1305). Throws a guidance exception for niche
-    /// addon types so the caller knows which addon helper to use.
+    /// Creates one of the encryption services shipped in the base <c>Lyo.Encryption</c> package (AES-GCM or ChaCha20-Poly1305). Throws a guidance exception for niche addon types
+    /// so the caller knows which addon helper to use.
     /// </summary>
     private static TService CreateBuiltInService<TService>(IKeyStore keyStore, AesGcmKeySizeBits aesGcmKeySize)
         where TService : class, IEncryptionService
@@ -58,10 +58,7 @@ public static class EncryptionServiceExtensions
         public IServiceCollection AddEncryptionServiceKeyed(string keyName, string keyStoreName, AesGcmKeySizeBits aesGcmKeySize = AesGcmKeySizeBits.Bits256)
             => services.AddEncryptionServiceKeyed<AesGcmEncryptionService, AesGcmEncryptionService>(keyName, keyStoreName, aesGcmKeySize);
 
-        /// <summary>
-        /// Registers a keyed two-key service that uses an existing keyed key store. The same encryption service type handles both DEK and KEK
-        /// work.
-        /// </summary>
+        /// <summary>Registers a keyed two-key service that uses an existing keyed key store. The same encryption service type handles both DEK and KEK work.</summary>
         /// <typeparam name="TEncryptionService">Service type used for both DEK and KEK</typeparam>
         /// <param name="keyName">Keyed-registration name for the encryption service</param>
         /// <param name="keyStoreName">Keyed-registration name for the key store</param>

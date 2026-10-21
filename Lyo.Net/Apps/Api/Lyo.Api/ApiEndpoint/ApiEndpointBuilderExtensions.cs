@@ -40,9 +40,7 @@ public static class ApiEndpointBuilderExtensions
             where TDbContext : DbContext where TDbEntity : class
             => new(app, baseRoute, groupName);
 
-        /// <summary>
-        /// Starts a typed CRUD endpoint group for <typeparamref name="TDbEntity" /> with request/response DTOs and primary-key type <typeparamref name="TKey" />.
-        /// </summary>
+        /// <summary>Starts a typed CRUD endpoint group for <typeparamref name="TDbEntity" /> with request/response DTOs and primary-key type <typeparamref name="TKey" />.</summary>
         /// <param name="baseRoute">URL prefix without a trailing slash.</param>
         /// <param name="groupName">OpenAPI / endpoint group display name.</param>
         public ApiEndpointBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey> CreateBuilder<TDbContext, TDbEntity, TRequest, TResponse, TKey>(
@@ -52,7 +50,8 @@ public static class ApiEndpointBuilderExtensions
             => new(app, baseRoute, groupName);
 
         /// <summary>
-        /// Starts a read-only typed builder (<c>TRequest = object</c>, <c>TKey = Guid</c>). Call <see cref="WithReadOnlyEndpoints{TDbContext,TDbEntity,TResponse}" /> or an equivalent.
+        /// Starts a read-only typed builder (<c>TRequest = object</c>, <c>TKey = Guid</c>). Call <see cref="WithReadOnlyEndpoints{TDbContext,TDbEntity,TResponse}" /> or an
+        /// equivalent.
         /// </summary>
         public ApiEndpointBuilder<TDbContext, TDbEntity, object, TResponse, Guid> CreateReadOnlyBuilder<TDbContext, TDbEntity, TResponse>(string baseRoute, string groupName)
             where TDbContext : DbContext where TDbEntity : class

@@ -3,7 +3,6 @@ using Lyo.Authentication.Postgres.Database;
 using Lyo.Authentication.Postgres.Stores;
 using Lyo.Authentication.Services.Opaque;
 using Lyo.Authentication.Services.Users;
-using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
 using Lyo.Postgres;
@@ -11,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+
 namespace Lyo.Authentication.Postgres;
 
 /// <summary>Container helpers for <c>Lyo.Authentication.Postgres</c>: <see cref="UserDbContext" /> registration plus the three Postgres-backed stores.</summary>
@@ -37,7 +37,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresUserOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddUserDbContextFactory(options);
         }
 
@@ -48,7 +47,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPostgresDbContextFactory<UserDbContext, PostgresUserOptions>(options);
             services.AddEntityRefOptions();
-
             return services;
         }
 
@@ -127,7 +125,10 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>Registers the Postgres-backed authentication stores (user, token, identity, claim, scope) plus the Postgres <see cref="IAuthAuditRecorder" />, binding options from configuration.</summary>
+        /// <summary>
+        /// Registers the Postgres-backed authentication stores (user, token, identity, claim, scope) plus the Postgres <see cref="IAuthAuditRecorder" />, binding options from
+        /// configuration.
+        /// </summary>
         public IServiceCollection AddPostgresAuthenticationStoresFromConfiguration(IConfiguration configuration, string configSectionName = PostgresUserOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);

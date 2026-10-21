@@ -1,3 +1,4 @@
+using System.Text;
 using Lyo.Common.Core.Records;
 using Lyo.Media.Models;
 
@@ -12,8 +13,10 @@ internal static class FFmpegFilterChain
         var scaleFilter = Scale(scale, width, height);
         if (scaleFilter != null)
             parts.Add(scaleFilter);
+
         if (!string.IsNullOrWhiteSpace(videoFilter))
             parts.Add(videoFilter);
+
         if (subtitles == SubtitleMode.BurnIn && !string.IsNullOrWhiteSpace(subtitlePath))
             parts.Add("subtitles=" + EscapeSubtitlePath(subtitlePath));
 
@@ -22,10 +25,11 @@ internal static class FFmpegFilterChain
 
     public static string EscapeSubtitlePath(string path)
     {
-        var escaped = new System.Text.StringBuilder(path.Length);
+        var escaped = new StringBuilder(path.Length);
         foreach (var c in path) {
             if (c is '\\' or ':' or '\'' or ',')
                 escaped.Append('\\');
+
             escaped.Append(c);
         }
 
@@ -36,10 +40,13 @@ internal static class FFmpegFilterChain
     {
         if (chosen != null)
             return chosen;
+
         if (format == null)
             return SubtitleCodec.MovText;
+
         if (format == MediaContainer.WebM)
             return SubtitleCodec.WebVtt;
+
         if (string.Equals(format.Format, "matroska", StringComparison.OrdinalIgnoreCase))
             return SubtitleCodec.Ass;
 
@@ -50,12 +57,16 @@ internal static class FFmpegFilterChain
     {
         if (scale == ScaleMode.Stretch || (width == null && height == null))
             return null;
+
         if (scale == ScaleMode.Fit && width is int w && height is int h)
             return $"scale={w}:{h}:force_original_aspect_ratio=decrease";
+
         if (scale == ScaleMode.Fit && width is int onlyWidth)
             return $"scale={onlyWidth}:-2";
+
         if (scale == ScaleMode.Fit && height is int onlyHeight)
             return $"scale=-2:{onlyHeight}";
+
         if (scale == ScaleMode.Fill && width is int fillW && height is int fillH)
             return $"scale={fillW}:{fillH}:force_original_aspect_ratio=increase,crop={fillW}:{fillH}";
 

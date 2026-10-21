@@ -1,18 +1,15 @@
-using System.Net.Http.Json;
 using System.Text.Json;
 using Lyo.Common.Core.Identifiers;
 using Lyo.Json;
-using Lyo.Web.Automation;
 using Lyo.Web.Automation.Abstractions;
-using Lyo.Web.Automation.Api;
 using Lyo.Web.Automation.Models;
 using Lyo.Web.Automation.Models.Enums;
 using Lyo.Web.Automation.Plan;
 using Lyo.Web.Automation.Playwright.Service;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Lyo.Web.Automation.Api.Tests;
 
@@ -33,6 +30,14 @@ public sealed class AutomationApiHost : IAsyncDisposable
         Http = http;
     }
 
+    public async ValueTask DisposeAsync()
+    {
+        await _app.StopAsync();
+        await _app.DisposeAsync();
+        if (Directory.Exists(_artifactRoot))
+            Directory.Delete(_artifactRoot, true);
+    }
+
     /// <summary>Host whose runner writes <paramref name="transcript" /> and optionally waits until cancelled.</summary>
     public static Task<AutomationApiHost> StartScriptedAsync(bool hold, string transcript = "RUN_STARTED plan=demo\n")
         => StartAsync(new ScriptedPlanRunner(hold, transcript), new TempSessionFactory());
@@ -44,7 +49,7 @@ public sealed class AutomationApiHost : IAsyncDisposable
         var builder = NewBuilder(root);
         builder.Services.AddSingleton<IAutomationPlanRunner>(new ReportingPlanRunner());
         builder.Services.AddSingleton<IAutomationBrowserSessionFactory>(new TempSessionFactory());
-        builder.Services.AddSingleton<IAutomationPlanFileStorage>(storage);
+        builder.Services.AddSingleton(storage);
         return BootAsync(builder, root);
     }
 
@@ -61,17 +66,10 @@ public sealed class AutomationApiHost : IAsyncDisposable
             options.NavigationTimeoutMs = 20_000;
             options.LocatorDefaultTimeoutMs = 20_000;
         });
+
         builder.Services.AddPlaywrightBrowserSessionFactory();
         builder.Services.AddWebAutomationPlanRunner();
         return BootAsync(builder, root);
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await _app.StopAsync();
-        await _app.DisposeAsync();
-        if (Directory.Exists(_artifactRoot))
-            Directory.Delete(_artifactRoot, true);
     }
 
     private static Task<AutomationApiHost> StartAsync(IAutomationPlanRunner runner, IAutomationBrowserSessionFactory factory)
@@ -88,7 +86,7 @@ public sealed class AutomationApiHost : IAsyncDisposable
         var app = builder.Build();
         app.BuildAutomationGroup();
         await app.StartAsync();
-        return new AutomationApiHost(app, root, app.GetTestServer().CreateClient());
+        return new(app, root, app.GetTestServer().CreateClient());
     }
 
     private static WebApplicationBuilder NewBuilder(string root)
@@ -101,6 +99,7 @@ public sealed class AutomationApiHost : IAsyncDisposable
             options.ArtifactRoot = root;
             options.RunTtl = TimeSpan.FromMinutes(30);
         });
+
         return builder;
     }
 
@@ -114,40 +113,40 @@ public sealed class AutomationApiHost : IAsyncDisposable
 
 internal sealed class ReportingPlanRunner : IAutomationPlanRunner
 {
-    public Task RunAsync(IWebAutomationSession session, AutomationPlan plan, Microsoft.Extensions.Logging.ILogger? logger, CancellationToken ct)
-        => RunWithResultAsync(session, plan, null, logger, ct);
+    public Task RunAsync(IWebAutomationSession session, AutomationPlan plan, ILogger? logger, CancellationToken ct) => RunWithResultAsync(session, plan, null, logger, ct);
 
     public async Task<AutomationPlanRunResult> RunWithResultAsync(
         IWebAutomationSession session,
         AutomationPlan plan,
         AutomationPlanRuntimeOptions? runtime,
-        Microsoft.Extensions.Logging.ILogger? logger,
+        ILogger? logger,
         CancellationToken ct)
     {
         var snapshot = new AutomationPlanContextSnapshot { Strings = new() { ["greeting"] = "hello" } };
         runtime?.Instrumentation?.OnStepOutcome(
-            new AutomationPlanStepOutcomeRecord(
-                Guid.Empty, Guid.Empty, Guid.Empty, 0, AutomationPlanStepOutcome.Success, TimeSpan.FromMilliseconds(12),
-                new StoreLiteralAutomationStep("greeting", "hello"), null, "snap-1", snapshot));
+            new(
+                Guid.Empty, Guid.Empty, Guid.Empty, 0, AutomationPlanStepOutcome.Success, TimeSpan.FromMilliseconds(12), new StoreLiteralAutomationStep("greeting", "hello"), null,
+                "snap-1", snapshot));
+
         await Task.Delay(Timeout.Infinite, ct).ConfigureAwait(false);
         var strings = new Dictionary<string, string> { ["greeting"] = "hello" };
         var bindings = new AutomationPlanBindings(
             new Dictionary<string, IWebAutomationElement>(), new Dictionary<string, IReadOnlyList<IWebAutomationElement>>(), strings,
             new Dictionary<string, IReadOnlyList<string>>(), new Dictionary<string, object?>());
-        return new AutomationPlanRunResult(new AutomationPlanExecutionSnapshot(strings, new Dictionary<string, IReadOnlyList<string>>()), new AutomationPlanExecutionContext(bindings, []));
+
+        return new(new(strings, new Dictionary<string, IReadOnlyList<string>>()), new(bindings, []));
     }
 }
 
 internal sealed class ScriptedPlanRunner(bool hold, string transcript) : IAutomationPlanRunner
 {
-    public Task RunAsync(IWebAutomationSession session, AutomationPlan plan, Microsoft.Extensions.Logging.ILogger? logger, CancellationToken ct)
-        => RunWithResultAsync(session, plan, null, logger, ct);
+    public Task RunAsync(IWebAutomationSession session, AutomationPlan plan, ILogger? logger, CancellationToken ct) => RunWithResultAsync(session, plan, null, logger, ct);
 
     public async Task<AutomationPlanRunResult> RunWithResultAsync(
         IWebAutomationSession session,
         AutomationPlan plan,
         AutomationPlanRuntimeOptions? runtime,
-        Microsoft.Extensions.Logging.ILogger? logger,
+        ILogger? logger,
         CancellationToken ct)
     {
         if (session.SessionDirectory is { } directory) {
@@ -162,13 +161,10 @@ internal sealed class ScriptedPlanRunner(bool hold, string transcript) : IAutoma
         var strings = new Dictionary<string, string> { ["marker"] = "ok" };
         var lists = new Dictionary<string, IReadOnlyList<string>>();
         var bindings = new AutomationPlanBindings(
-            new Dictionary<string, IWebAutomationElement>(),
-            new Dictionary<string, IReadOnlyList<IWebAutomationElement>>(),
-            strings,
-            lists,
-            new Dictionary<string, object?>());
+            new Dictionary<string, IWebAutomationElement>(), new Dictionary<string, IReadOnlyList<IWebAutomationElement>>(), strings, lists, new Dictionary<string, object?>());
+
         var context = new AutomationPlanExecutionContext(bindings, []);
-        return new AutomationPlanRunResult(new AutomationPlanExecutionSnapshot(strings, lists), context);
+        return new(new(strings, lists), context);
     }
 }
 

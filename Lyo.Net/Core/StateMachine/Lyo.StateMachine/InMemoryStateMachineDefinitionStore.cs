@@ -6,8 +6,8 @@ namespace Lyo.StateMachine;
 /// <summary>Process-local <see cref="IStateMachineDefinitionStore" /> with the same revision checks as a database store. For tests and single-process hosts.</summary>
 public sealed class InMemoryStateMachineDefinitionStore : IStateMachineDefinitionStore
 {
-    private readonly Dictionary<string, List<StateMachineDocument>> _revisions = new(StringComparer.Ordinal);
     private readonly object _gate = new();
+    private readonly Dictionary<string, List<StateMachineDocument>> _revisions = new(StringComparer.Ordinal);
 
     /// <inheritdoc />
     public Task<bool> SaveAsync(StateMachineDocument document, int expectedRevision, CancellationToken ct = default)

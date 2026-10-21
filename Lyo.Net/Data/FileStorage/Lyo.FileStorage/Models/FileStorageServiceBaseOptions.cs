@@ -50,8 +50,8 @@ public abstract class FileStorageServiceBaseOptions
     public long? MaxUploadSizeBytes { get; set; }
 
     /// <summary>
-    /// Whitelist of Content-Type values, compared case-insensitively. Null means this side is not configured. An empty set denies every content type. Cannot be set
-    /// together with <see cref="DeniedContentTypes" />.
+    /// Whitelist of Content-Type values, compared case-insensitively. Null means this side is not configured. An empty set denies every content type. Cannot be set together with
+    /// <see cref="DeniedContentTypes" />.
     /// </summary>
     public HashSet<string>? AllowedContentTypes { get; set; }
 
@@ -62,28 +62,27 @@ public abstract class FileStorageServiceBaseOptions
     public HashSet<string>? DeniedContentTypes { get; set; }
 
     /// <summary>
-    /// Whitelist of regular expressions matched against the full original file name (<see cref="Regex.IsMatch(string, string)" />). Patterns are not anchored. Null means
-    /// this side is not configured. An empty list rejects every name. Cannot be set together with <see cref="DeniedFileNamePatterns" />.
+    /// Whitelist of regular expressions matched against the full original file name (<see cref="Regex.IsMatch(string, string)" />). Patterns are not anchored. Null means this
+    /// side is not configured. An empty list rejects every name. Cannot be set together with <see cref="DeniedFileNamePatterns" />.
     /// </summary>
     public List<string>? AllowedFileNamePatterns { get; set; }
 
     /// <summary>
-    /// Blacklist of regular expressions matched against the full original file name. Patterns are not anchored. Null means this side is not configured. An empty list
-    /// rejects nothing. Cannot be set together with <see cref="AllowedFileNamePatterns" />.
+    /// Blacklist of regular expressions matched against the full original file name. Patterns are not anchored. Null means this side is not configured. An empty list rejects
+    /// nothing. Cannot be set together with <see cref="AllowedFileNamePatterns" />.
     /// </summary>
     public List<string>? DeniedFileNamePatterns { get; set; }
 
     /// <summary>
-    /// Whitelist of sniffed <see cref="FileTypeInfo.Name" /> values, compared case-insensitively. Null means this side is not configured. An empty set rejects every
-    /// header, including unrecognized bytes. A name that shares a signature family with the sniffed type also matches, so <c>JAR</c> selects the same <c>PK</c> bucket as
-    /// <c>ZIP</c>. Cannot be set together with <see cref="DeniedSniffedFileTypes" />.
+    /// Whitelist of sniffed <see cref="FileTypeInfo.Name" /> values, compared case-insensitively. Null means this side is not configured. An empty set rejects every header,
+    /// including unrecognized bytes. A name that shares a signature family with the sniffed type also matches, so <c>JAR</c> selects the same <c>PK</c> bucket as <c>ZIP</c>. Cannot be
+    /// set together with <see cref="DeniedSniffedFileTypes" />.
     /// </summary>
     public HashSet<string>? AllowedSniffedFileTypes { get; set; }
 
     /// <summary>
     /// Blacklist of sniffed <see cref="FileTypeInfo.Name" /> values, compared case-insensitively. Null means this side is not configured. An empty set rejects nothing.
-    /// Unrecognized headers pass. A name that shares a signature family with the sniffed type also matches. Cannot be set together with
-    /// <see cref="AllowedSniffedFileTypes" />.
+    /// Unrecognized headers pass. A name that shares a signature family with the sniffed type also matches. Cannot be set together with <see cref="AllowedSniffedFileTypes" />.
     /// </summary>
     public HashSet<string>? DeniedSniffedFileTypes { get; set; }
 
@@ -100,9 +99,9 @@ public abstract class FileStorageServiceBaseOptions
     public CompressionAlgorithm? DecompressionAlgorithmOverride { get; set; }
 
     /// <summary>
-    /// How long a direct upload may stay pending after begin before <see cref="Abstractions.IFileStorageService.SweepExpiredDirectUploadsAsync" /> discards it and any
-    /// object behind it. Begin rejects a <see cref="DirectUploadBeginRequest.UrlExpiration" /> longer than this, so a URL never outlives its row. Starts at 7 days, the
-    /// longest presigned URL S3 and Azure issue.
+    /// How long a direct upload may stay pending after begin before <see cref="Abstractions.IFileStorageService.SweepExpiredDirectUploadsAsync" /> discards it and any object
+    /// behind it. Begin rejects a <see cref="DirectUploadBeginRequest.UrlExpiration" /> longer than this, so a URL never outlives its row. Starts at 7 days, the longest presigned URL S3
+    /// and Azure issue.
     /// </summary>
     public TimeSpan PendingDirectUploadTtl { get; set; } = TimeSpan.FromDays(7);
 

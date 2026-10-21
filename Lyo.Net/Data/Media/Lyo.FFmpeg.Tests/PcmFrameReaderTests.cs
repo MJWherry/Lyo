@@ -12,7 +12,7 @@ public class PcmFrameReaderTests
         var payload = new byte[frameSize * 2];
         payload[0] = 1;
         payload[frameSize] = 2;
-        var reader = new PcmFrameReader(new MemoryStream(payload, writable: false));
+        var reader = new PcmFrameReader(new MemoryStream(payload, false));
         var frames = new List<byte[]>();
         await foreach (var frame in reader.ReadFramesAsync(TestCt))
             frames.Add(frame);
@@ -26,9 +26,9 @@ public class PcmFrameReaderTests
     [Fact]
     public async Task ReadFramesAsync_YieldsPartialLastFrame()
     {
-        var frameSize = new PcmFrameReader(Stream.Null, sampleRate: 8000, channels: 1, frameDuration: TimeSpan.FromMilliseconds(20)).FrameSizeBytes;
+        var frameSize = new PcmFrameReader(Stream.Null, 8000, 1, TimeSpan.FromMilliseconds(20)).FrameSizeBytes;
         var payload = new byte[frameSize + 10];
-        var reader = new PcmFrameReader(new MemoryStream(payload, writable: false), 8000, 1, TimeSpan.FromMilliseconds(20));
+        var reader = new PcmFrameReader(new MemoryStream(payload, false), 8000, 1, TimeSpan.FromMilliseconds(20));
         var frames = new List<byte[]>();
         await foreach (var frame in reader.ReadFramesAsync(TestCt))
             frames.Add(frame);

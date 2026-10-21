@@ -22,6 +22,7 @@ public class WatchableLocalFileSystemTests
             if (e is { Kind: FileSystemChangeKind.Created, IsDirectory: false })
                 seen = e;
         };
+
         var path = Path.Combine(fs.RootPath, "created.txt");
         await File.WriteAllTextAsync(path, "x", TestCt);
         await PollAssert.ThatAsync(() => seen is { Kind: FileSystemChangeKind.Created, IsDirectory: false }, TimeSpan.FromSeconds(3));

@@ -34,7 +34,7 @@ public partial class ConfigValueEditor
     public static string DefaultJsonForType(string? typeName)
     {
         var json = LyoTypeValueInput.DefaultJsonForType(typeName);
-        return json == "null" && !LyoTypeInfo.TryFromName(typeName, out _) ? "{}" : json;
+        return json == "null" && !LyoTypeInfo.TryFromName(typeName, out var _) ? "{}" : json;
     }
 
     private async Task OnJsonChanged(string? json)

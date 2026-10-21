@@ -13,8 +13,8 @@ namespace Lyo.Job.Scheduler.Tests;
 
 /// <summary>
 /// The template editor offers the keys from <see cref="JobFormatterContext" />, and the keys that actually resolve come from the scheduler's own context bag. Both are built
-/// from the same <see cref="JobContextBag" /> seeders, and these assert that stays true — so a scheduler change cannot leave the editor advertising tokens that resolve to
-/// nothing (or hiding ones that would work).
+/// from the same <see cref="JobContextBag" /> seeders, and these assert that stays true — so a scheduler change cannot leave the editor advertising tokens that resolve to nothing (or
+/// hiding ones that would work).
 /// </summary>
 /// <remarks>
 /// These live here instead of in <c>Lyo.Job.Tests</c> because the scheduler side of the comparison needs <see cref="JobRunRequestFactory" />, and the fakes for that already
@@ -29,10 +29,8 @@ public class JobFormatterContextTests
     {
         var definition = BuildDefinition();
         var schedule = definition.JobSchedules![0];
-
         var scheduler = SchedulerKeys(new(definition), schedule);
         var editor = JobFormatterContext.Build(definition, schedule: schedule);
-
         AssertCovers(scheduler, editor);
     }
 
@@ -44,10 +42,9 @@ public class JobFormatterContextTests
         var run = BuildRun(definition.Id);
         var scheduler = SchedulerKeys(new(definition, run, run, run), schedule);
         var editor = JobFormatterContext.Build(definition, LatestRuns(definition.Id, run), schedule);
-
         AssertCovers(scheduler, editor);
-        Assert.True(editor.TryGetValue("LastRun.Result.RowCount", out _));
-        Assert.True(editor.TryGetValue("LastRun.Parameter.EmailTo", out _));
+        Assert.True(editor.TryGetValue("LastRun.Result.RowCount", out var _));
+        Assert.True(editor.TryGetValue("LastRun.Parameter.EmailTo", out var _));
     }
 
     /// <summary>Every token the editor lists has to resolve. Underscore spellings are not aliases of the dotted keys.</summary>
@@ -58,9 +55,7 @@ public class JobFormatterContextTests
         var schedule = definition.JobSchedules![0];
         var run = BuildRun(definition.Id);
         var editor = JobFormatterContext.Build(definition, LatestRuns(definition.Id, run), schedule);
-
-        Assert.Empty(editor.Keys.Where(key => !editor.TryGetValue(key, out _)).ToList());
-
+        Assert.Empty(editor.Keys.Where(key => !editor.TryGetValue(key, out var _)).ToList());
         var formatter = new FormatterService(() => Frozen);
         Assert.Equal("42", formatter.Format("{LastRun.Result.RowCount}", editor));
         Assert.NotEqual("42", formatter.Format("{LastRun_Result_RowCount}", editor));
@@ -72,7 +67,6 @@ public class JobFormatterContextTests
     public void Build_WithoutRuns_StillExposesRunPaths()
     {
         var editor = JobFormatterContext.Build(BuildDefinition());
-
         var lastRun = Assert.IsType<Dictionary<string, object?>>(editor["LastRun"]);
         Assert.Contains(nameof(JobRunRes.State), lastRun.Keys);
         Assert.Contains(nameof(JobRunRes.FinishedTimestamp), lastRun.Keys);
@@ -84,7 +78,6 @@ public class JobFormatterContextTests
     {
         var definition = BuildDefinition();
         var editor = JobFormatterContext.Build(definition);
-
         var jobRun = Assert.IsType<Dictionary<string, object?>>(editor["jobrun"]);
         var parameters = Assert.IsType<Dictionary<string, object?>>(jobRun["Parameters"]);
         Assert.Contains("EmailTo", parameters.Keys);

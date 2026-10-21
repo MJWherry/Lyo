@@ -1,6 +1,7 @@
 # Lyo.Law.Models
 
-Wire types for the state statute API. Jurisdictions are US states. A code is one named compilation inside a state. Nodes are the outline and the text. This package has no DI registration. Federal law is not a type in this package.
+Wire types for the state statute API. Jurisdictions are US states. A code is one named compilation inside a state. Nodes are the outline and the text. This package has no DI
+registration. Federal law is not a type in this package.
 
 ## Features
 

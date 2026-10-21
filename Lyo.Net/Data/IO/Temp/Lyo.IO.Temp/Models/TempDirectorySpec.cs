@@ -15,9 +15,7 @@ public record TempDirectorySpec
     /// <summary>Same byte length for every generated file. Unused when <see cref="FileSizeSelector" /> is set.</summary>
     public long FileSizeBytes { get; init; }
 
-    /// <summary>
-    /// Optional size function. Gets the 0-based file index and returns bytes. When set, it replaces <see cref="FileSizeBytes" /> for every file at this level.
-    /// </summary>
+    /// <summary>Optional size function. Gets the 0-based file index and returns bytes. When set, it replaces <see cref="FileSizeBytes" /> for every file at this level.</summary>
     public Func<int, long>? FileSizeSelector { get; init; }
 
     /// <summary>Optional nested folders, each a <see cref="TempDirectorySpec" /> of its own.</summary>
@@ -33,8 +31,8 @@ public record TempDirectorySpec
     public static TempDirectorySpec Flat(int fileCount, FileSizeUnitInfo unit, double amount) => Flat(fileCount, unit.ConvertToBytes(amount));
 
     /// <summary>
-    /// Flat spec with file count and each file's size drawn uniformly from the given ranges. <see cref="FileSizeSelector" /> is set so each call picks an independent size in
-    /// [<paramref name="minSize" />, <paramref name="maxSize" />].
+    /// Flat spec with file count and each file's size drawn uniformly from the given ranges. <see cref="FileSizeSelector" /> is set so each call picks an independent size in [
+    /// <paramref name="minSize" />, <paramref name="maxSize" />].
     /// </summary>
     public static TempDirectorySpec Random(int minFiles, int maxFiles, long minSize, long maxSize)
     {

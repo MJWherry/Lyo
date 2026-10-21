@@ -1,5 +1,4 @@
 using Bogus;
-using Lyo.Billing;
 using Lyo.Billing.Postgres;
 using Lyo.Billing.Postgres.Database;
 using Lyo.Common.Core.Identifiers;
@@ -25,9 +24,7 @@ public sealed class BillingEfSeedContributor : SeedContributor, IEfSeedSource
     public DbContext CreateContext(string connectionString)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(connectionString);
-        var options = new DbContextOptionsBuilder<BillingDbContext>()
-            .UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema))
-            .Options;
+        var options = new DbContextOptionsBuilder<BillingDbContext>().UseNpgsql(connectionString, n => n.MigrationsHistoryTable("__EFMigrationsHistory", Schema)).Options;
         return new BillingDbContext(options);
     }
 
@@ -41,158 +38,178 @@ public sealed class BillingEfSeedContributor : SeedContributor, IEfSeedSource
         var phoneClient = new Dictionary<Guid, Guid>();
         var emailClient = new Dictionary<Guid, Guid>();
         var addressClient = new Dictionary<Guid, Guid>();
-        var clients = graph.Entity(options.Count, _ => new BillingClientEntity {
-            Id = LyoGuid.CreateV7(),
-            DisplayName = faker.Company.CompanyName(),
-            Status = (int)BillingClientStatus.Active,
-            DefaultCurrency = "USD",
-            CreatedAt = now
-        });
-        var invoices = clients.ForEach(_ => 2, (client, n) => {
-            var amount = faker.Random.Decimal(10, 500);
-            var issued = n == 1;
-            return new InvoiceEntity {
+        var clients = graph.Entity(
+            options.Count, _ => new BillingClientEntity {
                 Id = LyoGuid.CreateV7(),
-                ClientId = client.Id,
-                Status = (int)(issued ? InvoiceStatus.Issued : InvoiceStatus.Draft),
-                Number = issued ? $"INV-{client.Id:N}" : null,
-                Currency = "USD",
-                Subtotal = amount,
-                Total = amount,
-                AmountPaid = issued ? amount : 0,
-                IssuedAt = issued ? now : null,
-                BillToName = client.DisplayName,
+                DisplayName = faker.Company.CompanyName(),
+                Status = (int)BillingClientStatus.Active,
+                DefaultCurrency = "USD",
                 CreatedAt = now
-            };
-        });
-        invoices.ForEach(_ => 1, (invoice, _) => new InvoiceLineEntity {
-            Id = LyoGuid.CreateV7(),
-            InvoiceId = invoice.Id,
-            LineNumber = 1,
-            Title = faker.Commerce.ProductName(),
-            Description = invoice.Status == (int)InvoiceStatus.Issued ? "Issued time" : "Draft time",
-            Quantity = 1,
-            UnitAmount = invoice.Subtotal,
-            Amount = invoice.Subtotal
-        });
-        invoices.ForEach(invoice => invoice.Status == (int)InvoiceStatus.Issued ? 1 : 0, (invoice, _) => new ChargeEntity {
-            Id = LyoGuid.CreateV7(),
-            ClientId = invoice.ClientId,
-            InvoiceId = invoice.Id,
-            Kind = (int)ChargeKind.Time,
-            Description = faker.Commerce.ProductName(),
-            Quantity = 1,
-            UnitAmount = invoice.Subtotal,
-            Currency = "USD",
-            OccurredAt = now,
-            CreatedAt = now
-        });
-        invoices.ForEach(invoice => invoice.Status == (int)InvoiceStatus.Issued ? 1 : 0, (invoice, _) => new PaymentEntity {
-            Id = LyoGuid.CreateV7(),
-            InvoiceId = invoice.Id,
-            Amount = invoice.Total,
-            Currency = "USD",
-            Method = (int)PaymentMethod.Check,
-            Reference = invoice.Number ?? "check",
-            ReceivedAt = now
-        });
-        clients.ForEach(_ => 1, (client, _) => {
-            var person = new BillingPersonEntity {
+            });
+
+        var invoices = clients.ForEach(
+            _ => 2, (client, n) => {
+                var amount = faker.Random.Decimal(10, 500);
+                var issued = n == 1;
+                return new InvoiceEntity {
+                    Id = LyoGuid.CreateV7(),
+                    ClientId = client.Id,
+                    Status = (int)(issued ? InvoiceStatus.Issued : InvoiceStatus.Draft),
+                    Number = issued ? $"INV-{client.Id:N}" : null,
+                    Currency = "USD",
+                    Subtotal = amount,
+                    Total = amount,
+                    AmountPaid = issued ? amount : 0,
+                    IssuedAt = issued ? now : null,
+                    BillToName = client.DisplayName,
+                    CreatedAt = now
+                };
+            });
+
+        invoices.ForEach(
+            _ => 1, (invoice, _) => new InvoiceLineEntity {
                 Id = LyoGuid.CreateV7(),
-                DisplayName = client.DisplayName,
-                CreatedTimestamp = now
-            };
-            personClient[person.Id] = client.Id;
-            return person;
-        }).ForEach(_ => 1, (person, _) => new BillingContactEntity {
-            Id = LyoGuid.CreateV7(),
-            ClientId = personClient[person.Id],
-            SubjectEntityType = BillingEntityTypes.BillingPerson,
-            SubjectEntityId = person.Id.ToString(),
-            ActorEntityType = "System",
-            ActorEntityId = "00000000-0000-4000-8000-000000000002",
-            TenantId = Guid.Empty,
-            Role = (int)BillingContactRole.Billing,
-            IsPrimary = true,
-            IsBillingContact = true,
-            CreatedAt = now
-        });
-        clients.ForEach(_ => 1, (client, _) => {
-            var phone = new BillingPhoneNumberEntity {
+                InvoiceId = invoice.Id,
+                LineNumber = 1,
+                Title = faker.Commerce.ProductName(),
+                Description = invoice.Status == (int)InvoiceStatus.Issued ? "Issued time" : "Draft time",
+                Quantity = 1,
+                UnitAmount = invoice.Subtotal,
+                Amount = invoice.Subtotal
+            });
+
+        invoices.ForEach(
+            invoice => invoice.Status == (int)InvoiceStatus.Issued ? 1 : 0,
+            (invoice, _) => new ChargeEntity {
                 Id = LyoGuid.CreateV7(),
-                Number = faker.Phone.PhoneNumber("###-###-####"),
-                Country = "US",
-                CreatedTimestamp = now
-            };
-            phoneClient[phone.Id] = client.Id;
-            return phone;
-        }).ForEach(_ => 1, (phone, _) => new BillingPhoneEntity {
-            Id = LyoGuid.CreateV7(),
-            ClientId = phoneClient[phone.Id],
-            SubjectEntityType = BillingEntityTypes.BillingPhoneNumber,
-            SubjectEntityId = phone.Id.ToString(),
-            ActorEntityType = "System",
-            ActorEntityId = "00000000-0000-4000-8000-000000000002",
-            TenantId = Guid.Empty,
-            Usage = (int)BillingPhoneUsage.Work,
-            IsPrimary = true,
-            CreatedAt = now
-        });
-        clients.ForEach(_ => 1, (client, _) => {
-            var email = new BillingEmailAddressEntity {
+                ClientId = invoice.ClientId,
+                InvoiceId = invoice.Id,
+                Kind = (int)ChargeKind.Time,
+                Description = faker.Commerce.ProductName(),
+                Quantity = 1,
+                UnitAmount = invoice.Subtotal,
+                Currency = "USD",
+                OccurredAt = now,
+                CreatedAt = now
+            });
+
+        invoices.ForEach(
+            invoice => invoice.Status == (int)InvoiceStatus.Issued ? 1 : 0,
+            (invoice, _) => new PaymentEntity {
                 Id = LyoGuid.CreateV7(),
-                Email = faker.Internet.Email(),
-                CreatedTimestamp = now
-            };
-            emailClient[email.Id] = client.Id;
-            return email;
-        }).ForEach(_ => 1, (email, _) => new BillingEmailEntity {
-            Id = LyoGuid.CreateV7(),
-            ClientId = emailClient[email.Id],
-            SubjectEntityType = BillingEntityTypes.BillingEmailAddress,
-            SubjectEntityId = email.Id.ToString(),
-            ActorEntityType = "System",
-            ActorEntityId = "00000000-0000-4000-8000-000000000002",
-            TenantId = Guid.Empty,
-            Usage = (int)BillingEmailUsage.Billing,
-            IsPrimary = true,
-            CreatedAt = now
-        });
-        clients.ForEach(_ => 1, (client, _) => {
-            var address = new BillingAddressPayloadEntity {
+                InvoiceId = invoice.Id,
+                Amount = invoice.Total,
+                Currency = "USD",
+                Method = (int)PaymentMethod.Check,
+                Reference = invoice.Number ?? "check",
+                ReceivedAt = now
+            });
+
+        clients.ForEach(
+                _ => 1, (client, _) => {
+                    var person = new BillingPersonEntity { Id = LyoGuid.CreateV7(), DisplayName = client.DisplayName, CreatedTimestamp = now };
+                    personClient[person.Id] = client.Id;
+                    return person;
+                })
+            .ForEach(
+                _ => 1, (person, _) => new BillingContactEntity {
+                    Id = LyoGuid.CreateV7(),
+                    ClientId = personClient[person.Id],
+                    SubjectEntityType = BillingEntityTypes.BillingPerson,
+                    SubjectEntityId = person.Id.ToString(),
+                    ActorEntityType = "System",
+                    ActorEntityId = "00000000-0000-4000-8000-000000000002",
+                    TenantId = Guid.Empty,
+                    Role = (int)BillingContactRole.Billing,
+                    IsPrimary = true,
+                    IsBillingContact = true,
+                    CreatedAt = now
+                });
+
+        clients.ForEach(
+                _ => 1, (client, _) => {
+                    var phone = new BillingPhoneNumberEntity {
+                        Id = LyoGuid.CreateV7(),
+                        Number = faker.Phone.PhoneNumber("###-###-####"),
+                        Country = "US",
+                        CreatedTimestamp = now
+                    };
+
+                    phoneClient[phone.Id] = client.Id;
+                    return phone;
+                })
+            .ForEach(
+                _ => 1, (phone, _) => new BillingPhoneEntity {
+                    Id = LyoGuid.CreateV7(),
+                    ClientId = phoneClient[phone.Id],
+                    SubjectEntityType = BillingEntityTypes.BillingPhoneNumber,
+                    SubjectEntityId = phone.Id.ToString(),
+                    ActorEntityType = "System",
+                    ActorEntityId = "00000000-0000-4000-8000-000000000002",
+                    TenantId = Guid.Empty,
+                    Usage = (int)BillingPhoneUsage.Work,
+                    IsPrimary = true,
+                    CreatedAt = now
+                });
+
+        clients.ForEach(
+                _ => 1, (client, _) => {
+                    var email = new BillingEmailAddressEntity { Id = LyoGuid.CreateV7(), Email = faker.Internet.Email(), CreatedTimestamp = now };
+                    emailClient[email.Id] = client.Id;
+                    return email;
+                })
+            .ForEach(
+                _ => 1, (email, _) => new BillingEmailEntity {
+                    Id = LyoGuid.CreateV7(),
+                    ClientId = emailClient[email.Id],
+                    SubjectEntityType = BillingEntityTypes.BillingEmailAddress,
+                    SubjectEntityId = email.Id.ToString(),
+                    ActorEntityType = "System",
+                    ActorEntityId = "00000000-0000-4000-8000-000000000002",
+                    TenantId = Guid.Empty,
+                    Usage = (int)BillingEmailUsage.Billing,
+                    IsPrimary = true,
+                    CreatedAt = now
+                });
+
+        clients.ForEach(
+                _ => 1, (client, _) => {
+                    var address = new BillingAddressPayloadEntity {
+                        Id = LyoGuid.CreateV7(),
+                        Line1 = faker.Address.StreetAddress(),
+                        City = faker.Address.City(),
+                        Region = faker.Address.StateAbbr(),
+                        PostalCode = faker.Address.ZipCode(),
+                        Country = "US",
+                        CreatedTimestamp = now
+                    };
+
+                    addressClient[address.Id] = client.Id;
+                    return address;
+                })
+            .ForEach(
+                _ => 1, (address, _) => new BillingAddressEntity {
+                    Id = LyoGuid.CreateV7(),
+                    ClientId = addressClient[address.Id],
+                    SubjectEntityType = BillingEntityTypes.BillingAddress,
+                    SubjectEntityId = address.Id.ToString(),
+                    ActorEntityType = "System",
+                    ActorEntityId = "00000000-0000-4000-8000-000000000002",
+                    TenantId = Guid.Empty,
+                    Usage = (int)BillingAddressUsage.Billing,
+                    IsPrimary = true,
+                    CreatedAt = now
+                });
+
+        graph.Entity(
+            1, _ => new BillerProfileEntity {
                 Id = LyoGuid.CreateV7(),
-                Line1 = faker.Address.StreetAddress(),
-                City = faker.Address.City(),
-                Region = faker.Address.StateAbbr(),
-                PostalCode = faker.Address.ZipCode(),
-                Country = "US",
-                CreatedTimestamp = now
-            };
-            addressClient[address.Id] = client.Id;
-            return address;
-        }).ForEach(_ => 1, (address, _) => new BillingAddressEntity {
-            Id = LyoGuid.CreateV7(),
-            ClientId = addressClient[address.Id],
-            SubjectEntityType = BillingEntityTypes.BillingAddress,
-            SubjectEntityId = address.Id.ToString(),
-            ActorEntityType = "System",
-            ActorEntityId = "00000000-0000-4000-8000-000000000002",
-            TenantId = Guid.Empty,
-            Usage = (int)BillingAddressUsage.Billing,
-            IsPrimary = true,
-            CreatedAt = now
-        });
-        graph.Entity(1, _ => new BillerProfileEntity {
-            Id = LyoGuid.CreateV7(),
-            DisplayName = faker.Company.CompanyName(),
-            LegalName = faker.Company.CompanyName(),
-            Remittance = "Pay to the address on the invoice"
-        });
-        graph.Entity(1, _ => new InvoiceSequenceEntity {
-            Id = LyoGuid.CreateV7(),
-            Year = now.Year,
-            LastValue = options.Count
-        });
+                DisplayName = faker.Company.CompanyName(),
+                LegalName = faker.Company.CompanyName(),
+                Remittance = "Pay to the address on the invoice"
+            });
+
+        graph.Entity(1, _ => new InvoiceSequenceEntity { Id = LyoGuid.CreateV7(), Year = now.Year, LastValue = options.Count });
     }
 
     private static async Task ClearAsync(SeedSession session, CancellationToken ct)

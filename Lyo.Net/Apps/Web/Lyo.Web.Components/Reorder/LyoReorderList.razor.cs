@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 
 namespace Lyo.Web.Components;
 
 /// <summary>Ordered list with a drag handle, a read-only index, and up/down buttons. The list position is the order.</summary>
 public partial class LyoReorderList<TItem>
 {
+    private int? _dragOverIndex;
+
+    private int? _dragSourceIndex;
+
     /// <summary>Rows in display order. The component moves items inside this list.</summary>
     [Parameter]
     public List<TItem> Items { get; set; } = [];
@@ -26,18 +29,18 @@ public partial class LyoReorderList<TItem>
     [Parameter]
     public EventCallback<TItem> OnDelete { get; set; }
 
-    private int? _dragSourceIndex;
-    private int? _dragOverIndex;
-
     private bool ShowSection(int index)
     {
         if (SectionLabel == null || index < 0 || index >= Items.Count)
             return false;
+
         var label = SectionLabel(Items[index]);
         if (string.IsNullOrWhiteSpace(label))
             return false;
+
         if (index == 0)
             return true;
+
         return !string.Equals(label, SectionLabel(Items[index - 1]), StringComparison.Ordinal);
     }
 
@@ -45,8 +48,10 @@ public partial class LyoReorderList<TItem>
     {
         if (_dragOverIndex == index && _dragSourceIndex is int from && from != index)
             return "lyo-reorder-drop";
+
         if (_dragSourceIndex == index)
             return "lyo-reorder-dragging";
+
         return "";
     }
 
@@ -74,6 +79,7 @@ public partial class LyoReorderList<TItem>
     {
         if (_dragSourceIndex is not int from)
             return;
+
         OnDragEnd();
         var insertAt = dropIndex > from ? dropIndex - 1 : dropIndex;
         await Move(from, insertAt);
@@ -83,6 +89,7 @@ public partial class LyoReorderList<TItem>
     {
         if (fromIndex < 0 || fromIndex >= Items.Count || toIndex < 0 || toIndex >= Items.Count || fromIndex == toIndex)
             return;
+
         var item = Items[fromIndex];
         Items.RemoveAt(fromIndex);
         Items.Insert(toIndex, item);

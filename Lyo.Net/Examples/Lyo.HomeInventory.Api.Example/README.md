@@ -1,6 +1,8 @@
 # Lyo.HomeInventory.Api.Example
 
-Runnable example: `AddHomeInventoryApiFromConfiguration` and `BuildHomeInventoryGroup`, plus a keyed local-disk FileStorage API at `FileStorage` (`AddHomeInventoryFileStorage`). Demo wiring (local cache, OpenAPI/Scalar, auto-migrate). Prefer embedding those calls in another host when composing APIs. Not packed to NuGet. Binds http://localhost:5102 (see Properties/launchSettings.json).
+Runnable example: `AddHomeInventoryApiFromConfiguration` and `BuildHomeInventoryGroup`, plus a keyed local-disk FileStorage API at `FileStorage` (`AddHomeInventoryFileStorage`).
+Demo wiring (local cache, OpenAPI/Scalar, auto-migrate). Prefer embedding those calls in another host when composing APIs. Not packed to NuGet. Binds http://localhost:5102 (see
+Properties/launchSettings.json).
 
 ## Features
 

@@ -45,10 +45,9 @@ public class JobWorkflowGraphTests
 
     [Fact]
     public void TryParseDependencies_NonGuidEntry_Fails()
-    {
-        // Permanent configuration fault, not a transient one: callers fail the run rather than requeue it.
-        Assert.False(JobWorkflowGraph.TryParseDependencies($"{LyoGuid.CreateV7()},not-a-guid", out _));
-    }
+        =>
+            // Permanent configuration fault, not a transient one: callers fail the run rather than requeue it.
+            Assert.False(JobWorkflowGraph.TryParseDependencies($"{LyoGuid.CreateV7()},not-a-guid", out var _));
 
     [Fact]
     public void TryParseDependencies_SpacedCsv_IsTrimmed()

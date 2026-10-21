@@ -38,8 +38,6 @@ internal sealed class XlsxReader : IXlsxReader
         _getPooling = getPooling ?? (() => new());
     }
 
-    private IDisposable BeginCall() => _calls.Enter();
-
     /// <inheritdoc cref='M:Lyo.Xlsx.Models.IXlsxReader.ParseXlsxFileAsDictionary(System.String)' />
     public IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseXlsxFileAsDictionary(string xlsxFilePath)
     {
@@ -363,6 +361,93 @@ internal sealed class XlsxReader : IXlsxReader
         return ParseXlsxStreamAsAllSheetsWithFormatting(ms, useHeaderRow, useFooterRow);
     }
 
+    /// <inheritdoc cref="IXlsxReader.ParseBytesAsResult{T}" />
+    public XlsxParseResult<T> ParseBytesAsResult<T>(byte[] xlsxBytes, string? sheetName = null, IReadOnlyCollection<string>? requiredHeaders = null)
+        where T : new()
+    {
+        using var scope = BeginCall();
+        ArgumentHelpers.ThrowIfNull(xlsxBytes);
+        if (xlsxBytes.Length == 0)
+            return XlsxParseResult<T>.FromError("XLSX is empty.", "xlsx_empty");
+
+        using var stream = new MemoryStream(xlsxBytes);
+        using var workbook = new XLWorkbook(stream);
+        IXLWorksheet? sheet;
+        if (string.IsNullOrWhiteSpace(sheetName))
+            sheet = workbook.Worksheets.FirstOrDefault();
+        else
+            sheet = workbook.Worksheets.FirstOrDefault(item => string.Equals(item.Name, sheetName, StringComparison.OrdinalIgnoreCase));
+
+        if (sheet is null)
+            return XlsxParseResult<T>.FromError(string.IsNullOrWhiteSpace(sheetName) ? "Workbook has no worksheets." : $"Worksheet '{sheetName}' was not found.", "xlsx_sheet");
+
+        var lastRow = sheet.LastRowUsed()?.RowNumber() ?? 0;
+        var lastColumn = sheet.LastColumnUsed()?.ColumnNumber() ?? 0;
+        if (lastRow == 0 || lastColumn == 0)
+            return XlsxParseResult<T>.FromError("XLSX is empty.", "xlsx_empty");
+
+        var headers = new string[lastColumn];
+        for (var column = 1; column <= lastColumn; column++)
+            headers[column - 1] = sheet.Cell(1, column).GetString();
+
+        if (requiredHeaders is not null) {
+            foreach (var required in requiredHeaders) {
+                var found = false;
+                foreach (var header in headers) {
+                    if (string.Equals(header, required, StringComparison.OrdinalIgnoreCase)) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                    return XlsxParseResult<T>.FromError($"Required header '{required}' is missing.", "xlsx_schema");
+            }
+        }
+
+        var byName = new Dictionary<string, PropertyInfo>(StringComparer.OrdinalIgnoreCase);
+        foreach (var property in typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public)) {
+            if (property.CanWrite && !byName.ContainsKey(property.Name))
+                byName.Add(property.Name, property);
+        }
+
+        var rows = new List<T>();
+        var errors = new List<XlsxParseError>();
+        for (var rowNumber = 2; rowNumber <= lastRow; rowNumber++) {
+            var item = new T();
+            XlsxParseError? error = null;
+            for (var column = 1; column <= lastColumn; column++) {
+                var header = headers[column - 1];
+                if (string.IsNullOrWhiteSpace(header) || !byName.TryGetValue(header, out var property))
+                    continue;
+
+                var raw = sheet.Cell(rowNumber, column).GetString();
+                try {
+                    AssignCell(property, item, raw);
+                }
+                catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException or ArgumentException) {
+                    error = new() {
+                        RowNumber = rowNumber,
+                        ColumnName = header,
+                        Raw = raw,
+                        Message = ex.Message
+                    };
+
+                    break;
+                }
+            }
+
+            if (error is null)
+                rows.Add(item);
+            else
+                errors.Add(error);
+        }
+
+        return XlsxParseResult<T>.FromSuccess(rows, errors.Count == 0 ? null : errors);
+    }
+
+    private IDisposable BeginCall() => _calls.Enter();
+
     private Result<DataTable.Models.DataTable> ParseXlsxStreamAsDataTableCore(Stream xlsxStream, bool? useHeaderRow, bool includeFormatting, bool useFooterRow = false)
     {
         ArgumentHelpers.ThrowIfNull(xlsxStream);
@@ -633,85 +718,6 @@ internal sealed class XlsxReader : IXlsxReader
             return null;
 
         return hex;
-    }
-
-    /// <inheritdoc cref="IXlsxReader.ParseBytesAsResult{T}" />
-    public XlsxParseResult<T> ParseBytesAsResult<T>(byte[] xlsxBytes, string? sheetName = null, IReadOnlyCollection<string>? requiredHeaders = null)
-        where T : new()
-    {
-        using var scope = BeginCall();
-        ArgumentHelpers.ThrowIfNull(xlsxBytes);
-        if (xlsxBytes.Length == 0)
-            return XlsxParseResult<T>.FromError("XLSX is empty.", "xlsx_empty");
-
-        using var stream = new MemoryStream(xlsxBytes);
-        using var workbook = new XLWorkbook(stream);
-        IXLWorksheet? sheet;
-        if (string.IsNullOrWhiteSpace(sheetName))
-            sheet = workbook.Worksheets.FirstOrDefault();
-        else
-            sheet = workbook.Worksheets.FirstOrDefault(item => string.Equals(item.Name, sheetName, StringComparison.OrdinalIgnoreCase));
-
-        if (sheet is null)
-            return XlsxParseResult<T>.FromError(string.IsNullOrWhiteSpace(sheetName) ? "Workbook has no worksheets." : $"Worksheet '{sheetName}' was not found.", "xlsx_sheet");
-
-        var lastRow = sheet.LastRowUsed()?.RowNumber() ?? 0;
-        var lastColumn = sheet.LastColumnUsed()?.ColumnNumber() ?? 0;
-        if (lastRow == 0 || lastColumn == 0)
-            return XlsxParseResult<T>.FromError("XLSX is empty.", "xlsx_empty");
-
-        var headers = new string[lastColumn];
-        for (var column = 1; column <= lastColumn; column++)
-            headers[column - 1] = sheet.Cell(1, column).GetString();
-
-        if (requiredHeaders is not null) {
-            foreach (var required in requiredHeaders) {
-                var found = false;
-                foreach (var header in headers) {
-                    if (string.Equals(header, required, StringComparison.OrdinalIgnoreCase)) {
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (!found)
-                    return XlsxParseResult<T>.FromError($"Required header '{required}' is missing.", "xlsx_schema");
-            }
-        }
-
-        var byName = new Dictionary<string, PropertyInfo>(StringComparer.OrdinalIgnoreCase);
-        foreach (var property in typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public)) {
-            if (property.CanWrite && !byName.ContainsKey(property.Name))
-                byName.Add(property.Name, property);
-        }
-
-        var rows = new List<T>();
-        var errors = new List<XlsxParseError>();
-        for (var rowNumber = 2; rowNumber <= lastRow; rowNumber++) {
-            var item = new T();
-            XlsxParseError? error = null;
-            for (var column = 1; column <= lastColumn; column++) {
-                var header = headers[column - 1];
-                if (string.IsNullOrWhiteSpace(header) || !byName.TryGetValue(header, out var property))
-                    continue;
-
-                var raw = sheet.Cell(rowNumber, column).GetString();
-                try {
-                    AssignCell(property, item, raw);
-                }
-                catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException or ArgumentException) {
-                    error = new() { RowNumber = rowNumber, ColumnName = header, Raw = raw, Message = ex.Message };
-                    break;
-                }
-            }
-
-            if (error is null)
-                rows.Add(item);
-            else
-                errors.Add(error);
-        }
-
-        return XlsxParseResult<T>.FromSuccess(rows, errors.Count == 0 ? null : errors);
     }
 
     private static void AssignCell(PropertyInfo property, object target, string raw)

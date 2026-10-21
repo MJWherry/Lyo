@@ -1,9 +1,10 @@
 using Lyo.Audit.Postgres.Database;
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Lyo.Common.Core.Identifiers;
+
 namespace Lyo.Audit.Postgres.Tests;
 
 public class PostgresAuditRecorderTests : IAsyncDisposable
@@ -149,9 +150,7 @@ public class PostgresAuditRecorderTests : IAsyncDisposable
     public async Task SystemOnly_PersistsNullTenantRegardlessOfCaller()
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
-        var recorder = new PostgresAuditRecorder(
-            factory, new EntityRefOptions(), new PostgresAuditOptions { Tenancy = new() { Mode = TenancyMode.SystemOnly } });
-
+        var recorder = new PostgresAuditRecorder(factory, new(), new() { Tenancy = new() { Mode = TenancyMode.SystemOnly } });
         var evt = new AuditEvent(EntityRef.ForKey("Doc", "system-only"), "Created", "ignored tenant") { TenantId = LyoGuid.CreateV7() };
         await recorder.RecordEventAsync(evt, TestCt);
         await using var context = await factory.CreateDbContextAsync(TestCt);
@@ -163,9 +162,7 @@ public class PostgresAuditRecorderTests : IAsyncDisposable
     public async Task MultiTenantStrict_ThrowsWhenCallerDoesNotSupplyTenant()
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
-        var recorder = new PostgresAuditRecorder(
-            factory, new EntityRefOptions(), new PostgresAuditOptions { Tenancy = new() { Mode = TenancyMode.MultiTenantStrict } });
-
+        var recorder = new PostgresAuditRecorder(factory, new(), new() { Tenancy = new() { Mode = TenancyMode.MultiTenantStrict } });
         var evt = new AuditEvent(EntityRef.ForKey("Doc", "strict-missing"), "Created", "no tenant");
         await Assert.ThrowsAsync<ArgumentNullException>(() => recorder.RecordEventAsync(evt, TestCt));
     }
@@ -175,10 +172,7 @@ public class PostgresAuditRecorderTests : IAsyncDisposable
     {
         var defaultTenant = LyoGuid.CreateV7();
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<AuditDbContext>>();
-        var recorder = new PostgresAuditRecorder(
-            factory, new EntityRefOptions(),
-            new PostgresAuditOptions { Tenancy = new() { Mode = TenancyMode.SingleTenantDefault, DefaultTenantId = defaultTenant } });
-
+        var recorder = new PostgresAuditRecorder(factory, new(), new() { Tenancy = new() { Mode = TenancyMode.SingleTenantDefault, DefaultTenantId = defaultTenant } });
         var evt = new AuditEvent(EntityRef.ForKey("Doc", "default-tenant"), "Created", "uses default");
         await recorder.RecordEventAsync(evt, TestCt);
         await using var context = await factory.CreateDbContextAsync(TestCt);

@@ -8,12 +8,12 @@ namespace Lyo.Toml;
 /// <summary>Facade over <see cref="TomlReader" /> and <see cref="TomlWriter" />, plus JSON conversion. One instance is safe for concurrent calls.</summary>
 public sealed class TomlService : ITomlService
 {
-    /// <summary>Shared service with the default options. Do not change it.</summary>
-    public static TomlService Default { get; } = new();
-
     private readonly TomlEngine _engine;
     private readonly TomlReader _reader;
     private readonly TomlWriter _writer;
+
+    /// <summary>Shared service with the default options. Do not change it.</summary>
+    public static TomlService Default { get; } = new();
 
     static TomlService() => Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
@@ -81,16 +81,14 @@ public sealed class TomlService : ITomlService
     public bool TryExport<T>(T value, Span<byte> destination, out int bytesWritten, Encoding? encoding = null) => _writer.TryExport(value, destination, out bytesWritten, encoding);
 
     /// <inheritdoc />
-    public string ExportFormattedToTomlString<T>(IEnumerable<T> items, IReadOnlyDictionary<string, Func<T, string>> fields)
-        => _writer.ExportFormattedToTomlString(items, fields);
+    public string ExportFormattedToTomlString<T>(IEnumerable<T> items, IReadOnlyDictionary<string, Func<T, string>> fields) => _writer.ExportFormattedToTomlString(items, fields);
 
     /// <inheritdoc />
     public void ExportFormattedToToml<T>(IEnumerable<T> items, IReadOnlyDictionary<string, Func<T, string>> fields, Stream tomlStream)
         => _writer.ExportFormattedToToml(items, fields, tomlStream);
 
     /// <inheritdoc />
-    public string ExportColumnsToTomlString<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns)
-        => _writer.ExportColumnsToTomlString(items, columns);
+    public string ExportColumnsToTomlString<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns) => _writer.ExportColumnsToTomlString(items, columns);
 
     /// <inheritdoc />
     public void ExportColumnsToToml<T>(IEnumerable<T> items, IReadOnlyDictionary<string, PropertyInfo> columns, Stream tomlStream)
@@ -172,7 +170,7 @@ public sealed class TomlService : ITomlService
 
     private static string Read(Stream stream)
     {
-        using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, 1024, leaveOpen: true);
+        using var reader = new StreamReader(stream, Encoding.UTF8, true, 1024, true);
         return reader.ReadToEnd();
     }
 
@@ -230,7 +228,11 @@ public sealed class TomlService : ITomlService
         => _reader.ParseStringAsDataTableAsync(toml, hasFooterRow, ct);
 
     /// <inheritdoc />
-    public Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(byte[] tomlBytes, bool hasFooterRow = false, Encoding? encoding = null, CancellationToken ct = default)
+    public Task<Result<DataTable.Models.DataTable>> ParseBytesAsDataTableAsync(
+        byte[] tomlBytes,
+        bool hasFooterRow = false,
+        Encoding? encoding = null,
+        CancellationToken ct = default)
         => _reader.ParseBytesAsDataTableAsync(tomlBytes, hasFooterRow, encoding, ct);
 
     /// <inheritdoc />

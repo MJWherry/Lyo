@@ -2,10 +2,7 @@ using Lyo.Exceptions;
 
 namespace Lyo.Web.Components.ParamTable;
 
-/// <summary>
-/// Host defaults for <see cref="LyoParameterEditor" />. Wire with <c>AddLyoParameterEditor</c>; hosts that never register it get the table layout with the
-/// toggle available.
-/// </summary>
+/// <summary>Host defaults for <see cref="LyoParameterEditor" />. Wire with <c>AddLyoParameterEditor</c>; hosts that never register it get the table layout with the toggle available.</summary>
 public sealed class LyoParameterEditorOptions
 {
     /// <summary>Configuration section bound by <c>AddLyoParameterEditorFromConfiguration</c>.</summary>

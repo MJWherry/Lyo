@@ -1,6 +1,6 @@
 using Lyo.Common.Core.Enums;
-using Lyo.Job.Models.Builders;
 using Lyo.Common.Core.Identifiers;
+using Lyo.Job.Models.Builders;
 
 namespace Lyo.Job.Scheduler.Tests;
 

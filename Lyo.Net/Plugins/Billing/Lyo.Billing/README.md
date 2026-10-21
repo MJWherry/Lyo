@@ -1,6 +1,7 @@
 # Lyo.Billing
 
-Billing documents in schema `billing`, including bill-to clients (`billing.client`). `IBillingStore.IssueInvoiceAsync` snapshots bill-to strings (encrypted tax id) and posts Dr AR / Cr Revenue / Cr Tax. `RecordPaymentAsync` posts Dr Cash / Cr AR. Void writes a reversing journal. This plugin does not render PDFs.
+Billing documents in schema `billing`, including bill-to clients (`billing.client`). `IBillingStore.IssueInvoiceAsync` snapshots bill-to strings (encrypted tax id) and posts Dr
+AR / Cr Revenue / Cr Tax. `RecordPaymentAsync` posts Dr Cash / Cr AR. Void writes a reversing journal. This plugin does not render PDFs.
 
 ## Features
 

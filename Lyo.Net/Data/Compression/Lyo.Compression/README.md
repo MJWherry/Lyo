@@ -1,15 +1,19 @@
 # Lyo.Compression
 
-Compress and decompress bytes, strings, streams, and files with ICompressionService (default codec plus Resolver, AlgorithmSelector, and ResolveForCompress) and ICompressionResolver (explicit per-algorithm compress/decompress, implemented by CompressionService). Batch file work and atomic file writes are included.
+Compress and decompress bytes, strings, streams, and files with ICompressionService (default codec plus Resolver, AlgorithmSelector, and ResolveForCompress) and
+ICompressionResolver (explicit per-algorithm compress/decompress, implemented by CompressionService). Batch file work and atomic file writes are included.
 
-With GenerateDocumentationFile set in Directory.Build.props, IntelliSense on ICompressionService and CompressionServiceOptions shows the same behavioral detail as the method summaries below.
+With GenerateDocumentationFile set in Directory.Build.props, IntelliSense on ICompressionService and CompressionServiceOptions shows the same behavioral detail as the method
+summaries below.
 
 ## Features
 
-- Algorithms on CompressionAlgorithm: GZip (default on netstandard2.0); Brotli (default on net10.0+; not on netstandard2.0); Deflate; ZLib (not on netstandard2.0); Snappier (Snappy); ZstdSharp (Zstandard); LZ4; LZMA; BZip2 (SharpZipLib); XZ (Joveler.Compression.XZ; native liblzma required on Linux: apt install liblzma5).
+- Algorithms on CompressionAlgorithm: GZip (default on netstandard2.0); Brotli (default on net10.0+; not on netstandard2.0); Deflate; ZLib (not on netstandard2.0); Snappier
+  (Snappy); ZstdSharp (Zstandard); LZ4; LZMA; BZip2 (SharpZipLib); XZ (Joveler.Compression.XZ; native liblzma required on Linux: apt install liblzma5).
 - Byte array, string (with encoding), stream (sync and async), file (sync and async), parallel batch files, and Base64.
 - ICompressionResolver. Per-algorithm dispatch with cached factories. File storage uses it for metadata-driven decompression.
-- Safe to register as a singleton. File writes go to a temp path then rename, so a failed compress leaves no partial target. MaxInputSize caps both input and decompressed output. Unknown encodings fall back to UTF-8.
+- Safe to register as a singleton. File writes go to a temp path then rename, so a failed compress leaves no partial target. MaxInputSize caps both input and decompressed output.
+  Unknown encodings fall back to UTF-8.
 - File I/O uses 64 KB buffers by default. Batch file work honours MaxParallelFileOperations.
 
 ## Examples
@@ -425,14 +429,14 @@ File operations write a unique temporary file first, then rename. If compression
 
 What the container gets
 
-| Call | What DI registers |
-| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| AddCompressionService() | Built-in ICompressorFactory, CompressionServiceOptions, CompressionService, and ICompressionResolver pointing at the same instance. |
-| AddCompressionResolver() | ICompressionResolver only (idempotent; usually unnecessary. AddCompressionService already calls this). |
-| AddDefaultCompressionService<CompressionService>() | ICompressionService mapped to the same instance as CompressionService. |
-| AddCompressionPolicySelector(…) | ICompressionAlgorithmSelector plus CompressionPolicyOptions (optional write-time policy for file storage). |
-| AddLz4Compressor() / other addons | Additional ICompressorFactory entries only. |
-| AddCompressionServiceKeyed("key", …) | Per-key options plus CompressionService plus ICompressionService (no separate default mapper). |
+| Call                                               | What DI registers                                                                                                                   |
+|----------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| AddCompressionService()                            | Built-in ICompressorFactory, CompressionServiceOptions, CompressionService, and ICompressionResolver pointing at the same instance. |
+| AddCompressionResolver()                           | ICompressionResolver only (idempotent; usually unnecessary. AddCompressionService already calls this).                              |
+| AddDefaultCompressionService<CompressionService>() | ICompressionService mapped to the same instance as CompressionService.                                                              |
+| AddCompressionPolicySelector(…)                    | ICompressionAlgorithmSelector plus CompressionPolicyOptions (optional write-time policy for file storage).                          |
+| AddLz4Compressor() / other addons                  | Additional ICompressorFactory entries only.                                                                                         |
+| AddCompressionServiceKeyed("key", …)               | Per-key options plus CompressionService plus ICompressionService (no separate default mapper).                                      |
 
 AddCompressionService does not register ICompressionService until AddDefaultCompressionService<TConcrete>() is called. ICompressionResolver is registered automatically.
 
@@ -444,12 +448,16 @@ Optional addon factories: register them before or with AddCompressionService. Id
 
 ## ICompressionResolver
 
-- DI: AddCompressionService() registers ICompressionResolver pointing at the same CompressionService singleton. Call AddCompressionResolver() only when you registered CompressionService yourself and still need the interface mapping.
-- Defaults: new CompressionService() / new CompressionService(options: null) uses CompressionServiceOptions.Default (static singleton; do not mutate it).
+- DI: AddCompressionService () registers ICompressionResolver pointing at the same CompressionService singleton. Call AddCompressionResolver () only when you registered
+  CompressionService yourself and still need the interface mapping.
+- Defaults: new CompressionService () / new CompressionService (options: null) uses CompressionServiceOptions.Default (static singleton; do not mutate it).
 
 ## ICompressionAlgorithmSelector
 
-Register policy-driven algorithm selection for file storage saves, and for any caller that injects the selector. Rules use FileTypeInfo category, MIME/content-type, size, tenant, and environment name. First matching rule wins, then built-in heuristics, then environment profile, then default. On the file storage read path, decompress uses metadata.CompressionAlgorithm via ICompressionService.Resolver, not the configured default. Optional overrides: GetFileAsync(id, compressionAlgorithmOverride: …, ct) or FileStorageServiceBaseOptions.DecompressionAlgorithmOverride. Register factories for every algorithm you may read from historical files.
+Register policy-driven algorithm selection for file storage saves, and for any caller that injects the selector. Rules use FileTypeInfo category, MIME/content-type, size, tenant,
+and environment name. First matching rule wins, then built-in heuristics, then environment profile, then default. On the file storage read path, decompress uses
+metadata.CompressionAlgorithm via ICompressionService.Resolver, not the configured default. Optional overrides: GetFileAsync (id, compressionAlgorithmOverride: …, ct) or
+FileStorageServiceBaseOptions.DecompressionAlgorithmOverride. Register factories for every algorithm you may read from historical files.
 
 ## Validation
 
@@ -563,7 +571,8 @@ public enum CompressionAlgorithm
 }
 ```
 
-File extensions are sourced from `Lyo.Common.Metadata.Records.FileTypeInfo` via `Constants.Data.AlgorithmExtensions` (e.g. `.gz`, `.br`, `.zst`, `.lz4`, `.lzma`, `.bz2`, `.xz`, `.snappy`, `.deflate`, `.zlib`).
+File extensions are sourced from `Lyo.Common.Metadata.Records.FileTypeInfo` via `Constants.Data.AlgorithmExtensions` (e.g. `.gz`, `.br`, `.zst`, `.lz4`, `.lzma`, `.bz2`, `.xz`,
+`.snappy`, `.deflate`, `.zlib`).
 
 ## Information types
 
@@ -576,22 +585,26 @@ File extensions are sourced from `Lyo.Common.Metadata.Records.FileTypeInfo` via 
 
 ## Performance
 
-BenchmarkDotNet suite: [`Lyo.Compression.Benchmarks`](../Lyo.Compression.Benchmarks/). Write-up in [`BENCHMARK_SUMMARY.md`](../Lyo.Compression.Benchmarks/BENCHMARK_SUMMARY.md) (last run June 14, 2026, .NET 10.0.9, Linux Mint 22.1, Intel Core Ultra 7 155U). Payloads use random bytes unless noted. Real compressible data improves ratios and lowers BZip2 allocation.
+BenchmarkDotNet suite: [`Lyo.Compression.Benchmarks`](../Lyo.Compression.Benchmarks/). Write-up in [`BENCHMARK_SUMMARY.md`](../Lyo.Compression.Benchmarks/BENCHMARK_SUMMARY.md)
+(last run June 14, 2026, .NET 10.0.9, Linux Mint 22.1, Intel Core Ultra 7 155U). Payloads use random bytes unless noted. Real compressible data improves ratios and lowers BZip2
+allocation.
 
 ## Benchmark numbers (June 2026)
 
-| Workload | Fastest compress | Fastest decompress | GZip baseline |
-| ----------------------- | ------------------ | ------------------ | ----------------- |
-| 1 KB in-memory | Snappier (~878 ns) | LZ4 (~271 ns) | ~17 µs compress |
-| 1 MB in-memory | **LZ4 (~117 µs)** | **Zstd (~70 µs)** | ~19 ms / ~381 µs |
-| 10 MB in-memory | **LZ4 (~1.8 ms)** | **Zstd (~1.3 ms)** | ~197 ms / ~9.0 ms |
-| 100 MB in-memory | **LZ4 (~18 ms)** | **Zstd (~13 ms)** | ~2.0 s / ~78 ms |
-| 100 MB streaming | **Zstd (~65 ms)** | Zstd (~58 ms) | ~1.9 s / ~65 ms |
-| 1 GB streaming compress | **Zstd (~1.0 s)** | n/a | ~19.9 s |
+| Workload                | Fastest compress   | Fastest decompress | GZip baseline     |
+|-------------------------|--------------------|--------------------|-------------------|
+| 1 KB in-memory          | Snappier (~878 ns) | LZ4 (~271 ns)      | ~17 µs compress   |
+| 1 MB in-memory          | **LZ4 (~117 µs)**  | **Zstd (~70 µs)**  | ~19 ms / ~381 µs  |
+| 10 MB in-memory         | **LZ4 (~1.8 ms)**  | **Zstd (~1.3 ms)** | ~197 ms / ~9.0 ms |
+| 100 MB in-memory        | **LZ4 (~18 ms)**   | **Zstd (~13 ms)**  | ~2.0 s / ~78 ms   |
+| 100 MB streaming        | **Zstd (~65 ms)**  | Zstd (~58 ms)      | ~1.9 s / ~65 ms   |
+| 1 GB streaming compress | **Zstd (~1.0 s)**  | n/a                | ~19.9 s           |
 
-Zstd vs GZip streaming compress: about 29× at 100 MB, about 20× at 1 to 2 GB. Policy defaults (FastAlgorithm: LZ4, ArchivalAlgorithm: Zstd, default Brotli) line up with these numbers.
+Zstd vs GZip streaming compress: about 29× at 100 MB, about 20× at 1 to 2 GB. Policy defaults (FastAlgorithm: LZ4, ArchivalAlgorithm: Zstd, default Brotli) line up with these
+numbers.
 
-> **BZip2 on random data.** SharpZipLib allocates a sort stack on every internal QSort3 call. Benchmarks show about 764 MB alloc per 1 MB compress on noise, but about 8 MB on compressible text. Use BZip2 for `.tar.bz2` interop on compressible payloads, not on pre-compressed blobs.
+> **BZip2 on random data.** SharpZipLib allocates a sort stack on every internal QSort3 call. Benchmarks show about 764 MB alloc per 1 MB compress on noise, but about 8 MB on
+> compressible text. Use BZip2 for `.tar.bz2` interop on compressible payloads, not on pre-compressed blobs.
 
 ## Algorithm selection
 
@@ -707,20 +720,20 @@ Batch operations check the cancellation token before each file, so a long batch 
 
 ## Public types
 
-| Type | Description |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ICompressionService / CompressionService | Default-codec contract and implementation. FileExtension, Algorithm, plus byte/string/stream/file/batch/base64 methods (sync + async + Try*). |
-| ICompressionResolver | Per-algorithm compress/decompress (GetCompressor, stream/byte APIs with an explicit CompressionAlgorithm). Implemented by CompressionService. |
-| ICompressionAlgorithmSelector / CompressionPolicyAlgorithmSelector | Optional write-time policy (rules, env profiles, built-in skips). File storage uses it on save when registered. |
-| CompressionServiceOptions | Default (static), DefaultAlgorithm, DefaultCompressionLevel, MaxInputSize, MaxParallelFileOperations, buffer sizes, EnableMetrics. SectionName = "CompressionOptions". |
-| CompressionPolicyOptions | Policy rules, MinCompressSizeBytes, and environment profiles. Bind from CompressionOptions:Policy. |
-| CompressionAlgorithm | Enum: GZip, Brotli*, Deflate, ZLib*, Snappier, ZstdSharp, LZ4, LZMA, BZip2, XZ. (*Brotli/ZLib require net10.0; unavailable on netstandard2.0.) |
-| CompressionInfo / DecompressionInfo | In-memory operation metadata. |
-| FileCompressionInfo / FileDecompressionInfo | File-level operation metadata (input/output paths, sizes, timings). |
-| BatchFileCompressionResult / BatchFileDecompressionResult | Batch metadata + per-file failures (FailedFiles). |
-| CompressionFileInfo / DecompressionFileInfo / FileCompressionInfo / FileDecompressionInfo / FailedFileOperation / BatchCompressionResult / BatchDecompressionResult / CompressionProgress | Supporting models in Lyo.Compression.Models. |
-| Extensions | DI helpers: AddCompressionService(), AddCompressionResolver(), AddDefaultCompressionService<TConcrete>(), AddCompressionServiceFromConfiguration, AddCompressionPolicySelector, AddCompressionServiceKeyed. |
-| CompressionErrorCodes | Stable error code strings. |
+| Type                                                                                                                                                                                      | Description                                                                                                                                                                                                 |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ICompressionService / CompressionService                                                                                                                                                  | Default-codec contract and implementation. FileExtension, Algorithm, plus byte/string/stream/file/batch/base64 methods (sync + async + Try*).                                                               |
+| ICompressionResolver                                                                                                                                                                      | Per-algorithm compress/decompress (GetCompressor, stream/byte APIs with an explicit CompressionAlgorithm). Implemented by CompressionService.                                                               |
+| ICompressionAlgorithmSelector / CompressionPolicyAlgorithmSelector                                                                                                                        | Optional write-time policy (rules, env profiles, built-in skips). File storage uses it on save when registered.                                                                                             |
+| CompressionServiceOptions                                                                                                                                                                 | Default (static), DefaultAlgorithm, DefaultCompressionLevel, MaxInputSize, MaxParallelFileOperations, buffer sizes, EnableMetrics. SectionName = "CompressionOptions".                                      |
+| CompressionPolicyOptions                                                                                                                                                                  | Policy rules, MinCompressSizeBytes, and environment profiles. Bind from CompressionOptions:Policy.                                                                                                          |
+| CompressionAlgorithm                                                                                                                                                                      | Enum: GZip, Brotli*, Deflate, ZLib*, Snappier, ZstdSharp, LZ4, LZMA, BZip2, XZ. (*Brotli/ZLib require net10.0; unavailable on netstandard2.0.)                                                              |
+| CompressionInfo / DecompressionInfo                                                                                                                                                       | In-memory operation metadata.                                                                                                                                                                               |
+| FileCompressionInfo / FileDecompressionInfo                                                                                                                                               | File-level operation metadata (input/output paths, sizes, timings).                                                                                                                                         |
+| BatchFileCompressionResult / BatchFileDecompressionResult                                                                                                                                 | Batch metadata + per-file failures (FailedFiles).                                                                                                                                                           |
+| CompressionFileInfo / DecompressionFileInfo / FileCompressionInfo / FileDecompressionInfo / FailedFileOperation / BatchCompressionResult / BatchDecompressionResult / CompressionProgress | Supporting models in Lyo.Compression.Models.                                                                                                                                                                |
+| Extensions                                                                                                                                                                                | DI helpers: AddCompressionService(), AddCompressionResolver(), AddDefaultCompressionService<TConcrete>(), AddCompressionServiceFromConfiguration, AddCompressionPolicySelector, AddCompressionServiceKeyed. |
+| CompressionErrorCodes                                                                                                                                                                     | Stable error code strings.                                                                                                                                                                                  |
 
 The Compressors/ folder (BZip2Compressor, XZCompressor) holds internal helpers backing those two algorithms. Callers should go through ICompressionService.
 

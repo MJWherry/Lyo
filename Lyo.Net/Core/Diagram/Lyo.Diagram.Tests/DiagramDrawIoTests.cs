@@ -16,18 +16,15 @@ public class DiagramDrawIoTests
         var mxfile = XDocument.Parse(xml).Root!;
         Assert.Equal("mxfile", mxfile.Name.LocalName);
         Assert.Equal("Checkout", Attr(mxfile, "name"));
-
         var page = mxfile.Elements().Single(e => e.Name.LocalName == "diagram");
         Assert.Equal("Flow", Attr(page, "name"));
         var model = page.Elements().Single(e => e.Name.LocalName == "mxGraphModel");
         Assert.Equal("850", Attr(model, "pageWidth"));
         Assert.Equal("1100", Attr(model, "pageHeight"));
-
         var cells = model.Elements().Single(e => e.Name.LocalName == "root").Elements().Where(e => e.Name.LocalName == "mxCell").ToArray();
         Assert.Equal("0", Attr(cells[0], "id"));
         Assert.Equal("1", Attr(cells[1], "id"));
         Assert.Equal("0", Attr(cells[1], "parent"));
-
         var start = Cell(cells, "start");
         Assert.Equal("Start", Attr(start, "value"));
         Assert.Equal("1", Attr(start, "vertex"));
@@ -38,13 +35,11 @@ public class DiagramDrawIoTests
         Assert.Equal("40", Attr(startBox, "y"));
         Assert.Equal("120", Attr(startBox, "width"));
         Assert.Equal("60", Attr(startBox, "height"));
-
         var end = Cell(cells, "end");
         Assert.Equal("End", Attr(end, "value"));
         Assert.Equal("ellipse;whiteSpace=wrap;html=1;", Attr(end, "style"));
         var endBox = end.Elements().Single(e => e.Name.LocalName == "mxGeometry");
         Assert.Equal("180", Attr(endBox, "y"));
-
         var edge = Cell(cells, "go");
         Assert.Equal("next", Attr(edge, "value"));
         Assert.Equal("1", Attr(edge, "edge"));
@@ -59,7 +54,6 @@ public class DiagramDrawIoTests
     {
         var document = Grouped();
         var imported = DiagramDrawIo.Import(DiagramDrawIo.Export(document));
-
         Assert.NotEqual(Guid.Empty, imported.Id);
         Assert.NotEqual(document.Id, imported.Id);
         Assert.Equal(document.Name, imported.Name);
@@ -67,7 +61,6 @@ public class DiagramDrawIoTests
         Assert.Equal("Flow", imported.Pages[0].Name);
         Assert.Equal(900, imported.Pages[0].PageWidth);
         Assert.Equal(1200, imported.Pages[0].PageHeight);
-
         var box = imported.Pages[0].Cells.Single(c => c.Id == "box");
         Assert.Null(box.ParentId);
         Assert.Equal("Box", box.Value);
@@ -78,11 +71,9 @@ public class DiagramDrawIoTests
         Assert.Equal(20, box.Geometry.Y);
         Assert.Equal(100, box.Geometry.Width);
         Assert.Equal(40, box.Geometry.Height);
-
         var inner = imported.Pages[0].Cells.Single(c => c.Id == "inner");
         Assert.Equal("box", inner.ParentId);
         Assert.Equal("ellipse;whiteSpace=wrap;html=1;", inner.Style);
-
         var edge = imported.Pages[0].Cells.Single(c => c.Id == "go");
         Assert.True(edge.IsEdge);
         Assert.Equal("box", edge.SourceId);
@@ -100,12 +91,9 @@ public class DiagramDrawIoTests
     {
         var exported = XDocument.Parse(DiagramDrawIo.Export(Checkout()));
         var model = exported.Root!.Elements().Single(e => e.Name.LocalName == "diagram").Elements().Single(e => e.Name.LocalName == "mxGraphModel");
-        var compressed = new XElement("mxfile",
-            new XAttribute("name", "Checkout"),
-            new XElement("diagram",
-                new XAttribute("id", "flow"),
-                new XAttribute("name", "Flow"),
-                Compress(model.ToString(SaveOptions.DisableFormatting))));
+        var compressed = new XElement(
+            "mxfile", new XAttribute("name", "Checkout"),
+            new XElement("diagram", new XAttribute("id", "flow"), new XAttribute("name", "Flow"), Compress(model.ToString(SaveOptions.DisableFormatting))));
 
         var imported = DiagramDrawIo.Import(compressed.ToString(SaveOptions.DisableFormatting));
         Assert.Equal("Checkout", imported.Name);
@@ -118,13 +106,12 @@ public class DiagramDrawIoTests
     }
 
     private static DiagramDocument Checkout()
-        => new DiagramBuilder("Checkout")
-            .Page("flow", "Flow", page =>
-            {
-                page.Shape("start", "Start", 40, 40, 120, 60, DiagramShapeKind.Rectangle);
-                page.Shape("end", "End", 40, 180, 120, 60, DiagramShapeKind.Ellipse);
-                page.Connect("go", "start", "end", "next");
-            })
+        => new DiagramBuilder("Checkout").Page(
+                "flow", "Flow", page => {
+                    page.Shape("start", "Start", 40, 40, 120, 60, DiagramShapeKind.Rectangle);
+                    page.Shape("end", "End", 40, 180, 120, 60, DiagramShapeKind.Ellipse);
+                    page.Connect("go", "start", "end", "next");
+                })
             .Build();
 
     private static DiagramDocument Grouped()
@@ -132,28 +119,38 @@ public class DiagramDrawIoTests
             Id = LyoGuid.CreateV7(),
             Name = "Checkout",
             Pages = [
-                new DiagramPage {
+                new() {
                     Id = "flow",
                     Name = "Flow",
                     PageWidth = 900,
                     PageHeight = 1200,
                     Cells = [
-                        new DiagramCell {
+                        new() {
                             Id = "box",
                             Value = "Box",
                             Style = "rounded=0;whiteSpace=wrap;html=1;",
                             IsVertex = true,
-                            Geometry = new DiagramGeometry { X = 10, Y = 20, Width = 100, Height = 40 }
+                            Geometry = new() {
+                                X = 10,
+                                Y = 20,
+                                Width = 100,
+                                Height = 40
+                            }
                         },
-                        new DiagramCell {
+                        new() {
                             Id = "inner",
                             ParentId = "box",
                             Value = "Inner",
                             Style = "ellipse;whiteSpace=wrap;html=1;",
                             IsVertex = true,
-                            Geometry = new DiagramGeometry { X = 5, Y = 5, Width = 30, Height = 20 }
+                            Geometry = new() {
+                                X = 5,
+                                Y = 5,
+                                Width = 30,
+                                Height = 20
+                            }
                         },
-                        new DiagramCell {
+                        new() {
                             Id = "go",
                             Value = "next",
                             Style = "edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=classic;",
@@ -172,11 +169,9 @@ public class DiagramDrawIoTests
             ]
         };
 
-    private static XElement Cell(IEnumerable<XElement> cells, string id)
-        => cells.Single(cell => Attr(cell, "id") == id);
+    private static XElement Cell(IEnumerable<XElement> cells, string id) => cells.Single(cell => Attr(cell, "id") == id);
 
-    private static string? Attr(XElement element, string name)
-        => element.Attribute(name)?.Value;
+    private static string? Attr(XElement element, string name) => element.Attribute(name)?.Value;
 
     /// <summary>diagrams.net <c>Graph.compress</c>: <c>encodeURIComponent</c>, raw DEFLATE, standard base64.</summary>
     private static string Compress(string xml)
@@ -184,7 +179,7 @@ public class DiagramDrawIoTests
         var encoded = EncodeUriComponent(xml);
         var payload = Encoding.UTF8.GetBytes(encoded);
         using var output = new MemoryStream();
-        using (var deflate = new DeflateStream(output, CompressionLevel.Optimal, leaveOpen: true))
+        using (var deflate = new DeflateStream(output, CompressionLevel.Optimal, true))
             deflate.Write(payload, 0, payload.Length);
 
         return Convert.ToBase64String(output.ToArray());
@@ -205,8 +200,6 @@ public class DiagramDrawIoTests
     }
 
     private static bool IsUnreserved(byte b)
-        => b is (>= (byte)'A' and <= (byte)'Z')
-            or (>= (byte)'a' and <= (byte)'z')
-            or (>= (byte)'0' and <= (byte)'9')
-            or (byte)'-' or (byte)'_' or (byte)'.' or (byte)'!' or (byte)'~' or (byte)'*' or (byte)'\'' or (byte)'(' or (byte)')';
+        => b is >= (byte)'A' and <= (byte)'Z' or >= (byte)'a' and <= (byte)'z' or >= (byte)'0' and <= (byte)'9' or (byte)'-' or (byte)'_' or (byte)'.' or (byte)'!' or (byte)'~'
+            or (byte)'*' or (byte)'\'' or (byte)'(' or (byte)')';
 }

@@ -102,12 +102,10 @@ public sealed class SqlProjectionConsolidationTests
     }
 
     [Fact]
-    public void TryBuildSqlProjectionExpression_NineIndependentFields_BuildsAndConvertsInSlotOrder()
-        => AssertWideIndependentFieldsConvert(9);
+    public void TryBuildSqlProjectionExpression_NineIndependentFields_BuildsAndConvertsInSlotOrder() => AssertWideIndependentFieldsConvert(9);
 
     [Fact]
-    public void TryBuildSqlProjectionExpression_ThirtyIndependentFields_BuildsAndConvertsInSlotOrder()
-        => AssertWideIndependentFieldsConvert(30);
+    public void TryBuildSqlProjectionExpression_ThirtyIndependentFields_BuildsAndConvertsInSlotOrder() => AssertWideIndependentFieldsConvert(30);
 
     [Fact]
     public void Project_StringWindows_MatchInMemoryAndSqlExpression()
@@ -156,12 +154,11 @@ public sealed class SqlProjectionConsolidationTests
         Assert.Empty(pathErrors);
         var entity = new IndexedRoot {
             Addresses = [
-                new() { Id = 1, City = "A", Street = "First" },
-                new() { Id = 2, City = "B", Street = "Second" },
-                new() { Id = 3, City = "C", Street = "Third" },
+                new() { Id = 1, City = "A", Street = "First" }, new() { Id = 2, City = "B", Street = "Second" }, new() { Id = 3, City = "C", Street = "Third" },
                 new() { Id = 4, City = "D", Street = "Fourth" }
             ]
         };
+
         var items = service.ProjectEntities([entity], specs, QueryIncludeFilterMode.Full, new([]));
         service.MergeSiblingCollectionProjectionRows(items, typeof(IndexedRoot), specs, true);
         var row = Assert.IsType<Dictionary<string, object?>>(items[0]);
@@ -175,7 +172,6 @@ public sealed class SqlProjectionConsolidationTests
         Assert.Equal(3, tail.Count);
         var full = Assert.IsAssignableFrom<IList>(row["Addresses.City"]);
         Assert.Equal(4, full.Count);
-
         var build = service.TryBuildSqlProjectionExpression<IndexedRoot>(specs);
         Assert.NotNull(build.Projection);
         var raw = build.Projection!.Compile()(entity);
@@ -195,13 +191,7 @@ public sealed class SqlProjectionConsolidationTests
         Assert.NotNull(build.ConversionPlan);
         Assert.Single(build.ConversionPlan!.Slots);
         Assert.IsType<SqlProjectionMergedCollectionSlot>(build.ConversionPlan.Slots[0]);
-
-        var entity = new SiblingRoot {
-            Items = [
-                CreateSiblingItem("a"),
-                CreateSiblingItem("b")
-            ]
-        };
+        var entity = new SiblingRoot { Items = [CreateSiblingItem("a"), CreateSiblingItem("b")] };
         var raw = build.Projection!.Compile()(entity);
         var converted = service.ConvertSqlProjectedResults([raw], specs, build.ConversionPlan);
         var dict = Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(converted[0]);
@@ -223,7 +213,6 @@ public sealed class SqlProjectionConsolidationTests
         Assert.NotNull(build.Projection);
         Assert.NotNull(build.ConversionPlan);
         Assert.Equal(fieldCount, build.ConversionPlan!.Slots.Count);
-
         var entity = new WideRoot();
         for (var i = 0; i < fieldCount; i++)
             typeof(WideRoot).GetProperty(WidePath(i))!.SetValue(entity, $"v{i}");

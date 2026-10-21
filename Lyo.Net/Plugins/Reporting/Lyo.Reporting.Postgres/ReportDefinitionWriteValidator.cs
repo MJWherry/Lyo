@@ -2,7 +2,6 @@ using System.Text;
 using System.Text.Json;
 using Lyo.Common.Core.Conversion;
 using Lyo.Parameters;
-using Lyo.Query.Models.Parameters;
 using Lyo.Reporting.Models;
 using Lyo.Reporting.Models.Enums;
 using Lyo.Reporting.Postgres.Database;
@@ -10,8 +9,8 @@ using Lyo.Reporting.Postgres.Database;
 namespace Lyo.Reporting.Postgres;
 
 /// <summary>
-/// Write-time checks for definitions and definition parameters so bad data (invalid regex, unknown format, malformed composition JSON) fails at create/update instead of
-/// at generate time. Shared by the API CRUD hooks.
+/// Write-time checks for definitions and definition parameters so bad data (invalid regex, unknown format, malformed composition JSON) fails at create/update instead of at
+/// generate time. Shared by the API CRUD hooks.
 /// </summary>
 public static class ReportDefinitionWriteValidator
 {

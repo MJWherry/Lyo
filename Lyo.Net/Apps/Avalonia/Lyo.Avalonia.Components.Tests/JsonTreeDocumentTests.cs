@@ -20,7 +20,6 @@ public class JsonTreeDocumentTests
     {
         var doc = Parse("""{"outer":{"inner":"needle"}}""");
         doc.Search("needle");
-
         Assert.Equal(1, doc.SearchCurrent);
         Assert.Equal(1, doc.SearchTotal);
         var hit = Assert.Single(doc.VisibleRows, row => row.SearchHit);

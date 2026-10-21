@@ -9,15 +9,12 @@ namespace Lyo.Reporting.Web.Components;
 /// <summary>Live composition editor: same paint as <see cref="ReportViewer{T}" />, plus hover chrome, handle-only drag, and selection. Not used for generate HTML/PDF.</summary>
 public partial class ReportDesignCanvas
 {
-    private enum ChromeAdd
-    {
-        None,
-        Section,
-        Grid
-    }
+    private static readonly ContentType[] AddBlockTypes = Enum.GetValues<ContentType>().OrderBy(t => t.ToString(), StringComparer.OrdinalIgnoreCase).ToArray();
 
-    private static readonly ContentType[] AddBlockTypes =
-        Enum.GetValues<ContentType>().OrderBy(t => t.ToString(), StringComparer.OrdinalIgnoreCase).ToArray();
+    private SectionBodyItem? _dragging;
+    private bool _dropHandled;
+    private string? _dropSlot;
+    private string? _hoverKey;
 
     [Parameter]
     [EditorRequired]
@@ -55,41 +52,32 @@ public partial class ReportDesignCanvas
 
     private ReportViewPainter Paint => new(Layout, Report.Styles, PreviewParameters, Report.Sections);
 
-    private SectionBodyItem? _dragging;
-    private bool _dropHandled;
-    private string? _hoverKey;
-    private string? _dropSlot;
+    private string? RootComponentCaption
+        => string.IsNullOrWhiteSpace(Layout.RootComponentType)
+            ? null
+            : $"HTML/PDF generate uses root component {Layout.RootComponentType}. This canvas still edits the stored composition.";
 
-    private string? RootComponentCaption => string.IsNullOrWhiteSpace(Layout.RootComponentType)
-        ? null
-        : $"HTML/PDF generate uses root component {Layout.RootComponentType}. This canvas still edits the stored composition.";
+    private bool ReportChromeSelected => Selection is { Section: null, Control: null, Card: null, Block: null, Table: null, Grid: null, TableColumn: null, TableRow: null };
 
-    private bool ReportChromeSelected
-        => Selection is { Section: null, Control: null, Card: null, Block: null, Table: null, Grid: null, TableColumn: null, TableRow: null };
-
-    private string TitleStyle
-    {
-        get
-        {
-            var ring = ReportChromeSelected
-                ? Paint.SelectionRing(true) + " cursor: pointer;"
-                : "cursor: pointer;";
+    private string TitleStyle {
+        get {
+            var ring = ReportChromeSelected ? Paint.SelectionRing(true) + " cursor: pointer;" : "cursor: pointer;";
             return "margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid " + Paint.AccentColor + "; " + ring;
         }
     }
 
-    private bool IsChromeActive(string key, bool selected)
-        => selected || string.Equals(_hoverKey, key, StringComparison.Ordinal);
+    private bool IsChromeActive(string key, bool selected) => selected || string.Equals(_hoverKey, key, StringComparison.Ordinal);
 
-    private bool IsHover(string key)
-        => string.Equals(_hoverKey, key, StringComparison.Ordinal);
+    private bool IsHover(string key) => string.Equals(_hoverKey, key, StringComparison.Ordinal);
 
     private string ChromeBox(bool selected, bool hover)
     {
         if (selected)
             return $" outline: 2px solid {Paint.AccentColor}; outline-offset: 2px;";
+
         if (hover)
             return $" outline: 1px dashed {Paint.AccentColor}; outline-offset: 2px;";
+
         return string.Empty;
     }
 
@@ -101,8 +89,7 @@ public partial class ReportDesignCanvas
         return " opacity: 0.45;";
     }
 
-    private static string CollapsedDim(Section section)
-        => section.Collapsed ? " opacity: 0.45;" : string.Empty;
+    private static string CollapsedDim(Section section) => section.Collapsed ? " opacity: 0.45;" : string.Empty;
 
     private string SlotStyle(bool over, bool dragging)
     {
@@ -111,8 +98,7 @@ public partial class ReportDesignCanvas
         return $"min-height: {height}; margin: 2px 0; border-radius: 4px; background: {bg};";
     }
 
-    private static string SlotKey(Section section, int index)
-        => "slot:" + ReportDesignTreeExpand.LiveKey(section) + ":" + index;
+    private static string SlotKey(Section section, int index) => "slot:" + ReportDesignTreeExpand.LiveKey(section) + ":" + index;
 
     private void SetHover(string key) => _hoverKey = key;
 
@@ -132,7 +118,7 @@ public partial class ReportDesignCanvas
         => item.Kind switch {
             SectionBodyKind.Control when item.Control is not null => ControlOrChildSelected(item.Control),
             SectionBodyKind.Subsection when item.Subsection is not null => Selection?.Matches(item.Subsection) == true,
-            _ => false
+            var _ => false
         };
 
     private bool ControlOrChildSelected(Control control)
@@ -140,9 +126,10 @@ public partial class ReportDesignCanvas
         if (Selection?.Matches(control) == true)
             return true;
 
-        if (control is Table table)
-            return Selection?.TableColumn is not null && table.Columns.Contains(Selection.TableColumn)
-                || Selection?.TableRow is not null && table.Rows.Contains(Selection.TableRow);
+        if (control is Table table) {
+            return (Selection?.TableColumn is not null && table.Columns.Contains(Selection.TableColumn)) ||
+                (Selection?.TableRow is not null && table.Rows.Contains(Selection.TableRow));
+        }
 
         if (control is not Grid grid)
             return false;
@@ -162,7 +149,7 @@ public partial class ReportDesignCanvas
             SectionBodyKind.Control when item.Control is Table table => new() { Section = section, Control = table, Table = table },
             SectionBodyKind.Control when item.Control is Grid grid => new() { Section = section, Control = grid, Grid = grid },
             SectionBodyKind.Subsection => new() { Section = item.Subsection },
-            _ => new() { Section = section }
+            var _ => new() { Section = section }
         };
 
     private static ReportDesignHit ItemHit(Section section, SectionBodyItem item)
@@ -172,7 +159,7 @@ public partial class ReportDesignCanvas
             SectionBodyKind.Control when item.Control is Table table => new() { Section = section, Control = table, Table = table },
             SectionBodyKind.Control when item.Control is Grid grid => new() { Section = section, Control = grid, Grid = grid },
             SectionBodyKind.Subsection => new() { Section = item.Subsection },
-            _ => new() { Section = section }
+            var _ => new() { Section = section }
         };
 
     private Task SelectReportChrome()
@@ -239,12 +226,13 @@ public partial class ReportDesignCanvas
 
         var drag = _dragging;
         _dragging = null;
-        await OnDrop.InvokeAsync(new() {
-            Source = drag.Section,
-            Dest = dest,
-            Item = drag,
-            InsertIndex = insertIndex
-        });
+        await OnDrop.InvokeAsync(
+            new() {
+                Source = drag.Section,
+                Dest = dest,
+                Item = drag,
+                InsertIndex = insertIndex
+            });
     }
 
     private async Task DropOnGrid(Section dest, Grid grid)
@@ -256,12 +244,20 @@ public partial class ReportDesignCanvas
 
         var drag = _dragging;
         _dragging = null;
-        await OnDrop.InvokeAsync(new() {
-            Source = drag.Section,
-            Dest = dest,
-            Item = drag,
-            InsertIndex = grid.Controls.Count,
-            DestGrid = grid
-        });
+        await OnDrop.InvokeAsync(
+            new() {
+                Source = drag.Section,
+                Dest = dest,
+                Item = drag,
+                InsertIndex = grid.Controls.Count,
+                DestGrid = grid
+            });
+    }
+
+    private enum ChromeAdd
+    {
+        None,
+        Section,
+        Grid
     }
 }

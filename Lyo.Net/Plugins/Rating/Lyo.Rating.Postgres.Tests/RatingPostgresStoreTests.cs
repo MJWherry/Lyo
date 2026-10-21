@@ -1,6 +1,5 @@
-using Lyo.Rating;
-using Microsoft.Extensions.DependencyInjection;
 using Lyo.Common.Core.Identifiers;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Rating.Postgres.Tests;
 
@@ -20,8 +19,9 @@ public sealed class RatingPostgresStoreTests(RatingPostgresFixture fixture)
             SubjectEntityId = subject.ToString(),
             ActorEntityType = "person",
             ActorEntityId = actor.ToString(),
-            Value = 4.5m,
+            Value = 4.5m
         };
+
         await store.SaveAsync(row, ct: ct);
         Assert.NotEqual(Guid.Empty, row.Id);
         var loaded = await store.GetByIdAsync(row.Id, ct: ct);

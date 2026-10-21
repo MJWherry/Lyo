@@ -70,6 +70,7 @@ public sealed class SectionBuilder
                 Alignment = alignment,
                 Emphasized = emphasized
             });
+
         return this;
     }
 
@@ -220,6 +221,7 @@ public sealed class SectionBuilder
                 Alt = alt,
                 Caption = caption
             });
+
         return this;
     }
 
@@ -254,36 +256,21 @@ public sealed class SectionBuilder
     /// <summary>Appends a progress bar. <paramref name="percent" /> is 0–100.</summary>
     public SectionBuilder AddProgress(int percent, string? caption = null)
     {
-        _section.Controls.Add(
-            new Block {
-                ContentType = ContentType.Progress,
-                Level = percent < 0 ? 0 : percent > 100 ? 100 : percent,
-                Caption = caption
-            });
+        _section.Controls.Add(new Block { ContentType = ContentType.Progress, Level = percent < 0 ? 0 : percent > 100 ? 100 : percent, Caption = caption });
         return this;
     }
 
     /// <summary>Appends a heading. <paramref name="level" /> is 1–6.</summary>
     public SectionBuilder AddHeading(string text, int level = 3)
     {
-        _section.Controls.Add(
-            new Block {
-                ContentType = ContentType.Heading,
-                Content = text,
-                Level = level < 1 ? 1 : level > 6 ? 6 : level
-            });
+        _section.Controls.Add(new Block { ContentType = ContentType.Heading, Content = text, Level = level < 1 ? 1 : level > 6 ? 6 : level });
         return this;
     }
 
     /// <summary>Appends a custom component block resolved by CLR FullName.</summary>
     public SectionBuilder AddComponent(string componentType, Dictionary<string, ComponentBinding>? bindings = null)
     {
-        _section.Controls.Add(
-            new Block {
-                ContentType = ContentType.Component,
-                ComponentType = componentType,
-                ParameterBindings = bindings ?? []
-            });
+        _section.Controls.Add(new Block { ContentType = ContentType.Component, ComponentType = componentType, ParameterBindings = bindings ?? [] });
         return this;
     }
 
@@ -313,13 +300,11 @@ public sealed class SectionBuilder
                 Level = height,
                 ListItems = series?.ToList() ?? []
             });
+
         return this;
     }
 
-    /// <summary>
-    /// Chart series from a report parameter whose value is a JSON array of objects.
-    /// The live canvas fills from example JSON without mutating the block.
-    /// </summary>
+    /// <summary>Chart series from a report parameter whose value is a JSON array of objects. The live canvas fills from example JSON without mutating the block.</summary>
     public SectionBuilder AddChartFromParameter(
         ChartKind kind,
         string parameterKey,
@@ -339,6 +324,7 @@ public sealed class SectionBuilder
                 ChartLabelField = labelField,
                 ChartValueField = valueField
             });
+
         return this;
     }
 
@@ -352,7 +338,14 @@ public sealed class SectionBuilder
     /// <summary>Appends a print-friendly signature line. <paramref name="name" /> is the signed name; <paramref name="dateLabel" /> is the date line.</summary>
     public SectionBuilder AddSignature(string? caption = "Authorized by", string? name = null, string? dateLabel = "Date")
     {
-        _section.Controls.Add(new Block { ContentType = ContentType.Signature, Caption = caption, Content = name, Source = dateLabel });
+        _section.Controls.Add(
+            new Block {
+                ContentType = ContentType.Signature,
+                Caption = caption,
+                Content = name,
+                Source = dateLabel
+            });
+
         return this;
     }
 

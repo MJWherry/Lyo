@@ -4,7 +4,10 @@ using Lyo.Result;
 
 namespace Lyo.Json;
 
-/// <summary>Reads and writes a JSON document. <see cref="Reader" /> and <see cref="Writer" /> are the same operations this facade forwards to. One instance is safe for concurrent calls.</summary>
+/// <summary>
+/// Reads and writes a JSON document. <see cref="Reader" /> and <see cref="Writer" /> are the same operations this facade forwards to. One instance is safe for concurrent
+/// calls.
+/// </summary>
 public interface IJsonService
 {
     /// <summary>Owned reader.</summary>

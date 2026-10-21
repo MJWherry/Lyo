@@ -10,13 +10,16 @@ internal sealed class MemoryRecipeStore : IRecipeStore
     {
         if (attachment.Id == Guid.Empty)
             attachment.Id = LyoGuid.CreateV7();
+
         if (attachment.CreatedTimestamp == default)
             attachment.CreatedTimestamp = DateTime.UtcNow;
+
         var existing = Attachments.FindIndex(a => a.Id == attachment.Id);
         if (existing >= 0)
             Attachments[existing] = attachment;
         else
             Attachments.Add(attachment);
+
         return Task.CompletedTask;
     }
 
@@ -66,8 +69,7 @@ internal sealed class MemoryRecipeStore : IRecipeStore
 
     public Task<IReadOnlyList<RecipeStepRecord>> GetStepsAsync(Guid recipeId, Guid? tenantId, CancellationToken ct = default) => throw new NotSupportedException();
 
-    public Task ReplaceStepsAsync(Guid recipeId, IReadOnlyList<RecipeStepRecord> steps, Guid? tenantId, CancellationToken ct = default)
-        => throw new NotSupportedException();
+    public Task ReplaceStepsAsync(Guid recipeId, IReadOnlyList<RecipeStepRecord> steps, Guid? tenantId, CancellationToken ct = default) => throw new NotSupportedException();
 
     public Task<IReadOnlyList<IngredientUsageRecord>> ListIngredientUsageAsync(Guid ingredientId, Guid? tenantId, CancellationToken ct = default)
         => throw new NotSupportedException();

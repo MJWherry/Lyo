@@ -1,8 +1,6 @@
 namespace Lyo.Ledger;
 
-/// <summary>
-/// Double-entry books. Billing must not change a balance except by posting here. Listing and search belong in QueryProject.
-/// </summary>
+/// <summary>Double-entry books. Billing must not change a balance except by posting here. Listing and search belong in QueryProject.</summary>
 /// <remarks>Pass null for <c>tenantId</c> on single-tenant hosts. There is no PostgreSQL FK to <c>client</c>; <c>client_id</c> on lines is a Guid.</remarks>
 public interface ILedgerStore
 {
@@ -22,14 +20,16 @@ public interface ILedgerStore
     Task<IReadOnlyList<LedgerAccountRecord>> ListAccountsAsync(Guid? tenantId = null, CancellationToken ct = default);
 
     /// <summary>Creates a draft journal with lines. Does not post.</summary>
-    Task<LedgerJournalRecord> SaveDraftJournalAsync(LedgerJournalRecord journal, IReadOnlyList<LedgerJournalLineRecord> lines, Guid? tenantId = null, CancellationToken ct = default);
+    Task<LedgerJournalRecord> SaveDraftJournalAsync(
+        LedgerJournalRecord journal,
+        IReadOnlyList<LedgerJournalLineRecord> lines,
+        Guid? tenantId = null,
+        CancellationToken ct = default);
 
     /// <summary>Loads a journal and its lines.</summary>
     Task<LedgerJournalRecord?> GetJournalByIdAsync(Guid id, Guid? tenantId = null, CancellationToken ct = default);
 
-    /// <summary>
-    /// Creates (if needed) and posts a balanced journal. Seeded accounts are ensured first. Posted journals cannot be edited.
-    /// </summary>
+    /// <summary>Creates (if needed) and posts a balanced journal. Seeded accounts are ensured first. Posted journals cannot be edited.</summary>
     Task<LedgerJournalRecord> PostJournalAsync(LedgerJournalRecord journal, IReadOnlyList<LedgerJournalLineRecord> lines, Guid? tenantId = null, CancellationToken ct = default);
 
     /// <summary>Posts an existing draft. Fails when already posted or unbalanced.</summary>

@@ -1,7 +1,6 @@
 using Lyo.Common.Core.Enums;
 using Lyo.Exceptions;
 using Lyo.Geolocation.Models.Addresses;
-using Lyo.People.Models.Contact;
 
 namespace Lyo.People.Models;
 
@@ -13,28 +12,21 @@ public static class VCardPerson
     {
         ArgumentHelpers.ThrowIfNull(card);
         var person = new Person {
-            Name = new PersonName {
-                FirstName = card.GivenName ?? "",
-                LastName = card.FamilyName ?? ""
-            },
-            CurrentCompany = card.Organization,
-            CurrentJobTitle = card.Title
+            Name = new() { FirstName = card.GivenName ?? "", LastName = card.FamilyName ?? "" }, CurrentCompany = card.Organization, CurrentJobTitle = card.Title
         };
-        for (var i = 0; i < card.Telephones.Count; i++)
-            person.PhoneNumbers.Add(new() {
-                IsPrimary = i == 0,
-                PhoneNumber = new PhoneNumber { Number = card.Telephones[i] }
-            });
-        for (var i = 0; i < card.Emails.Count; i++)
-            person.EmailAddresses.Add(new() {
-                IsPrimary = i == 0,
-                EmailAddress = new() { Email = card.Emails[i] }
-            });
-        for (var i = 0; i < card.Addresses.Count; i++)
-            person.Addresses.Add(new() {
-                IsPrimary = i == 0,
-                Address = ToAddress(card.Addresses[i])
-            });
+
+        for (var i = 0; i < card.Telephones.Count; i++) {
+            person.PhoneNumbers.Add(new() { IsPrimary = i == 0, PhoneNumber = new() { Number = card.Telephones[i] } });
+        }
+
+        for (var i = 0; i < card.Emails.Count; i++) {
+            person.EmailAddresses.Add(new() { IsPrimary = i == 0, EmailAddress = new() { Email = card.Emails[i] } });
+        }
+
+        for (var i = 0; i < card.Addresses.Count; i++) {
+            person.Addresses.Add(new() { IsPrimary = i == 0, Address = ToAddress(card.Addresses[i]) });
+        }
+
         return person;
     }
 
@@ -49,15 +41,22 @@ public static class VCardPerson
             Organization = person.CurrentCompany,
             Title = person.CurrentJobTitle
         };
-        foreach (var phone in person.PhoneNumbers)
+
+        foreach (var phone in person.PhoneNumbers) {
             if (phone.IsCurrent && phone.PhoneNumber?.Number is { Length: > 0 } number)
                 card.Telephones.Add(number);
-        foreach (var email in person.EmailAddresses)
+        }
+
+        foreach (var email in person.EmailAddresses) {
             if (email.IsCurrent && email.EmailAddress?.Email is { Length: > 0 } address)
                 card.Emails.Add(address);
-        foreach (var link in person.Addresses)
+        }
+
+        foreach (var link in person.Addresses) {
             if (link.IsCurrent && link.Address is not null)
                 card.Addresses.Add(FromAddress(link.Address));
+        }
+
         return card;
     }
 
@@ -69,8 +68,10 @@ public static class VCardPerson
             State = source.Region,
             PostalCode = source.PostalCode
         };
-        if (source.Country is not null && global::System.Enum.TryParse<CountryCode>(source.Country, ignoreCase: true, out var country))
+
+        if (source.Country is not null && System.Enum.TryParse<CountryCode>(source.Country, true, out var country))
             address.CountryCode = country;
+
         return address;
     }
 

@@ -13,7 +13,7 @@ public class ImageFileTagProviderTests
         using var session = new IOTempSession();
         var path = session.GetFilePath("photo.jpg");
         using (var image = new Image<Rgba32>(8, 8)) {
-            image.Metadata.ExifProfile = new ExifProfile();
+            image.Metadata.ExifProfile = new();
             image.Metadata.ExifProfile.SetValue(ExifTag.Artist, "Ada");
             await image.SaveAsJpegAsync(path, TestCt);
         }

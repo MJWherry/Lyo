@@ -20,6 +20,7 @@ public static class FileManagerLog
         var directory = Path.GetDirectoryName(path);
         if (!string.IsNullOrEmpty(directory))
             Directory.CreateDirectory(directory);
+
         File.AppendAllText(path, line + Environment.NewLine);
         Console.Error.WriteLine(line);
     }

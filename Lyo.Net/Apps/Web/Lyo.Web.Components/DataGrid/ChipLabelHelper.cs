@@ -20,8 +20,8 @@ public static class ChipLabelHelper
     public static bool ShouldTruncate(string? text, int maxLength) => !string.IsNullOrEmpty(text) && text.Length > maxLength;
 
     /// <summary>
-    /// Formats a filter condition value (handles <see cref="JsonElement" />, collections, and so on). Use <paramref name="compact" /> for chip labels; use <c>false</c> for dialogs
-    /// that must list every value.
+    /// Formats a filter condition value (handles <see cref="JsonElement" />, collections, and so on). Use <paramref name="compact" /> for chip labels; use <c>false</c> for
+    /// dialogs that must list every value.
     /// </summary>
     public static string FormatFilterValue(object? value, bool compact = true)
     {

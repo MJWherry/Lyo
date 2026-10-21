@@ -1,4 +1,5 @@
 using Lyo.Exceptions;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -41,8 +42,8 @@ public static class StatusPaletteExtensions
         }
 
         /// <summary>
-        /// Registers the palette resolver by itself. Only needed when a host wants it resolvable without registering any domain palette, since
-        /// <c>AddLyoStatusPalette</c> already implies it.
+        /// Registers the palette resolver by itself. Only needed when a host wants it resolvable without registering any domain palette, since <c>AddLyoStatusPalette</c> already
+        /// implies it.
         /// </summary>
         public IServiceCollection AddLyoStatusPalettes()
         {
@@ -52,8 +53,8 @@ public static class StatusPaletteExtensions
         }
 
         /// <summary>
-        /// Registers a workbench so <see cref="LyoNavMenu" /> can list it and <see cref="LyoWorkbenchHost" /> can render it. Call once per component; the registry is
-        /// implied by this call.
+        /// Registers a workbench so <see cref="LyoNavMenu" /> can list it and <see cref="LyoWorkbenchHost" /> can render it. Call once per component; the registry is implied by this
+        /// call.
         /// </summary>
         /// <typeparam name="TComponent">Blazor component that forms the workbench body.</typeparam>
         /// <param name="title">Title used in nav and on the page.</param>
@@ -62,7 +63,7 @@ public static class StatusPaletteExtensions
         /// <param name="route">Href for the nav item. Point at an existing host page, or <c>workbench/{slug}</c>.</param>
         /// <param name="slug">Optional slug consumed by <see cref="LyoWorkbenchHost" />. Defaults to the last segment of <paramref name="route" />.</param>
         public IServiceCollection AddLyoWorkbench<TComponent>(string title, string icon, string category, string route, string? slug = null)
-            where TComponent : Microsoft.AspNetCore.Components.IComponent
+            where TComponent : IComponent
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(title);
@@ -70,13 +71,12 @@ public static class StatusPaletteExtensions
             services.TryAddEnumerable(
                 ServiceDescriptor.Singleton<ILyoWorkbenchDescriptor>(
                     new LyoWorkbenchDescriptor(title, icon ?? string.Empty, category ?? string.Empty, route, typeof(TComponent), slug)));
+
             services.TryAddSingleton<LyoWorkbenchRegistry>();
             return services;
         }
 
-        /// <summary>
-        /// Registers an empty workbench registry. Only needed when a host wants <see cref="LyoNavMenu" /> resolvable without any <c>AddLyoWorkbench</c> call.
-        /// </summary>
+        /// <summary>Registers an empty workbench registry. Only needed when a host wants <see cref="LyoNavMenu" /> resolvable without any <c>AddLyoWorkbench</c> call.</summary>
         public IServiceCollection AddLyoWorkbenches()
         {
             ArgumentHelpers.ThrowIfNull(services);

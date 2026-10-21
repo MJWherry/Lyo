@@ -1,8 +1,8 @@
 namespace Lyo.Web.WebRenderer.Models;
 
 /// <summary>
-/// HTML plus capture settings. A host can serialize this and hand it to <see cref="IWebRenderGenerator" />.
-/// PDF fields apply when <see cref="Format" /> is <see cref="WebRenderFormat.Pdf" />. Image fields apply to PNG, JPEG, and WebP.
+/// HTML plus capture settings. A host can serialize this and hand it to <see cref="IWebRenderGenerator" />. PDF fields apply when <see cref="Format" /> is
+/// <see cref="WebRenderFormat.Pdf" />. Image fields apply to PNG, JPEG, and WebP.
 /// </summary>
 public sealed class WebRenderReq
 {
@@ -12,10 +12,7 @@ public sealed class WebRenderReq
     /// <summary>Output file. Starts as PDF.</summary>
     public WebRenderFormat Format { get; set; } = WebRenderFormat.Pdf;
 
-    /// <summary>
-    /// Paper name: Letter, Legal, Tabloid, A3, A4, A5, or CSS. Null and CSS use the HTML <c>@page</c> size when
-    /// <see cref="PreferCssPageSize" /> is true, and A4 otherwise.
-    /// </summary>
+    /// <summary>Paper name: Letter, Legal, Tabloid, A3, A4, A5, or CSS. Null and CSS use the HTML <c>@page</c> size when <see cref="PreferCssPageSize" /> is true, and A4 otherwise.</summary>
     public string? Paper { get; set; }
 
     /// <summary>Print the PDF in landscape. Ignored for images.</summary>

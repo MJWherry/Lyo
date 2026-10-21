@@ -1,5 +1,4 @@
 @using Lyo.Web.Components.Form
-
 <TemplateColumn T="object?"
                 Title="@Title"
                 Sortable="@Sortable"
@@ -22,39 +21,39 @@
 @code {
 
     /// <summary>Cell markup for one row, rendered by the table cell and by the mobile card layout so a value looks the same in both.</summary>
-    internal RenderFragment<object?> Cell => item =>
-        @<text>
-            @if (CellContent != null) {
-                @CellContent(item)
-            }
-            else if (Timestamp is { } kind) {
-                var raw = ProjectedValueHelper.GetValue(item, Field);
-                var value = TimestampLatest ? LyoDateTimeDisplay.Latest(raw) : raw;
-                <LyoTimestamp Value="@value" Kind="@kind" RelativeWindow="@TimestampRelativeWindow"/>
-            }
-            else if (Identifier) {
-                <LyoIdField Compact="true" Text="@ProjectedValueHelper.GetDisplayValue(item, Field)"/>
-            }
-            else {
-                string displayText;
-                if (FormattedValue != null) {
-                    var raw = ProjectedValueHelper.GetValue(item, Field);
-                    displayText = FormattedValue(item, raw);
-                }
-                else {
-                    displayText = ProjectedValueHelper.GetDisplayValue(item, Field);
-                }
+    internal RenderFragment<object?> Cell
+        => item => @<text>
+                        @if (CellContent != null) {
+                            @CellContent(item)
+                        }
+                        else if (Timestamp is { } kind) {
+                            var raw = ProjectedValueHelper.GetValue(item, Field);
+                            var value = TimestampLatest ? LyoDateTimeDisplay.Latest(raw) : raw;
+                            <LyoTimestamp Value="@value" Kind="@kind" RelativeWindow="@TimestampRelativeWindow"/>
+                        }
+                        else if (Identifier) {
+                            <LyoIdField Compact="true" Text="@ProjectedValueHelper.GetDisplayValue(item, Field)"/>
+                        }
+                        else {
+                            string displayText;
+                            if (FormattedValue != null) {
+                                var raw = ProjectedValueHelper.GetValue(item, Field);
+                                displayText = FormattedValue(item, raw);
+                            }
+                            else {
+                                displayText = ProjectedValueHelper.GetDisplayValue(item, Field);
+                            }
 
-                @if (MaxDisplayLength is int maxLen) {
-                    <LyoTruncatedText Text="@displayText" MaxLength="@maxLen" Title="@Title"/>
-                }
-                else if (!string.IsNullOrEmpty(QuickSearchPropertyName) && !string.IsNullOrEmpty(QuickSearchText)) {
-                    <MudHighlighter Text="@displayText" HighlightedText="@QuickSearchText"/>
-                }
-                else {
-                    @displayText
-                }
-            }
-        </text>;
+                            @if (MaxDisplayLength is int maxLen) {
+                                <LyoTruncatedText Text="@displayText" MaxLength="@maxLen" Title="@Title"/>
+                            }
+                            else if (!string.IsNullOrEmpty(QuickSearchPropertyName) && !string.IsNullOrEmpty(QuickSearchText)) {
+                                <MudHighlighter Text="@displayText" HighlightedText="@QuickSearchText"/>
+                            }
+                            else {
+                                @displayText
+                            }
+                        }
+    </text>;
 
 }

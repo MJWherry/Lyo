@@ -82,5 +82,5 @@ public sealed class CachePayloadCodec : ICachePayloadCodec
     }
 
     /// <inheritdoc />
-    public bool IsFramed(ReadOnlySpan<byte> data) => CachePayloadFrame.TryInspect(data, out _, out _);
+    public bool IsFramed(ReadOnlySpan<byte> data) => CachePayloadFrame.TryInspect(data, out var _, out var _);
 }

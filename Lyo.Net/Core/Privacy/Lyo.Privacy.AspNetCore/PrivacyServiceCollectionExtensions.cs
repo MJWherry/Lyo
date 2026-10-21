@@ -31,7 +31,6 @@ public static class PrivacyServiceCollectionExtensions
                 services.Configure(configureOptions);
 
             services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<PrivacyRedactorOptions>>().Value);
-
             services.AddSingleton<ITextRedactor>(sp => {
                 var o = sp.GetRequiredService<IOptions<PrivacyRedactorOptions>>().Value;
                 var metrics = sp.GetService<IMetrics>() ?? NullMetrics.Instance;

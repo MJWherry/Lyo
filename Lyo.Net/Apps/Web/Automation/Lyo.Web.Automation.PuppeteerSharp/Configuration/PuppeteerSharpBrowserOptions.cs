@@ -15,8 +15,8 @@ public class PuppeteerSharpBrowserOptions
     public static readonly string[] ChromiumDefaultLaunchArguments = ["--disable-infobars", "--disable-extensions", "--disable-dev-shm-usage", "--no-sandbox"];
 
     /// <summary>
-    /// Which browser to launch. Chrome, Chromium, Edge, and Firefox resolve an executable through <see cref="AutomationBrowserDetector" /> unless
-    /// <see cref="BrowserExePath" /> is set. WebKit is rejected by <see cref="Validate" />.
+    /// Which browser to launch. Chrome, Chromium, Edge, and Firefox resolve an executable through <see cref="AutomationBrowserDetector" /> unless <see cref="BrowserExePath" />
+    /// is set. WebKit is rejected by <see cref="Validate" />.
     /// </summary>
     public AutomationBrowserKind BrowserKind { get; set; } = AutomationBrowserKind.Chrome;
 
@@ -132,9 +132,7 @@ public class PuppeteerSharpBrowserOptions
             throw new ConfigurationException($"BrowserExePath '{BrowserExePath}' does not exist.", nameof(BrowserExePath));
     }
 
-    /// <summary>
-    /// Applies <see cref="RandomizeViewportOnSessionStart" /> and ensures the screen is at least the viewport. Call once before launch.
-    /// </summary>
+    /// <summary>Applies <see cref="RandomizeViewportOnSessionStart" /> and ensures the screen is at least the viewport. Call once before launch.</summary>
     public void ApplySessionViewport(Random? random = null)
     {
         if (RandomizeViewportOnSessionStart) {
@@ -148,6 +146,7 @@ public class PuppeteerSharpBrowserOptions
 
         if (ScreenWidth < ViewportWidth)
             ScreenWidth = ViewportWidth;
+
         if (ScreenHeight < ViewportHeight)
             ScreenHeight = ViewportHeight;
     }
@@ -187,8 +186,7 @@ public class PuppeteerSharpBrowserOptions
     }
 
     /// <summary>User-Agent for a new page. An empty <see cref="UserAgents" /> list is generated for <see cref="BrowserKind" /> on this host.</summary>
-    public string ResolveContextUserAgent()
-        => UserAgents.Count == 0 ? AutomationBrowserDetector.UserAgent(BrowserKind) : UserAgents[0];
+    public string ResolveContextUserAgent() => UserAgents.Count == 0 ? AutomationBrowserDetector.UserAgent(BrowserKind) : UserAgents[0];
 
     /// <summary>Creates a deep copy for an independent session.</summary>
     public virtual PuppeteerSharpBrowserOptions Clone()

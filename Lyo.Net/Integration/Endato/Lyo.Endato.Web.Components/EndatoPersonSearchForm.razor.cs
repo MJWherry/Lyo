@@ -1,26 +1,21 @@
 using Lyo.Endato.Client.Models.Person.Request;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
-using MudBlazor;
 
 namespace Lyo.Endato.Web.Components;
 
 public partial class EndatoPersonSearchForm
 {
+    private readonly List<PersonQueryAddress> _addressRows = [];
+    private string _filterOptionsText = string.Empty;
+    private string _includesText = string.Empty;
+    private string _tahoeIdsText = string.Empty;
+
     [Parameter]
     [EditorRequired]
     public PersonQuery Query { get; set; } = new();
 
     [Parameter]
     public EventCallback<PersonQuery> QueryChanged { get; set; }
-
-    private readonly List<PersonQueryAddress> _addressRows = [];
-    private string _tahoeIdsText = string.Empty;
-    private string _includesText = string.Empty;
-    private string _filterOptionsText = string.Empty;
 
     private string AddressPanelTitle => $"Addresses ({_addressRows.Count})";
 

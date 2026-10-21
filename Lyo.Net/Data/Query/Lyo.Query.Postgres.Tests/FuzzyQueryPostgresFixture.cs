@@ -1,6 +1,4 @@
 using Lyo.Cache;
-using Lyo.Query;
-using Lyo.Query.Postgres;
 using Lyo.Query.Services.WhereClause;
 using Lyo.Testing.Containers;
 using Microsoft.EntityFrameworkCore;

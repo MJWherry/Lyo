@@ -22,5 +22,5 @@ public static class AudioConversion
 
     /// <summary>Concatenates <paramref name="inputs" /> into <paramref name="outputPath" />. Call <see cref="AudioConversionBuilder.BuildConcat" />.</summary>
     public static AudioConversionBuilder Concat(IReadOnlyList<string> inputs, string outputPath)
-        => AudioConversionBuilder.Seed(new AudioConversionOptions { CopyCodecs = true }, null, outputPath, inputs, true);
+        => AudioConversionBuilder.Seed(new() { CopyCodecs = true }, null, outputPath, inputs, true);
 }

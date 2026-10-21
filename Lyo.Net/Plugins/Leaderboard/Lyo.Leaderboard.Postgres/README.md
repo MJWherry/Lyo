@@ -1,6 +1,7 @@
 # Lyo.Leaderboard.Postgres
 
-Schema `leaderboard`. Saving a board with a formula writes one Expression revision through `IAlgorithmCatalog` (schema `algorithms`). Saving a property does not touch the catalog. Saving an entry substitutes choice numbers and keys, then calls `IAlgorithmRegistry.ExecuteWithBreakdownAsync`.
+Schema `leaderboard`. Saving a board with a formula writes one Expression revision through `IAlgorithmCatalog` (schema `algorithms`). Saving a property does not touch the catalog.
+Saving an entry substitutes choice numbers and keys, then calls `IAlgorithmRegistry.ExecuteWithBreakdownAsync`.
 
 ## Features
 

@@ -1,6 +1,9 @@
 # Lyo.Rfid.Tonie
 
-ICODE SLIX-L helpers for a Toniebox tag you program yourself. `TonieContentPath.FromUid` turns an 8-byte UID that starts with `E0 04 03` into the SD-card directory and file name (each half reversed). `SlixPrivacy.XorPassword` applies the NXP formula `Password XOR {Random, Random}` to the two-byte GET RANDOM NUMBER result. Custom tags use the datasheet factory privacy password `0F0F0F0F` (`ToniePrivacy.NxpDefault`). `TonieTagSession` sends GET RANDOM, SET PASSWORD, block read/write, and ENABLE PRIVACY through `Lyo.Rfid.IIso15693Transceiver`. A Type 2 NFC reader cannot carry those frames.
+ICODE SLIX-L helpers for a Toniebox tag you program yourself. `TonieContentPath.FromUid` turns an 8-byte UID that starts with `E0 04 03` into the SD-card directory and file name
+(each half reversed). `SlixPrivacy.XorPassword` applies the NXP formula `Password XOR {Random, Random}` to the two-byte GET RANDOM NUMBER result. Custom tags use the datasheet
+factory privacy password `0F0F0F0F` (`ToniePrivacy.NxpDefault`). `TonieTagSession` sends GET RANDOM, SET PASSWORD, block read/write, and ENABLE PRIVACY through
+`Lyo.Rfid.IIso15693Transceiver`. A Type 2 NFC reader cannot carry those frames.
 
 ## Features
 

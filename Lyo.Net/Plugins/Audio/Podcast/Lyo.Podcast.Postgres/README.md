@@ -1,6 +1,7 @@
 # Lyo.Podcast.Postgres
 
-PostgreSQL and EF Core implementation of `Lyo.Podcast.IPodcastStore` (`PostgresPodcastStore`) via `PodcastDbContext`, schema `podcast`, and `AddPostgresMigrations`. `PostgresPodcastStore` implements `Lyo.Health.IHealth`.
+PostgreSQL and EF Core implementation of `Lyo.Podcast.IPodcastStore` (`PostgresPodcastStore`) via `PodcastDbContext`, schema `podcast`, and `AddPostgresMigrations`.
+`PostgresPodcastStore` implements `Lyo.Health.IHealth`.
 
 ## Features
 

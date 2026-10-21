@@ -1,6 +1,7 @@
 # Lyo.Recipe.Models
 
-Wire types for the household recipe API. `Request/` and `Response/` types are used by `Lyo.Recipe.Api` and `Lyo.Recipe.Web.Components`. Enums live here so the store contract and HTTP surface share one vocabulary. This package has no DI registration.
+Wire types for the household recipe API. `Request/` and `Response/` types are used by `Lyo.Recipe.Api` and `Lyo.Recipe.Web.Components`. Enums live here so the store contract and
+HTTP surface share one vocabulary. This package has no DI registration.
 
 ## Features
 

@@ -7,11 +7,7 @@ public sealed class MediaCaptionsTests
     [Fact]
     public void Resolve_BlankSrc_DropsTrack()
     {
-        var tracks = MediaCaptions.Resolve([
-            new MediaCaptionTrack("  "),
-            new MediaCaptionTrack("  subs.vtt ", Label: "English", Language: "en")
-        ]);
-
+        var tracks = MediaCaptions.Resolve([new("  "), new("  subs.vtt ", "English", "en")]);
         var track = Assert.Single(tracks);
         Assert.Equal("subs.vtt", track.Src);
         Assert.Equal("English", track.Label);
@@ -24,12 +20,7 @@ public sealed class MediaCaptionsTests
     [Fact]
     public void Resolve_TwoDefaults_KeepsFirst()
     {
-        var tracks = MediaCaptions.Resolve([
-            new MediaCaptionTrack("a.vtt", Default: true),
-            new MediaCaptionTrack("b.vtt", Default: true),
-            new MediaCaptionTrack("c.vtt")
-        ]);
-
+        var tracks = MediaCaptions.Resolve([new("a.vtt", Default: true), new("b.vtt", Default: true), new("c.vtt")]);
         Assert.Equal(3, tracks.Count);
         Assert.True(tracks[0].Default);
         Assert.False(tracks[1].Default);

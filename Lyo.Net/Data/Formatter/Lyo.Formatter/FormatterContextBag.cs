@@ -6,8 +6,8 @@ using Lyo.Common.Core;
 namespace Lyo.Formatter;
 
 /// <summary>
-/// Case-insensitive context for SmartFormat and expressions. Resolves nested members and flat dotted keys
-/// (<c>Docket.Number</c> on a dictionary) from one or more DTOs or dictionaries. Values live in a <see cref="BindableBag" />.
+/// Case-insensitive context for SmartFormat and expressions. Resolves nested members and flat dotted keys (<c>Docket.Number</c> on a dictionary) from one or more DTOs or
+/// dictionaries. Values live in a <see cref="BindableBag" />.
 /// </summary>
 internal sealed class FormatterContextBag : DynamicObject, IReadOnlyDictionary<string, object?>
 {
@@ -26,14 +26,24 @@ internal sealed class FormatterContextBag : DynamicObject, IReadOnlyDictionary<s
 
     public object? this[string key] => TryResolve(key, out var value) ? value : null;
 
+    public bool ContainsKey(string key) => _values.ContainsKey(key);
+
+    public bool TryGetValue(string key, out object? value) => TryResolve(key, out value);
+
+    public IEnumerator<KeyValuePair<string, object?>> GetEnumerator() => Snapshot().GetEnumerator();
+
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
     public void AddContext(object? context)
     {
         if (context is null)
             return;
+
         if (context is FormatterContextBag other) {
             _values.Import(other._values);
             foreach (var kv in other._types)
                 _types[kv.Key] = kv.Value;
+
             return;
         }
 
@@ -55,6 +65,7 @@ internal sealed class FormatterContextBag : DynamicObject, IReadOnlyDictionary<s
         var dict = (IDictionary<string, object?>)expando;
         foreach (var kv in Snapshot())
             dict[kv.Key] = kv.Value;
+
         return expando;
     }
 
@@ -63,16 +74,9 @@ internal sealed class FormatterContextBag : DynamicObject, IReadOnlyDictionary<s
     {
         if (_types.TryGetValue(key, out var type))
             return type;
+
         return _values.GetBindingType(key);
     }
-
-    public bool ContainsKey(string key) => _values.ContainsKey(key);
-
-    public bool TryGetValue(string key, out object? value) => TryResolve(key, out value);
-
-    public IEnumerator<KeyValuePair<string, object?>> GetEnumerator() => Snapshot().GetEnumerator();
-
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     public override bool TryGetMember(GetMemberBinder binder, out object? result) => TryResolve(binder.Name, out result);
 
@@ -81,6 +85,7 @@ internal sealed class FormatterContextBag : DynamicObject, IReadOnlyDictionary<s
         result = null;
         if (indexes.Length != 1 || indexes[0] is not string key)
             return false;
+
         return TryResolve(key, out result);
     }
 
@@ -90,12 +95,14 @@ internal sealed class FormatterContextBag : DynamicObject, IReadOnlyDictionary<s
         value = null;
         if (string.IsNullOrEmpty(path))
             return false;
+
         if (_values.TryGetValue(path, out value))
             return true;
 
         var segments = path.Split('.');
         if (segments.Length == 1)
             return TryResolveDottedPrefix(path, out value);
+
         return _values.TryGetPath(path, out value) && value is not null;
     }
 
@@ -106,6 +113,7 @@ internal sealed class FormatterContextBag : DynamicObject, IReadOnlyDictionary<s
                 _values.Set(kv.Key, kv.Value);
                 _types[kv.Key] = kv.Value?.GetType() ?? typeof(object);
             }
+
             return true;
         }
 
@@ -114,6 +122,7 @@ internal sealed class FormatterContextBag : DynamicObject, IReadOnlyDictionary<s
                 var key = Convert.ToString(entry.Key, CultureInfo.InvariantCulture);
                 if (string.IsNullOrEmpty(key))
                     continue;
+
                 _values.Set(key, entry.Value);
                 _types[key] = entry.Value?.GetType() ?? typeof(object);
             }
@@ -132,11 +141,13 @@ internal sealed class FormatterContextBag : DynamicObject, IReadOnlyDictionary<s
         foreach (var key in _values.Keys) {
             if (!key.StartsWith(start, StringComparison.OrdinalIgnoreCase))
                 continue;
+
             nested[key[start.Length..]] = _values[key];
         }
 
         if (nested.Count == 0)
             return false;
+
         if (nested.Count == 1 && nested.TryGetValue(string.Empty, out value))
             return true;
 
@@ -152,8 +163,10 @@ internal sealed class FormatterContextBag : DynamicObject, IReadOnlyDictionary<s
             merged[name] = value;
             _types[name] = type;
         });
+
         foreach (var kv in _values)
             merged[kv.Key] = kv.Value;
+
         return merged;
     }
 }

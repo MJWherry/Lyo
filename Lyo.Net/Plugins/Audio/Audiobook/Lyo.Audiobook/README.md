@@ -1,6 +1,7 @@
 # Lyo.Audiobook
 
-Domain contracts for a spoken-word catalog. A work may be one audio file, a chapter list, or both. Optional series membership. Credits use an opaque `PersonRef`. `CoverImageRef` and `AudioFileRef` are opaque file refs. Favorite and Tag attach via `AudiobookEntityTypes`. The print book catalog is a separate plugin.
+Domain contracts for a spoken-word catalog. A work may be one audio file, a chapter list, or both. Optional series membership. Credits use an opaque `PersonRef`. `CoverImageRef`
+and `AudioFileRef` are opaque file refs. Favorite and Tag attach via `AudiobookEntityTypes`. The print book catalog is a separate plugin.
 
 ## Features
 

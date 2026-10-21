@@ -1,6 +1,7 @@
-using Lyo.Reporting.Api;
 using Lyo.Api.Services.Crud.Delete;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
+using Lyo.Reporting.Api;
 using Lyo.Reporting.Models;
 using Lyo.Reporting.Models.Builders;
 using Lyo.Reporting.Models.Composition;
@@ -13,7 +14,7 @@ using Lyo.Xlsx.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Lyo.Common.Core.Identifiers;
+
 namespace Lyo.Reporting.Tests.Postgres;
 
 /// <summary>Integration coverage for new reporting features: Xlsx and Json formats, rerun, retention cleanup, and input hygiene.</summary>
@@ -25,8 +26,7 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
 
     private ReportService CreateService(IServiceProvider sp, PostgresReportingOptions options)
         => new(
-            sp.GetRequiredService<IDbContextFactory<ReportingContext>>(), sp.GetServices<IReportRenderer>(), [], [], sp, options,
-            sp.GetRequiredService<ILogger<ReportService>>());
+            sp.GetRequiredService<IDbContextFactory<ReportingContext>>(), sp.GetServices<IReportRenderer>(), [], [], sp, options, sp.GetRequiredService<ILogger<ReportService>>());
 
     [Fact]
     public async Task Generate_Xlsx_ProducesValidWorkbookOutput()
@@ -41,9 +41,7 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
             }
         };
 
-        var result = await reportService.GenerateAsync(
-            new() { ReportDataJson = SampleReportJson(), Format = ReportFormat.Xlsx, FileName = "sample.xlsx" }, hooks, TestCt);
-
+        var result = await reportService.GenerateAsync(new() { ReportDataJson = SampleReportJson(), Format = ReportFormat.Xlsx, FileName = "sample.xlsx" }, hooks, TestCt);
         Assert.Equal(ReportGenerationStatus.Succeeded, result.Status);
         Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", result.ContentType);
         Assert.Equal("sample.xlsx", result.OriginalFileName);
@@ -80,9 +78,7 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
     {
         using var scope = fixture.CreateScope();
         var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
-        var result = await reportService.GenerateAsync(
-            new() { ReportDataJson = SampleReportJson(), Format = ReportFormat.Csv, FileName = "../../etc/we\0ird.csv" }, ct: TestCt);
-
+        var result = await reportService.GenerateAsync(new() { ReportDataJson = SampleReportJson(), Format = ReportFormat.Csv, FileName = "../../etc/we\0ird.csv" }, ct: TestCt);
         Assert.Equal(ReportGenerationStatus.Succeeded, result.Status);
         Assert.Equal("weird.csv", result.OriginalFileName);
     }
@@ -156,9 +152,7 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
         await db.SaveChangesAsync(TestCt);
         using var scope = fixture.CreateScope();
         var reportService = scope.ServiceProvider.GetRequiredService<ReportService>();
-        var result = await reportService.GenerateAsync(
-            new() { ReportDefinitionId = definition.Id, Format = ReportFormat.Json, IncludeReportData = true }, ct: TestCt);
-
+        var result = await reportService.GenerateAsync(new() { ReportDefinitionId = definition.Id, Format = ReportFormat.Json, IncludeReportData = true }, ct: TestCt);
         Assert.Equal(ReportGenerationStatus.Succeeded, result.Status);
         Assert.Equal(stored, result.ReportDataJson);
     }
@@ -244,7 +238,7 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
         };
 
         var service = new ReportRetentionService(
-            dbFactory, fixture.ServiceProvider, new PostgresReportingOptions { ConnectionString = "unused", GenerationRetention = TimeSpan.FromDays(7) },
+            dbFactory, fixture.ServiceProvider, new() { ConnectionString = "unused", GenerationRetention = TimeSpan.FromDays(7) },
             fixture.ServiceProvider.GetRequiredService<ILogger<ReportRetentionService>>());
 
         var deleted = await service.CleanupAsync(hooks, TestCt);
@@ -263,8 +257,7 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
     {
         var dbFactory = fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ReportingContext>>();
         var service = new ReportRetentionService(
-            dbFactory, fixture.ServiceProvider, new PostgresReportingOptions { ConnectionString = "unused" },
-            fixture.ServiceProvider.GetRequiredService<ILogger<ReportRetentionService>>());
+            dbFactory, fixture.ServiceProvider, new() { ConnectionString = "unused" }, fixture.ServiceProvider.GetRequiredService<ILogger<ReportRetentionService>>());
 
         Assert.Equal(0, await service.CleanupAsync(TestCt));
     }
@@ -303,7 +296,6 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
         var generation = NewGeneration(nameof(ReportGenerationStatus.Succeeded), DateTime.UtcNow, outputFileId);
         db.ReportGenerations.Add(generation);
         await db.SaveChangesAsync(TestCt);
-
         var hooks = new ReportGenerationHooks {
             OnCleanupAsync = async (ctx, ct) => {
                 if (ctx.OutputFileId is Guid fileId)
@@ -314,8 +306,7 @@ public sealed class ReportFeatureTests(ReportingPostgresFixture fixture) : IClas
         await using var scope = fixture.ServiceProvider.CreateAsyncScope();
         var delete = scope.ServiceProvider.GetRequiredService<IDeleteService<ReportingContext>>();
         var result = await delete.DeleteAsync<ReportGeneration, ReportGenerationRes>(
-            [generation.Id], beforeAsync: (ctx, ct) => ReportGenerationCleanup.InvokeCleanupHooksAsync([ctx.Entity], hooks, ctx.Services, ct).AsTask(),
-            ct: TestCt);
+            [generation.Id], beforeAsync: (ctx, ct) => ReportGenerationCleanup.InvokeCleanupHooksAsync([ctx.Entity], hooks, ctx.Services, ct).AsTask(), ct: TestCt);
 
         Assert.True(result.IsSuccess);
         Assert.False(fixture.FakeFileStorage.Files.ContainsKey(outputFileId));

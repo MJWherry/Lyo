@@ -4,8 +4,8 @@ namespace Lyo.Job.Models.Request;
 
 /// <summary>
 /// Body of a "start this workflow" call. Every field is optional: an empty body starts the workflow once, immediately, with no de-duplication. Supply
-/// <see cref="IdempotencyKey" /> whenever the caller may retry (an at-least-once queue delivery, a UI double-click, a scheduler redelivery) so the retry resolves to the run
-/// the first attempt created instead of starting the workflow twice.
+/// <see cref="IdempotencyKey" /> whenever the caller may retry (an at-least-once queue delivery, a UI double-click, a scheduler redelivery) so the retry resolves to the run the first
+/// attempt created instead of starting the workflow twice.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class JobWorkflowStartReq
@@ -17,8 +17,8 @@ public sealed class JobWorkflowStartReq
     public Guid? JobScheduleId { get; set; }
 
     /// <summary>
-    /// The cron instant this start covers. Together with <see cref="JobScheduleId" /> it de-duplicates independently of <see cref="IdempotencyKey" />, so two schedulers
-    /// racing the same slot converge on one run.
+    /// The cron instant this start covers. Together with <see cref="JobScheduleId" /> it de-duplicates independently of <see cref="IdempotencyKey" />, so two schedulers racing
+    /// the same slot converge on one run.
     /// </summary>
     public DateTime? ScheduledSlotUtc { get; set; }
 

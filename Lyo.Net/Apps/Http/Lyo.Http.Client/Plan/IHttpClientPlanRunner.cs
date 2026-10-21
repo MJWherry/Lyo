@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 namespace Lyo.Http.Client.Plan;
 
 /// <summary>Executes an <see cref="HttpClientPlan" /> against an <see cref="ILyoHttpClient" />.</summary>
@@ -8,6 +10,6 @@ public interface IHttpClientPlanRunner
         ILyoHttpClient client,
         HttpClientPlan plan,
         HttpClientPlanRuntime? runtime = null,
-        Microsoft.Extensions.Logging.ILogger? logger = null,
+        ILogger? logger = null,
         CancellationToken ct = default);
 }

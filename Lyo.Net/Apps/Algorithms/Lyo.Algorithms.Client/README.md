@@ -1,6 +1,7 @@
 # Lyo.Algorithms.Client
 
-Calls list, get, revision append, revert, and label routes on `Lyo.Algorithms.Api`. Sit it on an `IApiClient`. Execute stays on `IAlgorithmRegistry` in the process that compiled the delegate.
+Calls list, get, revision append, revert, and label routes on `Lyo.Algorithms.Api`. Sit it on an `IApiClient`. Execute stays on `IAlgorithmRegistry` in the process that compiled
+the delegate.
 
 ## Features
 

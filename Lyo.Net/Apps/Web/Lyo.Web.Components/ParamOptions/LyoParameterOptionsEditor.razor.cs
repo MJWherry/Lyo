@@ -1,6 +1,6 @@
+using Lyo.Parameters;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
-using Lyo.Parameters;
 using Lyo.Query.Models.Parameters;
 using Microsoft.AspNetCore.Components;
 
@@ -10,15 +10,15 @@ namespace Lyo.Web.Components.ParamOptions;
 public partial class LyoParameterOptionsEditor : ComponentBase
 {
     private readonly List<ParameterOptionsItem> _items = [];
+    private readonly List<(string Name, string Value)> _sprocArgs = [];
     private string? _error;
+    private string? _keyField;
     private ParameterOptionsKind? _kind;
+    private string? _labelField;
     private string? _lastIncoming;
     private QueryReq _query = CreateDefaultQuery();
     private string? _queryRoute;
     private string? _storedProcName;
-    private string? _keyField;
-    private string? _labelField;
-    private readonly List<(string Name, string Value)> _sprocArgs = [];
 
     /// <summary>Serialized Options JSON bound to the definition parameter.</summary>
     [Parameter]
@@ -28,9 +28,8 @@ public partial class LyoParameterOptionsEditor : ComponentBase
     public EventCallback<string?> OptionsJsonChanged { get; set; }
 
     /// <summary>
-    /// When true (default), renders the Options kind MudSelect. If false, the parent owns the kind control (for example definition parameter table column) and this editor
-    /// only shows
-    /// kind-specific fields.
+    /// When true (default), renders the Options kind MudSelect. If false, the parent owns the kind control (for example definition parameter table column) and this editor only
+    /// shows kind-specific fields.
     /// </summary>
     [Parameter]
     public bool ShowKindSelect { get; set; } = true;
@@ -164,9 +163,7 @@ public partial class LyoParameterOptionsEditor : ComponentBase
                     StoredProcName = string.IsNullOrWhiteSpace(_storedProcName) ? null : _storedProcName.Trim(),
                     KeyField = string.IsNullOrWhiteSpace(_keyField) ? null : _keyField.Trim(),
                     LabelField = string.IsNullOrWhiteSpace(_labelField) ? null : _labelField.Trim(),
-                    SprocParameters = _sprocArgs
-                        .Where(a => !string.IsNullOrWhiteSpace(a.Name))
-                        .ToDictionary(a => a.Name.Trim(), a => a.Value, StringComparer.OrdinalIgnoreCase)
+                    SprocParameters = _sprocArgs.Where(a => !string.IsNullOrWhiteSpace(a.Name)).ToDictionary(a => a.Name.Trim(), a => a.Value, StringComparer.OrdinalIgnoreCase)
                 };
 
                 if (!ParameterOptionsJson.IsValidStoredProcName(options.StoredProcName))

@@ -1,7 +1,6 @@
-using Lyo.Api.ApiEndpoint;
 using Lyo.Authentication.Postgres.Database;
-using Lyo.Exceptions.Models;
 using Lyo.Common.Core.Identifiers;
+using Lyo.Exceptions.Models;
 
 namespace Lyo.Api.Authentication.Tests;
 

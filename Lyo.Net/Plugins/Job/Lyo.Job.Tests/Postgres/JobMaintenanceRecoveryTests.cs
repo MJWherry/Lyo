@@ -161,7 +161,7 @@ public class JobMaintenanceRecoveryTests
             JobDefinitionId = definitionId,
             State = state,
             CreatedBy = "test",
-            CreatedTimestamp = DateTime.UtcNow,
+            CreatedTimestamp = DateTime.UtcNow
         };
 
         configure?.Invoke(run);

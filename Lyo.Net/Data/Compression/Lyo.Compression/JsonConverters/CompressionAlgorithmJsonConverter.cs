@@ -7,7 +7,6 @@ namespace Lyo.Compression.JsonConverters;
 /// <summary>JSON converter for <see cref="CompressionAlgorithm" /> that serializes and deserializes using the stable algorithm <see cref="CompressionAlgorithm.Name" />.</summary>
 public sealed class CompressionAlgorithmJsonConverter : JsonConverter<CompressionAlgorithm?>
 {
-
     public override CompressionAlgorithm? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType == JsonTokenType.Null)

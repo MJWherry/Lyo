@@ -1,13 +1,13 @@
+using System.Collections;
 using System.Text.Json;
 using Lyo.Exceptions;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Enums;
-using Lyo.Story.Enums;
 
 namespace Lyo.Story;
 
-/// <summary>Combines, negates, and evaluates <see cref="WhereClause"/> trees against play facts (variable bag, chose, visited).</summary>
+/// <summary>Combines, negates, and evaluates <see cref="WhereClause" /> trees against play facts (variable bag, chose, visited).</summary>
 public static class StoryWhere
 {
     /// <summary>AND two optional trees. Nulls are skipped.</summary>
@@ -15,8 +15,10 @@ public static class StoryWhere
     {
         if (left is null)
             return right;
+
         if (right is null)
             return left;
+
         return WhereClauseBuilder.CombineAs(GroupOperatorEnum.And, left, right);
     }
 
@@ -25,27 +27,23 @@ public static class StoryWhere
     {
         if (clause is null)
             return null;
+
         return NegateNode(clause);
     }
 
-    /// <summary>True when <paramref name="clause"/> is null (always) or matches play facts.</summary>
-    public static bool Matches(
-        WhereClause? clause,
-        IReadOnlyDictionary<string, string?> variables,
-        ISet<string> chose,
-        ISet<string> visited)
+    /// <summary>True when <paramref name="clause" /> is null (always) or matches play facts.</summary>
+    public static bool Matches(WhereClause? clause, IReadOnlyDictionary<string, string?> variables, ISet<string> chose, ISet<string> visited)
     {
         if (clause is null)
             return true;
+
         return Evaluate(clause, variables, chose, visited);
     }
 
     private static WhereClause NegateNode(WhereClause clause)
         => clause switch {
             GroupClause group => new GroupClause(
-                group.Operator == GroupOperatorEnum.And ? GroupOperatorEnum.Or : GroupOperatorEnum.And,
-                group.Children.Select(NegateNode).ToList(),
-                group.Description),
+                group.Operator == GroupOperatorEnum.And ? GroupOperatorEnum.Or : GroupOperatorEnum.And, group.Children.Select(NegateNode).ToList(), group.Description),
             ConditionClause condition => new ConditionClause(condition.Field, NegateComparison(condition.Comparison), condition.Value, condition.Description, condition.Threshold),
             var _ => throw new StoryException($"Unsupported where-clause type '{clause.GetType().Name}'.")
         };
@@ -69,11 +67,7 @@ public static class StoryWhere
             var _ => throw new StoryException($"Cannot negate comparison '{comparison}'.")
         };
 
-    private static bool Evaluate(
-        WhereClause clause,
-        IReadOnlyDictionary<string, string?> variables,
-        ISet<string> chose,
-        ISet<string> visited)
+    private static bool Evaluate(WhereClause clause, IReadOnlyDictionary<string, string?> variables, ISet<string> chose, ISet<string> visited)
         => clause switch {
             GroupClause group when group.Operator == GroupOperatorEnum.And => group.Children.All(c => Evaluate(c, variables, chose, visited)),
             GroupClause group => group.Children.Any(c => Evaluate(c, variables, chose, visited)),
@@ -81,11 +75,7 @@ public static class StoryWhere
             var _ => throw new StoryException($"Unsupported where-clause type '{clause.GetType().Name}'.")
         };
 
-    private static bool EvaluateCondition(
-        ConditionClause condition,
-        IReadOnlyDictionary<string, string?> variables,
-        ISet<string> chose,
-        ISet<string> visited)
+    private static bool EvaluateCondition(ConditionClause condition, IReadOnlyDictionary<string, string?> variables, ISet<string> chose, ISet<string> visited)
     {
         ArgumentHelpers.ThrowIfNull(condition);
         var field = condition.Field ?? string.Empty;
@@ -97,7 +87,8 @@ public static class StoryWhere
         else if (field.StartsWith(StoryConditionFields.VisitedPrefix, StringComparison.Ordinal))
             actual = visited.Contains(field.Substring(StoryConditionFields.VisitedPrefix.Length)) ? bool.TrueString : bool.FalseString;
         else
-            throw new StoryException($"Unknown condition field '{field}'. Use {StoryConditionFields.VarPrefix}, {StoryConditionFields.ChosePrefix}, or {StoryConditionFields.VisitedPrefix} prefixes.");
+            throw new StoryException(
+                $"Unknown condition field '{field}'. Use {StoryConditionFields.VarPrefix}, {StoryConditionFields.ChosePrefix}, or {StoryConditionFields.VisitedPrefix} prefixes.");
 
         return Compare(actual, condition.Comparison, condition.Value);
     }
@@ -131,6 +122,7 @@ public static class StoryWhere
             case ComparisonOperatorEnum.LessThanOrEqual:
                 if (!TryToDecimal(actual, out var left) || !TryToDecimal(expected, out var right))
                     return false;
+
                 return comparison switch {
                     ComparisonOperatorEnum.GreaterThan => left > right,
                     ComparisonOperatorEnum.GreaterThanOrEqual => left >= right,
@@ -148,7 +140,7 @@ public static class StoryWhere
             string text => [text],
             JsonElement { ValueKind: JsonValueKind.Array } array => array.EnumerateArray().Select(Scalar),
             JsonElement element => [Scalar(element)],
-            System.Collections.IEnumerable items => items.Cast<object?>(),
+            IEnumerable items => items.Cast<object?>(),
             var single => [single]
         };
 
@@ -166,11 +158,14 @@ public static class StoryWhere
     {
         if (expected is bool b)
             return ParseBool(actual) == b;
+
         if (TryToDecimal(actual, out var left) && TryToDecimal(expected, out var right))
             return left == right;
+
         var expectedText = expected is null ? null : Convert.ToString(expected);
         if (string.IsNullOrEmpty(actual) && string.IsNullOrEmpty(expectedText))
             return expected is not bool;
+
         return string.Equals(actual, expectedText, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -178,8 +173,10 @@ public static class StoryWhere
     {
         if (string.IsNullOrWhiteSpace(value))
             return false;
+
         if (bool.TryParse(value, out var parsed))
             return parsed;
+
         return value is "1" or "yes" or "on";
     }
 
@@ -188,18 +185,22 @@ public static class StoryWhere
         number = 0;
         if (value is null)
             return false;
+
         if (value is decimal d) {
             number = d;
             return true;
         }
+
         if (value is int i) {
             number = i;
             return true;
         }
+
         if (value is long l) {
             number = l;
             return true;
         }
+
         return decimal.TryParse(Convert.ToString(value), out number);
     }
 }

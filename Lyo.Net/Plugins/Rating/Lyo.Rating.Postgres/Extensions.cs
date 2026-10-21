@@ -6,6 +6,7 @@ using Lyo.Rating.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace Lyo.Rating.Postgres;
 
 /// <summary>DI helpers for PostgreSQL rating store registration.</summary>
@@ -31,7 +32,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresRatingOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddRatingDbContextFactory(options);
         }
 
@@ -42,7 +42,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPostgresDbContextFactory<RatingDbContext, PostgresRatingOptions>(options);
             services.AddEntityRefOptions();
-
             return services;
         }
 
@@ -64,7 +63,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresRatingOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddPostgresRatingStore(options);
         }
 
@@ -75,8 +73,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(options);
             services.AddRatingDbContextFactory(options);
             services.AddSingleton<IRatingStore>(sp => new PostgresRatingStore(
-                sp.GetRequiredService<IDbContextFactory<RatingDbContext>>(), sp.GetRequiredService<EntityRefOptions>(),
-                sp.GetRequiredService<PostgresRatingOptions>(), sp.GetServices<IEntityRefActionInterceptor>()));
+                sp.GetRequiredService<IDbContextFactory<RatingDbContext>>(), sp.GetRequiredService<EntityRefOptions>(), sp.GetRequiredService<PostgresRatingOptions>(),
+                sp.GetServices<IEntityRefActionInterceptor>()));
 
             return services;
         }

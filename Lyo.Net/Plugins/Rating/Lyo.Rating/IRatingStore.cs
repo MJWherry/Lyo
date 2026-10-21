@@ -4,8 +4,8 @@ namespace Lyo.Rating;
 
 /// <summary>Store contract for ratings.</summary>
 /// <remarks>
-/// Every read/write method takes an optional <c>Guid? tenantId</c>. A <c>null</c> falls back to <c>EntityRefOptions.DefaultTenantId</c> (single-tenant
-/// hosts map that to <c>EntityRefWellKnown.SingleTenantDefaultId</c>).
+/// Every read/write method takes an optional <c>Guid? tenantId</c>. A <c>null</c> falls back to <c>EntityRefOptions.DefaultTenantId</c> (single-tenant hosts map that to
+/// <c>EntityRefWellKnown.SingleTenantDefaultId</c>).
 /// </remarks>
 public interface IRatingStore
 {

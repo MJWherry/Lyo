@@ -4,7 +4,17 @@ namespace Lyo.Job.Web.Components;
 
 public partial class JobParameterView
 {
-    static JobParameterView() => FormatterLyoType.EnsureRegistered();
+    private bool _dirty;
+
+    private object? _formatterContext;
+
+    /// <summary>Definition the current rows were built from, so a definition switch rebuilds them.</summary>
+    private Guid? _loadedDefinitionId;
+
+    /// <summary>The exact <see cref="JobParameters" /> instance already loaded. Compared by reference: the parent hands over a fresh list on each reload.</summary>
+    private IReadOnlyList<JobParameterRes>? _loadedParameters;
+
+    private List<LyoParameterEditRow> _rows = [];
 
     [Parameter]
     public IReadOnlyList<JobParameterRes>? JobParameters { get; set; }
@@ -26,16 +36,7 @@ public partial class JobParameterView
 
     private string ParameterRoute => $"{DefinitionRoute}/Parameter";
 
-    private List<LyoParameterEditRow> _rows = [];
-    private bool _dirty;
-
-    /// <summary>Definition the current rows were built from, so a definition switch rebuilds them.</summary>
-    private Guid? _loadedDefinitionId;
-
-    /// <summary>The exact <see cref="JobParameters" /> instance already loaded. Compared by reference: the parent hands over a fresh list on each reload.</summary>
-    private IReadOnlyList<JobParameterRes>? _loadedParameters;
-
-    private object? _formatterContext;
+    static JobParameterView() => FormatterLyoType.EnsureRegistered();
 
     protected override async Task OnParametersSetAsync()
     {
@@ -49,11 +50,11 @@ public partial class JobParameterView
 
         _loadedDefinitionId = JobDefinitionId;
         _loadedParameters = JobParameters;
-        _rows = (JobParameters ?? []).OrderBy(p => p.Order).ThenBy(p => p.Key)
-            .Select(
-                p => LyoParameterEditRow.FromMasked(
-                    p.Id, p.Key, p.Type, p.Value, p.Description, p.Required, p.EncryptedValue, p.AllowedValues, p.Options, p.Order, defaultKind: p.DefaultKind,
-                    defaultTemplate: p.DefaultTemplate))
+        _rows = (JobParameters ?? []).OrderBy(p => p.Order)
+            .ThenBy(p => p.Key)
+            .Select(p => LyoParameterEditRow.FromMasked(
+                p.Id, p.Key, p.Type, p.Value, p.Description, p.Required, p.EncryptedValue, p.AllowedValues, p.Options, p.Order, defaultKind: p.DefaultKind,
+                defaultTemplate: p.DefaultTemplate))
             .ToList();
 
         _dirty = false;
@@ -61,8 +62,8 @@ public partial class JobParameterView
     }
 
     /// <summary>
-    /// Real run values make the template preview worth reading, but they are not required: a failed or empty load still leaves the run paths available through the
-    /// sample shape, so a load failure is not worth interrupting the editor for.
+    /// Real run values make the template preview worth reading, but they are not required: a failed or empty load still leaves the run paths available through the sample shape,
+    /// so a load failure is not worth interrupting the editor for.
     /// </summary>
     private async Task<JobDefinitionLatestRunsRes?> LoadLatestRunsAsync()
     {
@@ -99,6 +100,7 @@ public partial class JobParameterView
         try {
             await LyoParameterEditRowSync.SaveAsync<JobParameterReq, JobParameterRes>(
                 ApiClient, ParameterRoute, _rows, (JobParameters ?? []).Select(p => p.Id), ToRequest, p => p.Id);
+
             Snackbar.Add("Parameters saved", Severity.Success);
             _dirty = false;
         }
