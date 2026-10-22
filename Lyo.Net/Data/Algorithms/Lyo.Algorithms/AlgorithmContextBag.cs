@@ -66,6 +66,16 @@ public sealed class AlgorithmContextBag : IReadOnlyDictionary<string, object?>
     /// <summary>Reads <paramref name="key" /> and converts it. See <see cref="ContextBag{TKey}.TryGetAs{T}" />.</summary>
     public bool TryGetAs<T>(string key, out T? value) => _values.TryGetAs(key, out value);
 
+    /// <summary>Reads <paramref name="name" /> as <typeparamref name="T" />. The stored value must already be <typeparamref name="T" />. Compiled formulas call this.</summary>
+    public static T Read<T>(AlgorithmContextBag bag, string name)
+    {
+        ArgumentHelpers.ThrowIfNull(bag);
+        if (!bag.TryGetValue(name, out var value) || value is not T)
+            return AlgorithmHelpers.Throw<T>($"Expression identifier '{name}' is missing or is not {typeof(T).Name}.");
+
+        return (T)value;
+    }
+
     /// <summary>Reads <paramref name="name" /> as a double. Compiled catalog formulas call this. A pending factory runs once.</summary>
     public static double ReadDouble(AlgorithmContextBag bag, string name)
     {

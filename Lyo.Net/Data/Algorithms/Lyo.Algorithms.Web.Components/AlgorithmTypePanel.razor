@@ -1,0 +1,110 @@
+@if (Draft is not null) {
+    <div class="algorithm-types">
+        @if (Draft.Kind is AlgorithmKind.RangeBand or AlgorithmKind.Linear) {
+            <MudSelect T="string" Label="Input type" Value="@(Draft.InputType ?? "double")" ValueChanged="SetInputType" Margin="Margin.Dense" AnchorOrigin="Origin.BottomCenter" Class="algorithm-input-type">
+                @foreach (var alias in AlgorithmDraftRules.Aliases.Where(AlgorithmDraftRules.IsNumericAlias)) {
+                    <MudSelectItem T="string" Value="@alias">@alias</MudSelectItem>
+                }
+            </MudSelect>
+        }
+        @foreach (var row in VisibleParameters) {
+            <div class="algorithm-line">
+                @if (FormulaNames is null) {
+                    <input class="algorithm-line-input" value="@row.Name" aria-label="Name" @oninput="@(args => SetField(row, args, true))"/>
+                }
+                else {
+                    <span class="algorithm-line-name">@row.Name</span>
+                }
+                <input class="algorithm-line-input" value="@row.Alias" aria-label="Alias" @oninput="@(args => SetField(row, args, false))"/>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" aria-label="Remove parameter" Size="Size.Small" OnClick="@(() => Remove(Draft.Parameters, row))"/>
+            </div>
+        }
+        @if (FormulaNames is null) {
+            <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" OnClick="AddParameter">Add parameter</MudButton>
+        }
+        @if (Draft.Calls.Count > 0) {
+            @foreach (var row in Draft.Calls) {
+                <div class="algorithm-line">
+                    <input class="algorithm-line-input" value="@row.Name" aria-label="Catalog key" placeholder="Catalog key" @oninput="@(args => SetField(row, args, true))"/>
+                    <input class="algorithm-line-input" value="@row.Alias" aria-label="Call result" placeholder="Result" @oninput="@(args => SetField(row, args, false))"/>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" aria-label="Remove call" Size="Size.Small" OnClick="@(() => Remove(Draft.Calls, row))"/>
+                </div>
+            }
+        }
+        <MudButton Variant="Variant.Text" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" OnClick="AddCall">Add call</MudButton>
+    </div>
+}
+
+<style>
+    .algorithm-types { display: flex; flex-direction: column; gap: 4px; }
+    .algorithm-line { display: flex; align-items: center; gap: 8px; }
+    .algorithm-line-name { flex: 1; min-width: 0; font-family: ui-monospace, monospace; font-size: 0.875rem; }
+    .algorithm-line-input {
+        flex: 1; min-width: 0; height: 28px; padding: 0 8px; border-radius: 4px; font: inherit;
+        color: var(--mud-palette-text-primary); background: var(--mud-palette-surface); border: 1px solid var(--mud-palette-lines-default);
+    }
+    .algorithm-input-type { max-width: 12rem; }
+</style>
+
+@code {
+    [Parameter]
+    public AlgorithmDraft? Draft { get; set; }
+
+    [Parameter]
+    public IReadOnlyList<string>? FormulaNames { get; set; }
+
+    [Parameter]
+    public EventCallback Changed { get; set; }
+
+    private IEnumerable<AlgorithmTypeRow> VisibleParameters
+    {
+        get {
+            if (Draft is null)
+                return [];
+
+            if (FormulaNames is null)
+                return Draft.Parameters;
+
+            return FormulaNames.Select(name => Draft.Parameters.FirstOrDefault(row => string.Equals(row.Name, name, StringComparison.Ordinal))).OfType<AlgorithmTypeRow>();
+        }
+    }
+
+    private Task Notify() => Changed.InvokeAsync();
+
+    private Task SetInputType(string value)
+    {
+        if (Draft is not null)
+            Draft.InputType = value;
+
+        return Changed.InvokeAsync();
+    }
+
+    private Task SetField(AlgorithmTypeRow row, ChangeEventArgs args, bool name)
+    {
+        var value = args.Value?.ToString() ?? string.Empty;
+        if (name)
+            row.Name = value;
+        else
+            row.Alias = value;
+
+        return Notify();
+    }
+
+    private Task AddParameter()
+    {
+        Draft?.Parameters.Add(new() { Alias = "double" });
+        return Changed.InvokeAsync();
+    }
+
+    private Task AddCall()
+    {
+        Draft?.Calls.Add(new() { Alias = "double" });
+        return Changed.InvokeAsync();
+    }
+
+    private Task Remove(List<AlgorithmTypeRow> rows, AlgorithmTypeRow row)
+    {
+        rows.Remove(row);
+        return Changed.InvokeAsync();
+    }
+}

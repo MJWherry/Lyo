@@ -26,4 +26,7 @@ public interface IAlgorithmDefinitionStore
 
     /// <summary>Label row, or null.</summary>
     Task<AlgorithmLabelRes?> GetLabelAsync(string key, string label, CancellationToken ct = default);
+
+    /// <summary>Removes the definition, its revisions, and its labels. Returns false when the key is absent.</summary>
+    Task<bool> DeleteAsync(string key, CancellationToken ct = default);
 }

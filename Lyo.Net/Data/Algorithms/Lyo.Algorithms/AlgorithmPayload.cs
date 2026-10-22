@@ -19,18 +19,27 @@ public static class AlgorithmPayload
             return Result<Unit>.Failure("Algorithm payload is required.", "algorithm.payload.missing");
 
         try {
+            var binding = AlgorithmTypeBinding.ParsePayload(payload);
             switch (kind) {
                 case AlgorithmKind.DiscreteMap:
-                    ParseMap(payload!);
+                    var map = ParseMap(payload!);
+                    RequireZeroValue(binding, map.Missing == MissingKeyPolicy.Zero, map.MissingValue);
                     break;
                 case AlgorithmKind.RangeBand:
-                    ParseBands(payload!);
+                    var bands = ParseBands(payload!);
+                    RequireNumericInput(binding);
+                    RequireZeroValue(binding, bands.OutOfRange == OutOfRangePolicy.Zero, bands.MissingValue);
                     break;
                 case AlgorithmKind.Linear:
                     ParseLinear(payload!);
+                    RequireNumericInput(binding);
+                    RequireNumericResult(binding);
                     break;
                 case AlgorithmKind.Composite:
-                    ParseComposite(payload!);
+                    var composite = ParseComposite(payload!);
+                    if (composite.Combiner != CombinerKind.Formula)
+                        RequireNumericResult(binding);
+
                     break;
                 default:
                     return Result<Unit>.Failure($"Algorithm kind '{kind}' does not use a payload.", "algorithm.payload.invalid");
@@ -53,6 +62,22 @@ public static class AlgorithmPayload
     internal static LinearBody ParseLinear(string payload) => Require(JsonSerializer.Deserialize<LinearBody>(payload, Json), "Linear payload is invalid.");
 
     internal static CompositeBody ParseComposite(string payload) => Require(JsonSerializer.Deserialize<CompositeBody>(payload, Json), "Composite payload is invalid.");
+
+    private static void RequireNumericInput(AlgorithmTypeBinding binding)
+        => AlgorithmHelpers.ThrowIf(!AlgorithmTypeBinding.IsNumeric(binding.Input), "Algorithm input type must be numeric.", "algorithm.payload.invalid");
+
+    private static void RequireNumericResult(AlgorithmTypeBinding binding)
+        => AlgorithmHelpers.ThrowIf(!AlgorithmTypeBinding.IsNumeric(binding.Result), "Algorithm result type must be numeric.", "algorithm.payload.invalid");
+
+    private static void RequireZeroValue(AlgorithmTypeBinding binding, bool usesZero, JsonElement missing)
+    {
+        if (!usesZero || AlgorithmTypeBinding.IsNumeric(binding.Result))
+            return;
+
+        AlgorithmHelpers.ThrowIf(
+            missing.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null, "A non-numeric result needs missingValue when the missing policy is zero.",
+            "algorithm.payload.invalid");
+    }
 
     private static T Require<T>(T? value, string message)
         where T : class, ICheckedPayload
@@ -77,6 +102,9 @@ public sealed class DiscreteMapBody : ICheckedPayload
     /// <summary>What happens when <see cref="Input" /> is not in <see cref="Entries" />.</summary>
     public MissingKeyPolicy Missing { get; set; } = MissingKeyPolicy.Zero;
 
+    /// <summary>Value used when <see cref="Missing" /> is <see cref="MissingKeyPolicy.Zero" /> and the result is not numeric.</summary>
+    public JsonElement MissingValue { get; set; }
+
     /// <summary>Allowed values.</summary>
     public List<DiscreteMapEntry> Entries { get; set; } = [];
 
@@ -84,8 +112,10 @@ public sealed class DiscreteMapBody : ICheckedPayload
     {
         AlgorithmHelpers.ThrowIf(!AlgorithmContextBag.IsIdentifier(Input), "Discrete map input must be an identifier.", "algorithm.payload.invalid");
         AlgorithmHelpers.ThrowIf(Entries.Count == 0, "Discrete map entries are required.", "algorithm.payload.invalid");
-        foreach (var entry in Entries)
+        foreach (var entry in Entries) {
             AlgorithmHelpers.ThrowIf(string.IsNullOrWhiteSpace(entry.Key), "Discrete map entry key is required.", "algorithm.payload.invalid");
+            AlgorithmHelpers.ThrowIf(entry.Points.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null, "Discrete map entry value is required.", "algorithm.payload.invalid");
+        }
     }
 }
 
@@ -95,8 +125,8 @@ public sealed class DiscreteMapEntry
     /// <summary>Matched against the input text.</summary>
     public string Key { get; set; } = string.Empty;
 
-    /// <summary>Points for <see cref="Key" />.</summary>
-    public double Points { get; set; }
+    /// <summary>Value for <see cref="Key" />. A JSON number or string, converted to the revision result when the revision compiles.</summary>
+    public JsonElement Points { get; set; }
 }
 
 /// <summary>How a discrete map treats an unknown choice.</summary>
@@ -118,6 +148,9 @@ public sealed class RangeBandBody : ICheckedPayload
     /// <summary>What happens when no band contains the input.</summary>
     public OutOfRangePolicy OutOfRange { get; set; } = OutOfRangePolicy.Zero;
 
+    /// <summary>Value used when <see cref="OutOfRange" /> is <see cref="OutOfRangePolicy.Zero" /> and the result is not numeric.</summary>
+    public JsonElement MissingValue { get; set; }
+
     /// <summary>Bands. Each is <c>[min, max)</c>.</summary>
     public List<RangeBandEntry> Bands { get; set; } = [];
 
@@ -125,22 +158,24 @@ public sealed class RangeBandBody : ICheckedPayload
     {
         AlgorithmHelpers.ThrowIf(!AlgorithmContextBag.IsIdentifier(Input), "Range band input must be an identifier.", "algorithm.payload.invalid");
         AlgorithmHelpers.ThrowIf(Bands.Count == 0, "Range bands are required.", "algorithm.payload.invalid");
-        foreach (var band in Bands)
-            AlgorithmHelpers.ThrowIf(band.Max <= band.Min, "Range band max must be greater than min.", "algorithm.payload.invalid");
+        foreach (var band in Bands) {
+            AlgorithmHelpers.ThrowIf(AlgorithmValues.Decimal(band.Max) <= AlgorithmValues.Decimal(band.Min), "Range band max must be greater than min.", "algorithm.payload.invalid");
+            AlgorithmHelpers.ThrowIf(band.Points.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null, "Range band value is required.", "algorithm.payload.invalid");
+        }
     }
 }
 
 /// <summary>One half-open band.</summary>
 public sealed class RangeBandEntry
 {
-    /// <summary>Inclusive start.</summary>
-    public double Min { get; set; }
+    /// <summary>Inclusive start. A JSON number, converted to the input type when the revision compiles.</summary>
+    public JsonElement Min { get; set; }
 
-    /// <summary>Exclusive end.</summary>
-    public double Max { get; set; }
+    /// <summary>Exclusive end. A JSON number, converted to the input type when the revision compiles.</summary>
+    public JsonElement Max { get; set; }
 
-    /// <summary>Points while the input is in this band.</summary>
-    public double Points { get; set; }
+    /// <summary>Value while the input is in this band. Converted to the revision result when the revision compiles.</summary>
+    public JsonElement Points { get; set; }
 }
 
 /// <summary>How a range band treats a value outside every band.</summary>
@@ -162,17 +197,17 @@ public sealed class LinearBody : ICheckedPayload
     /// <summary>Context identifier.</summary>
     public string Input { get; set; } = string.Empty;
 
-    /// <summary>Input value that maps to <see cref="PointsMin" />.</summary>
-    public double InputMin { get; set; }
+    /// <summary>Input value that maps to <see cref="PointsMin" />. A JSON number.</summary>
+    public JsonElement InputMin { get; set; }
 
-    /// <summary>Input value that maps to <see cref="PointsMax" />.</summary>
-    public double InputMax { get; set; }
+    /// <summary>Input value that maps to <see cref="PointsMax" />. A JSON number.</summary>
+    public JsonElement InputMax { get; set; }
 
-    /// <summary>Points at <see cref="InputMin" />.</summary>
-    public double PointsMin { get; set; }
+    /// <summary>Value at <see cref="InputMin" />. Converted to the revision result when the revision compiles.</summary>
+    public JsonElement PointsMin { get; set; }
 
-    /// <summary>Points at <see cref="InputMax" />.</summary>
-    public double PointsMax { get; set; }
+    /// <summary>Value at <see cref="InputMax" />. Converted to the revision result when the revision compiles.</summary>
+    public JsonElement PointsMax { get; set; }
 
     /// <summary>When true, inputs outside the range stay on the nearest endpoint.</summary>
     public bool Clamp { get; set; }
@@ -180,7 +215,7 @@ public sealed class LinearBody : ICheckedPayload
     void ICheckedPayload.Check()
     {
         AlgorithmHelpers.ThrowIf(!AlgorithmContextBag.IsIdentifier(Input), "Linear input must be an identifier.", "algorithm.payload.invalid");
-        AlgorithmHelpers.ThrowIf(InputMax == InputMin, "Linear inputMax must differ from inputMin.", "algorithm.payload.invalid");
+        AlgorithmHelpers.ThrowIf(AlgorithmValues.Decimal(InputMax) == AlgorithmValues.Decimal(InputMin), "Linear inputMax must differ from inputMin.", "algorithm.payload.invalid");
     }
 }
 
@@ -237,8 +272,8 @@ public sealed class CompositeChild
     /// <summary>Inline scorer JSON.</summary>
     public JsonElement Payload { get; set; }
 
-    /// <summary>Multiplier for <see cref="CombinerKind.WeightedSum" />. Default 1.</summary>
-    public double Weight { get; set; } = 1;
+    /// <summary>Multiplier for <see cref="CombinerKind.WeightedSum" />. Omitted means 1. A JSON number, read as a decimal or double coefficient when the revision compiles.</summary>
+    public JsonElement Weight { get; set; }
 }
 
 /// <summary>How a composite combines children.</summary>
@@ -254,9 +289,40 @@ public enum CombinerKind
     Formula = 2
 }
 
+/// <summary>One <c>Algo</c> or <c>score</c> call replaced with a typed placeholder before parse.</summary>
+internal readonly record struct AlgorithmCallSite(string Name, string Key, Type Type);
+
 /// <summary>Reads <c>Algo("key")</c> and <c>score("key")</c> names out of an expression.</summary>
 internal static class AlgorithmCalls
 {
+    /// <summary>Replaces <c>Algo("key")</c> and <c>score("key")</c> with identifiers whose types are <paramref name="callType" />.</summary>
+    public static string Placeholders(string source, Func<string, Type> callType, List<AlgorithmCallSite> sites)
+    {
+        var builder = new System.Text.StringBuilder(source.Length);
+        var index = 0;
+        while (index < source.Length) {
+            var algo = source.IndexOf("Algo(\"", index, StringComparison.Ordinal);
+            var score = source.IndexOf("score(\"", index, StringComparison.Ordinal);
+            var start = Next(algo, score);
+            if (start < 0) {
+                builder.Append(source, index, source.Length - index);
+                break;
+            }
+
+            builder.Append(source, index, start - index);
+            var keyStart = source[start] == 'A' ? start + 6 : start + 7;
+            var keyEnd = source.IndexOf('"', keyStart);
+            AlgorithmHelpers.ThrowIf(keyEnd < 0 || keyEnd + 1 >= source.Length || source[keyEnd + 1] != ')', "Algo and score require a constant key.", "algorithm.expression.parse");
+            var key = source.Substring(keyStart, keyEnd - keyStart);
+            var name = "__lyo" + sites.Count.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            sites.Add(new(name, key, callType(key)));
+            builder.Append(name);
+            index = keyEnd + 2;
+        }
+
+        return builder.ToString();
+    }
+
     public static IEnumerable<string> Keys(string? source)
     {
         if (source is not { Length: > 0 })
@@ -290,16 +356,5 @@ internal static class AlgorithmCalls
             return algo;
 
         return Math.Min(algo, score);
-    }
-
-    public static double AsDouble<T>(T value)
-    {
-        if (value is double number)
-            return number;
-
-        if (value is null)
-            return 0;
-
-        return Convert.ToDouble(value, CultureInfo.InvariantCulture);
     }
 }

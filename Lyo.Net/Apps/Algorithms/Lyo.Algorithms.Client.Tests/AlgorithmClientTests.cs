@@ -43,6 +43,17 @@ public sealed class AlgorithmClientTests
     }
 
     [Fact]
+    public async Task PreviewAsync_PostsPreviewRoute()
+    {
+        var api = new RecordingApiClient();
+        var client = new AlgorithmClient(api);
+        var req = new AlgorithmPreviewReq { Kind = AlgorithmKind.Expression, Source = "Atk * 2", Key = "attack.physical" };
+        await client.PreviewAsync(req, TestCt);
+        Assert.Equal("Algorithms/preview", api.LastUri);
+        Assert.Same(req, api.LastBody);
+    }
+
+    [Fact]
     public async Task RevertAsync_PostsRevertRoute()
     {
         var api = new RecordingApiClient();
@@ -51,6 +62,15 @@ public sealed class AlgorithmClientTests
         await client.RevertAsync("attack.physical", req, TestCt);
         Assert.Equal("Algorithms/attack.physical/revert", api.LastUri);
         Assert.Same(req, api.LastBody);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_DeletesRoute()
+    {
+        var api = new RecordingApiClient();
+        var client = new AlgorithmClient(api);
+        await client.DeleteAsync("attack.physical", TestCt);
+        Assert.Equal("Algorithms/attack.physical", api.LastUri);
     }
 }
 
@@ -165,7 +185,11 @@ internal sealed class RecordingApiClient : IApiClient
     public Task<TResult> DeleteAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException(uri);
 
-    public Task<TResult> DeleteAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default) => throw new NotImplementedException(uri);
+    public Task<TResult> DeleteAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+    {
+        LastUri = uri;
+        return Task.FromResult(default(TResult)!);
+    }
 
     public string ToQueryString<T>(T obj, string? enumerableDelimiter = null) => throw new NotImplementedException();
 

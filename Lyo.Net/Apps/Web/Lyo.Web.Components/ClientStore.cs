@@ -13,6 +13,7 @@ public class ClientStore(ILocalStorageService sessionStorage) : ILyoLayoutPrefer
     private const string QueryWorkbenchStateKey = "query_workbench_state_v1";
     private const string WorkflowWorkbenchStateKey = "workflow_workbench_state_v1";
     private const string StoryBuilderStateKey = "story_builder_state_v1";
+    private const string AlgorithmWorkbenchStateKey = "algorithm_workbench_state_v1";
     private const string ParameterLayoutKey = "pref_param_layout";
     private const string DataGridLayoutKey = "pref_grid_layout";
 
@@ -76,6 +77,15 @@ public class ClientStore(ILocalStorageService sessionStorage) : ILyoLayoutPrefer
 
     /// <summary>Clears the persisted story graph.</summary>
     public async Task RemoveStoryBuilderStateAsync() => await sessionStorage.RemoveItemAsync(StoryBuilderStateKey);
+
+    /// <summary>Persists the in-progress algorithm draft and context bag.</summary>
+    public async Task SetAlgorithmWorkbenchStateAsync(string json) => await sessionStorage.SetItemAsync(AlgorithmWorkbenchStateKey, json);
+
+    /// <summary>The algorithm workbench JSON last written by <see cref="SetAlgorithmWorkbenchStateAsync" />, or null.</summary>
+    public async Task<string?> GetAlgorithmWorkbenchStateAsync() => await sessionStorage.GetItemAsync<string?>(AlgorithmWorkbenchStateKey);
+
+    /// <summary>Clears the persisted algorithm workbench.</summary>
+    public async Task RemoveAlgorithmWorkbenchStateAsync() => await sessionStorage.RemoveItemAsync(AlgorithmWorkbenchStateKey);
 
     public async Task SetParameterLayoutAsync(LyoParameterLayout layout) => await sessionStorage.SetItemAsync(ParameterLayoutKey, layout);
 

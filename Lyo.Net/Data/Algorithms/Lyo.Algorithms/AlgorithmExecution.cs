@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Lyo.Algorithms;
 
 /// <summary>One scored step. Children are nested <c>Algo</c> / <c>score</c> calls or composite parts.</summary>
@@ -12,8 +14,12 @@ public sealed class AlgorithmStep
     /// <summary>Input value that selected the points, when the scorer read one.</summary>
     public string? Input { get; init; }
 
-    /// <summary>Points contributed by this step.</summary>
+    /// <summary>Numeric value contributed by this step. Zero when <see cref="Value" /> is not a number.</summary>
     public double Points { get; init; }
+
+    /// <summary>Step value when it is not a number. Omitted from JSON when null so numeric breakdowns stay a points list.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public object? Value { get; init; }
 
     /// <summary>Steps recorded while this step ran.</summary>
     public IReadOnlyList<AlgorithmStep> Children { get; init; } = [];

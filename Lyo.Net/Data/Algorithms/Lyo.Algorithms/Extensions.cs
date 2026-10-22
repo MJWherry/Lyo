@@ -1,3 +1,4 @@
+using System.Reflection;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -46,14 +47,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(options);
             options.Validate();
             var compiler = new ExpressionCompiler();
-            foreach (var expression in options.Expressions) {
-                var compiled = compiler.Compile<AlgorithmContextBag, object>(expression.Expression);
-                if (!compiled.IsSuccess || compiled.Data is null)
-                    AlgorithmHelpers.Throw(compiled.Errors?[0].Message ?? $"Expression '{expression.Key}' failed to compile.");
-
-                services.AddSingleton<IAlgorithmRegistration>(
-                    new AlgorithmRegistration<AlgorithmContextBag, object>(expression.Key, new KeyedAlgorithm<AlgorithmContextBag, object>(expression.Key, compiled.Data)));
-            }
+            foreach (var expression in options.Expressions)
+                RegisterStartupExpression(services, compiler, expression);
 
             services.AddSingleton(Options.Create(options));
             services.TryAddSingleton(options);
@@ -65,6 +60,7 @@ public static class Extensions
                 sp.GetService<IAlgorithmDefinitionStore>()));
 
             services.TryAddSingleton<IAlgorithmRuntimeStore>(sp => sp.GetRequiredService<RuntimeAlgorithmStore>());
+            services.TryAddSingleton<IAlgorithmPreview>(sp => new AlgorithmPreview(sp.GetRequiredService<RuntimeAlgorithmStore>()));
             services.TryAddSingleton<IAlgorithmRegistry, AlgorithmRegistry>();
             services.TryAddSingleton<IAlgorithmCatalog>(sp => {
                 var store = sp.GetService<IAlgorithmDefinitionStore>();
@@ -100,17 +96,43 @@ public static class Extensions
         }
 
         /// <summary>Compiles <paramref name="expression" /> now and freezes it into the startup store.</summary>
-        public IServiceCollection AddExpressionAlgorithm<TContext, TResult>(string key, string expression)
+        public IServiceCollection AddExpressionAlgorithm<TContext, TResult>(string key, string expression) => services.AddExpressionAlgorithm<TContext, TResult>(key, expression, AlgorithmTypeBinding.Untyped);
+
+        /// <summary>Compiles <paramref name="expression" /> with <paramref name="binding" /> and freezes it into the startup store.</summary>
+        public IServiceCollection AddExpressionAlgorithm<TContext, TResult>(string key, string expression, AlgorithmTypeBinding binding)
         {
             ArgumentHelpers.ThrowIfNull(services);
+            ArgumentHelpers.ThrowIfNull(binding);
             AlgorithmKeys.ThrowIfInvalidKey(key);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(expression);
-            var compiled = new ExpressionCompiler().Compile<TContext, TResult>(expression);
+            var compiled = new ExpressionCompiler().Compile<TContext, TResult>(expression, binding);
             if (!compiled.IsSuccess || compiled.Data is null)
                 AlgorithmHelpers.Throw(compiled.Errors?[0].Message ?? $"Expression '{key}' failed to compile.");
 
             services.AddSingleton<IAlgorithmRegistration>(new AlgorithmRegistration<TContext, TResult>(key, new KeyedAlgorithm<TContext, TResult>(key, compiled.Data)));
             return services;
         }
+    }
+
+    private static void RegisterStartupExpression(IServiceCollection services, ExpressionCompiler compiler, AlgorithmExpressionOption expression)
+    {
+        var binding = AlgorithmTypeBinding.Create(expression.Result, expression.Parameters, expression.Calls);
+        if (!binding.ResultSpecified) {
+            RegisterStartup<Object>(services, compiler, expression, binding);
+            return;
+        }
+
+        var method = typeof(Extensions).GetMethods(BindingFlags.NonPublic | BindingFlags.Static).Single(candidate => candidate.Name == nameof(RegisterStartup) && candidate.IsGenericMethodDefinition);
+        method.MakeGenericMethod(binding.Result).Invoke(null, [services, compiler, expression, binding]);
+    }
+
+    private static void RegisterStartup<TResult>(IServiceCollection services, ExpressionCompiler compiler, AlgorithmExpressionOption expression, AlgorithmTypeBinding binding)
+    {
+        var compiled = compiler.Compile<AlgorithmContextBag, TResult>(expression.Expression, binding);
+        if (!compiled.IsSuccess || compiled.Data is null)
+            AlgorithmHelpers.Throw(compiled.Errors?[0].Message ?? $"Expression '{expression.Key}' failed to compile.");
+
+        services.AddSingleton<IAlgorithmRegistration>(
+            new AlgorithmRegistration<AlgorithmContextBag, TResult>(expression.Key, new KeyedAlgorithm<AlgorithmContextBag, TResult>(expression.Key, compiled.Data)));
     }
 }

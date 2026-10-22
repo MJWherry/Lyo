@@ -3,14 +3,16 @@
   "name": "Lyo.Algorithms",
   "area": "Data",
   "tagline": "Keyed algorithm registry: frozen startup C# plus a versioned expression and scorer catalog.",
-  "description": "Compiles named C# algorithms and DynamicExpresso expressions once, then runs them through IAlgorithmRegistry. After the first compile, Execute is a delegate call with no database and no Task. AddMemoryAlgorithmStore keeps the catalog in process. Postgres and SQLite are optional packages that implement the same store. Catalog rows are the Req and Res types in Lyo.Algorithms.Models. Runtime rows do not replace a startup key unless AllowRuntimeOverride is set.",
+  "description": "Compiles named C# algorithms and DynamicExpresso expressions once, then runs them through IAlgorithmRegistry. After the first compile, Execute is a delegate call with no database, no Task, no JSON, and no conversion. AddMemoryAlgorithmStore keeps the catalog in process. Postgres and SQLite are optional packages that implement the same store. Catalog rows are the Req and Res types in Lyo.Algorithms.Models. Runtime rows do not replace a startup key unless AllowRuntimeOverride is set.",
   "features": [
     "**Startup store.** Named C# via AddNamedAlgorithm and bag expressions via AlgorithmOptions.Expressions or AddExpressionAlgorithm. Compiled at registration, then frozen.",
     "**Runtime catalog.** IAlgorithmDefinitionStore takes Req and returns Res. It appends revisions, copies a snapshot on revert, and retargets mutable labels. Immutable labels stay put. Structured kinds store a JSON payload.",
     "**AlgorithmRef.** Latest, Revision, or Label. Latest and mutable labels follow new revisions. Pins and immutable labels do not.",
-    "**Math expressions.** Math and Convert only (Abs, Min, Max, Round, Floor, Ceiling, Pow, Sqrt, Sign, and a few Convert.To* methods). Algo(\"key\") and score(\"key\") call another catalog algorithm. Other methods, member access, and new of non-primitive types are denied.",
-    "**Context bag.** `AlgorithmContextBag` stores identifiers on a case-insensitive `ContextBag`. `Set` rejects dotted names. A factory runs once when `ReadDouble` or `TryGetAs<T>` reads the key. A factory that receives the bag can read sibling identifiers.",
-    "**Scorers.** DiscreteMap, RangeBand, Linear, and Composite (Sum, WeightedSum, or Formula). ExecuteWithBreakdownAsync returns the value plus nested steps. Execute does not."
+    "**Types.** A revision payload declares `result`, and optionally `inputType`, `parameters`, and `calls`. A missing payload, or a missing field, means double. `*_key` identifiers stay string. A declared call type must equal that child revision's result. Legal aliases are bool, byte, sbyte, short, ushort, int, uint, long, ulong, float, double, decimal, string, datetime, datetimeoffset, timespan, and one-level arrays of those. A host registers an enum before a revision may name it.",
+    "**Expressions.** Math and Convert stay available. DateTime and DateTimeOffset allow Year, Month, Day, Hour, Minute, Second, Date, AddDays, AddMonths, AddYears, and AddHours. UtcDateTime is DateTimeOffset only. TimeSpan allows TotalDays, TotalHours, and Days. Length and Count are allowed on arrays and non-string collections. string members, LINQ, and loops are denied. Algo(\"key\") and score(\"key\") invoke the child as its result type.",
+    "**Execute.** The first call compiles a delegate. Later calls run that delegate. Bag values must already be the declared type. JSON numbers, band edges, and weights are converted while compiling.",
+    "**Context bag.** `AlgorithmContextBag` stores identifiers on a case-insensitive `ContextBag`. `Set` rejects dotted names. Compiled formulas read with `Read<T>`, which succeeds only when the stored value is already `T`. A factory runs once when `ReadDouble` or `TryGetAs<T>` reads the key. A factory that receives the bag can read sibling identifiers.",
+    "**Scorers.** DiscreteMap, RangeBand, Linear, and Composite (Sum, WeightedSum, or Formula) compile to the revision result. A map can return a date, a band can select a string, and a line or weighted sum can run in decimal. Sum and WeightedSum stay numeric. Weights stay decimal or double coefficients. ExecuteWithBreakdownAsync returns the value plus nested steps. A numeric step keeps Points. Any other step leaves Points at 0 and sets Value. Execute does not allocate a step."
   ],
   "examples": [
     {
@@ -38,7 +40,7 @@
     {
       "type": "paragraph",
       "title": "Stores",
-      "text": "AddMemoryAlgorithmStore is in this package and needs no database. Postgres and SQLite are Lyo.Algorithms.Postgres and Lyo.Algorithms.Sqlite. Call one store after AddAlgorithms. Hosts that only need startup C# can skip a store; resolving IAlgorithmCatalog without a store throws. HTTP catalog routes live in Lyo.Algorithms.Api and Lyo.Algorithms.Client and return the same Res types. Execute stays in-process."
+      "text": "AddMemoryAlgorithmStore is in this package and needs no database. Postgres and SQLite are Lyo.Algorithms.Postgres and Lyo.Algorithms.Sqlite. Call one store after AddAlgorithms. Hosts that only need startup C# can skip a store; resolving IAlgorithmCatalog without a store throws. HTTP catalog routes live in Lyo.Algorithms.Api and Lyo.Algorithms.Client and return the same Res types. IAlgorithmCatalog.DeleteAsync removes the definition, its revisions, and its labels. A missing key is a failed result. IAlgorithmPreview compiles an unsaved draft, converts context JSON through the revision type binding, and does not write the store. Catalog execute stays in-process. POST Algorithms/preview is the one remote run."
     }
   ],
   "links": [],

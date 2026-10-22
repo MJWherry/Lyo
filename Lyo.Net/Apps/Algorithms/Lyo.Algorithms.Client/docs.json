@@ -4,9 +4,9 @@
   "name": "Lyo.Algorithms.Client",
   "area": "Apps",
   "tagline": "Typed HTTP client for the Lyo algorithm catalog API.",
-  "description": "Calls list, get, revision append, revert, and label routes on `Lyo.Algorithms.Api`. Sit it on an `IApiClient`. Execute stays on `IAlgorithmRegistry` in the process that compiled the delegate.",
+  "description": "Calls list, get, revision append, revert, label, delete, and preview routes on `Lyo.Algorithms.Api`. Sit it on an `IApiClient`. `DeleteAsync` removes one key. `PreviewAsync` is the one remote run and does not persist. Saved keys still execute in-process on `IAlgorithmRegistry`.",
   "features": [
-    "`IAlgorithmClient` methods match `BuildAlgorithmsGroup` routes and return `*Res` types.",
+    "`IAlgorithmClient` methods match `BuildAlgorithmsGroup` routes and return `*Res` types. `PreviewAsync` posts `AlgorithmPreviewReq`.",
     "`AddAlgorithmClient`, the options instance, and `AddAlgorithmClientFromConfiguration` (section `AlgorithmClientOptions`)."
   ],
   "examples": [
@@ -87,6 +87,14 @@
       ]
     },
     {
+      "name": "Lyo.DataTable.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.DateAndTime",
       "kind": "lyo",
       "tags": [
@@ -159,6 +167,14 @@
       ]
     },
     {
+      "name": "Lyo.RateLimit",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
@@ -179,6 +195,16 @@
       "name": "Microsoft.Bcl.AsyncInterfaces",
       "kind": "package",
       "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.TimeProvider",
+      "kind": "package",
+      "version": "8.0.1",
       "tags": [
         "transitive",
         "microsoft",

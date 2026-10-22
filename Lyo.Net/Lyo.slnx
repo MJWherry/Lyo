@@ -683,6 +683,8 @@
         <Project Path="Data/Algorithms/Lyo.Algorithms.Sqlite.Tests/Lyo.Algorithms.Sqlite.Tests.csproj"/>
         <Project Path="Data/Algorithms/Lyo.Algorithms.Seed/Lyo.Algorithms.Seed.csproj"/>
         <Project Path="Data/Algorithms/Lyo.Algorithms.Seed.Tests/Lyo.Algorithms.Seed.Tests.csproj"/>
+        <Project Path="Data/Algorithms/Lyo.Algorithms.Web.Components/Lyo.Algorithms.Web.Components.csproj"/>
+        <Project Path="Data/Algorithms/Lyo.Algorithms.Web.Components.Tests/Lyo.Algorithms.Web.Components.Tests.csproj"/>
     </Folder>
     <Folder Name="/Data/Formatter/">
         <Project Path="Data/Formatter/Lyo.Formatter.Algorithms.Tests/Lyo.Formatter.Algorithms.Tests.csproj"/>

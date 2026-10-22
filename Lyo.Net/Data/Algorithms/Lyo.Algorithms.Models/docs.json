@@ -10,7 +10,8 @@
     "`AlgorithmDefinitionReq` / `AlgorithmDefinitionRes` for definition metadata and the current revision.",
     "`AlgorithmRevisionReq` / `AlgorithmRevisionRes` for append. `AlgorithmRevertReq` copies an existing snapshot.",
     "`AlgorithmLabelReq` / `AlgorithmLabelRes` for mutable and immutable labels.",
-    "`Constants.Rest.Algorithms` route prefixes shared by the API and the client."
+    "`Constants.Rest.Algorithms` route prefixes shared by the API and the client, including `Algorithms/preview`.",
+    "`AlgorithmPreviewReq` / `AlgorithmPreviewRes` and `AlgorithmStepRes` for an unsaved run. Context and step values stay JSON."
   ],
   "examples": [
     {
@@ -22,7 +23,18 @@
   "sections": [],
   "links": [],
   "readmePath": "Lyo.Net/Data/Algorithms/Lyo.Algorithms.Models/README.md",
-  "dependencies": [],
+  "dependencies": [
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
   "targetFrameworks": [
     "netstandard2.0",
     "net10.0"

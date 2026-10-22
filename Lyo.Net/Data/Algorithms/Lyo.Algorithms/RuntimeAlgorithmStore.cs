@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Reflection;
 
 namespace Lyo.Algorithms;
 
@@ -90,8 +91,22 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
 
     private async Task WarmAsync<TContext>(AlgorithmRevisionRes revision, CancellationToken ct)
     {
+        var binding = AlgorithmTypeBinding.ParsePayload(revision.Payload);
+        var asParentResult = false;
+        if (revision.Kind == AlgorithmKind.Composite && !string.IsNullOrWhiteSpace(revision.Payload)) {
+            var composite = AlgorithmPayload.ParseComposite(revision.Payload!);
+            asParentResult = composite.Combiner is CombinerKind.Sum or CombinerKind.WeightedSum;
+        }
+
         foreach (var child in ChildKeys(revision))
-            await ResolveAsync<TContext, double>(AlgorithmRef.Latest(child), ct).ConfigureAwait(false);
+            await ResolveAs(typeof(TContext), asParentResult ? binding.Result : binding.CallType(child), child, ct).ConfigureAwait(false);
+    }
+
+    private async Task ResolveAs(Type context, Type result, string key, CancellationToken ct)
+    {
+        var method = ResolveOpen.MakeGenericMethod(context, result);
+        var task = (Task)method.Invoke(this, [AlgorithmRef.Latest(key), ct])!;
+        await task.ConfigureAwait(false);
     }
 
     private static IEnumerable<string> ChildKeys(AlgorithmRevisionRes revision)
@@ -115,9 +130,9 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
         return keys;
     }
 
-    private double InvokeChild<TContext>(TContext context, string childKey)
+    private TResult InvokeChild<TContext, TResult>(TContext context, string childKey)
     {
-        AlgorithmHelpers.ThrowIf(!TryExecute<TContext, double>(AlgorithmRef.Latest(childKey), context, out var value), $"Algorithm '{childKey}' is not compiled.");
+        AlgorithmHelpers.ThrowIf(!TryExecute<TContext, TResult>(AlgorithmRef.Latest(childKey), context, out var value), $"Algorithm '{childKey}' is not compiled.");
         return value;
     }
 
@@ -129,11 +144,43 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
 
     private static void LeaveWarm(string key) => _warming?.Remove(key);
 
+    /// <summary>Compiles <paramref name="draft" /> without publishing it. Child catalog refs are warmed on the live store.</summary>
+    internal async Task<AlgorithmExecution<TResult>> ExecutePreviewAsync<TContext, TResult>(string key, AlgorithmRevisionReq draft, TContext context, CancellationToken ct)
+    {
+        var revision = new AlgorithmRevisionRes { Kind = draft.Kind, Source = draft.Source ?? string.Empty, Payload = draft.Payload, CreatedTimestamp = DateTime.UtcNow };
+        var body = new Body(Guid.Empty, key, revision, false, null);
+        AlgorithmHelpers.ThrowIf(!EnterWarm(key), $"Algorithm '{key}' calls itself.");
+        try {
+            await WarmAsync<TContext>(revision, ct).ConfigureAwait(false);
+            var algorithm = CompileInto<TContext, TResult>(body, AlgorithmRef.Latest(key));
+            var steps = AlgorithmTrace.Begin();
+            try {
+                return new() { Value = algorithm.Execute(context), Steps = steps };
+            }
+            finally {
+                AlgorithmTrace.End();
+            }
+        }
+        finally {
+            LeaveWarm(key);
+        }
+    }
+
     /// <summary>Publishes the latest slot for a revision saved in this process. The next execute compiles from this body.</summary>
     internal void NoteLatest(AlgorithmDefinitionRes definition, AlgorithmRevisionRes revision)
     {
         var holder = _latest.GetOrAdd(definition.Key, static _ => new());
         holder.Publish(new(definition.Id, definition.Key, revision, true, LastGoodOf(holder.Read())));
+    }
+
+    /// <summary>Drops the latest slot and every label slot for <paramref name="key" /> after a catalog delete.</summary>
+    internal void Forget(string key)
+    {
+        _latest.TryRemove(key, out _);
+        var prefix = key + "\n";
+        foreach (var labelKey in _labels.Keys)
+            if (labelKey.StartsWith(prefix, StringComparison.Ordinal))
+                _labels.TryRemove(labelKey, out _);
     }
 
     /// <summary>Publishes a label slot. Mutable labels keep the previous delegate when the new body fails to compile.</summary>
@@ -173,6 +220,11 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
             return ready;
 
         var pair = new TypePair(typeof(TContext), typeof(TResult));
+        var binding = AlgorithmTypeBinding.ParsePayload(body.Revision.Payload);
+        if (body.Revision.Kind != AlgorithmKind.Named || binding.ResultSpecified)
+            AlgorithmHelpers.ThrowIf(
+                binding.Result != typeof(TResult), $"Algorithm '{body.Key}' returns {binding.Result.Name}, not {typeof(TResult).Name}.", "algorithm.result.mismatch");
+
         if (body.Failed.ContainsKey(pair))
             return LastGoodOrThrow<TContext, TResult>(body, pair);
 
@@ -183,7 +235,7 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
                 body.Key, AlgorithmHelpers.ThrowIfNull(named, $"Catalog algorithm names startup key '{body.Revision.Source}', which is not registered."));
         }
         else if (body.Revision.Kind == AlgorithmKind.Expression) {
-            var result = _compiler.Compile<TContext, TResult>(body.Revision.Source);
+            var result = _compiler.Compile<TContext, TResult>(body.Revision.Source, binding);
             if (!result.IsSuccess || result.Data is null) {
                 body.Failed.TryAdd(pair, 0);
                 return LastGoodOrThrow<TContext, TResult>(body, pair, result.Errors?[0].Message);
@@ -193,7 +245,8 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
         }
         else {
             try {
-                compiled = AlgorithmScorer.Compile<TContext, TResult>(body.Key, body.Revision.Kind, body.Revision.Payload ?? string.Empty, _compiler, InvokeChild);
+                compiled = AlgorithmScorer.Compile<TContext, TResult>(
+                    body.Key, body.Revision.Kind, body.Revision.Payload ?? string.Empty, _compiler, InvokeChild<TContext, TResult>);
             }
             catch (AlgorithmException ex) {
                 body.Failed.TryAdd(pair, 0);
@@ -261,6 +314,9 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
             var _ => "latest"
         };
 
+    private static readonly MethodInfo ResolveOpen = typeof(RuntimeAlgorithmStore).GetMethods(BindingFlags.Instance | BindingFlags.Public)
+        .Single(method => method.Name == nameof(ResolveAsync) && method.IsGenericMethodDefinition);
+
     private readonly record struct TypePair(Type Context, Type Result);
 
     private readonly record struct PinKey(string Key, int Revision, Type Context, Type Result);
@@ -279,12 +335,12 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
 
             var began = AlgorithmCallScope.Begin(maxDepth);
             if (began)
-                AlgorithmCallScope.SetInvoker(child => store.InvokeChild(context, child));
+                AlgorithmCallScope.SetInvoker(new StoreInvoker<TContext>(store, context));
 
             AlgorithmCallScope.Enter(Key);
             try {
                 if (kind is AlgorithmKind.Expression or AlgorithmKind.Named)
-                    return AlgorithmTrace.Run(Key, kind, null, () => inner.Execute(context), AlgorithmCalls.AsDouble);
+                    return AlgorithmTrace.Run(Key, kind, null, () => inner.Execute(context), AlgorithmValues.Points, AlgorithmValues.Box);
 
                 return inner.Execute(context);
             }
@@ -336,6 +392,15 @@ public sealed class RuntimeAlgorithmStore : IAlgorithmRuntimeStore
                 return (IAlgorithm<TContext, TResult>)found;
 
             return null;
+        }
+    }
+
+    private sealed class StoreInvoker<TContext>(RuntimeAlgorithmStore store, TContext context) : IAlgorithmInvoker
+    {
+        public T Invoke<T>(string key)
+        {
+            AlgorithmHelpers.ThrowIf(!store.TryExecute<TContext, T>(AlgorithmRef.Latest(key), context, out var value), $"Algorithm '{key}' is not compiled.");
+            return value;
         }
     }
 }

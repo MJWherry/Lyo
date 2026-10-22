@@ -59,4 +59,28 @@ public abstract class AlgorithmCatalogContractTests
         bag.Set("FishType", "bass");
         Assert.Equal(10d, await registry.ExecuteAsync<AlgorithmContextBag, double>(key, bag, ct));
     }
+
+    [Fact]
+    public async Task DeleteAsync_RemovesDefinitionRevisionsAndLabels()
+    {
+        var catalog = Services.GetRequiredService<IAlgorithmCatalog>();
+        var store = Services.GetRequiredService<IAlgorithmDefinitionStore>();
+        var key = "attack." + LyoGuid.CreateV7().ToString("N");
+        var ct = TestCt;
+        Assert.True((await catalog.SaveRevisionAsync(key, new() { Kind = AlgorithmKind.Expression, Source = "1" }, ct)).IsSuccess);
+        Assert.True((await catalog.SetLabelAsync(key, "live", new() { Revision = 1, IsMutable = true }, ct)).IsSuccess);
+        Assert.True((await catalog.DeleteAsync(key, ct)).IsSuccess);
+        Assert.DoesNotContain(await store.ListAsync(ct), row => row.Key == key);
+        Assert.Null(await catalog.GetByKeyAsync(key, ct));
+        Assert.Empty(await catalog.GetRevisionsAsync(key, ct));
+        Assert.Null(await store.GetLabelAsync(key, "live", ct));
+    }
+
+    [Fact]
+    public async Task DeleteAsync_UnknownKey_Fails()
+    {
+        var catalog = Services.GetRequiredService<IAlgorithmCatalog>();
+        var result = await catalog.DeleteAsync("missing." + LyoGuid.CreateV7().ToString("N"), TestCt);
+        Assert.False(result.IsSuccess);
+    }
 }

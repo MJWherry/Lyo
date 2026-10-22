@@ -94,6 +94,19 @@ public sealed class AlgorithmCatalog : IAlgorithmCatalog
         }
     }
 
+    /// <inheritdoc />
+    public async Task<Result<Unit>> DeleteAsync(string key, CancellationToken ct = default)
+    {
+        if (!AlgorithmKeys.IsKey(key))
+            return ResultVoid.Failure($"Algorithm key '{key}' must match {AlgorithmKeys.KeyPattern}.", "algorithm.key.invalid");
+
+        if (!await _store.DeleteAsync(key, ct).ConfigureAwait(false))
+            return ResultVoid.Failure($"Algorithm '{key}' was not found.", "algorithm.definition.missing");
+
+        _runtime.Forget(key);
+        return ResultVoid.Success();
+    }
+
     private Result<AlgorithmDefinitionRes>? Deny(string key, AlgorithmRevisionReq request)
     {
         if (!AlgorithmKeys.IsKey(key))
@@ -106,8 +119,16 @@ public sealed class AlgorithmCatalog : IAlgorithmCatalog
             if (string.IsNullOrWhiteSpace(request.Source))
                 return Result<AlgorithmDefinitionRes>.Failure("Algorithm source is required.", "algorithm.expression.parse");
 
+            AlgorithmTypeBinding binding;
+            try {
+                binding = AlgorithmTypeBinding.ParsePayload(request.Payload);
+            }
+            catch (AlgorithmException ex) {
+                return Result<AlgorithmDefinitionRes>.Failure(ex.Message, ex.Code ?? "algorithm.payload.invalid");
+            }
+
             if (request.Kind == AlgorithmKind.Expression) {
-                var validated = _compiler.Validate(request.Source);
+                var validated = _compiler.Validate(request.Source, binding);
                 if (!validated.IsSuccess)
                     return Result<AlgorithmDefinitionRes>.Failure(validated.Errors![0].Message, validated.Errors[0].Code);
             }

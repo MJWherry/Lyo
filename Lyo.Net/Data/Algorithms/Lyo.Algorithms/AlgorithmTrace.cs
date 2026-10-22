@@ -18,7 +18,7 @@ internal static class AlgorithmTrace
 
     public static void End() => _stack = null;
 
-    public static T Run<T>(string key, AlgorithmKind kind, string? input, Func<T> execute, Func<T, double> points)
+    public static T Run<T>(string key, AlgorithmKind kind, string? input, Func<T> execute, Func<T, double> points, Func<T, object?>? valueOf = null)
     {
         if (_stack is null)
             return execute();
@@ -36,11 +36,7 @@ internal static class AlgorithmTrace
         _stack.Peek()
         .Add(
             new() {
-                Key = key,
-                Kind = kind,
-                Input = input,
-                Points = points(value),
-                Children = children
+                Key = key, Kind = kind, Input = input, Points = points(value), Value = valueOf?.Invoke(value), Children = children
             });
 
         return value;

@@ -11,7 +11,7 @@
 
     <MudGrid Spacing="2">
         @foreach (var entry in Entries) {
-            <MudItem xs="12" md="@(LyoTypeUi.IsWideEditor(entry.Definition.Type) ? 12 : 6)">
+            <MudItem xs="12" md="@(LyoTypeUi.IsWideEditor(entry.Definition.Type) ? 12 : 6)" Style="@HighlightStyle(entry)">
                 <LyoParameterValueField TypeName="@entry.Definition.Type"
                                         Json="@entry.Value"
                                         JsonChanged="@(v => SetValueAsync(entry, v))"

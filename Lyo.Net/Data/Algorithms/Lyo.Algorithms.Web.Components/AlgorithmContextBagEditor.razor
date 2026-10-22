@@ -1,0 +1,87 @@
+<MudStack Spacing="2">
+    <MudStack Row="true" Spacing="1">
+        <MudButton Variant="Variant.Outlined" OnClick="@(() => Apply(AlgorithmPresets.FishingContext()))">Fishing derby</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="@(() => Apply(AlgorithmPresets.AttackContext()))">Attack</MudButton>
+        <MudButton Variant="Variant.Outlined" OnClick="@(() => Apply(AlgorithmPresets.ScheduleContext()))">Schedule</MudButton>
+    </MudStack>
+    @foreach (var row in Rows) {
+        <MudPaper Outlined="true" Class="@(row.Name == Focused ? "pa-2 mud-border-primary" : "pa-2")">
+            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                <MudTextField @bind-Value="row.Name" @bind-Value:after="Notify" Label="Identifier" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                <MudSelect T="string" Label="Alias" Value="@row.Alias" ValueChanged="@(value => SetAlias(row, value))" AnchorOrigin="Origin.BottomCenter">
+                    @foreach (var alias in AlgorithmDraftRules.Aliases) {
+                        <MudSelectItem T="string" Value="@alias">@alias</MudSelectItem>
+                    }
+                </MudSelect>
+                @if (AlgorithmDraftRules.EditorKind(row.Alias) == AlgorithmValueKind.Switch) {
+                    <MudSwitch T="bool" Value="@IsTrue(row)" ValueChanged="@(value => SetText(row, value ? "true" : "false"))" Label="Value"/>
+                }
+                else {
+                    <MudTextField @bind-Value="row.Text" @bind-Value:after="Notify" Label="@Label(row.Alias)" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true" Lines="@(AlgorithmDraftRules.EditorKind(row.Alias) == AlgorithmValueKind.List ? 2 : 1)"/>
+                }
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" aria-label="Remove context row" OnClick="@(() => Remove(row))"/>
+            </MudStack>
+        </MudPaper>
+    }
+    <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" OnClick="Add">Add value</MudButton>
+</MudStack>
+
+@code {
+    [Parameter]
+    public List<AlgorithmContextRow> Rows { get; set; } = [];
+
+    [Parameter]
+    public EventCallback<List<AlgorithmContextRow>> RowsChanged { get; set; }
+
+    [Parameter]
+    public string? Focused { get; set; }
+
+    [Parameter]
+    public EventCallback Changed { get; set; }
+
+    private Task Notify() => Changed.InvokeAsync();
+
+    private async Task Apply(List<AlgorithmContextRow> rows)
+    {
+        Rows = rows;
+        await RowsChanged.InvokeAsync(rows);
+        await Changed.InvokeAsync();
+    }
+
+    private async Task SetAlias(AlgorithmContextRow row, string alias)
+    {
+        row.Alias = alias;
+        await Changed.InvokeAsync();
+    }
+
+    private async Task SetText(AlgorithmContextRow row, string text)
+    {
+        row.Text = text;
+        await Changed.InvokeAsync();
+    }
+
+    private async Task Add()
+    {
+        Rows.Add(new() { Alias = "double" });
+        await RowsChanged.InvokeAsync(Rows);
+        await Changed.InvokeAsync();
+    }
+
+    private async Task Remove(AlgorithmContextRow row)
+    {
+        Rows.Remove(row);
+        await RowsChanged.InvokeAsync(Rows);
+        await Changed.InvokeAsync();
+    }
+
+    private static bool IsTrue(AlgorithmContextRow row) => bool.TryParse(row.Text, out var value) && value;
+
+    private static string Label(string alias)
+        => AlgorithmDraftRules.EditorKind(alias) switch {
+            AlgorithmValueKind.Date => "ISO-8601",
+            AlgorithmValueKind.Duration => "Duration",
+            AlgorithmValueKind.List => "JSON array",
+            AlgorithmValueKind.Number => "Number",
+            _ => "Value"
+        };
+}

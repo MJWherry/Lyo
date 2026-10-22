@@ -6,4 +6,8 @@
         <PackageTags>algorithm catalog api models</PackageTags>
     </PropertyGroup>
 
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+        <PackageReference Include="System.Text.Json"/>
+    </ItemGroup>
+
 </Project>

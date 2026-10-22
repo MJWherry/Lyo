@@ -1,6 +1,6 @@
 {
   "generatedAt": "2026-10-07T00:31:52.491800+00:00",
-  "packageCount": 414,
+  "packageCount": 415,
   "packages": [
     {
       "id": "Lyo.Email",
@@ -4318,6 +4318,16 @@
       "topic": "Lyo.FantasyFootball",
       "name": "Lyo.FantasyFootball.Api",
       "tagline": "HTTP API that syncs fantasy football chats and trades.",
+      "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Algorithms.Web.Components",
+      "area": "Data",
+      "topic": "Lyo.Algorithms",
+      "name": "Lyo.Algorithms.Web.Components",
+      "tagline": "Blazor workbench for algorithm revisions, typed context bags, and live breakdown previews.",
       "targetFrameworks": [
         "net10.0"
       ]

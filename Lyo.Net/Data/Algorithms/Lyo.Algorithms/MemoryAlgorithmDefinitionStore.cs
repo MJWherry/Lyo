@@ -69,7 +69,9 @@ public sealed class MemoryAlgorithmDefinitionStore : IAlgorithmDefinitionStore
     {
         lock (_gate) {
             ReadCount++;
-            var definition = Require(key);
+            if (!_definitions.TryGetValue(key, out var definition))
+                return Task.FromResult<IReadOnlyList<AlgorithmRevisionRes>>([]);
+
             var rows = _revisions[definition.Id].OrderByDescending(r => r.Revision).Select(Copy).ToArray();
             return Task.FromResult<IReadOnlyList<AlgorithmRevisionRes>>(rows);
         }
@@ -146,6 +148,22 @@ public sealed class MemoryAlgorithmDefinitionStore : IAlgorithmDefinitionStore
                 return Task.FromResult<AlgorithmLabelRes?>(null);
 
             return Task.FromResult(_labels.TryGetValue((definition.Id, label), out var row) ? Copy(row) : null);
+        }
+    }
+
+    /// <inheritdoc />
+    public Task<bool> DeleteAsync(string key, CancellationToken ct = default)
+    {
+        lock (_gate) {
+            if (!_definitions.TryGetValue(key, out var definition))
+                return Task.FromResult(false);
+
+            _definitions.Remove(key);
+            _revisions.Remove(definition.Id);
+            foreach (var labelKey in _labels.Keys.Where(pair => pair.DefinitionId == definition.Id).ToArray())
+                _labels.Remove(labelKey);
+
+            return Task.FromResult(true);
         }
     }
 

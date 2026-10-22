@@ -1,0 +1,43 @@
+@if (Steps.Count == 0) {
+    <MudText Typo="Typo.body2" Color="Color.Secondary">Run a preview to see the breakdown.</MudText>
+}
+else {
+    <MudSimpleTable Dense="true" Hover="true">
+        <thead>
+        <tr>
+            <th>Step</th>
+            <th>Kind</th>
+            <th>Input</th>
+            <th>Points</th>
+            <th>Value</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var step in Flatten(Steps, 0)) {
+            <tr>
+                <td style="padding-left: @(step.Depth * 16)px">@step.Step.Key</td>
+                <td>@step.Step.Kind</td>
+                <td>@step.Step.Input</td>
+                <td>@step.Step.Points</td>
+                <td>@Format(step.Step.Value)</td>
+            </tr>
+        }
+        </tbody>
+    </MudSimpleTable>
+}
+
+@code {
+    [Parameter]
+    public IReadOnlyList<AlgorithmStepRes> Steps { get; set; } = [];
+
+    private static IEnumerable<(AlgorithmStepRes Step, int Depth)> Flatten(IEnumerable<AlgorithmStepRes> steps, int depth)
+    {
+        foreach (var step in steps) {
+            yield return (step, depth);
+            foreach (var child in Flatten(step.Children, depth + 1))
+                yield return child;
+        }
+    }
+
+    private static string Format(object? value) => value is null ? string.Empty : System.Text.Json.JsonSerializer.Serialize(value);
+}

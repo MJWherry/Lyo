@@ -3,7 +3,7 @@ using Lyo.Algorithms.Models.Response;
 
 namespace Lyo.Algorithms.Client;
 
-/// <summary>Typed HTTP client for the Lyo algorithm catalog. Execute stays in-process on <c>IAlgorithmRegistry</c>.</summary>
+/// <summary>Typed HTTP client for the Lyo algorithm catalog. Saved keys still execute in-process. <see cref="PreviewAsync" /> is the one remote run, and it does not persist.</summary>
 public interface IAlgorithmClient
 {
     /// <summary>Lists every catalog definition, ordered by key.</summary>
@@ -26,4 +26,10 @@ public interface IAlgorithmClient
 
     /// <summary>Creates or retargets a label. Immutable labels cannot move.</summary>
     Task<AlgorithmLabelRes> SetLabelAsync(string key, string label, AlgorithmLabelReq request, CancellationToken ct = default);
+
+    /// <summary>Compiles <paramref name="request" /> and runs it. The catalog is not changed.</summary>
+    Task<AlgorithmPreviewRes> PreviewAsync(AlgorithmPreviewReq request, CancellationToken ct = default);
+
+    /// <summary>Removes the definition, its revisions, and its labels. A missing key is a failed response from the server.</summary>
+    Task DeleteAsync(string key, CancellationToken ct = default);
 }

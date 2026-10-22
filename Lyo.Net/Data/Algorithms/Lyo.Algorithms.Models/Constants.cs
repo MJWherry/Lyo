@@ -21,6 +21,9 @@ public static class Constants
             /// <summary>Copy a snapshot onto a new current revision.</summary>
             public static string Revert(string key) => $"{Route}/{key}/revert";
 
+            /// <summary>Run an unsaved revision. Does not append a catalog row.</summary>
+            public const string Preview = Route + "/preview";
+
             /// <summary>One label on a definition.</summary>
             public static string Label(string key, string label) => $"{Route}/{key}/labels/{label}";
         }

@@ -38,6 +38,8 @@ public static class Constants
 
         public const string Formatter = "formatter";
 
+        public const string Algorithms = "algorithms";
+
         public const string Translation = "translation";
 
         public const string Profanity = "profanity";

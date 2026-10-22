@@ -1,0 +1,80 @@
+@if (Draft is not null) {
+    <MudStack Spacing="2">
+        <MudSelect T="CombinerKind" @bind-Value="Draft.Combiner" @bind-Value:after="Notify" Label="Combiner" AnchorOrigin="Origin.BottomCenter">
+            @foreach (var kind in Enum.GetValues<CombinerKind>()) {
+                <MudSelectItem Value="@kind">@kind</MudSelectItem>
+            }
+        </MudSelect>
+        @if (Draft.Combiner == CombinerKind.Formula) {
+            <MudTextField @bind-Value="Draft.Formula" @bind-Value:after="Notify" Label="Formula" Variant="Variant.Outlined" Lines="3" Immediate="true" HelperText="score(&quot;child&quot;) reads an inline child."/>
+        }
+        @foreach (var child in Draft.Children) {
+            <MudPaper Outlined="true" Class="pa-3">
+                <MudStack Spacing="1">
+                    <MudStack Row="true" Spacing="1">
+                        <MudTextField @bind-Value="child.Key" @bind-Value:after="Notify" Label="Key" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                        <MudTextField @bind-Value="child.Ref" @bind-Value:after="Notify" Label="Catalog ref" Variant="Variant.Outlined" Margin="Margin.Dense" HelperText="Leave empty for an inline scorer."/>
+                        @if (Draft.Combiner == CombinerKind.WeightedSum) {
+                            <MudTextField @bind-Value="child.Weight" @bind-Value:after="Notify" Label="Weight" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                        }
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" aria-label="Remove child" OnClick="@(() => Remove(child))"/>
+                    </MudStack>
+                    @if (string.IsNullOrWhiteSpace(child.Ref)) {
+                        <MudSelect T="AlgorithmKind?" Value="child.Kind" ValueChanged="@(kind => SetKind(child, kind))" Label="Inline kind" AnchorOrigin="Origin.BottomCenter" Clearable="true">
+                            <MudSelectItem T="AlgorithmKind?" Value="@((AlgorithmKind?)AlgorithmKind.DiscreteMap)">Discrete map</MudSelectItem>
+                            <MudSelectItem T="AlgorithmKind?" Value="@((AlgorithmKind?)AlgorithmKind.RangeBand)">Range band</MudSelectItem>
+                            <MudSelectItem T="AlgorithmKind?" Value="@((AlgorithmKind?)AlgorithmKind.Linear)">Linear</MudSelectItem>
+                        </MudSelect>
+                        @if (child.Inline is not null && child.Kind == AlgorithmKind.DiscreteMap) {
+                            <AlgorithmDiscreteMapEditor Draft="child.Inline" Changed="Changed"/>
+                        }
+                        else if (child.Inline is not null && child.Kind == AlgorithmKind.RangeBand) {
+                            <AlgorithmRangeBandEditor Draft="child.Inline" Changed="Changed"/>
+                        }
+                        else if (child.Inline is not null && child.Kind == AlgorithmKind.Linear) {
+                            <AlgorithmLinearEditor Draft="child.Inline" Changed="Changed"/>
+                        }
+                    }
+                </MudStack>
+            </MudPaper>
+        }
+        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" OnClick="AddRef">Add catalog ref</MudButton>
+        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" OnClick="AddInline">Add inline scorer</MudButton>
+    </MudStack>
+}
+
+@code {
+    [Parameter]
+    public AlgorithmDraft? Draft { get; set; }
+
+    [Parameter]
+    public EventCallback Changed { get; set; }
+
+    private Task Notify() => Changed.InvokeAsync();
+
+    private Task AddRef()
+    {
+        Draft?.Children.Add(new() { Ref = "child.key", Weight = "1" });
+        return Notify();
+    }
+
+    private Task AddInline()
+    {
+        Draft?.Children.Add(new() { Key = "child", Kind = AlgorithmKind.DiscreteMap, Inline = new() { Kind = AlgorithmKind.DiscreteMap }, Weight = "1" });
+        return Notify();
+    }
+
+    private Task Remove(AlgorithmChildDraft child)
+    {
+        Draft?.Children.Remove(child);
+        return Notify();
+    }
+
+    private Task SetKind(AlgorithmChildDraft child, AlgorithmKind? kind)
+    {
+        child.Kind = kind;
+        child.Ref = null;
+        child.Inline = kind is null ? null : new() { Kind = kind.Value };
+        return Notify();
+    }
+}

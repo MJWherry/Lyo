@@ -164,6 +164,17 @@ Stays under `Communication/Translation/`.
 | `Lyo.Query.Postgres` | E | Rewrite Fuzzy / NotFuzzy to `pg_trgm` `similarity()` |
 | `Lyo.Query.Sql` | E | Concrete, projection, and root requests printed as parameterized Postgres SQL |
 
+### Algorithms (E, Data)
+
+| Package | Archetype | Role |
+|---------|-----------|------|
+| `Lyo.Algorithms.Models` | E | Catalog DTOs, `AlgorithmKind`, and route constants |
+| `Lyo.Algorithms` | E | Compiler, type binding, in-memory store, and unsaved preview |
+| `Lyo.Algorithms.Postgres` | E | Postgres definition store |
+| `Lyo.Algorithms.Sqlite` | E | SQLite definition store |
+| `Lyo.Algorithms.Seed` | E | Fishing derby seed revision |
+| `Lyo.Algorithms.Web.Components` | E | Blazor workbench: kind editors, typed context bag, and live breakdown |
+
 ---
 
 ## Inventory: Integration (vendor / product)
@@ -219,8 +230,8 @@ Stays under `Communication/Translation/`.
 | `Lyo.Drift.Client` | E | `Apps/Drift/` | - | - | |
 | `Lyo.Drift.Agent` | E | `Apps/Drift/` | - | - | Collector process |
 | `Lyo.Comic.Api` | E | `Apps/Comic/` | - | - | HTTP over `Plugins/Comic` |
-| `Lyo.Algorithms.Api` | E | `Apps/Algorithms/` | - | - | Catalog HTTP (`BuildAlgorithmsGroup`). No remote Execute |
-| `Lyo.Algorithms.Client` | E | `Apps/Algorithms/` | - | - | Typed HTTP client over the catalog |
+| `Lyo.Algorithms.Api` | E | `Apps/Algorithms/` | - | - | Catalog HTTP (`BuildAlgorithmsGroup`). `POST Algorithms/preview` runs an unsaved draft, converts the context with the revision type binding, and returns `value` plus the breakdown. Catalog execute stays in-process |
+| `Lyo.Algorithms.Client` | E | `Apps/Algorithms/` | - | - | Typed HTTP client. `PreviewAsync` is the one remote run and does not persist |
 | `Lyo.Story.Api` | E | `Apps/Story/` | - | - | HTTP over `Plugins/Story`. Req/Res CRUD plus graph and play |
 | `Lyo.Story.Client` | E | `Apps/Story/` | - | - | Typed HTTP client for graph and play. Query stays on `IApiClient` |
 | `Lyo.FantasyFootball.Api` | E | `Apps/FantasyFootball/` | - | - | HTTP over `Plugins/FantasyFootball`. Syncs chats and trades through the ESPN client |

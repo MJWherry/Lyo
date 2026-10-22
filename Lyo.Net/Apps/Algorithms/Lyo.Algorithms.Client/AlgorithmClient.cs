@@ -75,5 +75,19 @@ public sealed class AlgorithmClient : IAlgorithmClient
         return _api.PutAsAsync<AlgorithmLabelReq, AlgorithmLabelRes>(Route(Constants.Rest.Algorithms.Label(key, label)), request, ct: ct);
     }
 
+    /// <inheritdoc />
+    public Task<AlgorithmPreviewRes> PreviewAsync(AlgorithmPreviewReq request, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(request);
+        return _api.PostAsAsync<AlgorithmPreviewReq, AlgorithmPreviewRes>(Route(Constants.Rest.Algorithms.Preview), request, ct: ct);
+    }
+
+    /// <inheritdoc />
+    public Task DeleteAsync(string key, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
+        return _api.DeleteAsAsync<object>(Route(Constants.Rest.Algorithms.Definition(key)), ct: ct);
+    }
+
     private string Route(string relativePath) => ApiRouteBuilder.Build(_routePrefix, relativePath);
 }

@@ -1,5 +1,12 @@
 namespace Lyo.Algorithms;
 
+/// <summary>Invokes a child algorithm as the type the call site was compiled with.</summary>
+internal interface IAlgorithmInvoker
+{
+    /// <summary>Runs <paramref name="key" /> and returns its value as <typeparamref name="T" />.</summary>
+    T Invoke<T>(string key);
+}
+
 /// <summary>Re-entrancy frame for <c>Algo</c> and <c>score</c>. Set only when a formula actually calls a child.</summary>
 internal static class AlgorithmCallScope
 {
@@ -8,7 +15,7 @@ internal static class AlgorithmCallScope
 
     public static bool HasFrame => _frame is not null;
 
-    public static Func<string, double>? Invoker => _frame?.Invoke;
+    public static IAlgorithmInvoker? Invoker => _frame?.Invoke;
 
     public static bool Begin(int maxDepth)
     {
@@ -38,14 +45,15 @@ internal static class AlgorithmCallScope
         _frame.Depth--;
     }
 
-    public static double Call(string key)
+    /// <summary>Runs <paramref name="key" /> as <typeparamref name="T" />. The call site is closed over <typeparamref name="T" /> when the formula compiles.</summary>
+    public static T Call<T>(string key)
     {
         var frame = AlgorithmHelpers.ThrowIfNull(_frame, "Algo is only available while an algorithm is executing.");
         var invoke = AlgorithmHelpers.ThrowIfNull(frame.Invoke, $"Algorithm '{key}' is not compiled.");
-        return invoke(key);
+        return invoke.Invoke<T>(key);
     }
 
-    public static void SetInvoker(Func<string, double>? invoke)
+    public static void SetInvoker(IAlgorithmInvoker? invoke)
     {
         if (_frame is not null)
             _frame.Invoke = invoke;
@@ -59,6 +67,6 @@ internal static class AlgorithmCallScope
 
         public HashSet<string> Keys { get; } = new(StringComparer.Ordinal);
 
-        public Func<string, double>? Invoke { get; set; }
+        public IAlgorithmInvoker? Invoke { get; set; }
     }
 }

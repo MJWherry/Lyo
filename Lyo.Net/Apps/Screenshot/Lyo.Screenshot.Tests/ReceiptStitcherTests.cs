@@ -115,4 +115,100 @@ public class ReceiptStitcherTests
         Frames.AssertRows(result, 0, first, 0, height);
         Frames.AssertRows(result, height, second, 0, height);
     }
+
+    [Fact]
+    public void Stitch_ManySmallUpwardSteps_AllocatedBytesStayNearTheImage()
+    {
+        const int width = 32;
+        const int height = 40;
+        const int steps = 16;
+        var frames = new Image<Rgba32>[steps];
+        try {
+            for (var i = 0; i < steps; i++)
+                frames[i] = Frames.Rows(width, height, steps - 1 - i);
+
+            var before = GC.GetTotalAllocatedBytes(true);
+            using var result = ReceiptStitcher.Stitch(frames);
+            var allocated = GC.GetTotalAllocatedBytes(true) - before;
+
+            Assert.Equal(height + steps - 1, result.Height);
+            Assert.Equal(width, result.Width);
+            for (var y = 0; y < result.Height; y++)
+                Assert.Equal(Frames.RowColor(y), result[0, y]);
+
+            Assert.True(allocated < 16L * 1024 * 1024, $"allocated {allocated} bytes");
+        }
+        finally {
+            foreach (var frame in frames)
+                frame?.Dispose();
+        }
+    }
+
+    [Fact]
+    public void Stitch_StickyHeaderAndBlankFooter_AppendsOnlyNewRows()
+    {
+        const int width = 96;
+        const int height = 100;
+        const int shift = 20;
+        const int header = 12;
+        using var first = DarkPage(width, height, 0, header);
+        using var second = DarkPage(width, height, shift, header);
+        using var result = ReceiptStitcher.Stitch([first, second]);
+        Assert.Equal(height + shift, result.Height);
+        Assert.Equal(HeaderColor, result[width / 2, 0]);
+        Assert.Equal(Mark(30), result[width / 2, 30]);
+        Assert.NotEqual(HeaderColor, result[width / 2, height]);
+    }
+
+    [Fact]
+    public void Stitch_StickyHeader_UpwardSteps_KeepsOneHeader()
+    {
+        const int width = 96;
+        const int height = 100;
+        const int header = 12;
+        const int step = 4;
+        const int frames = 6;
+        const int start = 40;
+        var shots = new Image<Rgba32>[frames];
+        try {
+            for (var i = 0; i < frames; i++)
+                shots[i] = DarkPage(width, height, start - i * step, header);
+
+            using var result = ReceiptStitcher.Stitch(shots);
+            var lastScroll = start - (frames - 1) * step;
+            Assert.Equal(height + step * (frames - 1), result.Height);
+            for (var y = 0; y < header; y++)
+                Assert.Equal(HeaderColor, result[width / 2, y]);
+
+            Assert.Equal(Mark(lastScroll + header), result[width / 2, header]);
+            for (var y = header; y < result.Height; y++)
+                Assert.NotEqual(HeaderColor, result[width / 2, y]);
+        }
+        finally {
+            foreach (var shot in shots)
+                shot?.Dispose();
+        }
+    }
+
+    private static Image<Rgba32> DarkPage(int width, int height, int scroll, int header)
+    {
+        var image = new Image<Rgba32>(width, height, Background);
+        for (var y = 0; y < header; y++)
+        for (var x = 0; x < width; x++)
+            image[x, y] = HeaderColor;
+
+        var contentEnd = height * 3 / 5;
+        for (var y = header; y < contentEnd; y++) {
+            var color = Mark(scroll + y);
+            for (var x = 0; x < width; x++)
+                image[x, y] = color;
+        }
+
+        return image;
+    }
+
+    private static Rgba32 Mark(int row) => new((byte)(row * 13), (byte)(80 + row * 5), (byte)(255 - row * 7), 255);
+
+    private static readonly Rgba32 Background = new(20, 18, 16, 255);
+    private static readonly Rgba32 HeaderColor = new(255, 180, 0, 255);
 }

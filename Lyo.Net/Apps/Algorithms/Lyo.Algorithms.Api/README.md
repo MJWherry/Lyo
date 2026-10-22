@@ -1,12 +1,11 @@
 # Lyo.Algorithms.Api
 
-Maps catalog list, get, revision append, revert, and label routes. Writes go through `IAlgorithmCatalog` so syntax and startup-key checks still run. Reads return the store's `*Res`
-types with no second mapping. `Kind` is `AlgorithmKind`. Revert takes `AlgorithmRevertReq`. There is no remote Execute. Register with `AddAlgorithmsApiFromConfiguration` (section
-`PostgresAlgorithms`), then call `BuildAlgorithmsGroup`.
+Maps catalog list, get, revision append, revert, label, delete, and preview routes. Writes go through `IAlgorithmCatalog` so syntax and startup-key checks still run. Reads return the store's `*Res` types with no second mapping. `Kind` is `AlgorithmKind`. Revert takes `AlgorithmRevertReq`. `DELETE Algorithms/{key}` removes the definition, its revisions, and its labels. `POST Algorithms/preview` runs an unsaved draft and does not append a revision. Catalog execute stays in-process. Register with `AddAlgorithmsApiFromConfiguration` (section `PostgresAlgorithms`), then call `BuildAlgorithmsGroup`.
 
 ## Features
 
-- `BuildAlgorithmsGroup` maps GET /Algorithms, GET by key, revisions, revert, and labels.
+- `BuildAlgorithmsGroup` maps GET /Algorithms, GET by key, revisions, revert, labels, DELETE by key, and POST /Algorithms/preview.
+- `POST Algorithms/preview` converts the context JSON with the revision type binding and returns `value`, the result alias, and the step breakdown.
 - POST revisions and revert, and PUT labels, return `AlgorithmDefinitionRes` or `AlgorithmLabelRes`. Failed catalog results are 400.
 - `AddAlgorithmsApiFromConfiguration` registers the Postgres store and `AddAlgorithms`.
 

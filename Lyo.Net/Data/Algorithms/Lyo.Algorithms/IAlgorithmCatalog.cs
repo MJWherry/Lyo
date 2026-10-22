@@ -19,4 +19,7 @@ public interface IAlgorithmCatalog
 
     /// <summary>Creates or retargets a label. Immutable labels cannot move.</summary>
     Task<Result<AlgorithmLabelRes>> SetLabelAsync(string key, string label, AlgorithmLabelReq request, CancellationToken ct = default);
+
+    /// <summary>Removes the definition, its revisions, and its labels. A missing or invalid key is a failure and does not throw.</summary>
+    Task<Result<Unit>> DeleteAsync(string key, CancellationToken ct = default);
 }

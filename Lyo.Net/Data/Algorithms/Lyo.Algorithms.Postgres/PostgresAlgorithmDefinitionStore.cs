@@ -58,7 +58,9 @@ public sealed class PostgresAlgorithmDefinitionStore : IAlgorithmDefinitionStore
     {
         await using var ctx = await _factory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var definition = await ctx.Definitions.AsNoTracking().FirstOrDefaultAsync(x => x.Key == key, ct).ConfigureAwait(false);
-        AlgorithmHelpers.ThrowIf(definition is null, $"Algorithm '{key}' was not found.");
+        if (definition is null)
+            return [];
+
         var rows = await ctx.Revisions.AsNoTracking().Where(r => r.DefinitionId == definition.Id).OrderByDescending(r => r.Revision).ToListAsync(ct).ConfigureAwait(false);
         return [.. rows.Select(ToRevision)];
     }
@@ -136,6 +138,23 @@ public sealed class PostgresAlgorithmDefinitionStore : IAlgorithmDefinitionStore
 
         var row = await ctx.Labels.AsNoTracking().FirstOrDefaultAsync(l => l.DefinitionId == definition.Id && l.Label == label, ct).ConfigureAwait(false);
         return row is null ? null : ToLabel(row);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> DeleteAsync(string key, CancellationToken ct = default)
+    {
+        await using var ctx = await _factory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var entity = await ctx.Definitions.FirstOrDefaultAsync(x => x.Key == key, ct).ConfigureAwait(false);
+        if (entity is null)
+            return false;
+
+        var labels = await ctx.Labels.Where(l => l.DefinitionId == entity.Id).ToListAsync(ct).ConfigureAwait(false);
+        var revisions = await ctx.Revisions.Where(r => r.DefinitionId == entity.Id).ToListAsync(ct).ConfigureAwait(false);
+        ctx.Labels.RemoveRange(labels);
+        ctx.Revisions.RemoveRange(revisions);
+        ctx.Definitions.Remove(entity);
+        await ctx.SaveChangesAsync(ct).ConfigureAwait(false);
+        return true;
     }
 
     /// <inheritdoc />

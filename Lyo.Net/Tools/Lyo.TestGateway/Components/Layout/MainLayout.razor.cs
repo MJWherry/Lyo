@@ -37,6 +37,7 @@ public partial class MainLayout
         new(
             "Data", Icons.Material.Filled.TableChart,
             [
+                new("Algorithms", Constants.Page.Algorithms, Icons.Material.Filled.Functions),
                 new("CSV / XLSX", Constants.Page.CsvXlsx, Icons.Material.Filled.TableChart), new("Formatter", Constants.Page.Formatter, Icons.Material.Filled.TextFields),
                 new("ID generator", Constants.Page.IdGenerator, Icons.Material.Filled.Tag),
                 new("Privacy redaction", Constants.Page.PrivacyRedaction, Icons.Material.Filled.PrivacyTip),

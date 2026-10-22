@@ -32,6 +32,10 @@ public partial class LyoParameterValueGrid
     [Parameter]
     public EventCallback ValueChanged { get; set; }
 
+    /// <summary>Key of the entry to outline. Null leaves every row unoutlined.</summary>
+    [Parameter]
+    public string? HighlightedKey { get; set; }
+
     /// <summary>
     /// Sample data for autocomplete and live preview on formatter-typed parameters. Run dialogs pass what the template will resolve against at run time so the user does not have
     /// to remember the token names.
@@ -48,4 +52,9 @@ public partial class LyoParameterValueGrid
         if (ValueChanged.HasDelegate)
             await ValueChanged.InvokeAsync();
     }
+
+    private string? HighlightStyle(LyoParameterEntry entry)
+        => string.Equals(entry.Definition.Key, HighlightedKey, StringComparison.Ordinal)
+            ? "outline: 2px solid var(--mud-palette-primary); border-radius: 4px; padding: 4px;"
+            : null;
 }

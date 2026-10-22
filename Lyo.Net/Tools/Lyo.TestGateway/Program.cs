@@ -1,3 +1,5 @@
+using Lyo.Algorithms.Client;
+using Lyo.Algorithms.Web.Components;
 using Lyo.Api.Client;
 using Lyo.Authentication.Client;
 using Lyo.Authentication.Web.Components;
@@ -119,6 +121,17 @@ builder.Services.AddTransient(provider => provider.GetRequiredService<IOptions<A
 builder.Services.AddLyoAuthClient(builder.Configuration);
 builder.Services.AddLyoAuthBlazorStateProvider();
 builder.Services.AddLyoApiClient(httpClientBuilderOverride: clientBuilder => clientBuilder.AddLyoAuthHandler());
+builder.Services.AddAlgorithmClient(sp => sp.GetRequiredService<IApiClient>());
+builder.Services.AddAlgorithmWorkbench(context => {
+    foreach (var row in AlgorithmPresets.FishingContext())
+        context.Add(row.Name, row.Alias, row.Text);
+
+    foreach (var row in AlgorithmPresets.AttackContext())
+        context.Add(row.Name, row.Alias, row.Text);
+
+    foreach (var row in AlgorithmPresets.ScheduleContext())
+        context.Add(row.Name, row.Alias, row.Text);
+});
 builder.Services.AddAutomationPlanClient<ApiClient>();
 builder.Services.AddBillingClient<ApiClient>();
 builder.Services.AddLeaderboardApiClientFromConfiguration(builder.Configuration);
