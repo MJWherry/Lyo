@@ -6,8 +6,8 @@ namespace Lyo.Cli.Services;
 internal static class CliIO
 {
     /// <summary>
-    /// Opens a readable stream. A path opens that file; <c>-</c> or a missing path with redirected stdin reads standard input. Dispose the stream unless it is stdin
-    /// (check <c>LeaveOpen</c> on the <see cref="OpenInput" /> result).
+    /// Opens a readable stream. A path opens that file; <c>-</c> or a missing path with redirected stdin reads standard input. Dispose the stream unless it is stdin (check
+    /// <c>LeaveOpen</c> on the <see cref="OpenInput" /> result).
     /// </summary>
     public static (Stream Stream, bool LeaveOpen, string? PathOrNull) OpenInput(string? path)
     {
@@ -23,8 +23,8 @@ internal static class CliIO
     }
 
     /// <summary>
-    /// Opens a writable stream. A set <paramref name="output" /> (or <c>-</c>) takes precedence; otherwise stdout if redirected or if input came from a pipe; if input was a file and
-    /// stdout is a TTY, the path from <paramref name="defaultSiblingPath" /> is used.
+    /// Opens a writable stream. A set <paramref name="output" /> (or <c>-</c>) takes precedence; otherwise stdout if redirected or if input came from a pipe; if input was a file
+    /// and stdout is a TTY, the path from <paramref name="defaultSiblingPath" /> is used.
     /// </summary>
     public static (Stream Stream, bool LeaveOpen, string? PathOrNull) OpenOutput(string? output, string? inputPath, Func<string, string>? defaultSiblingPath)
     {

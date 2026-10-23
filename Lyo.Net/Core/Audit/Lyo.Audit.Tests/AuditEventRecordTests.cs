@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 
 namespace Lyo.Audit.Tests;
@@ -34,7 +35,7 @@ public class AuditEventRecordTests
     [Fact]
     public void AuditEvent_ValueEquality_ComparesByValues()
     {
-        var id = Guid.NewGuid();
+        var id = LyoGuid.CreateV7();
         var timestamp = DateTime.UtcNow;
         var subject = EntityRef.ForKey("E", "1");
         var actor = EntityRef.ForKey("User", "a");

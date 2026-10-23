@@ -1,0 +1,57 @@
+{
+  "$schema": "../../../../docs/catalog/schema/package.schema.json",
+  "id": "Lyo.Nfc",
+  "name": "Lyo.Nfc",
+  "area": "Data",
+  "tagline": "Type 2 NFC pages and NDEF.",
+  "description": "Read and write NTAG21x user pages and NFC Forum NDEF (Text, URI, or a raw record). `INfcTag` is the page port: `MemoryNfcTag` for tests and dumps, `Lyo.Nfc.Pcsc` for a PC/SC reader. ISO 15693 tags, including Tonie figures, live in `Lyo.Rfid`.",
+  "features": [
+    "**Pages.** `ReadPagesAsync` and `WritePageAsync` move 4-byte Type 2 pages. A page that is not 4 bytes throws.",
+    "**NDEF.** `NdefTextRecord`, `NdefUriRecord`, and `NdefRecord.Raw`. `NdefType2` wraps the message in a `0x03` TLV and a `0xFE` terminator.",
+    "**NTAG size.** `NtagMemory` knows NTAG213, NTAG215, and NTAG216. User memory starts at page 4. Config and lock pages are not written."
+  ],
+  "examples": [
+    {
+      "title": "Write and read a Text record on an in-memory NTAG213",
+      "language": "csharp",
+      "code": "var tag = new MemoryNfcTag(NtagMemory.Ntag213, \"04AABBCCDDEEFF\");\nvar message = NdefMessage.Of(NdefTextRecord.Create(\"en\", \"hello\"));\nawait NfcNdef.WriteAsync(tag, NtagMemory.Ntag213, message, cancellationToken);\nvar text = (NdefTextRecord)(await NfcNdef.ReadAsync(tag, NtagMemory.Ntag213, cancellationToken)).Records[0];"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Nfc/Lyo.Nfc/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "direct",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

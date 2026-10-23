@@ -4,8 +4,8 @@ namespace Lyo.Cache;
 public static class Constants
 {
     /// <summary>
-    /// Canonical entity-scoped cache tag. Producers (API tag builders) and consumers (<see cref="ICacheService.InvalidateQueryCacheAsync{TDb}" />) must
-    /// agree byte-for-byte or invalidation silently stops working, so both sides resolve here rather than formatting the string themselves.
+    /// Canonical entity-scoped cache tag. Producers (API tag builders) and consumers (<see cref="ICacheService.InvalidateQueryCacheAsync{TDb}" />) must agree byte-for-byte or
+    /// invalidation silently stops working, so both sides resolve here rather than formatting the string themselves.
     /// </summary>
     public static class Tags
     {

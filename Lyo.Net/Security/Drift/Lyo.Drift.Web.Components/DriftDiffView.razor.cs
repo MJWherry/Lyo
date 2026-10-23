@@ -1,17 +1,17 @@
 using System.Text.Json;
-using Lyo.Common.Json;
+using Lyo.Json;
 
 namespace Lyo.Drift.Web.Components;
 
 public partial class DriftDiffView
 {
+    private List<FileSystemChangeDto> _fileChanges = [];
+    private List<ObjectGraphDifferenceDto> _systemDiffs = [];
+
     /// <summary>Stored diff to display.</summary>
     [Parameter]
     [EditorRequired]
     public DriftDiffRes Diff { get; set; } = null!;
-
-    private List<FileSystemChangeDto> _fileChanges = [];
-    private List<ObjectGraphDifferenceDto> _systemDiffs = [];
 
     protected override void OnParametersSet()
     {

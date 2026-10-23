@@ -3,8 +3,8 @@ using Lyo.FileStorage.Policy;
 namespace Lyo.FileStorage;
 
 /// <summary>
-/// Counts bytes read from an upload source and rejects the read once it passes <c>MaxUploadSizeBytes</c>. Save paths check policy against the caller's <em>declared</em> length, so
-/// this is what stops a lying or unknown declared length from writing an unbounded payload. <see cref="BytesRead" /> is the actual size to store on metadata.
+/// Counts bytes read from an upload source and rejects the read once it passes <c>MaxUploadSizeBytes</c>. Save paths check policy against the caller's <em>declared</em>
+/// length, so this is what stops a lying or unknown declared length from writing an unbounded payload. <see cref="BytesRead" /> is the actual size to store on metadata.
 /// </summary>
 /// <remarks>Does not dispose the inner stream. The caller owns the upload source.</remarks>
 internal sealed class MaxUploadBytesReadStream : Stream

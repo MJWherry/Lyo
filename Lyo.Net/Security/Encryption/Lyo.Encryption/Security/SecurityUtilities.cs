@@ -8,10 +8,7 @@ namespace Lyo.Encryption.Security;
 /// <summary>Helpers for wiping memory and comparing secrets in constant time.</summary>
 public static class SecurityUtilities
 {
-    /// <summary>
-    /// Overwrites a byte array with zeros. Shrinks the exposure window; GC and memory dumps can still retain copies, so this is not a complete
-    /// guarantee of removal.
-    /// </summary>
+    /// <summary>Overwrites a byte array with zeros. Shrinks the exposure window; GC and memory dumps can still retain copies, so this is not a complete guarantee of removal.</summary>
     /// <param name="data">Array to wipe</param>
     [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
     public static void Clear(byte[]? data)
@@ -42,10 +39,7 @@ public static class SecurityUtilities
 #endif
     }
 
-    /// <summary>
-    /// Constant-time equality of two byte arrays. Always scans the full length so timing does not leak whether the arrays
-    /// match.
-    /// </summary>
+    /// <summary>Constant-time equality of two byte arrays. Always scans the full length so timing does not leak whether the arrays match.</summary>
     /// <param name="a">Left array</param>
     /// <param name="b">Right array</param>
     /// <returns>True when the arrays are equal</returns>

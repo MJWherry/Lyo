@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions.Models;
 
 namespace Lyo.Exceptions.Tests;
@@ -27,7 +28,7 @@ public class FormatHelpersTests
     [Fact]
     public void GetValidGuid_Valid_ReturnsParsedGuid()
     {
-        var expected = Guid.NewGuid();
+        var expected = LyoGuid.CreateV7();
         Assert.Equal(expected, FormatHelpers.GetValidGuid(expected.ToString()));
     }
 

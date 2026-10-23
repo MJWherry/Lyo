@@ -6,9 +6,8 @@ using Lyo.Exceptions;
 namespace Lyo.KeyStore.KeyDerivation;
 
 /// <summary>
-/// HKDF (HMAC-based Extract-and-Expand Key Derivation Function) service. Uses HKDF as defined in RFC 5869. HKDF
-/// is a modern, efficient KDF that does not need iterations the way PBKDF2 does. Note: the 'iterations' parameter is ignored — HKDF is single-pass.
-/// HKDF uses an 'info' parameter for context binding instead of iterations.
+/// HKDF (HMAC-based Extract-and-Expand Key Derivation Function) service. Uses HKDF as defined in RFC 5869. HKDF is a modern, efficient KDF that does not need iterations the
+/// way PBKDF2 does. Note: the 'iterations' parameter is ignored — HKDF is single-pass. HKDF uses an 'info' parameter for context binding instead of iterations.
 /// </summary>
 public class HkdfKeyDerivationService : IKeyDerivationService
 {

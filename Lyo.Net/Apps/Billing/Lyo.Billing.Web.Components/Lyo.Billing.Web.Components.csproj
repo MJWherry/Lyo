@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>Blazor billing dashboard: clients, charges, invoices, payments, and ledger views built on Lyo grids and dialogs.</Description>
+        <PackageTags>blazor billing invoice mudblazor dashboard</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+        <PackageReference Include="MudBlazor"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Plugins\Billing\Lyo.Billing\Lyo.Billing.csproj"/>
+        <ProjectReference Include="..\Lyo.Billing.Client\Lyo.Billing.Client.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\Ledger\Lyo.Ledger\Lyo.Ledger.csproj"/>
+        <ProjectReference Include="..\..\Payments\Lyo.Payments\Lyo.Payments.csproj"/>
+        <ProjectReference Include="..\..\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\Web\Export\Lyo.Web.Components.Export\Lyo.Web.Components.Export.csproj"/>
+        <ProjectReference Include="..\..\Web\Export\Lyo.Web.Components.Export.Csv\Lyo.Web.Components.Export.Csv.csproj"/>
+        <ProjectReference Include="..\..\Web\Export\Lyo.Web.Components.Export.Yaml\Lyo.Web.Components.Export.Yaml.csproj"/>
+        <ProjectReference Include="..\..\Web\Export\Lyo.Web.Components.Export.Xml\Lyo.Web.Components.Export.Xml.csproj"/>
+        <ProjectReference Include="..\..\Web\Export\Lyo.Web.Components.Export.Toml\Lyo.Web.Components.Export.Toml.csproj"/>
+        <ProjectReference Include="..\..\Web\Export\Lyo.Web.Components.Export.Xlsx\Lyo.Web.Components.Export.Xlsx.csproj"/>
+        <ProjectReference Include="..\..\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
+        <ProjectReference Include="..\..\Api\Lyo.Api.Models\Lyo.Api.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Query\Lyo.Query.Models\Lyo.Query.Models.csproj"/>
+        <ProjectReference Include="..\..\Http\Lyo.Http.Client\Lyo.Http.Client.csproj"/>
+    </ItemGroup>
+
+</Project>

@@ -4,8 +4,7 @@ using Lyo.Web.Automation.Models;
 
 namespace Lyo.Web.Automation.Plan;
 
-/// <summary>All element refs, list refs, and string variables for one point in time (typically the <see cref="AutomationPlanExecutionContext.Overall" /> result of a
-/// run).</summary>
+/// <summary>All element refs, list refs, and string variables for one point in time (typically the <see cref="AutomationPlanExecutionContext.Overall" /> result of a run).</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class AutomationPlanBindings
 {
@@ -85,8 +84,7 @@ public sealed class AutomationPlanBindings
         => $"AutomationPlanBindings elements={Elements.Count}, elementLists={ElementLists.Count}, strings={Strings.Count}, stringLists={StringLists.Count}, contextItems={ContextItems.Count}";
 }
 
-/// <summary>Immutable snapshot immediately after a single plan step finished. <see cref="CompletedStepIndex" /> is zero-based: <c>0</c> = after <c>plan.Steps[0]</c>, and so
-/// on</summary>
+/// <summary>Immutable snapshot immediately after a single plan step finished. <see cref="CompletedStepIndex" /> is zero-based: <c>0</c> = after <c>plan.Steps[0]</c>, and so on</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class AutomationPlanStepFrame
 {

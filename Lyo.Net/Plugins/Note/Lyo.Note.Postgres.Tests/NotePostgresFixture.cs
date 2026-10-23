@@ -1,6 +1,4 @@
-using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
-using Lyo.Note.Postgres;
 using Lyo.Note.Postgres.Database;
 using Lyo.Testing.Containers;
 using Microsoft.Extensions.DependencyInjection;

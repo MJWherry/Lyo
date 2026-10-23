@@ -34,7 +34,7 @@
     {
       "title": "2. Wire the secrets into Lyo.TestApi (4)",
       "language": "json",
-      "code": "{\n  \"LyoOidcBff\": {\n    \"AllowedReturnOrigins\": [ \"http://localhost:5138\", \"https://localhost:5138\", \"https://localhost:7116\" ],\n    \"DefaultReturnUrl\": \"/\",\n    \"HandoffCodeTtl\": \"00:00:30\"\n  }\n}"
+      "code": "{\n  \"LyoSso\": {\n    \"AllowedReturnOrigins\": [ \"http://localhost:5138\", \"https://localhost:5138\", \"https://localhost:7116\" ],\n    \"DefaultReturnUrl\": \"/\",\n    \"HandoffCodeTtl\": \"00:00:30\"\n  }\n}"
     },
     {
       "title": "3. Point the Gateway at the TestApi",
@@ -158,7 +158,7 @@
         ],
         [
           "Callback redirects back to the API instead of the Gateway",
-          "The Gateway HTTPS launch profile (`https://localhost:7116`) stamps a `returnUrl` origin that must be in `LyoOidcBff:AllowedReturnOrigins` (exact `scheme://host:port`, no trailing slash). Off-list absolute URLs now 400 at `/auth/login`. Local TestApi allow-lists both `:5138` and `:7116`."
+          "The Gateway HTTPS launch profile (`https://localhost:7116`) stamps a `returnUrl` origin that must be in `LyoSso:AllowedReturnOrigins` (exact `scheme://host:port`, no trailing slash). Off-list absolute URLs now 400 at `/auth/login`. Local TestApi allow-lists both `:5138` and `:7116`."
         ],
         [
           "`/auth/handoff/exchange` returns 403 `origin_mismatch`",
@@ -177,7 +177,7 @@
     {
       "type": "markdown",
       "title": "6. Promote to deployed environments",
-      "body": "When you move off localhost, replace the user-secrets values with the deployed equivalents and **add a second OAuth client** in Google Cloud, or extra redirect URIs on the same client, for each environment:\n\n- Staging: `https://api-staging.example.com/auth/callback/google` + `LyoOidcBff:AllowedReturnOrigins` includes `https://app-staging.example.com`\n- Production: `https://api.example.com/auth/callback/google` + `LyoOidcBff:AllowedReturnOrigins` includes `https://app.example.com`\n\nProduction must be on HTTPS. Google rejects non-`localhost` plain-HTTP redirect URIs. Submit the OAuth consent screen for verification before you remove the *Testing* gate, otherwise external users will still get the unverified-app screen, and personal accounts beyond the 100-test-user cap will be blocked."
+      "body": "When you move off localhost, replace the user-secrets values with the deployed equivalents and **add a second OAuth client** in Google Cloud, or extra redirect URIs on the same client, for each environment:\n\n- Staging: `https://api-staging.example.com/auth/callback/google` + `LyoSso:AllowedReturnOrigins` includes `https://app-staging.example.com`\n- Production: `https://api.example.com/auth/callback/google` + `LyoSso:AllowedReturnOrigins` includes `https://app.example.com`\n\nProduction must be on HTTPS. Google rejects non-`localhost` plain-HTTP redirect URIs. Submit the OAuth consent screen for verification before you remove the *Testing* gate, otherwise external users will still get the unverified-app screen, and personal accounts beyond the 100-test-user cap will be blocked."
     }
   ],
   "links": [],
@@ -232,7 +232,7 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
+      "name": "Lyo.Authentication.Sso",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -241,6 +241,14 @@
     },
     {
       "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DataTable.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -257,6 +265,14 @@
     },
     {
       "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -281,6 +297,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -371,6 +395,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

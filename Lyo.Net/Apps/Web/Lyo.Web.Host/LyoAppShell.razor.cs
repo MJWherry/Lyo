@@ -5,18 +5,18 @@ using Microsoft.AspNetCore.Components;
 namespace Lyo.Web.Host;
 
 /// <summary>
-/// Shared host chrome: theme provider, drawer, app bar, dark-mode toggle stored in <see cref="ClientStore" />, and the Blazor error UI. Auth and domain nav stay
-/// in the host via <see cref="DrawerHeader" />, <see cref="DrawerNav" />, and <see cref="AppBarEnd" />.
+/// Shared host chrome: theme provider, drawer, app bar, dark-mode toggle stored in <see cref="ClientStore" />, and the Blazor error UI. Auth and domain nav stay in the host
+/// via <see cref="DrawerHeader" />, <see cref="DrawerNav" />, and <see cref="AppBarEnd" />.
 /// </summary>
 /// <remarks>
-/// When <see cref="DrawerNav" /> is omitted the drawer renders <see cref="LyoNavMenu" /> from the workbench registry. Add the client services with
-/// <c>AddLyoWebShell</c> before mounting this component.
+/// When <see cref="DrawerNav" /> is omitted the drawer renders <see cref="LyoNavMenu" /> from the workbench registry. Add the client services with <c>AddLyoWebShell</c>
+/// before mounting this component.
 /// </remarks>
 public partial class LyoAppShell
 {
     private bool _drawerOpen;
-    private bool _isDarkMode;
     private bool _initialized;
+    private bool _isDarkMode;
 
     /// <summary>App-bar text, usually the current page name.</summary>
     [Parameter]

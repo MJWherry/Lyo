@@ -1,6 +1,7 @@
 using System.Text.Json;
-using Lyo.Common.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
+using Lyo.Json;
 using Lyo.Query.Models.Common;
 using Lyo.Validation.Models;
 using Lyo.Validation.Postgres.Database;
@@ -17,7 +18,7 @@ public static class ValidationSchemaMapper
     {
         ArgumentHelpers.ThrowIfNull(schema);
         ArgumentHelpers.ThrowIfNull(schema.Constraints);
-        var entity = existing ?? new ValidationSchemaEntity { Id = Guid.NewGuid() };
+        var entity = existing ?? new ValidationSchemaEntity { Id = LyoGuid.CreateV7() };
         entity.Key = schema.Key;
         entity.TargetTypeName = schema.TargetTypeName;
         entity.Description = schema.Description;

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Domain contracts for a podcast catalog: shows, seasons, episodes, credits, identifiers, and IPodcastStore.</Description>
+        <PackageTags>podcast catalog show episode identifier</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.Podcast.Postgres.Tests"/>
+    </ItemGroup>
+
+</Project>

@@ -1,11 +1,12 @@
 namespace Lyo.FileSystemWatcher;
 
-/// <summary>
-/// Hierarchical snapshot of a directory. One <see cref="SnapshotDirectoryNode" /> per subdirectory, files grouped under their parent. Avoids a flat map keyed by full
-/// path.
-/// </summary>
+/// <summary>Hierarchical snapshot of a directory. One <see cref="SnapshotDirectoryNode" /> per subdirectory, files grouped under their parent. Avoids a flat map keyed by full path.</summary>
 public sealed class SnapshotTree
 {
+    private Dictionary<string, List<string>>? _fingerprintIndex;
+
+    private Dictionary<string, List<string>>? _hashIndex;
+
     /// <summary>Root directory this snapshot was taken from.</summary>
     public string RootPath { get; }
 
@@ -27,6 +28,15 @@ public sealed class SnapshotTree
     /// <summary>Files plus directories, excluding the snapshot root node. Matches the old flat-dictionary key count.</summary>
     public int TotalEntryCount => FileCount + DirectoryCount;
 
+    /// <summary>
+    /// File paths grouped by full-content hash, built on first use and reused afterwards. A diff reads this on every poll, so it is an index over the snapshot rather than
+    /// something a caller rebuilds. Treat the lists as read-only.
+    /// </summary>
+    public IReadOnlyDictionary<string, List<string>> FileHashIndex => _hashIndex ??= BuildIndex(e => e.Hash);
+
+    /// <summary>File paths grouped by sparse fingerprint. Same lifetime and read-only rule as <see cref="FileHashIndex" />.</summary>
+    public IReadOnlyDictionary<string, List<string>> FileFingerprintIndex => _fingerprintIndex ??= BuildIndex(e => e.Fingerprint);
+
     /// <summary>Builds a snapshot descriptor. Prefer <see cref="Utilities.TakeSnapshot" /> to construct one.</summary>
     public SnapshotTree(string rootPath, StringComparison pathComparison, SnapshotDirectoryNode root, int fileCount, int directoryCount)
     {
@@ -36,6 +46,22 @@ public sealed class SnapshotTree
         Root = root;
         FileCount = fileCount;
         DirectoryCount = directoryCount;
+    }
+
+    private Dictionary<string, List<string>> BuildIndex(Func<DirectorySnapshotEntry, string?> selectKey)
+    {
+        Dictionary<string, List<string>> index = new(StringComparer.Ordinal);
+        foreach (var (path, entry) in EnumerateFiles()) {
+            if (entry.Info is not FileInfo || selectKey(entry) is not { } key)
+                continue;
+
+            if (!index.TryGetValue(key, out var paths))
+                index[key] = paths = [];
+
+            paths.Add(path);
+        }
+
+        return index;
     }
 
     /// <summary>True if <paramref name="fullPath" /> is a file or directory node in this snapshot.</summary>
@@ -117,7 +143,7 @@ public sealed class SnapshotTree
     private IEnumerable<(string Path, DirectorySnapshotEntry Entry)> EnumerateDirectoryAndFileEntries(SnapshotDirectoryNode dir)
     {
         foreach (var sub in dir.Directories.Values) {
-            yield return (sub.FullPath, new(sub.FullPath, new DirectoryInfo(sub.FullPath)));
+            yield return (sub.FullPath, sub.Entry);
 
             foreach (var pair in EnumerateDirectoryAndFileEntries(sub))
                 yield return pair;

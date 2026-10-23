@@ -1,31 +1,16 @@
-using System.Globalization;
-using System.Net.Http.Json;
-using Lyo.Api.Client;
-using Lyo.Images;
 using Lyo.Metrics;
 using Lyo.Metrics.Models;
-using Lyo.TestGateway.Components;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.Web.Virtualization;
-using Microsoft.JSInterop;
 using MudBlazor;
-using static Microsoft.AspNetCore.Components.Web.RenderMode;
 
 namespace Lyo.TestGateway.Components.TestGateway;
 
 public partial class MetricsWorkbench
 {
     private bool _busy;
+    private List<MetricData> _events = [];
     private string _filterText = string.Empty;
     private DateTime _lastRefresh;
     private MetricsSnapshot? _snapshot;
-    private List<MetricData> _events = [];
 
     private MetricsService? MetricsStore => Metrics as MetricsService;
 
@@ -100,7 +85,8 @@ public partial class MetricsWorkbench
         return tags?.Any(i => i.Key.Contains(filter, StringComparison.OrdinalIgnoreCase) || i.Value.Contains(filter, StringComparison.OrdinalIgnoreCase)) == true;
     }
 
-    private static string FormatTags(Dictionary<string, string>? tags) => tags == null || tags.Count == 0 ? "(none)" : string.Join(", ", tags.OrderBy(i => i.Key).Select(i => $"{i.Key}={i.Value}"));
+    private static string FormatTags(Dictionary<string, string>? tags)
+        => tags == null || tags.Count == 0 ? "(none)" : string.Join(", ", tags.OrderBy(i => i.Key).Select(i => $"{i.Key}={i.Value}"));
 
     private static string FormatEventTags(MetricData metric)
     {

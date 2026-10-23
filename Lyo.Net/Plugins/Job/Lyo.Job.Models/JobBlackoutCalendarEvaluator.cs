@@ -6,14 +6,12 @@ using Lyo.Job.Models.Response;
 namespace Lyo.Job.Models;
 
 /// <summary>
-/// Checks whether scheduled slots fall inside <see cref="JobBlackoutCalendarRes" /> do-not-run windows. Shared by the job scheduler and
-/// <c>GetNextRuns</c> so weekday, dated-range, calendar-day, and holiday windows are evaluated the same way.
+/// Checks whether scheduled slots fall inside <see cref="JobBlackoutCalendarRes" /> do-not-run windows. Shared by the job scheduler and <c>GetNextRuns</c> so weekday,
+/// dated-range, calendar-day, and holiday windows are evaluated the same way.
 /// </summary>
 public static class JobBlackoutCalendarEvaluator
 {
-    /// <summary>
-    /// Applies blackout policy to a candidate slot. Returns null when the slot should be skipped, or the (possibly deferred) UTC slot when it may fire.
-    /// </summary>
+    /// <summary>Applies blackout policy to a candidate slot. Returns null when the slot should be skipped, or the (possibly deferred) UTC slot when it may fire.</summary>
     /// <param name="slotUtc">Candidate fire time in UTC.</param>
     /// <param name="calendar">Calendar whose enabled windows are considered, or null when none is attached.</param>
     /// <param name="timeZone">Zone the window clock times are expressed in. Null uses UTC.</param>
@@ -47,7 +45,7 @@ public static class JobBlackoutCalendarEvaluator
         return slotUtc;
     }
 
-    private static bool MatchesWindowDate(JobBlackoutWindowRes window, DateTime local, DayFlags dayFlag)
+    internal static bool MatchesWindowDate(JobBlackoutWindowRes window, DateTime local, DayFlags dayFlag)
     {
         if (!string.IsNullOrWhiteSpace(window.HolidaySlug)) {
             var holiday = HolidayInfo.FromSlug(window.HolidaySlug);

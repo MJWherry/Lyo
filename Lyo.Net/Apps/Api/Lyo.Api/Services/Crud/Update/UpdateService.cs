@@ -74,7 +74,8 @@ public class UpdateService<TContext>(
             return result;
         }
 
-        await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), [typeConversion.GetPrimaryKeyValues(entity, context)], ct, Logger)
+        await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(
+                cache, cacheOptions, typeof(TDbModel), [typeConversion.GetPrimaryKeyValues(entity, context)], ct, Logger)
             .ConfigureAwait(false);
 
         var entityKeys = typeConversion.GetPrimaryKeyValues(entity, context);
@@ -444,8 +445,8 @@ public class UpdateService<TContext>(
     }
 
     /// <summary>
-    /// Snapshots each entity's EF state after mapping and before SaveChanges. After a successful write EF sets Modified to Unchanged, so post-save State cannot classify Updated vs
-    /// NoChange (and would skip query-cache invalidation).
+    /// Snapshots each entity's EF state after mapping and before SaveChanges. After a successful write EF sets Modified to Unchanged, so post-save State cannot classify Updated
+    /// vs NoChange (and would skip query-cache invalidation).
     /// </summary>
     private static Dictionary<TDbModel, EntityState> CapturePreSaveStates<TDbModel>(TContext context, IEnumerable<TDbModel> entities)
         where TDbModel : class
@@ -458,9 +459,7 @@ public class UpdateService<TContext>(
         return states;
     }
 
-    /// <summary>
-    /// Classifies an Update from pre-save EF state (and SaveChanges row count as a fallback). Matching Patch: only skip invalidation when nothing was written.
-    /// </summary>
+    /// <summary>Classifies an Update from pre-save EF state (and SaveChanges row count as a fallback). Matching Patch: only skip invalidation when nothing was written.</summary>
     private static UpdateResultEnum ClassifyUpdateResult(EntityState preSaveState, int savedChanges = 0)
         => preSaveState switch {
             EntityState.Modified => UpdateResultEnum.Updated,

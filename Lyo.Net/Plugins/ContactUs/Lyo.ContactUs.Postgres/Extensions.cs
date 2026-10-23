@@ -5,6 +5,7 @@ using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace Lyo.ContactUs.Postgres;
 
 /// <summary>DI helpers for PostgreSQL contact form service registration.</summary>
@@ -47,7 +48,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresContactUsOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddContactUsDbContextFactory(options);
         }
 
@@ -59,7 +59,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPostgresDbContextFactory<ContactUsDbContext, PostgresContactUsOptions>(options);
-
             return services;
         }
 
@@ -86,7 +85,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresContactUsOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddContactUsPostgres(options);
         }
 

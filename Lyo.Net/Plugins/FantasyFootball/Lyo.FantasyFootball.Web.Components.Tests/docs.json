@@ -1,0 +1,17 @@
+{
+  "$schema": "../../../../docs/catalog/schema/package.schema.json",
+  "id": "Lyo.FantasyFootball.Web.Components.Tests",
+  "name": "Lyo.FantasyFootball.Web.Components.Tests",
+  "area": "Plugins",
+  "tagline": "Labels for fantasy football topics and trades.",
+  "description": "Locks `FantasyFootballUi.TopicTitle` and `TradeSummary`. A direct message uses the other member. The all-members topic is league chat. A two-sided trade lists sent and received players.",
+  "features": [
+    "`TopicTitle_DirectMessage_UsesTheOtherMember`",
+    "`TopicTitle_AllMembers_IsLeagueChat`",
+    "`TradeSummary_TwoSides_ListsSentAndReceivedPlayers`"
+  ],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/FantasyFootball/Lyo.FantasyFootball.Web.Components.Tests/README.md"
+}

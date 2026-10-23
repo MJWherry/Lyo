@@ -1,11 +1,13 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Lyo.Media.Models;
 
 /// <summary>
-/// Extensible video codec identifier. Lookups are thread-safe. Use <see cref="Custom" /> for a codec that is not listed.
-/// Ids are codec tokens (<c>h264</c>, <c>vp9</c>), not a specific backend's encoder binary name.
+/// Extensible video codec identifier. Lookups are thread-safe. Use <see cref="Custom" /> for a codec that is not listed. Ids are codec tokens (<c>h264</c>, <c>vp9</c>), not
+/// a specific backend's encoder binary name.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record VideoEncoder
 {
     private static readonly ConcurrentDictionary<string, VideoEncoder> ById = new(StringComparer.OrdinalIgnoreCase);
@@ -20,11 +22,20 @@ public sealed record VideoEncoder
     /// <summary>VP9 (<c>vp9</c>).</summary>
     public static readonly VideoEncoder Vp9 = Create("Vp9", "vp9");
 
+    /// <summary>VP8 (<c>vp8</c>).</summary>
+    public static readonly VideoEncoder Vp8 = Create("Vp8", "vp8");
+
+    /// <summary>HEVC (<c>hevc</c>).</summary>
+    public static readonly VideoEncoder Hevc = Create("Hevc", "hevc");
+
+    /// <summary>AV1 (<c>av1</c>).</summary>
+    public static readonly VideoEncoder Av1 = Create("Av1", "av1");
+
     /// <summary>Stream copy (<c>copy</c>).</summary>
     public static readonly VideoEncoder Copy = Create("Copy", "copy");
 
     /// <summary>Every built-in encoder. Touching this list registers the static instances for lookup.</summary>
-    public static IReadOnlyList<VideoEncoder> BuiltIns { get; } = [H264, Mpeg4, Vp9, Copy];
+    public static IReadOnlyList<VideoEncoder> BuiltIns { get; } = [H264, Mpeg4, Vp9, Vp8, Hevc, Av1, Copy];
 
     /// <summary>Stable display name (e.g. <c>H264</c>).</summary>
     public string Name { get; }
@@ -57,7 +68,7 @@ public sealed record VideoEncoder
     public static VideoEncoder Custom(string id)
     {
         _ = BuiltIns;
-        return NamedCatalog.GetOrCustom(ById, id, key => new VideoEncoder(key, key));
+        return NamedCatalog.GetOrCustom(ById, id, key => new(key, key));
     }
 
     /// <inheritdoc />

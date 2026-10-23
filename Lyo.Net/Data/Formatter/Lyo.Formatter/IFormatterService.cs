@@ -6,9 +6,7 @@ namespace Lyo.Formatter;
 /// <summary>Formats SmartFormat templates with named placeholders and C#-like expressions (DateTime, ternary, in-memory LINQ).</summary>
 public interface IFormatterService
 {
-    /// <summary>
-    /// Underlying SmartFormat <see cref="SmartFormatter" /> for extensions, culture, and similar setup. Cast to SmartFormat.Core.Extensions.SmartFormatter when configuring.
-    /// </summary>
+    /// <summary>Underlying SmartFormat <see cref="SmartFormatter" /> for extensions, culture, and similar setup. Cast to SmartFormat.Core.Extensions.SmartFormatter when configuring.</summary>
     SmartFormatter Formatter { get; }
 
     /// <summary>Culture used for formatting. Null uses the current thread culture.</summary>
@@ -79,8 +77,8 @@ public interface IFormatterService
     IReadOnlyList<string> GetUnresolvedPlaceholders(string template, string formattedOutput);
 
     /// <summary>
-    /// Renders a template as ordered spans (literals and per-placeholder replacements) so UIs can color-link keys to values. Empty templates yield an empty list; invalid
-    /// syntax yields one literal span of the original text. Nested or list placeholders are one outer span keyed by the selector path (e.g. <c>Items</c>).
+    /// Renders a template as ordered spans (literals and per-placeholder replacements) so UIs can color-link keys to values. Empty templates yield an empty list; invalid syntax
+    /// yields one literal span of the original text. Nested or list placeholders are one outer span keyed by the selector path (e.g. <c>Items</c>).
     /// </summary>
     /// <param name="template">Template with placeholders.</param>
     /// <param name="context">Primary context: anonymous object, DTO, dictionary, or null.</param>

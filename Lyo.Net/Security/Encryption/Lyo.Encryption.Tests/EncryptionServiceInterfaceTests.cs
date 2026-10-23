@@ -58,14 +58,14 @@ public class EncryptionServiceInterfaceTests : IDisposable, IAsyncDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "stream-key", TestContext.Current.CancellationToken);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "stream-key", TestCt);
         IEncryptionService svc = new AesGcmEncryptionService(keyStore);
         var input = new MemoryStream(Encoding.UTF8.GetBytes("This is a long stream content to encrypt"));
         var encStream = new MemoryStream();
-        await svc.EncryptToStreamAsync(input, encStream, keyId, ct: TestContext.Current.CancellationToken);
+        await svc.EncryptToStreamAsync(input, encStream, keyId, ct: TestCt);
         encStream.Position = 0;
         var outStream = new MemoryStream();
-        await svc.DecryptToStreamAsync(encStream, outStream, keyId, ct: TestContext.Current.CancellationToken);
+        await svc.DecryptToStreamAsync(encStream, outStream, keyId, ct: TestCt);
         var result = Encoding.UTF8.GetString(outStream.ToArray());
         Assert.Equal("This is a long stream content to encrypt", result);
     }
@@ -75,14 +75,14 @@ public class EncryptionServiceInterfaceTests : IDisposable, IAsyncDisposable
     {
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "stream-key", TestContext.Current.CancellationToken);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "stream-key", TestCt);
         IEncryptionService svc = new ChaCha20Poly1305EncryptionService(keyStore);
         var input = new MemoryStream(Encoding.UTF8.GetBytes("This is a long stream content to encrypt"));
         var encStream = new MemoryStream();
-        await svc.EncryptToStreamAsync(input, encStream, keyId, ct: TestContext.Current.CancellationToken);
+        await svc.EncryptToStreamAsync(input, encStream, keyId, ct: TestCt);
         encStream.Position = 0;
         var outStream = new MemoryStream();
-        await svc.DecryptToStreamAsync(encStream, outStream, keyId, ct: TestContext.Current.CancellationToken);
+        await svc.DecryptToStreamAsync(encStream, outStream, keyId, ct: TestCt);
         var result = Encoding.UTF8.GetString(outStream.ToArray());
         Assert.Equal("This is a long stream content to encrypt", result);
     }
@@ -95,10 +95,10 @@ public class EncryptionServiceInterfaceTests : IDisposable, IAsyncDisposable
         await using var decryptor = new RsaDecryptor(priv, padding: RSAEncryptionPadding.OaepSHA256);
         var input = new MemoryStream(Encoding.UTF8.GetBytes("This is a long stream content to encrypt"));
         var encStream = new MemoryStream();
-        await encryptor.EncryptToStreamAsync(input, encStream, ct: TestContext.Current.CancellationToken);
+        await encryptor.EncryptToStreamAsync(input, encStream, ct: TestCt);
         encStream.Position = 0;
         var outStream = new MemoryStream();
-        await decryptor.DecryptToStreamAsync(encStream, outStream, ct: TestContext.Current.CancellationToken);
+        await decryptor.DecryptToStreamAsync(encStream, outStream, ct: TestCt);
         var result = Encoding.UTF8.GetString(outStream.ToArray());
         Assert.Equal("This is a long stream content to encrypt", result);
     }

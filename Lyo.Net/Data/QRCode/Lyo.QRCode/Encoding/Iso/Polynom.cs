@@ -64,9 +64,7 @@ internal sealed partial class QRIsoEncoder
         }
 
         /// <summary>Sorts the <see cref="PolynomItem" /> terms with a custom comparer.</summary>
-        /// <param name="comparer">
-        /// Compares two <see cref="PolynomItem" /> values. Negative if the first is less than the second, zero if equal, positive if the first is greater.
-        /// </param>
+        /// <param name="comparer">Compares two <see cref="PolynomItem" /> values. Negative if the first is less than the second, zero if equal, positive if the first is greater.</param>
         public void Sort(Func<PolynomItem, PolynomItem, int> comparer)
         {
             if (comparer == null)
@@ -108,9 +106,7 @@ internal sealed partial class QRIsoEncoder
             QuickSort(0, Count - 1);
         }
 
-        /// <summary>
-        /// Algebraic form of the polynomial. Example: "a^2*x^3 + a^5*x^1 + a^3*x^0" for 2x³ + 5x + 3.
-        /// </summary>
+        /// <summary>Algebraic form of the polynomial. Example: "a^2*x^3 + a^5*x^1 + a^3*x^0" for 2x³ + 5x + 3.</summary>
         public override string ToString()
         {
             var sb = new StringBuilder();

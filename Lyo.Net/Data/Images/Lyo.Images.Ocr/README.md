@@ -1,8 +1,10 @@
 # Lyo.Images.Ocr
 
-Lyo OCR contracts: `IOcrEngine`, request/response models, Y-up pixel boxes (same as [`BoundingBox2D`](../../../Core/Common/Lyo.Common.Core/Records/BoundingBox2D.cs)), coordinate helpers, and shared `OcrEngineOptions`.
+Lyo OCR contracts: `IOcrEngine`, request/response models, Y-up pixel boxes (same as [`BoundingBox2D`](../../../Core/Common/Lyo.Common.Core/Records/BoundingBox2D.cs)), coordinate
+helpers, and shared `OcrEngineOptions`.
 
-Concrete engines (e.g. `Lyo.Images.Ocr.Tesseract`) register `IOcrEngine`. This package only registers cross-provider options through `AddOcrEngineOptions` / `AddOcrEngineOptionsFromConfiguration`.
+Concrete engines (e.g. `Lyo.Images.Ocr.Tesseract`) register `IOcrEngine`. This package only registers cross-provider options through `AddOcrEngineOptions` /
+`AddOcrEngineOptionsFromConfiguration`.
 
 ## Examples
 
@@ -29,22 +31,23 @@ services.AddOcrEngineOptionsFromConfiguration(builder.Configuration);
 
 ## Types
 
-| Type | Description |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `IOcrEngine` | `ReadAsync(Stream imageStream, OcrReadRequest?, CancellationToken) → Task<Result<OcrPageResult>>`. OCR on an encoded raster stream (PNG/JPEG/etc.). |
-| `OcrReadRequest` | Optional overrides for one call: `Languages`, `PageSegmentationMode`, `MinimumConfidencePercent`. |
-| `OcrPageResult` | `FullText`, `Words` (pixel Y-up bounding boxes), `Lines` (grouped), `ImageWidth`, `ImageHeight`. |
-| `OcrWord` / `OcrLine` | Word and line records in `OcrPageResult`. `OcrWord.BoundingBoxPixels` is a `BoundingBox2D` (Y-up). |
-| `OcrEngineOptions` | `EnableMetrics`, `DefaultLanguages` (default `"eng"`), `DefaultPageSegmentationMode` (default `SparseTextOsd`); `SectionName = "OcrEngine"`. |
-| `OcrPageSegmentationMode` | Layout modes that do not depend on a provider (`AutoOsd`, `Auto`, `SingleColumn`, `SingleBlock`, `SingleLine`, `SingleWord`, `CircleWord`, `SingleChar`, `SparseTextOsd`, …). |
-| `OcrCoordinateTransforms` | `FromTopLeftDownwardRect`, `MapPixelBoxToPdfPoints`, and other helpers that convert among raster, Y-up pixel, and PDF point coordinates. |
-| `OcrLineGrouper` | Turns `OcrWord` results into `OcrLine` rows. |
-| `OcrMetrics` / `OcrErrorCodes` | Shared metric names and error codes for engines. |
-| `OcrServiceCollectionExtensions` | Container helpers: `AddOcrEngineOptions(Action<OcrEngineOptions>?)`, `AddOcrEngineOptionsFromConfiguration(IConfiguration, sectionName?)`. |
+| Type                             | Description                                                                                                                                                                   |
+|----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `IOcrEngine`                     | `ReadAsync(Stream imageStream, OcrReadRequest?, CancellationToken) → Task<Result<OcrPageResult>>`. OCR on an encoded raster stream (PNG/JPEG/etc.).                           |
+| `OcrReadRequest`                 | Optional overrides for one call: `Languages`, `PageSegmentationMode`, `MinimumConfidencePercent`.                                                                             |
+| `OcrPageResult`                  | `FullText`, `Words` (pixel Y-up bounding boxes), `Lines` (grouped), `ImageWidth`, `ImageHeight`.                                                                              |
+| `OcrWord` / `OcrLine`            | Word and line records in `OcrPageResult`. `OcrWord.BoundingBoxPixels` is a `BoundingBox2D` (Y-up).                                                                            |
+| `OcrEngineOptions`               | `EnableMetrics`, `DefaultLanguages` (default `"eng"`), `DefaultPageSegmentationMode` (default `SparseTextOsd`); `SectionName = "OcrEngine"`.                                  |
+| `OcrPageSegmentationMode`        | Layout modes that do not depend on a provider (`AutoOsd`, `Auto`, `SingleColumn`, `SingleBlock`, `SingleLine`, `SingleWord`, `CircleWord`, `SingleChar`, `SparseTextOsd`, …). |
+| `OcrCoordinateTransforms`        | `FromTopLeftDownwardRect`, `MapPixelBoxToPdfPoints`, and other helpers that convert among raster, Y-up pixel, and PDF point coordinates.                                      |
+| `OcrLineGrouper`                 | Turns `OcrWord` results into `OcrLine` rows.                                                                                                                                  |
+| `OcrMetrics` / `OcrErrorCodes`   | Shared metric names and error codes for engines.                                                                                                                              |
+| `OcrServiceCollectionExtensions` | Container helpers: `AddOcrEngineOptions(Action<OcrEngineOptions>?)`, `AddOcrEngineOptionsFromConfiguration(IConfiguration, sectionName?)`.                                    |
 
 ## How boxes are oriented
 
-- `OcrWord.BoundingBoxPixels` is Y-up: origin at the image bottom-left, so `Top` &gt; `Bottom` and `Height = Top - Bottom` matches [`BoundingBox2D`](../../../Core/Common/Lyo.Common.Core/Records/BoundingBox2D.cs).
+- `OcrWord.BoundingBoxPixels` is Y-up: origin at the image bottom-left, so `Top` &gt; `Bottom` and `Height = Top - Bottom` matches [
+  `BoundingBox2D`](../../../Core/Common/Lyo.Common.Core/Records/BoundingBox2D.cs).
 - `OcrCoordinateTransforms.FromTopLeftDownwardRect` converts typical top-left raster rects (e.g. Tesseract) into this form.
 - For a PDF overlay on a rendered page, call `OcrCoordinateTransforms.MapPixelBoxToPdfPoints` (see `Lyo.Pdf.Ocr`).
 

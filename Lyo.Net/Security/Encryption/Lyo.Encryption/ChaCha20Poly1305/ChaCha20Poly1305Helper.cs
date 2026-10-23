@@ -50,7 +50,7 @@ public static class ChaCha20Poly1305Helper
                     tlen = chacha.ProcessBytes(pb, 0, plaintext.Length, outBuf, 0);
                 }
                 finally {
-                    ArrayPool<byte>.Shared.Return(pb, clearArray: true);
+                    ArrayPool<byte>.Shared.Return(pb, true);
                 }
             }
 
@@ -61,7 +61,7 @@ public static class ChaCha20Poly1305Helper
             outBuf.AsSpan(plaintext.Length, TagSize).CopyTo(tag);
         }
         finally {
-            ArrayPool<byte>.Shared.Return(outBuf, clearArray: true);
+            ArrayPool<byte>.Shared.Return(outBuf, true);
         }
 #endif
     }
@@ -100,7 +100,7 @@ public static class ChaCha20Poly1305Helper
                     outBuf.AsSpan(0, len).CopyTo(plaintext);
                 }
                 finally {
-                    ArrayPool<byte>.Shared.Return(outBuf, clearArray: true);
+                    ArrayPool<byte>.Shared.Return(outBuf, true);
                 }
             }
             catch (InvalidCipherTextException ex) {
@@ -108,7 +108,7 @@ public static class ChaCha20Poly1305Helper
             }
         }
         finally {
-            ArrayPool<byte>.Shared.Return(combined, clearArray: true);
+            ArrayPool<byte>.Shared.Return(combined, true);
         }
 #endif
     }

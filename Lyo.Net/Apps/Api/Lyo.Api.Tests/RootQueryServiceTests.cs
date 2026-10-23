@@ -20,7 +20,7 @@ public sealed class RootQueryServiceTests : IAsyncDisposable
     private readonly IRootQueryService<RootQueryTestDbContext> _service;
     private readonly ServiceProvider _services;
 
-    private CancellationToken Ct => TestContext.Current.CancellationToken;
+    private CancellationToken Ct => TestCt;
 
     public RootQueryServiceTests()
     {
@@ -89,6 +89,7 @@ public sealed class RootQueryServiceTests : IAsyncDisposable
             .AddSelects("p.FirstName", "c.StartDate")
             .SetPagination(0, 50)
             .Build();
+
         var res = await _service.QueryAsync(req, _registry, Ct);
         Assert.True(res.IsSuccess, res.Error?.Detail);
         Assert.Equal(2, res.Items!.Count);
@@ -110,6 +111,7 @@ public sealed class RootQueryServiceTests : IAsyncDisposable
             .AddSelects("p.FirstName", "c.StartDate")
             .SetPagination(0, 50)
             .Build();
+
         var res = await _service.QueryAsync(req, _registry, Ct);
         Assert.True(res.IsSuccess, res.Error?.Detail);
         Assert.Equal(3, res.Items!.Count);

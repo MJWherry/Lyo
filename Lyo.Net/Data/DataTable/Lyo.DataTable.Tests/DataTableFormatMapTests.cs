@@ -1,5 +1,3 @@
-using Lyo.DataTable.Models;
-
 namespace Lyo.DataTable.Models.Tests;
 
 public sealed class DataTableFormatMapTests

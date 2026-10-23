@@ -1,0 +1,43 @@
+<MudStack Spacing="1">
+    <MudText Typo="Typo.subtitle2">Ingredients</MudText>
+    <LyoReorderList TItem="RecipeIngredientLineReq" Items="Lines" SectionLabel="@(line => line.GroupLabel)" OnDelete="Remove" Changed="Changed">
+        <ItemContent Context="line">
+            <MudStack Spacing="1">
+                <MudAutocomplete T="string"
+                                 Value="@IngredientLabel(line)"
+                                 ValueChanged="@(value => OnIngredientChanged(line, value))"
+                                 SearchFunc="SearchIngredients"
+                                 Label="Ingredient"
+                                 Margin="Margin.Dense"
+                                 Variant="Variant.Text"
+                                 CoerceText="true"
+                                 ResetValueOnEmptyText="true"
+                                 Clearable="true"
+                                 Dense="true"/>
+                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                    <MudNumericField T="decimal?" @bind-Value="line.Quantity" Label="Qty" Margin="Margin.Dense" Style="max-width: 6rem;"/>
+                    <div style="min-width: 8rem; flex: 1;">
+                        <RecipeUnitField Value="@line.Unit" ValueChanged="@(unit => line.Unit = unit)" Units="Units"/>
+                    </div>
+                    <MudCheckBox @bind-Value="line.IsOptional" Label="Optional" Dense="true" Size="Size.Small"/>
+                </MudStack>
+                <MudTextField @bind-Value="line.Preparation" Label="Preparation" Margin="Margin.Dense"/>
+                <MudTextField @bind-Value="line.GroupLabel" Label="Group" Margin="Margin.Dense"/>
+                @if (Steps.Count > 0) {
+                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">Used in</MudText>
+                        @foreach (var (step, index) in Steps.Select((row, i) => (row, i))) {
+                            var selected = line.StepIds.Contains(step.Id);
+                            <MudChip T="string" Size="Size.Small" Variant="@(selected ? Variant.Filled : Variant.Outlined)"
+                                     Color="@(selected ? Color.Primary : Color.Default)"
+                                     OnClick="@(() => ToggleStep(line, step.Id))">
+                                @(index + 1)
+                            </MudChip>
+                        }
+                    </MudStack>
+                }
+            </MudStack>
+        </ItemContent>
+    </LyoReorderList>
+    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="Add">Add ingredient</MudButton>
+</MudStack>

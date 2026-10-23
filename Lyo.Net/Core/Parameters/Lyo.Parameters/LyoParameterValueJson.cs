@@ -7,8 +7,8 @@ using Lyo.Common.Metadata.Records;
 namespace Lyo.Parameters;
 
 /// <summary>
-/// Converts loose parameter text into the JSON a declared type accepts. Reporting stores JSON-encoded values while jobs store what the user typed, so both spellings of a scalar
-/// land in the same place: <c>2026-01-01</c> and <c>"2026-01-01"</c> are both a legitimate <c>DateTime</c>.
+/// Converts loose parameter text into the JSON a declared type accepts. Reporting stores JSON-encoded values while jobs store what the user typed, so both spellings of a
+/// scalar land in the same place: <c>2026-01-01</c> and <c>"2026-01-01"</c> are both a legitimate <c>DateTime</c>.
 /// </summary>
 /// <remarks>
 /// <see cref="LyoParameterValidator" /> and <see cref="LyoParameterDefaults" /> both go through here, so a rendered expression default is stored in the same spelling the
@@ -110,8 +110,7 @@ public static class LyoParameterValueJson
     private static bool AllowsScalarLeniency(string? type)
     {
         var info = LyoTypeInfo.FromName(type);
-        return info.IsScalar
-            && info.EditorKind is not (LyoTypeEditorKind.JsonObject or LyoTypeEditorKind.JsonArray or LyoTypeEditorKind.Collection or LyoTypeEditorKind.Xml
-                or LyoTypeEditorKind.Formatter);
+        return info.IsScalar && info.EditorKind is not (LyoTypeEditorKind.JsonObject or LyoTypeEditorKind.JsonArray or LyoTypeEditorKind.Collection or LyoTypeEditorKind.Xml
+            or LyoTypeEditorKind.Formatter);
     }
 }

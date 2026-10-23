@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Email.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,7 +22,7 @@ public class EmailPostgresExtensionsTests
     public void AddEmailDbContext_WithNullConnectionString_ThrowsArgumentNullException()
     {
         var services = new ServiceCollection();
-        var ex = Assert.Throws<ArgumentNullException>(() => services.AddEmailDbContext((string)null!));
+        var ex = Assert.Throws<ArgumentNullException>(() => services.AddEmailDbContext(null!));
         Assert.Equal("connectionString", ex.ParamName);
     }
 
@@ -53,8 +54,8 @@ public class EmailPostgresExtensionsTests
     public async Task DbContext_CanConnectAndQuerySchema()
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<EmailDbContext>>();
-        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var canConnect = await context.Database.CanConnectAsync(TestContext.Current.CancellationToken);
+        await using var context = await factory.CreateDbContextAsync(TestCt);
+        var canConnect = await context.Database.CanConnectAsync(TestCt);
         Assert.True(canConnect);
     }
 
@@ -62,8 +63,8 @@ public class EmailPostgresExtensionsTests
     public async Task DbContext_MigrationsApplied_SchemaExists()
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<EmailDbContext>>();
-        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var pending = await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken);
+        await using var context = await factory.CreateDbContextAsync(TestCt);
+        var pending = await context.Database.GetPendingMigrationsAsync(TestCt);
         Assert.Empty(pending);
     }
 
@@ -71,7 +72,7 @@ public class EmailPostgresExtensionsTests
     public async Task DbContext_CanInsertAndRetrieveOutboundLog_WithTextHtmlPathAndAttachments()
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<EmailDbContext>>();
-        var id = Guid.NewGuid();
+        var id = LyoGuid.CreateV7();
         var sent = DateTime.UtcNow;
         var entity = new EmailLogEntity {
             Id = id,
@@ -88,7 +89,7 @@ public class EmailPostgresExtensionsTests
             MessageId = "<id@example.com>",
             SentTimestamp = sent,
             Attachments = {
-                new EmailAttachmentLogEntity {
+                new() {
                     FileName = "invoice.pdf",
                     ContentType = "application/pdf",
                     SizeBytes = 1024,
@@ -98,14 +99,13 @@ public class EmailPostgresExtensionsTests
             }
         };
 
-        await using (var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
+        await using (var context = await factory.CreateDbContextAsync(TestCt)) {
             context.EmailLogs.Add(entity);
-            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+            await context.SaveChangesAsync(TestCt);
         }
 
-        await using (var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
-            var retrieved = await context.EmailLogs.Include(e => e.Attachments).AsNoTracking()
-                .SingleAsync(e => e.Id == id, TestContext.Current.CancellationToken);
+        await using (var context = await factory.CreateDbContextAsync(TestCt)) {
+            var retrieved = await context.EmailLogs.Include(e => e.Attachments).AsNoTracking().SingleAsync(e => e.Id == id, TestCt);
             Assert.Equal(EmailDirection.Outbound, retrieved.Direction);
             Assert.Equal("sender@example.com", retrieved.FromAddress);
             Assert.Equal("Plain text body", retrieved.TextBody);
@@ -126,7 +126,7 @@ public class EmailPostgresExtensionsTests
     public async Task DbContext_CanInsertAndRetrieveInboundLog()
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<EmailDbContext>>();
-        var id = Guid.NewGuid();
+        var id = LyoGuid.CreateV7();
         var received = DateTime.UtcNow;
         var entity = new EmailLogEntity {
             Id = id,
@@ -139,13 +139,13 @@ public class EmailPostgresExtensionsTests
             ReceivedTimestamp = received
         };
 
-        await using (var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
+        await using (var context = await factory.CreateDbContextAsync(TestCt)) {
             context.EmailLogs.Add(entity);
-            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+            await context.SaveChangesAsync(TestCt);
         }
 
-        await using (var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
-            var retrieved = await context.EmailLogs.AsNoTracking().SingleAsync(e => e.Id == id, TestContext.Current.CancellationToken);
+        await using (var context = await factory.CreateDbContextAsync(TestCt)) {
+            var retrieved = await context.EmailLogs.AsNoTracking().SingleAsync(e => e.Id == id, TestCt);
             Assert.Equal(EmailDirection.Inbound, retrieved.Direction);
             Assert.Equal("Can you help?", retrieved.TextBody);
             Assert.NotNull(retrieved.ReceivedTimestamp);
@@ -157,7 +157,7 @@ public class EmailPostgresExtensionsTests
     public async Task DbContext_CanStoreFailedOutboundLog()
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<EmailDbContext>>();
-        var id = Guid.NewGuid();
+        var id = LyoGuid.CreateV7();
         var entity = new EmailLogEntity {
             Id = id,
             Direction = EmailDirection.Outbound,
@@ -167,13 +167,13 @@ public class EmailPostgresExtensionsTests
             ErrorMessage = "SMTP connection failed"
         };
 
-        await using (var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
+        await using (var context = await factory.CreateDbContextAsync(TestCt)) {
             context.EmailLogs.Add(entity);
-            await context.SaveChangesAsync(TestContext.Current.CancellationToken);
+            await context.SaveChangesAsync(TestCt);
         }
 
-        await using (var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken)) {
-            var retrieved = await context.EmailLogs.FindAsync([id], TestContext.Current.CancellationToken);
+        await using (var context = await factory.CreateDbContextAsync(TestCt)) {
+            var retrieved = await context.EmailLogs.FindAsync([id], TestCt);
             Assert.NotNull(retrieved);
             Assert.False(retrieved.IsSuccess);
             Assert.Equal("SMTP connection failed", retrieved.ErrorMessage);

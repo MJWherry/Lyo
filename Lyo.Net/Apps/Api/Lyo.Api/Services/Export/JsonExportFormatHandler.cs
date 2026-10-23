@@ -1,31 +1,43 @@
 using System.Reflection;
-using System.Text.Json;
 using Lyo.Api.Models.Enums;
-using Microsoft.AspNetCore.Http.Json;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
+using Lyo.Json;
 
 namespace Lyo.Api.Services.Export;
 
-/// <summary>Built-in handler for the JSON export format.</summary>
-public sealed class JsonExportFormatHandler(IServiceProvider serviceProvider) : IExportFormatHandler
+/// <summary>Built-in handler for the JSON export format. Writes through <see cref="IJsonService" />.</summary>
+public sealed class JsonExportFormatHandler(IJsonService json) : IExportFormatHandler
 {
+    /// <inheritdoc />
     public ExportFormat Format => ExportFormat.Json;
 
-    public Task<(Stream Stream, string ContentType, string FileName)> WriteProjectedAsync(
+    /// <inheritdoc />
+    public async Task<(Stream Stream, string ContentType, string FileName)> WriteProjectedAsync(
         IReadOnlyList<object?> items,
         Dictionary<string, Func<object?, string>>? formatters,
         CancellationToken ct)
-        => Task.FromResult(WriteJson(items));
-
-    public Task<(Stream Stream, string ContentType, string FileName)> WriteTypedAsync<T>(IReadOnlyList<T> items, Dictionary<string, PropertyInfo>? columns, CancellationToken ct)
-        => Task.FromResult(WriteJson(items));
-
-    private (Stream Stream, string ContentType, string FileName) WriteJson<T>(IEnumerable<T> items)
     {
-        var serializerOptions = serviceProvider.GetService<IOptions<JsonOptions>>()?.Value.SerializerOptions;
         var stream = new MemoryStream();
-        JsonSerializer.Serialize(stream, items, serializerOptions ?? JsonSerializerOptions.Default);
+        if (formatters is not null)
+            await json.ExportFormattedToJsonAsync(items, formatters, stream, ct).ConfigureAwait(false);
+        else
+            await json.ExportToJsonAsync(items, stream, ct).ConfigureAwait(false);
+
+        stream.Position = 0;
+        return (stream, Format.FileType.MimeType, Format.DefaultFileName);
+    }
+
+    /// <inheritdoc />
+    public async Task<(Stream Stream, string ContentType, string FileName)> WriteTypedAsync<T>(
+        IReadOnlyList<T> items,
+        Dictionary<string, PropertyInfo>? columns,
+        CancellationToken ct)
+    {
+        var stream = new MemoryStream();
+        if (columns is not null)
+            await json.ExportColumnsToJsonAsync(items, columns, stream, ct).ConfigureAwait(false);
+        else
+            await json.ExportToJsonAsync(items, stream, ct).ConfigureAwait(false);
+
         stream.Position = 0;
         return (stream, Format.FileType.MimeType, Format.DefaultFileName);
     }

@@ -27,8 +27,8 @@ public sealed class QueueWorkerBaseTests
     public async Task StartAsync_QueuedMessages_ProcessesThem()
     {
         using var mq = new InMemoryMqService();
-        await mq.ConnectAsync(TestContext.Current.CancellationToken);
-        await mq.CreateQueue("worker-test", ct: TestContext.Current.CancellationToken);
+        await mq.ConnectAsync(TestCt);
+        await mq.CreateQueue("worker-test", ct: TestCt);
         var request1 = new { Id = "a1", Payload = "first" };
         var request2 = new { Id = "a2", Payload = "second" };
         await mq.SendToQueue("worker-test", JsonSerializer.SerializeToUtf8Bytes(request1));
@@ -39,7 +39,7 @@ public sealed class QueueWorkerBaseTests
         for (var i = 0; i < 50 && worker.ProcessedRequests.Count < 2; i++)
             await Task.Delay(50, cts.Token);
 
-        await worker.StopAsync(TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestCt);
         Assert.Equal(2, worker.ProcessedRequests.Count);
         Assert.Equal("a1", worker.ProcessedRequests[0].Id);
         Assert.Equal("first", worker.ProcessedRequests[0].Payload);
@@ -53,7 +53,7 @@ public sealed class QueueWorkerBaseTests
         using var mq = new InMemoryMqService();
         var worker = new TestQueueWorker(mq, "q");
         worker.Dispose();
-        Assert.Throws<ObjectDisposedException>(() => worker.StartAsync(TestContext.Current.CancellationToken).GetAwaiter().GetResult());
+        Assert.Throws<ObjectDisposedException>(() => worker.StartAsync(TestCt).GetAwaiter().GetResult());
     }
 
     [Fact]
@@ -68,8 +68,8 @@ public sealed class QueueWorkerBaseTests
     public async Task StartAsync_EnvelopeMessage_ProcessesPayload()
     {
         using var mq = new InMemoryMqService();
-        await mq.ConnectAsync(TestContext.Current.CancellationToken);
-        await mq.CreateQueue("envelope-test", ct: TestContext.Current.CancellationToken);
+        await mq.ConnectAsync(TestCt);
+        await mq.CreateQueue("envelope-test", ct: TestCt);
         var envelope = new QueueMessageEnvelope<TestRequest>(new("e1", "envelope-payload"), 0, "msg-1");
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         await mq.SendToQueue("envelope-test", JsonSerializer.SerializeToUtf8Bytes(envelope, options));
@@ -79,7 +79,7 @@ public sealed class QueueWorkerBaseTests
         for (var i = 0; i < 50 && worker.ProcessedRequests.Count < 1; i++)
             await Task.Delay(50, cts.Token);
 
-        await worker.StopAsync(TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestCt);
         Assert.Single(worker.ProcessedRequests);
         Assert.Equal("e1", worker.ProcessedRequests[0].Id);
         Assert.Equal("envelope-payload", worker.ProcessedRequests[0].Payload);
@@ -89,8 +89,8 @@ public sealed class QueueWorkerBaseTests
     public async Task StartAsync_MalformedEnvelopeMetadata_AutocorrectsPayload()
     {
         using var mq = new InMemoryMqService();
-        await mq.ConnectAsync(TestContext.Current.CancellationToken);
-        await mq.CreateQueue("autocorrect-test", ct: TestContext.Current.CancellationToken);
+        await mq.ConnectAsync(TestCt);
+        await mq.CreateQueue("autocorrect-test", ct: TestCt);
 
         // EnqueuedAt is not a valid DateTime, so whole-envelope deserialize fails — the Payload element can still be recovered.
         const string json = """{"Payload":{"Id":"a1","Payload":"autocorrected"},"RequeueCount":2,"MessageId":"m-1","EnqueuedAt":"not-a-date"}""";
@@ -101,7 +101,7 @@ public sealed class QueueWorkerBaseTests
         for (var i = 0; i < 50 && worker.ProcessedRequests.Count < 1; i++)
             await Task.Delay(50, cts.Token);
 
-        await worker.StopAsync(TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestCt);
         Assert.Single(worker.ProcessedRequests);
         Assert.Equal("a1", worker.ProcessedRequests[0].Id);
         Assert.Equal("autocorrected", worker.ProcessedRequests[0].Payload);
@@ -111,8 +111,8 @@ public sealed class QueueWorkerBaseTests
     public async Task Handle_GarbageJson_RoutesToDlq()
     {
         using var mq = new InMemoryMqService();
-        await mq.ConnectAsync(TestContext.Current.CancellationToken);
-        await mq.CreateQueue("poison-test", ct: TestContext.Current.CancellationToken);
+        await mq.ConnectAsync(TestCt);
+        await mq.CreateQueue("poison-test", ct: TestCt);
         await mq.SendToQueue("poison-test", Encoding.UTF8.GetBytes("this is not json"));
         using var worker = new ConfigurableTestQueueWorker(mq, "poison-test", (r, _) => Result<TestRequest>.Success(r), dlqName: "poison-test.dlq");
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
@@ -123,7 +123,7 @@ public sealed class QueueWorkerBaseTests
             dlq = await mq.PeekQueueMessages("poison-test.dlq", ct: cts.Token);
         }
 
-        await worker.StopAsync(TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestCt);
         Assert.Single(dlq);
         Assert.Equal("this is not json", dlq[0].Payload);
         Assert.Equal(0, worker.CallCount);
@@ -133,8 +133,8 @@ public sealed class QueueWorkerBaseTests
     public async Task Handle_ThrownException_RetriesThenDlq()
     {
         using var mq = new InMemoryMqService();
-        await mq.ConnectAsync(TestContext.Current.CancellationToken);
-        await mq.CreateQueue("throw-test", ct: TestContext.Current.CancellationToken);
+        await mq.ConnectAsync(TestCt);
+        await mq.CreateQueue("throw-test", ct: TestCt);
         await mq.SendToQueue("throw-test", Encoding.UTF8.GetBytes("{\"Id\":\"x\",\"Payload\":\"y\"}"));
         using var worker = new ConfigurableTestQueueWorker(mq, "throw-test", (_, _) => throw new InvalidOperationException("boom"), 3, "throw-test.dlq");
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
@@ -145,7 +145,7 @@ public sealed class QueueWorkerBaseTests
             dlq = await mq.PeekQueueMessages("throw-test.dlq", ct: cts.Token);
         }
 
-        await worker.StopAsync(TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestCt);
 
         // First try plus three counted requeues, then DLQ — the broker must not loop forever.
         Assert.Equal(4, worker.CallCount);
@@ -156,8 +156,8 @@ public sealed class QueueWorkerBaseTests
     public async Task Handle_FailureResult_RetriesThenDlq()
     {
         using var mq = new InMemoryMqService();
-        await mq.ConnectAsync(TestContext.Current.CancellationToken);
-        await mq.CreateQueue("fail-test", ct: TestContext.Current.CancellationToken);
+        await mq.ConnectAsync(TestCt);
+        await mq.CreateQueue("fail-test", ct: TestCt);
         await mq.SendToQueue("fail-test", Encoding.UTF8.GetBytes("{\"Id\":\"x\",\"Payload\":\"y\"}"));
         using var worker = new ConfigurableTestQueueWorker(mq, "fail-test", (_, _) => Result<TestRequest>.Failure("nope", "TestFailure"), 3, "fail-test.dlq");
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
@@ -168,7 +168,7 @@ public sealed class QueueWorkerBaseTests
             dlq = await mq.PeekQueueMessages("fail-test.dlq", ct: cts.Token);
         }
 
-        await worker.StopAsync(TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestCt);
         Assert.Equal(4, worker.CallCount);
         Assert.Single(dlq);
     }
@@ -177,8 +177,8 @@ public sealed class QueueWorkerBaseTests
     public async Task Handle_FailureResult_UsesOptionsMaxRequeue()
     {
         using var mq = new InMemoryMqService();
-        await mq.ConnectAsync(TestContext.Current.CancellationToken);
-        await mq.CreateQueue("options-test", ct: TestContext.Current.CancellationToken);
+        await mq.ConnectAsync(TestCt);
+        await mq.CreateQueue("options-test", ct: TestCt);
         await mq.SendToQueue("options-test", Encoding.UTF8.GetBytes("{\"Id\":\"x\",\"Payload\":\"y\"}"));
         using var worker = new ConfigurableTestQueueWorker(
             mq, "options-test", (_, _) => Result<TestRequest>.Failure("nope", "TestFailure"), null, "options-test.dlq", new() { DefaultMaxRequeueCount = 2, RequeueDelay = null });
@@ -191,7 +191,7 @@ public sealed class QueueWorkerBaseTests
             dlq = await mq.PeekQueueMessages("options-test.dlq", ct: cts.Token);
         }
 
-        await worker.StopAsync(TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestCt);
 
         // First try plus two counted requeues from QueueWorkerOptions.DefaultMaxRequeueCount.
         Assert.Equal(3, worker.CallCount);
@@ -202,8 +202,8 @@ public sealed class QueueWorkerBaseTests
     public async Task Handle_FailureResult_SpacesRetriesByDelay()
     {
         using var mq = new InMemoryMqService();
-        await mq.ConnectAsync(TestContext.Current.CancellationToken);
-        await mq.CreateQueue("delay-test", ct: TestContext.Current.CancellationToken);
+        await mq.ConnectAsync(TestCt);
+        await mq.CreateQueue("delay-test", ct: TestCt);
         await mq.SendToQueue("delay-test", Encoding.UTF8.GetBytes("{\"Id\":\"x\",\"Payload\":\"y\"}"));
         var attemptTimes = new List<DateTime>();
         using var worker = new ConfigurableTestQueueWorker(
@@ -217,7 +217,7 @@ public sealed class QueueWorkerBaseTests
         for (var i = 0; i < 100 && worker.CallCount < 3; i++)
             await Task.Delay(50, cts.Token);
 
-        await worker.StopAsync(TestContext.Current.CancellationToken);
+        await worker.StopAsync(TestCt);
         Assert.Equal(3, attemptTimes.Count);
 
         // Linear backoff: attempt 2 waits about 1x the base delay, attempt 3 about 2x. Allow scheduling slack but require a real gap.

@@ -4,8 +4,8 @@ using Lyo.Common.Metadata.Records;
 namespace Lyo.Api;
 
 /// <summary>
-/// MIME types used by <see cref="LyoApiCompressionExtensions.AddLyoApiCompression" />. Compresses every content type except payloads that are already compressed
-/// (images other than SVG, audio, video, archives, Open XML Office documents, and PDF).
+/// MIME types used by <see cref="LyoApiCompressionExtensions.AddLyoApiCompression" />. Compresses every content type except payloads that are already compressed (images
+/// other than SVG, audio, video, archives, Open XML Office documents, and PDF).
 /// </summary>
 public static class LyoApiCompressionDefaults
 {
@@ -19,11 +19,9 @@ public static class LyoApiCompressionDefaults
     {
         var excluded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var type in FileTypeInfo.All) {
-            var skip = type.Category is FileTypeCategory.Compressed or FileTypeCategory.Audio or FileTypeCategory.Video or FileTypeCategory.PackageManager
-                || (type.Category == FileTypeCategory.Images && type != FileTypeInfo.Svg)
-                || type == FileTypeInfo.Pdf
-                || type == FileTypeInfo.Docx
-                || type == FileTypeInfo.Xlsx;
+            var skip = type.Category is FileTypeCategory.Compressed or FileTypeCategory.Audio or FileTypeCategory.Video or FileTypeCategory.PackageManager ||
+                (type.Category == FileTypeCategory.Images && type != FileTypeInfo.Svg) || type == FileTypeInfo.Pdf || type == FileTypeInfo.Docx || type == FileTypeInfo.Xlsx;
+
             if (!skip)
                 continue;
 
@@ -33,6 +31,6 @@ public static class LyoApiCompressionDefaults
         }
 
         excluded.Remove(FileTypeInfo.Unknown.MimeType);
-        return [..excluded];
+        return [.. excluded];
     }
 }

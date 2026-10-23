@@ -26,8 +26,8 @@ internal sealed partial class QRIsoEncoder
         /// <param name="other"><see cref="Point" /> to compare with this instance.</param>
         /// <returns>True when both points share the same X and Y; otherwise false.</returns>
         /// <remarks>
-        /// Without this <see cref="IEquatable{T}.Equals(T)" /> implementation, methods such as <see cref="List{T}.Contains(T)" /> fall back to reflection, which allocates
-        /// during <see cref="FieldInfo.GetValue(object)" />.
+        /// Without this <see cref="IEquatable{T}.Equals(T)" /> implementation, methods such as <see cref="List{T}.Contains(T)" /> fall back to reflection, which allocates during
+        /// <see cref="FieldInfo.GetValue(object)" />.
         /// </remarks>
         public bool Equals(Point other) => X == other.X && Y == other.Y;
 

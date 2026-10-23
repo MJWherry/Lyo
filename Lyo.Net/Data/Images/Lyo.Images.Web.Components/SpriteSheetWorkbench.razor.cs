@@ -1,10 +1,10 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Images.Models;
 using Lyo.Images.Sprite;
 using Lyo.Images.Sprite.Models;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
 using Lyo.Web.Components.Models;
+using Lyo.Web.Primitives;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using MudBlazor;
@@ -286,7 +286,7 @@ public partial class SpriteSheetWorkbench : IAsyncDisposable
                 return;
             }
 
-            entry = new(Guid.NewGuid(), file);
+            entry = new(LyoGuid.CreateV7(), file);
             _animatorSheets.Add(entry);
             _selectedAnimatorSheetId = entry.Id;
             await LoadAnimatorSheetCoreAsync(file);

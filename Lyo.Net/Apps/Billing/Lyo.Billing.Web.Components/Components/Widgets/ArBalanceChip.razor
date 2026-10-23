@@ -1,0 +1,8 @@
+@namespace Lyo.Billing.Web.Components.Components.Widgets
+
+@if (_loading) {
+    <LyoChip Spec="@LyoChips.Of("AR…")"/>
+}
+else {
+    <LyoChip Spec="@LyoChips.Of($"AR {BillingMoney.Format(_balance, Currency)}", _balance == 0 ? Color.Success : Color.Warning)"/>
+}

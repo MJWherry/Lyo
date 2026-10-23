@@ -14,7 +14,10 @@ public sealed class Grid : Control
     /// <summary>Number of equal columns when <see cref="TemplateColumns" /> is not a CSS track list. Default 2.</summary>
     public int ColumnCount { get; set; } = 2;
 
-    /// <summary>Optional CSS <c>grid-template-columns</c> override (for example <c>1fr 2fr</c> or <c>repeat(auto-fit, minmax(220px, 1fr))</c>). Empty or a bare integer uses <see cref="ColumnCount" />.</summary>
+    /// <summary>
+    /// Optional CSS <c>grid-template-columns</c> override (for example <c>1fr 2fr</c> or <c>repeat(auto-fit, minmax(220px, 1fr))</c>). Empty or a bare integer uses
+    /// <see cref="ColumnCount" />.
+    /// </summary>
     public string? TemplateColumns { get; set; }
 
     /// <summary>CSS gap. Paint uses 16px when unset.</summary>
@@ -52,15 +55,11 @@ public sealed class Grid : Control
 
     private static bool LooksLikeCssTrackList(string value)
     {
-        if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _))
+        if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var _))
             return false;
 
         var lower = value.ToLowerInvariant();
-        return lower.Contains("fr", StringComparison.Ordinal)
-            || lower.Contains("repeat(", StringComparison.Ordinal)
-            || lower.Contains("minmax(", StringComparison.Ordinal)
-            || lower.Contains("px", StringComparison.Ordinal)
-            || lower.Contains("%", StringComparison.Ordinal)
-            || lower.Contains("auto", StringComparison.Ordinal);
+        return lower.Contains("fr", StringComparison.Ordinal) || lower.Contains("repeat(", StringComparison.Ordinal) || lower.Contains("minmax(", StringComparison.Ordinal) ||
+            lower.Contains("px", StringComparison.Ordinal) || lower.Contains("%", StringComparison.Ordinal) || lower.Contains("auto", StringComparison.Ordinal);
     }
 }

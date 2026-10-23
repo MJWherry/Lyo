@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.IO.Temp.Models;
 
@@ -7,7 +8,7 @@ namespace Lyo.IO.Temp.Tests;
 public sealed class IOTempFileGeneratorTests
 {
     private static IOTempServiceOptions GetTestOptions()
-        => new() { TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-temp-tests"), DirectoryName = Guid.NewGuid().ToString("N") };
+        => new() { TempRoot = Path.Combine(Path.GetTempPath(), "lyo-io-temp-tests"), DirectoryName = LyoGuid.CreateV7().ToString("N") };
 
     [Fact]
     public void Session_Exposes_Generator()
@@ -113,7 +114,7 @@ public sealed class IOTempFileGeneratorTests
         try {
             using var service = new IOTempService(options);
             await using var session = service.CreateSession();
-            var path = await session.Generator.CreateRandomFileAsync(2048, null, TestContext.Current.CancellationToken);
+            var path = await session.Generator.CreateRandomFileAsync(2048, null, TestCt);
             Assert.True(File.Exists(path));
             Assert.Equal(2048, new FileInfo(path).Length);
         }
@@ -129,7 +130,7 @@ public sealed class IOTempFileGeneratorTests
         try {
             using var service = new IOTempService(options);
             await using var session = service.CreateSession();
-            var path = await session.Generator.CreateRandomFileAsync(FileSizeUnitInfo.Kilobyte, 8, null, TestContext.Current.CancellationToken);
+            var path = await session.Generator.CreateRandomFileAsync(FileSizeUnitInfo.Kilobyte, 8, null, TestCt);
             Assert.Equal(FileSizeUnitInfo.Kilobyte.ConvertToBytes(8), new FileInfo(path).Length);
         }
         finally {
@@ -198,7 +199,7 @@ public sealed class IOTempFileGeneratorTests
         try {
             using var service = new IOTempService(options);
             await using var session = service.CreateSession();
-            var paths = await session.Generator.CreateRandomFilesAsync(4, 128, TestContext.Current.CancellationToken);
+            var paths = await session.Generator.CreateRandomFilesAsync(4, 128, TestCt);
             Assert.Equal(4, paths.Count);
             Assert.All(paths, p => Assert.Equal(128, new FileInfo(p).Length));
         }
@@ -328,7 +329,7 @@ public sealed class IOTempFileGeneratorTests
         try {
             using var service = new IOTempService(options);
             await using var session = service.CreateSession();
-            var dirPath = await session.Generator.SimulateDirectoryAsync(3, 512, null, TestContext.Current.CancellationToken);
+            var dirPath = await session.Generator.SimulateDirectoryAsync(3, 512, null, TestCt);
             Assert.True(Directory.Exists(dirPath));
             Assert.Equal(3, Directory.GetFiles(dirPath).Length);
         }
@@ -345,7 +346,7 @@ public sealed class IOTempFileGeneratorTests
             using var service = new IOTempService(options);
             await using var session = service.CreateSession();
             var spec = new TempDirectorySpec { FileCount = 1, FileSizeBytes = 64, Subdirectories = [TempDirectorySpec.Flat(2, 32)] };
-            var rootDir = await session.Generator.SimulateDirectoryAsync(spec, null, TestContext.Current.CancellationToken);
+            var rootDir = await session.Generator.SimulateDirectoryAsync(spec, null, TestCt);
             Assert.Single(Directory.GetFiles(rootDir));
             var sub = Directory.GetDirectories(rootDir).Single();
             Assert.Equal(2, Directory.GetFiles(sub).Length);
@@ -412,7 +413,7 @@ public sealed class IOTempFileGeneratorTests
         try {
             using var service = new IOTempService(options);
             await using var session = service.CreateSession();
-            var paths = await session.Generator.CreateRandomFilesAsync(2, 128, i => $"async_{i}.bin", TestContext.Current.CancellationToken);
+            var paths = await session.Generator.CreateRandomFilesAsync(2, 128, i => $"async_{i}.bin", TestCt);
             Assert.Equal(2, paths.Count);
             Assert.All(paths, p => Assert.True(File.Exists(p)));
         }
@@ -491,7 +492,7 @@ public sealed class IOTempFileGeneratorTests
         try {
             using var service = new IOTempService(options);
             await using var session = service.CreateSession();
-            var path = await session.Generator.CreateTextFileAsync(4, 15, null, TestContext.Current.CancellationToken);
+            var path = await session.Generator.CreateTextFileAsync(4, 15, null, TestCt);
             Assert.True(File.Exists(path));
             Assert.Equal(4, File.ReadAllLines(path).Length);
         }
@@ -557,7 +558,7 @@ public sealed class IOTempFileGeneratorTests
         try {
             using var service = new IOTempService(options);
             await using var session = service.CreateSession();
-            var path = await session.Generator.CreateCsvFileAsync(2, 2, null, TestContext.Current.CancellationToken);
+            var path = await session.Generator.CreateCsvFileAsync(2, 2, null, TestCt);
             Assert.True(File.Exists(path));
         }
         finally {
@@ -621,7 +622,7 @@ public sealed class IOTempFileGeneratorTests
         try {
             using var service = new IOTempService(options);
             await using var session = service.CreateSession();
-            var path = await session.Generator.CreateJsonFileAsync(1, 2, null, TestContext.Current.CancellationToken);
+            var path = await session.Generator.CreateJsonFileAsync(1, 2, null, TestCt);
             Assert.True(File.Exists(path));
         }
         finally {
@@ -702,7 +703,7 @@ public sealed class IOTempFileGeneratorTests
         try {
             using var service = new IOTempService(options);
             await using var session = service.CreateSession();
-            var zipPath = await session.Generator.CreateZipFileAsync(TempDirectorySpec.Flat(2, 256), ct: TestContext.Current.CancellationToken);
+            var zipPath = await session.Generator.CreateZipFileAsync(TempDirectorySpec.Flat(2, 256), ct: TestCt);
             Assert.True(File.Exists(zipPath));
             using var archive = ZipFile.OpenRead(zipPath);
             Assert.Equal(2, archive.Entries.Count);
@@ -782,7 +783,7 @@ public sealed class IOTempFileGeneratorTests
         try {
             using var service = new IOTempService(options);
             using var session = service.CreateSession();
-            var path = await session.Generator.CreateXmlFileAsync(1, 3, ct: TestContext.Current.CancellationToken);
+            var path = await session.Generator.CreateXmlFileAsync(1, 3, ct: TestCt);
             Assert.True(File.Exists(path));
             var content = File.ReadAllText(path);
             Assert.Contains("<root>", content);
@@ -864,7 +865,7 @@ public sealed class IOTempFileGeneratorTests
             using var service = new IOTempService(options);
             using var session = service.CreateSession();
             var zipPath = session.Generator.CreateZipFile(TempDirectorySpec.Flat(2, 128));
-            var extractDir = await session.Generator.ExtractZipFileAsync(zipPath, ct: TestContext.Current.CancellationToken);
+            var extractDir = await session.Generator.ExtractZipFileAsync(zipPath, ct: TestCt);
             Assert.True(Directory.Exists(extractDir));
             Assert.Equal(2, Directory.GetFiles(extractDir, "*", SearchOption.AllDirectories).Length);
         }
@@ -946,7 +947,7 @@ public sealed class IOTempFileGeneratorTests
         try {
             using var service = new IOTempService(options);
             using var session = service.CreateSession();
-            var root = await session.Generator.CreateDirectoryTreeAsync(1, 2, 32, ct: TestContext.Current.CancellationToken);
+            var root = await session.Generator.CreateDirectoryTreeAsync(1, 2, 32, ct: TestCt);
             Assert.True(Directory.Exists(root));
             var allFiles = Directory.GetFiles(root, "*", SearchOption.AllDirectories);
             Assert.True(allFiles.Length >= 2);

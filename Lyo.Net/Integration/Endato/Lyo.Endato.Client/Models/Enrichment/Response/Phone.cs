@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json.Serialization;
-using Lyo.Common.Json.JsonConverters;
+using Lyo.Json.JsonConverters;
 
 namespace Lyo.Endato.Client.Models.Enrichment.Response;
 

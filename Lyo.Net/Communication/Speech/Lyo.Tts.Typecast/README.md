@@ -1,6 +1,7 @@
 # Lyo.Tts.Typecast
 
-Typecast TTS through [`Lyo.Typecast.Client`](../../../Integration/Typecast/Lyo.Typecast.Client/README.md). `TypecastTtsService` synthesizes audio through `TypecastClient`, can load the voice catalog for validation (`LoadVoicesAsync`), and uses the bulk pipeline and Typecast-namespaced metrics from [`Lyo.Tts`](../Lyo.Tts/README.md).
+Typecast TTS through [`Lyo.Typecast.Client`](../../../Integration/Typecast/Lyo.Typecast.Client/README.md). `TypecastTtsService` synthesizes audio through `TypecastClient`, can load
+the voice catalog for validation (`LoadVoicesAsync`), and uses the bulk pipeline and Typecast-namespaced metrics from [`Lyo.Tts`](../Lyo.Tts/README.md).
 
 **Target frameworks:** `netstandard2.0`, `net10.0`
 
@@ -41,11 +42,13 @@ requires a registered `TypecastClient`. Register it first via `AddTypecastClient
 
 ## Voice catalog checks
 
-During startup, call `await typecastService.LoadVoicesAsync()` so `SynthesizeAsync` can verify `(model, voiceId)` pairs against the downloaded catalog; validation is skipped when voices are not loaded (see logging in `TypecastTtsService`).
+During startup, call `await typecastService.LoadVoicesAsync()` so `SynthesizeAsync` can verify `(model, voiceId)` pairs against the downloaded catalog; validation is skipped when
+voices are not loaded (see logging in `TypecastTtsService`).
 
 ## Builder overload warning
 
-One overload is named `SynthesizeToFileAsync(TypecastTtsRequestBuilder, …)` on `TypecastTtsService` that never writes to disk. It only builds a request and returns audio bytes. Use the base class `SynthesizeToFileAsync(TypecastTtsRequest, string, …)` with `builder.Build()` when you need a file.
+One overload is named `SynthesizeToFileAsync(TypecastTtsRequestBuilder, …)` on `TypecastTtsService` that never writes to disk. It only builds a request and returns audio bytes. Use
+the base class `SynthesizeToFileAsync(TypecastTtsRequest, string, …)` with `builder.Build()` when you need a file.
 
 ## Dependencies
 
@@ -59,9 +62,9 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Options` `10.0.5` (direct, microsoft)
 - `System.Text.Json` `10.0.5` (direct, microsoft, netstandard2.0)
 - `Lyo.Common.Core` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.Http.Client` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `Lyo.Tts.Models` (transitive, lyo)
@@ -70,4 +73,5 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Http` `10.0.5` (transitive, microsoft)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Threading.RateLimiting` `10.0.5` (transitive, microsoft)

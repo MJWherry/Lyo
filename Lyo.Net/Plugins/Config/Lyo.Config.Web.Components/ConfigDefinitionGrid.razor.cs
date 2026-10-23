@@ -3,22 +3,28 @@ using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Enums;
 using Lyo.Web.Components.Models;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 
 namespace Lyo.Config.Web.Components;
 
 public partial class ConfigDefinitionGrid
 {
+    private static readonly LyoDataGridFeatureFlags _gridFeatures =
+        LyoDataGridFeatureFlags.Filterable | LyoDataGridFeatureFlags.Searchable | LyoDataGridFeatureFlags.BulkMenu | LyoDataGridFeatureFlags.BulkExport;
+
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [
+        new("Key"), new("ForValueType", "Value type"), new("IsRequired", "Required", LyoTypeInfo.Bool), new("IsEncrypted", "Encrypted", LyoTypeInfo.Bool)
+    ];
+
+    private LyoDataGridProjected? _dataGrid;
+    private string? _queryType;
+    private int _queryVersion = int.MinValue;
+
     /// <summary>Store used to create, edit, and delete definitions (writes never go through generic CRUD).</summary>
     [Parameter]
     [EditorRequired]
     public IConfigStore Store { get; set; } = null!;
 
-    /// <summary>
-    /// Feeds the grid's search, filter, sort, and export through Lyo.Query (<see cref="ConfigQueryRoutes.Definition" />). Writes still go through <see cref="Store" />.
-    /// </summary>
+    /// <summary>Feeds the grid's search, filter, sort, and export through Lyo.Query (<see cref="ConfigQueryRoutes.Definition" />). Writes still go through <see cref="Store" />.</summary>
     [Parameter]
     [EditorRequired]
     public IApiClient ApiClient { get; set; } = null!;
@@ -39,20 +45,6 @@ public partial class ConfigDefinitionGrid
     [Parameter]
     public EventCallback<Guid> OnViewDefinitionHistory { get; set; }
 
-    private static readonly LyoDataGridFeatureFlags _gridFeatures =
-        LyoDataGridFeatureFlags.Filterable | LyoDataGridFeatureFlags.Searchable | LyoDataGridFeatureFlags.BulkMenu | LyoDataGridFeatureFlags.BulkExport;
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [
-        new("Key"),
-        new("ForValueType", "Value type"),
-        new("IsRequired", "Required", LyoTypeInfo.Bool),
-        new("IsEncrypted", "Encrypted", LyoTypeInfo.Bool)
-    ];
-
-    private LyoDataGridProjected? _dataGrid;
-    private string? _queryType;
-    private int _queryVersion = int.MinValue;
-
     protected override async Task OnParametersSetAsync()
     {
         if (string.Equals(_queryType, SubjectEntityType, StringComparison.Ordinal) && _queryVersion == DataVersion)
@@ -72,10 +64,7 @@ public partial class ConfigDefinitionGrid
 
     private async Task OpenCreateAsync()
     {
-        var parameters = new DialogParameters<ConfigDefinitionView> {
-            { d => d.Store, Store },
-            { d => d.SubjectEntityType, SubjectEntityType.Trim() }
-        };
+        var parameters = new DialogParameters<ConfigDefinitionView> { { d => d.Store, Store }, { d => d.SubjectEntityType, SubjectEntityType.Trim() } };
         var dialog = await DialogService.ShowAsync<ConfigDefinitionView>("New definition", parameters, LyoDialogPresets.Medium);
         var result = await dialog.Result;
         if (result is { Canceled: false })
@@ -85,10 +74,9 @@ public partial class ConfigDefinitionGrid
     private async Task OpenEditAsync(ConfigDefinitionRecord definition)
     {
         var parameters = new DialogParameters<ConfigDefinitionView> {
-            { d => d.Store, Store },
-            { d => d.Definition, definition },
-            { d => d.SubjectEntityType, SubjectEntityType.Trim() }
+            { d => d.Store, Store }, { d => d.Definition, definition }, { d => d.SubjectEntityType, SubjectEntityType.Trim() }
         };
+
         var dialog = await DialogService.ShowAsync<ConfigDefinitionView>("Edit definition", parameters, LyoDialogPresets.Medium);
         var result = await dialog.Result;
         if (result is { Canceled: false })
@@ -123,8 +111,7 @@ public partial class ConfigDefinitionGrid
         await DeleteAsync(definition);
     }
 
-    private Task ViewHistoryProjectedAsync(object? item)
-        => TryGetId(item, out var id) ? ViewHistoryAsync(id) : Task.CompletedTask;
+    private Task ViewHistoryProjectedAsync(object? item) => TryGetId(item, out var id) ? ViewHistoryAsync(id) : Task.CompletedTask;
 
     private async Task BulkDeleteAsync()
     {
@@ -137,6 +124,7 @@ public partial class ConfigDefinitionGrid
             .Where(g => g.HasValue)
             .Select(g => g!.Value)
             .ToList();
+
         if (ids.Count == 0)
             return;
 
@@ -158,6 +146,7 @@ public partial class ConfigDefinitionGrid
             Snackbar.Add($"Deleted {deleted} definition(s).", Severity.Success);
             if (_dataGrid is not null)
                 await _dataGrid.ClearSelectionAsync();
+
             await NotifyChangedAsync();
         }
     }
@@ -184,8 +173,7 @@ public partial class ConfigDefinitionGrid
             await OnViewDefinitionHistory.InvokeAsync(id);
     }
 
-    private Task ViewHistoryAsync(Guid definitionId)
-        => OnViewDefinitionHistory.InvokeAsync(definitionId);
+    private Task ViewHistoryAsync(Guid definitionId) => OnViewDefinitionHistory.InvokeAsync(definitionId);
 
     private static bool TryGetId(object? item, out Guid id)
     {

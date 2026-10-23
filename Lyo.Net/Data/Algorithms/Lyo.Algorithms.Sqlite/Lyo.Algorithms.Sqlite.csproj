@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>SQLite catalog for Lyo.Algorithms. Same IAlgorithmDefinitionStore as Postgres, for embedded and local hosts.</Description>
+        <PackageTags>algorithm sqlite entity-framework ef</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Health\Lyo.Health\Lyo.Health.csproj"/>
+        <ProjectReference Include="..\..\Sqlite\Lyo.Sqlite\Lyo.Sqlite.csproj"/>
+        <ProjectReference Include="..\Lyo.Algorithms\Lyo.Algorithms.csproj"/>
+    </ItemGroup>
+
+</Project>

@@ -2,6 +2,14 @@ namespace Lyo.Config.Web.Components;
 
 public partial class ConfigDefinitionRevisionList
 {
+    private bool _busy;
+
+    private IReadOnlyList<ConfigDefinitionRevisionRecord> _items = [];
+    private string? _loadError;
+    private Guid? _loadedId;
+    private int _loadedVersion = int.MinValue;
+    private bool _loading;
+
     /// <summary>Store used to list and revert definition revisions.</summary>
     [Parameter]
     [EditorRequired]
@@ -22,13 +30,6 @@ public partial class ConfigDefinitionRevisionList
     /// <summary>Fired after a successful revert so sibling tabs can reload.</summary>
     [Parameter]
     public EventCallback OnChanged { get; set; }
-
-    private IReadOnlyList<ConfigDefinitionRevisionRecord> _items = [];
-    private bool _loading;
-    private bool _busy;
-    private string? _loadError;
-    private Guid? _loadedId;
-    private int _loadedVersion = int.MinValue;
 
     protected override async Task OnParametersSetAsync()
     {

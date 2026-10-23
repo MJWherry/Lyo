@@ -2,9 +2,7 @@ namespace Lyo.QRCode.Encoding.Iso;
 
 internal sealed partial class QRIsoEncoder
 {
-    /// <summary>
-    /// Capacity and error-correction tables per version and encoding mode. Used to pick how much data fits and which version is needed.
-    /// </summary>
+    /// <summary>Capacity and error-correction tables per version and encoding mode. Used to pick how much data fits and which version is needed.</summary>
     private static class CapacityTables
     {
         private static readonly int[] CapacityBaseValues = [
@@ -191,9 +189,7 @@ internal sealed partial class QRIsoEncoder
         /// <summary>Error-correction info for a QR version and ECC level.</summary>
         /// <param name="version">QR version (1 to 40, or -1 to -4 for M1 to M4).</param>
         /// <param name="eccLevel">Requested ECC level (L, M, Q, or H). Do not pass <see cref="ECCLevel.Default" />.</param>
-        /// <returns>
-        /// An <see cref="ECCInfo" /> with data codewords, ECC per block, block-group details, and other ECC encoding parameters.
-        /// </returns>
+        /// <returns>An <see cref="ECCInfo" /> with data codewords, ECC per block, block-group details, and other ECC encoding parameters.</returns>
         public static ECCInfo GetEccInfo(int version, ECCLevel eccLevel)
         {
             foreach (var item in CapacityECCTable) {
@@ -204,23 +200,17 @@ internal sealed partial class QRIsoEncoder
             throw new InvalidOperationException("No item found"); // same type LINQ would throw
         }
 
-        /// <summary>
-        /// Capacity for a QR version: max characters at each ECC level (L, M, Q, H) and encoding mode (Numeric, Alphanumeric, Byte, Kanji).
-        /// </summary>
+        /// <summary>Capacity for a QR version: max characters at each ECC level (L, M, Q, H) and encoding mode (Numeric, Alphanumeric, Byte, Kanji).</summary>
         /// <param name="version">QR version (1 to 40, or -1 to -4 for M1 to M4).</param>
         /// <returns>A <see cref="VersionInfo" /> with capacity for every ECC level and encoding mode of that version.</returns>
         public static VersionInfo GetVersionInfo(int version) => version < 0 ? MicroCapacityTable[-version - 1] : CapacityTable[version - 1];
 
-        /// <summary>
-        /// Remainder bits for a QR version. Appended to the bit stream so it aligns to a byte boundary, as required by the spec.
-        /// </summary>
+        /// <summary>Remainder bits for a QR version. Appended to the bit stream so it aligns to a byte boundary, as required by the spec.</summary>
         /// <param name="version">QR version (1 to 40, or -1 to -4 for M1 to M4).</param>
         /// <returns>Remainder bits (0 to 7) to append to the encoded stream.</returns>
         public static int GetRemainderBits(int version) => version < 0 ? 0 : RemainderBits[version - 1];
 
-        /// <summary>
-        /// Smallest QR version that can hold the given data length, encoding mode, and ECC level. Raises if no version is large enough.
-        /// </summary>
+        /// <summary>Smallest QR version that can hold the given data length, encoding mode, and ECC level. Raises if no version is large enough.</summary>
         /// <param name="length">Length of the data to encode.</param>
         /// <param name="encMode">Encoding mode (e.g., Numeric, Alphanumeric, Byte).</param>
         /// <param name="eccLevel">Error-correction level (e.g., Low, Medium, Quartile, High).</param>
@@ -254,9 +244,7 @@ internal sealed partial class QRIsoEncoder
             }
         }
 
-        /// <summary>
-        /// Tries to find the smallest QR version that can hold a data segment at an ECC level. Accounts for version-dependent mode and count indicator sizes.
-        /// </summary>
+        /// <summary>Tries to find the smallest QR version that can hold a data segment at an ECC level. Accounts for version-dependent mode and count indicator sizes.</summary>
         /// <param name="segment">Data segment to encode (mode, character count, and data bits).</param>
         /// <param name="eccLevel">Error-correction level (e.g., Low, Medium, Quartile, High).</param>
         /// <param name="version">On success, the smallest version (1-40) that can hold the segment; otherwise 0.</param>
@@ -294,9 +282,7 @@ internal sealed partial class QRIsoEncoder
             return false;
         }
 
-        /// <summary>
-        /// Smallest Micro QR version that can hold the given data length, encoding mode, and ECC level. Raises if no version is large enough.
-        /// </summary>
+        /// <summary>Smallest Micro QR version that can hold the given data length, encoding mode, and ECC level. Raises if no version is large enough.</summary>
         /// <param name="length">Length of the data to encode.</param>
         /// <param name="encMode">Encoding mode (e.g., Numeric, Alphanumeric, Byte).</param>
         /// <param name="eccLevel">Error-correction level (e.g., Default, Low, Medium, Quartile, High).</param>
@@ -327,9 +313,7 @@ internal sealed partial class QRIsoEncoder
             throw new DataTooLongException(eccLevel.ToString(), encMode.ToString(), maxSizeByte);
         }
 
-        /// <summary>
-        /// Builds the ECC capacity and data-codeword table for each version and ECC level. Used to size payloads and judge how much damage the symbol can tolerate.
-        /// </summary>
+        /// <summary>Builds the ECC capacity and data-codeword table for each version and ECC level. Used to size payloads and judge how much damage the symbol can tolerate.</summary>
         /// <returns>ECCInfo entries for each version and ECC-level pair.</returns>
         private static List<ECCInfo> CreateCapacityECCTable(int[] capacityECCBaseValues)
         {
@@ -370,10 +354,7 @@ internal sealed partial class QRIsoEncoder
             return localCapacityECCTable;
         }
 
-        /// <summary>
-        /// Builds capacity rows for each QR version: numeric, alphanumeric, byte, and other modes at each ECC level.
-        /// Table index is version minus one.
-        /// </summary>
+        /// <summary>Builds capacity rows for each QR version: numeric, alphanumeric, byte, and other modes at each ECC level. Table index is version minus one.</summary>
         private static List<VersionInfo> CreateCapacityTable(int[] capacityBaseValues)
         {
             var localCapacityTable = new List<VersionInfo>(40);

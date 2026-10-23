@@ -1,11 +1,14 @@
 # Lyo.Comic
 
-Domain contracts for a serialized fiction catalog: series (`ComicSeries`, `ComicAlternateTitle`), hierarchy (`ComicVolume`, `ComicChapter`, `ComicPage`), cast (`ComicCharacter`), query DTO (`ComicSeriesQuery`), enums `ComicType`/`ComicStatus`, and the persistence facade `IComicStore`.
+Domain contracts for a serialized fiction catalog: series (`ComicSeries`, `ComicAlternateTitle`), hierarchy (`ComicVolume`, `ComicChapter`, `ComicPage`), cast (`ComicCharacter`),
+query DTO (`ComicSeriesQuery`), enums `ComicType`/`ComicStatus`, and the persistence facade `IComicStore`.
 
 ## `IComicStore` responsibilities
 
-- **Series.** `SaveSeriesAsync` upserts canonical series row + `ComicAlternateTitle` projections. `GetSeriesByIdAsync` / `GetSeriesBySlugAsync` hydrate alternates. `SearchSeriesAsync` receives `ComicSeriesQuery` filters. `DeleteSeriesAsync` cascades dependent graph per implementation.
-- **Volumes / chapters / pages.** CRUD primitives with deterministic ordering assumptions documented on the interface (e.g. chapters ordered by number + language, pages ascending by page number within a chapter).
+- **Series.** `SaveSeriesAsync` upserts canonical series row + `ComicAlternateTitle` projections. `GetSeriesByIdAsync` / `GetSeriesBySlugAsync` hydrate alternates.
+  `SearchSeriesAsync` receives `ComicSeriesQuery` filters. `DeleteSeriesAsync` cascades dependent graph per implementation.
+- **Volumes / chapters / pages.** CRUD primitives with deterministic ordering assumptions documented on the interface (e.g. chapters ordered by number + language, pages ascending
+  by page number within a chapter).
 - **Characters.** Attach cast members to series, list alphabetically (`GetCharactersBySeriesAsync`), delete standalone.
 
 ## What is deliberately not here
@@ -16,16 +19,17 @@ Domain contracts for a serialized fiction catalog: series (`ComicSeries`, `Comic
 
 ## Layering map
 
-| Assembly | Responsibility |
-| --------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `Lyo.Comic` (this) | POCOs + `IComicStore` (`netstandard2.0;net10.0`). |
-| `Lyo.Comic.Postgres` | EF `ComicDbContext`, migrations, `PostgresComicStore`, DI extensions. |
-| `Lyo.Comic.Web.Components` | Reusable Blazor browse/search/reader components (cards, grid/list layouts, MangaFire-style tap-to-page). |
-| `Lyo-Comic` (separate repo) | ASP.NET minimal API + client + DTO assemblies that consume this store over HTTP. |
+| Assembly                    | Responsibility                                                                                           |
+|-----------------------------|----------------------------------------------------------------------------------------------------------|
+| `Lyo.Comic` (this)          | POCOs + `IComicStore` (`netstandard2.0;net10.0`).                                                        |
+| `Lyo.Comic.Postgres`        | EF `ComicDbContext`, migrations, `PostgresComicStore`, DI extensions.                                    |
+| `Lyo.Comic.Web.Components`  | Reusable Blazor browse/search/reader components (cards, grid/list layouts, MangaFire-style tap-to-page). |
+| `Lyo-Comic` (separate repo) | ASP.NET minimal API + client + DTO assemblies that consume this store over HTTP.                         |
 
 ## Testing strategy
 
-Implement `IComicStore` as an in-memory double for unit tests validating slug uniqueness rules and cascading deletes without spinning up Postgres. The Postgres mapping is covered indirectly via host application integration tests. No dedicated `Lyo.Comic.Postgres.Tests` project ships in this repo today.
+Implement `IComicStore` as an in-memory double for unit tests validating slug uniqueness rules and cascading deletes without spinning up Postgres. The Postgres mapping is covered
+indirectly via host application integration tests. No dedicated `Lyo.Comic.Postgres.Tests` project ships in this repo today.
 
 ## See also
 

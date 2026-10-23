@@ -1,0 +1,16 @@
+{
+  "id": "Lyo.Email.Seed",
+  "name": "Lyo.Email.Seed",
+  "area": "Communication",
+  "tagline": "EF seed of email logs and attachment logs.",
+  "description": "EF seed of Count outbound email logs, each with one attachment log. Schema email.",
+  "features": [],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Communication/Email/Lyo.Email.Seed/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

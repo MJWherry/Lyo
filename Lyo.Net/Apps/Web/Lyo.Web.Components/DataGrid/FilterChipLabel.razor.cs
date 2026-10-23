@@ -4,6 +4,10 @@ namespace Lyo.Web.Components.DataGrid;
 
 public partial class FilterChipLabel
 {
+    private readonly DialogOptions _viewDialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
+
+    private bool _viewDialogOpen;
+
     [Parameter]
     public string? ElementId { get; set; }
 
@@ -18,11 +22,7 @@ public partial class FilterChipLabel
     [Parameter]
     public int MaxLength { get; set; } = ChipLabelHelper.DefaultFilterChipMaxLength;
 
-    private bool _viewDialogOpen;
-
     private string DialogBodyText => string.IsNullOrEmpty(DialogText) ? Text : DialogText!;
-
-    private readonly DialogOptions _viewDialogOptions = new() { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseOnEscapeKey = true };
 
     private void OpenViewDialog() => _viewDialogOpen = true;
 }

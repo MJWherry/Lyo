@@ -82,10 +82,11 @@ public static class WebhookCrypto
         return bytes;
     }
 
-    private static int ParseHexNibble(char c) => c switch {
-        >= '0' and <= '9' => c - '0',
-        >= 'a' and <= 'f' => c - 'a' + 10,
-        >= 'A' and <= 'F' => c - 'A' + 10,
-        _ => -1
-    };
+    private static int ParseHexNibble(char c)
+        => c switch {
+            >= '0' and <= '9' => c - '0',
+            >= 'a' and <= 'f' => c - 'a' + 10,
+            >= 'A' and <= 'F' => c - 'A' + 10,
+            var _ => -1
+        };
 }

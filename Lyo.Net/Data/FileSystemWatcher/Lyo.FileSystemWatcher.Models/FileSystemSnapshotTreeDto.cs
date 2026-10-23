@@ -2,9 +2,7 @@ using Lyo.Exceptions;
 
 namespace Lyo.FileSystemWatcher.Models;
 
-/// <summary>
-/// Hierarchical persistable snapshot of a directory. Paths inside the tree are relative to <see cref="RootPath" /> and use '/' separators.
-/// </summary>
+/// <summary>Hierarchical persistable snapshot of a directory. Paths inside the tree are relative to <see cref="RootPath" /> and use '/' separators.</summary>
 public sealed class FileSystemSnapshotTreeDto
 {
     /// <summary>Absolute watch root this snapshot was taken from.</summary>
@@ -24,15 +22,13 @@ public sealed class FileSystemSnapshotTreeDto
 
     /// <summary>Resolved <see cref="PathComparison" /> value.</summary>
     public StringComparison GetPathComparison()
-        => string.Equals(PathComparison, nameof(StringComparison.Ordinal), StringComparison.Ordinal)
-            ? StringComparison.Ordinal
-            : StringComparison.OrdinalIgnoreCase;
+        => string.Equals(PathComparison, nameof(StringComparison.Ordinal), StringComparison.Ordinal) ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
 
     /// <summary>True if <paramref name="relativePath" /> is a file or directory node in this snapshot.</summary>
     public bool ContainsPath(string relativePath)
     {
         ArgumentHelpers.ThrowIfNull(relativePath);
-        return TryGetDirectory(relativePath, out _) || TryGetFile(relativePath, out _);
+        return TryGetDirectory(relativePath, out var _) || TryGetFile(relativePath, out var _);
     }
 
     /// <summary>Looks up a file by relative path.</summary>
@@ -89,12 +85,10 @@ public sealed class FileSystemSnapshotTreeDto
     }
 
     /// <summary>Every file in the tree as (relative path, entry), depth-first.</summary>
-    public IEnumerable<(string Path, FileSystemSnapshotEntryDto Entry)> EnumerateFiles()
-        => EnumerateFiles(Root);
+    public IEnumerable<(string Path, FileSystemSnapshotEntryDto Entry)> EnumerateFiles() => EnumerateFiles(Root);
 
     /// <summary>Every directory relative path except the snapshot root.</summary>
-    public IEnumerable<(string Path, FileSystemSnapshotDirectoryDto Node)> EnumerateDirectories()
-        => EnumerateDirectories(Root);
+    public IEnumerable<(string Path, FileSystemSnapshotDirectoryDto Node)> EnumerateDirectories() => EnumerateDirectories(Root);
 
     /// <summary>Counts files and descendant directories under <paramref name="relativeDirectory" /> as stored in this tree.</summary>
     public (int FileCount, int DirectoryCount) GetSnapshotCounts(string relativeDirectory)
@@ -132,6 +126,7 @@ public sealed class FileSystemSnapshotTreeDto
     {
         foreach (var sub in dir.Directories.Values) {
             yield return (sub.RelativePath, sub);
+
             foreach (var pair in EnumerateDirectories(sub))
                 yield return pair;
         }
@@ -152,6 +147,5 @@ public sealed class FileSystemSnapshotTreeDto
         return slash < 0 ? normalizedPath : normalizedPath.Substring(slash + 1);
     }
 
-    private static IEnumerable<string> Split(string normalized)
-        => normalized.Split(['/'], StringSplitOptions.RemoveEmptyEntries);
+    private static IEnumerable<string> Split(string normalized) => normalized.Split(['/'], StringSplitOptions.RemoveEmptyEntries);
 }

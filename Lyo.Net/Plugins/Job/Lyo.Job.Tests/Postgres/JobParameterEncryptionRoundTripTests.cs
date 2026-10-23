@@ -37,12 +37,12 @@ public class JobParameterEncryptionRoundTripTests
         using var scope = sp.CreateScope();
         var jobService = scope.ServiceProvider.GetRequiredService<JobService>();
         var definitionId = await CreateEncryptedDefinitionAsync(sp);
-        var created = await jobService.CreateJobRun(BuildRunRequest(definitionId), TestContext.Current.CancellationToken);
+        var created = await jobService.CreateJobRun(BuildRunRequest(definitionId), TestCt);
         Assert.True(created.IsSuccess, created.Error?.Detail ?? "create failed");
         var responseParam = Assert.Single(created.Data!.JobRunParameters!, p => p.Key == ParameterKey);
         Assert.Equal("***", responseParam.Value);
         await using var db = await CreateDbContextAsync(sp);
-        var stored = await db.JobRunParameters.AsNoTracking().SingleAsync(p => p.JobRunId == created.Data.Id && p.Key == ParameterKey, TestContext.Current.CancellationToken);
+        var stored = await db.JobRunParameters.AsNoTracking().SingleAsync(p => p.JobRunId == created.Data.Id && p.Key == ParameterKey, TestCt);
         Assert.Null(stored.Value);
         Assert.NotNull(stored.EncryptedValue);
         Assert.NotEqual(Plaintext, Encoding.UTF8.GetString(stored.EncryptedValue!));
@@ -55,7 +55,7 @@ public class JobParameterEncryptionRoundTripTests
         using var scope = sp.CreateScope();
         var jobService = scope.ServiceProvider.GetRequiredService<JobService>();
         var definitionId = await CreateEncryptedDefinitionAsync(sp);
-        var created = await jobService.CreateJobRun(BuildRunRequest(definitionId), TestContext.Current.CancellationToken);
+        var created = await jobService.CreateJobRun(BuildRunRequest(definitionId), TestCt);
         Assert.True(created.IsSuccess);
         var (started, error) = await jobService.StartedJobRun(created.Data!.Id);
 
@@ -73,14 +73,14 @@ public class JobParameterEncryptionRoundTripTests
         var jobService = scope.ServiceProvider.GetRequiredService<JobService>();
         var encryption = scope.ServiceProvider.GetRequiredService<IJobParameterEncryptionService>();
         var definitionId = await CreateEncryptedDefinitionAsync(sp);
-        var created = await jobService.CreateJobRun(BuildRunRequest(definitionId), TestContext.Current.CancellationToken);
+        var created = await jobService.CreateJobRun(BuildRunRequest(definitionId), TestCt);
         Assert.True(created.IsSuccess);
         await FinishRunAsync(sp, created.Data!.Id);
         var rerun = await jobService.RerunJob(created.Data.Id);
         Assert.NotNull(rerun);
         Assert.True(rerun.IsSuccess, rerun.Error?.Detail ?? "rerun failed");
         await using var db = await CreateDbContextAsync(sp);
-        var cloned = await db.JobRunParameters.AsNoTracking().SingleAsync(p => p.JobRunId == rerun.Data!.Id && p.Key == ParameterKey, TestContext.Current.CancellationToken);
+        var cloned = await db.JobRunParameters.AsNoTracking().SingleAsync(p => p.JobRunId == rerun.Data!.Id && p.Key == ParameterKey, TestCt);
 
         // The clone must decrypt back to the original secret. the old response-based clone stored "***" (or double-encrypted bytes).
         Assert.Null(cloned.Value);
@@ -88,7 +88,7 @@ public class JobParameterEncryptionRoundTripTests
     }
 
     private static JobRunReq BuildRunRequest(Guid definitionId)
-        => new(definitionId, "test-user", false) {
+        => new(definitionId, "test-user") {
             JobRunParameters = {
                 new() {
                     Key = ParameterKey,
@@ -137,25 +137,25 @@ public class JobParameterEncryptionRoundTripTests
                 CreatedTimestamp = DateTime.UtcNow
             });
 
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
         return definitionId;
     }
 
     private static async Task FinishRunAsync(ServiceProvider sp, Guid runId)
     {
         await using var db = await CreateDbContextAsync(sp);
-        var run = await db.JobRuns.FirstAsync(r => r.Id == runId, TestContext.Current.CancellationToken);
+        var run = await db.JobRuns.FirstAsync(r => r.Id == runId, TestCt);
         run.State = JobState.Finished;
         run.Result = JobRunResult.Success;
         run.FinishedTimestamp = DateTime.UtcNow;
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
     }
 
     private static async Task<JobContext> CreateDbContextAsync(ServiceProvider sp)
     {
         using var scope = sp.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
-        return await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        return await factory.CreateDbContextAsync(TestCt);
     }
 
     /// <summary>Deterministic stand-in for the keyed encryption service: ciphertext is <c>enc:</c> + plaintext bytes.</summary>

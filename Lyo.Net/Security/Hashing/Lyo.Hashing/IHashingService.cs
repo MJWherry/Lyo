@@ -6,8 +6,8 @@ namespace Lyo.Hashing;
 /// <summary>Injectable façade for digests, hex formatting, hashing streams, sparse fingerprints, and HMAC helpers.</summary>
 /// <remarks>
 /// <para>
-/// Use <see cref="Hasher" /> / <see cref="HexEncoding" /> at static call sites; inject this when hex casing or fingerprint defaults should be
-/// centralized or swapped in tests. <see cref="HashingService.Shared" /> is the singleton <c>AddLyoHashing()</c> uses when no configuration is supplied.
+/// Use <see cref="Hasher" /> / <see cref="HexEncoding" /> at static call sites; inject this when hex casing or fingerprint defaults should be centralized or swapped in tests.
+/// <see cref="HashingService.Shared" /> is the singleton <c>AddLyoHashing()</c> uses when no configuration is supplied.
 /// </para>
 /// <para>MD5 and sparse fingerprints are not a security integrity check; see the package README.</para>
 /// </remarks>

@@ -8,7 +8,6 @@ namespace Lyo.Espn.Fantasy.Football.Client.Builders;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class FantasyFilterReqBuilder
 {
-    private readonly Dictionary<string, TopicTypeFilterReq> _topicsByType = [];
     private PlayerFilterReq? _players;
     private TopicsFilterReq? _topics;
     private TransactionsFilterReq? _transactions;
@@ -20,6 +19,21 @@ public sealed class FantasyFilterReqBuilder
         ArgumentHelpers.ThrowIfNullOrEmpty(idList);
         var ids = idList.Distinct().ToArray();
         _players = (_players ?? new()) with { FilterIds = new() { Value = ids } };
+        return this;
+    }
+
+    /// <summary>Selects free agents and waiver-wire players, most owned first.</summary>
+    public FantasyFilterReqBuilder WithFreeAgents(int limit = 50, int offset = 0)
+    {
+        ArgumentHelpers.ThrowIf(limit <= 0, "Value must be greater than zero.", nameof(limit));
+        ArgumentHelpers.ThrowIf(offset < 0, "Value cannot be negative.", nameof(offset));
+        _players = (_players ?? new()) with {
+            FilterStatus = new() { Value = ["FREEAGENT", "WAIVERS"] },
+            Limit = limit,
+            Offset = offset,
+            SortPercOwned = new() { SortPriority = 1, SortAsc = false }
+        };
+
         return this;
     }
 
@@ -42,25 +56,6 @@ public sealed class FantasyFilterReqBuilder
         var values = typeList.Where(i => !string.IsNullOrWhiteSpace(i)).Distinct().ToArray();
         ArgumentHelpers.ThrowIfNullOrEmpty(values, nameof(types));
         _transactions = new() { FilterType = new() { Value = values } };
-        return this;
-    }
-
-    /// <summary>Registers a topic type group to the league chat filter.</summary>
-    public FantasyFilterReqBuilder AddTopicType(string topicType, int sortPriority = 1, bool sortAsc = false)
-    {
-        ArgumentHelpers.ThrowIfNullOrWhiteSpace(topicType);
-        _topicsByType[topicType] = new() { SortMessageDate = new() { SortPriority = sortPriority, SortAsc = sortAsc } };
-        return this;
-    }
-
-    /// <summary>Registers multiple topic type groups to the league chat filter.</summary>
-    public FantasyFilterReqBuilder WithTopicTypes(IEnumerable<string> topicTypes, int sortPriority = 1, bool sortAsc = false)
-    {
-        var topicTypeList = topicTypes.AsReadOnlyList();
-        foreach (var topicType in topicTypeList.Where(i => !string.IsNullOrWhiteSpace(i)).Distinct())
-            AddTopicType(topicType, sortPriority, sortAsc);
-
-        ArgumentHelpers.ThrowIfNullOrEmpty(_topicsByType, nameof(topicTypes));
         return this;
     }
 
@@ -87,27 +82,20 @@ public sealed class FantasyFilterReqBuilder
     /// <summary>Assembles the typed ESPN fantasy filter.</summary>
     public FantasyFilterReq Build()
     {
-        OperationHelpers.ThrowIf(
-            _players == null && _transactions == null && _topics == null && _topicsByType.Count == 0, "At least one fantasy filter section must be specified.");
-
-        return new() {
-            Players = _players,
-            Transactions = _transactions,
-            Topics = _topics,
-            TopicsByType = _topicsByType.Count == 0 ? null : new Dictionary<string, TopicTypeFilterReq>(_topicsByType)
-        };
+        OperationHelpers.ThrowIf(_players == null && _transactions == null && _topics == null, "At least one fantasy filter section must be specified.");
+        return new() { Players = _players, Transactions = _transactions, Topics = _topics };
     }
 
     public static FantasyFilterReqBuilder Create() => new();
 
     public static FantasyFilterReqBuilder ForPlayers(IEnumerable<int> playerIds) => Create().WithPlayerIds(playerIds);
 
-    public static FantasyFilterReqBuilder ForTransactions(IEnumerable<string> types) => Create().WithTransactionTypes(types);
+    public static FantasyFilterReqBuilder ForFreeAgents(int limit = 50, int offset = 0) => Create().WithFreeAgents(limit, offset);
 
-    public static FantasyFilterReqBuilder ForTopicTypes(IEnumerable<string> topicTypes) => Create().WithTopicTypes(topicTypes);
+    public static FantasyFilterReqBuilder ForTransactions(IEnumerable<string> types) => Create().WithTransactionTypes(types);
 
     public static FantasyFilterReqBuilder ForRecentActivity(int limit, int offset = 0, int limitPerMessageSet = 25, IEnumerable<int>? messageTypeIds = null)
         => Create().WithRecentActivity(limit, offset, limitPerMessageSet, messageTypeIds);
 
-    public override string ToString() => $"Players={_players != null} Transactions={_transactions != null} Topics={_topics != null} TopicTypes={_topicsByType.Count}";
+    public override string ToString() => $"Players={_players != null} Transactions={_transactions != null} Topics={_topics != null}";
 }

@@ -1,6 +1,6 @@
-using System.Security.Cryptography;
-using Lyo.FileMetadataStore.DownloadAccess;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
+using Lyo.FileMetadataStore.DownloadAccess;
 using Lyo.FileMetadataStore.Postgres.Database;
 using Lyo.FileStorage.Audit;
 using Lyo.Lock.Abstractions;
@@ -48,7 +48,7 @@ public sealed class PostgresFileDownloadAccessService : IFileDownloadAccessServi
         var (token, tokenHash) = FileDownloadAccessToken.Create();
         var now = DateTime.UtcNow;
         var link = new FileDownloadAccessLinkEntity {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             FileId = request.FileId,
             TokenHash = tokenHash,
             CreatedUtc = now,
@@ -142,7 +142,7 @@ public sealed class PostgresFileDownloadAccessService : IFileDownloadAccessServi
         var normalizedError = string.IsNullOrWhiteSpace(ipAddress) ? error : $"{error ?? "n/a"};ip={ipAddress}";
         _dbContext.FileAuditEvents.Add(
             new() {
-                Id = Guid.NewGuid(),
+                Id = LyoGuid.CreateV7(),
                 EventType = eventType,
                 Outcome = outcome,
                 Timestamp = DateTime.UtcNow,

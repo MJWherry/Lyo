@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Components;
 namespace Lyo.Web.Primitives;
 
 /// <summary>
-/// Compact outlined button for a <see cref="LyoToolbar" />. Size is always small. <see cref="Disabled" /> ORs with the owning toolbar's cascade.
-/// Extra attributes are forwarded onto <c>MudButton</c>.
+/// Compact outlined button for a <see cref="LyoToolbar" />. Size is always small. <see cref="Disabled" /> ORs with the owning toolbar's cascade. Extra attributes are
+/// forwarded onto <c>MudButton</c>.
 /// </summary>
 public partial class LyoToolbarButton
 {
@@ -44,8 +44,8 @@ public partial class LyoToolbarButton
     [Parameter(CaptureUnmatchedValues = true)]
     public IReadOnlyDictionary<string, object>? AdditionalAttributes { get; set; }
 
-    [CascadingParameter]
-    private LyoToolbar? Owner { get; set; }
+    [CascadingParameter(Name = LyoToolbarLayout.DisabledCascadeName)]
+    private bool OwnerDisabled { get; set; }
 
-    private bool IsDisabled => LyoToolbarLayout.IsDisabled(Disabled, Owner?.Disabled ?? false);
+    private bool IsDisabled => LyoToolbarLayout.IsDisabled(Disabled, OwnerDisabled);
 }

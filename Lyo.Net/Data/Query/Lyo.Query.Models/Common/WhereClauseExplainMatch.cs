@@ -128,8 +128,8 @@ public sealed class WhereClauseExplainResult
     public string? FailureSummary { get; }
 
     /// <summary>
-    /// When any <c>Or</c> group in the tree failed, one entry per direct branch under each such group (nested <c>Or</c>s add more rows). Empty or null when there are
-    /// no failed <c>Or</c> nodes or when the overall clause passed.
+    /// When any <c>Or</c> group in the tree failed, one entry per direct branch under each such group (nested <c>Or</c>s add more rows). Empty or null when there are no failed
+    /// <c>Or</c> nodes or when the overall clause passed.
     /// </summary>
     public IReadOnlyList<ExplainOrBranchOutcome>? OrBranchOutcomes { get; }
 

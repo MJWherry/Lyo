@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Json\Lyo.Common.Json.csproj"/>
+        <ProjectReference Include="..\..\Json\Lyo.Json\Lyo.Json.csproj"/>
         <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
         <ProjectReference Include="..\..\..\Core\Parameters\Lyo.Parameters\Lyo.Parameters.csproj"/>
     </ItemGroup>

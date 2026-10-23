@@ -50,9 +50,7 @@ public interface IIOTempFileGenerator
     /// <summary>Writes a CSV asynchronously.</summary>
     Task<string> CreateCsvFileAsync(int rows, int columns, string? name = null, CancellationToken ct = default);
 
-    /// <summary>
-    /// Writes JSON: nested objects with <paramref name="keysPerObject" /> keys per level and <paramref name="depth" /> levels. Leaves are random strings, numbers, or booleans.
-    /// </summary>
+    /// <summary>Writes JSON: nested objects with <paramref name="keysPerObject" /> keys per level and <paramref name="depth" /> levels. Leaves are random strings, numbers, or booleans.</summary>
     string CreateJsonFile(int depth, int keysPerObject, string? name = null);
 
     /// <summary>Writes nested JSON asynchronously.</summary>
@@ -64,9 +62,7 @@ public interface IIOTempFileGenerator
     /// <summary>Writes a zip from <paramref name="spec" /> asynchronously.</summary>
     Task<string> CreateZipFileAsync(TempDirectorySpec spec, string? name = null, CancellationToken ct = default);
 
-    /// <summary>
-    /// Writes XML: nested elements with <paramref name="keysPerObject" /> children per node and <paramref name="depth" /> levels. Leaves are random integers.
-    /// </summary>
+    /// <summary>Writes XML: nested elements with <paramref name="keysPerObject" /> children per node and <paramref name="depth" /> levels. Leaves are random integers.</summary>
     string CreateXmlFile(int depth, int keysPerObject, string? name = null);
 
     /// <summary>Writes nested XML asynchronously.</summary>

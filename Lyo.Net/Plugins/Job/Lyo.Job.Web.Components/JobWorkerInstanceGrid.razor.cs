@@ -2,6 +2,12 @@ namespace Lyo.Job.Web.Components;
 
 public partial class JobWorkerInstanceGrid
 {
+    private static readonly string[] _quickSearchProperties = ["WorkerType", "MachineName"];
+
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("WorkerType", "Worker Type"), new("MachineName", "Machine"), new("State")];
+
+    private LyoDataGridProjected? _dataGrid;
+
     [Parameter]
     [EditorRequired]
     public IApiClient ApiClient { get; set; } = null!;
@@ -12,13 +18,6 @@ public partial class JobWorkerInstanceGrid
 
     private string _route => $"{BaseRoute.TrimEnd('/')}/WorkerInstance";
 
-    private LyoDataGridProjected? _dataGrid;
-
-    private static readonly string[] _quickSearchProperties = ["WorkerType", "MachineName"];
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("WorkerType", "Worker Type"), new("MachineName", "Machine"), new("State")];
-
-
     private async Task ViewInstance(object? item)
     {
         if (item == null)
@@ -28,8 +27,7 @@ public partial class JobWorkerInstanceGrid
         if (id == null)
             return;
 
-        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobWorkerInstanceRes>>(
-            $"{_route}/QueryConcrete", new() { Keys = [[id]], Amount = 1 });
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobWorkerInstanceRes>>($"{_route}/QueryConcrete", new() { Keys = [[id]], Amount = 1 });
         var instance = res?.Items?.FirstOrDefault();
         if (instance == null)
             return;

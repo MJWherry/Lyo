@@ -2,10 +2,7 @@ using System.Diagnostics;
 
 namespace Lyo.Query.Models.Common.Request;
 
-/// <summary>
-/// Request body for root <c>/Query</c> (context base, not under <c>{entityType}</c>) — From/Joins + sparse Select. Same projected row shape as
-/// <c>/QueryProject</c>.
-/// </summary>
+/// <summary>Request body for root <c>/Query</c> (context base, not under <c>{entityType}</c>) — From/Joins + sparse Select. Same projected row shape as <c>/QueryProject</c>.</summary>
 /// <remarks>
 /// <see cref="QueryRequestBase.Include" /> is forbidden. Outer <see cref="QueryRequestBase.WhereClause" /> / <see cref="QueryRequestBase.SortBy" /> may only reference the
 /// From alias in v1 (paging safety). Joins are arbitrary EF Join/GroupJoin on ON columns (including chained join aliases) — not navigations (<c>/QueryProject</c> owns nav Select).

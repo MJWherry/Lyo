@@ -77,7 +77,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
-
             services.AddSingleton(BindOptions(configuration, configSectionName));
 
             // add IAmazonSecretsManager when it is not already registered
@@ -88,8 +87,8 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Registers two-key encryption with AWS KeyStore and applies the given secret prefix to AwsKeyStore. Example:
-        /// services.AddTwoKeyEncryption&lt;AwsKeyStore&gt;("two-key-aws", "dev/FileStore")
+        /// Registers two-key encryption with AWS KeyStore and applies the given secret prefix to AwsKeyStore. Example: services.AddTwoKeyEncryption&lt;AwsKeyStore&gt;("two-key-aws",
+        /// "dev/FileStore")
         /// </summary>
         /// <typeparam name="TKeyStore">Must be AwsKeyStore</typeparam>
         /// <param name="keyedServiceName">Keyed-registration name</param>
@@ -107,8 +106,8 @@ public static class Extensions
             => services.AddTwoKeyEncryptionServiceKeyed(keyedServiceName, secretNamePrefix, null);
 
         /// <summary>
-        /// Registers two-key encryption with AWS KeyStore, binding AwsKeyStoreOptions from appsettings. Example:
-        /// services.AddTwoKeyEncryptionFromConfiguration&lt;AwsKeyStore&gt;("two-key-aws", "AwsKeyStore")
+        /// Registers two-key encryption with AWS KeyStore, binding AwsKeyStoreOptions from appsettings. Example: services.AddTwoKeyEncryptionFromConfiguration&lt;AwsKeyStore&gt;
+        /// ("two-key-aws", "AwsKeyStore")
         /// </summary>
         /// <typeparam name="TKeyStore">Must be AwsKeyStore</typeparam>
         /// <param name="configuration">Host configuration (for example builder.Configuration).</param>

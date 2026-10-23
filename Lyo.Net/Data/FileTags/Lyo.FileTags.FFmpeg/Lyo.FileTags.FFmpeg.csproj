@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>ffprobe and stream-copy ffmpeg provider for audio and video file tags.</Description>
+        <PackageTags>file tags ffmpeg ffprobe metadata</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.FileTags.FFmpeg.Tests"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CliWrap"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.FileTags\Lyo.FileTags.csproj"/>
+        <ProjectReference Include="..\..\Media\Lyo.FFmpeg\Lyo.FFmpeg.csproj"/>
+    </ItemGroup>
+
+</Project>

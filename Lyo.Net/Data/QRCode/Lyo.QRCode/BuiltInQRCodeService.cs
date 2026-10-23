@@ -13,8 +13,8 @@ namespace Lyo.QRCode;
 
 /// <summary>
 /// QR generation using the in-library ISO/IEC 18004 encoder (no QRCoder NuGet dependency). Supports PNG and SVG. JPEG and BMP require Windows, the same constraint as the
-/// QRCoder-backed service. Decoration (logo overlay, frame, caption, padding) is out of scope on purpose. Chain <c>Lyo.Images.IImageDecorationService</c> on the returned bytes
-/// for that.
+/// QRCoder-backed service. Decoration (logo overlay, frame, caption, padding) is out of scope on purpose. Chain <c>Lyo.Images.IImageDecorationService</c> on the returned bytes for
+/// that.
 /// </summary>
 public class BuiltInQRCodeService : IQRCodeService
 {

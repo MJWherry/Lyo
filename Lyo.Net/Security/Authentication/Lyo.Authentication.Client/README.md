@@ -1,6 +1,7 @@
 # Lyo.Authentication.Client
 
-Consumer-side runtime for the Lyo BFF auth flow. Plugs a web host, typically a Blazor Server gateway or a server-rendered API consumer, into a Lyo authentication API without ever exposing tokens to the browser.
+Consumer-side runtime for the Lyo BFF auth flow. Plugs a web host, typically a Blazor Server gateway or a server-rendered API consumer, into a Lyo authentication API without ever
+exposing tokens to the browser.
 
 ## Examples
 
@@ -43,7 +44,7 @@ app.MapLyoAuthSignOut();
 
 ```json
 {
-  "LyoOidcBff": {
+  "LyoSso": {
     "AllowedReturnOrigins": [ "http://localhost:5138" ],
     "DefaultReturnUrl": "/",
     "HandoffCodeTtl": "00:00:30"
@@ -102,7 +103,8 @@ Register in the consuming host's `Program.cs`. Bind `appsettings.json`. On the A
 
 ## API client flow (no browser)
 
-For non-browser callers, hit `POST /auth/token` (grant_type=refresh_token) and `POST /auth/refresh` directly on the API. Both return JSON `{access_token, expires_in, refresh_token, token_type}`. This package isn't needed for that flow. It exists to bridge the browser handoff into a server-managed session.
+For non-browser callers, hit `POST /auth/token` (grant_type=refresh_token) and `POST /auth/refresh` directly on the API. Both return JSON
+`{access_token, expires_in, refresh_token, token_type}`. This package isn't needed for that flow. It exists to bridge the browser handoff into a server-managed session.
 
 ## Production swap-out points
 
@@ -126,18 +128,21 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Common.Core` (direct, lyo)
 - `Lyo.Diagnostic.AspNetCore` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
+- `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft)

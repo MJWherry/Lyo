@@ -6,21 +6,24 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Lyo.Web.Primitives;
 
 /// <summary>
-/// Virtualized log pane with a minimum-level filter, text search, follow-tail, copy, and download. Prefer it for job runs, diagnostics, seed, automation, and queue
-/// traces instead of a growing <c>&lt;pre&gt;</c> that locks the UI once a few thousand lines arrive.
+/// Virtualized log pane with a minimum-level filter, text search, follow-tail, copy, and download. Prefer it for job runs, diagnostics, seed, automation, and queue traces
+/// instead of a growing <c>&lt;pre&gt;</c> that locks the UI once a few thousand lines arrive.
 /// </summary>
 /// <remarks>
-/// Pass the current snapshot as <see cref="Entries" />. The viewer does not subscribe to a stream itself; the parent appends and re-renders, and follow-tail
-/// scrolls to the newest row when the count grows.
+/// Pass the current snapshot as <see cref="Entries" />. The viewer does not subscribe to a stream itself; the parent appends and re-renders, and follow-tail scrolls to the
+/// newest row when the count grows.
 /// </remarks>
 public partial class LyoLogViewer
 {
-    private static readonly LyoLogLevel[] FilterLevels = [LyoLogLevel.Trace, LyoLogLevel.Debug, LyoLogLevel.Information, LyoLogLevel.Warning, LyoLogLevel.Error, LyoLogLevel.Critical];
+    private static readonly LyoLogLevel[] FilterLevels = [
+        LyoLogLevel.Trace, LyoLogLevel.Debug, LyoLogLevel.Information, LyoLogLevel.Warning, LyoLogLevel.Error, LyoLogLevel.Critical
+    ];
+
+    private bool _followTail = true;
+    private int _lastCount;
 
     private LyoLogLevel _minLevel = LyoLogLevel.Trace;
     private string? _search;
-    private bool _followTail = true;
-    private int _lastCount;
     private Virtualize<LyoLogEntry>? _virtualize;
 
     /// <summary>Log rows, oldest first. The viewer does not mutate the list.</summary>
@@ -80,9 +83,8 @@ public partial class LyoLogViewer
     }
 
     private static bool Matches(LyoLogEntry entry, string? search)
-        => string.IsNullOrWhiteSpace(search)
-            || entry.Message.Contains(search, StringComparison.OrdinalIgnoreCase)
-            || (entry.Source?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false);
+        => string.IsNullOrWhiteSpace(search) || entry.Message.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+            (entry.Source?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false);
 
     private async Task CopyAsync()
     {

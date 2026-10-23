@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Job.Models.Response;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public record SpJobStatistic(
     Guid JobDefinitionId,
     string JobName,

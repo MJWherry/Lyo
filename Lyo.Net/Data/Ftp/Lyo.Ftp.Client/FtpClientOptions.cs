@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
 
 namespace Lyo.Ftp.Client;
 
 /// <summary>Settings that <see cref="FtpClient" /> binds and validates.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class FtpClientOptions
 {
     /// <summary>Section key used when binding from configuration.</summary>
@@ -40,8 +42,8 @@ public sealed class FtpClientOptions
     public int MaxPooledClients { get; set; } = 4;
 
     /// <summary>
-    /// Optional inclusive PASV data-port range advertised by the server. When set, FluentFTP uses PASV and callers should publish the same host ports one-to-one for
-    /// NAT or Testcontainers.
+    /// Optional inclusive PASV data-port range advertised by the server. When set, FluentFTP uses PASV and callers should publish the same host ports one-to-one for NAT or
+    /// Testcontainers.
     /// </summary>
     public (int Min, int Max)? PassivePortRange { get; set; }
 
@@ -67,4 +69,7 @@ public sealed class FtpClientOptions
             // Fine as-is. No extra fields needed. FluentFTP uses the system trust store.
         }
     }
+
+    /// <summary>Host, port, and user. The password is omitted.</summary>
+    public override string ToString() => $"Host={Host} Port={Port} Username={Username} RootRemoteDirectory={RootRemoteDirectory} EncryptionMode={EncryptionMode} PasswordSet={!string.IsNullOrWhiteSpace(Password)}";
 }

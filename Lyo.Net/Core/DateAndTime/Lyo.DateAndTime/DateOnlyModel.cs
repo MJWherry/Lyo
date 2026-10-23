@@ -6,8 +6,8 @@ namespace Lyo.DateAndTime;
 
 /// <summary>Calendar date with no time-of-day, usable on .NET Standard 2.0, modeled after the BCL <c>System.DateOnly</c> type added in .NET 6.</summary>
 /// <remarks>
-/// Stored as a day offset from 0001-01-01, close enough to BCL behavior for scheduling and persistence where <see cref="DateTime" /> would bring in unwanted time zones.
-/// On .NET 6+, prefer built-in <c>System.DateOnly</c> when you can target it directly.
+/// Stored as a day offset from 0001-01-01, close enough to BCL behavior for scheduling and persistence where <see cref="DateTime" /> would bring in unwanted time zones. On
+/// .NET 6+, prefer built-in <c>System.DateOnly</c> when you can target it directly.
 /// </remarks>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class DateOnlyModel : IComparable<DateOnlyModel>, IEquatable<DateOnlyModel>

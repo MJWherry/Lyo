@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 
 namespace Lyo.Config.Postgres.Database;
 
 /// <summary>Postgres row that holds config definitions in PostgreSQL.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ConfigDefinitionEntity
 {
     [Key]
@@ -33,13 +35,14 @@ public sealed class ConfigDefinitionEntity
     [MaxLength(8192)]
     public string? DefaultValueJson { get; set; }
 
-    /// <summary>
-    /// Encrypted bytes for <see cref="DefaultValueJson" /> when <see cref="IsEncrypted" />. Empty array is the Job-style “encrypt this plaintext” marker on write.
-    /// </summary>
+    /// <summary>Encrypted bytes for <see cref="DefaultValueJson" /> when <see cref="IsEncrypted" />. Empty array is the Job-style “encrypt this plaintext” marker on write.</summary>
     public byte[]? EncryptedDefaultValue { get; set; }
 
     [Required]
     public DateTime CreatedTimestamp { get; set; }
 
     public DateTime? UpdatedTimestamp { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

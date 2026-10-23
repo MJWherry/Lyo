@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Result;
 
 namespace Lyo.ShortUrl.Models;
 
 /// <summary>Outcome of a URL shortening operation with URL shortening-specific properties.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record UrlShortenResult : Result<string>
 {
     /// <summary>URL after shortening.</summary>

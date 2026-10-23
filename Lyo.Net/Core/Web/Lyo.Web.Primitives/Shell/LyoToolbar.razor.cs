@@ -5,12 +5,12 @@ namespace Lyo.Web.Primitives;
 
 /// <summary>
 /// Control cluster above a table, editor, or panel body. Shorthand slots (<see cref="Start" />, <see cref="ChildContent" />, <see cref="End" />) draw one row.
-/// <see cref="Rows" /> draws any number of <see cref="LyoToolbarRow" /> children instead. Unlike <c>MudToolBar</c> this has no fixed height and no surface of its
-/// own, which is what lets it sit inside a <see cref="LyoSection" /> without doubling the padding.
+/// <see cref="Rows" /> draws any number of <see cref="LyoToolbarRow" /> children instead. Unlike <c>MudToolBar</c> this has no fixed height and no surface of its own, which is what
+/// lets it sit inside a <see cref="LyoSection" /> without doubling the padding.
 /// </summary>
 /// <remarks>
-/// Wrappers (<see cref="LyoToolbarButton" />, <see cref="LyoToolbarIconButton" />, <see cref="LyoToolbarMenu" />, <see cref="LyoToolbarField" />) pick up
-/// <see cref="Disabled" /> through a cascade. Raw MudBlazor controls remain legal inside a group.
+/// Wrappers (<see cref="LyoToolbarButton" />, <see cref="LyoToolbarIconButton" />, <see cref="LyoToolbarMenu" />, <see cref="LyoToolbarField" />) pick up <see cref="Disabled" />
+/// through a cascade. Raw MudBlazor controls remain legal inside a group.
 /// <code>
 /// &lt;LyoToolbar Dense="true" Disabled="@_loading"&gt;
 ///     &lt;Rows&gt;
@@ -43,10 +43,7 @@ public partial class LyoToolbar
     [Parameter]
     public RenderFragment? End { get; set; }
 
-    /// <summary>
-    /// Explicit rows. When set, <see cref="Start" />, <see cref="ChildContent" />, and <see cref="End" /> are not rendered. Put <see cref="LyoToolbarRow" />
-    /// children inside.
-    /// </summary>
+    /// <summary>Explicit rows. When set, <see cref="Start" />, <see cref="ChildContent" />, and <see cref="End" /> are not rendered. Put <see cref="LyoToolbarRow" /> children inside.</summary>
     [Parameter]
     public RenderFragment? Rows { get; set; }
 
@@ -54,7 +51,10 @@ public partial class LyoToolbar
     [Parameter]
     public bool Dense { get; set; }
 
-    /// <summary>Disables every wrapper that reads the cascade. Per-control <c>Disabled</c> still ORs in.</summary>
+    /// <summary>
+    /// Disables every wrapper that reads the cascade. Per-control <c>Disabled</c> still ORs in. Cascaded as a bool (not via the owner instance) so buttons re-enable when this
+    /// flips from true to false.
+    /// </summary>
     [Parameter]
     public bool Disabled { get; set; }
 
@@ -84,10 +84,8 @@ public partial class LyoToolbar
 
     internal bool ShowCollapseToggle => ShowRowToggle && HasCollapsibleRows;
 
-    internal string RootCssClass
-    {
-        get
-        {
+    internal string RootCssClass {
+        get {
             _toggleClaimed = false;
             return LyoToolbarLayout.Root(Dense);
         }
@@ -124,6 +122,7 @@ public partial class LyoToolbar
     {
         if (!ShowCollapseToggle || _toggleClaimed)
             return false;
+
         _toggleClaimed = true;
         return true;
     }

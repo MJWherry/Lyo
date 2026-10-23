@@ -4,7 +4,7 @@ Job API client package built on top of `lyo-api-client` and `lyo-query`.
 
 ## Scope
 
-- Typed contracts for Job definitions, runs, workers, schedules, triggers, blackouts, and workflows
+- Typed contracts for Job definitions, runs, workers, schedules, blackouts, and workflows
 - QueryConcrete / QueryProject plus special lifecycle routes (`Create`, `Cancel`, `Rerun`, Stats, …)
 - Include-path constants used by the Blazor job editor
 
@@ -28,7 +28,6 @@ const page = await jobs.definitions.queryConcrete(emptyConcreteQuery(20));
 const run = await jobs.runs.create({
   jobDefinitionId: "…",
   createdBy: "ui",
-  allowTriggers: true,
 });
 await jobs.runs.cancel(run.data!.data!.id);
 ```

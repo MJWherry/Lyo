@@ -21,7 +21,7 @@ public class NativeBarcodeServiceTests
                 ModuleWidthPixels = 2,
                 BarHeightPixels = 60,
                 QuietZoneModules = 8
-            }, TestContext.Current.CancellationToken);
+            }, TestCt);
 
         var br = Assert.IsType<BarcodeResult>(result);
         Assert.True(result.IsSuccess);
@@ -43,7 +43,7 @@ public class NativeBarcodeServiceTests
                 ModuleWidthPixels = 1,
                 BarHeightPixels = 40,
                 QuietZoneModules = 4
-            }, TestContext.Current.CancellationToken);
+            }, TestCt);
 
         var br = Assert.IsType<BarcodeResult>(result);
         Assert.True(result.IsSuccess);
@@ -55,7 +55,7 @@ public class NativeBarcodeServiceTests
     public async Task GenerateAsync_InvalidCharacter_Fails()
     {
         var service = CreateService();
-        var result = await service.GenerateAsync("bad\u0001", BarcodeSymbology.Code128, new() { Format = BarcodeFormat.Bmp }, TestContext.Current.CancellationToken);
+        var result = await service.GenerateAsync("bad\u0001", BarcodeSymbology.Code128, new() { Format = BarcodeFormat.Bmp }, TestCt);
         Assert.False(result.IsSuccess);
     }
 
@@ -63,7 +63,7 @@ public class NativeBarcodeServiceTests
     public async Task GenerateAsync_UnsupportedSymbology_Fails()
     {
         var service = CreateService();
-        var result = await service.GenerateAsync("123", (BarcodeSymbology)999, new(), TestContext.Current.CancellationToken);
+        var result = await service.GenerateAsync("123", (BarcodeSymbology)999, new(), TestCt);
         Assert.False(result.IsSuccess);
     }
 
@@ -83,7 +83,7 @@ public class NativeBarcodeServiceTests
                 ModuleWidthPixels = moduleW,
                 BarHeightPixels = barH,
                 QuietZoneModules = 8
-            }, TestContext.Current.CancellationToken);
+            }, TestCt);
 
         var with = await service.GenerateAsync(
             "TEST1234", BarcodeSymbology.Code128, new() {
@@ -95,7 +95,7 @@ public class NativeBarcodeServiceTests
                 HumanReadableFontSizePixels = 14,
                 HumanReadableMarginTopPixels = 6,
                 HumanReadableMarginBottomPixels = 4
-            }, TestContext.Current.CancellationToken);
+            }, TestCt);
 
         var br0 = Assert.IsType<BarcodeResult>(without);
         var br1 = Assert.IsType<BarcodeResult>(with);
@@ -115,7 +115,7 @@ public class NativeBarcodeServiceTests
                 BarHeightPixels = 40,
                 QuietZoneModules = 10,
                 ShowHumanReadableTextBelow = true
-            }, TestContext.Current.CancellationToken);
+            }, TestCt);
 
         var br = Assert.IsType<BarcodeResult>(result);
         Assert.True(result.IsSuccess);
@@ -138,7 +138,7 @@ public class NativeBarcodeServiceTests
                 ModuleWidthPixels = moduleW,
                 BarHeightPixels = barH,
                 QuietZoneModules = quiet
-            }, TestContext.Current.CancellationToken);
+            }, TestCt);
 
         var bordered = await service.GenerateAsync(
             "X", BarcodeSymbology.Code128, new() {
@@ -149,7 +149,7 @@ public class NativeBarcodeServiceTests
                 ShowBorder = true,
                 BorderWidthPixels = border,
                 BorderColorHex = "#FF0000"
-            }, TestContext.Current.CancellationToken);
+            }, TestCt);
 
         var p0 = Assert.IsType<BarcodeResult>(plain);
         var p1 = Assert.IsType<BarcodeResult>(bordered);
@@ -170,7 +170,7 @@ public class NativeBarcodeServiceTests
                 QuietZoneModules = 10,
                 ShowHumanReadableTextBelow = true,
                 HumanReadableText = "a<b&\"'"
-            }, TestContext.Current.CancellationToken);
+            }, TestCt);
 
         var br = Assert.IsType<BarcodeResult>(result);
         Assert.True(result.IsSuccess);

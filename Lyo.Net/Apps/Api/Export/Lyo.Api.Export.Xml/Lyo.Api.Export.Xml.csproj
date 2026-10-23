@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>XML export format handler for Lyo.Api export service.</Description>
+        <PackageTags>api export xml</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Lyo.Api\Lyo.Api.csproj"/>
+        <ProjectReference Include="..\..\..\..\Data\Xml\Lyo.Xml\Lyo.Xml.csproj"/>
+    </ItemGroup>
+
+</Project>

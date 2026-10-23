@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.ContactUs.Models;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
@@ -7,6 +8,7 @@ using static Lyo.ContactUs.ContactUsErrorCodes;
 namespace Lyo.ContactUs;
 
 /// <summary>Shared implementation of contact form service with validation and logging.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public abstract class ContactUsServiceBase : IContactUsService
 {
     /// <summary>Logger instance.</summary>
@@ -40,6 +42,21 @@ public abstract class ContactUsServiceBase : IContactUsService
             Logger.LogError(ex, "Failed to submit contact form from {Email}", request.Email);
             return ContactUsSubmitResult.FromException(ex, SubmitFailed);
         }
+    }
+
+    /// <inheritdoc />
+    public Task<ContactSubmission?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfEmpty(id);
+        ct.ThrowIfCancellationRequested();
+        return GetByIdCoreAsync(id, ct);
+    }
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<ContactSubmission>> ListAsync(CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+        return ListCoreAsync(ct);
     }
 
     /// <inheritdoc />
@@ -77,4 +94,13 @@ public abstract class ContactUsServiceBase : IContactUsService
 
     /// <summary>Posts the contact form (storage-specific implementation).</summary>
     protected abstract Task<ContactUsSubmitResult> SubmitCoreAsync(ContactUsRequest request, CancellationToken ct);
+
+    /// <summary>Loads one stored submission (storage-specific implementation).</summary>
+    protected abstract Task<ContactSubmission?> GetByIdCoreAsync(Guid id, CancellationToken ct);
+
+    /// <summary>Lists stored submissions, newest first (storage-specific implementation).</summary>
+    protected abstract Task<IReadOnlyList<ContactSubmission>> ListCoreAsync(CancellationToken ct);
+
+    /// <summary>Service name and the options it was built with.</summary>
+    public override string ToString() => $"{GetType().Name} {Options}";
 }

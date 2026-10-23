@@ -22,8 +22,8 @@ public sealed class PhoneMaskOptions
     public int TrailingDigitsVisible { get; set; }
 
     /// <summary>
-    /// When set, leading/trailing counts are ignored: among the last N digits, only the first of that window stays visible (the earlier “first digit of last group” behaviour). Use
-    /// <see cref="DigitsOnlyOutput" /> to drop separators.
+    /// When set, leading/trailing counts are ignored: among the last N digits, only the first of that window stays visible (the earlier “first digit of last group” behaviour).
+    /// Use <see cref="DigitsOnlyOutput" /> to drop separators.
     /// </summary>
     public int? OnlyFirstDigitAmongLastN { get; set; }
 

@@ -5,18 +5,24 @@ using Lyo.Exceptions;
 namespace Lyo.Media.Models;
 
 /// <summary>
-/// Slices a raw PCM s16le stream into fixed-duration frames. Default frame duration is 20 ms (voice-pump shaped without referencing Discord).
-/// Each yielded array is a copy the caller owns. Uses <see cref="ArrayPool{T}" /> for the read buffer.
+/// Slices a raw PCM s16le stream into fixed-duration frames. Default frame duration is 20 ms (voice-pump shaped without referencing Discord). Each yielded array is a copy
+/// the caller owns. Uses <see cref="ArrayPool{T}" /> for the read buffer.
 /// </summary>
-/// <remarks>
-/// Single-consumer. Do not call <see cref="ReadFramesAsync" /> from two threads against the same instance. Dispose or complete the underlying stream to stop.
-/// </remarks>
+/// <remarks>Single-consumer. Do not call <see cref="ReadFramesAsync" /> from two threads against the same instance. Dispose or complete the underlying stream to stop.</remarks>
 public sealed class PcmFrameReader
 {
     private readonly int _channels;
     private readonly TimeSpan _frameDuration;
     private readonly int _sampleRate;
     private readonly Stream _stream;
+
+    /// <summary>Byte length of one full frame.</summary>
+    public int FrameSizeBytes {
+        get {
+            var seconds = _frameDuration.TotalSeconds;
+            return checked((int)Math.Round(_sampleRate * _channels * 2 * seconds, MidpointRounding.AwayFromZero));
+        }
+    }
 
     /// <summary>Wraps <paramref name="stream" />. Frame size is <c>sampleRate * channels * 2 * frameDuration</c> bytes.</summary>
     public PcmFrameReader(Stream stream, int sampleRate = 48000, int channels = 2, TimeSpan? frameDuration = null)
@@ -30,16 +36,6 @@ public sealed class PcmFrameReader
         _channels = channels;
         _frameDuration = frameDuration ?? TimeSpan.FromMilliseconds(20);
         ArgumentHelpers.ThrowIf(_frameDuration <= TimeSpan.Zero, "Frame duration must be greater than zero.", nameof(frameDuration));
-    }
-
-    /// <summary>Byte length of one full frame.</summary>
-    public int FrameSizeBytes
-    {
-        get
-        {
-            var seconds = _frameDuration.TotalSeconds;
-            return checked((int)Math.Round(_sampleRate * _channels * 2 * seconds, MidpointRounding.AwayFromZero));
-        }
     }
 
     /// <summary>Reads frames until the stream ends. A partial last frame is yielded if any bytes remain.</summary>

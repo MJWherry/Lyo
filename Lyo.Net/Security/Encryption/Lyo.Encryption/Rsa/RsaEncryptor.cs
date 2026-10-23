@@ -8,9 +8,8 @@ using Lyo.Exceptions.Models;
 namespace Lyo.Encryption.Rsa;
 
 /// <summary>
-/// Encrypts with an RSA public key. RSA only accepts small payloads (roughly key size minus padding), so data is chunked automatically.
-/// Use for small bodies or key exchange. Decrypt side is <see cref="RsaDecryptor" />. Thread-safe: each call owns its
-/// cryptographic context and shares no mutable crypto state.
+/// Encrypts with an RSA public key. RSA only accepts small payloads (roughly key size minus padding), so data is chunked automatically. Use for small bodies or key exchange.
+/// Decrypt side is <see cref="RsaDecryptor" />. Thread-safe: each call owns its cryptographic context and shares no mutable crypto state.
 /// </summary>
 public sealed class RsaEncryptor : IEncryptor, IDisposable, IAsyncDisposable
 {
@@ -77,10 +76,7 @@ public sealed class RsaEncryptor : IEncryptor, IDisposable, IAsyncDisposable
     /// <inheritdoc />
     public void SetEncryptionEncoding(Encoding encoding) => _encryptionEncoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
 
-    /// <summary>
-    /// Encrypts with RSA. Thread-safe: concurrent calls on one instance are safe because each call owns its
-    /// cryptographic context and shares no mutable crypto state.
-    /// </summary>
+    /// <summary>Encrypts with RSA. Thread-safe: concurrent calls on one instance are safe because each call owns its cryptographic context and shares no mutable crypto state.</summary>
     /// <param name="bytes">Plaintext. Must not be null or empty.</param>
     /// <param name="keyId">Ignored. RSA keys come from the constructor; present only for the interface.</param>
     /// <param name="key">Ignored. RSA keys come from the constructor; present only for the interface.</param>

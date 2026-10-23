@@ -1,10 +1,15 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.ContactUs.Models;
 
 /// <summary>Request payload for a contact form submission.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ContactUsRequest
 {
+    /// <summary>Sender and subject. The message body is omitted.</summary>
+    public override string ToString() => $"{Name} <{Email}> Subject={Subject} MessageLength={Message?.Length ?? 0}";
+
     /// <summary>Sender's name.</summary>
     [Required]
     [MaxLength(200)]

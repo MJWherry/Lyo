@@ -1,0 +1,17 @@
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.FantasyFootball)]
+@inherits AuthorizedPage
+
+<PageTitle>Fantasy football</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <MudStack Row="true" Spacing="2" Class="mb-4">
+        <MudNumericField @bind-Value="_leagueId" Label="League id" Variant="Variant.Outlined"/>
+        <MudNumericField @bind-Value="_seasonId" Label="Season" Variant="Variant.Outlined"/>
+        <MudTextField @bind-Value="_espnS2" Label="Auth token" HelperText="espn_s2, or the whole Cookie header" InputType="InputType.Password" Immediate="true"
+                      Variant="Variant.Outlined"/>
+        <MudTextField @bind-Value="_swid" Label="SWID" HelperText="Optional when the token field already includes it" InputType="InputType.Password" Immediate="true"
+                      Variant="Variant.Outlined"/>
+    </MudStack>
+    <FantasyFootballWorkbench LeagueId="_leagueId" SeasonId="_seasonId" EspnS2="_espnS2" Swid="_swid"/>
+</MudContainer>

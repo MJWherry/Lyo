@@ -1,0 +1,87 @@
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="1">
+            <MudGrid Spacing="1">
+                <MudItem xs="12" md="6">
+                    <MudTextField @bind-Value="_req.Name" Label="Name" Required="true" Margin="Margin.Dense"/>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudSelect T="Guid?" @bind-Value="_req.CategoryId" Label="Category" Clearable="true" Margin="Margin.Dense" Dense="true">
+                        <MudSelectItem T="Guid?" Value="@((Guid?)null)">(none)</MudSelectItem>
+                        @foreach (var cat in _categories) {
+                            <MudSelectItem T="Guid?" Value="@cat.Id">@cat.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="6">
+                    <MudSelect T="Guid?" @bind-Value="_req.LocationId" Label="Room" Clearable="true" Margin="Margin.Dense" Dense="true">
+                        <MudSelectItem T="Guid?" Value="@((Guid?)null)">(none)</MudSelectItem>
+                        @foreach (var loc in _locations) {
+                            <MudSelectItem T="Guid?" Value="@loc.Id">@loc.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="3">
+                    <MudSelect T="HomeItemStatus" @bind-Value="_req.Status" Label="Status" Margin="Margin.Dense" Dense="true">
+                        @foreach (var s in Enum.GetValues<HomeItemStatus>()) {
+                            <MudSelectItem Value="s">@s</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="3">
+                    <MudSelect T="HomeItemCondition" @bind-Value="_req.Condition" Label="Condition" Margin="Margin.Dense" Dense="true">
+                        @foreach (var c in Enum.GetValues<HomeItemCondition>()) {
+                            <MudSelectItem Value="c">@c</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+            <MudTextField @bind-Value="_req.Description" Label="Description" Margin="Margin.Dense"/>
+            <MudText Typo="Typo.subtitle2" Class="mt-1">Identifiers</MudText>
+            @foreach (var key in _req.ProductKeys) {
+                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.caption" Style="min-width: 7rem;">@HomeProductKeys.DisplayName(key.Kind)</MudText>
+                    <MudText Typo="Typo.body2">@key.Value</MudText>
+                    @if (!string.IsNullOrWhiteSpace(key.Note)) {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@key.Note</MudText>
+                    }
+                    <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small" OnClick="@(() => RemoveProductKey(key))"/>
+                </MudStack>
+            }
+            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Start">
+                <MudSelect T="string" @bind-Value="_draftKind" Label="Kind" Margin="Margin.Dense" Dense="true" Style="min-width: 10rem;">
+                    @foreach (var kind in HomeProductKeys.All) {
+                        <MudSelectItem Value="@kind">@HomeProductKeys.DisplayName(kind)</MudSelectItem>
+                    }
+                    <MudSelectItem Value="@CustomKindChoice">Custom…</MudSelectItem>
+                </MudSelect>
+                @if (IsCustomKind) {
+                    <MudTextField @bind-Value="_customKind" Label="Custom kind" Margin="Margin.Dense"/>
+                }
+                <MudTextField @bind-Value="_draftValue" Label="Value" Margin="Margin.Dense"/>
+                <MudTextField @bind-Value="_draftNote" Label="Note" Placeholder="which part / radio this belongs to" Margin="Margin.Dense"/>
+                <MudButton Size="Size.Small" Variant="Variant.Filled" Class="mt-1" OnClick="AddProductKey" Disabled="@(!CanAddKey)">Add</MudButton>
+            </MudStack>
+            @if (_savedId is Guid itemId) {
+                <MudDivider Class="my-1"/>
+
+                <HomeStockPanel ApiClient="ApiClient" BaseRoute="@BaseRoute" ItemId="itemId" Locations="_locations"/>
+
+                <HomeNotesPanel ApiClient="ApiClient" NotesRoute="@($"{_itemsRoute}/{itemId}/Notes")"/>
+
+                <HomeTagsPanel ApiClient="ApiClient" TagsRoute="@($"{_itemsRoute}/{itemId}/Tags")"/>
+
+                <HomeAttachmentPanel ApiClient="ApiClient"
+                                     AttachmentsRoute="@_attachmentsRoute"
+                                     FileStorageApiRoutePrefix="@FileStorageApiRoutePrefix"
+                                     EntityType="@HomeInventoryEntityTypes.Item"
+                                     EntityId="itemId"
+                                     ApiOrigin="@ApiOrigin"/>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Close</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Save" Disabled="@string.IsNullOrWhiteSpace(_req.Name)">Save</MudButton>
+    </DialogActions>
+</MudDialog>

@@ -43,7 +43,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(sectionName);
             var options = new FtpClientOptions();
             configuration.GetSection(sectionName).Bind(options);
-
             return services.AddFtpClient(options);
         }
 

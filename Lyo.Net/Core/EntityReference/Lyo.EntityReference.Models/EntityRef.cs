@@ -10,8 +10,8 @@ namespace Lyo.EntityReference.Models;
 /// <summary>Reference to an entity using a compound key of type and id for flexibility.</summary>
 /// <remarks>
 /// <para>
-/// <see cref="EntityType" /> identifies the kind of entity (for example <c>Person</c>, <c>Product</c>). <see cref="EntityId" /> is typically a Guid string but may be a composite
-/// (multi-part keys from <see cref="For{T}(object[])" />).
+/// <see cref="EntityType" /> identifies the kind of entity (for example <c>Person</c>, <c>Product</c>). <see cref="EntityId" /> is typically a Guid string but may be a
+/// composite (multi-part keys from <see cref="For{T}(object[])" />).
 /// </para>
 /// <para><b>Stable types:</b> apply <see cref="EntityRefLogicalTypeAttribute" /> so persisted rows do not depend on CLR <see cref="Type.FullName" />.</para>
 /// <para><b>Opaque token:</b> <see cref="ToOpaqueToken" /> / <see cref="TryParseOpaque" /> use U+001F as separator (unlikely in natural text).</para>
@@ -39,9 +39,7 @@ public readonly record struct EntityRef(string EntityType, string EntityId)
     /// <typeparam name="T">CLR type used to resolve the logical entity type name.</typeparam>
     /// <param name="entity">Non-null instance to read keys from.</param>
     /// <param name="selector">Returns a single key, a non-string <see cref="IEnumerable" /> of keys, or an <c>object[]</c> of keys.</param>
-    /// <returns>
-    /// An <see cref="EntityRef" /> whose <see cref="EntityType" /> comes from <typeparamref name="T" /> and whose <see cref="EntityId" /> is built from the keys.
-    /// </returns>
+    /// <returns>An <see cref="EntityRef" /> whose <see cref="EntityType" /> comes from <typeparamref name="T" /> and whose <see cref="EntityId" /> is built from the keys.</returns>
     /// <example>EntityRef.For(docket, d => d.Id) or EntityRef.For(order, o => [o.OrderId, o.LineId]).</example>
     public static EntityRef For<T>(T entity, Func<T, object?> selector)
         where T : class
@@ -57,9 +55,7 @@ public readonly record struct EntityRef(string EntityType, string EntityId)
     /// <typeparam name="T">CLR type used to resolve the logical entity type name.</typeparam>
     /// <param name="entity">Non-null instance to read keys from.</param>
     /// <param name="selector">Returns key segments, including via collection expressions (for example <c>e => [e.Id, e.SecondId]</c>).</param>
-    /// <returns>
-    /// An <see cref="EntityRef" /> whose <see cref="EntityType" /> comes from <typeparamref name="T" /> and whose <see cref="EntityId" /> is built from the keys.
-    /// </returns>
+    /// <returns>An <see cref="EntityRef" /> whose <see cref="EntityType" /> comes from <typeparamref name="T" /> and whose <see cref="EntityId" /> is built from the keys.</returns>
     public static EntityRef For<T>(T entity, Func<T, object?[]> selector)
         where T : class
     {

@@ -2,7 +2,8 @@
 
 Typed HTTP client targeting the Lyo Reporting API (`netstandard2.0;net10.0`).
 
-Workers and Discord bots should call Generate through this client against an API host that runs [`Lyo.Reporting.Api`](../Lyo.Reporting.Api/README.md). Do **not** host `ReportService` in the worker.
+Workers and Discord bots should call Generate through this client against an API host that runs [`Lyo.Reporting.Api`](../Lyo.Reporting.Api/README.md). Do **not** host
+`ReportService` in the worker.
 
 ```csharp services.AddReportingClient<MyApiClient>(); services.AddReportingClient<MyApiClient>(o => o.RoutePrefix = "api"); services.AddReportingClientFromConfiguration<MyApiClient>(configuration); // section ReportingClientOptions // or resolve the API client through a factory: services.AddReportingClient(sp => sp.GetRequiredService<IApiClient>()); ```
 
@@ -30,12 +31,12 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Core` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
@@ -46,6 +47,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.RateLimiting` `10.0.5` (transitive, microsoft)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft)

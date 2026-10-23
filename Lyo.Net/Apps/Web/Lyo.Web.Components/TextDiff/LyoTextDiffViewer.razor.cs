@@ -154,9 +154,8 @@ public partial class LyoTextDiffViewer : ComponentBase, IAsyncDisposable
         => isLeft
             ? new(
                 positionClass, "Left", 0, _leftSearchText, _leftSearchCurrent, _leftSearchTotal, EventCallback.Factory.Create<string>(this, OnLeftSearchTextChangedAsync),
-                EventCallback.Factory.Create<KeyboardEventArgs>(this, e => OnEditorSearchKeyDown(e, true)),
-                EventCallback.Factory.Create<MouseEventArgs>(this, PreviousLeftSearch), EventCallback.Factory.Create<MouseEventArgs>(this, NextLeftSearch), LeftLineCount,
-                _leftLineTypes, _leftPaneLines, _leftEditorText)
+                EventCallback.Factory.Create<KeyboardEventArgs>(this, e => OnEditorSearchKeyDown(e, true)), EventCallback.Factory.Create<MouseEventArgs>(this, PreviousLeftSearch),
+                EventCallback.Factory.Create<MouseEventArgs>(this, NextLeftSearch), LeftLineCount, _leftLineTypes, _leftPaneLines, _leftEditorText)
             : new(
                 positionClass, "Right", 1, _rightSearchText, _rightSearchCurrent, _rightSearchTotal, EventCallback.Factory.Create<string>(this, OnRightSearchTextChangedAsync),
                 EventCallback.Factory.Create<KeyboardEventArgs>(this, e => OnEditorSearchKeyDown(e, false)),

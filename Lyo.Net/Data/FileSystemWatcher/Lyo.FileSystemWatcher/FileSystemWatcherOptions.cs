@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 using Lyo.FileSystemWatcher.Models;
 
 namespace Lyo.FileSystemWatcher;
 
 /// <summary>Settings that control how FileSystemWatcher scans and reports changes.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class FileSystemWatcherOptions
 {
     /// <summary>If true, subdirectories are included in the native watch and in <c>TakeSnapshot</c>. Starts as false.</summary>
@@ -15,21 +17,18 @@ public class FileSystemWatcherOptions
     /// <summary>If true, file hashes are computed so moves and renames can be detected. Starts as true. Turning this off is faster but drops hash-based move detection.</summary>
     public bool EnableFileHashing { get; set; } = true;
 
-    /// <summary>
-    /// How paths are compared. Starts as OrdinalIgnoreCase, which fits Windows. Use Ordinal on case-sensitive file systems such as Linux and macOS.
-    /// </summary>
+    /// <summary>How paths are compared. Starts as OrdinalIgnoreCase, which fits Windows. Use Ordinal on case-sensitive file systems such as Linux and macOS.</summary>
     public StringComparison PathComparison { get; set; } = StringComparison.OrdinalIgnoreCase;
 
     /// <summary>If true, metrics are recorded. Starts as false. When on, the constructor must receive IMetrics.</summary>
     public bool EnableMetrics { get; set; } = false;
 
-    /// <summary>
-    /// Include regexes matched against the relative path from the watch root (for example <c>\.json$</c>). Empty means every file is included. Exclude patterns still win.
-    /// </summary>
+    /// <summary>Include regexes matched against the relative path from the watch root (for example <c>\.json$</c>). Empty means every file is included. Exclude patterns still win.</summary>
     public IList<string> IncludePatterns { get; set; } = [];
 
     /// <summary>
-    /// Exclude regexes matched against the relative path from the watch root (for example <c>(^|/)\.git(/|$)</c>, <c>(^|/)bin(/|$)</c>). Matching files are omitted from snapshots; matching directories are not descended into.
+    /// Exclude regexes matched against the relative path from the watch root (for example <c>(^|/)\.git(/|$)</c>, <c>(^|/)bin(/|$)</c>). Matching files are omitted from
+    /// snapshots; matching directories are not descended into.
     /// </summary>
     public IList<string> ExcludePatterns { get; set; } = [];
 
@@ -40,4 +39,8 @@ public class FileSystemWatcherOptions
         FileSystemPathGlob.ValidatePatterns(IncludePatterns, PathComparison);
         FileSystemPathGlob.ValidatePatterns(ExcludePatterns, PathComparison);
     }
+
+    /// <summary>Debounce, hashing, and include/exclude pattern counts.</summary>
+    public override string ToString()
+        => $"DebounceTimerDelay={DebounceTimerDelay} EnableFileHashing={EnableFileHashing} IncludePatterns={IncludePatterns.Count} ExcludePatterns={ExcludePatterns.Count}";
 }

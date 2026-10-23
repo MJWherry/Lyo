@@ -1,15 +1,18 @@
 using Lyo.Api.FileStorage.Models;
 using Lyo.FileMetadataStore.Models;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 
 namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
 
 public partial class FileStoragePathTree
 {
+    private readonly HashSet<FileStoragePathTreeNode> _checked = new(FileStoragePathTreeNodeKeyComparer.Instance);
+    private FileStoragePathTreeNode? _dragNode;
+    private string? _dropKey;
+    private bool _editMode;
+    private string _filter = string.Empty;
+
     /// <summary>Items bound to <see cref="MudTreeView{T}" />.</summary>
     [Parameter]
     [EditorRequired]
@@ -71,12 +74,6 @@ public partial class FileStoragePathTree
     [Parameter]
     public EventCallback<IReadOnlyList<FileStoragePathTreeNode>> CheckedChanged { get; set; }
 
-    private readonly HashSet<FileStoragePathTreeNode> _checked = new(FileStoragePathTreeNodeKeyComparer.Instance);
-    private FileStoragePathTreeNode? _dragNode;
-    private string? _dropKey;
-    private bool _editMode;
-    private string _filter = string.Empty;
-
     private IReadOnlyCollection<TreeItemData<FileStoragePathTreeNode>> DisplayItems => FilterTree(Items, _filter);
 
     /// <inheritdoc />
@@ -90,11 +87,9 @@ public partial class FileStoragePathTree
         RemapChecked(Items, keys, _checked);
     }
 
-    private static string IconFor(FileStoragePathTreeNode node)
-        => node.IsDirectory ? Icons.Material.Filled.Folder : Icons.Material.Filled.InsertDriveFile;
+    private static string IconFor(FileStoragePathTreeNode node) => node.IsDirectory ? Icons.Material.Filled.Folder : Icons.Material.Filled.InsertDriveFile;
 
-    private static Color IconColorFor(FileStoragePathTreeNode node)
-        => node.IsDeleted ? Color.Warning : node.IsDirectory ? Color.Warning : Color.Default;
+    private static Color IconColorFor(FileStoragePathTreeNode node) => node.IsDeleted ? Color.Warning : node.IsDirectory ? Color.Warning : Color.Default;
 
     private static IEnumerable<(string Label, Color Color)> BadgesFor(FileStoragePathTreeNode node)
     {
@@ -115,24 +110,21 @@ public partial class FileStoragePathTree
         };
     }
 
-    private bool IsRowSelected(FileStoragePathTreeNode node)
-        => _editMode ? _checked.Contains(node) : Selected?.Key == node.Key;
+    private bool IsRowSelected(FileStoragePathTreeNode node) => _editMode ? _checked.Contains(node) : Selected?.Key == node.Key;
 
     private string RowClass(FileStoragePathTreeVisibleRow row)
     {
         var css = ItemClass(row.Node);
         if (IsRowSelected(row.Node))
             css += " file-storage-tree-row-selected";
+
         return css;
     }
 
-    private Task OnSelectAsync(FileStoragePathTreeNode node)
-        => FileStoragePathTreeBuilder.IsPendingChild(node) ? Task.CompletedTask : SelectedChanged.InvokeAsync(node);
+    private Task OnSelectAsync(FileStoragePathTreeNode node) => FileStoragePathTreeBuilder.IsPendingChild(node) ? Task.CompletedTask : SelectedChanged.InvokeAsync(node);
 
     private Task OnExpandedAsync(FileStoragePathTreeNode node, bool expanded)
-        => FileStoragePathTreeBuilder.IsPendingChild(node)
-            ? Task.CompletedTask
-            : expanded ? FolderExpanded.InvokeAsync(node) : FolderCollapsed.InvokeAsync(node);
+        => FileStoragePathTreeBuilder.IsPendingChild(node) ? Task.CompletedTask : expanded ? FolderExpanded.InvokeAsync(node) : FolderCollapsed.InvokeAsync(node);
 
     private async Task ToggleEdit()
     {
@@ -169,10 +161,7 @@ public partial class FileStoragePathTree
 
     private Task OnBulkDownloadAsync() => BulkDownload.InvokeAsync(CheckedSnapshot());
 
-    private void OnDragStart(FileStoragePathTreeNode node)
-    {
-        _dragNode = node.IsDeleted ? null : node;
-    }
+    private void OnDragStart(FileStoragePathTreeNode node) => _dragNode = node.IsDeleted ? null : node;
 
     private void OnDragEnter(FileStoragePathTreeNode node)
     {
@@ -194,9 +183,9 @@ public partial class FileStoragePathTree
         if (!_editMode || dragged == null || dragged.IsDeleted || !target.IsDirectory)
             return Task.CompletedTask;
 
-        var sources = _checked.Contains(dragged) ? CheckedSnapshot() : (IReadOnlyList<FileStoragePathTreeNode>) [dragged];
+        var sources = _checked.Contains(dragged) ? CheckedSnapshot() : (IReadOnlyList<FileStoragePathTreeNode>)[dragged];
         sources = sources.Where(static s => !s.IsDeleted || s.IsDirectory).ToList();
-        return Dropped.InvokeAsync(new FileStoragePathTreeDrop(sources, target));
+        return Dropped.InvokeAsync(new(sources, target));
     }
 
     private string ItemClass(FileStoragePathTreeNode node)
@@ -204,24 +193,25 @@ public partial class FileStoragePathTree
         var css = "file-storage-tree-row";
         if (_editMode && !node.IsDeleted)
             css += " file-storage-tree-item-drag";
+
         if (_editMode && node.IsDirectory && _dropKey == node.Key)
             css += " file-storage-tree-drop-target";
+
         return css;
     }
 
-    private static void RemapChecked(
-        IEnumerable<ITreeItemData<FileStoragePathTreeNode>> items, HashSet<string> keys, HashSet<FileStoragePathTreeNode> into)
+    private static void RemapChecked(IEnumerable<ITreeItemData<FileStoragePathTreeNode>> items, HashSet<string> keys, HashSet<FileStoragePathTreeNode> into)
     {
         foreach (var item in items) {
             if (item.Value is { IsDeleted: false } && keys.Contains(item.Value.Key))
                 into.Add(item.Value);
+
             if (item.Children is { Count: > 0 })
                 RemapChecked(item.Children, keys, into);
         }
     }
 
-    private static IReadOnlyCollection<TreeItemData<FileStoragePathTreeNode>> FilterTree(
-        IReadOnlyCollection<TreeItemData<FileStoragePathTreeNode>> items, string filter)
+    private static IReadOnlyCollection<TreeItemData<FileStoragePathTreeNode>> FilterTree(IReadOnlyCollection<TreeItemData<FileStoragePathTreeNode>> items, string filter)
     {
         if (string.IsNullOrWhiteSpace(filter))
             return items;
@@ -239,7 +229,7 @@ public partial class FileStoragePathTree
     private static bool TryKeep(ITreeItemData<FileStoragePathTreeNode> item, string needle, out TreeItemData<FileStoragePathTreeNode> filtered)
     {
         if (Matches(item.Value, needle)) {
-            filtered = Clone(item, expand: item.Children is { Count: > 0 });
+            filtered = Clone(item, item.Children is { Count: > 0 });
             return true;
         }
 
@@ -256,7 +246,7 @@ public partial class FileStoragePathTree
             return false;
         }
 
-        filtered = new TreeItemData<FileStoragePathTreeNode> {
+        filtered = new() {
             Value = item.Value,
             Text = item.Text,
             Icon = item.Icon,
@@ -264,6 +254,7 @@ public partial class FileStoragePathTree
             Expanded = true,
             Children = kept
         };
+
         return true;
     }
 
@@ -271,9 +262,9 @@ public partial class FileStoragePathTree
     {
         List<TreeItemData<FileStoragePathTreeNode>>? children = null;
         if (item.Children is { Count: > 0 } source)
-            children = source.Select(child => Clone(child, expand: child.Expanded)).ToList();
+            children = source.Select(child => Clone(child, child.Expanded)).ToList();
 
-        return new TreeItemData<FileStoragePathTreeNode> {
+        return new() {
             Value = item.Value,
             Text = item.Text,
             Icon = item.Icon,
@@ -284,7 +275,5 @@ public partial class FileStoragePathTree
     }
 
     private static bool Matches(FileStoragePathTreeNode? node, string needle)
-        => node != null
-           && (node.Name.Contains(needle, StringComparison.OrdinalIgnoreCase)
-               || (node.PathPrefix?.Contains(needle, StringComparison.OrdinalIgnoreCase) == true));
+        => node != null && (node.Name.Contains(needle, StringComparison.OrdinalIgnoreCase) || node.PathPrefix?.Contains(needle, StringComparison.OrdinalIgnoreCase) == true);
 }

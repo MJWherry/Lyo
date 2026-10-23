@@ -5,6 +5,8 @@ import type { ConditionClause, FilterPropertyDefinition, SortBy } from "lyo-quer
 import type { LyoProblemDetails } from "lyo-api-client";
 import type { LyoQueryClient } from "../client/LyoQueryClient.js";
 import { clientStore } from "../provider/clientStore.js";
+import { useViewport } from "../responsive/LyoResponsive.js";
+import type { LyoBreakpoint } from "../responsive/viewport.js";
 import { buildConcreteQuery, buildProjectedQuery, buildRootQuery } from "./buildQuery.js";
 import { nextSorts } from "./sorts.js";
 import {
@@ -17,6 +19,20 @@ import {
   type LyoDataGridPersistedState,
 } from "./types.js";
 import { loadRelatedEntities, lookupRelated, type RelatedLookup } from "./relatedLookup.js";
+import {
+  DEFAULT_MAX_BULK_SIZE,
+  bulkLabel,
+  canExport,
+  cardColumns,
+  quickSearchPlaceholder,
+  quickSearchProperties as resolveQuickSearch,
+  resolveCardMode,
+  selectGrew,
+  type LyoDataGridLayout,
+} from "./gridModel.js";
+import type { LyoRelatedClient } from "./types.js";
+import type { LyoGridQueryMetrics } from "./devChips.js";
+import { appendFilterUnique } from "../query/filterChipText.js";
 
 export type UseLyoDataGridOptions<T> = {
   apiClient: LyoQueryClient;
@@ -37,6 +53,18 @@ export type UseLyoDataGridOptions<T> = {
   searchDebounceMs?: number;
   entityType?: string;
   fromAlias?: string;
+  /** Largest selection that bulk export / patch / delete accept; unselected exports take the first this many rows. Default 2000. */
+  maxBulkSize?: number;
+  /** Bulk patch route when it differs from `route` (posted to `{patchRoute}/Bulk`). */
+  patchRoute?: string | null;
+  /** Initial layout; the user's toggle is persisted per grid and wins. Default `Auto`. */
+  layout?: LyoDataGridLayout;
+  /** `Auto` layout switches to cards at or below this breakpoint. Default `sm`. */
+  cardBreakpoint?: LyoBreakpoint;
+  /** Show the Table / Cards toggle. Default true. */
+  allowLayoutToggle?: boolean;
+  /** Increment after an inline mutation so the current page reloads. */
+  reloadToken?: number;
 };
 
 export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
@@ -57,6 +85,13 @@ export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
     searchDebounceMs = 300,
     entityType = "Person",
     fromAlias,
+    autoRefreshIntervalsSeconds = [1, 3, 5, 10, 25, 30],
+    maxBulkSize = DEFAULT_MAX_BULK_SIZE,
+    patchRoute,
+    layout = "Auto",
+    cardBreakpoint = "sm",
+    allowLayoutToggle = true,
+    reloadToken = 0,
   } = options;
 
   const storageKey = `grid:${gridKey}`;
@@ -71,6 +106,9 @@ export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
   const [hidden, setHidden] = useState<Set<string>>(
     () => new Set(columns.filter((c) => c.hiddenByDefault).map((c) => c.field))
   );
+  /** Hidden set the last Select was built from; only moves when showing a column needs a field the last load lacked. */
+  const [queryHidden, setQueryHidden] = useState<Set<string>>(hidden);
+  const [userLayout, setUserLayout] = useState<LyoDataGridLayout | null>(null);
   const [columnSizing, setColumnSizing] = useState<Record<string, number>>({});
   const [rows, setRows] = useState<T[]>([]);
   const [total, setTotal] = useState(0);
@@ -78,11 +116,14 @@ export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
   const [error, setError] = useState<string | null>(null);
   const [currentQuery, setCurrentQuery] = useState<unknown>(null);
   const [currentResults, setCurrentResults] = useState<unknown>(null);
+  const [queryMetrics, setQueryMetrics] = useState<LyoGridQueryMetrics>({});
   const [selectedKeys, setSelectedKeys] = useState<unknown[][]>([]);
   const [relatedLookup, setRelatedLookup] = useState<RelatedLookup>(() => new Map());
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [refreshSeconds, setRefreshSeconds] = useState(10);
   const [tick, setTick] = useState(0);
+  const loadEpoch = useRef(0);
+  const viewport = useViewport();
 
   useEffect(() => {
     if (restored.current) return;
@@ -105,7 +146,11 @@ export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
         }))
       );
     }
-    if (saved.hiddenColumnFields) setHidden(new Set(saved.hiddenColumnFields));
+    if (saved.hiddenColumnFields) {
+      setHidden(new Set(saved.hiddenColumnFields));
+      setQueryHidden(new Set(saved.hiddenColumnFields));
+    }
+    if (saved.layout) setUserLayout(saved.layout);
     if (saved.selectedItemKeys) setSelectedKeys(saved.selectedItemKeys);
     if (saved.columnSizing) setColumnSizing(saved.columnSizing);
   }, [storageKey]);
@@ -125,16 +170,17 @@ export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
       hiddenColumnFields: [...hidden],
       selectedItemKeys: selectedKeys,
       columnSizing,
+      layout: userLayout ?? undefined,
     } satisfies LyoDataGridPersistedState);
-  }, [storageKey, searchInput, filterStates, sorts, page, pageSize, hidden, selectedKeys, columnSizing]);
+  }, [storageKey, searchInput, filterStates, sorts, page, pageSize, hidden, selectedKeys, columnSizing, userLayout]);
 
-  const quickSearch = useMemo(
-    () =>
-      quickSearchProperties?.length
-        ? quickSearchProperties
-        : columns.filter((c) => c.quickSearch).map((c) => c.field),
-    [columns, quickSearchProperties]
-  );
+  const quickSearch = useMemo(() => resolveQuickSearch(columns, quickSearchProperties), [columns, quickSearchProperties]);
+  const searchPlaceholder = useMemo(() => quickSearchPlaceholder(columns, quickSearchProperties), [columns, quickSearchProperties]);
+
+  useEffect(() => {
+    const visibleFields = (set: ReadonlySet<string>) => columns.filter((c) => !set.has(c.field)).map((c) => c.field);
+    if (selectGrew(visibleFields(queryHidden), visibleFields(hidden))) setQueryHidden(new Set(hidden));
+  }, [columns, hidden, queryHidden]);
 
   const activeFilters = useMemo(
     () => filterStates.filter((f) => f.isEnabled).map((f) => f.condition),
@@ -151,6 +197,8 @@ export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
   }, [searchInput, searchText, searchDebounceMs]);
 
   const reload = useCallback(async () => {
+    const epoch = ++loadEpoch.current;
+    const current = () => epoch === loadEpoch.current;
     setLoading(true);
     setError(null);
     try {
@@ -164,12 +212,12 @@ export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
       };
       let body: unknown =
         mode === "concrete"
-          ? buildConcreteQuery(queryArgs)
+          ? buildConcreteQuery({ ...queryArgs, columns })
           : mode === "query"
             ? buildRootQuery({
                 ...queryArgs,
                 columns,
-                hiddenFields: hidden,
+                hiddenFields: queryHidden,
                 keyFields: keyFields ?? (keySelector ? ["Id"] : []),
                 entityType,
                 fromAlias,
@@ -177,23 +225,35 @@ export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
             : buildProjectedQuery({
                 ...queryArgs,
                 columns,
-                hiddenFields: hidden,
+                hiddenFields: queryHidden,
                 keyFields: keyFields ?? (keySelector ? ["Id"] : []),
               });
       if (beforeQuery) body = beforeQuery(body as Record<string, unknown>);
       setCurrentQuery(body);
+      const started = performance.now();
       const res =
         mode === "concrete"
           ? await apiClient.queryConcrete?.(route, body)
           : mode === "query"
             ? await apiClient.query?.(route, body)
             : await apiClient.queryProject(route, body);
+      if (!current()) return;
       const payload = res?.data as QueryPayload<T> | undefined;
+      setQueryMetrics({
+        elapsedMs: Math.round(performance.now() - started),
+        statusCode: res?.status ?? null,
+        itemCount: payload?.items?.length ?? null,
+        total: payload?.total ?? null,
+        queryScore: payload?.queryScore ?? null,
+        hasMore: payload?.hasMore ?? null,
+      });
       if (!res?.ok || !payload || payload.isSuccess === false || payload.error) {
+        setCurrentResults(payload ?? null);
         setRows([]);
         setTotal(0);
         setRelatedLookup(new Map());
         setError(formatLoadError(undefined, payload));
+        setAutoRefresh(false);
         return;
       }
       setCurrentResults(payload);
@@ -201,14 +261,17 @@ export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
       const mapped = mapRows ? mapRows(items) : (items as T[]);
       setRows(mapped);
       setTotal(payload.total ?? items.length);
-      setRelatedLookup(await loadRelatedEntities(apiClient.queryProject, columns, hidden, mapped));
+      const related = await loadRelatedEntities(apiClient.queryProject, columns, queryHidden, mapped);
+      if (current()) setRelatedLookup(related);
     } catch (err) {
+      if (!current()) return;
       setError(formatLoadError(err));
       setRows([]);
       setTotal(0);
       setRelatedLookup(new Map());
+      setAutoRefresh(false);
     } finally {
-      setLoading(false);
+      if (current()) setLoading(false);
     }
   }, [
     apiClient,
@@ -221,7 +284,7 @@ export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
     quickSearch,
     sorts,
     columns,
-    hidden,
+    queryHidden,
     keyFields,
     keySelector,
     beforeQuery,
@@ -229,6 +292,7 @@ export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
     entityType,
     fromAlias,
     tick,
+    reloadToken,
   ]);
 
   useEffect(() => {
@@ -253,7 +317,7 @@ export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
   };
 
   const addFilter = (condition: ConditionClause) => {
-    setFilterStates((s) => [...s, { condition, isEnabled: true }]);
+    setFilterStates((s) => appendFilterUnique(s, condition));
     setPage(0);
   };
 
@@ -310,7 +374,7 @@ export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
     const selected = selectedKeys.length;
     const q = buildProjectedQuery({
       start: 0,
-      amount: selected > 0 ? selected : 5000,
+      amount: selected > 0 ? selected : maxBulkSize,
       filters: activeFilters,
       searchText,
       quickSearchProperties: quickSearch,
@@ -331,7 +395,11 @@ export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
     hidden,
     keyFields,
     keySelector,
+    maxBulkSize,
   ]);
+
+  const bulkState = { loading, selectedCount: selectedKeys.length, total, maxBulkSize };
+  const effectiveLayout = userLayout ?? layout;
 
   return {
     features,
@@ -359,6 +427,9 @@ export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
     error,
     currentQuery,
     currentResults,
+    queryMetrics,
+    /** Endpoint the last query posted to, for the Dev dialogs. */
+    queryPath: `${route.replace(/\/+$/, "")}/${mode === "concrete" ? "QueryConcrete" : mode === "query" ? "Query" : "QueryProject"}`,
     exportQuery,
     selectedKeys,
     setSelectedKeys,
@@ -376,11 +447,25 @@ export function useLyoDataGrid<T>(options: UseLyoDataGridOptions<T>) {
     setAutoRefresh,
     refreshSeconds,
     setRefreshSeconds,
+    autoRefreshIntervalsSeconds,
+    autoRefreshEnabled: hasFeature(features, LyoDataGridFeatureFlags.AutoRefresh),
+    maxBulkSize,
+    patchRoute,
+    bulkLabel: bulkLabel(bulkState),
+    canExport: canExport(bulkState),
+    /** Selection fits the bulk cap (patch / delete need at least one selected key). */
+    canBulkEdit: selectedKeys.length > 0 && selectedKeys.length <= maxBulkSize,
+    searchPlaceholder,
+    layout: effectiveLayout,
+    setLayout: setUserLayout,
+    allowLayoutToggle,
+    cardMode: resolveCardMode(effectiveLayout, viewport.isAtOrBelow(cardBreakpoint)),
+    cardColumns: cardColumns(columns, hidden),
     mode,
     route,
     apiClient,
     keySelector,
-    getRelated: (relatedRoute: string, id: unknown) => lookupRelated(relatedLookup, relatedRoute, id),
+    getRelated: (relatedRoute: string, id: unknown, client?: LyoRelatedClient) => lookupRelated(relatedLookup, relatedRoute, id, client),
   };
 }
 
@@ -389,6 +474,8 @@ type QueryPayload<T> = {
   error?: LyoProblemDetails | null;
   items?: T[] | null;
   total?: number | null;
+  hasMore?: boolean | null;
+  queryScore?: number | null;
   detail?: string;
   title?: string;
   errors?: LyoProblemDetails["errors"];

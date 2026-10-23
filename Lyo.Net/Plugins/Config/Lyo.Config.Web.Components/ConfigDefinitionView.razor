@@ -1,6 +1,3 @@
-@using System.Text.Json.Nodes
-@using Lyo.Common.Metadata.Records;
-@using LyoTypeSelect = Lyo.Web.Components.LyoType.LyoTypeSelect
 @inject ISnackbar Snackbar
 
 <LyoDialog Busy="@_saving" OnSave="SaveAsync" SaveDisabled="@(!_canSave)" DebugData="@DebugModel()">
@@ -40,8 +37,8 @@
                 </MudItem>
                 <MudItem xs="12" sm="6">
                     <LyoTypeSelect Label="Value type"
-                                      Value="@_edit.ForValueType"
-                                      ValueChanged="OnTypeChanged"/>
+                                   Value="@_edit.ForValueType"
+                                   ValueChanged="OnTypeChanged"/>
                 </MudItem>
                 <MudItem xs="12" sm="3">
                     <LyoFormInput TModel="ConfigDefinitionRecord"
@@ -88,7 +85,9 @@
         }
         @if (!IsNew) {
             <MudDivider Class="my-3"/>
+
             <MudText Typo="Typo.subtitle2">Definition history</MudText>
+
             <ConfigDefinitionRevisionList Store="Store"
                                           DefinitionId="_edit.Id"
                                           DataVersion="_historyVersion"

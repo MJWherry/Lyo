@@ -1,8 +1,8 @@
 namespace Lyo.Hashing.Internal;
 
 /// <summary>
-/// Reflected (LSB-first) table-driven CRC-32 covering IEEE/ISO-HDLC (poly <c>0xEDB88320</c>) and CRC-32C/Castagnoli (poly <c>0x82F63B78</c>). Both start the
-/// register at <c>0xFFFFFFFF</c> and finish with XOR <c>0xFFFFFFFF</c>, matching <c>System.IO.Hashing.Crc32</c> for the IEEE variant.
+/// Reflected (LSB-first) table-driven CRC-32 covering IEEE/ISO-HDLC (poly <c>0xEDB88320</c>) and CRC-32C/Castagnoli (poly <c>0x82F63B78</c>). Both start the register at
+/// <c>0xFFFFFFFF</c> and finish with XOR <c>0xFFFFFFFF</c>, matching <c>System.IO.Hashing.Crc32</c> for the IEEE variant.
 /// </summary>
 internal sealed class ReflectedCrc32Calculator : ChecksumCalculator
 {

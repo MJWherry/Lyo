@@ -3,20 +3,20 @@
   "name": "Lyo.Tools.Postgres",
   "area": "Tools",
   "tagline": "Spectre.Console TUI used for EF Core migrations against Lyo Postgres `DbContext`s, plus `Lyo.Seed` contributors (EF direct and Lyo.Api bulk).",
-  "description": "Spectre.Console TUI used for running and rolling back EF Core migrations against Lyo Postgres `DbContext`s, plus seed contributors from `Lyo.Seed`. People can be seeded through EF or `POST Person/Bulk`; Comic is EF-only. Use it to bring a\nfresh local database up to the latest schema or step one schema back to a specific migration.",
+  "description": "Spectre.Console TUI used for running and rolling back EF Core migrations against Lyo Postgres `DbContext`s, plus seed contributors from `Lyo.Seed`. People can be seeded through EF or `POST Person/Bulk`. Comic, Book, Story, and every other product Postgres context the tool can open are EF-only. Use it to bring a fresh local database up to the latest schema or step one schema back to a specific migration.",
   "features": [],
   "examples": [],
   "sections": [
     {
       "type": "paragraph",
       "title": "Startup path",
-      "text": "`Program.cs` builds a default `Microsoft.Extensions.Hosting` host, wires a singleton `ConnectionStringProvider` (initial value from the `ConnectionString` config key, set in `appsettings.Development.json` or environment variables), then either runs `seed …` from argv (`SeedCli`) or hands control to `Menu.RunAsync`. Ctrl+C cancels the host. `MigrationRunner` drives EF migrations. Seed contributors (`PeopleEfSeedContributor`, `PeopleApiSeedContributor`, `ComicEfSeedContributor`) are wired through `AddLyoSeed`."
+      "text": "`Program.cs` builds a default `Microsoft.Extensions.Hosting` host, wires a singleton `ConnectionStringProvider` (initial value from the `ConnectionString` config key, set in `appsettings.Development.json` or environment variables), then either runs `seed …` from argv (`SeedCli`) or hands control to `Menu.RunAsync`. Ctrl+C cancels the host. `MigrationRunner` drives EF migrations. Seed contributors are wired through `AddLyoSeed`. People has EF and API contributors. Comic, Book, and Story live in this tool. The other contributors implement `IEfSeedSource`, so the host opens their context from the connection string. Book migrate also runs `BookDbSeeder` for types, formats, and the genre tree."
     },
     {
       "type": "list",
       "title": "Primary menu",
       "items": [
-        "**Seeds.** Lists `Lyo.Seed` contributors (People EF, People API, Comic EF). Asks for count, optional random seed, Direct vs API when both are supported, optional skip-if-not-empty, replace for Comic, and API base URL (default `http://localhost:5251/`). CLI: `dotnet run --project Lyo.Tools.Postgres -- seed people --via ef --count 50`. `--skip` skips when rows exist; the default is append.",
+        "**Seeds.** Lists every `Lyo.Seed` contributor: People EF, People API, Comic, Book, Story, Comment, Favorite, Note, Rating, Tag, ContactUs, ShortUrl, HomeInventory, Recipe, Config, Job, Reporting, Billing, Ledger, Law, Music, Video, Algorithms, Leaderboard, Authentication, Geolocation, Validation, State machine, Package metadata, File metadata, File system watcher, Email, SMS, Twilio SMS, Discord, Endato, Drift, Audit, and Change tracker. Asks for count, optional random seed, Direct vs API when both are supported, optional skip-if-not-empty, replace for EF contributors that can clear, and API base URL (default `http://localhost:5251/`). CLI: `dotnet run --project Lyo.Tools.Postgres -- seed people --via ef --count 50`. `--skip` skips when rows exist; the default is append. People EF writes an identification per person. Book writes a series alternate title and a book alternate title. Story seeds `StorySamples.TheHeist()` plus one playthrough (count is unused). Reporting seeds `ReportDesignTemplates.Samples` and one succeeded generation each (count is unused). Job definitions, schedules, and workflows stay disabled.",
         "**Migrations.** Covered below.",
         "**Change connection string.** Takes a new value and updates `ConnectionStringProvider` in place. The header shows a masked preview (`first 40 chars + ****`)."
       ]
@@ -111,6 +111,11 @@
           "`rating`"
         ],
         [
+          "Recipe",
+          "`RecipeDbContext`",
+          "`recipe`"
+        ],
+        [
           "Reporting",
           "`ReportingContext`",
           "`reporting`"
@@ -131,12 +136,17 @@
           "`sms`"
         ],
         [
+          "Story",
+          "`StoryDbContext`",
+          "`story`"
+        ],
+        [
           "Tag",
           "`TagDbContext`",
           "`tag`"
         ]
       ],
-      "lead": "`MigrationRunner` (see `MigrationRunner.cs`) knows 21 `DbContext`s, each paired with a Postgres schema name used for `__EFMigrationsHistory`:",
+      "lead": "`MigrationRunner` (see `MigrationRunner.cs`) knows 25 `DbContext`s, each paired with a Postgres schema name used for `__EFMigrationsHistory`:",
       "trail": "The menu provides **Run All (Latest)**, which calls every `RunXxxAsync` in registration order, or a context-specific submenu with four actions:\n\n- **Migrate to Latest.** `MigrateLatestAsync<TContext>` (`context.Database.MigrateAsync`).\n- **Migrate to Target….** `MigrateToAsync<TContext>(target)` via `IMigrator.MigrateAsync(target)`. The picker lists every migration with ` APPLIED` / `· PENDING` status, plus a\n  top \"Roll back all\" sentinel (passes `\"0\"` after a confirmation) and a \"Cancel\" sentinel.\n- **View Status.** Table of all defined migrations with applied/pending state.\n- **View Current Version.** `GetCurrentVersionAsync<TContext>` returns the last applied migration name, or \"No migrations applied yet.\"\n\nBefore each `MigrateAsync`, `EnsureSchemaAsync` runs `CREATE SCHEMA IF NOT EXISTS \"schema\"` so the migrations history table can be created in its own schema even on a brand-new\ndatabase. Contexts are constructed at call time via `Activator.CreateInstance(typeof(TContext), options)` with the connection string pulled from `ConnectionStringProvider` on every\ncall, so the \"Change Connection String\" menu option takes effect immediately."
     },
     {
@@ -159,6 +169,14 @@
   "readmePath": "Lyo.Net/Tools/Lyo.Tools.Postgres/README.md",
   "dependencies": [
     {
+      "name": "Lyo.Algorithms.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Api.Client",
       "kind": "lyo",
       "tags": [
@@ -175,7 +193,55 @@
       ]
     },
     {
+      "name": "Lyo.Audit.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Billing.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Book",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Book.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.ChangeTracker.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.ChangeTracker.Seed",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -199,6 +265,14 @@
       ]
     },
     {
+      "name": "Lyo.Comment.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Common.Metadata",
       "kind": "lyo",
       "tags": [
@@ -215,7 +289,23 @@
       ]
     },
     {
+      "name": "Lyo.Config.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.ContactUs.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.ContactUs.Seed",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -231,7 +321,31 @@
       ]
     },
     {
+      "name": "Lyo.Discord.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Drift.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Email.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Email.Seed",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -247,7 +361,23 @@
       ]
     },
     {
+      "name": "Lyo.Endato.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Favorite.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Favorite.Seed",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -263,6 +393,22 @@
       ]
     },
     {
+      "name": "Lyo.FileMetadataStore.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FileSystemWatcher.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Geolocation.Postgres",
       "kind": "lyo",
       "tags": [
@@ -271,7 +417,23 @@
       ]
     },
     {
+      "name": "Lyo.Geolocation.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.HomeInventory.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.HomeInventory.Seed",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -295,7 +457,63 @@
       ]
     },
     {
+      "name": "Lyo.Job.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Law.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Leaderboard.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Ledger.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Music.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Note.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Note.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.PackageMetadata.Seed",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -327,7 +545,39 @@
       ]
     },
     {
+      "name": "Lyo.Rating.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Recipe.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Recipe.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Reporting.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Reporting.Seed",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -351,7 +601,23 @@
       ]
     },
     {
+      "name": "Lyo.ShortUrl.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Sms.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Sms.Seed",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -367,7 +633,63 @@
       ]
     },
     {
+      "name": "Lyo.Sms.Twilio.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.StateMachine.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Story",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Story.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Tag.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Tag.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Validation.Seed",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Video.Seed",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -390,6 +712,30 @@
       "tags": [
         "direct",
         "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Algorithms",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Algorithms.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Algorithms.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
       ]
     },
     {
@@ -418,6 +764,46 @@
     },
     {
       "name": "Lyo.Audit",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Billing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Billing.Postgres",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -458,14 +844,6 @@
     },
     {
       "name": "Lyo.Common.Core",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Common.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -561,6 +939,22 @@
       ]
     },
     {
+      "name": "Lyo.Drift.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Drift.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Encryption",
       "kind": "lyo",
       "tags": [
@@ -617,6 +1011,30 @@
       ]
     },
     {
+      "name": "Lyo.FileSystemWatcher",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FileSystemWatcher.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FileSystemWatcher.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Formatter",
       "kind": "lyo",
       "tags": [
@@ -634,6 +1052,14 @@
     },
     {
       "name": "Lyo.Geolocation.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Google.Youtube.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -665,6 +1091,14 @@
       ]
     },
     {
+      "name": "Lyo.HomeInventory.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.IO.FileSystem",
       "kind": "lyo",
       "tags": [
@@ -689,7 +1123,71 @@
       ]
     },
     {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.KeyStore",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Law",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Law.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Law.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Leaderboard",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Leaderboard.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Ledger",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Ledger.Postgres",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -721,6 +1219,22 @@
       ]
     },
     {
+      "name": "Lyo.Music",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Music.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Note",
       "kind": "lyo",
       "tags": [
@@ -730,6 +1244,14 @@
     },
     {
       "name": "Lyo.PackageMetadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.PackageMetadata.Postgres",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -777,7 +1299,31 @@
       ]
     },
     {
+      "name": "Lyo.Query.Sql",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Rating",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Recipe",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Recipe.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -817,6 +1363,14 @@
       ]
     },
     {
+      "name": "Lyo.Search.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.ShortUrl",
       "kind": "lyo",
       "tags": [
@@ -849,7 +1403,47 @@
       ]
     },
     {
+      "name": "Lyo.StateMachine",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.StateMachine.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.StateMachine.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Story.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Streams",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.SystemInformation",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -874,6 +1468,30 @@
     },
     {
       "name": "Lyo.Validation.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Validation.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Video",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Video.Postgres",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -1141,6 +1759,15 @@
       "tags": [
         "transitive",
         "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "transitive",
+        "third-party"
       ]
     },
     {

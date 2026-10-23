@@ -10,8 +10,8 @@ internal static class JobBlackoutCalendarEntityHelper
 {
     /// <summary>
     /// After mapping a <see cref="JobDefinitionReq" />, makes sure schedules that inherit the definition default share one <see cref="JobBlackoutCalendar" /> entity, while
-    /// schedules with explicit overrides keep their own. Maps definition-level <see cref="JobDefinitionReq.CreateBlackoutCalendar" /> when it was not cascaded onto schedules.
-    /// Treats schedule calendars as inherited when they structurally match the definition calendar (JSON round-trip).
+    /// schedules with explicit overrides keep their own. Maps definition-level <see cref="JobDefinitionReq.CreateBlackoutCalendar" /> when it was not cascaded onto schedules. Treats
+    /// schedule calendars as inherited when they structurally match the definition calendar (JSON round-trip).
     /// </summary>
     public static void ApplyDefinitionBlackoutDefaults(JobDefinitionReq src, JobDefinition dest)
     {

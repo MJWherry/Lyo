@@ -1,0 +1,90 @@
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4">
+    <MudStack Spacing="3">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+            <div>
+                <MudText Typo="Typo.h5">Fantasy football</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Chats and trades for league @_leagueLabel.</MudText>
+            </div>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_busy" OnClick="RefreshAsync">Refresh from ESPN</MudButton>
+        </MudStack>
+        @if (!string.IsNullOrWhiteSpace(_error)) {
+            <MudAlert Severity="Severity.Error">@_error</MudAlert>
+        }
+        <MudTabs Elevation="1" Rounded="true" ApplyEffectsToContainer="true">
+            <MudTabPanel Text="Chats">
+                <MudGrid Class="pa-2">
+                    <MudItem xs="12" md="4">
+                        <MudList T="string" SelectedValue="@_selectedTopicId" SelectedValueChanged="OpenConversationAsync">
+                            @foreach (var conversation in _conversations) {
+                                <MudListItem T="string" Value="@conversation.EspnTopicId">
+                                    <MudStack Spacing="0">
+                                        <MudText>@FantasyFootballUi.TopicTitle(conversation)</MudText>
+                                        @if (conversation.UnreadCount > 0) {
+                                            <MudText Typo="Typo.caption">@conversation.UnreadCount unread</MudText>
+                                        }
+                                    </MudStack>
+                                </MudListItem>
+                            }
+                        </MudList>
+                    </MudItem>
+                    <MudItem xs="12" md="8">
+                        <MudStack Spacing="2">
+                            @foreach (var message in _messages) {
+                                <MudPaper Class="pa-2" Outlined="true">
+                                    <MudText Typo="Typo.caption">@(message.AuthorName ?? message.AuthorEspnId) · @message.Kind</MudText>
+                                    <MudText>@MessageBody(message)</MudText>
+                                </MudPaper>
+                            }
+                            <MudTextField @bind-Value="_draft" Label="Message" Lines="2" Variant="Variant.Outlined"/>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_busy || string.IsNullOrWhiteSpace(_selectedTopicId)" OnClick="SendAsync">Send
+                            </MudButton>
+                        </MudStack>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+            <MudTabPanel Text="Trades">
+                <MudStack Spacing="2" Class="pa-2">
+                    @foreach (var trade in _trades) {
+                        <MudPaper Class="pa-2" Outlined="true">
+                            <MudText>@trade.Type @(trade.IsPending ? "(pending)" : "")</MudText>
+                            <MudText>@FantasyFootballUi.TradeSummary(trade)</MudText>
+                            @if (trade.IsPending) {
+                                <MudStack Row="true" Spacing="1" Class="mt-2">
+                                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => RespondAsync(trade, "accept"))">Accept</MudButton>
+                                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => RespondAsync(trade, "decline"))">Decline</MudButton>
+                                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => RespondAsync(trade, "uphold"))">Uphold</MudButton>
+                                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="@(() => RespondAsync(trade, "veto"))">Veto</MudButton>
+                                </MudStack>
+                            }
+                        </MudPaper>
+                    }
+                    <MudText Typo="Typo.subtitle1">Propose</MudText>
+                    <MudSelect T="int" Label="Your team" @bind-Value="_teamId" Variant="Variant.Outlined">
+                        @foreach (var team in _teams) {
+                            <MudSelectItem T="int" Value="@team.EspnTeamId">@TeamLabel(team)</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudSelect T="int" Label="Other team" @bind-Value="_otherTeamId" Variant="Variant.Outlined">
+                        @foreach (var team in _teams) {
+                            <MudSelectItem T="int" Value="@team.EspnTeamId">@TeamLabel(team)</MudSelectItem>
+                        }
+                    </MudSelect>
+                    <MudText Typo="Typo.caption">Send</MudText>
+                    @foreach (var player in Roster(_teamId)) {
+                        <MudCheckBox T="bool" Value="@_send.Contains(player.PlayerId)" ValueChanged="@(value => Toggle(_send, player.PlayerId, value))"
+                                     Label="@PlayerLabel(player)"/>
+                    }
+                    <MudText Typo="Typo.caption">Receive</MudText>
+                    @foreach (var player in Roster(_otherTeamId)) {
+                        <MudCheckBox T="bool" Value="@_receive.Contains(player.PlayerId)" ValueChanged="@(value => Toggle(_receive, player.PlayerId, value))"
+                                     Label="@PlayerLabel(player)"/>
+                    }
+                    <MudTextField @bind-Value="_comment" Label="Comment" Variant="Variant.Outlined"/>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_busy" OnClick="ProposeAsync">Propose trade</MudButton>
+                </MudStack>
+            </MudTabPanel>
+        </MudTabs>
+    </MudStack>
+</MudPaper>

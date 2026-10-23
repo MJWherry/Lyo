@@ -1,0 +1,33 @@
+<MudPaper Class="pa-3" Elevation="1">
+    @if (_picture.Document.Pages[0].Cells.Count == 0 && _picture.Cyclic.Count == 0) {
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">No nodes yet. Add one to see the graph.</MudText>
+    }
+    else {
+        <MudStack Spacing="2">
+            @if (_picture.Document.Pages[0].Cells.Count > 0) {
+                <div class="story-graph-scroll">
+                    <svg class="story-graph-svg" width="@_picture.Document.Pages[0].PageWidth" height="@_picture.Document.Pages[0].PageHeight"
+                         viewBox="@ViewBox(_picture.Document.Pages[0])">
+                        @foreach (var edge in _picture.Document.Pages[0].Cells.Where(cell => cell.IsEdge)) {
+                            <polyline points="@Polyline(edge)" class="story-graph-edge"/>
+                            <polygon points="@Arrow(edge)" class="story-graph-arrow"/>
+                        }
+                        @foreach (var node in _picture.Document.Pages[0].Cells.Where(cell => cell.IsVertex)) {
+                            <g class="story-graph-node-clickable" role="button" tabindex="0" aria-label="@($"Select node {node.Value}")"
+                               @onclick="@(() => SelectAsync(node))" @onkeydown="@(e => OnNodeKeyDown(e, node))">
+                                <title>@Tooltip(node)</title>
+                                <rect x="@node.Geometry!.X" y="@node.Geometry.Y" width="@node.Geometry.Width" height="@node.Geometry.Height" rx="4"
+                                      class="story-graph-node-shape" stroke="@Stroke(node)" stroke-width="@(IsSelected(node) ? 2 : 1)"/>
+                                <text x="@TextX(node)" y="@TextY(node, 0.42)" text-anchor="middle" class="story-graph-label">@Label(node)</text>
+                                <text x="@TextX(node)" y="@TextY(node, 0.72)" text-anchor="middle" class="story-graph-caption">@Caption(node)</text>
+                            </g>
+                        }
+                    </svg>
+                </div>
+            }
+            @if (_picture.Cyclic.Count > 0) {
+                <MudAlert Severity="Severity.Error" Dense>Circular choice path between: @string.Join(", ", _picture.Cyclic). These nodes are left off the graph.</MudAlert>
+            }
+        </MudStack>
+    }
+</MudPaper>

@@ -7,10 +7,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Json\Lyo.Common.Json.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Json\Lyo.Json\Lyo.Json.csproj"/>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Metadata\Lyo.Common.Metadata.csproj"/>
         <ProjectReference Include="..\..\..\Data\Formatter\Lyo.Formatter\Lyo.Formatter.csproj"/>
         <ProjectReference Include="..\..\..\Data\Query\Lyo.Query\Lyo.Query.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Query\Lyo.Query.Sql\Lyo.Query.Sql.csproj"/>
         <ProjectReference Include="..\Lyo.Api.Models\Lyo.Api.Models.csproj"/>
         <ProjectReference Include="..\..\..\Core\Diff\Lyo.Diff\Lyo.Diff.csproj"/>
         <ProjectReference Include="..\..\..\Core\Diagnostic\Lyo.Diagnostic.AspNetCore\Lyo.Diagnostic.AspNetCore.csproj"/>
@@ -18,6 +19,7 @@
         <ProjectReference Include="..\..\..\Core\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
         <ProjectReference Include="..\..\..\Security\Hashing\Lyo.Hashing\Lyo.Hashing.csproj"/>
         <ProjectReference Include="..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
+        <ProjectReference Include="..\..\..\Core\RateLimit\Lyo.RateLimit\Lyo.RateLimit.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

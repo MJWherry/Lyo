@@ -29,8 +29,8 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Registers resilience pipelines from a <c>Resilience</c> subsection under the given options section. Use when resilience config is nested inside service options
-        /// (for example TwilioOptions:Resilience).
+        /// Registers resilience pipelines from a <c>Resilience</c> subsection under the given options section. Use when resilience config is nested inside service options (for
+        /// example TwilioOptions:Resilience).
         /// </summary>
         /// <param name="configuration">Configuration root.</param>
         /// <param name="parentOptionsSectionName">Parent options section (for example "TwilioOptions").</param>
@@ -58,10 +58,7 @@ public static class Extensions
             return services.AddLyoResiliencePipelinesFromConfiguration(configuration, sectionPath);
         }
 
-        /// <summary>
-        /// Registers resilience pipelines from configuration (for example appsettings.json). Each named pipeline may define Retry, Timeout, and CircuitBreaker
-        /// strategies.
-        /// </summary>
+        /// <summary>Registers resilience pipelines from configuration (for example appsettings.json). Each named pipeline may define Retry, Timeout, and CircuitBreaker strategies.</summary>
         /// <param name="configuration">Configuration root.</param>
         /// <param name="configSectionName">
         /// Full config section path (default: "Lyo:ResiliencePipelines"). Use <see cref="AddLyoResiliencePipelinesFromOptions" /> when resilience is nested

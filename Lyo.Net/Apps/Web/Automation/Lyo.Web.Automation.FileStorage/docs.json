@@ -1,0 +1,23 @@
+{
+  "$schema": "../../../../docs/catalog/schema/package.schema.json",
+  "id": "Lyo.Web.Automation.FileStorage",
+  "name": "Lyo.Web.Automation.FileStorage",
+  "area": "Apps",
+  "tagline": "Stores automation step screenshots through a host-configured file storage service.",
+  "description": "`AddAutomationPlanFileStorage` replaces `IAutomationPlanFileStorage`. The host picks the `IFileStorageService`, including a keyed service. A step screenshot is `image/png` at `Runs/{runId}/steps/{stepId}/{stepId}.png`. Other files use `Runs/{runId}` or `Runs/{runId}/steps/{stepId}`. The file id is returned to the runner.",
+  "features": [
+    "Call it after `AddWebAutomationPlanRunner` and `AddAutomationApi`.",
+    "A null save from the default storage leaves the local PNG write in place."
+  ],
+  "examples": [
+    {
+      "title": "Use the workbench file storage service",
+      "language": "csharp",
+      "code": "services.AddAutomationPlanFileStorage(sp =>\n    sp.GetRequiredKeyedService<IFileStorageService>(Constants.FileStorageWorkbench.ServiceKey));"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Apps/Web/Automation/Lyo.Web.Automation.FileStorage/README.md",
+  "dependencies": []
+}

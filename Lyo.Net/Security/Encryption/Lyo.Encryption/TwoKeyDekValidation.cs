@@ -46,8 +46,8 @@ public static class TwoKeyDekValidation
     }
 
     /// <summary>
-    /// Legal plaintext key-material widths for a symmetric <see cref="EncryptionAlgorithm" /> (same rules as DEK/KEK when both are symmetric). KEK material size is not
-    /// recorded in the two-key header; this enumerates what the unwrap key must be.
+    /// Legal plaintext key-material widths for a symmetric <see cref="EncryptionAlgorithm" /> (same rules as DEK/KEK when both are symmetric). KEK material size is not recorded
+    /// in the two-key header; this enumerates what the unwrap key must be.
     /// </summary>
     public static string DescribeValidSymmetricKeyMaterialSizes(byte algorithmId)
     {

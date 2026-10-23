@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Common.Metadata.Records;
 
 namespace Lyo.Images.Ocr.Models;
@@ -6,4 +7,5 @@ namespace Lyo.Images.Ocr.Models;
 /// <param name="Text">Combined line text.</param>
 /// <param name="BoundingBoxPixels">Union box for the line.</param>
 /// <param name="Words">Words on this line.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record OcrLine(string Text, BoundingBox2D BoundingBoxPixels, IReadOnlyList<OcrWord> Words);

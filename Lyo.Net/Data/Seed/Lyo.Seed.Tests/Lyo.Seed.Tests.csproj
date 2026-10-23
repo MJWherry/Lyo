@@ -6,10 +6,11 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite"/>
+        <PackageReference Include="Npgsql"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Json\Lyo.Common.Json.csproj"/>
+        <ProjectReference Include="..\..\Json\Lyo.Json\Lyo.Json.csproj"/>
         <ProjectReference Include="..\..\..\Core\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
         <ProjectReference Include="..\Lyo.Seed\Lyo.Seed.csproj"/>
     </ItemGroup>

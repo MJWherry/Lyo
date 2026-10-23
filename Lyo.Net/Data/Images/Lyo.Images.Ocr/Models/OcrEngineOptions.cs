@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Images.Ocr.Models;
 
 /// <summary>Cross-provider OCR options bound from configuration or set in DI.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class OcrEngineOptions
 {
     /// <summary>Configuration section name.</summary>
@@ -23,4 +25,7 @@ public sealed class OcrEngineOptions
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(DefaultLanguages);
         ArgumentHelpers.ThrowIfNotDefined(DefaultPageSegmentationMode);
     }
+
+    /// <summary>Default languages and page-segmentation mode.</summary>
+    public override string ToString() => $"DefaultLanguages={DefaultLanguages} DefaultPageSegmentationMode={DefaultPageSegmentationMode}";
 }

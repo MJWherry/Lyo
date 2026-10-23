@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Metrics;
 using Lyo.Web.Automation.Playwright.Browser;
@@ -44,16 +45,6 @@ public sealed class PlaywrightBrowserService : IPlaywrightBrowserService
         return CreateSessionCore(effective);
     }
 
-    private IPlaywrightBrowserSession CreateSessionCore(PlaywrightBrowserOptions effective)
-    {
-        var sessionId = Guid.NewGuid();
-        var ctx = PlaywrightExecutionContextFactory.Create(effective, sessionId);
-        var baseLogger = _loggerFactory?.CreateLogger<PlaywrightBrowser>() ?? NullLogger<PlaywrightBrowser>.Instance;
-        var browser = new PlaywrightBrowser(effective, ctx, baseLogger, _metrics);
-        Interlocked.Increment(ref _activeSessions);
-        return new PlaywrightBrowserSession(browser, OnSessionDisposed);
-    }
-
     /// <inheritdoc />
     public void Dispose()
     {
@@ -61,6 +52,16 @@ public sealed class PlaywrightBrowserService : IPlaywrightBrowserService
             return;
 
         _disposed = true;
+    }
+
+    private IPlaywrightBrowserSession CreateSessionCore(PlaywrightBrowserOptions effective)
+    {
+        var sessionId = LyoGuid.CreateV7();
+        var ctx = PlaywrightExecutionContextFactory.Create(effective, sessionId);
+        var baseLogger = _loggerFactory?.CreateLogger<PlaywrightBrowser>() ?? NullLogger<PlaywrightBrowser>.Instance;
+        var browser = new PlaywrightBrowser(effective, ctx, baseLogger, _metrics);
+        Interlocked.Increment(ref _activeSessions);
+        return new PlaywrightBrowserSession(browser, OnSessionDisposed);
     }
 
     private void OnSessionDisposed() => Interlocked.Decrement(ref _activeSessions);

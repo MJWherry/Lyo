@@ -1,6 +1,7 @@
 # Lyo.Benchmark.Models
 
-Models and builders for the Lyo benchmark report schema (`lyo.bench/v1`). One polymorphic document covers both BenchmarkDotNet micro-benchmarks and k6 load tests. A viewer or portfolio / test gateway can render any report file by switching on one discriminator.
+Models and builders for the Lyo benchmark report schema (`lyo.bench/v1`). One polymorphic document covers both BenchmarkDotNet micro-benchmarks and k6 load tests. A viewer or
+portfolio / test gateway can render any report file by switching on one discriminator.
 
 Depends only on `System.Text.Json`. Targets `netstandard2.0;net10.0`. BenchmarkDotNet and Testcontainers stay in [`Lyo.Benchmark`](../Lyo.Benchmark/README.md).
 
@@ -25,19 +26,23 @@ switch (report) {
 
 ## Polymorphic report tree
 
-| Type | Discriminator | Role |
-| ---------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------- |
-| `BenchmarkReport` (abstract) | | Shared envelope: `Schema`, `Name`, `Title`, `Description`, `RunId`, `GeneratedAt`, `Environment`, `Notes`. |
-| `MicroBenchmarkReport` | `micro` | BenchmarkDotNet: `Groups` (classes -> measurements) + optional `Comparison` table + `Slo` / `Grades`. |
-| `LoadTestReport` | `load` | k6: `Cases`, `Scenarios`, `Rollups`, `Slo`, `Grades`. |
+| Type                         | Discriminator | Role                                                                                                       |
+|------------------------------|---------------|------------------------------------------------------------------------------------------------------------|
+| `BenchmarkReport` (abstract) |               | Shared envelope: `Schema`, `Name`, `Title`, `Description`, `RunId`, `GeneratedAt`, `Environment`, `Notes`. |
+| `MicroBenchmarkReport`       | `micro`       | BenchmarkDotNet: `Groups` (classes -> measurements) + optional `Comparison` table + `Slo` / `Grades`.      |
+| `LoadTestReport`             | `load`        | k6: `Cases`, `Scenarios`, `Rollups`, `Slo`, `Grades`.                                                      |
 
 ## Descriptive context
 
 - `BenchmarkReport.Description`. Suite-level methodology (what / how, the data set, payload kinds).
 - `BenchmarkGroup.Description`. What a class measures. `BenchmarkMeasurement.Description` is what a single method does.
-- `BenchmarkGroup.Parameters` / `ComparisonTable.Parameters`. A list of `ParameterDescriptor { Name, Unit, Description }` explaining each `[Params]` value, for example `DataSize` is bytes, `RowCount` is rows.
-- `BenchmarkGroup.Dataset`. A `DatasetDescriptor` of the data structure: `TypeName`, `ColumnCount`, `MaxNestingDepth`, and a `Columns` tree of `ColumnDescriptor { Name, Type, Kind (scalar|object|collection), Children }`. Nested-property complexity, such as a CSV/XLSX row type or a mapping entity with a nested child collection, is visible here. A row count alone hides it.
-- `LoadTestReport.Cases`. A list of `LoadCase { Case, Endpoint, Description, WhereClauses, Filters, SortFields, Includes, SelectionFieldCount }` describing each k6 query case's structure, so `query_with_subquery` vs `baseline` is interpretable. `Hotspot.Case` joins to it.
+- `BenchmarkGroup.Parameters` / `ComparisonTable.Parameters`. A list of `ParameterDescriptor { Name, Unit, Description }` explaining each `[Params]` value, for example `DataSize`
+  is bytes, `RowCount` is rows.
+- `BenchmarkGroup.Dataset`. A `DatasetDescriptor` of the data structure: `TypeName`, `ColumnCount`, `MaxNestingDepth`, and a `Columns` tree of
+  `ColumnDescriptor { Name, Type, Kind (scalar|object|collection), Children }`. Nested-property complexity, such as a CSV/XLSX row type or a mapping entity with a nested child
+  collection, is visible here. A row count alone hides it.
+- `LoadTestReport.Cases`. A list of `LoadCase { Case, Endpoint, Description, WhereClauses, Filters, SortFields, Includes, SelectionFieldCount }` describing each k6 query case's
+  structure, so `query_with_subquery` vs `baseline` is interpretable. `Hotspot.Case` joins to it.
 
 ## SLAs / business standards (micro)
 
@@ -46,7 +51,8 @@ k6 reports and micro reports share one SLA assessment model. The exporter fills 
 - `BenchmarkMeasurement`. `ThroughputMbps` (size-based suites), `SlaTarget` (for example `<= 2 ms`, `>= 300 MB/s`), `SlaResult` (`Meets` / `Exceeds` / `Miss`), `SlaStandard` (the
   business-standard text).
 - `ComparisonRow`. `ThroughputMbps`, `SlaTarget`, `SlaResult`.
-- `MicroBenchmarkReport.Slo`. Each benchmark contributes a single worst-case `SloRow`, using the same `SloRow` type as the load report. `GradeRow` is reused by `MicroBenchmarkReport.Grades`. Those fields drive an "SLA assessment" block in the viewer, and a verdict badge column on the measurement and comparison tables.
+- `MicroBenchmarkReport.Slo`. Each benchmark contributes a single worst-case `SloRow`, using the same `SloRow` type as the load report. `GradeRow` is reused by
+  `MicroBenchmarkReport.Grades`. Those fields drive an "SLA assessment" block in the viewer, and a verdict badge column on the measurement and comparison tables.
 
 `[JsonPolymorphic(TypeDiscriminatorPropertyName = "type")]` names the discriminator `type`,
 the same convention as the
@@ -135,10 +141,10 @@ Deserialize as `BenchmarkReport` and pattern-match the concrete type — the bas
 
 ## Builders
 
-| Builder | Produces | Notes |
-| ----------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Builder                       | Produces               | Notes                                                                                                                                                                                                            |
+|-------------------------------|------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `MicroBenchmarkReportBuilder` | `MicroBenchmarkReport` | `Create(name, title)`, `WithDescription`, `WithRun`, `WithEnvironment`, `AddNote`, `AddMeasurement(group, m)`, `DescribeGroup(group, description, parameters, dataset)`, `WithComparison`, `AddSlo`, `AddGrade`. |
-| `LoadTestReportBuilder` | `LoadTestReport` | `Create(name, title)`, `WithDescription`, `WithRun`, `WithEnvironment`, `AddNote`, `AddCase`, `AddScenario`, `AddRollup`, `AddSlo`, `AddGrade`. |
+| `LoadTestReportBuilder`       | `LoadTestReport`       | `Create(name, title)`, `WithDescription`, `WithRun`, `WithEnvironment`, `AddNote`, `AddCase`, `AddScenario`, `AddRollup`, `AddSlo`, `AddGrade`.                                                                  |
 
 ## Dependencies
 

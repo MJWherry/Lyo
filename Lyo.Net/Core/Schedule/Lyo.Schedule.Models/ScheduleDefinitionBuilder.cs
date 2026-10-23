@@ -1,10 +1,10 @@
+using System.Diagnostics;
+using Lyo.Common.Core.Enums;
 #if NET6_0_OR_GREATER
 using TimeOnly = System.TimeOnly;
 #else
 using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 #endif
-using System.Diagnostics;
-using Lyo.Common.Core.Enums;
 
 namespace Lyo.Schedule.Models;
 
@@ -121,8 +121,8 @@ public sealed class ScheduleDefinitionBuilder
     }
 
     /// <summary>
-    /// Sets a cron-expression schedule. Accepts standard 5-field (minute) and 6-field (second) cron forms. Examples: <c>"0 8 * * MON-FRI"</c> (weekdays at
-    /// 08:00), <c>"*/15 9-17 * * MON-FRI"</c> (every 15 min during business hours).
+    /// Sets a cron-expression schedule. Accepts standard 5-field (minute) and 6-field (second) cron forms. Examples: <c>"0 8 * * MON-FRI"</c> (weekdays at 08:00),
+    /// <c>"*/15 9-17 * * MON-FRI"</c> (every 15 min during business hours).
     /// </summary>
     public ScheduleDefinitionBuilder SetCron(string cronExpression)
     {

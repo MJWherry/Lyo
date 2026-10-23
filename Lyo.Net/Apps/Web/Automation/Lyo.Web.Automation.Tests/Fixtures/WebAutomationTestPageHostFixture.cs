@@ -12,6 +12,7 @@ public sealed class WebAutomationTestPageHostFixture : IDisposable
     private static readonly string HomePageHtml = ReadAsset("Pages/home.html");
     private static readonly string NextPageHtml = ReadAsset("Pages/next.html");
     private static readonly string ControlsPageHtml = ReadAsset("Pages/controls.html");
+    private static readonly string DuplicatesPageHtml = ReadAsset("Pages/duplicates.html");
     private readonly CancellationTokenSource _cts = new();
 
     private readonly HttpListener _listener;
@@ -25,7 +26,12 @@ public sealed class WebAutomationTestPageHostFixture : IDisposable
 
     public Uri ControlsUri => new(BaseUri, "controls");
 
+    public Uri DuplicatesUri => new(BaseUri, "duplicates");
+
     public Uri EchoApiUri => new(BaseUri, "api/echo");
+
+    /// <summary>Current xUnit cancellation token. Reads <see cref="TestContext.Current" /> when accessed, so each test gets that test's token.</summary>
+    public CancellationToken TestCt => TestContext.Current.CancellationToken;
 
     public WebAutomationTestPageHostFixture()
     {
@@ -79,6 +85,7 @@ public sealed class WebAutomationTestPageHostFixture : IDisposable
             ("GET", "/") => ($"{FileTypeInfo.Html.MimeType}; charset=utf-8", HomePageHtml, HttpStatusCode.OK),
             ("GET", "/next") => ($"{FileTypeInfo.Html.MimeType}; charset=utf-8", NextPageHtml, HttpStatusCode.OK),
             ("GET", "/controls") => ($"{FileTypeInfo.Html.MimeType}; charset=utf-8", ControlsPageHtml, HttpStatusCode.OK),
+            ("GET", "/duplicates") => ($"{FileTypeInfo.Html.MimeType}; charset=utf-8", DuplicatesPageHtml, HttpStatusCode.OK),
             ("GET", "/files/sample-a.txt") => ($"{FileTypeInfo.Txt.MimeType}; charset=utf-8", "sample-a", HttpStatusCode.OK),
             ("GET", "/files/sample-b.txt") => ($"{FileTypeInfo.Txt.MimeType}; charset=utf-8", "sample-b", HttpStatusCode.OK),
             var _ => await BuildDynamicResponseAsync(request, path)

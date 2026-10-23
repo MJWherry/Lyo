@@ -1,0 +1,37 @@
+<MudStack Spacing="1">
+    <MudText Typo="Typo.subtitle2">Steps</MudText>
+    <LyoReorderList TItem="RecipeStepReq" Items="Steps" SectionLabel="@(step => step.GroupLabel)" OnDelete="Remove" Changed="Changed">
+        <ItemContent Context="step">
+            <MudStack Spacing="1">
+                <MudTextField @bind-Value="step.Instruction" Label="Instruction" Margin="Margin.Dense" Lines="2" AutoGrow="true"/>
+                <MudStack Row="true" Spacing="1">
+                    <MudNumericField T="int?" @bind-Value="step.DurationMinutes" Label="Minutes" Margin="Margin.Dense" Style="max-width: 6rem;"/>
+                    <MudTextField @bind-Value="step.GroupLabel" Label="Group" Margin="Margin.Dense"/>
+                </MudStack>
+                @{
+                    var linked = Lines.Where(line => line.StepIds.Contains(step.Id)).ToList();
+                }
+                @if (linked.Count > 0) {
+                    <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                        @foreach (var line in linked) {
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@LineName(line)</MudChip>
+                        }
+                    </MudStack>
+                }
+                @if (AllowAttachments && SavedStepIds.Contains(step.Id)) {
+                    <RecipeAttachmentPanel ApiClient="ApiClient"
+                                           RecipeClient="RecipeClient"
+                                           AttachmentsRoute="@AttachmentsRoute"
+                                           FileStorageApiRoutePrefix="@FileStorageApiRoutePrefix"
+                                           EntityType="@RecipeEntityTypes.RecipeStep"
+                                           EntityId="step.Id"
+                                           ApiOrigin="@ApiOrigin"/>
+                }
+                else if (AllowAttachments) {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Save the recipe to attach a photo.</MudText>
+                }
+            </MudStack>
+        </ItemContent>
+    </LyoReorderList>
+    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="Add">Add step</MudButton>
+</MudStack>

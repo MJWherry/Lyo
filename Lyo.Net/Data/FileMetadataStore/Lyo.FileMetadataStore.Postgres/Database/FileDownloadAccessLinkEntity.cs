@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.FileMetadataStore.Postgres.Database;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class FileDownloadAccessLinkEntity
 {
     public Guid Id { get; set; }
@@ -33,4 +35,7 @@ public sealed class FileDownloadAccessLinkEntity
 
     [MaxLength(256)]
     public string? TenantId { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

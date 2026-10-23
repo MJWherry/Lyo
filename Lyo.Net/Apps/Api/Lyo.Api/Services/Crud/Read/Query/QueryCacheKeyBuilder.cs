@@ -30,8 +30,8 @@ public static class QueryCacheKeyBuilder
     /// <c>Get&lt;Widget, WidgetDetail&gt;</c> resolve to one key and whichever runs first answers for both.
     /// </param>
     /// <param name="hookPartition">
-    /// Opaque discriminator for callers that pass before/after hooks. Hooks mutate the result but are invisible to the key, so two callers with different hooks would
-    /// otherwise share an entry. Callers that supply hooks must supply a partition; callers that do not can leave it null.
+    /// Opaque discriminator for callers that pass before/after hooks. Hooks mutate the result but are invisible to the key, so two callers with different
+    /// hooks would otherwise share an entry. Callers that supply hooks must supply a partition; callers that do not can leave it null.
     /// </param>
     public static string BuildSingleEntityGetCacheKey(
         Type entityClrType,
@@ -42,7 +42,8 @@ public static class QueryCacheKeyBuilder
         string? hookPartition = null)
         => BuildSingleEntityGetCacheKeyCore(entityClrType, primaryKeyValuesInEfOrder, includes, rawResponse, responseType, hookPartition);
 
-    /// <inheritdoc cref="BuildSingleEntityGetCacheKey(System.Type,System.Collections.Generic.IReadOnlyList{object?},System.Collections.Generic.IReadOnlyList{string}?,bool,System.Type?,string?)" />
+    /// <inheritdoc
+    ///     cref="BuildSingleEntityGetCacheKey(System.Type,System.Collections.Generic.IReadOnlyList{object?},System.Collections.Generic.IReadOnlyList{string}?,bool,System.Type?,string?)" />
     public static string BuildSingleEntityGetCacheKey(
         Type entityClrType,
         object[] primaryKeyValuesInEfOrder,
@@ -90,8 +91,8 @@ public static class QueryCacheKeyBuilder
     /// <summary>Cache key for <c>/QueryConcrete</c> (full entities). Leaves out projection dimensions.</summary>
     /// <param name="queryRequest">The query request.</param>
     /// <param name="defaultSortKey">
-    /// Fingerprint of the caller's fallback ordering from <c>FormatDefaultSortKey</c>, applied by execution when <see cref="QueryConcreteReq.SortBy" /> is empty. Two
-    /// callers with different fallback orders produce different pages for the same request, so the fallback has to be part of the key.
+    /// Fingerprint of the caller's fallback ordering from <c>FormatDefaultSortKey</c>, applied by execution when <see cref="QueryConcreteReq.SortBy" /> is
+    /// empty. Two callers with different fallback orders produce different pages for the same request, so the fallback has to be part of the key.
     /// </param>
     public static string Build<TDb, TResponse>(QueryConcreteReq queryRequest, string? defaultSortKey = null)
         where TDb : class
@@ -125,13 +126,12 @@ public static class QueryCacheKeyBuilder
     /// <inheritdoc cref="FormatDefaultSortKey(string,SortDirection)" />
     /// <param name="defaultOrder">The default order key selector.</param>
     /// <param name="defaultSortDirection">Direction applied to that selector.</param>
-    public static string FormatDefaultSortKey(Expression defaultOrder, SortDirection defaultSortDirection)
-        => FormatDefaultSortKey(defaultOrder.ToString(), defaultSortDirection);
+    public static string FormatDefaultSortKey(Expression defaultOrder, SortDirection defaultSortDirection) => FormatDefaultSortKey(defaultOrder.ToString(), defaultSortDirection);
 
     /// <summary>
-    /// Discriminator identifying a set of result-mutating hooks, or null when none were supplied. Hooks change what gets cached but are invisible to the request, so without
-    /// this two callers reading the same row through different hooks would share one entry and the first one through would decide what the second saw. Identity comes from each
-    /// delegate's declaring type and method name, which is stable for a given call site.
+    /// Discriminator identifying a set of result-mutating hooks, or null when none were supplied. Hooks change what gets cached but are invisible to the request, so without this
+    /// two callers reading the same row through different hooks would share one entry and the first one through would decide what the second saw. Identity comes from each delegate's
+    /// declaring type and method name, which is stable for a given call site.
     /// </summary>
     /// <param name="hooks">The hook delegates, in a fixed order; nulls are ignored.</param>
     public static string? FormatHookPartition(params Delegate?[] hooks)
@@ -172,12 +172,29 @@ public static class QueryCacheKeyBuilder
         return keyBuilder.ToString();
     }
 
-    /// <summary>Cache key for <c>/QueryProject</c> SQL or materialized projection paths (includes select plus computed).</summary>
+    /// <summary>
+    /// Cache key for <c>/QueryProject</c>, including select, computed fields, and aggregates. The where tree is part of the key: a grouped query filters before it aggregates, so
+    /// two filters of the same select must not share a page.
+    /// </summary>
     public static string Build<TDb, TResponse>(ProjectionQueryReq queryRequest, string? defaultSortKey = null)
         where TDb : class
     {
         var baseReq = ToQueryConcreteReq(queryRequest);
-        return BuildEntityLoadWithProjectionDimensions<TDb, TResponse>(baseReq, queryRequest.Select, queryRequest.ComputedFields, defaultSortKey);
+        var key = BuildEntityLoadWithProjectionDimensions<TDb, TResponse>(baseReq, queryRequest.Select, queryRequest.ComputedFields, defaultSortKey);
+        if (queryRequest.WhereClause != null)
+            key += $":tree={WhereClauseHelpers.GetWhereClauseTreeHash(queryRequest.WhereClause)}";
+
+        return AppendAggregatesSuffix(key, queryRequest.Aggregates);
+    }
+
+    /// <summary>Appends aggregate columns so a grouped query does not share a cache entry with a row projection of the same <c>Select</c>.</summary>
+    public static string AppendAggregatesSuffix(string cacheKey, IReadOnlyList<AggregateSelect>? aggregates)
+    {
+        if (aggregates is not { Count: > 0 })
+            return cacheKey;
+
+        var body = string.Join("|", aggregates.Select(a => $"{a.Function}:{NormalizePathValue(a.Name)}:{NormalizePathValue(a.Field ?? "")}"));
+        return $"{cacheKey}:aggregates={CompactCacheSegment(body)}";
     }
 
     /// <summary>Appends QueryProject shape flags so cache entries differ when row columns differ (zip versus parallel sibling collection columns).</summary>
@@ -265,8 +282,8 @@ public static class QueryCacheKeyBuilder
     }
 
     /// <summary>
-    /// Appends requested key sets. Each set is rendered through <see cref="WhereClauseHelpers.FormatValueCanonical" />, which length-prefixes every component: joining raw
-    /// values on <c>|</c> made <c>["a|b", "c"]</c> and <c>["a", "b|c"]</c> produce one key, so a request for one row could be answered from another's entry.
+    /// Appends requested key sets. Each set is rendered through <see cref="WhereClauseHelpers.FormatValueCanonical" />, which length-prefixes every component: joining raw values
+    /// on <c>|</c> made <c>["a|b", "c"]</c> and <c>["a", "b|c"]</c> produce one key, so a request for one row could be answered from another's entry.
     /// </summary>
     private static void AppendKeySets(StringBuilder keyBuilder, IReadOnlyList<object[]>? keys)
     {
@@ -277,8 +294,8 @@ public static class QueryCacheKeyBuilder
     }
 
     /// <summary>
-    /// Renders a CLR type for a cache key. Uses <see cref="Type.FullName" />: two entities or two response DTOs that share a short name in different namespaces would
-    /// otherwise produce identical keys and serve each other's rows.
+    /// Renders a CLR type for a cache key. Uses <see cref="Type.FullName" />: two entities or two response DTOs that share a short name in different namespaces would otherwise
+    /// produce identical keys and serve each other's rows.
     /// </summary>
     private static string TypeKeySegment(Type type) => (type.FullName ?? type.Name).ToLowerInvariant();
 

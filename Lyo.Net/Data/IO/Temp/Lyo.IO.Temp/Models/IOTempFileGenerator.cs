@@ -4,6 +4,7 @@ using System.IO.Compression;
 using System.Text;
 using System.Xml.Linq;
 using Lyo.Common.Core.Extensions;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Core.Pathing;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
@@ -115,6 +116,9 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
         _ctx.RegisterFile(path, sizeBytes);
         return path;
     }
+
+    /// <summary>Metric names and log label for one artifact type, so timing and counters share one record.</summary>
+    private sealed record ArtifactMetrics(string Artifact, string Duration, string Success, string Failure);
 
 #region Random-bytes files
 
@@ -269,7 +273,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     {
         for (var i = 0; i < spec.FileCount; i++) {
             var sizeBytes = spec.FileSizeSelector != null ? spec.FileSizeSelector(i) : spec.FileSizeBytes;
-            var entryName = prefix + Guid.NewGuid().ToString("N") + ".tmp";
+            var entryName = prefix + LyoGuid.CreateV7().ToString("N") + ".tmp";
             var entry = archive.CreateEntry(entryName, CompressionLevel.Fastest);
             using var stream = entry.Open();
             WriteRandomBytesToStream(stream, sizeBytes, random);
@@ -467,7 +471,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
             }
 
             var style = _ctx.Storage.PathStyle;
-            var dirName = targetDirName ?? PathHelpers.GetFileNameWithoutExtension(style, zipPath) + "_" + Guid.NewGuid().ToString("N")[..8];
+            var dirName = targetDirName ?? PathHelpers.GetFileNameWithoutExtension(style, zipPath) + "_" + LyoGuid.CreateV7().ToString("N")[..8];
             destDir = _ctx.ResolvePath(dirName, true);
             _ctx.Storage.CreateDirectory(destDir);
             using var zipStream = IOTempExternalIo.OpenRead(_ctx.Storage, zipPath);
@@ -752,7 +756,7 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     private static string GenerateName(string? prefix, string? suffix, TempNamingStrategy strategy)
     {
         var middle = strategy switch {
-            TempNamingStrategy.Guid => Guid.NewGuid().ToString("N"),
+            TempNamingStrategy.Guid => LyoGuid.CreateV7().ToString("N"),
             TempNamingStrategy.Timestamp => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(),
             TempNamingStrategy.Sequential => Interlocked.Increment(ref _nameSequence).ToString(),
             TempNamingStrategy.RandomChars => Path.GetRandomFileName().Replace(".", string.Empty),
@@ -763,7 +767,4 @@ public sealed class IOTempFileGenerator : IIOTempFileGenerator
     }
 
 #endregion
-
-    /// <summary>Metric names and log label for one artifact type, so timing and counters share one record.</summary>
-    private sealed record ArtifactMetrics(string Artifact, string Duration, string Success, string Failure);
 }

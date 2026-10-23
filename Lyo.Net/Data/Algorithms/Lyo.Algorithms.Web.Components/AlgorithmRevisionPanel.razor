@@ -1,0 +1,39 @@
+<MudStack Spacing="1">
+    <MudText Typo="Typo.subtitle2">Revisions</MudText>
+    @if (Revisions.Count == 0) {
+        <MudText Typo="Typo.caption" Color="Color.Secondary">No saved revisions.</MudText>
+    }
+    @foreach (var revision in Revisions) {
+        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.body2">@revision.Revision · @revision.Kind</MudText>
+            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => Open.InvokeAsync(revision))">Open</MudButton>
+            <MudButton Size="Size.Small" Variant="Variant.Text" OnClick="@(() => Revert.InvokeAsync(revision.Revision))">Revert</MudButton>
+        </MudStack>
+    }
+    <MudStack Row="true" Spacing="1">
+        <MudTextField @bind-Value="_label" Label="Label" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+        <MudNumericField @bind-Value="_revision" Label="Revision" Variant="Variant.Outlined" Margin="Margin.Dense" Min="1"/>
+        <MudSwitch @bind-Value="_mutable" Label="Mutable" Color="Color.Primary"/>
+        <MudButton Variant="Variant.Outlined" OnClick="SaveLabel">Set label</MudButton>
+    </MudStack>
+</MudStack>
+
+@code {
+    private string _label = "live";
+    private int _revision = 1;
+    private bool _mutable = true;
+
+    [Parameter]
+    public IReadOnlyList<AlgorithmRevisionRes> Revisions { get; set; } = [];
+
+    [Parameter]
+    public EventCallback<AlgorithmRevisionRes> Open { get; set; }
+
+    [Parameter]
+    public EventCallback<int> Revert { get; set; }
+
+    [Parameter]
+    public EventCallback<(string Label, AlgorithmLabelReq Request)> SetLabel { get; set; }
+
+    private Task SaveLabel() => SetLabel.InvokeAsync((_label, new AlgorithmLabelReq { Revision = _revision, IsMutable = _mutable }));
+}

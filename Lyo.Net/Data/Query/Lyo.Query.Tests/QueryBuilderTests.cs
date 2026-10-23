@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Query.Models.Attributes;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
@@ -37,9 +38,9 @@ public class QueryBuilderTests
     [Fact]
     public void QueryConcreteReqBuilder_AddKey_AddKeys_AppendsRows()
     {
-        var id1 = Guid.NewGuid();
-        var id2 = Guid.NewGuid();
-        var id3 = Guid.NewGuid();
+        var id1 = LyoGuid.CreateV7();
+        var id2 = LyoGuid.CreateV7();
+        var id3 = LyoGuid.CreateV7();
         var qr = QueryConcreteReqBuilder.New().AddKey(id1).AddKey("tenant-a", 1).AddKeys([id2], [id3]).AddKeys([[42]]).Build();
         Assert.Equal(5, qr.Keys.Count);
         Assert.Equal(new object[] { id1 }, qr.Keys[0]);

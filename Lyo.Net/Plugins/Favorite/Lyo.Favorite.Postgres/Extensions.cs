@@ -6,6 +6,7 @@ using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace Lyo.Favorite.Postgres;
 
 /// <summary>DI helpers for PostgreSQL favorite store registration.</summary>
@@ -32,7 +33,6 @@ public static class Extensions
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         var options = new PostgresFavoriteOptions();
         configuration.GetSection(configSectionName).Bind(options);
-
         return services.AddFavoriteDbContextFactory(options);
     }
 
@@ -43,7 +43,6 @@ public static class Extensions
         ArgumentHelpers.ThrowIfNull(options);
         services.AddPostgresDbContextFactory<FavoriteDbContext, PostgresFavoriteOptions>(options);
         services.AddEntityRefOptions();
-
         return services;
     }
 
@@ -68,7 +67,6 @@ public static class Extensions
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
         var options = new PostgresFavoriteOptions();
         configuration.GetSection(configSectionName).Bind(options);
-
         return services.AddPostgresFavoriteStore(options);
     }
 
@@ -79,8 +77,8 @@ public static class Extensions
         ArgumentHelpers.ThrowIfNull(options);
         services.AddFavoriteDbContextFactory(options);
         services.AddSingleton<IFavoriteStore>(sp => new PostgresFavoriteStore(
-            sp.GetRequiredService<IDbContextFactory<FavoriteDbContext>>(), sp.GetRequiredService<EntityRefOptions>(),
-            sp.GetRequiredService<PostgresFavoriteOptions>(), sp.GetServices<IEntityRefActionInterceptor>()));
+            sp.GetRequiredService<IDbContextFactory<FavoriteDbContext>>(), sp.GetRequiredService<EntityRefOptions>(), sp.GetRequiredService<PostgresFavoriteOptions>(),
+            sp.GetServices<IEntityRefActionInterceptor>()));
 
         return services;
     }

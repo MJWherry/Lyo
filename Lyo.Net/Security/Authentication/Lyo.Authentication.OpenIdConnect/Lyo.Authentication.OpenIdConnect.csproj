@@ -15,6 +15,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Lyo.Authentication.Sso\Lyo.Authentication.Sso.csproj"/>
         <ProjectReference Include="..\Lyo.Authentication\Lyo.Authentication.csproj"/>
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
         <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>

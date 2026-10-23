@@ -1,8 +1,10 @@
 # Lyo.Job.Alerts
 
-Hosted `JobAlertConsumer` that binds the `job.notifications.alert` routing key on the `job.events` exchange, deserializes `JobAlertEvent` payloads, and sends them through `INotificationPublisher` (in-process handlers) and/or an optional HTTP webhook.
+Hosted `JobAlertConsumer` that binds the `job.notifications.alert` routing key on the `job.events` exchange, deserializes `JobAlertEvent` payloads, and sends them through
+`INotificationPublisher` (in-process handlers) and/or an optional HTTP webhook.
 
-Alert producers include `JobService` (SLA breaches), `JobScheduler` (failures, circuit breaker), and `JobMaintenanceService` (dead jobs, SLA scans) via `IJobEventPublisher.PublishAlertAsync`.
+Alert producers include `JobService` (SLA breaches), `JobScheduler` (failures, circuit breaker), and `JobMaintenanceService` (dead jobs, SLA scans) via
+`IJobEventPublisher.PublishAlertAsync`.
 
 ## Examples
 
@@ -33,20 +35,21 @@ services.AddJobAlerts(o => {
 
 ## Options (`JobAlertsOptions.SectionName` = `"JobAlerts"`)
 
-| Property | Default | Notes |
-| ----------------- | ------- | -------------------------------------------------------- |
-| `AlertWebhookUrl` | `null` | Each alert is POSTed as JSON to this URL when it is set. |
+| Property          | Default | Notes                                                    |
+|-------------------|---------|----------------------------------------------------------|
+| `AlertWebhookUrl` | `null`  | Each alert is POSTed as JSON to this URL when it is set. |
 
-`JobAlertConsumer` does **not** read per-definition `AlertWebhookUrl` on `JobDefinition` (that field is persisted for custom integrations). Alerts from this package leave through `JobAlertsOptions.AlertWebhookUrl` (or `INotificationPublisher` handlers).
+`JobAlertConsumer` does **not** read per-definition `AlertWebhookUrl` on `JobDefinition` (that field is persisted for custom integrations). Alerts from this package leave through
+`JobAlertsOptions.AlertWebhookUrl` (or `INotificationPublisher` handlers).
 
 ## Alert kinds (`JobAlertType`)
 
-| Type | Usually produced by |
-| ----------------------- | ----------------------------------------------------------------- |
-| `Failure` | After consecutive failures the scheduler fires (`AlertOnFailure`) |
-| `CircuitBreakerTripped` | The scheduler turns the definition off |
-| `DeadJob` | Maintenance timeout (heartbeat missing) |
-| `SlaBreach` | SLA checks in `JobService` start/finish; maintenance SLA scan |
+| Type                    | Usually produced by                                           |
+|-------------------------|---------------------------------------------------------------|
+| `Failure`               | A workflow step run fails (`JobWorkflowEngine`)               |
+| `CircuitBreakerTripped` | The scheduler turns the definition off                        |
+| `DeadJob`               | Maintenance timeout (heartbeat missing)                       |
+| `SlaBreach`             | SLA checks in `JobService` start/finish; maintenance SLA scan |
 
 ## `JobAlertEvent` payload
 
@@ -93,11 +96,12 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Http` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (direct, microsoft)
 - `Lyo.Api.Models` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
+- `Lyo.EntityReference.Models` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
@@ -107,4 +111,5 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
 - `System.Diagnostics.DiagnosticSource` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

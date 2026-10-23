@@ -1,6 +1,5 @@
 using Lyo.Cache.Fusion;
 using Lyo.Testing;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ZiggyCreatures.Caching.Fusion;

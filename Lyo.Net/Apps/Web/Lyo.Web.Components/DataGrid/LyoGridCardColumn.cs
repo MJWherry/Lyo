@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Components;
 
 namespace Lyo.Web.Components.DataGrid;
@@ -6,6 +7,7 @@ namespace Lyo.Web.Components.DataGrid;
 /// One column as the card layout sees it: a label, the same cell markup the table draws, and whether it heads the card. Built by
 /// <see cref="ProjectedColumnRegistry.GetCardColumns" /> from the columns a grid declared.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record LyoGridCardColumn
 {
     /// <summary>Projected field path or property path the column reads.</summary>

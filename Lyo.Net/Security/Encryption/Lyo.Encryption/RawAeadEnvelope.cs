@@ -1,4 +1,3 @@
-using Lyo.Common.Core.Security;
 using Lyo.Exceptions;
 
 namespace Lyo.Encryption;
@@ -9,12 +8,52 @@ namespace Lyo.Encryption;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Layout: <c>[nonce:n][authenticator:n][payload:n]</c>. Algorithms with a synthetic IV instead of a nonce and tag (AES-SIV) store the IV in the nonce field with a
-/// zero-length authenticator and write into <see cref="EnvelopeBuffer.Body" />, which is RFC 5297 <c>SIV || ciphertext</c>.
+/// Layout: <c>[nonce:n][authenticator:n][payload:n]</c>. Algorithms with a synthetic IV instead of a nonce and tag (AES-SIV) store the IV in the nonce field with a zero-length
+/// authenticator and write into <see cref="EnvelopeBuffer.Body" />, which is RFC 5297 <c>SIV || ciphertext</c>.
 /// </para>
 /// </remarks>
 public static class RawAeadEnvelope
 {
+    /// <summary>
+    /// Allocates a raw blob, leaving nonce, authenticator, and payload for the AEAD primitive. The nonce is filled with strong random bytes unless
+    /// <paramref name="randomizeNonce" /> is <see langword="false" />.
+    /// </summary>
+    /// <param name="nonceLength">Nonce width, or synthetic-IV width for algorithms that use one.</param>
+    /// <param name="authenticatorLength">Tag width, or <c>0</c> when the algorithm has none.</param>
+    /// <param name="payloadLength">Plaintext length (equals ciphertext length for every algorithm here).</param>
+    /// <param name="randomizeNonce"><see langword="false" /> when the algorithm fills the nonce region deterministically.</param>
+    public static EnvelopeBuffer Allocate(int nonceLength, int authenticatorLength, int payloadLength, bool randomizeNonce = true)
+    {
+        ArgumentHelpers.ThrowIfNegative(nonceLength);
+        ArgumentHelpers.ThrowIfNegative(authenticatorLength);
+        ArgumentHelpers.ThrowIfNegative(payloadLength);
+        var envelope = new EnvelopeBuffer(new byte[nonceLength + authenticatorLength + payloadLength], nonceLength, authenticatorLength, payloadLength);
+        if (randomizeNonce && nonceLength > 0)
+            CryptographicRandom.Fill(envelope.Nonce);
+
+        return envelope;
+    }
+
+    /// <summary>
+    /// Parses <paramref name="envelope" /> as a raw AEAD blob, checking that it holds the expected nonce (or synthetic IV) and authenticator before any key material is used.
+    /// Every failure is an <see cref="InvalidDataException" />.
+    /// </summary>
+    /// <param name="envelope">Ciphertext to parse.</param>
+    /// <param name="expectedNonceLength">Required nonce (or synthetic IV) width; the blob must be at least this plus <paramref name="authenticatorLength" />.</param>
+    /// <param name="authenticatorLength">Tag width, or <c>0</c> when the algorithm has none.</param>
+    /// <param name="nonceFieldName">Name used in errors, for example <c>nonce</c> or <c>synthetic IV</c>.</param>
+    /// <exception cref="InvalidDataException">Blob is shorter than nonce plus authenticator.</exception>
+    public static EnvelopeHeader Read(ReadOnlySpan<byte> envelope, int expectedNonceLength, int authenticatorLength, string nonceFieldName = "nonce")
+    {
+        ArgumentHelpers.ThrowIfNegative(expectedNonceLength);
+        ArgumentHelpers.ThrowIfNegative(authenticatorLength);
+        var min = expectedNonceLength + authenticatorLength;
+        if (envelope.Length < min)
+            throw new InvalidDataException($"Invalid raw AEAD data: truncated {nonceFieldName} or ciphertext.");
+
+        return new(expectedNonceLength, authenticatorLength);
+    }
+
     /// <summary>Newly allocated raw blob: backing array plus the regions the caller still needs to fill.</summary>
     public readonly struct EnvelopeBuffer
     {
@@ -87,49 +126,5 @@ public static class RawAeadEnvelope
         /// <summary>Reads nonce, authenticator, and payload as one span, for primitives that take a combined input (AES-SIV).</summary>
         /// <param name="envelope">Blob this header was parsed from.</param>
         public ReadOnlySpan<byte> Body(ReadOnlySpan<byte> envelope) => envelope;
-    }
-
-    /// <summary>
-    /// Allocates a raw blob, leaving nonce, authenticator, and payload for the AEAD primitive. The nonce is filled with strong random bytes unless
-    /// <paramref name="randomizeNonce" /> is <see langword="false" />.
-    /// </summary>
-    /// <param name="nonceLength">Nonce width, or synthetic-IV width for algorithms that use one.</param>
-    /// <param name="authenticatorLength">Tag width, or <c>0</c> when the algorithm has none.</param>
-    /// <param name="payloadLength">Plaintext length (equals ciphertext length for every algorithm here).</param>
-    /// <param name="randomizeNonce"><see langword="false" /> when the algorithm fills the nonce region deterministically.</param>
-    public static EnvelopeBuffer Allocate(int nonceLength, int authenticatorLength, int payloadLength, bool randomizeNonce = true)
-    {
-        ArgumentHelpers.ThrowIfNegative(nonceLength);
-        ArgumentHelpers.ThrowIfNegative(authenticatorLength);
-        ArgumentHelpers.ThrowIfNegative(payloadLength);
-        var envelope = new EnvelopeBuffer(new byte[nonceLength + authenticatorLength + payloadLength], nonceLength, authenticatorLength, payloadLength);
-        if (randomizeNonce && nonceLength > 0)
-            CryptographicRandom.Fill(envelope.Nonce);
-
-        return envelope;
-    }
-
-    /// <summary>
-    /// Parses <paramref name="envelope" /> as a raw AEAD blob, checking that it holds the expected nonce (or synthetic IV) and authenticator before any key
-    /// material is used. Every failure is an <see cref="InvalidDataException" />.
-    /// </summary>
-    /// <param name="envelope">Ciphertext to parse.</param>
-    /// <param name="expectedNonceLength">Required nonce (or synthetic IV) width; the blob must be at least this plus <paramref name="authenticatorLength" />.</param>
-    /// <param name="authenticatorLength">Tag width, or <c>0</c> when the algorithm has none.</param>
-    /// <param name="nonceFieldName">Name used in errors, for example <c>nonce</c> or <c>synthetic IV</c>.</param>
-    /// <exception cref="InvalidDataException">Blob is shorter than nonce plus authenticator.</exception>
-    public static EnvelopeHeader Read(
-        ReadOnlySpan<byte> envelope,
-        int expectedNonceLength,
-        int authenticatorLength,
-        string nonceFieldName = "nonce")
-    {
-        ArgumentHelpers.ThrowIfNegative(expectedNonceLength);
-        ArgumentHelpers.ThrowIfNegative(authenticatorLength);
-        var min = expectedNonceLength + authenticatorLength;
-        if (envelope.Length < min)
-            throw new InvalidDataException($"Invalid raw AEAD data: truncated {nonceFieldName} or ciphertext.");
-
-        return new(expectedNonceLength, authenticatorLength);
     }
 }

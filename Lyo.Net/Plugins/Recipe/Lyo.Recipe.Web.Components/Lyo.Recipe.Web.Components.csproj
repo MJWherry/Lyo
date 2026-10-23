@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>Blazor / MudBlazor workbench for household recipes: recipes, ingredients, categories, lines, steps, notes, tags, and FileStorage attachments.</Description>
+        <PackageTags>blazor components recipe mudblazor</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Recipe.Models\Lyo.Recipe.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Recipe\Lyo.Recipe.Client\Lyo.Recipe.Client.csproj"/>
+        <ProjectReference Include="..\..\Note\Lyo.Note\Lyo.Note.csproj"/>
+        <ProjectReference Include="..\..\Tag\Lyo.Tag\Lyo.Tag.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Web\Export\Lyo.Web.Components.Export\Lyo.Web.Components.Export.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Web\Export\Lyo.Web.Components.Export.Csv\Lyo.Web.Components.Export.Csv.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Web\Export\Lyo.Web.Components.Export.Xlsx\Lyo.Web.Components.Export.Xlsx.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Http\Lyo.Http.Client\Lyo.Http.Client.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Api\Lyo.Api.FileStorage.Models\Lyo.Api.FileStorage.Models.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MudBlazor"/>
+    </ItemGroup>
+
+</Project>

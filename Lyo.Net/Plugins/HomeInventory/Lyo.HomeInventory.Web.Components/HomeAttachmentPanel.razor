@@ -1,0 +1,15 @@
+<MudStack Spacing="1">
+    <MudText Typo="Typo.subtitle2">Attachments</MudText>
+    @foreach (var row in _rows) {
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+            <LyoChip Label="@row.Role.ToString()" Hue="@HomeColorHelper.ForRole(row.Role)" Size="Size.Small"/>
+            <MudLink Href="@DownloadUrl(row.FileId, true)" Target="_blank">@(row.Caption ?? row.FileId.ToString("D")[..8])</MudLink>
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="@(() => Delete(row.Id))"/>
+        </MudStack>
+    }
+    <LyoFileUpload InlineLayout="true"
+                   MaxFiles="1"
+                   ButtonText="Attach file"
+                   ShowFiles="true"
+                   OnClientFileReady="OnClientFileReadyAsync"/>
+</MudStack>

@@ -1,6 +1,7 @@
 # Lyo.Job.Api
 
-Maps job definition CRUD, run lifecycle, stats, next-runs, and scheduler batch routes. Register the store with `AddPostgresJobManagement` from `Lyo.Job.Postgres` first, then call `BuildJobGroup`. Standalone host: `Lyo.Job.Api.Host`.
+Maps job definition CRUD, run lifecycle, stats, next-runs, and scheduler batch routes. Register the store with `AddPostgresJobManagement` from `Lyo.Job.Postgres` first, then call
+`BuildJobGroup`. Example host: `Lyo.Job.Api.Example`.
 
 ## Features
 
@@ -21,21 +22,20 @@ app.BuildJobGroup();
 
 Tag `"Job"`. Definitions get CRUD + export; runs expose Query/Get/Delete/DeleteBulk + export.
 
-| Route prefix | Entity | Notes |
-| ---------------------------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `Job/Definition` | `JobDefinition` | Version bump + audit on update |
-| `Job/Definition/Parameter` | `JobParameter` | Encryption on write |
-| `Job/Schedule` | `JobSchedule` | Misfire policy, calendar link, cron |
-| `Job/Triggers` | `JobTrigger` | |
-| `Job/BlackoutCalendar`, `Job/BlackoutCalendar/Window` | Blackout calendars | |
-| `Job/Workflow`, `Job/Workflow/Step`, `Job/Workflow/Run`, … | Workflows | |
-| `Job/WorkerInstance` | Worker registry | Created by workers |
-| `Job/Run` | `JobRun` | Progress, SLA, idempotency fields |
-| `Job/Run/{id}/Children` | Batch fan-out | `JobCreateChildRunsReq` |
-| `POST Job/Definition/LatestRuns` | Batch latest-runs | Latest / latest-successful / latest-failed run per definition id (scheduler refresh) |
-| `GET Job/Definition/{id}/Stats` | Stats projection | Rolling window aggregates plus current `RunningCount` / `QueuedCount` |
-| `GET Job/Definition/{id}/NextRuns` | Upcoming slots | Merged next-run timestamps across enabled schedules (blackout-aware) |
-| `POST Job/Run/Resync` | Queued-run resync | Optional `definitionId`; peeks worker + `.wait` queues and republishes missing due `Queued` runs (`JobRunResyncRes`) |
+| Route prefix                                               | Entity             | Notes                                                                                                                |
+|------------------------------------------------------------|--------------------|----------------------------------------------------------------------------------------------------------------------|
+| `Job/Definition`                                           | `JobDefinition`    | Version bump + audit on update                                                                                       |
+| `Job/Definition/Parameter`                                 | `JobParameter`     | Encryption on write                                                                                                  |
+| `Job/Schedule`                                             | `JobSchedule`      | Misfire policy, calendar link, cron                                                                                  |
+| `Job/BlackoutCalendar`, `Job/BlackoutCalendar/Window`      | Blackout calendars |                                                                                                                      |
+| `Job/Workflow`, `Job/Workflow/Step`, `Job/Workflow/Run`, … | Workflows          |                                                                                                                      |
+| `Job/WorkerInstance`                                       | Worker registry    | Created by workers                                                                                                   |
+| `Job/Run`                                                  | `JobRun`           | Progress, SLA, idempotency fields                                                                                    |
+| `Job/Run/{id}/Children`                                    | Batch fan-out      | `JobCreateChildRunsReq`                                                                                              |
+| `POST Job/Definition/LatestRuns`                           | Batch latest-runs  | Latest / latest-successful / latest-failed run per definition id (scheduler refresh)                                 |
+| `GET Job/Definition/{id}/Stats`                            | Stats projection   | Rolling window aggregates plus current `RunningCount` / `QueuedCount`                                                |
+| `GET Job/Definition/{id}/NextRuns`                         | Upcoming slots     | Merged next-run timestamps across enabled schedules (blackout-aware)                                                 |
+| `POST Job/Run/Resync`                                      | Queued-run resync  | Optional `definitionId`; peeks worker + `.wait` queues and republishes missing due `Queued` runs (`JobRunResyncRes`) |
 
 Alongside CRUD, lifecycle routes (`RunStarted`, `RunFinished`, `RunRequeue`, `RunsResync`, `RunHeartbeat`, `RunLog`, …) are mapped for scheduler/worker hosts.
 
@@ -52,7 +52,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Job.Postgres` (direct, lyo)
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Audit` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.Compression` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
@@ -64,6 +63,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Formatter` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.MessageQueue` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
@@ -73,6 +73,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Query` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Query.Sql` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `Lyo.Schedule.Models` (transitive, lyo)
 - `Lyo.Scheduler` (transitive, lyo)
@@ -104,5 +105,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.Diagnostics.DiagnosticSource` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

@@ -28,20 +28,20 @@ public sealed class LyoDefaultStatusPalette : ILyoStatusPalette
 
         var label = LyoStatusText.Humanize(key);
         return key switch {
-            "success" or "succeeded" or "ok" or "complete" or "completed" or "done" or "passed" or "valid" or "delivered" or "sent" or "read" or "healthy" or "active"
-                or "enabled" or "online" or "connected" or "up" => new LyoChipSpec(label, Color.Success, Icons.Material.Filled.CheckCircle),
-            "warning" or "warn" or "degraded" or "partial" or "partial success" or "partially delivered" or "succeeded with warnings" or "success with warnings" or "stale"
-                => new LyoChipSpec(label, Color.Warning, Icons.Material.Filled.Warning),
-            "failed" or "failure" or "error" or "faulted" or "invalid" or "unhealthy" or "undelivered" or "rejected" or "down" or "disconnected"
-                => new LyoChipSpec(label, Color.Error, Icons.Material.Filled.Error),
-            "timeout" or "timed out" or "expired" => new LyoChipSpec(label, Color.Error, Icons.Material.Filled.Timer),
-            "running" or "in progress" or "inprogress" or "processing" or "started" or "sending" or "receiving" or "draining"
-                => new LyoChipSpec(label, Color.Info, Icons.Material.Filled.PlayArrow),
-            "queued" or "pending" or "scheduled" or "waiting" or "accepted" or "new" or "created" => new LyoChipSpec(label, Color.Info, Icons.Material.Filled.Schedule),
-            "cancelled" or "canceled" or "aborted" or "stopped" => new LyoChipSpec(label, Color.Default, Icons.Material.Filled.Cancel),
-            "skipped" or "ignored" or "noop" => new LyoChipSpec(label, Color.Default, Icons.Material.Filled.SkipNext),
-            "disabled" or "inactive" or "offline" or "paused" or "suspended" => new LyoChipSpec(label, Color.Default, Icons.Material.Filled.PauseCircle),
-            "unknown" or "none" => new LyoChipSpec(label, Color.Default, Icons.Material.Filled.Help),
+            "success" or "succeeded" or "ok" or "complete" or "completed" or "done" or "passed" or "valid" or "delivered" or "sent" or "read" or "healthy" or "active" or "enabled"
+                or "online" or "connected" or "up" => new(label, Color.Success, Icons.Material.Filled.CheckCircle),
+            "warning" or "warn" or "degraded" or "partial" or "partial success" or "partially delivered" or "succeeded with warnings" or "success with warnings" or "stale" => new(
+                label, Color.Warning, Icons.Material.Filled.Warning),
+            "failed" or "failure" or "error" or "faulted" or "invalid" or "unhealthy" or "undelivered" or "rejected" or "down" or "disconnected" => new(
+                label, Color.Error, Icons.Material.Filled.Error),
+            "timeout" or "timed out" or "expired" => new(label, Color.Error, Icons.Material.Filled.Timer),
+            "running" or "in progress" or "inprogress" or "processing" or "started" or "sending" or "receiving" or "draining" => new(
+                label, Color.Info, Icons.Material.Filled.PlayArrow),
+            "queued" or "pending" or "scheduled" or "waiting" or "accepted" or "new" or "created" => new(label, Color.Info, Icons.Material.Filled.Schedule),
+            "cancelled" or "canceled" or "aborted" or "stopped" => new(label, Color.Default, Icons.Material.Filled.Cancel),
+            "skipped" or "ignored" or "noop" => new(label, Color.Default, Icons.Material.Filled.SkipNext),
+            "disabled" or "inactive" or "offline" or "paused" or "suspended" => new(label, Color.Default, Icons.Material.Filled.PauseCircle),
+            "unknown" or "none" => new(label, Color.Default, Icons.Material.Filled.Help),
             var _ => null
         };
     }

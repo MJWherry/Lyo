@@ -1,6 +1,9 @@
 @using Lyo.Web.Components.Export
 @using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Toml
 @using Lyo.Web.Components.Export.Xlsx
+@using Lyo.Web.Components.Export.Xml
+@using Lyo.Web.Components.Export.Yaml
 <LyoDataGridProjected @ref="_dataGrid"
                       ApiClient="ApiClient"
                       GridKey="TwilioSmsLogGrid"
@@ -11,6 +14,9 @@
         <LyoDataGridExportMenu Host="context">
             <ExportCsvMenuItem Host="context"/>
             <ExportJsonMenuItem Host="context"/>
+            <ExportYamlMenuItem Host="context"/>
+            <ExportXmlMenuItem Host="context"/>
+            <ExportTomlMenuItem Host="context"/>
             <ExportXlsxMenuItem Host="context"/>
         </LyoDataGridExportMenu>
     </BulkExportControls>
@@ -32,7 +38,7 @@
                 @{
                     var directionText = ProjectedValueHelper.GetDisplayValue(item, "Direction");
                 }
-                <LyoChip Label="@directionText" Color="@SmsColorHelper.ForDirection(directionText)"/>
+                <LyoChip Label="@directionText" Hue="@SmsColorHelper.ForDirection(directionText)"/>
             </CellContent>
         </LyoProjectedColumn>
         <LyoProjectedColumn Field="IsSuccess" Title="Received" Align="Align.Center" HeaderStyle="width: 110px;">
@@ -74,15 +80,30 @@
     </TitleContent>
     <DialogContent>
         <style>
-            .sms-thread-dialog .mud-dialog-content { padding: 0 !important; }
-            .sms-thread-title { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; width: 100%; padding-right: 8px; }
-            .sms-thread-via { flex: 1 0 100%; }
+            .sms-thread-dialog .mud-dialog-content {
+                padding: 0 !important;
+            }
+
+            .sms-thread-title {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 4px 8px;
+                width: 100%;
+                padding-right: 8px;
+            }
+
+            .sms-thread-via {
+                flex: 1 0 100%;
+            }
+
             .sms-thread {
                 display: flex;
                 flex-direction: column;
                 height: min(62vh, 560px);
                 background: var(--mud-palette-background);
             }
+
             .sms-thread-messages {
                 flex: 1;
                 min-height: 0;
@@ -92,10 +113,26 @@
                 flex-direction: column-reverse;
                 gap: 12px;
             }
-            .sms-thread-empty { color: var(--mud-palette-text-secondary); text-align: center; padding: 48px 16px; font-size: 0.875rem; }
-            .sms-thread-row { display: flex; }
-            .sms-thread-row.in { justify-content: flex-start; }
-            .sms-thread-row.out { justify-content: flex-end; }
+
+            .sms-thread-empty {
+                color: var(--mud-palette-text-secondary);
+                text-align: center;
+                padding: 48px 16px;
+                font-size: 0.875rem;
+            }
+
+            .sms-thread-row {
+                display: flex;
+            }
+
+            .sms-thread-row.in {
+                justify-content: flex-start;
+            }
+
+            .sms-thread-row.out {
+                justify-content: flex-end;
+            }
+
             .sms-thread-msg {
                 max-width: 72%;
                 padding: 10px 14px;
@@ -105,17 +142,30 @@
                 word-break: break-word;
                 white-space: pre-wrap;
             }
+
             .sms-thread-row.in .sms-thread-msg {
                 background: var(--mud-palette-surface);
                 border: 1px solid var(--mud-palette-lines-default);
                 color: var(--mud-palette-text-primary);
             }
+
             .sms-thread-row.out .sms-thread-msg {
                 background: var(--mud-palette-primary);
                 color: var(--mud-palette-primary-text);
             }
-            .sms-thread-meta { margin-top: 6px; font-size: 0.7rem; opacity: 0.7; }
-            .sms-thread-media { display: block; margin-top: 6px; font-size: 0.8rem; }
+
+            .sms-thread-meta {
+                margin-top: 6px;
+                font-size: 0.7rem;
+                opacity: 0.7;
+            }
+
+            .sms-thread-media {
+                display: block;
+                margin-top: 6px;
+                font-size: 0.8rem;
+            }
+
             .sms-thread-composer {
                 display: flex;
                 align-items: flex-end;
@@ -124,7 +174,11 @@
                 border-top: 1px solid var(--mud-palette-lines-default);
                 background: var(--mud-palette-surface);
             }
-            .sms-thread-composer .mud-input-control { flex: 1; margin: 0; }
+
+            .sms-thread-composer .mud-input-control {
+                flex: 1;
+                margin: 0;
+            }
         </style>
         <div class="sms-thread">
             <div class="sms-thread-messages">

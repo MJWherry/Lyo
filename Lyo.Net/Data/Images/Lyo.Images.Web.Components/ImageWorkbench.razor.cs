@@ -1,16 +1,8 @@
-using System.Net.Http.Json;
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Metadata.Records;
 using Lyo.Images.Models;
 using Lyo.Result;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
 using Lyo.Web.Components.Models;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 using MudBlazor;
 using ResizeMode = Lyo.Images.Models.ResizeMode;
 
@@ -19,37 +11,36 @@ namespace Lyo.Images.Web.Components;
 public partial class ImageWorkbench
 {
     private static readonly ImageFormat[] SupportedOutputFormats = [ImageFormat.Png, ImageFormat.Jpeg];
-
-    private LocalBrowserFile? _uploadedFile;
-    private ImageMetadata? _metadata;
-    private byte[]? _originalBytes;
-    private byte[]? _currentBytes;
-    private string? _previewDataUrl;
-    private bool _busy;
-
-    private int _paletteColorCount = 8;
     private readonly List<string> _paletteColors = [];
-
-    private int _resizeWidth = 256;
-    private int _resizeHeight = 256;
-    private ResizeMode _resizeMode = ResizeMode.Max;
-    private ImageFormat _resizeFormat = ImageFormat.Png;
-    private int _resizeQuality = 90;
-    private int _cropX;
-    private int _cropY;
-    private int _cropWidth = 64;
-    private int _cropHeight = 64;
-    private ImageFormat _cropFormat = ImageFormat.Png;
-    private int _cropQuality = 90;
-    private float _rotateDegrees;
-    private ImageFormat _rotateFormat = ImageFormat.Png;
-    private int _rotateQuality = 90;
-    private bool _liveRotate = true;
+    private bool _busy;
     private ImageFormat _compressFormat = ImageFormat.Jpeg;
     private int _compressQuality = 80;
     private ImageFormat _convertFormat = ImageFormat.Png;
     private int _convertQuality = 90;
+    private ImageFormat _cropFormat = ImageFormat.Png;
+    private int _cropHeight = 64;
+    private int _cropQuality = 90;
+    private int _cropWidth = 64;
+    private int _cropX;
+    private int _cropY;
+    private byte[]? _currentBytes;
+    private bool _liveRotate = true;
+    private ImageMetadata? _metadata;
+    private byte[]? _originalBytes;
 
+    private int _paletteColorCount = 8;
+    private string? _previewDataUrl;
+    private ImageFormat _resizeFormat = ImageFormat.Png;
+    private int _resizeHeight = 256;
+    private ResizeMode _resizeMode = ResizeMode.Max;
+    private int _resizeQuality = 90;
+
+    private int _resizeWidth = 256;
+    private float _rotateDegrees;
+    private ImageFormat _rotateFormat = ImageFormat.Png;
+    private int _rotateQuality = 90;
+
+    private LocalBrowserFile? _uploadedFile;
 
     private bool HasImage => _currentBytes is { Length: > 0 };
 
@@ -108,14 +99,18 @@ public partial class ImageWorkbench
     private Task ApplyResizeAsync()
         => ApplyOperationAsync(
             async (input, output) => {
-                var result = await ImageService.ResizeAsync(input, output, Math.Max(1, _resizeWidth), Math.Max(1, _resizeHeight), _resizeMode, _resizeFormat, Math.Clamp(_resizeQuality, 1, 100));
+                var result = await ImageService.ResizeAsync(
+                    input, output, Math.Max(1, _resizeWidth), Math.Max(1, _resizeHeight), _resizeMode, _resizeFormat, Math.Clamp(_resizeQuality, 1, 100));
+
                 ThrowIfFailed(result, "Resize failed.");
             }, "Resize applied.");
 
     private Task ApplyCropAsync()
         => ApplyOperationAsync(
             async (input, output) => {
-                var result = await ImageService.CropAsync(input, output, Math.Max(0, _cropX), Math.Max(0, _cropY), Math.Max(1, _cropWidth), Math.Max(1, _cropHeight), _cropFormat, Math.Clamp(_cropQuality, 1, 100));
+                var result = await ImageService.CropAsync(
+                    input, output, Math.Max(0, _cropX), Math.Max(0, _cropY), Math.Max(1, _cropWidth), Math.Max(1, _cropHeight), _cropFormat, Math.Clamp(_cropQuality, 1, 100));
+
                 ThrowIfFailed(result, "Crop failed.");
             }, "Crop applied.");
 
@@ -222,7 +217,10 @@ public partial class ImageWorkbench
         if (result.IsSuccess && result.Data != null)
             return;
 
-        var message = result.Errors == null || result.Errors.Count == 0 ? fallbackMessage : string.Join(Environment.NewLine, result.Errors.Where(error => !string.IsNullOrWhiteSpace(error.Message)).Select(error => error.Message));
+        var message = result.Errors == null || result.Errors.Count == 0
+            ? fallbackMessage
+            : string.Join(Environment.NewLine, result.Errors.Where(error => !string.IsNullOrWhiteSpace(error.Message)).Select(error => error.Message));
+
         throw new InvalidOperationException(message);
     }
 

@@ -306,9 +306,9 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     {
         var svc = new CsvService(_logger);
         Person[] data = [new() { Id = 8, Name = "Hank" }];
-        var bytes = await svc.ExportToCsvBytesAsync(data, TestContext.Current.CancellationToken);
+        var bytes = await svc.ExportToCsvBytesAsync(data, TestCt);
         using var ms = new MemoryStream(bytes);
-        var parsed = await svc.ParseStreamAsync<Person>(ms, TestContext.Current.CancellationToken);
+        var parsed = await svc.ParseStreamAsync<Person>(ms, TestCt);
         Assert.Single(parsed);
         Assert.Equal(8, parsed[0].Id);
         Assert.Equal("Hank", parsed[0].Name);
@@ -320,7 +320,7 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         var svc = new CsvService(_logger);
         Person[] data = [new() { Id = 20, Name = "Ivy", Age = 40 }];
         List<PropertyInfo> props = [typeof(Person).GetProperty(nameof(Person.Name))!, typeof(Person).GetProperty(nameof(Person.Age))!];
-        var bytes = await svc.ExportToCsvBytesAsync(data, props, TestContext.Current.CancellationToken);
+        var bytes = await svc.ExportToCsvBytesAsync(data, props, TestCt);
         var header = GetHeaderFromBytes(bytes);
         var rows = GetRowsFromBytes(bytes);
         Assert.Equal("Name,Age", header);
@@ -499,7 +499,7 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         var svc = new CsvService(_logger);
         svc.SetEncoding(encoding);
         var data = new List<Person> { new() { Id = 1, Name = "Async Test" } };
-        var bytes = await svc.ExportToCsvBytesAsync(data, TestContext.Current.CancellationToken);
+        var bytes = await svc.ExportToCsvBytesAsync(data, TestCt);
         Assert.NotNull(bytes);
         var decoded = encoding.GetString(bytes);
         Assert.Contains("Async Test", decoded);
@@ -513,7 +513,7 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         svc.SetEncoding(encoding);
         var data = new List<Person> { new() { Id = 1, Name = "Async Stream Test" } };
         using var ms = new MemoryStream();
-        await svc.ExportToCsvStreamAsync(data, ms, TestContext.Current.CancellationToken);
+        await svc.ExportToCsvStreamAsync(data, ms, TestCt);
         ms.Position = 0;
         var bytes = ms.ToArray();
         var decoded = encoding.GetString(bytes);
@@ -525,7 +525,7 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     {
         var svc = new CsvService(_logger);
         var data = new List<Person> { new() { Id = 1, Name = "Español" }, new() { Id = 2, Name = "Русский" } };
-        var csvString = await svc.ExportToCsvStringAsync(data, TestContext.Current.CancellationToken);
+        var csvString = await svc.ExportToCsvStringAsync(data, TestCt);
         Assert.Contains("Español", csvString);
         Assert.Contains("Русский", csvString);
     }
@@ -549,9 +549,9 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         var svc = new CsvService(_logger);
         svc.SetEncoding(Encoding.Unicode);
         var data = new List<Person> { new() { Id = 1, Name = "UTF-16 Async Test" } };
-        var bytes = await svc.ExportToCsvBytesAsync(data, TestContext.Current.CancellationToken);
+        var bytes = await svc.ExportToCsvBytesAsync(data, TestCt);
         using var ms = new MemoryStream(bytes);
-        var parsed = await svc.ParseStreamAsync<Person>(ms, TestContext.Current.CancellationToken);
+        var parsed = await svc.ParseStreamAsync<Person>(ms, TestCt);
         Assert.Single(parsed);
         Assert.Equal("UTF-16 Async Test", parsed[0].Name);
     }
@@ -580,7 +580,7 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         svc.SetEncoding(encoding);
         var data = new List<Person> { new() { Id = 1, Name = "Async Selected", Age = 30 } };
         var props = new List<PropertyInfo> { typeof(Person).GetProperty(nameof(Person.Name))!, typeof(Person).GetProperty(nameof(Person.Age))! };
-        var bytes = await svc.ExportToCsvBytesAsync(data, props, TestContext.Current.CancellationToken);
+        var bytes = await svc.ExportToCsvBytesAsync(data, props, TestCt);
         var decoded = encoding.GetString(bytes);
         Assert.Contains("Async Selected", decoded);
         Assert.Contains("30", decoded);
@@ -635,9 +635,9 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         var tempFile = _tempSession.GetFilePath();
         var svc = new CsvService(_logger);
         var data = new List<Person> { new() { Id = 1, Name = "Alice" }, new() { Id = 2, Name = "Bob" }, new() { Id = 3, Name = "Charlie" } };
-        await svc.ExportToCsvAsync(data, tempFile, TestContext.Current.CancellationToken);
+        await svc.ExportToCsvAsync(data, tempFile, TestCt);
         var records = new List<Person>();
-        await foreach (var record in svc.ParseFileStreamingAsync<Person>(tempFile, ct: TestContext.Current.CancellationToken))
+        await foreach (var record in svc.ParseFileStreamingAsync<Person>(tempFile, ct: TestCt))
             records.Add(record);
 
         Assert.Equal(3, records.Count);
@@ -651,11 +651,11 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     {
         var svc = new CsvService(_logger);
         var data = new List<Person> { new() { Id = 1, Name = "Test" } };
-        var bytes = await svc.ExportToCsvBytesAsync(data, TestContext.Current.CancellationToken);
+        var bytes = await svc.ExportToCsvBytesAsync(data, TestCt);
         using var ms = new MemoryStream(bytes);
         ms.Position = bytes.Length; // Move to end
         var records = new List<Person>();
-        await foreach (var record in svc.ParseStreamStreamingAsync<Person>(ms, ct: TestContext.Current.CancellationToken))
+        await foreach (var record in svc.ParseStreamStreamingAsync<Person>(ms, ct: TestCt))
             records.Add(record);
 
         Assert.Single(records);
@@ -667,11 +667,11 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     {
         var svc = new CsvService(_logger);
         var data = Enumerable.Range(1, 10).Select(i => new Person { Id = i, Name = $"Person{i}" }).ToList();
-        var bytes = await svc.ExportToCsvBytesAsync(data, TestContext.Current.CancellationToken);
+        var bytes = await svc.ExportToCsvBytesAsync(data, TestCt);
         using var ms = new MemoryStream(bytes);
         var options = new CsvParseOptions { MaxRows = 5 };
         var records = new List<Person>();
-        await foreach (var record in svc.ParseStreamStreamingAsync<Person>(ms, options, TestContext.Current.CancellationToken))
+        await foreach (var record in svc.ParseStreamStreamingAsync<Person>(ms, options, TestCt))
             records.Add(record);
 
         Assert.Equal(5, records.Count);
@@ -685,7 +685,7 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         var data = Enumerable.Range(1, 250).Select(i => new Person { Id = i, Name = $"Person{i}" }).ToList();
         var progressReports = new List<CsvProgress>();
         var progress = new SynchronousProgress<CsvProgress>(p => progressReports.Add(p));
-        await svc.ExportToCsvWithProgressAsync(data, tempFile, progress, TestContext.Current.CancellationToken);
+        await svc.ExportToCsvWithProgressAsync(data, tempFile, progress, TestCt);
         Assert.True(progressReports.Count > 0);
         Assert.Contains(progressReports, p => p.RowsProcessed > 0);
         Assert.Equal(250, progressReports.Last().TotalRows);
@@ -700,7 +700,7 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         var progressReports = new List<CsvProgress>();
         var progress = new SynchronousProgress<CsvProgress>(p => progressReports.Add(p));
         using var ms = new MemoryStream();
-        await svc.ExportToCsvStreamWithProgressAsync(data, ms, progress, TestContext.Current.CancellationToken);
+        await svc.ExportToCsvStreamWithProgressAsync(data, ms, progress, TestCt);
         Assert.True(progressReports.Count > 0);
         Assert.Equal(150, progressReports.Last().TotalRows);
     }
@@ -709,11 +709,11 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     [Fact]
     public async Task ParseFileWithOptionsAsync_ContinuesOnError()
     {
-        var tempFile = await _tempSession.CreateFileAsync("Id,Name,Age\n1,Alice,30\ninvalid,Bob,25\n3,Charlie,40", TestContext.Current.CancellationToken);
+        var tempFile = await _tempSession.CreateFileAsync("Id,Name,Age\n1,Alice,30\ninvalid,Bob,25\n3,Charlie,40", TestCt);
         var svc = new CsvService(_logger);
         var errors = new List<CsvParseError>();
         var options = new CsvParseOptions { ContinueOnError = true, OnError = error => errors.Add(error) };
-        var records = await svc.ParseFileWithOptionsAsync<Person>(tempFile, options, TestContext.Current.CancellationToken);
+        var records = await svc.ParseFileWithOptionsAsync<Person>(tempFile, options, TestCt);
         Assert.Equal(2, records.Count); // Should parse 2 valid records
         Assert.Single(errors); // Should catch 1 error
         Assert.Equal("Alice", records[0].Name);
@@ -725,10 +725,10 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     {
         var svc = new CsvService(_logger);
         var data = new List<Person> { new() { Id = 1, Name = "Alice", Age = 30 }, new() { Id = 2, Name = "Bob", Age = 25 }, new() { Id = 3, Name = "Charlie", Age = 40 } };
-        var bytes = await svc.ExportToCsvBytesAsync(data, TestContext.Current.CancellationToken);
+        var bytes = await svc.ExportToCsvBytesAsync(data, TestCt);
         using var ms = new MemoryStream(bytes);
         var options = new CsvParseOptions { RowFilter = row => int.TryParse(row["Age"], out var age) && age >= 30 };
-        var records = await svc.ParseStreamWithOptionsAsync<Person>(ms, options, TestContext.Current.CancellationToken);
+        var records = await svc.ParseStreamWithOptionsAsync<Person>(ms, options, TestCt);
         Assert.Equal(2, records.Count);
         Assert.Equal("Alice", records[0].Name);
         Assert.Equal("Charlie", records[1].Name);
@@ -741,8 +741,8 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         var tempFile = _tempSession.GetFilePath();
         var svc = new CsvService(_logger);
         var data = new List<Person> { new() { Id = 1, Name = "Alice", Age = 30 }, new() { Id = 2, Name = "Bob", Age = 25 } };
-        await svc.ExportToCsvAsync(data, tempFile, TestContext.Current.CancellationToken);
-        var stats = await svc.GetStatisticsAsync(tempFile, TestContext.Current.CancellationToken);
+        await svc.ExportToCsvAsync(data, tempFile, TestCt);
+        var stats = await svc.GetStatisticsAsync(tempFile, TestCt);
         Assert.Equal(2, stats.RowCount);
         Assert.Equal(3, stats.ColumnCount);
         Assert.Contains("Id", stats.Headers);
@@ -758,8 +758,8 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         var tempFile = _tempSession.GetFilePath();
         var svc = new CsvService(_logger);
         var data = new List<Person> { new() { Id = 1, Name = "Test" } };
-        await svc.ExportToCsvAsync(data, tempFile, TestContext.Current.CancellationToken);
-        var stats = await svc.GetStatisticsAsync(tempFile, TestContext.Current.CancellationToken);
+        await svc.ExportToCsvAsync(data, tempFile, TestCt);
+        var stats = await svc.GetStatisticsAsync(tempFile, TestCt);
         Assert.NotNull(stats.DetectedDelimiter);
         Assert.Equal(',', stats.DetectedDelimiter);
     }
@@ -771,13 +771,13 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         var tempFile = _tempSession.GetFilePath();
         var svc = new CsvService(_logger);
         var data = Enumerable.Range(1, 10).Select(i => new Person { Id = i, Name = $"Person{i}" }).ToList();
-        await svc.ExportToCsvAsync(data, tempFile, TestContext.Current.CancellationToken);
+        await svc.ExportToCsvAsync(data, tempFile, TestCt);
         var chunks = new List<List<Person>>();
         await svc.ProcessFileInChunksAsync<Person>(
             tempFile, 3, async chunk => {
                 chunks.Add(chunk.ToList());
                 await Task.CompletedTask;
-            }, ct: TestContext.Current.CancellationToken);
+            }, ct: TestCt);
 
         Assert.Equal(4, chunks.Count); // 3 + 3 + 3 + 1
         Assert.Equal(3, chunks[0].Count);
@@ -791,14 +791,14 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     {
         var svc = new CsvService(_logger);
         var data = Enumerable.Range(1, 7).Select(i => new Person { Id = i, Name = $"Person{i}" }).ToList();
-        var bytes = await svc.ExportToCsvBytesAsync(data, TestContext.Current.CancellationToken);
+        var bytes = await svc.ExportToCsvBytesAsync(data, TestCt);
         using var ms = new MemoryStream(bytes);
         var chunks = new List<List<Person>>();
         await svc.ProcessStreamInChunksAsync<Person>(
             ms, 2, async chunk => {
                 chunks.Add(chunk.ToList());
                 await Task.CompletedTask;
-            }, ct: TestContext.Current.CancellationToken);
+            }, ct: TestCt);
 
         Assert.Equal(4, chunks.Count); // 2 + 2 + 2 + 1
     }
@@ -807,13 +807,13 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     [Fact]
     public async Task ValidateAsync_ValidatesRequiredColumns()
     {
-        var tempFile = await _tempSession.CreateFileAsync("Id,Name\n1,Alice\n2,Bob", TestContext.Current.CancellationToken);
+        var tempFile = await _tempSession.CreateFileAsync("Id,Name\n1,Alice\n2,Bob", TestCt);
         var svc = new CsvService(_logger);
         var schema = new CsvSchema {
             Columns = [new() { Name = "Id", Required = true }, new() { Name = "Name", Required = true }, new() { Name = "Email", Required = true }], RequireAllColumns = true
         };
 
-        var result = await svc.ValidateAsync(tempFile, schema, TestContext.Current.CancellationToken);
+        var result = await svc.ValidateAsync(tempFile, schema, TestCt);
         Assert.False(result.IsValid);
         Assert.Contains("Email", result.Errors!.First());
     }
@@ -821,10 +821,10 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     [Fact]
     public async Task ValidateAsync_ValidatesColumnValues()
     {
-        var tempFile = await _tempSession.CreateFileAsync("Id,Name\n1,Alice\ninvalid,Bob", TestContext.Current.CancellationToken);
+        var tempFile = await _tempSession.CreateFileAsync("Id,Name\n1,Alice\ninvalid,Bob", TestCt);
         var svc = new CsvService(_logger);
         var schema = new CsvSchema { Columns = [new("Id", true, v => int.TryParse((string?)v, out var _)), new() { Name = "Name", Required = true }] };
-        var result = await svc.ValidateAsync(tempFile, schema, TestContext.Current.CancellationToken);
+        var result = await svc.ValidateAsync(tempFile, schema, TestCt);
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors!, e => e.Contains("Id") || e.Contains("validation"));
     }
@@ -832,10 +832,10 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     [Fact]
     public async Task ValidateAsync_PassesValidSchema()
     {
-        var tempFile = await _tempSession.CreateFileAsync("Id,Name\n1,Alice\n2,Bob", TestContext.Current.CancellationToken);
+        var tempFile = await _tempSession.CreateFileAsync("Id,Name\n1,Alice\n2,Bob", TestCt);
         var svc = new CsvService(_logger);
         var schema = new CsvSchema { Columns = [new() { Name = "Id", Required = true }, new() { Name = "Name", Required = true }] };
-        var result = await svc.ValidateAsync(tempFile, schema, TestContext.Current.CancellationToken);
+        var result = await svc.ValidateAsync(tempFile, schema, TestCt);
         Assert.True(result.IsValid);
         Assert.Empty(result.Errors!);
     }
@@ -844,7 +844,7 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     [Fact]
     public async Task ParseFileWithMappingAsync_MapsColumnsCorrectly()
     {
-        var tempFile = await _tempSession.CreateFileAsync("ID,FullName,Age\n1,Alice Smith,30\n2,Bob Jones,25", TestContext.Current.CancellationToken);
+        var tempFile = await _tempSession.CreateFileAsync("ID,FullName,Age\n1,Alice Smith,30\n2,Bob Jones,25", TestCt);
         var svc = new CsvService(_logger);
         var mappings = new List<ColumnMapping> {
             new() { SourceColumn = "ID", TargetProperty = "Id", Transformer = v => int.Parse(v) },
@@ -852,7 +852,7 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
             new() { SourceColumn = "Age", TargetProperty = "Age", Transformer = v => int.Parse(v) }
         };
 
-        var records = await svc.ParseFileWithMappingAsync<Person>(tempFile, mappings, ct: TestContext.Current.CancellationToken);
+        var records = await svc.ParseFileWithMappingAsync<Person>(tempFile, mappings, ct: TestCt);
         Assert.Equal(2, records.Count);
         Assert.Equal(1, records[0].Id);
         Assert.Equal("Alice Smith", records[0].Name);
@@ -870,7 +870,7 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
             new() { SourceColumn = "Name", TargetProperty = "Name", DefaultValue = "Unknown" }
         };
 
-        var records = await svc.ParseStreamWithMappingAsync<Person>(ms, mappings, ct: TestContext.Current.CancellationToken);
+        var records = await svc.ParseStreamWithMappingAsync<Person>(ms, mappings, ct: TestCt);
         Assert.Equal(2, records.Count);
         Assert.Equal("Alice", records[0].Name);
         Assert.Equal("Unknown", records[1].Name);
@@ -884,9 +884,9 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         var tempFile2 = _tempSession.GetFilePath();
         var svc = new CsvService(_logger);
         var data = new List<Person> { new() { Id = 1, Name = "Alice" }, new() { Id = 2, Name = "Bob" } };
-        await svc.ExportToCsvAsync(data, tempFile1, TestContext.Current.CancellationToken);
-        await svc.ExportToCsvAsync(data, tempFile2, TestContext.Current.CancellationToken);
-        var result = await svc.CompareFilesAsync(tempFile1, tempFile2, ct: TestContext.Current.CancellationToken);
+        await svc.ExportToCsvAsync(data, tempFile1, TestCt);
+        await svc.ExportToCsvAsync(data, tempFile2, TestCt);
+        var result = await svc.CompareFilesAsync(tempFile1, tempFile2, ct: TestCt);
         Assert.True(result.AreIdentical);
         Assert.Empty(result.Differences);
     }
@@ -899,9 +899,9 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         var svc = new CsvService(_logger);
         var data1 = new List<Person> { new() { Id = 1, Name = "Alice" } };
         var data2 = new List<Person> { new() { Id = 1, Name = "Bob" } };
-        await svc.ExportToCsvAsync(data1, tempFile1, TestContext.Current.CancellationToken);
-        await svc.ExportToCsvAsync(data2, tempFile2, TestContext.Current.CancellationToken);
-        var result = await svc.CompareFilesAsync(tempFile1, tempFile2, ct: TestContext.Current.CancellationToken);
+        await svc.ExportToCsvAsync(data1, tempFile1, TestCt);
+        await svc.ExportToCsvAsync(data2, tempFile2, TestCt);
+        var result = await svc.CompareFilesAsync(tempFile1, tempFile2, ct: TestCt);
         Assert.False(result.AreIdentical);
         Assert.NotEmpty(result.Differences);
     }
@@ -909,10 +909,10 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     [Fact]
     public async Task CompareFilesAsync_ComparesByKeyColumn()
     {
-        var tempFile1 = await _tempSession.CreateFileAsync("Id,Name\n1,Alice\n2,Bob", TestContext.Current.CancellationToken);
-        var tempFile2 = await _tempSession.CreateFileAsync("Id,Name\n1,Alice\n2,Charlie", TestContext.Current.CancellationToken);
+        var tempFile1 = await _tempSession.CreateFileAsync("Id,Name\n1,Alice\n2,Bob", TestCt);
+        var tempFile2 = await _tempSession.CreateFileAsync("Id,Name\n1,Alice\n2,Charlie", TestCt);
         var svc = new CsvService(_logger);
-        var result = await svc.CompareFilesAsync(tempFile1, tempFile2, "Id", TestContext.Current.CancellationToken);
+        var result = await svc.CompareFilesAsync(tempFile1, tempFile2, "Id", TestCt);
         Assert.False(result.AreIdentical);
         Assert.Contains(result.Differences, d => d.Type == DifferenceType.Modified);
     }
@@ -924,9 +924,9 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         var tempFile = _tempSession.GetFilePath();
         var svc = new CsvService(_logger);
         var initialData = new List<Person> { new() { Id = 1, Name = "Alice" } };
-        await svc.ExportToCsvAsync(initialData, tempFile, TestContext.Current.CancellationToken);
+        await svc.ExportToCsvAsync(initialData, tempFile, TestCt);
         var appendData = new List<Person> { new() { Id = 2, Name = "Bob" } };
-        await svc.AppendToCsvAsync(appendData, tempFile, ct: TestContext.Current.CancellationToken);
+        await svc.AppendToCsvAsync(appendData, tempFile, ct: TestCt);
         var allRecords = svc.ParseFile<Person>(tempFile).ToList();
         Assert.Equal(2, allRecords.Count);
         Assert.Equal("Alice", allRecords[0].Name);
@@ -939,8 +939,8 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         var tempFile = _tempSession.GetFilePath();
         var svc = new CsvService(_logger);
         var data = new List<Person> { new() { Id = 1, Name = "Alice" } };
-        await svc.AppendToCsvAsync(data, tempFile, true, TestContext.Current.CancellationToken);
-        var content = await File.ReadAllTextAsync(tempFile, TestContext.Current.CancellationToken);
+        await svc.AppendToCsvAsync(data, tempFile, true, TestCt);
+        var content = await File.ReadAllTextAsync(tempFile, TestCt);
         Assert.Contains("Id", content);
         Assert.Contains("Name", content);
         Assert.Contains("Alice", content);
@@ -956,9 +956,9 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         var svc = new CsvService(_logger);
         var data1 = new List<Person> { new() { Id = 1, Name = "Alice" } };
         var data2 = new List<Person> { new() { Id = 2, Name = "Bob" } };
-        await svc.ExportToCsvAsync(data1, tempFile1, TestContext.Current.CancellationToken);
-        await svc.ExportToCsvAsync(data2, tempFile2, TestContext.Current.CancellationToken);
-        await svc.CombineCsvFilesAsync([tempFile1, tempFile2], outputFile, ct: TestContext.Current.CancellationToken);
+        await svc.ExportToCsvAsync(data1, tempFile1, TestCt);
+        await svc.ExportToCsvAsync(data2, tempFile2, TestCt);
+        await svc.CombineCsvFilesAsync([tempFile1, tempFile2], outputFile, ct: TestCt);
         var combined = svc.ParseFile<Person>(outputFile).ToList();
         Assert.Equal(2, combined.Count);
         Assert.Equal("Alice", combined[0].Name);
@@ -969,11 +969,11 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     public async Task SplitCsvFileAsync_SplitsIntoMultipleFiles()
     {
         var tempFile = _tempSession.GetFilePath();
-        var outputDir = await _tempSession.CreateDirectoryAsync(ct: TestContext.Current.CancellationToken);
+        var outputDir = await _tempSession.CreateDirectoryAsync(ct: TestCt);
         var svc = new CsvService(_logger);
         var data = Enumerable.Range(1, 10).Select(i => new Person { Id = i, Name = $"Person{i}" }).ToList();
-        await svc.ExportToCsvAsync(data, tempFile, TestContext.Current.CancellationToken);
-        var createdPaths = await svc.SplitCsvFileAsync(tempFile, 3, outputDir, TestContext.Current.CancellationToken);
+        await svc.ExportToCsvAsync(data, tempFile, TestCt);
+        var createdPaths = await svc.SplitCsvFileAsync(tempFile, 3, outputDir, TestCt);
         Assert.Equal(4, createdPaths.Count);
         var firstFileData = svc.ParseFile<Person>(createdPaths[0]).ToList();
         Assert.Equal(3, firstFileData.Count);
@@ -984,11 +984,11 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     {
         var svc = new CsvService(_logger);
         var data = Enumerable.Range(1, 7).Select(i => new Person { Id = i, Name = $"Person{i}" }).ToList();
-        var originalBytes = await svc.ExportToCsvBytesAsync(data, TestContext.Current.CancellationToken);
-        var parts = await svc.SplitCsvBytesAsync(originalBytes, 3, TestContext.Current.CancellationToken);
+        var originalBytes = await svc.ExportToCsvBytesAsync(data, TestCt);
+        var parts = await svc.SplitCsvBytesAsync(originalBytes, 3, TestCt);
         Assert.Equal(3, parts.Count);
-        var combinedBytes = await svc.CombineCsvBytesAsync(parts, ct: TestContext.Current.CancellationToken);
-        var combined = (await svc.ParseBytesAsync<Person>(combinedBytes, TestContext.Current.CancellationToken)).ToList();
+        var combinedBytes = await svc.CombineCsvBytesAsync(parts, ct: TestCt);
+        var combined = (await svc.ParseBytesAsync<Person>(combinedBytes, TestCt)).ToList();
         Assert.Equal(7, combined.Count);
         Assert.Equal("Person7", combined[^1].Name);
     }
@@ -999,12 +999,12 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         var svc = new CsvService(_logger);
         var data1 = new List<Person> { new() { Id = 1, Name = "Alice" } };
         var data2 = new List<Person> { new() { Id = 2, Name = "Bob" } };
-        await using var stream1 = new MemoryStream(await svc.ExportToCsvBytesAsync(data1, TestContext.Current.CancellationToken));
-        await using var stream2 = new MemoryStream(await svc.ExportToCsvBytesAsync(data2, TestContext.Current.CancellationToken));
+        await using var stream1 = new MemoryStream(await svc.ExportToCsvBytesAsync(data1, TestCt));
+        await using var stream2 = new MemoryStream(await svc.ExportToCsvBytesAsync(data2, TestCt));
         await using var output = new MemoryStream();
-        await svc.CombineCsvStreamsAsync([stream1, stream2], output, leaveOpen: true, ct: TestContext.Current.CancellationToken);
+        await svc.CombineCsvStreamsAsync([stream1, stream2], output, leaveOpen: true, ct: TestCt);
         output.Position = 0;
-        var combined = (await svc.ParseStreamAsync<Person>(output, TestContext.Current.CancellationToken)).ToList();
+        var combined = (await svc.ParseStreamAsync<Person>(output, TestCt)).ToList();
         Assert.Equal(2, combined.Count);
         Assert.Equal("Bob", combined[1].Name);
     }
@@ -1014,11 +1014,11 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     {
         var svc = new CsvService(_logger);
         var data = Enumerable.Range(1, 5).Select(i => new Person { Id = i, Name = $"Person{i}" }).ToList();
-        var csvBytes = await svc.ExportToCsvBytesAsync(data, TestContext.Current.CancellationToken);
-        var parts = await svc.SplitCsvBytesAsync(csvBytes, 2, TestContext.Current.CancellationToken);
+        var csvBytes = await svc.ExportToCsvBytesAsync(data, TestCt);
+        var parts = await svc.SplitCsvBytesAsync(csvBytes, 2, TestCt);
         Assert.Equal(3, parts.Count);
         foreach (var part in parts) {
-            var rows = (await svc.ParseBytesAsync<Person>(part, TestContext.Current.CancellationToken)).ToList();
+            var rows = (await svc.ParseBytesAsync<Person>(part, TestCt)).ToList();
             Assert.True(rows.Count <= 2);
             Assert.All(rows, row => Assert.False(string.IsNullOrWhiteSpace(row.Name)));
         }
@@ -1031,7 +1031,7 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         var svc = new CsvService(_logger);
         using var ms = new MemoryStream();
         var records = new List<Person>();
-        await foreach (var record in svc.ParseStreamStreamingAsync<Person>(ms, ct: TestContext.Current.CancellationToken))
+        await foreach (var record in svc.ParseStreamStreamingAsync<Person>(ms, ct: TestCt))
             records.Add(record);
 
         Assert.Empty(records);
@@ -1040,9 +1040,9 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
     [Fact]
     public async Task GetStatisticsAsync_HandlesEmptyFile()
     {
-        var tempFile = await _tempSession.CreateFileAsync("Id,Name\n", TestContext.Current.CancellationToken);
+        var tempFile = await _tempSession.CreateFileAsync("Id,Name\n", TestCt);
         var svc = new CsvService(_logger);
-        var stats = await svc.GetStatisticsAsync(tempFile, TestContext.Current.CancellationToken);
+        var stats = await svc.GetStatisticsAsync(tempFile, TestCt);
         Assert.Equal(0, stats.RowCount);
         Assert.Equal(2, stats.ColumnCount);
     }
@@ -1053,7 +1053,7 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         var csv = "A,B,C\n1,2,3\n4,5,6\n";
         var svc = new CsvService(_logger);
         using var ms = StringToStream(csv);
-        var stats = await svc.GetStatisticsAsync(ms, TestContext.Current.CancellationToken);
+        var stats = await svc.GetStatisticsAsync(ms, TestCt);
         Assert.Equal(2, stats.RowCount);
         Assert.Equal(3, stats.ColumnCount);
     }
@@ -1166,7 +1166,7 @@ public class CsvServiceTests : IDisposable, IAsyncDisposable
         var tempFile = _tempSession.TouchFile();
         var svc = new CsvService(_logger);
         var schema = new CsvSchema { Columns = [new() { Name = "Id" }] };
-        var result = await svc.ValidateAsync(tempFile, schema, TestContext.Current.CancellationToken);
+        var result = await svc.ValidateAsync(tempFile, schema, TestCt);
         Assert.False(result.IsValid);
         Assert.Contains("empty", result.Errors!.First(), StringComparison.OrdinalIgnoreCase);
     }

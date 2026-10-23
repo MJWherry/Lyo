@@ -1,10 +1,11 @@
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 
 namespace Lyo.Authentication.Web.Components.Models;
 
 /// <summary>
-/// Display-safe projection of an issued token, mirroring the shape from <c>GET /tokens</c> and the <c>Record</c> field of <c>POST /tokens</c>. No secret material —
-/// only what's safe to render in a list.
+/// Display-safe projection of an issued token, mirroring the shape from <c>GET /tokens</c> and the <c>Record</c> field of <c>POST /tokens</c>. No secret material — only
+/// what's safe to render in a list.
 /// </summary>
 /// <param name="Id">11-character Crockford base32 id (also the second-to-last segment of the wire-form token).</param>
 /// <param name="Kind">One of <c>pat</c> / <c>svc</c> / <c>cli</c> / <c>webhook</c>.</param>
@@ -16,6 +17,7 @@ namespace Lyo.Authentication.Web.Components.Models;
 /// <param name="LastUsedAt">Best-effort last-validated timestamp.</param>
 /// <param name="RevokedAt">When the token was revoked, or <c>null</c> if still active.</param>
 /// <param name="RevokedReason">Audit string captured at revocation.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record AuthTokenSummary(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("kind")] string Kind,

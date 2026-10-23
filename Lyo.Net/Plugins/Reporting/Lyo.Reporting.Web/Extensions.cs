@@ -10,8 +10,8 @@ namespace Lyo.Reporting.Web;
 public static class Extensions
 {
     /// <summary>
-    /// Adds <see cref="HtmlPdfReportRenderer" /> as a scoped <see cref="IReportRenderer" />. Lifetime matches
-    /// <see cref="Lyo.Web.WebRenderer.IWebRendererService" /> (and Blazor <c>HtmlRenderer</c>), which must be registered separately.
+    /// Adds <see cref="HtmlPdfReportRenderer" /> as a scoped <see cref="IReportRenderer" />. Lifetime matches <see cref="Lyo.Web.WebRenderer.IWebRendererService" /> (and Blazor
+    /// <c>HtmlRenderer</c>), which must be registered separately.
     /// </summary>
     public static IServiceCollection AddReportingWebRenderer(this IServiceCollection services)
     {

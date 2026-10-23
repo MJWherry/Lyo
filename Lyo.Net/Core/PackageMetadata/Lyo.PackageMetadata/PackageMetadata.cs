@@ -1,9 +1,11 @@
+using System.Diagnostics;
+
 namespace Lyo.PackageMetadata;
 
 /// <summary>
 /// Catalog metadata for a published artifact, meant for JSON and database persistence. Several rows may share the same <see cref="Name" /> with different
-/// <see cref="Version" /> values. How <see cref="Name" /> / <see cref="Version" /> are read depends on <see cref="Ecosystem" /> (for example NuGet id + version; Maven often
-/// uses <c>groupId:artifactId</c> as <see cref="Name" />).
+/// <see cref="Version" /> values. How <see cref="Name" /> / <see cref="Version" /> are read depends on <see cref="Ecosystem" /> (for example NuGet id + version; Maven often uses
+/// <c>groupId:artifactId</c> as <see cref="Name" />).
 /// </summary>
 /// <param name="Id">Primary key when this row is stored (for example a Postgres <c>uuid</c>).</param>
 /// <param name="Ecosystem">Registry or distribution family for this row.</param>
@@ -20,13 +22,14 @@ namespace Lyo.PackageMetadata;
 /// <param name="LicenseUrl">License document URL, when available. Prefer <paramref name="LicenseExpression" /> as the canonical license field.</param>
 /// <param name="LicenseExpression">When known, an SPDX 2.x license expression: <c>AND</c>, <c>OR</c>, parentheses, <c>WITH</c>. Canonical license field.</param>
 /// <param name="LicenseExpressionSyntax">
-/// Parsed tree of <see cref="LicenseExpression" /> (surjective with the string when parsing succeeds). Filled when persisting or loading; not
-/// an independent legal source — use <see cref="LicenseExpression" /> as written.
+/// Parsed tree of <see cref="LicenseExpression" /> (surjective with the string when parsing succeeds). Filled when persisting or loading; not an
+/// independent legal source — use <see cref="LicenseExpression" /> as written.
 /// </param>
 /// <param name="PackageDetailsUrl">URL of the package details page on its registry, when available.</param>
 /// <param name="Tags">Free-form tags or keywords for the package, when available.</param>
 /// <param name="CreatedAt">When this metadata row was first stored (UTC). Set by the Postgres store; optional elsewhere.</param>
 /// <param name="UpdatedAt">When this metadata row was last updated (UTC). Set by the Postgres store; optional elsewhere.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record PackageMetadata(
     Guid Id,
     PackageEcosystem Ecosystem,

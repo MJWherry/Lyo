@@ -2,11 +2,11 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
-using Lyo.Common.Json;
 using Lyo.Exceptions;
 using Lyo.Http.Client.Extract;
 using Lyo.Http.Client.Pipeline;
 using Lyo.Http.Client.Session;
+using Lyo.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -31,7 +31,6 @@ public sealed class HttpClientPlanRunner : IHttpClientPlanRunner
         int? lastStatus = null;
         HttpResponseMessage? lastResponse = null;
         var sessionHeaders = new LyoHttpHeaderBag();
-
         if (!string.IsNullOrWhiteSpace(runtime.CookieFile) && File.Exists(runtime.CookieFile))
             LoadCookieFile(client, runtime.CookieFile!);
 
@@ -42,13 +41,24 @@ public sealed class HttpClientPlanRunner : IHttpClientPlanRunner
                 lastBody = result.Body ?? lastBody;
                 lastStatus = result.Status ?? lastStatus;
                 lastResponse = result.Response ?? lastResponse;
-                if (!result.Ok)
+                if (!result.Ok) {
                     return new() {
-                        Success = false, Runtime = runtime, LastBody = lastBody, LastStatusCode = lastStatus, Error = result.Error, Exception = result.Exception
+                        Success = false,
+                        Runtime = runtime,
+                        LastBody = lastBody,
+                        LastStatusCode = lastStatus,
+                        Error = result.Error,
+                        Exception = result.Exception
                     };
+                }
             }
 
-            return new() { Success = true, Runtime = runtime, LastBody = lastBody, LastStatusCode = lastStatus };
+            return new() {
+                Success = true,
+                Runtime = runtime,
+                LastBody = lastBody,
+                LastStatusCode = lastStatus
+            };
         }
         finally {
             lastResponse?.Dispose();
@@ -72,6 +82,7 @@ public sealed class HttpClientPlanRunner : IHttpClientPlanRunner
                 var wait = delay.Max is { } max && max > delay.Min
                     ? TimeSpan.FromMilliseconds(delay.Min.TotalMilliseconds + new Random().NextDouble() * (max - delay.Min).TotalMilliseconds)
                     : delay.Min;
+
                 await Task.Delay(wait, ct).ConfigureAwait(false);
                 return StepExec.Succeeded();
             case HttpDownloadFilePlanStep download:
@@ -101,7 +112,9 @@ public sealed class HttpClientPlanRunner : IHttpClientPlanRunner
                 client.Session.CookieJar.Clear();
                 return StepExec.Succeeded();
             case HttpExportCookiesPlanStep export:
-                runtime.JsonBindings[export.VariableName] = JsonSerializer.Serialize(client.Session.CookieJar.Export(), runtime.SerializerOptions ?? LyoJsonSerializerOptions.Create());
+                runtime.JsonBindings[export.VariableName] = JsonSerializer.Serialize(
+                    client.Session.CookieJar.Export(), runtime.SerializerOptions ?? LyoJsonSerializerOptions.Create());
+
                 return StepExec.Succeeded();
             case HttpLoadCookiesPlanStep load:
                 if (!string.IsNullOrWhiteSpace(load.CookieFile))
@@ -167,7 +180,6 @@ public sealed class HttpClientPlanRunner : IHttpClientPlanRunner
                 }
 
                 AssignBody(request, step, runtime);
-
                 HttpResponseMessage response;
                 if (client is LyoHttpClient typed)
                     response = await typed.SendPreparedAsync(request, ct).ConfigureAwait(false);
@@ -204,17 +216,32 @@ public sealed class HttpClientPlanRunner : IHttpClientPlanRunner
                         if (step.Then != null)
                             await RunThenAsync(client, step.Then, runtime, sessionHeaders, body, response, logger, ct).ConfigureAwait(false);
 
-                        return new() { Ok = true, Body = body, Status = status, Response = response };
+                        return new() {
+                            Ok = true,
+                            Body = body,
+                            Status = status,
+                            Response = response
+                        };
                     }
 
                     response.Dispose();
-                    return new() { Ok = false, Body = body, Status = status, Error = $"HTTP {status} for {uri}" };
+                    return new() {
+                        Ok = false,
+                        Body = body,
+                        Status = status,
+                        Error = $"HTTP {status} for {uri}"
+                    };
                 }
 
                 if (step.Then != null)
                     await RunThenAsync(client, step.Then, runtime, sessionHeaders, body, response, logger, ct).ConfigureAwait(false);
 
-                return new() { Ok = true, Body = body, Status = status, Response = response };
+                return new() {
+                    Ok = true,
+                    Body = body,
+                    Status = status,
+                    Response = response
+                };
             }
             catch (Exception) when (attempts <= retries) {
                 if (step.RetryBackoff is { } backoff)
@@ -289,8 +316,7 @@ public sealed class HttpClientPlanRunner : IHttpClientPlanRunner
         LyoHttpExtractOptions? options = null;
         string? variable = null;
         IReadOnlyList<LyoHttpExtractedItem>? items = null;
-        Uri? baseUri = lastResponse?.RequestMessage?.RequestUri;
-
+        var baseUri = lastResponse?.RequestMessage?.RequestUri;
         switch (step) {
             case HttpExtractSourcesPlanStep s:
                 options = s.Options;
@@ -441,12 +467,16 @@ public sealed class HttpClientPlanRunner : IHttpClientPlanRunner
         IEnumerable<string> q = source;
         if (!string.IsNullOrWhiteSpace(step.IncludeRegex))
             q = q.Where(s => Regex.IsMatch(s, step.IncludeRegex!));
+
         if (!string.IsNullOrWhiteSpace(step.ExcludeRegex))
             q = q.Where(s => !Regex.IsMatch(s, step.ExcludeRegex!));
+
         if (step.Skip > 0)
             q = q.Skip(step.Skip);
+
         if (step.Take > 0)
             q = q.Take(step.Take);
+
         if (step.Distinct)
             q = q.Distinct(StringComparer.Ordinal);
 
@@ -469,8 +499,7 @@ public sealed class HttpClientPlanRunner : IHttpClientPlanRunner
             client.Session.CookieJar.Import(cookies);
     }
 
-    private static string Interpolate(string template, HttpClientPlanRuntime runtime)
-        => HttpClientPlanInterpolation.Interpolate(template, runtime.Bindings);
+    private static string Interpolate(string template, HttpClientPlanRuntime runtime) => HttpClientPlanInterpolation.Interpolate(template, runtime.Bindings);
 
     private static string ResolvePath(string path, HttpClientPlanRuntime runtime, ILyoHttpClient client)
     {
@@ -564,8 +593,7 @@ public sealed class HttpClientPlanRunner : IHttpClientPlanRunner
         return text;
     }
 
-    private static string TrimJsonString(string json)
-        => json.Length >= 2 && json[0] == '"' && json[^1] == '"' ? JsonSerializer.Deserialize<string>(json) ?? json : json;
+    private static string TrimJsonString(string json) => json.Length >= 2 && json[0] == '"' && json[^1] == '"' ? JsonSerializer.Deserialize<string>(json) ?? json : json;
 
     private sealed class StepExec
     {

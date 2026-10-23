@@ -1,10 +1,12 @@
 using System.Diagnostics;
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Job.Models;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
 using Lyo.MessageQueue;
 using Microsoft.Extensions.Logging;
+
 namespace Lyo.Job.Client;
 
 /// <summary>
@@ -70,6 +72,14 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
     }
 
     /// <inheritdoc />
+    public async Task PublishWorkflowRunCreatedAsync(Guid workflowRunId, CancellationToken ct = default)
+    {
+        _logger.LogDebug("Publishing workflow run {WorkflowRunId} created", workflowRunId);
+        await _mqService.SendToExchange(Constants.Mq.JobEventExchange, Constants.Mq.JobWorkflowRunCreatedRoutingKey, JsonSerializer.SerializeToUtf8Bytes(workflowRunId))
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
     public async Task PublishRunCancelledAsync(Guid runId, CancellationToken ct = default)
     {
         _logger.LogDebug("Publishing run {RunId} cancelled", runId);
@@ -113,7 +123,7 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
         // Cancels fan out through the exchange to a per-instance exclusive queue. A shared per-worker-type queue would be a
         // competing-consumer queue: with scaled-out workers only one instance would get each cancel, and if it is not the instance
         // running the job the cancel is silently lost.
-        var suffix = string.IsNullOrWhiteSpace(instanceSuffix) ? Guid.NewGuid().ToString("N") : instanceSuffix;
+        var suffix = string.IsNullOrWhiteSpace(instanceSuffix) ? LyoGuid.CreateV7().ToString("N") : instanceSuffix;
         var queueName = Constants.Mq.QueueGetJobRunCancelInstance(workerType, suffix);
         if (!await _mqService.CreateQueue(queueName, false, true, true, null, ct).ConfigureAwait(false))
             throw new InvalidOperationException($"Failed to declare per-instance cancellation queue '{queueName}'.");

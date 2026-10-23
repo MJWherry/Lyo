@@ -1,6 +1,7 @@
 # Lyo.Authentication.Web.Components.Wasm
 
-Blazor WebAssembly host adapter for [`Lyo.Authentication.Web.Components`](../Lyo.Authentication.Web.Components/README.md). Implements the same login / debug / profile pages over a pure-browser auth flow. No consumer-side server, no HttpOnly cookie. Tokens live in `Blazored.LocalStorage` and the browser talks directly to the Lyo API.
+Blazor WebAssembly host adapter for [`Lyo.Authentication.Web.Components`](../Lyo.Authentication.Web.Components/README.md). Implements the same login / debug / profile pages over a
+pure-browser auth flow. No consumer-side server, no HttpOnly cookie. Tokens live in `Blazored.LocalStorage` and the browser talks directly to the Lyo API.
 
 ## Examples
 
@@ -35,7 +36,7 @@ builder.Services.AddLyoAuthWebComponentsWasm(builder.Configuration);
 
 ```json
 {
-  "LyoOidcBff": {
+  "LyoSso": {
     "AllowedReturnOrigins": [ "https://spa.example.com" ],
     "DefaultReturnUrl": "/",
     "HandoffCodeTtl": "00:00:30"
@@ -63,21 +64,22 @@ browser ── POST /auth/handoff/exchange { code } ──► API
 
 ## What's inside
 
-| Service | Role |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `WasmAuthClientOptions` | `AuthBaseUrl`, `HandoffCallbackPath` (default `/auth/handoff`), `StorageKey`, `AccessTokenSkew`. |
-| `WasmAuthSessionStore` | Singleton store with in-memory cache + `Blazored.LocalStorage` snapshot. Survives page reloads inside the SPA. |
-| `WasmAuthApiClient` | Typed `HttpClient` for `/auth/handoff/exchange`, `/auth/refresh`, `/auth/logout`. |
-| `WasmAuthDelegatingHandler` | Outbound bearer-injection + auto-refresh handler for any user `HttpClient`. |
-| `WasmAuthStateProvider` | Blazor `AuthenticationStateProvider` that re-runs `LyoJwtClaimsParser` over the cached access token. |
-| `WasmAuthSignInLauncher` | `IAuthSignInLauncher` implementation. Sign-in 302s to the API; sign-out revokes the refresh token and clears local state. |
-| `WasmAuthUserClient` | `IAuthUserClient` implementation against `/auth/me` and `/auth/users/{id}`. |
-| `WasmAuthSessionAccessor` | `IAuthSessionAccessor` implementation used by the debug page. |
-| `Pages/WasmAuthHandoffPage` | Route `/auth/handoff`. Redeems the `?lyo_handoff=...` code and stores the tokens. |
+| Service                     | Role                                                                                                                      |
+|-----------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| `WasmAuthClientOptions`     | `AuthBaseUrl`, `HandoffCallbackPath` (default `/auth/handoff`), `StorageKey`, `AccessTokenSkew`.                          |
+| `WasmAuthSessionStore`      | Singleton store with in-memory cache + `Blazored.LocalStorage` snapshot. Survives page reloads inside the SPA.            |
+| `WasmAuthApiClient`         | Typed `HttpClient` for `/auth/handoff/exchange`, `/auth/refresh`, `/auth/logout`.                                         |
+| `WasmAuthDelegatingHandler` | Outbound bearer-injection + auto-refresh handler for any user `HttpClient`.                                               |
+| `WasmAuthStateProvider`     | Blazor `AuthenticationStateProvider` that re-runs `LyoJwtClaimsParser` over the cached access token.                      |
+| `WasmAuthSignInLauncher`    | `IAuthSignInLauncher` implementation. Sign-in 302s to the API; sign-out revokes the refresh token and clears local state. |
+| `WasmAuthUserClient`        | `IAuthUserClient` implementation against `/auth/me` and `/auth/users/{id}`.                                               |
+| `WasmAuthSessionAccessor`   | `IAuthSessionAccessor` implementation used by the debug page.                                                             |
+| `Pages/WasmAuthHandoffPage` | Route `/auth/handoff`. Redeems the `?lyo_handoff=...` code and stores the tokens.                                         |
 
 ## Quick start
 
-Register in the consuming WASM host's `Program.cs`. Serve `appsettings.json` from the WASM client's `wwwroot/`. On the API side, the WASM origin must appear in `LyoOidcBff.AllowedReturnOrigins`:
+Register in the consuming WASM host's `Program.cs`. Serve `appsettings.json` from the WASM client's `wwwroot/`. On the API side, the WASM origin must appear in
+`LyoSso.AllowedReturnOrigins`:
 
 ## Outbound API calls
 
@@ -91,7 +93,8 @@ builder.Services
 
 ## Caveats vs. the server adapter
 
-- Tokens live in LocalStorage on the browser. That is the standard SPA trade-off. XSS hijacks the session. If you cannot accept that, use the Server (BFF) adapter instead, which stores tokens server-side and only puts a data-protected session id in the cookie.
+- Tokens live in LocalStorage on the browser. That is the standard SPA trade-off. XSS hijacks the session. If you cannot accept that, use the Server (BFF) adapter instead, which
+  stores tokens server-side and only puts a data-protected session id in the cookie.
 - No cross-tab broadcast: a sign-out in one tab does not drop the session in another. Possible follow-up via the LocalStorage `storage` event.
 - The handoff exchange happens in the browser (`fetch`), so the WASM origin must be in the API's allow-list.
 
@@ -106,36 +109,47 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.AspNetCore.Components.WebAssembly` `10.0.5` (direct, microsoft)
 - `Lyo.Api.Client` (transitive, lyo)
 - `Lyo.Api.Models` (transitive, lyo)
+- `Lyo.Audit` (transitive, lyo)
 - `Lyo.Authentication.Models` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
+- `Lyo.Authorization` (transitive, lyo)
+- `Lyo.Authorization.Web.Components` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Encryption` (transitive, lyo)
+- `Lyo.EntityReference.Models` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
+- `Lyo.Health` (transitive, lyo)
 - `Lyo.Http.Client` (transitive, lyo)
 - `Lyo.IO.FileSystem` (transitive, lyo)
 - `Lyo.IO.Temp` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.RateLimit` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
+- `Lyo.Schedule.Models` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
 - `Lyo.Validation` (transitive, lyo)
 - `Lyo.Validation.Models` (transitive, lyo)
 - `Lyo.Web.Components` (transitive, lyo)
 - `Lyo.Web.Components.Export` (transitive, lyo)
 - `Lyo.Web.Components.Export.Csv` (transitive, lyo)
+- `Lyo.Web.Components.Export.Toml` (transitive, lyo)
 - `Lyo.Web.Components.Export.Xlsx` (transitive, lyo)
+- `Lyo.Web.Components.Export.Xml` (transitive, lyo)
+- `Lyo.Web.Components.Export.Yaml` (transitive, lyo)
 - `Lyo.Web.Primitives` (transitive, lyo)
 - `AngleSharp` `1.5.0` (transitive, third-party)
 - `BouncyCastle.Cryptography` `2.6.2` (transitive, third-party, netstandard2.0)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Bcl.TimeProvider` `8.0.1` (transitive, microsoft, netstandard2.0)
 - `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft, net10.0, netstandard2.0)
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (transitive, microsoft)
@@ -146,6 +160,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.RateLimiting` `10.0.5` (transitive, microsoft)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

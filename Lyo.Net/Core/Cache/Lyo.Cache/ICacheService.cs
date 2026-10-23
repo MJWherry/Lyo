@@ -6,9 +6,9 @@ namespace Lyo.Cache;
 public interface ICacheService : IHealth
 {
     /// <summary>
-    /// This process's in-memory (L1) key and tag list. Thread-safe. Redis (L2) keys written by other processes are not listed until this process loads them.
-    /// Payload entries include <see cref="CacheItem.Encrypted" />, <see cref="CacheItem.Compressed" />, and <see cref="CacheItem.SizeBytes" />.
-    /// Keys also carry <see cref="CacheItem.Expires" /> and <see cref="CacheItem.Tags" />.
+    /// This process's in-memory (L1) key and tag list. Thread-safe. Redis (L2) keys written by other processes are not listed until this process loads them. Payload entries
+    /// include <see cref="CacheItem.Encrypted" />, <see cref="CacheItem.Compressed" />, and <see cref="CacheItem.SizeBytes" />. Keys also carry <see cref="CacheItem.Expires" /> and
+    /// <see cref="CacheItem.Tags" />.
     /// </summary>
     IReadOnlyCollection<CacheItem> Items { get; }
 
@@ -89,8 +89,8 @@ public interface ICacheService : IHealth
         CancellationToken token = default);
 
     /// <summary>
-    /// Reads or stores a cached value. <paramref name="setupAction" /> stamps duration and
-    /// <see cref="ICacheEntryOptions.ExpirationMode" /> on miss. Hits of sliding entries reset TTL from the stored policy.
+    /// Reads or stores a cached value. <paramref name="setupAction" /> stamps duration and <see cref="ICacheEntryOptions.ExpirationMode" /> on miss. Hits of sliding entries
+    /// reset TTL from the stored policy.
     /// </summary>
     ValueTask<TValue?> GetOrSetAsync<TValue>(
         string key,
@@ -130,14 +130,10 @@ public interface ICacheService : IHealth
     TValue? GetOrSet<TValue>(string key, Func<CancellationToken, TValue?> factory, Type type, IEnumerable<string>? extraTags = null);
 
     /// <summary>
-    /// Reads or stores a cached value (sync). <paramref name="setupAction" /> stamps duration and
-    /// <see cref="ICacheEntryOptions.ExpirationMode" /> on miss. Hits of sliding entries reset TTL from the stored policy.
+    /// Reads or stores a cached value (sync). <paramref name="setupAction" /> stamps duration and <see cref="ICacheEntryOptions.ExpirationMode" /> on miss. Hits of sliding
+    /// entries reset TTL from the stored policy.
     /// </summary>
-    TValue? GetOrSet<TValue>(
-        string key,
-        Func<CancellationToken, TValue?> factory,
-        Action<ICacheEntryOptions> setupAction,
-        IEnumerable<string>? extraTags = null);
+    TValue? GetOrSet<TValue>(string key, Func<CancellationToken, TValue?> factory, Action<ICacheEntryOptions> setupAction, IEnumerable<string>? extraTags = null);
 
     /// <summary>Returns the cached value when the key exists; otherwise stores <paramref name="value" /> with optional <paramref name="setupAction" /> and tags.</summary>
     /// <typeparam name="TValue">Cached value type.</typeparam>
@@ -250,8 +246,8 @@ public interface ICacheService : IHealth
     CacheEntryEnvelope? GetOrSetPayload(string key, Func<CancellationToken, byte[]?> factory, TimeSpan? duration, IEnumerable<string>? extraTags = null);
 
     /// <summary>
-    /// Reads or stores a framed byte payload. <paramref name="setupAction" /> stamps duration and expiration mode on miss.
-    /// Hits of sliding entries reset TTL from the stored policy.
+    /// Reads or stores a framed byte payload. <paramref name="setupAction" /> stamps duration and expiration mode on miss. Hits of sliding entries reset TTL from the stored
+    /// policy.
     /// </summary>
     ValueTask<CacheEntryEnvelope?> GetOrSetPayloadAsync(
         string key,
@@ -261,11 +257,7 @@ public interface ICacheService : IHealth
         CancellationToken token = default);
 
     /// <summary>Synchronous variant of the payload factory overload that accepts <see cref="ICacheEntryOptions" /> setup.</summary>
-    CacheEntryEnvelope? GetOrSetPayload(
-        string key,
-        Func<CancellationToken, byte[]?> factory,
-        Action<ICacheEntryOptions> setupAction,
-        IEnumerable<string>? extraTags = null);
+    CacheEntryEnvelope? GetOrSetPayload(string key, Func<CancellationToken, byte[]?> factory, Action<ICacheEntryOptions> setupAction, IEnumerable<string>? extraTags = null);
 
     /// <summary>Stores plaintext bytes using the payload codec (compress/encrypt per options).</summary>
     /// <param name="key">Cache key.</param>

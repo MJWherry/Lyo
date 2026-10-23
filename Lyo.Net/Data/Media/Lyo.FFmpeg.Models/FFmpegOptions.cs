@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Lyo.Exceptions;
+using Lyo.Media.Models;
 
 namespace Lyo.FFmpeg.Models;
 
@@ -57,18 +58,28 @@ public sealed class FFmpegOptions
     public FFmpegProcessOutputMode ProcessOutputMode { get; set; } = FFmpegProcessOutputMode.Suppress;
 
     /// <summary>
-    /// Wall-clock timeout for batch convert, probe, and play. Null means no timeout. Do not set this for StartConvertAsync sessions;
-    /// a live stream can run for hours and is cancelled with the token or by disposing the session.
+    /// Wall-clock timeout for batch convert, probe, and play. Null means no timeout. Do not set this for StartConvertAsync sessions; a live stream can run for hours and is
+    /// cancelled with the token or by disposing the session.
     /// </summary>
     public TimeSpan? ProcessTimeout { get; set; }
 
-    /// <summary>Checks sample rate, channels, enum, and timeout.</summary>
+    /// <summary>
+    /// Worker GPU name or id (<c>nvenc</c>, <c>qsv</c>, <c>vaapi</c>, <c>videotoolbox</c>, <c>none</c>). Null leaves converts on the CPU. A request that sets
+    /// <c>HardwareAccel.None</c> still forces the CPU.
+    /// </summary>
+    public string? Hardware { get; set; }
+
+    /// <summary>VAAPI device path. Null uses <c>/dev/dri/renderD128</c> when <see cref="Hardware" /> is VAAPI.</summary>
+    public string? HardwareDevice { get; set; }
+
+    /// <summary>Checks sample rate, channels, enum, timeout, and <see cref="Hardware" />.</summary>
     public void Validate()
     {
         ArgumentHelpers.ThrowIfLessThan(DefaultSampleRate, 1);
         ArgumentHelpers.ThrowIfLessThan(DefaultChannels, 1);
         ArgumentHelpers.ThrowIfNotDefined(ProcessOutputMode);
         ArgumentHelpers.ThrowIf(ProcessTimeout is { } timeout && timeout <= TimeSpan.Zero, "ProcessTimeout must be null or greater than zero.", nameof(ProcessTimeout));
+        ArgumentHelpers.ThrowIf(!string.IsNullOrWhiteSpace(Hardware) && HardwareAccel.TryParse(Hardware) == null, $"Unknown hardware '{Hardware}'.", nameof(Hardware));
     }
 
     /// <inheritdoc />

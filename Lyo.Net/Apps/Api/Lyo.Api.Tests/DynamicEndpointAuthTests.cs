@@ -1,14 +1,12 @@
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.ApiEndpoint.Dynamic;
 using Lyo.Cache;
-using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Api.Tests;
 

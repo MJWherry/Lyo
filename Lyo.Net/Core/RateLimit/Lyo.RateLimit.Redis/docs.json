@@ -1,0 +1,92 @@
+{
+  "id": "Lyo.RateLimit.Redis",
+  "name": "Lyo.RateLimit.Redis",
+  "area": "Core",
+  "tagline": "Redis-backed quotas with the same fixed, sliding, and token-bucket rules as the in-memory store.",
+  "description": "AddRedisRateLimit replaces an in-memory IRateLimitService. Use it only when more than one host must share a quota. A missing Redis connection string fails registration instead of falling back to memory.",
+  "features": [
+    "**Same three windows.** Fixed, sliding, and token bucket use one Lua script each.",
+    "**One key.** The hash tag is {policy:partition}, so a sliding window never touches two slots.",
+    "**Scripted clock.** Production passes Redis TIME. Tests pass unix milliseconds.",
+    "**Fail closed.** RedisException and RedisTimeoutException deny the call unless FailOpen is set. A failure does not write.",
+    "**DI.** AddRedisRateLimit, the connection-string overload, and AddRedisRateLimitFromConfiguration."
+  ],
+  "examples": [
+    {
+      "title": "Shared quota",
+      "language": "csharp",
+      "code": "services.AddRedisRateLimit(redisConnectionString);\nservices.AddFlaredHttpClientFromConfiguration(configuration);"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/RateLimit/Lyo.RateLimit.Redis/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.RateLimit",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "StackExchange.Redis",
+      "kind": "package",
+      "version": "2.12.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.TimeProvider",
+      "kind": "package",
+      "version": "8.0.1",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

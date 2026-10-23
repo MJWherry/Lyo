@@ -30,6 +30,12 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
     private readonly DiskFileStorageOptions _options;
     private readonly bool _ownsMetadataService;
 
+    /// <summary>Root resolved once. Every traversal guard compares against it, and <c>FindFilePath</c> probes several candidates per read.</summary>
+    private readonly string _storageRootFull;
+
+    /// <inheritdoc />
+    public override bool SupportsPlainByteRange => true;
+
     public LocalFileStorageService(
         DiskFileStorageOptions options,
         ILoggerFactory? loggerFactory = null,
@@ -39,14 +45,30 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
         IMetrics? metrics = null,
         IFileOperationContextAccessor? operationContextAccessor = null,
         IEnumerable<IFileAuditEventHandler>? auditHandlers = null,
-        IFileContentPolicy? contentPolicy = null)
+        IFileContentPolicy? contentPolicy = null,
+        IFileTypeSniffer? fileTypeSniffer = null)
+        : this(
+            ArgumentHelpers.ThrowIfNullReturn(options), loggerFactory, compressionService, twoKeyEncryptionService, metrics, operationContextAccessor, auditHandlers, contentPolicy,
+            fileTypeSniffer, OpenCatalog(options, loggerFactory, metadataService)) { }
+
+    private LocalFileStorageService(
+        DiskFileStorageOptions options,
+        ILoggerFactory? loggerFactory,
+        ICompressionService? compressionService,
+        ITwoKeyEncryptionService? twoKeyEncryptionService,
+        IMetrics? metrics,
+        IFileOperationContextAccessor? operationContextAccessor,
+        IEnumerable<IFileAuditEventHandler>? auditHandlers,
+        IFileContentPolicy? contentPolicy,
+        IFileTypeSniffer? fileTypeSniffer,
+        LocalCatalog catalog)
         : base(
-            ArgumentHelpers.ThrowIfNullReturn(options), metadataService ?? new LocalFileMetadataStore(options.RootDirectoryPath, loggerFactory),
-            (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<LocalFileStorageService>(), compressionService, twoKeyEncryptionService,
-            options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance, operationContextAccessor, auditHandlers, contentPolicy)
+            options, catalog.Metadata, (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<LocalFileStorageService>(), compressionService, twoKeyEncryptionService,
+            options.EnableMetrics && metrics != null ? metrics : NullMetrics.Instance, operationContextAccessor, auditHandlers, contentPolicy, fileTypeSniffer)
     {
         _options = options;
-        _ownsMetadataService = metadataService == null;
+        _storageRootFull = NormalizeAndTrim(options.RootDirectoryPath);
+        _ownsMetadataService = catalog.OwnsMetadata;
         if (_ownsMetadataService)
             Logger.LogInformation("Using JSON file-based metadata storage");
 
@@ -56,11 +78,6 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
         Directory.CreateDirectory(_options.RootDirectoryPath);
         Logger.LogInformation("Created root directory: {RootPath}", _options.RootDirectoryPath);
     }
-
-    /// <inheritdoc />
-    public IFileSystem Physical => _physicalFs ??= new LocalFileSystem(_options.RootDirectoryPath);
-
-    private IFileSystem? _physicalFs;
 
     /// <inheritdoc />
     Task<IReadOnlyList<string>> IFileStorageDiagnosticsService.ListStorageKeysAsync(string? prefix, int maxKeys, CancellationToken ct)
@@ -75,6 +92,17 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
             list.Add(ToStorageKeyRelativeToRoot(storageRootFull, absolute));
 
         return Task.FromResult<IReadOnlyList<string>>(list);
+    }
+
+    /// <inheritdoc />
+    public IFileSystem Physical => field ??= new LocalFileSystem(_options.RootDirectoryPath);
+
+    private static LocalCatalog OpenCatalog(DiskFileStorageOptions options, ILoggerFactory? loggerFactory, IFileMetadataStore? metadataService)
+    {
+        if (metadataService != null)
+            return new(metadataService, false);
+
+        return new(new LocalFileMetadataStore(options.RootDirectoryPath, loggerFactory), true);
     }
 
     protected override async Task<HealthResult> CheckHealthLightweightAsync(CancellationToken ct)
@@ -111,14 +139,14 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
 
         ArgumentHelpers.ThrowIfNull(request);
         var normalized = NormalizePathPrefix(request.PathPrefix) ?? "";
-        var fileId = Guid.NewGuid();
+        var fileId = LyoGuid.CreateV7();
         await PersistPendingPlainDirectUploadMetadataAsync(fileId, request, normalized, ct).ConfigureAwait(false);
         var trimmedBase = _options.DirectUploadReceiveBaseUri!.Trim().TrimEnd('/');
         var routeTrim = _options.DirectUploadPutRouteRelativePath.Trim().Trim('/');
         var putUrl = $"{trimmedBase}/{routeTrim}/{fileId:D}/put";
         var expiry = request.UrlExpiration ?? TimeSpan.FromHours(1);
         var storageRootFull = NormalizeStorageRootFullPath();
-        var fullPathForId = TrimEnds(Path.GetFullPath(GetFilePath(fileId, "", normalized)));
+        var fullPathForId = NormalizeAndTrim(GetFilePath(fileId, "", normalized));
         EnsurePathUnder(storageRootFull, fullPathForId);
         var storageRelative = ToStorageKeyRelativeToRoot(storageRootFull, fullPathForId);
         return new() {
@@ -131,9 +159,7 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
     }
 
     /// <summary>Accepts a raw HTTP PUT body for a pending plaintext direct upload. Pair with a trusted cooperating HTTP host.</summary>
-    /// <remarks>
-    /// Enforces <see cref="FileStorageServiceBaseOptions.MaxUploadSizeBytes" /> during the copy so an attacker cannot fill the disk before finalize re-checks the size.
-    /// </remarks>
+    /// <remarks>Enforces <see cref="FileStorageServiceBaseOptions.MaxUploadSizeBytes" /> during the copy so an attacker cannot fill the disk before finalize re-checks the size.</remarks>
     public async Task ReceiveDirectPutAsync(Guid fileId, Stream body, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(body);
@@ -288,8 +314,8 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
     }
 
     /// <summary>
-    /// Opens the write side for <paramref name="fileId" /> as an <see cref="AtomicReplaceFileStream" />. Bytes land in a sibling temp file and only replace the real path once the
-    /// caller flushes. A caller that faults mid-write therefore leaves any pre-existing content intact instead of truncating it.
+    /// Opens the write side for <paramref name="fileId" /> as an <see cref="AtomicReplaceFileStream" />. Bytes land in a sibling temp file and only replace the real path once
+    /// the caller flushes. A caller that faults mid-write therefore leaves any pre-existing content intact instead of truncating it.
     /// </summary>
     protected override Task<Stream> CreateOutputStreamAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct)
     {
@@ -314,6 +340,33 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
             return Task.FromResult<Stream?>(File.OpenRead(filePath));
 
         return Task.FromResult<Stream?>(null);
+    }
+
+    /// <inheritdoc />
+    protected override Task<Stream?> ReadPlainByteRangeAsync(FileStoreResult metadata, long startInclusive, long endInclusive, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var suffix = InferTrailingSuffixAfterFileId(metadata.Id, metadata.SourceFileName);
+        var filePath = GetFilePath(metadata.Id, suffix, metadata.PathPrefix);
+        if (!File.Exists(filePath))
+            return Task.FromResult<Stream?>(null);
+
+        var stream = File.OpenRead(filePath);
+        stream.Seek(startInclusive, SeekOrigin.Begin);
+        return Task.FromResult<Stream?>(stream);
+    }
+
+    /// <inheritdoc />
+    protected override Task<Stream?> ReadPlainByteRangeAsync(Guid fileId, string? pathPrefix, long startInclusive, long endInclusive, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var filePath = FindFilePath(fileId, pathPrefix);
+        if (filePath == null || !File.Exists(filePath))
+            return Task.FromResult<Stream?>(null);
+
+        var stream = File.OpenRead(filePath);
+        stream.Seek(startInclusive, SeekOrigin.Begin);
+        return Task.FromResult<Stream?>(stream);
     }
 
     protected override Task<bool> DeleteFromStorageAsync(Guid fileId, string? pathPrefix, CancellationToken ct)
@@ -374,7 +427,7 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
         }
         else {
             // Stream the rest of the original file (after the old header) into a sibling temp file with the new header prefix, then replace atomically.
-            var tempPath = filePath + ".dek-rotate-" + Guid.NewGuid().ToString("N") + ".tmp";
+            var tempPath = filePath + ".dek-rotate-" + LyoGuid.CreateV7().ToString("N") + ".tmp";
             try {
                 var source = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 81920, FileOptions.Asynchronous);
                 try {
@@ -417,6 +470,13 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
         header.Write(ms);
         return ms.ToArray();
     }
+
+    /// <summary>
+    /// Presigned read is set when <see cref="DiskFileStorageOptions.AllowFileUriPresignedUrls" /> is set. Direct upload is set when
+    /// <see cref="DiskFileStorageOptions.DirectUploadReceiveBaseUri" /> is set. Copy, move, and physical listing are supported.
+    /// </summary>
+    public override FileStorageCapabilities GetCapabilities()
+        => new(_options.AllowFileUriPresignedUrls, !string.IsNullOrWhiteSpace(_options.DirectUploadReceiveBaseUri), true, true, true);
 
     /// <inheritdoc />
     public override Task<string> GetPreSignedReadUrlAsync(Guid fileId, TimeSpan? expiration = null, string? pathPrefix = null, CancellationToken ct = default)
@@ -481,6 +541,191 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
 
         base.Dispose();
     }
+
+    /// <summary>Moves a file and replaces an existing destination. Uses delete-then-move so the path works on netstandard2.0 (no <c>File.Move</c> overwrite overload).</summary>
+    private static void MoveFileReplace(string sourcePath, string destinationPath)
+    {
+        if (File.Exists(destinationPath))
+            File.Delete(destinationPath);
+
+        File.Move(sourcePath, destinationPath);
+    }
+
+    private string GetFilePath(Guid fileId, string extension = "", string? pathPrefix = null)
+    {
+        var fileName = fileId.ToString("N") + extension;
+        string combined;
+        if (!string.IsNullOrWhiteSpace(pathPrefix))
+            combined = Path.Combine(_options.RootDirectoryPath, pathPrefix, fileName);
+        else {
+            var idString = fileId.ToString("N");
+            var subDir = Path.Combine(idString.Substring(0, 2), idString.Substring(2, 2));
+            combined = Path.Combine(_options.RootDirectoryPath, subDir, fileName);
+        }
+
+        // Defense in depth: keep the resolved path under the storage root even if a caller skipped ValidatePathPrefix upstream.
+        EnsurePathUnder(_storageRootFull, NormalizeAndTrim(combined));
+        return combined;
+    }
+
+    private string? FindFilePath(Guid fileId, string? pathPrefix = null)
+    {
+        var basePath = GetFilePath(fileId, "", pathPrefix);
+        var directory = Path.GetDirectoryName(basePath);
+        var fileNameWithoutExt = Path.GetFileName(basePath);
+        if (directory == null || !Directory.Exists(directory))
+            return null;
+
+        var filePath = Path.Combine(directory, fileNameWithoutExt);
+        if (File.Exists(filePath))
+            return filePath;
+
+        if (CompressionService != null) {
+            filePath = Path.Combine(directory, fileNameWithoutExt + CompressionService.FileExtension);
+            if (File.Exists(filePath))
+                return filePath;
+        }
+
+        if (TwoKeyEncryptionService != null) {
+            filePath = Path.Combine(directory, fileNameWithoutExt + TwoKeyEncryptionService.FileExtension);
+            if (File.Exists(filePath))
+                return filePath;
+
+            // Check the compression + two-key encryption combination
+            if (CompressionService != null) {
+                filePath = Path.Combine(directory, fileNameWithoutExt + CompressionService.FileExtension + TwoKeyEncryptionService.FileExtension);
+                if (File.Exists(filePath))
+                    return filePath;
+            }
+        }
+
+        // Fall back to common extensions
+        var commonExtensions = FileTypeInfo.CommonStorageResolutionSuffixes;
+        foreach (var ext in commonExtensions) {
+            filePath = Path.Combine(directory, fileNameWithoutExt + ext);
+            if (File.Exists(filePath))
+                return filePath;
+        }
+
+        return null;
+    }
+
+    private string NormalizeStorageRootFullPath()
+    {
+        try {
+            Directory.CreateDirectory(_options.RootDirectoryPath);
+            return _storageRootFull;
+        }
+        catch (Exception ex) {
+            Logger.LogWarning(ex, "Could not normalize root directory path {Root}", _options.RootDirectoryPath);
+            throw;
+        }
+    }
+
+    /// <summary>Resolves <paramref name="path" /> to an absolute path with trailing separators removed. The comparison helpers below take paths already in that shape.</summary>
+    private static string NormalizeAndTrim(string path) => Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+    private static string NormalizeDiagnosticListingPrefix(string? prefix)
+        => prefix == null || string.IsNullOrWhiteSpace(prefix) ? "" : prefix.Trim().TrimStart('/', '\\').TrimEnd('/', '\\');
+
+    /// <exception cref="UnauthorizedAccessException">When <paramref name="extendedPrefix" /> tries to escape the storage root.</exception>
+    private static string ResolveListingDirectory(string storageRootFull, string? extendedPrefix)
+    {
+        var trimmed = NormalizeDiagnosticListingPrefix(extendedPrefix);
+        if (string.IsNullOrEmpty(trimmed))
+            return storageRootFull;
+
+        if (trimmed.Split('/', '\\').Any(p => string.Equals(p, "..", StringComparison.Ordinal)))
+            throw new UnauthorizedAccessException("Diagnostic listing prefix contains path traversal.");
+
+        var relative = trimmed.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
+        var resolved = NormalizeAndTrim(Path.Combine(storageRootFull, relative));
+        EnsurePathUnder(storageRootFull, resolved);
+        return resolved;
+    }
+
+    /// <summary>Both arguments must already be absolute, normalized, and trailing-separator trimmed.</summary>
+    private static void EnsurePathUnder(string storageRootFull, string resolvedPathAbsolute)
+    {
+        var cmp = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        var rootWithSep = storageRootFull + Path.DirectorySeparatorChar;
+        if (!(resolvedPathAbsolute.Equals(storageRootFull, cmp) || resolvedPathAbsolute.StartsWith(rootWithSep, cmp)))
+            throw new UnauthorizedAccessException($"Path '{resolvedPathAbsolute}' is outside storage root.");
+    }
+
+    private static IEnumerable<string> EnumerateLimitedFilesUnderDirectory(string storageRootFull, string startDirectory, int maxEntries, CancellationToken ct)
+    {
+        ArgumentHelpers.ThrowIfLessThan(maxEntries, 1);
+        if (!Directory.Exists(startDirectory))
+            yield break;
+
+        var dirs = new Queue<string>();
+        dirs.Enqueue(startDirectory);
+        var counted = 0;
+        while (dirs.Count > 0 && counted < maxEntries) {
+            ct.ThrowIfCancellationRequested();
+            string dir;
+            try {
+                dir = dirs.Dequeue();
+            }
+            catch {
+                yield break;
+            }
+
+            IEnumerable<string>? filesEnumerable;
+            try {
+                filesEnumerable = Directory.EnumerateFiles(dir);
+            }
+            catch (UnauthorizedAccessException) {
+                continue;
+            }
+            catch (DirectoryNotFoundException) {
+                continue;
+            }
+
+            foreach (var file in filesEnumerable) {
+                ct.ThrowIfCancellationRequested();
+                var full = NormalizeAndTrim(file);
+                EnsurePathUnder(storageRootFull, full);
+                counted++;
+                yield return full;
+
+                if (counted >= maxEntries)
+                    yield break;
+            }
+
+            IEnumerable<string>? subdirs;
+            try {
+                subdirs = Directory.EnumerateDirectories(dir);
+            }
+            catch (UnauthorizedAccessException) {
+                continue;
+            }
+            catch (DirectoryNotFoundException) {
+                continue;
+            }
+
+            foreach (var sub in subdirs)
+                dirs.Enqueue(sub);
+        }
+    }
+
+    private static string ToStorageKeyRelativeToRoot(string storageRootFull, string absoluteFile)
+    {
+        var cmp = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        var candTrim = NormalizeAndTrim(absoluteFile);
+        EnsurePathUnder(storageRootFull, candTrim);
+        var rootWithSep = storageRootFull + Path.DirectorySeparatorChar;
+        if (candTrim.Equals(storageRootFull, cmp))
+            return "";
+
+        if (!candTrim.StartsWith(rootWithSep, cmp))
+            throw new UnauthorizedAccessException($"Path '{absoluteFile}' is outside storage root.");
+
+        return candTrim.Substring(rootWithSep.Length).Replace(Path.DirectorySeparatorChar, '/');
+    }
+
+    private readonly record struct LocalCatalog(IFileMetadataStore Metadata, bool OwnsMetadata);
 
     /// <summary>
     /// Write stream that buffers into a sibling temp file and moves it over the real path only after the caller has flushed, so a write that faults partway leaves the previous
@@ -575,191 +820,5 @@ public sealed class LocalFileStorageService : FileStorageServiceBase, IFileStora
                 _logger.LogDebug(ex, "Best-effort delete of partial write temp file failed: {TempPath}", _tempPath);
             }
         }
-    }
-
-    /// <summary>Moves a file and replaces an existing destination. Uses delete-then-move so the path works on netstandard2.0 (no <c>File.Move</c> overwrite overload).</summary>
-    private static void MoveFileReplace(string sourcePath, string destinationPath)
-    {
-        if (File.Exists(destinationPath))
-            File.Delete(destinationPath);
-
-        File.Move(sourcePath, destinationPath);
-    }
-
-    private string GetFilePath(Guid fileId, string extension = "", string? pathPrefix = null)
-    {
-        var fileName = fileId.ToString("N") + extension;
-        string combined;
-        if (!string.IsNullOrWhiteSpace(pathPrefix))
-            combined = Path.Combine(_options.RootDirectoryPath, pathPrefix, fileName);
-        else {
-            var idString = fileId.ToString("N");
-            var subDir = Path.Combine(idString.Substring(0, 2), idString.Substring(2, 2));
-            combined = Path.Combine(_options.RootDirectoryPath, subDir, fileName);
-        }
-
-        // Defense in depth: keep the resolved path under the storage root even if a caller skipped ValidatePathPrefix upstream.
-        var storageRootFull = TrimEnds(Path.GetFullPath(_options.RootDirectoryPath));
-        var resolved = TrimEnds(Path.GetFullPath(combined));
-        EnsurePathUnder(storageRootFull, resolved);
-        return combined;
-    }
-
-    private string? FindFilePath(Guid fileId, string? pathPrefix = null)
-    {
-        var basePath = GetFilePath(fileId, "", pathPrefix);
-        var directory = Path.GetDirectoryName(basePath);
-        var fileNameWithoutExt = Path.GetFileName(basePath);
-        if (directory == null || !Directory.Exists(directory))
-            return null;
-
-        var filePath = Path.Combine(directory, fileNameWithoutExt);
-        if (File.Exists(filePath))
-            return filePath;
-
-        if (CompressionService != null) {
-            filePath = Path.Combine(directory, fileNameWithoutExt + CompressionService.FileExtension);
-            if (File.Exists(filePath))
-                return filePath;
-        }
-
-        if (TwoKeyEncryptionService != null) {
-            filePath = Path.Combine(directory, fileNameWithoutExt + TwoKeyEncryptionService.FileExtension);
-            if (File.Exists(filePath))
-                return filePath;
-
-            // Check the compression + two-key encryption combination
-            if (CompressionService != null) {
-                filePath = Path.Combine(directory, fileNameWithoutExt + CompressionService.FileExtension + TwoKeyEncryptionService.FileExtension);
-                if (File.Exists(filePath))
-                    return filePath;
-            }
-        }
-
-        // Fall back to common extensions
-        var commonExtensions = FileTypeInfo.CommonStorageResolutionSuffixes;
-        foreach (var ext in commonExtensions) {
-            filePath = Path.Combine(directory, fileNameWithoutExt + ext);
-            if (File.Exists(filePath))
-                return filePath;
-        }
-
-        return null;
-    }
-
-    private string NormalizeStorageRootFullPath()
-    {
-        try {
-            Directory.CreateDirectory(_options.RootDirectoryPath);
-            return TrimEnds(Path.GetFullPath(_options.RootDirectoryPath));
-        }
-        catch (Exception ex) {
-            Logger.LogWarning(ex, "Could not normalize root directory path {Root}", _options.RootDirectoryPath);
-            throw;
-        }
-    }
-
-    private static string TrimEnds(string path) => Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-
-    private static string NormalizeDiagnosticListingPrefix(string? prefix)
-        => prefix == null || string.IsNullOrWhiteSpace(prefix) ? "" : prefix.Trim().TrimStart('/', '\\').TrimEnd('/', '\\');
-
-    /// <exception cref="UnauthorizedAccessException">When <paramref name="extendedPrefix" /> tries to escape the storage root.</exception>
-    private static string ResolveListingDirectory(string storageRootFull, string? extendedPrefix)
-    {
-        var trimmed = NormalizeDiagnosticListingPrefix(extendedPrefix);
-        if (string.IsNullOrEmpty(trimmed))
-            return storageRootFull;
-
-        if (trimmed.Split('/', '\\').Any(p => string.Equals(p, "..", StringComparison.Ordinal)))
-            throw new UnauthorizedAccessException("Diagnostic listing prefix contains path traversal.");
-
-        var relative = trimmed.Replace('\\', Path.DirectorySeparatorChar).Replace('/', Path.DirectorySeparatorChar);
-        var resolved = TrimEnds(Path.Combine(storageRootFull, relative));
-        EnsurePathUnder(storageRootFull, resolved);
-        return resolved;
-    }
-
-    private static void EnsurePathUnder(string storageRootFull, string resolvedPathAbsolute)
-    {
-        var cmp = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-        var rootTrim = TrimEnds(storageRootFull);
-        var candTrim = TrimEnds(resolvedPathAbsolute);
-        var rootWithSep = rootTrim + Path.DirectorySeparatorChar;
-        if (!(candTrim.Equals(rootTrim, cmp) || candTrim.StartsWith(rootWithSep, cmp)))
-            throw new UnauthorizedAccessException($"Path '{resolvedPathAbsolute}' is outside storage root.");
-    }
-
-    private static IEnumerable<string> EnumerateLimitedFilesUnderDirectory(string storageRootFull, string startDirectory, int maxEntries, CancellationToken ct)
-    {
-        ArgumentHelpers.ThrowIfLessThan(maxEntries, 1);
-        if (!Directory.Exists(startDirectory))
-            yield break;
-
-        var dirs = new Queue<string>();
-        dirs.Enqueue(startDirectory);
-        var counted = 0;
-        while (dirs.Count > 0 && counted < maxEntries) {
-            ct.ThrowIfCancellationRequested();
-            string dir;
-            try {
-                dir = dirs.Dequeue();
-            }
-            catch {
-                yield break;
-            }
-
-            IEnumerable<string>? filesEnumerable;
-            try {
-                filesEnumerable = Directory.EnumerateFiles(dir);
-            }
-            catch (UnauthorizedAccessException) {
-                continue;
-            }
-            catch (DirectoryNotFoundException) {
-                continue;
-            }
-
-            foreach (var file in filesEnumerable) {
-                ct.ThrowIfCancellationRequested();
-                var full = TrimEnds(Path.GetFullPath(file));
-                EnsurePathUnder(storageRootFull, full);
-                counted++;
-                yield return full;
-
-                if (counted >= maxEntries)
-                    yield break;
-            }
-
-            IEnumerable<string>? subdirs;
-            try {
-                subdirs = Directory.EnumerateDirectories(dir);
-            }
-            catch (UnauthorizedAccessException) {
-                continue;
-            }
-            catch (DirectoryNotFoundException) {
-                continue;
-            }
-
-            foreach (var sub in subdirs)
-                dirs.Enqueue(sub);
-        }
-    }
-
-    private static string ToStorageKeyRelativeToRoot(string storageRootFull, string absoluteFile)
-    {
-        var cmp = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-        var rootTrim = TrimEnds(storageRootFull);
-        var candTrim = TrimEnds(Path.GetFullPath(absoluteFile));
-        EnsurePathUnder(storageRootFull, candTrim);
-        var rootWithSep = rootTrim + Path.DirectorySeparatorChar;
-        if (candTrim.Equals(rootTrim, cmp))
-            return "";
-
-        if (!candTrim.StartsWith(rootWithSep, cmp))
-            throw new UnauthorizedAccessException($"Path '{absoluteFile}' is outside storage root.");
-
-        return candTrim.Substring(rootWithSep.Length).Replace(Path.DirectorySeparatorChar, '/');
     }
 }

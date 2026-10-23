@@ -43,7 +43,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(sectionName);
             var options = new SftpClientOptions();
             configuration.GetSection(sectionName).Bind(options);
-
             return services.AddSftpClient(options);
         }
 

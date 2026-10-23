@@ -1,0 +1,42 @@
+{
+  "$schema": "../../../../docs/catalog/schema/package.schema.json",
+  "id": "Lyo.Algorithms.Models",
+  "name": "Lyo.Algorithms.Models",
+  "area": "Data",
+  "tagline": "Request and response DTOs, `AlgorithmKind`, and route constants for the Algorithms catalog.",
+  "description": "The catalog contract shared by the in-memory store, Postgres, SQLite, the API, and the client. `Request/` and `Response/` are separate: a save sends `AlgorithmRevisionReq`, a read returns `AlgorithmDefinitionRes`. `Kind` is `AlgorithmKind`, not a string. The compiler and registry stay in `Lyo.Algorithms`. This package has no DI registration.",
+  "features": [
+    "`AlgorithmKind` for expression, named, map, band, linear, and composite revisions.",
+    "`AlgorithmDefinitionReq` / `AlgorithmDefinitionRes` for definition metadata and the current revision.",
+    "`AlgorithmRevisionReq` / `AlgorithmRevisionRes` for append. `AlgorithmRevertReq` copies an existing snapshot.",
+    "`AlgorithmLabelReq` / `AlgorithmLabelRes` for mutable and immutable labels.",
+    "`Constants.Rest.Algorithms` route prefixes shared by the API and the client, including `Algorithms/preview`.",
+    "`AlgorithmPreviewReq` / `AlgorithmPreviewRes` and `AlgorithmStepRes` for an unsaved run. Context and step values stay JSON."
+  ],
+  "examples": [
+    {
+      "title": "Route constants",
+      "language": "csharp",
+      "code": "var revisions = Constants.Rest.Algorithms.Revisions(\"attack.physical\");"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Algorithms/Lyo.Algorithms.Models/README.md",
+  "dependencies": [
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

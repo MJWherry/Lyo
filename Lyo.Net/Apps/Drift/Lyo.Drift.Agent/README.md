@@ -1,6 +1,8 @@
 # Lyo.Drift.Agent
 
-Hosted agent: upserts an InstanceKey, constructs one FileSystemWatcher per watch, copies DTOs on ScanCompleted onto a bounded Channel, and POSTs from the hosted-service loop so the debounce thread never awaits HTTP. System-info uses SystemInfoDriftProjection with DriftAgent:SystemInfo:Include (empty = identity-only). Identical collector hashes are not re-inserted.
+Hosted agent: upserts an InstanceKey, constructs one FileSystemWatcher per watch, copies DTOs on ScanCompleted onto a bounded Channel, and POSTs from the hosted-service loop so the
+debounce thread never awaits HTTP. System-info uses SystemInfoDriftProjection with DriftAgent:SystemInfo:Include (empty = identity-only). Identical collector hashes are not
+re-inserted.
 
 ## Features
 
@@ -24,12 +26,12 @@ services.AddDriftAgentFromConfiguration(configuration);
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
 - `Lyo.Api.Client` (direct, lyo)
-- `Lyo.Common.Json` (direct, lyo)
 - `Lyo.Diff` (direct, lyo)
 - `Lyo.Drift.Client` (direct, lyo)
 - `Lyo.Drift.Models` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.FileSystemWatcher` (direct, lyo)
+- `Lyo.Json` (direct, lyo)
 - `Lyo.SystemInformation` (direct, lyo)
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
@@ -56,6 +58,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.Buffers` `4.6.1` (transitive, microsoft, netstandard2.0)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.RateLimiting` `10.0.5` (transitive, microsoft)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft)

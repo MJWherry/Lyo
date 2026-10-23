@@ -87,6 +87,15 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Lyo.Common.Core",
       "kind": "lyo",
       "tags": [
@@ -214,15 +223,6 @@
     },
     {
       "name": "Microsoft.EntityFrameworkCore.Relational",
-      "kind": "package",
-      "version": "10.0.5",
-      "tags": [
-        "transitive",
-        "microsoft"
-      ]
-    },
-    {
-      "name": "Microsoft.Extensions.Configuration.Binder",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

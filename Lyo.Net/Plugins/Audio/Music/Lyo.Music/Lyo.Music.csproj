@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Domain contracts for a music catalog: release groups, releases, tracks, credits, identifiers, and IMusicStore.</Description>
+        <PackageTags>music catalog release album track identifier</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.Music.Postgres.Tests"/>
+    </ItemGroup>
+
+</Project>

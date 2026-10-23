@@ -1,25 +1,7 @@
 using System.Diagnostics;
-using System.Net.Http.Json;
-using Lyo.Api.Client;
-using Lyo.Images;
-using Lyo.Images.Models;
 using Lyo.Lock.Abstractions;
 using Lyo.Metrics;
-using Lyo.TestGateway;
-using Lyo.TestGateway.Components;
-using Lyo.TestGateway.Models;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
-using Lyo.Web.Components.DataGrid;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.Web.Virtualization;
-using Microsoft.JSInterop;
 using MudBlazor;
-using static Microsoft.AspNetCore.Components.Web.RenderMode;
 using SemaphoreConstants = Lyo.Lock.Constants;
 
 namespace Lyo.TestGateway.Components.TestGateway;
@@ -27,22 +9,22 @@ namespace Lyo.TestGateway.Components.TestGateway;
 public partial class SemaphoreWorkbench
 {
     private readonly List<DemoEvent> _events = [];
-    private readonly List<IPermitHandle> _heldPermits = [];
     private readonly object _eventsLock = new();
-    private bool _busy;
+    private readonly List<IPermitHandle> _heldPermits = [];
+    private double _acquireDurationAverageMs;
+    private int _acquireDurationCount;
     private long _acquireFailure;
     private long _acquireSuccess;
-    private int _acquireDurationCount;
-    private double _acquireDurationAverageMs;
-    private int _executeDurationCount;
+    private bool _busy;
     private double _executeDurationAverageMs;
+    private int _executeDurationCount;
     private int _holdMilliseconds = 750;
     private string _key = "workbench:local-semaphore";
     private DateTime _lastMetricsRefresh;
     private DemoSummary? _lastRun;
     private int _maxConcurrency = 3;
-    private int _releaseDurationCount;
     private double _releaseDurationAverageMs;
+    private int _releaseDurationCount;
     private int _timeoutMilliseconds = 2500;
     private int _workerCount = 8;
 
@@ -57,9 +39,9 @@ public partial class SemaphoreWorkbench
         }
     }
 
-    protected override Task OnInitializedAsync() => RefreshMetricsAsync();
-
     public ValueTask DisposeAsync() => new(ReleaseAllHeldPermitsCoreAsync());
+
+    protected override Task OnInitializedAsync() => RefreshMetricsAsync();
 
     private async Task AcquirePermitAsync()
     {
@@ -245,7 +227,15 @@ public partial class SemaphoreWorkbench
             startGate.TrySetResult(true);
             await Task.WhenAll(tasks);
             stopwatch.Stop();
-            var summary = useSemaphore ? maxConcurrent <= _maxConcurrency && timedOutWorkers == 0 ? $"Workers respected the semaphore limit; no more than {_maxConcurrency} ran at once." : "The semaphore run exceeded the expected limit or some workers timed out." : maxConcurrent > _maxConcurrency ? "Unlocked workers exceeded the permit limit, showing the overlap the semaphore avoids." : "Unlocked workers happened to stay within the permit limit on this run.";
+            var summary = useSemaphore
+                ?
+                maxConcurrent <= _maxConcurrency && timedOutWorkers == 0
+                    ? $"Workers respected the semaphore limit; no more than {_maxConcurrency} ran at once."
+                    : "The semaphore run exceeded the expected limit or some workers timed out."
+                : maxConcurrent > _maxConcurrency
+                    ? "Unlocked workers exceeded the permit limit, showing the overlap the semaphore avoids."
+                    : "Unlocked workers happened to stay within the permit limit on this run.";
+
             _lastRun = new(completedWorkers, _workerCount, timedOutWorkers, maxConcurrent, _maxConcurrency, stopwatch.Elapsed, startedAt, summary, useSemaphore);
             SetStatus(summary, useSemaphore ? maxConcurrent <= _maxConcurrency && timedOutWorkers == 0 ? Severity.Success : Severity.Warning : Severity.Info);
             await RefreshMetricsAsync();
@@ -317,5 +307,14 @@ public partial class SemaphoreWorkbench
 
     private sealed record DemoEvent(DateTime Timestamp, string Stage, string Message);
 
-    private sealed record DemoSummary(int Completed, int WorkerCount, int TimedOut, int MaxConcurrent, int MaxAllowed, TimeSpan Elapsed, DateTime StartedAt, string Summary, bool UsedSemaphore);
+    private sealed record DemoSummary(
+        int Completed,
+        int WorkerCount,
+        int TimedOut,
+        int MaxConcurrent,
+        int MaxAllowed,
+        TimeSpan Elapsed,
+        DateTime StartedAt,
+        string Summary,
+        bool UsedSemaphore);
 }

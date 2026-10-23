@@ -27,7 +27,9 @@ internal enum ComparisonType
     OneOf,
     NotOneOf,
     Regex,
-    NotRegex
+    NotRegex,
+    Fuzzy,
+    NotFuzzy
 }
 
 [DebuggerDisplay("{ToString(),nq}")]
@@ -60,10 +62,7 @@ internal record PropertyPathMetadata(IReadOnlyList<PropertyInfo> Properties, Typ
 /// </remarks>
 public class WhereClauseEvaluator : IWhereClauseService
 {
-    /// <summary>
-    /// Cap on a caller-supplied regex pattern, shared with <see cref="LyoParameterValidator.MaxValidationRegexLength" /> so both validation surfaces accept the same
-    /// patterns.
-    /// </summary>
+    /// <summary>Cap on a caller-supplied regex pattern, shared with <see cref="LyoParameterValidator.MaxValidationRegexLength" /> so both validation surfaces accept the same patterns.</summary>
     public const int MaxRegexPatternLength = LyoParameterValidator.MaxValidationRegexLength;
 
     /// <summary>
@@ -95,8 +94,8 @@ public class WhereClauseEvaluator : IWhereClauseService
 
     private static readonly MethodInfo RegexIsMatchMethod = typeof(Regex).GetMethod(nameof(Regex.IsMatch), [typeof(string), typeof(string)])!;
 
-    private static readonly MethodInfo RegexIsMatchWithTimeoutMethod =
-        typeof(Regex).GetMethod(nameof(Regex.IsMatch), [typeof(string), typeof(string), typeof(RegexOptions), typeof(TimeSpan)])!;
+    private static readonly MethodInfo RegexIsMatchWithTimeoutMethod = typeof(Regex).GetMethod(
+        nameof(Regex.IsMatch), [typeof(string), typeof(string), typeof(RegexOptions), typeof(TimeSpan)])!;
 
     private static readonly MethodInfo[] QueryableOrderMethods = typeof(Queryable).GetMethods(BindingFlags.Public | BindingFlags.Static)
         .Where(m => m.Name is "OrderBy" or "OrderByDescending" or "ThenBy" or "ThenByDescending")
@@ -106,6 +105,29 @@ public class WhereClauseEvaluator : IWhereClauseService
     private static readonly BoundedCache<string, object> MatcherCache = new(MaxCompiledArtifactCacheEntries);
     private static readonly BoundedCache<string, object?> EfPredicateCache = new(MaxCompiledArtifactCacheEntries);
     private static readonly BoundedCache<string, IReadOnlyList<string>> IncludePathCache = new(MaxCompiledArtifactCacheEntries);
+
+    /// <summary>
+    /// Operators that pass the current ordering through unchanged. Walking past them is what lets <c>query.OrderBy(x).AsNoTracking()</c> still be recognised as ordered;
+    /// inspecting only the outermost call reported it as unordered, so the next sort emitted <c>OrderBy</c> and silently discarded the first sort key.
+    /// </summary>
+    private static readonly HashSet<string> OrderPreservingQueryOperators = new(StringComparer.Ordinal) {
+        "AsNoTracking",
+        "AsNoTrackingWithIdentityResolution",
+        "AsTracking",
+        "AsSplitQuery",
+        "AsSingleQuery",
+        "IgnoreQueryFilters",
+        "IgnoreAutoIncludes",
+        "Include",
+        "ThenInclude",
+        "TagWith",
+        "TagWithCallSite",
+        "Where",
+        "Cast",
+        "OfType",
+        "Skip",
+        "Take"
+    };
 
     /// <summary>Converts filter literals to the CLR type of the compared property.</summary>
     protected readonly IValueConversionService ValueConversion;
@@ -172,8 +194,11 @@ public class WhereClauseEvaluator : IWhereClauseService
         using var timer = _metrics.StartTimer(Constants.Metrics.ApplyWhereClauseDuration, EntityTypeTag<TEntity>.Tags);
         try {
             var expression = GetEfPredicate<TEntity>(queryNode, includeSubClauses);
-            if (expression != null && source.Provider is EnumerableQuery)
-                expression = (Expression<Func<TEntity, bool>>)InMemoryEvaluationRewriter.Instance.Visit(expression);
+            if (expression != null) {
+                expression = RewriteQueryablePredicate(expression, source.Provider);
+                if (source.Provider is EnumerableQuery)
+                    expression = (Expression<Func<TEntity, bool>>)InMemoryEvaluationRewriter.Instance.Visit(expression);
+            }
 
             var result = expression != null ? source.Where(expression) : source;
             _metrics.IncrementCounter(Constants.Metrics.ApplyWhereClauseSuccess, 1, EntityTypeTag<TEntity>.Tags);
@@ -270,9 +295,19 @@ public class WhereClauseEvaluator : IWhereClauseService
         }
     }
 
+    /// <summary>
+    /// Last chance to reshape the cached predicate for a specific <see cref="IQueryProvider" />. The default returns <paramref name="expression" /> unchanged. Postgres rewrites
+    /// <see cref="FuzzyMatch.Similarity" /> to <c>EF.Functions.TrigramsSimilarity</c> so Npgsql can emit SQL <c>similarity()</c>.
+    /// </summary>
+    /// <typeparam name="TEntity">Entity type.</typeparam>
+    /// <param name="expression">Predicate produced by <see cref="GetEfPredicate{TEntity}" />.</param>
+    /// <param name="provider">LINQ provider that will run the predicate.</param>
+    /// <returns>The predicate to pass to <c>Queryable.Where</c>.</returns>
+    protected virtual Expression<Func<TEntity, bool>> RewriteQueryablePredicate<TEntity>(Expression<Func<TEntity, bool>> expression, IQueryProvider provider) => expression;
+
     /// <remarks>
-    /// Every node resolves through the memoized matcher. Building and compiling a fresh delegate per node made an explain cost one JIT compilation per node plus another for
-    /// each sub-clause parent, so a 50-node tree paid 50+ compilations on every call.
+    /// Every node resolves through the memoized matcher. Building and compiling a fresh delegate per node made an explain cost one JIT compilation per node plus another for each
+    /// sub-clause parent, so a 50-node tree paid 50+ compilations on every call.
     /// </remarks>
     private WhereClauseExplainNode BuildExplainNode<TEntity>(TEntity entity, Models.Common.WhereClause node, string path, int depth)
     {
@@ -495,8 +530,8 @@ public class WhereClauseEvaluator : IWhereClauseService
     /// <param name="parameter">Lambda parameter the property paths are rooted at.</param>
     /// <param name="includeSubClauses">Whether nested sub-clauses contribute to the expression.</param>
     /// <param name="depth">
-    /// Current recursion depth. A deeply nested clause would otherwise overflow the stack, which is process-fatal and cannot be caught, so the walk refuses to descend past
-    /// <see cref="WhereClauseHelpers.MaxClauseDepth" />.
+    /// Current recursion depth. A deeply nested clause would otherwise overflow the stack, which is process-fatal and cannot be caught, so the walk refuses to descend
+    /// past <see cref="WhereClauseHelpers.MaxClauseDepth" />.
     /// </param>
     private Expression BuildWhereClauseExpression<TEntity>(Models.Common.WhereClause node, ParameterExpression parameter, bool includeSubClauses, int depth)
     {
@@ -515,9 +550,9 @@ public class WhereClauseEvaluator : IWhereClauseService
     /// short-circuits a trivial regex.
     /// </summary>
     /// <remarks>
-    /// Both the scalar path and the collection-element paths resolve here. They used to differ: the OR-group collection branch parsed against the property type rather than
-    /// the operator-adjusted parse type, so a <c>Contains</c> or a rewritten regex against a Guid collection element tried to read the fragment as a Guid and threw, while the
-    /// same filter outside an OR group worked.
+    /// Both the scalar path and the collection-element paths resolve here. They used to differ: the OR-group collection branch parsed against the property type rather than the
+    /// operator-adjusted parse type, so a <c>Contains</c> or a rewritten regex against a Guid collection element tried to read the fragment as a Guid and threw, while the same filter
+    /// outside an OR group worked.
     /// </remarks>
     /// <param name="comparison">The comparison operator.</param>
     /// <param name="rawValue">The unparsed filter literal.</param>
@@ -525,13 +560,15 @@ public class WhereClauseEvaluator : IWhereClauseService
     /// <param name="propertyType">CLR type of the compared property.</param>
     /// <param name="target">Expression producing the property value.</param>
     /// <param name="parameter">Lambda parameter the comparison is built against.</param>
+    /// <param name="threshold">Optional Fuzzy / NotFuzzy cutoff; omitted uses <see cref="ConditionClause.DefaultFuzzyThreshold" />.</param>
     private Expression BuildLeafComparison(
         ComparisonOperatorEnum comparison,
         object? rawValue,
         string fieldName,
         Type propertyType,
         Expression target,
-        ParameterExpression parameter)
+        ParameterExpression parameter,
+        double? threshold = null)
     {
         ValidateNullComparison(comparison, propertyType, rawValue, fieldName);
         var parseType = GetFilterValueParseType(propertyType, comparison);
@@ -540,7 +577,7 @@ public class WhereClauseEvaluator : IWhereClauseService
             return Expression.Constant(true);
 
         var valueExpr = GetRhsConstantExpression(parsedSingle, parseType, target, comparison);
-        return BuildComparisonExpressionCached(comparison, propertyType, target, valueExpr, parsedMultiple, parameter);
+        return BuildComparisonExpressionCached(comparison, propertyType, target, valueExpr, parsedMultiple, parameter, threshold);
     }
 
     private static bool IsTrivialRegex(string? pattern)
@@ -609,18 +646,20 @@ public class WhereClauseEvaluator : IWhereClauseService
             var elementType = pathMetadata.CollectionElementType ?? SharedEntityMetadataCache.GetCollectionElementType(collectionExpr.Type);
             var countMethod = GetEnumerableCountMethod(elementType);
             var countExpression = Expression.Call(countMethod, collectionExpr);
-            return BuildLeafComparison(condition.Comparison, condition.Value, condition.Field, typeof(int), countExpression, parameter);
+            return BuildLeafComparison(condition.Comparison, condition.Value, condition.Field, typeof(int), countExpression, parameter, condition.Threshold);
         }
 
         if (pathMetadata.CollectionPropertyIndex != null) {
             var (collectionExpr, elementParam, elementPropExpr, elementType) = BuildCollectionElementAccess(pathMetadata, parameter);
-            var comparisonElement = BuildLeafComparison(condition.Comparison, condition.Value, condition.Field, pathMetadata.FinalType, elementPropExpr, elementParam);
+            var comparisonElement = BuildLeafComparison(
+                condition.Comparison, condition.Value, condition.Field, pathMetadata.FinalType, elementPropExpr, elementParam, condition.Threshold);
+
             return BuildAnyCall(collectionExpr, elementType, comparisonElement, elementParam);
         }
 
         var property = GetPropertyExpression<TEntity>(condition.Field, parameter);
         var (targetExpression, propertyType) = AdjustForCollectionCached(property);
-        var conditionExpr = BuildLeafComparison(condition.Comparison, condition.Value, condition.Field, propertyType, targetExpression, parameter);
+        var conditionExpr = BuildLeafComparison(condition.Comparison, condition.Value, condition.Field, propertyType, targetExpression, parameter, condition.Threshold);
         if (includeSubClauses && condition.SubClause != null)
             return Expression.AndAlso(conditionExpr, BuildWhereClauseExpression<TEntity>(condition.SubClause, parameter, includeSubClauses, depth + 1));
 
@@ -677,7 +716,7 @@ public class WhereClauseEvaluator : IWhereClauseService
                     var (collectionExpr, elementParam, elementPropExpr, elementType) = BuildCollectionElementAccess(meta, parameter);
                     Expression? innerOr = null;
                     foreach (var cond in nodes) {
-                        var compExpr = BuildLeafComparison(cond.Comparison, cond.Value, cond.Field, meta.FinalType, elementPropExpr, elementParam);
+                        var compExpr = BuildLeafComparison(cond.Comparison, cond.Value, cond.Field, meta.FinalType, elementPropExpr, elementParam, cond.Threshold);
                         innerOr = innerOr == null ? compExpr : Expression.OrElse(innerOr, compExpr);
                     }
 
@@ -738,7 +777,8 @@ public class WhereClauseEvaluator : IWhereClauseService
         Expression target,
         Expression value,
         IEnumerable? values,
-        ParameterExpression parameter)
+        ParameterExpression parameter,
+        double? threshold)
     {
         var cacheKey = $"{MetadataCacheKeys.ComparisonMetadataPrefix}{comparison}_{propertyType.FullName}";
         var metadata = SharedEntityMetadataCache.GetOrAddComparisonMetadata(cacheKey, () => CreateComparisonMetadata(comparison, propertyType));
@@ -750,6 +790,8 @@ public class WhereClauseEvaluator : IWhereClauseService
             ComparisonType.NotOneOf => BuildOneOfExpressionCached(propertyType, target, values, true),
             ComparisonType.Regex => BuildRegexComparison(target, value, false),
             ComparisonType.NotRegex => BuildRegexComparison(target, value, true),
+            ComparisonType.Fuzzy => BuildFuzzyComparison(target, value, ResolveFuzzyThreshold(threshold), false),
+            ComparisonType.NotFuzzy => BuildFuzzyComparison(target, value, ResolveFuzzyThreshold(threshold), true),
             var _ => throw new InvalidQueryException($"Comparison '{comparison}' is not supported for type '{propertyType.Name}'")
         };
     }
@@ -789,8 +831,8 @@ public class WhereClauseEvaluator : IWhereClauseService
     }
 
     /// <summary>
-    /// Emits <see cref="Regex.IsMatch(string,string)" />. The two-argument overload is deliberate: it is the form Npgsql translates to the <c>~</c> operator, so the pattern
-    /// runs in the database on the <see cref="IQueryable{T}" /> path. Predicates compiled for in-memory evaluation are rewritten to the timeout-bounded overload by
+    /// Emits <see cref="Regex.IsMatch(string,string)" />. The two-argument overload is deliberate: it is the form Npgsql translates to the <c>~</c> operator, so the pattern runs
+    /// in the database on the <see cref="IQueryable{T}" /> path. Predicates compiled for in-memory evaluation are rewritten to the timeout-bounded overload by
     /// <see cref="InMemoryEvaluationRewriter" />, because there the pattern runs in this process.
     /// </summary>
     protected virtual Expression BuildRegexComparison(Expression target, Expression value, bool negate)
@@ -803,6 +845,30 @@ public class WhereClauseEvaluator : IWhereClauseService
         var call = Expression.Call(RegexIsMatchMethod, targetAsString, value);
         var combined = Expression.AndAlso(notNull, call);
         return negate ? Expression.Not(combined) : combined;
+    }
+
+    /// <summary>
+    /// Emits <see cref="FuzzyMatch.Similarity(string,string)" /> compared against <paramref name="threshold" />. The CLR body matches pg_trgm Jaccard; a provider-specific
+    /// <see cref="RewriteQueryablePredicate{TEntity}" /> may replace the call with a translatable EF method for SQL.
+    /// </summary>
+    protected virtual Expression BuildFuzzyComparison(Expression target, Expression value, double threshold, bool negate)
+    {
+        var targetAsString = AsStringExpression(target);
+        var valueAsString = AsStringExpression(value);
+        var notNull = Expression.NotEqual(targetAsString, Expression.Constant(null, typeof(string)));
+        var similarity = Expression.Call(FuzzyMatch.SimilarityMethod, targetAsString, valueAsString);
+        var meets = Expression.GreaterThanOrEqual(similarity, Expression.Constant(threshold));
+        var combined = Expression.AndAlso(notNull, meets);
+        return negate ? Expression.Not(combined) : combined;
+    }
+
+    private static double ResolveFuzzyThreshold(double? threshold)
+    {
+        var resolved = threshold ?? ConditionClause.DefaultFuzzyThreshold;
+        if (double.IsNaN(resolved) || resolved is < 0 or > 1)
+            throw new InvalidQueryException($"Fuzzy threshold must be between 0 and 1, inclusive. Received '{resolved}'.");
+
+        return resolved;
     }
 
     /// <summary>
@@ -949,6 +1015,9 @@ public class WhereClauseEvaluator : IWhereClauseService
             var isCountPath = false;
             for (var i = 0; i < propertyParts.Length; i++) {
                 var part = propertyParts[i];
+                if (part.Contains('[') || part.Contains(']'))
+                    throw new InvalidQueryException($"Index is not valid in a filter ('{propertyName}').");
+
                 if (string.Equals(part, "Count", StringComparison.OrdinalIgnoreCase) && properties.Count > 0) {
                     var prevProp = properties[^1];
                     var prevType = prevProp.PropertyType;
@@ -1140,27 +1209,23 @@ public class WhereClauseEvaluator : IWhereClauseService
             ComparisonOperatorEnum.LessThan => new(ComparisonType.SimpleComparison, ExpressionType.LessThan),
             ComparisonOperatorEnum.LessThanOrEqual => new(ComparisonType.SimpleComparison, ExpressionType.LessThanOrEqual),
             ComparisonOperatorEnum.Contains when SupportsStringMethodComparisons(propertyType) => new(
-                ComparisonType.StringMethod, ToLowerMethod: StringToLowerMethod,
-                StringMethod: typeof(string).GetMethod(nameof(string.Contains), [typeof(string)])!),
+                ComparisonType.StringMethod, ToLowerMethod: StringToLowerMethod, StringMethod: typeof(string).GetMethod(nameof(string.Contains), [typeof(string)])!),
             ComparisonOperatorEnum.NotContains when SupportsStringMethodComparisons(propertyType) => new(
-                ComparisonType.NegatedStringMethod, ToLowerMethod: StringToLowerMethod,
-                StringMethod: typeof(string).GetMethod(nameof(string.Contains), [typeof(string)])!),
+                ComparisonType.NegatedStringMethod, ToLowerMethod: StringToLowerMethod, StringMethod: typeof(string).GetMethod(nameof(string.Contains), [typeof(string)])!),
             ComparisonOperatorEnum.StartsWith when SupportsStringMethodComparisons(propertyType) => new(
-                ComparisonType.StringMethod, ToLowerMethod: StringToLowerMethod,
-                StringMethod: typeof(string).GetMethod(nameof(string.StartsWith), [typeof(string)])!),
+                ComparisonType.StringMethod, ToLowerMethod: StringToLowerMethod, StringMethod: typeof(string).GetMethod(nameof(string.StartsWith), [typeof(string)])!),
             ComparisonOperatorEnum.EndsWith when SupportsStringMethodComparisons(propertyType) => new(
-                ComparisonType.StringMethod, ToLowerMethod: StringToLowerMethod,
-                StringMethod: typeof(string).GetMethod(nameof(string.EndsWith), [typeof(string)])!),
+                ComparisonType.StringMethod, ToLowerMethod: StringToLowerMethod, StringMethod: typeof(string).GetMethod(nameof(string.EndsWith), [typeof(string)])!),
             ComparisonOperatorEnum.NotStartsWith when SupportsStringMethodComparisons(propertyType) => new(
-                ComparisonType.NegatedStringMethod, ToLowerMethod: StringToLowerMethod,
-                StringMethod: typeof(string).GetMethod(nameof(string.StartsWith), [typeof(string)])!),
+                ComparisonType.NegatedStringMethod, ToLowerMethod: StringToLowerMethod, StringMethod: typeof(string).GetMethod(nameof(string.StartsWith), [typeof(string)])!),
             ComparisonOperatorEnum.NotEndsWith when SupportsStringMethodComparisons(propertyType) => new(
-                ComparisonType.NegatedStringMethod, ToLowerMethod: StringToLowerMethod,
-                StringMethod: typeof(string).GetMethod(nameof(string.EndsWith), [typeof(string)])!),
+                ComparisonType.NegatedStringMethod, ToLowerMethod: StringToLowerMethod, StringMethod: typeof(string).GetMethod(nameof(string.EndsWith), [typeof(string)])!),
             ComparisonOperatorEnum.In => new(ComparisonType.OneOf),
             ComparisonOperatorEnum.NotIn => new(ComparisonType.NotOneOf),
             ComparisonOperatorEnum.Regex when SupportsStringMethodComparisons(propertyType) => new(ComparisonType.Regex),
             ComparisonOperatorEnum.NotRegex when SupportsStringMethodComparisons(propertyType) => new(ComparisonType.NotRegex),
+            ComparisonOperatorEnum.Fuzzy when SupportsStringMethodComparisons(propertyType) => new(ComparisonType.Fuzzy),
+            ComparisonOperatorEnum.NotFuzzy when SupportsStringMethodComparisons(propertyType) => new(ComparisonType.NotFuzzy),
             var _ => throw new InvalidQueryException($"Comparison '{comparison}' is not supported for type '{propertyType.Name}'")
         };
 
@@ -1176,7 +1241,8 @@ public class WhereClauseEvaluator : IWhereClauseService
 
     private static bool IsStringOrRegexComparison(ComparisonOperatorEnum comparison)
         => comparison is ComparisonOperatorEnum.Contains or ComparisonOperatorEnum.NotContains or ComparisonOperatorEnum.StartsWith or ComparisonOperatorEnum.EndsWith
-            or ComparisonOperatorEnum.NotStartsWith or ComparisonOperatorEnum.NotEndsWith or ComparisonOperatorEnum.Regex or ComparisonOperatorEnum.NotRegex;
+            or ComparisonOperatorEnum.NotStartsWith or ComparisonOperatorEnum.NotEndsWith or ComparisonOperatorEnum.Regex or ComparisonOperatorEnum.NotRegex
+            or ComparisonOperatorEnum.Fuzzy or ComparisonOperatorEnum.NotFuzzy;
 
     /// <summary>Types that support Contains/StartsWith/EndsWith/Regex using string semantics (including Guid, matched via string representation).</summary>
     private static bool SupportsStringMethodComparisons(Type propertyType) => propertyType == typeof(string) || IsGuidLikeType(propertyType);
@@ -1199,29 +1265,6 @@ public class WhereClauseEvaluator : IWhereClauseService
     private static string GetOrderingMethodName<T>(IQueryable<T> source, SortDirection sortDirection)
         => !IsQueryableOrdered(source) ? sortDirection == SortDirection.Desc ? "OrderByDescending" : "OrderBy" :
             sortDirection == SortDirection.Desc ? "ThenByDescending" : "ThenBy";
-
-    /// <summary>
-    /// Operators that pass the current ordering through unchanged. Walking past them is what lets <c>query.OrderBy(x).AsNoTracking()</c> still be recognised as ordered;
-    /// inspecting only the outermost call reported it as unordered, so the next sort emitted <c>OrderBy</c> and silently discarded the first sort key.
-    /// </summary>
-    private static readonly HashSet<string> OrderPreservingQueryOperators = new(StringComparer.Ordinal) {
-        "AsNoTracking",
-        "AsNoTrackingWithIdentityResolution",
-        "AsTracking",
-        "AsSplitQuery",
-        "AsSingleQuery",
-        "IgnoreQueryFilters",
-        "IgnoreAutoIncludes",
-        "Include",
-        "ThenInclude",
-        "TagWith",
-        "TagWithCallSite",
-        "Where",
-        "Cast",
-        "OfType",
-        "Skip",
-        "Take"
-    };
 
     /// <summary>
     /// Whether an ordering has already been established on <paramref name="source" />. Cannot use <c>source is IOrderedQueryable&lt;T&gt;</c>: EF Core's root queryable
@@ -1391,8 +1434,8 @@ public class WhereClauseEvaluator : IWhereClauseService
 
     /// <summary>
     /// Retargets the expression tree from "translatable to SQL" to "safe and correct in this process". Two swaps: <see cref="Regex.IsMatch(string,string)" /> becomes the
-    /// timeout-bounded overload, because a pattern like <c>^(a+)+$</c> backtracks catastrophically and would otherwise pin a core with no way to interrupt it; and
-    /// <c>ToLower()</c> becomes <see cref="string.ToLowerInvariant" />, because the culture-sensitive fold makes matching depend on the server's locale.
+    /// timeout-bounded overload, because a pattern like <c>^(a+)+$</c> backtracks catastrophically and would otherwise pin a core with no way to interrupt it; and <c>ToLower()</c>
+    /// becomes <see cref="string.ToLowerInvariant" />, because the culture-sensitive fold makes matching depend on the server's locale.
     /// </summary>
     private sealed class InMemoryEvaluationRewriter : ExpressionVisitor
     {

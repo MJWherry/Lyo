@@ -3,8 +3,8 @@ using System.Diagnostics;
 namespace Lyo.Parameters;
 
 /// <summary>
-/// Declared shape of one parameter, detached from whichever DTO or entity it was read from so <see cref="LyoParameterValidator" /> can serve Job, Reporting, and anything else
-/// that grows parameters later.
+/// Declared shape of one parameter, detached from whichever DTO or entity it was read from so <see cref="LyoParameterValidator" /> can serve Job, Reporting, and anything
+/// else that grows parameters later.
 /// </summary>
 /// <param name="Key">Parameter name, matched case-insensitively against supplied values.</param>
 /// <param name="Type">CLR <see cref="System.Type.FullName" /> the supplied value must parse as.</param>

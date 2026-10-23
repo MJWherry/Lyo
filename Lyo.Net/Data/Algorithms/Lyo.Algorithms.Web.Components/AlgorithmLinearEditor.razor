@@ -1,0 +1,20 @@
+@if (Draft is not null) {
+    <MudGrid>
+        <MudItem xs="6"><MudTextField @bind-Value="Draft.Input" @bind-Value:after="Notify" Label="Input identifier" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"/></MudItem>
+        <MudItem xs="6"><MudSwitch @bind-Value="Draft.Clamp" @bind-Value:after="Notify" Label="Clamp" Color="Color.Primary"/></MudItem>
+        <MudItem xs="6"><MudTextField @bind-Value="Draft.InputMin" @bind-Value:after="Notify" Label="Input min" Variant="Variant.Outlined" Margin="Margin.Dense"/></MudItem>
+        <MudItem xs="6"><MudTextField @bind-Value="Draft.InputMax" @bind-Value:after="Notify" Label="Input max" Variant="Variant.Outlined" Margin="Margin.Dense"/></MudItem>
+        <MudItem xs="6"><MudTextField @bind-Value="Draft.PointsMin" @bind-Value:after="Notify" Label="Result at min" Variant="Variant.Outlined" Margin="Margin.Dense"/></MudItem>
+        <MudItem xs="6"><MudTextField @bind-Value="Draft.PointsMax" @bind-Value:after="Notify" Label="Result at max" Variant="Variant.Outlined" Margin="Margin.Dense"/></MudItem>
+    </MudGrid>
+}
+
+@code {
+    [Parameter]
+    public AlgorithmDraft? Draft { get; set; }
+
+    [Parameter]
+    public EventCallback Changed { get; set; }
+
+    private Task Notify() => Changed.InvokeAsync();
+}

@@ -1,12 +1,14 @@
 @namespace Lyo.Web.Host
-@using Lyo.Web.Components
-@using Lyo.Web.Primitives
 
 @if (_initialized) {
     <MudThemeProvider Theme="@(Theme ?? LyoThemes.Default)" IsDarkMode="@_isDarkMode"/>
+
     <MudPopoverProvider/>
+
     <MudDialogProvider/>
+
     <MudSnackbarProvider/>
+
     <MudLayout>
         <MudDrawer @bind-Open="_drawerOpen"
                    Elevation="1"

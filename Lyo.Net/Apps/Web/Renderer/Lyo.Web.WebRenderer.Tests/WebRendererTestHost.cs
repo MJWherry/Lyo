@@ -6,12 +6,12 @@ namespace Lyo.Web.WebRenderer.Tests;
 
 internal static class WebRendererTestHost
 {
-    public static WebRendererService CreateService()
+    public static WebRendererService CreateService(WebRenderOptions? options = null)
     {
         var services = new ServiceCollection();
         services.AddLogging();
         var provider = services.BuildServiceProvider();
         var htmlRenderer = new HtmlRenderer(provider, provider.GetRequiredService<ILoggerFactory>());
-        return new WebRendererService(htmlRenderer);
+        return new(htmlRenderer, provider.GetRequiredService<ILogger<WebRendererService>>(), options: options);
     }
 }

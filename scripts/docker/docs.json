@@ -26,7 +26,7 @@
     },
     {
       "cmd": "python3 scripts/docker/run_workbench.py up",
-      "blurb": "Build and start TestApi, TestGateway, job examples, Postgres, RabbitMQ, Redis (detached)"
+      "blurb": "Build and start TestApi, TestGateway, job examples, Postgres, RabbitMQ, Redis, and Prometheus (detached)"
     },
     {
       "cmd": "python3 scripts/docker/run_workbench.py down",

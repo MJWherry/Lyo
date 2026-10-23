@@ -89,7 +89,6 @@ public sealed record SocialPlatformInfo(string Name, string Slug, string Descrip
     static SocialPlatformInfo()
     {
         var fields = typeof(SocialPlatformInfo).PublicStaticFields<SocialPlatformInfo>();
-
         foreach (var platform in fields) {
             if (platform == Unknown)
                 continue;

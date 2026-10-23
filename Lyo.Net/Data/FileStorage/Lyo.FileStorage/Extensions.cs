@@ -7,12 +7,12 @@ using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Models;
 using Lyo.FileStorage.Multipart;
 using Lyo.FileStorage.OperationContext;
+using Lyo.FileStorage.Policy;
 using Lyo.IO.Temp;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.FileStorage;
 
@@ -82,9 +82,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>
-        /// Registers a keyed file storage alias that reuses an existing keyed file storage service and registers encryption via <paramref name="configEncryptionService" />.
-        /// </summary>
+        /// <summary>Registers a keyed file storage alias that reuses an existing keyed file storage service and registers encryption via <paramref name="configEncryptionService" />.</summary>
         /// <param name="keyName">Key for the alias</param>
         /// <param name="fileStoreKeyName">Key of the existing file storage implementation</param>
         /// <param name="configEncryptionService">Factory that builds the encryption service (registered under <paramref name="keyName" />)</param>
@@ -188,7 +186,8 @@ public static class Extensions
                         var encryptionService = provider.GetKeyedService<ITwoKeyEncryptionService>(encryptionServiceKeyName);
                         var metadataService = configureMetadataStore(provider);
                         var metrics = options.EnableMetrics ? provider.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
-                        return new(options, loggerFactory, compressionService, encryptionService, metadataService, metrics);
+                        return new(
+                            options, loggerFactory, compressionService, encryptionService, metadataService, metrics, fileTypeSniffer: provider.GetService<IFileTypeSniffer>());
                     });
 
                 services.AddKeyedScoped<IFileStorageService>(keyName, (provider, _) => provider.GetRequiredKeyedService<LocalFileStorageService>(keyName));
@@ -198,8 +197,8 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Registers a keyed local file storage service. Options come from <paramref name="config" />, encryption from <paramref name="configEncryptionService" />, and metadata
-        /// from <paramref name="configureMetadataStore" />.
+        /// Registers a keyed local file storage service. Options come from <paramref name="config" />, encryption from <paramref name="configEncryptionService" />, and metadata from
+        /// <paramref name="configureMetadataStore" />.
         /// </summary>
         /// <param name="keyName">Key for the file storage service</param>
         /// <param name="config">Callback that fills <see cref="DiskFileStorageOptions" /></param>
@@ -235,7 +234,8 @@ public static class Extensions
                         var encryptionService = provider.GetKeyedService<ITwoKeyEncryptionService>(keyName);
                         var metadataService = configureMetadataStore(provider);
                         var metrics = options.EnableMetrics ? provider.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
-                        return new(options, loggerFactory, compressionService, encryptionService, metadataService, metrics);
+                        return new(
+                            options, loggerFactory, compressionService, encryptionService, metadataService, metrics, fileTypeSniffer: provider.GetService<IFileTypeSniffer>());
                     });
 
                 services.AddKeyedScoped<IFileStorageService>(keyName, (provider, _) => provider.GetRequiredKeyedService<LocalFileStorageService>(keyName));
@@ -249,7 +249,7 @@ public static class Extensions
         /// <paramref name="configureMetadataStore" />.
         /// </summary>
         /// <param name="keyName">Key for the file storage service</param>
-        /// <param name="configSectionName">Configuration section name (for example <c>LocalFileStorageService</c>)</param>
+        /// <param name="configSectionName">Configuration section name (for example <c>DiskFileStorage</c>)</param>
         /// <param name="configureMetadataStore">Factory that builds the metadata store</param>
         /// <param name="encryptionServiceKeyName">Key of the existing encryption service</param>
         /// <returns>The same collection, for chaining</returns>
@@ -278,7 +278,8 @@ public static class Extensions
                         var encryptionService = provider.GetKeyedService<ITwoKeyEncryptionService>(encryptionServiceKeyName);
                         var metadataService = configureMetadataStore(provider);
                         var metrics = options.EnableMetrics ? provider.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
-                        return new(options, loggerFactory, compressionService, encryptionService, metadataService, metrics);
+                        return new(
+                            options, loggerFactory, compressionService, encryptionService, metadataService, metrics, fileTypeSniffer: provider.GetService<IFileTypeSniffer>());
                     });
 
                 services.AddKeyedScoped<IFileStorageService>(keyName, (provider, _) => provider.GetRequiredKeyedService<LocalFileStorageService>(keyName));
@@ -292,7 +293,7 @@ public static class Extensions
         /// metadata from <paramref name="configureMetadataStore" />.
         /// </summary>
         /// <param name="keyName">Key for the file storage service</param>
-        /// <param name="configSectionName">Configuration section name (for example <c>LocalFileStorageService</c>)</param>
+        /// <param name="configSectionName">Configuration section name (for example <c>DiskFileStorage</c>)</param>
         /// <param name="configureMetadataStore">Factory that builds the metadata store</param>
         /// <param name="configEncryptionService">Factory that builds the encryption service (registered under <paramref name="keyName" />)</param>
         /// <returns>The same collection, for chaining</returns>
@@ -323,7 +324,8 @@ public static class Extensions
                         var encryptionService = provider.GetKeyedService<ITwoKeyEncryptionService>(keyName);
                         var metadataService = configureMetadataStore(provider);
                         var metrics = options.EnableMetrics ? provider.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
-                        return new(options, loggerFactory, compressionService, encryptionService, metadataService, metrics);
+                        return new(
+                            options, loggerFactory, compressionService, encryptionService, metadataService, metrics, fileTypeSniffer: provider.GetService<IFileTypeSniffer>());
                     });
 
                 services.AddKeyedScoped<IFileStorageService>(keyName, (provider, _) => provider.GetRequiredKeyedService<LocalFileStorageService>(keyName));
@@ -359,16 +361,13 @@ public static class Extensions
         }
 
         /// <summary>Binds <see cref="FileStorageArchiveOptions" /> from configuration and registers <see cref="IIOTempService" /> when it is not already present.</summary>
-        public IServiceCollection AddFileStorageArchiveServiceFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = FileStorageArchiveOptions.SectionName)
+        public IServiceCollection AddFileStorageArchiveServiceFromConfiguration(IConfiguration configuration, string configSectionName = FileStorageArchiveOptions.SectionName)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new FileStorageArchiveOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddFileStorageArchiveService(options);
         }
 
@@ -387,7 +386,8 @@ public static class Extensions
 
             if (!services.Any(s => s.ServiceKey != null && s.ServiceKey.Equals(keyName) && s.ServiceType == typeof(IFileStorageArchiveService))) {
                 services.AddKeyedScoped<IFileStorageArchiveService>(
-                    keyName, (provider, _) => new FileStorageArchiveService(
+                    keyName,
+                    (provider, _) => new FileStorageArchiveService(
                         provider.GetRequiredKeyedService<IFileStorageService>(keyName), provider.GetRequiredService<IIOTempService>(),
                         provider.GetRequiredService<FileStorageArchiveOptions>(), provider.GetService<ILogger<FileStorageArchiveService>>()));
             }
@@ -408,7 +408,6 @@ public static class Extensions
         {
             var configuration = provider.GetRequiredService<IConfiguration>();
             var options = new DiskFileStorageOptions();
-            var lf = provider.GetService<ILoggerFactory>();
             foreach (var name in OrderedSectionCandidates(preferredSection)) {
                 var section = configuration.GetSection(name);
                 if (!section.Exists())
@@ -416,13 +415,6 @@ public static class Extensions
 
                 section.Bind(options);
                 options.Validate();
-                if (string.Equals(name, DiskFileStorageOptions.LegacySectionName, StringComparison.Ordinal)) {
-                    (lf ?? NullLoggerFactory.Instance).CreateLogger("Lyo.FileStorage.Disk")
-                        .LogWarning(
-                            "Disk file storage options were loaded from legacy configuration section [{Legacy}]; migrate appsettings to [{Current}].",
-                            DiskFileStorageOptions.LegacySectionName, DiskFileStorageOptions.SectionName);
-                }
-
                 return options;
             }
 
@@ -437,9 +429,6 @@ public static class Extensions
 
             if (!string.Equals(preferredSection, DiskFileStorageOptions.SectionName, StringComparison.Ordinal))
                 yield return DiskFileStorageOptions.SectionName;
-
-            if (!string.Equals(preferredSection, DiskFileStorageOptions.LegacySectionName, StringComparison.Ordinal))
-                yield return DiskFileStorageOptions.LegacySectionName;
         }
     }
 }

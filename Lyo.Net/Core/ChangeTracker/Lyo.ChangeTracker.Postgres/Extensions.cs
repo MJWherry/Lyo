@@ -1,11 +1,11 @@
 using Lyo.ChangeTracker.Postgres.Database;
-using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
 using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace Lyo.ChangeTracker.Postgres;
 
 /// <summary>DI helpers that register PostgreSQL change tracking.</summary>
@@ -42,7 +42,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresChangeTrackerOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddChangeTrackerDbContextFactory(options);
         }
 
@@ -52,7 +51,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPostgresDbContextFactory<ChangeTrackerDbContext, PostgresChangeTrackerOptions>(options);
-
             return services;
         }
 
@@ -74,7 +72,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresChangeTrackerOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddPostgresChangeTracker(options);
         }
 

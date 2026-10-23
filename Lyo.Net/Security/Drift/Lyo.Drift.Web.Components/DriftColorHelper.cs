@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace Lyo.Drift.Web.Components;
 
 /// <summary>MudBlazor chip colors and icons for Drift instance, snapshot, diff, and change vocabularies.</summary>
@@ -26,20 +28,20 @@ public static class DriftColorHelper
             var _ => Icons.Material.Filled.Help
         };
 
-    /// <summary>Color for a stored snapshot kind.</summary>
-    public static Color ForSnapshotKind(DriftSnapshotKind kind)
+    /// <summary>Identity hue for a stored snapshot kind.</summary>
+    public static LyoChipHue? ForSnapshotKind(DriftSnapshotKind kind)
         => kind switch {
-            DriftSnapshotKind.FileTree => Color.Info,
-            DriftSnapshotKind.SystemInfo => Color.Primary,
-            var _ => Color.Default
+            DriftSnapshotKind.FileTree => LyoChipHue.Teal,
+            DriftSnapshotKind.SystemInfo => LyoChipHue.Indigo,
+            var _ => null
         };
 
-    /// <summary>Color for who computed a stored diff.</summary>
-    public static Color ForDiffSource(DriftDiffSource source)
+    /// <summary>Identity hue for who computed a stored diff.</summary>
+    public static LyoChipHue? ForDiffSource(DriftDiffSource source)
         => source switch {
-            DriftDiffSource.Agent => Color.Info,
-            DriftDiffSource.Server => Color.Primary,
-            var _ => Color.Default
+            DriftDiffSource.Agent => LyoChipHue.Cyan,
+            DriftDiffSource.Server => LyoChipHue.Violet,
+            var _ => null
         };
 
     /// <summary>Color for a persistable file-system change kind.</summary>
@@ -60,7 +62,7 @@ public static class DriftColorHelper
         return value switch {
             Guid g => g,
             string s when Guid.TryParse(s, out var parsed) => parsed,
-            System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.String } el when Guid.TryParse(el.GetString(), out var fromJson) => fromJson,
+            JsonElement { ValueKind: JsonValueKind.String } el when Guid.TryParse(el.GetString(), out var fromJson) => fromJson,
             var _ => null
         };
     }

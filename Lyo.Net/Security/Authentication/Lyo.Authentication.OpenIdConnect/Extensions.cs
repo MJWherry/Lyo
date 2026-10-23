@@ -1,14 +1,15 @@
 using Lyo.Authentication.OpenIdConnect.Client;
 using Lyo.Authentication.OpenIdConnect.Coordinator;
 using Lyo.Authentication.OpenIdConnect.Discovery;
-using Lyo.Authentication.OpenIdConnect.Handoff;
 using Lyo.Authentication.OpenIdConnect.Pkce;
+using Lyo.Authentication.OpenIdConnect.Protocol;
 using Lyo.Authentication.OpenIdConnect.Provider;
+using Lyo.Authentication.Sso;
+using Lyo.Authentication.Sso.Protocol;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 
 namespace Lyo.Authentication.OpenIdConnect;
 
@@ -19,18 +20,14 @@ public static class Extensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers the OIDC base: discovery cache, JWKS resolver, PKCE state protector, authorize URL builder, token-exchange client, id_token validator, provider registry,
-        /// <see cref="DefaultExternalLoginCoordinator" />, <see cref="OpenIdConnectBffOptions" />, and in-memory <see cref="IHandoffCodeStore" />. Provider profiles (Google,
-        /// Keycloak) layer on top.
+        /// Registers the OpenID Connect protocol on top of <c>AddLyoSso</c>: discovery, JWKS, PKCE, token exchange, id_token validation, and <see cref="OidcSsoProtocol" />. Does not
+        /// bind BFF options; <c>AddLyoSso(IConfiguration)</c> does that.
         /// </summary>
         public IServiceCollection AddLyoOpenIdConnect()
         {
             ArgumentHelpers.ThrowIfNull(services);
+            services.AddLyoSso();
             services.AddDataProtection();
-            services.AddOptions<ExternalLoginOptions>();
-            services.AddOptions<OpenIdConnectBffOptions>();
-            services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<ExternalLoginOptions>>().Value);
-            services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<OpenIdConnectBffOptions>>().Value);
             services.AddHttpClient<OidcDiscoveryCache>();
             services.AddHttpClient<OidcJwksResolver>();
             services.AddHttpClient<OidcTokenExchangeClient>();
@@ -38,22 +35,19 @@ public static class Extensions
             services.AddSingleton<OidcAuthorizationUrlBuilder>();
             services.AddSingleton<OidcIdTokenValidator>();
             services.AddSingleton<OpenIdConnectProviderRegistry>();
+            services.AddSingleton<OidcSsoProtocol>();
+            services.TryAddEnumerable(ServiceDescriptor.Singleton<ISsoProtocol, OidcSsoProtocol>(sp => sp.GetRequiredService<OidcSsoProtocol>()));
             services.AddSingleton<IExternalLoginCoordinator, DefaultExternalLoginCoordinator>();
-            services.TryAddSingleton<IHandoffCodeStore, InMemoryHandoffCodeStore>();
             return services;
         }
 
-        /// <summary>Like <see cref="AddLyoOpenIdConnect()" /> plus binding <see cref="ExternalLoginOptions" /> and <see cref="OpenIdConnectBffOptions" /> from config.</summary>
-        public IServiceCollection AddLyoOpenIdConnect(
-            IConfiguration configuration,
-            string externalLoginSectionName = ExternalLoginOptions.SectionName,
-            string bffSectionName = OpenIdConnectBffOptions.SectionName)
+        /// <summary>Like <see cref="AddLyoOpenIdConnect()" />. BFF and external-login options are bound by <see cref="Sso.Extensions" />.</summary>
+        public IServiceCollection AddLyoOpenIdConnect(IConfiguration configuration)
         {
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(configuration);
+            services.AddLyoSso(configuration);
             services.AddLyoOpenIdConnect();
-            services.Configure<ExternalLoginOptions>(o => configuration.GetSection(externalLoginSectionName).Bind(o));
-            services.Configure<OpenIdConnectBffOptions>(o => configuration.GetSection(bffSectionName).Bind(o));
             return services;
         }
     }

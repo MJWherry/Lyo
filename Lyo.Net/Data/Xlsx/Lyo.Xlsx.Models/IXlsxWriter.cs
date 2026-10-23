@@ -148,8 +148,11 @@ public interface IXlsxWriter
         CancellationToken ct = default);
 
     /// <summary>Asynchronously serializes a nested dictionary to XLSX bytes.</summary>
-    Task<byte[]> ExportToXlsxBytesFromDictionaryAsync(IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data, bool useHeaderRow = true, bool useFooterRow =
- false, CancellationToken ct = default);
+    Task<byte[]> ExportToXlsxBytesFromDictionaryAsync(
+        IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> data,
+        bool useHeaderRow = true,
+        bool useFooterRow = false,
+        CancellationToken ct = default);
 
     /// <summary>Asynchronously exports a Lyo data table to <paramref name="xlsxFilePath" />.</summary>
     Task ExportToXlsxFromDataTableAsync(DataTable.Models.DataTable dataTable, string xlsxFilePath, CancellationToken ct = default);

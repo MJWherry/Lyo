@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 
 namespace Lyo.Authentication.Web.Components.Wasm;
@@ -6,6 +7,7 @@ namespace Lyo.Authentication.Web.Components.Wasm;
 /// Persisted shape of a WASM auth session in <c>Blazored.LocalStorage</c>. Mirrors the snake-case JSON the API returns from <c>/auth/handoff/exchange</c> and
 /// <c>/auth/refresh</c>.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record WasmAuthPersistedSession(
     [property: JsonPropertyName("access_token")]
     string AccessToken,
@@ -14,4 +16,9 @@ public sealed record WasmAuthPersistedSession(
     [property: JsonPropertyName("access_token_expires_at")]
     DateTime AccessTokenExpiresAt,
     [property: JsonPropertyName("refresh_token_expires_at")]
-    DateTime? RefreshTokenExpiresAt = null);
+    DateTime? RefreshTokenExpiresAt = null)
+{
+    /// <summary>Token expiry times. Access and refresh token values are omitted.</summary>
+    public override string ToString()
+        => $"AccessExp={AccessTokenExpiresAt:O} RefreshExp={RefreshTokenExpiresAt:O} AccessSet={AccessToken.Length > 0} RefreshSet={RefreshToken != null}";
+}

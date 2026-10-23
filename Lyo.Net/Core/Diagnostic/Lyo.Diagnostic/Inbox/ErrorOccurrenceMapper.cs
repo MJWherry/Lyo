@@ -15,10 +15,7 @@ public static class ErrorOccurrenceMapper
     /// <summary>Maximum breadcrumbs copied into <see cref="ErrorOccurrenceRecord.BreadcrumbsSnapshot" />.</summary>
     public const int DefaultMaxBreadcrumbsInSnapshot = 50;
 
-    /// <summary>
-    /// Builds a record from a diagnostic context. When <paramref name="sanitiser" /> is provided, crash site and exception message come from the
-    /// sanitised trace.
-    /// </summary>
+    /// <summary>Builds a record from a diagnostic context. When <paramref name="sanitiser" /> is provided, crash site and exception message come from the sanitised trace.</summary>
     public static ErrorOccurrenceRecord FromDiagnosticContext(
         DiagnosticContext context,
         IReadOnlyList<Breadcrumb>? breadcrumbs = null,

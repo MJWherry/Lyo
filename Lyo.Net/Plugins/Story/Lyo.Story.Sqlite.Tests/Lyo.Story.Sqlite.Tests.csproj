@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\Lyo.Story.Sqlite\Lyo.Story.Sqlite.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Include="..\test-shared\StoryStoreContractTests.cs" Link="StoryStoreContractTests.cs"/>
+    </ItemGroup>
+
+</Project>

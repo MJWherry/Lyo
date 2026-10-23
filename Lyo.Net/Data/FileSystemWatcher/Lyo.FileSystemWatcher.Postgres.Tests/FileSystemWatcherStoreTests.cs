@@ -14,17 +14,16 @@ public sealed class FileSystemWatcherStoreTests
     [Fact]
     public async Task SaveSnapshot_ThenGetLatest_RoundTripsTree()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var store = _fixture.ServiceProvider.GetRequiredService<IFileSystemWatcherStore>();
-        var watchId = await store.CreateWatchAsync("/tmp/watch", new FileSystemWatchOptionsDto { IncludeSubdirectories = true }, ct);
+        var watchId = await store.CreateWatchAsync("/tmp/watch", new() { IncludeSubdirectories = true }, ct);
         var tree = new FileSystemSnapshotTreeDto {
             RootPath = "/tmp/watch",
             PathComparison = nameof(StringComparison.OrdinalIgnoreCase),
             FileCount = 1,
-            Root = new() {
-                Files = { ["a.txt"] = new() { Path = "a.txt", FileSize = 4, Hash = "abcd" } }
-            }
+            Root = new() { Files = { ["a.txt"] = new() { Path = "a.txt", FileSize = 4, Hash = "abcd" } } }
         };
+
         var snapshotId = await store.SaveSnapshotAsync(watchId, tree, DateTime.UtcNow, ct);
         snapshotId.ShouldNotBe(Guid.Empty);
         var loaded = await store.GetLatestSnapshotAsync(watchId, ct);
@@ -36,9 +35,9 @@ public sealed class FileSystemWatcherStoreTests
     [Fact]
     public async Task SaveSnapshot_SameHash_ReturnsExistingId()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var store = _fixture.ServiceProvider.GetRequiredService<IFileSystemWatcherStore>();
-        var watchId = await store.CreateWatchAsync("/tmp/dedupe", new FileSystemWatchOptionsDto(), ct);
+        var watchId = await store.CreateWatchAsync("/tmp/dedupe", new(), ct);
         var tree = new FileSystemSnapshotTreeDto { RootPath = "/tmp/dedupe", FileCount = 0, Root = new() };
         var first = await store.SaveSnapshotAsync(watchId, tree, DateTime.UtcNow, ct);
         var second = await store.SaveSnapshotAsync(watchId, tree, DateTime.UtcNow.AddSeconds(1), ct);
@@ -48,17 +47,10 @@ public sealed class FileSystemWatcherStoreTests
     [Fact]
     public async Task SaveChanges_CanBeReadBack()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var store = _fixture.ServiceProvider.GetRequiredService<IFileSystemWatcherStore>();
-        var watchId = await store.CreateWatchAsync("/tmp/changes", new FileSystemWatchOptionsDto(), ct);
-        await store.SaveChangesAsync(
-            watchId, null, [
-                new() {
-                    NewPath = "a.txt",
-                    ChangeType = FileSystemChangeKind.Created,
-                    OccurredAtUtc = DateTime.UtcNow
-                }
-            ], ct);
+        var watchId = await store.CreateWatchAsync("/tmp/changes", new(), ct);
+        await store.SaveChangesAsync(watchId, null, [new() { NewPath = "a.txt", ChangeType = FileSystemChangeKind.Created, OccurredAtUtc = DateTime.UtcNow }], ct);
         var changes = await store.GetChangesAsync(watchId, 10, ct);
         changes.ShouldHaveCount(1);
         changes[0].ChangeType.ShouldBe(FileSystemChangeKind.Created);

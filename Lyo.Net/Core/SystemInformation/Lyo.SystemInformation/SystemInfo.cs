@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.SystemInformation;
 
 /// <summary>Aggregate host snapshot: hardware, software/runtime, network, and environment facts.</summary>
@@ -6,4 +8,5 @@ namespace Lyo.SystemInformation;
 /// <param name="Network">Host name and network-interface facts.</param>
 /// <param name="Environment">Machine, user, culture, timezone, and (redacted) environment variables.</param>
 /// <param name="CollectedAtUtc">UTC timestamp when the snapshot was taken.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record SystemInfo(HardwareInfo Hardware, SoftwareInfo Software, NetworkInfo Network, EnvironmentInfo Environment, DateTime CollectedAtUtc);

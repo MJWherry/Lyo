@@ -1,0 +1,43 @@
+@namespace Lyo.Billing.Web.Components.Components.Grids
+
+<LyoDataGridProjected @ref="_dataGrid"
+                      ApiClient="ApiClient"
+                      GridKey="BillingPaymentGrid"
+                      Route="Billing/Payments"
+                      KeySelector="@(i => ProjectedGridKeys.GuidId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      Features="@LyoDataGridFeatureFlags.All">
+    <BulkExportControls>
+        <LyoDataGridExportMenu Host="context">
+            <ExportCsvMenuItem Host="context"/>
+            <ExportJsonMenuItem Host="context"/>
+            <ExportYamlMenuItem Host="context"/>
+            <ExportXmlMenuItem Host="context"/>
+            <ExportTomlMenuItem Host="context"/>
+            <ExportXlsxMenuItem Host="context"/>
+        </LyoDataGridExportMenu>
+    </BulkExportControls>
+    <Columns>
+        <LyoProjectedColumn Field="Id" Title="ID" HeaderStyle="width: 110px;" CellStyle="white-space: nowrap;">
+            <CellContent Context="item">
+                <LyoIdField Compact="true" Text="@ProjectedValueHelper.GetDisplayValue(item, "Id")" Abbreviation="LyoIdAbbreviation.Prefix" AbbreviationLength="8"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="InvoiceId" Title="Invoice"/>
+        <LyoProjectedColumn Field="Amount" Title="Amount" Align="Align.Right">
+            <CellContent Context="item">
+                @BillingMoney.Format(ProjectedValueHelper.GetValue(item, "Amount"), ProjectedValueHelper.GetDisplayValue(item, "Currency"))
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Method" Title="Method" Align="Align.Center">
+            <CellContent Context="item">
+                @{
+                    var methodText = ProjectedValueHelper.GetDisplayValue(item, "Method");
+                }
+                <LyoChip Spec="@(LyoChips.FromEnum<PaymentMethod>(methodText, BillingColorHelper.ForPaymentMethod))"/>
+            </CellContent>
+        </LyoProjectedColumn>
+        <LyoProjectedColumn Field="Reference" Title="Reference"/>
+        <LyoProjectedColumn Field="ReceivedAt" Title="Received" CellStyle="white-space: nowrap;" Timestamp="LyoTimestampKind.Absolute"/>
+    </Columns>
+</LyoDataGridProjected>

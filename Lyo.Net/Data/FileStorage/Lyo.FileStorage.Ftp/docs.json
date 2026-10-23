@@ -15,6 +15,11 @@
       "title": "DI setup",
       "language": "csharp",
       "code": "services.AddFtpFileStorageService(o =>\n{\n    o.Ftp.Host = \"ftp.example.com\";\n    o.Ftp.Username = \"lyo\";\n    o.Ftp.Password = secret;\n    o.Ftp.RootRemoteDirectory = \"/files\";\n});"
+    },
+    {
+      "title": "Factory and single-store builder",
+      "language": "csharp",
+      "code": "using Lyo.FileStorage;\nusing Lyo.FileStorage.Ftp;\n\nservices.AddFtpFileStorage(ftp => ftp.Configure(options => options.Ftp.Host = \"ftp.example.com\"));\n\nservices.AddFileStorageFactory(stores => stores.AddFtp(\"drop\", ftp => ftp.Configure(options =>\n{\n    options.Ftp.Host = \"ftp.example.com\";\n    options.Ftp.Username = \"lyo\";\n    options.Ftp.RootRemoteDirectory = \"/files\";\n})));"
     }
   ],
   "sections": [],

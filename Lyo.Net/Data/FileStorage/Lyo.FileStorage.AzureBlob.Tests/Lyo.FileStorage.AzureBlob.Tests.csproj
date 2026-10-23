@@ -5,7 +5,13 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Testcontainers"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\..\..\Core\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Testing\Lyo.Testing.Containers\Lyo.Testing.Containers.csproj"/>
+        <ProjectReference Include="..\..\IO\Lyo.IO.FileSystem.Tests\Lyo.IO.FileSystem.Tests.csproj"/>
         <ProjectReference Include="..\Lyo.FileStorage.AzureBlob\Lyo.FileStorage.AzureBlob.csproj"/>
     </ItemGroup>
 

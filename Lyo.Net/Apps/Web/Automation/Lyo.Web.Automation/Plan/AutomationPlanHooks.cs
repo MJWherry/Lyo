@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Web.Automation.Abstractions;
 using Lyo.Web.Automation.Models;
 
@@ -36,10 +37,13 @@ public sealed class AutomationPlanStepFailureContext : AutomationPlanStepContext
 }
 
 /// <summary>Outcome of a single step after it finishes without throwing (passed to <see cref="AutomationPlanHooks.AfterStepAsync" />).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct AutomationPlanStepResult(TimeSpan Duration);
 
-/// <summary>Correlation fields for nested logging during a step (file I/O, downloads) when the ambient logger scope may not flow (for example <see cref="Task.Run(Action)"
-/// />).</summary>
+/// <summary>
+/// Correlation fields for nested logging during a step (file I/O, downloads) when the ambient logger scope may not flow (for example <see cref="Task.Run(Action)" />).
+/// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct AutomationPlanStepLogScope(Guid RunId, Guid StepExecutionId, Guid PlanStepId, int StepIndex, string StepLabel);
 
 /// <summary>Optional callbacks around each step and on failure (screenshots, tracing, custom metrics).</summary>

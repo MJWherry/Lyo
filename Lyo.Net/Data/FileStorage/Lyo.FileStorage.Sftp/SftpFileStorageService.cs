@@ -17,7 +17,9 @@ namespace Lyo.FileStorage.Sftp;
 /// <summary>SFTP-backed <see cref="IFileStorageService" />. Physical IO only. Presigned and multipart are not supported.</summary>
 public sealed class SftpFileStorageService : RemoteFileStorageServiceBase
 {
-    /// <summary>Builds an SFTP file storage service.</summary>
+    private readonly ISftpClient? _ownedClient;
+
+    /// <summary>Builds an SFTP file storage service. Pass <paramref name="ownsClient" /> when this service should dispose <paramref name="sftpClient" />.</summary>
     public SftpFileStorageService(
         SftpFileStorageOptions options,
         IFileMetadataStore metadataService,
@@ -28,9 +30,25 @@ public sealed class SftpFileStorageService : RemoteFileStorageServiceBase
         IMetrics? metrics = null,
         IFileOperationContextAccessor? operationContextAccessor = null,
         IEnumerable<IFileAuditEventHandler>? auditHandlers = null,
-        IFileContentPolicy? contentPolicy = null)
+        IFileContentPolicy? contentPolicy = null,
+        IFileTypeSniffer? fileTypeSniffer = null,
+        bool ownsClient = false)
         : base(
             options, metadataService, new SftpRemoteFileTransport(ArgumentHelpers.ThrowIfNullReturn(sftpClient)),
             (loggerFactory ?? NullLoggerFactory.Instance).CreateLogger<SftpFileStorageService>(), compressionService, twoKeyEncryptionService, metrics, operationContextAccessor,
-            auditHandlers, contentPolicy) { }
+            auditHandlers, contentPolicy, fileTypeSniffer)
+    {
+        if (ownsClient)
+            _ownedClient = sftpClient;
+    }
+
+    /// <inheritdoc />
+    public override void Dispose()
+    {
+        if (Disposed)
+            return;
+
+        base.Dispose();
+        _ownedClient?.Dispose();
+    }
 }

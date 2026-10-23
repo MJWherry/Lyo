@@ -1,10 +1,10 @@
-@namespace Lyo.Authentication.Web.Components
-@using Lyo.Authentication.Models
-@using Lyo.Query.Models.Common
-@using Lyo.Query.Models.Enums
 @using Lyo.Web.Components.Export
 @using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Toml
 @using Lyo.Web.Components.Export.Xlsx
+@using Lyo.Web.Components.Export.Xml
+@using Lyo.Web.Components.Export.Yaml
+@namespace Lyo.Authentication.Web.Components
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -19,6 +19,9 @@
         <LyoDataGridExportMenu Host="context">
             <ExportCsvMenuItem Host="context"/>
             <ExportJsonMenuItem Host="context"/>
+            <ExportYamlMenuItem Host="context"/>
+            <ExportXmlMenuItem Host="context"/>
+            <ExportTomlMenuItem Host="context"/>
             <ExportXlsxMenuItem Host="context"/>
         </LyoDataGridExportMenu>
     </BulkExportControls>
@@ -35,7 +38,8 @@
         <LyoProjectedColumn Field="Email" Title="Email" QuickSearchPropertyName="Email"/>
         <LyoProjectedColumn Field="EmailVerified" Title="Verified" Align="Align.Center" HeaderStyle="width: 110px;">
             <CellContent Context="item">
-                <LyoChip Spec="@LyoChips.FromBool(ProjectedValueHelper.GetDisplayValue(item, "EmailVerified") is "True" or "true", "Verified", "Unverified", Color.Success, Color.Default)"/>
+                <LyoChip
+                    Spec="@LyoChips.FromBool(ProjectedValueHelper.GetDisplayValue(item, "EmailVerified") is "True" or "true", "Verified", "Unverified", Color.Success, Color.Default)"/>
             </CellContent>
         </LyoProjectedColumn>
         <LyoProjectedColumn Field="DisabledTimestamp" Title="Status" HeaderStyle="width: 110px;">

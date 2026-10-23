@@ -31,15 +31,14 @@ public sealed class DataGridSelectionTracker
     }
 
     /// <summary>
-    /// Drops every key that appears on <paramref name="pageItems" />, then adds keys of <paramref name="selectedOnPage" /> that still belong to that page. Call this from a
-    /// user checkbox event, never from a server reload — Mud often clears or select-alls the page while data is in flight.
+    /// Drops every key that appears on <paramref name="pageItems" />, then adds keys of <paramref name="selectedOnPage" /> that still belong to that page. Call this from a user
+    /// checkbox event, never from a server reload — Mud often clears or select-alls the page while data is in flight.
     /// </summary>
     public void ReplacePage<T>(IEnumerable<T> pageItems, IEnumerable<T> selectedOnPage, Func<T, object[]> keySelector)
     {
         ArgumentHelpers.ThrowIfNull(pageItems);
         ArgumentHelpers.ThrowIfNull(selectedOnPage);
         ArgumentHelpers.ThrowIfNull(keySelector);
-
         var pageKeys = new List<object[]>();
         foreach (var row in pageItems) {
             var key = keySelector(row);
@@ -63,7 +62,6 @@ public sealed class DataGridSelectionTracker
     {
         ArgumentHelpers.ThrowIfNull(pageItems);
         ArgumentHelpers.ThrowIfNull(keySelector);
-
         var result = new HashSet<T>();
         foreach (var item in pageItems) {
             if (Contains(keySelector(item)))

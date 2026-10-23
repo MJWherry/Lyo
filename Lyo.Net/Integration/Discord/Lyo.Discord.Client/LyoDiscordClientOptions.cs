@@ -3,7 +3,8 @@ using Lyo.Http.Client;
 namespace Lyo.Discord.Client;
 
 /// <summary>
-/// Options for <see cref="LyoDiscordClient" />. Inherits <see cref="LyoHttpClientOptions" /> for HTTP behavior; use <see cref="LyoHttpClientOptions.BaseUrl" /> of the Lyo API root.
+/// Options for <see cref="LyoDiscordClient" />. Inherits <see cref="LyoHttpClientOptions" /> for HTTP behavior; use <see cref="LyoHttpClientOptions.BaseUrl" /> of the Lyo
+/// API root.
 /// </summary>
 public class LyoDiscordClientOptions : LyoHttpClientOptions
 {

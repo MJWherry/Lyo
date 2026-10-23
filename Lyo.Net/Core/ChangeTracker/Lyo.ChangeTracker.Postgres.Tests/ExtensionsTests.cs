@@ -23,7 +23,7 @@ public class ExtensionsTests
     public void AddChangeTrackerDbContext_WithNullOrEmptyConnectionString_Throws()
     {
         var services = new ServiceCollection();
-        Assert.Throws<ArgumentNullException>(() => services.AddChangeTrackerDbContext((string)null!));
+        Assert.Throws<ArgumentNullException>(() => services.AddChangeTrackerDbContext(null!));
         Assert.Throws<ArgumentException>(() => services.AddChangeTrackerDbContext(""));
     }
 

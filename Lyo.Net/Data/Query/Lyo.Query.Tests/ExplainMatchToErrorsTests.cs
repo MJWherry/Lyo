@@ -1,9 +1,7 @@
 using Lyo.Query.Models.Builders;
-using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Enums;
 using Lyo.Result;
 using Lyo.Result.Enums;
-using Lyo.Validation;
 using Lyo.Validation.Models;
 
 namespace Lyo.Query.Tests;
@@ -86,9 +84,11 @@ public class ExplainMatchToErrorsTests : WhereClauseServiceTests
         var person = new PersonBuilder().WithName("Bob").Build();
         var clause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "Alice");
         var errors = svc.ExplainMatch(person, clause)
-            .ToErrors(new Dictionary<string, WhereClauseErrorOverride>(StringComparer.OrdinalIgnoreCase) {
-                ["name"] = new() { ErrorCode = "BAD_NAME", ErrorMessage = "Name must be Alice" }
-            });
+            .ToErrors(
+                new Dictionary<string, WhereClauseErrorOverride>(StringComparer.OrdinalIgnoreCase) {
+                    ["name"] = new() { ErrorCode = "BAD_NAME", ErrorMessage = "Name must be Alice" }
+                });
+
         Assert.Single(errors);
         Assert.Equal("BAD_NAME", errors[0].Code);
         Assert.Equal("Name must be Alice", errors[0].Message);

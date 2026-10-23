@@ -42,6 +42,11 @@
           "`Lyo.Query.Web.Components`"
         ],
         [
+          "`/algorithms`",
+          "`AlgorithmExample`",
+          "`Lyo.Algorithms.Web.Components` workbench. Catalog and preview go through `IAlgorithmClient` to TestApi. The gateway does not open a database."
+        ],
+        [
           "`/id-generator`",
           "`IdGeneratorTest`",
           "`Lyo.Web.Components`"
@@ -112,9 +117,9 @@
           "`Lyo.Web.Components` editor"
         ],
         [
-          "`/cache`, `/locks`, `/rabbitmq`, `/metrics`, `/schedule`, `/diagnostics`, `/jobs`, `/drift`, `/reports`, `/report-design`, `/config`, `/privacy-redaction`, `/seed`",
+          "`/cache`, `/locks`, `/rabbitmq`, `/metrics`, `/schedule`, `/diagnostics`, `/jobs`, `/home-inventory`, `/recipe`, `/story`, `/drift`, `/reports`, `/report-design`, `/config`, `/billing`, `/privacy-redaction`, `/seed`",
           "Infra workbenches",
-          "`Lyo.Cache`, `Lyo.Lock`, `Lyo.MessageQueue.RabbitMq.Web.Components`, `Lyo.Metrics`, `Lyo.Schedule.Web.Components`, `Lyo.Diagnostic.Web.Components`, `Lyo.Job.Web.Components`, `Lyo.Drift.Web.Components`, `Lyo.Reporting.Web.Components` (`ReportManagement` + `ReportDesignWorkbench`; Seed posts people plus designer report templates), `Lyo.Config.Web.Components`, `Lyo.Privacy.Web.Components`"
+          "`Lyo.Cache`, `Lyo.Lock`, `Lyo.MessageQueue.RabbitMq.Web.Components`, `Lyo.Metrics`, `Lyo.Schedule.Web.Components`, `Lyo.Diagnostic.Web.Components`, `Lyo.Job.Web.Components`, `Lyo.HomeInventory.Web.Components` (`HomeInventoryManagement`; FileStorage prefix `Workbench/FileStorage`), `Lyo.Recipe.Web.Components` (`RecipeManagement`; FileStorage prefix `Workbench/FileStorage`), `Lyo.Story.Web.Components` (`StoryManagement` on `IStoryClient` against TestApi), `Lyo.Drift.Web.Components`, `Lyo.Reporting.Web.Components` (`ReportManagement` + `ReportDesignWorkbench`; Seed posts people plus designer report templates), `Lyo.Config.Web.Components`, `Lyo.Billing.Web.Components` (invoice demo via TestApi + in-process `IPaymentCollector`), `Lyo.Privacy.Web.Components`"
         ]
       ],
       "lead": "Each workbench page lives under `Components/Pages/` and uses `@attribute [Route(\"/\" + Constants.Page.X)]` so route strings are taken from `Lyo.TestGateway.Constants.Page`.",
@@ -139,11 +144,12 @@
       "title": "Other `Program.cs` registrations",
       "items": [
         "Infra: `AddCsvService`, `AddXlsxService`, `AddCompressionService` + `AddDefaultCompressionService<CompressionService>` (`ICompressionResolver` included), `AddLyoMetricsWithOpenTelemetryFromConfiguration` (`OpenTelemetry` section: `ServiceName` `Lyo.TestGateway`; OTLP endpoint from env when set), `AddScheduler`, `AddLocalCacheFromConfiguration`, `AddLocalLock(enableMetrics)`, `AddLocalKeyedSemaphore(enableMetrics)`, `AddImageSharpImageServiceFromConfiguration`, `AddPdfService`, `AddSpriteSheetExportService`, `AddPdfAnnotatorInterop`.",
-        "Communication: `AddEmailServiceFromConfiguration`, `AddTwilioSmsServiceFromConfiguration`, `SetupRabbitMqServiceFromConfiguration`, `AddAwsTranslationServiceFromConfiguration`, `AddProfanityFilterServiceFromConfiguration`, Typecast client + TTS service, `AddQRCodeServiceFromConfiguration`, `AddNativeBarcodeServiceFromConfiguration`.",
+        "Communication: `AddSmtpEmailServiceFromConfiguration`, `AddTwilioSmsServiceFromConfiguration`, `SetupRabbitMqServiceFromConfiguration`, `AddAwsTranslationServiceFromConfiguration`, `AddProfanityFilterServiceFromConfiguration`, Typecast client + TTS service, `AddQRCodeServiceFromConfiguration`, `AddNativeBarcodeServiceFromConfiguration`.",
         "Web: `AddWebRendererServiceFromConfiguration`, `AddBlazoredLocalStorage`, `AddMudServices(...)`, `IIOTempService` rooted at `lyo-gateway-uploads`, `TestGatewayFileTransformer` on the file-tools workbench.",
         "API client: `Configure<ApiClientOptions>(…ApiClientOptions.SectionName)`, `AddLyoApiClient`.",
         "File workbench: `AddFileStorageWorkbenchSupport(builder.Configuration)`. Key store: `AddLocalKeyStore()`.",
         "Config workbench: `AddConfigApiStore()` (`IConfigStore` → TestApi manage routes). Encryption remains on TestApi.",
+        "Billing workbench: `AddInternalPaymentCollector()` (`IPaymentCollector` → in-process Internal collector). Invoice writes go through TestApi.",
         "Seed page: `AddLyoSeed()` plus `ApiSeedTransport` against `POST Person/Bulk` (People API) and `POST Reporting/Definition/Bulk` (designer templates: controls gallery, sales summary, invoice, operations dashboard)."
       ]
     },
@@ -184,8 +190,8 @@
           "Typecast TTS workbench"
         ],
         [
-          "`EmailServiceOptions`",
-          "SMTP-based `Lyo.Email`"
+          "`SmtpEmailOptions`",
+          "SMTP-based `Lyo.Email.Smtp`"
         ],
         [
           "`TwilioOptions`",
@@ -219,6 +225,22 @@
   "readmePath": "Lyo.Net/Tools/Lyo.TestGateway/README.md",
   "dependencies": [
     {
+      "name": "Lyo.Algorithms.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Algorithms.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Api.Client",
       "kind": "lyo",
       "tags": [
@@ -251,6 +273,22 @@
       ]
     },
     {
+      "name": "Lyo.Authorization.AspNetCore",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authorization.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Barcode.Native",
       "kind": "lyo",
       "tags": [
@@ -267,7 +305,7 @@
       ]
     },
     {
-      "name": "Lyo.Cache",
+      "name": "Lyo.Billing.Client",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -275,7 +313,15 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
+      "name": "Lyo.Billing.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Cache",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -395,6 +441,14 @@
       ]
     },
     {
+      "name": "Lyo.Email.Smtp",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Email.Web.Components",
       "kind": "lyo",
       "tags": [
@@ -451,6 +505,14 @@
       ]
     },
     {
+      "name": "Lyo.FantasyFootball.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.FileMetadataStore",
       "kind": "lyo",
       "tags": [
@@ -484,6 +546,14 @@
     },
     {
       "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.HomeInventory.Web.Components",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -531,6 +601,14 @@
       ]
     },
     {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [
@@ -548,6 +626,22 @@
     },
     {
       "name": "Lyo.KeyStore.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Leaderboard.Api.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Leaderboard.Web.Components",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -596,6 +690,14 @@
     },
     {
       "name": "Lyo.Metrics.OpenTelemetry",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Payments",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -660,6 +762,22 @@
     },
     {
       "name": "Lyo.Query.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Recipe.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Recipe.Web.Components",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -747,6 +865,22 @@
       ]
     },
     {
+      "name": "Lyo.Story.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Story.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Tag",
       "kind": "lyo",
       "tags": [
@@ -795,6 +929,22 @@
       ]
     },
     {
+      "name": "Lyo.Web.Automation.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Automation.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Web.Components",
       "kind": "lyo",
       "tags": [
@@ -819,7 +969,31 @@
       ]
     },
     {
+      "name": "Lyo.Web.Components.Export.Toml",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Web.Components.Export.Xlsx",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Components.Export.Xml",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Components.Export.Yaml",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -878,6 +1052,22 @@
       ]
     },
     {
+      "name": "Lyo.Algorithms",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Algorithms.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Api.FileStorage.Models",
       "kind": "lyo",
       "tags": [
@@ -894,7 +1084,31 @@
       ]
     },
     {
+      "name": "Lyo.Audit",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Authentication.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authorization",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -911,6 +1125,14 @@
     },
     {
       "name": "Lyo.Barcode.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Billing",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -982,7 +1204,7 @@
       ]
     },
     {
-      "name": "Lyo.Drift.Models",
+      "name": "Lyo.Diagram",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -990,7 +1212,15 @@
       ]
     },
     {
-      "name": "Lyo.Email.Models",
+      "name": "Lyo.Diagram.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Drift.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -1007,6 +1237,14 @@
     },
     {
       "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FantasyFootball",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -1038,7 +1276,23 @@
       ]
     },
     {
+      "name": "Lyo.HomeInventory.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.IO.FileSystem",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.FileSystem.Web.Components",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -1054,7 +1308,39 @@
       ]
     },
     {
+      "name": "Lyo.Leaderboard",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Leaderboard.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Ledger",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.MessageQueue.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Note",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -1110,6 +1396,22 @@
       ]
     },
     {
+      "name": "Lyo.RateLimit",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Recipe.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Reporting.Client",
       "kind": "lyo",
       "tags": [
@@ -1135,6 +1437,22 @@
     },
     {
       "name": "Lyo.Sms.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Story",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Story.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -1214,7 +1532,23 @@
       ]
     },
     {
+      "name": "Lyo.Web.Automation",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Web.Primitives",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.WebRenderer.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -1421,6 +1755,16 @@
       ]
     },
     {
+      "name": "Microsoft.Bcl.TimeProvider",
+      "kind": "package",
+      "version": "8.0.1",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
       "name": "Microsoft.EntityFrameworkCore",
       "kind": "package",
       "version": "10.0.5",
@@ -1528,6 +1872,15 @@
       "tags": [
         "transitive",
         "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "transitive",
+        "third-party"
       ]
     },
     {

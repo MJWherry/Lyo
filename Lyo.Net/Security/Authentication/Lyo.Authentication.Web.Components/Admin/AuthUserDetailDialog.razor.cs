@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Lyo.Api.Client;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Common.Request;
@@ -5,7 +6,6 @@ using Lyo.Api.Models.Common.Response;
 using Lyo.Authentication.Models;
 using Lyo.Authentication.Models.Response;
 using Lyo.Query.Models.Common;
-using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
 using Lyo.Web.Components.Dialog;
@@ -16,6 +16,8 @@ namespace Lyo.Authentication.Web.Components;
 
 public partial class AuthUserDetailDialog
 {
+    private AuthUserRes _user = null!;
+
     [CascadingParameter]
     public IMudDialogInstance MudDialog { get; set; } = null!;
 
@@ -35,8 +37,6 @@ public partial class AuthUserDetailDialog
 
     [Inject]
     private IDialogService DialogService { get; set; } = null!;
-
-    private AuthUserRes _user = null!;
 
     private string UserRoute => $"{BaseRoute.TrimEnd('/')}/User";
 
@@ -66,7 +66,7 @@ public partial class AuthUserDetailDialog
             if (disable)
                 builder.SetProperty("DisabledTimestamp", DateTime.UtcNow).SetProperty("DisabledReason", "admin");
             else
-                builder.SetProperty("DisabledTimestamp", (DateTime?)null).SetProperty("DisabledReason", (string?)null);
+                builder.SetProperty("DisabledTimestamp", null).SetProperty("DisabledReason", null);
 
             await ApiClient.PatchAsAsync<PatchRequest, PatchResult<AuthUserRes>>(UserRoute, builder.Build());
             await ReloadUser();
@@ -84,15 +84,14 @@ public partial class AuthUserDetailDialog
 
         try {
             var query = new ProjectionQueryReq {
-                Amount = 500,
-                Select = ["Id", "RevokedTimestamp"],
-                WhereClause = new ConditionClause("UserId", ComparisonOperatorEnum.Equals, _user.Id)
+                Amount = 500, Select = ["Id", "RevokedTimestamp"], WhereClause = new ConditionClause("UserId", ComparisonOperatorEnum.Equals, _user.Id)
             };
-            var res = await ApiClient.PostAsAsync<ProjectionQueryReq, ProjectedQueryRes<System.Text.Json.JsonElement>>($"{TokenRoute}/QueryProject", query);
+
+            var res = await ApiClient.PostAsAsync<ProjectionQueryReq, ProjectedQueryRes<JsonElement>>($"{TokenRoute}/QueryProject", query);
             var now = DateTime.UtcNow;
             var count = 0;
             foreach (var row in res?.Items ?? []) {
-                if (row.TryGetProperty("RevokedTimestamp", out var revoked) && revoked.ValueKind is not System.Text.Json.JsonValueKind.Null and not System.Text.Json.JsonValueKind.Undefined)
+                if (row.TryGetProperty("RevokedTimestamp", out var revoked) && revoked.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
                     continue;
 
                 if (!row.TryGetProperty("Id", out var idProp))

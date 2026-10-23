@@ -1,63 +1,68 @@
-using Blazored.LocalStorage;
+using Lyo.Algorithms.Client;
+using Lyo.Algorithms.Web.Components;
 using Lyo.Api.Client;
 using Lyo.Authentication.Client;
 using Lyo.Authentication.Web.Components;
 using Lyo.Authentication.Web.Components.Abstractions;
 using Lyo.Authentication.Web.Components.Options;
 using Lyo.Authentication.Web.Components.Server;
+using Lyo.Authorization;
+using Lyo.Authorization.AspNetCore;
 using Lyo.Barcode.Native;
+using Lyo.Billing.Client;
 using Lyo.Cache;
-using Lyo.Common.Json;
-using Lyo.Common.Metadata.Records;
 using Lyo.Compression;
 using Lyo.Config.Api.Client;
 using Lyo.Csv;
 using Lyo.DateAndTime.Json;
-using Lyo.Email;
+using Lyo.Diagnostic.Web.Components;
+using Lyo.Drift.Web.Components;
+using Lyo.Email.Smtp;
 using Lyo.Endato.Client;
-using Lyo.FileStorage.Web.Components.Services;
 using Lyo.Formatter;
 using Lyo.Formatter.Web.Components;
-using Lyo.TestGateway;
-using Lyo.TestGateway.Components;
-using Lyo.TestGateway.Services;
-using Lyo.TestGateway.Stores;
-using Lyo.Diagnostic.Web.Components;
 using Lyo.Images;
 using Lyo.IO.Temp;
 using Lyo.Job.Web.Components;
-using Lyo.Drift.Web.Components;
+using Lyo.Json;
 using Lyo.KeyStore;
+using Lyo.Leaderboard.Api.Client;
 using Lyo.Lock;
 using Lyo.MessageQueue.RabbitMq;
 using Lyo.MessageQueue.RabbitMq.Web.Components;
-using Lyo.Reporting.Business.Example;
-using Lyo.Reporting.Web.Components;
-using Lyo.Sms.Web.Components;
 using Lyo.Metrics.OpenTelemetry;
+using Lyo.Payments;
 using Lyo.Pdf;
 using Lyo.Pdf.Web.Components.PdfAnnotator;
 using Lyo.Privacy.Web.Components;
 using Lyo.Profanity;
-using Lyo.Schedule.Web.Components;
 using Lyo.QRCode;
+using Lyo.Reporting.Business.Example;
+using Lyo.Reporting.Web.Components;
+using Lyo.Schedule.Web.Components;
 using Lyo.Scheduler;
 using Lyo.Seed;
 using Lyo.Sms.Twilio;
+using Lyo.Sms.Web.Components;
+using Lyo.Story.Client;
+using Lyo.TestGateway;
+using Lyo.TestGateway.Components;
+using Lyo.TestGateway.Services;
+using Lyo.TestGateway.Stores;
 using Lyo.Translation.Aws;
 using Lyo.Tts.Typecast;
 using Lyo.Typecast.Client;
+using Lyo.Web.Automation.Client;
 using Lyo.Web.Components;
-using Lyo.Web.Primitives;
 using Lyo.Web.Components.Export;
 using Lyo.Web.Components.ParamTable;
 using Lyo.Web.Host;
+using Lyo.Web.Primitives;
 using Lyo.Web.WebRenderer;
 using Lyo.Xlsx;
-using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using MudBlazor;
-using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddLogging(i => i.ClearProviders()
@@ -86,14 +91,17 @@ builder.Services.AddTypecastTtsServiceFromConfiguration(builder.Configuration);
 builder.Services.AddAwsTranslationServiceFromConfiguration(builder.Configuration);
 builder.Services.AddProfanityFilterServiceFromConfiguration(builder.Configuration);
 builder.Services.AddEndatoClientFromConfiguration(builder.Configuration);
-builder.Services.AddEmailServiceFromConfiguration(builder.Configuration);
+builder.Services.AddSmtpEmailServiceFromConfiguration(builder.Configuration);
 builder.Services.AddTwilioSmsServiceFromConfiguration(builder.Configuration);
 builder.Services.SetupRabbitMqServiceFromConfiguration(builder.Configuration, new());
 builder.Services.AddWebRendererServiceFromConfiguration(builder.Configuration);
 ReportingBusinessExamples.Register();
 builder.Services.AddFileStorageWorkbenchSupport(builder.Configuration);
 builder.Services.AddLocalKeyStore();
+builder.Services.AddInMemoryAuthorization();
+builder.Services.Configure<AuthorizationOptions>(options => options.AddPolicy(GrantEndpoints.ManagePolicyName, policy => policy.RequireAuthenticatedUser()));
 builder.Services.AddConfigApiStore();
+builder.Services.AddInternalPaymentCollector();
 builder.Services.AddLyoSeed();
 builder.Services.AddFormatterService();
 builder.Services.AddLyoFormatterValueEditor(c => {
@@ -106,13 +114,30 @@ builder.Services.AddLyoParameterEditor(o => {
     o.Layout = LyoParameterLayout.Cards;
     o.AllowLayoutToggle = true;
 });
+
 builder.Services.AddSingleton<IIOTempService>(new IOTempService(new() { DirectoryName = "lyo-gateway-uploads", CreateRootDirectoryIfNotExists = true }));
 builder.Services.Configure<ApiClientOptions>(builder.Configuration.GetSection(ApiClientOptions.SectionName));
 builder.Services.AddTransient(provider => provider.GetRequiredService<IOptions<ApiClientOptions>>().Value);
 builder.Services.AddLyoAuthClient(builder.Configuration);
 builder.Services.AddLyoAuthBlazorStateProvider();
 builder.Services.AddLyoApiClient(httpClientBuilderOverride: clientBuilder => clientBuilder.AddLyoAuthHandler());
+builder.Services.AddAlgorithmClient(sp => sp.GetRequiredService<IApiClient>());
+builder.Services.AddAlgorithmWorkbench(context => {
+    foreach (var row in AlgorithmPresets.FishingContext())
+        context.Add(row.Name, row.Alias, row.Text);
+
+    foreach (var row in AlgorithmPresets.AttackContext())
+        context.Add(row.Name, row.Alias, row.Text);
+
+    foreach (var row in AlgorithmPresets.ScheduleContext())
+        context.Add(row.Name, row.Alias, row.Text);
+});
+builder.Services.AddAutomationPlanClient<ApiClient>();
+builder.Services.AddBillingClient<ApiClient>();
+builder.Services.AddLeaderboardApiClientFromConfiguration(builder.Configuration);
+builder.Services.AddStoryClient<ApiClient>();
 builder.Services.AddAuthorization();
+builder.Services.AddLyoGrantAuthorization();
 builder.Services.AddLyoAuthWebComponents(builder.Configuration);
 builder.Services.PostConfigure<LyoAuthWebComponentsOptions>(opts => {
     if (opts.Providers.Count == 0) {
@@ -167,13 +192,11 @@ if (!app.Environment.IsDevelopment()) {
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseAuthentication();
 app.UseAuthorization();
+app.MapGrantEndpoints(GrantEndpoints.ManagePolicyName);
 app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapLyoAuthSignIn();
 app.MapLyoAuthHandoffCallback();
 app.MapLyoAuthSignOut();
-
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode()
-    .AddAdditionalAssemblies(typeof(LyoWorkbenchHost).Assembly);
+app.MapRazorComponents<App>().AddInteractiveServerRenderMode().AddAdditionalAssemblies(typeof(LyoWorkbenchHost).Assembly);
 app.Run();

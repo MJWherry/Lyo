@@ -15,6 +15,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\Schedule\Lyo.Schedule.Models\Lyo.Schedule.Models.csproj"/>
         <ProjectReference Include="..\..\Result\Lyo.Result\Lyo.Result.csproj"/>
         <ProjectReference Include="..\..\Validation\Lyo.Validation\Lyo.Validation.csproj"/>
     </ItemGroup>

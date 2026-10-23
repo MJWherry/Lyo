@@ -9,8 +9,8 @@ namespace Lyo.Lock;
 
 /// <summary>In-process exclusive lock: one holder per key in the current process, backed by a <see cref="SemaphoreSlim" /> per normalized key.</summary>
 /// <remarks>
-/// Not for coordination across machines or processes; use a distributed <see cref="ILockService" /> for that. <see cref="LockOptions.DefaultLockDuration" /> is ignored
-/// (no TTL).
+/// Not for coordination across machines or processes; use a distributed <see cref="ILockService" /> for that. <see cref="LockOptions.DefaultLockDuration" /> is ignored (no
+/// TTL).
 /// </remarks>
 public sealed class LocalLockService : ILockService
 {

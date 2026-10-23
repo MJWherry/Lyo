@@ -43,9 +43,7 @@ public sealed class ComicSeries
     /// <summary>Source URL or site name this series data was obtained from, used for attribution and citation for this record.</summary>
     public string? Source { get; set; }
 
-    /// <summary>
-    /// Optional field: a reference to the series cover image in file storage. Format is determined by the consuming application (e.g. a file storage key or URI).
-    /// </summary>
+    /// <summary>Optional field: a reference to the series cover image in file storage. Format is determined by the consuming application (e.g. a file storage key or URI).</summary>
     public string? CoverImageRef { get; set; }
 
     /// <summary>Holds the target demographic as a free-form label (e.g. "Shonen", "Seinen", "Josei", "Mature").</summary>

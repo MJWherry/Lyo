@@ -7,8 +7,8 @@ using Lyo.Privacy.Policy;
 namespace Lyo.Privacy.Rules;
 
 /// <summary>
-/// Delegates span detection to an ordered inner rule list. The reported kind is <see cref="RedactionKind.Composite" />; use <see cref="RedactionPolicyBuilder" /> when per-kind
-/// counts matter.
+/// Delegates span detection to an ordered inner rule list. The reported kind is <see cref="RedactionKind.Composite" />; use <see cref="RedactionPolicyBuilder" /> when
+/// per-kind counts matter.
 /// </summary>
 public sealed class CompositeRedactionRule : IRedactionRule
 {

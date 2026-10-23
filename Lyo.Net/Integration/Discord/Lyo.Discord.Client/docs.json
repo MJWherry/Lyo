@@ -9,7 +9,7 @@
     {
       "title": "Wire into DI ([`Extensions.cs`](Extensions.cs))",
       "language": "csharp",
-      "code": "services.AddDiscordClientFromConfiguration(builder.Configuration);\n\n// or:\nservices.AddDiscordClient(o => {\n    o.BaseUrl = \"https://api.example.com/\";\n    o.RequestCompression = ApiRequestCompressionType.Gzip;\n});"
+      "code": "services.AddDiscordClientFromConfiguration(builder.Configuration);\n\n// or:\nservices.AddDiscordClient(o => {\n    o.BaseUrl = \"https://api.example.com/\";\n    o.RequestCompression = LyoHttpRequestCompressionType.Gzip;\n});"
     }
   ],
   "sections": [
@@ -112,14 +112,6 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Discord.Models",
       "kind": "lyo",
       "tags": [
@@ -129,6 +121,14 @@
     },
     {
       "name": "Lyo.Http.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -204,6 +204,14 @@
       ]
     },
     {
+      "name": "Lyo.DataTable.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.DateAndTime",
       "kind": "lyo",
       "tags": [
@@ -221,6 +229,14 @@
     },
     {
       "name": "Lyo.Parameters",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.RateLimit",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -255,6 +271,16 @@
       ]
     },
     {
+      "name": "Microsoft.Bcl.TimeProvider",
+      "kind": "package",
+      "version": "8.0.1",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
       "name": "Microsoft.Extensions.Configuration.Binder",
       "kind": "package",
       "version": "10.0.5",
@@ -271,6 +297,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

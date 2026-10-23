@@ -27,7 +27,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(options);
             options.Validate();
             services.TryAddSingleton(options);
-            services.TryAddSingleton<IFileSystem>(sp => new LocalFileSystem(sp.GetRequiredService<LocalFileSystemOptions>()));
+            // Close over the options passed here. Resolving LocalFileSystemOptions instead would silently pick up whatever another registration won with TryAddSingleton.
+            services.TryAddSingleton<IFileSystem>(_ => new LocalFileSystem(options));
             return services;
         }
 
@@ -47,6 +48,17 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             services.TryAddSingleton<IFileSystem>(_ => new MemoryFileSystem());
+            return services;
+        }
+
+        /// <summary>
+        /// Registers <see cref="FileSystemTreeSource" /> as <see cref="IFileTreeSource" /> over the already-registered <see cref="IFileSystem" />. Call one of the
+        /// <c>Add*FileSystem</c> members first; the tree source resolves the file system at request time.
+        /// </summary>
+        public IServiceCollection AddFileTreeSource()
+        {
+            ArgumentHelpers.ThrowIfNull(services);
+            services.TryAddSingleton<IFileTreeSource>(sp => new FileSystemTreeSource(sp.GetRequiredService<IFileSystem>()));
             return services;
         }
     }

@@ -6,8 +6,8 @@ namespace Lyo.Webhook.Twilio;
 
 /// <summary>
 /// Checks Twilio webhook requests with the auth token and <c>X-Twilio-Signature</c> (HMAC-SHA1, Base64). Pair it with <see cref="VerifiedWebhookEndpointBuilder" />; keep
-/// <see cref="WebhookVerificationContext.RequestUrl" /> as the public URL Twilio called and <see cref="WebhookVerificationContext.Parameters" /> as the form fields (Lyo.Webhook
-/// fills those automatically for <c>application/x-www-form-urlencoded</c> bodies).
+/// <see cref="WebhookVerificationContext.RequestUrl" /> as the public URL Twilio called and <see cref="WebhookVerificationContext.Parameters" /> as the form fields (Lyo.Webhook fills
+/// those automatically for <c>application/x-www-form-urlencoded</c> bodies).
 /// </summary>
 public sealed class TwilioWebhookSignatureVerifier : IWebhookSignatureVerifier
 {

@@ -20,9 +20,7 @@ public static class WhereClauseExplainAnalysis
         return root.Passed ? (null, null) : FindBlockingFailure(root);
     }
 
-    /// <summary>
-    /// Depth-first walk of <paramref name="node" /> for the first failure that actually blocks the match, preferring a failed sub-clause when the primary predicate passed.
-    /// </summary>
+    /// <summary>Depth-first walk of <paramref name="node" /> for the first failure that actually blocks the match, preferring a failed sub-clause when the primary predicate passed.</summary>
     public static (string? Path, string? Summary) FindBlockingFailure(WhereClauseExplainNode node)
     {
         ArgumentHelpers.ThrowIfNull(node);

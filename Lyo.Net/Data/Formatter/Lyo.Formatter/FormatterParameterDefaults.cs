@@ -4,12 +4,12 @@ using Lyo.Parameters;
 namespace Lyo.Formatter;
 
 /// <summary>
-/// Connects SmartFormat to <see cref="LyoParameterDefaults" />: renders a parameter's <see cref="ILyoParameterDefinition.DefaultTemplate" /> and checks the result against the
-/// parameter's declared type. A <c>System.DateTime</c> parameter defaulting to <c>{DateTime.UtcNow.AddDays(-1):yyyy-MM-dd}</c> is validated here as a date, not as a template.
+/// Connects SmartFormat to <see cref="LyoParameterDefaults" />: renders a parameter's <see cref="ILyoParameterDefinition.DefaultTemplate" /> and checks the result against
+/// the parameter's declared type. A <c>System.DateTime</c> parameter defaulting to <c>{DateTime.UtcNow.AddDays(-1):yyyy-MM-dd}</c> is validated here as a date, not as a template.
 /// </summary>
 /// <remarks>
-/// <see cref="CreateResolver" /> produces the <see cref="LyoTemplateResolver" /> that Core-side resolution needs; <c>AddFormatterService</c> registers a context-free one, so any
-/// host with the formatter resolves expression defaults without extra wiring.
+/// <see cref="CreateResolver" /> produces the <see cref="LyoTemplateResolver" /> that Core-side resolution needs; <c>AddFormatterService</c> registers a context-free one, so
+/// any host with the formatter resolves expression defaults without extra wiring.
 /// </remarks>
 public static class FormatterParameterDefaults
 {
@@ -33,17 +33,10 @@ public static class FormatterParameterDefaults
     /// <param name="error">Why the template is unusable, phrased for the author. Null when this returns true.</param>
     /// <param name="context">Context object or dictionary placeholders resolve against.</param>
     /// <returns>True when the template renders to a value of the declared type.</returns>
-    public static bool TryValidate(
-        IFormatterService formatter,
-        string? type,
-        string? template,
-        out string? rendered,
-        out string? error,
-        object? context = null)
+    public static bool TryValidate(IFormatterService formatter, string? type, string? template, out string? rendered, out string? error, object? context = null)
     {
         ArgumentHelpers.ThrowIfNull(formatter);
         rendered = null;
-
         if (string.IsNullOrWhiteSpace(template)) {
             error = "Default template is required.";
             return false;

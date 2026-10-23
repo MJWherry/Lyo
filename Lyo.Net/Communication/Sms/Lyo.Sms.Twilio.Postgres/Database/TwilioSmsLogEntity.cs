@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.Sms.Twilio.Postgres.Database;
 
 /// <summary>Database row for a Twilio SMS log.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class TwilioSmsLogEntity
 {
     /// <summary>Twilio message SID (34-character primary key).</summary>
@@ -81,4 +83,7 @@ public class TwilioSmsLogEntity
 
     /// <summary>Whether the message is inbound or outbound.</summary>
     public MessageDirection Direction { get; set; } = MessageDirection.Outbound;
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

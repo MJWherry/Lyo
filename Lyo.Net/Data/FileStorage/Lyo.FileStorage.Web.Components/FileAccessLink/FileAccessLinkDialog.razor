@@ -85,9 +85,11 @@
             }
             else {
                 <MudAlert Severity="Severity.Success" Dense="true">Link created.</MudAlert>
+
                 <MudText Typo="Typo.body2">Link id @_response.LinkId.ToString("D")</MudText>
 
                 <MudText Typo="Typo.subtitle2" Class="mt-2">Download (full URL)</MudText>
+
                 @if (!string.IsNullOrEmpty(_downloadAbsoluteUrl)) {
                     <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Start" Wrap="Wrap.Wrap">
                         <MudTextField Value="@_downloadAbsoluteUrl" ReadOnly="true" Variant="Variant.Outlined" Lines="2" Class="flex-grow-1"
@@ -109,6 +111,7 @@
                 }
 
                 <MudText Typo="Typo.subtitle2" Class="mt-3">Presigned read (full URL)</MudText>
+
                 @if (!string.IsNullOrEmpty(_presignedReadAbsoluteUrl)) {
                     <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Start" Wrap="Wrap.Wrap">
                         <MudTextField Value="@_presignedReadAbsoluteUrl" ReadOnly="true" Variant="Variant.Outlined" Lines="2" Class="flex-grow-1"
@@ -132,10 +135,13 @@
     <DialogActions>
         @if (_response == null) {
             <MudButton OnClick="Close" Variant="Variant.Text">Cancel</MudButton>
+
             <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="CreateAsync" Disabled="@_busy">Create</MudButton>
         }
         else {
-            <MudButton OnClick="@(() => CopyToClipboardAsync(_downloadAbsoluteUrl))" Variant="Variant.Text" Disabled="@(string.IsNullOrEmpty(_downloadAbsoluteUrl))">Copy download</MudButton>
+            <MudButton OnClick="@(() => CopyToClipboardAsync(_downloadAbsoluteUrl))" Variant="Variant.Text" Disabled="@(string.IsNullOrEmpty(_downloadAbsoluteUrl))">Copy download
+            </MudButton>
+
             <MudButton OnClick="Close" Variant="Variant.Filled" Color="Color.Primary">Close</MudButton>
         }
     </DialogActions>

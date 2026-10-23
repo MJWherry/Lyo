@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
 
 namespace Lyo.FileStorage.Models;
 
 /// <summary>Limits for <see cref="IFileStorageArchiveService" /> zip downloads. Bind from configuration section <see cref="SectionName" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class FileStorageArchiveOptions
 {
     /// <summary>Configuration section name. Starts as <c>FileStorageArchive</c>.</summary>
@@ -21,4 +23,7 @@ public sealed class FileStorageArchiveOptions
         ArgumentHelpers.ThrowIfLessThan(MaxFileCount, 1);
         ArgumentHelpers.ThrowIfLessThan(MaxTotalUncompressedBytes, 1);
     }
+
+    /// <summary>File count and uncompressed byte caps.</summary>
+    public override string ToString() => $"MaxFileCount={MaxFileCount} MaxTotalUncompressedBytes={MaxTotalUncompressedBytes}";
 }

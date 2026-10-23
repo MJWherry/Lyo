@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Testing\Lyo.Testing.Containers\Lyo.Testing.Containers.csproj"/>
+        <ProjectReference Include="..\Lyo.Leaderboard.Postgres\Lyo.Leaderboard.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Algorithms\Lyo.Algorithms\Lyo.Algorithms.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Algorithms\Lyo.Algorithms.Postgres\Lyo.Algorithms.Postgres.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Logging.Console"/>
+    </ItemGroup>
+</Project>

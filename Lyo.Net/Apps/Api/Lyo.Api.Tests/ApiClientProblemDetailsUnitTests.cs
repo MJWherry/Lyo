@@ -4,8 +4,8 @@ using System.Text.Json;
 using Lyo.Api.Client;
 using Lyo.Api.Models;
 using Lyo.Api.Models.Error;
-using Lyo.Common.Json;
 using Lyo.Exceptions.Models;
+using Lyo.Json;
 
 namespace Lyo.Api.Tests;
 
@@ -16,11 +16,9 @@ public sealed class ApiClientProblemDetailsUnitTests
     {
         var problem = LyoProblemDetails.FromCode(Constants.ApiErrorCodes.NotFound, "Widget missing");
         var json = JsonSerializer.Serialize(problem, LyoJsonSerializerOptions.Create());
-        var inner = new StubHandler(new HttpResponseMessage(HttpStatusCode.NotFound) {
-            Content = new StringContent(json, Encoding.UTF8, "application/json")
-        });
-        using var client = new ApiClient(httpClient: new HttpClient(inner) { BaseAddress = new("https://example.test/") });
-        var ex = await Assert.ThrowsAsync<ApiException>(() => client.GetAsAsync<object>("/missing", ct: TestContext.Current.CancellationToken));
+        var inner = new StubHandler(new(HttpStatusCode.NotFound) { Content = new StringContent(json, Encoding.UTF8, "application/json") });
+        using var client = new ApiClient(httpClient: new(inner) { BaseAddress = new("https://example.test/") });
+        var ex = await Assert.ThrowsAsync<ApiException>(() => client.GetAsAsync<object>("/missing", ct: TestCt));
         Assert.Equal(404, ex.StatusCode);
         Assert.Equal(Constants.ApiErrorCodes.NotFound, ex.ErrorCode);
         Assert.NotNull(ex.ProblemDetails);
@@ -30,7 +28,6 @@ public sealed class ApiClientProblemDetailsUnitTests
 
     private sealed class StubHandler(HttpResponseMessage response) : HttpMessageHandler
     {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
-            => Task.FromResult(response);
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct) => Task.FromResult(response);
     }
 }

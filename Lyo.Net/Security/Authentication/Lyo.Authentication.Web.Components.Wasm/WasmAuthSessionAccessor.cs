@@ -52,7 +52,9 @@ public sealed class WasmAuthSessionAccessor : IAuthSessionAccessor
         }
 
         var now = DateTime.UtcNow;
-        await _sessions.SetAsync(new(refreshed.AccessToken, refreshed.RefreshToken, now.AddSeconds(refreshed.ExpiresIn), refreshed.RefreshExpiresAtUtc(now)), ct).ConfigureAwait(false);
+        await _sessions.SetAsync(new(refreshed.AccessToken, refreshed.RefreshToken, now.AddSeconds(refreshed.ExpiresIn), refreshed.RefreshExpiresAtUtc(now)), ct)
+            .ConfigureAwait(false);
+
         return true;
     }
 }

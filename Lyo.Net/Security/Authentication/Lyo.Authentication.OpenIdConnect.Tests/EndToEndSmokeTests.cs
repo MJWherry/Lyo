@@ -5,14 +5,15 @@ using Lyo.Authentication.AspNetCore;
 using Lyo.Authentication.AspNetCore.Endpoints;
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.OpenIdConnect.Client;
-using Lyo.Authentication.Services.Opaque;
-using Lyo.Authentication.Services.Users;
 using Lyo.Authentication.OpenIdConnect.Coordinator;
 using Lyo.Authentication.OpenIdConnect.Discovery;
-using Lyo.Authentication.OpenIdConnect.Endpoints;
 using Lyo.Authentication.OpenIdConnect.Pkce;
 using Lyo.Authentication.OpenIdConnect.Provider;
 using Lyo.Authentication.Options;
+using Lyo.Authentication.Services.Opaque;
+using Lyo.Authentication.Services.Users;
+using Lyo.Authentication.Sso.Completion;
+using Lyo.Authentication.Sso.Endpoints;
 using Lyo.Common.Core.Extensions;
 using Lyo.KeyStore;
 using Microsoft.AspNetCore.Builder;
@@ -46,45 +47,75 @@ public sealed class EndToEndSmokeTests
             });
 
         var coordinator = fx.Services.GetRequiredService<IExternalLoginCoordinator>();
-        var result = await coordinator.HandleCallbackAsync("fake", code, sealedState, state, TestContext.Current.CancellationToken);
+        var result = await coordinator.HandleCallbackAsync("fake", code, sealedState, state, TestCt);
         Assert.NotNull(result);
         Assert.False(result.Issued.AccessToken.IsNullOrEmpty());
         using (var meRequest = new HttpRequestMessage(HttpMethod.Get, "/protected")) {
             meRequest.Headers.Authorization = new("Bearer", result.Issued.AccessToken);
-            var resp = await fx.Client.SendAsync(meRequest, TestContext.Current.CancellationToken);
+            var resp = await fx.Client.SendAsync(meRequest, TestCt);
             Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
-            var json = await resp.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+            var json = await resp.Content.ReadFromJsonAsync<JsonElement>(TestCt);
             Assert.False(json.GetProperty("sub").GetString().IsNullOrEmpty());
         }
 
         using (var createTokenRequest = new HttpRequestMessage(HttpMethod.Post, "/tokens")) {
             createTokenRequest.Headers.Authorization = new("Bearer", result.Issued.AccessToken);
             createTokenRequest.Content = JsonContent.Create(new { displayName = "smoke-pat", scopes = new[] { "people.read" } });
-            var resp = await fx.Client.SendAsync(createTokenRequest, TestContext.Current.CancellationToken);
+            var resp = await fx.Client.SendAsync(createTokenRequest, TestCt);
             Assert.Equal(HttpStatusCode.OK, resp.StatusCode);
-            var json = await resp.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+            var json = await resp.Content.ReadFromJsonAsync<JsonElement>(TestCt);
             var plaintext = json.GetProperty("plaintext").GetString();
             Assert.False(plaintext.IsNullOrEmpty());
             using var patRequest = new HttpRequestMessage(HttpMethod.Get, "/protected");
             patRequest.Headers.Authorization = new("Bearer", plaintext);
-            var patResp = await fx.Client.SendAsync(patRequest, TestContext.Current.CancellationToken);
+            var patResp = await fx.Client.SendAsync(patRequest, TestCt);
             Assert.Equal(HttpStatusCode.OK, patResp.StatusCode);
         }
 
         using (var listRequest = new HttpRequestMessage(HttpMethod.Get, "/tokens?includeRevoked=true")) {
             listRequest.Headers.Authorization = new("Bearer", result.Issued.AccessToken);
-            var listResp = await fx.Client.SendAsync(listRequest, TestContext.Current.CancellationToken);
+            var listResp = await fx.Client.SendAsync(listRequest, TestCt);
             Assert.Equal(HttpStatusCode.OK, listResp.StatusCode);
-            var listed = await listResp.Content.ReadFromJsonAsync<JsonElement>(TestContext.Current.CancellationToken);
+            var listed = await listResp.Content.ReadFromJsonAsync<JsonElement>(TestCt);
             Assert.Equal(JsonValueKind.Array, listed.ValueKind);
             Assert.Contains(listed.EnumerateArray(), e => e.GetProperty("displayName").GetString() == "smoke-pat");
             Assert.DoesNotContain(listed.EnumerateArray(), e => e.GetProperty("kind").GetString() == "internal");
         }
 
-        var user = await fx.Services.GetRequiredService<IUserStore>().GetByEmailAsync("smoke@example.com", null, TestContext.Current.CancellationToken);
+        var user = await fx.Services.GetRequiredService<IUserStore>().GetByEmailAsync("smoke@example.com", null, TestCt);
         Assert.NotNull(user);
-        var stored = await fx.Services.GetRequiredService<IApiTokenStore>().ListForUserAsync(user.Id, true, null, TestContext.Current.CancellationToken);
+        var stored = await fx.Services.GetRequiredService<IApiTokenStore>().ListForUserAsync(user.Id, true, null, TestCt);
         Assert.Contains(stored, t => t.Kind == ApiTokenKind.Internal && t.RevokedAt is null);
+    }
+
+    [Fact]
+    public async Task OidcCallback_ApiMode_ReturnsJsonWithoutHandoff()
+    {
+        await using var fx = await SmokeFixture.CreateAsync();
+        var coordinator = fx.Services.GetRequiredService<IExternalLoginCoordinator>();
+        var protector = fx.Services.GetRequiredService<StateNonceProtector>();
+        var redirect = await coordinator.BuildLoginRedirectAsync("fake", "/", "api", TestCt);
+        var unsealed = protector.Unseal(redirect.SealedState) ?? throw new InvalidOperationException("could not unseal state");
+        var code = fx.Idp.IssueCode(
+            new Dictionary<string, object?> {
+                ["sub"] = "api-user",
+                ["iss"] = FakeOidcIdentityProvider.Issuer,
+                ["aud"] = "test-client",
+                ["email"] = "api@example.com",
+                ["email_verified"] = true,
+                ["name"] = "Api User",
+                ["exp"] = DateTimeOffset.UtcNow.AddMinutes(5).ToUnixTimeSeconds(),
+                ["iat"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                ["nonce"] = unsealed.Nonce
+            });
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"/auth/callback/fake?code={Uri.EscapeDataString(code)}&state={Uri.EscapeDataString(unsealed.State)}");
+        request.Headers.Add("Cookie", $"{AuthEndpointsMapper.StateCookieName}={redirect.SealedState}");
+        var response = await fx.Client.SendAsync(request, TestCt);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>(TestCt);
+        Assert.False(json.GetProperty("access_token").GetString().IsNullOrEmpty());
+        Assert.False(response.Headers.Location is not null);
     }
 
     private sealed class SmokeFixture : IAsyncDisposable
@@ -99,7 +130,7 @@ public sealed class EndToEndSmokeTests
         public async ValueTask DisposeAsync()
         {
             if (Host is not null) {
-                await Host.StopAsync(TestContext.Current.CancellationToken);
+                await Host.StopAsync(TestCt);
                 Host.Dispose();
             }
         }
@@ -136,6 +167,7 @@ public sealed class EndToEndSmokeTests
                                 o.DefaultUserScopes.Add("auth.tokens.read");
                                 o.DefaultUserScopes.Add("auth.tokens.write");
                             });
+
                             services.AddSingleton<IOpenIdConnectProvider>(new ScopedFakeProvider("people.read", "auth.tokens.read", "auth.tokens.write"));
                             services.AddHttpClient<OidcDiscoveryCache>().ConfigurePrimaryHttpMessageHandler(() => fx.Idp.CreateHandler());
                             services.AddHttpClient<OidcJwksResolver>().ConfigurePrimaryHttpMessageHandler(() => fx.Idp.CreateHandler());
@@ -159,7 +191,7 @@ public sealed class EndToEndSmokeTests
                             });
                         });
                 })
-                .StartAsync(TestContext.Current.CancellationToken);
+                .StartAsync(TestCt);
 
             fx.Host = host;
             return fx;

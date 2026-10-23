@@ -2,16 +2,15 @@ import type {
     ApiClient,
     ApiResponse,
     AsyncApiClient,
-    CreateResult,
+    CrudResource,
     DeleteResult,
     ExportDownload,
     ExportRequest,
-    PatchRequest,
     ProjectedQueryRes,
     QueryRes,
-    UpdateResult,
+    SyncCrudResource,
 } from "lyo-api-client";
-import {fileNameFromDisposition} from "lyo-api-client";
+import {createAsyncCrudResource, createSyncCrudResource, fileNameFromDisposition} from "lyo-api-client";
 import type {
     ParameterOptionsResolveReq,
     ParameterOptionsResolveRes,
@@ -47,41 +46,16 @@ function pathOf(options: ReportingClientOptions | undefined, relative: string): 
     return joinRoutePrefix(options?.routePrefix, relative);
 }
 
-export interface CrudResource<TReq, TRes> {
-    queryConcrete(request: QueryConcreteReq): Promise<ApiResponse<QueryRes<TRes>>>;
-    queryProject<TRow = Record<string, unknown>>(
-        request: ProjectionQueryReq
-    ): Promise<ApiResponse<ProjectedQueryRes<TRow>>>;
-    get(id: string, include?: readonly string[]): Promise<ApiResponse<TRes>>;
-    create(body: TReq): Promise<ApiResponse<CreateResult<TRes>>>;
-    update(id: string, body: TReq): Promise<ApiResponse<UpdateResult<TRes>>>;
-    patch(id: string, body: PatchRequest): Promise<ApiResponse<unknown>>;
-    deleteById(id: string): Promise<ApiResponse<DeleteResult<TRes>>>;
-}
-
-function crud<TReq, TRes>(api: AsyncApiClient, route: string): CrudResource<TReq, TRes> {
+function toExportDownload(response: ApiResponse<unknown>): ExportDownload {
+    const blob =
+        response.blob ??
+        new Blob([response.rawBody ?? ""], {
+            type: response.headers?.["content-type"] ?? "application/octet-stream",
+        });
     return {
-        queryConcrete(request) {
-            return api.queryConcrete<TRes, QueryConcreteReq>(route, request);
-        },
-        queryProject(request) {
-            return api.queryProject(route, request);
-        },
-        get(id, include) {
-            return api.getById<TRes>(route, id, include);
-        },
-        create(body) {
-            return api.create<TReq, TRes>(route, body);
-        },
-        update(id, body) {
-            return api.update<TReq, TRes>(route, [id], body);
-        },
-        patch(id, body) {
-            return api.patch(route, {...body, keys: body.keys ?? [[id]]});
-        },
-        deleteById(id) {
-            return api.deleteById<TRes>(route, id);
-        },
+        blob,
+        fileName: fileNameFromDisposition(response.headers?.["content-disposition"]),
+        contentType: response.headers?.["content-type"] ?? blob.type,
     };
 }
 
@@ -108,6 +82,27 @@ export interface AsyncReportingApiClient {
     ): Promise<ApiResponse<ParameterOptionsResolveRes>>;
 }
 
+export interface SyncReportGenerationsClient {
+    queryConcrete(request: QueryConcreteReq): ApiResponse<QueryRes<ReportGenerationRes>>;
+    queryProject<TRow = Record<string, unknown>>(
+        request: ProjectionQueryReq
+    ): ApiResponse<ProjectedQueryRes<TRow>>;
+    get(id: string, include?: readonly string[]): ApiResponse<ReportGenerationRes>;
+    deleteById(id: string): ApiResponse<DeleteResult<ReportGenerationRes>>;
+    generate(request: GenerateReportReq): ApiResponse<ReportGenerationRes>;
+    rerun(id: string, includeReportData?: boolean): ApiResponse<ReportGenerationRes>;
+    download(id: string): ExportDownload;
+}
+
+export interface SyncReportingApiClient {
+    definitions: SyncCrudResource<ReportDefinitionReq, ReportDefinitionRes> & {
+        export(body: ExportRequest): ExportDownload;
+    };
+    definitionParameters: SyncCrudResource<ReportDefinitionParameterReq, ReportDefinitionParameterRes>;
+    generations: SyncReportGenerationsClient;
+    resolveParameterOptions(body: ParameterOptionsResolveReq): ApiResponse<ParameterOptionsResolveRes>;
+}
+
 export function createAsyncReportingApiClient(
     api: AsyncApiClient,
     options?: ReportingClientOptions
@@ -115,14 +110,16 @@ export function createAsyncReportingApiClient(
     const p = (relative: string) => pathOf(options, relative);
     const definitionsRoute = p(ReportingRoutes.definitions);
     const generationsRoute = p(ReportingRoutes.generations);
-    const definitions = crud<ReportDefinitionReq, ReportDefinitionRes>(api, definitionsRoute);
+    const definitions = createAsyncCrudResource<ReportDefinitionReq, ReportDefinitionRes>(api, definitionsRoute, {
+        export: true,
+    });
 
     return {
         definitions: {
             ...definitions,
             export: (body) => api.export(definitionsRoute, body),
         },
-        definitionParameters: crud(api, p(ReportingRoutes.definitionParameters)),
+        definitionParameters: createAsyncCrudResource(api, p(ReportingRoutes.definitionParameters)),
         generations: {
             queryConcrete(request) {
                 return api.queryConcrete<ReportGenerationRes, QueryConcreteReq>(generationsRoute, request);
@@ -156,16 +153,7 @@ export function createAsyncReportingApiClient(
                     path: p(reportingGenerationDownloadPath(id)),
                     responseType: "blob",
                 });
-                const blob =
-                    response.blob ??
-                    new Blob([response.rawBody ?? ""], {
-                        type: response.headers?.["content-type"] ?? "application/octet-stream",
-                    });
-                return {
-                    blob,
-                    fileName: fileNameFromDisposition(response.headers?.["content-disposition"]),
-                    contentType: response.headers?.["content-type"] ?? blob.type,
-                };
+                return toExportDownload(response);
             },
         },
         resolveParameterOptions(body) {
@@ -178,36 +166,47 @@ export function createAsyncReportingApiClient(
     };
 }
 
-export function createReportingApiClient(api: ApiClient, options?: ReportingClientOptions) {
+export function createReportingApiClient(api: ApiClient, options?: ReportingClientOptions): SyncReportingApiClient {
     const p = (relative: string) => pathOf(options, relative);
     const definitionsRoute = p(ReportingRoutes.definitions);
+    const generationsRoute = p(ReportingRoutes.generations);
+    const definitions = createSyncCrudResource<ReportDefinitionReq, ReportDefinitionRes>(api, definitionsRoute, {
+        export: true,
+    });
+
     return {
         definitions: {
+            ...definitions,
+            export: (body: ExportRequest) => definitions.export!(body),
+        },
+        definitionParameters: createSyncCrudResource<ReportDefinitionParameterReq, ReportDefinitionParameterRes>(
+            api,
+            p(ReportingRoutes.definitionParameters)
+        ),
+        generations: {
             queryConcrete(request: QueryConcreteReq) {
-                return api.request<QueryRes<ReportDefinitionRes>, QueryConcreteReq>({
+                return api.request<QueryRes<ReportGenerationRes>, QueryConcreteReq>({
                     method: "POST",
-                    path: `${definitionsRoute}/QueryConcrete`,
+                    path: `${generationsRoute}/QueryConcrete`,
+                    body: request,
+                });
+            },
+            queryProject<TRow = Record<string, unknown>>(request: ProjectionQueryReq) {
+                return api.request<ProjectedQueryRes<TRow>, ProjectionQueryReq>({
+                    method: "POST",
+                    path: `${generationsRoute}/QueryProject`,
                     body: request,
                 });
             },
             get(id: string, include?: readonly string[]) {
-                return api.getById<ReportDefinitionRes>(definitionsRoute, id, include);
-            },
-            create(body: ReportDefinitionReq) {
-                return api.request<CreateResult<ReportDefinitionRes>, ReportDefinitionReq>({
-                    method: "POST",
-                    path: definitionsRoute,
-                    body,
-                });
+                return api.getById<ReportGenerationRes>(generationsRoute, id, include);
             },
             deleteById(id: string) {
-                return api.request<DeleteResult<ReportDefinitionRes>>({
+                return api.request<DeleteResult<ReportGenerationRes>>({
                     method: "DELETE",
-                    path: `${definitionsRoute}/${encodeURIComponent(id)}`,
+                    path: `${generationsRoute}/${encodeURIComponent(id)}`,
                 });
             },
-        },
-        generations: {
             generate(request: GenerateReportReq) {
                 return api.request<ReportGenerationRes, GenerateReportReq>({
                     method: "POST",
@@ -215,12 +214,20 @@ export function createReportingApiClient(api: ApiClient, options?: ReportingClie
                     body: request,
                 });
             },
-            queryConcrete(request: QueryConcreteReq) {
-                return api.request<QueryRes<ReportGenerationRes>, QueryConcreteReq>({
+            rerun(id: string, includeReportData = false) {
+                return api.request<ReportGenerationRes>({
                     method: "POST",
-                    path: `${p(ReportingRoutes.generations)}/QueryConcrete`,
-                    body: request,
+                    path: p(reportingGenerationRerunPath(id)),
+                    query: includeReportData ? {includeReportData: true} : undefined,
                 });
+            },
+            download(id: string) {
+                const response = api.request<unknown>({
+                    method: "GET",
+                    path: p(reportingGenerationDownloadPath(id)),
+                    responseType: "blob",
+                });
+                return toExportDownload(response);
             },
         },
         resolveParameterOptions(body: ParameterOptionsResolveReq) {

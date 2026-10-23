@@ -6,9 +6,8 @@ using Lyo.Exceptions;
 namespace Lyo.Encryption.TwoKey;
 
 /// <summary>
-/// AES Key Wrap (RFC 3394). Two-key stream DEK encoding when the KEK is a raw AES-sized key: wrap is deterministic, integrity-checked, and exactly
-/// <c>dekLength + 8</c> bytes — no nonce or header, which fits the encrypted-DEK length cap. Implemented on AES-ECB so
-/// every target framework works without extra packages.
+/// AES Key Wrap (RFC 3394). Two-key stream DEK encoding when the KEK is a raw AES-sized key: wrap is deterministic, integrity-checked, and exactly <c>dekLength + 8</c> bytes
+/// — no nonce or header, which fits the encrypted-DEK length cap. Implemented on AES-ECB so every target framework works without extra packages.
 /// </summary>
 internal static class AesKeyWrap
 {

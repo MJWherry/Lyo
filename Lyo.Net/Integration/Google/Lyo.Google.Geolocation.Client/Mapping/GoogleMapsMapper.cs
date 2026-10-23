@@ -1,5 +1,6 @@
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Extensions;
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 using Lyo.Geolocation.Models;
 using Lyo.Geolocation.Models.Addresses;
@@ -93,7 +94,7 @@ internal static class GoogleMapsMapper
     public static Route ToRoute(GoogleRoute googleRoute, GeoCoordinate start, GeoCoordinate end, RouteOptions options)
     {
         var route = new Route {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             StartPoint = start,
             EndPoint = end,
             TransportMode = options.Mode,

@@ -1,4 +1,5 @@
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Hashing.Tests;
 
@@ -29,8 +30,8 @@ public sealed class ChecksumServiceTests
         var svc = HashingService.Shared;
         var path = Path.GetTempFileName();
         try {
-            await File.WriteAllBytesAsync(path, CheckVector, TestContext.Current.CancellationToken);
-            var fromFile = await svc.ChecksumFileAsync(ChecksumAlgorithm.Crc32C, path, TestContext.Current.CancellationToken);
+            await File.WriteAllBytesAsync(path, CheckVector, TestCt);
+            var fromFile = await svc.ChecksumFileAsync(ChecksumAlgorithm.Crc32C, path, TestCt);
             Assert.Equal(svc.Checksum(ChecksumAlgorithm.Crc32C, CheckVector), fromFile);
         }
         finally {
@@ -41,7 +42,7 @@ public sealed class ChecksumServiceTests
     [Fact]
     public async Task ChecksumFileAsync_Missing_File_Throws()
         => await Assert.ThrowsAsync<FileNotFoundException>(() => HashingService.Shared.ChecksumFileAsync(
-            ChecksumAlgorithm.Crc32, Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")), TestContext.Current.CancellationToken));
+            ChecksumAlgorithm.Crc32, Path.Combine(Path.GetTempPath(), LyoGuid.CreateV7().ToString("N")), TestCt));
 
     [Fact]
     public void CreateChecksumStream_Wraps_Underlying_Stream()

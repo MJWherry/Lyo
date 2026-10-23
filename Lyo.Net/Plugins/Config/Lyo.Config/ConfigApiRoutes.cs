@@ -18,8 +18,7 @@ public static class ConfigApiRoutes
     public const string ManageResolved = "api/config/manage/resolved";
 
     /// <summary>Returns definitions for <paramref name="subjectEntityType" />.</summary>
-    public static string DefinitionsFor(string subjectEntityType)
-        => $"{ManageDefinitions}?subjectEntityType={Uri.EscapeDataString(subjectEntityType)}";
+    public static string DefinitionsFor(string subjectEntityType) => $"{ManageDefinitions}?subjectEntityType={Uri.EscapeDataString(subjectEntityType)}";
 
     /// <summary>Read or delete one definition.</summary>
     public static string Definition(Guid id) => $"{ManageDefinitions}/{id:D}";

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Common.Core.Net;
 
 namespace Lyo.Diagnostic.Correlation;
@@ -6,14 +7,15 @@ namespace Lyo.Diagnostic.Correlation;
 /// Tunables for <see cref="LyoCorrelationDelegatingHandler" />. The same defaults are used by <c>Lyo.Diagnostic.AspNetCore.DiagnosticWebOptions.CorrelationIdHeaders</c> so
 /// the inbound reader and the outbound writer agree without extra configuration.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class CorrelationHandlerOptions
 {
     /// <summary>Default header order (mirrors <c>DiagnosticWebOptions.CorrelationIdHeaders</c>).</summary>
     public static readonly string[] DefaultHeaders = LyoHttpHeaders.CorrelationIds;
 
     /// <summary>
-    /// Header names checked on the outbound request. If any are already populated by the caller (for example via the typed-client's <c>before:</c> hook), the handler does nothing.
-    /// Defaults to <see cref="DefaultHeaders" />.
+    /// Header names checked on the outbound request. If any are already populated by the caller (for example via the typed-client's <c>before:</c> hook), the handler does
+    /// nothing. Defaults to <see cref="DefaultHeaders" />.
     /// </summary>
     public string[] DetectHeaderNames { get; set; } = DefaultHeaders;
 
@@ -22,4 +24,7 @@ public sealed class CorrelationHandlerOptions
     /// multiple aliases simultaneously (for example <c>X-Correlation-Id</c> for Lyo services and <c>X-Request-Id</c> for legacy ones). Defaults to <see cref="DefaultHeaders" />.
     /// </summary>
     public string[] WriteHeaderNames { get; set; } = DefaultHeaders;
+
+    /// <summary>Detect and write header counts.</summary>
+    public override string ToString() => $"DetectHeaderNames={DetectHeaderNames?.Length} WriteHeaderNames={WriteHeaderNames?.Length}";
 }

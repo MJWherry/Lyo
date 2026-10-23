@@ -1,10 +1,12 @@
 # Lyo.Note
 
-Contracts for notes hung on entities. A note has a **subject** (what it is about) and an **actor** (who wrote it), both as `EntityRef`. The default Postgres store maps `for_entity_*` / `from_entity_*` (nullable varchar) and uses soft-delete.
+Contracts for notes hung on entities. A note has a **subject** (what it is about) and an **actor** (who wrote it), both as `EntityRef`. The default Postgres store maps
+`for_entity_*` / `from_entity_*` (nullable varchar) and uses soft-delete.
 
 ## `INoteStore`
 
-- `SaveAsync(NoteRecord note, CancellationToken ct = default)` insert or update. If `note.Id` matches an active row, that row's subject/actor endpoints and `Content` are updated in place. Otherwise a new row is inserted. A new `Id` is generated when `Id == default`.
+- `SaveAsync(NoteRecord note, CancellationToken ct = default)` insert or update. If `note.Id` matches an active row, that row's subject/actor endpoints and `Content` are updated in
+  place. Otherwise a new row is inserted. A new `Id` is generated when `Id == default`.
 - `GetByIdAsync(Guid id, CancellationToken ct = default)` one note by id. Active rows only.
 - `GetForEntityAsync(EntityRef forEntity, CancellationToken ct = default)` every note on that target, ordered by `CreatedAt`.
 - `GetFromEntityAsync(EntityRef fromEntity, CancellationToken ct = default)` every note written by that actor, ordered by `CreatedAt`.

@@ -8,9 +8,7 @@ using Lyo.Notification;
 
 namespace Lyo.Discord.Bot;
 
-/// <summary>
-/// Strongly typed read/write for guild settings on <see cref="ICacheService" />, including <see cref="GuildSettingsChangedNotification" /> on meaningful updates.
-/// </summary>
+/// <summary>Strongly typed read/write for guild settings on <see cref="ICacheService" />, including <see cref="GuildSettingsChangedNotification" /> on meaningful updates.</summary>
 public static class Extensions
 {
     private const int MaxEmbedDescription = 3900;

@@ -1,0 +1,16 @@
+{
+  "id": "Lyo.Discord.Seed",
+  "name": "Lyo.Discord.Seed",
+  "area": "Integration",
+  "tagline": "EF seed of Discord guilds and their users, members, channels, roles, emojis, messages, attachments, reactions, and interactions.",
+  "description": "EF seed of one guild per count, with one user, member, channel, role, emoji, message, attachment, reaction, and interaction. Schema discord.",
+  "features": [],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Integration/Discord/Lyo.Discord.Seed/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

@@ -10,6 +10,12 @@ namespace Lyo.Reporting.Web.Components;
 /// <summary>Paints one mixed body item. No drag chrome — the design canvas wraps this component when editing.</summary>
 public sealed class ReportBodyItemView : ComponentBase
 {
+    private Control? _cardDrag;
+    private string? _cardSlot;
+    private bool _dropHandled;
+    private TableColumn? _tableColDrag;
+    private string? _tableColSlot;
+
     [Parameter]
     [EditorRequired]
     public ReportViewPainter Painter { get; set; } = null!;
@@ -29,12 +35,6 @@ public sealed class ReportBodyItemView : ComponentBase
 
     [Parameter]
     public EventCallback<ReportDesignGridColumnDrop> OnGridColumnDrop { get; set; }
-
-    private Control? _cardDrag;
-    private TableColumn? _tableColDrag;
-    private string? _cardSlot;
-    private string? _tableColSlot;
-    private bool _dropHandled;
 
     protected override void BuildRenderTree(RenderTreeBuilder builder)
     {
@@ -128,13 +128,16 @@ public sealed class ReportBodyItemView : ComponentBase
     private void WriteCard(RenderTreeBuilder b, Section section, Grid? grid, Card card)
     {
         var extra = Painter.SelectionRing(Selection?.Matches(card) == true) + " cursor: pointer; position: relative;";
-        Painter.WriteCard(b, card, extra, inner => {
-            inner.AddAttribute(16, "data-lyo-design", ReportDesignTreeExpand.CardKey(section, card));
-            inner.AddAttribute(17, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => OnHit.InvokeAsync(new() { Section = section, Control = card, Card = card })));
-            inner.AddEventStopPropagationAttribute(18, "onclick", true);
-            if (grid is not null)
-                WriteCardHandle(inner, grid, card);
-        });
+        Painter.WriteCard(
+            b, card, extra, inner => {
+                inner.AddAttribute(16, "data-lyo-design", ReportDesignTreeExpand.CardKey(section, card));
+                inner.AddAttribute(
+                    17, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => OnHit.InvokeAsync(new() { Section = section, Control = card, Card = card })));
+
+                inner.AddEventStopPropagationAttribute(18, "onclick", true);
+                if (grid is not null)
+                    WriteCardHandle(inner, grid, card);
+            });
     }
 
     private void WriteCardHandle(RenderTreeBuilder b, Grid grid, Control control)
@@ -157,9 +160,7 @@ public sealed class ReportBodyItemView : ComponentBase
     private void WriteTable(RenderTreeBuilder b, Table table)
     {
         var section = Item.Section;
-        Painter.WriteTable(b, table, OnGridColumnDrop.HasDelegate
-            ? (inner, column, index) => WriteTableHeader(inner, section, table, column, index)
-            : null);
+        Painter.WriteTable(b, table, OnGridColumnDrop.HasDelegate ? (inner, column, index) => WriteTableHeader(inner, section, table, column, index) : null);
     }
 
     private void WriteTableHeader(RenderTreeBuilder b, Section section, Table table, TableColumn column, int index)
@@ -167,7 +168,9 @@ public sealed class ReportBodyItemView : ComponentBase
         WriteTableColSlot(b, table, index, 40);
         b.OpenElement(50, "span");
         b.AddAttribute(51, "style", "display: inline-flex; align-items: center; gap: 4px; cursor: pointer;");
-        b.AddAttribute(52, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => OnHit.InvokeAsync(new() { Section = section, Table = table, TableColumn = column })));
+        b.AddAttribute(
+            52, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, () => OnHit.InvokeAsync(new() { Section = section, Table = table, TableColumn = column })));
+
         b.AddEventStopPropagationAttribute(53, "onclick", true);
         if (OnGridColumnDrop.HasDelegate) {
             b.OpenElement(54, "span");
@@ -211,13 +214,14 @@ public sealed class ReportBodyItemView : ComponentBase
     }
 
     private Task HitControl(Section section, Control control)
-        => OnHit.InvokeAsync(control switch {
-            Card card => new ReportDesignHit { Section = section, Control = card, Card = card },
-            Block block => new ReportDesignHit { Section = section, Control = block, Block = block },
-            Table table => new ReportDesignHit { Section = section, Control = table, Table = table },
-            Grid grid => new ReportDesignHit { Section = section, Control = grid, Grid = grid },
-            _ => new ReportDesignHit { Section = section, Control = control }
-        });
+        => OnHit.InvokeAsync(
+            control switch {
+                Card card => new() { Section = section, Control = card, Card = card },
+                Block block => new() { Section = section, Control = block, Block = block },
+                Table table => new() { Section = section, Control = table, Table = table },
+                Grid grid => new() { Section = section, Control = grid, Grid = grid },
+                var _ => new() { Section = section, Control = control }
+            });
 
     private void OnCardDragStart(Control control)
     {
@@ -246,11 +250,9 @@ public sealed class ReportBodyItemView : ComponentBase
         _cardSlot = null;
     }
 
-    private static string CardSlotKey(Grid grid, int insertIndex)
-        => "card:" + ReportDesignTreeExpand.LiveKey(grid) + ":" + insertIndex;
+    private static string CardSlotKey(Grid grid, int insertIndex) => "card:" + ReportDesignTreeExpand.LiveKey(grid) + ":" + insertIndex;
 
-    private bool IsCardSlot(Grid grid, int insertIndex)
-        => string.Equals(_cardSlot, CardSlotKey(grid, insertIndex), StringComparison.Ordinal);
+    private bool IsCardSlot(Grid grid, int insertIndex) => string.Equals(_cardSlot, CardSlotKey(grid, insertIndex), StringComparison.Ordinal);
 
     private void SetCardSlot(Grid grid, int insertIndex)
     {

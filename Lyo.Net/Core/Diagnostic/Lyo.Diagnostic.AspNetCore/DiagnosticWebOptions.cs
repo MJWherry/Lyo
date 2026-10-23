@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Common.Core.Net;
 using Lyo.Diagnostic.Classification;
 using Lyo.Diagnostic.Context;
@@ -6,6 +7,7 @@ using Lyo.Diagnostic.Inbox;
 namespace Lyo.Diagnostic.AspNetCore;
 
 /// <summary>Host settings for breadcrumb capacity, inbox recording filters, and correlation headers.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class DiagnosticWebOptions
 {
     /// <summary>Only occurrences at or above this severity are written to <see cref="IErrorOccurrenceSink" />.</summary>
@@ -20,9 +22,11 @@ public sealed class DiagnosticWebOptions
     /// <summary>Ceiling for <see cref="InMemoryErrorInbox" /> when <see cref="DiagnosticWebServiceCollectionExtensions.AddLyoDiagnosticsWeb" /> registers it.</summary>
     public int InMemoryInboxMaxOccurrences { get; set; } = 5_000;
 
-    /// <summary>
-    /// Request headers tried in order for <see cref="RequestMetadata.CorrelationId" />; falls back to
-    /// <see cref="Microsoft.AspNetCore.Http.HttpContext.TraceIdentifier" />.
-    /// </summary>
+    /// <summary>Request headers tried in order for <see cref="RequestMetadata.CorrelationId" />; falls back to <see cref="Microsoft.AspNetCore.Http.HttpContext.TraceIdentifier" />.</summary>
     public string[] CorrelationIdHeaders { get; set; } = LyoHttpHeaders.CorrelationIds;
+
+    /// <summary>Severity floor, breadcrumb capacity, inbox cap, and correlation-header count.</summary>
+    public override string ToString()
+        => $"MinimumSeverity={MinimumSeverity} BreadcrumbCapacity={BreadcrumbCapacity} "
+         + $"InMemoryInboxMaxOccurrences={InMemoryInboxMaxOccurrences} CorrelationIdHeaders={CorrelationIdHeaders?.Length}";
 }

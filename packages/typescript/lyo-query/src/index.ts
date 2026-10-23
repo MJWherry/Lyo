@@ -4,3 +4,6 @@ export * from "./models/filterProperty.js";
 export * from "./models/parameterOptions.js";
 export * from "./where/helpers.js";
 export * from "./where/grid.js";
+export * from "./where/print.js";
+export * from "./score.js";
+export * from "./queryPath.js";

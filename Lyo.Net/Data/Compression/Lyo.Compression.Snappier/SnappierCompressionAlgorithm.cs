@@ -1,16 +1,18 @@
+using System.Diagnostics;
 using Lyo.Compression.Models;
 
 namespace Lyo.Compression.Snappier;
 
 /// <summary>Snappy framing (Snappier). Very fast, less CPU than zlib on warm payloads. Default extension <c>.snappy</c>.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record SnappierCompressionAlgorithm : CompressionAlgorithm
 {
     /// <summary>Shared singleton instance.</summary>
     public static readonly SnappierCompressionAlgorithm Instance = new();
 
     /// <summary>
-    /// Snappy's raw block format (EasyCompressor's binary API) cannot be read by its framed stream format, and EasyCompressor has no stream-compatible binary mode, so
-    /// byte[] compression has to go through the stream path.
+    /// Snappy's raw block format (EasyCompressor's binary API) cannot be read by its framed stream format, and EasyCompressor has no stream-compatible binary mode, so byte[]
+    /// compression has to go through the stream path.
     /// </summary>
     public override bool BinaryCompressMatchesStreamFormat => false;
 

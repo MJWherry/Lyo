@@ -1,43 +1,66 @@
-using System.Net.Http.Json;
 using System.Text;
-using Lyo.Api.Client;
 using Lyo.Common.Metadata.Records;
 using Lyo.Compression.Models;
 using Lyo.Encryption;
 using Lyo.Encryption.AesSiv;
-using Lyo.Images;
-using Lyo.Images.Models;
-using Lyo.TestGateway.Components;
 using Lyo.TestGateway.Services;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
-using Lyo.Web.Components.DataGrid;
 using Lyo.Web.Components.FileUpload;
 using Lyo.Web.Components.Models;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.Web.Virtualization;
-using Microsoft.JSInterop;
 using MudBlazor;
-using static Microsoft.AspNetCore.Components.Web.RenderMode;
 
 namespace Lyo.TestGateway.Components.TestGateway;
 
 public partial class FileTransformWorkbench
 {
+    private const int MaxClipboardCopyBytes = 512 * 1024;
+
+    private static readonly EncryptionAlgorithm[] SymmetricWorkbenchAlgorithms = [
+        EncryptionAlgorithm.AesGcm, EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.AesCcm, EncryptionAlgorithm.AesSiv, EncryptionAlgorithm.XChaCha20Poly1305
+    ];
+
     private bool _busy;
     private CompressionAlgorithm? _compressionAlgorithm;
-    private EncryptionAlgorithm? _dataEncryptionAlgorithm;
-    private EncryptionAlgorithm? _keyEncryptionAlgorithm;
     private AesGcmKeySizeBits _dataAesGcmKeySize = AesGcmKeySizeBits.Bits256;
-    private AesGcmKeySizeBits _keyAesGcmKeySize = AesGcmKeySizeBits.Bits256;
     private AesSivKeySizeBits _dataAesSivKeySize = AesSivKeySizeBits.Bits256;
+    private EncryptionAlgorithm? _dataEncryptionAlgorithm;
+    private AesGcmKeySizeBits _keyAesGcmKeySize = AesGcmKeySizeBits.Bits256;
     private AesSivKeySizeBits _keyAesSivKeySize = AesSivKeySizeBits.Bits256;
+    private EncryptionAlgorithm? _keyEncryptionAlgorithm;
+    private string _rawText = string.Empty;
+    private TestGatewayTransformResult? _result;
 
-    private static readonly EncryptionAlgorithm[] SymmetricWorkbenchAlgorithms = [EncryptionAlgorithm.AesGcm, EncryptionAlgorithm.ChaCha20Poly1305, EncryptionAlgorithm.AesCcm, EncryptionAlgorithm.AesSiv, EncryptionAlgorithm.XChaCha20Poly1305];
+    private bool _reverse;
+    private string _secret = "change-me";
+    private bool _showSecret;
+    private string _uploadStatus = "No file selected.";
+    private TestGatewayUploadedFile? _uploadedFile;
+    private bool _useRawText;
+    private bool _useTwoKeyEncryption;
+
+    /// <summary>Whether the data-encryption row shows a key-size list next to the algorithm (two-key mode).</summary>
+    private bool ShowsTwoKeyDataKeySize => UsesAesGcmOrCcmKeySize(_dataEncryptionAlgorithm) || _dataEncryptionAlgorithm == EncryptionAlgorithm.AesSiv;
+
+    /// <summary>Whether the key-wrapping row shows a key-size list next to the algorithm (two-key mode).</summary>
+    private bool ShowsTwoKeyKekKeySize => UsesAesGcmOrCcmKeySize(_keyEncryptionAlgorithm) || _keyEncryptionAlgorithm == EncryptionAlgorithm.AesSiv;
+
+    /// <summary>Whether single-key mode shows a key-size list next to the algorithm.</summary>
+    private bool ShowsNormalKeySize => UsesAesGcmOrCcmKeySize(_dataEncryptionAlgorithm) || _dataEncryptionAlgorithm == EncryptionAlgorithm.AesSiv;
+
+    private bool ActionButtonsDisabled => _busy || (!_useRawText && _uploadedFile == null) || (_useRawText && string.IsNullOrWhiteSpace(_rawText));
+
+    private bool CanCopyResultToClipboard => _result != null && _result.OutputBytes.Length > 0 && _result.OutputBytes.Length <= MaxClipboardCopyBytes;
+
+    private string CopyResultTooltip
+        => _result == null || _result.OutputBytes.Length == 0 ? string.Empty :
+            _result.OutputBytes.Length > MaxClipboardCopyBytes ? $"Output exceeds {MaxClipboardCopyBytes / 1024} KB — use download." :
+            "Copy as UTF-8 when lossless, otherwise Base64.";
+
+    private bool ApplyCompression => _compressionAlgorithm is not null;
+
+    private bool ApplyEncryption => _useTwoKeyEncryption ? _dataEncryptionAlgorithm.HasValue && _keyEncryptionAlgorithm.HasValue : _dataEncryptionAlgorithm.HasValue;
+
+    private bool HasEncryptionSelection => _useTwoKeyEncryption ? _dataEncryptionAlgorithm.HasValue || _keyEncryptionAlgorithm.HasValue : _dataEncryptionAlgorithm.HasValue;
 
     private static string FormatEncryptionAlgorithmLabel(EncryptionAlgorithm a)
         => a switch {
@@ -50,33 +73,6 @@ public partial class FileTransformWorkbench
         };
 
     private static bool UsesAesGcmOrCcmKeySize(EncryptionAlgorithm? algorithm) => algorithm is EncryptionAlgorithm.AesGcm or EncryptionAlgorithm.AesCcm;
-
-    /// <summary>Whether the data-encryption row shows a key-size list next to the algorithm (two-key mode).</summary>
-    private bool ShowsTwoKeyDataKeySize => UsesAesGcmOrCcmKeySize(_dataEncryptionAlgorithm) || _dataEncryptionAlgorithm == EncryptionAlgorithm.AesSiv;
-
-    /// <summary>Whether the key-wrapping row shows a key-size list next to the algorithm (two-key mode).</summary>
-    private bool ShowsTwoKeyKekKeySize => UsesAesGcmOrCcmKeySize(_keyEncryptionAlgorithm) || _keyEncryptionAlgorithm == EncryptionAlgorithm.AesSiv;
-
-    /// <summary>Whether single-key mode shows a key-size list next to the algorithm.</summary>
-    private bool ShowsNormalKeySize => UsesAesGcmOrCcmKeySize(_dataEncryptionAlgorithm) || _dataEncryptionAlgorithm == EncryptionAlgorithm.AesSiv;
-
-    private bool _reverse;
-    private bool _useRawText;
-    private string _rawText = string.Empty;
-    private TestGatewayTransformResult? _result;
-    private string _secret = "change-me";
-    private bool _showSecret;
-    private TestGatewayUploadedFile? _uploadedFile;
-    private bool _useTwoKeyEncryption;
-    private string _uploadStatus = "No file selected.";
-
-    private bool ActionButtonsDisabled => _busy || (!_useRawText && _uploadedFile == null) || (_useRawText && string.IsNullOrWhiteSpace(_rawText));
-
-    private const int MaxClipboardCopyBytes = 512 * 1024;
-
-    private bool CanCopyResultToClipboard => _result != null && _result.OutputBytes.Length > 0 && _result.OutputBytes.Length <= MaxClipboardCopyBytes;
-
-    private string CopyResultTooltip => _result == null || _result.OutputBytes.Length == 0 ? string.Empty : _result.OutputBytes.Length > MaxClipboardCopyBytes ? $"Output exceeds {MaxClipboardCopyBytes / 1024} KB — use download." : "Copy as UTF-8 when lossless, otherwise Base64.";
 
     private void OnTwoKeyEncryptionToggleClicked(bool twoKey)
     {
@@ -265,7 +261,13 @@ public partial class FileTransformWorkbench
         var actionLabel = GetActionButtonText();
         _busy = true;
         try {
-            _result = await Transformer.TransformAsync(input, new(_reverse, ApplyCompression, ApplyEncryption, _useTwoKeyEncryption, _secret, _dataEncryptionAlgorithm ?? EncryptionAlgorithm.AesGcm, _keyEncryptionAlgorithm ?? EncryptionAlgorithm.AesGcm, _compressionAlgorithm ?? CompressionAlgorithm.Brotli, _dataAesGcmKeySize, _keyAesGcmKeySize, _dataAesSivKeySize, _keyAesSivKeySize));
+            _result = await Transformer.TransformAsync(
+                input,
+                new(
+                    _reverse, ApplyCompression, ApplyEncryption, _useTwoKeyEncryption, _secret, _dataEncryptionAlgorithm ?? EncryptionAlgorithm.AesGcm,
+                    _keyEncryptionAlgorithm ?? EncryptionAlgorithm.AesGcm, _compressionAlgorithm ?? CompressionAlgorithm.Brotli, _dataAesGcmKeySize, _keyAesGcmKeySize,
+                    _dataAesSivKeySize, _keyAesSivKeySize));
+
             SetStatus($"{actionLabel} completed.", Severity.Success);
         }
         catch (Exception ex) {
@@ -309,10 +311,4 @@ public partial class FileTransformWorkbench
         _showSecret = !_showSecret;
         return Task.CompletedTask;
     }
-
-    private bool ApplyCompression => _compressionAlgorithm is not null;
-
-    private bool ApplyEncryption => _useTwoKeyEncryption ? _dataEncryptionAlgorithm.HasValue && _keyEncryptionAlgorithm.HasValue : _dataEncryptionAlgorithm.HasValue;
-
-    private bool HasEncryptionSelection => _useTwoKeyEncryption ? _dataEncryptionAlgorithm.HasValue || _keyEncryptionAlgorithm.HasValue : _dataEncryptionAlgorithm.HasValue;
 }

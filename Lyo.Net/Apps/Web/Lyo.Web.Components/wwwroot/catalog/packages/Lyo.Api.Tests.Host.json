@@ -39,7 +39,7 @@
       "title": "Endpoints",
       "items": [
         "**Typed builder** at `/api/Job/Definition`. Uses `CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>` with `AllowAnonymous`, `WithMetadata(IncludeEntityMetadata = true)`, and lifecycle hooks (`WithGet`, `WithCreate`, `WithCreateBulk`, `WithUpdate`, `WithUpdateBulk`, `WithPatch`, `WithPatchBulk`, `WithUpsert`, `WithUpsertBulk`, `WithDelete`, `WithDeleteBulk`). Each hook appends a marker (e.g. `[afterCreate]`) to `Description` so tests can verify hook execution order.",
-        "**Dynamic builder** at `api/Job`. `MapDynamicCrudEndpoints<JobContext>` with `IncludeOnly<JobDefinition>` and `BeforeCreate` setting a `Guid.NewGuid()` PK when callers omit `Id`. Features: `ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance` on dynamic defaults."
+        "**Dynamic builder** at `api/Job`. `MapDynamicCrudEndpoints<JobContext>` with `IncludeOnly<JobDefinition>` and `BeforeCreate` setting a `LyoGuid.CreateV7()` PK when callers omit `Id`. Features: `ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance` on dynamic defaults."
       ]
     },
     {
@@ -76,6 +76,14 @@
       ]
     },
     {
+      "name": "Lyo.Api.Export.Toml",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Api.Export.Xlsx",
       "kind": "lyo",
       "tags": [
@@ -84,7 +92,7 @@
       ]
     },
     {
-      "name": "Lyo.Cache",
+      "name": "Lyo.Api.Export.Xml",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -92,7 +100,15 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
+      "name": "Lyo.Api.Export.Yaml",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Cache",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -125,6 +141,14 @@
     },
     {
       "name": "Lyo.Job.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -340,6 +364,14 @@
       ]
     },
     {
+      "name": "Lyo.Query.Sql",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
@@ -372,6 +404,14 @@
       ]
     },
     {
+      "name": "Lyo.Toml",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Validation",
       "kind": "lyo",
       "tags": [
@@ -389,6 +429,22 @@
     },
     {
       "name": "Lyo.Xlsx.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Xml",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Yaml",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -700,6 +756,24 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Tomlyn",
+      "kind": "package",
+      "version": "2.10.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "YamlDotNet",
+      "kind": "package",
+      "version": "18.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
       ]
     }
   ],

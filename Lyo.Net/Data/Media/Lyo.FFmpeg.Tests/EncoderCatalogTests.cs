@@ -6,12 +6,13 @@ public class EncoderCatalogTests
 {
     [Fact]
     public void TryFromName_Parallel_DoesNotThrow()
-        => Parallel.For(0, 64, _ => {
-            Assert.Same(AudioEncoder.Aac, AudioEncoder.TryFromName("Aac"));
-            Assert.Same(VideoEncoder.Mpeg4, VideoEncoder.TryFromName("Mpeg4"));
-            Assert.Same(PixelFormat.Yuv420p, PixelFormat.TryFromName("Yuv420p"));
-            Assert.Same(EncoderPreset.Medium, EncoderPreset.TryFromName("Medium"));
-        });
+        => Parallel.For(
+            0, 64, _ => {
+                Assert.Same(AudioEncoder.Aac, AudioEncoder.TryFromName("Aac"));
+                Assert.Same(VideoEncoder.Mpeg4, VideoEncoder.TryFromName("Mpeg4"));
+                Assert.Same(PixelFormat.Yuv420p, PixelFormat.TryFromName("Yuv420p"));
+                Assert.Same(EncoderPreset.Medium, EncoderPreset.TryFromName("Medium"));
+            });
 
     [Fact]
     public void Custom_ReusesRegisteredInstance()
@@ -23,6 +24,5 @@ public class EncoderCatalogTests
     }
 
     [Fact]
-    public void TryFromId_Aac_ReturnsBuiltIn()
-        => Assert.Same(AudioEncoder.Aac, AudioEncoder.TryFromId("aac"));
+    public void TryFromId_Aac_ReturnsBuiltIn() => Assert.Same(AudioEncoder.Aac, AudioEncoder.TryFromId("aac"));
 }

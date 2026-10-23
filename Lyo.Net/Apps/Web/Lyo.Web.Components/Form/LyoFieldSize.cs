@@ -1,8 +1,8 @@
 namespace Lyo.Web.Components.Form;
 
 /// <summary>
-/// Layout width hint for a <see cref="LyoFormInput{TModel,TValue}" /> hosted inside a <c>LyoFormGrid</c>. <c>Auto</c> derives a sensible width from the property type
-/// (bools, numerics, and times are narrow; strings are wide).
+/// Layout width hint for a <see cref="LyoFormInput{TModel,TValue}" /> hosted inside a <c>LyoFormGrid</c>. <c>Auto</c> derives a sensible width from the property type (bools,
+/// numerics, and times are narrow; strings are wide).
 /// </summary>
 public enum LyoFieldSize
 {

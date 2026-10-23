@@ -1,4 +1,4 @@
-using Lyo.Comment;
+using Lyo.Common.Core.Identifiers;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Comment.Postgres.Tests;
@@ -9,18 +9,19 @@ public sealed class CommentPostgresStoreTests(CommentPostgresFixture fixture)
     [Fact]
     public async Task Save_ThenGetById_RoundTrips()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var store = fixture.ServiceProvider.GetRequiredService<ICommentStore>();
-        var subject = Guid.NewGuid();
-        var actor = Guid.NewGuid();
+        var subject = LyoGuid.CreateV7();
+        var actor = LyoGuid.CreateV7();
         var row = new CommentRecord {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             SubjectEntityType = "thing",
             SubjectEntityId = subject.ToString(),
             ActorEntityType = "person",
             ActorEntityId = actor.ToString(),
-            Content = "hello",
+            Content = "hello"
         };
+
         await store.SaveAsync(row, ct: ct);
         Assert.NotEqual(Guid.Empty, row.Id);
         var loaded = await store.GetByIdAsync(row.Id, ct: ct);

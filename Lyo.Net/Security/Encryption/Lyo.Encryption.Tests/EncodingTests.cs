@@ -117,7 +117,7 @@ public class EncodingTests : IDisposable, IAsyncDisposable
         var encoding = Encoding.GetEncoding(encodingName);
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "test-key", TestContext.Current.CancellationToken);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "test-key", TestCt);
         var svc = new AesGcmEncryptionService(keyStore);
         foreach (var testString in TestStrings) {
             if (encodingName == "ASCII" && !IsAsciiCompatible(testString))
@@ -126,10 +126,10 @@ public class EncodingTests : IDisposable, IAsyncDisposable
             var bytes = encoding.GetBytes(testString);
             var input = new MemoryStream(bytes);
             var encStream = new MemoryStream();
-            await svc.EncryptToStreamAsync(input, encStream, keyId, ct: TestContext.Current.CancellationToken);
+            await svc.EncryptToStreamAsync(input, encStream, keyId, ct: TestCt);
             encStream.Position = 0;
             var outStream = new MemoryStream();
-            await svc.DecryptToStreamAsync(encStream, outStream, keyId, ct: TestContext.Current.CancellationToken);
+            await svc.DecryptToStreamAsync(encStream, outStream, keyId, ct: TestCt);
             var result = encoding.GetString(outStream.ToArray());
             Assert.Equal(testString, result);
         }
@@ -145,7 +145,7 @@ public class EncodingTests : IDisposable, IAsyncDisposable
         var encoding = Encoding.GetEncoding(encodingName);
         const string keyId = "test-key";
         var keyStore = new LocalKeyStore();
-        await keyStore.UpdateKeyFromStringAsync(keyId, "test-key", TestContext.Current.CancellationToken);
+        await keyStore.UpdateKeyFromStringAsync(keyId, "test-key", TestCt);
         var svc = new ChaCha20Poly1305EncryptionService(keyStore);
         foreach (var testString in TestStrings) {
             if (encodingName == "ASCII" && !IsAsciiCompatible(testString))
@@ -154,10 +154,10 @@ public class EncodingTests : IDisposable, IAsyncDisposable
             var bytes = encoding.GetBytes(testString);
             var input = new MemoryStream(bytes);
             var encStream = new MemoryStream();
-            await svc.EncryptToStreamAsync(input, encStream, keyId, ct: TestContext.Current.CancellationToken);
+            await svc.EncryptToStreamAsync(input, encStream, keyId, ct: TestCt);
             encStream.Position = 0;
             var outStream = new MemoryStream();
-            await svc.DecryptToStreamAsync(encStream, outStream, keyId, ct: TestContext.Current.CancellationToken);
+            await svc.DecryptToStreamAsync(encStream, outStream, keyId, ct: TestCt);
             var result = encoding.GetString(outStream.ToArray());
             Assert.Equal(testString, result);
         }
@@ -181,10 +181,10 @@ public class EncodingTests : IDisposable, IAsyncDisposable
             var bytes = encoding.GetBytes(testString);
             var input = new MemoryStream(bytes);
             var encStream = new MemoryStream();
-            await encryptor.EncryptToStreamAsync(input, encStream, ct: TestContext.Current.CancellationToken);
+            await encryptor.EncryptToStreamAsync(input, encStream, ct: TestCt);
             encStream.Position = 0;
             var outStream = new MemoryStream();
-            await decryptor.DecryptToStreamAsync(encStream, outStream, ct: TestContext.Current.CancellationToken);
+            await decryptor.DecryptToStreamAsync(encStream, outStream, ct: TestCt);
             var result = encoding.GetString(outStream.ToArray());
             Assert.Equal(testString, result);
         }

@@ -27,6 +27,12 @@ public class JobWorkflowStep
 
     public string? ParametersJson { get; set; }
 
+    /// <summary>
+    /// Serialized <c>WhereClause</c> gating this step, evaluated against the step's context bag. Each condition's field is a context path (<c>Step.Extract.Result.RowCount</c>,
+    /// <c>Input.Env</c>, <c>Workflow.Name</c>) and groups combine predicates with AND/OR. Null when the step is unconditional.
+    /// </summary>
+    public string? ConditionJson { get; set; }
+
     public bool Enabled { get; set; }
 
     public DateTime CreatedTimestamp { get; set; }

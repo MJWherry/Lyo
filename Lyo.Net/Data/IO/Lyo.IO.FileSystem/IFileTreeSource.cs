@@ -22,6 +22,5 @@ public sealed class FileSystemTreeSource : IFileTreeSource
     }
 
     /// <inheritdoc />
-    public Task<IReadOnlyList<FileSystemEntry>> ListChildrenAsync(string path, CancellationToken ct = default)
-        => _fileSystem.ListDirectoryAsync(path, ct);
+    public Task<IReadOnlyList<FileSystemEntry>> ListChildrenAsync(string path, CancellationToken ct = default) => _fileSystem.ListDirectoryAsync(path, ct);
 }

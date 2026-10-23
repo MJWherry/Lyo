@@ -7,7 +7,7 @@ namespace Lyo.Web.Components.QueryRequestBuilder;
 
 public partial class SortByList
 {
-    private static readonly Regex PropertyPattern = new("^[a-zA-Z.]+$", RegexOptions.Compiled);
+    private static readonly Regex PropertyPattern = new("^[A-Za-z]+(\\[(?:\\d+|\\d*:\\d*)\\])?(?:\\.[A-Za-z]+(\\[(?:\\d+|\\d*:\\d*)\\])?)*$", RegexOptions.Compiled);
 
     private SortDirectionEnum _newDirection = SortDirectionEnum.Desc;
     private int? _newPriority;

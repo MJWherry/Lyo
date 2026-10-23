@@ -307,10 +307,7 @@ public static class FormatHelpers
             ThrowInvalidFormat($"Invalid port: {port}", paramName, port.ToString(CultureInfo.InvariantCulture), $"{MinPort}-{MaxPort}");
     }
 
-    /// <summary>
-    /// Throws <see cref="InvalidFormatException" /> when <paramref name="value" /> is outside the inclusive range
-    /// [<paramref name="min" />, <paramref name="max" />].
-    /// </summary>
+    /// <summary>Throws <see cref="InvalidFormatException" /> when <paramref name="value" /> is outside the inclusive range [<paramref name="min" />, <paramref name="max" />].</summary>
     /// <remarks>
     /// Prefer this for options/config format checks that surface <see cref="InvalidFormatException" />. For call-site argument guards that should throw
     /// <see cref="ArgumentOutsideRangeException" />, use <see cref="ArgumentHelpers.ThrowIfNotInRange{T}(T,T?,T?,string?,string?)" />.

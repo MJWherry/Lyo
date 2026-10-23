@@ -6,18 +6,16 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.FileSystemWatcher.Postgres;
 
-/// <summary>
-/// Copies DTOs on <see cref="FileSystemWatcher.ScanCompleted" /> (timer thread) and writes them through <see cref="IFileSystemWatcherStore" /> from a background loop.
-/// </summary>
+/// <summary>Copies DTOs on <see cref="FileSystemWatcher.ScanCompleted" /> (timer thread) and writes them through <see cref="IFileSystemWatcherStore" /> from a background loop.</summary>
 public sealed class FileSystemWatcherPersister : IAsyncDisposable
 {
-    private readonly IFileSystemWatcherStore _store;
-    private readonly ILogger<FileSystemWatcherPersister> _logger;
     private readonly Channel<PersistWork> _channel;
     private readonly CancellationTokenSource _cts = new();
+    private readonly ILogger<FileSystemWatcherPersister> _logger;
     private readonly Task _pump;
-    private FileSystemWatcher? _watcher;
+    private readonly IFileSystemWatcherStore _store;
     private Guid _watchId;
+    private FileSystemWatcher? _watcher;
 
     /// <summary>Builds a persister. Call <see cref="Attach" /> then drain with the background pump.</summary>
     public FileSystemWatcherPersister(IFileSystemWatcherStore store, ILogger<FileSystemWatcherPersister>? logger = null, int capacity = 32)
@@ -26,12 +24,25 @@ public sealed class FileSystemWatcherPersister : IAsyncDisposable
         _store = store;
         _logger = logger ?? NullLogger<FileSystemWatcherPersister>.Instance;
         _channel = Channel.CreateBounded<PersistWork>(
-            new BoundedChannelOptions(capacity) {
-                FullMode = BoundedChannelFullMode.DropOldest,
-                SingleReader = true,
-                SingleWriter = false
-            });
+            new BoundedChannelOptions(capacity) { FullMode = BoundedChannelFullMode.DropOldest, SingleReader = true, SingleWriter = false });
+
         _pump = Task.Run(() => PumpAsync(_cts.Token));
+    }
+
+    /// <inheritdoc />
+    public async ValueTask DisposeAsync()
+    {
+        if (_watcher != null)
+            _watcher.ScanCompleted -= OnScanCompleted;
+
+        _channel.Writer.TryComplete();
+        _cts.Cancel();
+        try {
+            await _pump.ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) { }
+
+        _cts.Dispose();
     }
 
     /// <summary>Subscribes to <paramref name="watcher" />. Mapping runs on the scan thread; database writes run on the pump.</summary>
@@ -53,22 +64,6 @@ public sealed class FileSystemWatcherPersister : IAsyncDisposable
             await Task.Delay(15, ct).ConfigureAwait(false);
 
         await Task.Delay(50, ct).ConfigureAwait(false);
-    }
-
-    /// <inheritdoc />
-    public async ValueTask DisposeAsync()
-    {
-        if (_watcher != null)
-            _watcher.ScanCompleted -= OnScanCompleted;
-
-        _channel.Writer.TryComplete();
-        _cts.Cancel();
-        try {
-            await _pump.ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) { }
-
-        _cts.Dispose();
     }
 
     private void OnScanCompleted(object? sender, FileSystemScanCompletedEventArgs e)

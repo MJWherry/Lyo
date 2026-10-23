@@ -1,9 +1,10 @@
 """Core, reusable API client foundation for Lyo Python consumers.
 
-Domain-specific Person endpoints live in ``lyo_person_api_client``.
-Job and Reporting endpoints live in ``lyo_job_api_client`` and ``lyo_reporting_api_client``.
-Generic Lyo.Api metadata helpers (``get_metadata`` / ``get_crud_metadata`` /
-``get_entity_metadata``) plus ``get_by_id`` / ``patch`` are on this client.
+Domain clients are separate packages (``lyo-person-api-client`` and the other
+``lyo-*-api-client`` directories) and depend on this one.
+Generic Lyo.Api helpers on this client: metadata (``get_metadata`` /
+``get_crud_metadata`` / ``get_entity_metadata``), ``get_by_id``, ``patch``,
+``query_project``, ``create``, ``update``, and ``delete_by_id``.
 """
 
 from __future__ import annotations
@@ -96,7 +97,9 @@ def with_bearer_token(headers: dict[str, str], token: str | None = None) -> dict
     return {**headers, "Authorization": f"Bearer {token}"}
 
 
-def _serialize_body(body: Any) -> str:
+def _serialize_body(body: Any) -> str | bytes:
+    if isinstance(body, (bytes, bytearray)):
+        return bytes(body)
     if hasattr(body, "to_dict"):
         body = body.to_dict()
     return json.dumps(body)
@@ -129,9 +132,10 @@ class ApiClient:
     def request(self, request: ApiRequest) -> ApiResponse:
         """Execute an API request, returning the normalized response or raising ApiClientError."""
         url = build_url(self.base_url, request.path, request.query)
+        content_type = {} if isinstance(request.body, (bytes, bytearray)) else {"Content-Type": "application/json"}
         headers = with_bearer_token(
             {
-                "Content-Type": "application/json",
+                **content_type,
                 **self.default_headers,
                 **(request.headers or {}),
             },
@@ -167,3 +171,21 @@ class ApiClient:
     def patch(self, base_route: str, body: PatchRequest | dict[str, Any]) -> ApiResponse:
         """``PATCH {baseRoute}`` with a PatchRequest body."""
         return self.request(ApiRequest(method="PATCH", path=normalize_route_prefix(base_route), body=body))
+
+    def query_project(self, route: str, body: Any) -> ApiResponse:
+        """``POST {route}/QueryProject``. ``body`` is sent as JSON unchanged. The caller supplies ``Select``."""
+        return self.request(ApiRequest(method="POST", path=f"{normalize_route_prefix(route)}/QueryProject", body=body))
+
+    def create(self, route: str, body: Any) -> ApiResponse:
+        """``POST {route}`` with the create body unchanged."""
+        return self.request(ApiRequest(method="POST", path=normalize_route_prefix(route), body=body))
+
+    def update(self, route: str, entity_id: str, body: Any) -> ApiResponse:
+        """``POST {route}/Update`` with ``keys`` set to the id and ``data`` set to ``body``."""
+        payload = {"keys": [entity_id], "data": body}
+        return self.request(ApiRequest(method="POST", path=f"{normalize_route_prefix(route)}/Update", body=payload))
+
+    def delete_by_id(self, route: str, entity_id: str) -> ApiResponse:
+        """``DELETE {route}/{id}``. The id is percent-encoded."""
+        encoded = quote(entity_id, safe="")
+        return self.request(ApiRequest(method="DELETE", path=f"{normalize_route_prefix(route)}/{encoded}"))

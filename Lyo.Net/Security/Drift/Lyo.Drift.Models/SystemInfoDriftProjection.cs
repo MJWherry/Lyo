@@ -4,34 +4,55 @@ using Lyo.SystemInformation;
 namespace Lyo.Drift.Models;
 
 /// <summary>
-/// Stable host facts for drift comparison. Volatile fields (collection time, uptime, free disk, memory used, process lifetime) are never mapped.
-/// Arrays are sorted so object-graph diffs walk them by index. Pass <see cref="SystemInfoDriftGroups" /> to control which identity/opt-in groups are filled.
+/// Stable host facts for drift comparison. Volatile fields (collection time, uptime, free disk, memory used, process lifetime) are never mapped. Arrays are sorted so
+/// object-graph diffs walk them by index. Pass <see cref="SystemInfoDriftGroups" /> to control which identity/opt-in groups are filled.
 /// </summary>
 public sealed class SystemInfoDriftProjection
 {
     public string OsDescription { get; set; } = "";
+
     public string OsPlatform { get; set; } = "";
+
     public string OsVersion { get; set; } = "";
+
     public string FrameworkDescription { get; set; } = "";
+
     public string? RuntimeIdentifier { get; set; }
+
     public string? CpuModel { get; set; }
+
     public int ProcessorCount { get; set; }
+
     public string ProcessArchitecture { get; set; } = "";
+
     public string OsArchitecture { get; set; } = "";
+
     public long? TotalPhysicalMemoryBytes { get; set; }
+
     public string HostName { get; set; } = "";
+
     public string MachineName { get; set; } = "";
+
     public string? CultureName { get; set; }
+
     public string? UICultureName { get; set; }
+
     public string? TimeZoneId { get; set; }
+
     public DriveFact[] Drives { get; set; } = [];
+
     public InterfaceFact[] Interfaces { get; set; } = [];
+
     public MonitorFact[] Monitors { get; set; } = [];
+
+    public AudioDeviceFact[] AudioDevices { get; set; } = [];
+
+    public PrinterFact[] Printers { get; set; } = [];
+
     public EnvVarFact[] Variables { get; set; } = [];
 
     /// <summary>Maps a live <see cref="SystemInfo" /> onto the identity-only projection.</summary>
-    public static SystemInfoDriftProjection From(SystemInfo info)
-        => From(info, SystemInfoDriftGroups.Identity);
+    public static SystemInfoDriftProjection From(SystemInfo info) => From(info, SystemInfoDriftGroups.Identity);
 
     /// <summary>Maps a live <see cref="SystemInfo" /> using the given include groups. Hard-omitted volatile fields are never copied.</summary>
     public static SystemInfoDriftProjection From(SystemInfo info, IReadOnlyList<SystemInfoDriftGroup> include)
@@ -40,6 +61,7 @@ public sealed class SystemInfoDriftProjection
         ArgumentHelpers.ThrowIfNull(include);
         var groups = include.Count == 0 ? SystemInfoDriftGroups.Identity : include;
         var set = new HashSet<SystemInfoDriftGroup>(groups);
+
         bool Has(SystemInfoDriftGroup group) => set.Contains(group);
 
         var projection = new SystemInfoDriftProjection();
@@ -73,8 +95,12 @@ public sealed class SystemInfoDriftProjection
         }
 
         if (Has(SystemInfoDriftGroup.Drives)) {
-            projection.Drives = info.Hardware.Drives
-                .Select(d => new DriveFact { Name = d.Name, Type = d.Type, Format = d.Format, TotalSizeBytes = d.TotalSizeBytes })
+            projection.Drives = info.Hardware.Drives.Select(d => new DriveFact {
+                    Name = d.Name,
+                    Type = d.Type,
+                    Format = d.Format,
+                    TotalSizeBytes = d.TotalSizeBytes
+                })
                 .OrderBy(d => d.Name, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
         }
@@ -85,17 +111,14 @@ public sealed class SystemInfoDriftProjection
                 .Select(i => new InterfaceFact {
                     Name = i.Name,
                     MacAddress = includeAddresses ? i.MacAddress : null,
-                    UnicastAddresses = includeAddresses
-                        ? i.UnicastAddresses.OrderBy(a => a, StringComparer.OrdinalIgnoreCase).ToArray()
-                        : []
+                    UnicastAddresses = includeAddresses ? i.UnicastAddresses.OrderBy(a => a, StringComparer.OrdinalIgnoreCase).ToArray() : []
                 })
                 .OrderBy(i => i.Name, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
         }
 
         if (Has(SystemInfoDriftGroup.Monitors)) {
-            projection.Monitors = info.Hardware.Monitors
-                .Select(m => new MonitorFact {
+            projection.Monitors = info.Hardware.Monitors.Select(m => new MonitorFact {
                     Connector = m.Connector,
                     Model = m.Model,
                     ManufacturerId = m.ManufacturerId,
@@ -107,9 +130,30 @@ public sealed class SystemInfoDriftProjection
                 .ToArray();
         }
 
+        if (Has(SystemInfoDriftGroup.AudioDevices)) {
+            projection.AudioDevices = info.Hardware.AudioDevices.Select(device => new AudioDeviceFact {
+                    Name = device.Name,
+                    Kind = device.Kind,
+                    FormFactor = device.FormFactor,
+                    IsDefault = device.IsDefault
+                })
+                .OrderBy(device => device.Name, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+
+        if (Has(SystemInfoDriftGroup.Printers)) {
+            projection.Printers = info.Hardware.Printers.Select(printer => new PrinterFact {
+                    Name = printer.Name,
+                    Driver = printer.Driver,
+                    Port = printer.Port,
+                    IsDefault = printer.IsDefault
+                })
+                .OrderBy(printer => printer.Name, StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+
         if (Has(SystemInfoDriftGroup.Variables)) {
-            projection.Variables = info.Environment.Variables
-                .Select(kv => new EnvVarFact { Key = kv.Key, Value = kv.Value })
+            projection.Variables = info.Environment.Variables.Select(kv => new EnvVarFact { Key = kv.Key, Value = kv.Value })
                 .OrderBy(v => v.Key, StringComparer.OrdinalIgnoreCase)
                 .ToArray();
         }
@@ -121,8 +165,11 @@ public sealed class SystemInfoDriftProjection
     public sealed class DriveFact
     {
         public string Name { get; set; } = "";
+
         public string Type { get; set; } = "";
+
         public string Format { get; set; } = "";
+
         public long TotalSizeBytes { get; set; }
     }
 
@@ -130,18 +177,49 @@ public sealed class SystemInfoDriftProjection
     public sealed class InterfaceFact
     {
         public string Name { get; set; } = "";
+
         public string? MacAddress { get; set; }
+
         public string[] UnicastAddresses { get; set; } = [];
+    }
+
+    /// <summary>Audio endpoint identity. Volume and mute are omitted.</summary>
+    public sealed class AudioDeviceFact
+    {
+        public string Name { get; set; } = "";
+
+        public string Kind { get; set; } = "";
+
+        public string? FormFactor { get; set; }
+
+        public bool? IsDefault { get; set; }
+    }
+
+    /// <summary>Printer identity. <c>Status</c> is omitted because it changes while the printer stays installed.</summary>
+    public sealed class PrinterFact
+    {
+        public string Name { get; set; } = "";
+
+        public string? Driver { get; set; }
+
+        public string? Port { get; set; }
+
+        public bool IsDefault { get; set; }
     }
 
     /// <summary>Monitor identity. Refresh rate is omitted because it can change without a hardware swap.</summary>
     public sealed class MonitorFact
     {
         public string Connector { get; set; } = "";
+
         public string? Model { get; set; }
+
         public string? ManufacturerId { get; set; }
+
         public string? CurrentResolution { get; set; }
+
         public string? Adapter { get; set; }
+
         public bool? IsPrimary { get; set; }
     }
 
@@ -149,6 +227,7 @@ public sealed class SystemInfoDriftProjection
     public sealed class EnvVarFact
     {
         public string Key { get; set; } = "";
+
         public string Value { get; set; } = "";
     }
 }

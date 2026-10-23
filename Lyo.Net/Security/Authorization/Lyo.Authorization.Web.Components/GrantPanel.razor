@@ -1,0 +1,77 @@
+@namespace Lyo.Authorization.Web.Components
+
+@if (Store is null) {
+    <MudAlert Severity="Severity.Warning" Dense="true" Variant="Variant.Outlined">
+        No <code>IGrantStore</code> is registered on this host. Register <code>AddInMemoryAuthorization()</code> or <code>AddPostgresAuthorization()</code>.
+    </MudAlert>
+}
+else if (_loading) {
+    <MudProgressCircular Indeterminate="true" Size="Size.Small"/>
+}
+else if (_error is not null) {
+    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">@_error</MudAlert>
+}
+else {
+    <MudStack Spacing="2">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudSwitch T="bool" Value="_includeRevoked" ValueChanged="ToggleRevoked" Color="Color.Primary" Label="Revoked"/>
+            <MudSwitch T="bool" Value="_includeExpired" ValueChanged="ToggleExpired" Color="Color.Primary" Label="Expired"/>
+            @if (AllowEdit) {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" OnClick="AddAsync">Add grant</MudButton>
+            }
+        </MudStack>
+        @if (_rows.Count == 0) {
+            <MudAlert Severity="Severity.Info" Dense="true" Variant="Variant.Outlined">No grants.</MudAlert>
+        }
+        else {
+            <MudSimpleTable Dense="true" Hover="true">
+                <thead>
+                <tr>
+                    <th>Action</th>
+                    <th>Type</th>
+                    <th>Resource</th>
+                    <th>Tenant</th>
+                    <th>Expires</th>
+                    <th>Revoked</th>
+                    @if (AllowEdit) {
+                        <th></th>
+                    }
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var row in _rows) {
+                    <tr>
+                        <td>@row.Action</td>
+                        <td>@row.ResourceType</td>
+                        <td>@(row.ResourceId ?? "any")</td>
+                        <td>@(row.TenantId?.ToString("D") ?? "any")</td>
+                        <td>
+                            @if (row.ExpiresAt is { } expires) {
+                                <LyoTimestamp Value="@expires" Kind="LyoTimestampKind.Relative"/>
+                            }
+                            else {
+                                <text>never</text>
+                            }
+                        </td>
+                        <td>
+                            @if (row.RevokedAt is { } revoked) {
+                                <LyoTimestamp Value="@revoked" Kind="LyoTimestampKind.Relative"/>
+                            }
+                            else {
+                                <text>—</text>
+                            }
+                        </td>
+                        @if (AllowEdit) {
+                            <td>
+                                @if (row.RevokedAt is null) {
+                                    <MudButton Size="Size.Small" Color="Color.Warning" OnClick="@(() => RevokeAsync(row.Id))">Revoke</MudButton>
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+                </tbody>
+            </MudSimpleTable>
+        }
+    </MudStack>
+}

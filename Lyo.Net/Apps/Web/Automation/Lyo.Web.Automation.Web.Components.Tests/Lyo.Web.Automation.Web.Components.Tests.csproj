@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <RootNamespace>Lyo.Web.Automation.Web.Components.Tests</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Web.Automation.Web.Components\Lyo.Web.Automation.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\..\..\Core\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\..\..\..\Data\Json\Lyo.Json\Lyo.Json.csproj"/>
+    </ItemGroup>
+
+</Project>

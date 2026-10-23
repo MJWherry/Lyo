@@ -1,5 +1,3 @@
-using System.Net;
-using System.Reflection;
 using System.Text.Json;
 using Lyo.Api.Models.Error;
 using Lyo.Common.Metadata.Records;
@@ -15,6 +13,18 @@ public class ApiClient : LyoHttpClient, IApiClient
     /// <summary>Creates an <see cref="ApiClient" />. Prefer resolving it from <c>IHttpClientFactory</c> so the handler lifetime stays correct.</summary>
     public ApiClient(ILogger? logger = null, HttpClient? httpClient = null, JsonSerializerOptions? serializerOptions = null, LyoHttpClientOptions? options = null)
         : base(logger, httpClient, serializerOptions, options) { }
+
+    /// <inheritdoc />
+    public Task<TResult?> QueryProjectAsync<TResult>(string route, ProjectionQueryReq request, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        => PostAsAsync<ProjectionQueryReq, TResult?>(QueryPath(route, "QueryProject"), request, before, ct)!;
+
+    /// <inheritdoc />
+    public Task<TResult?> QueryConcreteAsync<TResult>(string route, QueryConcreteReq request, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        => PostAsAsync<QueryConcreteReq, TResult?>(QueryPath(route, "QueryConcrete"), request, before, ct)!;
+
+    /// <inheritdoc />
+    public Task<TResult?> QuerySqlAsync<TResult>(string route, QueryRequestBase request, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        => PostAsAsync<QueryRequestBase, TResult?>(QueryPath(route, "QuerySql"), request, before, ct)!;
 
     /// <inheritdoc />
     protected override void ApplyDefaultHeaders()
@@ -53,14 +63,6 @@ public class ApiClient : LyoHttpClient, IApiClient
 
         throw new ApiException((int)response.StatusCode, message, problemDetails) { ErrorCode = problemDetails?.Errors.FirstOrDefault()?.Code };
     }
-
-    /// <inheritdoc />
-    public Task<TResult?> QueryProjectAsync<TResult>(string route, ProjectionQueryReq request, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
-        => PostAsAsync<ProjectionQueryReq, TResult?>(QueryPath(route, "QueryProject"), request, before, ct)!;
-
-    /// <inheritdoc />
-    public Task<TResult?> QueryConcreteAsync<TResult>(string route, QueryConcreteReq request, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
-        => PostAsAsync<QueryConcreteReq, TResult?>(QueryPath(route, "QueryConcrete"), request, before, ct)!;
 
     /// <summary>Joins <paramref name="route" /> and a Query/QueryProject suffix.</summary>
     public static string QueryPath(string route, string suffix)

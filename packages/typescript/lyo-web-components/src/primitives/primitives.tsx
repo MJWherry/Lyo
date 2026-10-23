@@ -8,7 +8,7 @@ import Box from "@mui/material/Box";
 import Button, { type ButtonProps } from "@mui/material/Button";
 import Card, { type CardProps } from "@mui/material/Card";
 import Checkbox, { type CheckboxProps } from "@mui/material/Checkbox";
-import Chip, { type ChipProps } from "@mui/material/Chip";
+import type { ChipProps } from "@mui/material/Chip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Container, { type ContainerProps } from "@mui/material/Container";
 import Divider from "@mui/material/Divider";
@@ -93,7 +93,6 @@ export const LyoSwitch = withId(Switch, "lyo-switch") as (p: SwitchProps & IdPro
 export const LyoCheckbox = withId(Checkbox, "lyo-checkbox") as (p: CheckboxProps & IdProps) => ReactNode;
 export const LyoSelect = Select;
 export const LyoAutocomplete = Autocomplete;
-export const LyoChip = Chip;
 export const LyoAlert = Alert;
 export const LyoTooltip = Tooltip;
 export const LyoMenu = Menu;

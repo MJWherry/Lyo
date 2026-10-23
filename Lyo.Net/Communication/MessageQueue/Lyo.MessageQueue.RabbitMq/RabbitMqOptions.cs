@@ -24,15 +24,12 @@ public sealed class RabbitMqOptions
     /// <summary>When true, collect metrics for queue operations. Default: false</summary>
     public bool EnableMetrics { get; set; } = false;
 
-    /// <summary>
-    /// How many messages a queue may process at once. Default: unlimited (0). Override per queue with
-    /// <see cref="QueueProcessingLimits" />.
-    /// </summary>
+    /// <summary>How many messages a queue may process at once. Default: unlimited (0). Override per queue with <see cref="QueueProcessingLimits" />.</summary>
     public int ProcessingLimit { get; set; } = 0;
 
     /// <summary>
-    /// Concurrency cap per queue (name → max in-flight messages). Enforced as broker prefetch, consumer dispatch concurrency, and an in-process semaphore, so a queue with
-    /// limit 1 handles one message at a time while another can run 10 in parallel. Unlisted queues use <see cref="ProcessingLimit" />.
+    /// Concurrency cap per queue (name → max in-flight messages). Enforced as broker prefetch, consumer dispatch concurrency, and an in-process semaphore, so a queue with limit
+    /// 1 handles one message at a time while another can run 10 in parallel. Unlisted queues use <see cref="ProcessingLimit" />.
     /// </summary>
     public Dictionary<string, int>? QueueProcessingLimits { get; set; }
 
@@ -40,8 +37,8 @@ public sealed class RabbitMqOptions
     public bool PersistentMessages { get; set; } = true;
 
     /// <summary>
-    /// When true, the publish channel uses publisher confirms. <c>SendToQueue</c>/<c>SendToExchange</c> return true only after the broker confirms, and
-    /// false on nack. Costs a round-trip per publish. Default: false.
+    /// When true, the publish channel uses publisher confirms. <c>SendToQueue</c>/<c>SendToExchange</c> return true only after the broker confirms, and false on nack. Costs a
+    /// round-trip per publish. Default: false.
     /// </summary>
     public bool PublisherConfirms { get; set; } = false;
 

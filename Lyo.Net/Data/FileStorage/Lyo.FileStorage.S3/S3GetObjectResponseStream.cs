@@ -3,8 +3,8 @@ using Amazon.S3.Model;
 namespace Lyo.FileStorage.S3;
 
 /// <summary>
-/// Stream that owns a <see cref="GetObjectResponse" /> and disposes it (HTTP handle included) when the caller disposes the stream. Reading
-/// <c>response.ResponseStream</c> without this wrapper leaves the connection checked out of the S3 SDK pool.
+/// Stream that owns a <see cref="GetObjectResponse" /> and disposes it (HTTP handle included) when the caller disposes the stream. Reading <c>response.ResponseStream</c>
+/// without this wrapper leaves the connection checked out of the S3 SDK pool.
 /// </summary>
 internal sealed class S3GetObjectResponseStream : Stream
 {

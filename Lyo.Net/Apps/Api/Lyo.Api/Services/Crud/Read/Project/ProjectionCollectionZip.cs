@@ -1,4 +1,5 @@
 using System.Collections;
+using Lyo.Query.Services.Path;
 using Lyo.Query.Services.WhereClause;
 
 namespace Lyo.Api.Services.Crud.Read.Project;
@@ -258,7 +259,10 @@ internal static class ProjectionCollectionZip
         if (SharedEntityMetadataCache.IsCollectionType(rootType))
             return false;
 
-        var property = SharedEntityMetadataCache.ResolveProperty(rootType, firstSegment);
+        if (!QueryPath.TryParseSegment(firstSegment, out var segmentName, out var window, out var _) || window is { IsSingle: true })
+            return false;
+
+        var property = SharedEntityMetadataCache.ResolveProperty(rootType, segmentName);
         if (property is null)
             return false;
 
@@ -390,14 +394,19 @@ internal static class ProjectionCollectionZip
             if (SharedEntityMetadataCache.IsCollectionType(current))
                 current = SharedEntityMetadataCache.GetCollectionElementType(current);
 
-            var property = SharedEntityMetadataCache.ResolveProperty(current, part);
+            if (!QueryPath.TryParseSegment(part, out var segmentName, out var window, out var _))
+                return false;
+
+            var property = SharedEntityMetadataCache.ResolveProperty(current, segmentName);
             if (property is null)
                 return false;
 
-            if (SharedEntityMetadataCache.IsCollectionType(property.PropertyType))
+            if (SharedEntityMetadataCache.IsCollectionType(property.PropertyType) && window is not { IsSingle: true })
                 crossedCollectionProperty = true;
 
-            current = property.PropertyType;
+            current = window is { IsSingle: true } && SharedEntityMetadataCache.IsCollectionType(property.PropertyType)
+                ? SharedEntityMetadataCache.GetCollectionElementType(property.PropertyType)
+                : property.PropertyType;
         }
 
         return crossedCollectionProperty;
@@ -504,11 +513,16 @@ internal static class ProjectionCollectionZip
             if (SharedEntityMetadataCache.IsCollectionType(current))
                 current = SharedEntityMetadataCache.GetCollectionElementType(current);
 
-            var property = SharedEntityMetadataCache.ResolveProperty(current, part);
+            if (!QueryPath.TryParseSegment(part, out var segmentName, out var window, out var _))
+                return false;
+
+            var property = SharedEntityMetadataCache.ResolveProperty(current, segmentName);
             if (property == null)
                 return false;
 
-            current = property.PropertyType;
+            current = window is { IsSingle: true } && SharedEntityMetadataCache.IsCollectionType(property.PropertyType)
+                ? SharedEntityMetadataCache.GetCollectionElementType(property.PropertyType)
+                : property.PropertyType;
         }
 
         return SharedEntityMetadataCache.IsCollectionType(current);

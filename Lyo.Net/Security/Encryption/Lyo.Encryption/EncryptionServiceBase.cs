@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Diagnostics;
 using System.Buffers.Binary;
 using System.Security.Cryptography;
 using System.Text;
@@ -13,23 +14,23 @@ using Lyo.Streams;
 namespace Lyo.Encryption;
 
 /// <summary>
-/// Shared helpers for encryption services. Implements IEncryptionService and supplies default string, stream, and
-/// file methods. Thread-safe: concurrent calls on one instance are safe because each call owns its cryptographic context (nonce, key
-/// material) and shares no mutable crypto state. If a KeyStore or other dependency is not thread-safe, synchronize at those
-/// levels.
+/// Shared helpers for encryption services. Implements IEncryptionService and supplies default string, stream, and file methods. Thread-safe: concurrent calls on one instance
+/// are safe because each call owns its cryptographic context (nonce, key material) and shares no mutable crypto state. If a KeyStore or other dependency is not thread-safe,
+/// synchronize at those levels.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Nonce collision bounds and key rotation.</b> Algorithms with 96-bit (12-byte) random nonces (AES-GCM, ChaCha20-Poly1305, AES-CCM) hit the birthday bound: after
-/// about 2^32 encrypts under one key, a nonce collision — catastrophic for GCM/Poly1305 — is no longer negligible. NIST SP 800-38D recommends staying
-/// well below that (collision probability ≤ 2^-32, i.e. at most ~2^32 random-nonce operations per key). Each single-shot <c>Encrypt</c> and each encrypted stream consumes one
-/// random nonce (streams derive per-chunk nonces from a counter, so chunk count does not matter). Rotate keys (KeyStore versioning) long before those volumes.
+/// <b>Nonce collision bounds and key rotation.</b> Algorithms with 96-bit (12-byte) random nonces (AES-GCM, ChaCha20-Poly1305, AES-CCM) hit the birthday bound: after about 2^32
+/// encrypts under one key, a nonce collision — catastrophic for GCM/Poly1305 — is no longer negligible. NIST SP 800-38D recommends staying well below that (collision probability ≤
+/// 2^-32, i.e. at most ~2^32 random-nonce operations per key). Each single-shot <c>Encrypt</c> and each encrypted stream consumes one random nonce (streams derive per-chunk nonces
+/// from a counter, so chunk count does not matter). Rotate keys (KeyStore versioning) long before those volumes.
 /// </para>
 /// <para>
-/// <b>High-volume workloads.</b> When one key must cover a huge message count, prefer XChaCha20-Poly1305 (192-bit nonces make random collisions negligible,
-/// ~2^80 messages) or AES-SIV (nonce misuse-resistant: a repeated nonce only reveals whether two plaintexts match, never the key stream).
+/// <b>High-volume workloads.</b> When one key must cover a huge message count, prefer XChaCha20-Poly1305 (192-bit nonces make random collisions negligible, ~2^80 messages) or
+/// AES-SIV (nonce misuse-resistant: a repeated nonce only reveals whether two plaintexts match, never the key stream).
 /// </para>
 /// </remarks>
+[DebuggerDisplay("{ToString(),nq}")]
 public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlgorithmProvider, IRawAead
 {
     /// <summary>KeyStore used to fetch encryption keys. Null when the service does not use a store.</summary>
@@ -41,6 +42,32 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
     private Encoding _decryptionEncoding = Encoding.UTF8;
 
     private Encoding _encryptionEncoding = Encoding.UTF8;
+
+    /// <summary>Wire facts for this service's AEAD (nonce, tag, minimum framed size).</summary>
+    protected abstract EncryptionAlgorithmInfo AlgorithmInfo { get; }
+
+    /// <summary>
+    /// Nonce (or synthetic IV) bytes written after a framed header and at the start of a raw blob. AES-SIV reports <see cref="EncryptionAlgorithmInfo.NonceSize" /> as 0 and
+    /// stores the 16-byte IV in this width instead.
+    /// </summary>
+    protected int AeadNonceSize {
+        get {
+            var info = AlgorithmInfo;
+            return info.NonceSize > 0 ? info.NonceSize : info.TagSize;
+        }
+    }
+
+    /// <summary>Separate tag bytes; <c>0</c> when the authenticator is the synthetic IV (AES-SIV).</summary>
+    protected int AeadTagSize => AlgorithmInfo.NonceSize > 0 ? AlgorithmInfo.TagSize : 0;
+
+    /// <summary>Smallest legal raw blob: nonce (or synthetic IV) plus tag, with an empty payload.</summary>
+    protected int MinRawAeadSize => AeadNonceSize + AeadTagSize;
+
+    /// <summary><see langword="false" /> when the primitive fills the nonce region (AES-SIV synthetic IV).</summary>
+    protected virtual bool RandomizeNonce => AlgorithmInfo.NonceSize > 0;
+
+    /// <summary>Field name used when a raw or framed blob is short of nonce/IV bytes.</summary>
+    protected string AeadNonceFieldName => AlgorithmInfo.NonceSize > 0 ? "nonce" : "synthetic IV";
 
     /// <summary>Creates an EncryptionServiceBase.</summary>
     /// <param name="options">Service options. Must not be null.</param>
@@ -70,31 +97,6 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
 
     /// <inheritdoc />
     public virtual void SetDecryptionEncoding(Encoding encoding) => _decryptionEncoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
-
-    /// <summary>Wire facts for this service's AEAD (nonce, tag, minimum framed size).</summary>
-    protected abstract EncryptionAlgorithmInfo AlgorithmInfo { get; }
-
-    /// <summary>
-    /// Nonce (or synthetic IV) bytes written after a framed header and at the start of a raw blob. AES-SIV reports <see cref="EncryptionAlgorithmInfo.NonceSize" />
-    /// as 0 and stores the 16-byte IV in this width instead.
-    /// </summary>
-    protected int AeadNonceSize
-    {
-        get
-        {
-            var info = AlgorithmInfo;
-            return info.NonceSize > 0 ? info.NonceSize : info.TagSize;
-        }
-    }
-
-    /// <summary>Separate tag bytes; <c>0</c> when the authenticator is the synthetic IV (AES-SIV).</summary>
-    protected int AeadTagSize => AlgorithmInfo.NonceSize > 0 ? AlgorithmInfo.TagSize : 0;
-
-    /// <summary>Smallest legal raw blob: nonce (or synthetic IV) plus tag, with an empty payload.</summary>
-    protected int MinRawAeadSize => AeadNonceSize + AeadTagSize;
-
-    /// <summary><see langword="false" /> when the primitive fills the nonce region (AES-SIV synthetic IV).</summary>
-    protected virtual bool RandomizeNonce => AlgorithmInfo.NonceSize > 0;
 
     /// <inheritdoc />
     public virtual byte[] Encrypt(byte[] bytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
@@ -127,41 +129,6 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
     }
 
     /// <inheritdoc />
-    public virtual byte[] EncryptRaw(byte[] bytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
-    {
-        ArgumentHelpers.ThrowIfNotInRange(bytes, Options.MinInputSize, Options.MaxInputSize);
-        ValidateEncryptPlaintext(bytes.Length, nameof(bytes));
-        return EncryptRaw((ReadOnlySpan<byte>)bytes, keyId, key, associatedData);
-    }
-
-    /// <inheritdoc />
-    public virtual byte[] EncryptRaw(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
-    {
-        ArgumentHelpers.ThrowIfNotInRange((long)plaintext.Length, Options.MinInputSize, Options.MaxInputSize, nameof(plaintext));
-        ValidateEncryptPlaintext(plaintext.Length, nameof(plaintext));
-        var actualKey = ResolveEncryptionKey(keyId, key, ValidateSymmetricKey, out _);
-        var envelope = RawAeadEnvelope.Allocate(AeadNonceSize, AeadTagSize, plaintext.Length, RandomizeNonce);
-        Seal(plaintext, actualKey, envelope.Nonce, envelope.Authenticator, envelope.Payload, envelope.Body, associatedData);
-        return envelope.Buffer;
-    }
-
-    /// <inheritdoc />
-    public virtual byte[] DecryptRaw(byte[] encryptedBytes, string? keyId = null, byte[]? key = null, string? keyVersion = null, byte[]? associatedData = null)
-    {
-        ArgumentHelpers.ThrowIfNotInRange(encryptedBytes, MinRawAeadSize, Options.MaxInputSize);
-        return DecryptRaw((ReadOnlySpan<byte>)encryptedBytes, keyId, key, keyVersion, associatedData);
-    }
-
-    /// <inheritdoc />
-    public virtual byte[] DecryptRaw(ReadOnlySpan<byte> encrypted, string? keyId = null, byte[]? key = null, string? keyVersion = null, byte[]? associatedData = null)
-    {
-        ArgumentHelpers.ThrowIfNotInRange((long)encrypted.Length, (long)MinRawAeadSize, Options.MaxInputSize, nameof(encrypted));
-        var header = RawAeadEnvelope.Read(encrypted, AeadNonceSize, AeadTagSize, AeadNonceFieldName);
-        var actualKey = ResolveDecryptionKey(null, keyVersion, keyId, key, ValidateSymmetricKey);
-        return OpenWrapped(header.Payload(encrypted), header.Authenticator(encrypted), header.Nonce(encrypted), header.Body(encrypted), actualKey, associatedData);
-    }
-
-    /// <inheritdoc />
     public virtual byte[] EncryptString(string text, string? keyId = null, byte[]? key = null, Encoding? encoding = null)
         => Encrypt((encoding ?? GetEncryptionEncoding()).GetBytes(text), keyId, key);
 
@@ -171,9 +138,9 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
 
     /// <inheritdoc />
     /// <remarks>
-    /// Writes <c>[version:1][algorithmId:1][keyIdLen:int32][keyId][keyVersionLen:int32][keyVersion][noncePrefix: NonceSize-4 bytes]</c> then compact chunk frames.
-    /// Per-chunk nonces come from the header nonce prefix plus a chunk counter; the last chunk is flagged final; every chunk authenticates the full header (plus
-    /// <paramref name="associatedData" />) as AAD — so header tampering, reordering, replay, and truncation all fail authentication.
+    /// Writes <c>[version:1][algorithmId:1][keyIdLen:int32][keyId][keyVersionLen:int32][keyVersion][noncePrefix: NonceSize-4 bytes]</c> then compact chunk frames. Per-chunk
+    /// nonces come from the header nonce prefix plus a chunk counter; the last chunk is flagged final; every chunk authenticates the full header (plus <paramref name="associatedData" />)
+    /// as AAD — so header tampering, reordering, replay, and truncation all fail authentication.
     /// </remarks>
     public virtual async Task EncryptToStreamAsync(
         Stream input,
@@ -341,6 +308,41 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         return outputStream.ToArray();
     }
 
+    /// <inheritdoc />
+    public virtual byte[] EncryptRaw(byte[] bytes, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
+    {
+        ArgumentHelpers.ThrowIfNotInRange(bytes, Options.MinInputSize, Options.MaxInputSize);
+        ValidateEncryptPlaintext(bytes.Length, nameof(bytes));
+        return EncryptRaw((ReadOnlySpan<byte>)bytes, keyId, key, associatedData);
+    }
+
+    /// <inheritdoc />
+    public virtual byte[] EncryptRaw(ReadOnlySpan<byte> plaintext, string? keyId = null, byte[]? key = null, byte[]? associatedData = null)
+    {
+        ArgumentHelpers.ThrowIfNotInRange((long)plaintext.Length, Options.MinInputSize, Options.MaxInputSize, nameof(plaintext));
+        ValidateEncryptPlaintext(plaintext.Length, nameof(plaintext));
+        var actualKey = ResolveEncryptionKey(keyId, key, ValidateSymmetricKey, out var _);
+        var envelope = RawAeadEnvelope.Allocate(AeadNonceSize, AeadTagSize, plaintext.Length, RandomizeNonce);
+        Seal(plaintext, actualKey, envelope.Nonce, envelope.Authenticator, envelope.Payload, envelope.Body, associatedData);
+        return envelope.Buffer;
+    }
+
+    /// <inheritdoc />
+    public virtual byte[] DecryptRaw(byte[] encryptedBytes, string? keyId = null, byte[]? key = null, string? keyVersion = null, byte[]? associatedData = null)
+    {
+        ArgumentHelpers.ThrowIfNotInRange(encryptedBytes, MinRawAeadSize, Options.MaxInputSize);
+        return DecryptRaw((ReadOnlySpan<byte>)encryptedBytes, keyId, key, keyVersion, associatedData);
+    }
+
+    /// <inheritdoc />
+    public virtual byte[] DecryptRaw(ReadOnlySpan<byte> encrypted, string? keyId = null, byte[]? key = null, string? keyVersion = null, byte[]? associatedData = null)
+    {
+        ArgumentHelpers.ThrowIfNotInRange((long)encrypted.Length, MinRawAeadSize, Options.MaxInputSize, nameof(encrypted));
+        var header = RawAeadEnvelope.Read(encrypted, AeadNonceSize, AeadTagSize, AeadNonceFieldName);
+        var actualKey = ResolveDecryptionKey(null, keyVersion, keyId, key, ValidateSymmetricKey);
+        return OpenWrapped(header.Payload(encrypted), header.Authenticator(encrypted), header.Nonce(encrypted), header.Body(encrypted), actualKey, associatedData);
+    }
+
     /// <summary>Builds the full stream header (<c>[version][algorithmId][keyIdLen][keyId][keyVersionLen][keyVersion][noncePrefix]</c>) as one buffer.</summary>
     internal static byte[] BuildStreamHeader(byte formatVersion, byte algorithmId, byte[] keyIdBytes, byte[] keyVersionBytes, byte[] noncePrefix)
     {
@@ -357,8 +359,8 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
     }
 
     /// <summary>
-    /// Builds the two per-chunk AAD variants: <c>header || finalFlagByte (0/1) || callerAssociatedData</c>. Putting the final-flag byte in AAD stops an
-    /// attacker from clearing or setting the (plaintext) final marker on an existing chunk.
+    /// Builds the two per-chunk AAD variants: <c>header || finalFlagByte (0/1) || callerAssociatedData</c>. Putting the final-flag byte in AAD stops an attacker from clearing or
+    /// setting the (plaintext) final marker on an existing chunk.
     /// </summary>
     internal static (byte[] AadNonFinal, byte[] AadFinal) BuildChunkAads(byte[] header, byte[]? associatedData)
     {
@@ -373,16 +375,13 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
     }
 
     /// <summary>
-    /// Creates a per-stream AEAD cipher bound to <paramref name="key" /> for one streaming call. Implementations check key length and throw if it is
-    /// invalid. Powers the low-allocation compact frame used by <see cref="EncryptToStreamAsync" />/<see cref="DecryptToStreamAsync" />.
+    /// Creates a per-stream AEAD cipher bound to <paramref name="key" /> for one streaming call. Implementations check key length and throw if it is invalid. Powers the
+    /// low-allocation compact frame used by <see cref="EncryptToStreamAsync" />/<see cref="DecryptToStreamAsync" />.
     /// </summary>
     public abstract IAeadStreamCryptor CreateStreamCryptor(ReadOnlySpan<byte> key);
 
     /// <summary>Algorithm id for this service, written in the stream-format header for versioning and compatibility.</summary>
     protected virtual byte GetAlgorithmId() => 0; // Default, override in derived classes
-
-    /// <summary>Field name used when a raw or framed blob is short of nonce/IV bytes.</summary>
-    protected string AeadNonceFieldName => AlgorithmInfo.NonceSize > 0 ? "nonce" : "synthetic IV";
 
     /// <summary>Rejects plaintext the algorithm cannot seal in one shot (AES-CCM packet cap). No-op for the other AEADs.</summary>
     protected virtual void ValidateEncryptPlaintext(int length, string paramName) { }
@@ -392,22 +391,12 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
     protected abstract void ValidateSymmetricKey(byte[] key);
 
     /// <summary>
-    /// Writes the AEAD ciphertext into <paramref name="payload" /> and the tag into <paramref name="authenticator" />. Combined-output algorithms (AES-SIV)
-    /// write RFC 5297 <c>SIV || ciphertext</c> into <paramref name="body" /> instead.
+    /// Writes the AEAD ciphertext into <paramref name="payload" /> and the tag into <paramref name="authenticator" />. Combined-output algorithms (AES-SIV) write RFC 5297
+    /// <c>SIV || ciphertext</c> into <paramref name="body" /> instead.
     /// </summary>
-    protected abstract void Seal(
-        ReadOnlySpan<byte> plaintext,
-        byte[] key,
-        Span<byte> nonce,
-        Span<byte> authenticator,
-        Span<byte> payload,
-        Span<byte> body,
-        byte[]? associatedData);
+    protected abstract void Seal(ReadOnlySpan<byte> plaintext, byte[] key, Span<byte> nonce, Span<byte> authenticator, Span<byte> payload, Span<byte> body, byte[]? associatedData);
 
-    /// <summary>
-    /// Decrypts one AEAD message into <paramref name="plaintext" />. Combined-input algorithms (AES-SIV) read RFC 5297 <c>SIV || ciphertext</c> from
-    /// <paramref name="body" />.
-    /// </summary>
+    /// <summary>Decrypts one AEAD message into <paramref name="plaintext" />. Combined-input algorithms (AES-SIV) read RFC 5297 <c>SIV || ciphertext</c> from <paramref name="body" />.</summary>
     protected abstract void Open(
         ReadOnlySpan<byte> ciphertext,
         ReadOnlySpan<byte> authenticator,
@@ -429,14 +418,14 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         var actualKey = ResolveEncryptionKey(keyId, key, ValidateSymmetricKey, out var keyVersion);
         var envelope = SingleShotEnvelope.Allocate(
             Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1, keyId, keyVersion, AeadNonceSize, AeadTagSize, plaintext.Length, RandomizeNonce);
+
         Seal(plaintext, actualKey, envelope.Nonce, envelope.Authenticator, envelope.Payload, envelope.Body, associatedData);
         return envelope.Buffer;
     }
 
     private byte[] DecryptFramed(ReadOnlySpan<byte> encrypted, string? keyId, byte[]? key, byte[]? associatedData)
     {
-        var header = SingleShotEnvelope.Read(
-            encrypted, Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1, AeadNonceSize, AeadTagSize, AeadNonceFieldName);
+        var header = SingleShotEnvelope.Read(encrypted, Options.CurrentFormatVersion ?? (byte)StreamFormatVersion.V1, AeadNonceSize, AeadTagSize, AeadNonceFieldName);
         var actualKey = ResolveDecryptionKey(header.KeyId, header.KeyVersion, keyId, key, ValidateSymmetricKey);
         return OpenWrapped(header.Payload(encrypted), header.Authenticator(encrypted), header.Nonce(encrypted), header.Body(encrypted), actualKey, associatedData);
     }
@@ -500,8 +489,8 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
     protected static string ReadBinaryWriterString(ReadOnlySpan<byte> source, out int bytesConsumed) => BinaryWriterString.Read(source, out bytesConsumed);
 
     /// <summary>
-    /// Picks the encrypt key: an explicit <paramref name="key" /> wins; otherwise the current key for <paramref name="keyId" /> is loaded from the
-    /// <see cref="KeyStore" /> together with its version so the envelope can record which version produced it.
+    /// Picks the encrypt key: an explicit <paramref name="key" /> wins; otherwise the current key for <paramref name="keyId" /> is loaded from the <see cref="KeyStore" />
+    /// together with its version so the envelope can record which version produced it.
     /// </summary>
     /// <param name="keyId">Id to look up when <paramref name="key" /> is null.</param>
     /// <param name="key">Caller key, or null to use the store.</param>
@@ -524,8 +513,8 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
     }
 
     /// <summary>
-    /// Picks the decrypt key: an explicit <paramref name="key" /> wins; otherwise the envelope key id beats
-    /// <paramref name="fallbackKeyId" />, and a recorded version pins that exact key so rotated keys still open old data.
+    /// Picks the decrypt key: an explicit <paramref name="key" /> wins; otherwise the envelope key id beats <paramref name="fallbackKeyId" />, and a recorded version pins that
+    /// exact key so rotated keys still open old data.
     /// </summary>
     /// <param name="headerKeyId">Key id from the envelope, or null when it has none.</param>
     /// <param name="headerKeyVersion">Key version from the envelope, or null to use the current version.</param>
@@ -557,10 +546,7 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
     }
 
     // file helpers
-    /// <summary>
-    /// Convenience: encrypts a file onto another file. Not on IEncryptionService. For the interface
-    /// methods, call EncryptToFileAsync instead.
-    /// </summary>
+    /// <summary>Convenience: encrypts a file onto another file. Not on IEncryptionService. For the interface methods, call EncryptToFileAsync instead.</summary>
     public virtual async Task EncryptFileAsync(string inputPath, string? outputPath = null, string? keyId = null, byte[]? key = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfFileNotFound(inputPath);
@@ -570,10 +556,7 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         await EncryptToStreamAsync(inputStream, outputStream, keyId, key, ct: ct).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Convenience: decrypts a file onto another file. Not on IEncryptionService. For the interface
-    /// methods, call DecryptFromFileAsync instead.
-    /// </summary>
+    /// <summary>Convenience: decrypts a file onto another file. Not on IEncryptionService. For the interface methods, call DecryptFromFileAsync instead.</summary>
     public virtual async Task DecryptFileAsync(string inputPath, string outputPath, string? keyId = null, byte[]? key = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfFileNotFound(inputPath);
@@ -583,10 +566,7 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         await DecryptToStreamAsync(inputStream, outputStream, keyId, key, ct: ct).ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Convenience: encrypts a file and returns the ciphertext bytes. Not on IEncryptionService. For the interface
-    /// methods, call EncryptToFileAsync instead.
-    /// </summary>
+    /// <summary>Convenience: encrypts a file and returns the ciphertext bytes. Not on IEncryptionService. For the interface methods, call EncryptToFileAsync instead.</summary>
     public virtual byte[] EncryptFile(string inputPath, string? keyId = null, byte[]? key = null)
     {
         ArgumentHelpers.ThrowIfFileNotFound(inputPath);
@@ -594,10 +574,7 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         return Encrypt(fileBytes, keyId, key);
     }
 
-    /// <summary>
-    /// Convenience: encrypts a file synchronously onto another file. Not on IEncryptionService. For the
-    /// interface methods, call EncryptToFileAsync instead.
-    /// </summary>
+    /// <summary>Convenience: encrypts a file synchronously onto another file. Not on IEncryptionService. For the interface methods, call EncryptToFileAsync instead.</summary>
     public virtual void EncryptToFile(string inputPath, string? outputPath = null, string? keyId = null, byte[]? key = null)
     {
         ArgumentHelpers.ThrowIfFileNotFound(inputPath);
@@ -606,10 +583,7 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         File.WriteAllBytes(outputFile, encrypted);
     }
 
-    /// <summary>
-    /// Convenience: decrypts a file and returns the plaintext bytes. Not on IEncryptionService. For the interface
-    /// methods, call DecryptFromFileAsync instead.
-    /// </summary>
+    /// <summary>Convenience: decrypts a file and returns the plaintext bytes. Not on IEncryptionService. For the interface methods, call DecryptFromFileAsync instead.</summary>
     public virtual byte[] DecryptFile(string inputPath, string? keyId = null, byte[]? key = null)
     {
         ArgumentHelpers.ThrowIfFileNotFound(inputPath);
@@ -617,10 +591,7 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         return Decrypt(encryptedBytes, keyId, key);
     }
 
-    /// <summary>
-    /// Convenience: decrypts a file synchronously onto another file. Not on IEncryptionService. For the
-    /// interface methods, call DecryptFromFileAsync instead.
-    /// </summary>
+    /// <summary>Convenience: decrypts a file synchronously onto another file. Not on IEncryptionService. For the interface methods, call DecryptFromFileAsync instead.</summary>
     public virtual void DecryptToFile(string inputPath, string outputPath, string? keyId = null, byte[]? key = null)
     {
         ArgumentHelpers.ThrowIfFileNotFound(inputPath);
@@ -628,4 +599,7 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         var decrypted = DecryptFile(inputPath, keyId, key);
         File.WriteAllBytes(outputPath, decrypted);
     }
+
+    /// <summary>Service name and the options it was built with.</summary>
+    public override string ToString() => $"{GetType().Name} {Options}";
 }

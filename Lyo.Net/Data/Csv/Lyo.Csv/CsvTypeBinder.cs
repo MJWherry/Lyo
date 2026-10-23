@@ -2,7 +2,10 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
+using Lyo.Common.Core;
+using Lyo.Common.Core.Attributes;
 using Lyo.Common.Core.Conversion;
+using Lyo.Common.Core.Enums;
 using Lyo.Csv.Converters;
 using Lyo.Csv.Models;
 
@@ -60,6 +63,38 @@ internal static class CsvTypeBinder
     }
 
     public static string[] GetHeaders(TypeMap map) => map.Headers;
+
+    public static ColumnMap[] OrderColumns(TypeMap map, MemberOrder order, IReadOnlyList<string> orderNames)
+    {
+        if (order == MemberOrder.Defined || map.Columns.Length <= 1)
+            return map.Columns;
+
+        return MemberOrderSort.Sort(
+                map.Columns, static column => column.HeaderName, static column => column.Property.GetCustomAttribute<MemberOrderAttribute>()?.Order, order, orderNames)
+            .ToArray();
+    }
+
+    public static string[] HeadersFor(IReadOnlyList<ColumnMap> columns)
+    {
+        var headers = new string[columns.Count];
+        for (var i = 0; i < columns.Count; i++)
+            headers[i] = columns[i].HeaderName;
+
+        return headers;
+    }
+
+    public static void WriteColumns(object? instance, IReadOnlyList<ColumnMap> columns, CsvTextWriter csv, CultureInfo culture)
+    {
+        if (instance is null) {
+            for (var i = 0; i < columns.Count; i++)
+                csv.WriteField("");
+
+            return;
+        }
+
+        for (var i = 0; i < columns.Count; i++)
+            columns[i].Writer(instance, csv, culture);
+    }
 
     /// <summary>Emits one typed row cell-by-cell without allocating an intermediate string array.</summary>
     public static void WriteRecord(object? instance, TypeMap map, CsvTextWriter csv, CultureInfo culture)
@@ -260,9 +295,8 @@ internal static class CsvTypeBinder
 
     private static Expression CompileYesNoText(Expression propAccess, Type propType, bool isNullable)
     {
-        if (!isNullable) {
+        if (!isNullable)
             return Expression.Condition(propAccess, Expression.Constant("yes"), Expression.Constant("no"));
-        }
 
         return Expression.Condition(
             Expression.Property(propAccess, nameof(Nullable<bool>.HasValue)),

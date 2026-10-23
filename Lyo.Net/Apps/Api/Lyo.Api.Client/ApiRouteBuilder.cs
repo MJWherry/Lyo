@@ -8,8 +8,7 @@ public static class ApiRouteBuilder
     /// <param name="routePrefix">Host mount point, for example <c>api/v1</c>. Null or blank leaves the path as-is.</param>
     /// <param name="relativePath">Path relative to the client, for example <c>jobs/runs</c>.</param>
     /// <returns>The combined request path.</returns>
-    public static string Build(string? routePrefix, string relativePath)
-        => string.IsNullOrWhiteSpace(routePrefix) ? relativePath : $"{routePrefix!.TrimEnd('/')}/{relativePath}";
+    public static string Build(string? routePrefix, string relativePath) => string.IsNullOrWhiteSpace(routePrefix) ? relativePath : $"{routePrefix!.TrimEnd('/')}/{relativePath}";
 
     /// <summary>Adds one <c>include</c> query parameter for each navigation to expand.</summary>
     /// <param name="route">Route from <see cref="Build" />.</param>

@@ -5,7 +5,7 @@ public class AsyncResultExtensionsTests
     [Fact]
     public async Task ThenAsync_OnSuccess_ChainsToNext()
     {
-        var result = await Result<int>.Success(5).ThenAsync(x => Task.FromResult(Result<string>.Success(x.ToString())), TestContext.Current.CancellationToken);
+        var result = await Result<int>.Success(5).ThenAsync(x => Task.FromResult(Result<string>.Success(x.ToString())), TestCt);
         Assert.True(result.IsSuccess);
         Assert.Equal("5", result.Data);
     }
@@ -19,7 +19,7 @@ public class AsyncResultExtensionsTests
                 _ => {
                     called = true;
                     return Task.FromResult(Result<string>.Success("ok"));
-                }, TestContext.Current.CancellationToken);
+                }, TestCt);
 
         Assert.False(called);
         Assert.False(result.IsSuccess);
@@ -52,7 +52,7 @@ public class AsyncResultExtensionsTests
     [Fact]
     public async Task ThenAsync_TaskOverload_ChainsCorrectly()
     {
-        var result = await Task.FromResult(Result<int>.Success(10)).ThenAsync(x => Task.FromResult(Result<string>.Success(x.ToString())), TestContext.Current.CancellationToken);
+        var result = await Task.FromResult(Result<int>.Success(10)).ThenAsync(x => Task.FromResult(Result<string>.Success(x.ToString())), TestCt);
         Assert.Equal("10", result.Data);
     }
 
@@ -65,7 +65,7 @@ public class AsyncResultExtensionsTests
                 _ => {
                     called = true;
                     return Task.CompletedTask;
-                }, TestContext.Current.CancellationToken);
+                }, TestCt);
 
         Assert.True(called);
     }
@@ -79,7 +79,7 @@ public class AsyncResultExtensionsTests
                 _ => {
                     called = true;
                     return Task.CompletedTask;
-                }, TestContext.Current.CancellationToken);
+                }, TestCt);
 
         Assert.False(called);
     }
@@ -93,7 +93,7 @@ public class AsyncResultExtensionsTests
                 _ => {
                     called = true;
                     return Task.CompletedTask;
-                }, TestContext.Current.CancellationToken);
+                }, TestCt);
 
         Assert.True(called);
     }
@@ -107,7 +107,7 @@ public class AsyncResultExtensionsTests
                 _ => {
                     called = true;
                     return Task.CompletedTask;
-                }, TestContext.Current.CancellationToken);
+                }, TestCt);
 
         Assert.False(called);
     }
@@ -153,7 +153,7 @@ public class AsyncResultExtensionsTests
     [Fact]
     public async Task MapAsync_TaskOverload_TransformsValue()
     {
-        var result = await Task.FromResult(Result<int>.Success(5)).MapAsync(x => Task.FromResult(x * 3), TestContext.Current.CancellationToken);
+        var result = await Task.FromResult(Result<int>.Success(5)).MapAsync(x => Task.FromResult(x * 3), TestCt);
         Assert.True(result.IsSuccess);
         Assert.Equal(15, result.Data);
     }
@@ -167,7 +167,7 @@ public class AsyncResultExtensionsTests
                 _ => {
                     called = true;
                     return Task.CompletedTask;
-                }, TestContext.Current.CancellationToken);
+                }, TestCt);
 
         Assert.True(called);
         Assert.Equal(7, result.Data);

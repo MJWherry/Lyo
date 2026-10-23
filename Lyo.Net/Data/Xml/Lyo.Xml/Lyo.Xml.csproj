@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>XML parse and export for a typed document, and conversion to and from JSON, over System.Xml.Linq and the Lyo JSON contract.</Description>
+        <PackageTags>xml json parse export convert</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Json\Lyo.Json\Lyo.Json.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Result\Lyo.Result\Lyo.Result.csproj"/>
+        <ProjectReference Include="..\..\DataTable\Lyo.DataTable.Models\Lyo.DataTable.Models.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="System.Text.Encoding.CodePages"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.Xml.Tests"/>
+    </ItemGroup>
+
+</Project>

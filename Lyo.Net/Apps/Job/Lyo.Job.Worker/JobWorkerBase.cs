@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Reflection;
 using Lyo.Api.Client;
 using Lyo.Api.Models.Builders;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Formatter;
 using Lyo.Job.Client;
 using Lyo.Job.Models;
@@ -34,7 +35,7 @@ namespace Lyo.Job.Worker;
 /// </summary>
 public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHostedService
 {
-    private static readonly string[] RunIncludes = ["JobRunParameters", "JobRunResults", "JobSchedule", "JobTrigger", "JobDefinition", "JobDefinition.JobParameters"];
+    private static readonly string[] RunIncludes = ["JobRunParameters", "JobRunResults", "JobSchedule", "JobDefinition", "JobDefinition.JobParameters"];
 
     /// <summary>Result metadata that tells <see cref="QueueWorkerBase{TRequest,TResult}" /> not to requeue the message even when the result is a failure.</summary>
     private static readonly IReadOnlyDictionary<string, object> NoRequeueMetadata = new Dictionary<string, object> { ["requeue"] = false };
@@ -47,8 +48,8 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
     private readonly IJobParameterEncryptionService? _parameterEncryption;
 
     /// <summary>
-    /// Per-run cancellation sources keyed by run ID. Filled when a run starts so a cancel message from
-    /// <see cref="IJobEventPublisher.SubscribeToRunCancellationsAsync" /> can cancel the matching token.
+    /// Per-run cancellation sources keyed by run ID. Filled when a run starts so a cancel message from <see cref="IJobEventPublisher.SubscribeToRunCancellationsAsync" /> can
+    /// cancel the matching token.
     /// </summary>
     private readonly ConcurrentDictionary<Guid, CancellationTokenSource> _runCancellationSources = new();
 
@@ -65,12 +66,15 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
     /// <summary>Worker type string. Used to build the input queue name and the cancel-subscription queue.</summary>
     protected string WorkerType { get; }
 
+    /// <summary>Optional formatter for string parameter placeholders. DI sets this after construction; without it, templates stay unchanged.</summary>
+    internal IFormatterService? Formatter { get; set; }
+
     /// <param name="mqService">Message queue used to subscribe to the input queue.</param>
     /// <param name="jobClient">Typed Job API client.</param>
     /// <param name="eventPublisher">Job event publisher used to subscribe to cancellations.</param>
     /// <param name="workerType">
-    /// Worker type id. Must match <c>WorkerType</c> on the <see cref="JobDefinition" /> entities this worker handles. Sets both the queue name
-    /// (<c>job.run.{workerType}</c>) and the cancel-subscription queue.
+    /// Worker type id. Must match <c>WorkerType</c> on the <see cref="JobDefinition" /> entities this worker handles. Sets both the queue name (
+    /// <c>job.run.{workerType}</c>) and the cancel-subscription queue.
     /// </param>
     /// <param name="logger">Optional logger.</param>
     /// <param name="metrics">Optional metrics.</param>
@@ -97,30 +101,28 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
         WorkerType = workerType;
     }
 
-    /// <summary>Optional formatter for string parameter placeholders. DI sets this after construction; without it, templates stay unchanged.</summary>
-    internal IFormatterService? Formatter { get; set; }
-
     /// <inheritdoc />
     public override async Task StartAsync(CancellationToken ct = default)
     {
         await EnsureJobTopologyAsync(ct).ConfigureAwait(false);
 
         // Register before we consume the dispatch queue so the first in-flight start already has an instance id.
-        var cancelSuffix = Guid.NewGuid().ToString("N");
+        var cancelSuffix = LyoGuid.CreateV7().ToString("N");
         _cancelQueueName = Constants.Mq.QueueGetJobRunCancelInstance(WorkerType, cancelSuffix);
         await RegisterWorkerInstanceAsync(ct).ConfigureAwait(false);
         await _eventPublisher.SubscribeToRunCancellationsAsync(WorkerType, OnCancelAsync, ct, cancelSuffix).ConfigureAwait(false);
         _workerHeartbeatCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         _workerHeartbeatTask = RunWorkerInstanceHeartbeatAsync(_workerHeartbeatCts.Token);
-
         await base.StartAsync(ct).ConfigureAwait(false);
         if (!IsRunning)
             throw new InvalidOperationException($"Failed to subscribe to worker queue '{QueueName}'.");
     }
 
+    async Task IHostedService.StopAsync(CancellationToken cancellationToken) => await StopWorkerAsync(cancellationToken).ConfigureAwait(false);
+
     /// <summary>
-    /// Declares <c>job.events</c> and this worker's dispatch queue (and DLQ when configured) when they are missing. RabbitMQ subscribers do not create queues, so a worker
-    /// that starts before the API — or against an empty broker — would otherwise fail to subscribe.
+    /// Declares <c>job.events</c> and this worker's dispatch queue (and DLQ when configured) when they are missing. RabbitMQ subscribers do not create queues, so a worker that
+    /// starts before the API — or against an empty broker — would otherwise fail to subscribe.
     /// </summary>
     private async Task EnsureJobTopologyAsync(CancellationToken ct)
     {
@@ -143,8 +145,6 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
                 $"Failed to declare queue '{_dlqName}'. If it already exists with different arguments, delete it in RabbitMQ and restart the host.");
         }
     }
-
-    async Task IHostedService.StopAsync(CancellationToken cancellationToken) => await StopWorkerAsync(cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc />
     public new async Task StopAsync(CancellationToken ct = default) => await StopWorkerAsync(ct).ConfigureAwait(false);
@@ -280,8 +280,8 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
     }
 
     /// <summary>
-    /// <c>Running -&gt; Queued</c> hand-back during host shutdown. If the run is no longer <c>Running</c> (for example a user cancel moved it to <c>Cancelling</c>), the
-    /// requeue is rejected and dead-job detection finalizes the run instead.
+    /// <c>Running -&gt; Queued</c> hand-back during host shutdown. If the run is no longer <c>Running</c> (for example a user cancel moved it to <c>Cancelling</c>), the requeue
+    /// is rejected and dead-job detection finalizes the run instead.
     /// </summary>
     /// <returns>true when the run is back in <c>Queued</c> and safe to redeliver; false when the caller must ack the message instead.</returns>
     private async Task<bool> TryRequeueRunForShutdownAsync(Guid runId)
@@ -345,6 +345,7 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
         foreach (var pair in extra) {
             if (string.IsNullOrWhiteSpace(pair.Key))
                 continue;
+
             metadata[pair.Key] = pair.Value;
         }
 
@@ -374,6 +375,7 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
             [Constants.WorkerMetadata.ProcessName] = software.ProcessName,
             [Constants.WorkerMetadata.AssemblyVersion] = Assembly.GetEntryAssembly()?.GetName().Version?.ToString()
         };
+
         return _staticSystemMetadata;
     }
 
@@ -412,12 +414,7 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
 
     private static string? FormatInt64(long? value) => value?.ToString(CultureInfo.InvariantCulture);
 
-    private JobRunStartedReq BuildRunStartedRequest()
-        => new() {
-            WorkerInstanceId = _workerInstanceId,
-            MachineName = Environment.MachineName,
-            ProcessId = Environment.ProcessId
-        };
+    private JobRunStartedReq BuildRunStartedRequest() => new() { WorkerInstanceId = _workerInstanceId, MachineName = Environment.MachineName, ProcessId = Environment.ProcessId };
 
     private void ApplyWorkerSnapshot(PatchRequestBuilder patch)
     {
@@ -470,17 +467,9 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
         }
     }
 
-    /// <summary>Why a run fetch returned nothing, so the caller can tell a permanently missing run (ack) from a transient failure (requeue).</summary>
-    private enum RunFetchOutcome
-    {
-        Found,
-        NotFound,
-        TransientError
-    }
-
     /// <summary>
-    /// Loads the run being dispatched. A 404 (or a null body) is terminal: the run was deleted or purged, and redelivery will not find it. Anything else is treated as
-    /// transient so the counted requeue can retry.
+    /// Loads the run being dispatched. A 404 (or a null body) is terminal: the run was deleted or purged, and redelivery will not find it. Anything else is treated as transient
+    /// so the counted requeue can retry.
     /// </summary>
     private async Task<(RunFetchOutcome Outcome, JobRunRes? Run)> FetchRunAsync(Guid runId, CancellationToken ct)
     {
@@ -512,7 +501,6 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
                     patch.SetProperty("ProgressMessage", message);
 
                 ApplyWorkerSnapshot(patch);
-
                 await _jobClient.Runs.PatchAsync(runId, patch.Build(), ct).ConfigureAwait(false);
                 Metrics.IncrementCounter(Constants.Metrics.Worker.HeartbeatSent);
             }
@@ -527,8 +515,8 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
     }
 
     /// <summary>
-    /// Sends the run's results to the Job API. Transient failures retry in-process a few times. A 400 rejection (the run is no longer finishable, for example dead-job
-    /// detection already timed it out while this worker was still executing) is terminal and is never retried. Returns false when the run row was not moved to Finished.
+    /// Sends the run's results to the Job API. Transient failures retry in-process a few times. A 400 rejection (the run is no longer finishable, for example dead-job detection
+    /// already timed it out while this worker was still executing) is terminal and is never retried. Returns false when the run row was not moved to Finished.
     /// </summary>
     private async Task<bool> ReportFinishedAsync(Guid runId, IReadOnlyList<JobRunResultReq> results, CancellationToken ct)
     {
@@ -590,9 +578,17 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
         return parameter with { Value = value };
     }
 
+    /// <summary>Why a run fetch returned nothing, so the caller can tell a permanently missing run (ack) from a transient failure (requeue).</summary>
+    private enum RunFetchOutcome
+    {
+        Found,
+        NotFound,
+        TransientError
+    }
+
     /// <summary>
-    /// Latest progress from one run, so the heartbeat loop can include it. Scoped per run because the worker is a singleton and <c>ProcessingLimit</c> may allow several
-    /// runs at once. Shared instance fields would let concurrent runs report each other's percentage and message.
+    /// Latest progress from one run, so the heartbeat loop can include it. Scoped per run because the worker is a singleton and <c>ProcessingLimit</c> may allow several runs at
+    /// once. Shared instance fields would let concurrent runs report each other's percentage and message.
     /// </summary>
     private sealed class RunProgressState
     {
@@ -610,9 +606,8 @@ public abstract class JobWorkerBase : QueueWorkerBase<Guid, Result<Unit>>, IHost
 
         public (int? Percent, string? Message) Read()
         {
-            lock (_gate) {
+            lock (_gate)
                 return (_percent, _message);
-            }
         }
     }
 

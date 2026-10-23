@@ -20,12 +20,13 @@ public class CacheServiceL2Tests
                 o.Payload.AutoCompress = true;
                 o.Payload.AutoCompressMinSizeBytes = 64;
             });
+
         var data = new byte[400];
         host.Cache.SetPayload("l2-payload-zip", data);
         var blob = AssertSingleL2Blob(capture);
         FusionL2Frame.IsFramed(blob).ShouldBeTrue();
         blob[0].ShouldBe((byte)'L');
-        FusionL2Frame.TryParse(blob, out _, out var valueBytes).ShouldBeTrue();
+        FusionL2Frame.TryParse(blob, out var _, out var valueBytes).ShouldBeTrue();
         host.Codec.IsFramed(valueBytes).ShouldBeTrue();
         valueBytes[0].ShouldNotBe((byte)'{');
         valueBytes[0].ShouldNotBe((byte)'[');
@@ -44,10 +45,11 @@ public class CacheServiceL2Tests
                 o.Payload.AutoCompress = true;
                 o.Payload.AutoCompressMinSizeBytes = 64;
             });
+
         var value = new string('a', 2000);
         host.Cache.Set("l2-string-zip", value);
         var blob = AssertSingleL2Blob(capture);
-        FusionL2Frame.TryParse(blob, out _, out var valueBytes).ShouldBeTrue();
+        FusionL2Frame.TryParse(blob, out var _, out var valueBytes).ShouldBeTrue();
         host.Codec.IsFramed(valueBytes).ShouldBeTrue();
         var env = host.Codec.Decode(valueBytes);
         env.Compression.ShouldNotBeNull();
@@ -63,10 +65,10 @@ public class CacheServiceL2Tests
         var capture = new CapturingDistributedCache();
         var data = Encoding.UTF8.GetBytes(new string('x', 300));
         using (var writer = CreateL2Host(
-                   capture, o => {
-                       o.Payload.AutoCompress = true;
-                       o.Payload.AutoCompressMinSizeBytes = 64;
-                   }))
+            capture, o => {
+                o.Payload.AutoCompress = true;
+                o.Payload.AutoCompressMinSizeBytes = 64;
+            }))
             writer.Cache.SetPayload("l2-payload-share", data);
 
         using var reader = CreateL2Host(
@@ -74,6 +76,7 @@ public class CacheServiceL2Tests
                 o.Payload.AutoCompress = true;
                 o.Payload.AutoCompressMinSizeBytes = 64;
             });
+
         reader.Cache.TryGetPayload("l2-payload-share", out var env).ShouldBeTrue();
         env.ShouldNotBeNull();
         env.Payload.ToArray().ShouldBe(data);
@@ -85,10 +88,10 @@ public class CacheServiceL2Tests
         var capture = new CapturingDistributedCache();
         var value = new string('b', 1500);
         using (var writer = CreateL2Host(
-                   capture, o => {
-                       o.Payload.AutoCompress = true;
-                       o.Payload.AutoCompressMinSizeBytes = 64;
-                   }))
+            capture, o => {
+                o.Payload.AutoCompress = true;
+                o.Payload.AutoCompressMinSizeBytes = 64;
+            }))
             writer.Cache.Set("l2-string-share", value);
 
         using var reader = CreateL2Host(
@@ -96,6 +99,7 @@ public class CacheServiceL2Tests
                 o.Payload.AutoCompress = true;
                 o.Payload.AutoCompressMinSizeBytes = 64;
             });
+
         reader.Cache.TryGetValue<string>("l2-string-share", out var hit).ShouldBeTrue();
         hit.ShouldBe(value);
     }
@@ -117,6 +121,7 @@ public class CacheServiceL2Tests
             o.Enabled = true;
             configure?.Invoke(o);
         });
+
         var sp = services.BuildServiceProvider();
         var fusion = sp.GetRequiredService<IFusionCache>();
         fusion.DefaultEntryOptions.AllowBackgroundDistributedCacheOperations = false;
@@ -127,6 +132,7 @@ public class CacheServiceL2Tests
     private sealed class L2Host(IServiceProvider services, ICacheService cache, ICachePayloadCodec codec) : IDisposable
     {
         public ICacheService Cache { get; } = cache;
+
         public ICachePayloadCodec Codec { get; } = codec;
 
         public void Dispose() => (services as IDisposable)?.Dispose();
@@ -148,13 +154,11 @@ public class CacheServiceL2Tests
             return Task.CompletedTask;
         }
 
-        public void Refresh(string key)
-        {
-        }
+        public void Refresh(string key) { }
 
         public Task RefreshAsync(string key, CancellationToken token = default) => Task.CompletedTask;
 
-        public void Remove(string key) => Store.TryRemove(key, out _);
+        public void Remove(string key) => Store.TryRemove(key, out var _);
 
         public Task RemoveAsync(string key, CancellationToken token = default)
         {

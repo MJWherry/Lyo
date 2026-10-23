@@ -15,8 +15,8 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.FileStorage;
 
 /// <summary>
-/// Encode/decode streaming stages shared by every storage backend: single-pass compress-then-encrypt uploads and pipelined decrypt/decompress reads. Persisted
-/// ciphertext sizes and headers are read through <see cref="IFileStoragePhysicalIO" />.
+/// Encode/decode streaming stages shared by every storage backend: single-pass compress-then-encrypt uploads and pipelined decrypt/decompress reads. Persisted ciphertext
+/// sizes and headers are read through <see cref="IFileStoragePhysicalIO" />.
 /// </summary>
 internal sealed class FileStorageStreamingPipelines
 {
@@ -69,6 +69,25 @@ internal sealed class FileStorageStreamingPipelines
         CompressionAlgorithm? compressionAlgorithmOverride,
         CancellationToken ct)
     {
+        try {
+            await DecodeIntoPlainWriterAsync(storageStream, metadata, plainWriter, chunkSize, compressionAlgorithmOverride, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex) {
+            // A reader is already parked on this pipe, so every failure has to travel out through the writer. The configuration guards below throw before the first write,
+            // and without this the read side would wait on bytes that are never coming.
+            await plainWriter.CompleteAsync(ex).ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    private async Task DecodeIntoPlainWriterAsync(
+        Stream storageStream,
+        FileStoreResult metadata,
+        PipeWriter plainWriter,
+        int? chunkSize,
+        CompressionAlgorithm? compressionAlgorithmOverride,
+        CancellationToken ct)
+    {
         CompressionAlgorithm? decompressAlgorithm = null;
         if (metadata.IsCompressed) {
             OperationHelpers.ThrowIfNull(
@@ -109,17 +128,10 @@ internal sealed class FileStorageStreamingPipelines
                 if (storageStream.CanSeek)
                     storageStream.Position = 0;
 
-                try {
-                    using (var plainOut = plainWriter.AsStream(true))
-                        await _twoKeyEncryptionService!.DecryptToStreamAsync(storageStream, plainOut, null, null, ct).ConfigureAwait(false);
+                using (var plainOut = plainWriter.AsStream(true))
+                    await _twoKeyEncryptionService!.DecryptToStreamAsync(storageStream, plainOut, null, null, ct).ConfigureAwait(false);
 
-                    await plainWriter.CompleteAsync().ConfigureAwait(false);
-                }
-                catch (Exception ex) {
-                    await plainWriter.CompleteAsync(ex).ConfigureAwait(false);
-                    throw;
-                }
-
+                await plainWriter.CompleteAsync().ConfigureAwait(false);
                 _logger.LogDebug("Stream pipeline complete for file {FileId} (decrypt only)", metadata.Id);
                 return;
             }
@@ -128,17 +140,10 @@ internal sealed class FileStorageStreamingPipelines
                 if (storageStream.CanSeek)
                     storageStream.Position = 0;
 
-                try {
-                    using (var plainOut = plainWriter.AsStream(true))
-                        await _compressionService!.Resolver.DecompressAsync(storageStream, plainOut, decompressAlgorithm!, chunkSize, ct).ConfigureAwait(false);
+                using (var plainOut = plainWriter.AsStream(true))
+                    await _compressionService!.Resolver.DecompressAsync(storageStream, plainOut, decompressAlgorithm!, chunkSize, ct).ConfigureAwait(false);
 
-                    await plainWriter.CompleteAsync().ConfigureAwait(false);
-                }
-                catch (Exception ex) {
-                    await plainWriter.CompleteAsync(ex).ConfigureAwait(false);
-                    throw;
-                }
-
+                await plainWriter.CompleteAsync().ConfigureAwait(false);
                 _logger.LogDebug("Stream pipeline complete for file {FileId} (decompress only)", metadata.Id);
                 return;
             }
@@ -268,9 +273,10 @@ internal sealed class FileStorageStreamingPipelines
     private async Task DecompressCompressedPipeToPlainAsync(Pipe pipeCompressed, PipeWriter plainWriter, CompressionAlgorithm algorithm, int? chunkSize, CancellationToken ct)
     {
         try {
-            using (var compressedRead = pipeCompressed.Reader.AsStream(true))
-            using (var plainOut = plainWriter.AsStream(true))
-                await _compressionService!.Resolver.DecompressAsync(compressedRead, plainOut, algorithm, chunkSize, ct).ConfigureAwait(false);
+            using (var compressedRead = pipeCompressed.Reader.AsStream(true)) {
+                using (var plainOut = plainWriter.AsStream(true))
+                    await _compressionService!.Resolver.DecompressAsync(compressedRead, plainOut, algorithm, chunkSize, ct).ConfigureAwait(false);
+            }
 
             await pipeCompressed.Reader.CompleteAsync().ConfigureAwait(false);
             await plainWriter.CompleteAsync().ConfigureAwait(false);

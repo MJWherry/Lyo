@@ -13,7 +13,6 @@ public sealed record JobDefinitionRes(
     bool Enabled,
     IReadOnlyList<JobParameterRes>? JobParameters,
     IReadOnlyList<JobScheduleRes>? JobSchedules,
-    IReadOnlyList<JobTriggerRes>? JobTriggers,
     IReadOnlyList<JobParallelRestrictionRes>? JobParallelRestrictions,
     int MaxRetryCount = 0,
     int RetryBackoffSeconds = 0,
@@ -28,9 +27,6 @@ public sealed record JobDefinitionRes(
     int MaxRunsPerHour = 0,
     int ExpectedDurationMinutes = 0,
     int MustStartByMinutes = 0,
-    bool AlertOnFailure = false,
-    int AlertAfterConsecutiveFailures = 0,
-    string? AlertWebhookUrl = null,
     int DefinitionVersion = 1)
 {
     public override string ToString() => $"{Name}, {Description} (Enabled={Enabled})";

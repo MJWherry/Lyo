@@ -1,0 +1,11 @@
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.WorkflowBuilder)]
+@rendermode InteractiveServer
+@inherits AuthorizedPage
+@inject IApiClient ApiClient
+
+<PageTitle>Workflow Builder Example</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <JobWorkflowBuilderWorkbench ApiClient="@ApiClient" BaseRoute="@_baseRoute"/>
+</MudContainer>

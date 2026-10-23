@@ -9,13 +9,16 @@ rectangle, 0 elsewhere), runs OpenCV inpaint with optional Telea or Navier-Stoke
 at the decoded source width and height.
 
 - **Without DI.** [`OpenCvRoiInpaint`](OpenCvRoiInpaint.cs) (`InpaintColorRoiPng`, `InpaintTelea`) forwards to a shared [`OpenCvRoiInpaintService`](OpenCvRoiInpaintService.cs).
-- **With DI.** [`AddOpenCvRoiInpaint()`](OpenCvImageServiceCollectionExtensions.cs) maps `IOpenCvRoiInpaint` → `OpenCvRoiInpaintService` when that mapping is not already registered.
+- **With DI.** [`AddOpenCvRoiInpaint()`](OpenCvImageServiceCollectionExtensions.cs) maps `IOpenCvRoiInpaint` → `OpenCvRoiInpaintService` when that mapping is not already
+  registered.
 
 Failure codes: `OpenCvInpaint.DecodeFailed`, `OpenCvInpaint.InpaintError`.
 
 ## Native runtimes on NuGet
 
-`OpenCvSharp4.official.runtime.linux-x64` is referenced here for Linux CI and local Linux work. On Windows or other RIDs, add the matching official runtime package to the executable (e.g. Gateway) or to this library's `.csproj`. Search NuGet for `OpenCvSharp4.official.runtime` for your OS. If native libraries fail to load, confirm the right runtime package was restored and copied next to the app output.
+`OpenCvSharp4.official.runtime.linux-x64` is referenced here for Linux CI and local Linux work. On Windows or other RIDs, add the matching official runtime package to the
+executable (e.g. Gateway) or to this library's `.csproj`. Search NuGet for `OpenCvSharp4.official.runtime` for your OS. If native libraries fail to load, confirm the right runtime
+package was restored and copied next to the app output.
 
 ## How to run tests
 

@@ -1,16 +1,17 @@
 # Lyo.Schedule.Web.Components
 
-Blazor component(s) for interactively building and previewing [`Lyo.Schedule.Models.ScheduleDefinition`](../Lyo.Schedule.Models/README.md) values.
+Blazor component (s) for interactively building and previewing [`Lyo.Schedule.Models.ScheduleDefinition`](../Lyo.Schedule.Models/README.md) values.
 
 ## Components
 
-| Component | What it does |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ScheduleWorkbench` | Interactive editor for `ScheduleDefinition`. Chooses the `ScheduleType` (`SetTimes` / `Interval` / `OneShot` / `Cron`), shows the matching inputs for that type (day/month flags, time pickers, interval bounds, one-shot timestamp, cron string with a `CronFormat` toggle), validates with `ScheduleDefinition.Validate()`, and previews the next N occurrences in the host's `TimeZoneInfo`. |
+| Component           | What it does                                                                                                                                                                                                                                                                                                                                                                  |
+|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ScheduleWorkbench` | Interactive editor for `ScheduleDefinition`. Chooses the `ScheduleType` (`SetTimes` / `Interval` / `OneShot` / `Cron`), shows the matching inputs for that type (day/month flags, time pickers, interval bounds, one-shot timestamp, cron string), validates with `ScheduleDefinition.Validate()`, and previews the visible month on `LyoCalendar` plus the next occurrences. |
 
 ## Wiring into a host
 
-`<ScheduleWorkbench />` is a pure component. Pass a `ScheduleDefinition?` initial value as a parameter and take the updated value from the value-changed callback. MudBlazor layout primitives come from [`Lyo.Web.Components`](../../../Apps/Web/Lyo.Web.Components/README.md).
+`<ScheduleWorkbench />` is a pure component. Pass a `ScheduleDefinition?` initial value as a parameter and take the updated value from the value-changed callback. MudBlazor layout
+primitives come from [`Lyo.Web.Components`](../../../Apps/Web/Lyo.Web.Components/README.md).
 
 ## Dependencies
 
@@ -20,10 +21,11 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Scheduler` (direct, lyo)
 - `Lyo.Web.Primitives` (direct, lyo)
 - `MudBlazor` `9.3` (direct, third-party)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
+- `Lyo.EntityReference.Models` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
@@ -37,4 +39,5 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
 - `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

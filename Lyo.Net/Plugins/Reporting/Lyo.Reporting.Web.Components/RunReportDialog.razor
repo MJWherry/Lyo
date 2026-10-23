@@ -1,4 +1,3 @@
-@using Lyo.Web.Components.ParamTable
 @inject ISnackbar Snackbar
 
 <LyoDialog Busy="@_busy" OnSave="Submit" SaveDisabled="@(_selected is null || !IsValid())" SaveText="Generate" CloseText="Cancel" DebugData="@_selected">

@@ -1,4 +1,5 @@
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
@@ -17,7 +18,7 @@ public class QueryRequestCloneTests
             Options = new() { TotalCountMode = QueryTotalCountMode.HasMore, IncludeFilterMode = QueryIncludeFilterMode.MatchedOnly },
             WhereClause = where,
             Include = ["contactaddresses.address"],
-            Keys = [[Guid.NewGuid()]],
+            Keys = [[LyoGuid.CreateV7()]],
             SortBy = [new("CreatedTimestamp", SortDirection.Desc, 0)]
         };
 

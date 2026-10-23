@@ -12,7 +12,10 @@ public sealed record MediaStreamInfo
     /// <summary>Stream kind, for example <c>audio</c> or <c>video</c>.</summary>
     public string? CodecType { get; init; }
 
-    /// <summary>Codec name, for example <c>aac</c> or <c>h264</c>. Unknown names are left as strings; use <see cref="AudioEncoder.Custom" /> / <see cref="VideoEncoder.Custom" /> when you need a catalog instance.</summary>
+    /// <summary>
+    /// Codec name, for example <c>aac</c> or <c>h264</c>. Unknown names are left as strings; use <see cref="AudioEncoder.Custom" /> / <see cref="VideoEncoder.Custom" /> when you
+    /// need a catalog instance.
+    /// </summary>
     public string? CodecName { get; init; }
 
     /// <summary>Sample rate in hertz when this is an audio stream.</summary>
@@ -40,6 +43,5 @@ public sealed record MediaStreamInfo
     public bool IsAttachedPicture { get; init; }
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"MediaStreamInfo(Index={Index}, Type={CodecType}, Codec={CodecName}, {Width}x{Height}, Fps={Fps}, AttachedPic={IsAttachedPicture})";
+    public override string ToString() => $"MediaStreamInfo(Index={Index}, Type={CodecType}, Codec={CodecName}, {Width}x{Height}, Fps={Fps}, AttachedPic={IsAttachedPicture})";
 }

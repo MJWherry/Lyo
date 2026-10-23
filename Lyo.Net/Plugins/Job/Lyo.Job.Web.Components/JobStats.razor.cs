@@ -4,6 +4,15 @@ namespace Lyo.Job.Web.Components;
 
 public partial class JobStats
 {
+    private static readonly string[] ResultLabels = ["Success", "Failure", "Warn", "Partial", "Cancelled", "Skipped", "Timeout", "Unknown"];
+    private readonly ChartOptions _barOptions = new() { ChartPalette = ["#2196F3", "#4CAF50", "#FF9800"] };
+
+    private readonly ChartOptions _pieOptions = new() { ChartPalette = ["#4CAF50", "#F44336", "#FF9800", "#2196F3", "#9C27B0", "#607D8B", "#795548", "#FF5722"] };
+    private string? _error;
+
+    private bool _loading;
+    private IReadOnlyList<SpJobStatistic> _stats = [];
+
     [Parameter]
     [EditorRequired]
     public IApiClient ApiClient { get; set; } = null!;
@@ -11,16 +20,7 @@ public partial class JobStats
     [Parameter]
     public string? StatisticsRoute { get; set; }
 
-    private bool _loading;
-    private string? _error;
-    private IReadOnlyList<SpJobStatistic> _stats = [];
-
     private IEnumerable<SpJobStatistic> _filtered => _stats;
-
-    private static readonly string[] ResultLabels = ["Success", "Failure", "Warn", "Partial", "Cancelled", "Skipped", "Timeout", "Unknown"];
-
-    private readonly ChartOptions _pieOptions = new() { ChartPalette = ["#4CAF50", "#F44336", "#FF9800", "#2196F3", "#9C27B0", "#607D8B", "#795548", "#FF5722"] };
-    private readonly ChartOptions _barOptions = new() { ChartPalette = ["#2196F3", "#4CAF50", "#FF9800"] };
 
     protected override Task OnInitializedAsync() => LoadAsync();
 
@@ -48,12 +48,20 @@ public partial class JobStats
     private double[] ResultData()
     {
         var s = _filtered.ToList();
-        return [s.Sum(j => j.SuccessCount), s.Sum(j => j.FailureCount), s.Sum(j => j.SuccessWithWarningsCount), s.Sum(j => j.PartialSuccessCount), s.Sum(j => j.CancelledCount), s.Sum(j => j.SkippedCount), s.Sum(j => j.TimeoutCount), s.Sum(j => j.UnknownCount)];
+        return [
+            s.Sum(j => j.SuccessCount), s.Sum(j => j.FailureCount), s.Sum(j => j.SuccessWithWarningsCount), s.Sum(j => j.PartialSuccessCount), s.Sum(j => j.CancelledCount),
+            s.Sum(j => j.SkippedCount), s.Sum(j => j.TimeoutCount), s.Sum(j => j.UnknownCount)
+        ];
     }
 
     private string[] JobLabels() => _filtered.Select(j => j.JobName.Length > 15 ? j.JobName[..12] + "..." : j.JobName).ToArray();
 
-    private List<ChartSeries<double>> RuntimeSeries() => [new() { Name = "Average", Data = _filtered.Select(j => (j.AvgRunTimeMs ?? 0) / 1000).ToArray() }, new() { Name = "Min", Data = _filtered.Select(j => (j.MinRunTimeMs ?? 0) / 1000).ToArray() }, new() { Name = "Max", Data = _filtered.Select(j => (j.MaxRunTimeMs ?? 0) / 1000).ToArray() }];
+    private List<ChartSeries<double>> RuntimeSeries()
+        => [
+            new() { Name = "Average", Data = _filtered.Select(j => (j.AvgRunTimeMs ?? 0) / 1000).ToArray() },
+            new() { Name = "Min", Data = _filtered.Select(j => (j.MinRunTimeMs ?? 0) / 1000).ToArray() },
+            new() { Name = "Max", Data = _filtered.Select(j => (j.MaxRunTimeMs ?? 0) / 1000).ToArray() }
+        ];
 
     private double OverallSuccessRate()
     {

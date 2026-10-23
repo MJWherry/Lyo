@@ -94,8 +94,7 @@ public class JobRunResultBuilder
     /// <summary>Increments an integer when the key exists; otherwise inserts it with the given value.</summary>
     public JobRunResultBuilder IncrementInt(string key, int incrementBy = 1)
     {
-        if (_results.TryGetValue(key, out var existing) && LyoTypeInfo.FromName(existing.Type) == LyoTypeInfo.Int
-            && TryJsonInt(existing.Value, out var currentValue))
+        if (_results.TryGetValue(key, out var existing) && LyoTypeInfo.FromName(existing.Type) == LyoTypeInfo.Int && TryJsonInt(existing.Value, out var currentValue))
             _results[key] = new(key, LyoTypeInfo.Int, currentValue + incrementBy);
         else
             _results[key] = new(key, LyoTypeInfo.Int, incrementBy);
@@ -106,8 +105,7 @@ public class JobRunResultBuilder
     /// <summary>Increments a long when the key exists; otherwise inserts it with the given value.</summary>
     public JobRunResultBuilder IncrementLong(string key, long incrementBy = 1)
     {
-        if (_results.TryGetValue(key, out var existing) && LyoTypeInfo.FromName(existing.Type) == LyoTypeInfo.Long
-            && TryJsonLong(existing.Value, out var currentValue))
+        if (_results.TryGetValue(key, out var existing) && LyoTypeInfo.FromName(existing.Type) == LyoTypeInfo.Long && TryJsonLong(existing.Value, out var currentValue))
             _results[key] = new(key, LyoTypeInfo.Long, currentValue + incrementBy);
         else
             _results[key] = new(key, LyoTypeInfo.Long, incrementBy);

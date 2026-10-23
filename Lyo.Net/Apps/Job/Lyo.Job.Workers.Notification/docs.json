@@ -1,0 +1,74 @@
+{
+  "id": "Lyo.Job.Workers.Notification",
+  "name": "Lyo.Job.Workers.Notification",
+  "area": "Apps",
+  "tagline": "Job workers that send notifications as workflow steps: webhook POST, email, and SMS. A send that does not happen fails the run.",
+  "description": "Three `JobWorkerBase` implementations that turn notifying into a workflow step: `WebhookNotificationWorker` (`notification.webhook`), `EmailNotificationWorker` (`notification.email`), and `SmsNotificationWorker` (`notification.sms`).\n\nThese replace `JobDefinition.AlertWebhookUrl` and the per-definition alert columns. As a step, a notification can be conditional, can read upstream step results through templated parameters, and — the part a column could not do — **fails the job run when the send fails**, so the job system's retry, backoff, DLQ, and run-log history all apply.\n\nEach worker declares its inputs as ordinary job parameters (`Url`, `Body`, `To`, `Subject`, ...), so one shared job definition per channel serves every workflow: the step's `ParametersJson` fills them in.",
+  "features": [],
+  "examples": [
+    {
+      "title": "Register in DI",
+      "language": "csharp",
+      "code": "// Prerequisites: IMqService, IJobClient, IJobEventPublisher, plus the channel service each worker sends through.\nservices.AddWebhookNotificationWorkerFromConfiguration(configuration);\nservices.AddEmailNotificationWorker(o => o.DefaultFromAddress = \"jobs@example.com\");\nservices.AddSmsNotificationWorker(o => o.DefaultFrom = \"+15555550100\");"
+    },
+    {
+      "title": "Options",
+      "language": "json",
+      "code": "{\n  \"WebhookNotificationWorker\": {\n    \"RetryCount\": 2,\n    \"RetryDelay\": \"00:00:01\",\n    \"Timeout\": \"00:00:30\"\n  },\n  \"EmailNotificationWorker\": {\n    \"DefaultFromAddress\": \"jobs@example.com\",\n    \"DefaultFromName\": \"Lyo Jobs\"\n  },\n  \"SmsNotificationWorker\": {\n    \"DefaultFrom\": \"+15555550100\"\n  }\n}"
+    },
+    {
+      "title": "Notify only when the load produced rows",
+      "language": "csharp",
+      "code": "JobWorkflowBuilder.New(\"Nightly ETL\")\n    .AddStep(\"Load\", loadDefinitionId)\n    .AddStep(\n        \"Notify\", webhookDefinitionId,\n        dependsOn: [\"Load\"],\n        condition: JobWorkflowStepCondition.When(\"Load\", \"RowCount\", ComparisonOperatorEnum.GreaterThan, \"0\"),\n        parameters: new Dictionary<string, string> {\n            [\"Url\"] = \"https://hooks.example.com/etl\",\n            [\"Body\"] = \"{\\\"rows\\\": \\\"{Step.Load.Result.RowCount}\\\"}\"\n        })\n    .Build();"
+    }
+  ],
+  "sections": [
+    {
+      "type": "table",
+      "title": "Workers and their parameters",
+      "headers": [
+        "Worker type",
+        "Required parameters",
+        "Optional parameters",
+        "Results"
+      ],
+      "rows": [
+        [
+          "`notification.webhook`",
+          "`Url`, `Body`",
+          "`Headers` (JSON object of header name to value), `ContentType` (defaults to `application/json`)",
+          "`StatusCode`, `Attempts`"
+        ],
+        [
+          "`notification.email`",
+          "`To`, `Subject`, `Body`",
+          "`Cc`, `IsHtml`, `From`, `FromName`",
+          "`Recipient`"
+        ],
+        [
+          "`notification.sms`",
+          "`To`, `Body`",
+          "`From`",
+          "`Recipient`"
+        ]
+      ],
+      "trail": "`To` and `Cc` accept a comma or semicolon separated list. Values arrive already resolved: the scheduler formats a step's `ParametersJson` against the workflow context before creating the run, so `{Step.Extract.Result.RowCount}` is a number by the time the worker reads it."
+    },
+    {
+      "type": "paragraph",
+      "title": "Why not INotificationPublisher",
+      "text": "`NotificationPublisher` catches and logs every handler exception by design, so routing through it would finish a run as `Success` even when nothing was delivered. That is the failure mode `JobDefinition.AlertWebhookUrl` had. These workers call `ILyoHttpClient`, `IEmailService`, and `ISmsService` directly, so a refused send is a failed run with the reason recorded in the run's results."
+    },
+    {
+      "type": "paragraph",
+      "title": "Why not Lyo.Webhook",
+      "text": "`Lyo.Webhook` is inbound-only — signature verification and endpoint mapping for webhooks you receive. It has no sender, so the webhook worker uses `Lyo.Http.Client`."
+    },
+    {
+      "type": "paragraph",
+      "title": "Retry and failure handling",
+      "text": "The webhook worker retries 408, 429, and 5xx responses plus transport errors `RetryCount` times with a doubling delay. Other 4xx responses fail immediately: a rejected payload is rejected identically every time. A missing required parameter fails the run without attempting a send, since a definition with no `Url` can never succeed no matter how often it is retried."
+    }
+  ],
+  "readmePath": "README.md"
+}

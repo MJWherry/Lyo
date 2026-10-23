@@ -1,8 +1,6 @@
 using System.Net;
 using System.Text;
 using FlareSolverrSharp.Types;
-using Lyo.Http.Client;
-using Lyo.Http.Client.Flared;
 using Lyo.Http.Client.Session;
 
 namespace Lyo.Http.Client.Flared.Tests;
@@ -19,9 +17,10 @@ public sealed class FlaredMappingTests
             Url = "https://example.test/",
             UserAgent = "Mozilla/5.0 Test"
         };
+
         using var response = FlaredHttpMessageHandler.ToResponse(request, solution);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("<html>ok</html>", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Equal("<html>ok</html>", await response.Content.ReadAsStringAsync(TestCt));
         Assert.True(response.Headers.Contains("X-FlareSolverr-UserAgent"));
     }
 
@@ -33,13 +32,19 @@ public sealed class FlaredMappingTests
         try {
             using var handler = new FlaredHttpMessageHandler(new());
             var solved = new FlareSolverrResponse {
-                Solution = new Solution {
+                Solution = new() {
                     UserAgent = "Mozilla/5.0 Pinned",
                     Cookies = [
-                        new FlareSolverrSharp.Types.Cookie { Name = "cf_clearance", Value = "tok", Domain = "example.test", Path = "/" }
+                        new() {
+                            Name = "cf_clearance",
+                            Value = "tok",
+                            Domain = "example.test",
+                            Path = "/"
+                        }
                     ]
                 }
             };
+
             handler.MergeSolution(solved);
             Assert.Equal("Mozilla/5.0 Pinned", session.UserAgent);
             Assert.Contains(session.CookieJar.Export(), c => c.Name == "cf_clearance" && c.Value == "tok");
@@ -52,12 +57,12 @@ public sealed class FlaredMappingTests
     [Fact]
     public async Task StreamBinary_SkipsThroughSolver()
     {
-        var inner = new RecordingHandler(new HttpResponseMessage(HttpStatusCode.OK) { Content = new ByteArrayContent(Encoding.UTF8.GetBytes("bin")) });
+        var inner = new RecordingHandler(new(HttpStatusCode.OK) { Content = new ByteArrayContent(Encoding.UTF8.GetBytes("bin")) });
         using var handler = new FlaredHttpMessageHandler(new()) { InnerHandler = inner };
         using var client = new HttpClient(handler);
         using var request = new HttpRequestMessage(HttpMethod.Get, "https://example.test/file.bin");
         LyoHttpRequestMarkers.SetStreamBinary(request);
-        using var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+        using var response = await client.SendAsync(request, TestCt);
         Assert.Equal(1, inner.Sends);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }

@@ -13,8 +13,7 @@ public sealed class DeniedSelectFieldPolicyTests
     [InlineData("EncryptedValue.Length", true)]
     [InlineData("Name", false)]
     [InlineData("Parameters.Key", false)]
-    public void IsDeniedField_NestedPaths_ReturnsExpected(string field, bool denied)
-        => Assert.Equal(denied, DeniedSelectFieldPolicy.IsDeniedField(field, ["EncryptedValue"]));
+    public void IsDeniedField_NestedPaths_ReturnsExpected(string field, bool denied) => Assert.Equal(denied, DeniedSelectFieldPolicy.IsDeniedField(field, ["EncryptedValue"]));
 
     [Fact]
     public void ValidateProjection_SelectAndComputedTemplates_Rejects()

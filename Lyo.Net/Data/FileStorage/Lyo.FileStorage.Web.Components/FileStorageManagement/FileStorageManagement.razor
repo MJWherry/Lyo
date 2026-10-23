@@ -4,6 +4,13 @@
     <MudStack Spacing="3">
         <FileStorageManagementHeader Title="@Title" Description="@Description"/>
         <FileStorageRegistrationAlerts ApiHealthy="@ApiHealthy" StorageHealthy="@StorageHealthy" ApiHealthDescription="@ApiHealthDescription"/>
+        @if (Stores.Count > 1) {
+            <MudSelect T="string" Value="@SelectedStoreName" ValueChanged="ChangeStoreAsync" Label="Store" Variant="Variant.Outlined">
+                @foreach (var store in Stores) {
+                    <MudSelectItem T="string" Value="@store.Name">@store.Name</MudSelectItem>
+                }
+            </MudSelect>
+        }
         <MudTabs Rounded="true" KeepPanelsAlive="true">
             <MudTabPanel Text="Files">
                 <FileStoreFilesTab/>

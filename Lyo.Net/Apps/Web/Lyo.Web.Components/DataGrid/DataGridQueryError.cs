@@ -17,8 +17,10 @@ internal static class DataGridQueryError
     {
         if (error is not null)
             return error;
+
         if (!isSuccess)
             return LyoProblemDetails.FromCode(Constants.ApiErrorCodes.Unknown, "The query failed.");
+
         return null;
     }
 }

@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using Lyo.Authentication.Models.Records;
 using Lyo.Common.Core.Extensions;
 using Lyo.Exceptions;
+
 namespace Lyo.Authentication.Web.Components.Wasm;
 
 /// <summary>Typed <see cref="HttpClient" /> wrapper for API <c>/auth/handoff/exchange</c>, <c>/auth/refresh</c>, and <c>/auth/logout</c> used by the WASM runtime.</summary>

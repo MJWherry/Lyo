@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Privacy.Abstractions;
 using Lyo.Privacy.Enums;
 using Lyo.Privacy.Json;
@@ -6,6 +7,7 @@ using Lyo.Privacy.Policy;
 namespace Lyo.Privacy.Configuration;
 
 /// <summary>Options bound for DI (section name <c>Privacy</c> in ASP.NET Core).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class PrivacyRedactorOptions
 {
     public const string SectionName = "Privacy";
@@ -15,10 +17,7 @@ public sealed class PrivacyRedactorOptions
     /// <summary>A name from <see cref="PrivacyPresetNames" />.</summary>
     public string DefaultPreset { get; set; } = PrivacyPresetNames.Logging;
 
-    /// <summary>
-    /// Metrics tag <c>policy</c> and <see cref="RedactionResult.PolicyName" /> for text and JSON redactors. Null or whitespace falls back to
-    /// <see cref="DefaultPreset" />.
-    /// </summary>
+    /// <summary>Metrics tag <c>policy</c> and <see cref="RedactionResult.PolicyName" /> for text and JSON redactors. Null or whitespace falls back to <see cref="DefaultPreset" />.</summary>
     public string? PolicyName { get; set; }
 
     /// <summary>When true, JSON string values are piped through <see cref="ITextRedactor" />.</summary>
@@ -50,4 +49,8 @@ public sealed class PrivacyRedactorOptions
             PolicyName = tag
         };
     }
+
+    /// <summary>Preset, policy name, and JSON key count. The hash salt length is shown, not the bytes.</summary>
+    public override string ToString()
+        => $"DefaultPreset={DefaultPreset} PolicyName={PolicyName} JsonSensitiveKeys={JsonSensitiveKeys?.Count} JsonStableHashSaltLength={JsonStableHashSalt?.Length}";
 }

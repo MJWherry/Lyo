@@ -28,6 +28,11 @@
       "title": "Keyed S3FileStorageServiceBuilder registration",
       "language": "csharp",
       "code": "services\n    .AddS3FileStorageServiceKeyed(\"client-files\")\n    .UseFileMetadataStore(\"postgres-filemetadatastore\")\n    .UseEncryptionService(\"two-key-aws\")\n    .ConfigureS3FileStorage(\"S3FileStorageOptions\")\n    .Build(configuration);"
+    },
+    {
+      "title": "Factory and single-store builder",
+      "language": "csharp",
+      "code": "using Lyo.FileStorage;\nusing Lyo.FileStorage.S3;\n\nservices.AddS3FileStorage(s3 => s3.Configure(options => options.BucketName = \"one\"));\n\nservices.AddFileStorageFactory(stores =>\n{\n    stores.AddS3(\"archive\", s3 => s3.Configure(options =>\n    {\n        options.BucketName = \"archive\";\n        options.Region = \"us-east-1\";\n    }));\n});"
     }
   ],
   "sections": [

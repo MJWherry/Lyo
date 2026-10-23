@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Api.FileStorage;
 
 /// <summary>Route prefixes and keyed-DI names used by <see cref="Extensions.BuildFileStorageApi" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class FileStorageApiOptions
 {
     /// <summary>Default MapGroup prefix: <c>FileStorage</c>.</summary>
@@ -36,4 +38,7 @@ public sealed class FileStorageApiOptions
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(ServiceKey);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(FileMetadataRoute);
     }
+
+    /// <summary>Route prefixes and the keyed storage service name.</summary>
+    public override string ToString() => $"Route={Route} ServiceKey={ServiceKey} Metadata={FileMetadataRoute} DirectUpload={DirectUploadPath}";
 }

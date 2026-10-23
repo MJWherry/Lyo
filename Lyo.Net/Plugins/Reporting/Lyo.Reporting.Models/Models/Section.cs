@@ -25,10 +25,7 @@ public sealed class Section
     /// <summary>Section order among sibling subsections.</summary>
     public int Order { get; set; }
 
-    /// <summary>
-    /// When set, the section is kept only if the bound parameters satisfy the condition. Forms: <c>Key</c> (non-empty), <c>!Key</c> (empty),
-    /// <c>Key=value</c>, <c>Key!=value</c>.
-    /// </summary>
+    /// <summary>When set, the section is kept only if the bound parameters satisfy the condition. Forms: <c>Key</c> (non-empty), <c>!Key</c> (empty), <c>Key=value</c>, <c>Key!=value</c>.</summary>
     public string? VisibleWhen { get; set; }
 
     /// <summary>Ordered body controls (card, block, table, grid).</summary>

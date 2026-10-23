@@ -11,13 +11,8 @@ public sealed class FileStoragePathTreeBuilderTests
         var root = FileStoragePathTreeBuilder.CreateRoot();
         var rootFileId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
         var nestedFileId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
-        FileStoragePathTreeRow[] rows = [
-            new(rootFileId, null, "readme.txt", 12, false),
-            new(nestedFileId, "reports/2024", "out.pdf", 99, false)
-        ];
-
-        FileStoragePathTreeBuilder.MergeImmediateChildren(root, rows, rows.Select(r => r.PathPrefix).ToList(), truncated: false);
-
+        FileStoragePathTreeRow[] rows = [new(rootFileId, null, "readme.txt", 12, false), new(nestedFileId, "reports/2024", "out.pdf", 99, false)];
+        FileStoragePathTreeBuilder.MergeImmediateChildren(root, rows, rows.Select(r => r.PathPrefix).ToList(), false);
         Assert.True(root.ChildrenLoaded);
         Assert.Equal(2, root.Children.Count);
         Assert.True(root.Children[0].IsDirectory);
@@ -80,7 +75,7 @@ public sealed class FileStoragePathTreeBuilderTests
     {
         var root = FileStoragePathTreeBuilder.CreateRoot();
         var fileId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
-        FileStoragePathTreeBuilder.MergeImmediateChildren(root, [new(fileId, null, "a.txt", 1, false)], [null], truncated: false);
+        FileStoragePathTreeBuilder.MergeImmediateChildren(root, [new(fileId, null, "a.txt", 1, false)], [null], false);
         List<TreeItemData<FileStoragePathTreeNode>> items = [
             new() {
                 Value = root,
@@ -102,7 +97,7 @@ public sealed class FileStoragePathTreeBuilderTests
     {
         var root = FileStoragePathTreeBuilder.CreateRoot();
         var fileId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
-        FileStoragePathTreeBuilder.MergeImmediateChildren(root, [new(fileId, null, "a.txt", 1, false)], [null], truncated: false);
+        FileStoragePathTreeBuilder.MergeImmediateChildren(root, [new(fileId, null, "a.txt", 1, false)], [null], false);
         List<TreeItemData<FileStoragePathTreeNode>> items = [
             new() {
                 Value = root,

@@ -9,10 +9,7 @@ namespace Lyo.Encryption;
 /// <see cref="IEncryptionService" /> when a service handles both directions.
 /// </summary>
 /// <remarks>
-/// <para>
-/// Supply <c>keyId</c> to load material from <see cref="Lyo.KeyStore.IKeyStore" /> when the service was built with a store; supply <c>key</c> for inline
-/// symmetric keys.
-/// </para>
+/// <para>Supply <c>keyId</c> to load material from <see cref="Lyo.KeyStore.IKeyStore" /> when the service was built with a store; supply <c>key</c> for inline symmetric keys.</para>
 /// </remarks>
 public interface IDecryptor
 {
@@ -28,8 +25,8 @@ public interface IDecryptor
     /// <param name="keyId">KeyStore id. Null means use <paramref name="key" /> as-is.</param>
     /// <param name="key">Optional raw key. When null and <paramref name="keyId" /> is set, the KeyStore supplies the key.</param>
     /// <param name="associatedData">
-    /// Optional AAD that was authenticated with the ciphertext at encrypt time. Must equal the encrypt-time value exactly (null if none was
-    /// used) or authentication fails. Only AEAD implementations accept it.
+    /// Optional AAD that was authenticated with the ciphertext at encrypt time. Must equal the encrypt-time value exactly (null if none was used) or
+    /// authentication fails. Only AEAD implementations accept it.
     /// </param>
     /// <returns>Plaintext</returns>
     /// <exception cref="ArgumentOutsideRangeException">Thrown when encryptedBytes is empty (length &lt; 1) or shorter than the minimum size</exception>
@@ -72,8 +69,8 @@ public interface IDecryptor
     /// <param name="keyId">KeyStore id. Null means use <paramref name="key" /> as-is.</param>
     /// <param name="key">Optional raw key. When null and <paramref name="keyId" /> is set, the KeyStore supplies the key.</param>
     /// <param name="associatedData">
-    /// Optional AAD authenticated with the stream at encrypt time. Must equal the encrypt-time value exactly (null if none was
-    /// used) or chunk authentication fails. Only V2 streams from AEAD implementations support it.
+    /// Optional AAD authenticated with the stream at encrypt time. Must equal the encrypt-time value exactly (null if none was used) or chunk authentication
+    /// fails. Only V2 streams from AEAD implementations support it.
     /// </param>
     /// <param name="ct">Cancellation token</param>
     /// <exception cref="InvalidDataException">Thrown when stream layout is invalid, format version unsupported, chunk length illegal, or data corrupted</exception>

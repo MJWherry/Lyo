@@ -1,12 +1,14 @@
 using System.Linq.Expressions;
 using Lyo.Common.Core;
-using Lyo.Web.Components.Form;
 using Microsoft.AspNetCore.Components;
 
 namespace Lyo.Web.Components.DataGrid;
 
 public partial class LyoPropertyColumn<T, TProperty>
 {
+    private bool _hidden;
+    private bool _hiddenSeeded;
+
     [CascadingParameter(Name = "LyoDataGridQuickSearchText")]
     public string? QuickSearchText { get; set; }
 
@@ -46,14 +48,13 @@ public partial class LyoPropertyColumn<T, TProperty>
     [Parameter]
     public Align Align { get; set; } = Align.Inherit;
 
-    /// <summary>
-    /// Makes this column the heading of each card in the card layout instead of one more labelled field. Leave false to let the grid pick the most name-like column.
-    /// </summary>
+    /// <summary>Makes this column the heading of each card in the card layout instead of one more labelled field. Leave false to let the grid pick the most name-like column.</summary>
     [Parameter]
     public bool CardTitle { get; set; }
 
-    private bool _hidden;
-    private bool _hiddenSeeded;
+    private string EffectiveHeaderStyle => MergeAlignStyle(null, Align);
+
+    private string EffectiveCellStyle => MergeAlignStyle(null, Align);
 
     protected override void OnParametersSet()
     {
@@ -69,10 +70,6 @@ public partial class LyoPropertyColumn<T, TProperty>
     private string DisplayText(object? item) => item is T typed && Property is not null ? Property.Compile().Invoke(typed)?.ToString() ?? string.Empty : string.Empty;
 
     private static string? PropertyPath(LambdaExpression? expr) => expr.TryGetMemberPath();
-
-    private string EffectiveHeaderStyle => MergeAlignStyle(null, Align);
-
-    private string EffectiveCellStyle => MergeAlignStyle(null, Align);
 
     private static string MergeAlignStyle(string? style, Align align)
         => align switch {

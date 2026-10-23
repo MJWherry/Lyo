@@ -4,7 +4,7 @@
   "name": "Lyo.Comic.Api",
   "area": "Apps",
   "tagline": "HTTP mapping for the Lyo Comic API (`BuildComicGroup`).",
-  "description": "Maps CRUD on `ComicDbContext` entities (series, alternate titles, volumes, chapters, pages, characters) via `Lyo.Api` `CreateBuilder` with entity-as-both DTOs. Register the store with `AddComicApiFromConfiguration` (or `AddPostgresComicStore` plus `AddLyoCrudServices<ComicDbContext>`), then call `BuildComicGroup`. Standalone host: `Lyo.Comic.Api.Host`.",
+  "description": "Maps CRUD on `ComicDbContext` entities (series, alternate titles, volumes, chapters, pages, characters) via `Lyo.Api` `CreateBuilder` with entity-as-both DTOs. Register the store with `AddComicApiFromConfiguration` (or `AddPostgresComicStore` plus `AddLyoCrudServices<ComicDbContext>`), then call `BuildComicGroup`. Example host: `Lyo.Comic.Api.Example`.",
   "features": [
     "`BuildComicGroup` maps Comic CRUD for series, alternate titles, volumes, chapters, pages, and characters.",
     "`AddComicApiFromConfiguration` registers the Postgres store, CRUD services, and an identity `ILyoMapper` for entity-as-both mapping."
@@ -70,14 +70,6 @@
     },
     {
       "name": "Lyo.Comic",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Common.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -165,6 +157,14 @@
       ]
     },
     {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [
@@ -222,6 +222,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Sql",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -481,6 +489,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

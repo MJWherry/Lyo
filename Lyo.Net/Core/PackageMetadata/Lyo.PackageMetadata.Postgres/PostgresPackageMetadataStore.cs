@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.PackageMetadata.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
@@ -75,16 +76,30 @@ public sealed class PostgresPackageMetadataStore : IPackageMetadataStore
         if (registrations.Count == 0)
             return;
 
+        var folded = FoldRegistrations(registrations);
         await using var db = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         await using var tx = await db.Database.BeginTransactionAsync(ct).ConfigureAwait(false);
         var utc = DateTime.UtcNow;
-        foreach (var reg in registrations) {
+        var ids = new Guid[folded.Count];
+        var claimed = new HashSet<string>(StringComparer.Ordinal);
+        for (var i = 0; i < folded.Count; i++) {
+            ids[i] = folded[i].Package.Id;
+            foreach (var prefix in folded[i].Prefixes)
+                claimed.Add(prefix);
+        }
+
+        var existing = await db.Packages.Include(p => p.StackPrefixes).Where(p => ids.Contains(p.Id)).ToListAsync(ct).ConfigureAwait(false);
+        var claimedList = claimed.ToList();
+        var externalPrefixes = claimedList.Count == 0
+            ? []
+            : await db.StackPrefixes.Where(p => claimedList.Contains(p.NormalizedPrefix) && !ids.Contains(p.PackageMetadataId)).ToListAsync(ct).ConfigureAwait(false);
+
+        var byId = existing.ToDictionary(e => e.Id);
+        var toInsert = new List<PackageStackPrefixEntity>();
+        foreach (var item in folded) {
             ct.ThrowIfCancellationRequested();
-            ArgumentHelpers.ThrowIfNull(reg);
-            var pkg = reg.Package;
-            ArgumentHelpers.ThrowIfNull(pkg);
-            var entity = await db.Packages.Include(p => p.StackPrefixes).FirstOrDefaultAsync(p => p.Id == pkg.Id, ct).ConfigureAwait(false);
-            if (entity is null) {
+            var pkg = item.Package;
+            if (!byId.TryGetValue(pkg.Id, out var entity)) {
                 var created = pkg.CreatedAt ?? utc;
                 var updated = pkg.UpdatedAt ?? utc;
                 entity = new() { CreatedAt = created, UpdatedAt = updated };
@@ -92,27 +107,44 @@ public sealed class PostgresPackageMetadataStore : IPackageMetadataStore
                 entity.CreatedAt = created;
                 entity.UpdatedAt = updated;
                 db.Packages.Add(entity);
+                byId[entity.Id] = entity;
             }
             else {
                 PackageMetadataMapping.CopyContentFromModel(pkg, entity);
                 entity.UpdatedAt = utc;
-                db.StackPrefixes.RemoveRange(entity.StackPrefixes);
-                entity.StackPrefixes.Clear();
             }
 
-            foreach (var raw in reg.NamespacePrefixes) {
-                if (string.IsNullOrWhiteSpace(raw))
+            var desired = new HashSet<string>(item.Prefixes, StringComparer.Ordinal);
+            var remove = entity.StackPrefixes.Where(p => !desired.Contains(p.NormalizedPrefix)).ToList();
+            if (remove.Count > 0) {
+                db.StackPrefixes.RemoveRange(remove);
+                foreach (var prefix in remove)
+                    entity.StackPrefixes.Remove(prefix);
+            }
+
+            var have = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var prefix in entity.StackPrefixes)
+                have.Add(prefix.NormalizedPrefix);
+
+            foreach (var prefix in item.Prefixes) {
+                if (!have.Add(prefix))
                     continue;
 
-                var p = raw.Trim();
-                if (!p.EndsWith(".", StringComparison.Ordinal))
-                    p += ".";
-
-                entity.StackPrefixes.Add(new() { Id = Guid.NewGuid(), PackageMetadataId = entity.Id, NormalizedPrefix = p });
+                toInsert.Add(new() { Id = LyoGuid.CreateV7(), PackageMetadataId = entity.Id, NormalizedPrefix = prefix });
             }
         }
 
-        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        if (externalPrefixes.Count > 0)
+            db.StackPrefixes.RemoveRange(externalPrefixes);
+
+        if (db.ChangeTracker.HasChanges())
+            await db.SaveChangesAsync(ct).ConfigureAwait(false);
+
+        if (toInsert.Count > 0) {
+            db.StackPrefixes.AddRange(toInsert);
+            await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        }
+
         await tx.CommitAsync(ct).ConfigureAwait(false);
         InvalidateCatalogSnapshot();
     }
@@ -120,8 +152,8 @@ public sealed class PostgresPackageMetadataStore : IPackageMetadataStore
     /// <summary>Clears the in-process ordered-prefix snapshot so the next bulk lookup reloads from PostgreSQL.</summary>
     /// <remarks>
     /// Call this when another process or tool mutates <c>package_metadata</c> tables without going through <see cref="RegisterManyAsync" />. When
-    /// <see cref="PostgresPackageMetadataOptions.PrefixCatalogCaching" /> is <see cref="PostgresPrefixCatalogCachingMode.Disabled" />, there is no snapshot to drop; the method only
-    /// bumps an internal generation counter (harmless for lookups).
+    /// <see cref="PostgresPackageMetadataOptions.PrefixCatalogCaching" /> is <see cref="PostgresPrefixCatalogCachingMode.Disabled" />, there is no snapshot to drop; the method only bumps
+    /// an internal generation counter (harmless for lookups).
     /// </remarks>
     public void ClearPrefixCatalogCache() => InvalidateCatalogSnapshot();
 
@@ -134,24 +166,64 @@ public sealed class PostgresPackageMetadataStore : IPackageMetadataStore
 
     private async Task<List<(string Prefix, PackageMetadata Metadata)>> ResolveOrderedModelsWithCatalogCacheAsync(CancellationToken ct)
     {
-        lock (_catalogLock) {
-            if (_catalogSnapshot is { MutationVersion: var v } snap && v == _mutationVersion) {
-                Interlocked.Increment(ref _prefixCatalogHitCount);
-                return snap.Ordered;
+        while (true) {
+            long version;
+            lock (_catalogLock) {
+                if (_catalogSnapshot is { MutationVersion: var v } snap && v == _mutationVersion) {
+                    Interlocked.Increment(ref _prefixCatalogHitCount);
+                    return snap.Ordered;
+                }
+
+                version = _mutationVersion;
+            }
+
+            Interlocked.Increment(ref _prefixCatalogLoadCount);
+            await using var db = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+            var freshOrdered = await QueryAndMaterializeOrderedModelsAsync(db, ct).ConfigureAwait(false);
+            lock (_catalogLock) {
+                if (_mutationVersion != version)
+                    continue;
+
+                if (_catalogSnapshot is not null && _catalogSnapshot.MutationVersion == _mutationVersion)
+                    return _catalogSnapshot.Ordered;
+
+                var immutableCopy = freshOrdered.ConvertAll(static x => x);
+                _catalogSnapshot = new(version, immutableCopy);
+                return immutableCopy;
             }
         }
+    }
 
-        Interlocked.Increment(ref _prefixCatalogLoadCount);
-        await using var db = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var freshOrdered = await QueryAndMaterializeOrderedModelsAsync(db, ct).ConfigureAwait(false);
-        lock (_catalogLock) {
-            if (_catalogSnapshot is not null && _catalogSnapshot.MutationVersion == _mutationVersion)
-                return _catalogSnapshot.Ordered;
+    private static List<FoldedRegistration> FoldRegistrations(IReadOnlyList<PackageMetadataRegistration> registrations)
+    {
+        var order = new List<Guid>();
+        var map = new Dictionary<Guid, FoldedRegistration>();
+        foreach (var reg in registrations) {
+            ArgumentHelpers.ThrowIfNull(reg);
+            var package = reg.Package;
+            ArgumentHelpers.ThrowIfNull(package);
+            var prefixes = PackageMetadataPrefixMatch.NormalizePrefixes(reg.NamespacePrefixes);
+            var claimed = new HashSet<string>(prefixes, StringComparer.Ordinal);
+            foreach (var existing in map.Values)
+                existing.Prefixes.RemoveAll(claimed.Contains);
 
-            var immutableCopy = freshOrdered.ConvertAll(static x => x);
-            _catalogSnapshot = new(_mutationVersion, immutableCopy);
-            return immutableCopy;
+            if (!map.TryGetValue(package.Id, out var folded)) {
+                folded = new(package);
+                map.Add(package.Id, folded);
+                order.Add(package.Id);
+            }
+            else
+                folded.Package = package;
+
+            folded.Prefixes.Clear();
+            folded.Prefixes.AddRange(prefixes);
         }
+
+        var foldedList = new List<FoldedRegistration>(order.Count);
+        foreach (var id in order)
+            foldedList.Add(map[id]);
+
+        return foldedList;
     }
 
     private static async Task<List<(string Prefix, PackageMetadata Metadata)>> QueryAndMaterializeOrderedModelsAsync(PackageMetadataDbContext db, CancellationToken ct)
@@ -174,6 +246,13 @@ public sealed class PostgresPackageMetadataStore : IPackageMetadataStore
             _mutationVersion++;
             _catalogSnapshot = null;
         }
+    }
+
+    private sealed class FoldedRegistration(PackageMetadata package)
+    {
+        public PackageMetadata Package { get; set; } = package;
+
+        public List<string> Prefixes { get; } = [];
     }
 
     private sealed record PrefixCatalogSnapshot(long MutationVersion, List<(string Prefix, PackageMetadata Metadata)> Ordered);

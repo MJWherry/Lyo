@@ -1,5 +1,6 @@
 using System.Text;
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Testing;
 
 namespace Lyo.TextEncoding.Tests;
@@ -72,7 +73,7 @@ public sealed class BinaryEncodingTests
             var encoded = BinaryEncoding.Encode(kind, data, lineLength: kind == BinaryEncodingKind.Base64 ? 76 : 0);
             using var reader = new StringReader(encoded);
             await using var ms = new MemoryStream();
-            await BinaryEncoding.DecodeAsync(kind, reader, ms, TestContext.Current.CancellationToken);
+            await BinaryEncoding.DecodeAsync(kind, reader, ms, TestCt);
             Assert.Equal(data, ms.ToArray());
         }
     }
@@ -81,16 +82,16 @@ public sealed class BinaryEncodingTests
     public async Task EncodeDecode_File_RoundTrip()
     {
         var data = TestData.Create(128);
-        var dir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+        var dir = Path.Combine(Path.GetTempPath(), LyoGuid.CreateV7().ToString("N"));
         Directory.CreateDirectory(dir);
         try {
             var bin = Path.Combine(dir, "in.bin");
             var enc = Path.Combine(dir, "out.txt");
             var outBin = Path.Combine(dir, "out.bin");
-            await File.WriteAllBytesAsync(bin, data, TestContext.Current.CancellationToken);
-            await BinaryEncoding.EncodeFileAsync(BinaryEncodingKind.Base64, bin, enc, ct: TestContext.Current.CancellationToken);
-            await BinaryEncoding.DecodeFileAsync(BinaryEncodingKind.Base64, enc, outBin, TestContext.Current.CancellationToken);
-            Assert.Equal(data, await File.ReadAllBytesAsync(outBin, TestContext.Current.CancellationToken));
+            await File.WriteAllBytesAsync(bin, data, TestCt);
+            await BinaryEncoding.EncodeFileAsync(BinaryEncodingKind.Base64, bin, enc, ct: TestCt);
+            await BinaryEncoding.DecodeFileAsync(BinaryEncodingKind.Base64, enc, outBin, TestCt);
+            Assert.Equal(data, await File.ReadAllBytesAsync(outBin, TestCt));
         }
         finally {
             Directory.Delete(dir, true);

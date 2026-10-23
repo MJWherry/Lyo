@@ -10,8 +10,8 @@ namespace Lyo.FileMetadataStore.Postgres;
 
 /// <summary>
 /// Fluent setup for a keyed PostgreSQL file metadata store. <see cref="Build" /> also registers <see cref="PostgresMultipartUploadSessionStore" /> as
-/// <see cref="IMultipartUploadSessionStore" /> when none is already registered. Bind from a section via <c>ConfigurePostgresFileStore("PostgresFileStore")</c>, or mutate
-/// options in <c>ConfigurePostgresFileStore(options =&gt; …)</c>, then call <c>Build()</c>.
+/// <see cref="IMultipartUploadSessionStore" /> when none is already registered. Bind from a section via <c>ConfigurePostgresFileStore("PostgresFileStore")</c>, or mutate options in
+/// <c>ConfigurePostgresFileStore(options =&gt; …)</c>, then call <c>Build()</c>.
 /// </summary>
 public sealed class PostgresFileMetadataStoreBuilder
 {
@@ -60,7 +60,7 @@ public sealed class PostgresFileMetadataStoreBuilder
             }
             else {
                 using var tempProvider = _services.BuildServiceProvider();
-                options = new PostgresFileMetadataStoreOptions();
+                options = new();
                 tempProvider.GetRequiredService<IConfiguration>().GetSection(configSectionName).Bind(options);
             }
 
@@ -83,7 +83,7 @@ public sealed class PostgresFileMetadataStoreBuilder
                 else {
                     // The builder has no service provider of its own, so it stands one up to reach IConfiguration.
                     using var tempProvider = _services.BuildServiceProvider();
-                    options = new PostgresFileMetadataStoreOptions();
+                    options = new();
                     tempProvider.GetRequiredService<IConfiguration>().GetSection(configSectionName).Bind(options);
                 }
 

@@ -13,7 +13,7 @@ public class InvalidPropertyNameException : BadRequestException
 
     /// <summary>Creates the exception for one or more missing property names.</summary>
     public InvalidPropertyNameException(string errorCode, IReadOnlyList<string> propertyNames, Exception? innerException = null)
-        : this(errorCode, propertyNames, targetType: null, innerException) { }
+        : this(errorCode, propertyNames, null, innerException) { }
 
     /// <summary>Creates the exception and names the target type in the message.</summary>
     public InvalidPropertyNameException(string errorCode, IReadOnlyList<string> propertyNames, Type? targetType, Exception? innerException = null)

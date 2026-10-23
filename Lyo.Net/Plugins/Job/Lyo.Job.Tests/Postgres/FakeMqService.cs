@@ -7,14 +7,17 @@ namespace Lyo.Job.Tests.Postgres;
 /// <summary>Fake MQ service for integration tests. always connected, all operations succeed.</summary>
 public sealed class FakeMqService : IMqService
 {
-    private bool _connected = true;
     private readonly Dictionary<string, List<QueuePeekMessage>> _peeked = new(StringComparer.Ordinal);
+    private bool _connected = true;
 
     public List<(string Name, string Type, bool Durable, bool AutoDelete)> CreatedExchanges { get; } = [];
 
     public List<(string Name, bool Durable, bool Exclusive, bool AutoDelete)> CreatedQueues { get; } = [];
 
     public List<(string QueueName, string ExchangeName, string RoutingKey)> Bindings { get; } = [];
+
+    /// <summary>Handlers registered per queue, so a test can deliver a message the way the broker would.</summary>
+    public Dictionary<string, Func<byte[], Task<bool>>> Handlers { get; } = new(StringComparer.Ordinal);
 
     public bool IsConnected() => _connected;
 
@@ -76,19 +79,6 @@ public sealed class FakeMqService : IMqService
         return Task.FromResult<IReadOnlyList<QueuePeekMessage>>(messages.Take(Math.Max(1, maxMessages)).ToArray());
     }
 
-    /// <summary>Seeds peek results as enveloped run ids for the given queue (and optionally its <c>.wait</c> companion).</summary>
-    public void SeedPeek(string queueName, params Guid[] runIds)
-    {
-        _peeked[queueName] = runIds.Select(id => {
-                var envelope = new QueueMessageEnvelope<Guid>(id, 0, id.ToString("D"), DateTime.UtcNow);
-                return new QueuePeekMessage(JsonSerializer.Serialize(envelope));
-            })
-            .ToList();
-    }
-
-    /// <summary>Handlers registered per queue, so a test can deliver a message the way the broker would.</summary>
-    public Dictionary<string, Func<byte[], Task<bool>>> Handlers { get; } = new(StringComparer.Ordinal);
-
     public Task<bool> SubscribeToQueue(string queueName, Func<byte[], Task<bool>> onMessage, CancellationToken ct = default)
     {
         lock (Handlers)
@@ -96,6 +86,19 @@ public sealed class FakeMqService : IMqService
 
         return Task.FromResult(true);
     }
+
+    public string HealthCheckName => "fake-mq";
+
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
+        => Task.FromResult(HealthResult.Healthy(TimeSpan.Zero, null, new Dictionary<string, object?> { ["fake"] = true }));
+
+    /// <summary>Seeds peek results as enveloped run ids for the given queue (and optionally its <c>.wait</c> companion).</summary>
+    public void SeedPeek(string queueName, params Guid[] runIds)
+        => _peeked[queueName] = runIds.Select(id => {
+                var envelope = new QueueMessageEnvelope<Guid>(id, 0, id.ToString("D"), DateTime.UtcNow);
+                return new QueuePeekMessage(JsonSerializer.Serialize(envelope));
+            })
+            .ToList();
 
     /// <summary>The handler for <paramref name="queueName" />, or the only registered handler when no name is given.</summary>
     public Func<byte[], Task<bool>>? GetHandler(string? queueName = null)
@@ -107,11 +110,6 @@ public sealed class FakeMqService : IMqService
             return Handlers.Count == 1 ? Handlers.Values.First() : null;
         }
     }
-
-    public string HealthCheckName => "fake-mq";
-
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => Task.FromResult(HealthResult.Healthy(TimeSpan.Zero, null, new Dictionary<string, object?> { ["fake"] = true }));
 
     public void SetConnected(bool value) => _connected = value;
 }

@@ -1,4 +1,3 @@
-using Lyo.Comment.Postgres;
 using Lyo.Comment.Postgres.Database;
 using Lyo.Testing.Containers;
 using Microsoft.Extensions.DependencyInjection;

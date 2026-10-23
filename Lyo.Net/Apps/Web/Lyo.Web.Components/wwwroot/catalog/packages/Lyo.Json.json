@@ -1,0 +1,106 @@
+{
+  "$schema": "../../../../docs/catalog/schema/package.schema.json",
+  "id": "Lyo.Json",
+  "name": "Lyo.Json",
+  "area": "Data",
+  "tagline": "The Lyo HTTP JSON contract and typed JSON parse and export.",
+  "description": "The JSON contract Lyo APIs, clients, and message-queue envelopes serialize against lives in Lyo.Json: camelCase properties, case-insensitive reads, nulls omitted on write, camelCase string enums, and ReferenceHandler.IgnoreCycles so EF-shaped graphs serialize.\n\nJsonService.Default is that contract. Pass a JsonOptions instance or new JsonService(o => { ... }) to change naming, enums, number handling, write omission, encoding, and comments. Pass a JsonSerializerOptions instance and it is copied and used as-is. One instance is safe for concurrent parse and export. Options are fixed after construction.\n\nByte methods take an optional Encoding. A missing argument uses the service encoding (UTF-8 without a BOM). A character span is already decoded. File and stream reads detect a BOM. Async twins and NDJSON streaming exist on net10.0.\n\nConverters under JsonConverters/ stay unregistered until UseStringScalarConverters is set. Add them for one integration through LyoJsonSerializerOptionsBuilder. Namespaces match the package: options are Lyo.Json.LyoJsonSerializerOptions and converters live in Lyo.Json.JsonConverters.",
+  "features": [
+    "JsonService.Default, new JsonService(JsonOptions), new JsonService(configure), or new JsonService(JsonSerializerOptions) for camelCase, snake_case, kebab-case, or PascalCase, string or numeric enums, and write omission of nulls, defaults, empty strings, and empty collections.",
+    "`Order` is Defined (declaration order), Alphabetical, or Specified. Specified uses `[MemberOrder]` and `OrderNames`. Defined does not sort.",
+    "`ExportFormattedToJsonString` writes formatter fields in dictionary order. `ExportColumnsToJsonString` writes a header-to-property map in that same order. `Order` does not reorder either list.",
+    "Optional Encoding on ParseBytes, Parse(ReadOnlySpan<byte>), ExportToJsonBytes, and TryExport. UTF-8 uses the System.Text.Json span APIs.",
+    "NDJSON: ParseNdjsonFile, ParseNdjsonStream, ParseNdjsonString, and ParseNdjsonBytes, plus net10 IAsyncEnumerable for file and stream. Export writes one compact value per line.",
+    "LyoJsonSerializerOptions.Create, Create(configure), and ApplyTo for the HTTP contract. LyoJsonSerializerOptionsBuilder adds converters.",
+    "A top-level JSON array binds List<T> or T[].",
+    "JsonNodeGraph converts a JsonNode to dictionaries, lists, and scalars so YAML, XML, and TOML share this contract.",
+    "ObjectJsonConverter and the string scalar converters stay opt-in."
+  ],
+  "examples": [
+    {
+      "title": "Parse and export a person",
+      "language": "csharp",
+      "code": "using Lyo.Json;\n\nvar person = JsonService.Default.ParseString<Person>(\"\"\"{\"givenName\":\"Ada\"}\"\"\");\nvar snake = new JsonService(o => o.Naming = DocumentNaming.SnakeCase);\nstring text = snake.ExportToJsonString(person);"
+    },
+    {
+      "title": "Serialize against the shared contract",
+      "language": "csharp",
+      "code": "using Lyo.Json;\n\nvar options = LyoJsonSerializerOptions.Create();\nvar json = JsonSerializer.Serialize(dto, options);\nvar back = JsonSerializer.Deserialize<MyDto>(json, options);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "ASP.NET export",
+      "text": "When an ASP.NET JsonOptions instance is registered, construct new JsonService(serializerOptions: aspNetSerializerOptions). The service copies those options and does not apply JsonOptions on top, and it does not mutate the host instance. ConfigureHttpJsonOptions can copy the same defaults with LyoJsonSerializerOptions.ApplyTo."
+    },
+    {
+      "type": "paragraph",
+      "title": "Why record converters live in metadata",
+      "text": "SocialPlatformInfoJsonConverter and LanguageCodeInfoJsonConverter resolve a code to a registry record, so they stay in Lyo.Common.Metadata. A project that only wants the scalar converters does not acquire the catalogs."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Json/Lyo.Json/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

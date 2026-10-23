@@ -1,14 +1,7 @@
-using System.Net.Http.Json;
 using System.Text;
 using Lyo.Barcode.Models;
 using Lyo.Common.Metadata.Records;
-using Lyo.Web.Components;
 using Lyo.Web.Primitives;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 using MudBlazor;
 using MudBlazor.Utilities;
 
@@ -16,26 +9,26 @@ namespace Lyo.Barcode.Web.Components;
 
 public partial class BarcodeWorkbench
 {
-    private bool _busy;
     private int _barHeight = 80;
-    private string _data = "HELLO-128";
+    private MudColor _borderColor = new("#000000");
+    private int _borderWidthPx = 4;
+    private bool _busy;
     private MudColor _darkColor = new("#000000");
+    private string _data = "HELLO-128";
     private BarcodeFormat _format = BarcodeFormat.Bmp;
     private int _heightPx;
+    private MudColor _humanReadableColor = new("#000000");
+    private int _humanReadableFontPx = 14;
+    private int _humanReadableMarginBottomPx = 4;
+    private int _humanReadableMarginTopPx = 6;
+    private string _humanReadableOverride = string.Empty;
     private byte[]? _imageBytes;
     private string? _imageSource;
     private MudColor _lightColor = new("#FFFFFF");
-    private bool _showBorder;
-    private int _borderWidthPx = 4;
-    private MudColor _borderColor = new("#000000");
     private int _moduleWidth = 2;
     private int _quietZone = 10;
+    private bool _showBorder;
     private bool _showHumanReadable;
-    private string _humanReadableOverride = string.Empty;
-    private int _humanReadableFontPx = 14;
-    private int _humanReadableMarginTopPx = 6;
-    private int _humanReadableMarginBottomPx = 4;
-    private MudColor _humanReadableColor = new("#000000");
     private string _svgMarkup = string.Empty;
     private int _widthPx;
 
@@ -69,7 +62,12 @@ public partial class BarcodeWorkbench
                 HumanReadableFontSizePixels = _humanReadableFontPx,
                 HumanReadableMarginTopPixels = _humanReadableMarginTopPx,
                 HumanReadableMarginBottomPixels = _humanReadableMarginBottomPx,
-                HumanReadableColorHex = !_showHumanReadable ? null : string.Equals(_humanReadableColor.ToString(MudColorOutputFormats.Hex), _darkColor.ToString(MudColorOutputFormats.Hex), StringComparison.OrdinalIgnoreCase) ? null : _humanReadableColor.ToString(MudColorOutputFormats.Hex)
+                HumanReadableColorHex = !_showHumanReadable ? null :
+                    string.Equals(_humanReadableColor.ToString(MudColorOutputFormats.Hex), _darkColor.ToString(MudColorOutputFormats.Hex), StringComparison.OrdinalIgnoreCase)
+                        ?
+                        null
+                        :
+                        _humanReadableColor.ToString(MudColorOutputFormats.Hex)
             };
 
             var result = await BarcodeService.GenerateAsync(_data, BarcodeSymbology.Code128, options);

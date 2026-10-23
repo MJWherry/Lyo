@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Health;
 using Lyo.Metrics;
@@ -72,7 +73,7 @@ public sealed class LocalCacheService : ICacheService
     {
         var sw = Stopwatch.StartNew();
         try {
-            var testKey = $"lyo-health-{Guid.NewGuid():N}";
+            var testKey = $"lyo-health-{LyoGuid.CreateV7():N}";
             var testValue = "ok";
             Set(testKey, testValue, ["lyo-health-check"]);
             var fromCache = await GetOrSetAsync(testKey, _ => Task.FromResult<string?>(testValue), TimeSpan.FromSeconds(5), ["lyo-health-check"], ct).ConfigureAwait(false);
@@ -154,9 +155,7 @@ public sealed class LocalCacheService : ICacheService
 
     public Task InvalidateQueryCacheAsync<TDb>()
         where TDb : class
-    {
-        return InvalidateCacheItemByTag(Constants.Tags.EntityType(typeof(TDb)));
-    }
+        => InvalidateCacheItemByTag(Constants.Tags.EntityType(typeof(TDb)));
 
     public Task InvalidateCacheByTypeAsync(string fullTypeName)
     {
@@ -525,11 +524,7 @@ public sealed class LocalCacheService : ICacheService
         }
     }
 
-    public TValue? GetOrSet<TValue>(
-        string key,
-        Func<CancellationToken, TValue?> factory,
-        Action<ICacheEntryOptions> setupAction,
-        IEnumerable<string>? extraTags = null)
+    public TValue? GetOrSet<TValue>(string key, Func<CancellationToken, TValue?> factory, Action<ICacheEntryOptions> setupAction, IEnumerable<string>? extraTags = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         ArgumentHelpers.ThrowIfNull(setupAction);
@@ -662,8 +657,7 @@ public sealed class LocalCacheService : ICacheService
     }
 
     /// <inheritdoc />
-    public void Set<T>(string key, T obj, TimeSpan duration, IEnumerable<string>? tags = null)
-        => Set(key, obj, o => o.SetAbsoluteExpiration(duration), tags);
+    public void Set<T>(string key, T obj, TimeSpan duration, IEnumerable<string>? tags = null) => Set(key, obj, o => o.SetAbsoluteExpiration(duration), tags);
 
     /// <inheritdoc />
     public void Set<T>(string key, T obj, Action<ICacheEntryOptions> setupAction, IEnumerable<string>? tags = null)
@@ -772,7 +766,7 @@ public sealed class LocalCacheService : ICacheService
         Func<CancellationToken, Task<(byte[]? plaintext, string[]? tags)>> factory,
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
-        => await GetOrSetPayloadAsync(key, factory, (TimeSpan?)null, extraTags, token).ConfigureAwait(false);
+        => await GetOrSetPayloadAsync(key, factory, null, extraTags, token).ConfigureAwait(false);
 
     /// <inheritdoc />
     public async ValueTask<CacheEntryEnvelope?> GetOrSetPayloadAsync(
@@ -832,7 +826,7 @@ public sealed class LocalCacheService : ICacheService
         Func<CancellationToken, Task<TValue?>> factory,
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
-        => GetOrSetPayloadAsync(key, factory, (TimeSpan?)null, extraTags, token);
+        => GetOrSetPayloadAsync(key, factory, null, extraTags, token);
 
     /// <inheritdoc />
     public ValueTask<TValue?> GetOrSetPayloadAsync<TValue>(
@@ -853,7 +847,7 @@ public sealed class LocalCacheService : ICacheService
         Func<CancellationToken, Task<(TValue? value, string[]? tags)>> factory,
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
-        => GetOrSetPayloadAsync(key, factory, (TimeSpan?)null, extraTags, token);
+        => GetOrSetPayloadAsync(key, factory, null, extraTags, token);
 
     /// <inheritdoc />
     public async ValueTask<TValue?> GetOrSetPayloadAsync<TValue>(
@@ -1026,11 +1020,7 @@ public sealed class LocalCacheService : ICacheService
     }
 
     /// <inheritdoc />
-    public CacheEntryEnvelope? GetOrSetPayload(
-        string key,
-        Func<CancellationToken, byte[]?> factory,
-        Action<ICacheEntryOptions> setupAction,
-        IEnumerable<string>? extraTags = null)
+    public CacheEntryEnvelope? GetOrSetPayload(string key, Func<CancellationToken, byte[]?> factory, Action<ICacheEntryOptions> setupAction, IEnumerable<string>? extraTags = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         ArgumentHelpers.ThrowIfNull(setupAction);
@@ -1233,11 +1223,11 @@ public sealed class LocalCacheService : ICacheService
             value is byte[] stored
                 ? CacheItem.FromStoredBytes(normalizedKey, stored, expires: expires, tags: trackedTags)
                 : CacheItem.Key(normalizedKey, encrypted: false, compressed: false, expires: expires, tags: trackedTags));
+
         TagIndexAdd(normalizedKey, tagList);
     }
 
-    private void UpsertItem(CacheItem item)
-        => _items.AddOrUpdate(item, item, (_, existing) => item with { Created = existing.Created });
+    private void UpsertItem(CacheItem item) => _items.AddOrUpdate(item, item, (_, existing) => item with { Created = existing.Created });
 
     /// <summary>
     /// Presence, not value nullness, decides a hit. A factory that legitimately produced <c>null</c> — a lookup of an id that does not exist — stores an entry whose value is
@@ -1263,7 +1253,7 @@ public sealed class LocalCacheService : ICacheService
         UpsertItem(existing with { Expires = DateTime.UtcNow.Add(policy.Duration) });
     }
 
-    private void ForgetTtl(string normalizedKey) => _ttls.TryRemove(normalizedKey, out _);
+    private void ForgetTtl(string normalizedKey) => _ttls.TryRemove(normalizedKey, out var _);
 
     /// <summary>Associates a cache key with normalized tags in the bidirectional index (O(1) per tag).</summary>
     private void TagIndexAdd(string normalizedKey, string[] normalizedTags)

@@ -11,10 +11,12 @@ using Lyo.Api.Models.Error;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Export;
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Csv;
 using Lyo.Csv.Models;
 using Lyo.Formatter;
+using Lyo.Json;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Testing;
 using Lyo.Xlsx;
@@ -44,21 +46,19 @@ public sealed class ExportServiceTests
         _csvService = new CsvService(loggerFactory.CreateLogger<CsvService>());
         _xlsxService = new XlsxService(loggerFactory.CreateLogger<XlsxService>());
         _formatterService = new FormatterService();
-        _formatHandlers = [
-            new JsonExportFormatHandler(new ServiceCollection().BuildServiceProvider()), new CsvExportFormatHandler(_csvService), new XlsxExportFormatHandler(_xlsxService)
-        ];
+        _formatHandlers = [new JsonExportFormatHandler(new JsonService()), new CsvExportFormatHandler(_csvService), new XlsxExportFormatHandler(_xlsxService)];
     }
 
     [Fact]
     public async Task ExportAsync_Csv_WithoutColumns_ExportsAllProperties()
     {
-        var items = new[] { new TestExportItem(Guid.NewGuid(), "Alice", "Smith", new(2024, 1, 15)), new TestExportItem(Guid.NewGuid(), "Bob", "Jones", new(2024, 2, 20)) };
+        var items = new[] { new TestExportItem(LyoGuid.CreateV7(), "Alice", "Smith", new(2024, 1, 15)), new TestExportItem(LyoGuid.CreateV7(), "Bob", "Jones", new(2024, 2, 20)) };
         var queryService = new FakeQueryService<TestDbContext, TestExportItem>(items);
         var exportService = new ExportService<TestDbContext>(queryService, _formatHandlers, new(), _formatterService, _logger);
         var request = new ExportRequest { Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Csv, Columns = null };
-        var (stream, contentType, fileName) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken);
+        var (stream, contentType, fileName) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestCt);
         await using var _ = stream;
-        var content = await new StreamReader(stream).ReadToEndAsync(TestContext.Current.CancellationToken);
+        var content = await new StreamReader(stream).ReadToEndAsync(TestCt);
         Assert.Equal(FileTypeInfo.Csv.MimeType, contentType);
         Assert.Equal("export.csv", fileName);
         Assert.Contains("Id", content);
@@ -71,13 +71,13 @@ public sealed class ExportServiceTests
     [Fact]
     public async Task ExportAsync_Csv_WithPropertyColumns_ExportsSelectedColumns()
     {
-        var items = new[] { new TestExportItem(Guid.NewGuid(), "Alice", "Smith", new(2024, 1, 15)) };
+        var items = new[] { new TestExportItem(LyoGuid.CreateV7(), "Alice", "Smith", new(2024, 1, 15)) };
         var queryService = new FakeQueryService<TestDbContext, TestExportItem>(items, _formatterService);
         var exportService = new ExportService<TestDbContext>(queryService, _formatHandlers, new(), _formatterService, _logger);
         var request = new ExportRequest { Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Csv, Columns = new() { ["First"] = "FirstName", ["Last"] = "LastName" } };
-        var (stream, _, _) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken);
+        var (stream, _, _) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestCt);
         await using var _ = stream;
-        var content = await new StreamReader(stream).ReadToEndAsync(TestContext.Current.CancellationToken);
+        var content = await new StreamReader(stream).ReadToEndAsync(TestCt);
         Assert.Contains("First", content);
         Assert.Contains("Last", content);
         Assert.Contains("Alice", content);
@@ -87,7 +87,7 @@ public sealed class ExportServiceTests
     [Fact]
     public async Task ExportAsync_Csv_WithFormatterTemplates_FormatsCells()
     {
-        var items = new[] { new TestExportItem(Guid.NewGuid(), "Alice", "Smith", new(2024, 1, 15)), new TestExportItem(Guid.NewGuid(), "Bob", "Jones", new(2024, 2, 20)) };
+        var items = new[] { new TestExportItem(LyoGuid.CreateV7(), "Alice", "Smith", new(2024, 1, 15)), new TestExportItem(LyoGuid.CreateV7(), "Bob", "Jones", new(2024, 2, 20)) };
         var queryService = new FakeQueryService<TestDbContext, TestExportItem>(items, _formatterService);
         var exportService = new ExportService<TestDbContext>(queryService, _formatHandlers, new(), _formatterService, _logger);
         var request = new ExportRequest {
@@ -96,9 +96,9 @@ public sealed class ExportServiceTests
             Columns = new() { ["Full Name"] = "{FirstName} {LastName}", ["Created"] = "{CreatedAt:yyyy-MM-dd}" }
         };
 
-        var (stream, _, _) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken);
+        var (stream, _, _) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestCt);
         await using var _ = stream;
-        var content = await new StreamReader(stream).ReadToEndAsync(TestContext.Current.CancellationToken);
+        var content = await new StreamReader(stream).ReadToEndAsync(TestCt);
         Assert.Contains("Full Name", content);
         Assert.Contains("Created", content);
         Assert.Contains("Alice Smith", content);
@@ -110,14 +110,14 @@ public sealed class ExportServiceTests
     [Fact]
     public async Task ExportAsync_Xlsx_WithFormatterTemplates_FormatsCells()
     {
-        var items = new[] { new TestExportItem(Guid.NewGuid(), "Alice", "Smith", new(2024, 1, 15)) };
+        var items = new[] { new TestExportItem(LyoGuid.CreateV7(), "Alice", "Smith", new(2024, 1, 15)) };
         var queryService = new FakeQueryService<TestDbContext, TestExportItem>(items, _formatterService);
         var exportService = new ExportService<TestDbContext>(queryService, _formatHandlers, new(), _formatterService, _logger);
         var request = new ExportRequest {
             Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Xlsx, Columns = new() { ["Full Name"] = "{FirstName} {LastName}", ["Date"] = "{CreatedAt:yyyy-MM-dd}" }
         };
 
-        var (stream, contentType, fileName) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken);
+        var (stream, contentType, fileName) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestCt);
         await using var _ = stream;
         Assert.Equal(FileTypeInfo.Xlsx.MimeType, contentType);
         Assert.Equal("export.xlsx", fileName);
@@ -127,13 +127,13 @@ public sealed class ExportServiceTests
     [Fact]
     public async Task ExportAsync_Json_ReturnsJsonArray()
     {
-        var items = new[] { new TestExportItem(Guid.NewGuid(), "Alice", "Smith", new(2024, 1, 15)) };
+        var items = new[] { new TestExportItem(LyoGuid.CreateV7(), "Alice", "Smith", new(2024, 1, 15)) };
         var queryService = new FakeQueryService<TestDbContext, TestExportItem>(items);
         var exportService = new ExportService<TestDbContext>(queryService, _formatHandlers, new(), null, _logger);
         var request = new ExportRequest { Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Json, Columns = null };
-        var (stream, contentType, fileName) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken);
+        var (stream, contentType, fileName) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestCt);
         await using var _ = stream;
-        var content = await new StreamReader(stream).ReadToEndAsync(TestContext.Current.CancellationToken);
+        var content = await new StreamReader(stream).ReadToEndAsync(TestCt);
         Assert.Equal(FileTypeInfo.Json.MimeType, contentType);
         Assert.Equal("export.json", fileName);
         Assert.Contains("Alice", content);
@@ -143,14 +143,12 @@ public sealed class ExportServiceTests
     [Fact]
     public async Task ExportAsync_Csv_WithoutCsvHandler_ThrowsNotSupportedException()
     {
-        var jsonOnlyHandlers = new IExportFormatHandler[] { new JsonExportFormatHandler(new ServiceCollection().BuildServiceProvider()) };
-        var items = new[] { new TestExportItem(Guid.NewGuid(), "Alice", "Smith", new(2024, 1, 15)) };
+        var jsonOnlyHandlers = new IExportFormatHandler[] { new JsonExportFormatHandler(new JsonService()) };
+        var items = new[] { new TestExportItem(LyoGuid.CreateV7(), "Alice", "Smith", new(2024, 1, 15)) };
         var queryService = new FakeQueryService<TestDbContext, TestExportItem>(items);
         var exportService = new ExportService<TestDbContext>(queryService, jsonOnlyHandlers, new(), _formatterService, _logger);
         var request = new ExportRequest { Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Csv };
-        var ex = await Assert.ThrowsAsync<NotSupportedException>(()
-            => exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken));
-
+        var ex = await Assert.ThrowsAsync<NotSupportedException>(() => exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestCt));
         Assert.Contains("AddCsvExport()", ex.Message, StringComparison.Ordinal);
     }
 
@@ -161,13 +159,13 @@ public sealed class ExportServiceTests
         services.AddSingleton(_csvService);
         services.AddCsvExport();
         var handlers = services.BuildServiceProvider().GetServices<IExportFormatHandler>().ToList();
-        var items = new[] { new TestExportItem(Guid.NewGuid(), "Alice", "Smith", new(2024, 1, 15)) };
+        var items = new[] { new TestExportItem(LyoGuid.CreateV7(), "Alice", "Smith", new(2024, 1, 15)) };
         var queryService = new FakeQueryService<TestDbContext, TestExportItem>(items);
         var exportService = new ExportService<TestDbContext>(queryService, handlers, new(), _formatterService, _logger);
         var request = new ExportRequest { Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Csv };
-        var (stream, contentType, fileName) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken);
+        var (stream, contentType, fileName) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestCt);
         await using var _ = stream;
-        var content = await new StreamReader(stream).ReadToEndAsync(TestContext.Current.CancellationToken);
+        var content = await new StreamReader(stream).ReadToEndAsync(TestCt);
         Assert.Equal(FileTypeInfo.Csv.MimeType, contentType);
         Assert.Equal("export.csv", fileName);
         Assert.Contains("Alice", content);
@@ -176,13 +174,13 @@ public sealed class ExportServiceTests
     [Fact]
     public async Task ExportAsync_WithoutFormatter_WithPropertyColumns_StillWorks()
     {
-        var items = new[] { new TestExportItem(Guid.NewGuid(), "Alice", "Smith", new(2024, 1, 15)) };
+        var items = new[] { new TestExportItem(LyoGuid.CreateV7(), "Alice", "Smith", new(2024, 1, 15)) };
         var queryService = new FakeQueryService<TestDbContext, TestExportItem>(items);
         var exportService = new ExportService<TestDbContext>(queryService, _formatHandlers, new(), null, _logger);
         var request = new ExportRequest { Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Csv, Columns = new() { ["First"] = "FirstName", ["Last"] = "LastName" } };
-        var (stream, _, _) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken);
+        var (stream, _, _) = await exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestCt);
         await using var _ = stream;
-        var content = await new StreamReader(stream).ReadToEndAsync(TestContext.Current.CancellationToken);
+        var content = await new StreamReader(stream).ReadToEndAsync(TestCt);
         Assert.Contains("First", content);
         Assert.Contains("Last", content);
         Assert.Contains("Alice", content);
@@ -195,8 +193,7 @@ public sealed class ExportServiceTests
         var queryService = new FailingQueryService<TestDbContext>();
         var exportService = new ExportService<TestDbContext>(queryService, _formatHandlers, new(), _formatterService, _logger);
         var request = new ExportRequest { Query = new() { Start = 0, Amount = 10 }, Format = ExportFormat.Csv };
-        await Assert.ThrowsAsync<ApiErrorException>(()
-            => exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ApiErrorException>(() => exportService.ExportAsync<TestExportItem, TestExportItem>(request, x => x.CreatedAt, ct: TestCt));
     }
 
     private sealed record TestExportItem(Guid Id, string FirstName, string LastName, DateTime CreatedAt);

@@ -10,26 +10,25 @@ namespace Lyo.FileSystemWatcher;
 /// <summary>Helpers for snapshotting a directory tree, diffing two snapshots, hashing, and fingerprints.</summary>
 public static class Utilities
 {
-    /// <summary>
-    /// Walks <paramref name="path" /> recursively and builds a <see cref="SnapshotTree" />, optionally hashing and reusing data from <paramref name="oldTree" />.
-    /// </summary>
+    /// <summary>Walks <paramref name="path" /> recursively and builds a <see cref="SnapshotTree" />, optionally hashing and reusing data from <paramref name="oldTree" />.</summary>
     /// <param name="path">Root directory to scan.</param>
     /// <param name="enableHashing">If true, fingerprints and hashes each file for move detection. Slower.</param>
     /// <param name="pathComparison">How path segments are compared in the dictionaries.</param>
     /// <param name="ct">Token that cancels the walk.</param>
     /// <param name="oldTree">Previous snapshot. When hashing is on, metadata may be reused for unchanged files.</param>
-    /// <remarks>This overload always walks subdirectories. Prefer <see cref="TakeSnapshot(string, FileSystemWatcherOptions, CancellationToken, SnapshotTree?)" /> to honor include/exclude regexes and <c>IncludeSubdirectories</c>.</remarks>
+    /// <remarks>
+    /// This overload always walks subdirectories. Prefer <see cref="TakeSnapshot(string, FileSystemWatcherOptions, CancellationToken, SnapshotTree?)" /> to honor include/exclude
+    /// regexes and <c>IncludeSubdirectories</c>.
+    /// </remarks>
     public static SnapshotTree TakeSnapshot(
         string path,
         bool enableHashing = true,
         StringComparison pathComparison = StringComparison.OrdinalIgnoreCase,
         CancellationToken ct = default,
         SnapshotTree? oldTree = null)
-        => TakeSnapshot(path, new FileSystemWatcherOptions { EnableFileHashing = enableHashing, PathComparison = pathComparison, IncludeSubdirectories = true }, ct, oldTree);
+        => TakeSnapshot(path, new() { EnableFileHashing = enableHashing, PathComparison = pathComparison, IncludeSubdirectories = true }, ct, oldTree);
 
-    /// <summary>
-    /// Walks <paramref name="path" /> according to <paramref name="options" /> (recursion, include/exclude regexes, hashing) and builds a <see cref="SnapshotTree" />.
-    /// </summary>
+    /// <summary>Walks <paramref name="path" /> according to <paramref name="options" /> (recursion, include/exclude regexes, hashing) and builds a <see cref="SnapshotTree" />.</summary>
     public static SnapshotTree TakeSnapshot(string path, FileSystemWatcherOptions options, CancellationToken ct = default, SnapshotTree? oldTree = null)
     {
         ArgumentHelpers.ThrowIfNull(options);
@@ -59,7 +58,7 @@ public static class Utilities
         var root = new SnapshotDirectoryNode(null, "", path, segmentComparer);
         var fileCount = 0;
         var directoryCount = 0;
-        WalkDirectory(root, path, options, oldTree, ct, sizeLookup, fingerprintLookup, segmentComparer, isRoot: true, ref fileCount, ref directoryCount);
+        WalkDirectory(root, path, options, oldTree, ct, sizeLookup, fingerprintLookup, segmentComparer, true, ref fileCount, ref directoryCount);
         return new(path, pathComparison, root, fileCount, directoryCount);
     }
 
@@ -100,7 +99,7 @@ public static class Utilities
             node.Directories[name] = child;
             directoryCount++;
             if (options.IncludeSubdirectories)
-                WalkDirectory(child, rootPath, options, oldTree, ct, sizeLookup, fingerprintLookup, segmentComparer, isRoot: false, ref fileCount, ref directoryCount);
+                WalkDirectory(child, rootPath, options, oldTree, ct, sizeLookup, fingerprintLookup, segmentComparer, false, ref fileCount, ref directoryCount);
         }
 
         string[] files;
@@ -197,17 +196,10 @@ public static class Utilities
     {
         var stringComparer = pathComparison == StringComparison.OrdinalIgnoreCase ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
         var changes = new List<FileSystemChangeInfo>();
+        // processedPaths doubles as the claim list: once an old path has been matched it is no longer a candidate, which is what removing it from the lookups used to do.
         var processedPaths = new HashSet<string>(stringComparer);
-        var fileHashLookup = oldTree.EnumerateFiles()
-            .Where(e => e.Entry.Info is FileInfo && e.Entry.Hash != null)
-            .GroupBy(e => e.Entry.Hash!)
-            .ToDictionary(g => g.Key, g => g.Select(e => e.Path).ToList());
-
-        var fileFingerprintLookup = oldTree.EnumerateFiles()
-            .Where(e => e.Entry.Info is FileInfo && e.Entry.Fingerprint != null)
-            .GroupBy(e => e.Entry.Fingerprint!)
-            .ToDictionary(g => g.Key, g => g.Select(e => e.Path).ToList());
-
+        var fileHashLookup = oldTree.FileHashIndex;
+        var fileFingerprintLookup = oldTree.FileFingerprintIndex;
         foreach (var (path, entry) in EnumerateNewSnapshotEntries(newTree.Root)) {
             ct.ThrowIfCancellationRequested();
             if (TryGetSnapshotEntry(oldTree, path, out var value) && value != null) {
@@ -242,12 +234,8 @@ public static class Utilities
             var isDirectory = entry.Info is DirectoryInfo;
             if (!isDirectory) {
                 if (entry.Hash != null && fileHashLookup.TryGetValue(entry.Hash, out var oldPaths)) {
-                    var oldPath = FindBestMatch(oldPaths, path, newTree, pathComparison);
+                    var oldPath = FindBestMatch(oldPaths, path, newTree, pathComparison, processedPaths);
                     if (oldPath != null) {
-                        oldPaths.Remove(oldPath);
-                        if (oldPaths.Count == 0)
-                            fileHashLookup.Remove(entry.Hash);
-
                         processedPaths.Add(oldPath);
                         var isMove = Path.GetDirectoryName(oldPath) != Path.GetDirectoryName(path);
                         changes.Add(new(oldPath, path, isMove ? ChangeTypeEnum.Moved : ChangeTypeEnum.Renamed, false));
@@ -256,26 +244,18 @@ public static class Utilities
                 }
 
                 if (entry.Fingerprint != null && entry.FileSize.HasValue && fileFingerprintLookup.TryGetValue(entry.Fingerprint, out var oldFingerprintPaths)) {
-                    var matchingOldPaths = oldFingerprintPaths.Where(oldPath => {
-                            if (oldTree.TryGetFile(oldPath, out var oldEntry) && oldEntry!.FileSize.HasValue)
-                                return oldEntry.FileSize.Value == entry.FileSize.Value;
+                    List<string> matchingOldPaths = [];
+                    foreach (var candidate in oldFingerprintPaths) {
+                        if (oldTree.TryGetFile(candidate, out var oldEntry) && oldEntry!.FileSize == entry.FileSize)
+                            matchingOldPaths.Add(candidate);
+                    }
 
-                            return false;
-                        })
-                        .ToList();
-
-                    if (matchingOldPaths.Count > 0) {
-                        var oldPath = FindBestMatch(matchingOldPaths, path, newTree, pathComparison);
-                        if (oldPath != null) {
-                            matchingOldPaths.Remove(oldPath);
-                            if (matchingOldPaths.Count == 0)
-                                fileFingerprintLookup.Remove(entry.Fingerprint);
-
-                            processedPaths.Add(oldPath);
-                            var isMove = Path.GetDirectoryName(oldPath) != Path.GetDirectoryName(path);
-                            changes.Add(new(oldPath, path, isMove ? ChangeTypeEnum.Moved : ChangeTypeEnum.Renamed, false));
-                            continue;
-                        }
+                    var oldPath = FindBestMatch(matchingOldPaths, path, newTree, pathComparison, processedPaths);
+                    if (oldPath != null) {
+                        processedPaths.Add(oldPath);
+                        var isMove = Path.GetDirectoryName(oldPath) != Path.GetDirectoryName(path);
+                        changes.Add(new(oldPath, path, isMove ? ChangeTypeEnum.Moved : ChangeTypeEnum.Renamed, false));
+                        continue;
                     }
                 }
             }
@@ -324,7 +304,7 @@ public static class Utilities
             return true;
 
         if (tree.TryGetDirectory(path, out var node) && node != null) {
-            entry = new(node.FullPath, new DirectoryInfo(node.FullPath));
+            entry = node.Entry;
             return true;
         }
 
@@ -336,7 +316,7 @@ public static class Utilities
     private static IEnumerable<(string Path, DirectorySnapshotEntry Entry)> EnumerateNewSnapshotEntries(SnapshotDirectoryNode root)
     {
         foreach (var sub in root.Directories.Values) {
-            yield return (sub.FullPath, new(sub.FullPath, new DirectoryInfo(sub.FullPath)));
+            yield return (sub.FullPath, sub.Entry);
 
             foreach (var pair in EnumerateNewSnapshotEntries(sub))
                 yield return pair;
@@ -347,20 +327,40 @@ public static class Utilities
     }
 
     /// <summary>Picks the best prior path for a file that looks moved or renamed, using hash or fingerprint candidates.</summary>
-    public static string? FindBestMatch(List<string> candidates, string newPath, SnapshotTree newTree, StringComparison pathComparison = StringComparison.OrdinalIgnoreCase)
+    /// <param name="candidates">Old paths that share the hash or fingerprint. Not modified.</param>
+    /// <param name="newPath">Path the file now has.</param>
+    /// <param name="newTree">Current snapshot. A candidate that still exists in it cannot be the source of a move.</param>
+    /// <param name="pathComparison">How paths are matched.</param>
+    /// <param name="claimed">Old paths already matched by an earlier candidate in this diff, so each source is used at most once. Null means nothing is claimed yet.</param>
+    public static string? FindBestMatch(
+        List<string> candidates,
+        string newPath,
+        SnapshotTree newTree,
+        StringComparison pathComparison = StringComparison.OrdinalIgnoreCase,
+        HashSet<string>? claimed = null)
     {
         if (candidates.Count == 0)
             return null;
 
-        var validCandidates = candidates.Where(c => !newTree.ContainsPath(c)).ToList();
-        if (validCandidates.Count == 0)
+        List<string> validCandidates = [];
+        foreach (var candidate in candidates) {
+            if (!newTree.ContainsPath(candidate) && claimed?.Contains(candidate) != true)
+                validCandidates.Add(candidate);
+        }
+
+        if (validCandidates.Count is 0)
             return null;
 
-        if (validCandidates.Count == 1)
+        if (validCandidates.Count is 1)
             return validCandidates[0];
 
         var newFileName = Path.GetFileName(newPath);
-        return validCandidates.FirstOrDefault(c => string.Equals(Path.GetFileName(c), newFileName, pathComparison)) ?? validCandidates[0];
+        foreach (var candidate in validCandidates) {
+            if (string.Equals(Path.GetFileName(candidate), newFileName, pathComparison))
+                return candidate;
+        }
+
+        return validCandidates[0];
     }
 
     /// <summary>Heuristic that matches a new directory path to a missing old directory path, used for rename and move detection.</summary>

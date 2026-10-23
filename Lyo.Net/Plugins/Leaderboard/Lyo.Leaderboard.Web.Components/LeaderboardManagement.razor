@@ -1,0 +1,75 @@
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="3">
+    <MudPaper Class="pa-4" Outlined="true">
+        <MudGrid Spacing="2">
+            <MudItem xs="12" sm="5" md="4">
+                <MudTextField T="string"
+                              Label="Board id"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Immediate="true"
+                              @bind-Value="_idDraft"
+                              OnKeyDown="OnToolbarKeyDown"/>
+            </MudItem>
+            <MudItem xs="12" sm="5" md="4">
+                <MudTextField T="string"
+                              Label="Board slug"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Immediate="true"
+                              HelperText="Used when id is empty."
+                              @bind-Value="_slugDraft"
+                              OnKeyDown="OnToolbarKeyDown"/>
+            </MudItem>
+            <MudItem xs="12" sm="2" md="4" Class="d-flex align-end">
+                <MudStack Row="true" Spacing="1" Class="mb-1">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Check"
+                               OnClick="LoadAsync">
+                        Load
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined"
+                               StartIcon="@Icons.Material.Filled.Refresh"
+                               OnClick="RefreshAsync">
+                        Refresh
+                    </MudButton>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+        @if (_board != null) {
+            <MudStack Row="true" Spacing="1" Class="mt-3" AlignItems="AlignItems.Center">
+                <MudText Typo="Typo.h6">@_board.Name</MudText>
+                <LyoChip Spec="@LyoChips.Of(_board.Visibility.ToString(), Color.Info)"/>
+                <LyoChip Spec="@LyoChips.FromBool(_board.RequireVerification, "Verify", "Auto-approve", Color.Warning, Color.Success)"/>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">@_board.Slug</MudText>
+            </MudStack>
+        }
+    </MudPaper>
+
+    @if (!string.IsNullOrWhiteSpace(_error)) {
+        <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
+    }
+
+    <MudTabs @bind-ActivePanelIndex="_tabIndex" Color="Color.Primary" SliderColor="Color.Secondary">
+        <MudTabPanel Text="Board">
+            <LeaderboardBoardEditor Client="Client" Board="_board" DataVersion="_dataVersion" OnChanged="HandleBoardChangedAsync"/>
+        </MudTabPanel>
+        <MudTabPanel Text="Standings">
+            <LeaderboardStandingTable Client="Client" BoardId="_board?.Id" DataVersion="_dataVersion"/>
+        </MudTabPanel>
+        <MudTabPanel Text="Submit">
+            <LeaderboardEntryForm Client="Client" Board="_board" DataVersion="_dataVersion" OnChanged="RefreshAsync"/>
+        </MudTabPanel>
+        <MudTabPanel Text="Verify">
+            <LeaderboardEntryQueue Client="Client" BoardId="_board?.Id" DataVersion="_dataVersion" OnChanged="RefreshAsync"/>
+        </MudTabPanel>
+        <MudTabPanel Text="Invite">
+            <MudStack Spacing="3" Class="mt-3">
+                <LeaderboardInviteShare Client="Client" Board="_board" DataVersion="_dataVersion"/>
+                <LeaderboardJoinRedeem Client="Client" OnRedeemed="RefreshAsync"/>
+            </MudStack>
+        </MudTabPanel>
+    </MudTabs>
+</MudStack>

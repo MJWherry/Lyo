@@ -1,3 +1,5 @@
+using Lyo.Common.Core.Identifiers;
+
 namespace Lyo.Job.Models;
 
 /// <summary>Shared constants for the Job library.</summary>
@@ -7,23 +9,23 @@ public static class Constants
     public static class Mq
     {
         /// <summary>
-        /// Queue for finished-run notifications, consumed by scheduler instances. With multiple schedulers this is a competing-consumer queue: each completion is handled by
-        /// exactly one instance. Retry and trigger creation are deduplicated across instances via idempotency keys on the resulting run requests.
+        /// Queue for finished-run notifications, consumed by scheduler instances. With multiple schedulers this is a competing-consumer queue: each completion is handled by exactly
+        /// one instance. Retry and trigger creation are deduplicated across instances via idempotency keys on the resulting run requests.
         /// </summary>
         public const string QueueJobRunFinish = "job.run.complete";
 
-        /// <summary>
-        /// Fan-in exchange for job lifecycle notifications. Declared at API and worker startup when missing (direct, durable). Bindings use the routing keys below.
-        /// </summary>
+        /// <summary>Fan-in exchange for job lifecycle notifications. Declared at API and worker startup when missing (direct, durable). Bindings use the routing keys below.</summary>
         public const string JobEventExchange = "job.events";
 
         /// <summary>AMQP type for <see cref="JobEventExchange" />. Direct because every binding uses an exact routing key.</summary>
         public const string JobEventExchangeType = "direct";
+
         public const string JobDefinitionChangeKey = "job.notifications.definition.updated";
         public const string JobRunCreatedRoutingKey = "job.notifications.run.created";
         public const string JobRunStartedRoutingKey = "job.notifications.run.started";
         public const string JobRunCancelledRoutingKey = "job.notifications.run.cancelled";
         public const string JobRunFinishedRoutingKey = "job.notifications.run.finished";
+        public const string JobWorkflowRunCreatedRoutingKey = "job.notifications.workflow.run.created";
         public const string JobAlertRoutingKey = "job.notifications.alert";
 
         /// <summary>Suffix for the RabbitMQ delay-wait companion of a worker dispatch queue (<c>job.run.{workerType}.wait</c>).</summary>
@@ -60,8 +62,6 @@ public static class Constants
             public const string DefinitionParameters = $"{Definitions}/Parameter";
             public const string Schedules = $"{Route}/Schedule";
             public const string ScheduleParameters = $"{Route}/ScheduleParameters";
-            public const string Triggers = $"{Route}/Triggers";
-            public const string TriggerParameters = $"{Route}/TriggerParameters";
             public const string Runs = $"{Route}/Run";
 
             /// <summary>POST endpoint that creates a run through <c>JobService.CreateJobRun</c> (not the generic CRUD create).</summary>
@@ -82,6 +82,9 @@ public static class Constants
             public const string WorkflowSteps = $"{Route}/Workflow/Step";
             public const string WorkflowRuns = $"{Route}/Workflow/Run";
             public const string WorkflowRunSteps = $"{Route}/Workflow/Run/Step";
+
+            /// <summary>POST endpoint that materializes a workflow run and its pending steps through <c>JobWorkflowService.StartWorkflowAsync</c>.</summary>
+            public static string WorkflowStart(Guid workflowId) => $"{Workflows}/{workflowId}/Start";
 
             /// <summary>POST endpoint that moves a run to <c>Running</c>.</summary>
             public static string RunStarted(Guid runId) => $"{Runs}/{runId}/Started";
@@ -123,12 +126,12 @@ public static class Constants
             public const string RunsCreated = "job.scheduler.runs.created";
             public const string RunCreateFailed = "job.scheduler.runs.create.failed";
             public const string SlotConflicts = "job.scheduler.slot.conflicts";
-            public const string TriggersFired = "job.scheduler.triggers.fired";
             public const string RetriesScheduled = "job.scheduler.retries.scheduled";
             public const string CircuitBreakerTripped = "job.scheduler.circuit_breaker.tripped";
 
             /// <summary>The breaker threshold was reached but the definition could not be disabled, so it remains enabled.</summary>
             public const string CircuitBreakerTripFailed = "job.scheduler.circuit_breaker.trip.failed";
+
             public const string MisfiresCaughtUp = "job.scheduler.misfires.caught_up";
             public const string MisfiresSkipped = "job.scheduler.misfires.skipped";
         }
@@ -143,6 +146,7 @@ public static class Constants
 
             /// <summary>A run started, but its advisory started event could not be published.</summary>
             public const string RunStartedPublishFailed = "job.service.run.started.publish.failed";
+
             public const string RunCreateRejected = "job.service.run.create.rejected";
             public const string RunDispatchDeferred = "job.service.run.dispatch.deferred";
             public const string RunRequeued = "job.service.run.requeued";
@@ -154,6 +158,39 @@ public static class Constants
             public const string RunResynced = "job.service.run.resynced";
             public const string RunDuration = "job.service.run.duration";
             public const string RunQueueLatency = "job.service.run.queue_latency";
+        }
+
+        /// <summary>Metrics from <c>Lyo.Job.Postgres.JobWorkflowService</c> and <c>Lyo.Job.Scheduler.JobWorkflowEngine</c>.</summary>
+        public static class Workflow
+        {
+            public const string RunCreated = "job.workflow.run.created";
+
+            /// <summary>A start was refused before any row was written (unknown, disabled, or empty workflow). Tagged with <c>reason</c>.</summary>
+            public const string RunCreateRejected = "job.workflow.run.create.rejected";
+
+            /// <summary>A run was created but its created-event could not be published, so it is sitting <c>Pending</c> with nothing driving it.</summary>
+            public const string RunDispatchDeferred = "job.workflow.run.dispatch.deferred";
+
+            /// <summary>A workflow run was started by <c>JobWorkflowScheduler</c> for a due schedule slot.</summary>
+            public const string ScheduledRunStarted = "job.workflow.scheduled.run.started";
+
+            /// <summary>A workflow run left <c>Pending</c> because the engine started its first step.</summary>
+            public const string RunsStarted = "job.workflow.runs.started";
+
+            /// <summary>A workflow run reached <c>Finished</c>.</summary>
+            public const string RunsFinished = "job.workflow.runs.finished";
+
+            /// <summary>A workflow run reached <c>Failed</c>.</summary>
+            public const string RunsFailed = "job.workflow.runs.failed";
+
+            public const string StepsStarted = "job.workflow.steps.started";
+            public const string StepsFailed = "job.workflow.steps.failed";
+
+            /// <summary>A step did not run: gated off by its condition, cascaded from a gated dependency, or skipped by a <c>Stop</c> failure upstream.</summary>
+            public const string StepsSkipped = "job.workflow.steps.skipped";
+
+            /// <summary>A run was failed because its step graph could not execute (malformed or circular <c>DependsOnStepIds</c>). A hung run is otherwise invisible.</summary>
+            public const string GraphInvalid = "job.workflow.graph.invalid";
         }
 
         /// <summary>Metrics from <c>Lyo.Job.Worker.JobWorkerBase</c> (on top of the inherited <c>queue.worker.*</c> metrics).</summary>
@@ -173,6 +210,7 @@ public static class Constants
 
             /// <summary>A dispatch message pointed at a run that no longer exists, so it was dropped without consuming the requeue budget.</summary>
             public const string RunNotFound = "job.worker.run.not_found";
+
             public const string LateFinishDropped = "job.worker.late_finish.dropped";
         }
 
@@ -184,6 +222,10 @@ public static class Constants
             public const string DeadJobsFailed = "job.maintenance.dead_jobs.failed";
             public const string CircuitBreakersReset = "job.maintenance.circuit_breakers.reset";
             public const string RunsPurged = "job.maintenance.runs.purged";
+
+            /// <summary>Workflow runs deleted by <c>WorkflowRetentionDays</c>. Counted separately from job runs because the two have independent retention policies.</summary>
+            public const string WorkflowRunsPurged = "job.maintenance.workflow_runs.purged";
+
             public const string RunsRedispatched = "job.maintenance.runs.redispatched";
             public const string WorkerInstancesPruned = "job.maintenance.worker_instances.pruned";
 
@@ -252,8 +294,8 @@ public static class Constants
 
         /// <summary>Host/runtime keys (CPU, memory, OS). Anything else is worker/queue metadata or a host extra.</summary>
         public static readonly string[] SystemKeys = [
-            Os, OsPlatform, OsVersion, Framework, RuntimeIdentifier, ClrVersion, ProcessArchitecture, OsArchitecture, ProcessorCount, CpuModel, TotalPhysicalMemoryBytes,
-            WorkingSetBytes, GcHeapBytes, IsServerGc, ProcessName, AssemblyVersion
+            Os, OsPlatform, OsVersion, Framework, RuntimeIdentifier, ClrVersion, ProcessArchitecture, OsArchitecture, ProcessorCount, CpuModel,
+            TotalPhysicalMemoryBytes, WorkingSetBytes, GcHeapBytes, IsServerGc, ProcessName, AssemblyVersion
         ];
 
         /// <summary>True when <paramref name="key" /> is a built-in system-info key.</summary>
@@ -273,7 +315,7 @@ public static class Constants
             public const string FailedCount = "FailedCount";
             public const string NoChangeCount = "NoChangeCount";
 
-            public static string Unknown => $"Unknown_{Guid.NewGuid()}";
+            public static string Unknown => $"Unknown_{LyoGuid.CreateV7()}";
 
             public static string FailureReason(object n) => $"FailureReason_{n}";
 
@@ -291,7 +333,7 @@ public static class Constants
             public const string DegreeOfParallel = "DegreeOfParallel";
             public const string UpsertChunkSize = "UpsertChunkSize";
 
-            public static string Unknown => $"Unknown_{Guid.NewGuid()}";
+            public static string Unknown => $"Unknown_{LyoGuid.CreateV7()}";
         }
     }
 }

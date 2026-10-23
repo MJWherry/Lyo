@@ -16,7 +16,7 @@ public class LyoParameterEntryTests
     [Trait("Category", "Fast")]
     public void From_OptionalEnumWithoutDefault_StartsUnset()
     {
-        var entry = Assert.Single(LyoParameterEntry.From([new StubDefinition(typeof(SampleEnum).FullName!, required: false)]));
+        var entry = Assert.Single(LyoParameterEntry.From([new StubDefinition(typeof(SampleEnum).FullName!, false)]));
         Assert.Null(entry.Value);
         Assert.True(entry.IsEmpty());
         Assert.False(entry.ShouldSubmit);
@@ -27,7 +27,7 @@ public class LyoParameterEntryTests
     [Trait("Category", "Fast")]
     public void From_RequiredEnumWithoutDefault_SeedsTypeDefault()
     {
-        var entry = Assert.Single(LyoParameterEntry.From([new StubDefinition(typeof(SampleEnum).FullName!, required: true)]));
+        var entry = Assert.Single(LyoParameterEntry.From([new StubDefinition(typeof(SampleEnum).FullName!, true)]));
         Assert.Equal(LyoTypeInfo.Enum.DefaultJson, entry.Value);
         Assert.False(entry.IsEmpty());
         Assert.True(entry.ShouldSubmit);
@@ -38,7 +38,7 @@ public class LyoParameterEntryTests
     public void From_OptionalEnumWithLiteralDefault_UsesStoredValue()
     {
         var json = "\"Second\"";
-        var entry = Assert.Single(LyoParameterEntry.From([new StubDefinition(typeof(SampleEnum).FullName!, required: false, value: json)]));
+        var entry = Assert.Single(LyoParameterEntry.From([new StubDefinition(typeof(SampleEnum).FullName!, false, json)]));
         Assert.Equal(json, entry.Value);
         Assert.True(entry.ShouldSubmit);
     }
@@ -47,7 +47,7 @@ public class LyoParameterEntryTests
     [Trait("Category", "Fast")]
     public void From_OptionalBooleanWithoutDefault_SeedsFalse()
     {
-        var entry = Assert.Single(LyoParameterEntry.From([new StubDefinition(LyoTypeInfo.Bool.FullName, required: false)]));
+        var entry = Assert.Single(LyoParameterEntry.From([new StubDefinition(LyoTypeInfo.Bool.FullName, false)]));
         Assert.Equal(LyoTypeInfo.Bool.DefaultJson, entry.Value);
         Assert.True(entry.ShouldSubmit);
     }
@@ -55,13 +55,13 @@ public class LyoParameterEntryTests
     [Fact]
     [Trait("Category", "Fast")]
     public void RequiredSatisfied_EmptyOptional_DoesNotBlock()
-        => Assert.True(LyoParameterEntry.RequiredSatisfied(LyoParameterEntry.From([new StubDefinition(typeof(SampleEnum).FullName!, required: false)])));
+        => Assert.True(LyoParameterEntry.RequiredSatisfied(LyoParameterEntry.From([new StubDefinition(typeof(SampleEnum).FullName!, false)])));
 
     [Fact]
     [Trait("Category", "Fast")]
     public void RequiredSatisfied_EmptyRequired_Blocks()
     {
-        var entry = Assert.Single(LyoParameterEntry.From([new StubDefinition(LyoTypeInfo.String.FullName, required: true)]));
+        var entry = Assert.Single(LyoParameterEntry.From([new StubDefinition(LyoTypeInfo.String.FullName, true)]));
         entry.Value = null;
         Assert.False(LyoParameterEntry.RequiredSatisfied([entry]));
     }

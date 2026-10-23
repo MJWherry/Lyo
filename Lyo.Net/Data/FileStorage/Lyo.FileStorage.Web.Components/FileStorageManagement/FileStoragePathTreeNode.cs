@@ -11,8 +11,8 @@ using MudBlazor;
 namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
 
 /// <summary>
-/// A node in the path tree. Directories are virtual <c>PathPrefix</c> segments; files are metadata rows. Empty prefixes hang off the root
-/// (<see cref="FileStoragePathTreeBuilder.RootDisplayName" />).
+/// A node in the path tree. Directories are virtual <c>PathPrefix</c> segments; files are metadata rows. Empty prefixes hang off the root (
+/// <see cref="FileStoragePathTreeBuilder.RootDisplayName" />).
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class FileStoragePathTreeNode
@@ -88,18 +88,13 @@ public readonly record struct FileStoragePathTreeRow(
 
 /// <summary>One visible row in the flattened, virtualized path tree. Collapsed descendants are omitted.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public readonly record struct FileStoragePathTreeVisibleRow(
-    FileStoragePathTreeNode Node,
-    int Depth,
-    bool Expandable,
-    bool Expanded)
+public readonly record struct FileStoragePathTreeVisibleRow(FileStoragePathTreeNode Node, int Depth, bool Expandable, bool Expanded)
 {
     /// <summary>Row height in pixels; must match the virtualize <c>ItemSize</c> and CSS.</summary>
     public const float ItemSize = 40f;
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"FileStoragePathTreeVisibleRow: depth={Depth} {Node}";
+    public override string ToString() => $"FileStoragePathTreeVisibleRow: depth={Depth} {Node}";
 }
 
 /// <summary>Builds and updates <see cref="FileStoragePathTreeNode" /> graphs from PathPrefix rows. Does not call the API.</summary>
@@ -136,10 +131,7 @@ public static class FileStoragePathTreeBuilder
     /// <summary>File key for a metadata id.</summary>
     public static string FileKey(Guid fileId) => $"file:{fileId:D}";
 
-    /// <summary>
-    /// Walks expanded <see cref="ITreeItemData{FileStoragePathTreeNode}"/> nodes into a flat list for <c>Virtualize</c>. Collapsed children stay out of the list
-    /// (and the DOM).
-    /// </summary>
+    /// <summary>Walks expanded <see cref="ITreeItemData{FileStoragePathTreeNode}" /> nodes into a flat list for <c>Virtualize</c>. Collapsed children stay out of the list (and the DOM).</summary>
     /// <param name="items">Root tree items bound to the path pane.</param>
     public static List<FileStoragePathTreeVisibleRow> FlattenVisible(IEnumerable<ITreeItemData<FileStoragePathTreeNode>> items)
     {
@@ -149,8 +141,7 @@ public static class FileStoragePathTreeBuilder
         return rows;
     }
 
-    private static void AppendVisible(
-        IEnumerable<ITreeItemData<FileStoragePathTreeNode>> items, int depth, List<FileStoragePathTreeVisibleRow> rows)
+    private static void AppendVisible(IEnumerable<ITreeItemData<FileStoragePathTreeNode>> items, int depth, List<FileStoragePathTreeVisibleRow> rows)
     {
         foreach (var item in items) {
             if (item.Value is not { } node)
@@ -176,8 +167,7 @@ public static class FileStoragePathTreeBuilder
     }
 
     /// <summary>True for the dummy expand placeholder, which is not a real file or folder.</summary>
-    public static bool IsPendingChild(FileStoragePathTreeNode? node)
-        => node != null && node.Key.EndsWith(PendingChildKeySuffix, StringComparison.Ordinal);
+    public static bool IsPendingChild(FileStoragePathTreeNode? node) => node != null && node.Key.EndsWith(PendingChildKeySuffix, StringComparison.Ordinal);
 
     /// <summary>Trims slashes and maps backslashes to forward slashes. Empty becomes null.</summary>
     public static string? Normalize(string? pathPrefix)
@@ -217,8 +207,8 @@ public static class FileStoragePathTreeBuilder
     public static FileStoragePathTreeNode? FindDirectory(FileStoragePathTreeNode root, string? pathPrefix) => Find(root, DirectoryKey(pathPrefix));
 
     /// <summary>
-    /// Builds a full folder/file tree from metadata rows. Each <c>PathPrefix</c> segment becomes a directory; each row becomes a file leaf under that prefix
-    /// (or under root when the prefix is empty).
+    /// Builds a full folder/file tree from metadata rows. Each <c>PathPrefix</c> segment becomes a directory; each row becomes a file leaf under that prefix (or under root when
+    /// the prefix is empty).
     /// </summary>
     public static FileStoragePathTreeNode BuildFullTree(IReadOnlyList<FileStoragePathTreeRow> rows, bool truncated)
     {
@@ -227,7 +217,6 @@ public static class FileStoragePathTreeBuilder
         root.ChildrenLoaded = true;
         root.Truncated = truncated;
         var dirs = new Dictionary<string, FileStoragePathTreeNode>(StringComparer.Ordinal) { [DirectoryKey(null)] = root };
-
         foreach (var row in rows) {
             var parent = root;
             foreach (var segment in SplitSegments(row.PathPrefix)) {
@@ -250,9 +239,7 @@ public static class FileStoragePathTreeBuilder
         return root;
     }
 
-    /// <summary>
-    /// QueryProject filter for files that sit directly in <paramref name="parentPrefix" /> (empty / null prefix is root). Nested-folder files are excluded.
-    /// </summary>
+    /// <summary>QueryProject filter for files that sit directly in <paramref name="parentPrefix" /> (empty / null prefix is root). Nested-folder files are excluded.</summary>
     public static WhereClause CreateImmediateFilesWhere(string? parentPrefix)
     {
         var normalized = Normalize(parentPrefix);
@@ -263,8 +250,8 @@ public static class FileStoragePathTreeBuilder
     }
 
     /// <summary>
-    /// QueryProject filter for PathPrefix values nested under <paramref name="parentPrefix" />. Discovers child folder names without treating those files as
-    /// children of the parent. Root uses any non-empty prefix.
+    /// QueryProject filter for PathPrefix values nested under <paramref name="parentPrefix" />. Discovers child folder names without treating those files as children of the
+    /// parent. Root uses any non-empty prefix.
     /// </summary>
     public static WhereClause CreateDescendantPrefixWhere(string? parentPrefix)
     {
@@ -285,26 +272,26 @@ public static class FileStoragePathTreeBuilder
         if (normalized == null)
             return null;
 
-        return WhereClauseBuilder.CombineAs(
-            GroupOperatorEnum.Or, CreateImmediateFilesWhere(normalized), CreateDescendantPrefixWhere(normalized));
+        return WhereClauseBuilder.CombineAs(GroupOperatorEnum.Or, CreateImmediateFilesWhere(normalized), CreateDescendantPrefixWhere(normalized));
     }
 
     /// <summary>
     /// Replaces the immediate children of <paramref name="parent" />. <paramref name="files" /> are file leaves whose prefix matches the parent.
-    /// <paramref name="descendantPrefixes" /> add the next path segment as an unloaded folder. Pending folders not already represented are kept.
-    /// Child folders stay with <see cref="FileStoragePathTreeNode.ChildrenLoaded" /> false so the browser can query them on expand.
+    /// <paramref name="descendantPrefixes" /> add the next path segment as an unloaded folder. Pending folders not already represented are kept. Child folders stay with
+    /// <see cref="FileStoragePathTreeNode.ChildrenLoaded" /> false so the browser can query them on expand.
     /// </summary>
     public static void MergeImmediateChildren(
-        FileStoragePathTreeNode parent, IReadOnlyList<FileStoragePathTreeRow> files, IReadOnlyList<string?> descendantPrefixes, bool truncated)
+        FileStoragePathTreeNode parent,
+        IReadOnlyList<FileStoragePathTreeRow> files,
+        IReadOnlyList<string?> descendantPrefixes,
+        bool truncated)
     {
         ArgumentHelpers.ThrowIfNull(parent);
         ArgumentHelpers.ThrowIfNull(files);
         ArgumentHelpers.ThrowIfNull(descendantPrefixes);
-
         var pending = parent.Children.Where(static c => c.IsPending && c.IsDirectory).ToList();
         var folders = new Dictionary<string, FileStoragePathTreeNode>(StringComparer.Ordinal);
         var fileNodes = new List<FileStoragePathTreeNode>();
-
         foreach (var row in files) {
             if (IsImmediateFile(parent.PathPrefix, row.PathPrefix))
                 fileNodes.Add(CreateFileNode(row));
@@ -346,6 +333,7 @@ public static class FileStoragePathTreeBuilder
 
             return string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase);
         });
+
         foreach (var child in node.Children) {
             if (child.IsDirectory)
                 SortChildrenRecursive(child);
@@ -353,8 +341,8 @@ public static class FileStoragePathTreeBuilder
     }
 
     /// <summary>
-    /// Adds a client-only child folder under <paramref name="parent" />. <paramref name="name" /> must be a single path segment. Yields the existing folder when that prefix
-    /// is already present.
+    /// Adds a client-only child folder under <paramref name="parent" />. <paramref name="name" /> must be a single path segment. Yields the existing folder when that prefix is
+    /// already present.
     /// </summary>
     public static FileStoragePathTreeNode AddPendingFolder(FileStoragePathTreeNode parent, string name)
     {
@@ -379,7 +367,8 @@ public static class FileStoragePathTreeBuilder
     }
 
     /// <summary>
-    /// Active (non-deleted) file ids under <paramref name="nodes" />. A directory contributes every descendant file, so bulk DEK, delete, or move on a folder covers its contents.
+    /// Active (non-deleted) file ids under <paramref name="nodes" />. A directory contributes every descendant file, so bulk DEK, delete, or move on a folder covers its
+    /// contents.
     /// </summary>
     public static IReadOnlyList<Guid> CollectActiveFileIds(IEnumerable<FileStoragePathTreeNode> nodes)
     {
@@ -392,11 +381,10 @@ public static class FileStoragePathTreeBuilder
     }
 
     /// <summary>
-    /// Per-file destinations for dropping <paramref name="selected" /> onto <paramref name="target" />. Individual files land in the target prefix. Directories keep their
-    /// folder name and relative child prefixes. Yields an empty list when the drop would move a folder into itself or is a no-op.
+    /// Per-file destinations for dropping <paramref name="selected" /> onto <paramref name="target" />. Individual files land in the target prefix. Directories keep their folder
+    /// name and relative child prefixes. Yields an empty list when the drop would move a folder into itself or is a no-op.
     /// </summary>
-    public static IReadOnlyList<(Guid FileId, string? NewPathPrefix)> CollectMovesToDirectory(
-        IReadOnlyList<FileStoragePathTreeNode> selected, FileStoragePathTreeNode target)
+    public static IReadOnlyList<(Guid FileId, string? NewPathPrefix)> CollectMovesToDirectory(IReadOnlyList<FileStoragePathTreeNode> selected, FileStoragePathTreeNode target)
     {
         ArgumentHelpers.ThrowIfNull(selected);
         ArgumentHelpers.ThrowIfNull(target);
@@ -407,8 +395,10 @@ public static class FileStoragePathTreeBuilder
         foreach (var node in selected) {
             if (!node.IsDirectory)
                 continue;
+
             if (node.Key == target.Key)
                 return [];
+
             if (node.PathPrefix != null && IsStrictlyUnderPrefix(node.PathPrefix, targetPrefix))
                 return [];
         }
@@ -416,7 +406,6 @@ public static class FileStoragePathTreeBuilder
         var selectedDirs = selected.Where(static n => n.IsDirectory).ToList();
         var covered = new HashSet<Guid>();
         var moves = new List<(Guid FileId, string? NewPathPrefix)>();
-
         foreach (var dir in selectedDirs) {
             foreach (var file in EnumerateActiveFiles(dir)) {
                 if (file.FileId is not { } id || !covered.Add(id))
@@ -434,8 +423,10 @@ public static class FileStoragePathTreeBuilder
         foreach (var file in selected) {
             if (file.IsDirectory || file.FileId is not { } id || file.IsDeleted || !covered.Add(id))
                 continue;
+
             if (selectedDirs.Any(d => IsUnderDirectory(file, d)))
                 continue;
+
             if (string.Equals(Normalize(file.PathPrefix), targetPrefix, StringComparison.Ordinal))
                 continue;
 
@@ -455,19 +446,19 @@ public static class FileStoragePathTreeBuilder
         var sizeRaw = ProjectedValueHelper.GetValue(row, "OriginalFileSize");
         ProjectedValueHelper.TryGetInt64(sizeRaw, out var size);
         parsed = new(
-            fileId, FileStorageGridRowHelper.GetPathPrefixFromRow(row), FileStorageGridRowHelper.GetOriginalFileNameFromRow(row), size,
-            FileStorageGridRowHelper.IsRowDeleted(row), FileStorageGridRowHelper.GetSourceFileNameFromRow(row), FileStoragePresence.None, ReadAvailability(row));
+            fileId, FileStorageGridRowHelper.GetPathPrefixFromRow(row), FileStorageGridRowHelper.GetOriginalFileNameFromRow(row), size, FileStorageGridRowHelper.IsRowDeleted(row),
+            FileStorageGridRowHelper.GetSourceFileNameFromRow(row), FileStoragePresence.None, ReadAvailability(row));
+
         return true;
     }
 
     private static FileAvailability? ReadAvailability(object? row)
     {
         var raw = ProjectedValueHelper.GetDisplayValue(row, "Availability");
-        return Enum.TryParse<FileAvailability>(raw, ignoreCase: true, out var parsed) ? parsed : null;
+        return Enum.TryParse<FileAvailability>(raw, true, out var parsed) ? parsed : null;
     }
 
-    internal static bool IsImmediateFile(string? parentPrefix, string? filePrefix)
-        => string.Equals(Normalize(parentPrefix), Normalize(filePrefix), StringComparison.Ordinal);
+    internal static bool IsImmediateFile(string? parentPrefix, string? filePrefix) => string.Equals(Normalize(parentPrefix), Normalize(filePrefix), StringComparison.Ordinal);
 
     internal static string? ImmediateChildFolderPrefix(string? parentPrefix, string? filePrefix)
     {
@@ -506,6 +497,7 @@ public static class FileStoragePathTreeBuilder
         if (!node.IsDirectory) {
             if (node is { FileId: { } id, IsDeleted: false })
                 ids.Add(id);
+
             return;
         }
 
@@ -518,6 +510,7 @@ public static class FileStoragePathTreeBuilder
         if (!node.IsDirectory) {
             if (node is { FileId: not null, IsDeleted: false })
                 yield return node;
+
             yield break;
         }
 
@@ -543,8 +536,10 @@ public static class FileStoragePathTreeBuilder
         var child = Normalize(prefix);
         if (parent == null)
             return child;
+
         if (child == null)
             return null;
+
         if (string.Equals(parent, child, StringComparison.Ordinal))
             return null;
 
@@ -613,6 +608,5 @@ public sealed class FileStoragePathTreeNodeKeyComparer : IEqualityComparer<FileS
         => ReferenceEquals(x, y) || (x is not null && y is not null && string.Equals(x.Key, y.Key, StringComparison.Ordinal));
 
     /// <inheritdoc />
-    public int GetHashCode(FileStoragePathTreeNode obj)
-        => obj is null ? 0 : StringComparer.Ordinal.GetHashCode(obj.Key);
+    public int GetHashCode(FileStoragePathTreeNode obj) => obj is null ? 0 : StringComparer.Ordinal.GetHashCode(obj.Key);
 }

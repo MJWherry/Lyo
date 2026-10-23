@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>PostgreSQL store for automation plans, with a query endpoint for the plan grid.</Description>
+        <PackageTags>web-automation automation-plans postgres postgresql</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder"/>
+        <PackageReference Include="Microsoft.Extensions.Options"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\Apps\Api\Lyo.Api\Lyo.Api.csproj"/>
+        <ProjectReference Include="..\..\..\..\Data\Json\Lyo.Json\Lyo.Json.csproj"/>
+        <ProjectReference Include="..\..\..\..\Data\Postgres\Lyo.Postgres\Lyo.Postgres.csproj"/>
+        <ProjectReference Include="..\Lyo.Web.Automation\Lyo.Web.Automation.csproj"/>
+    </ItemGroup>
+
+</Project>

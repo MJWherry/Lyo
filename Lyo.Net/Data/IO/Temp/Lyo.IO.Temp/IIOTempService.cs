@@ -2,13 +2,9 @@ using Lyo.IO.Temp.Models;
 
 namespace Lyo.IO.Temp;
 
-/// <summary>
-/// Owns a unique <see cref="ServiceDirectory" /> for temp files: sessions, keyed reuse, one-off paths, and age-based cleanup.
-/// </summary>
+/// <summary>Owns a unique <see cref="ServiceDirectory" /> for temp files: sessions, keyed reuse, one-off paths, and age-based cleanup.</summary>
 /// <remarks>
-/// <para>
-/// Disposing the service tries to delete the whole service folder. Dispose open <see cref="IIOTempSession" /> instances first so those folders are not still in use.
-/// </para>
+/// <para>Disposing the service tries to delete the whole service folder. Dispose open <see cref="IIOTempSession" /> instances first so those folders are not still in use.</para>
 /// </remarks>
 // ReSharper disable once InconsistentNaming
 public interface IIOTempService : IDisposable
@@ -19,9 +15,7 @@ public interface IIOTempService : IDisposable
     /// <summary>How many sessions are created and not yet disposed.</summary>
     int ActiveSessionCount { get; }
 
-    /// <summary>
-    /// Fires after <see cref="CreateSession" /> or the first <see cref="GetOrCreateSession" /> for a key. The argument is the session directory.
-    /// </summary>
+    /// <summary>Fires after <see cref="CreateSession" /> or the first <see cref="GetOrCreateSession" /> for a key. The argument is the session directory.</summary>
     event Action<string>? SessionCreated;
 
     /// <summary>Fires when a tracked session is disposed, including <see cref="ReleaseSession" />. The argument is the session directory.</summary>

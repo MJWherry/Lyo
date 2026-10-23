@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Job.Models.Enums;
 
 namespace Lyo.Job.Models.Response;
 
 /// <summary>A registered (live) worker instance, including host metadata reported when it registered.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record JobWorkerInstanceRes
 {
     /// <summary>Instance id assigned at register.</summary>
@@ -35,6 +37,6 @@ public sealed record JobWorkerInstanceRes
     /// <summary>When the row was last patched (heartbeat or a stop).</summary>
     public DateTime? UpdatedTimestamp { get; init; }
 
-    /// <summary>Built-in system info, queue subscriptions, and extras from the host. See <see cref="Lyo.Job.Models.Constants.WorkerMetadata"/>.</summary>
+    /// <summary>Built-in system info, queue subscriptions, and extras from the host. See <see cref="Lyo.Job.Models.Constants.WorkerMetadata" />.</summary>
     public IReadOnlyDictionary<string, string?>? Metadata { get; init; }
 }

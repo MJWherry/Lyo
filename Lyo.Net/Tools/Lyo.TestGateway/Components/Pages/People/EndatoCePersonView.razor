@@ -18,23 +18,28 @@
                         <MudExpansionPanel Text="Name" Expanded="true">
                             <MudGrid Spacing="2">
                                 <MudItem xs="12" sm="6" md="4">
-                                    <MudTextField T="string" Label="First Name" Value="@PersonViewHelpers.Field(Person.FirstName)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                    <MudTextField T="string" Label="First Name" Value="@PersonViewHelpers.Field(Person.FirstName)" Placeholder="@PersonViewHelpers.NullPlaceholder"
+                                                  ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
                                 </MudItem>
                                 <MudItem xs="12" sm="6" md="4">
-                                    <MudTextField T="string" Label="Middle Name" Value="@PersonViewHelpers.Field(Person.MiddleName)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                    <MudTextField T="string" Label="Middle Name" Value="@PersonViewHelpers.Field(Person.MiddleName)"
+                                                  Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
                                 </MudItem>
                                 <MudItem xs="12" sm="6" md="4">
-                                    <MudTextField T="string" Label="Last Name" Value="@PersonViewHelpers.Field(Person.LastName)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                    <MudTextField T="string" Label="Last Name" Value="@PersonViewHelpers.Field(Person.LastName)" Placeholder="@PersonViewHelpers.NullPlaceholder"
+                                                  ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
                                 </MudItem>
                             </MudGrid>
                         </MudExpansionPanel>
                         <MudExpansionPanel Text="Info">
                             <MudGrid Spacing="2">
                                 <MudItem xs="12" sm="6" md="3">
-                                    <MudTextField T="string" Label="DoB" Value="@PersonViewHelpers.FormatDate(Person.DateOfBirth)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                    <MudTextField T="string" Label="DoB" Value="@PersonViewHelpers.FormatDate(Person.DateOfBirth)" Placeholder="@PersonViewHelpers.NullPlaceholder"
+                                                  ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
                                 </MudItem>
                                 <MudItem xs="12" sm="6" md="3">
-                                    <MudTextField T="string" Label="Age" Value="@PersonViewHelpers.AgeLabel(Person.DateOfBirth)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                    <MudTextField T="string" Label="Age" Value="@PersonViewHelpers.AgeLabel(Person.DateOfBirth)" Placeholder="@PersonViewHelpers.NullPlaceholder"
+                                                  ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
                                 </MudItem>
                             </MudGrid>
                         </MudExpansionPanel>
@@ -62,24 +67,31 @@
                                             <LyoIdField Label="ID" Value="@address.Id"/>
                                         </MudItem>
                                         <MudItem xs="12" md="9">
-                                            <MudTextField T="string" Label="Street" Value="@PersonViewHelpers.Field(address.Street)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" Label="Street" Value="@PersonViewHelpers.Field(address.Street)"
+                                                          Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
                                         </MudItem>
                                     </Summary>
                                     <ChildContent>
                                         <MudItem xs="12" sm="6" md="3">
-                                            <MudTextField T="string" Label="Unit" Value="@PersonViewHelpers.Field(address.Unit)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" Label="Unit" Value="@PersonViewHelpers.Field(address.Unit)" Placeholder="@PersonViewHelpers.NullPlaceholder"
+                                                          ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
                                         </MudItem>
                                         <MudItem xs="12" sm="6" md="3">
-                                            <MudTextField T="string" Label="City" Value="@PersonViewHelpers.Field(address.City)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" Label="City" Value="@PersonViewHelpers.Field(address.City)" Placeholder="@PersonViewHelpers.NullPlaceholder"
+                                                          ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
                                         </MudItem>
                                         <MudItem xs="6" sm="3" md="2">
-                                            <MudTextField T="string" Label="State" Value="@PersonViewHelpers.Field(address.State)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" Label="State" Value="@PersonViewHelpers.Field(address.State)" Placeholder="@PersonViewHelpers.NullPlaceholder"
+                                                          ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
                                         </MudItem>
                                         <MudItem xs="6" sm="3" md="2">
-                                            <MudTextField T="string" Label="ZIP" Value="@PersonViewHelpers.Field(address.Zipcode)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" Label="ZIP" Value="@PersonViewHelpers.Field(address.Zipcode)" Placeholder="@PersonViewHelpers.NullPlaceholder"
+                                                          ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
                                         </MudItem>
                                         <MudItem xs="12" sm="6" md="4">
-                                            <MudTextField T="string" Label="Reported" Value="@PersonViewHelpers.FormatDateRange(address.FirstReportedDate, address.LastReportedDate)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" Label="Reported"
+                                                          Value="@PersonViewHelpers.FormatDateRange(address.FirstReportedDate, address.LastReportedDate)"
+                                                          Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
                                         </MudItem>
                                         <MudItem xs="12" sm="6" md="4">
                                             <LyoIdField Label="Person ID" Value="@address.EndatoCePersonId"/>
@@ -105,10 +117,12 @@
                                             <LyoIdField Label="ID" Value="@phone.Id"/>
                                         </MudItem>
                                         <MudItem xs="12" sm="6" md="5">
-                                            <MudTextField T="string" Label="Number" Value="@PersonViewHelpers.FormatPhone(phone.Number)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" Label="Number" Value="@PersonViewHelpers.FormatPhone(phone.Number)"
+                                                          Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
                                         </MudItem>
                                         <MudItem xs="12" sm="6" md="4">
-                                            <MudSelect T="string" Label="Type" Value="@phone.Type" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
+                                            <MudSelect T="string" Label="Type" Value="@phone.Type" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly
+                                                       Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
                                                 @foreach (var type in PhoneTypes) {
                                                     <MudSelectItem Value="@type">@type</MudSelectItem>
                                                 }
@@ -117,13 +131,15 @@
                                     </Summary>
                                     <ChildContent>
                                         <MudItem xs="12" sm="6" md="4">
-                                            <MudTextField T="string" Label="Reported" Value="@PersonViewHelpers.FormatDateRange(phone.FirstReportedDate, phone.LastReportedDate)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" Label="Reported" Value="@PersonViewHelpers.FormatDateRange(phone.FirstReportedDate, phone.LastReportedDate)"
+                                                          Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
                                         </MudItem>
                                         <MudItem xs="12" sm="6" md="4">
                                             <LyoIdField Label="Person ID" Value="@phone.EndatoCePersonId"/>
                                         </MudItem>
                                         <MudItem xs="12" sm="6" md="4" Class="d-flex align-end">
-                                            <LyoChip Spec="@LyoChips.FromBool(phone.IsConnected, "Connected", "Disconnected", Color.Success, Color.Default)" Variant="Variant.Outlined"/>
+                                            <LyoChip Spec="@LyoChips.FromBool(phone.IsConnected, "Connected", "Disconnected", Color.Success, Color.Default)"
+                                                     Variant="Variant.Outlined"/>
                                         </MudItem>
                                     </ChildContent>
                                 </LyoExpandableCard>
@@ -146,7 +162,8 @@
                                             <LyoIdField Label="ID" Value="@email.Id"/>
                                         </MudItem>
                                         <MudItem xs="12" sm="6" md="9">
-                                            <MudTextField T="string" Label="Email" Value="@PersonViewHelpers.Field(email.Email)" Placeholder="@PersonViewHelpers.NullPlaceholder" ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                                            <MudTextField T="string" Label="Email" Value="@PersonViewHelpers.Field(email.Email)" Placeholder="@PersonViewHelpers.NullPlaceholder"
+                                                          ReadOnly Variant="Variant.Outlined" Margin="Margin.Dense"/>
                                         </MudItem>
                                     </Summary>
                                     <ChildContent>

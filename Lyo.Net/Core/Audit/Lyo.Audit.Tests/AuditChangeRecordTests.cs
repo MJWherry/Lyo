@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 
 namespace Lyo.Audit.Tests;
@@ -7,7 +8,7 @@ public class AuditChangeRecordTests
     [Fact]
     public void AuditChange_WithDefaults_HasEmptyCollectionsAndGeneratedId()
     {
-        var change = new AuditChange(EntityRef.ForKey("Test.Entity", Guid.NewGuid().ToString()), new Dictionary<string, object?>(), new Dictionary<string, object?>());
+        var change = new AuditChange(EntityRef.ForKey("Test.Entity", LyoGuid.CreateV7().ToString()), new Dictionary<string, object?>(), new Dictionary<string, object?>());
         Assert.NotEqual(Guid.Empty, change.Id);
         Assert.True(change.Timestamp <= DateTime.UtcNow.AddSeconds(1) && change.Timestamp >= DateTime.UtcNow.AddSeconds(-1));
         Assert.Empty(change.OldValues);
@@ -30,7 +31,7 @@ public class AuditChangeRecordTests
     [Fact]
     public void AuditChange_ValueEquality_ComparesByValues()
     {
-        var id = Guid.NewGuid();
+        var id = LyoGuid.CreateV7();
         var timestamp = DateTime.UtcNow;
         var entity = EntityRef.ForKey("T", "A");
         var actor = EntityRef.ForKey("User", "u1");

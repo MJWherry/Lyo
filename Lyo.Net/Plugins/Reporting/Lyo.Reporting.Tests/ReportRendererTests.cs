@@ -1,12 +1,12 @@
 using System.Text;
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Csv;
 using Lyo.Csv.Models;
 using Lyo.Reporting.Models;
 using Lyo.Reporting.Models.Builders;
 using Lyo.Reporting.Models.Composition;
 using Lyo.Reporting.Models.Enums;
-using Lyo.Reporting.Models.Response;
 using Lyo.Reporting.Postgres.Rendering;
 using Lyo.Xlsx;
 using Lyo.Xlsx.Models;
@@ -28,7 +28,7 @@ public sealed class ReportRendererTests : IDisposable
         services.AddXlsxService();
         services.AddCsvService();
         _provider = services.BuildServiceProvider();
-        _tempDir = Path.Combine(Path.GetTempPath(), $"lyo-report-render-{Guid.NewGuid():N}");
+        _tempDir = Path.Combine(Path.GetTempPath(), $"lyo-report-render-{LyoGuid.CreateV7():N}");
         Directory.CreateDirectory(_tempDir);
     }
 
@@ -60,7 +60,7 @@ public sealed class ReportRendererTests : IDisposable
                 Format = ReportFormat.Xlsx,
                 OutputFilePath = outputPath,
                 SuggestedFileName = "multi.xlsx"
-            }, TestContext.Current.CancellationToken);
+            }, TestCt);
 
         Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", result.ContentType);
         Assert.True(new FileInfo(outputPath).Length > 0);
@@ -90,9 +90,7 @@ public sealed class ReportRendererTests : IDisposable
         var xlsx = _provider.GetRequiredService<IXlsxService>();
         var renderer = new XlsxReportRenderer(xlsx);
         var outputPath = Path.Combine(_tempDir, "dupes.xlsx");
-        await renderer.RenderAsync(
-            new() { ReportDataJson = ReportJson.Serialize(report), Format = ReportFormat.Xlsx, OutputFilePath = outputPath }, TestContext.Current.CancellationToken);
-
+        await renderer.RenderAsync(new() { ReportDataJson = ReportJson.Serialize(report), Format = ReportFormat.Xlsx, OutputFilePath = outputPath }, TestCt);
         var sheetNames = xlsx.Reader.ListSheetNames(outputPath);
         Assert.Equal(3, sheetNames.Count);
         Assert.Equal(sheetNames.Count, sheetNames.Distinct(StringComparer.OrdinalIgnoreCase).Count());
@@ -110,10 +108,10 @@ public sealed class ReportRendererTests : IDisposable
                 Format = ReportFormat.Csv,
                 OutputFilePath = outputPath,
                 SuggestedFileName = "multi.csv"
-            }, TestContext.Current.CancellationToken);
+            }, TestCt);
 
         Assert.Equal(ReportFormat.Csv.ContentType, result.ContentType);
-        var csv = await File.ReadAllTextAsync(outputPath, TestContext.Current.CancellationToken);
+        var csv = await File.ReadAllTextAsync(outputPath, TestCt);
         Assert.Contains("Ada", csv, StringComparison.Ordinal);
         Assert.Contains("Grace", csv, StringComparison.Ordinal);
 
@@ -140,10 +138,8 @@ public sealed class ReportRendererTests : IDisposable
 
         var renderer = new CsvReportRenderer(_provider.GetRequiredService<ICsvService>());
         var outputPath = Path.Combine(_tempDir, "big.csv");
-        await renderer.RenderAsync(
-            new() { ReportDataJson = json, Format = ReportFormat.Csv, OutputFilePath = outputPath }, TestContext.Current.CancellationToken);
-
-        var lines = await File.ReadAllLinesAsync(outputPath, TestContext.Current.CancellationToken);
+        await renderer.RenderAsync(new() { ReportDataJson = json, Format = ReportFormat.Csv, OutputFilePath = outputPath }, TestCt);
+        var lines = await File.ReadAllLinesAsync(outputPath, TestCt);
         var dataLines = lines.Where(l => !string.IsNullOrWhiteSpace(l)).ToList();
         Assert.Equal(rowCount + 1, dataLines.Count);
         Assert.Equal("Index", dataLines[0]);
@@ -158,7 +154,7 @@ public sealed class ReportRendererTests : IDisposable
         var renderer = new CsvReportRenderer(_provider.GetRequiredService<ICsvService>());
         var json = ReportJson.Serialize(ReportBuilder<object>.New().SetTitle("No tables").AddSection("S", s => s.AddText("nothing here")).Build());
         await Assert.ThrowsAsync<ReportValidationException>(() => renderer.RenderAsync(
-            new() { ReportDataJson = json, Format = ReportFormat.Csv, OutputFilePath = Path.Combine(_tempDir, "empty.csv") }, TestContext.Current.CancellationToken));
+            new() { ReportDataJson = json, Format = ReportFormat.Csv, OutputFilePath = Path.Combine(_tempDir, "empty.csv") }, TestCt));
     }
 
     [Fact]
@@ -185,10 +181,10 @@ public sealed class ReportRendererTests : IDisposable
                 Format = ReportFormat.Json,
                 OutputFilePath = outputPath,
                 SuggestedFileName = "report.json"
-            }, TestContext.Current.CancellationToken);
+            }, TestCt);
 
         Assert.Equal("application/json; charset=utf-8", result.ContentType);
-        var written = await File.ReadAllTextAsync(outputPath, TestContext.Current.CancellationToken);
+        var written = await File.ReadAllTextAsync(outputPath, TestCt);
         using var doc = JsonDocument.Parse(written);
         Assert.Equal("Multi", doc.RootElement.GetProperty("Title").GetString());
     }
@@ -205,9 +201,9 @@ public sealed class ReportRendererTests : IDisposable
                 Format = ReportFormat.Json,
                 OutputFilePath = outputPath,
                 Parameters = [new(Guid.Empty, Guid.Empty, "Period", "System.String", "\"Q4\"", null, null)]
-            }, TestContext.Current.CancellationToken);
+            }, TestCt);
 
-        var written = await File.ReadAllTextAsync(outputPath, TestContext.Current.CancellationToken);
+        var written = await File.ReadAllTextAsync(outputPath, TestCt);
         using var doc = JsonDocument.Parse(written);
         Assert.Equal("Q4", doc.RootElement.GetProperty("Title").GetString());
     }

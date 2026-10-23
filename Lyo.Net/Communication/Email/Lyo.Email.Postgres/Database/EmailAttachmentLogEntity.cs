@@ -1,14 +1,17 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Email.Postgres.Database;
 
 /// <summary>Attachment metadata for a logged email. File bytes are not stored.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class EmailAttachmentLogEntity
 {
     /// <summary>Primary key.</summary>
     [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; } = LyoGuid.CreateV7();
 
     /// <summary>Owning email-log id.</summary>
     [Required]
@@ -41,4 +44,7 @@ public class EmailAttachmentLogEntity
 
     /// <summary>When this row was last updated.</summary>
     public DateTime? UpdatedTimestamp { get; set; }
+
+    /// <summary>File name, content type, and size. The parent log is omitted.</summary>
+    public override string ToString() => $"{FileName} {ContentType} SizeBytes={SizeBytes}";
 }

@@ -1,4 +1,3 @@
-using Lyo.Api;
 using Lyo.Common.Metadata.Records;
 
 namespace Lyo.Api.Tests;
@@ -6,10 +5,7 @@ namespace Lyo.Api.Tests;
 public sealed class LyoApiCompressionDefaultsTests
 {
     [Fact]
-    public void MimeTypes_IsWildcard()
-    {
-        Assert.Equal(["*/*"], LyoApiCompressionDefaults.MimeTypes);
-    }
+    public void MimeTypes_IsWildcard() => Assert.Equal(["*/*"], LyoApiCompressionDefaults.MimeTypes);
 
     [Fact]
     public void ExcludedMimeTypes_OmitsOctetStreamAndCompressibleText()

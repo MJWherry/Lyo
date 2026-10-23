@@ -1,4 +1,5 @@
 using Lyo.Authentication.Models.Records;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 
 namespace Lyo.Authentication.Services.Users;
@@ -6,20 +7,15 @@ namespace Lyo.Authentication.Services.Users;
 /// <summary>Resolves and mirrors internal user scopes used for JWT/PAT issuance. Provider/link scopes are never consulted.</summary>
 public static class UserScopeNames
 {
-    /// <summary>
-    /// Prefers <paramref name="store" /> rows when any exist; otherwise falls back to <see cref="LyoUser.Scopes" /> (legacy <c>ScopesJson</c>) so existing users keep working
-    /// until an admin assigns rows.
-    /// </summary>
+    /// <summary>Prefers store rows. An empty or missing store returns no scopes.</summary>
     public static async Task<IReadOnlyList<string>> ResolveAsync(IUserScopeStore? store, LyoUser user, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(user);
-        if (store is not null) {
-            var rows = await store.ListForUserAsync(user.Id, null, ct).ConfigureAwait(false);
-            if (rows.Count > 0)
-                return DistinctNames(rows.Select(r => r.Name));
-        }
+        if (store is null)
+            return [];
 
-        return user.Scopes;
+        var rows = await store.ListForUserAsync(user.Id, null, ct).ConfigureAwait(false);
+        return DistinctNames(rows.Select(r => r.Name));
     }
 
     /// <summary>Inserts missing names for <paramref name="userId" />. Existing names are left alone.</summary>
@@ -33,7 +29,7 @@ public static class UserScopeNames
                 continue;
 
             var now = DateTime.UtcNow;
-            await store.CreateAsync(new LyoUserScope(Guid.NewGuid(), userId, name, now, null), tenantId, ct).ConfigureAwait(false);
+            await store.CreateAsync(new(LyoGuid.CreateV7(), userId, name, now, null), tenantId, ct).ConfigureAwait(false);
         }
     }
 
@@ -46,6 +42,5 @@ public static class UserScopeNames
         await users.SetScopesAsync(userId, names, tenantId, ct).ConfigureAwait(false);
     }
 
-    private static IReadOnlyList<string> DistinctNames(IEnumerable<string> names)
-        => names.Where(n => !string.IsNullOrWhiteSpace(n)).Distinct(StringComparer.Ordinal).ToArray();
+    private static IReadOnlyList<string> DistinctNames(IEnumerable<string> names) => names.Where(n => !string.IsNullOrWhiteSpace(n)).Distinct(StringComparer.Ordinal).ToArray();
 }

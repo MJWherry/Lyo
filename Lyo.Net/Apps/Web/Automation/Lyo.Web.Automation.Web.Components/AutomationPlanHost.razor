@@ -1,0 +1,48 @@
+@using Lyo.Web.Automation.Core
+@using Lyo.Web.Components.DataGrid
+@using Microsoft.AspNetCore.Components.Forms
+@namespace Lyo.Web.Automation.Web.Components
+
+<MudStack Spacing="3">
+    @if (_error != null) {
+        <MudAlert Severity="Severity.Error">@_error</MudAlert>
+    }
+    <MudPaper Class="pa-3" Outlined="true">
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.subtitle1">@(_plan?.Name ?? "No plan selected")</MudText>
+            <MudChip T="string" Size="Size.Small">@_source</MudChip>
+            <InputFile OnChange="LoadFileAsync" accept=".json,application/json"/>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_busy || _plan is null" OnClick="SaveAsync">Save</MudButton>
+        </MudStack>
+    </MudPaper>
+    <MudTabs @bind-ActivePanelIndex="_tab">
+        <MudTabPanel Text="Manage">
+            <LyoDataGridProjected ApiClient="ApiClient"
+                                  GridKey="automation-plans"
+                                  Route="@Constants.Rest.PlanRecords"
+                                  KeySelector="@(row => ProjectedGridKeys.GuidId(row))"
+                                  Features="@(LyoDataGridFeatureFlags.Filterable | LyoDataGridFeatureFlags.Searchable)">
+                <Columns>
+                    <LyoProjectedColumn Field="Name" Title="Name"/>
+                    <LyoProjectedColumn Field="StepCount" Title="Steps"/>
+                    <LyoProjectedColumn Field="UpdatedUtc" Title="Updated"/>
+                </Columns>
+                <RowMenuControls Context="item">
+                    <MudMenuItem OnClick="@(() => OpenRowAsync(item, false))">Open</MudMenuItem>
+                    <MudMenuItem OnClick="@(() => OpenRowAsync(item, true))">Run</MudMenuItem>
+                </RowMenuControls>
+            </LyoDataGridProjected>
+        </MudTabPanel>
+        <MudTabPanel Text="Editor">
+            @if (_plan is null) {
+                <MudAlert Severity="Severity.Info">Open a plan from the grid or load a file.</MudAlert>
+            }
+            else {
+                <AutomationPlanWorkbench Plan="_plan" PlanChanged="OnEdited"/>
+            }
+        </MudTabPanel>
+        <MudTabPanel Text="Runner">
+            <AutomationPlanRunnerView Client="Client" Plan="_plan"/>
+        </MudTabPanel>
+    </MudTabs>
+</MudStack>

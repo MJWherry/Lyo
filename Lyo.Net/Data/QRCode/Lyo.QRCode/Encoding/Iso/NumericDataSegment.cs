@@ -2,9 +2,7 @@ namespace Lyo.QRCode.Encoding.Iso;
 
 internal sealed partial class QRIsoEncoder
 {
-    /// <summary>
-    /// Encodes numeric plain text as QR binary. Groups of up to 3 digits use 10 bits; leftover digits use fewer bits.
-    /// </summary>
+    /// <summary>Encodes numeric plain text as QR binary. Groups of up to 3 digits use 10 bits; leftover digits use fewer bits.</summary>
     /// <param name="plainText">Numeric text to encode. Must contain only digits.</param>
     /// <returns>BitArray of the encoded numeric payload.</returns>
     private static BitArray PlainTextToBinaryNumeric(string plainText)
@@ -16,9 +14,7 @@ internal sealed partial class QRIsoEncoder
         return bitArray;
     }
 
-    /// <summary>
-    /// Encodes a slice of numeric plain text into an existing BitArray. Groups of up to 3 digits use 10 bits; leftover digits use fewer bits.
-    /// </summary>
+    /// <summary>Encodes a slice of numeric plain text into an existing BitArray. Groups of up to 3 digits use 10 bits; leftover digits use fewer bits.</summary>
     /// <param name="plainText">Numeric text to encode. Must contain only digits.</param>
     /// <param name="offset">Starting index in the text to encode from.</param>
     /// <param name="length">Number of characters to encode.</param>

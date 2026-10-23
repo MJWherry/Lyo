@@ -12,9 +12,9 @@ public sealed class InMemoryErrorInboxTests
         var r1 = Sample("a");
         var r2 = Sample("b");
         var r3 = Sample("c");
-        await inbox.RecordAsync(r1, TestContext.Current.CancellationToken);
-        await inbox.RecordAsync(r2, TestContext.Current.CancellationToken);
-        await inbox.RecordAsync(r3, TestContext.Current.CancellationToken);
+        await inbox.RecordAsync(r1, TestCt);
+        await inbox.RecordAsync(r2, TestCt);
+        await inbox.RecordAsync(r3, TestCt);
         Assert.False(inbox.TryGetOccurrence(r1.OccurrenceId, out var _));
         Assert.True(inbox.TryGetOccurrence(r2.OccurrenceId, out var _));
         Assert.True(inbox.TryGetOccurrence(r3.OccurrenceId, out var _));
@@ -24,7 +24,7 @@ public sealed class InMemoryErrorInboxTests
     public async Task ListGroups_AggregatesByKey()
     {
         var inbox = new InMemoryErrorInbox();
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         await inbox.RecordAsync(Sample("x"), ct);
         await inbox.RecordAsync(Sample("y"), ct);
         var groups = inbox.ListGroups(TimeSpan.FromHours(1));

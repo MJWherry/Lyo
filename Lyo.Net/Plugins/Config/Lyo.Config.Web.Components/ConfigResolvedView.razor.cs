@@ -2,6 +2,13 @@ namespace Lyo.Config.Web.Components;
 
 public partial class ConfigResolvedView
 {
+    private IReadOnlyList<ResolvedConfigItemRecord> _items = [];
+    private string? _loadedId;
+    private string? _loadedType;
+    private int _loadedVersion = int.MinValue;
+    private bool _loading;
+    private string? _resolveError;
+
     /// <summary>Store used to resolve and mutate bindings.</summary>
     [Parameter]
     [EditorRequired]
@@ -27,18 +34,10 @@ public partial class ConfigResolvedView
     [Parameter]
     public EventCallback<Guid> OnViewRevisions { get; set; }
 
-    private IReadOnlyList<ResolvedConfigItemRecord> _items = [];
-    private bool _loading;
-    private string? _resolveError;
-    private string? _loadedType;
-    private string? _loadedId;
-    private int _loadedVersion = int.MinValue;
-
     protected override async Task OnParametersSetAsync()
     {
-        if (string.Equals(_loadedType, SubjectEntityType, StringComparison.Ordinal)
-            && string.Equals(_loadedId, SubjectEntityId, StringComparison.Ordinal)
-            && _loadedVersion == DataVersion)
+        if (string.Equals(_loadedType, SubjectEntityType, StringComparison.Ordinal) && string.Equals(_loadedId, SubjectEntityId, StringComparison.Ordinal) &&
+            _loadedVersion == DataVersion)
             return;
 
         await ReloadAsync();
@@ -79,10 +78,7 @@ public partial class ConfigResolvedView
     {
         var defs = await Store.GetDefinitionsAsync(entity.EntityType);
         var bindings = await Store.GetBindingsAsync(entity, null);
-        return defs.Select(d => new ResolvedConfigItemRecord {
-            Definition = d,
-            Binding = bindings.FirstOrDefault(b => b.DefinitionId == d.Id)
-        }).ToList();
+        return defs.Select(d => new ResolvedConfigItemRecord { Definition = d, Binding = bindings.FirstOrDefault(b => b.DefinitionId == d.Id) }).ToList();
     }
 
     private async Task OpenBindingAsync(ResolvedConfigItemRecord item)
@@ -94,6 +90,7 @@ public partial class ConfigResolvedView
             { d => d.SubjectEntityId, SubjectEntityId.Trim() },
             { d => d.Binding, item.Binding }
         };
+
         var dialog = await DialogService.ShowAsync<ConfigBindingView>($"Binding · {item.Definition.Key}", parameters, LyoDialogPresets.Medium);
         var result = await dialog.Result;
         if (result is { Canceled: false }) {
@@ -109,10 +106,8 @@ public partial class ConfigResolvedView
             return;
 
         var confirmed = await DialogService.ShowMessageBoxAsync(
-            "Reset to default",
-            $"Remove the binding for '{item.Definition.Key}' so the definition default is used?",
-            yesText: "Reset",
-            cancelText: "Cancel");
+            "Reset to default", $"Remove the binding for '{item.Definition.Key}' so the definition default is used?", "Reset", cancelText: "Cancel");
+
         if (confirmed != true)
             return;
 
@@ -135,10 +130,9 @@ public partial class ConfigResolvedView
             return;
 
         var confirmed = await DialogService.ShowMessageBoxAsync(
-            "Clear binding",
-            $"Remove the binding for '{item.Definition.Key}'? The resolved value falls back to the definition default when one exists.",
-            yesText: "Clear",
+            "Clear binding", $"Remove the binding for '{item.Definition.Key}'? The resolved value falls back to the definition default when one exists.", "Clear",
             cancelText: "Cancel");
+
         if (confirmed != true)
             return;
 
@@ -155,8 +149,7 @@ public partial class ConfigResolvedView
         }
     }
 
-    private Task ViewRevisionsAsync(ResolvedConfigItemRecord item)
-        => item.Binding == null ? Task.CompletedTask : OnViewRevisions.InvokeAsync(item.Binding.Id);
+    private Task ViewRevisionsAsync(ResolvedConfigItemRecord item) => item.Binding == null ? Task.CompletedTask : OnViewRevisions.InvokeAsync(item.Binding.Id);
 
     private async Task NotifyChangedAsync()
     {

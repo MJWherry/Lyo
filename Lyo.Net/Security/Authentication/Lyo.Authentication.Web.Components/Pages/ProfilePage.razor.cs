@@ -1,28 +1,25 @@
-using System.Net.Http.Json;
-using System.Security.Claims;
 using Lyo.Api.Client;
-using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Authentication.Models;
 using Lyo.Authentication.Models.Response;
 using Lyo.Authentication.Web.Components.Models;
+using Lyo.Authorization;
 using Lyo.Query.Models.Common.Request;
-using Lyo.Web.Components;
 using Lyo.Web.Components.Dialog;
-using Lyo.Web.Primitives;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Lyo.Authentication.Web.Components.Pages;
 
 public partial class ProfilePage
 {
+    private string? _error;
+
+    private bool _loading = true;
+
+    private AuthMeSnapshot? _snapshot;
+
     /// <summary>When set, renders that user (needs <c>auth.users.read</c>). When <c>null</c>, renders the current user via <c>/auth/me</c>.</summary>
     [Parameter]
     public Guid? UserId { get; set; }
@@ -33,11 +30,7 @@ public partial class ProfilePage
 
     private IApiClient? ApiClient => Services.GetService<IApiClient>();
 
-    private AuthMeSnapshot? _snapshot;
-
-    private bool _loading = true;
-
-    private string? _error;
+    private IGrantStore? GrantStore => Services.GetService<IGrantStore>();
 
     protected override async Task OnParametersSetAsync()
     {
@@ -75,17 +68,14 @@ public partial class ProfilePage
         try {
             var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<AuthUserRes>>(
                 $"{Constants.Rest.Auth.User}/QueryConcrete", new() { Keys = [[_snapshot.User.Id]], Amount = 1 });
+
             var user = res?.Items?.FirstOrDefault();
             if (user is null) {
                 Snackbar.Add("Could not load the user for editing.", Severity.Warning);
                 return;
             }
 
-            var parameters = new DialogParameters<AuthUserEditDialog> {
-                { d => d.User, user },
-                { d => d.ApiClient, ApiClient },
-                { d => d.UserRoute, Constants.Rest.Auth.User }
-            };
+            var parameters = new DialogParameters<AuthUserEditDialog> { { d => d.User, user }, { d => d.ApiClient, ApiClient }, { d => d.UserRoute, Constants.Rest.Auth.User } };
             var dialog = await DialogService.ShowAsync<AuthUserEditDialog>("Edit user", parameters, LyoDialogPresets.Medium);
             var result = await dialog.Result;
             if (result is { Canceled: false })

@@ -15,10 +15,7 @@ namespace Lyo.Translation.Aws;
 
 /// <summary>Amazon Translate-backed implementation of text translation between languages.</summary>
 /// <remarks>
-/// <para>
-/// Thread-safe: instance fields are readonly, and bulk work uses the base class's thread-safe collections and synchronization
-/// primitives.
-/// </para>
+/// <para>Thread-safe: instance fields are readonly, and bulk work uses the base class's thread-safe collections and synchronization primitives.</para>
 /// </remarks>
 public sealed class AwsTranslationService : TranslationServiceBase
 {
@@ -133,8 +130,8 @@ public sealed class AwsTranslationService : TranslationServiceBase
     /// <summary>Infers language of <paramref name="text" /> through AWS Translate.</summary>
     /// <remarks>
     /// <para>
-    /// AWS Translate has no dedicated language-detection API. This calls TranslateText with source "auto" and target "en" so the
-    /// source language is reported. The translated string is thrown away.
+    /// AWS Translate has no dedicated language-detection API. This calls TranslateText with source "auto" and target "en" so the source language is reported. The translated string
+    /// is thrown away.
     /// </para>
     /// </remarks>
     /// <param name="text">Sample whose language should be identified.</param>

@@ -2,6 +2,13 @@ namespace Lyo.Job.Web.Components;
 
 public partial class JobManagement
 {
+    private bool _deepLinkHandled;
+    private Guid? _runsDefinitionId;
+    private string? _runsDefinitionName;
+
+    private int _tabIndex;
+    private bool _tabInitialized;
+
     /// <summary>Base route for job endpoints (for example "Job"). Definitions use BaseRoute/Definition, runs use BaseRoute/Run, and so on.</summary>
     [Parameter]
     [EditorRequired]
@@ -27,19 +34,11 @@ public partial class JobManagement
     [Parameter]
     public Guid? WorkflowId { get; set; }
 
-    private int _tabIndex;
-    private bool _tabInitialized;
-    private bool _deepLinkHandled;
-    private Guid? _runsDefinitionId;
-    private string? _runsDefinitionName;
-
     private string DefinitionRoute => $"{BaseRoute.TrimEnd('/')}/Definition";
 
     private string RunRoute => $"{BaseRoute.TrimEnd('/')}/Run";
 
     private string ScheduleRoute => $"{BaseRoute.TrimEnd('/')}/Schedule";
-
-    private string TriggerRoute => $"{BaseRoute.TrimEnd('/')}/Trigger";
 
     protected override void OnParametersSet()
     {
@@ -108,7 +107,7 @@ public partial class JobManagement
 
     private async Task OpenDefinitionAsync(Guid id)
     {
-        var req = new QueryConcreteReq { Keys = [[id]], Amount = 1, Include = [..JobDefinitionEditorQuery.Includes] };
+        var req = new QueryConcreteReq { Keys = [[id]], Amount = 1, Include = [.. JobDefinitionEditorQuery.Includes] };
         var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobDefinitionRes>>($"{DefinitionRoute}/QueryConcrete", req);
         var def = res?.Items?.FirstOrDefault();
         if (def is null) {
@@ -117,10 +116,7 @@ public partial class JobManagement
         }
 
         var parameters = new DialogParameters<JobDefinitionView> {
-            { d => d.JobDefinition, def },
-            { d => d.DefinitionRoute, DefinitionRoute },
-            { d => d.ScheduleRoute, ScheduleRoute },
-            { d => d.TriggerRoute, TriggerRoute }
+            { d => d.JobDefinition, def }, { d => d.DefinitionRoute, DefinitionRoute }, { d => d.ScheduleRoute, ScheduleRoute }
         };
 
         var dialog = await DialogService.ShowAsync<JobDefinitionView>("Job Definition", parameters, LyoDialogPresets.Large);

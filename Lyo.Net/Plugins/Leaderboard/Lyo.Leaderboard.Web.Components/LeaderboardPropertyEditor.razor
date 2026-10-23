@@ -1,0 +1,64 @@
+<LyoDialog Busy="@_saving" OnSave="SaveAsync" SaveDisabled="@(!_canSave)" DebugData="_edit">
+    <TitleContent>
+        <MudText Typo="Typo.h6">@(IsNew ? "New property" : _edit.Key)</MudText>
+    </TitleContent>
+    <TitleChips>
+        <LyoChip Spec="@LyoChips.Of(_edit.ValueKind.ToString(), Color.Info)"/>
+        <LyoChip Spec="@LyoChips.FromBool(_edit.Required, "Required", "Optional", Color.Warning, Color.Default)"/>
+    </TitleChips>
+    <ChildContent>
+        <LyoForm TModel="ScoringPropertyRecord" Model="_edit" ShowActions="false" HasChangesChanged="v => _formHasChanges = v">
+            <MudGrid Spacing="2">
+                <MudItem xs="12" sm="6">
+                    <LyoFormInput TModel="ScoringPropertyRecord" TValue="string" Model="_edit" PropertyExpression="@(m => m.Key)" Label="Key" AllowEditing="@IsNew"/>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <LyoFormInput TModel="ScoringPropertyRecord" TValue="string" Model="_edit" PropertyExpression="@(m => m.Label)" Label="Label" AllowEditing="true"/>
+                </MudItem>
+                <MudItem xs="12">
+                    <LyoFormInput TModel="ScoringPropertyRecord" TValue="string?" Model="_edit" PropertyExpression="@(m => m.Description)" Label="Description" AllowEditing="true"/>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudSelect T="ScoringValueKind" Label="Value kind" Variant="Variant.Outlined" Margin="Margin.Dense" Value="_edit.ValueKind" ValueChanged="OnValueKindChanged">
+                        @foreach (var value in Enum.GetValues<ScoringValueKind>()) {
+                            <MudSelectItem T="ScoringValueKind" Value="value">@value</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <LyoFormInput TModel="ScoringPropertyRecord" TValue="string?" Model="_edit" PropertyExpression="@(m => m.Unit)" Label="Unit" AllowEditing="true"/>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <LyoFormInput TModel="ScoringPropertyRecord" TValue="bool" Model="_edit" PropertyExpression="@(m => m.Required)" Label="Required" AllowEditing="true"
+                                  OnValueChanged="@(_ => StateHasChanged())"/>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <LyoFormInput TModel="ScoringPropertyRecord" TValue="int" Model="_edit" PropertyExpression="@(m => m.SortOrder)" Label="Sort order" AllowEditing="true"/>
+                </MudItem>
+            </MudGrid>
+        </LyoForm>
+
+        @if (_edit.ValueKind == ScoringValueKind.Choice) {
+            <MudText Typo="Typo.subtitle2" Class="mt-3">Choices</MudText>
+
+            @foreach (var (choice, index) in _choices.Select((c, i) => (c, i))) {
+                <MudGrid Spacing="1" @key="index">
+                    <MudItem xs="4">
+                        <MudTextField T="string" Label="Key" Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="choice.Key"/>
+                    </MudItem>
+                    <MudItem xs="4">
+                        <MudTextField T="string" Label="Label" Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="choice.Label"/>
+                    </MudItem>
+                    <MudItem xs="3">
+                        <MudNumericField T="double" Label="Value" Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="choice.Value"/>
+                    </MudItem>
+                    <MudItem xs="1" Class="d-flex align-end">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="@(() => _choices.RemoveAt(index))"/>
+                    </MudItem>
+                </MudGrid>
+            }
+
+            <MudButton Size="Size.Small" Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.Add" OnClick="AddChoice">Add choice</MudButton>
+        }
+    </ChildContent>
+</LyoDialog>

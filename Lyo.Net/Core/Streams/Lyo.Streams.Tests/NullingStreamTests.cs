@@ -32,7 +32,7 @@ public sealed class NullingStreamTests
     public async Task WriteAsync_Counts_Bytes()
     {
         await using var stream = new NullingStream();
-        await stream.WriteAsync(new byte[32].AsMemory(), TestContext.Current.CancellationToken);
+        await stream.WriteAsync(new byte[32].AsMemory(), TestCt);
         Assert.Equal(32L, stream.BytesWritten);
     }
 }

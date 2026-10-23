@@ -1,6 +1,7 @@
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Postgres.Database;
 using Lyo.Authentication.Services.Users;
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
@@ -45,6 +46,7 @@ public sealed class PostgresUserScopeStore : IUserScopeStore
             .OrderBy(s => s.CreatedTimestamp)
             .ToListAsync(ct)
             .ConfigureAwait(false);
+
         return rows.Select(ToRecord).ToArray();
     }
 
@@ -57,12 +59,13 @@ public sealed class PostgresUserScopeStore : IUserScopeStore
         var duplicate = await context.Scopes.AsNoTracking()
             .AnyAsync(s => s.UserId == scope.UserId && s.Name == scope.Name && s.TenantId == resolvedTenant, ct)
             .ConfigureAwait(false);
+
         if (duplicate)
             throw new ConflictException($"Scope '{scope.Name}' is already granted to user '{scope.UserId}'.");
 
         var entity = ToEntity(scope);
         if (entity.Id == Guid.Empty)
-            entity.Id = Guid.NewGuid();
+            entity.Id = LyoGuid.CreateV7();
 
         entity.TenantId = resolvedTenant;
         if (entity.CreatedTimestamp == default)
@@ -93,6 +96,5 @@ public sealed class PostgresUserScopeStore : IUserScopeStore
             UpdatedTimestamp = scope.UpdatedAt
         };
 
-    private static LyoUserScope ToRecord(UserScopeEntity entity)
-        => new(entity.Id, entity.UserId, entity.Name, entity.CreatedTimestamp, entity.UpdatedTimestamp);
+    private static LyoUserScope ToRecord(UserScopeEntity entity) => new(entity.Id, entity.UserId, entity.Name, entity.CreatedTimestamp, entity.UpdatedTimestamp);
 }

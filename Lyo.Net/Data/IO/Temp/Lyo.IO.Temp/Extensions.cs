@@ -1,6 +1,6 @@
 using Lyo.Exceptions;
-using Lyo.IO.Temp.Models;
 using Lyo.IO.FileSystem;
+using Lyo.IO.Temp.Models;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +23,7 @@ public static class Extensions
                 if (delay.HasValue)
                     o.InitialDelay = delay.Value;
             });
+
             services.TryAddSingleton(sp => sp.GetRequiredService<IOptions<IOTempCleanupOptions>>().Value);
         }
     }
@@ -81,9 +82,7 @@ public static class Extensions
             return services;
         }
 
-        /// <summary>
-        /// Registers <see cref="IIOTempService" /> and hosts <see cref="IOTempCleanupWorker" />, which calls <see cref="IIOTempService.Cleanup" /> on a timer.
-        /// </summary>
+        /// <summary>Registers <see cref="IIOTempService" /> and hosts <see cref="IOTempCleanupWorker" />, which calls <see cref="IIOTempService.Cleanup" /> on a timer.</summary>
         public IServiceCollection AddIOTempServiceWithAutoCleanup(TimeSpan? cleanupInterval = null, TimeSpan? initialDelay = null)
         {
             ArgumentHelpers.ThrowIfNull(services);

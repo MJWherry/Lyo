@@ -1,14 +1,10 @@
-using Lyo.Drift.Postgres.Database;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Lyo.Drift.Postgres;
 
-/// <summary>
-/// Optional hosted prune: deletes snapshots and change events older than <see cref="PostgresDriftOptions.SnapshotRetention" />, keeping the latest snapshot per lineage.
-/// </summary>
+/// <summary>Optional hosted prune: deletes snapshots and change events older than <see cref="PostgresDriftOptions.SnapshotRetention" />, keeping the latest snapshot per lineage.</summary>
 public sealed class DriftRetentionService(IServiceScopeFactory scopes, ILogger<DriftRetentionService> logger) : BackgroundService
 {
     private static readonly TimeSpan Interval = TimeSpan.FromHours(1);

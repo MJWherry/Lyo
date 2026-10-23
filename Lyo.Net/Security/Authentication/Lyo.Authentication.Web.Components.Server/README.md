@@ -1,6 +1,7 @@
 # Lyo.Authentication.Web.Components.Server
 
-Blazor Server host adapter for [`Lyo.Authentication.Web.Components`](../Lyo.Authentication.Web.Components/README.md). Plugs the shared login / debug / profile pages into the BFF-cookie auth runtime in [`Lyo.Authentication.Client`](../Lyo.Authentication.Client/README.md).
+Blazor Server host adapter for [`Lyo.Authentication.Web.Components`](../Lyo.Authentication.Web.Components/README.md). Plugs the shared login / debug / profile pages into the
+BFF-cookie auth runtime in [`Lyo.Authentication.Client`](../Lyo.Authentication.Client/README.md).
 
 ## Examples
 
@@ -29,11 +30,11 @@ app.MapLyoAuthSignOut();
 
 ## What's inside
 
-| Service | Role |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ServerAuthSignInLauncher` | Sign-in 302s through the consumer's `/auth/sign-in/{provider}` endpoint. Sign-out submits a POST to `/auth/sign-out` via a dynamically constructed form (CSRF-safe). |
+| Service                     | Role                                                                                                                                                                                                                 |
+|-----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ServerAuthSignInLauncher`  | Sign-in 302s through the consumer's `/auth/sign-in/{provider}` endpoint. Sign-out submits a POST to `/auth/sign-out` via a dynamically constructed form (CSRF-safe).                                                 |
 | `ServerAuthSessionAccessor` | Unseals the HttpOnly session cookie via `IDataProtectionProvider`, reads the active `LyoAuthSession` from `LyoAuthSessionStore`, and rotates it through `/auth/refresh` for the debug page's "Refresh token" button. |
-| `ServerAuthUserClient` | Typed `HttpClient` with `AddLyoAuthHandler()` so calls to `GET /auth/me` and `GET /auth/users/{id}` carry the bearer and refresh on 401. |
+| `ServerAuthUserClient`      | Typed `HttpClient` with `AddLyoAuthHandler()` so calls to `GET /auth/me` and `GET /auth/users/{id}` carry the bearer and refresh on 401.                                                                             |
 
 ## Registration
 
@@ -49,18 +50,19 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Api.Client` (transitive, lyo)
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Authentication.Models` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Diagnostic.AspNetCore` (transitive, lyo)
 - `Lyo.Encryption` (transitive, lyo)
+- `Lyo.EntityReference.Models` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Http.Client` (transitive, lyo)
 - `Lyo.IO.FileSystem` (transitive, lyo)
 - `Lyo.IO.Temp` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
@@ -68,13 +70,17 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
+- `Lyo.Schedule.Models` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
 - `Lyo.Validation` (transitive, lyo)
 - `Lyo.Validation.Models` (transitive, lyo)
 - `Lyo.Web.Components` (transitive, lyo)
 - `Lyo.Web.Components.Export` (transitive, lyo)
 - `Lyo.Web.Components.Export.Csv` (transitive, lyo)
+- `Lyo.Web.Components.Export.Toml` (transitive, lyo)
 - `Lyo.Web.Components.Export.Xlsx` (transitive, lyo)
+- `Lyo.Web.Components.Export.Xml` (transitive, lyo)
+- `Lyo.Web.Components.Export.Yaml` (transitive, lyo)
 - `Lyo.Web.Primitives` (transitive, lyo)
 - `AngleSharp` `1.5.0` (transitive, third-party)
 - `Blazored.LocalStorage` `4.5.0` (transitive, third-party)
@@ -91,6 +97,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.RateLimiting` `10.0.5` (transitive, microsoft)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

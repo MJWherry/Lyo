@@ -13,10 +13,7 @@ public interface IDiagnosticContextBuilder
     /// <summary>Builds from an already-decoded trace (avoids decoding twice in middleware).</summary>
     DiagnosticContext Build(DecodedStackTrace trace, Exception exception, RequestMetadata request);
 
-    /// <summary>
-    /// Like <see cref="Build(Exception)" /> but uses <see cref="IStackTraceDecoder.DecodeAsync(Exception, CancellationToken)" /> when a package store is
-    /// configured.
-    /// </summary>
+    /// <summary>Like <see cref="Build(Exception)" /> but uses <see cref="IStackTraceDecoder.DecodeAsync(Exception, CancellationToken)" /> when a package store is configured.</summary>
     Task<DiagnosticContext> BuildAsync(Exception exception, CancellationToken ct = default);
 
     /// <summary>Like <see cref="Build(Exception, RequestMetadata)" /> but uses asynchronous stack decode when required.</summary>

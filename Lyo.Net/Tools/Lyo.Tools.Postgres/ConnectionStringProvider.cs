@@ -1,9 +1,6 @@
 namespace Lyo.Tools.Postgres;
 
-/// <summary>
-/// Session-scoped mutable singleton for the active PostgreSQL connection string. Callers read ConnectionString when they use it so a change is visible
-/// right away.
-/// </summary>
+/// <summary>Session-scoped mutable singleton for the active PostgreSQL connection string. Callers read ConnectionString when they use it so a change is visible right away.</summary>
 public sealed class ConnectionStringProvider
 {
     public string? ConnectionString { get; set; }

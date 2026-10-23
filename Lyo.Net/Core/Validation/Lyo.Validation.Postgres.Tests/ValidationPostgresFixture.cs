@@ -8,6 +8,6 @@ namespace Lyo.Validation.Postgres.Tests;
 public sealed class ValidationPostgresFixture : PostgresServiceFixtureBase<ValidationDbContext>
 {
     /// <inheritdoc />
-    protected override void ConfigureServices(IServiceCollection services, string connectionString) =>
-        services.AddPostgresValidationStore(new PostgresValidationOptions { ConnectionString = connectionString, EnableAutoMigrations = true });
+    protected override void ConfigureServices(IServiceCollection services, string connectionString)
+        => services.AddPostgresValidationStore(new PostgresValidationOptions { ConnectionString = connectionString, EnableAutoMigrations = true });
 }

@@ -34,7 +34,7 @@ public sealed class TesseractJapaneseOcrEngineTests(TesseractOcrTestFixture fixt
 
         using var engine = new TesseractOcrEngine(shared, tess);
         await using var ms = new MemoryStream(png);
-        var result = await engine.ReadAsync(ms, new() { Languages = "jpn", PageSegmentationMode = OcrPageSegmentationMode.SingleBlock }, TestContext.Current.CancellationToken);
+        var result = await engine.ReadAsync(ms, new() { Languages = "jpn", PageSegmentationMode = OcrPageSegmentationMode.SingleBlock }, TestCt);
         SkipIfNativeLibrariesUnavailable(result);
         Assert.True(result.IsSuccess, result.Errors is { } e ? string.Join("; ", e.Select(x => x.Message)) : "");
         Assert.NotNull(result.Data);
@@ -60,7 +60,7 @@ public sealed class TesseractJapaneseOcrEngineTests(TesseractOcrTestFixture fixt
 
         using var engine = new TesseractOcrEngine(shared, tess);
         await using var ms = new MemoryStream(png);
-        var result = await engine.ReadAsync(ms, new() { Languages = "eng+jpn", PageSegmentationMode = OcrPageSegmentationMode.SingleBlock }, TestContext.Current.CancellationToken);
+        var result = await engine.ReadAsync(ms, new() { Languages = "eng+jpn", PageSegmentationMode = OcrPageSegmentationMode.SingleBlock }, TestCt);
         SkipIfNativeLibrariesUnavailable(result);
         Assert.True(result.IsSuccess, result.Errors is { } e ? string.Join("; ", e.Select(x => x.Message)) : "");
         Assert.NotNull(result.Data);

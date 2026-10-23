@@ -4,12 +4,12 @@ namespace Lyo.Job.Web.Components;
 
 public partial class JobWorkerInstanceView
 {
+    private List<KeyValuePair<string, string?>> _systemPairs = [];
+    private List<KeyValuePair<string, string?>> _workerPairs = [];
+
     [Parameter]
     [EditorRequired]
     public JobWorkerInstanceRes Instance { get; set; } = null!;
-
-    private List<KeyValuePair<string, string?>> _systemPairs = [];
-    private List<KeyValuePair<string, string?>> _workerPairs = [];
 
     private string CpuSummary => Combine(Meta(Constants.WorkerMetadata.ProcessorCount) is { } count ? $"{count} logical" : null, Meta(Constants.WorkerMetadata.CpuModel));
 
@@ -21,6 +21,7 @@ public partial class JobWorkerInstanceView
             var gcHeap = FormatBytes(Meta(Constants.WorkerMetadata.GcHeapBytes));
             if (workingSet == "—" && gcHeap == "—")
                 return "—";
+
             return gcHeap == "—" ? workingSet : $"{workingSet} working / {gcHeap} GC";
         }
     }
@@ -46,6 +47,7 @@ public partial class JobWorkerInstanceView
     {
         if (string.IsNullOrWhiteSpace(left))
             return string.IsNullOrWhiteSpace(right) ? "—" : right!;
+
         return string.IsNullOrWhiteSpace(right) ? left : $"{left} · {right}";
     }
 
@@ -53,8 +55,10 @@ public partial class JobWorkerInstanceView
     {
         if (string.IsNullOrWhiteSpace(value))
             return "—";
+
         if (key.EndsWith("Bytes", StringComparison.OrdinalIgnoreCase))
             return FormatBytes(value);
+
         return value;
     }
 

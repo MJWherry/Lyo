@@ -10,11 +10,12 @@ using Lyo.Common.Core.Extensions;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 using Microsoft.Extensions.Logging;
+
 namespace Lyo.Authentication.Services.Opaque;
 
 /// <summary>
-/// Default <see cref="IApiTokenIssuer" />. Mints via <see cref="ApiTokenCodec.Mint" />, persists via <see cref="IApiTokenStore" />, retries a few times on id
-/// collisions, and refuses to issue for disabled users.
+/// Default <see cref="IApiTokenIssuer" />. Mints via <see cref="ApiTokenCodec.Mint" />, persists via <see cref="IApiTokenStore" />, retries a few times on id collisions, and
+/// refuses to issue for disabled users.
 /// </summary>
 public sealed class DefaultApiTokenIssuer : IApiTokenIssuer
 {

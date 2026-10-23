@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildGridWhere } from "lyo-query";
-import { buildProjectedQuery, buildRootQuery } from "./buildQuery.js";
+import { buildConcreteQuery, buildProjectedQuery, buildRootQuery } from "./buildQuery.js";
 import { createLyoColumn } from "./types.js";
 
 describe("buildProjectedQuery", () => {
@@ -30,6 +30,37 @@ describe("buildProjectedQuery", () => {
         quickSearchProperties: ["FirstName", "LastName"],
       })
     );
+  });
+});
+
+describe("sortKey", () => {
+  const columns = [
+    createLyoColumn({ id: "id", field: "Id", header: "ID" }),
+    createLyoColumn({ id: "owner", field: "OwnerName", header: "Owner", sortKey: "Owner.LastName" }),
+  ];
+
+  it("maps a column's sort to its sortKey in the request", () => {
+    const q = buildProjectedQuery({
+      start: 0,
+      amount: 10,
+      filters: [],
+      quickSearchProperties: [],
+      sorts: [
+        { PropertyName: "OwnerName", Direction: "Desc", Priority: 0 },
+        { PropertyName: "Id", Direction: "Asc", Priority: 1 },
+      ],
+      columns,
+      hiddenFields: new Set(),
+    });
+    expect(q.SortBy).toEqual([
+      { PropertyName: "Owner.LastName", Direction: "Desc", Priority: 0 },
+      { PropertyName: "Id", Direction: "Asc", Priority: 1 },
+    ]);
+  });
+
+  it("concrete queries map sortKey too", () => {
+    const q = buildConcreteQuery({ start: 0, amount: 10, filters: [], quickSearchProperties: [], sorts: [{ PropertyName: "OwnerName", Direction: "Asc" }], columns });
+    expect(q.SortBy).toEqual([{ PropertyName: "Owner.LastName", Direction: "Asc" }]);
   });
 });
 

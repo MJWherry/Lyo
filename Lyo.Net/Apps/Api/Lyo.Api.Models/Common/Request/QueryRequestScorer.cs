@@ -287,6 +287,8 @@ public static class QueryRequestScorer
             ComparisonOperatorEnum.NotIn => 5 + ValueItemCountComplexity(value),
             ComparisonOperatorEnum.Regex => 8 + RegexLengthComplexity(value),
             ComparisonOperatorEnum.NotRegex => 9 + RegexLengthComplexity(value),
+            ComparisonOperatorEnum.Fuzzy => 6,
+            ComparisonOperatorEnum.NotFuzzy => 7,
             var _ => 1
         };
 

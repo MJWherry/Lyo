@@ -9,6 +9,10 @@
             }
         </MudSelect>
         <MudButton Variant="Variant.Outlined" OnClick="LoadWorkflowAsync" StartIcon="@Icons.Material.Filled.Refresh" aria-label="Reload selected workflow">Refresh</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="StartWorkflowAsync" StartIcon="@Icons.Material.Filled.PlayArrow"
+                   Disabled="@(_starting || _selectedWorkflow is null || !_selectedWorkflow.Enabled)" aria-label="Start a run of the selected workflow">
+            Run now
+        </MudButton>
     </MudStack>
 
     @if (_loading) {
@@ -24,22 +28,7 @@
                 <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2">@_selectedWorkflow.Description</MudText>
             }
 
-            <MudTimeline TimelinePosition="TimelinePosition.Start">
-                @foreach (var step in (_selectedWorkflow.Steps ?? []).OrderBy(s => s.StepOrder)) {
-                    <MudTimelineItem Color="@GetStepColor(step)">
-                        <ItemContent>
-                            <MudText Typo="Typo.subtitle2">@step.StepOrder. @step.StepName</MudText>
-                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
-                                Definition: @(step.JobDefinition?.Name ?? step.JobDefinitionId.ToString()[..8])
-                                @if (!string.IsNullOrWhiteSpace(step.DependsOnStepIds)) {
-                                    <span> · Depends on: @step.DependsOnStepIds</span>
-                                }
-                            </MudText>
-                            <LyoChip Class="mt-1" Label="@($"{step.FailurePolicy} on failure")"/>
-                        </ItemContent>
-                    </MudTimelineItem>
-                }
-            </MudTimeline>
+            <JobWorkflowGraphView Steps="@GraphSteps" Definitions="@GraphDefinitions"/>
         </MudPaper>
     }
 </MudStack>

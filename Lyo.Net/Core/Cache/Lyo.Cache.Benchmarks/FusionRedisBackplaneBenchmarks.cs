@@ -7,8 +7,8 @@ using Testcontainers.Redis;
 namespace Lyo.Cache.Benchmarks;
 
 /// <summary>
-/// Times FusionCache operations with a StackExchange Redis backplane so backplane overhead is visible against in-process FusionCache. Needs Docker; starts a
-/// throwaway Redis container in <see cref="GlobalSetup" />.
+/// Times FusionCache operations with a StackExchange Redis backplane so backplane overhead is visible against in-process FusionCache. Needs Docker; starts a throwaway Redis
+/// container in <see cref="GlobalSetup" />.
 /// </summary>
 [BenchmarkDescription(
     "FusionCache get/set/invalidate-by-tag with a StackExchange Redis backplane (throwaway Docker Redis), surfacing backplane overhead vs the in-process FusionCache.")]

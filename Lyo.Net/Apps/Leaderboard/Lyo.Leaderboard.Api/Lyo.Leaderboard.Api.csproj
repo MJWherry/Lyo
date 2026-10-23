@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>HTTP API for Lyo.Leaderboard. Embed via AddLeaderboardApi / MapLeaderboardApiEndpoints.</Description>
+        <PackageTags>leaderboard api aspnetcore</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Plugins\Leaderboard\Lyo.Leaderboard\Lyo.Leaderboard.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\Leaderboard\Lyo.Leaderboard.Postgres\Lyo.Leaderboard.Postgres.csproj"/>
+        <ProjectReference Include="..\Lyo.Leaderboard.Api.Models\Lyo.Leaderboard.Api.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Json\Lyo.Json\Lyo.Json.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Query\Lyo.Query\Lyo.Query.csproj"/>
+        <ProjectReference Include="..\..\..\Data\QRCode\Lyo.QRCode\Lyo.QRCode.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\ShortUrl\Lyo.ShortUrl\Lyo.ShortUrl.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\ShortUrl\Lyo.ShortUrl.Postgres\Lyo.ShortUrl.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Communication\Email\Lyo.Email.Smtp\Lyo.Email.Smtp.csproj"/>
+        <ProjectReference Include="..\..\..\Communication\Email\Lyo.Email\Lyo.Email.csproj"/>
+        <ProjectReference Include="..\..\Api\Lyo.Api\Lyo.Api.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Algorithms\Lyo.Algorithms\Lyo.Algorithms.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Algorithms\Lyo.Algorithms.Postgres\Lyo.Algorithms.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Security\KeyStore\Lyo.KeyStore\Lyo.KeyStore.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Authentication\Lyo.Authentication\Lyo.Authentication.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Authentication\Lyo.Authentication.AspNetCore\Lyo.Authentication.AspNetCore.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Authentication\Lyo.Authentication.Postgres\Lyo.Authentication.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Authentication\Lyo.Authentication.Google\Lyo.Authentication.Google.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Authentication\Lyo.Authentication.Keycloak\Lyo.Authentication.Keycloak.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Authentication\Lyo.Authentication.OpenIdConnect\Lyo.Authentication.OpenIdConnect.csproj"/>
+    </ItemGroup>
+</Project>

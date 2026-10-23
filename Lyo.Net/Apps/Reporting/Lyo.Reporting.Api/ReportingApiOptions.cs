@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Api.ApiEndpoint;
 using Lyo.Reporting.Postgres.Database;
 
@@ -7,6 +8,7 @@ namespace Lyo.Reporting.Api;
 /// Per-surface auth for reporting endpoints. Every surface starts as <see cref="EndpointAuth.RequireAuthorization()" /> (signed-in user). Hosts must choose
 /// <see cref="EndpointAuth.Anonymous()" /> on purpose. Set policies for Worker/Discord Generate (for example <c>"ReportingGenerate"</c>).
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ReportingApiOptions
 {
     /// <summary>Auth on Definition CRUD (and Export when that feature is on). Defaults to requiring authorization.</summary>
@@ -22,15 +24,15 @@ public sealed class ReportingApiOptions
     public EndpointAuth? DownloadAuth { get; init; } = EndpointAuth.RequireAuthorization();
 
     /// <summary>
-    /// Host factory that opens a readable stream for a generation's stored output (for example FileStorage lookup by <see cref="ReportGeneration.OutputFileId" />). The
-    /// Download route is mapped only when this is set. Return null if the output is gone.
+    /// Host factory that opens a readable stream for a generation's stored output (for example FileStorage lookup by <see cref="ReportGeneration.OutputFileId" />). The Download
+    /// route is mapped only when this is set. Return null if the output is gone.
     /// </summary>
     public Func<ReportDownloadContext, CancellationToken, Task<Stream?>>? DownloadStreamFactory { get; init; }
 
     /// <summary>
     /// Whether an unauthenticated caller may set <c>CreatedBy</c> on a generate request. Defaults to false: the field is audit data, and trusting it from an anonymous request
-    /// lets a caller pin a generation on anyone. Authenticated requests always use the signed-in identity, whatever this flag is. Turn it on only for trusted
-    /// service-to-service callers that have no user identity.
+    /// lets a caller pin a generation on anyone. Authenticated requests always use the signed-in identity, whatever this flag is. Turn it on only for trusted service-to-service callers
+    /// that have no user identity.
     /// </summary>
     public bool AllowAnonymousCreatedBy { get; init; }
 
@@ -46,6 +48,22 @@ public sealed class ReportingApiOptions
             DownloadAuth = auth,
             DownloadStreamFactory = downloadStreamFactory
         };
+
+    /// <summary>Auth mode per surface and whether download is configured. The stream factory is omitted.</summary>
+    public override string ToString() =>
+        $"Definition={Describe(DefinitionAuth)} Generation={Describe(GenerationAuth)} Generate={Describe(GenerateAuth)} " +
+        $"Download={Describe(DownloadAuth)} DownloadConfigured={DownloadStreamFactory is not null} AllowAnonymousCreatedBy={AllowAnonymousCreatedBy}";
+
+    private static string Describe(EndpointAuth? auth)
+    {
+        if (auth is null)
+            return "inherit";
+
+        if (auth.AllowAnonymous)
+            return "anonymous";
+
+        return auth.AuthorizationPolicies is { Length: > 0 } ? string.Join("+", auth.AuthorizationPolicies) : "authorized";
+    }
 }
 
 /// <summary>Context given to <see cref="ReportingApiOptions.DownloadStreamFactory" /> for a downloadable generation.</summary>

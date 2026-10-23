@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 
 namespace Lyo.ShortUrl.Postgres.Database;
 
 /// <summary>Row that stores a click/access event for a short URL.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class UrlClickEntity
 {
     /// <summary>Holds the unique identifier.</summary>
@@ -34,4 +36,7 @@ public sealed class UrlClickEntity
     /// <summary>Value of the navigation property to the short URL.</summary>
     [ForeignKey(nameof(ShortUrlId))]
     public ShortUrlEntity? ShortUrl { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

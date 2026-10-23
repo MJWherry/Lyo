@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+
 namespace Lyo.FileMetadataStore.Postgres;
 
 /// <summary>DI helpers that register the PostgreSQL file metadata store and related DbContext factory.</summary>
@@ -52,7 +53,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresFileMetadataStoreOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddFileMetadataStoreDbContextFactory(options);
         }
 
@@ -64,7 +64,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPostgresDbContextFactory<FileMetadataStoreDbContext, PostgresFileMetadataStoreOptions>(options);
-
             return services;
         }
 

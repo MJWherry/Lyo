@@ -4,9 +4,7 @@ using Lyo.Exceptions;
 
 namespace Lyo.Config;
 
-/// <summary>
-/// Wires URL segments under <c>/api/config/{appKind}/{appId}</c> to <see cref="EntityRef" /> with <see cref="AppEntityType" /> and compound id <c>{kind}:{id}</c>.
-/// </summary>
+/// <summary>Wires URL segments under <c>/api/config/{appKind}/{appId}</c> to <see cref="EntityRef" /> with <see cref="AppEntityType" /> and compound id <c>{kind}:{id}</c>.</summary>
 public static class AppConfigEntity
 {
     /// <summary>Persisted <see cref="EntityRef.EntityType" /> for definitions/bindings serviced by Config API routes.</summary>

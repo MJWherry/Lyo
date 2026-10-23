@@ -4,7 +4,9 @@ EF Core store behind `Lyo.PackageMetadata.IPackageMetadataStore`.
 
 ## What problem this solves
 
-Stripped namespaces and assembly-qualified tokens show up in stack traces. [`Lyo.PackageMetadata`](../Lyo.PackageMetadata/README.md) resolves which NuGet or Git package owns a prefix for diagnostics overlays. `PostgresPackageMetadataStore` implements the store against normalized tables (`PackageStackPrefix` rows ordered by `NormalizedPrefix` length) so resolution is `O(sorted prefixes)` in-process after each DB read. The bulk API loads all prefixes once per call when caching allows.
+Stripped namespaces and assembly-qualified tokens show up in stack traces. [`Lyo.PackageMetadata`](../Lyo.PackageMetadata/README.md) resolves which NuGet or Git package owns a
+prefix for diagnostics overlays. `PostgresPackageMetadataStore` implements the store against normalized tables (`PackageStackPrefix` rows ordered by `NormalizedPrefix` length) so
+resolution is `O(sorted prefixes)` in-process after each DB read. The bulk API loads all prefixes once per call when caching allows.
 
 ## How storage is modeled (conceptual)
 
@@ -21,10 +23,10 @@ Stripped namespaces and assembly-qualified tokens show up in stack traces. [`Lyo
 
 Repeated DB chatter is gated by `PostgresPackageMetadataOptions.PrefixCatalogCaching`:
 
-| Mode | What it means |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mode                              | What it means                                                                                                                                                     |
+|-----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `InvalidateOnRegisterManyOrClear` | Keep an immutable in-process snapshot. Reload when mutations bump the generation counter (`RegisterManyAsync` or `ClearPrefixCatalogCache` on the same instance). |
-| `Disabled` | Always hit Postgres. Wrap with an outer cache yourself if importing huge catalogs asynchronously. |
+| `Disabled`                        | Always hit Postgres. Wrap with an outer cache yourself if importing huge catalogs asynchronously.                                                                 |
 
 When caching is disabled, `ClearPrefixCatalogCache()` is a no-op on the cache. It only bumps the generation.
 
@@ -32,7 +34,8 @@ Cross-process writes do not invalidate. Disable the snapshot or bust the cache a
 
 ## DI registration (`Extensions`)
 
-- **AddPackageMetadataDbContextFactory** (and `FromConfiguration`). Binds `PostgresPackageMetadataOptions`, registers the `PackageMetadataDbContext` factory, attaches `AddPostgresMigrations` bootstrap.
+- **AddPackageMetadataDbContextFactory** (and `FromConfiguration`). Binds `PostgresPackageMetadataOptions`, registers the `PackageMetadataDbContext` factory, attaches
+  `AddPostgresMigrations` bootstrap.
 - **AddPostgresPackageMetadataStore.** Factory plus `IPackageMetadataStore` as `PostgresPackageMetadataStore` singleton resolving options and `IDbContextFactory`.
 
 ## Schema and migrations
@@ -52,6 +55,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Postgres` (direct, lyo)
 - `Microsoft.EntityFrameworkCore` `10.0.5` (direct, microsoft)
 - `Microsoft.EntityFrameworkCore.Design` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Options` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)

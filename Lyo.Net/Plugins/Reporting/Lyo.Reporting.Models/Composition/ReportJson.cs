@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Lyo.Common.Json.JsonConverters;
 using Lyo.Exceptions;
+using Lyo.Json.JsonConverters;
 using Lyo.Reporting.Models.Models;
 
 namespace Lyo.Reporting.Models.Composition;

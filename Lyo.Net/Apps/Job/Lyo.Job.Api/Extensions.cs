@@ -1,14 +1,11 @@
-using Lyo.Api.Services.Crud.Read.Query;
-using Lyo.Api;
+using System.Diagnostics.CodeAnalysis;
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.Export;
-using Lyo.Api.Mapping;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Error;
+using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Cache;
 using Lyo.Common.Core.Identifiers;
-using Lyo.Encryption;
-using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Request;
@@ -16,12 +13,10 @@ using Lyo.Job.Models.Response;
 using Lyo.Job.Models.Security;
 using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
-using Lyo.Job.Postgres.Events;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Constants = Lyo.Job.Models.Constants;
 using JobRunResult = Lyo.Job.Postgres.Database.JobRunResult;
@@ -48,7 +43,6 @@ public static class Extensions
                         }
 
                         JobDefinitionWriteValidator.ValidateParameters(ctx.Entity.JobParameters);
-
                         foreach (var schedule in ctx.Entity.JobSchedules) {
                             if (schedule.Id == default)
                                 schedule.Id = LyoGuid.CreateCombPostgres();
@@ -59,19 +53,6 @@ public static class Extensions
                                     scheduleParameter.Id = LyoGuid.CreateCombPostgres();
 
                                 scheduleParameter.JobScheduleId = schedule.Id;
-                            }
-                        }
-
-                        foreach (var trigger in ctx.Entity.JobTriggerJobDefinitions) {
-                            if (trigger.Id == default)
-                                trigger.Id = LyoGuid.CreateCombPostgres();
-
-                            trigger.JobDefinitionId = ctx.Entity.Id;
-                            foreach (var triggerParameter in trigger.JobTriggerParameters) {
-                                if (triggerParameter.Id == default)
-                                    triggerParameter.Id = LyoGuid.CreateCombPostgres();
-
-                                triggerParameter.JobTriggerId = trigger.Id;
                             }
                         }
 
@@ -97,7 +78,9 @@ public static class Extensions
                     BeforeDelete = ctx => JobDefinitionCascadeDelete.RemoveDependents(ctx.DbContext, ctx.Entity.Id),
                     AfterDelete = ctx => {
                         app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.Id).GetAwaiter().GetResult();
-                        QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<JobRun, JobDefinition>(ctx.Services.GetService<ICacheService>()).GetAwaiter().GetResult();
+                        QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<JobRun, JobDefinition>(ctx.Services.GetService<ICacheService>())
+                            .GetAwaiter()
+                            .GetResult();
                     }
                 })
             .Build();
@@ -139,6 +122,7 @@ public static class Extensions
                 ApiFeatureSet.DefaultCrud, new() {
                     BeforeCreate = ctx => {
                         ctx.Entity.Id = LyoGuid.CreateCombPostgres();
+                        JobScheduleWriteValidator.ValidateOwner(ctx.Entity);
                         foreach (var scheduleParameter in ctx.Entity.JobScheduleParameters) {
                             if (scheduleParameter.Id == default)
                                 scheduleParameter.Id = LyoGuid.CreateCombPostgres();
@@ -150,13 +134,16 @@ public static class Extensions
                     },
                     AfterCreate = ctx => {
                         JobAuditHelper.RecordCreated(ctx.Services, nameof(JobSchedule), ctx.Entity.Id);
-                        app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.JobDefinitionId).GetAwaiter().GetResult();
+                        PublishScheduleOwnerUpdated(app, ctx.Entity);
                         InvalidateChildDefinitionQueryCaches<JobSchedule>(ctx.Services);
                     },
-                    BeforeUpdate = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow,
+                    BeforeUpdate = ctx => {
+                        ctx.Entity.UpdatedTimestamp = DateTime.UtcNow;
+                        JobScheduleWriteValidator.ValidateOwner(ctx.Entity);
+                    },
                     AfterUpdate = ctx => {
                         JobAuditHelper.RecordUpdated(ctx.Services, nameof(JobSchedule), ctx.Entity.Id);
-                        app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(ctx.Entity.JobDefinitionId).GetAwaiter().GetResult();
+                        PublishScheduleOwnerUpdated(app, ctx.Entity);
                         InvalidateChildDefinitionQueryCaches<JobSchedule>(ctx.Services);
                     },
                     BeforeDelete = ctx => RemoveScheduleDependents(ctx.DbContext, ctx.Entity),
@@ -192,49 +179,19 @@ public static class Extensions
                 })
             .Build();
 
-        app.CreateBuilder<JobContext, JobTrigger, JobTriggerReq, JobTriggerRes, Guid>($"{Constants.Rest.Job.Triggers}", "Job")
-            .WithCrud(
-                ApiFeatureSet.DefaultCrud, new() {
-                    BeforeCreate = ctx => {
-                        ctx.Entity.Id = LyoGuid.CreateCombPostgres();
-                        foreach (var triggerParameter in ctx.Entity.JobTriggerParameters) {
-                            if (triggerParameter.Id == default)
-                                triggerParameter.Id = LyoGuid.CreateCombPostgres();
-
-                            triggerParameter.JobTriggerId = ctx.Entity.Id;
-                        }
-                    },
-                    AfterCreate = ctx => {
-                        JobAuditHelper.RecordCreated(ctx.Services, nameof(JobTrigger), ctx.Entity.Id);
-                        var publisher = app.Services.GetRequiredService<IJobEventPublisher>();
-                        publisher.PublishDefinitionUpdatedAsync(ctx.Entity.TriggersJobDefinitionId).GetAwaiter().GetResult();
-                        publisher.PublishDefinitionUpdatedAsync(ctx.Entity.JobDefinitionId).GetAwaiter().GetResult();
-                        InvalidateChildDefinitionQueryCaches<JobTrigger>(ctx.Services);
-                    },
-                    BeforeUpdate = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow,
-                    AfterUpdate = ctx => {
-                        JobAuditHelper.RecordUpdated(ctx.Services, nameof(JobTrigger), ctx.Entity.Id);
-                        var publisher = app.Services.GetRequiredService<IJobEventPublisher>();
-                        publisher.PublishDefinitionUpdatedAsync(ctx.Entity.TriggersJobDefinitionId).GetAwaiter().GetResult();
-                        publisher.PublishDefinitionUpdatedAsync(ctx.Entity.JobDefinitionId).GetAwaiter().GetResult();
-                        InvalidateChildDefinitionQueryCaches<JobTrigger>(ctx.Services);
-                    },
-                    BeforeDelete = ctx => RemoveTriggerDependents(ctx.DbContext, ctx.Entity),
-                    AfterDelete = ctx => InvalidateChildDefinitionQueryCaches<JobTrigger>(ctx.Services)
-                })
-            .Build();
-
         app.CreateBuilder<JobContext, JobRun, JobRunReq, JobRunRes, Guid>(Constants.Rest.Job.Runs, "Job")
             .WithQuery()
             .WithGet()
             .WithDelete(
                 ctx => RemoveJobRunDependents(ctx.DbContext, ctx.Entity),
-                ctx => QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<JobRun, JobDefinition>(ctx.Services.GetService<ICacheService>()).GetAwaiter().GetResult(),
-                ["JobRunLogs", "JobRunParameters", "JobRunResults", "InverseReRanFromJobRun", "InverseTriggeredByJobRun", "InverseParentJobRun"])
+                ctx => QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<JobRun, JobDefinition>(ctx.Services.GetService<ICacheService>())
+                    .GetAwaiter()
+                    .GetResult(), ["JobRunLogs", "JobRunParameters", "JobRunResults", "InverseReRanFromJobRun", "InverseParentJobRun"])
             .WithDeleteBulk(
                 ctx => RemoveJobRunDependents(ctx.DbContext, ctx.Entity),
-                ctx => QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<JobRun, JobDefinition>(ctx.Services.GetService<ICacheService>()).GetAwaiter().GetResult(),
-                ["JobRunLogs", "JobRunParameters", "JobRunResults", "InverseReRanFromJobRun", "InverseTriggeredByJobRun", "InverseParentJobRun"])
+                ctx => QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<JobRun, JobDefinition>(ctx.Services.GetService<ICacheService>())
+                    .GetAwaiter()
+                    .GetResult(), ["JobRunLogs", "JobRunParameters", "JobRunResults", "InverseReRanFromJobRun", "InverseParentJobRun"])
             .WithExport()
             .Build();
 
@@ -292,8 +249,7 @@ public static class Extensions
 
         app.CreateBuilder<JobContext, JobBlackoutWindow, JobBlackoutWindowReq, JobBlackoutWindowRes, Guid>(Constants.Rest.Job.BlackoutWindows, "Job")
             .WithCrud(
-                ApiFeatureSet.DefaultCrud,
-                new() {
+                ApiFeatureSet.DefaultCrud, new() {
                     BeforeCreate = ctx => {
                         ctx.Entity.Id = LyoGuid.CreateCombPostgres();
                         JobBlackoutWindowWriteValidator.ValidateAndNormalize(ctx.Entity);
@@ -315,6 +271,16 @@ public static class Extensions
                                 step.Id = LyoGuid.CreateCombPostgres();
 
                             step.JobWorkflowId = ctx.Entity.Id;
+                        }
+
+                        // Nested schedules are workflow-owned by construction; the caller cannot know the workflow id when it builds the request.
+                        foreach (var schedule in ctx.Entity.JobSchedules) {
+                            if (schedule.Id == default)
+                                schedule.Id = LyoGuid.CreateCombPostgres();
+
+                            schedule.JobWorkflowId = ctx.Entity.Id;
+                            schedule.JobDefinitionId = null;
+                            JobScheduleWriteValidator.ValidateOwner(schedule);
                         }
                     },
                     BeforeDelete = ctx => {
@@ -365,8 +331,24 @@ public static class Extensions
         MapNextRunsEndpoint(app);
         MapDefinitionLatestRunsEndpoint(app);
         MapLifecycleEndpoints(app);
+        MapWorkflowStartEndpoint(app);
         return app;
     }
+
+    /// <summary>
+    /// Maps <c>POST /Job/Workflow/{id}/Start</c>, the only way to get a workflow running. The generic CRUD create on <c>/Job/Workflow/Run</c> writes a run row but leaves it with
+    /// no steps and no created-event, so it would never execute. Invoked by <see cref="BuildJobGroup" />.
+    /// </summary>
+    private static void MapWorkflowStartEndpoint(WebApplication app)
+        => app.MapPost(
+                $"/{Constants.Rest.Job.Workflows}/{{id:guid}}/Start", async (
+                    Guid id, [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] JobWorkflowStartReq? req, JobWorkflowService workflowService, CancellationToken ct) => {
+                    var result = await workflowService.StartWorkflowAsync(id, req, ct).ConfigureAwait(false);
+                    // Return CreateResult so ApiClient deserializers receive IsSuccess/Data, matching the run-create endpoint.
+                    return result.IsSuccess ? Results.Created($"/{Constants.Rest.Job.WorkflowRuns}/{result.Data!.Id}", result) : ProblemResult(result.Error);
+                })
+            .WithTags("Job")
+            .WithName("StartJobWorkflow");
 
     /// <summary>Maps the <c>GET /Job/Definition/{id}/Stats</c> route. Invoked by <see cref="BuildJobGroup" />.</summary>
     private static void MapStatsEndpoint(WebApplication app)
@@ -374,7 +356,9 @@ public static class Extensions
                 $"/{Constants.Rest.Job.Definitions}/{{id:guid}}/Stats", async (Guid id, int days, JobService jobService, CancellationToken ct) => {
                     days = days > 0 ? days : 30;
                     var stats = await jobService.GetDefinitionStats(id, days, ct).ConfigureAwait(false);
-                    return stats is null ? throw ApiErrorException.From(LyoProblemDetailsBuilder.CreateWithActivity().NotFound("Job definition", id.ToString()).Build()) : Results.Ok(stats);
+                    return stats is null
+                        ? throw ApiErrorException.From(LyoProblemDetailsBuilder.CreateWithActivity().NotFound("Job definition", id.ToString()).Build())
+                        : Results.Ok(stats);
                 })
             .WithTags("Job")
             .WithName("GetJobDefinitionStats");
@@ -416,8 +400,8 @@ public static class Extensions
             .WithName("CreateJobRun");
 
         app.MapPost(
-                $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Started",
-                async (Guid id, [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] JobRunStartedReq? req, JobService jobService, CancellationToken ct) => {
+                $"/{Constants.Rest.Job.Runs}/{{id:guid}}/Started", async (
+                    Guid id, [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] JobRunStartedReq? req, JobService jobService, CancellationToken ct) => {
                     var (run, error) = await jobService.StartedJobRun(id, req, ct).ConfigureAwait(false);
                     return error is null ? Results.Ok(run) : ProblemResult(error);
                 })
@@ -495,7 +479,7 @@ public static class Extensions
     }
 
     /// <summary>Throws <see cref="ApiErrorException" /> so LoggingMiddleware writes and logs the problem. Uses a generic 400 when no problem was produced.</summary>
-    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
+    [DoesNotReturn]
     private static IResult ProblemResult(LyoProblemDetails? error)
     {
         error ??= LyoProblemDetailsBuilder.CreateWithActivity()
@@ -531,7 +515,14 @@ public static class Extensions
     private static void PublishScheduleDefinitionUpdated(WebApplication app, JobContext db, Guid jobScheduleId)
     {
         var definitionId = db.JobSchedules.Where(s => s.Id == jobScheduleId).Select(s => s.JobDefinitionId).FirstOrDefault();
-        if (definitionId != default)
+        if (definitionId.HasValue)
+            app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(definitionId.Value).GetAwaiter().GetResult();
+    }
+
+    /// <summary>Notifies the job scheduler when a definition-owned schedule changes. Workflow-owned schedules have no cached definition to invalidate.</summary>
+    private static void PublishScheduleOwnerUpdated(WebApplication app, JobSchedule schedule)
+    {
+        if (schedule.JobDefinitionId is { } definitionId)
             app.Services.GetRequiredService<IJobEventPublisher>().PublishDefinitionUpdatedAsync(definitionId).GetAwaiter().GetResult();
     }
 
@@ -540,6 +531,9 @@ public static class Extensions
         db.JobScheduleParameters.RemoveRange(db.JobScheduleParameters.Where(p => p.JobScheduleId == schedule.Id).ToList());
         foreach (var run in db.JobRuns.Where(r => r.JobScheduleId == schedule.Id).ToList())
             run.JobScheduleId = null;
+
+        foreach (var workflowRun in db.JobWorkflowRuns.Where(r => r.JobScheduleId == schedule.Id).ToList())
+            workflowRun.JobScheduleId = null;
 
         if (!schedule.JobBlackoutCalendarId.HasValue)
             return;
@@ -553,13 +547,6 @@ public static class Extensions
         var calendar = db.JobBlackoutCalendars.Find(calendarId);
         if (calendar is not null)
             db.JobBlackoutCalendars.Remove(calendar);
-    }
-
-    private static void RemoveTriggerDependents(JobContext db, JobTrigger trigger)
-    {
-        db.JobTriggerParameters.RemoveRange(db.JobTriggerParameters.Where(p => p.JobTriggerId == trigger.Id).ToList());
-        foreach (var run in db.JobRuns.Where(r => r.JobTriggerId == trigger.Id).ToList())
-            run.JobTriggerId = null;
     }
 
     private static void RemoveJobRunDependents(JobContext db, JobRun jobRun)

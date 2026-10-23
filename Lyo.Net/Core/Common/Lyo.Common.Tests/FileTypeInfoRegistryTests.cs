@@ -127,12 +127,41 @@ public class FileTypeInfoRegistryTests
     }
 
     [Fact]
-    public void FileTypeInfo_FromMimeType_StripsCharsetParameter()
-        => Assert.Same(FileTypeInfo.Txt, FileTypeInfo.FromMimeType("text/plain; charset=utf-8"));
+    public void FileTypeInfo_FromMimeType_StripsCharsetParameter() => Assert.Same(FileTypeInfo.Txt, FileTypeInfo.FromMimeType("text/plain; charset=utf-8"));
 
     [Fact]
-    public void FileTypeInfo_FromMime_SharedOctetStream_IsUnknown()
-        => Assert.Same(FileTypeInfo.Unknown, FileTypeInfo.FromMime(MimeTypeInfo.Unknown));
+    public void FileTypeInfo_FromMime_SharedOctetStream_IsUnknown() => Assert.Same(FileTypeInfo.Unknown, FileTypeInfo.FromMime(MimeTypeInfo.Unknown));
+
+    [Fact]
+    public void HeaderSignatures_Pdf_IsPercentPdfAtOffsetZero()
+    {
+        var signature = Assert.Single(FileTypeInfo.Pdf.HeaderSignatures);
+        var mark = Assert.Single(signature.Marks);
+        Assert.Equal(0, mark.Offset);
+        Assert.Equal("%PDF"u8.ToArray(), mark.Magic.ToArray());
+    }
+
+    [Fact]
+    public void HeaderSignatures_Zip_HasThreePkSignatures()
+    {
+        Assert.Equal(3, FileTypeInfo.Zip.HeaderSignatures.Count);
+        foreach (var signature in FileTypeInfo.Zip.HeaderSignatures) {
+            var mark = Assert.Single(signature.Marks);
+            Assert.Equal(0, mark.Offset);
+            Assert.Equal((byte)'P', mark.Magic.Span[0]);
+            Assert.Equal((byte)'K', mark.Magic.Span[1]);
+        }
+    }
+
+    [Fact]
+    public void HeaderSignatures_Txt_IsEmpty() => Assert.Empty(FileTypeInfo.Txt.HeaderSignatures);
+
+    [Fact]
+    public void SignatureFamily_Jar_LinksToZip_AndZipOwnsTheBytes()
+    {
+        Assert.Same(FileTypeInfo.Zip, FileTypeInfo.JavaJar.SignatureFamily);
+        Assert.Null(FileTypeInfo.Zip.SignatureFamily);
+    }
 
     [Fact]
     public void GetMimeTypeFromExtension_Mp4_ReturnsVideoMp4()

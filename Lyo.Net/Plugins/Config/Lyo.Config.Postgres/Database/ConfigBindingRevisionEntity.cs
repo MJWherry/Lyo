@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 
 namespace Lyo.Config.Postgres.Database;
 
 /// <summary>Insert-only value snapshots for a binding. Type is implied by <see cref="ConfigDefinitionEntity.ForValueType" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ConfigBindingRevisionEntity
 {
     [Required]
@@ -27,4 +29,7 @@ public sealed class ConfigBindingRevisionEntity
     public DateTime CreatedTimestamp { get; set; }
 
     public ConfigBindingEntity Binding { get; set; } = null!;
+
+    /// <summary>Type name and primary key.</summary>
+    public override string ToString() => $"{GetType().Name} {BindingId} {Revision}";
 }

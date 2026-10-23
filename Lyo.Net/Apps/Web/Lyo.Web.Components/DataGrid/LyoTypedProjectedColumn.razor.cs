@@ -78,11 +78,17 @@ public partial class LyoTypedProjectedColumn<TValue>
     [Parameter]
     public Func<object?, TValue, string>? FormattedValue { get; set; }
 
-    /// <summary>
-    /// Makes this column the heading of each card in the card layout instead of one more labelled field. Leave false to let the grid pick the most name-like column.
-    /// </summary>
+    /// <summary>Makes this column the heading of each card in the card layout instead of one more labelled field. Leave false to let the grid pick the most name-like column.</summary>
     [Parameter]
     public bool CardTitle { get; set; }
+
+    private string EffectiveHeaderStyle => MergeAlignStyle(HeaderStyle, Align);
+
+    private string EffectiveCellStyle => MergeAlignStyle(CellStyle, Align);
+
+    private string EffectiveHeaderClass => MergeAlignClass(HeaderClass, Align);
+
+    private string EffectiveCellClass => MergeAlignClass(CellClass, Align);
 
     protected override void OnParametersSet() => ColumnRegistry?.Register(Field, Title, QuickSearchPropertyName, HiddenByDefault, Cell, false, CardTitle, Sortable);
 
@@ -103,14 +109,6 @@ public partial class LyoTypedProjectedColumn<TValue>
     private object GetSortValue(object? item) => ProjectedValueHelper.GetValue(item, Field) ?? string.Empty;
 
     internal string GetApiSortKey() => SortKey ?? Field;
-
-    private string EffectiveHeaderStyle => MergeAlignStyle(HeaderStyle, Align);
-
-    private string EffectiveCellStyle => MergeAlignStyle(CellStyle, Align);
-
-    private string EffectiveHeaderClass => MergeAlignClass(HeaderClass, Align);
-
-    private string EffectiveCellClass => MergeAlignClass(CellClass, Align);
 
     private static string MergeAlignStyle(string? style, Align align)
         => align switch {

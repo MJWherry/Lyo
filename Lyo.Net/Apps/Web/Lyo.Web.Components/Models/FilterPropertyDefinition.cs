@@ -42,11 +42,7 @@ public class FilterPropertyDefinition(string propertyName, string? displayName =
     /// <summary>An enum catalog type or a property with <see cref="EnumValues" />.</summary>
     public bool IsEnumType => Type.Category == LyoTypeCategory.Enum || EnumValues != null;
 
-    public static FilterPropertyDefinition FromEnum(
-        string propertyName,
-        Dictionary<string, string> enumValues,
-        LyoTypeInfo? type = null,
-        string? displayName = null)
+    public static FilterPropertyDefinition FromEnum(string propertyName, Dictionary<string, string> enumValues, LyoTypeInfo? type = null, string? displayName = null)
         => new(propertyName, displayName) { Type = type ?? LyoTypeInfo.Enum, EnumValues = enumValues };
 
     public static FilterPropertyDefinition FromDatabase(string propertyName, string column, string table, string? schema = "public", string? displayName = null)

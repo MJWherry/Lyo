@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Lyo.Common.Core.Conversion;
 
 namespace Lyo.Config.Api.Infrastructure;
 
@@ -47,7 +48,7 @@ internal static class ConfigFingerprint
     internal static string ComputeQuotedStrongEtag(ReadOnlySpan<byte> canonicalUtf8)
     {
         var hash = SHA256.HashData(canonicalUtf8);
-        var hex = Convert.ToHexString(hash);
+        var hex = ByteConvert.ToHex(hash);
         return '"' + hex + '"';
     }
 

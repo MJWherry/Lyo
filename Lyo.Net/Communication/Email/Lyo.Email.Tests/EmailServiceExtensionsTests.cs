@@ -1,199 +1,128 @@
 using Lyo.Common.Metadata.Records;
+using Lyo.Email.Smtp;
 using Lyo.Metrics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Lyo.Email.Tests;
 
 public class EmailServiceExtensionsTests
 {
     [Fact]
-    public void AddEmailService_NullServices_ThrowsArgumentNullException()
+    public void AddSmtpEmailService_NullServices_Throws()
     {
         IServiceCollection? services = null;
-        Assert.Throws<ArgumentNullException>(() => services!.AddEmailService(_ => new() {
-            Host = "smtp.example.com",
-            Port = PortInfo.SmtpSubmission,
-            DefaultFromAddress = "test@example.com",
-            DefaultFromName = "Test"
+        Assert.Throws<ArgumentNullException>(() => services!.AddSmtpEmailService(_ => Valid(new())));
+    }
+
+    [Fact]
+    public void AddSmtpEmailService_NullConfigure_Throws()
+    {
+        var services = new ServiceCollection();
+        Assert.Throws<ArgumentNullException>(() => services.AddSmtpEmailService((Action<SmtpEmailOptions>)null!));
+    }
+
+    [Fact]
+    public void AddSmtpEmailService_Action_RegistersTheSameInstanceForTheInterface()
+    {
+        var services = new ServiceCollection();
+        services.AddSmtpEmailService(Valid);
+        using var provider = services.BuildServiceProvider();
+        var service = provider.GetRequiredService<SmtpEmailService>();
+        Assert.Same(service, provider.GetRequiredService<IEmailService>());
+        Assert.Equal("smtp.example.com", provider.GetRequiredService<SmtpEmailOptions>().Host);
+        Assert.NotNull(provider.GetRequiredService<IOptions<SmtpEmailOptions>>().Value);
+    }
+
+    [Fact]
+    public void AddSmtpEmailService_Instance_RegistersServices()
+    {
+        var services = new ServiceCollection();
+        var options = new SmtpEmailOptions();
+        Valid(options);
+        services.AddSmtpEmailService(options);
+        using var provider = services.BuildServiceProvider();
+        Assert.NotNull(provider.GetRequiredService<IEmailService>());
+    }
+
+    [Fact]
+    public void AddSmtpEmailService_InvalidOptions_ThrowsAtRegistration()
+    {
+        var services = new ServiceCollection();
+        var ex = Assert.Throws<ArgumentException>(() => services.AddSmtpEmailService(options => {
+            options.Host = "";
+            options.Port = PortInfo.SmtpSubmission;
+            options.DefaultFromAddress = "test@example.com";
+            options.DefaultFromName = "Test";
         }));
+
+        Assert.Equal("Host", ex.ParamName);
     }
 
     [Fact]
-    public void AddEmailService_NullConfigure_ThrowsArgumentNullException()
-    {
-        var services = new ServiceCollection();
-        Assert.Throws<ArgumentNullException>(() => services.AddEmailService(null!));
-    }
-
-    [Fact]
-    public void AddEmailService_WithFunc_RegistersServices()
-    {
-        var services = new ServiceCollection();
-        services.AddEmailService(_ => new() {
-            Host = "smtp.example.com",
-            Port = PortInfo.SmtpSubmission,
-            DefaultFromAddress = "test@example.com",
-            DefaultFromName = "Test"
-        });
-
-        var provider = services.BuildServiceProvider();
-        var service = provider.GetService<EmailService>();
-        var interfaceService = provider.GetService<IEmailService>();
-        Assert.NotNull(service);
-        Assert.NotNull(interfaceService);
-        Assert.Same(service, interfaceService);
-    }
-
-    [Fact]
-    public void AddEmailService_WithAction_RegistersServices()
-    {
-        var services = new ServiceCollection();
-        services.AddEmailService(options => {
-            options.Host = "smtp.example.com";
-            options.Port = PortInfo.SmtpSubmission;
-            options.DefaultFromAddress = "test@example.com";
-            options.DefaultFromName = "Test";
-        });
-
-        var provider = services.BuildServiceProvider();
-        var service = provider.GetService<EmailService>();
-        var interfaceService = provider.GetService<IEmailService>();
-        Assert.NotNull(service);
-        Assert.NotNull(interfaceService);
-    }
-
-    [Fact]
-    public void AddEmailService_WithActionAndProvider_RegistersServices()
-    {
-        var services = new ServiceCollection();
-        services.AddEmailService((_, options) => {
-            options.Host = "smtp.example.com";
-            options.Port = PortInfo.SmtpSubmission;
-            options.DefaultFromAddress = "test@example.com";
-            options.DefaultFromName = "Test";
-        });
-
-        var provider = services.BuildServiceProvider();
-        var service = provider.GetService<EmailService>();
-        var interfaceService = provider.GetService<IEmailService>();
-        Assert.NotNull(service);
-        Assert.NotNull(interfaceService);
-    }
-
-    [Fact]
-    public void AddEmailService_InvalidOptions_ThrowsOnResolve()
-    {
-        var services = new ServiceCollection();
-        services.AddEmailService(_ => new() {
-            Host = "", // Invalid
-            Port = PortInfo.SmtpSubmission,
-            DefaultFromAddress = "test@example.com",
-            DefaultFromName = "Test"
-        });
-
-        var provider = services.BuildServiceProvider();
-        Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<EmailService>());
-    }
-
-    [Fact]
-    public void AddEmailServiceFromConfiguration_NullServices_ThrowsArgumentNullException()
-    {
-        IServiceCollection? services = null;
-        var config = new ConfigurationBuilder().Build();
-        Assert.Throws<ArgumentNullException>(() => services!.AddEmailServiceFromConfiguration(config));
-    }
-
-    [Fact]
-    public void AddEmailServiceFromConfiguration_EmptySectionName_ThrowsArgumentException()
+    public void AddSmtpEmailServiceFromConfiguration_EmptySectionName_Throws()
     {
         var services = new ServiceCollection();
         var config = new ConfigurationBuilder().Build();
-        Assert.Throws<ArgumentException>(() => services.AddEmailServiceFromConfiguration(config, ""));
+        Assert.Throws<ArgumentException>(() => services.AddSmtpEmailServiceFromConfiguration(config, "   "));
     }
 
     [Fact]
-    public void AddEmailServiceFromConfiguration_WhitespaceSectionName_ThrowsArgumentException()
-    {
-        var services = new ServiceCollection();
-        var config = new ConfigurationBuilder().Build();
-        Assert.Throws<ArgumentException>(() => services.AddEmailServiceFromConfiguration(config, "   "));
-    }
-
-    [Fact]
-    public void AddEmailServiceFromConfiguration_WithValidConfig_RegistersServices()
+    public void AddSmtpEmailServiceFromConfiguration_BindsTheSection()
     {
         var config = new ConfigurationBuilder().AddInMemoryCollection(
                 new Dictionary<string, string?> {
-                    { "EmailServiceOptions:Host", "smtp.example.com" },
-                    { "EmailServiceOptions:Port", "587" },
-                    { "EmailServiceOptions:DefaultFromAddress", "test@example.com" },
-                    { "EmailServiceOptions:DefaultFromName", "Test" }
+                    ["SmtpEmailOptions:Host"] = "smtp.example.com",
+                    ["SmtpEmailOptions:Port"] = "587",
+                    ["SmtpEmailOptions:DefaultFromAddress"] = "test@example.com",
+                    ["SmtpEmailOptions:DefaultFromName"] = "Test"
                 })
             .Build();
 
         var services = new ServiceCollection();
-        services.AddEmailServiceFromConfiguration(config);
-        var provider = services.BuildServiceProvider();
-        var service = provider.GetService<EmailService>();
-        var interfaceService = provider.GetService<IEmailService>();
-        Assert.NotNull(service);
-        Assert.NotNull(interfaceService);
+        services.AddSmtpEmailServiceFromConfiguration(config);
+        using var provider = services.BuildServiceProvider();
+        Assert.IsType<SmtpEmailService>(provider.GetRequiredService<IEmailService>());
     }
 
     [Fact]
-    public void AddEmailServiceFromConfiguration_WithCustomSectionName_RegistersServices()
+    public void AddSmtpEmailServiceFromConfiguration_CustomSection_BindsThatSection()
     {
         var config = new ConfigurationBuilder().AddInMemoryCollection(
                 new Dictionary<string, string?> {
-                    { "CustomEmail:Host", "smtp.example.com" },
-                    { "CustomEmail:Port", "587" },
-                    { "CustomEmail:DefaultFromAddress", "test@example.com" },
-                    { "CustomEmail:DefaultFromName", "Test" }
+                    ["CustomEmail:Host"] = "smtp.example.com",
+                    ["CustomEmail:Port"] = "2525",
+                    ["CustomEmail:DefaultFromAddress"] = "test@example.com",
+                    ["CustomEmail:DefaultFromName"] = "Test"
                 })
             .Build();
 
         var services = new ServiceCollection();
-        services.AddEmailServiceFromConfiguration(config, "CustomEmail");
-        var provider = services.BuildServiceProvider();
-        var service = provider.GetService<EmailService>();
-        var interfaceService = provider.GetService<IEmailService>();
-        Assert.NotNull(service);
-        Assert.NotNull(interfaceService);
+        services.AddSmtpEmailServiceFromConfiguration(config, "CustomEmail");
+        using var provider = services.BuildServiceProvider();
+        Assert.Equal(2525, provider.GetRequiredService<SmtpEmailOptions>().Port);
     }
 
     [Fact]
-    public void AddEmailService_RegistersLogger_WhenAvailable()
-    {
-        var services = new ServiceCollection();
-        services.AddLogging();
-        services.AddEmailService(options => {
-            options.Host = "smtp.example.com";
-            options.Port = PortInfo.SmtpSubmission;
-            options.DefaultFromAddress = "test@example.com";
-            options.DefaultFromName = "Test";
-        });
-
-        var provider = services.BuildServiceProvider();
-        var service = provider.GetRequiredService<EmailService>();
-        Assert.NotNull(service);
-    }
-
-    [Fact]
-    public void AddEmailService_RegistersMetrics_WhenAvailable()
+    public void AddSmtpEmailService_ResolvesWhenMetricsAreRegistered()
     {
         var services = new ServiceCollection();
         services.AddSingleton<IMetrics>(NullMetrics.Instance);
-        services.AddEmailService(options => {
-            options.Host = "smtp.example.com";
-            options.Port = PortInfo.SmtpSubmission;
-            options.DefaultFromAddress = "test@example.com";
-            options.DefaultFromName = "Test";
+        services.AddSmtpEmailService(options => {
+            Valid(options);
             options.EnableMetrics = true;
         });
 
-        var provider = services.BuildServiceProvider();
-        var service = provider.GetRequiredService<EmailService>();
-        Assert.NotNull(service);
+        using var provider = services.BuildServiceProvider();
+        Assert.NotNull(provider.GetRequiredService<SmtpEmailService>());
+    }
+
+    private static void Valid(SmtpEmailOptions options)
+    {
+        options.Host = "smtp.example.com";
+        options.Port = PortInfo.SmtpSubmission;
+        options.DefaultFromAddress = "test@example.com";
+        options.DefaultFromName = "Test";
     }
 }

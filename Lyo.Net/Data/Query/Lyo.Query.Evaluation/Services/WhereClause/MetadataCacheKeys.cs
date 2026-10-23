@@ -1,11 +1,9 @@
 namespace Lyo.Query.Services.WhereClause;
 
-/// <summary>
-/// Key prefixes for reflection metadata memoized by <see cref="SharedEntityMetadataCache" />.
-/// </summary>
+/// <summary>Key prefixes for reflection metadata memoized by <see cref="SharedEntityMetadataCache" />.</summary>
 /// <remarks>
-/// Duplicated from <c>Lyo.Cache.Constants.EntityMetadata</c> on purpose: evaluation must not depend on the cache stack. The strings stay byte-identical so keys remain
-/// stable for hosts that project them into a shared cache.
+/// Duplicated from <c>Lyo.Cache.Constants.EntityMetadata</c> on purpose: evaluation must not depend on the cache stack. The strings stay byte-identical so keys remain stable
+/// for hosts that project them into a shared cache.
 /// </remarks>
 internal static class MetadataCacheKeys
 {

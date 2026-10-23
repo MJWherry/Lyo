@@ -2,7 +2,6 @@ using Lyo.Api;
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.Export;
 using Lyo.Api.Mapping;
-using Lyo.Config;
 using Lyo.Config.Postgres.Database;
 using Lyo.Encryption;
 using Lyo.EntityReference.Models;
@@ -15,6 +14,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+
 namespace Lyo.Config.Postgres;
 
 /// <summary>DI helpers for PostgreSQL config store registration.</summary>
@@ -27,10 +27,7 @@ public static class Extensions
     {
         ArgumentHelpers.ThrowIfNull(app);
         app.CreateBuilder<ConfigDbContext, ConfigDefinitionEntity, ConfigDefinitionEntity, ConfigDefinitionEntity, Guid>(ConfigQueryRoutes.Definition, ConfigQueryRoutes.Group)
-            .WithCrud(
-                ApiFeatureSet.ReadOnly + ExportApiFeature.Instance, new() {
-                    DeniedSelectFields = DefinitionDeniedSelectFields
-                })
+            .WithCrud(ApiFeatureSet.ReadOnly + ExportApiFeature.Instance, new() { DeniedSelectFields = DefinitionDeniedSelectFields })
             .Build();
 
         app.CreateBuilder<ConfigDbContext, ConfigBindingEntity, ConfigBindingEntity, ConfigBindingEntity, Guid>(ConfigQueryRoutes.Binding, ConfigQueryRoutes.Group)
@@ -60,7 +57,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresConfigOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddConfigDbContextFactory(options);
         }
 
@@ -71,7 +67,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPostgresDbContextFactory<ConfigDbContext, PostgresConfigOptions>(options);
             services.AddEntityRefOptions();
-
             return services;
         }
 
@@ -93,7 +88,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresConfigOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddPostgresConfigStore(options);
         }
 
@@ -104,17 +98,16 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(options);
             services.AddConfigDbContextFactory(options);
             services.AddSingleton<IConfigStore>(sp => new PostgresConfigStore(
-                sp.GetRequiredService<IDbContextFactory<ConfigDbContext>>(),
-                sp.GetRequiredService<EntityRefOptions>(),
-                sp.GetRequiredService<PostgresConfigOptions>(),
+                sp.GetRequiredService<IDbContextFactory<ConfigDbContext>>(), sp.GetRequiredService<EntityRefOptions>(), sp.GetRequiredService<PostgresConfigOptions>(),
                 sp.GetService<IConfigValueEncryptionService>()));
+
             services.TryAddSingleton<ILyoMapper, ConfigIdentityLyoMapper>();
             return services;
         }
 
         /// <summary>
-        /// Adds query/CRUD/export services for <see cref="ConfigDbContext" />. Call on API hosts before <see cref="MapConfigQueryEndpoints" />.
-        /// Needs <c>AddLyoQueryServices</c> and a cache implementation.
+        /// Adds query/CRUD/export services for <see cref="ConfigDbContext" />. Call on API hosts before <see cref="MapConfigQueryEndpoints" />. Needs <c>AddLyoQueryServices</c> and
+        /// a cache implementation.
         /// </summary>
         public IServiceCollection AddConfigQueryServices()
         {

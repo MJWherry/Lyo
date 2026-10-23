@@ -1,6 +1,7 @@
 using Lyo.Authentication.OpenIdConnect.Provider;
 using Lyo.Common.Core.Extensions;
 using Lyo.Exceptions;
+
 namespace Lyo.Authentication.Keycloak;
 
 /// <summary>Keycloak realm <see cref="IOpenIdConnectProvider" /> profile.</summary>

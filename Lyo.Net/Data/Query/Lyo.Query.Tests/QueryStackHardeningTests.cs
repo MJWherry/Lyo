@@ -2,20 +2,21 @@ using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Text.Json;
 using Lyo.Cache;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Query.Models.Builders;
+using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Enums;
 using Lyo.Query.Models.Exceptions;
 using Lyo.Query.Services.ValueConversion;
 using Lyo.Query.Services.WhereClause;
-using Lyo.Query.Tests.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.Query.Tests;
 
 /// <summary>
-/// Regression suite for query-stack hardening: cache-key collisions that returned another request's rows, predicate entries evicted by unrelated data writes, and
-/// unbounded regex evaluation.
+/// Regression suite for query-stack hardening: cache-key collisions that returned another request's rows, predicate entries evicted by unrelated data writes, and unbounded
+/// regex evaluation.
 /// </summary>
 public class QueryStackHardeningTests
 {
@@ -65,28 +66,24 @@ public class QueryStackHardeningTests
     }
 
     /// <summary>
-    /// A compiled predicate is a pure function of clause shape and entity type, so a row write must not drop it. Tagging predicate entries with the same
-    /// <c>entity:{name}</c> tag the result cache uses forced a recompile on every write.
+    /// A compiled predicate is a pure function of clause shape and entity type, so a row write must not drop it. Tagging predicate entries with the same <c>entity:{name}</c> tag
+    /// the result cache uses forced a recompile on every write.
     /// </summary>
     [Fact]
     public async Task ApplyWhereClause_PredicateCache_SurvivesEntityDataInvalidation()
     {
         var (service, cache) = CreateCountingService();
         // The compiled-predicate cache is process-wide, so the clause must be unique here or another test's identical clause pre-warms it and the count starts at zero.
-        var name = $"Alice-{Guid.NewGuid():N}";
+        var name = $"Alice-{LyoGuid.CreateV7():N}";
         var people = new List<Person> { new PersonBuilder().WithName(name).Build() }.AsQueryable();
         var node = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, name);
-
         service.ApplyWhereClause(people, node).ToList();
         var afterFirst = service.BuildCount;
         Assert.Equal(1, afterFirst);
-
         service.ApplyWhereClause(people, node).ToList();
         Assert.Equal(afterFirst, service.BuildCount);
-
         await cache.InvalidateQueryCacheAsync<Person>();
         await cache.InvalidateCacheItemByTag("entity:person");
-
         service.ApplyWhereClause(people, node).ToList();
         Assert.Equal(afterFirst, service.BuildCount);
     }
@@ -117,7 +114,6 @@ public class QueryStackHardeningTests
         var svc = CreateService();
         var people = new List<Person> { new PersonBuilder().WithName(new string('a', 40) + "!").Build() }.AsQueryable();
         var node = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Regex, "^(a+)+$");
-
         var stopwatch = Stopwatch.StartNew();
         Assert.ThrowsAny<Exception>(() => svc.ApplyWhereClause(people, node).ToList());
         stopwatch.Stop();
@@ -145,7 +141,7 @@ public class QueryStackHardeningTests
 
         public int BuildCount => Volatile.Read(ref _buildCount);
 
-        public override Expression<Func<TEntity, bool>>? BuildExpressionFromWhereClause<TEntity>(Lyo.Query.Models.Common.WhereClause? queryNode, bool includeSubClauses = true)
+        public override Expression<Func<TEntity, bool>>? BuildExpressionFromWhereClause<TEntity>(WhereClause? queryNode, bool includeSubClauses = true)
         {
             Interlocked.Increment(ref _buildCount);
             return base.BuildExpressionFromWhereClause<TEntity>(queryNode, includeSubClauses);

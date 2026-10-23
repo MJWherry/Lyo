@@ -7,7 +7,8 @@ Host runners for Lyo microbenchmarks. After each suite finishes, manifests refre
 ## Commands
 
 - `python3 scripts/benchmarks/run_dotnet.py [categories...]`. Run BDN suites in Release; rebuild category manifests after each suite
-- `python3 scripts/benchmarks/run_dotnet.py --no-sync-portfolio encryption`. Run one category without copying history into a local Gateway public tree
+- `python3 scripts/benchmarks/run_dotnet.py --no-sync-portfolio encryption`. Run one category without copying JSON into Lyo-Public apps/gateway/public/benchmarks
+- `python3 scripts/benchmarks/build_manifests.py --sync-portfolio-only`. Copy docs/benchmarks/{data,history} into Lyo-Public (LYO_PUBLIC_ROOT or sibling ../Lyo-Public)
 - `python3 scripts/benchmarks/build_manifests.py`. Rebuild all static hub data from artifacts/history
 - `python3 scripts/benchmarks/build_manifests.py --encryption-only`. Refresh a single category (used by run_dotnet after each suite)
 - `python3 scripts/benchmarks/build_manifests.py --publish-s3`. Rebuild manifests then aws s3 sync data/ + history/ (LYO_BENCH_S3_BUCKET or --bucket)
@@ -15,7 +16,7 @@ Host runners for Lyo microbenchmarks. After each suite finishes, manifests refre
 
 ## Notes
 
-- Categories: encryption compression hashing cache query csv xlsx lock filestorage
+- Categories: encryption compression hashing cache query csv xlsx lock filestorage filesystemwatcher
 - Prefer Python entry points under scripts/; do not add shell wrappers
 - Docker path: python3 scripts/docker/run.py (see scripts/docker/docs.json)
 

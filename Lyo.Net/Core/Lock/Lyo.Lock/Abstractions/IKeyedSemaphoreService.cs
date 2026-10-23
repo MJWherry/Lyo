@@ -2,8 +2,8 @@ namespace Lyo.Lock.Abstractions;
 
 /// <summary>Caps how many operations may run at once per logical key (counting semaphore per key). Local implementations scope concurrency to one process.</summary>
 /// <remarks>
-/// For a given normalized key, the <c>maxConcurrency</c> argument must stay the same while any permit or waiter is active; otherwise implementations throw to avoid
-/// undefined behavior.
+/// For a given normalized key, the <c>maxConcurrency</c> argument must stay the same while any permit or waiter is active; otherwise implementations throw to avoid undefined
+/// behavior.
 /// </remarks>
 public interface IKeyedSemaphoreService
 {

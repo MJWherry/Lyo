@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 using Lyo.Web.Automation.Models.Enums;
 
 namespace Lyo.Web.Automation.Models;
 
 /// <summary>Factory methods and fluent chaining (<see cref="Then" />) for <see cref="ElementLocator" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed partial record ElementLocator
 {
     public static ElementLocator Id(string value) => New(ElementLocatorKind.Id, value);

@@ -1,12 +1,13 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
-using Lyo.Http.Client;
 
 namespace Lyo.Http.Client.Flared;
 
 /// <summary>
-/// Options for <see cref="FlaredHttpMessageHandler" />. Timing, rate limit, and PerSession UA are on by default.
-/// <see cref="LyoHttpClientOptions.ProxyUrl" /> is sent to FlareSolverr and to the primary handler.
+/// Options for <see cref="FlaredHttpMessageHandler" />. Timing, rate limit, and PerSession UA are on by default. <see cref="LyoHttpClientOptions.ProxyUrl" /> is sent to
+/// FlareSolverr and to the primary handler.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class FlaredHttpOptions : LyoHttpClientOptions
 {
     /// <summary>Configuration section name.</summary>
@@ -62,4 +63,7 @@ public class FlaredHttpOptions : LyoHttpClientOptions
         if (UserAgent.Rotation == LyoHttpUserAgentRotation.PerRequest)
             throw new InvalidOperationException("FlaredHttpOptions cannot use PerRequest User-Agent rotation; clearance cookies are bound to one UA per session.");
     }
+
+    /// <summary>Solver URL and timeout. Extra header values are omitted.</summary>
+    public override string ToString() => $"FlareSolverr={FlareSolverrUrl} MaxTimeoutMs={MaxTimeoutMs} ExtraHeaders={ExtraHeaders?.Count ?? 0} {base.ToString()}";
 }

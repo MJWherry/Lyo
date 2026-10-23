@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Common.Core;
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Extensions;
@@ -6,6 +7,7 @@ using Lyo.Common.Metadata.Extensions;
 namespace Lyo.Common.Metadata.Records;
 
 /// <summary>Catalog row for a place: state or province, country, and timezone.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public record GeographicInfo(USState? State, string? Province, CountryCode Country, string CountryName, string? TimeZoneId)
 {
     // Unrecognized location
@@ -63,6 +65,11 @@ public record GeographicInfo(USState? State, string? Province, CountryCode Count
     public static readonly GeographicInfo WestVirginia = new(USState.WV, null, CountryCode.US, "United States", "America/New_York");
     public static readonly GeographicInfo Wisconsin = new(USState.WI, null, CountryCode.US, "United States", "America/Chicago");
     public static readonly GeographicInfo Wyoming = new(USState.WY, null, CountryCode.US, "United States", "America/Denver");
+
+    // USPS military mail codes. These span many time zones, so no single IANA id is assigned.
+    public static readonly GeographicInfo ArmedForcesAmericas = new(USState.AA, null, CountryCode.US, "United States", null);
+    public static readonly GeographicInfo ArmedForcesEurope = new(USState.AE, null, CountryCode.US, "United States", null);
+    public static readonly GeographicInfo ArmedForcesPacific = new(USState.AP, null, CountryCode.US, "United States", null);
 
     // Locations outside the US
     public static readonly GeographicInfo Canada = new(null, null, CountryCode.CA, "Canada", "America/Toronto");
@@ -140,7 +147,6 @@ public record GeographicInfo(USState? State, string? Province, CountryCode Count
     static GeographicInfo()
     {
         var fields = typeof(GeographicInfo).PublicStaticFields<GeographicInfo>();
-
         foreach (var location in fields) {
             if (location == Unknown)
                 continue;

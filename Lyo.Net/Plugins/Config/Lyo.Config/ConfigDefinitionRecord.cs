@@ -32,9 +32,7 @@ public sealed class ConfigDefinitionRecord
     /// <summary>Optional default value for the key for this record.</summary>
     public ConfigValue? DefaultValue { get; set; }
 
-    /// <summary>
-    /// If set, the API host encrypts the default and all binding values at rest. Clients send plaintext plus this flag; they do not encrypt.
-    /// </summary>
+    /// <summary>If set, the API host encrypts the default and all binding values at rest. Clients send plaintext plus this flag; they do not encrypt.</summary>
     public bool IsEncrypted { get; set; }
 
     /// <summary>When the definition was created.</summary>

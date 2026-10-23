@@ -1,9 +1,11 @@
 using System.Text.Json;
 using Lyo.ChangeTracker.Postgres.Database;
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace Lyo.ChangeTracker.Postgres.Tests;
 
 public class PostgresChangeTrackerTests : IAsyncDisposable
@@ -15,8 +17,8 @@ public class PostgresChangeTrackerTests : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ChangeTrackerDbContext>>();
-        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        await context.Database.ExecuteSqlRawAsync("TRUNCATE TABLE change_tracker.changes RESTART IDENTITY CASCADE;", TestContext.Current.CancellationToken);
+        await using var context = await factory.CreateDbContextAsync(TestCt);
+        await context.Database.ExecuteSqlRawAsync("TRUNCATE TABLE change_tracker.changes RESTART IDENTITY CASCADE;", TestCt);
     }
 
     [Fact]
@@ -28,9 +30,9 @@ public class PostgresChangeTrackerTests : IAsyncDisposable
             FromEntity = fromEntity, ChangeType = "Updated", Message = "Order submitted"
         };
 
-        await _fixture.ChangeTracker.RecordChangeAsync(change, TestContext.Current.CancellationToken);
-        var byId = await _fixture.ChangeTracker.GetByIdAsync(change.Id, TestContext.Current.CancellationToken);
-        var history = await _fixture.ChangeTracker.GetForEntityAsync(forEntity, TestContext.Current.CancellationToken);
+        await _fixture.ChangeTracker.RecordChangeAsync(change, TestCt);
+        var byId = await _fixture.ChangeTracker.GetByIdAsync(change.Id, TestCt);
+        var history = await _fixture.ChangeTracker.GetForEntityAsync(forEntity, TestCt);
         Assert.NotNull(byId);
         Assert.Single(history);
         Assert.Equal(change.Id, byId.Id);
@@ -53,8 +55,8 @@ public class PostgresChangeTrackerTests : IAsyncDisposable
             Timestamp = DateTime.UtcNow, ChangeType = "Updated"
         };
 
-        await _fixture.ChangeTracker.RecordChangesAsync([older, newer], TestContext.Current.CancellationToken);
-        var history = await _fixture.ChangeTracker.GetForEntityTypeAsync("Order", ct: TestContext.Current.CancellationToken);
+        await _fixture.ChangeTracker.RecordChangesAsync([older, newer], TestCt);
+        var history = await _fixture.ChangeTracker.GetForEntityTypeAsync("Order", ct: TestCt);
         Assert.True(history.Count >= 2);
         Assert.Equal(newer.Id, history[0].Id);
         Assert.Equal(older.Id, history[1].Id);
@@ -65,17 +67,17 @@ public class PostgresChangeTrackerTests : IAsyncDisposable
     {
         var forEntity = EntityRef.ForKey("Invoice", "9001");
         var change = new ChangeRecord(forEntity, new Dictionary<string, object?>(), new Dictionary<string, object?> { ["Status"] = "Paid" });
-        await _fixture.ChangeTracker.RecordChangeAsync(change, TestContext.Current.CancellationToken);
-        await _fixture.ChangeTracker.DeleteForEntityAsync(forEntity, TestContext.Current.CancellationToken);
-        var history = await _fixture.ChangeTracker.GetForEntityAsync(forEntity, TestContext.Current.CancellationToken);
+        await _fixture.ChangeTracker.RecordChangeAsync(change, TestCt);
+        await _fixture.ChangeTracker.DeleteForEntityAsync(forEntity, TestCt);
+        var history = await _fixture.ChangeTracker.GetForEntityAsync(forEntity, TestCt);
         Assert.Empty(history);
     }
 
     [Fact]
     public async Task RecordChange_WithTenant_FiltersByTenant()
     {
-        var tenantA = Guid.NewGuid();
-        var tenantB = Guid.NewGuid();
+        var tenantA = LyoGuid.CreateV7();
+        var tenantB = LyoGuid.CreateV7();
         var changeA = new ChangeRecord(EntityRef.ForKey("Order", "tenant-a-1"), new Dictionary<string, object?>(), new Dictionary<string, object?> { ["x"] = 1 }) {
             TenantId = tenantA
         };
@@ -85,16 +87,16 @@ public class PostgresChangeTrackerTests : IAsyncDisposable
         };
 
         var changeSystem = new ChangeRecord(EntityRef.ForKey("Order", "system-1"), new Dictionary<string, object?>(), new Dictionary<string, object?> { ["x"] = 1 });
-        await _fixture.ChangeTracker.RecordChangesAsync([changeA, changeB, changeSystem], TestContext.Current.CancellationToken);
+        await _fixture.ChangeTracker.RecordChangesAsync([changeA, changeB, changeSystem], TestCt);
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ChangeTrackerDbContext>>();
-        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var onlyTenantA = await context.Changes.WhereTenant(tenantA).ToListAsync(TestContext.Current.CancellationToken);
+        await using var context = await factory.CreateDbContextAsync(TestCt);
+        var onlyTenantA = await context.Changes.WhereTenant(tenantA).ToListAsync(TestCt);
         Assert.Single(onlyTenantA);
         Assert.Equal("tenant-a-1", onlyTenantA[0].SubjectEntityId);
-        var onlySystem = await context.Changes.WhereTenant(null).ToListAsync(TestContext.Current.CancellationToken);
+        var onlySystem = await context.Changes.WhereTenant(null).ToListAsync(TestCt);
         Assert.Single(onlySystem);
         Assert.Equal("system-1", onlySystem[0].SubjectEntityId);
-        var tenantAOrSystem = await context.Changes.WhereTenantOrSystem(tenantA).ToListAsync(TestContext.Current.CancellationToken);
+        var tenantAOrSystem = await context.Changes.WhereTenantOrSystem(tenantA).ToListAsync(TestCt);
         Assert.Equal(2, tenantAOrSystem.Count);
         Assert.Contains(tenantAOrSystem, e => e.SubjectEntityId == "tenant-a-1");
         Assert.Contains(tenantAOrSystem, e => e.SubjectEntityId == "system-1");
@@ -104,16 +106,14 @@ public class PostgresChangeTrackerTests : IAsyncDisposable
     public async Task SystemOnly_PersistsNullTenantRegardlessOfCaller()
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ChangeTrackerDbContext>>();
-        var tracker = new PostgresChangeTracker(
-            factory, new EntityRefOptions(), new PostgresChangeTrackerOptions { Tenancy = new() { Mode = TenancyMode.SystemOnly } });
-
+        var tracker = new PostgresChangeTracker(factory, new(), new() { Tenancy = new() { Mode = TenancyMode.SystemOnly } });
         var record = new ChangeRecord(EntityRef.ForKey("Order", "system-only-1"), new Dictionary<string, object?>(), new Dictionary<string, object?> { ["x"] = 1 }) {
-            TenantId = Guid.NewGuid()
+            TenantId = LyoGuid.CreateV7()
         };
 
-        await tracker.RecordChangeAsync(record, TestContext.Current.CancellationToken);
-        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var entity = await context.Changes.FirstAsync(c => c.SubjectEntityId == "system-only-1", TestContext.Current.CancellationToken);
+        await tracker.RecordChangeAsync(record, TestCt);
+        await using var context = await factory.CreateDbContextAsync(TestCt);
+        var entity = await context.Changes.FirstAsync(c => c.SubjectEntityId == "system-only-1", TestCt);
         Assert.Null(entity.TenantId);
     }
 
@@ -121,26 +121,21 @@ public class PostgresChangeTrackerTests : IAsyncDisposable
     public async Task MultiTenantStrict_ThrowsWhenCallerDoesNotSupplyTenant()
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ChangeTrackerDbContext>>();
-        var tracker = new PostgresChangeTracker(
-            factory, new EntityRefOptions(), new PostgresChangeTrackerOptions { Tenancy = new() { Mode = TenancyMode.MultiTenantStrict } });
-
+        var tracker = new PostgresChangeTracker(factory, new(), new() { Tenancy = new() { Mode = TenancyMode.MultiTenantStrict } });
         var record = new ChangeRecord(EntityRef.ForKey("Order", "strict-missing"), new Dictionary<string, object?>(), new Dictionary<string, object?> { ["x"] = 1 });
-        await Assert.ThrowsAsync<ArgumentNullException>(() => tracker.RecordChangeAsync(record, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => tracker.RecordChangeAsync(record, TestCt));
     }
 
     [Fact]
     public async Task SingleTenantDefault_NullTenantUsesFeatureDefault()
     {
-        var defaultTenant = Guid.NewGuid();
+        var defaultTenant = LyoGuid.CreateV7();
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ChangeTrackerDbContext>>();
-        var tracker = new PostgresChangeTracker(
-            factory, new EntityRefOptions(),
-            new PostgresChangeTrackerOptions { Tenancy = new() { Mode = TenancyMode.SingleTenantDefault, DefaultTenantId = defaultTenant } });
-
+        var tracker = new PostgresChangeTracker(factory, new(), new() { Tenancy = new() { Mode = TenancyMode.SingleTenantDefault, DefaultTenantId = defaultTenant } });
         var record = new ChangeRecord(EntityRef.ForKey("Order", "default-tenant-1"), new Dictionary<string, object?>(), new Dictionary<string, object?> { ["x"] = 1 });
-        await tracker.RecordChangeAsync(record, TestContext.Current.CancellationToken);
-        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var entity = await context.Changes.FirstAsync(c => c.SubjectEntityId == "default-tenant-1", TestContext.Current.CancellationToken);
+        await tracker.RecordChangeAsync(record, TestCt);
+        await using var context = await factory.CreateDbContextAsync(TestCt);
+        var entity = await context.Changes.FirstAsync(c => c.SubjectEntityId == "default-tenant-1", TestCt);
         Assert.Equal(defaultTenant, entity.TenantId);
     }
 

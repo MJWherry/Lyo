@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.KeyStore.Aws;
 
 /// <summary>AWS credentials and related settings.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class AwsKeyStoreOptions
 {
     public const string SectionName = "AwsKeyStore";
@@ -14,8 +16,8 @@ public class AwsKeyStoreOptions
     public string? SecretAccessKey { get; set; }
 
     /// <summary>
-    /// Named profile from the shared credentials/config files (<c>~/.aws/credentials</c> and <c>~/.aws/config</c>). Used when static keys are omitted. When unset, the AWS default
-    /// credential chain is used (which looks for the <c>default</c> profile). If set but the profile is missing, registration fails rather than falling back to <c>default</c>.
+    /// Named profile from the shared credentials/config files (<c>~/.aws/credentials</c> and <c>~/.aws/config</c>). Used when static keys are omitted. When unset, the AWS
+    /// default credential chain is used (which looks for the <c>default</c> profile). If set but the profile is missing, registration fails rather than falling back to <c>default</c>.
     /// </summary>
     public string? Profile { get; set; }
 
@@ -32,4 +34,8 @@ public class AwsKeyStoreOptions
         var hasSecret = !string.IsNullOrWhiteSpace(SecretAccessKey);
         ArgumentHelpers.ThrowIf(hasAccess != hasSecret, $"{nameof(AccessKeyId)} and {nameof(SecretAccessKey)} must both be set or both be omitted.");
     }
+
+    /// <summary>Region and profile. Access key values are omitted.</summary>
+    public override string ToString()
+        => $"Region={Region} Profile={Profile} SecretNamePrefix={SecretNamePrefix} AccessKeySet={!string.IsNullOrWhiteSpace(AccessKeyId)} SecretAccessKeySet={!string.IsNullOrWhiteSpace(SecretAccessKey)}";
 }

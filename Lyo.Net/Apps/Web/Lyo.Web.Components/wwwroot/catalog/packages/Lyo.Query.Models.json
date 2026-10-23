@@ -7,7 +7,7 @@
   "features": [
     "**WhereClause AST.** Polymorphic `condition` / `group` JSON tree, with optional `SubClause` for two-phase filters.",
     "**QueryConcreteReq.** Entity-graph body for `POST …/QueryConcrete` (includes, sort, keys, options).",
-    "**ProjectionQueryReq.** `Select` plus computed fields for `POST …/QueryProject`.",
+    "**ProjectionQueryReq.** `Select`, computed fields, and aggregates for `POST …/QueryProject`. When `Aggregates` is set, `Select` is the group key.",
     "**QueryReq (root).** `From` / `Joins` / `Select` for dynamic-context `POST …/Query`.",
     "**Builders.** `WhereClauseBuilder`, `QueryConcreteReqBuilder`, `ProjectionQueryReqBuilder`, `QueryReqBuilder`.",
     "**ParameterOptions.** Static key/label list, a root `QueryReq` template, or a `schema.func` sproc (`StoredProcName`, `SprocParameters` with `{{Key}}` placeholders) for Job/Reporting definition parameter pickers (`ParameterOptionsJson`, `ParameterOptionsBinder`, `ParameterOptionsResolveReq`).",
@@ -19,7 +19,7 @@
     {
       "title": "WhereClauseBuilder",
       "language": "csharp",
-      "code": "// Simple conditions\nvar node = WhereClauseBuilder.And()\n    .Equals(\"Status\", \"Active\")\n    .GreaterThan(\"Age\", 18)\n    .Build();\n\n// Nested AND/OR\nvar node = WhereClauseBuilder.And()\n    .AddOr(or => or.Equals(\"Status\", \"Active\").Equals(\"Status\", \"Pending\"))\n    .AddAnd(and => and.Contains(\"Tags\", \"verified\").In(\"Region\", \"US\", \"CA\"))\n    .Build();\n\n// Explicit grouped node (same as AddAnd/AddOr, but useful for clarity)\nvar grouped = WhereClauseBuilder.And()\n    .AddGroupOr(g => g.Equals(\"Region\", \"US\").Equals(\"Region\", \"CA\"))\n    .Build();"
+      "code": "// Simple conditions\nvar node = WhereClauseBuilder.And()\n    .Equals(\"Status\", \"Active\")\n    .GreaterThan(\"Age\", 18)\n    .Build();\n\n// Nested AND/OR\nvar node = WhereClauseBuilder.And()\n    .AddOr(or => or.Equals(\"Status\", \"Active\").Equals(\"Status\", \"Pending\"))\n    .AddAnd(and => and.Contains(\"Tags\", \"verified\").In(\"Region\", \"US\", \"CA\"))\n    .Build();\n\n// Explicit grouped node (same as AddAnd/AddOr, but useful for clarity)\nvar grouped = WhereClauseBuilder.And()\n    .AddGroupOr(g => g.Equals(\"Region\", \"US\").Equals(\"Region\", \"CA\"))\n    .Build();\n\n// Fuzzy / NotFuzzy (trigram Jaccard; omit threshold to use 0.3)\nvar fuzzy = WhereClauseBuilder.And()\n    .Fuzzy(\"Name\", \"jon\", threshold: 0.4)\n    .Build();"
     },
     {
       "title": "QueryConcreteReqBuilder",
@@ -39,7 +39,7 @@
     {
       "title": "ProjectionQueryReqBuilder",
       "language": "csharp",
-      "code": "using Lyo.Query.Models.Builders;\nusing Lyo.Query.Models.Enums;\n\nvar query = ProjectionQueryReqBuilder.New()\n    .AddSelects(\"Id\", \"Name\", \"Email\")\n    .AddWhere(b => b.Equals(\"Status\", \"Active\"))\n    .AddComputedField(\"Label\", \"{Name} — {Email}\")\n    .SetZipSiblingCollectionSelections(true)\n    .SetPagination(0, 20)\n    .Build();\n// POST {baseRoute}/QueryProject"
+      "code": "using Lyo.Query.Models.Builders;\nusing Lyo.Query.Models.Enums;\n\nvar query = ProjectionQueryReqBuilder.New()\n    .AddSelects(\"Id\", \"Name\", \"Email\")\n    .AddWhere(b => b.Equals(\"Status\", \"Active\"))\n    .AddComputedField(\"Label\", \"{Name} — {Email}\")\n    .SetZipSiblingCollectionSelections(true)\n    .SetPagination(0, 20)\n    .Build();\n// POST {baseRoute}/QueryProject\n\n// Aggregates switch the request to one row per distinct Select. Empty Select is one summary row.\nvar counts = ProjectionQueryReqBuilder.New()\n    .AddSelects(\"Sex\", \"Age\")\n    .AddCount()\n    .AddWhere(b => b.GreaterThan(\"Age\", 20))\n    .AddSort(\"Count\", SortDirection.Desc)\n    .SetPagination(0, 50)\n    .Build();"
     }
   ],
   "sections": [
@@ -57,7 +57,7 @@
         ],
         [
           "`ConditionClause`",
-          "Leaf: dotted `Field`, `Comparison` (`ComparisonOperatorEnum`), and `Value` (scalar, list, or CSV string for `In` / `NotIn`). Implements `IEquatable<ConditionClause>` and `Print(indent)`."
+          "Leaf: dotted `Field`, `Comparison` (`ComparisonOperatorEnum`), and `Value` (scalar, list, or CSV string for `In` / `NotIn`). Optional `Threshold` (`0`–`1`) for `Fuzzy` / `NotFuzzy` (default `0.3`). Implements `IEquatable<ConditionClause>` and `Print(indent)`."
         ],
         [
           "`GroupClause`",
@@ -70,17 +70,18 @@
       "type": "list",
       "title": "Enums",
       "items": [
-        "`ComparisonOperatorEnum`. `Unknown`, `Equals`, `NotEquals`, `Contains`, `NotContains`, `StartsWith`, `EndsWith`, `NotStartsWith`, `NotEndsWith`, `GreaterThan`, `GreaterThanOrEqual`, `LessThan`, `LessThanOrEqual`, `In`, `NotIn`, `Regex`, `NotRegex`. Each carries a `[Description]` symbol (`=`, `≠`, etc.) for UI use. `GreaterThan*` / `LessThan*` over collection navigations operate on the collection's count.",
+        "`ComparisonOperatorEnum`. `Unknown`, `Equals`, `NotEquals`, `Contains`, `NotContains`, `StartsWith`, `EndsWith`, `NotStartsWith`, `NotEndsWith`, `GreaterThan`, `GreaterThanOrEqual`, `LessThan`, `LessThanOrEqual`, `In`, `NotIn`, `Regex`, `NotRegex`, `Fuzzy`, `NotFuzzy`. Each carries a `[Description]` symbol (`=`, `≠`, etc.) for UI use. `GreaterThan*` / `LessThan*` over collection navigations operate on the collection's count. `Fuzzy` / `NotFuzzy` use trigram Jaccard similarity with optional `ConditionClause.Threshold` (default `0.3`).",
         "`GroupOperatorEnum`. `And`, `Or`.",
         "`QueryTotalCountMode`. `Exact`, `None`, `HasMore`.",
         "`QueryIncludeFilterMode`. `Full`, `MatchedOnly`.",
-        "`JoinType`. `Inner`, `Left` (root `/Query` joins; v1)."
+        "`JoinType`. `Inner`, `Left` (root `/Query` joins; v1).",
+        "`AggregateFunction`. `Count` (`COUNT(*)` with no field; a collection field totals its elements; a scalar field counts non-null values), `Sum`, `Average`, `Min`, `Max`, `CountDistinct` (`COUNT(DISTINCT field)`, nulls skipped). Used by `AggregateSelect` on `ProjectionQueryReq`."
       ]
     },
     {
       "type": "markdown",
       "title": "Request DTOs under `Common/Request`",
-      "body": "- `QueryRequestBase`. Shared fields: `Start`, `Amount` (paging), `Keys`. Polymorphic JSON (`$type`: `concrete` / `project` / `root`) so cache/API can deserialize `ProjectedQueryRes.QueryRequest` (`List<object[]>` of composite primary keys), `WhereClause`, `Include` (navigation paths for eager load), `SortBy` (`List<SortBy>`).\n- `QueryConcreteReq : QueryRequestBase, IQueryExecutionRequest`. Request body for `/QueryConcrete` (entity graphs). `Options : QueryRequestOptions` (TotalCount + IncludeFilter).\n- `ProjectionQueryReq : QueryRequestBase, IQueryExecutionRequest`. Request body for `/QueryProject`. Adds `Select` (required) and `ComputedField[] ComputedFields`. `Include` is ignored. Navigations are derived from `Select` and any collection paths referenced in `WhereClause`. `Options : ProjectedQueryRequestOptions` adds `ZipSiblingCollectionSelections` (default `true`).\n- `QueryReq : QueryRequestBase, IQueryExecutionRequest`. Request body for root `/Query` (dynamic context base). Required `From` (`FromClause`), optional `Joins` (`JoinClause`), required `Select` (alias.property), optional `ComputedFields`. `Include` forbidden. Nested `FromClause.Query` / `JoinClause.Query` is a `SourceQueryScope` (Where/Keys), not `WhereClause.SubClause`.\n- `FromClause` / `JoinClause` / `JoinOn` / `SourceQueryScope`. Join AST for root Query.\n- `ComputedField(Name, Template)`. Adds a column derived from a SmartFormat template evaluated against the projected row (requires `IFormatterService` in the host).\n- `IQueryExecutionRequest`. Shared methods for concrete / projection / root query.\n\nMaps onto `Lyo.Api` host routes (see [`Lyo.Api`](../../../Apps/Api/Lyo.Api/README.md) for caching, options, and SQL projection details):\n\n| Request DTO | Endpoint | Response |\n| --- | --- | --- |\n| `QueryConcreteReq` | `POST {baseRoute}/QueryConcrete` | `QueryRes<T>` (entity graphs) |\n| `ProjectionQueryReq` | `POST {baseRoute}/QueryProject` | `ProjectedQueryRes<T>` |\n| `QueryReq` | `POST {dynamicBase}/Query` | `ProjectedQueryRes` (JSON rows; From/Joins) |\n\n**Result caching** for QueryConcrete / QueryProject is host-side (`QueryOptions.CacheQueryResultsAsUtf8Payload` + `ICacheService` / Fusion), not on these DTOs. Both endpoints share the same option and tag-based invalidation (`QueryCacheKeyBuilder` / `QueryCacheTagBuilder`)."
+      "body": "- `QueryRequestBase`. Shared fields: `Start`, `Amount` (paging), `Keys`. Polymorphic JSON (`$type`: `concrete` / `project` / `root`) so cache/API can deserialize `ProjectedQueryRes.QueryRequest` (`List<object[]>` of composite primary keys), `WhereClause`, `Include` (navigation paths for eager load), `SortBy` (`List<SortBy>`).\n- `QueryConcreteReq : QueryRequestBase, IQueryExecutionRequest`. Request body for `/QueryConcrete` (entity graphs). `Options : QueryRequestOptions` (TotalCount + IncludeFilter).\n- `ProjectionQueryReq : QueryRequestBase, IQueryExecutionRequest`. Request body for `/QueryProject`. Adds `Select`, `ComputedField[] ComputedFields`, and `AggregateSelect[] Aggregates`. Omit `Aggregates` for one row per entity. When `Aggregates` is set, `Select` is the group key (empty `Select` is one summary row) and each aggregate is another column. A path segment may end with `[n]`, `[start:]`, `[:end]`, `[start:end]`, or `[:]`. On a string that is a slice (`[n]` is one character; `start` is inclusive and `end` is exclusive; a missing side is open). On a collection it is an ordered window: one element is a scalar, a longer window is a select list and cannot be a group key. Brackets are rejected on a filter. `Include` is ignored. Navigations are derived from `Select` and any collection paths referenced in `WhereClause`. `Options : ProjectedQueryRequestOptions` adds `ZipSiblingCollectionSelections` (default `true`).\n- `AggregateSelect(Function, Name, Field?)`. Output column for `Count`, `Sum`, `Average`, `Min`, `Max`, or `CountDistinct`. `Name` is the result key, not the thing being counted. `Field` is optional for `Count` and required for every other function. A `Count` field that is a collection, or ends in `.count`, totals the elements in the group. A scalar `Count` field skips nulls and keeps duplicates. `Field` accepts the same bracket syntax as `Select`.\n- `QueryReq : QueryRequestBase, IQueryExecutionRequest`. Request body for root `/Query` (dynamic context base). Required `From` (`FromClause`), optional `Joins` (`JoinClause`), required `Select` (alias.property), optional `ComputedFields`. `Include` forbidden. Nested `FromClause.Query` / `JoinClause.Query` is a `SourceQueryScope` (Where/Keys), not `WhereClause.SubClause`.\n- `FromClause` / `JoinClause` / `JoinOn` / `SourceQueryScope`. Join AST for root Query.\n- `ComputedField(Name, Template)`. Adds a column derived from a SmartFormat template evaluated against the projected row (requires `IFormatterService` in the host).\n- `IQueryExecutionRequest`. Shared methods for concrete / projection / root query.\n\nMaps onto `Lyo.Api` host routes (see [`Lyo.Api`](../../../Apps/Api/Lyo.Api/README.md) for caching, options, and SQL projection details):\n\n| Request DTO | Endpoint | Response |\n| --- | --- | --- |\n| `QueryConcreteReq` | `POST {baseRoute}/QueryConcrete` | `QueryRes<T>` (entity graphs) |\n| `ProjectionQueryReq` | `POST {baseRoute}/QueryProject` | `ProjectedQueryRes<T>` |\n| `QueryReq` | `POST {dynamicBase}/Query` | `ProjectedQueryRes` (JSON rows; From/Joins) |\n\n**Result caching** for QueryConcrete / QueryProject is host-side (`QueryOptions.CacheQueryResultsAsUtf8Payload` + `ICacheService` / Fusion), not on these DTOs. Both endpoints share the same option and tag-based invalidation (`QueryCacheKeyBuilder` / `QueryCacheTagBuilder`)."
     },
     {
       "type": "list",
@@ -97,7 +98,7 @@
     {
       "type": "markdown",
       "title": "Builders",
-      "body": "| Builder | Produces | Notes |\n| --- | --- | --- |\n| `WhereClauseBuilder` | `WhereClause` | `And()` / `Or()`; per-operator helpers (`Equals`, `Contains`, `In`, `Regex`, …); nested groups; `AddSubClause` / `AddConditionWithSubClause` for two-phase filters |\n| `WhereClauseBuilderFor<T>` | `WhereClause` | From `WhereClauseBuilder.For<T>()`. Property paths via `Expression<Func<T, …>>` |\n| `QueryConcreteReqBuilder` | `QueryConcreteReq` | Includes, keys, where, sort, paging, total-count / include-filter modes; `For<T>()` typed helpers |\n| `ProjectionQueryReqBuilder` | `ProjectionQueryReq` | Same as concrete plus `AddSelect` / `AddComputedField` / zip sibling collections |\n| `QueryReqBuilder` | `QueryReq` | Root `/Query`: `From`, `Join`, selects, where/sort/paging |\n\nSee Examples above for builder samples (also documented under Query & Request Builders in `Lyo.Api`)."
+      "body": "| Builder | Produces | Notes |\n| --- | --- | --- |\n| `WhereClauseBuilder` | `WhereClause` | `And()` / `Or()`; per-operator helpers (`Equals`, `Contains`, `In`, `Regex`, `Fuzzy`, …); nested groups; `AddSubClause` / `AddConditionWithSubClause` for two-phase filters |\n| `WhereClauseBuilderFor<T>` | `WhereClause` | From `WhereClauseBuilder.For<T>()`. Property paths via `Expression<Func<T, …>>` |\n| `QueryConcreteReqBuilder` | `QueryConcreteReq` | Includes, keys, where, sort, paging, total-count / include-filter modes; `For<T>()` typed helpers |\n| `ProjectionQueryReqBuilder` | `ProjectionQueryReq` | Same as concrete plus `AddSelect` / `AddComputedField` / `AddCount` / `AddSum` / `AddAverage` / `AddMin` / `AddMax` / zip sibling collections |\n| `QueryReqBuilder` | `QueryReq` | Root `/Query`: `From`, `Join`, selects, where/sort/paging |\n\nSee Examples above for builder samples (also documented under Query & Request Builders in `Lyo.Api`)."
     },
     {
       "type": "list",
@@ -120,7 +121,7 @@
   },
   "dependencies": [
     {
-      "name": "Lyo.Common.Json",
+      "name": "Lyo.Exceptions",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -128,7 +129,7 @@
       ]
     },
     {
-      "name": "Lyo.Exceptions",
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -177,6 +178,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\..\Core\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\Lyo.Api.Import\Lyo.Api.Import.csproj"/>
+        <ProjectReference Include="..\Lyo.Api.Import.Csv\Lyo.Api.Import.Csv.csproj"/>
+        <ProjectReference Include="..\Lyo.Api.Import.Toml\Lyo.Api.Import.Toml.csproj"/>
+        <ProjectReference Include="..\Lyo.Api.Import.Xml\Lyo.Api.Import.Xml.csproj"/>
+        <ProjectReference Include="..\Lyo.Api.Import.Yaml\Lyo.Api.Import.Yaml.csproj"/>
+        <ProjectReference Include="..\..\..\..\Data\Json\Lyo.Json\Lyo.Json.csproj"/>
+    </ItemGroup>
+
+</Project>

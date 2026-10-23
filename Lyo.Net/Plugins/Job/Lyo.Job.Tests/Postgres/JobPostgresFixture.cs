@@ -2,6 +2,7 @@ using Lyo.Api;
 using Lyo.Api.Mapping;
 using Lyo.Api.Services.Crud.Create;
 using Lyo.Cache;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Job.Models.Events;
 using Lyo.Job.Models.Request;
@@ -58,7 +59,7 @@ public sealed class JobPostgresFixture : PostgresServiceFixtureBase<JobContext>
 
         var result = await CreateService.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(
             req, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
+                ctx.Entity.Id = LyoGuid.CreateV7();
                 ctx.Entity.Type = "Test";
                 ctx.Entity.WorkerType = ProgrammingLanguageInfo.CSharp.ShortName;
             }, ct: cancellationToken);

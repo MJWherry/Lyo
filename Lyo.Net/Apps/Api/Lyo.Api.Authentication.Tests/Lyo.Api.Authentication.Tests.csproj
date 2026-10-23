@@ -16,7 +16,7 @@
         <ProjectReference Include="..\Lyo.Api.Authentication\Lyo.Api.Authentication.csproj"/>
         <ProjectReference Include="..\Lyo.Api\Lyo.Api.csproj"/>
         <ProjectReference Include="..\..\..\Core\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
-        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Json\Lyo.Common.Json.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Json\Lyo.Json\Lyo.Json.csproj"/>
         <ProjectReference Include="..\..\..\Core\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
         <ProjectReference Include="..\..\..\Core\Testing\Lyo.Testing.Containers\Lyo.Testing.Containers.csproj"/>
         <ProjectReference Include="..\..\..\Security\Authentication\Lyo.Authentication.Postgres\Lyo.Authentication.Postgres.csproj"/>

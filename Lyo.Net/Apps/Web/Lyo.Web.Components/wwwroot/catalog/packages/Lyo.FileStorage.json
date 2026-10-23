@@ -3,7 +3,7 @@
   "name": "Lyo.FileStorage",
   "area": "Data",
   "tagline": "Save, stream-save, read, delete, and file metadata. Optional compression (Lyo.Compression), two-key encryption (Lyo.Encryption), duplicate hashing, access policies, audit hooks, multipart (IMultipartUploadService), and presigned/direct-upload/copy on cloud backends.",
-  "description": "Save, stream-save, read, delete, and file metadata. Optional compression ([Lyo.Compression](../../Compression/Lyo.Compression/README.md)), two-key encryption ([Lyo.Encryption](../../../Security/Encryption/Lyo.Encryption/README.md)), duplicate hashing, access policies, audit hooks, multipart uploads (via [IMultipartUploadService](Multipart/IMultipartUploadService.cs)), and presigned/direct-upload/copy on cloud-capable backends.\n\nCatalog listing is `IFileMetadataStore`. Bytes go through `IFileStorageService`. Backends that can list keys expose `IFileStoragePhysical.Physical` (`IFileSystem`). `FileStorageReconcile` joins them on file id with flags `Store` / `Physical` / `Both`.\n\nWith GenerateDocumentationFile set in Directory.Build.props, IntelliSense shows the same summaries as this README for documented members.",
+  "description": "Save, stream-save, read, delete, and file metadata. Optional compression ([Lyo.Compression](../../Compression/Lyo.Compression/README.md)), two-key encryption ([Lyo.Encryption](../../../Security/Encryption/Lyo.Encryption/README.md)), duplicate hashing, access policies, audit hooks, multipart uploads (via [IMultipartUploadService](Multipart/IMultipartUploadService.cs)), and presigned/direct-upload/copy on cloud-capable backends.\n\nCatalog listing is `IFileMetadataStore`. Bytes go through `IFileStorageService`. Backends that can list keys expose `IFileStoragePhysical.Physical` (`IFileSystem`). `FileStorageReconcile` joins them on file id with flags `Store` / `Physical` / `Both`.\n\n`IFileStorageTags` adds manual tags and stamps automatic `file-type` and `imported` tags. `ListTagGroupAsync` builds a virtual folder from an ordered list of tag types (including import year, month, and day) without moving object keys. `GET capabilities` includes those tag types.\n\nWith GenerateDocumentationFile set in Directory.Build.props, IntelliSense shows the same summaries as this README for documented members.\n\nNamed stores are recorded with `AddFileStorageFactory`. Inject the scoped `IFileStorageFactory` and call `Get(name)`. Disk is built in. S3, Azure Blob, FTP, and SFTP add their own builder methods. `FileStorage:Stores` binds `Provider`, plus optional `EncryptionServiceKey` and `CompressionServiceKey`. Omitted encryption passes null. Omitted compression uses the unkeyed `ICompressionService`.",
   "features": [],
   "examples": [
     {
@@ -15,6 +15,16 @@
       "title": "Store files on S3-compatible backends",
       "language": "csharp",
       "code": "using Lyo.FileStorage.S3;\nusing Lyo.FileStorage.Models;\n\nvar options = new S3FileStorageOptions\n{\n    BucketName = \"my-bucket\",\n    Region = \"us-east-1\",\n    AccessKeyId = \"your-access-key\",\n    SecretAccessKey = \"your-secret-key\"\n};\n\nvar metadataStore = new YourMetadataStore(); // IFileMetadataStore\nvar service = new S3FileStorageService(options, metadataStore);\n\n// Same IFileStorageService contract as LocalFileStorageService"
+    },
+    {
+      "title": "Named disk store",
+      "language": "csharp",
+      "code": "using Lyo.FileStorage;\n\nservices.AddFileStorageFactory(stores =>\n{\n    stores.AddDisk(\"photos\", disk =>\n    {\n        disk.FromConfiguration(configuration, \"FileStorage:Stores:photos\");\n        disk.Configure(options => options.RootDirectoryPath = \"/data/photos\");\n        disk.UseEncryption(\"kek\");\n        disk.UseCompression(\"gzip\");\n    });\n});\n\nvar photos = scope.ServiceProvider.GetRequiredService<IFileStorageFactory>().Get(\"photos\");"
+    },
+    {
+      "title": "FileStorage:Stores",
+      "language": "json",
+      "code": "{\n  \"FileStorage\": {\n    \"Default\": \"photos\",\n    \"Stores\": {\n      \"photos\": {\n        \"Provider\": \"Disk\",\n        \"RootDirectoryPath\": \"/data/photos\",\n        \"EncryptionServiceKey\": \"kek\",\n        \"CompressionServiceKey\": \"gzip\"\n      }\n    }\n  }\n}"
     }
   ],
   "sections": [
@@ -100,6 +110,12 @@
           "Yes (server-staged parts)",
           "Yes",
           "Yes"
+        ],
+        [
+          "Byte range (OpenPlainByteRangeAsync)",
+          "Yes (plain slice, or encrypted from the chunk)",
+          "Yes (GetObject ByteRange, inclusive)",
+          "Yes (DownloadStreaming HttpRange)"
         ]
       ],
       "trail": "Plaintext direct uploads (BeginDirectUpload) skip encryption and compression on the edge PUT. Finalized metadata still runs through the usual content policy and availability flags."
@@ -114,7 +130,7 @@
       "title": "IFileStorageService",
       "items": [
         "**Writes.** SaveFileAsync, SaveFromStreamAsync",
-        "**Reads.** GetFileAsync, GetFileStreamAsync. Compressed payloads are decompressed via ICompressionService.Resolver using stored CompressionAlgorithm metadata. Optional per-call compressionAlgorithmOverride or FileStorageServiceBaseOptions.DecompressionAlgorithmOverride. Bounded by MaxDecompressedFileSize through MaxBytesWriteStream.",
+        "**Reads.** GetFileAsync, GetFileStreamAsync, GetContentIntegrityAsync (plaintext hash, algorithm, and size; no wrapped key material). Compressed payloads are decompressed via ICompressionService.Resolver using stored CompressionAlgorithm metadata. Optional per-call compressionAlgorithmOverride or FileStorageServiceBaseOptions.DecompressionAlgorithmOverride. Bounded by MaxDecompressedFileSize through MaxBytesWriteStream. OpenPlainByteRangeAsync reads one inclusive slice when SupportsPlainByteRange is true (local disk, S3, Azure Blob). FTP and SFTP leave the flag false. A plain object is sliced at the plaintext offset. An encrypted, uncompressed object is decrypted from the AEAD chunk that holds that offset, not from ciphertext byte 0. Compressed objects throw. The slice is not hash-verified.",
         "**Zip archive.** IFileStorageArchiveService.CreateArchiveAsync spools files through Lyo.IO.Temp, zips on disk (nested ZipPath, caller fileName), and returns a stream that deletes the temp session on dispose. Caps: FileStorageArchiveOptions.MaxFileCount / MaxTotalUncompressedBytes. DI: AddFileStorageArchiveServiceFromConfiguration + AddFileStorageArchiveServiceKeyed.",
         "**Metadata / delete.** GetMetadataAsync, DeleteFileAsync(Guid, FileDeletionMode, CancellationToken). Deletes the backing object then, depending on FileDeletionMode, either tombstones metadata (RemoveObjectAndTombstoneMetadata, default) or purges it via IFileMetadataStore.PurgeMetadataAsync (RemoveObjectAndPurgeMetadata). Operator/governance flows only. Never accept this mode from end-user input.",
         "**Temporary links.** GetPreSignedReadUrlAsync (with optional PreSignedReadUrlOptions overrides). Both overloads accept CancellationToken, defaulting to default.",
@@ -123,7 +139,8 @@
         "**Move / rename.** MoveFileAsync (same file id, relocate by PathPrefix). RenameFileAsync changes metadata OriginalFileName only.",
         "**Key ops.** MigrateDeksAsync, RotateDeksAsync. Results split Skipped vs Failed. Missing blobs and short encryption headers fail fast.",
         "**Events.** FileSaved, FileRetrieved, FileDeleted, FileMoved, FileRenamed, FileMetadataRetrieved, FileAuditOccurred. Payloads carry a redacted FileStoreSnapshot (wrapped DEK and KEK salt omitted).",
-        "**Health.** CheckHealthAsync via IHealth. Depth follows HealthCheckMode."
+        "**Health.** CheckHealthAsync via IHealth. Depth follows HealthCheckMode.",
+        "**Capabilities.** GetCapabilities reports presigned read, direct upload, copy, move, and physical listing for this backend. Local presign follows AllowFileUriPresignedUrls. Local direct upload follows DirectUploadReceiveBaseUri. HTTP hosts add multipart, encryption, archive, and access-link flags on GET capabilities."
       ]
     },
     {
@@ -159,6 +176,10 @@
         [
           "FileStorageArchiveService",
           "IFileStorageArchiveService: spool via Lyo.IO.Temp, nested ZipPath, caller fileName, caps from FileStorageArchiveOptions"
+        ],
+        [
+          "FileStorageTransfer",
+          "Copies or moves files between two IFileStorageService instances. KeysOnly copies referenced key-encryption keys. Everything also copies the selected objects. PreserveKeys copies ciphertext. NewKey and ExistingKey re-save with the same compression and encryption flags. Move tombstones the source after the hashes match."
         ]
       ]
     },
@@ -184,7 +205,12 @@
         [
           "IFileContentPolicy",
           "Register one implementation (services.AddScoped<IFileContentPolicy, MyPolicy>()).",
-          "Optional pre-save gate that can reject by content (extension/MIME/header sniffing). Rejections raise FilePolicyRejectedException."
+          "Optional pre-save gate. The default policy enforces the content-type and file-name lists. Rejections raise FilePolicyRejectedException. A replacement policy skips those lists on save; rename and direct-upload complete still apply the file-name list."
+        ],
+        [
+          "IFileTypeSniffer",
+          "Optional. Storage factories pass services.GetService<IFileTypeSniffer>(). The default is MagicFileTypeSniffer.",
+          "Identifies a file from its header. Used when VerifyFileSignature is true or a sniffed-type list is set. FileSignatureAlignment rejects a header that disagrees with the claimed type. FileSniffedTypeFilter applies AllowedSniffedFileTypes or DeniedSniffedFileTypes."
         ],
         [
           "IMultipartUploadSessionStore",
@@ -204,8 +230,14 @@
       "items": [
         "FileStorageDekOperations. Implements MigrateDeksAsync and RotateDeksAsync the same way across backends, including short-encryption-header detection and per-file failure isolation.",
         "FileStorageStreamingPipelines. Composes compression / encryption / hash / max-size guards over streamed save and read paths.",
-        "PlainDirectUploadCoordinator. Finalizes plaintext direct-upload PUTs into a normal SaveFileAsync outcome (policy, availability) and runs only when the caller used BeginDirectUploadAsync without compression/encryption hints."
+        "PlainDirectUploadCoordinator. Finalizes plaintext direct-upload PUTs into a normal SaveFileAsync outcome (policy, availability) and runs only when the caller used BeginDirectUploadAsync without compression/encryption hints.",
+        "FileStorageTransfer. Copies or moves files onto another backend. MigrateDeksAsync is unchanged: it rewraps data-encryption keys inside one backend and does not move blobs or copy a key store."
       ]
+    },
+    {
+      "type": "markdown",
+      "title": "Copying or moving files (`FileStorageTransfer`)",
+      "body": "`FileStorageTransfer.TransferAsync` takes a source endpoint, a destination endpoint, and a request. Each endpoint is the storage service, the metadata catalog it was constructed with, and its `IKeyStore`. `Copy` leaves the source in place. `Move` tombstones a source file only after the destination hashes match, and it never deletes source keys. Move requires a separate catalog. A shared catalog can still be copied.\n\n`KeysOnly` copies the key versions referenced by the selected rows and does not read or write blobs. `Everything` also copies those objects. Pass `FileIds` to transfer that set. Null selects the catalog. An empty set, a missing id, a tombstone, or a pending direct upload throws before any write. `Move` with `KeysOnly` throws before any write.\n\n`PreserveKeys` copies raw objects and the same key-encryption keys. Object keys come from `CloudObjectKeyBuilder.FromMetadata` with no storage prefix, because `IFileStoragePhysical.Physical` is already jailed to the disk root or bucket prefix. A shared catalog is left unchanged; a separate catalog receives the same `FileStoreResult`. `NewKey` mints a 32-byte key and re-saves every file with the source compression and encryption flags. `ExistingKey` re-saves under a key the destination already has and does not write key material. `KeysOnly` with either re-encrypt mode throws before any write. Re-encrypt also throws when both endpoints share one metadata instance.\n\nA list that comes back full (`Count == ListCap`) throws before any write. `ListCap` applies only to the catalog list. Tombstones and pending direct uploads are not copied from a catalog list. A file is skipped only when the recomputed destination hashes match. A different stored `OriginalFileHash` fails that file and does not overwrite it. A missing or different stored object with the same metadata hash is rewritten, then checked again. `PreserveKeys` checks the plaintext hash and `SourceFileHash` (the bytes on disk). `NewKey` and `ExistingKey` check the plaintext hash, and the destination compression and encryption flags must match the source. A file the service will not read, such as `PendingScan`, still copies under `PreserveKeys` when the stored-object hash matches. `FilesFailed > 0` means the run did not fully succeed. Earlier destination files stay. A failed file stays on the source. Cancellation throws `OperationCanceledException`. Pass `IProgress<FileStorageTransferProgress>` to hear listing, key, file, and throttled byte progress. Null progress reports nothing. Raw copy progress uses the stored size. Re-save progress uses the plaintext size.\n\n`GetContentIntegrityAsync` returns the plaintext hash, algorithm, and size without wrapped key material. That is the hash of a full download body.\n\nFTP and SFTP do not implement `IFileStoragePhysical`, so `PreserveKeys` throws for them. They can still use `NewKey` or `ExistingKey`."
     },
     {
       "type": "table",
@@ -252,8 +284,8 @@
           "Failure-vs-null behaviour"
         ],
         [
-          "MaxUploadSizeBytes, MaxDecompressedFileSize, AllowedContentTypes",
-          "Safety / validation. MaxUploadSizeBytes is enforced on direct-upload PUT bodies as well as streamed saves. An empty AllowedContentTypes list denies all uploads (configure null or omit to allow any)."
+          "MaxUploadSizeBytes, MaxDecompressedFileSize, Allowed/Denied content types, file-name patterns, and sniffed types, VerifyFileSignature",
+          "Safety / validation. MaxUploadSizeBytes is enforced on direct-upload PUT bodies as well as streamed saves. For content type, file name, and sniffed type, set Allowed* (whitelist) or Denied* (blacklist), not both — ValidateUploadFilters throws ArgumentException when both sides of one pair are non-null. Null omits that side. An empty whitelist rejects everything on that dimension; an empty blacklist rejects nothing. VerifyFileSignature starts false; when true, the header must agree with the claimed type. Sniffed names are FileTypeInfo names. JAR, DOCX, and XLSX share the ZIP signature, so denying JAR denies every PK header."
         ],
         [
           "DefaultAvailability, AllowReadQuarantinedForAdmin",
@@ -265,6 +297,11 @@
         ]
       ],
       "lead": "DiskFileStorageOptions adds:"
+    },
+    {
+      "type": "markdown",
+      "title": "Upload filters",
+      "body": "Each filter is a whitelist (`Allowed*`) or a blacklist (`Denied*`). Leave a property unset to skip that side. Setting both sides of one filter throws at startup.\n\n```json\n\"DiskFileStorage\": {\n  \"RootDirectoryPath\": \"/data/files\",\n  \"AllowedContentTypes\": [ \"application/pdf\", \"image/png\", \"image/jpeg\" ],\n  \"DeniedFileNamePatterns\": [ \"\\\\.(exe|dll|jar|bat|cmd|ps1|scr)$\" ],\n  \"DeniedSniffedFileTypes\": [ \"ZIP\", \"RAR\", \"7Z\" ],\n  \"VerifyFileSignature\": true\n}\n```\n\nFile-name patterns match the full name and are not auto-anchored, so `\\.pdf$` allows `report.pdf` and rejects `report.pdf.jar`. An unrecognized header fails a sniffed whitelist and passes a sniffed blacklist. `VerifyFileSignature` rejects `report.pdf` whose bytes start with `PK`."
     },
     {
       "type": "table",
@@ -310,7 +347,7 @@
         ]
       ],
       "lead": "When EnableDuplicateDetection is true, saves hash plaintext and call IFileMetadataStore.FindByHashAsync before persisting transformed bytes.",
-      "trail": "Reads stay the same: GetFileAsync / GetFileStreamAsync decode according to stored metadata, not per-request compress/encrypt flags.\n\nLegacy appsettings LocalFileStorage vs DiskFileStorage binder details are documented on DiskFileStorageOptions.LegacySectionName and DiskFileStorageConfigurationBinder. The internal BindDiskFileStorage(IServiceProvider, string? preferredSection) is invoked by the keyed-disk AddFileStorageServiceKeyed overloads that accept a configSectionName. It tries the preferred section, then DiskFileStorageOptions.SectionName (DiskFileStorage), then DiskFileStorageOptions.LegacySectionName (LocalFileStorage) and logs a warning when the legacy section is matched."
+      "trail": "Reads stay the same: GetFileAsync / GetFileStreamAsync decode according to stored metadata, not per-request compress/encrypt flags.\n\nDisk options bind from the preferred section, then DiskFileStorage."
     },
     {
       "type": "table",
@@ -529,6 +566,14 @@
       ]
     },
     {
+      "name": "Lyo.KeyStore",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Metrics",
       "kind": "lyo",
       "tags": [
@@ -584,14 +629,6 @@
     },
     {
       "name": "Lyo.Common.Core",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [
         "transitive",

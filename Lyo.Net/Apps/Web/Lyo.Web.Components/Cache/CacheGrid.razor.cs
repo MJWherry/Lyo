@@ -5,7 +5,6 @@ using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Common.Core.Conversion;
 using Lyo.Common.Metadata.Records;
-using Lyo.Web.Components.DataGrid;
 using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
 
@@ -13,21 +12,15 @@ namespace Lyo.Web.Components.Cache;
 
 public partial class CacheGrid
 {
+    private const LyoDataGridFeatureFlags GridFeatures = LyoDataGridFeatureFlags.Filterable | LyoDataGridFeatureFlags.Searchable | LyoDataGridFeatureFlags.AutoRefresh |
+        LyoDataGridFeatureFlags.BulkMenu | LyoDataGridFeatureFlags.BulkDelete;
+
     private static readonly string[] KeyFields = ["Type", "Name"];
     private static readonly string[] QuickSearchFields = ["Name"];
-    private const LyoDataGridFeatureFlags GridFeatures =
-        LyoDataGridFeatureFlags.Filterable | LyoDataGridFeatureFlags.Searchable | LyoDataGridFeatureFlags.AutoRefresh
-        | LyoDataGridFeatureFlags.BulkMenu | LyoDataGridFeatureFlags.BulkDelete;
 
     private readonly List<FilterPropertyDefinition> _filters = [
-        new("Type", "Type"),
-        new("Name", "Name"),
-        new("Tags", "Tags"),
-        new("Encrypted", "Encrypted"),
-        new("Compressed", "Compressed"),
-        new("SizeBytes", "Size"),
-        new("Created", "Created"),
-        new("Expires", "Expires")
+        new("Type", "Type"), new("Name", "Name"), new("Tags", "Tags"), new("Encrypted", "Encrypted"), new("Compressed", "Compressed"), new("SizeBytes", "Size"),
+        new("Created", "Created"), new("Expires", "Expires")
     ];
 
     private LyoDataGridProjected? _dataGrid;
@@ -63,6 +56,7 @@ public partial class CacheGrid
     {
         if (raw is string s) {
             yield return s;
+
             yield break;
         }
 
@@ -97,13 +91,17 @@ public partial class CacheGrid
         var raw = ProjectedValueHelper.GetValue(item, field);
         if (raw is null)
             return null;
+
         if (raw is bool b)
             return b;
+
         if (raw is JsonElement je) {
             if (je.ValueKind is JsonValueKind.True)
                 return true;
+
             if (je.ValueKind is JsonValueKind.False)
                 return false;
+
             if (je.ValueKind is JsonValueKind.Null)
                 return null;
         }
@@ -114,15 +112,12 @@ public partial class CacheGrid
     private static string FormatSize(object? item)
     {
         var raw = ProjectedValueHelper.GetValue(item, "SizeBytes");
-        return ProjectedValueHelper.TryGetInt64(raw, out var size)
-            ? FileSizeUnitInfo.FormatBestFitAbbreviation(size, lowercaseAbbreviation: false)
-            : "—";
+        return ProjectedValueHelper.TryGetInt64(raw, out var size) ? FileSizeUnitInfo.FormatBestFitAbbreviation(size, lowercaseAbbreviation: false) : "—";
     }
 
     private async Task ClearAllAsync()
     {
-        var confirmed = await DialogService.ShowMessageBoxAsync(
-            "Clear cache", "Remove every L1 entry this API process is tracking?", yesText: "Clear", cancelText: "Cancel");
+        var confirmed = await DialogService.ShowMessageBoxAsync("Clear cache", "Remove every L1 entry this API process is tracking?", "Clear", cancelText: "Cancel");
         if (confirmed != true)
             return;
 
@@ -139,7 +134,7 @@ public partial class CacheGrid
         if (key.Length == 0 || _dataGrid == null)
             return;
 
-        var confirmed = await DialogService.ShowMessageBoxAsync("Delete", $"Remove '{name}'?", yesText: "Delete", cancelText: "Cancel");
+        var confirmed = await DialogService.ShowMessageBoxAsync("Delete", $"Remove '{name}'?", "Delete", cancelText: "Cancel");
         if (confirmed != true)
             return;
 

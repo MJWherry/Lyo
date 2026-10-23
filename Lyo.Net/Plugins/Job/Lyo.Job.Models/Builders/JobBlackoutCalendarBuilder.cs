@@ -1,13 +1,13 @@
-using Lyo.Common.Core.Enums;
-using Lyo.DateAndTime;
-using Lyo.Exceptions;
-using Lyo.Job.Models.Enums;
-using Lyo.Job.Models.Request;
 #if NET6_0_OR_GREATER
 using TimeOnly = System.TimeOnly;
 #else
 using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 #endif
+using Lyo.Common.Core.Enums;
+using Lyo.DateAndTime;
+using Lyo.Exceptions;
+using Lyo.Job.Models.Enums;
+using Lyo.Job.Models.Request;
 
 namespace Lyo.Job.Models.Builders;
 
@@ -63,8 +63,8 @@ public class JobBlackoutCalendarBuilder
     }
 
     /// <summary>
-    /// Appends one calculated holiday window. The scheduler evaluates <see cref="HolidayInfo.OccursOn" /> each year instead of storing a dated row per year.
-    /// Defaults to the holiday's calendar date, not the observed weekday.
+    /// Appends one calculated holiday window. The scheduler evaluates <see cref="HolidayInfo.OccursOn" /> each year instead of storing a dated row per year. Defaults to the
+    /// holiday's calendar date, not the observed weekday.
     /// </summary>
     public JobBlackoutCalendarBuilder AddBlackoutHoliday(
         HolidayInfo holiday,
@@ -76,8 +76,8 @@ public class JobBlackoutCalendarBuilder
         => AddBlackoutHoliday(holiday, TimeOnly.Parse(startTime), TimeOnly.Parse(endTime), policy, includeObservedDate, enabled);
 
     /// <summary>
-    /// Appends one calculated holiday window. The scheduler evaluates <see cref="HolidayInfo.OccursOn" /> each year instead of storing a dated row per year.
-    /// Defaults to the holiday's calendar date, not the observed weekday.
+    /// Appends one calculated holiday window. The scheduler evaluates <see cref="HolidayInfo.OccursOn" /> each year instead of storing a dated row per year. Defaults to the
+    /// holiday's calendar date, not the observed weekday.
     /// </summary>
     public JobBlackoutCalendarBuilder AddBlackoutHoliday(
         HolidayInfo holiday,
@@ -88,9 +88,7 @@ public class JobBlackoutCalendarBuilder
         bool enabled = true)
         => AddBlackoutHoliday(holiday.Name, holiday, startTime, endTime, policy, includeObservedDate, enabled);
 
-    /// <summary>
-    /// Appends one calculated holiday window with an explicit display name. The scheduler evaluates <see cref="HolidayInfo.OccursOn" /> each year.
-    /// </summary>
+    /// <summary>Appends one calculated holiday window with an explicit display name. The scheduler evaluates <see cref="HolidayInfo.OccursOn" /> each year.</summary>
     public JobBlackoutCalendarBuilder AddBlackoutHoliday(
         string name,
         HolidayInfo holiday,
@@ -101,9 +99,7 @@ public class JobBlackoutCalendarBuilder
         bool enabled = true)
         => AddBlackoutHoliday(name, holiday, TimeOnly.Parse(startTime), TimeOnly.Parse(endTime), policy, includeObservedDate, enabled);
 
-    /// <summary>
-    /// Appends one calculated holiday window with an explicit display name. The scheduler evaluates <see cref="HolidayInfo.OccursOn" /> each year.
-    /// </summary>
+    /// <summary>Appends one calculated holiday window with an explicit display name. The scheduler evaluates <see cref="HolidayInfo.OccursOn" /> each year.</summary>
     public JobBlackoutCalendarBuilder AddBlackoutHoliday(
         string name,
         HolidayInfo holiday,
@@ -165,8 +161,8 @@ public class JobBlackoutCalendarBuilder
     }
 
     /// <summary>
-    /// Appends a calendar-day window: the given days of the month in the given months, every year unless
-    /// <paramref name="startDateUtc" /> / <paramref name="endDateUtc" /> bound it.
+    /// Appends a calendar-day window: the given days of the month in the given months, every year unless <paramref name="startDateUtc" /> / <paramref name="endDateUtc" /> bound
+    /// it.
     /// </summary>
     public JobBlackoutCalendarBuilder AddBlackoutCalendarDays(
         string name,
@@ -181,8 +177,8 @@ public class JobBlackoutCalendarBuilder
         => AddBlackoutCalendarDays(name, months, daysOfMonth, TimeOnly.Parse(startTime), TimeOnly.Parse(endTime), policy, startDateUtc, endDateUtc, enabled);
 
     /// <summary>
-    /// Appends a calendar-day window: the given days of the month in the given months, every year unless
-    /// <paramref name="startDateUtc" /> / <paramref name="endDateUtc" /> bound it.
+    /// Appends a calendar-day window: the given days of the month in the given months, every year unless <paramref name="startDateUtc" /> / <paramref name="endDateUtc" /> bound
+    /// it.
     /// </summary>
     public JobBlackoutCalendarBuilder AddBlackoutCalendarDays(
         string name,

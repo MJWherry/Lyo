@@ -38,11 +38,8 @@ public partial class FileStoreKeyIdField
     private IReadOnlyList<string> Ids => KeyIds ?? Host?.EncryptionKeyIds ?? [];
 
     private string ResolvedHelper
-        => !string.IsNullOrWhiteSpace(HelperText)
-            ? HelperText
-            : Ids.Count > 0
-                ? "Pick a key from the API keystore."
-                : "No key ids from the API. Create a key in the keystore, then refresh.";
+        => !string.IsNullOrWhiteSpace(HelperText) ? HelperText :
+            Ids.Count > 0 ? "Pick a key from the API keystore." : "No key ids from the API. Create a key in the keystore, then refresh.";
 
     protected override async Task OnParametersSetAsync()
     {

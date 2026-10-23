@@ -15,10 +15,7 @@ namespace Lyo.Tts.AwsPolly;
 
 /// <summary>Amazon Polly-backed TTS that turns text into speech.</summary>
 /// <remarks>
-/// <para>
-/// Thread-safe: instance fields are readonly, and bulk work uses the base class's thread-safe collections and synchronization
-/// primitives.
-/// </para>
+/// <para>Thread-safe: instance fields are readonly, and bulk work uses the base class's thread-safe collections and synchronization primitives.</para>
 /// </remarks>
 public sealed class AwsPollyTtsService : TtsServiceBase<AwsPollyTtsRequest>
 {
@@ -99,17 +96,14 @@ public sealed class AwsPollyTtsService : TtsServiceBase<AwsPollyTtsRequest>
 
     /// <summary>Speaks via AWS Polly from a request object.</summary>
     /// <remarks>
+    /// <para><strong>Important:</strong> Polly ties language to the chosen VoiceId. A voice such as "Astrid" (Swedish) or "Joanna" (English US) has a fixed locale.</para>
     /// <para>
-    /// <strong>Important:</strong> Polly ties language to the chosen VoiceId. A voice such as "Astrid" (Swedish) or
-    /// "Joanna" (English US) has a fixed locale.
+    /// LanguageCode on SynthesizeSpeechRequest is mainly for picking a voice, not for changing that voice's language. With a VoiceId present, LanguageCode is ignored or can
+    /// conflict.
     /// </para>
     /// <para>
-    /// LanguageCode on SynthesizeSpeechRequest is mainly for picking a voice, not for changing that voice's language. With a VoiceId
-    /// present, LanguageCode is ignored or can conflict.
-    /// </para>
-    /// <para>
-    /// This method therefore sets LanguageCode only when VoiceId is omitted, so Polly can pick a voice for that language. When VoiceId is
-    /// supplied, only VoiceId is sent (the voice's own language applies).
+    /// This method therefore sets LanguageCode only when VoiceId is omitted, so Polly can pick a voice for that language. When VoiceId is supplied, only VoiceId is sent (the
+    /// voice's own language applies).
     /// </para>
     /// </remarks>
     /// <param name="request">Request holding the text and options.</param>

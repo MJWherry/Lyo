@@ -6,8 +6,8 @@ namespace Lyo.Web.Components.LyoType;
 public partial class LyoTypeSelect
 {
     private string _element = LyoTypeInfo.String.FullName;
-    private LyoTypeCollectionShape _shape = LyoTypeCollectionShape.Value;
     private bool _pendingConcreteName;
+    private LyoTypeCollectionShape _shape = LyoTypeCollectionShape.Value;
 
     /// <summary>Stored type FullName (CLR catalog, non-CLR Lyo type, concrete enum, list/array, or custom).</summary>
     [Parameter]
@@ -36,14 +36,11 @@ public partial class LyoTypeSelect
     [Parameter]
     public bool ShowCustom { get; set; } = true;
 
-    /// <summary>
-    /// If true, Custom… and enum types show a CLR FullName field under the picker (config). Job/report tables pass false and render that field in the row expander.
-    /// </summary>
+    /// <summary>If true, Custom… and enum types show a CLR FullName field under the picker (config). Job/report tables pass false and render that field in the row expander.</summary>
     [Parameter]
     public bool ShowFullNameField { get; set; } = true;
 
-    private bool CanWrap
-        => _element != LyoTypeUi.CustomTypeToken && LyoTypeUi.CanWrapInCollection(LyoTypeInfo.FromName(_element));
+    private bool CanWrap => _element != LyoTypeUi.CustomTypeToken && LyoTypeUi.CanWrapInCollection(LyoTypeInfo.FromName(_element));
 
     private bool NeedsFullNameField => _element == LyoTypeUi.CustomTypeToken || _element == LyoTypeInfo.Enum.FullName;
 
@@ -120,6 +117,5 @@ public partial class LyoTypeSelect
         return ValueChanged.InvokeAsync(LyoTypeUi.ComposeFullName(_element, _shape));
     }
 
-    private Task OnFullNameChanged(string value)
-        => ValueChanged.InvokeAsync(LyoTypeUi.ConcreteFullNameFromInput(_element, value));
+    private Task OnFullNameChanged(string value) => ValueChanged.InvokeAsync(LyoTypeUi.ConcreteFullNameFromInput(_element, value));
 }

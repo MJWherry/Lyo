@@ -1,0 +1,107 @@
+<MudStack Spacing="2" Class="pa-2">
+    <MudStack Row Spacing="2" AlignItems="AlignItems.Center">
+        <MudText Typo="Typo.h6">@(string.IsNullOrWhiteSpace(Draft.Title) ? "Untitled story" : Draft.Title)</MudText>
+        <MudSpacer/>
+        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" OnClick="AddNode">Add node</MudButton>
+        <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.CallSplit" Disabled="@(Selected is null)" OnClick="AddChoice">Add choice
+        </MudButton>
+        <MudButton Variant="Variant.Outlined" Size="Size.Small" Disabled="@(Selected is null)" OnClick="MakeStart">Set start</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Save" Disabled="@(_saving || _issues.Count > 0)"
+                   OnClick="SaveAsync">Save
+        </MudButton>
+    </MudStack>
+    <MudStack Row Spacing="2">
+        <MudTextField T="string" Label="Title" Value="@Draft.Title" ValueChanged="OnTitle" Margin="Margin.Dense" Variant="Variant.Outlined" Style="min-width: 220px;"/>
+        <MudTextField T="string" Label="Slug" Value="@Draft.Slug" ValueChanged="OnSlug" Margin="Margin.Dense" Variant="Variant.Outlined" Style="min-width: 180px;"/>
+        <MudSelect T="StoryStatus" Value="Draft.Status" ValueChanged="OnStatus" Label="Status" Margin="Margin.Dense" Variant="Variant.Outlined">
+            @foreach (var status in Enum.GetValues<StoryStatus>()) {
+                if (status != StoryStatus.Unknown) {
+                    <MudSelectItem Value="status">@status</MudSelectItem>
+                }
+            }
+        </MudSelect>
+        <MudTextField T="string" Label="Language" Value="@Draft.Language" ValueChanged="OnLanguage" Margin="Margin.Dense" Variant="Variant.Outlined"/>
+    </MudStack>
+    <MudTextField T="string" Label="Description" Value="@Draft.Description" ValueChanged="OnDescription" Margin="Margin.Dense" Variant="Variant.Outlined"/>
+    @if (_issues.Count > 0) {
+        <MudAlert Severity="Severity.Warning" Dense>
+            @foreach (var issue in _issues) {
+                <div>@issue</div>
+            }
+        </MudAlert>
+    }
+    <MudTabs Elevation="1" Rounded ApplyEffectsToContainer>
+        <MudTabPanel Text="Visual" Icon="@Icons.Material.Filled.AccountTree">
+            <MudGrid Spacing="2">
+                <MudItem xs="12" md="7">
+                    <StoryGraphView Draft="Draft" SelectedNodeKey="@_selectedKey" OnNodeSelected="SelectNode"/>
+                </MudItem>
+                <MudItem xs="12" md="5">
+                    <MudStack Spacing="2">
+                        @if (Selected is { } node) {
+                            <MudText Typo="Typo.subtitle1">Node</MudText>
+
+                            <StoryNodeEditor Node="node" Scenes="Draft.Scenes" OnChanged="Touch"/>
+
+                            <MudText Typo="Typo.subtitle2">Choices</MudText>
+
+                            @if (node.Choices.Count == 0) {
+                                <MudText Typo="Typo.body2" Class="mud-text-secondary">This node has no choices.</MudText>
+                            }
+                            else {
+                                <MudSelect T="int" Value="_choiceIndex" ValueChanged="SelectChoice" Label="Choice" Margin="Margin.Dense" Variant="Variant.Outlined">
+                                    @for (var index = 0; index < node.Choices.Count; index++) {
+                                        var captured = index;
+                                        var choice = node.Choices[captured];
+                                        <MudSelectItem T="int" Value="captured">@(choice.Prompt ?? choice.Key)</MudSelectItem>
+                                    }
+                                </MudSelect>
+
+                                @if (_choiceIndex >= 0 && _choiceIndex < node.Choices.Count) {
+                                    <StoryChoiceEditor Choice="node.Choices[_choiceIndex]" Fields="_fields" Variables="Draft.Variables" Nodes="Draft.Nodes" Actions="Draft.Actions"
+                                                       OnChanged="Touch"/>
+
+                                    <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" OnClick="RemoveChoice">Remove choice</MudButton>
+                                }
+                            }
+
+                            <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" OnClick="RemoveNode">Remove node</MudButton>
+                        }
+                        else {
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">Select a node, or add one.</MudText>
+                        }
+                        <MudExpansionPanels>
+                            <MudExpansionPanel Text="Scenes">
+                                <MudStack Spacing="1">
+                                    @foreach (var scene in Draft.Scenes) {
+                                        <MudText Typo="Typo.body2">@scene.Key — @scene.Title</MudText>
+                                    }
+                                    <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="AddScene">Add scene</MudButton>
+                                </MudStack>
+                            </MudExpansionPanel>
+                            <MudExpansionPanel Text="Variables">
+                                <StoryVariableEditor Variables="Draft.Variables" OnChanged="Touch"/>
+                            </MudExpansionPanel>
+                            <MudExpansionPanel Text="Actions">
+                                <StoryActionEditor Actions="Draft.Actions" Variables="Draft.Variables" Nodes="Draft.Nodes" OnChanged="Touch"/>
+                            </MudExpansionPanel>
+                            <MudExpansionPanel Text="Reactions">
+                                <StoryReactionEditor Reactions="Draft.Reactions" Fields="_fields" Variables="Draft.Variables" Nodes="Draft.Nodes" Actions="Draft.Actions"
+                                                     OnChanged="Touch"/>
+                            </MudExpansionPanel>
+                        </MudExpansionPanels>
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+        <MudTabPanel Text="Request JSON" Icon="@Icons.Material.Filled.DataObject">
+            <JsonEditor T="StoryGraphReq" Value="_request" ValueChanged="ApplyRequest" JsonOptions="_json" EditorSurfaceHeight="min(55vh, 560px)"/>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">The request the save button posts. Choice targets follow the last goto step.</MudText>
+            <MudTextField T="string" Label="StoryBuilder" Value="@_csharp" ReadOnly="true" Lines="8" Variant="Variant.Outlined"/>
+            <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="CopyCsharpAsync">Copy C#</MudButton>
+        </MudTabPanel>
+        <MudTabPanel Text="Play" Icon="@Icons.Material.Filled.PlayArrow">
+            <StoryPlayView StoryClient="StoryClient" StoryId="Draft.Id"/>
+        </MudTabPanel>
+    </MudTabs>
+</MudStack>

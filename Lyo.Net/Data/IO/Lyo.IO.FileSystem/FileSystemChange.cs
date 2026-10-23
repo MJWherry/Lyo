@@ -6,6 +6,18 @@ namespace Lyo.IO.FileSystem;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class FileSystemChange : EventArgs
 {
+    /// <summary>Created, deleted, changed, moved, or renamed.</summary>
+    public FileSystemChangeKind Kind { get; }
+
+    /// <summary>True when the change is about a directory.</summary>
+    public bool IsDirectory { get; }
+
+    /// <summary>Previous path. Null when the item was created.</summary>
+    public string? OldPath { get; }
+
+    /// <summary>New path. Null when the item was deleted.</summary>
+    public string? NewPath { get; }
+
     /// <summary>Builds a change event.</summary>
     /// <param name="kind">Created, deleted, changed, moved, or renamed.</param>
     /// <param name="isDirectory">True when the change is about a directory.</param>
@@ -19,19 +31,6 @@ public sealed class FileSystemChange : EventArgs
         NewPath = newPath;
     }
 
-    /// <summary>Created, deleted, changed, moved, or renamed.</summary>
-    public FileSystemChangeKind Kind { get; }
-
-    /// <summary>True when the change is about a directory.</summary>
-    public bool IsDirectory { get; }
-
-    /// <summary>Previous path. Null when the item was created.</summary>
-    public string? OldPath { get; }
-
-    /// <summary>New path. Null when the item was deleted.</summary>
-    public string? NewPath { get; }
-
     /// <inheritdoc />
-    public override string ToString()
-        => $"{Kind} {(IsDirectory ? "dir" : "file")}: Old={OldPath} | New={NewPath}";
+    public override string ToString() => $"{Kind} {(IsDirectory ? "dir" : "file")}: Old={OldPath} | New={NewPath}";
 }

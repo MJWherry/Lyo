@@ -4,22 +4,20 @@ using System.Text.Json;
 using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Common.Core.Identifiers;
+using Lyo.Common.Metadata.Records;
 using Lyo.Query.Models.Builders;
-using SortDirection = Lyo.Common.Core.Enums.SortDirection;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
 using Lyo.Result;
-using Lyo.Sms;
 using Lyo.Sms.Models;
-using Lyo.Common.Metadata.Records;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
 using Lyo.Web.Components.DataGrid;
 using Lyo.Web.Components.Models;
+using Lyo.Web.Primitives;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
+using SortDirection = Lyo.Common.Core.Enums.SortDirection;
 
 namespace Lyo.Sms.Web.Components;
 
@@ -28,9 +26,7 @@ public partial class TwilioSmsLogGrid
 {
     private const int ChatPageSize = 200;
 
-    private static readonly string[] ChatSelectFields = [
-        "Id", "To", "From", "Body", "Direction", "Status", "DateSent", "CreatedTimestamp", "MediaUrlsJson"
-    ];
+    private static readonly string[] ChatSelectFields = ["Id", "To", "From", "Body", "Direction", "Status", "DateSent", "CreatedTimestamp", "MediaUrlsJson"];
 
     private readonly DialogOptions _chatDialogOptions = new() {
         MaxWidth = MaxWidth.Small,
@@ -40,18 +36,18 @@ public partial class TwilioSmsLogGrid
     };
 
     private readonly List<FilterPropertyDefinition> _propertyDefinitions = [
-        new("To"), new("From"), new("Status"), new("Direction"), new("IsSuccess", "Received"), new("Body"),
-        new("DateSent", "Sent", LyoTypeInfo.DateTime), new("CreatedTimestamp", "Logged", LyoTypeInfo.DateTime)
+        new("To"), new("From"), new("Status"), new("Direction"), new("IsSuccess", "Received"), new("Body"), new("DateSent", "Sent", LyoTypeInfo.DateTime),
+        new("CreatedTimestamp", "Logged", LyoTypeInfo.DateTime)
     ];
 
     private bool _chatBusy;
+    private string? _chatError;
     private bool _chatOpen;
     private LyoDataGridProjected? _dataGrid;
     private string _draft = string.Empty;
     private string? _localNumber;
     private string? _peer;
     private string? _peerQuery;
-    private string? _chatError;
     private List<ChatMessage> _thread = [];
 
     [Inject]
@@ -148,6 +144,7 @@ public partial class TwilioSmsLogGrid
         var values = new HashSet<string>(StringComparer.Ordinal);
         if (!string.IsNullOrWhiteSpace(personNumber))
             values.Add(personNumber.Trim());
+
         if (!string.IsNullOrWhiteSpace(normalized))
             values.Add(normalized.Trim());
 
@@ -254,14 +251,12 @@ public partial class TwilioSmsLogGrid
 
     private static ChatMessage ToMessage(object row)
     {
-        var at = LyoDateTimeDisplay.ToDateTime(ProjectedValueHelper.GetValue(row, "DateSent"))
-                 ?? LyoDateTimeDisplay.ToDateTime(ProjectedValueHelper.GetValue(row, "CreatedTimestamp"));
+        var at = LyoDateTimeDisplay.ToDateTime(ProjectedValueHelper.GetValue(row, "DateSent")) ??
+            LyoDateTimeDisplay.ToDateTime(ProjectedValueHelper.GetValue(row, "CreatedTimestamp"));
+
         return new(
-            ProjectedValueHelper.GetDisplayValue(row, "Id"),
-            ProjectedValueHelper.GetDisplayValue(row, "Body"),
-            SmsColorHelper.IsInbound(ProjectedValueHelper.GetDisplayValue(row, "Direction")),
-            at,
-            ParseMedia(ProjectedValueHelper.GetDisplayValue(row, "MediaUrlsJson")),
+            ProjectedValueHelper.GetDisplayValue(row, "Id"), ProjectedValueHelper.GetDisplayValue(row, "Body"),
+            SmsColorHelper.IsInbound(ProjectedValueHelper.GetDisplayValue(row, "Direction")), at, ParseMedia(ProjectedValueHelper.GetDisplayValue(row, "MediaUrlsJson")),
             ProjectedValueHelper.GetDisplayValue(row, "Status"));
     }
 
@@ -296,9 +291,7 @@ public partial class TwilioSmsLogGrid
         var utc = value.Value.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(value.Value, DateTimeKind.Utc) : value.Value;
         var local = utc.Kind == DateTimeKind.Utc ? utc.ToLocalTime() : utc;
         var today = DateTime.Now.Date;
-        return local.Date == today
-            ? local.ToString("t", CultureInfo.CurrentCulture)
-            : local.ToString("g", CultureInfo.CurrentCulture);
+        return local.Date == today ? local.ToString("t", CultureInfo.CurrentCulture) : local.ToString("g", CultureInfo.CurrentCulture);
     }
 
     private static T? GetResultProperty<T>(object result, string name)

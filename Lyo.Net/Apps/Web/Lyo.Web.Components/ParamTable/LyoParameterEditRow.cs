@@ -4,9 +4,7 @@ using Lyo.Query.Models.Parameters;
 
 namespace Lyo.Web.Components.ParamTable;
 
-/// <summary>
-/// Editable parameter row for <see cref="LyoParameterEditor" />. Job and report hosts map their API DTOs into this type on load/save.
-/// </summary>
+/// <summary>Editable parameter row for <see cref="LyoParameterEditor" />. Job and report hosts map their API DTOs into this type on load/save.</summary>
 public sealed class LyoParameterEditRow
 {
     /// <summary>Existing row id; null until the host persists a new row.</summary>
@@ -72,9 +70,7 @@ public sealed class LyoParameterEditRow
     /// <summary>Picker kind in effect, or null when this parameter has no value picker and only takes a typed default.</summary>
     public ParameterOptionsKind? EffectiveKind => ParameterOptionsJson.TryGetKind(EffectiveOptions);
 
-    /// <summary>
-    /// Builds a row from an API response, treating <c>***</c> as a masked encrypted value instead of plaintext.
-    /// </summary>
+    /// <summary>Builds a row from an API response, treating <c>***</c> as a masked encrypted value instead of plaintext.</summary>
     public static LyoParameterEditRow FromMasked(
         Guid id,
         string key,

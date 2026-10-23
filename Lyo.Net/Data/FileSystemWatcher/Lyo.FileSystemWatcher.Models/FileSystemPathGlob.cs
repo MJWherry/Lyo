@@ -5,7 +5,8 @@ using Lyo.Exceptions;
 namespace Lyo.FileSystemWatcher.Models;
 
 /// <summary>
-/// Regex matching for paths relative to a watch root. Paths use '/' separators. Patterns are .NET regular expressions (not globs) and are not anchored unless the pattern includes <c>^</c>/<c>$</c>.
+/// Regex matching for paths relative to a watch root. Paths use '/' separators. Patterns are .NET regular expressions (not globs) and are not anchored unless the pattern
+/// includes <c>^</c>/<c>$</c>.
 /// </summary>
 public static class FileSystemPathGlob
 {
@@ -21,9 +22,7 @@ public static class FileSystemPathGlob
         return GetRegex(pattern, comparison).IsMatch(path);
     }
 
-    /// <summary>
-    /// Compiles each pattern so invalid regex fails at options validation rather than during a walk.
-    /// </summary>
+    /// <summary>Compiles each pattern so invalid regex fails at options validation rather than during a walk.</summary>
     public static void ValidatePatterns(IEnumerable<string>? patterns, StringComparison comparison = StringComparison.OrdinalIgnoreCase)
     {
         if (patterns is null)
@@ -37,9 +36,7 @@ public static class FileSystemPathGlob
         }
     }
 
-    /// <summary>
-    /// File include/exclude: empty include matches all; any matching exclude rejects. Paths are relative to the watch root.
-    /// </summary>
+    /// <summary>File include/exclude: empty include matches all; any matching exclude rejects. Paths are relative to the watch root.</summary>
     public static bool IsFileIncluded(
         string relativePath,
         IEnumerable<string>? includePatterns,
@@ -66,14 +63,8 @@ public static class FileSystemPathGlob
         return !sawPattern;
     }
 
-    /// <summary>
-    /// True when every path under <paramref name="relativeDirectory" /> would be excluded, so the walker can skip the subtree.
-    /// The snapshot root is never excluded this way.
-    /// </summary>
-    public static bool IsDirectoryExcluded(
-        string relativeDirectory,
-        IEnumerable<string>? excludePatterns,
-        StringComparison comparison = StringComparison.OrdinalIgnoreCase)
+    /// <summary>True when every path under <paramref name="relativeDirectory" /> would be excluded, so the walker can skip the subtree. The snapshot root is never excluded this way.</summary>
+    public static bool IsDirectoryExcluded(string relativeDirectory, IEnumerable<string>? excludePatterns, StringComparison comparison = StringComparison.OrdinalIgnoreCase)
     {
         if (excludePatterns is null)
             return false;
@@ -127,14 +118,15 @@ public static class FileSystemPathGlob
     }
 
     private static Regex GetRegex(string pattern, StringComparison comparison)
-        => RegexCache.GetOrAdd(comparison + "\n" + pattern, _ => {
-            try {
-                return new(pattern, ToRegexOptions(comparison), MatchTimeout);
-            }
-            catch (ArgumentException ex) {
-                throw new ArgumentException($"Invalid include/exclude regex '{pattern}'.", ex);
-            }
-        });
+        => RegexCache.GetOrAdd(
+            comparison + "\n" + pattern, _ => {
+                try {
+                    return new(pattern, ToRegexOptions(comparison), MatchTimeout);
+                }
+                catch (ArgumentException ex) {
+                    throw new ArgumentException($"Invalid include/exclude regex '{pattern}'.", ex);
+                }
+            });
 
     private static RegexOptions ToRegexOptions(StringComparison comparison)
         => comparison is StringComparison.OrdinalIgnoreCase or StringComparison.CurrentCultureIgnoreCase or StringComparison.InvariantCultureIgnoreCase

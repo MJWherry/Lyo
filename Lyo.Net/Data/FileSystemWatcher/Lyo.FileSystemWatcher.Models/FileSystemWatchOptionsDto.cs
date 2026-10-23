@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.FileSystemWatcher.Models;
 
 /// <summary>Serializable watch settings (patterns, recursion, hashing, debounce).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class FileSystemWatchOptionsDto
 {
     /// <summary>If true, subdirectories are included in the snapshot and native watch.</summary>
@@ -20,4 +23,8 @@ public sealed class FileSystemWatchOptionsDto
 
     /// <summary>Exclude regexes matched against the relative path from the watch root. Exclude wins over include.</summary>
     public IList<string> ExcludePatterns { get; set; } = [];
+
+    /// <summary>Debounce, hashing, and include/exclude pattern counts.</summary>
+    public override string ToString()
+        => $"DebounceTimerDelay={DebounceTimerDelay} EnableFileHashing={EnableFileHashing} IncludePatterns={IncludePatterns.Count} ExcludePatterns={ExcludePatterns.Count}";
 }

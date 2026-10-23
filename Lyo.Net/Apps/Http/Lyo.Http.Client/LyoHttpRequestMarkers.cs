@@ -10,7 +10,7 @@ public static class LyoHttpRequestMarkers
     public static void SetStreamBinary(HttpRequestMessage request)
     {
 #if NET5_0_OR_GREATER
-        request.Options.Set(new HttpRequestOptionsKey<bool>(StreamBinary), true);
+        request.Options.Set(new(StreamBinary), true);
 #else
         request.Properties[StreamBinary] = true;
 #endif

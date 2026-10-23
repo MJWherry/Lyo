@@ -1,6 +1,6 @@
 using System.Buffers;
-using System.Runtime.CompilerServices;
 using System.Text;
+using Lyo.Common.Core.Conversion;
 using Lyo.Common.Core.Enums;
 using Lyo.Exceptions;
 
@@ -706,29 +706,7 @@ public static class BinaryEncoding
     }
 
     private static bool TryEncodeHex(ReadOnlySpan<byte> data, Span<char> destination, out int charsWritten, TextLetterCase letterCase)
-    {
-        charsWritten = 0;
-        var needed = data.Length * 2;
-        if (destination.Length < needed)
-            return false;
-
-#if NET5_0_OR_GREATER
-        if (letterCase == TextLetterCase.Upper) {
-            var hex = Convert.ToHexString(data);
-            hex.AsSpan().CopyTo(destination);
-            charsWritten = hex.Length;
-            return true;
-        }
-#endif
-        for (var i = 0; i < data.Length; i++) {
-            var b = data[i];
-            destination[i * 2] = letterCase == TextLetterCase.Upper ? NibbleToHexUpper(b >> 4) : NibbleToHexLower(b >> 4);
-            destination[i * 2 + 1] = letterCase == TextLetterCase.Upper ? NibbleToHexUpper(b & 0xF) : NibbleToHexLower(b & 0xF);
-        }
-
-        charsWritten = needed;
-        return true;
-    }
+        => ByteConvert.TryToHex(data, destination, out charsWritten, letterCase);
 
     private static bool TryDecodeHex(ReadOnlySpan<char> hex, Span<byte> destination, out int bytesWritten)
     {
@@ -757,12 +735,6 @@ public static class BinaryEncoding
 
         return pending < 0;
     }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static char NibbleToHexUpper(int nibble) => (char)(nibble < 10 ? '0' + nibble : 'A' + (nibble - 10));
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static char NibbleToHexLower(int nibble) => (char)(nibble < 10 ? '0' + nibble : 'a' + (nibble - 10));
 
     private static int HexValue(char c)
     {

@@ -20,7 +20,7 @@ public class LocalLockServiceTests
     [Fact]
     public async Task AcquireAsync_ReturnsHandle()
     {
-        var handle = await _service.AcquireAsync("test-key-1", TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var handle = await _service.AcquireAsync("test-key-1", TimeSpan.FromSeconds(5), ct: TestCt);
         handle.ShouldNotBeNull();
         await handle.ReleaseAsync();
     }
@@ -28,10 +28,10 @@ public class LocalLockServiceTests
     [Fact]
     public async Task AcquireAsync_AfterRelease_CanAcquireAgain()
     {
-        var handle1 = await _service.AcquireAsync("test-key-2", TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var handle1 = await _service.AcquireAsync("test-key-2", TimeSpan.FromSeconds(5), ct: TestCt);
         handle1.ShouldNotBeNull();
         await handle1.ReleaseAsync();
-        var handle2 = await _service.AcquireAsync("test-key-2", TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var handle2 = await _service.AcquireAsync("test-key-2", TimeSpan.FromSeconds(5), ct: TestCt);
         handle2.ShouldNotBeNull();
         await handle2.ReleaseAsync();
     }
@@ -39,9 +39,9 @@ public class LocalLockServiceTests
     [Fact]
     public async Task AcquireAsync_WhenHeldByOther_ReturnsNullAfterTimeout()
     {
-        var handle1 = await _service.AcquireAsync("test-key-3", TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var handle1 = await _service.AcquireAsync("test-key-3", TimeSpan.FromSeconds(5), ct: TestCt);
         handle1.ShouldNotBeNull();
-        var handle2 = await _service.AcquireAsync("test-key-3", TimeSpan.FromMilliseconds(100), ct: TestContext.Current.CancellationToken);
+        var handle2 = await _service.AcquireAsync("test-key-3", TimeSpan.FromMilliseconds(100), ct: TestCt);
         handle2.ShouldBeNull();
         await handle1.ReleaseAsync();
     }
@@ -49,9 +49,9 @@ public class LocalLockServiceTests
     [Fact]
     public async Task AcquireAsync_KeyNormalizedToLowercase()
     {
-        var handle1 = await _service.AcquireAsync("Test-Key-MixedCase", TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var handle1 = await _service.AcquireAsync("Test-Key-MixedCase", TimeSpan.FromSeconds(5), ct: TestCt);
         handle1.ShouldNotBeNull();
-        var handle2 = await _service.AcquireAsync("test-key-mixedcase", TimeSpan.FromMilliseconds(100), ct: TestContext.Current.CancellationToken);
+        var handle2 = await _service.AcquireAsync("test-key-mixedcase", TimeSpan.FromMilliseconds(100), ct: TestCt);
         handle2.ShouldBeNull();
         await handle1.ReleaseAsync();
     }
@@ -64,7 +64,7 @@ public class LocalLockServiceTests
             "test-key-4", async ct => {
                 await Task.Delay(10, ct);
                 executed = true;
-            }, ct: TestContext.Current.CancellationToken);
+            }, ct: TestCt);
 
         executed.ShouldBeTrue();
     }
@@ -72,17 +72,17 @@ public class LocalLockServiceTests
     [Fact]
     public async Task ExecuteWithLockAsync_ReturnsValue()
     {
-        var result = await _service.ExecuteWithLockAsync("test-key-5", _ => Task.FromResult(42), ct: TestContext.Current.CancellationToken);
+        var result = await _service.ExecuteWithLockAsync("test-key-5", _ => Task.FromResult(42), ct: TestCt);
         result.ShouldBe(42);
     }
 
     [Fact]
     public async Task ExecuteWithLockAsync_WhenLockHeld_ThrowsTimeoutException()
     {
-        var handle = await _service.AcquireAsync("test-key-6", TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var handle = await _service.AcquireAsync("test-key-6", TimeSpan.FromSeconds(5), ct: TestCt);
         handle.ShouldNotBeNull();
-        await Assert.ThrowsAsync<TimeoutException>(async () => await _service.ExecuteWithLockAsync(
-            "test-key-6", _ => Task.CompletedTask, TimeSpan.FromMilliseconds(50), ct: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<TimeoutException>(async ()
+            => await _service.ExecuteWithLockAsync("test-key-6", _ => Task.CompletedTask, TimeSpan.FromMilliseconds(50), ct: TestCt));
 
         await handle.ReleaseAsync();
     }
@@ -90,15 +90,15 @@ public class LocalLockServiceTests
     [Fact]
     public async Task AcquireAsync_ThrowsOnNullOrEmptyKey()
     {
-        await Assert.ThrowsAsync<ArgumentNullException>(() => _service.AcquireAsync(null!, ct: TestContext.Current.CancellationToken).AsTask());
-        await Assert.ThrowsAsync<ArgumentException>(() => _service.AcquireAsync("", ct: TestContext.Current.CancellationToken).AsTask());
-        await Assert.ThrowsAsync<ArgumentException>(() => _service.AcquireAsync("   ", ct: TestContext.Current.CancellationToken).AsTask());
+        await Assert.ThrowsAsync<ArgumentNullException>(() => _service.AcquireAsync(null!, ct: TestCt).AsTask());
+        await Assert.ThrowsAsync<ArgumentException>(() => _service.AcquireAsync("", ct: TestCt).AsTask());
+        await Assert.ThrowsAsync<ArgumentException>(() => _service.AcquireAsync("   ", ct: TestCt).AsTask());
     }
 
     [Fact]
     public async Task Release_IsIdempotent()
     {
-        var handle = await _service.AcquireAsync("test-key-7", TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var handle = await _service.AcquireAsync("test-key-7", TimeSpan.FromSeconds(5), ct: TestCt);
         handle.ShouldNotBeNull();
         await handle.ReleaseAsync();
         await handle.ReleaseAsync();
@@ -108,8 +108,8 @@ public class LocalLockServiceTests
     [Fact]
     public async Task DifferentKeys_CanBeLockedConcurrently()
     {
-        var handle1 = await _service.AcquireAsync("key-a", TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
-        var handle2 = await _service.AcquireAsync("key-b", TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var handle1 = await _service.AcquireAsync("key-a", TimeSpan.FromSeconds(5), ct: TestCt);
+        var handle2 = await _service.AcquireAsync("key-b", TimeSpan.FromSeconds(5), ct: TestCt);
         handle1.ShouldNotBeNull();
         handle2.ShouldNotBeNull();
         await handle1.ReleaseAsync();
@@ -120,9 +120,9 @@ public class LocalLockServiceTests
     public async Task ExecuteWithLockAsync_ReleasesLockOnException()
     {
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await _service.ExecuteWithLockAsync(
-            "test-key-8", _ => throw new InvalidOperationException("test"), ct: TestContext.Current.CancellationToken));
+            "test-key-8", _ => throw new InvalidOperationException("test"), ct: TestCt));
 
-        var handle = await _service.AcquireAsync("test-key-8", TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var handle = await _service.AcquireAsync("test-key-8", TimeSpan.FromSeconds(5), ct: TestCt);
         handle.ShouldNotBeNull();
         await handle.ReleaseAsync();
     }
@@ -130,7 +130,7 @@ public class LocalLockServiceTests
     [Fact]
     public async Task AcquireAsync_RespectsCancellation()
     {
-        var handle = await _service.AcquireAsync("test-key-9", TimeSpan.FromSeconds(5), ct: TestContext.Current.CancellationToken);
+        var handle = await _service.AcquireAsync("test-key-9", TimeSpan.FromSeconds(5), ct: TestCt);
         handle.ShouldNotBeNull();
         using var cts = new CancellationTokenSource();
         cts.CancelAfter(10);

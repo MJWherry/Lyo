@@ -1,28 +1,23 @@
-using System.Net.Http.Json;
 using Lyo.Privacy.Configuration;
 using Lyo.Privacy.Enums;
 using Lyo.Privacy.Policy;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Lyo.Privacy.Web.Components;
 
 public partial class PrivacyWorkbench
 {
-    [Parameter]
-    public string InitialPreset { get; set; } = PrivacyPresetNames.Logging;
+    private bool _loadJsonOpen;
 
     private RedactionPolicy? _policy;
 
-    private string InitialPresetKey => InitialPreset;
-
-    private bool _loadJsonOpen;
-
     private string _policyJsonPaste = string.Empty;
+
+    [Parameter]
+    public string InitialPreset { get; set; } = PrivacyPresetNames.Logging;
+
+    private string InitialPresetKey => InitialPreset;
 
     protected override void OnInitialized() => SetPolicy(PrivacyPolicies.FromPreset(string.IsNullOrWhiteSpace(InitialPreset) ? PrivacyPresetNames.Logging : InitialPreset));
 

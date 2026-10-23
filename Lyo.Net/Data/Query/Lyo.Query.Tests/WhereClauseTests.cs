@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Enums;
@@ -41,8 +42,8 @@ public class WhereClauseTests : WhereClauseServiceTests
     public void Guid_WhereClause_IncludingNullable_Param(string property, ComparisonOperatorEnum comparator, bool needsValue)
     {
         var svc = CreateService();
-        var g1 = Guid.NewGuid();
-        var g2 = Guid.NewGuid();
+        var g1 = LyoGuid.CreateV7();
+        var g2 = LyoGuid.CreateV7();
         var people = new List<Person> {
             new PersonBuilder().WithId(g1).WithIdNullable(g1).WithName("A").Build(), new PersonBuilder().WithId(g2).WithIdNullable(null).WithName("B").Build()
         }.AsQueryable();
@@ -215,6 +216,16 @@ public class WhereClauseTests : WhereClauseServiceTests
         var node = WhereClauseBuilder.Condition(property, comparator, value);
         var res = svc.ApplyWhereClause(people, node).ToList();
         Assert.Equal(expected, res.Count);
+    }
+
+    [Fact]
+    public void WhereClause_Index_IsRejected()
+    {
+        var svc = CreateService();
+        var people = new List<Person> { new PersonBuilder().WithName("Smith").Build() }.AsQueryable();
+        var node = WhereClauseBuilder.Condition("Name[0]", ComparisonOperatorEnum.Equals, "S");
+        var ex = Assert.Throws<InvalidQueryException>(() => svc.ApplyWhereClause(people, node).ToList());
+        Assert.Contains("index is not valid in a filter", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

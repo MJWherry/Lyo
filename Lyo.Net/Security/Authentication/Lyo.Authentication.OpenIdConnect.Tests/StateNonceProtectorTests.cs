@@ -1,4 +1,5 @@
 using Lyo.Authentication.OpenIdConnect.Pkce;
+using Lyo.Common.Core.Identifiers;
 using Microsoft.AspNetCore.DataProtection;
 
 namespace Lyo.Authentication.OpenIdConnect.Tests;
@@ -29,8 +30,8 @@ public sealed class StateNonceProtectorTests
     [Fact]
     public void Unseal_RejectsValueFromDifferentProtector()
     {
-        var p1 = NewProtector("App-A-" + Guid.NewGuid());
-        var p2 = NewProtector("App-B-" + Guid.NewGuid());
+        var p1 = NewProtector("App-A-" + LyoGuid.CreateV7());
+        var p2 = NewProtector("App-B-" + LyoGuid.CreateV7());
         var sealedValue = p1.Seal(new("v", "n", "google", "/", "s"));
         var result = p2.Unseal(sealedValue);
         Assert.Null(result);

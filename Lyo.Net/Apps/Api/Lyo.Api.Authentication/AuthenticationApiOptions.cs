@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Api.ApiEndpoint;
 
 namespace Lyo.Api.Authentication;
@@ -6,6 +7,7 @@ namespace Lyo.Api.Authentication;
 /// Per-surface auth for authentication admin endpoints. Every surface starts as <see cref="EndpointAuth.RequireAuthorization()" /> (signed-in user). Hosts must choose
 /// <see cref="EndpointAuth.Anonymous()" /> on purpose — these routes QueryProject every user and token.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class AuthenticationApiOptions
 {
     /// <summary>Auth on User Query/Get/Patch (and Export when that feature is on). Defaults to requiring authorization.</summary>
@@ -36,4 +38,20 @@ public sealed class AuthenticationApiOptions
             LinkedIdentityAuth = auth,
             EventAuth = auth
         };
+
+    /// <summary>Auth mode for each admin surface. Policy objects are not expanded.</summary>
+    public override string ToString() =>
+        $"User={Describe(UserAuth)} Token={Describe(TokenAuth)} Claim={Describe(ClaimAuth)} " +
+        $"Scope={Describe(ScopeAuth)} Linked={Describe(LinkedIdentityAuth)} Event={Describe(EventAuth)}";
+
+    private static string Describe(EndpointAuth? auth)
+    {
+        if (auth is null)
+            return "inherit";
+
+        if (auth.AllowAnonymous)
+            return "anonymous";
+
+        return auth.AuthorizationPolicies is { Length: > 0 } ? string.Join("+", auth.AuthorizationPolicies) : "authorized";
+    }
 }

@@ -1,3 +1,5 @@
+using Lyo.Exceptions;
+
 namespace Lyo.FileStorage;
 
 /// <summary>Wraps a <see cref="PipeReader" /> stream backed by an in-flight async pipeline. Cancels and awaits that pipeline on dispose.</summary>
@@ -107,13 +109,5 @@ internal sealed class PipelineFileReadStream : Stream
     private static bool IsExpectedPipelineTeardownException(Exception ex)
         => ex is OperationCanceledException || (ex is AggregateException agg && agg.InnerExceptions.All(inner => inner is OperationCanceledException));
 
-    private void ThrowIfDisposed()
-    {
-#if NET5_0_OR_GREATER
-        ObjectDisposedException.ThrowIf(_disposed, this);
-#else
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(PipelineFileReadStream));
-#endif
-    }
+    private void ThrowIfDisposed() => OperationHelpers.ThrowIfDisposed(_disposed, nameof(PipelineFileReadStream));
 }

@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Net;
 using System.Text.Json;
-using Lyo.Reporting.Models;
 using Lyo.Reporting.Models.Composition;
 using Lyo.Reporting.Models.Controls;
 using Lyo.Reporting.Models.Models;
@@ -11,11 +10,51 @@ using Microsoft.AspNetCore.Components.Rendering;
 
 namespace Lyo.Reporting.Web.Components;
 
-/// <summary>
-/// Shared paint for <see cref="ReportViewer{T}" /> and the design canvas. No drag handles or selection rings — callers wrap body items when they need designer chrome.
-/// </summary>
+/// <summary>Shared paint for <see cref="ReportViewer{T}" /> and the design canvas. No drag handles or selection rings — callers wrap body items when they need designer chrome.</summary>
 public sealed class ReportViewPainter
 {
+    public Layout Layout { get; }
+
+    public IReadOnlyDictionary<string, string> ReportStyles { get; }
+
+    /// <summary>Example parameter map for designer paint. Null on generate so authored text is written unchanged.</summary>
+    public IReadOnlyDictionary<string, string?>? PreviewParameters { get; }
+
+    /// <summary>Live section graph for designer-only paint (TOC headings). Null on generate.</summary>
+    public IReadOnlyList<Section>? PreviewSections { get; }
+
+    public string AccentColor {
+        get {
+            var color = P(Layout.AccentColor);
+            return string.IsNullOrWhiteSpace(color) ? "#2563eb" : color!;
+        }
+    }
+
+    public bool IsCompact => string.Equals(Layout.Theme, "Compact", StringComparison.OrdinalIgnoreCase);
+
+    public bool IsFormal => string.Equals(Layout.Theme, "Formal", StringComparison.OrdinalIgnoreCase);
+
+    public string InkColor => IsFormal ? "#111827" : "#1e293b";
+
+    public string BodyColor => IsFormal ? "#1f2937" : "#475569";
+
+    public string MutedColor => "#64748b";
+
+    public string FontFamily => IsFormal ? "Georgia, 'Times New Roman', serif" : "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
+
+    public string? SafeLogoUrl {
+        get {
+            var logo = P(Layout.LogoUrl);
+            if (string.IsNullOrWhiteSpace(logo))
+                return null;
+
+            var html = ReportHtmlSanitizer.Sanitize($"<img src=\"{WebUtility.HtmlEncode(logo)}\" alt=\"\" />");
+            return html.Contains("src=", StringComparison.OrdinalIgnoreCase) ? logo : null;
+        }
+    }
+
+    public string? PageRuleCss => ReportLayoutCss.ResolvePageRule(Layout);
+
     /// <summary>Shared paint for generate <see cref="ReportViewer{T}" /> and the design canvas.</summary>
     /// <param name="layout">Report layout (theme, page size, padding).</param>
     /// <param name="reportStyles">Optional CSS declarations on the report root.</param>
@@ -33,23 +72,11 @@ public sealed class ReportViewPainter
         PreviewSections = previewSections;
     }
 
-    public Layout Layout { get; }
-
-    public IReadOnlyDictionary<string, string> ReportStyles { get; }
-
-    /// <summary>Example parameter map for designer paint. Null on generate so authored text is written unchanged.</summary>
-    public IReadOnlyDictionary<string, string?>? PreviewParameters { get; }
-
-    /// <summary>Live section graph for designer-only paint (TOC headings). Null on generate.</summary>
-    public IReadOnlyList<Section>? PreviewSections { get; }
-
     /// <summary>Interpolates <paramref name="text" /> when <see cref="PreviewParameters" /> is set; otherwise returns it unchanged.</summary>
-    public string? P(string? text)
-        => PreviewParameters is null ? text : ReportCompositionProcessor.Interpolate(text, PreviewParameters);
+    public string? P(string? text) => PreviewParameters is null ? text : ReportCompositionProcessor.Interpolate(text, PreviewParameters);
 
     /// <summary>Interpolates cell/card values when <see cref="PreviewParameters" /> is set.</summary>
-    public object? Pv(object? value)
-        => PreviewParameters is null ? value : ReportCompositionProcessor.InterpolateValue(value, PreviewParameters);
+    public object? Pv(object? value) => PreviewParameters is null ? value : ReportCompositionProcessor.InterpolateValue(value, PreviewParameters);
 
     private (string Label, string Detail) SplitP(string? item)
     {
@@ -57,44 +84,6 @@ public sealed class ReportViewPainter
         var split = text.IndexOf('|');
         return split < 0 ? (text, string.Empty) : (text[..split], text[(split + 1)..]);
     }
-
-    public string AccentColor
-    {
-        get
-        {
-            var color = P(Layout.AccentColor);
-            return string.IsNullOrWhiteSpace(color) ? "#2563eb" : color!;
-        }
-    }
-
-    public bool IsCompact => string.Equals(Layout.Theme, "Compact", StringComparison.OrdinalIgnoreCase);
-
-    public bool IsFormal => string.Equals(Layout.Theme, "Formal", StringComparison.OrdinalIgnoreCase);
-
-    public string InkColor => IsFormal ? "#111827" : "#1e293b";
-
-    public string BodyColor => IsFormal ? "#1f2937" : "#475569";
-
-    public string MutedColor => "#64748b";
-
-    public string FontFamily => IsFormal
-        ? "Georgia, 'Times New Roman', serif"
-        : "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
-
-    public string? SafeLogoUrl
-    {
-        get
-        {
-            var logo = P(Layout.LogoUrl);
-            if (string.IsNullOrWhiteSpace(logo))
-                return null;
-
-            var html = ReportHtmlSanitizer.Sanitize($"<img src=\"{WebUtility.HtmlEncode(logo)}\" alt=\"\" />");
-            return html.Contains("src=", StringComparison.OrdinalIgnoreCase) ? logo : null;
-        }
-    }
-
-    public string? PageRuleCss => ReportLayoutCss.ResolvePageRule(Layout);
 
     public string GetRootStyles()
     {
@@ -184,6 +173,7 @@ public sealed class ReportViewPainter
             $"gap: {gap}",
             "margin: 20px 0"
         };
+
         if (ReportKeepTogether.Effective(grid))
             styles.Add(ReportKeepTogether.Css);
 
@@ -203,15 +193,12 @@ public sealed class ReportViewPainter
         return string.Join(" ", styles);
     }
 
-    public string SelectionRing(bool selected)
-        => selected ? $"outline: 2px solid {AccentColor}; outline-offset: 2px;" : string.Empty;
+    public string SelectionRing(bool selected) => selected ? $"outline: 2px solid {AccentColor}; outline-offset: 2px;" : string.Empty;
 
-    public RenderFragment RenderSection(Section section, int depth)
-        => b => WriteSection(b, section, depth);
+    public RenderFragment RenderSection(Section section, int depth) => b => WriteSection(b, section, depth);
 
     /// <summary>Section title/subtitle/description only — the design canvas wraps this with hover chrome.</summary>
-    public RenderFragment RenderSectionChrome(Section section, int depth)
-        => b => WriteSectionChrome(b, section, depth);
+    public RenderFragment RenderSectionChrome(Section section, int depth) => b => WriteSectionChrome(b, section, depth);
 
     public void WriteSection(RenderTreeBuilder b, Section section, int depth)
     {
@@ -241,7 +228,9 @@ public sealed class ReportViewPainter
         var headingSize = depth == 0 ? "24px" : "20px";
         if (!string.IsNullOrEmpty(section.Title)) {
             b.OpenElement(3, headingTag);
-            b.AddAttribute(4, "style", $"color: {InkColor}; font-size: {headingSize}; font-weight: 600; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;");
+            b.AddAttribute(
+                4, "style", $"color: {InkColor}; font-size: {headingSize}; font-weight: 600; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;");
+
             b.AddContent(5, P(section.Title));
             b.CloseElement();
         }
@@ -342,7 +331,6 @@ public sealed class ReportViewPainter
             b.AddAttribute(15, "style", style);
 
         decorate?.Invoke(b);
-
         if (!string.IsNullOrEmpty(column.Label)) {
             b.OpenElement(40, "div");
             b.AddAttribute(41, "style", "font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;");
@@ -407,11 +395,15 @@ public sealed class ReportViewPainter
                 break;
             case ContentType.PageBreak:
                 b.OpenElement(40, "div");
-                b.AddAttribute(41, "style", PreviewParameters is null
-                    ? "break-after: page; page-break-after: always; height: 0;"
-                    : "break-after: page; page-break-after: always; margin: 16px 0; border-top: 2px dashed #94a3b8; color: #94a3b8; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; text-align: center;");
+                b.AddAttribute(
+                    41, "style",
+                    PreviewParameters is null
+                        ? "break-after: page; page-break-after: always; height: 0;"
+                        : "break-after: page; page-break-after: always; margin: 16px 0; border-top: 2px dashed #94a3b8; color: #94a3b8; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; text-align: center;");
+
                 if (PreviewParameters is not null)
                     b.AddContent(411, "Page break");
+
                 b.CloseElement();
                 break;
             case ContentType.Spacer:
@@ -465,7 +457,7 @@ public sealed class ReportViewPainter
         if (block.ChartKind is not null) {
             var bound = PreviewParameters is null
                 ? block
-                : new Block {
+                : new() {
                     ContentType = block.ContentType,
                     ChartKind = block.ChartKind,
                     Caption = P(block.Caption),
@@ -477,6 +469,7 @@ public sealed class ReportViewPainter
                     ChartValueField = block.ChartValueField,
                     ListItems = PreviewChartSeries(block)
                 };
+
             var html = ReportChartMarkup.TryBuild(bound, ReportChartMarkup.StableCanvasId(block));
             if (html is null) {
                 b.OpenElement(23, "p");
@@ -504,8 +497,7 @@ public sealed class ReportViewPainter
         return block.ListItems?.Select(i => P(i) ?? string.Empty).ToList();
     }
 
-    public void WriteList(RenderTreeBuilder b, string tag, Block block)
-        => WriteList(b, tag, block.ListItems);
+    public void WriteList(RenderTreeBuilder b, string tag, Block block) => WriteList(b, tag, block.ListItems);
 
     public void WriteImage(RenderTreeBuilder b, Block block)
     {
@@ -537,7 +529,10 @@ public sealed class ReportViewPainter
     {
         var (bg, border, fg) = ResolveTone(block.Tone);
         b.OpenElement(70, "span");
-        b.AddAttribute(71, "style", $"display: inline-block; padding: 2px 10px; border-radius: 999px; background: {bg}; border: 1px solid {border}; color: {fg}; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;");
+        b.AddAttribute(
+            71, "style",
+            $"display: inline-block; padding: 2px 10px; border-radius: 999px; background: {bg}; border: 1px solid {border}; color: {fg}; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;");
+
         b.AddContent(72, P(block.Content));
         b.CloseElement();
     }
@@ -676,6 +671,7 @@ public sealed class ReportViewPainter
             var rowStyle = last
                 ? $"display: flex; justify-content: space-between; gap: 16px; padding: 8px 0 0; margin-top: 6px; border-top: 1px solid #334155; font-weight: 700; color: {InkColor};"
                 : $"display: flex; justify-content: space-between; gap: 16px; padding: 4px 0; color: {BodyColor};";
+
             b.AddAttribute(112, "style", rowStyle);
             b.OpenElement(113, "span");
             b.AddContent(114, label);
@@ -743,7 +739,7 @@ public sealed class ReportViewPainter
             "success" => ("#ecfdf5", "#059669", "#065f46"),
             "warning" => ("#fffbeb", "#d97706", "#92400e"),
             "error" => ("#fef2f2", "#dc2626", "#991b1b"),
-            _ => ("#eff6ff", AccentColor, "#1e3a8a")
+            var _ => ("#eff6ff", AccentColor, "#1e3a8a")
         };
 
     public void WriteProgress(RenderTreeBuilder b, Block block)
@@ -783,7 +779,7 @@ public sealed class ReportViewPainter
             2 => "24px",
             3 => "20px",
             4 => "18px",
-            _ => "16px"
+            var _ => "16px"
         };
 
         b.OpenElement(48, "h" + level);

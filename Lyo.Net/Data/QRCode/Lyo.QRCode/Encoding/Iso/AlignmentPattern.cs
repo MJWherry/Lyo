@@ -3,8 +3,8 @@ namespace Lyo.QRCode.Encoding.Iso;
 internal sealed partial class QRIsoEncoder
 {
     /// <summary>
-    /// Alignment pattern used in QR codes so the symbol stays readable when it is somewhat distorted. Each QR version has its own alignment-pattern locations; this
-    /// struct holds those points.
+    /// Alignment pattern used in QR codes so the symbol stays readable when it is somewhat distorted. Each QR version has its own alignment-pattern locations; this struct holds
+    /// those points.
     /// </summary>
     private struct AlignmentPattern
     {

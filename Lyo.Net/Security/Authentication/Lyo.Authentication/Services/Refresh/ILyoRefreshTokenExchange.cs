@@ -3,8 +3,8 @@ using Lyo.Authentication.Models.Records;
 namespace Lyo.Authentication.Services.Refresh;
 
 /// <summary>
-/// Exchanges a presented refresh token for a fresh access JWT (and a fresh refresh token — rotating refresh by default). Reuse of an already-revoked refresh token fires
-/// an audit event and invalidates the entire chain.
+/// Exchanges a presented refresh token for a fresh access JWT (and a fresh refresh token — rotating refresh by default). Reuse of an already-revoked refresh token fires an
+/// audit event and invalidates the entire chain.
 /// </summary>
 public interface ILyoRefreshTokenExchange
 {

@@ -43,7 +43,8 @@
                    Size="Size.Small"
                    StartIcon="@Icons.Material.Filled.Refresh"
                    OnClick="OnRefresh"
-                   Disabled="@Busy">Refresh</MudButton>
+                   Disabled="@Busy">Refresh
+        </MudButton>
     </MudStack>
 
     @if (VisibleExchanges.Count == 0) {
@@ -77,7 +78,8 @@
                            Color="Color.Error"
                            StartIcon="@Icons.Material.Filled.Delete"
                            Disabled="@(Busy || SelectedExchange is null || RabbitMqColorHelper.IsDefaultExchange(SelectedExchange.Name))"
-                           OnClick="@DeleteSelectedAsync">Delete</MudButton>
+                           OnClick="@DeleteSelectedAsync">Delete
+                </MudButton>
                 <MudIconButton Icon="@Icons.Material.Filled.ContentCopy"
                                Size="Size.Small"
                                title="Copy name"
@@ -127,7 +129,8 @@
                                   ValueChanged="RoutingKeyChanged"/>
                     <MudButton Variant="Variant.Outlined"
                                Disabled="@(Busy || SelectedExchange is null)"
-                               OnClick="OnBind">Bind</MudButton>
+                               OnClick="OnBind">Bind
+                    </MudButton>
                 </MudStack>
             </MudStack>
         </MudTabPanel>

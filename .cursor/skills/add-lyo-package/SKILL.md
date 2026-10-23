@@ -15,7 +15,7 @@ Copy this checklist and track progress:
 - [ ] 3. Create the csproj + project docs.json (render README)
 - [ ] 4. Register in Lyo.slnx
 - [ ] 5. Add dependencies via Directory.Packages.props
-- [ ] 6. Create the sibling *.Tests project (skip `.Models` and `.Api.Host`)
+- [ ] 6. Create the sibling *.Tests project (skip `.Models` and `.Api.Example`)
 - [ ] 7. Update package-layout.md inventory (if applicable)
 - [ ] 8. Verify with dotnet build
 ```
@@ -26,11 +26,11 @@ Read the classification checklist in `Lyo.Net/docs/package-layout.md` and answer
 
 | Archetype                   | Placement                                                      | Example                  |
 |-----------------------------|----------------------------------------------------------------|--------------------------|
-| A — Lyo canonical domain    | `Core/{Domain}/`                                               | `Lyo.People.Models`      |
+| A — Lyo canonical domain    | `Core/{Domain}/`                                               | `Lyo.Geolocation.Models` |
 | B — capability + provider   | `Communication\|Security/{Capability}/`                        | `Lyo.Translation.Google` |
 | C — thin vendor client      | `Integration/{Vendor}/`                                        | `Lyo.Endato.Client`      |
 | D — vendor product vertical | `Integration/{Vendor}/`                                        | `Lyo.Discord.Postgres`   |
-| E — platform                | `Plugins/*`, `Apps/*`, `Data/*`, `Tools/*`                      | `Lyo.Api.Export`         |
+| E — platform                | `Plugins/*`, `Apps/*`, `Data/*`, `Tools/*`, `Examples/*`        | `Lyo.Api.Export`         |
 
 Enforce the dependency law: Core must never reference Apps platform packages, Integration vendors, vendor SDKs, or vendor clients. Archetype C packages require the `.Client` suffix.
 
@@ -86,11 +86,11 @@ Central Package Management: `PackageReference` entries carry no `Version`. New p
 Create `Lyo.{X}.Tests` beside the source project (xUnit; copy an existing sibling test csproj). Register it in `Lyo.slnx` too. Method naming: `Method_Scenario_ExpectedResult`.
 Postgres/Redis suites use Testcontainers.
 
-**Skip sibling tests** for `.Models` (contracts/DTOs — cover any logic from `Lyo.{X}.Tests` / `Lyo.{X}.Postgres.Tests`) and for `.Api.Host` (thin hosts).
+**Skip sibling tests** for `.Models` (contracts/DTOs — cover any logic from `Lyo.{X}.Tests` / `Lyo.{X}.Postgres.Tests`) and for `.Api.Example` (thin demo hosts under `Lyo.Net/Examples/`, `area: Examples`).
 
 ### 7. Inventory
 
-If the package is in Apps, Integration, Communication, or Security, add a row to the relevant inventory section of `Lyo.Net/docs/package-layout.md`.
+If the package is in Apps, Examples, Integration, Communication, or Security, add a row to the relevant inventory section of `Lyo.Net/docs/package-layout.md`. Example API hosts (`Lyo.{X}.Api.Example`) go under `Lyo.Net/Examples/` with `area: Examples`.
 
 ### 8. Verify
 

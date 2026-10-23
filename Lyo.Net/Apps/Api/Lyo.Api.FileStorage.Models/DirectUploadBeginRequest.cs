@@ -31,6 +31,15 @@ public sealed record DirectUploadBeginRequest
     /// <summary>How long the presigned PUT URL lives, in hours. Leave unset for the API default.</summary>
     public double? UrlExpirationHours { get; init; }
 
+    /// <summary>
+    /// Optional SHA-256 of the bytes the client will PUT, base64 in JSON (32 bytes). S3 signs it into the URL and rejects a mismatched body, and finalize then trusts the stored
+    /// checksum instead of downloading the object. Send every header in the begin response's <c>RequiredPutHeaders</c>.
+    /// </summary>
+    public byte[]? ExpectedSha256 { get; init; }
+
+    /// <summary>Optional MD5 of the bytes the client will PUT, base64 in JSON (16 bytes). Azure Blob returns it as a required <c>Content-MD5</c> PUT header.</summary>
+    public byte[]? ExpectedContentMd5 { get; init; }
+
     /// <inheritdoc />
     public override string ToString()
         => $"DirectUploadBeginRequest: OriginalFileName={OriginalFileName ?? "(none)"}, PathPrefix={PathPrefix ?? "(none)"}, DeclaredMaxSizeBytes={DeclaredMaxSizeBytes}";

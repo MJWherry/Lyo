@@ -80,7 +80,7 @@ public sealed class CatalogLink
     public string Href { get; set; } = "";
 }
 
-/// <summary>Discriminated section (paragraph, list, code, or markdown).</summary>
+/// <summary>Discriminated section (paragraph, list, code, table, or markdown).</summary>
 public sealed class CatalogSection
 {
     public string Type { get; set; } = "paragraph";
@@ -98,6 +98,18 @@ public sealed class CatalogSection
     public bool? Ordered { get; set; }
 
     public List<string>? Items { get; set; }
+
+    /// <summary>Column titles when <see cref="Type" /> is <c>table</c>.</summary>
+    public List<string>? Headers { get; set; }
+
+    /// <summary>Body rows when <see cref="Type" /> is <c>table</c>.</summary>
+    public List<List<string>>? Rows { get; set; }
+
+    /// <summary>Text shown above a table.</summary>
+    public string? Lead { get; set; }
+
+    /// <summary>Text shown below a table.</summary>
+    public string? Trail { get; set; }
 }
 
 /// <summary>A catalog index row from <c>wwwroot/catalog/index.json</c>.</summary>

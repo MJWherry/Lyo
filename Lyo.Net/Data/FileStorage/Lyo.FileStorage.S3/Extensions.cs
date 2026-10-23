@@ -32,8 +32,8 @@ public static class Extensions
                     var metrics = opts.EnableMetrics ? provider.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
                     return new(
                         provider.GetRequiredKeyedService<S3FileStorageService>(serviceKey), opts, provider.GetRequiredService<IAmazonS3>(),
-                        provider.GetRequiredService<IMultipartUploadSessionStore>(), provider.GetService<IFileContentPolicy>(),
-                        provider.GetServices<IFileAuditEventHandler>(), provider.GetService<IFileOperationContextAccessor>(), provider.GetService<ILoggerFactory>(), metrics);
+                        provider.GetRequiredService<IMultipartUploadSessionStore>(), provider.GetService<IFileContentPolicy>(), provider.GetServices<IFileAuditEventHandler>(),
+                        provider.GetService<IFileOperationContextAccessor>(), provider.GetService<ILoggerFactory>(), metrics);
                 });
 
             services.AddKeyedScoped<IMultipartUploadService>(serviceKey, (provider, _) => provider.GetRequiredKeyedService<S3MultipartUploadService>(serviceKey));
@@ -41,8 +41,8 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Alias for <see cref="AddKeyedS3MultipartUploadService" /> for callers who think in terms of the AWS S3 API (works for any S3-compatible endpoint: AWS, MinIO,
-        /// Wasabi, R2, etc.).
+        /// Alias for <see cref="AddKeyedS3MultipartUploadService" /> for callers who think in terms of the AWS S3 API (works for any S3-compatible endpoint: AWS, MinIO, Wasabi, R2,
+        /// etc.).
         /// </summary>
         public IServiceCollection AddKeyedAwsMultipartUploadService(string serviceKey) => services.AddKeyedS3MultipartUploadService(serviceKey);
 

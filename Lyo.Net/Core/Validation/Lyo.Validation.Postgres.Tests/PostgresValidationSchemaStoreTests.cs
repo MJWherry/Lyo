@@ -1,7 +1,7 @@
 using Lyo.Cache;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Query.Models.Builders;
 using Lyo.Query.Models.Common;
-using Lyo.Query.Models.Enums;
 using Lyo.Query.Services.ValueConversion;
 using Lyo.Query.Services.WhereClause;
 using Lyo.Validation.Models;
@@ -26,8 +26,8 @@ public class PostgresValidationSchemaStoreTests(ValidationPostgresFixture fixtur
     public async Task DbContext_MigrationsApplied_SchemaExists()
     {
         var factory = fixture.ServiceProvider.GetRequiredService<IDbContextFactory<ValidationDbContext>>();
-        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var pending = await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken);
+        await using var context = await factory.CreateDbContextAsync(TestCt);
+        var pending = await context.Database.GetPendingMigrationsAsync(TestCt);
         Assert.Empty(pending);
     }
 
@@ -35,55 +35,45 @@ public class PostgresValidationSchemaStoreTests(ValidationPostgresFixture fixtur
     public async Task Store_SaveGetListDelete_RoundTripsWhereClause()
     {
         var store = fixture.ServiceProvider.GetRequiredService<IValidationSchemaStore>();
-        var key = $"signup-{Guid.NewGuid():N}";
+        var key = $"signup-{LyoGuid.CreateV7():N}";
         var schema = new ValidationSchema {
             Key = key,
             TargetTypeName = nameof(SignupTarget),
             Description = "Signup rules",
-            Constraints = WhereClauseBuilder.And(b => b
-                .Regex("Email", "^[^@]+@[^@]+$")
-                .In("Role", "User", "Admin")
-                .NotIn("Status", "Banned")),
+            Constraints = WhereClauseBuilder.And(b => b.Regex("Email", "^[^@]+@[^@]+$").In("Role", "User", "Admin").NotIn("Status", "Banned")),
             Messages = new Dictionary<string, ValidationMessage> { ["Email"] = new() { ErrorCode = "BAD_EMAIL", ErrorMessage = "Bad email" } }
         };
 
-        await store.SaveAsync(schema, TestContext.Current.CancellationToken);
-        var loaded = await store.GetAsync(key, TestContext.Current.CancellationToken);
+        await store.SaveAsync(schema, TestCt);
+        var loaded = await store.GetAsync(key, TestCt);
         Assert.NotNull(loaded);
         Assert.Equal(key, loaded.Key);
         Assert.Equal(nameof(SignupTarget), loaded.TargetTypeName);
         Assert.IsType<GroupClause>(loaded.Constraints);
         Assert.Equal("BAD_EMAIL", loaded.Messages!["Email"].ErrorCode);
-
-        var listed = await store.ListAsync(nameof(SignupTarget), TestContext.Current.CancellationToken);
+        var listed = await store.ListAsync(nameof(SignupTarget), TestCt);
         Assert.Contains(listed, s => s.Key == key);
-
         schema.Description = "Updated";
-        await store.SaveAsync(schema, TestContext.Current.CancellationToken);
-        var updated = await store.GetAsync(key, TestContext.Current.CancellationToken);
+        await store.SaveAsync(schema, TestCt);
+        var updated = await store.GetAsync(key, TestCt);
         Assert.Equal("Updated", updated!.Description);
-
-        Assert.True(await store.DeleteAsync(key, TestContext.Current.CancellationToken));
-        Assert.Null(await store.GetAsync(key, TestContext.Current.CancellationToken));
+        Assert.True(await store.DeleteAsync(key, TestCt));
+        Assert.Null(await store.GetAsync(key, TestCt));
     }
 
     [Fact]
     public async Task Store_CompileAfterLoad_ValidatesInRegexNotIn()
     {
         var store = fixture.ServiceProvider.GetRequiredService<IValidationSchemaStore>();
-        var key = $"compile-{Guid.NewGuid():N}";
+        var key = $"compile-{LyoGuid.CreateV7():N}";
         await store.SaveAsync(
-            new ValidationSchema {
+            new() {
                 Key = key,
                 TargetTypeName = nameof(SignupTarget),
-                Constraints = WhereClauseBuilder.And(b => b
-                    .Regex("Email", "^[^@]+@[^@]+$")
-                    .In("Role", "User", "Admin")
-                    .NotIn("Status", "Banned"))
-            },
-            TestContext.Current.CancellationToken);
+                Constraints = WhereClauseBuilder.And(b => b.Regex("Email", "^[^@]+@[^@]+$").In("Role", "User", "Admin").NotIn("Status", "Banned"))
+            }, TestCt);
 
-        var loaded = await store.GetAsync(key, TestContext.Current.CancellationToken);
+        var loaded = await store.GetAsync(key, TestCt);
         Assert.NotNull(loaded);
         var compiler = new ValidationSchemaCompiler(store, CreateEvaluator());
         var validator = compiler.Compile<SignupTarget>(loaded);

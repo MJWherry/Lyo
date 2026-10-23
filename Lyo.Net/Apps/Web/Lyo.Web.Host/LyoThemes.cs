@@ -1,8 +1,6 @@
 namespace Lyo.Web.Host;
 
-/// <summary>
-/// Default MudBlazor theme used by every Lyo host. Kept here so a second host does not copy the palette out of TestGateway.
-/// </summary>
+/// <summary>Default MudBlazor theme used by every Lyo host. Kept here so a second host does not copy the palette out of TestGateway.</summary>
 public static class LyoThemes
 {
     /// <summary>Green-primary light palette and gray-surface dark palette used by TestGateway and any new admin host.</summary>

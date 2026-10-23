@@ -29,9 +29,8 @@ public static class ApiTokenCodec
     public const int EncodedSecretLength = 43;
 
     /// <summary>
-    /// Builds a new, freshly randomized Format-B token for <paramref name="kind" /> and <paramref name="ring" />. Returns the wire-form plaintext and its SHA-256
-    /// secret hash for persistence. The caller must keep the id unique (collision chance is ~2^-27.5 after 1 billion issuances, so retry-on-conflict at the
-    /// store is the right pattern).
+    /// Builds a new, freshly randomized Format-B token for <paramref name="kind" /> and <paramref name="ring" />. Returns the wire-form plaintext and its SHA-256 secret hash for
+    /// persistence. The caller must keep the id unique (collision chance is ~2^-27.5 after 1 billion issuances, so retry-on-conflict at the store is the right pattern).
     /// </summary>
     public static (string Plaintext, string Id, byte[] SecretHash) Mint(string kind, string ring)
     {
@@ -61,13 +60,10 @@ public static class ApiTokenCodec
         return $"{Prefix}{Separator}{kind}{Separator}{ring}{Separator}{id}{Separator}{secret}";
     }
 
-    /// <summary>
-    /// Tries to parse a token off the wire. Returns <c>false</c> with <paramref name="token" /> = <c>null</c> for any malformed input (no exceptions on the validation hot
-    /// path).
-    /// </summary>
+    /// <summary>Tries to parse a token off the wire. Returns <c>false</c> with <paramref name="token" /> = <c>null</c> for any malformed input (no exceptions on the validation hot path).</summary>
     /// <remarks>
-    /// The secret segment is base64url and CAN contain underscores, so we cannot simply split on '_'. We pin the first four '_' positions (one per fixed segment
-    /// boundary) and treat the remainder as the secret.
+    /// The secret segment is base64url and CAN contain underscores, so we cannot simply split on '_'. We pin the first four '_' positions (one per fixed segment boundary) and
+    /// treat the remainder as the secret.
     /// </remarks>
     public static bool TryParse(string? input, out ApiToken? token)
     {

@@ -64,10 +64,7 @@ public interface IMqService : IHealth
 
     // Receiving
 
-    /// <summary>
-    /// Subscribes to a queue. <paramref name="onMessage" /> runs for each delivery. Return true to requeue the message,
-    /// or false to ack and remove it.
-    /// </summary>
+    /// <summary>Subscribes to a queue. <paramref name="onMessage" /> runs for each delivery. Return true to requeue the message, or false to ack and remove it.</summary>
     /// <param name="queueName">Queue to subscribe to.</param>
     /// <param name="onMessage">Handler that processes the message and returns whether to requeue it (true = requeue, false = ack/remove).</param>
     /// <param name="ct">Token used to cancel. Cancellation stops the subscription.</param>
@@ -76,9 +73,7 @@ public interface IMqService : IHealth
 
     // Exchanges
 
-    /// <summary>
-    /// Declares an exchange. Brokers treat this as idempotent when the name and arguments already match; a mismatch (for example a different type) fails.
-    /// </summary>
+    /// <summary>Declares an exchange. Brokers treat this as idempotent when the name and arguments already match; a mismatch (for example a different type) fails.</summary>
     /// <param name="exchangeName">Name of the exchange to create.</param>
     /// <param name="exchangeType">Exchange type (for example <c>direct</c>, <c>topic</c>, <c>fanout</c>). Defaults to <c>direct</c>.</param>
     /// <param name="durable">If true, the exchange lives through a broker restart.</param>
@@ -94,10 +89,7 @@ public interface IMqService : IHealth
         IDictionary<string, object>? arguments = null,
         CancellationToken ct = default);
 
-    /// <summary>
-    /// Binds a queue to an exchange with a routing key so messages published with that key reach the queue. On non-RabbitMQ brokers this may become
-    /// a topic subscription.
-    /// </summary>
+    /// <summary>Binds a queue to an exchange with a routing key so messages published with that key reach the queue. On non-RabbitMQ brokers this may become a topic subscription.</summary>
     /// <param name="queueName">Queue to bind.</param>
     /// <param name="exchangeName">Exchange (or topic) to bind to.</param>
     /// <param name="routingKey">Routing key that selects messages for this queue.</param>

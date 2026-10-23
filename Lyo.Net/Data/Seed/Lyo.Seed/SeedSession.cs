@@ -5,8 +5,16 @@ namespace Lyo.Seed;
 /// <summary>State for one run: generated items by CLR type, the active transport, and persist helpers for <c>After</c> callbacks.</summary>
 public sealed class SeedSession
 {
-    private readonly Dictionary<Type, List<object>> _generated = [];
     private readonly Dictionary<string, int> _counts = new(StringComparer.Ordinal);
+    private readonly Dictionary<Type, List<object>> _generated = [];
+
+    /// <summary>Persist backend used for this run.</summary>
+    public ISeedTransport Transport { get; }
+
+    /// <summary>Options the contributor already received in <see cref="SeedContributor.Configure" />.</summary>
+    public SeedOptions Options { get; }
+
+    internal IReadOnlyDictionary<string, int> Counts => _counts;
 
     internal SeedSession(ISeedTransport transport, SeedOptions options)
     {
@@ -14,18 +22,12 @@ public sealed class SeedSession
         Options = options;
     }
 
-    /// <summary>Persist backend used for this run.</summary>
-    public ISeedTransport Transport { get; }
-
-    /// <summary>Options the contributor already received in <see cref="SeedContributor.Configure"/>.</summary>
-    public SeedOptions Options { get; }
-
-    /// <summary>Items built for <typeparamref name="T"/> so far (root <c>Entity</c> plus <c>ForEach</c> children).</summary>
+    /// <summary>Items built for <typeparamref name="T" /> so far (root <c>Entity</c> plus <c>ForEach</c> children).</summary>
     public IReadOnlyList<T> Generated<T>()
         where T : class
         => _generated.TryGetValue(typeof(T), out var list) ? list.Cast<T>().ToArray() : [];
 
-    /// <summary>Writes <paramref name="items"/> through <see cref="Transport"/> and records them as generated.</summary>
+    /// <summary>Writes <paramref name="items" /> through <see cref="Transport" /> and records them as generated.</summary>
     public async Task PersistAsync<T>(IReadOnlyList<T> items, CancellationToken ct = default)
         where T : class
     {
@@ -54,6 +56,4 @@ public sealed class SeedSession
         var name = typeof(T).Name;
         _counts[name] = _counts.GetValueOrDefault(name) + items.Count;
     }
-
-    internal IReadOnlyDictionary<string, int> Counts => _counts;
 }

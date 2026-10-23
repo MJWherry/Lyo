@@ -1,10 +1,8 @@
-@using System.Diagnostics
-@using Lyo.Lock.Abstractions
-@using Lyo.Metrics
-@using LockConstants = Lyo.Lock.Constants
 @implements IAsyncDisposable
 @inject ILockService LockService
 @inject IMetrics Metrics
+@using Lyo.Lock.Abstractions
+@using Lyo.Metrics
 @inherits LyoWorkbenchBase
 
 <MudTabs Rounded="true" KeepPanelsAlive="true" ApplyEffectsToContainer="true">

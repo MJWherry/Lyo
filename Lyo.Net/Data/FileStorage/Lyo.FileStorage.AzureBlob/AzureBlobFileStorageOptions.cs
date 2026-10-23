@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Azure.Storage.Blobs.Models;
 using Lyo.Exceptions;
 using Lyo.FileStorage.Models;
@@ -5,15 +6,10 @@ using Lyo.FileStorage.Models;
 namespace Lyo.FileStorage.AzureBlob;
 
 /// <summary>Options for <see cref="AzureBlobFileStorageService" /> over Azure Blob Storage.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class AzureBlobFileStorageOptions : FileStorageServiceBaseOptions
 {
     public const string SectionName = "AzureBlobFileStorage";
-
-    /// <summary>Obsolete section name from <c>Lyo.FileStorage.Blob</c> before the AzureBlob rename.</summary>
-    public const string LegacyBlobConfigurationSectionName = "BlobFileStorage";
-
-    /// <summary>Obsolete subsection name when migrating from the pre-<c>Lyo.FileStorage.AzureBlob</c> packages.</summary>
-    public const string LegacyAzureConfigurationSectionName = "AzureFileStorageOptions";
 
     /// <summary>Azure Storage account connection string.</summary>
     public string ConnectionString { get; set; } = null!;
@@ -46,5 +42,10 @@ public sealed class AzureBlobFileStorageOptions : FileStorageServiceBaseOptions
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(ConnectionString);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(ContainerName);
+        ValidateUploadFilters();
     }
+
+    /// <summary>Container and prefix. The connection string and customer key are omitted.</summary>
+    public override string ToString()
+        => $"ContainerName={ContainerName} BlobPrefix={BlobPrefix} EncryptionScope={EncryptionScope} CustomerKeySet={!string.IsNullOrWhiteSpace(CustomerProvidedKeyBase64)} {base.ToString()}";
 }

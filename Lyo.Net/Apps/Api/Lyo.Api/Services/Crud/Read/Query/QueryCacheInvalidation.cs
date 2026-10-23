@@ -20,9 +20,7 @@ public static class QueryCacheInvalidation
         return SafeAsync(() => cache.InvalidateQueryCacheAsync<TDb>(), logger, $"broad type sweep for {typeof(TDb).FullName}");
     }
 
-    /// <summary>
-    /// Invalidates the broad type caches for a child entity and its parent together, and accepts a null <paramref name="cache" />.
-    /// </summary>
+    /// <summary>Invalidates the broad type caches for a child entity and its parent together, and accepts a null <paramref name="cache" />.</summary>
     /// <remarks>
     /// Definition grids commonly project a child column (a job's last run, a report's last generation) onto the parent row without carrying the child's
     /// <c>entity:&lt;child&gt;</c> tag, so writing a child has to clear the parent's cached queries as well.
@@ -36,8 +34,7 @@ public static class QueryCacheInvalidation
         where TChild : class where TParent : class
         => cache is null
             ? Task.CompletedTask
-            : Task.WhenAll(
-                InvalidateQueryCachesForBroadEntityTypeAsync<TChild>(cache, ct, logger), InvalidateQueryCachesForBroadEntityTypeAsync<TParent>(cache, ct, logger));
+            : Task.WhenAll(InvalidateQueryCachesForBroadEntityTypeAsync<TChild>(cache, ct, logger), InvalidateQueryCachesForBroadEntityTypeAsync<TParent>(cache, ct, logger));
 
     /// <summary>
     /// Invalidates cache entries tagged for the given primary keys. When <see cref="CacheOptions.QueryCacheTagGranularity" /> is <see cref="QueryCacheTagGranularity.Broad" />,
@@ -57,8 +54,7 @@ public static class QueryCacheInvalidation
         ArgumentHelpers.ThrowIfNull(entityClrType);
         ArgumentHelpers.ThrowIfNull(affectedPrimaryKeys);
         return SafeAsync(
-            () => InvalidateQueryCachesForEntityKeysCoreAsync(cache, cacheOptions, entityClrType, affectedPrimaryKeys), logger,
-            $"key invalidation for {entityClrType.FullName}");
+            () => InvalidateQueryCachesForEntityKeysCoreAsync(cache, cacheOptions, entityClrType, affectedPrimaryKeys), logger, $"key invalidation for {entityClrType.FullName}");
     }
 
     private static async Task InvalidateQueryCachesForEntityKeysCoreAsync(
@@ -122,9 +118,7 @@ public static class QueryCacheInvalidation
         return cache.InvalidateCacheItemByTag(tag);
     }
 
-    /// <summary>
-    /// Runs an invalidation and logs, rather than rethrows, anything that throw produces.
-    /// </summary>
+    /// <summary>Runs an invalidation and logs, rather than rethrows, anything that throw produces.</summary>
     /// <remarks>
     /// Invalidation happens after the write has already committed. Letting a cache or backplane outage propagate turned a successful write into a 500, so the caller retried and
     /// wrote again. A stale cache entry is the lesser failure, and it expires on its own.

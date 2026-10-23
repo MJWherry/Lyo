@@ -2,7 +2,8 @@
 
 Histogram statistics on top of `Lyo.Metrics`: percentile, quartile, moving-average, and anomaly-detection helpers sitting on the metrics primitives in `Lyo.Metrics`.
 
-The base `Lyo.Metrics` package stays dependency-light because this package exists: the heavy `Lyo.Mathematics` + `Lyo.Mathematics.Functions` (F#) chain is pulled in only when callers opt in by referencing `Lyo.Metrics.Statistics`.
+The base `Lyo.Metrics` package stays dependency-light because this package exists: the heavy `Lyo.Mathematics` + `Lyo.Mathematics.Functions` (F#) chain is pulled in only when
+callers opt in by referencing `Lyo.Metrics.Statistics`.
 
 ## Examples
 
@@ -22,8 +23,13 @@ var p95 = metrics.GetHistogramPercentile("request.latency", 95d);
 
 ## What ships
 
-- On `HistogramData`: `Describe`, `Quartiles`, `InterquartileRange`, `Percentile`, `MovingAverage`, `ExponentialMovingAverage`, `RollingStandardDeviation`, `RollingMedian`, `RollingMinimum`, `RollingMaximum`, `MedianAbsoluteDeviation`, `LatestZScore`, `IsLatestValueAnomalous`, `IsLatestValueAnomalousByMad`, `MeanConfidenceInterval`, `PearsonCorrelation`.
-- On `MetricsService`: `DescribeHistogram`, `GetHistogramQuartiles`, `GetHistogramInterquartileRange`, `GetHistogramPercentile`, `GetHistogramMovingAverage`, `GetHistogramExponentialMovingAverage`, `GetHistogramRollingStandardDeviation`, `GetHistogramRollingMedian`, `GetHistogramRollingMinimum`, `GetHistogramRollingMaximum`, `GetHistogramMedianAbsoluteDeviation`, `GetLatestHistogramZScore`, `IsLatestHistogramValueAnomalous`, `IsLatestHistogramValueAnomalousByMad`, `GetHistogramMeanConfidenceInterval`, `GetHistogramPearsonCorrelation`.
+- On `HistogramData`: `Describe`, `Quartiles`, `InterquartileRange`, `Percentile`, `MovingAverage`, `ExponentialMovingAverage`, `RollingStandardDeviation`, `RollingMedian`,
+  `RollingMinimum`, `RollingMaximum`, `MedianAbsoluteDeviation`, `LatestZScore`, `IsLatestValueAnomalous`, `IsLatestValueAnomalousByMad`, `MeanConfidenceInterval`,
+  `PearsonCorrelation`.
+- On `MetricsService`: `DescribeHistogram`, `GetHistogramQuartiles`, `GetHistogramInterquartileRange`, `GetHistogramPercentile`, `GetHistogramMovingAverage`,
+  `GetHistogramExponentialMovingAverage`, `GetHistogramRollingStandardDeviation`, `GetHistogramRollingMedian`, `GetHistogramRollingMinimum`, `GetHistogramRollingMaximum`,
+  `GetHistogramMedianAbsoluteDeviation`, `GetLatestHistogramZScore`, `IsLatestHistogramValueAnomalous`, `IsLatestHistogramValueAnomalousByMad`,
+  `GetHistogramMeanConfidenceInterval`, `GetHistogramPearsonCorrelation`.
 - On `MetricsSnapshot`: `GetHistogramPercentiles` (batch percentile lookup).
 
 ## Dependencies

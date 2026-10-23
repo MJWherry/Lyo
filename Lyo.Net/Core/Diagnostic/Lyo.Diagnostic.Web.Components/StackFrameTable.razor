@@ -43,16 +43,17 @@ else {
 
 @code {
 
-    private RenderFragment<StackFrame> FrameFlags => frame => @<text>
-        @if (frame.IsAsync) {
-            <LyoChip Variant="Variant.Text" Label="async"/>
-        }
-        @if (frame.IsLambda) {
-            <LyoChip Variant="Variant.Text" Label="lambda"/>
-        }
-        @if (!frame.IsAsync && !frame.IsLambda) {
-            <span>—</span>
-        }
+    private RenderFragment<StackFrame> FrameFlags
+        => frame => @<text>
+                         @if (frame.IsAsync) {
+                             <LyoChip Variant="Variant.Text" Label="async"/>
+                         }
+                         @if (frame.IsLambda) {
+                             <LyoChip Variant="Variant.Text" Label="lambda"/>
+                         }
+                         @if (!frame.IsAsync && !frame.IsLambda) {
+                             <span>—</span>
+                         }
     </text>;
 
 }

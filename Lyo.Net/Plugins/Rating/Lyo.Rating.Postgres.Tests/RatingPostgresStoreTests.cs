@@ -1,4 +1,4 @@
-using Lyo.Rating;
+using Lyo.Common.Core.Identifiers;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Lyo.Rating.Postgres.Tests;
@@ -9,18 +9,19 @@ public sealed class RatingPostgresStoreTests(RatingPostgresFixture fixture)
     [Fact]
     public async Task Save_ThenGetById_RoundTrips()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var store = fixture.ServiceProvider.GetRequiredService<IRatingStore>();
-        var subject = Guid.NewGuid();
-        var actor = Guid.NewGuid();
+        var subject = LyoGuid.CreateV7();
+        var actor = LyoGuid.CreateV7();
         var row = new RatingRecord {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             SubjectEntityType = "thing",
             SubjectEntityId = subject.ToString(),
             ActorEntityType = "person",
             ActorEntityId = actor.ToString(),
-            Value = 4.5m,
+            Value = 4.5m
         };
+
         await store.SaveAsync(row, ct: ct);
         Assert.NotEqual(Guid.Empty, row.Id);
         var loaded = await store.GetByIdAsync(row.Id, ct: ct);

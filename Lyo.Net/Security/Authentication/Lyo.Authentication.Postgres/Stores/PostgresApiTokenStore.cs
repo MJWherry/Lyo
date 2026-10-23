@@ -133,8 +133,7 @@ public sealed class PostgresApiTokenStore : IApiTokenStore, IHealth
     public string HealthCheckName => "lyo-authentication-token-postgres";
 
     /// <inheritdoc />
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => PostgresHealth.CheckAsync(_contextFactory, PostgresUserOptions.Schema, ct);
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => PostgresHealth.CheckAsync(_contextFactory, PostgresUserOptions.Schema, ct);
 
     private static TokenEntity ToEntity(ApiTokenRecord record)
         => new() {

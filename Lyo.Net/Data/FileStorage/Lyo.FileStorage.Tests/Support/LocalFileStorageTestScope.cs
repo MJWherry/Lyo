@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Compression;
 using Lyo.Encryption.TwoKey;
 using Lyo.FileMetadataStore;
@@ -60,7 +61,7 @@ public sealed class LocalFileStorageTestScope : IDisposable
         ICompressionService? compressionService = null,
         ITwoKeyEncryptionService? twoKeyEncryptionService = null)
     {
-        var root = Path.Combine(Path.GetTempPath(), "lyo-fs-test-" + Guid.NewGuid().ToString("N"));
+        var root = Path.Combine(Path.GetTempPath(), "lyo-fs-test-" + LyoGuid.CreateV7().ToString("N"));
         Directory.CreateDirectory(root);
         var options = new DiskFileStorageOptions { RootDirectoryPath = root };
         if (builder != null)

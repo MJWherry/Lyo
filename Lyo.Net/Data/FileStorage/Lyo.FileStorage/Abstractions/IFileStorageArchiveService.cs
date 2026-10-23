@@ -3,14 +3,12 @@ using Lyo.FileStorage.Models;
 namespace Lyo.FileStorage.Abstractions;
 
 /// <summary>
-/// Zips stored files by id. Remote or encrypted objects are decrypted via <see cref="IFileStorageService.GetFileStreamAsync" />, written under an IO temp session, then zipped
-/// on disk so the archive is not held in RAM.
+/// Zips stored files by id. Remote or encrypted objects are decrypted via <see cref="IFileStorageService.GetFileStreamAsync" />, written under an IO temp session, then
+/// zipped on disk so the archive is not held in RAM.
 /// </summary>
 public interface IFileStorageArchiveService
 {
-    /// <summary>
-    /// Writes <paramref name="entries" /> into a temp directory, zips that tree, and returns a readable zip stream. Disposing the stream drops the temp session.
-    /// </summary>
+    /// <summary>Writes <paramref name="entries" /> into a temp directory, zips that tree, and returns a readable zip stream. Disposing the stream drops the temp session.</summary>
     /// <param name="entries">Files to include. Duplicate ids keep the first zip path.</param>
     /// <param name="fileName">Download name (for example <c>Q1-reports.zip</c>). Sanitized. Starts as <c>files.zip</c>.</param>
     /// <param name="ct">Cancellation token.</param>

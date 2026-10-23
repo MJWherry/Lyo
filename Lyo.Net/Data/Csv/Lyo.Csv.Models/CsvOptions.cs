@@ -1,13 +1,14 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
+using Lyo.Common.Core.Enums;
 using Lyo.DataTable.Models;
 
 namespace Lyo.Csv.Models;
 
 /// <summary>
-/// Service-level options for CSV dialect, encoding, and DataTable value pooling. CSV starts with value pooling off (unique-heavy grids); enable via <see cref="Pooling" />
-/// or config when duplication is high.
+/// Service-level options for CSV dialect, encoding, and DataTable value pooling. CSV starts with value pooling off (unique-heavy grids); enable via <see cref="Pooling" /> or
+/// config when duplication is high.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class CsvOptions
@@ -54,6 +55,12 @@ public sealed class CsvOptions
     /// <summary>Pooling options for CSV → DataTable imports. Defaults: <see cref="DataTablePoolingOptions.PoolValues" /> = false (format pooling unused for CSV).</summary>
     public DataTablePoolingOptions Pooling { get; set; } = CreateDefaultPooling();
 
+    /// <summary>Column order for a typed export and a DataTable export. Starts as declaration order. A caller-supplied column list stays in the caller's order.</summary>
+    public MemberOrder Order { get; set; } = MemberOrder.Defined;
+
+    /// <summary>Header names used when <see cref="Order" /> is <see cref="MemberOrder.Specified" />. Names in this list are written first, in this sequence.</summary>
+    public List<string> OrderNames { get; } = [];
+
     /// <summary>Creates CSV-oriented pooling defaults (<c>PoolValues=false</c>, <c>PoolFormats=false</c>).</summary>
     public static DataTablePoolingOptions CreateDefaultPooling() => new() { PoolValues = false, PoolFormats = false };
 
@@ -81,7 +88,8 @@ public sealed class CsvOptions
 
     /// <summary>Returns a shallow copy suitable for mutation (e.g. <see cref="Encoding" /> via <c>SetEncoding</c>).</summary>
     public CsvOptions Clone()
-        => new() {
+    {
+        var copy = new CsvOptions {
             Delimiter = Delimiter,
             HasHeaderRecord = HasHeaderRecord,
             IgnoreBlankLines = IgnoreBlankLines,
@@ -93,8 +101,13 @@ public sealed class CsvOptions
             Escape = Escape,
             AllowComments = AllowComments,
             Comment = Comment,
-            Pooling = Pooling
+            Pooling = Pooling,
+            Order = Order
         };
+
+        copy.OrderNames.AddRange(OrderNames);
+        return copy;
+    }
 
     /// <inheritdoc />
     public override string ToString()

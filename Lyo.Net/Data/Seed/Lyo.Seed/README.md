@@ -1,27 +1,33 @@
 # Lyo.Seed
 
-A named `SeedContributor` is run against an `ISeedTransport` by `Lyo.Seed`. The graph only wants items (`Func<int, T>` / `ForEach` factories). Bogus and other fakers remain in the host. This package ships two transports: `EfSeedTransport<TContext>` (`AddRange` + `SaveChangesAsync`) and `ApiSeedTransport` (chunked `POST {route}/Bulk`, skip via `POST {route}/QueryConcrete`).
+A named `SeedContributor` is run against an `ISeedTransport` by `Lyo.Seed`. The graph only wants items (`Func<int, T>` / `ForEach` factories). Bogus and other fakers remain in the
+host. This package ships two transports: `EfSeedTransport<TContext>` (`AddRange` + `SaveChangesAsync`) and `ApiSeedTransport` (chunked `POST {route}/Bulk`, skip via
+`POST {route}/QueryConcrete`).
 
 ## Features
 
 - **No generator dependency.** Factories that return `T` go to `SeedGraph.Entity` and `ForEach`. Contributors can use Bogus, hand-built objects, or anything else.
-- **EF transport.** Each batch is persisted by `EfSeedTransport<TContext>` with `SaveChangesAsync`. `After` callbacks may call `SeedSession.PersistAsync` or use `Context` for schema-specific deletes.
+- **EF transport.** Each batch is persisted by `EfSeedTransport<TContext>` with `SaveChangesAsync`. `After` callbacks may call `SeedSession.PersistAsync` or use `Context` for
+  schema-specific deletes.
 - **API transport.** `ApiSeedTransport` maps request types onto Lyo.Api routes, chunks at `MaxBulkAmount` (default 2000), and fails the run when `CreateBulkResult.FailedCount > 0`.
 - **Conflict modes.** `Append` (default), optional `SkipIfNotEmpty`, and `Replace` (`OnClear` is required).
+- **EF source.** `IEfSeedSource` names the Postgres schema and opens the `DbContext`. Hosts that see the interface build `EfSeedTransport<T>` without a per-contributor switch.
 
 ## Examples
 
 ### Contributor on EF
 
 ```csharp
+using Lyo.Common.Core.Identifiers;
+
 public sealed class ParentContributor : SeedContributor
 {
     public override string Name => "parents";
     public override SeedTransportKind SupportedTransports => SeedTransportKind.Ef;
 
     protected override void Configure(SeedGraph graph, SeedOptions options)
-        => graph.Entity(options.Count, i => new ParentRow { Id = Guid.NewGuid(), Name = $"p-{i}" })
-            .ForEach(_ => 2, (parent, i) => new ChildRow { Id = Guid.NewGuid(), ParentId = parent.Id, Label = $"{parent.Name}-{i}" });
+        => graph.Entity(options.Count, i => new ParentRow { Id = LyoGuid.CreateV7(), Name = $"p-{i}" })
+            .ForEach(_ => 2, (parent, i) => new ChildRow { Id = LyoGuid.CreateV7(), ParentId = parent.Id, Label = $"{parent.Name}-{i}" });
 }
 
 await using var db = new MyDbContext(options);
@@ -48,7 +54,9 @@ services.AddApiSeedTransport(api => api.Map<PersonReq, PersonRes>("Person"));
 
 ## How transports are built
 
-Build `EfSeedTransport<TContext>` on a live `DbContext`, or `ApiSeedTransport` on `IApiClient` plus a `SeedApiCatalog`. `ISeedRunner` rejects a transport whose `Kind` is missing from `SeedContributor.SupportedTransports`.
+Build `EfSeedTransport<TContext>` on a live `DbContext`, or `ApiSeedTransport` on `IApiClient` plus a `SeedApiCatalog`. A contributor that implements `IEfSeedSource` opens its own
+context from the connection string (`CreateContext`) so the host does not switch on contributor type. `ISeedRunner` rejects a transport whose `Kind` is missing from
+`SeedContributor.SupportedTransports`.
 
 ## Dependencies
 
@@ -61,12 +69,13 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Query.Models` (direct, lyo)
 - `Microsoft.EntityFrameworkCore` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
+- `Npgsql` `10.0.3` (direct, third-party)
 - `Lyo.Common.Core` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
@@ -78,6 +87,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.RateLimiting` `10.0.5` (transitive, microsoft)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft)

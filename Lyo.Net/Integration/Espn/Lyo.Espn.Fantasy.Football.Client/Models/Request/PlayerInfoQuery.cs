@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Espn.Fantasy.Football.Client.Models.Request;
 
 /// <summary>Query options for player card details.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record PlayerInfoQuery
 {
     /// <summary>ESPN player ids to fetch.</summary>

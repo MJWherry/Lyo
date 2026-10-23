@@ -5,8 +5,7 @@ using Microsoft.Extensions.Options;
 namespace Lyo.Authentication.AspNetCore.Authorization;
 
 /// <summary>
-/// Builds <c>scope:&lt;name&gt;</c> policies on demand. Everything else goes to the default policy provider. Endpoints can opt into scope checks without
-/// pre-registering every scope:
+/// Builds <c>scope:&lt;name&gt;</c> policies on demand. Everything else goes to the default policy provider. Endpoints can opt into scope checks without pre-registering every scope:
 /// <code>
 /// .RequireAuthorization("scope:people.read");
 /// </code>

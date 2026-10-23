@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>CSV import format handler for Lyo.Api.Import.</Description>
+        <PackageTags>api import csv</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Api.Import\Lyo.Api.Import.csproj"/>
+        <ProjectReference Include="..\..\..\..\Data\Csv\Lyo.Csv\Lyo.Csv.csproj"/>
+    </ItemGroup>
+
+</Project>

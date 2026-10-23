@@ -42,7 +42,6 @@ public static class Extensions
             configure(options);
             options.Validate();
             services.AddSingleton(options);
-
             return services.RegisterGoogleTranslationService();
         }
 

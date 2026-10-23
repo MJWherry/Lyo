@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Wire contracts for the Lyo Leaderboard HTTP API.</Description>
+        <PackageTags>leaderboard api models contracts</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Plugins\Leaderboard\Lyo.Leaderboard\Lyo.Leaderboard.csproj"/>
+    </ItemGroup>
+</Project>

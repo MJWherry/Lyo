@@ -2,34 +2,32 @@ using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
 using Lyo.Common.Core;
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Extensions;
-using Lyo.Common.Metadata.Extensions;
 using Lyo.Exceptions;
 
 namespace Lyo.Common.Metadata.Records;
 
 /// <summary>
-/// Type catalog used by pickers and value editors (config, job parameters, filters). Most rows are CLR types
-/// (<see cref="IsClr" />). Other packages add non-CLR rows (for example <c>Lyo.Formatter</c> templates) through <see cref="Register" />.
+/// Type catalog used by pickers and value editors (config, job parameters, filters). Most rows are CLR types (<see cref="IsClr" />). Other packages add non-CLR rows (for
+/// example <c>Lyo.Formatter</c> templates) through <see cref="Register" />.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Stored names use <see cref="Type.FullName" /> for CLR types (same convention as config <c>ForValueType</c>), or a package-owned name for non-CLR types
-/// (for example <c>Lyo.Formatter.Template</c>). Resolve by short name (<c>int</c>), alias (<c>Int32</c>), or full name. Concrete enums are not listed;
-/// <see cref="FromType" /> maps any <c>type.IsEnum</c> to <see cref="Enum" />. The stored FullName for an enum stays the concrete type, not <c>System.Enum</c>.
+/// Stored names use <see cref="Type.FullName" /> for CLR types (same convention as config <c>ForValueType</c>), or a package-owned name for non-CLR types (for example
+/// <c>Lyo.Formatter.Template</c>). Resolve by short name (<c>int</c>), alias (<c>Int32</c>), or full name. Concrete enums are not listed; <see cref="FromType" /> maps any
+/// <c>type.IsEnum</c> to <see cref="Enum" />. The stored FullName for an enum stays the concrete type, not <c>System.Enum</c>.
 /// </para>
 /// <para>Implicitly converts to <see cref="Type" /> (the JSON/runtime type; for non-CLR rows this is typically <see cref="string" />).</para>
 /// </remarks>
 /// <param name="ShortName">UI label (for example <c>string</c>, <c>int</c>, <c>JSON object</c>).</param>
 /// <param name="FullName">Stored name: CLR <see cref="Type.FullName" /> when <see cref="IsClr" />, otherwise a package-owned identifier.</param>
 /// <param name="Description">Human-readable summary for tooltips and docs.</param>
-/// <param name="Type">
-/// Runtime/JSON type. For <see cref="Enum" /> this is <see cref="System.Enum" />. For non-CLR rows, the JSON payload type (usually <see cref="string" />).
-/// </param>
+/// <param name="Type">Runtime/JSON type. For <see cref="Enum" /> this is <see cref="System.Enum" />. For non-CLR rows, the JSON payload type (usually <see cref="string" />).</param>
 /// <param name="Category">Picker group.</param>
 /// <param name="EditorKind">Which input widget to render.</param>
 /// <param name="IsScalar">False for JSON documents, collections, and binary payloads that need a JSON editor.</param>
@@ -53,7 +51,7 @@ public sealed record LyoTypeInfo(
 {
     /// <summary>Sentinel for an unrecognized or unregistered CLR type.</summary>
     public static readonly LyoTypeInfo Unknown = Create(
-        "unknown", typeof(object), "Unknown or unregistered CLR type", LyoTypeCategory.Unknown, LyoTypeEditorKind.Text, "null", isScalar: false, aliases: ["unknown", "unspecified"]);
+        "unknown", typeof(object), "Unknown or unregistered CLR type", LyoTypeCategory.Unknown, LyoTypeEditorKind.Text, "null", false, aliases: ["unknown", "unspecified"]);
 
     /// <summary><see cref="System.String" />.</summary>
     public static readonly LyoTypeInfo String = Create("string", typeof(string), "UTF-16 string", LyoTypeCategory.Text, LyoTypeEditorKind.Text, "\"\"");
@@ -124,8 +122,7 @@ public sealed record LyoTypeInfo(
 
     /// <summary>Regular-expression pattern persisted as a JSON string.</summary>
     public static readonly LyoTypeInfo Regex = Create(
-        "regex", typeof(System.Text.RegularExpressions.Regex), "Regular-expression pattern", LyoTypeCategory.Text, LyoTypeEditorKind.Regex, "\"\"",
-        aliases: ["Regex", "regexp"]);
+        "regex", typeof(Regex), "Regular-expression pattern", LyoTypeCategory.Text, LyoTypeEditorKind.Regex, "\"\"", aliases: ["Regex", "regexp"]);
 
     /// <summary>XML document persisted as a JSON string of markup.</summary>
     public static readonly LyoTypeInfo Xml = Create(
@@ -133,50 +130,45 @@ public sealed record LyoTypeInfo(
 
     /// <summary><see cref="JsonObject" />.</summary>
     public static readonly LyoTypeInfo JsonObject = Create(
-        "JSON object", typeof(JsonObject), "JSON object document", LyoTypeCategory.Json, LyoTypeEditorKind.JsonObject, "{}", isScalar: false, aliases: ["json object"]);
+        "JSON object", typeof(JsonObject), "JSON object document", LyoTypeCategory.Json, LyoTypeEditorKind.JsonObject, "{}", false, aliases: ["json object"]);
 
     /// <summary><see cref="JsonArray" />.</summary>
     public static readonly LyoTypeInfo JsonArray = Create(
-        "JSON array", typeof(JsonArray), "JSON array document", LyoTypeCategory.Json, LyoTypeEditorKind.JsonArray, "[]", isScalar: false, aliases: ["json array"]);
+        "JSON array", typeof(JsonArray), "JSON array document", LyoTypeCategory.Json, LyoTypeEditorKind.JsonArray, "[]", false, aliases: ["json array"]);
 
     /// <summary><see cref="JsonNode" />.</summary>
     public static readonly LyoTypeInfo JsonNode = Create(
-        "JSON node", typeof(JsonNode), "Any JSON node (object, array, or value)", LyoTypeCategory.Json, LyoTypeEditorKind.JsonObject, "{}", isScalar: false,
-        aliases: ["json node", "json"]);
+        "JSON node", typeof(JsonNode), "Any JSON node (object, array, or value)", LyoTypeCategory.Json, LyoTypeEditorKind.JsonObject, "{}", false, aliases: ["json node", "json"]);
 
     /// <summary><see cref="List{T}" /> of strings.</summary>
     public static readonly LyoTypeInfo StringList = Create(
-        "List<string>", typeof(List<string>), "List of strings", LyoTypeCategory.Collection, LyoTypeEditorKind.Collection, "[]", isScalar: false, elementType: typeof(string),
-        aliases: ["list<string>", "string list"]);
+        "List<string>", typeof(List<string>), "List of strings", LyoTypeCategory.Collection, LyoTypeEditorKind.Collection, "[]", false, typeof(string),
+        ["list<string>", "string list"]);
 
     /// <summary><see cref="List{T}" /> of 32-bit integers.</summary>
     public static readonly LyoTypeInfo IntList = Create(
-        "List<int>", typeof(List<int>), "List of 32-bit integers", LyoTypeCategory.Collection, LyoTypeEditorKind.Collection, "[]", isScalar: false, elementType: typeof(int),
-        aliases: ["list<int>", "int list"]);
+        "List<int>", typeof(List<int>), "List of 32-bit integers", LyoTypeCategory.Collection, LyoTypeEditorKind.Collection, "[]", false, typeof(int), ["list<int>", "int list"]);
 
     /// <summary><see cref="List{T}" /> of 64-bit integers.</summary>
     public static readonly LyoTypeInfo LongList = Create(
-        "List<long>", typeof(List<long>), "List of 64-bit integers", LyoTypeCategory.Collection, LyoTypeEditorKind.Collection, "[]", isScalar: false, elementType: typeof(long),
-        aliases: ["list<long>", "long list"]);
+        "List<long>", typeof(List<long>), "List of 64-bit integers", LyoTypeCategory.Collection, LyoTypeEditorKind.Collection, "[]", false, typeof(long),
+        ["list<long>", "long list"]);
 
     /// <summary><see cref="List{T}" /> of GUIDs.</summary>
     public static readonly LyoTypeInfo GuidList = Create(
-        "List<Guid>", typeof(List<Guid>), "List of GUIDs", LyoTypeCategory.Collection, LyoTypeEditorKind.Collection, "[]", isScalar: false, elementType: typeof(Guid),
-        aliases: ["list<guid>", "guid list"]);
+        "List<Guid>", typeof(List<Guid>), "List of GUIDs", LyoTypeCategory.Collection, LyoTypeEditorKind.Collection, "[]", false, typeof(Guid), ["list<guid>", "guid list"]);
 
     /// <summary>Array of strings.</summary>
     public static readonly LyoTypeInfo StringArray = Create(
-        "string[]", typeof(string[]), "Array of strings", LyoTypeCategory.Collection, LyoTypeEditorKind.Collection, "[]", isScalar: false, elementType: typeof(string),
-        aliases: ["string array"]);
+        "string[]", typeof(string[]), "Array of strings", LyoTypeCategory.Collection, LyoTypeEditorKind.Collection, "[]", false, typeof(string), ["string array"]);
 
     /// <summary>Array of 32-bit integers.</summary>
     public static readonly LyoTypeInfo IntArray = Create(
-        "int[]", typeof(int[]), "Array of 32-bit integers", LyoTypeCategory.Collection, LyoTypeEditorKind.Collection, "[]", isScalar: false, elementType: typeof(int),
-        aliases: ["int array"]);
+        "int[]", typeof(int[]), "Array of 32-bit integers", LyoTypeCategory.Collection, LyoTypeEditorKind.Collection, "[]", false, typeof(int), ["int array"]);
 
     /// <summary>Byte array serialized as JSON base64.</summary>
     public static readonly LyoTypeInfo ByteArray = Create(
-        "byte[]", typeof(byte[]), "Binary payload (JSON base64)", LyoTypeCategory.Binary, LyoTypeEditorKind.Binary, "\"\"", isScalar: false, aliases: ["bytes", "binary"]);
+        "byte[]", typeof(byte[]), "Binary payload (JSON base64)", LyoTypeCategory.Binary, LyoTypeEditorKind.Binary, "\"\"", false, aliases: ["bytes", "binary"]);
 
     private static readonly Dictionary<Type, LyoTypeInfo> ByType = new();
     private static readonly Dictionary<string, LyoTypeInfo> ByFullName = new(StringComparer.Ordinal);
@@ -185,10 +177,7 @@ public sealed record LyoTypeInfo(
     private static readonly List<LyoTypeInfo> AllTypes = [];
     private static readonly object CatalogLock = new();
 
-    private static readonly JsonSerializerOptions JsonOptions = new() {
-        PropertyNameCaseInsensitive = true,
-        NumberHandling = JsonNumberHandling.AllowReadingFromString
-    };
+    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true, NumberHandling = JsonNumberHandling.AllowReadingFromString };
 
     /// <summary>Registered types excluding <see cref="Unknown" />, in declaration order.</summary>
     public static IReadOnlyList<LyoTypeInfo> All => AllTypes;
@@ -199,7 +188,6 @@ public sealed record LyoTypeInfo(
     static LyoTypeInfo()
     {
         var fields = typeof(LyoTypeInfo).PublicStaticFields<LyoTypeInfo>();
-
         foreach (var info in fields) {
             if (info == Unknown)
                 continue;
@@ -207,6 +195,7 @@ public sealed record LyoTypeInfo(
             AllTypes.Add(info);
             if (info.IsClr)
                 ByType[info.Type] = info;
+
             ByFullName[info.FullName] = info;
             RegisterAlias(info.ShortName, info);
             if (info.IsClr && !info.Type.IsGenericType && !string.IsNullOrEmpty(info.Type.Name))
@@ -240,8 +229,8 @@ public sealed record LyoTypeInfo(
     }
 
     /// <summary>
-    /// Resolves a CLR type by FullName. Calls <see cref="Type.GetType(string)" /> first, then each loaded assembly.
-    /// Concrete enums and other loaded types missing from this catalog still become usable by pickers.
+    /// Resolves a CLR type by FullName. Calls <see cref="Type.GetType(string)" /> first, then each loaded assembly. Concrete enums and other loaded types missing from this
+    /// catalog still become usable by pickers.
     /// </summary>
     public static Type? TryResolveClrType(string? name)
     {
@@ -254,11 +243,11 @@ public sealed record LyoTypeInfo(
                 return cached;
         }
 
-        var found = Type.GetType(trimmed, throwOnError: false);
+        var found = Type.GetType(trimmed, false);
         if (found == null) {
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
                 try {
-                    found = assembly.GetType(trimmed, throwOnError: false);
+                    found = assembly.GetType(trimmed, false);
                 }
                 catch (ArgumentException) {
                     continue;
@@ -278,11 +267,9 @@ public sealed record LyoTypeInfo(
     }
 
     /// <summary>True when <paramref name="value" /> is empty or parses as a GUID.</summary>
-    public static bool IsValidGuidText(string? value) => value.IsNullOrWhitespace() || System.Guid.TryParse(value, out _);
+    public static bool IsValidGuidText(string? value) => value.IsNullOrWhitespace() || System.Guid.TryParse(value, out var _);
 
-    /// <summary>
-    /// True when <paramref name="value" /> is empty, an absolute URI, or a relative path (contains <c>/</c>). Bare tokens such as <c>87gg</c> are rejected.
-    /// </summary>
+    /// <summary>True when <paramref name="value" /> is empty, an absolute URI, or a relative path (contains <c>/</c>). Bare tokens such as <c>87gg</c> are rejected.</summary>
     public static bool IsValidUriText(string? value)
     {
         if (value.IsNullOrWhitespace())
@@ -291,7 +278,7 @@ public sealed record LyoTypeInfo(
         if (System.Uri.IsWellFormedUriString(value, UriKind.Absolute))
             return true;
 
-        return value.IndexOf('/') >= 0 && System.Uri.TryCreate(value, UriKind.Relative, out _);
+        return value.IndexOf('/') >= 0 && System.Uri.TryCreate(value, UriKind.Relative, out var _);
     }
 
     /// <summary>Attempts to resolve a catalog row by name or alias.</summary>
@@ -303,8 +290,7 @@ public sealed record LyoTypeInfo(
 
     /// <summary>
     /// Looks up a catalog row by runtime type (nullable unwrapped). Exact match first; any <c>type.IsEnum</c> maps to <see cref="Enum" />. Unlisted <c>List&lt;T&gt;</c> and
-    /// single-dimension arrays of a registered element type (or enum) synthesize a collection row (not added to <see cref="All" />). Returns <see cref="Unknown" /> when not
-    /// registered.
+    /// single-dimension arrays of a registered element type (or enum) synthesize a collection row (not added to <see cref="All" />). Returns <see cref="Unknown" /> when not registered.
     /// </summary>
     public static LyoTypeInfo FromType(Type? type)
     {
@@ -365,14 +351,12 @@ public sealed record LyoTypeInfo(
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(fullName);
         ArgumentHelpers.ThrowIfNull(description);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(defaultJson);
-
         lock (CatalogLock) {
             if (ByFullName.TryGetValue(fullName, out var existing))
                 return existing;
 
             var runtimeType = type ?? typeof(string);
-            var info = new LyoTypeInfo(
-                shortName, fullName, description, runtimeType, category, editorKind, isScalar, defaultJson, aliases ?? [], elementType, isClr);
+            var info = new LyoTypeInfo(shortName, fullName, description, runtimeType, category, editorKind, isScalar, defaultJson, aliases ?? [], elementType, isClr);
             AllTypes.Add(info);
             ByFullName[fullName] = info;
             if (isClr)
@@ -415,7 +399,7 @@ public sealed record LyoTypeInfo(
                     using (JsonDocument.Parse(json))
                         return true;
                 default:
-                    var target = info == Unknown ? typeof(System.Text.Json.Nodes.JsonNode) : info.Type;
+                    var target = info == Unknown ? typeof(JsonNode) : info.Type;
                     _ = JsonSerializer.Deserialize(json, target, JsonOptions);
                     return true;
             }
@@ -443,7 +427,7 @@ public sealed record LyoTypeInfo(
         if (value is string json && LooksLikeJson(json) && EditorKind is LyoTypeEditorKind.JsonObject or LyoTypeEditorKind.JsonArray or LyoTypeEditorKind.Collection)
             return json;
 
-        return JsonSerializer.Serialize(value, Type == typeof(System.Enum) ? value.GetType() : Type, JsonOptions);
+        return JsonSerializer.Serialize(value, Type == typeof(Enum) ? value.GetType() : Type, JsonOptions);
     }
 
     /// <summary>Implicit conversion to the runtime <see cref="Type" /> used for JSON and pickers.</summary>
@@ -481,6 +465,7 @@ public sealed record LyoTypeInfo(
         if (isArray) {
             if (type.GetArrayRank() != 1)
                 return null;
+
             element = type.GetElementType();
         }
         else if (type.IsGenericType && !type.IsGenericTypeDefinition && type.GetGenericTypeDefinition() == typeof(List<>))
@@ -496,8 +481,9 @@ public sealed record LyoTypeInfo(
         var elementLabel = elementInfo == Enum ? element.Name : elementInfo.ShortName;
         var shortName = isArray ? $"{elementLabel}[]" : $"List<{elementLabel}>";
         var info = new LyoTypeInfo(
-            shortName, type.FullName ?? type.Name, isArray ? $"Array of {elementLabel}" : $"List of {elementLabel}", type, LyoTypeCategory.Collection,
-            LyoTypeEditorKind.Collection, false, "[]", [], element, true);
+            shortName, type.FullName ?? type.Name, isArray ? $"Array of {elementLabel}" : $"List of {elementLabel}", type, LyoTypeCategory.Collection, LyoTypeEditorKind.Collection,
+            false, "[]", [], element);
+
         ByType[type] = info;
         ByFullName[info.FullName] = info;
         return info;
@@ -506,7 +492,7 @@ public sealed record LyoTypeInfo(
     private static bool TryValidateGuid(string json)
     {
         var text = JsonSerializer.Deserialize<string>(json, JsonOptions);
-        return text is not null && System.Guid.TryParse(text, out _);
+        return text is not null && System.Guid.TryParse(text, out var _);
     }
 
     private static bool TryValidateUri(string json)
@@ -533,7 +519,7 @@ public sealed record LyoTypeInfo(
             return true;
 
         try {
-            _ = new System.Text.RegularExpressions.Regex(pattern, System.Text.RegularExpressions.RegexOptions.None, System.TimeSpan.FromSeconds(1));
+            _ = new Regex(pattern, RegexOptions.None, System.TimeSpan.FromSeconds(1));
             return true;
         }
         catch (ArgumentException) {
@@ -561,4 +547,8 @@ public sealed record LyoTypeInfo(
         var trimmed = value.TrimStart();
         return trimmed.StartsWith("{") || trimmed.StartsWith("[") || trimmed.StartsWith("\"");
     }
+
+#if NET6_0_OR_GREATER
+
+#endif
 }

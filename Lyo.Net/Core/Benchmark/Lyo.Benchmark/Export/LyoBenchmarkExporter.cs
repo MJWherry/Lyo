@@ -16,8 +16,8 @@ using ModelReport = Lyo.Benchmark.Models.BenchmarkReport;
 namespace Lyo.Benchmark.Export;
 
 /// <summary>
-/// BenchmarkDotNet exporter that maps a run onto the shared <see cref="MicroBenchmarkReport" /> shape and writes <c>&lt;name&gt;.lyobench.json</c> under the artifacts folder.
-/// It reads structured stats as-is (nanosecond means, GC bytes, parameters) so later steps do not have to parse strings.
+/// BenchmarkDotNet exporter that maps a run onto the shared <see cref="MicroBenchmarkReport" /> shape and writes <c>&lt;name&gt;.lyobench.json</c> under the artifacts
+/// folder. It reads structured stats as-is (nanosecond means, GC bytes, parameters) so later steps do not have to parse strings.
 /// </summary>
 public sealed class LyoBenchmarkExporter : IExporter
 {
@@ -501,8 +501,8 @@ public sealed class LyoBenchmarkExporter : IExporter
         => row.WorkloadMethod?.GetCustomAttribute<BenchmarkSlaAttribute>() ?? row.BenchmarkType?.GetCustomAttribute<BenchmarkSlaAttribute>();
 
     /// <summary>
-    /// Grades a measured row against its SLA: builds the target display string, computes throughput when a size parameter is present, and assigns Miss / Exceeds / Meets.
-    /// Returns null when no budget applies.
+    /// Grades a measured row against its SLA: builds the target display string, computes throughput when a size parameter is present, and assigns Miss / Exceeds / Meets. Returns
+    /// null when no budget applies.
     /// </summary>
     private static SlaEvaluation? EvaluateSla(BenchmarkReportRow row, BenchmarkSlaAttribute? sla)
     {

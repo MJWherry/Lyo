@@ -5,12 +5,16 @@ using Microsoft.AspNetCore.Components;
 namespace Lyo.Web.Components.DataGrid;
 
 /// <summary>
-/// Column whose parent-row field is a foreign key. After the parent page loads, the grid batches a related QueryProject
-/// (<c>Keys</c> = ids on the page) and this column renders typed <see cref="ChildContent" /> for each related <typeparamref name="TRes" />.
-/// Use <see cref="Field" /> on projected grids (<typeparamref name="T" /> is <c>object?</c>) and <see cref="Property" /> on typed QueryConcrete grids.
+/// Column whose parent-row field is a foreign key. After the parent page loads, the grid batches a related QueryProject (<c>Keys</c> = ids on the page) and this column
+/// renders typed <see cref="ChildContent" /> for each related <typeparamref name="TRes" />. Use <see cref="Field" /> on projected grids (<typeparamref name="T" /> is <c>object?</c>)
+/// and <see cref="Property" /> on typed QueryConcrete grids.
 /// </summary>
-public partial class LyoIdColumn<T, TRes> where TRes : class
+public partial class LyoIdColumn<T, TRes>
+    where TRes : class
 {
+    private bool _hidden;
+    private bool _hiddenSeeded;
+
     [CascadingParameter(Name = "LyoDataGridProjectedColumnRegistry")]
     public ProjectedColumnRegistry? ProjectedRegistry { get; set; }
 
@@ -40,8 +44,8 @@ public partial class LyoIdColumn<T, TRes> where TRes : class
     public required string Route { get; set; }
 
     /// <summary>
-    /// Related Select paths. When omitted, public scalar properties of <typeparamref name="TRes" /> are used. <c>Id</c> is always included.
-    /// Paths must exist on the related QueryProject entity.
+    /// Related Select paths. When omitted, public scalar properties of <typeparamref name="TRes" /> are used. <c>Id</c> is always included. Paths must exist on the related
+    /// QueryProject entity.
     /// </summary>
     [Parameter]
     public IReadOnlyList<string>? Select { get; set; }
@@ -94,13 +98,18 @@ public partial class LyoIdColumn<T, TRes> where TRes : class
     [Parameter]
     public bool CardTitle { get; set; }
 
-    private bool _hidden;
-    private bool _hiddenSeeded;
-
     /// <summary>FK path used for registry, sort, and lookup.</summary>
     internal string EffectiveField => !string.IsNullOrWhiteSpace(Field) ? Field.Trim() : RelatedProjection.PropertyPath(Property) ?? string.Empty;
 
     private bool IsHidden => VisibilityBinder?.IsHidden(EffectiveField) ?? _hidden;
+
+    private string EffectiveHeaderStyle => MergeAlignStyle(HeaderStyle, Align);
+
+    private string EffectiveCellStyle => MergeAlignStyle(CellStyle, Align);
+
+    private string EffectiveHeaderClass => MergeAlignClass(HeaderClass, Align);
+
+    private string EffectiveCellClass => MergeAlignClass(CellClass, Align);
 
     protected override void OnParametersSet()
     {
@@ -112,7 +121,7 @@ public partial class LyoIdColumn<T, TRes> where TRes : class
         var fkPath = EffectiveField;
         var select = RelatedProjection.InferSelect(typeof(TRes), Select);
         var hidden = VisibilityBinder?.IsHidden(fkPath) ?? _hidden;
-        (ProjectedRegistry ?? PropertyRegistry)?.Register(fkPath, Title, null, HiddenByDefault, Cell, identifier: true, CardTitle, Sortable);
+        (ProjectedRegistry ?? PropertyRegistry)?.Register(fkPath, Title, null, HiddenByDefault, Cell, true, CardTitle, Sortable);
         RelatedRegistry?.Register(fkPath, Route, typeof(TRes), select, ApiClient, hidden);
     }
 
@@ -129,14 +138,6 @@ public partial class LyoIdColumn<T, TRes> where TRes : class
     private object GetSortValue(T item) => RelatedProjection.GetFieldValue(item, EffectiveField) ?? string.Empty;
 
     internal string GetApiSortKey() => SortKey ?? EffectiveField;
-
-    private string EffectiveHeaderStyle => MergeAlignStyle(HeaderStyle, Align);
-
-    private string EffectiveCellStyle => MergeAlignStyle(CellStyle, Align);
-
-    private string EffectiveHeaderClass => MergeAlignClass(HeaderClass, Align);
-
-    private string EffectiveCellClass => MergeAlignClass(CellClass, Align);
 
     private static string MergeAlignStyle(string? style, Align align)
         => align switch {

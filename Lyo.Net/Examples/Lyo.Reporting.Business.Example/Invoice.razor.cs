@@ -1,20 +1,33 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Components;
 
 namespace Lyo.Reporting.Business.Example;
 
 public partial class Invoice
 {
-    public sealed record InvoiceOptions(Guid InvoiceNumber, string ClientName, string ClientAddress, string ClientCity, string ClientEmail, string CardNumber, DateTime InvoiceTimestamp, DateOnly StartDate, DateOnly EndDate, List<InvoiceLineItem> LineItems, string Status)
+    [Parameter]
+    [EditorRequired]
+    public InvoiceOptions Options { get; set; }
+
+    public sealed record InvoiceOptions(
+        Guid InvoiceNumber,
+        string ClientName,
+        string ClientAddress,
+        string ClientCity,
+        string ClientEmail,
+        string CardNumber,
+        DateTime InvoiceTimestamp,
+        DateOnly StartDate,
+        DateOnly EndDate,
+        List<InvoiceLineItem> LineItems,
+        string Status)
     {
         public decimal GrandTotal => LineItems.Sum(i => i.Total);
     }
 
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed record InvoiceLineItem(string Description, decimal Cost, decimal Quantity, decimal? TotalOverride = null)
     {
         public decimal Total => TotalOverride ?? Cost * Quantity;
     }
-
-    [Parameter]
-    [EditorRequired]
-    public InvoiceOptions Options { get; set; }
 }

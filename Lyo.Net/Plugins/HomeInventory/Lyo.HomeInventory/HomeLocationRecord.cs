@@ -1,6 +1,10 @@
+using Lyo.EntityReference.Models;
+using Lyo.HomeInventory.Models;
+
 namespace Lyo.HomeInventory;
 
 /// <summary>Place the item lives: room, closet, shelf, or nested zone (e.g. Office / Desk drawer).</summary>
+[EntityRefLogicalType(HomeInventoryEntityTypes.Location)]
 public sealed class HomeLocationRecord
 {
     public Guid Id { get; set; }

@@ -45,10 +45,7 @@ public class ForbiddenException : HttpException
         Reason = reason;
     }
 
-    /// <summary>
-    /// Builds a <see cref="ForbiddenException" /> for a resource, guaranteeing <see cref="ResourceName" />, <see cref="ResourceId" />, and
-    /// <see cref="Reason" /> are set.
-    /// </summary>
+    /// <summary>Builds a <see cref="ForbiddenException" /> for a resource, guaranteeing <see cref="ResourceName" />, <see cref="ResourceId" />, and <see cref="Reason" /> are set.</summary>
     /// <param name="resourceName">Name or type of the resource that was denied.</param>
     /// <param name="resourceId">Id of the resource that was denied.</param>
     /// <param name="reason">Why access was denied.</param>

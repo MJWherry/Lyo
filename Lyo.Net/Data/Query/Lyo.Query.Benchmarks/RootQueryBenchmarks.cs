@@ -5,6 +5,7 @@ using Lyo.Api.Services.Crud.Read.Query.Root;
 using Lyo.Benchmark;
 using Lyo.Cache;
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
@@ -92,16 +93,16 @@ public class RootQueryBenchmarks
             Enabled = true
         };
 
-        var result = await _create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(req, ctx => ctx.Entity.Id = Guid.NewGuid());
+        var result = await _create.CreateAsync<JobDefinitionReq, JobDefinition, JobDefinitionRes>(req, ctx => ctx.Entity.Id = LyoGuid.CreateV7());
         return result.Data!.Id;
     }
 
     private async Task SeedRun(Guid jobDefinitionId, string createdBy)
     {
-        var req = new JobRunReq(jobDefinitionId, createdBy, false);
+        var req = new JobRunReq(jobDefinitionId, createdBy);
         await _create.CreateAsync<JobRunReq, JobRun, JobRunRes>(
             req, ctx => {
-                ctx.Entity.Id = Guid.NewGuid();
+                ctx.Entity.Id = LyoGuid.CreateV7();
                 ctx.Entity.State = JobState.Queued;
                 ctx.Entity.CreatedTimestamp = DateTime.UtcNow;
             });

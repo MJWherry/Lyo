@@ -24,7 +24,8 @@ public partial class LyoFormatterPreview : IDisposable
     [Parameter]
     public string EmptyText { get; set; } = "Type a template to preview replacements.";
 
-    private LyoFormatterLiveSession Resolved => _bound ?? throw new InvalidOperationException("LyoFormatterPreview requires a Session parameter or a cascaded LyoFormatterLiveSession.");
+    private LyoFormatterLiveSession Resolved
+        => _bound ?? throw new InvalidOperationException("LyoFormatterPreview requires a Session parameter or a cascaded LyoFormatterLiveSession.");
 
     /// <inheritdoc />
     public void Dispose()
@@ -39,6 +40,7 @@ public partial class LyoFormatterPreview : IDisposable
         var next = Session ?? CascadedSession;
         if (next == null)
             throw new InvalidOperationException("LyoFormatterPreview requires a Session parameter or a cascaded LyoFormatterLiveSession.");
+
         if (!ReferenceEquals(_bound, next)) {
             Unbind();
             _bound = next;

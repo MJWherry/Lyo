@@ -35,8 +35,7 @@ public class OpenTelemetryOptionsTests
     [InlineData("grpc")]
     [InlineData("http/protobuf")]
     [InlineData("GRPC")]
-    public void Validate_KnownProtocol_DoesNotThrow(string protocol)
-        => new OpenTelemetryOptions { Protocol = protocol }.Validate();
+    public void Validate_KnownProtocol_DoesNotThrow(string protocol) => new OpenTelemetryOptions { Protocol = protocol }.Validate();
 
     [Fact]
     public void Validate_ZeroMetricInterval_Throws()
@@ -52,7 +51,6 @@ public class OpenTelemetryOptionsTests
         configuration["OpenTelemetry:ServiceName"] = "Bound.Service";
         configuration["OpenTelemetry:Protocol"] = "grpc";
         configuration["OpenTelemetry:MetricExportIntervalMs"] = "1000";
-
         var services = new ServiceCollection();
         services.AddLyoMetricsWithOpenTelemetryFromConfiguration(configuration);
         using var provider = services.BuildServiceProvider();

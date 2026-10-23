@@ -83,7 +83,7 @@
         ],
         [
           "`RequestCompression`",
-          "`ApiRequestCompressionType.None`",
+          "`LyoHttpRequestCompressionType.None`",
           "Inherited request-body compression, unused by the resolve route (GET / HEAD)."
         ],
         [
@@ -251,7 +251,7 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
+      "name": "Lyo.Common.Metadata",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -259,7 +259,7 @@
       ]
     },
     {
-      "name": "Lyo.Common.Metadata",
+      "name": "Lyo.DataTable.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -307,6 +307,14 @@
       ]
     },
     {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Metrics",
       "kind": "lyo",
       "tags": [
@@ -340,6 +348,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.RateLimit",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -383,6 +399,16 @@
       "name": "Microsoft.Bcl.AsyncInterfaces",
       "kind": "package",
       "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.TimeProvider",
+      "kind": "package",
+      "version": "8.0.1",
       "tags": [
         "transitive",
         "microsoft",
@@ -443,6 +469,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

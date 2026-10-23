@@ -75,20 +75,29 @@ public static class PathHelpers
         if (string.IsNullOrWhiteSpace(root) || string.IsNullOrWhiteSpace(candidate))
             return false;
 
-        var sep = GetDirectorySeparator(style);
-        var fullRootTrimmed = TrimTrailingSeparators(GetFullPath(style, root), style);
-        var fullCandidate = GetFullPath(style, candidate);
+        return IsUnderNormalizedRoot(style, TrimTrailingSeparators(GetFullPath(style, root), style), GetFullPath(style, candidate));
+    }
+
+    /// <summary>
+    /// True when <paramref name="fullCandidate" /> is equal to or under <paramref name="normalizedRoot" />. Both arguments must already be the output of
+    /// <see cref="GetFullPath" />, with the root additionally passed through <see cref="TrimTrailingSeparators" />. Callers that hold a pre-normalized root (for example an
+    /// <c>IFileSystem</c> that normalized it once in its constructor) use this to avoid re-normalizing on every operation; everyone else wants <see cref="IsUnderRoot" />.
+    /// </summary>
+    public static bool IsUnderNormalizedRoot(PathStyle style, string normalizedRoot, string fullCandidate)
+    {
+        if (string.IsNullOrWhiteSpace(normalizedRoot) || string.IsNullOrWhiteSpace(fullCandidate))
+            return false;
+
         var comparison = style == PathStyle.Host && OperatingSystemIsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
 
         // POSIX filesystem root: every absolute path sits under "/".
-        if (style == PathStyle.Posix && fullRootTrimmed is "/")
+        if (style == PathStyle.Posix && normalizedRoot is "/")
             return IsPathRooted(PathStyle.Posix, fullCandidate);
 
-        var fullRoot = fullRootTrimmed + sep;
-        if (string.Equals(TrimTrailingSeparators(fullCandidate, style), fullRootTrimmed, comparison))
+        if (string.Equals(TrimTrailingSeparators(fullCandidate, style), normalizedRoot, comparison))
             return true;
 
-        return fullCandidate.StartsWith(fullRoot, comparison);
+        return fullCandidate.StartsWith(normalizedRoot + GetDirectorySeparator(style), comparison);
     }
 
     /// <summary>Joins path segments using <paramref name="style" /> separators.</summary>
@@ -218,18 +227,14 @@ public static class PathHelpers
         return idx <= 0 ? string.Empty : name[idx..];
     }
 
-    /// <summary>
-    /// Replaces invalid filename characters (including <c>/</c> and <c>\</c>) with <c>_</c> and trims dots/spaces. Returns <see langword="null" /> when nothing usable remains.
-    /// </summary>
+    /// <summary>Replaces invalid filename characters (including <c>/</c> and <c>\</c>) with <c>_</c> and trims dots/spaces. Returns <see langword="null" /> when nothing usable remains.</summary>
     /// <param name="name">Candidate file name, or a path when <paramref name="takeLeaf" /> is set.</param>
     /// <param name="replacement">Character substituted for invalid characters, or <see langword="null" /> to drop them instead of replacing them.</param>
     /// <param name="stripControlCharacters">
-    /// Also treat control characters as invalid. Needed on Unix, where <see cref="Path.GetInvalidFileNameChars" /> only reports <c>\0</c> and <c>/</c>, so names carrying
-    /// newlines or escape sequences would otherwise survive.
+    /// Also treat control characters as invalid. Needed on Unix, where <see cref="Path.GetInvalidFileNameChars" /> only reports <c>\0</c> and
+    /// <c>/</c>, so names carrying newlines or escape sequences would otherwise survive.
     /// </param>
-    /// <param name="takeLeaf">
-    /// Strip directory segments first, so a full path collapses to its file name. Off by default: callers that already hold a leaf keep their behavior.
-    /// </param>
+    /// <param name="takeLeaf">Strip directory segments first, so a full path collapses to its file name. Off by default: callers that already hold a leaf keep their behavior.</param>
     /// <param name="maxLength">When greater than zero, caps the result at this many characters while preserving the extension.</param>
     public static string? SanitizeFileName(string? name, char? replacement = '_', bool stripControlCharacters = false, bool takeLeaf = false, int maxLength = 0)
     {

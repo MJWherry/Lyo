@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Postgres.Database;
 
 /// <summary>Entity for the <c>[user].[token]</c> table (Format-B opaque tokens).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class TokenEntity
 {
     /// <summary>11-char lowercase Crockford base32 id. PK.</summary>
@@ -50,4 +53,7 @@ public sealed class TokenEntity
 
     /// <summary>Previous token id when this token replaced another via rotate.</summary>
     public string? RotatedFromId { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

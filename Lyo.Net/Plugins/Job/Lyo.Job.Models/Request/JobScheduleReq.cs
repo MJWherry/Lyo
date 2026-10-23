@@ -1,19 +1,23 @@
-using System.Diagnostics;
-using Lyo.Common.Core.Enums;
-using Lyo.Job.Models.Enums;
-using Lyo.Schedule.Models;
 #if NET6_0_OR_GREATER
 using TimeOnly = System.TimeOnly;
 #else
 using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 #endif
+using System.Diagnostics;
+using Lyo.Common.Core.Enums;
+using Lyo.Job.Models.Enums;
+using Lyo.Schedule.Models;
 
 namespace Lyo.Job.Models.Request;
 
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class JobScheduleReq
 {
-    public Guid JobDefinitionId { get; set; }
+    /// <summary>Definition this schedule fires. Set exactly one of this and <see cref="JobWorkflowId" />.</summary>
+    public Guid? JobDefinitionId { get; set; }
+
+    /// <summary>Workflow this schedule starts. Set exactly one of this and <see cref="JobDefinitionId" />.</summary>
+    public Guid? JobWorkflowId { get; set; }
 
     public MonthFlags MonthFlags { get; set; }
 

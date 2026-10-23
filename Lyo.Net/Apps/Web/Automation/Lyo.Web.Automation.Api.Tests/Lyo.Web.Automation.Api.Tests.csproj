@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <RootNamespace>Lyo.Web.Automation.Api.Tests</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Web.Automation.Api\Lyo.Web.Automation.Api.csproj"/>
+        <ProjectReference Include="..\Lyo.Web.Automation.FileStorage\Lyo.Web.Automation.FileStorage.csproj"/>
+        <ProjectReference Include="..\Lyo.Web.Automation.Client\Lyo.Web.Automation.Client.csproj"/>
+        <ProjectReference Include="..\Lyo.Web.Automation.Playwright\Lyo.Web.Automation.Playwright.csproj"/>
+        <ProjectReference Include="..\Lyo.Web.Automation.Tests\Lyo.Web.Automation.Tests.csproj"/>
+        <ProjectReference Include="..\..\..\..\Core\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\..\..\..\Data\Json\Lyo.Json\Lyo.Json.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.TestHost"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="..\Lyo.Web.Automation.Tests\TestAssets\**\*">
+            <Link>TestAssets\%(RecursiveDir)%(Filename)%(Extension)</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+</Project>

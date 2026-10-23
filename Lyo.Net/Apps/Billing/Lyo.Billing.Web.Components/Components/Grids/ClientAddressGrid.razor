@@ -1,0 +1,58 @@
+@namespace Lyo.Billing.Web.Components.Components.Grids
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+@if (ClientId is { } clientId && clientId != Guid.Empty) {
+    <MudStack Spacing="2">
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.End">
+            <MudTextField @bind-Value="_line1" Label="Line 1" Class="flex-grow-1"/>
+            <MudTextField @bind-Value="_city" Label="City" Style="max-width: 8rem;"/>
+            <MudTextField @bind-Value="_region" Label="Region" Style="max-width: 6rem;"/>
+            <MudTextField @bind-Value="_postal" Label="Postal" Style="max-width: 6rem;"/>
+            <MudSelect T="BillingAddressUsage" @bind-Value="_usage" Label="Usage" Style="max-width: 8rem;">
+                @foreach (var usage in Enum.GetValues<BillingAddressUsage>()) {
+                    <MudSelectItem Value="@usage">@usage</MudSelectItem>
+                }
+            </MudSelect>
+            <MudCheckBox @bind-Value="_isPrimary" Label="Primary"/>
+            <MudButton Variant="Variant.Outlined" Disabled="@(_busy || string.IsNullOrWhiteSpace(_line1))" OnClick="AddLiteAsync">Add</MudButton>
+        </MudStack>
+        <LyoDataGridProjected @ref="_dataGrid"
+                              ApiClient="ApiClient"
+                              GridKey="@GridKey"
+                              Route="Billing/Addresses"
+                              KeySelector="@(i => ProjectedGridKeys.GuidId(i))"
+                              FilterPropertyDefinitions="@_propertyDefinitions"
+                              BeforeQuery="ApplyQuery"
+                              Features="@(LyoDataGridFeatureFlags.Filterable | LyoDataGridFeatureFlags.Searchable)">
+            <Columns>
+                <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                                HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                                CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+                    <CellTemplate Context="cell">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Detach"
+                                       OnClick="@(() => DetachAsync(cell.Item))"/>
+                    </CellTemplate>
+                </TemplateColumn>
+                <LyoProjectedColumn Field="SubjectEntityType" Title="Type" HeaderStyle="width: 140px;"/>
+                <LyoIdColumn T="object?" TRes="PersonAddressLookup" Field="SubjectEntityId" Route="PersonAddress" Title="Address"
+                             Select="@(new[] { "FullAddress", "City" })" HeaderStyle="width: 220px;" Context="address">
+                    @(address?.FullAddress)
+                </LyoIdColumn>
+                <LyoIdColumn T="object?" TRes="BillingAddressLookup" Field="SubjectEntityId" Route="Billing/AddressPayloads" Title="Billing address"
+                             Select="@(new[] { "Line1", "City" })" HeaderStyle="width: 220px;" Context="address">
+                    @(address == null ? null : $"{address.Line1} {address.City}".Trim())
+                </LyoIdColumn>
+                <LyoProjectedColumn Field="Usage" Title="Usage" Align="Align.Center" HeaderStyle="width: 110px;">
+                    <CellContent Context="item">
+                        <LyoChip Spec="@(LyoChips.FromEnum<BillingAddressUsage>(ProjectedValueHelper.GetDisplayValue(item, "Usage"), _ => Color.Default))"/>
+                    </CellContent>
+                </LyoProjectedColumn>
+                <LyoProjectedColumn Field="IsPrimary" Title="Primary"/>
+            </Columns>
+        </LyoDataGridProjected>
+    </MudStack>
+}
+else {
+    <MudText Typo="Typo.caption" Color="Color.Secondary">Save the client before adding addresses.</MudText>
+}

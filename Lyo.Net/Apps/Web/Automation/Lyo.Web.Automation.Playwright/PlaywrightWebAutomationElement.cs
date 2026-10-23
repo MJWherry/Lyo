@@ -28,7 +28,10 @@ internal sealed class PlaywrightWebAutomationElement(ILocator locator, Playwrigh
     {
         ArgumentHelpers.ThrowIfNull(keys);
         ct.ThrowIfCancellationRequested();
-        await locator.PressSequentiallyAsync(keys).ConfigureAwait(false);
+        if (IsNamedKey(keys))
+            await locator.PressAsync(keys).ConfigureAwait(false);
+        else
+            await locator.PressSequentiallyAsync(keys).ConfigureAwait(false);
     }
 
     public async Task ClearAsync(CancellationToken ct = default)
@@ -103,4 +106,7 @@ internal sealed class PlaywrightWebAutomationElement(ILocator locator, Playwrigh
         ct.ThrowIfCancellationRequested();
         return await locator.ScreenshotAsync(new() { Type = ScreenshotType.Png }).ConfigureAwait(false);
     }
+
+    private static bool IsNamedKey(string keys)
+        => keys is "Enter" or "Tab" or "Escape" or "Backspace" or "Delete" or "ArrowDown" or "ArrowUp" or "ArrowLeft" or "ArrowRight" or "Home" or "End" or "PageUp" or "PageDown";
 }

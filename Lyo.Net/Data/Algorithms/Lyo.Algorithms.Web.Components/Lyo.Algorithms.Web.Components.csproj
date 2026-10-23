@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>Blazor workbench for authoring algorithm revisions, typed context bags, and live breakdown previews.</Description>
+        <PackageTags>blazor components algorithm mudblazor</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.Algorithms\Lyo.Algorithms.csproj"/>
+        <ProjectReference Include="..\Lyo.Algorithms.Models\Lyo.Algorithms.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Algorithms\Lyo.Algorithms.Client\Lyo.Algorithms.Client.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Http\Lyo.Http.Client\Lyo.Http.Client.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Parameters\Lyo.Parameters\Lyo.Parameters.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MudBlazor"/>
+    </ItemGroup>
+
+</Project>

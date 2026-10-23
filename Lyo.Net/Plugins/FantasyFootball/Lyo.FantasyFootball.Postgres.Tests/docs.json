@@ -1,0 +1,17 @@
+{
+  "$schema": "../../../../docs/catalog/schema/package.schema.json",
+  "id": "Lyo.FantasyFootball.Postgres.Tests",
+  "name": "Lyo.FantasyFootball.Postgres.Tests",
+  "area": "Plugins",
+  "tagline": "Testcontainers coverage for the fantasy football Postgres store.",
+  "description": "Uses a PostgreSQL Testcontainers fixture and the real `PostgresFantasyFootballStore`. Covers league upsert, direct-message members, message order, and trade items.",
+  "features": [
+    "League save with the same ESPN ids updates members and teams.",
+    "A direct message lists the other member.",
+    "Messages come back in time order, and a trade keeps both sides."
+  ],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/FantasyFootball/Lyo.FantasyFootball.Postgres.Tests/README.md"
+}

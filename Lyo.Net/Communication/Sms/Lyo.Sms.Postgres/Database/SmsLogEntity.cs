@@ -1,13 +1,16 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Sms.Postgres.Database;
 
 /// <summary>Database row for an outbound SMS log.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class SmsLogEntity
 {
     /// <summary>Primary key.</summary>
     [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; } = LyoGuid.CreateV7();
 
     /// <summary>Recipient number (E.164).</summary>
     [Required]
@@ -64,4 +67,7 @@ public class SmsLogEntity
     /// <summary>When this log row was created.</summary>
     [Required]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

@@ -4,6 +4,7 @@ using Lyo.Sms.Postgres.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace Lyo.Sms.Postgres;
 
 /// <summary>DI helpers that register the PostgreSQL SMS logging context.</summary>
@@ -46,7 +47,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresSmsOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddSmsDbContextFactory(options);
         }
 
@@ -58,7 +58,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPostgresDbContextFactory<SmsDbContext, PostgresSmsOptions>(options);
-
             return services;
         }
     }

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <IsPackable>false</IsPackable>
+        <Description>Example ASP.NET host for the Lyo Comic API. Not packed to NuGet.</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi"/>
+        <PackageReference Include="Scalar.AspNetCore"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Core\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
+        <ProjectReference Include="..\..\Data\Json\Lyo.Json\Lyo.Json.csproj"/>
+        <ProjectReference Include="..\..\Apps\Api\Lyo.Api\Lyo.Api.csproj"/>
+        <ProjectReference Include="..\..\Apps\Comic\Lyo.Comic.Api\Lyo.Comic.Api.csproj"/>
+    </ItemGroup>
+
+</Project>

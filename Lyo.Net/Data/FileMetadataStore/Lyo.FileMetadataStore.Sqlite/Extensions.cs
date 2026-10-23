@@ -66,7 +66,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new SqliteFileMetadataStoreOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddSqliteFileMetadataStoreDbContextFactory(options);
         }
 

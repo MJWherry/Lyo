@@ -1,5 +1,3 @@
-using Lyo.ContentThreatScan.Intel;
-
 namespace Lyo.ContentThreatScan.Tests;
 
 public sealed class ContentThreatAssessmentComposerTests

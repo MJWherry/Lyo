@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Reporting.Models;
 using Lyo.Reporting.Models.Enums;
@@ -12,7 +13,7 @@ public sealed class ReportDefinitionWriteValidatorTests
 
     private static ReportDefinition ValidDefinition()
         => new() {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             Name = "Valid",
             ReportDataJson = """{"Title":"x"}""",
             DefaultFormat = nameof(ReportFormat.Csv)

@@ -1,10 +1,9 @@
-@using Lyo.Api.Models.Common.Response
-@using Lyo.Query.Models.Common.Request
-@using Lyo.Web.Components.DataGrid
 @using Lyo.Web.Components.Export
 @using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Toml
 @using Lyo.Web.Components.Export.Xlsx
-@using Lyo.Web.Components.Models
+@using Lyo.Web.Components.Export.Xml
+@using Lyo.Web.Components.Export.Yaml
 @using Constants = Lyo.TestGateway.Models.Constants
 @inject IApiClient ApiClient
 @inject IDialogService DialogService
@@ -19,6 +18,9 @@
         <LyoDataGridExportMenu Host="context">
             <ExportCsvMenuItem Host="context"/>
             <ExportJsonMenuItem Host="context"/>
+            <ExportYamlMenuItem Host="context"/>
+            <ExportXmlMenuItem Host="context"/>
+            <ExportTomlMenuItem Host="context"/>
             <ExportXlsxMenuItem Host="context"/>
         </LyoDataGridExportMenu>
     </BulkExportControls>
@@ -44,6 +46,8 @@
 </LyoDataGridProjected>
 
 @code {
+
     private RenderFragment<object?> GetRowMenuControls()
         => person => @<MudMenuItem Icon="@Icons.Material.Filled.Visibility" OnClick="@(() => ViewPerson(person))">View</MudMenuItem>;
+
 }

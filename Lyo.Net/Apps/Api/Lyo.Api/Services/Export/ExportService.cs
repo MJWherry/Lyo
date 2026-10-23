@@ -10,13 +10,13 @@ using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Validation;
 using Lyo.Common.Core;
 using Lyo.Common.Core.Enums;
+using Lyo.Exceptions;
 using Lyo.Formatter;
 using Lyo.Metrics;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Lyo.Exceptions;
 
 namespace Lyo.Api.Services.Export;
 
@@ -281,6 +281,9 @@ public class ExportService<TContext>(
         var addonHint = format switch {
             ExportFormat.Csv => "AddCsvExport()",
             ExportFormat.Xlsx => "AddXlsxExport()",
+            ExportFormat.Yaml => "AddYamlExport()",
+            ExportFormat.Xml => "AddXmlExport()",
+            ExportFormat.Toml => "AddTomlExport()",
             var _ => "register an IExportFormatHandler"
         };
 

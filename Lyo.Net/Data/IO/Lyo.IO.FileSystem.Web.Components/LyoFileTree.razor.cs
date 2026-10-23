@@ -1,5 +1,4 @@
 using Lyo.Exceptions;
-using Lyo.IO.FileSystem;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -8,8 +7,9 @@ namespace Lyo.IO.FileSystem.Web.Components;
 /// <summary>Lazy folder tree over <see cref="IFileTreeSource" />.</summary>
 public partial class LyoFileTree : ComponentBase
 {
+    internal const int SearchFolderFetchCap = 200;
+
     private readonly HashSet<FileTreeNode> _checked = [];
-    private bool _editMode;
     private string _filter = string.Empty;
     private List<TreeItemData<FileTreeNode>> _items = [];
     private FileTreeNode? _root;
@@ -53,6 +53,10 @@ public partial class LyoFileTree : ComponentBase
     [Parameter]
     public bool EnableFilter { get; set; } = true;
 
+    /// <summary>Rendered immediately above the search field. Hosts use this for controls that should sit with the filter, such as a tag picker and its tag list.</summary>
+    [Parameter]
+    public RenderFragment? AboveFilter { get; set; }
+
     /// <summary>Shows a multi-select toggle and checkboxes for bulk actions in the host.</summary>
     [Parameter]
     public bool EnableSelection { get; set; }
@@ -65,15 +69,24 @@ public partial class LyoFileTree : ComponentBase
     [Parameter]
     public RenderFragment? SelectionToolbar { get; set; }
 
+    /// <summary>Optional per-row icon. Defaults to folder / generic file.</summary>
+    [Parameter]
+    public Func<FileTreeNode, string>? IconResolver { get; set; }
+
+    /// <summary>True when search stopped before every folder was listed.</summary>
+    public bool SearchListingTruncated { get; private set; }
+
     /// <summary>Checked nodes when <see cref="EnableSelection" /> is on.</summary>
     [Parameter]
     public EventCallback<IReadOnlyList<FileTreeNode>> CheckedChanged { get; set; }
 
     /// <summary>True while the user is picking multiple rows.</summary>
-    public bool EditMode => _editMode;
+    public bool EditMode { get; private set; }
 
     /// <summary>Checked nodes in the current tree instance.</summary>
     public IReadOnlyList<FileTreeNode> CheckedNodes => _checked.ToList();
+
+    private IReadOnlyCollection<TreeItemData<FileTreeNode>> DisplayItems => FileTreeFilter.Apply(_items, _filter);
 
     /// <inheritdoc />
     protected override async Task OnParametersSetAsync()
@@ -92,8 +105,21 @@ public partial class LyoFileTree : ComponentBase
     public async Task LoadAllDescendantsAsync(FileTreeNode node)
     {
         ArgumentHelpers.ThrowIfNull(node);
-        await LoadDescendantsCoreAsync(node).ConfigureAwait(true);
+        await FileTreeLoader.EnsureDescendantsAsync(Source, node, SearchFolderFetchCap).ConfigureAwait(true);
         RebuildItems();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnFilterChangedAsync(string? value)
+    {
+        _filter = value ?? string.Empty;
+        SearchListingTruncated = false;
+        if (!string.IsNullOrWhiteSpace(_filter) && _root != null) {
+            var (_, truncated) = await FileTreeLoader.EnsureDescendantsAsync(Source, _root, SearchFolderFetchCap).ConfigureAwait(true);
+            SearchListingTruncated = truncated;
+            RebuildItems();
+        }
+
         await InvokeAsync(StateHasChanged);
     }
 
@@ -110,16 +136,6 @@ public partial class LyoFileTree : ComponentBase
         _checked.Clear();
         CollectMatching(_root, checkedPaths, _checked);
         await CheckedChanged.InvokeAsync(CheckedNodes).ConfigureAwait(true);
-    }
-
-    private async Task LoadDescendantsCoreAsync(FileTreeNode node)
-    {
-        if (!node.Entry.IsDirectory)
-            return;
-
-        await FileTreeLoader.EnsureChildrenAsync(Source, node).ConfigureAwait(true);
-        foreach (var child in node.Children)
-            await LoadDescendantsCoreAsync(child).ConfigureAwait(true);
     }
 
     private static void CollectMatching(FileTreeNode node, HashSet<string> paths, HashSet<FileTreeNode> into)
@@ -156,8 +172,8 @@ public partial class LyoFileTree : ComponentBase
 
     private async Task ToggleEditAsync()
     {
-        _editMode = !_editMode;
-        if (_editMode)
+        EditMode = !EditMode;
+        if (EditMode)
             return;
 
         _checked.Clear();
@@ -174,13 +190,37 @@ public partial class LyoFileTree : ComponentBase
         return CheckedChanged.InvokeAsync(CheckedNodes);
     }
 
-    private IReadOnlyCollection<TreeItemData<FileTreeNode>> DisplayItems
-        => FileTreeFilter.Apply(_items, _filter);
+    private void RebuildItems()
+    {
+        if (_root == null) {
+            _items = [];
+            return;
+        }
+
+        _items = [ToItem(_root, true)];
+    }
+
+    private TreeItemData<FileTreeNode> ToItem(FileTreeNode node, bool expanded)
+    {
+        List<TreeItemData<FileTreeNode>>? children = null;
+        if (node.Entry.IsDirectory && !node.ChildrenLoaded)
+            children = [];
+        else if (node.Children.Count > 0)
+            children = node.Children.Select(c => ToItem(c, false)).ToList();
+
+        return new() {
+            Value = node,
+            Text = node.Entry.Name,
+            Icon = IconResolver?.Invoke(node) ?? (node.Entry.IsDirectory ? Icons.Material.Filled.Folder : Icons.Material.Filled.InsertDriveFile),
+            Expandable = node.Entry.IsDirectory,
+            Expanded = expanded,
+            Children = children
+        };
+    }
 
     internal static class FileTreeFilter
     {
-        public static IReadOnlyCollection<TreeItemData<FileTreeNode>> Apply(
-            IReadOnlyCollection<TreeItemData<FileTreeNode>> items, string filter)
+        public static IReadOnlyCollection<TreeItemData<FileTreeNode>> Apply(IReadOnlyCollection<TreeItemData<FileTreeNode>> items, string filter)
         {
             if (string.IsNullOrWhiteSpace(filter))
                 return items;
@@ -215,7 +255,7 @@ public partial class LyoFileTree : ComponentBase
                 return false;
             }
 
-            filtered = new TreeItemData<FileTreeNode> {
+            filtered = new() {
                 Value = item.Value,
                 Text = item.Text,
                 Icon = item.Icon,
@@ -223,40 +263,11 @@ public partial class LyoFileTree : ComponentBase
                 Expanded = true,
                 Children = kept
             };
+
             return true;
         }
 
         private static bool Matches(FileTreeNode? node, string needle)
-            => node != null
-               && (node.Entry.Name.Contains(needle, StringComparison.OrdinalIgnoreCase)
-                   || node.Entry.Path.Contains(needle, StringComparison.OrdinalIgnoreCase));
-    }
-
-    private void RebuildItems()
-    {
-        if (_root == null) {
-            _items = [];
-            return;
-        }
-
-        _items = [ToItem(_root, expanded: true)];
-    }
-
-    private static TreeItemData<FileTreeNode> ToItem(FileTreeNode node, bool expanded)
-    {
-        List<TreeItemData<FileTreeNode>>? children = null;
-        if (node.Entry.IsDirectory && !node.ChildrenLoaded)
-            children = [];
-        else if (node.Children.Count > 0)
-            children = node.Children.Select(c => ToItem(c, expanded: false)).ToList();
-
-        return new() {
-            Value = node,
-            Text = node.Entry.Name,
-            Icon = node.Entry.IsDirectory ? Icons.Material.Filled.Folder : Icons.Material.Filled.InsertDriveFile,
-            Expandable = node.Entry.IsDirectory,
-            Expanded = expanded,
-            Children = children
-        };
+            => node != null && (node.Entry.Name.Contains(needle, StringComparison.OrdinalIgnoreCase) || node.Entry.Path.Contains(needle, StringComparison.OrdinalIgnoreCase));
     }
 }

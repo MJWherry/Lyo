@@ -68,8 +68,8 @@ public sealed class CachePayload
 }
 
 /// <summary>
-/// Cached value with a realistic nested graph: a nested <see cref="Address" /> (itself nesting a <see cref="CacheGeo" />), a <see cref="Contacts" /> collection of
-/// objects, an <see cref="Attributes" /> dictionary, and a size-scalable <see cref="Data" /> body. Used to exercise serialization and compression of non-trivial graphs.
+/// Cached value with a realistic nested graph: a nested <see cref="Address" /> (itself nesting a <see cref="CacheGeo" />), a <see cref="Contacts" /> collection of objects,
+/// an <see cref="Attributes" /> dictionary, and a size-scalable <see cref="Data" /> body. Used to exercise serialization and compression of non-trivial graphs.
 /// </summary>
 public sealed class NestedCachePayload
 {

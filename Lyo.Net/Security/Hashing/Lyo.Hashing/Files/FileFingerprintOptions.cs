@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Hashing.Files;
 
 /// <summary>Thresholds and sample sizes used by <see cref="SparseFileFingerprinter" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class FileFingerprintOptions
 {
     public static FileFingerprintOptions Default { get; } = new();
@@ -16,4 +19,7 @@ public sealed class FileFingerprintOptions
 
     /// <inheritdoc cref="SparseFileFingerprinter.DefaultVeryLargeSampleSize" />
     public int VeryLargeSampleSize { get; set; } = SparseFileFingerprinter.DefaultVeryLargeSampleSize;
+
+    /// <summary>Size thresholds and sample lengths.</summary>
+    public override string ToString() => $"LargeFileThreshold={LargeFileThreshold} VeryLargeThreshold={VeryLargeThreshold} SampleSize={SampleSize} VeryLargeSampleSize={VeryLargeSampleSize}";
 }

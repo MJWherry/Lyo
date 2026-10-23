@@ -9,7 +9,11 @@ public class LeagueManager(FantasyFootballClient client)
     public async Task<LeagueRes?> GetAsync(int leagueId, int seasonId, CancellationToken ct = default)
     {
         var path = client.BuildLeaguePath(leagueId, seasonId, ["mSettings", "mTeam", "mStandings"]);
-        return await client.GetLeagueViewAsync<LeagueRes>(path, ct: ct).ConfigureAwait(false);
+        var league = await client.GetLeagueViewAsync<LeagueRes>(path, ct: ct).ConfigureAwait(false);
+        if (league != null)
+            client.Remember(league);
+
+        return league;
     }
 
     /// <summary>Loads teams and rosters for a specific scoring period.</summary>
@@ -47,5 +51,12 @@ public class LeagueManager(FantasyFootballClient client)
             return null;
 
         return matchupPeriodId == null ? response.Schedule : response.Schedule.Where(i => i.MatchupPeriodId == matchupPeriodId).ToArray();
+    }
+
+    /// <summary>Loads one matchup, including the roster ESPN scored for each side. Points sit on each entry's applied stat total.</summary>
+    public async Task<MatchupRes?> GetBoxScoreAsync(int leagueId, int seasonId, int scoringPeriodId, int matchupId, CancellationToken ct = default)
+    {
+        var matchups = await GetMatchupsAsync(leagueId, seasonId, scoringPeriodId, ct: ct).ConfigureAwait(false);
+        return matchups?.FirstOrDefault(matchup => matchup.Id == matchupId);
     }
 }

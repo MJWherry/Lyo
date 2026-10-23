@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
-using System.Text;
+using Lyo.Common.Core.Conversion;
+using Lyo.Common.Core.Enums;
 using Lyo.Exceptions;
 using Lyo.Geolocation.Models.Addresses;
 
@@ -33,14 +34,13 @@ public static class GeolocationQueryKey
     private static string Normalize(string value)
     {
         var trimmed = value.Trim().ToUpperInvariant();
-        var bytes = Encoding.UTF8.GetBytes(trimmed);
+        var bytes = ByteConvert.GetBytes(trimmed);
 #if NET5_0_OR_GREATER
         var hash = SHA256.HashData(bytes);
-        return Convert.ToHexString(hash).ToLowerInvariant();
 #else
         using var sha = SHA256.Create();
         var hash = sha.ComputeHash(bytes);
-        return BitConverter.ToString(hash).Replace("-", string.Empty).ToLowerInvariant();
 #endif
+        return ByteConvert.ToHex(hash, TextLetterCase.Lower);
     }
 }

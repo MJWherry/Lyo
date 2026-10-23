@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions.Models;
 
 namespace Lyo.Job.Postgres;
 
 /// <summary>Options used by <see cref="JobMaintenanceService" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class JobMaintenanceOptions
 {
     /// <summary>Default name of the configuration section.</summary>
@@ -17,6 +19,12 @@ public sealed class JobMaintenanceOptions
     /// </summary>
     public int DefaultRetentionDays { get; set; }
 
+    /// <summary>
+    /// Retention, in days, for finished and failed workflow runs (and their run steps). Workflow runs are not covered by <see cref="DefaultRetentionDays" />: a workflow run
+    /// outlives the job runs it orchestrated, and purging it on the job-run schedule would erase the only record of what the workflow did. 0 disables purging (the default).
+    /// </summary>
+    public int WorkflowRetentionDays { get; set; }
+
     /// <summary>Most job runs deleted per maintenance tick, so purge transactions stay small. Default 500.</summary>
     public int PurgeBatchSize { get; set; } = 500;
 
@@ -25,8 +33,8 @@ public sealed class JobMaintenanceOptions
 
     /// <summary>
     /// Minutes a due <c>Queued</c> run may sit untouched before the maintenance service re-publishes its dispatch message (recovery for lost publishes, delayed retries, and
-    /// crashed suppressed-dispatch owners). Duplicate deliveries are harmless. <c>StartedJobRun</c> only transitions <c>Queued -&gt; Running</c> once. Set above the worst-case
-    /// legitimate queue wait for your workers. 0 disables recovery. Default 10.
+    /// crashed suppressed-dispatch owners). Duplicate deliveries are harmless. <c>StartedJobRun</c> only transitions <c>Queued -&gt; Running</c> once. Set above the worst-case legitimate
+    /// queue wait for your workers. 0 disables recovery. Default 10.
     /// </summary>
     public int QueuedRunRedispatchMinutes { get; set; } = 10;
 
@@ -51,6 +59,9 @@ public sealed class JobMaintenanceOptions
 
         if (DefaultRetentionDays < 0)
             errors.Add($"{nameof(DefaultRetentionDays)} must be 0 or greater.");
+
+        if (WorkflowRetentionDays < 0)
+            errors.Add($"{nameof(WorkflowRetentionDays)} must be 0 or greater.");
 
         if (PurgeBatchSize <= 0)
             errors.Add($"{nameof(PurgeBatchSize)} must be greater than 0.");
@@ -80,4 +91,10 @@ public sealed class JobMaintenanceOptions
         if (errors.Count > 0)
             throw new ValidationException($"Invalid {nameof(JobMaintenanceOptions)}: {string.Join(" ", errors)}");
     }
+
+    /// <summary>Maintenance intervals, retention, and batch caps.</summary>
+    public override string ToString() =>
+        $"Interval={CheckIntervalSeconds}s RetentionDays={DefaultRetentionDays}/{WorkflowRetentionDays} PurgeBatch={PurgeBatchSize} " +
+        $"Stale={WorkerInstanceStaleMinutes}m Redispatch={QueuedRunRedispatchMinutes}/{QueuedRunRedispatchBatchSize} " +
+        $"Orphan={OrphanedRunTimeoutMinutes}m Scan={ActiveRunScanBatchSize}";
 }

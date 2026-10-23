@@ -1,8 +1,8 @@
 namespace Lyo.Job.Postgres;
 
 /// <summary>
-/// UTC normalization for job timestamps. Npgsql maps <c>timestamp with time zone</c> to <see cref="DateTimeKind.Utc" /> and throws on a <see cref="DateTimeKind.Local" /> value, so
-/// every timestamp arriving from a request body or a client clock has to pass through here before it reaches the context.
+/// UTC normalization for job timestamps. Npgsql maps <c>timestamp with time zone</c> to <see cref="DateTimeKind.Utc" /> and throws on a <see cref="DateTimeKind.Local" />
+/// value, so every timestamp arriving from a request body or a client clock has to pass through here before it reaches the context.
 /// </summary>
 public static class JobTimestamps
 {

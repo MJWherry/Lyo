@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 
 namespace Lyo.Config.Postgres.Database;
 
 /// <summary>Insert-only snapshots of a definition (key metadata, default, encryption flag).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ConfigDefinitionRevisionEntity
 {
     [Required]
@@ -37,4 +39,7 @@ public sealed class ConfigDefinitionRevisionEntity
     public DateTime CreatedTimestamp { get; set; }
 
     public ConfigDefinitionEntity Definition { get; set; } = null!;
+
+    /// <summary>Type name and primary key.</summary>
+    public override string ToString() => $"{GetType().Name} {DefinitionId} {Revision}";
 }

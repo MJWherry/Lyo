@@ -19,7 +19,7 @@ public class BuiltInQRCodeServiceTests
     public async Task GenerateAsync_Png_HasValidHeader()
     {
         var service = CreateService();
-        var result = await service.GenerateAsync("https://example.com", new() { Format = QRCodeFormat.Png, Size = 8 }, TestContext.Current.CancellationToken);
+        var result = await service.GenerateAsync("https://example.com", new() { Format = QRCodeFormat.Png, Size = 8 }, TestCt);
         Assert.True(result.IsSuccess);
         var qr = Assert.IsType<QRCodeResult>(result);
         Assert.NotNull(qr.ImageBytes);
@@ -36,7 +36,7 @@ public class BuiltInQRCodeServiceTests
         // Regression: MinSize must not treat Size as total image pixels (workbench passes 6–32 px/module).
         var service = new BuiltInQRCodeService(new(), NullLogger<BuiltInQRCodeService>.Instance);
         foreach (var px in new[] { 6, 10, 16, 24, 32 }) {
-            var result = await service.GenerateAsync("https://example.com", new() { Format = QRCodeFormat.Png, Size = px }, TestContext.Current.CancellationToken);
+            var result = await service.GenerateAsync("https://example.com", new() { Format = QRCodeFormat.Png, Size = px }, TestCt);
             Assert.True(result.IsSuccess, $"Size={px}px/module should be valid");
         }
     }
@@ -45,7 +45,7 @@ public class BuiltInQRCodeServiceTests
     public async Task GenerateAsync_Svg_ContainsSvgRoot()
     {
         var service = CreateService();
-        var result = await service.GenerateAsync("hello", new() { Format = QRCodeFormat.Svg, Size = 6 }, TestContext.Current.CancellationToken);
+        var result = await service.GenerateAsync("hello", new() { Format = QRCodeFormat.Svg, Size = 6 }, TestCt);
         Assert.True(result.IsSuccess);
         var qr = Assert.IsType<QRCodeResult>(result);
         Assert.NotNull(qr.ImageBytes);

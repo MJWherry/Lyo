@@ -1,37 +1,36 @@
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Identifiers;
-using Microsoft.AspNetCore.Components;
 
 namespace Lyo.Web.Components.Identifiers;
 
 public partial class IdWorkbench
 {
-    private GuidVersion _guidVersion = GuidVersion.V7;
+    private int _autoCount = 5;
+    private List<IdEntry> _autoEntries = [];
+    private long _autoStart;
+
+    private string _autoType = "int";
     private int _guidCount = 5;
-    private string _guidNamespace = "DNS";
     private string _guidCustomNamespace = string.Empty;
-    private string _guidName = string.Empty;
     private List<IdEntry> _guidEntries = [];
+    private string _guidName = string.Empty;
+    private string _guidNamespace = "DNS";
+    private GuidVersion _guidVersion = GuidVersion.V7;
 
     private int _ksuidCount = 5;
     private List<IdEntry> _ksuidEntries = [];
 
-    private int _ulidCount = 5;
-    private List<IdEntry> _ulidEntries = [];
-
     private string _nanoAlphabet = NanoId.DefaultAlphabet;
-    private int _nanoSize = NanoId.DefaultSize;
     private int _nanoCount = 5;
     private List<IdEntry> _nanoEntries = [];
-
-    private int _snowMachineId;
+    private int _nanoSize = NanoId.DefaultSize;
     private int _snowCount = 5;
     private List<IdEntry> _snowEntries = [];
 
-    private string _autoType = "int";
-    private long _autoStart;
-    private int _autoCount = 5;
-    private List<IdEntry> _autoEntries = [];
+    private int _snowMachineId;
+
+    private int _ulidCount = 5;
+    private List<IdEntry> _ulidEntries = [];
 
     private void GenerateGuids()
     {

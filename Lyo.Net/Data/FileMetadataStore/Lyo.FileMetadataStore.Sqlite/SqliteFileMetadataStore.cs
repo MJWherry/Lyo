@@ -1,6 +1,6 @@
 using System.Diagnostics;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
-using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileMetadataStore.Sqlite.Database;
 using Lyo.Health;
@@ -96,6 +96,11 @@ public class SqliteFileMetadataStore : IFileMetadataStore, IHealth, IDisposable
             return false;
         }
 
+        var fileKey = fileId.ToString();
+        var tags = await _dbContext.FileTags.Where(t => t.FileId == fileKey).ToListAsync(ct).ConfigureAwait(false);
+        if (tags.Count > 0)
+            _dbContext.FileTags.RemoveRange(tags);
+
         _dbContext.FileMetadata.Remove(entity);
         await _dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
         _logger.LogDebug("Purged metadata row for file {FileId}", fileId);
@@ -150,11 +155,153 @@ public class SqliteFileMetadataStore : IFileMetadataStore, IHealth, IDisposable
         }
         else if (normalized != null) {
             var nested = normalized + "/";
-            query = query.Where(e => e.PathPrefix == normalized || e.PathPrefix != null && e.PathPrefix.StartsWith(nested));
+            query = query.Where(e => e.PathPrefix == normalized || (e.PathPrefix != null && e.PathPrefix.StartsWith(nested)));
         }
 
         var entities = await query.OrderBy(e => e.PathPrefix).ThenBy(e => e.Id).Take(maxKeys).ToListAsync(ct).ConfigureAwait(false);
         return entities.Select(e => e.ToFileStoreResult()).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<FileStoreResult>> ListPendingDirectUploadsAsync(DateTime beganBefore, int maxKeys, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
+        var cutoff = DateTime.SpecifyKind(beganBefore, DateTimeKind.Utc);
+        var entities = await _dbContext.FileMetadata.Where(e => e.DeletedAt == null && e.Availability == nameof(FileAvailability.PendingDirectUpload) && e.Timestamp < cutoff)
+            .OrderBy(e => e.Timestamp)
+            .Take(maxKeys)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
+        return entities.Select(e => e.ToFileStoreResult()).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<FileStoreResult>> SearchByNameAsync(string text, int maxKeys, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(text);
+        ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
+        var entities = await _dbContext.FileMetadata.Where(e => e.DeletedAt == null && e.OriginalFileName != null && e.OriginalFileName.Contains(text))
+            .OrderBy(e => e.OriginalFileName)
+            .Take(maxKeys)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
+        return entities.Select(e => e.ToFileStoreResult()).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<FileRevision> SaveNewVersionAsync(Guid fileId, string storedKey, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(storedKey);
+        var id = fileId.ToString();
+        var entity = await _dbContext.FileMetadata.FirstOrDefaultAsync(e => e.Id == id && e.DeletedAt == null, ct).ConfigureAwait(false);
+        if (entity is null)
+            throw new FileNotFoundException($"Metadata for file {fileId} not found");
+
+        var revision = new FileRevisionEntity {
+            Id = Guid.NewGuid(),
+            ParentId = fileId,
+            StoredKey = entity.SourceFileName,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _dbContext.FileRevisions.Add(revision);
+        entity.SourceFileName = storedKey;
+        await _dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+        return new(revision.Id, revision.ParentId, revision.StoredKey, revision.CreatedAt);
+    }
+
+    /// <inheritdoc />
+    public async Task<FileRevision?> GetVersionAsync(Guid revisionId, CancellationToken ct = default)
+    {
+        var entity = await _dbContext.FileRevisions.AsNoTracking().FirstOrDefaultAsync(e => e.Id == revisionId, ct).ConfigureAwait(false);
+        return entity is null ? null : new FileRevision(entity.Id, entity.ParentId, entity.StoredKey, entity.CreatedAt);
+    }
+
+    /// <inheritdoc />
+    public async Task<FileTag> AddFileTagAsync(Guid fileId, string tagType, string value, string? slug, bool automatic, CancellationToken ct = default)
+    {
+        FileTagTypes.Validate(tagType, value, slug);
+        var fileKey = fileId.ToString();
+        var existing = await _dbContext.FileTags.FirstOrDefaultAsync(t => t.FileId == fileKey && t.TagType == tagType && t.Value == value, ct).ConfigureAwait(false);
+        if (existing != null)
+            return existing.ToFileTag();
+
+        var entity = new FileTagEntity {
+            Id = LyoGuid.CreateV7(),
+            FileId = fileKey,
+            TagType = tagType,
+            Value = value,
+            Slug = slug ?? "",
+            Automatic = automatic
+        };
+
+        _dbContext.FileTags.Add(entity);
+        await _dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+        return entity.ToFileTag();
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> RemoveFileTagAsync(Guid fileId, string tagType, string value, CancellationToken ct = default)
+    {
+        var fileKey = fileId.ToString();
+        var existing = await _dbContext.FileTags.FirstOrDefaultAsync(t => t.FileId == fileKey && t.TagType == tagType && t.Value == value, ct).ConfigureAwait(false);
+        if (existing == null)
+            return false;
+
+        _dbContext.FileTags.Remove(existing);
+        await _dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+        return true;
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<FileTag>> ListFileTagsAsync(Guid fileId, CancellationToken ct = default)
+    {
+        var fileKey = fileId.ToString();
+        var rows = await _dbContext.FileTags.AsNoTracking().Where(t => t.FileId == fileKey).ToListAsync(ct).ConfigureAwait(false);
+        return rows.Select(static t => t.ToFileTag()).ToArray();
+    }
+
+    /// <inheritdoc />
+    public async Task CopyFileTagsAsync(Guid sourceFileId, Guid destinationFileId, CancellationToken ct = default)
+    {
+        var source = await ListFileTagsAsync(sourceFileId, ct).ConfigureAwait(false);
+        foreach (var tag in source)
+            await AddFileTagAsync(destinationFileId, tag.TagType, tag.Value, tag.Slug, tag.Automatic, ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task DeleteFileTagsAsync(Guid fileId, CancellationToken ct = default)
+    {
+        var fileKey = fileId.ToString();
+        var rows = await _dbContext.FileTags.Where(t => t.FileId == fileKey).ToListAsync(ct).ConfigureAwait(false);
+        if (rows.Count == 0)
+            return;
+
+        _dbContext.FileTags.RemoveRange(rows);
+        await _dbContext.SaveChangesAsync(ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<string>> ListManualTagTypesAsync(CancellationToken ct = default)
+    {
+        var deleted = _dbContext.FileMetadata.Where(f => f.DeletedAt != null).Select(f => f.Id);
+        return await _dbContext.FileTags.AsNoTracking()
+            .Where(t => !t.Automatic && !deleted.Contains(t.FileId))
+            .Select(t => t.TagType)
+            .Distinct()
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<FileTagGroupPage> ListTagGroupAsync(IReadOnlyList<FileTagGroupKey> groupBy, string? virtualPath, int maxKeys, CancellationToken ct = default)
+    {
+        var files = await _dbContext.FileMetadata.AsNoTracking().Where(e => e.DeletedAt == null).ToListAsync(ct).ConfigureAwait(false);
+        var ids = files.Select(f => f.Id).ToArray();
+        var tagRows = await _dbContext.FileTags.AsNoTracking().Where(t => ids.Contains(t.FileId)).ToListAsync(ct).ConfigureAwait(false);
+        return FileTagGrouper.Group(groupBy, virtualPath, files.Select(static f => f.ToFileStoreResult()).ToArray(), tagRows.Select(static t => t.ToFileTag()).ToArray(), maxKeys);
     }
 
     /// <inheritdoc />

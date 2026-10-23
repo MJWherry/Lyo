@@ -2,14 +2,12 @@ using System.Linq.Expressions;
 using System.Text.Json;
 using Lyo.Api.Client;
 using Lyo.Common.Core;
-using Lyo.Common.Json;
 using Lyo.Exceptions;
+using Lyo.Json;
 
 namespace Lyo.Web.Components.DataGrid;
 
-/// <summary>
-/// Select inference, FK extraction, key-row shaping, and deserialize helpers for related-entity QueryProject lookups.
-/// </summary>
+/// <summary>Select inference, FK extraction, key-row shaping, and deserialize helpers for related-entity QueryProject lookups.</summary>
 public static class RelatedProjection
 {
     /// <summary>Dynamic CRUD QueryProject <c>MaxKeySetCount</c>; typed endpoints allow more, so this is the safe chunk size.</summary>
@@ -18,8 +16,8 @@ public static class RelatedProjection
     private static readonly JsonSerializerOptions JsonOptions = LyoJsonSerializerOptions.Create();
 
     /// <summary>
-    /// Select paths for a related QueryProject. Explicit <paramref name="select" /> wins; otherwise public scalar properties of <paramref name="resType" />.
-    /// Always unions <c>Id</c> so the lookup can be keyed.
+    /// Select paths for a related QueryProject. Explicit <paramref name="select" /> wins; otherwise public scalar properties of <paramref name="resType" />. Always unions
+    /// <c>Id</c> so the lookup can be keyed.
     /// </summary>
     public static IReadOnlyList<string> InferSelect(Type resType, IReadOnlyList<string>? select = null)
     {
@@ -27,9 +25,8 @@ public static class RelatedProjection
         IEnumerable<string> names;
         if (select is { Count: > 0 })
             names = select.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim());
-        else {
+        else
             names = resType.ScalarProperties().Select(p => p.Name);
-        }
 
         return names.Append("Id").Where(s => !string.IsNullOrWhiteSpace(s)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
@@ -49,10 +46,13 @@ public static class RelatedProjection
         if (value is JsonElement je) {
             if (je.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
                 return null;
+
             if (je.ValueKind == JsonValueKind.String)
                 return IdKey(je.GetString());
+
             if (je.TryGetGuid(out var guidFromJson))
                 return IdKey(guidFromJson);
+
             return IdKey(je.ToString());
         }
 
@@ -93,7 +93,7 @@ public static class RelatedProjection
     {
         ArgumentHelpers.ThrowIfNull(ids);
         ArgumentHelpers.ThrowIf(chunkSize < 1, "Chunk size must be at least 1.", nameof(chunkSize));
-        var rows = ids.Select(id => new object[] { id }).ToList();
+        var rows = ids.Select(id => new[] { id }).ToList();
         if (rows.Count == 0)
             return [];
 
@@ -126,10 +126,13 @@ public static class RelatedProjection
         ArgumentHelpers.ThrowIfNull(resType);
         if (item is null)
             return null;
+
         if (resType.IsInstanceOfType(item))
             return item;
+
         if (item is JsonElement je)
             return je.Deserialize(resType, JsonOptions);
+
         if (item is JsonDocument doc)
             return doc.RootElement.Deserialize(resType, JsonOptions);
 

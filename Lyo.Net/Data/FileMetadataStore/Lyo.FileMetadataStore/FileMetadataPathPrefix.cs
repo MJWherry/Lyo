@@ -13,8 +13,7 @@ public static class FileMetadataPathPrefix
     }
 
     /// <summary>True when <paramref name="storedPrefix" /> is an immediate file of <paramref name="parentPrefix" />.</summary>
-    public static bool IsImmediate(string? parentPrefix, string? storedPrefix)
-        => string.Equals(Normalize(parentPrefix), Normalize(storedPrefix), StringComparison.Ordinal);
+    public static bool IsImmediate(string? parentPrefix, string? storedPrefix) => string.Equals(Normalize(parentPrefix), Normalize(storedPrefix), StringComparison.Ordinal);
 
     /// <summary>True when <paramref name="storedPrefix" /> is under <paramref name="parentPrefix" />, including the parent itself.</summary>
     public static bool IsUnder(string? parentPrefix, string? storedPrefix, bool includeDescendants)
@@ -27,8 +26,7 @@ public static class FileMetadataPathPrefix
         if (parent == null)
             return true;
 
-        return string.Equals(stored, parent, StringComparison.Ordinal)
-               || (stored != null && stored.StartsWith(parent + "/", StringComparison.Ordinal));
+        return string.Equals(stored, parent, StringComparison.Ordinal) || (stored != null && stored.StartsWith(parent + "/", StringComparison.Ordinal));
     }
 
     /// <summary>Next folder segment under <paramref name="parentPrefix" />, or null when <paramref name="descendantPrefix" /> is not a nested prefix.</summary>

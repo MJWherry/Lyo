@@ -2,6 +2,12 @@ namespace Lyo.Drift.Web.Components;
 
 public partial class DriftChangeGrid
 {
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("WatchRoot", "Watch Root")];
+
+    private Guid? _appliedInstanceId;
+
+    private LyoDataGridProjected? _dataGrid;
+
     /// <summary>HTTP client used for Query.</summary>
     [Parameter]
     [EditorRequired]
@@ -17,12 +23,6 @@ public partial class DriftChangeGrid
     public Guid? InstanceId { get; set; }
 
     private string _route => $"{BaseRoute.TrimEnd('/')}/Change";
-
-    private LyoDataGridProjected? _dataGrid;
-
-    private Guid? _appliedInstanceId;
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("WatchRoot", "Watch Root")];
 
     protected override async Task OnParametersSetAsync()
     {
@@ -46,8 +46,7 @@ public partial class DriftChangeGrid
         if (id is null)
             return;
 
-        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<DriftChangeRes>>(
-            $"{_route}/QueryConcrete", new() { Keys = [[id.Value]], Amount = 1 });
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<DriftChangeRes>>($"{_route}/QueryConcrete", new() { Keys = [[id.Value]], Amount = 1 });
         var change = res?.Items?.FirstOrDefault();
         if (change is null)
             return;

@@ -1,9 +1,9 @@
-using Lyo.Http.Client;
-using Lyo.Common.Json;
 using Lyo.Exceptions;
 using Lyo.Geolocation.Models;
 using Lyo.Geolocation.Models.Coordinates;
 using Lyo.Geolocation.Models.Enums;
+using Lyo.Http.Client;
+using Lyo.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 

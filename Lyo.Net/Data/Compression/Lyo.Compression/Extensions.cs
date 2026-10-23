@@ -12,8 +12,8 @@ using Microsoft.Extensions.Options;
 namespace Lyo.Compression;
 
 /// <summary>
-/// DI helpers that register <see cref="CompressionService" /> with Microsoft.Extensions.DependencyInjection. Use <see cref="Extensions.AddDefaultCompressionService{TConcrete}" /> for
-/// unkeyed <see cref="ICompressionService" />.
+/// DI helpers that register <see cref="CompressionService" /> with Microsoft.Extensions.DependencyInjection. Use
+/// <see cref="Extensions.AddDefaultCompressionService{TConcrete}" /> for unkeyed <see cref="ICompressionService" />.
 /// </summary>
 public static class Extensions
 {
@@ -75,15 +75,14 @@ public static class Extensions
             var options = new CompressionServiceOptions();
             configuration.GetSection(configSectionName).Bind(options);
             services.AddSingleton(options);
-
             services.AddCompressionResolver();
             services.AddSingleton(sp => CreateCompressionService(sp, sp.GetRequiredService<CompressionServiceOptions>()));
             return services;
         }
 
         /// <summary>
-        /// Registers <see cref="ICompressionResolver" /> backed by <see cref="CompressionService" />. Idempotent; already called by
-        /// <see cref="Extensions.AddCompressionService()" />.
+        /// Registers <see cref="ICompressionResolver" /> backed by <see cref="CompressionService" />. Idempotent; already called by <see cref="Extensions.AddCompressionService()" />
+        /// .
         /// </summary>
         public IServiceCollection AddCompressionResolver()
         {

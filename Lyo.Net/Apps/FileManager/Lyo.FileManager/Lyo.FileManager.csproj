@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>Desktop file manager session for a remote FileStorage API or a local disk store.</Description>
+        <PackageTags>file-manager filestorage desktop</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.FileManager.Tests"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Apps\Api\Lyo.Api.FileStorage.Models\Lyo.Api.FileStorage.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Http\Lyo.Http.Client\Lyo.Http.Client.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+        <ProjectReference Include="..\..\Desktop\Lyo.Desktop\Lyo.Desktop.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Lock\Lyo.Lock\Lyo.Lock.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Compression\Lyo.Compression\Lyo.Compression.csproj"/>
+        <ProjectReference Include="..\..\..\Data\FileMetadataStore\Lyo.FileMetadataStore.Postgres\Lyo.FileMetadataStore.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Data\FileMetadataStore\Lyo.FileMetadataStore.Sqlite\Lyo.FileMetadataStore.Sqlite.csproj"/>
+        <ProjectReference Include="..\..\..\Data\FileMetadataStore\Lyo.FileMetadataStore\Lyo.FileMetadataStore.csproj"/>
+        <ProjectReference Include="..\..\..\Data\FileStorage\Lyo.FileStorage.AzureBlob\Lyo.FileStorage.AzureBlob.csproj"/>
+        <ProjectReference Include="..\..\..\Data\FileStorage\Lyo.FileStorage.Ftp\Lyo.FileStorage.Ftp.csproj"/>
+        <ProjectReference Include="..\..\..\Data\FileStorage\Lyo.FileStorage.S3\Lyo.FileStorage.S3.csproj"/>
+        <ProjectReference Include="..\..\..\Data\FileStorage\Lyo.FileStorage.Sftp\Lyo.FileStorage.Sftp.csproj"/>
+        <ProjectReference Include="..\..\..\Data\FileStorage\Lyo.FileStorage\Lyo.FileStorage.csproj"/>
+        <ProjectReference Include="..\..\..\Data\IO\Temp\Lyo.IO.Temp\Lyo.IO.Temp.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Query\Lyo.Query.Models\Lyo.Query.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Security\Encryption\Lyo.Encryption.AesSiv\Lyo.Encryption.AesSiv.csproj"/>
+        <ProjectReference Include="..\..\..\Security\KeyStore\Lyo.KeyStore\Lyo.KeyStore.csproj"/>
+        <ProjectReference Include="..\..\..\Security\KeyStore\Lyo.KeyStore.Aws\Lyo.KeyStore.Aws.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="AWSSDK.SecretsManager"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
+    </ItemGroup>
+
+</Project>

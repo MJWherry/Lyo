@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Images.Ocr.Models;
 using Lyo.Result;
 using SixLabors.Fonts;
@@ -17,7 +18,7 @@ public sealed class TesseractOcrEngineTests(TesseractOcrTestFixture fixture)
         var tess = new TesseractOcrEngineOptions { TessdataDirectory = "/nonexistent/numeric-placeholder-only" };
         using var engine = new TesseractOcrEngine(shared, tess);
         await using var empty = new MemoryStream();
-        var result = await engine.ReadAsync(empty, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await engine.ReadAsync(empty, cancellationToken: TestCt);
         Assert.False(result.IsSuccess);
         Assert.Equal(OcrErrorCodes.ImageEmpty, result.Errors![0].Code);
     }
@@ -26,10 +27,10 @@ public sealed class TesseractOcrEngineTests(TesseractOcrTestFixture fixture)
     public async Task ReadAsync_Missing_Tessdata_Returns_Failure()
     {
         var shared = new OcrEngineOptions();
-        var tess = new TesseractOcrEngineOptions { TessdataDirectory = Path.Combine(Path.GetTempPath(), "missing-tessdata-" + Guid.NewGuid()) };
+        var tess = new TesseractOcrEngineOptions { TessdataDirectory = Path.Combine(Path.GetTempPath(), "missing-tessdata-" + LyoGuid.CreateV7()) };
         using var engine = new TesseractOcrEngine(shared, tess);
         await using var png = new MemoryStream(CreatePngWithText("X"));
-        var result = await engine.ReadAsync(png, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await engine.ReadAsync(png, cancellationToken: TestCt);
         Assert.False(result.IsSuccess);
         Assert.Equal(OcrErrorCodes.EngineNotConfigured, result.Errors![0].Code);
     }
@@ -47,7 +48,7 @@ public sealed class TesseractOcrEngineTests(TesseractOcrTestFixture fixture)
 
         using var engine = new TesseractOcrEngine(shared, tess);
         await using var png = new MemoryStream(CreatePngWithText("HELLO"));
-        var result = await engine.ReadAsync(png, cancellationToken: TestContext.Current.CancellationToken);
+        var result = await engine.ReadAsync(png, cancellationToken: TestCt);
         SkipIfNativeLibrariesUnavailable(result);
         Assert.True(result.IsSuccess, result.Errors is { } e ? string.Join("; ", e.Select(x => x.Message)) : "");
         Assert.NotNull(result.Data);
@@ -66,7 +67,7 @@ public sealed class TesseractOcrEngineTests(TesseractOcrTestFixture fixture)
         tessOpts.TessdataDirectory = string.IsNullOrWhiteSpace(tessOpts.TessdataDirectory) ? tessDir : tessOpts.TessdataDirectory;
         using var engine = new TesseractOcrEngine(shared, tessOpts);
         await using var png = new MemoryStream(CreatePngWithText("AB"));
-        var result = await engine.ReadAsync(png, new() { PageSegmentationMode = OcrPageSegmentationMode.SingleBlock }, TestContext.Current.CancellationToken);
+        var result = await engine.ReadAsync(png, new() { PageSegmentationMode = OcrPageSegmentationMode.SingleBlock }, TestCt);
         SkipIfNativeLibrariesUnavailable(result);
         Assert.True(result.IsSuccess);
         foreach (var w in result.Data!.Words) {

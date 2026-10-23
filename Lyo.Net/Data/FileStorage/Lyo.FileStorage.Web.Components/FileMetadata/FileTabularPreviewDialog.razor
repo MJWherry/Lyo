@@ -1,5 +1,5 @@
-@namespace Lyo.FileStorage.Web.Components.FileMetadata
 @using Lyo.Web.Components.DataTablePreview
+@namespace Lyo.FileStorage.Web.Components.FileMetadata
 
 <LyoDialog>
     <ChildContent>
@@ -8,6 +8,7 @@
         }
         else if (Sheets.Count == 1) {
             <MudText Typo="Typo.subtitle2" Class="mb-2">@Sheets[0].Title</MudText>
+
             <DataTablePreview Table="@Sheets[0].Table" MaxHeightCss="60vh"/>
         }
         else {

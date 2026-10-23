@@ -3,7 +3,6 @@ using Lyo.Api.Client;
 using Lyo.Api.FileStorage.Models;
 using Lyo.FileStorage.Web.Components.Services;
 using Lyo.IO.Temp;
-using Lyo.Web.Components;
 using Lyo.Web.Primitives;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -54,18 +53,20 @@ public partial class FileStorageManagement : ComponentBase
     public string Title { get; set; } = "File Storage";
 
     [Parameter]
-    public string Description { get; set; } =
-        "Upload files, migrate or rotate DEKs, and browse metadata through the file-storage HTTP API.";
+    public string Description { get; set; } = "Upload files, migrate or rotate DEKs, and browse metadata through the file-storage HTTP API.";
 
     /// <summary>
-    /// Public origin for browser-opened URLs (download, access links). No trailing slash.
-    /// When omitted, uses <see cref="IApiClient" /> <c>BaseAddress</c> (Docker DNS name in production).
+    /// Public origin for browser-opened URLs (download, access links). No trailing slash. When omitted, uses <see cref="IApiClient" /> <c>BaseAddress</c> (Docker DNS name in
+    /// production).
     /// </summary>
     [Parameter]
     public string? PublicBaseUrl { get; set; }
 
-    /// <summary>Fired after file mutations so the Browser and Tree tabs can reload.</summary>
-    public event Func<Task>? FilesChanged;
+    /// <summary>Stores returned by <c>GET {prefix}/stores</c>. Empty when that call failed or the host has no factory.</summary>
+    public IReadOnlyList<FileStorageStoreResponse> Stores { get; private set; } = [];
+
+    /// <summary>Selected store name. Private to this component; it is not written back to <see cref="FileStorageApiRoutePrefix" />.</summary>
+    public string? SelectedStoreName { get; private set; }
 
     /// <summary>True after <c>GET {prefix}/health</c> succeeds (HTTP API is reachable).</summary>
     public bool ApiHealthy { get; private set; }
@@ -79,22 +80,48 @@ public partial class FileStorageManagement : ComponentBase
     /// <summary>Readable API health line (base URL plus check message or error).</summary>
     public string ApiHealthDescription { get; private set; } = "Checking file storage API…";
 
+    /// <summary>Fired after file mutations so the Browser and Tree tabs can reload.</summary>
+    public event Func<Task>? FilesChanged;
+
     public void SetStatus(string message, Severity severity) => Snackbar.Add(message, severity);
 
     /// <summary>Tells Browser grids that metadata or backing objects changed.</summary>
     public Task NotifyFilesChangedAsync() => FilesChanged?.Invoke() ?? Task.CompletedTask;
 
     /// <summary>Combines <see cref="FileStorageApiRoutePrefix" /> with an API-relative path such as <c>files/{id}/metadata</c>.</summary>
+    /// <summary>Records a successful store list. A null list is a failed call and leaves the current prefix alone. One store selects that route.</summary>
+    public void UseStores(IReadOnlyList<FileStorageStoreResponse>? stores)
+    {
+        if (stores == null)
+            return;
+
+        Stores = stores;
+        if (stores.Count == 1)
+            SelectedStoreName = stores[0].Name;
+    }
+
+    /// <summary>Selects a store by name. Health, key ids, and capabilities reload through <see cref="ChangeStoreAsync" />.</summary>
+    public void SelectStore(string? name) => SelectedStoreName = name;
+
+    /// <summary>Selects <paramref name="name" /> and reloads health and key ids.</summary>
+    public async Task ChangeStoreAsync(string? name)
+    {
+        SelectStore(name);
+        await RefreshApiHealthAsync().ConfigureAwait(false);
+        await RefreshEncryptionKeyIdsAsync().ConfigureAwait(false);
+        await NotifyFilesChangedAsync().ConfigureAwait(false);
+    }
+
     public string FilesApi(string relativePath)
     {
-        var prefix = FileStorageApiRoutePrefix.Trim().Trim('/');
+        var prefix = FileStorageStoreRoutes.Prefix(FileStorageApiRoutePrefix, Stores, SelectedStoreName).Trim().Trim('/');
         var relative = relativePath.Trim().TrimStart('/');
         return string.IsNullOrEmpty(prefix) ? relative : $"{prefix}/{relative}";
     }
 
     /// <summary>
-    /// Absolute browser URL for an API-relative path such as <c>FileStorage/files/...</c>.
-    /// Prefers <see cref="PublicBaseUrl" />; otherwise <see cref="IApiClient" /> <c>BaseAddress</c>.
+    /// Absolute browser URL for an API-relative path such as <c>FileStorage/files/...</c>. Prefers <see cref="PublicBaseUrl" />; otherwise <see cref="IApiClient" />
+    /// <c>BaseAddress</c>.
     /// </summary>
     public string? GetApiAbsoluteUrl(string apiRelativePath)
     {
@@ -158,14 +185,27 @@ public partial class FileStorageManagement : ComponentBase
 
         var qs = parts.Count > 0 ? "?" + string.Join("&", parts) : "";
         var streamPath = StreamUploadRelativePath?.Trim().Trim('/');
-        var basePath = string.IsNullOrEmpty(streamPath) ? FilesApi("files/save-stream") : streamPath;
+        var storeSelected = Stores.Count == 1 || !string.IsNullOrWhiteSpace(SelectedStoreName);
+        var basePath = storeSelected || string.IsNullOrEmpty(streamPath) ? FilesApi("files/save-stream") : streamPath;
         return $"{basePath}{qs}";
     }
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadStoresAsync().ConfigureAwait(false);
         await RefreshApiHealthAsync().ConfigureAwait(false);
         await RefreshEncryptionKeyIdsAsync().ConfigureAwait(false);
+    }
+
+    private async Task LoadStoresAsync()
+    {
+        try {
+            var stores = await ApiClient.GetAsAsync<List<FileStorageStoreResponse>>(FilesApi("stores")).ConfigureAwait(false);
+            UseStores(stores);
+        }
+        catch {
+            // A failed list leaves FileStorageApiRoutePrefix alone.
+        }
     }
 
     /// <summary>Fetches encryption key identifiers from <c>GET {prefix}/key-ids</c>.</summary>
@@ -190,9 +230,7 @@ public partial class FileStorageManagement : ComponentBase
             var health = await ApiClient.GetAsAsync<FileStorageHealthResponse>(FilesApi("health")).ConfigureAwait(false);
             ApiHealthy = true;
             StorageHealthy = health?.IsHealthy == true;
-            var detail = string.IsNullOrWhiteSpace(health?.Message)
-                ? (StorageHealthy ? "storage healthy" : "storage unhealthy")
-                : health!.Message;
+            var detail = string.IsNullOrWhiteSpace(health?.Message) ? StorageHealthy ? "storage healthy" : "storage unhealthy" : health!.Message;
             ApiHealthDescription = StorageHealthy ? $"{apiBase}: {detail}" : $"{apiBase}: storage {detail}";
             if (!StorageHealthy)
                 SetStatus($"File storage backend reported unhealthy ({apiBase}): {detail}", Severity.Warning);

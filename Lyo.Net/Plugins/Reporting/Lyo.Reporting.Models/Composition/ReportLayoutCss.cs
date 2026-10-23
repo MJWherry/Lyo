@@ -28,9 +28,7 @@ public static class ReportLayoutCss
         return string.IsNullOrEmpty(shorthand) ? DefaultPadding(compact) : shorthand;
     }
 
-    /// <summary>
-    /// <c>@page</c> rule for print/PDF, or empty when size and margin are all default-auto. Values are sanitized.
-    /// </summary>
+    /// <summary><c>@page</c> rule for print/PDF, or empty when size and margin are all default-auto. Values are sanitized.</summary>
     public static string ResolvePageRule(Layout layout)
     {
         var size = ResolvePageSize(layout);
@@ -41,6 +39,7 @@ public static class ReportLayoutCss
         var parts = new List<string>();
         if (!string.IsNullOrEmpty(size))
             parts.Add($"size: {size}");
+
         if (!string.IsNullOrEmpty(margin))
             parts.Add($"margin: {margin}");
 
@@ -51,13 +50,20 @@ public static class ReportLayoutCss
     {
         var landscape = string.Equals(layout.Orientation, "Landscape", StringComparison.OrdinalIgnoreCase);
         var size = layout.PageSize ?? "Auto";
-        if (string.Equals(size, "A4", StringComparison.OrdinalIgnoreCase))
-            return landscape ? "A4 landscape" : "A4 portrait";
+        var token = size.ToLowerInvariant() switch {
+            "a3" => "A3",
+            "a4" => "A4",
+            "a5" => "A5",
+            "letter" => "letter",
+            "legal" => "legal",
+            "tabloid" => "tabloid",
+            var _ => null
+        };
 
-        if (string.Equals(size, "Letter", StringComparison.OrdinalIgnoreCase))
-            return landscape ? "letter landscape" : "letter portrait";
+        if (token is null)
+            return string.Empty;
 
-        return string.Empty;
+        return landscape ? $"{token} landscape" : $"{token} portrait";
     }
 
     private static string ResolveMargin(Layout layout)

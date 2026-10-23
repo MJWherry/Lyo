@@ -1,33 +1,18 @@
-using System.Net.Http.Json;
 using System.Security.Claims;
-using Lyo.Api.Client;
-using Lyo.Images;
-using Lyo.Images.Models;
-using Lyo.TestGateway.Components;
 using Lyo.TestGateway.Components.Layout;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
-using Lyo.Web.Components.DataGrid;
 using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.Web.Virtualization;
-using Microsoft.JSInterop;
-using MudBlazor;
-using static Microsoft.AspNetCore.Components.Web.RenderMode;
 
 namespace Lyo.TestGateway.Components.Pages;
 
 public partial class AuthorizedPage
 {
-    protected ClaimsPrincipal? ClaimsPrincipal;
-
     //protected Guid? AzureUserOid;
     protected Guid? BachUserId;
     protected BlazorUserInfo? BlazorUserInfo;
+    protected ClaimsPrincipal? ClaimsPrincipal;
+
+    protected bool Loading;
     private bool _initialized;
 
     [CascadingParameter]
@@ -35,7 +20,7 @@ public partial class AuthorizedPage
 
     protected virtual string PageName { get; set; } = "";
 
-    protected bool Loading;
+    public void Dispose() { }
 
     private async Task InitializeUserAsync()
     {
@@ -101,6 +86,4 @@ public partial class AuthorizedPage
     protected virtual async Task OnPageInitializedAsync() => await Task.CompletedTask;
 
     protected virtual void OnPageInitialized() { }
-
-    public void Dispose() { }
 }

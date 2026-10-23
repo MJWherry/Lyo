@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
@@ -33,8 +34,8 @@ public class JobWorkerContextTests
 
     private static JobRunRes CreateRun()
         => new() {
-            Id = Guid.NewGuid(),
-            JobDefinitionId = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
+            JobDefinitionId = LyoGuid.CreateV7(),
             CreatedTimestamp = DateTime.UtcNow,
             State = JobState.Running
         };

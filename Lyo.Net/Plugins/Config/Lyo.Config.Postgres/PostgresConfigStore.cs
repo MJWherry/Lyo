@@ -1,4 +1,4 @@
-using Lyo.Config;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Config.Postgres.Database;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
@@ -12,10 +12,11 @@ namespace Lyo.Config.Postgres;
 /// <summary>Postgres-backed IConfigStore.</summary>
 public sealed class PostgresConfigStore : IConfigStore, IHealth
 {
+    private const string EncryptionRequiredMessage = "Encrypted config requires IEncryptionService on the API host.";
     private readonly IDbContextFactory<ConfigDbContext> _contextFactory;
+    private readonly IConfigValueEncryptionService? _encryption;
     private readonly EntityRefOptions _entityRefOptions;
     private readonly TenancyOptions _featureTenancy;
-    private readonly IConfigValueEncryptionService? _encryption;
 
     /// <summary>Constructs a new PostgresConfigStore.</summary>
     public PostgresConfigStore(
@@ -65,10 +66,11 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         }
 
         entity = new() {
-            Id = definition.Id == default ? Guid.NewGuid() : definition.Id,
+            Id = definition.Id == default ? LyoGuid.CreateV7() : definition.Id,
             SubjectEntityType = definition.SubjectEntityType,
             CreatedTimestamp = definition.CreatedTimestamp == default ? DateTime.UtcNow : definition.CreatedTimestamp
         };
+
         ApplyDefinition(entity, definition);
         context.ConfigDefinitions.Add(entity);
         await AppendDefinitionRevisionRowAsync(context, entity, ct).ConfigureAwait(false);
@@ -82,7 +84,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     public async Task<ConfigDefinitionRecord?> GetDefinitionByIdAsync(Guid id, CancellationToken ct = default)
     {
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.ConfigDefinitions.FindAsync([id], ct).ConfigureAwait(false);
+        var entity = await context.ConfigDefinitions.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct).ConfigureAwait(false);
         return entity == null ? null : ToRecord(entity);
     }
 
@@ -92,7 +94,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.ConfigDefinitions.FirstOrDefaultAsync(x => x.SubjectEntityType == forEntityType && x.Key == key, ct).ConfigureAwait(false);
+        var entity = await context.ConfigDefinitions.AsNoTracking().FirstOrDefaultAsync(x => x.SubjectEntityType == forEntityType && x.Key == key, ct).ConfigureAwait(false);
         return entity == null ? null : ToRecord(entity);
     }
 
@@ -101,7 +103,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(forEntityType);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.ConfigDefinitions.Where(x => x.SubjectEntityType == forEntityType).OrderBy(x => x.Key).ToListAsync(ct).ConfigureAwait(false);
+        var entities = await context.ConfigDefinitions.AsNoTracking().Where(x => x.SubjectEntityType == forEntityType).OrderBy(x => x.Key).ToListAsync(ct).ConfigureAwait(false);
         return entities.Select(ToRecord).ToList();
     }
 
@@ -208,7 +210,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         }
         else {
             entity = new() {
-                Id = binding.Id == default ? Guid.NewGuid() : binding.Id,
+                Id = binding.Id == default ? LyoGuid.CreateV7() : binding.Id,
                 DefinitionId = definition.Id,
                 Key = definition.Key,
                 SubjectEntityType = binding.SubjectEntityType,
@@ -237,14 +239,13 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var bindingEntity = await context.ConfigBindings.AsNoTracking().FirstOrDefaultAsync(x => x.Id == bindingId && x.TenantId == resolvedTenant, ct).ConfigureAwait(false);
         OperationHelpers.ThrowIfNull(bindingEntity);
-        var definition = await context.ConfigDefinitions.AsNoTracking().FirstAsync(x => x.Id == bindingEntity.DefinitionId, ct).ConfigureAwait(false);
         var rows = await context.ConfigBindingRevisions.AsNoTracking()
             .Where(x => x.BindingId == bindingId && x.TenantId == resolvedTenant)
             .OrderByDescending(x => x.Revision)
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
-        return rows.Select(r => ToRevisionRecord(r, ResolveBindingValueType(bindingEntity, definition.ForValueType))).ToList();
+        return rows.Select(r => ToRevisionRecord(r, ResolveBindingValueType(bindingEntity))).ToList();
     }
 
     /// <inheritdoc />
@@ -266,12 +267,11 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         if (bindingEntity == null)
             return null;
 
-        var definition = await context.ConfigDefinitions.AsNoTracking().FirstAsync(x => x.Id == bindingEntity.DefinitionId, ct).ConfigureAwait(false);
         var row = await context.ConfigBindingRevisions.AsNoTracking()
             .FirstOrDefaultAsync(x => x.BindingId == bindingId && x.Revision == revision && x.TenantId == resolvedTenant, ct)
             .ConfigureAwait(false);
 
-        return row == null ? null : ToRevisionRecord(row, ResolveBindingValueType(bindingEntity, definition.ForValueType));
+        return row == null ? null : ToRevisionRecord(row, ResolveBindingValueType(bindingEntity));
     }
 
     /// <inheritdoc />
@@ -287,7 +287,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         OperationHelpers.ThrowIfNull(revEntity, $"No revision {revision} for binding '{bindingId}'.");
         var definition = await context.ConfigDefinitions.FindAsync([binding.DefinitionId], ct).ConfigureAwait(false);
         OperationHelpers.ThrowIfNull(definition);
-        var valueType = ResolveBindingValueType(binding, definition.ForValueType);
+        var valueType = ResolveBindingValueType(binding);
         var cv = new ConfigValue { TypeName = valueType, Json = ResolveRevisionJson(revEntity) };
         OperationHelpers.ThrowIf(!cv.MatchesType(definition.ForValueType), "Revision JSON does not match the current definition type.");
         await AppendRevisionRowAsync(context, binding, cv.Json, definition.IsEncrypted, resolvedTenant, ct).ConfigureAwait(false);
@@ -309,7 +309,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     {
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.ConfigBindings.FirstOrDefaultAsync(x => x.Id == id && x.TenantId == resolvedTenant, ct).ConfigureAwait(false);
+        var entity = await context.ConfigBindings.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id && x.TenantId == resolvedTenant, ct).ConfigureAwait(false);
         return entity == null ? null : await ToBindingRecordAsync(context, entity, ct).ConfigureAwait(false);
     }
 
@@ -320,8 +320,8 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await context.ConfigBindings.FirstOrDefaultAsync(
-                x => x.SubjectEntityType == forEntity.EntityType && x.SubjectEntityId == forEntity.EntityId && x.Key == key && x.TenantId == resolvedTenant, ct)
+        var entity = await context.ConfigBindings.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.SubjectEntityType == forEntity.EntityType && x.SubjectEntityId == forEntity.EntityId && x.Key == key && x.TenantId == resolvedTenant, ct)
             .ConfigureAwait(false);
 
         return entity == null ? null : await ToBindingRecordAsync(context, entity, ct).ConfigureAwait(false);
@@ -333,7 +333,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         ArgumentHelpers.ThrowIfNull(forEntity);
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entities = await context.ConfigBindings
+        var entities = await context.ConfigBindings.AsNoTracking()
             .Where(x => x.SubjectEntityType == forEntity.EntityType && x.SubjectEntityId == forEntity.EntityId && x.TenantId == resolvedTenant)
             .OrderBy(x => x.Key)
             .ToListAsync(ct)
@@ -343,11 +343,9 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
             return [];
 
         var latestByBinding = await LoadLatestRevisionJsonByBindingIdAsync(context, entities.Select(e => e.Id).ToList(), resolvedTenant, ct).ConfigureAwait(false);
-        var defIds = entities.Select(e => e.DefinitionId).Distinct().ToList();
-        var defsById = await context.ConfigDefinitions.AsNoTracking().Where(d => defIds.Contains(d.Id)).ToDictionaryAsync(d => d.Id, ct).ConfigureAwait(false);
         var result = new List<ConfigBindingRecord>(entities.Count);
         foreach (var entity in entities)
-            result.Add(ToBindingRecord(entity, ResolveBindingValueType(entity, defsById[entity.DefinitionId].ForValueType), latestByBinding[entity.Id]));
+            result.Add(ToBindingRecord(entity, ResolveBindingValueType(entity), latestByBinding[entity.Id]));
 
         return result;
     }
@@ -395,8 +393,13 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         ArgumentHelpers.ThrowIfNull(forEntity);
         var resolvedTenant = ResolveTenant(tenantId);
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var definitions = await context.ConfigDefinitions.Where(x => x.SubjectEntityType == forEntity.EntityType).OrderBy(x => x.Key).ToListAsync(ct).ConfigureAwait(false);
-        var bindings = await context.ConfigBindings
+        var definitions = await context.ConfigDefinitions.AsNoTracking()
+            .Where(x => x.SubjectEntityType == forEntity.EntityType)
+            .OrderBy(x => x.Key)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
+        var bindings = await context.ConfigBindings.AsNoTracking()
             .Where(x => x.SubjectEntityType == forEntity.EntityType && x.SubjectEntityId == forEntity.EntityId && x.TenantId == resolvedTenant)
             .ToListAsync(ct)
             .ConfigureAwait(false);
@@ -410,7 +413,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
         foreach (var definition in definitions) {
             ConfigBindingRecord? bindingRecord = null;
             if (bindingsByDefinitionId.TryGetValue(definition.Id, out var bindingEntity) && latestJson != null)
-                bindingRecord = ToBindingRecord(bindingEntity, ResolveBindingValueType(bindingEntity, definition.ForValueType), latestJson[bindingEntity.Id]);
+                bindingRecord = ToBindingRecord(bindingEntity, ResolveBindingValueType(bindingEntity), latestJson[bindingEntity.Id]);
 
             items.Add(new() { Definition = ToRecord(definition), Binding = bindingRecord });
         }
@@ -424,12 +427,9 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
     public string HealthCheckName => "config-postgres";
 
     /// <inheritdoc />
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => PostgresHealth.CheckAsync(_contextFactory, PostgresConfigOptions.Schema, ct);
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => PostgresHealth.CheckAsync(_contextFactory, PostgresConfigOptions.Schema, ct);
 
     private Guid? ResolveTenant(Guid? tenantId) => TenancyResolver.Resolve(tenantId, _featureTenancy, _entityRefOptions);
-
-    private const string EncryptionRequiredMessage = "Encrypted config requires IEncryptionService on the API host.";
 
     private void ApplyDefinition(ConfigDefinitionEntity entity, ConfigDefinitionRecord definition)
     {
@@ -563,7 +563,6 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
 
     private async Task<ConfigBindingRecord> ToBindingRecordAsync(ConfigDbContext context, ConfigBindingEntity entity, CancellationToken ct)
     {
-        var definition = await context.ConfigDefinitions.AsNoTracking().FirstAsync(d => d.Id == entity.DefinitionId, ct).ConfigureAwait(false);
         var latest = await context.ConfigBindingRevisions.AsNoTracking()
             .Where(r => r.BindingId == entity.Id && r.TenantId == entity.TenantId)
             .OrderByDescending(r => r.Revision)
@@ -571,12 +570,11 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
             .ConfigureAwait(false);
 
         OperationHelpers.ThrowIfNull(latest, $"Binding '{entity.Id}' has no revision rows.");
-        return ToBindingRecord(entity, ResolveBindingValueType(entity, definition.ForValueType), ResolveRevisionJson(latest));
+        return ToBindingRecord(entity, ResolveBindingValueType(entity), ResolveRevisionJson(latest));
     }
 
-    /// <summary>Prefers <see cref="ConfigBindingEntity.ValueType" /> when set; otherwise the definition (for legacy rows missing the column).</summary>
-    private static string ResolveBindingValueType(ConfigBindingEntity entity, string definitionForValueType)
-        => string.IsNullOrWhiteSpace(entity.ValueType) ? definitionForValueType : entity.ValueType;
+    /// <summary>Returns the binding's stored <see cref="ConfigBindingEntity.ValueType" />.</summary>
+    private static string ResolveBindingValueType(ConfigBindingEntity entity) => entity.ValueType;
 
     private static ConfigBindingRecord ToBindingRecord(ConfigBindingEntity entity, string valueType, string valueJson)
         => new() {
@@ -595,8 +593,7 @@ public sealed class PostgresConfigStore : IConfigStore, IHealth
             definition.IsRequired && !HasDefault(definition),
             $"Cannot delete binding for required config key '{definition.Key}' (no default is defined). Add a default, set IsRequired to false, or delete the definition instead.");
 
-    private static bool HasDefault(ConfigDefinitionEntity definition)
-        => definition.DefaultValueJson != null || definition.EncryptedDefaultValue is { Length: > 0 };
+    private static bool HasDefault(ConfigDefinitionEntity definition) => definition.DefaultValueJson != null || definition.EncryptedDefaultValue is { Length: > 0 };
 
     private ConfigBindingRevisionRecord ToRevisionRecord(ConfigBindingRevisionEntity entity, string valueType)
         => new() {

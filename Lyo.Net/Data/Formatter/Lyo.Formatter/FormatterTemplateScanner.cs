@@ -6,14 +6,20 @@ namespace Lyo.Formatter;
 internal static class FormatterTemplateScanner
 {
     private static readonly HashSet<string> TypePrefixes = new(StringComparer.OrdinalIgnoreCase) {
-        "DateTime", "DateTimeOffset", "TimeSpan", "Math", "Convert", "string", "String", "Enumerable"
+        "DateTime",
+        "DateTimeOffset",
+        "TimeSpan",
+        "Math",
+        "Convert",
+        "string",
+        "String",
+        "Enumerable"
     };
 
     private static readonly string[] LinqCalls = [
-        ".Where(", ".Select(", ".SelectMany(", ".OrderBy(", ".OrderByDescending(", ".ThenBy(", ".ThenByDescending(",
-        ".Any(", ".All(", ".Count(", ".Sum(", ".Average(", ".Min(", ".Max(", ".First(", ".FirstOrDefault(",
-        ".Last(", ".LastOrDefault(", ".Single(", ".SingleOrDefault(", ".Take(", ".Skip(", ".Distinct(", ".GroupBy(",
-        ".ToList(", ".ToArray("
+        ".Where(", ".Select(", ".SelectMany(", ".OrderBy(", ".OrderByDescending(", ".ThenBy(", ".ThenByDescending(", ".Any(", ".All(", ".Count(",
+        ".Sum(", ".Average(", ".Min(", ".Max(", ".First(", ".FirstOrDefault(", ".Last(", ".LastOrDefault(", ".Single(", ".SingleOrDefault(",
+        ".Take(", ".Skip(", ".Distinct(", ".GroupBy(", ".ToList(", ".ToArray("
     ];
 
     /// <summary>Walks <paramref name="template" /> into ordered tokens. An unmatched <c>{</c> yields a single literal of the original text.</summary>
@@ -139,10 +145,16 @@ internal static class FormatterTemplateScanner
     {
         if (ContainsThis(inner) || StartsWithKnownType(inner) || ContainsKnownType(inner) || ContainsLinq(inner))
             return true;
+
+        if (inner.IndexOf("Algo(", StringComparison.Ordinal) >= 0 || inner.IndexOf("score(", StringComparison.Ordinal) >= 0)
+            return true;
+
         if (ContainsOperator(inner, "==") || ContainsOperator(inner, "!=") || ContainsOperator(inner, ">=") || ContainsOperator(inner, "<="))
             return true;
+
         if (HasComparison(inner) || HasBinaryArithmetic(inner) || inner.Contains('['))
             return true;
+
         return false;
     }
 
@@ -169,9 +181,11 @@ internal static class FormatterTemplateScanner
     {
         if (spec.Length == 0)
             return false;
+
         foreach (var c in spec) {
             if (char.IsLetterOrDigit(c) || c is '-' or '_' or '.' or ',' or '/' or ':' or ' ' or '#')
                 continue;
+
             return false;
         }
 
@@ -183,11 +197,14 @@ internal static class FormatterTemplateScanner
         var i = 0;
         while (i < inner.Length && (char.IsWhiteSpace(inner[i]) || inner[i] == '('))
             i++;
+
         var start = i;
         while (i < inner.Length && (char.IsLetterOrDigit(inner[i]) || inner[i] == '_'))
             i++;
+
         if (i == start)
             return false;
+
         return TypePrefixes.Contains(inner[start..i]);
     }
 
@@ -208,11 +225,13 @@ internal static class FormatterTemplateScanner
             var idx = inner.IndexOf(word, start, StringComparison.OrdinalIgnoreCase);
             if (idx < 0)
                 return -1;
+
             var beforeOk = idx == 0 || !(char.IsLetterOrDigit(inner[idx - 1]) || inner[idx - 1] == '_');
             var after = idx + word.Length;
             var afterOk = after >= inner.Length || !(char.IsLetterOrDigit(inner[after]) || inner[after] == '_');
             if (beforeOk && afterOk)
                 return idx;
+
             start = idx + 1;
         }
     }
@@ -221,21 +240,25 @@ internal static class FormatterTemplateScanner
     {
         if (text.Length == 0)
             return false;
+
         var i = 0;
         if (!(char.IsLetter(text[0]) || text[0] == '_'))
             return false;
+
         i++;
         while (i < text.Length) {
             if (text[i] == '.') {
                 i++;
                 if (i >= text.Length || !(char.IsLetter(text[i]) || text[i] == '_'))
                     return false;
+
                 i++;
                 continue;
             }
 
             if (!(char.IsLetterOrDigit(text[i]) || text[i] == '_'))
                 return false;
+
             i++;
         }
 
@@ -247,6 +270,7 @@ internal static class FormatterTemplateScanner
         for (var i = 0; i < inner.Length; i++) {
             if (!MatchWord(inner, i, "this"))
                 continue;
+
             var after = i + 4;
             if (after < inner.Length && inner[after] == '.')
                 return true;
@@ -290,10 +314,13 @@ internal static class FormatterTemplateScanner
 
             if (i == 0)
                 continue;
+
             if (c is not ('+' or '-' or '*' or '/' or '%'))
                 continue;
+
             if (c == '-' && inner[i - 1] == '(')
                 continue;
+
             if (IsOperandChar(inner[i - 1]) && i + 1 < inner.Length && (IsOperandChar(inner[i + 1]) || inner[i + 1] is '(' or ' ' or '_'))
                 return true;
         }
@@ -364,10 +391,13 @@ internal static class FormatterTemplateScanner
     {
         if (index + word.Length > inner.Length)
             return false;
+
         if (index > 0 && (char.IsLetterOrDigit(inner[index - 1]) || inner[index - 1] == '_'))
             return false;
+
         if (string.Compare(inner, index, word, 0, word.Length, StringComparison.OrdinalIgnoreCase) != 0)
             return false;
+
         var after = index + word.Length;
         return after >= inner.Length || !(char.IsLetterOrDigit(inner[after]) || inner[after] == '_');
     }

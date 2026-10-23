@@ -24,8 +24,8 @@ public sealed class Ed25519LyoJwtValidator : ILyoJwtValidator
     private readonly IKeyStore _keys;
     private readonly ILogger<Ed25519LyoJwtValidator> _logger;
     private readonly LyoJwtOptions _options;
-    private readonly IUserStore _users;
     private readonly IUserScopeStore? _scopes;
+    private readonly IUserStore _users;
 
     /// <summary>Builds a new validator.</summary>
     public Ed25519LyoJwtValidator(

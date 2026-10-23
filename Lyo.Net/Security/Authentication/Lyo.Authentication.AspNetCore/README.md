@@ -2,7 +2,8 @@
 
 ASP.NET Core integration for `Lyo.Authentication`. Three schemes coexist behind a single dispatcher:
 
-- `LyoApiToken.` Validates Format-B opaque tokens (`lyo_pat_live_...`) - `LyoJwt.` Validates Lyo-signed Ed25519 JWTs (`ey...`) - `LyoBearer` (the default). Sniffs the `Authorization`/`X-Api-Key` header and forwards to one of the above
+- `LyoApiToken.` Validates Format-B opaque tokens (`lyo_pat_live_...`) - `LyoJwt.` Validates Lyo-signed Ed25519 JWTs (`ey...`) - `LyoBearer` (the default). Sniffs the
+  `Authorization`/`X-Api-Key` header and forwards to one of the above
 
 ```csharp services.AddLyoAuthentication(configuration); services.AddInMemoryAuthenticationStores(); services.AddLyoApiTokenAuthentication();
 
@@ -16,6 +17,10 @@ or, when working with `EndpointAuth` from `Lyo.Api`:
 
 ```csharp GetAuth = EndpointAuth.RequireAuthorization("scope:people.read") ```
 
+## Role attribute
+
+`[RequireRole("editor")]` sets `AuthorizeAttribute.Roles`. `.RequireRole("editor")` is the minimal-API form. The framework role requirement is the handler. There is no Lyo role store. `[Authorize(Roles = "editor")]` is the same check.
+
 ## Dependencies
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
@@ -26,14 +31,16 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Diagnostic` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Authentication.Models` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
+- `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
 - `BouncyCastle.Cryptography` `2.6.2` (transitive, third-party)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
@@ -44,5 +51,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Options` `10.0.5` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft)

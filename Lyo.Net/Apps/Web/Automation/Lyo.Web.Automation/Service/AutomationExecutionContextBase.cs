@@ -54,8 +54,7 @@ public abstract class AutomationExecutionContextBase : IDisposable, IAsyncDispos
 
     /// <summary>
     /// Returns a logger that fans output to both <paramref name="baseLogger" /> and the session log file, so an engine's own logging displays up in the per-session file without
-    /// the
-    /// engine knowing the file exists. Falls back to <paramref name="baseLogger" /> when no provider is set.
+    /// the engine knowing the file exists. Falls back to <paramref name="baseLogger" /> when no provider is set.
     /// </summary>
     /// <typeparam name="TCategory">Category type the session-file logger is created under.</typeparam>
     /// <param name="baseLogger">The ambient logger to keep writing to.</param>
@@ -63,8 +62,8 @@ public abstract class AutomationExecutionContextBase : IDisposable, IAsyncDispos
         => LoggerProvider != null ? new CompositeLogger<TCategory>(baseLogger, LoggerProvider.CreateLogger(typeof(TCategory).Name)) : baseLogger;
 
     /// <summary>
-    /// Yields a logger that fans output to both <paramref name="baseLogger" /> and the session log file, for engines that hold a non-generic <see cref="ILogger" />. Falls back to
-    /// <paramref name="baseLogger" /> when no provider is set.
+    /// Yields a logger that fans output to both <paramref name="baseLogger" /> and the session log file, for engines that hold a non-generic <see cref="ILogger" />. Falls back
+    /// to <paramref name="baseLogger" /> when no provider is set.
     /// </summary>
     /// <typeparam name="TCategory">Category type the session-file logger is created under.</typeparam>
     /// <param name="baseLogger">The ambient logger to keep writing to.</param>

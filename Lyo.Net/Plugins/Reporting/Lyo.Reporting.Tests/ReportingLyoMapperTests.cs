@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Parameters;
 using Lyo.Reporting.Models.Enums;
@@ -35,12 +36,12 @@ public sealed class ReportingLyoMapperTests
         };
 
         var entity = _mapper.Map<ReportDefinition>(req);
-        entity.Id = Guid.NewGuid();
+        entity.Id = LyoGuid.CreateV7();
         entity.CreatedTimestamp = DateTime.UtcNow;
         entity.UpdatedTimestamp = entity.CreatedTimestamp;
         entity.CreatedBy = "tester";
         foreach (var p in entity.Parameters) {
-            p.Id = Guid.NewGuid();
+            p.Id = LyoGuid.CreateV7();
             p.ReportDefinitionId = entity.Id;
             p.CreatedTimestamp = entity.CreatedTimestamp;
         }
@@ -63,16 +64,16 @@ public sealed class ReportingLyoMapperTests
             Format = ReportFormat.Csv,
             Status = ReportGenerationStatus.Succeeded,
             CreatedBy = "worker",
-            Parameters = [new("ClientId", LyoTypeInfo.Guid, LyoTypeInfo.Guid.ToJson(Guid.NewGuid()))]
+            Parameters = [new("ClientId", LyoTypeInfo.Guid, LyoTypeInfo.Guid.ToJson(LyoGuid.CreateV7()))]
         };
 
         var entity = _mapper.Map<ReportGeneration>(req);
         Assert.Equal(nameof(ReportFormat.Csv), entity.Format);
         Assert.Single(entity.Parameters);
-        entity.Id = Guid.NewGuid();
+        entity.Id = LyoGuid.CreateV7();
         entity.CreatedTimestamp = DateTime.UtcNow;
         foreach (var p in entity.Parameters) {
-            p.Id = Guid.NewGuid();
+            p.Id = LyoGuid.CreateV7();
             p.ReportGenerationId = entity.Id;
         }
 
@@ -155,7 +156,6 @@ public sealed class ReportingLyoMapperTests
         var entity = _mapper.Map<ReportDefinitionParameter>(req);
         Assert.Equal(nameof(LyoParameterDefaultKind.Expression), entity.DefaultKind);
         Assert.Equal(req.DefaultTemplate, entity.DefaultTemplate);
-
         var res = _mapper.Map<ReportDefinitionParameterRes>(entity);
         Assert.Equal(LyoParameterDefaultKind.Expression, res.DefaultKind);
         Assert.Equal(req.DefaultTemplate, res.DefaultTemplate);
@@ -165,13 +165,7 @@ public sealed class ReportingLyoMapperTests
     public void Map_UnreadableDefaultColumn_DefaultsToLiteral()
     {
         // Rows written before the column existed, or by a client sending garbage, cannot be read as expression-authored.
-        var res = _mapper.Map<ReportDefinitionParameterRes>(
-            new ReportDefinitionParameter {
-                Key = "Code",
-                Type = LyoTypeInfo.String.FullName,
-                DefaultKind = "nonsense"
-            });
-
+        var res = _mapper.Map<ReportDefinitionParameterRes>(new ReportDefinitionParameter { Key = "Code", Type = LyoTypeInfo.String.FullName, DefaultKind = "nonsense" });
         Assert.Equal(LyoParameterDefaultKind.Literal, res.DefaultKind);
     }
 

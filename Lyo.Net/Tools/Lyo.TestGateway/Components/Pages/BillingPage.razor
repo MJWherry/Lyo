@@ -1,0 +1,9 @@
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.Billing)]
+@inherits AuthorizedPage
+
+<PageTitle>Billing</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4 mb-6">
+    <Lyo.Billing.Web.Components.Views.BillingDashboard/>
+</MudContainer>

@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Hashing;
 using Lyo.Postgres;
 
 namespace Lyo.FileSystemWatcher.Postgres;
 
 /// <summary>Settings for the FileSystemWatcher PostgreSQL schema.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class PostgresFileSystemWatcherOptions : PostgresOptionsBase
 {
     /// <summary>Configuration section name.</summary>
@@ -25,4 +27,7 @@ public sealed class PostgresFileSystemWatcherOptions : PostgresOptionsBase
         if (!Enum.IsDefined(ContentHashAlgorithm))
             throw new ArgumentException($"{nameof(ContentHashAlgorithm)} is not a known digest.", nameof(ContentHashAlgorithm));
     }
+
+    /// <summary>Schema, auto-migrate flag, and content hash. The connection string is omitted.</summary>
+    public override string ToString() => $"{base.ToString()} ContentHashAlgorithm={ContentHashAlgorithm}";
 }

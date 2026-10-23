@@ -5,7 +5,7 @@ namespace Lyo.Job.Web.Components;
 public partial class JobRunDetailView
 {
     [CascadingParameter]
-    IMudDialogInstance MudDialog { get; set; } = null!;
+    private IMudDialogInstance MudDialog { get; set; } = null!;
 
     [Parameter]
     [EditorRequired]
@@ -16,31 +16,21 @@ public partial class JobRunDetailView
     public string RunRoute { get; set; } = "";
 
     [Inject]
-    IApiClient ApiClient { get; set; } = null!;
+    private IApiClient ApiClient { get; set; } = null!;
 
-    private string AlertText
-        => JobRun?.JobDefinition?.AlertOnFailure == true ? "Alert on failure" : "No failure alert";
-
-    private string ScheduleText
-        => JobRun?.JobSchedule?.Description
-           ?? (JobRun?.JobSchedule is { } schedule ? schedule.Type.ToString() : "—");
+    private string ScheduleText => JobRun?.JobSchedule?.Description ?? (JobRun?.JobSchedule is { } schedule ? schedule.Type.ToString() : "—");
 
     private string WorkerLabel
-        => JobRun?.WorkerProcessId is { } pid && !string.IsNullOrWhiteSpace(JobRun.WorkerMachineName)
-            ? $"{JobRun.WorkerMachineName}:{pid}"
-            : (JobRun?.WorkerMachineName ?? "—");
+        => JobRun?.WorkerProcessId is { } pid && !string.IsNullOrWhiteSpace(JobRun.WorkerMachineName) ? $"{JobRun.WorkerMachineName}:{pid}" : JobRun?.WorkerMachineName ?? "—";
 
     private IReadOnlyList<ILyoParameterValue> OrderedParameters
         => (JobRun?.JobRunParameters ?? []).OrderBy(p => p.Key, StringComparer.OrdinalIgnoreCase).Cast<ILyoParameterValue>().ToList();
 
-    private IReadOnlyList<JobRunResultRes> OrderedResults
-        => (JobRun?.JobRunResults ?? []).OrderBy(r => r.Key, StringComparer.OrdinalIgnoreCase).ToList();
+    private IReadOnlyList<JobRunResultRes> OrderedResults => (JobRun?.JobRunResults ?? []).OrderBy(r => r.Key, StringComparer.OrdinalIgnoreCase).ToList();
 
-    private IReadOnlyList<JobRunLogRes> OrderedLogs
-        => (JobRun?.JobRunLogs ?? []).OrderBy(l => l.Timestamp).ThenBy(l => l.Id).ToList();
+    private IReadOnlyList<JobRunLogRes> OrderedLogs => (JobRun?.JobRunLogs ?? []).OrderBy(l => l.Timestamp).ThenBy(l => l.Id).ToList();
 
-    private string LogsTabText
-    {
+    private string LogsTabText {
         get {
             var logs = JobRun?.JobRunLogs;
             var count = logs?.Count ?? 0;

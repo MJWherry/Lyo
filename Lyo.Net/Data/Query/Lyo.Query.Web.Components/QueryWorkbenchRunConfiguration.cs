@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 using Lyo.Web.Components.JsonEditor;
 
 namespace Lyo.Query.Web.Components;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record QueryWorkbenchRunConfiguration
 {
     public Dictionary<string, List<string>> HostEndpoints { get; init; } = new();
@@ -21,7 +23,7 @@ public sealed record QueryWorkbenchRunConfiguration
     /// <summary>Credential style for Run Query. Starts as none.</summary>
     public QueryWorkbenchAuthMode AuthMode { get; init; } = QueryWorkbenchAuthMode.None;
 
-    /// <summary>Header name when <see cref="AuthMode"/> is <see cref="QueryWorkbenchAuthMode.Header"/> (such as <c>Authorization</c>, <c>X-Api-Key</c>).</summary>
+    /// <summary>Header name when <see cref="AuthMode" /> is <see cref="QueryWorkbenchAuthMode.Header" /> (such as <c>Authorization</c>, <c>X-Api-Key</c>).</summary>
     public string? AuthHeaderName { get; init; }
 
     /// <summary>Bearer token or custom header value. Stored with workbench state in the browser.</summary>

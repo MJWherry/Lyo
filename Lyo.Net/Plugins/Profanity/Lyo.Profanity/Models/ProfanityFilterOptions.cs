@@ -1,17 +1,19 @@
+using System.Diagnostics;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
 
 namespace Lyo.Profanity.Models;
 
 /// <summary>Settings that configure the profanity filter service.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class ProfanityFilterOptions
 {
     /// <summary>Options binding. Default: "ProfanityFilter" configuration section name.</summary>
     public const string SectionName = "ProfanityFilter";
 
     /// <summary>
-    /// Language used while filtering. Picks the WordsByLanguage list when that map is set. Accepts BCP 47 (for example "en-US"), ISO 639-1 (for example "en"), or ISO
-    /// 639-3 (for example "eng"). Default: "en-US".
+    /// Language used while filtering. Picks the WordsByLanguage list when that map is set. Accepts BCP 47 (for example "en-US"), ISO 639-1 (for example "en"), or ISO 639-3 (for
+    /// example "eng"). Default: "en-US".
     /// </summary>
     public string Language { get; set; } = "en-US";
 
@@ -39,6 +41,9 @@ public class ProfanityFilterOptions
     /// <summary>Flag: to enable metrics collection. Default is false. When enabled, requires IMetrics to be provided via constructor.</summary>
     public bool EnableMetrics { get; set; }
 
+    /// <summary>Matching. Derived from CaseSensitive string comparison used.</summary>
+    public StringComparison StringComparison => CaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+
     /// <summary>Throws when language or replacement settings are invalid.</summary>
     public virtual void Validate()
     {
@@ -48,9 +53,6 @@ public class ProfanityFilterOptions
         ArgumentHelpers.ThrowIfNull(AdditionalWords);
         ArgumentHelpers.ThrowIfNull(ExcludedWords);
     }
-
-    /// <summary>Matching. Derived from CaseSensitive string comparison used.</summary>
-    public StringComparison StringComparison => CaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
 
     /// <summary>Looks up the configured Language string to a LanguageCodeInfo. Falls back to EnUs when unknown.</summary>
     public LanguageCodeInfo GetLanguageCode() => ResolveLanguageCode(Language);
@@ -72,4 +74,8 @@ public class ProfanityFilterOptions
         info = LanguageCodeInfo.FromIso6393(code);
         return info != LanguageCodeInfo.Unknown ? info : LanguageCodeInfo.EnUs;
     }
+
+    /// <summary>Language, replacement strategy, and extra word-list sizes.</summary>
+    public override string ToString() =>
+        $"Language={Language} Strategy={ReplacementStrategy} Additional={AdditionalWords?.Count ?? 0} Excluded={ExcludedWords?.Count ?? 0}";
 }

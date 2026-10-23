@@ -22,11 +22,10 @@ public class PostgresOptionsBaseTests
     public void Validate_AcceptsAConnectionString() => new TestPostgresOptions { ConnectionString = "Host=localhost;Database=lyo" }.Validate();
 
     [Fact]
-    public void Validate_OverrideStillEnforcesTheBaseConnectionStringCheck()
-        => Assert.Throws<ArgumentException>(() => new TestPostgresOptionsWithExtraValidation().Validate());
+    public void Validate_OverrideStillEnforcesTheBaseConnectionStringCheck() => Assert.Throws<ArgumentException>(() => new TestPostgresOptionsWithExtraValidation().Validate());
 
     [Fact]
     public void Validate_OverrideEnforcesItsOwnChecks()
-        => Assert.Throws<ArgumentOutOfRangeException>(
-            () => new TestPostgresOptionsWithExtraValidation { ConnectionString = "Host=localhost", CommandTimeoutSeconds = 0 }.Validate());
+        => Assert.Throws<ArgumentOutOfRangeException>(()
+            => new TestPostgresOptionsWithExtraValidation { ConnectionString = "Host=localhost", CommandTimeoutSeconds = 0 }.Validate());
 }

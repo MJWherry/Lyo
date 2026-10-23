@@ -1,0 +1,50 @@
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-4" Outlined="true">
+    <MudStack Spacing="2">
+        <MudText Typo="Typo.subtitle1">Invite</MudText>
+        @if (Board == null) {
+            <MudAlert Severity="Severity.Info" Dense="true">Load a board to create invites.</MudAlert>
+
+            return;
+        }
+        <MudSelect T="InviteShareKind" Label="Share" Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="_kind">
+            @foreach (var kind in Enum.GetValues<InviteShareKind>()) {
+                <MudSelectItem T="InviteShareKind" Value="kind">@kind</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSelect T="MemberRole" Label="Role" Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="_role">
+            <MudSelectItem T="MemberRole" Value="MemberRole.Viewer">Viewer</MudSelectItem>
+            <MudSelectItem T="MemberRole" Value="MemberRole.Contributor">Contributor</MudSelectItem>
+            <MudSelectItem T="MemberRole" Value="MemberRole.Admin">Admin</MudSelectItem>
+        </MudSelect>
+        @if (_kind == InviteShareKind.Email) {
+            <MudTextField T="string" Label="Email" Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="_email"/>
+        }
+        @if (_kind == InviteShareKind.User) {
+            <MudTextField T="string" Label="User id" Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="_userIdText"/>
+        }
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@_busy" OnClick="CreateAsync">
+            Create invite
+        </MudButton>
+        @if (_created != null) {
+            <MudText Typo="Typo.caption">Token (shown once)</MudText>
+
+            <MudTextField T="string" Variant="Variant.Outlined" Margin="Margin.Dense" Value="@_created.Token" ReadOnly="true"/>
+
+            @if (!string.IsNullOrWhiteSpace(_created.JoinUrl)) {
+                <MudTextField T="string" Label="Join URL" Variant="Variant.Outlined" Margin="Margin.Dense" Value="@_created.JoinUrl" ReadOnly="true"/>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(_created.ShortUrl)) {
+                <MudTextField T="string" Label="Short URL" Variant="Variant.Outlined" Margin="Margin.Dense" Value="@_created.ShortUrl" ReadOnly="true"/>
+            }
+
+            @if (_qrSrc != null) {
+                <MudImage Src="@_qrSrc" Alt="Invite QR" Width="192" Height="192" ObjectFit="ObjectFit.Contain"/>
+            }
+
+            <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Small" OnClick="RevokeAsync">Revoke</MudButton>
+        }
+    </MudStack>
+</MudPaper>

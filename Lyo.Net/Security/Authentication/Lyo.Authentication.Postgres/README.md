@@ -1,10 +1,13 @@
 # Lyo.Authentication.Postgres
 
-PostgreSQL persistence for `Lyo.Authentication`. Replaces the in-memory stores from the base lib with EF Core-backed implementations of `IApiTokenStore`, `IUserStore`, `IExternalIdentityStore`, `IUserClaimStore`, and `IUserScopeStore`.
+PostgreSQL persistence for `Lyo.Authentication`. Replaces the in-memory stores from the base lib with EF Core-backed implementations of `IApiTokenStore`, `IUserStore`,
+`IExternalIdentityStore`, `IUserClaimStore`, and `IUserScopeStore`.
 
 Owns the `[user]` schema. Six tables in this lib:
 
-- `[user].[user].` Lyo internal users - `[user].[token].` Format-B opaque API tokens - `[user].[linked_identity].` External OIDC identity links - `[user].[event].` Auth audit events (`UserEventEntity`) - `[user].[claim].` Extra JWT type/value pairs (`UserClaimEntity`) - `[user].[scope].` Authorization scopes copied onto issued JWTs (`UserScopeEntity`). Unique `(user_id, name)`.
+- `[user].[user].` Lyo internal users - `[user].[token].` Format-B opaque API tokens - `[user].[linked_identity].` External OIDC identity links - `[user].[event].` Auth audit
+  events (`UserEventEntity`) - `[user].[claim].` Extra JWT type/value pairs (`UserClaimEntity`) - `[user].[scope].` Authorization scopes copied onto issued JWTs
+  (`UserScopeEntity`). Unique `(user_id, name)`.
 
 `__EFMigrationsHistory` lives inside the `[user]` schema.
 
@@ -42,11 +45,13 @@ Or each store individually: `appsettings.json`:
 
 ## Tenancy
 
-All six entities (`UserEntity`, `TokenEntity`, `LinkedIdentityEntity`, `UserEventEntity`, `UserClaimEntity`, `UserScopeEntity`) carry a nullable `tenant_id` (uuid) column with filtered indexes
-(`ix_<table>_tenant_id`). `null` represents cross-tenant / system records. Non-null values scope the row to a specific tenant. Unique constraints on
-`UserEntity.Email` and `LinkedIdentityEntity (provider, subject)` include `tenant_id`, so the same email or external subject can exist per tenant. Duplicate `(UserId, Type)` claim rows are allowed. Scope names are unique per user (`ux_scope_user_id_name`).
+All six entities (`UserEntity`, `TokenEntity`, `LinkedIdentityEntity`, `UserEventEntity`, `UserClaimEntity`, `UserScopeEntity`) carry a nullable `tenant_id` (uuid) column with
+filtered indexes (`ix_<table>_tenant_id`). `null` represents cross-tenant / system records. Non-null values scope the row to a specific tenant. Unique constraints on
+`UserEntity.Email` and `LinkedIdentityEntity (provider, subject)` include `tenant_id`, so the same email or external subject can exist per tenant. Duplicate `(UserId, Type)` claim
+rows are allowed. Scope names are unique per user (`ux_scope_user_id_name`).
 
-`IUserStore`, `IApiTokenStore`, `IExternalIdentityStore`, `IUserClaimStore`, `IUserScopeStore`, and `PostgresAuthAuditRecorder` all accept an explicit `Guid? tenantId` and run it through
+`IUserStore`, `IApiTokenStore`, `IExternalIdentityStore`, `IUserClaimStore`, `IUserScopeStore`, and `PostgresAuthAuditRecorder` all accept an explicit `Guid? tenantId` and run it
+through
 `TenancyResolver.Resolve` using the policy configured in `PostgresUserOptions.Tenancy` (inheriting from `EntityRefOptions.Mode` when unset):
 
 - `SystemOnly.` Every row is persisted with `tenant_id = NULL` and reads filter to system rows.

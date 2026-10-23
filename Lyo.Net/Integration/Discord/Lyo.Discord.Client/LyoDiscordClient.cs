@@ -1,7 +1,7 @@
-using Lyo.Http.Client;
-using Lyo.Common.Json;
 using Lyo.Discord.Client.Managers;
 using Lyo.Exceptions;
+using Lyo.Http.Client;
+using Lyo.Json;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 

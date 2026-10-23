@@ -3,9 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Response;
-using Lyo.Api.Models.Error;
-using Lyo.Common.Json;
-using Lyo.Query.Models.Common.Request;
+using Lyo.Json;
 
 namespace Lyo.Seed.Tests;
 
@@ -15,11 +13,11 @@ public sealed class ApiSeedTransportTests
     public async Task PersistAsync_ChunksOverMaxAmount()
     {
         var handler = new StubHandler();
-        handler.OnBulk = _ => OkBulk(created: 0, failed: 0, results: []);
-        var transport = CreateTransport(handler, max: 2000);
+        handler.OnBulk = _ => OkBulk(0, 0, []);
+        var transport = CreateTransport(handler, 2000);
         var items = Enumerable.Range(0, 2501).Select(i => new ItemReq { Name = $"n-{i}" }).ToArray();
         var contributor = new ItemContributor(items);
-        var result = await new SeedRunner().SeedAsync(contributor, transport, new() { Conflict = SeedConflictMode.Append }, TestContext.Current.CancellationToken);
+        var result = await new SeedRunner().SeedAsync(contributor, transport, new() { Conflict = SeedConflictMode.Append }, TestCt);
         Assert.True(result.Success);
         var bulks = handler.Requests.Where(r => r.Path.EndsWith("/Bulk", StringComparison.OrdinalIgnoreCase) && r.Method == "POST").ToList();
         Assert.Equal(2, bulks.Count);
@@ -33,10 +31,9 @@ public sealed class ApiSeedTransportTests
     public async Task SeedAsync_QueryConcreteOccupied_SkipsBulk()
     {
         var handler = new StubHandler();
-        handler.OnQuery = () => OkQuery(total: 3);
+        handler.OnQuery = () => OkQuery(3);
         var transport = CreateTransport(handler);
-        var result = await new SeedRunner().SeedAsync(
-            new ItemContributor([new() { Name = "x" }]), transport, new() { Conflict = SeedConflictMode.SkipIfNotEmpty }, TestContext.Current.CancellationToken);
+        var result = await new SeedRunner().SeedAsync(new ItemContributor([new() { Name = "x" }]), transport, new() { Conflict = SeedConflictMode.SkipIfNotEmpty }, TestCt);
         Assert.True(result.Skipped);
         Assert.DoesNotContain(handler.Requests, r => r.Path.Contains("/Bulk", StringComparison.OrdinalIgnoreCase) && r.Method == "POST");
     }
@@ -45,14 +42,10 @@ public sealed class ApiSeedTransportTests
     public async Task PersistAsync_FailedCount_ReturnsSeedFailure()
     {
         var handler = new StubHandler();
-        handler.OnQuery = () => OkQuery(total: 0);
-        handler.OnBulk = _ => OkBulk(
-            created: 0,
-            failed: 1,
-            results: [new CreateResult<ItemReq>(false, null, new LyoProblemDetails("row failed", 400, DateTime.UtcNow, []))]);
+        handler.OnQuery = () => OkQuery(0);
+        handler.OnBulk = _ => OkBulk(0, 1, [new(false, null, new("row failed", 400, DateTime.UtcNow, []))]);
         var transport = CreateTransport(handler);
-        var result = await new SeedRunner().SeedAsync(
-            new ItemContributor([new() { Name = "x" }]), transport, new() { Conflict = SeedConflictMode.Append }, TestContext.Current.CancellationToken);
+        var result = await new SeedRunner().SeedAsync(new ItemContributor([new() { Name = "x" }]), transport, new() { Conflict = SeedConflictMode.Append }, TestCt);
         Assert.False(result.Success);
         Assert.Contains(result.Errors, e => e.Contains("row failed", StringComparison.Ordinal));
     }
@@ -68,7 +61,7 @@ public sealed class ApiSeedTransportTests
 
     private static string OkQuery(int total)
     {
-        var body = new QueryRes<ItemReq>(new QueryConcreteReq { Amount = 1 }, true, total == 0 ? [] : [new() { Name = "existing" }], 0, 1, total, false, 0, null);
+        var body = new QueryRes<ItemReq>(new() { Amount = 1 }, true, total == 0 ? [] : [new() { Name = "existing" }], 0, 1, total, false, 0, null);
         return JsonSerializer.Serialize(body, LyoJsonSerializerOptions.Create());
     }
 

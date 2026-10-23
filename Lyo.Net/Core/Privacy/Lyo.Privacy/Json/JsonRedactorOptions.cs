@@ -16,10 +16,7 @@ public sealed class JsonRedactorOptions
     /// <summary>Case-insensitive property names mapped onto a strategy.</summary>
     public IReadOnlyDictionary<string, JsonKeyRedactionStrategy> SensitiveKeys { get; set; } = DefaultSensitiveKeys;
 
-    /// <summary>
-    /// When true, runs <see cref="ITextRedactor" /> on every string value. The <see cref="JsonRedactor" /> constructor must receive an
-    /// <see cref="ITextRedactor" />.
-    /// </summary>
+    /// <summary>When true, runs <see cref="ITextRedactor" /> on every string value. The <see cref="JsonRedactor" /> constructor must receive an <see cref="ITextRedactor" />.</summary>
     public bool ApplyTextRulesToAllStringValues { get; set; }
 
     /// <summary>Optional stable label for metrics (tag <c>policy</c>) and for <see cref="RedactionResult.PolicyName" />.</summary>

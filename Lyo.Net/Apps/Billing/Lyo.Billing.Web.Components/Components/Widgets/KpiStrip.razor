@@ -1,0 +1,60 @@
+@namespace Lyo.Billing.Web.Components.Components.Widgets
+
+<MudCard Class="mb-4">
+    <MudCardContent>
+        @if (_loading) {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Color="Color.Primary"/>
+                <MudText Typo="Typo.body2">Loading summary…</MudText>
+            </MudStack>
+        }
+        else if (_error != null) {
+            <MudAlert Severity="Severity.Error">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudText>@_error</MudText>
+                    <MudButton Size="Size.Small" Variant="Variant.Outlined" OnClick="LoadAsync">Retry</MudButton>
+                </MudStack>
+            </MudAlert>
+        }
+        else if (_summary != null) {
+            <MudGrid Spacing="2" Justify="Justify.SpaceBetween">
+                <MudItem xs="6" sm="3">
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.AccountBalance" Color="Color.Warning" Class="mr-2"/>
+                        <div>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Outstanding</MudText>
+                            <MudText Typo="Typo.h6">@BillingMoney.Format(_summary.OutstandingTotal, "USD")</MudText>
+                        </div>
+                    </div>
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.Drafts" Color="Color.Default" Class="mr-2"/>
+                        <div>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Drafts</MudText>
+                            <MudText Typo="Typo.h6">@_summary.DraftCount</MudText>
+                        </div>
+                    </div>
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.ReceiptLong" Color="Color.Info" Class="mr-2"/>
+                        <div>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Issued</MudText>
+                            <MudText Typo="Typo.h6">@_summary.IssuedCount</MudText>
+                        </div>
+                    </div>
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Class="mr-2"/>
+                        <div>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Paid</MudText>
+                            <MudText Typo="Typo.h6">@_summary.PaidCount</MudText>
+                        </div>
+                    </div>
+                </MudItem>
+            </MudGrid>
+        }
+    </MudCardContent>
+</MudCard>

@@ -7,7 +7,8 @@ Shared SMS contracts and send pipeline. Providers (`Lyo.Sms.Twilio`, and others)
 - **SmsMessageBuilder.** Fluent helper for assembling messages.
 - **Phone numbers.** Validate and normalize toward E.164.
 - **Bulk.** Batch send with rate limiting and `BulkSmsBuilder`.
-- **Results.** Failures return `Result<SmsRequest>` (bulk: `BulkResult<SmsRequest>`). Add retries or timeouts in the caller. See provider packages — the Twilio README covers resilience.
+- **Results.** Failures return `Result<SmsRequest>` (bulk: `BulkResult<SmsRequest>`). Add retries or timeouts in the caller. See provider packages — the Twilio README covers
+  resilience.
 - **Exceptions.** `InvalidFormatException` plus `ArgumentOutsideRangeException`.
 - **Logging.** Writes through Microsoft.Extensions.Logging.
 - **DI.** Provider packages register `ISmsService`.
@@ -317,7 +318,8 @@ Register the provider-specific service using the provider's extension methods. E
 
 ## Calling the service
 
-The contract uses `ISmsService<TResult>` where `TResult : Result<SmsRequest>`. `ISmsService` is shorthand for `ISmsService<Result<SmsRequest>>`. Twilio uses `TwilioSmsResult` as `TResult` when provider-specific fields are needed.
+The contract uses `ISmsService<TResult>` where `TResult : Result<SmsRequest>`. `ISmsService` is shorthand for `ISmsService<Result<SmsRequest>>`. Twilio uses `TwilioSmsResult` as
+`TResult` when provider-specific fields are needed.
 
 ## Send a batch
 
@@ -372,14 +374,15 @@ The stack yields structured `Result` errors and validates inputs early (builders
 - **No built-in retries.** Callers or HTTP layers should implement policy if needed.
 - **Error codes.** `SmsErrorCodes` (in `Lyo.Sms`) attaches the following constants to failed results raised by `SmsServiceBase`:
 
-| Constant | Value | Raised when |
-| -------------------- | --------------------- | -------------------------------------------------------- |
-| `BuildFailed` | `BUILD_FAILED` | A builder threw while assembling the request. |
-| `MessageNotBuilt` | `MESSAGE_NOT_BUILT` | The bulk pipeline hit send without a built request. |
+| Constant             | Value                 | Raised when                                              |
+|----------------------|-----------------------|----------------------------------------------------------|
+| `BuildFailed`        | `BUILD_FAILED`        | A builder threw while assembling the request.            |
+| `MessageNotBuilt`    | `MESSAGE_NOT_BUILT`   | The bulk pipeline hit send without a built request.      |
 | `OperationCancelled` | `OPERATION_CANCELLED` | The bulk send was cancelled through `CancellationToken`. |
-| `MissingFromNumber` | `MISSING_FROM_NUMBER` | No `From` number was supplied or configured. |
+| `MissingFromNumber`  | `MISSING_FROM_NUMBER` | No `From` number was supplied or configured.             |
 
 Providers hang their own codes on derived result types (for example `TwilioSmsResult.TwilioErrorCode`).
+
 - **Exception details.** Full exception information is available in results.
 - **Logging.** Operations are logged.
 - **Custom exceptions:**
@@ -442,16 +445,16 @@ Log levels:
 `SmsServiceBase` emits its counters/timers under the keys exposed by `Constants.Metrics`. Providers replace
 `CreateMetricNamesDictionary()` to prefix them with their own namespace (Twilio uses `sms.twilio.*`).
 
-| Constant key (`Lyo.Sms.Constants.Metrics`) | Metric name | Kind |
-| ------------------------------------------ | -------------------------------- | ------- |
-| `SendDuration` | `sms.send.duration` | Timer |
-| `SendSuccess` | `sms.send.success` | Counter |
-| `SendFailure` | `sms.send.failure` | Counter |
-| `BulkSendDuration` | `sms.bulk.send.duration` | Timer |
-| `BulkSendTotal` | `sms.bulk.send.total` | Counter |
-| `BulkSendSuccess` | `sms.bulk.send.success` | Counter |
-| `BulkSendFailure` | `sms.bulk.send.failure` | Counter |
-| `BulkSendLastDurationMs` | `sms.bulk.send.last_duration_ms` | Gauge |
+| Constant key (`Lyo.Sms.Constants.Metrics`) | Metric name                      | Kind    |
+|--------------------------------------------|----------------------------------|---------|
+| `SendDuration`                             | `sms.send.duration`              | Timer   |
+| `SendSuccess`                              | `sms.send.success`               | Counter |
+| `SendFailure`                              | `sms.send.failure`               | Counter |
+| `BulkSendDuration`                         | `sms.bulk.send.duration`         | Timer   |
+| `BulkSendTotal`                            | `sms.bulk.send.total`            | Counter |
+| `BulkSendSuccess`                          | `sms.bulk.send.success`          | Counter |
+| `BulkSendFailure`                          | `sms.bulk.send.failure`          | Counter |
+| `BulkSendLastDurationMs`                   | `sms.bulk.send.last_duration_ms` | Gauge   |
 
 ## MMS helpers
 
@@ -500,7 +503,9 @@ public class MyProviderOptions : SmsServiceOptions
 }
 ```
 
-2. Implement `SmsServiceBase<TResult>`. Override `SendCoreAsync` (the provider call after `SmsRequest` is built), `GetMessageByIdAsync`, `GetMessagesAsync`, `TestConnectionCoreAsync`, and `CreateFailure`. Everything else on `ISmsService` (`SendSmsAsync`, `SendBulkAsync`, events, concurrency throttling, metrics hooks) stays in the base.
+2. Implement `SmsServiceBase<TResult>`. Override `SendCoreAsync` (the provider call after `SmsRequest` is built), `GetMessageByIdAsync`, `GetMessagesAsync`,
+   `TestConnectionCoreAsync`, and `CreateFailure`. Everything else on `ISmsService` (`SendSmsAsync`, `SendBulkAsync`, events, concurrency throttling, metrics hooks) stays in the
+   base.
 
 ```csharp
 public class MyProviderSmsService : SmsServiceBase<Result<SmsRequest>>

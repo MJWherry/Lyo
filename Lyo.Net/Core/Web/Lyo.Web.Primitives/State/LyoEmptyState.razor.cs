@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Components;
 namespace Lyo.Web.Primitives;
 
 /// <summary>
-/// The "nothing here" panel: centred icon, headline, explanation, and optional actions. Use it wherever a list, grid, or panel can legitimately have no rows, instead
-/// of leaving the area blank or reaching for an informational <c>MudAlert</c>, which reads as a problem rather than an empty set.
+/// The "nothing here" panel: centred icon, headline, explanation, and optional actions. Use it wherever a list, grid, or panel can legitimately have no rows, instead of
+/// leaving the area blank or reaching for an informational <c>MudAlert</c>, which reads as a problem rather than an empty set.
 /// </summary>
 /// <remarks>
 /// <see cref="LyoResultBoundary{T}" /> renders one of these by default, so most callers get it without composing it directly.

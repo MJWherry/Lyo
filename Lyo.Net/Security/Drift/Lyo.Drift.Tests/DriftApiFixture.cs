@@ -1,13 +1,12 @@
 using Lyo.Api;
 using Lyo.Api.Middleware;
 using Lyo.Cache;
-using Lyo.Common.Json;
 using Lyo.Drift.Api;
 using Lyo.Drift.Postgres;
 using Lyo.Drift.Postgres.Database;
+using Lyo.Json;
 using Lyo.Testing.Containers;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,12 +29,14 @@ public sealed class DriftApiFixture : PostgresContainerFixtureBase
         builder.Services.ConfigureHttpJsonOptions(o => LyoJsonSerializerOptions.ApplyTo(o.SerializerOptions));
         builder.Services.AddLocalCache();
         builder.Services.AddLyoQueryServices();
-        builder.Services.AddPostgresDriftManagement(new PostgresDriftOptions {
-            ConnectionString = connectionString,
-            EnableAutoMigrations = true,
-            MaxSnapshotJsonBytes = 1024,
-            SnapshotRetention = TimeSpan.FromDays(1)
-        });
+        builder.Services.AddPostgresDriftManagement(
+            new PostgresDriftOptions {
+                ConnectionString = connectionString,
+                EnableAutoMigrations = true,
+                MaxSnapshotJsonBytes = 1024,
+                SnapshotRetention = TimeSpan.FromDays(1)
+            });
+
         builder.Services.AddDriftRetentionService();
         var app = builder.Build();
         app.UseMiddleware<LoggingMiddleware>();

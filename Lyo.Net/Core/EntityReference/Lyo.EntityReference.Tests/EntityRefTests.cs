@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 
 // ReSharper disable PropertyCanBeMadeInitOnly.Local
@@ -65,14 +66,14 @@ public class EntityRefTests
     [Fact]
     public void For_WithEntityAndSelector_NullSelector_Throws()
     {
-        var docket = new TestDocket { Id = Guid.NewGuid() };
+        var docket = new TestDocket { Id = LyoGuid.CreateV7() };
         Assert.Throws<ArgumentNullException>(() => EntityRef.For(docket, null!));
     }
 
     [Fact]
     public void For_WithEntityAndSelector_SelectorReturnsNull_Throws()
     {
-        var docket = new TestDocket { Id = Guid.NewGuid() };
+        var docket = new TestDocket { Id = LyoGuid.CreateV7() };
         Assert.Throws<ArgumentNullException>(() => EntityRef.For(docket, _ => (object?)null));
     }
 

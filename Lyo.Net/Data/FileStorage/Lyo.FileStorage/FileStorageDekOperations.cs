@@ -15,9 +15,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyo.FileStorage;
 
-/// <summary>
-/// Batch DEK migration (re-wrapping envelope keys) and full payload rotation (decrypt, then re-encrypt ciphertext) via <see cref="IFileStoragePhysicalIO" />.
-/// </summary>
+/// <summary>Batch DEK migration (re-wrapping envelope keys) and full payload rotation (decrypt, then re-encrypt ciphertext) via <see cref="IFileStoragePhysicalIO" />.</summary>
 internal sealed class FileStorageDekOperations
 {
     private const long LargePayloadSpillThresholdBytes = 32L * 1024 * 1024;
@@ -102,11 +100,11 @@ internal sealed class FileStorageDekOperations
         var errors = new List<string>();
         for (var i = 0; i < filesList.Count; i += batchSize) {
             ct.ThrowIfCancellationRequested();
-            var batch = filesList.Skip(i).Take(batchSize).ToList();
-            _logger.LogDebug(
-                "Processing batch {BatchNumber} ({StartIndex}-{EndIndex} of {Total})", i / batchSize + 1, i + 1, Math.Min(i + batchSize, filesList.Count), filesList.Count);
-
-            foreach (var fileMetadata in batch) {
+            // The batch only exists for log granularity, so walk the list in place rather than re-enumerating a prefix of it per batch.
+            var batchEnd = Math.Min(i + batchSize, filesList.Count);
+            _logger.LogDebug("Processing batch {BatchNumber} ({StartIndex}-{EndIndex} of {Total})", i / batchSize + 1, i + 1, batchEnd, filesList.Count);
+            for (var j = i; j < batchEnd; j++) {
+                var fileMetadata = filesList[j];
                 ct.ThrowIfCancellationRequested();
                 try {
                     if (fileMetadata.DataEncryptionKeyId == actualTargetKeyId && fileMetadata.DataEncryptionKeyVersion == actualTargetVersion) {
@@ -170,14 +168,13 @@ internal sealed class FileStorageDekOperations
         return migResult;
     }
 
-    /// <summary>
-    /// Decrypts each requested file entirely, re-seals ciphertext with refreshed KEK/version material from policy or explicit overrides, and writes updated metadata hashes.
-    /// </summary>
+    /// <summary>Decrypts each requested file entirely, re-seals ciphertext with refreshed KEK/version material from policy or explicit overrides, and writes updated metadata hashes.</summary>
     /// <remarks>Rotates payloads end to end. Failures accumulate per file while others keep processing.</remarks>
     /// <param name="fileIds">File ids slated for cryptographic rotation.</param>
     /// <param name="targetKeyId">Optional override KEK id. Omit to derive per-record defaults.</param>
     /// <param name="targetKeyVersion">
-    /// Optional override KEK version. Omit together with <paramref name="targetKeyId" /> to keep recorded versions unless a new KEK requires fresh versions.
+    /// Optional override KEK version. Omit together with <paramref name="targetKeyId" /> to keep recorded versions unless a new KEK requires fresh
+    /// versions.
     /// </param>
     /// <param name="batchSize">Chunk size that sets batch logging boundaries.</param>
     /// <param name="ct">Cancellation token passed through storage pipelines.</param>
@@ -200,13 +197,12 @@ internal sealed class FileStorageDekOperations
         var errors = new List<string>();
         for (var i = 0; i < requestedFileIds.Count; i += batchSize) {
             ct.ThrowIfCancellationRequested();
-            var batch = requestedFileIds.Skip(i).Take(batchSize).ToList();
-            _logger.LogDebug(
-                "Processing DEK rotation batch {BatchNumber} ({StartIndex}-{EndIndex} of {Total})", i / batchSize + 1, i + 1, Math.Min(i + batchSize, requestedFileIds.Count),
-                requestedFileIds.Count);
-
-            foreach (var fileId in batch) {
+            // The batch only exists for log granularity, so walk the list in place rather than re-enumerating a prefix of it per batch.
+            var batchEnd = Math.Min(i + batchSize, requestedFileIds.Count);
+            _logger.LogDebug("Processing DEK rotation batch {BatchNumber} ({StartIndex}-{EndIndex} of {Total})", i / batchSize + 1, i + 1, batchEnd, requestedFileIds.Count);
+            for (var j = i; j < batchEnd; j++) {
                 ct.ThrowIfCancellationRequested();
+                var fileId = requestedFileIds[j];
                 try {
                     var fileMetadata = await _metadataService.GetMetadataAsync(fileId, ct).ConfigureAwait(false);
                     ValidateDekRotationMetadata(fileMetadata);
@@ -269,8 +265,8 @@ internal sealed class FileStorageDekOperations
     }
 
     /// <summary>
-    /// Returns a seekable stream positioned at 0 that holds the decrypted payload of <paramref name="metadata" />. Small payloads stay in a pre-sized <see cref="MemoryStream" />;
-    /// payloads over <see cref="LargePayloadSpillThresholdBytes" /> spill to a temp file (DeleteOnClose) to bound RAM.
+    /// Returns a seekable stream positioned at 0 that holds the decrypted payload of <paramref name="metadata" />. Small payloads stay in a pre-sized <see cref="MemoryStream" />
+    /// ; payloads over <see cref="LargePayloadSpillThresholdBytes" /> spill to a temp file (DeleteOnClose) to bound RAM.
     /// </summary>
     private async Task<Stream> ReadEncryptedPayloadAsync(FileStoreResult metadata, CancellationToken ct)
     {
@@ -306,9 +302,7 @@ internal sealed class FileStorageDekOperations
         }
     }
 
-    /// <summary>
-    /// Builds the seekable destination buffer for the DEK rotate decrypt pass. Spills to a temp file (DeleteOnClose) past <see cref="LargePayloadSpillThresholdBytes" />.
-    /// </summary>
+    /// <summary>Builds the seekable destination buffer for the DEK rotate decrypt pass. Spills to a temp file (DeleteOnClose) past <see cref="LargePayloadSpillThresholdBytes" />.</summary>
     private static Stream CreateDecryptedSpillStream(long originalSize)
     {
         if (originalSize <= LargePayloadSpillThresholdBytes) {

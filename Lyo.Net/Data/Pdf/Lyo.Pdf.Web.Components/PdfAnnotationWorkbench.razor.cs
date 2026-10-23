@@ -1,5 +1,4 @@
 using Lyo.Pdf.Web.Components.PdfAnnotator;
-using Microsoft.AspNetCore.Components;
 
 namespace Lyo.Pdf.Web.Components;
 

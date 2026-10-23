@@ -17,14 +17,10 @@ public interface IWebRendererService
     Task<string> RenderToHtmlAsync<T>(Dictionary<string, object>? parameterDictionary = null, CancellationToken ct = default)
         where T : IComponent;
 
-    /// <summary>
-    /// Renders <paramref name="componentType" /> the same way as the generic overload. The type must implement <see cref="IComponent" />.
-    /// </summary>
+    /// <summary>Renders <paramref name="componentType" /> the same way as the generic overload. The type must implement <see cref="IComponent" />.</summary>
     Task<string> RenderToHtmlAsync(Type componentType, Dictionary<string, object>? parameterDictionary = null, CancellationToken ct = default);
 
-    /// <summary>
-    /// Resolves <paramref name="typeFullName" /> with <c>LyoTypeInfo.TryResolveClrType</c> and renders it. The type must implement <see cref="IComponent" />.
-    /// </summary>
+    /// <summary>Resolves <paramref name="typeFullName" /> with <c>LyoTypeInfo.TryResolveClrType</c> and renders it. The type must implement <see cref="IComponent" />.</summary>
     Task<string> RenderToHtmlAsync(string typeFullName, Dictionary<string, object>? parameterDictionary = null, CancellationToken ct = default);
 
     string RenderToHtml<T>(Dictionary<string, object>? parameterDictionary = null)
@@ -72,7 +68,14 @@ public interface IWebRendererService
     byte[] RenderToHtmlBytes<T, TOptions>(TOptions options)
         where T : IComponent where TOptions : class;
 
+    /// <summary>Captures <paramref name="htmlContent" /> as a PDF. A CSS <c>@page</c> size wins; otherwise the page is A4.</summary>
     Task<byte[]> ConvertHtmlToPdfAsync(string htmlContent, CancellationToken ct = default);
+
+    /// <summary>Writes a PDF capture of <paramref name="html" /> to <paramref name="destination" /> without buffering a second copy in the service.</summary>
+    Task CopyCaptureToAsync(string html, Stream destination, CancellationToken ct = default);
+
+    /// <summary>Writes a capture of <paramref name="html" /> to <paramref name="destination" /> using <paramref name="request" />.</summary>
+    Task CopyCaptureToAsync(string html, Stream destination, WebRenderReq request, CancellationToken ct = default);
 
     byte[] ConvertHtmlToPdf(string htmlContent);
 

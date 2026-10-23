@@ -8,6 +8,5 @@ public sealed record FileRetrievedResult(Guid FileId, long FileSize, bool WasCom
     : FileStorageResult(FileId, DateTime.UtcNow)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => $"FileRetrievedResult: FileId={FileId}, FileSize={FileSize}, compressed={WasCompressed}, encrypted={WasEncrypted}";
+    public override string ToString() => $"FileRetrievedResult: FileId={FileId}, FileSize={FileSize}, compressed={WasCompressed}, encrypted={WasEncrypted}";
 }

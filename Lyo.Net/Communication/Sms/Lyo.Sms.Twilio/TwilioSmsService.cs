@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Twilio.Clients;
 using Twilio.Rest.Api.V2010;
 using Twilio.Rest.Api.V2010.Account;
+
 #if NETSTANDARD2_0
 #pragma warning disable CS8602 // Dereference of a possibly null reference.
 #endif
@@ -20,10 +21,7 @@ namespace Lyo.Sms.Twilio;
 
 /// <summary>Twilio API-backed SMS that sends SMS and MMS.</summary>
 /// <remarks>
-/// <para>
-/// Thread-safe: instance fields are readonly, and bulk work uses the base class's thread-safe collections and synchronization
-/// primitives.
-/// </para>
+/// <para>Thread-safe: instance fields are readonly, and bulk work uses the base class's thread-safe collections and synchronization primitives.</para>
 /// </remarks>
 public sealed class TwilioSmsService : SmsServiceBase<TwilioSmsResult>, ISmsService
 {

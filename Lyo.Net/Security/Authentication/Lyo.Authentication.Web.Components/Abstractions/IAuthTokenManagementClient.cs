@@ -3,9 +3,8 @@ using Lyo.Authentication.Web.Components.Models;
 namespace Lyo.Authentication.Web.Components.Abstractions;
 
 /// <summary>
-/// Host-agnostic HTTP wrapper for the <c>/tokens</c> management endpoints in <c>Lyo.Authentication.AspNetCore</c>. The host adapter attaches the bearer
-/// token (Server-side via <c>LyoAuthDelegatingHandler</c>, WASM-side via <see cref="Wasm.WasmAuthDelegatingHandler" />) so callers only need the typed methods
-/// below.
+/// Host-agnostic HTTP wrapper for the <c>/tokens</c> management endpoints in <c>Lyo.Authentication.AspNetCore</c>. The host adapter attaches the bearer token (Server-side
+/// via <c>LyoAuthDelegatingHandler</c>, WASM-side via <see cref="Wasm.WasmAuthDelegatingHandler" />) so callers only need the typed methods below.
 /// </summary>
 public interface IAuthTokenManagementClient
 {

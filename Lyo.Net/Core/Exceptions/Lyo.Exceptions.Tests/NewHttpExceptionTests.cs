@@ -13,10 +13,7 @@ public class BadRequestExceptionTests
     }
 
     [Fact]
-    public void MessageConstructor_UsesMessage()
-    {
-        HttpExceptionAssert.MessageIs(new BadRequestException("Body is malformed."), "Body is malformed.");
-    }
+    public void MessageConstructor_UsesMessage() => HttpExceptionAssert.MessageIs(new BadRequestException("Body is malformed."), "Body is malformed.");
 
     [Fact]
     public void MessageConstructor_WithInner_SetsInnerException()

@@ -8,11 +8,15 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\Authorization\Lyo.Authorization.Web.Components\Lyo.Authorization.Web.Components.csproj"/>
         <ProjectReference Include="..\Lyo.Authentication.Models\Lyo.Authentication.Models.csproj"/>
         <ProjectReference Include="..\..\..\Apps\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>
-        <ProjectReference Include="..\..\..\Apps\Web\Lyo.Web.Components.Export\Lyo.Web.Components.Export.csproj"/>
-        <ProjectReference Include="..\..\..\Apps\Web\Lyo.Web.Components.Export.Csv\Lyo.Web.Components.Export.Csv.csproj"/>
-        <ProjectReference Include="..\..\..\Apps\Web\Lyo.Web.Components.Export.Xlsx\Lyo.Web.Components.Export.Xlsx.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Web\Export\Lyo.Web.Components.Export\Lyo.Web.Components.Export.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Web\Export\Lyo.Web.Components.Export.Csv\Lyo.Web.Components.Export.Csv.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Web\Export\Lyo.Web.Components.Export.Yaml\Lyo.Web.Components.Export.Yaml.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Web\Export\Lyo.Web.Components.Export.Xml\Lyo.Web.Components.Export.Xml.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Web\Export\Lyo.Web.Components.Export.Toml\Lyo.Web.Components.Export.Toml.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Web\Export\Lyo.Web.Components.Export.Xlsx\Lyo.Web.Components.Export.Xlsx.csproj"/>
         <ProjectReference Include="..\..\..\Apps\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
         <ProjectReference Include="..\..\..\Apps\Http\Lyo.Http.Client\Lyo.Http.Client.csproj"/>
     </ItemGroup>

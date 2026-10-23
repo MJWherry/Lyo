@@ -5,8 +5,8 @@ namespace Lyo.TestGateway.Services;
 
 /// <summary>
 /// Stand-in <see cref="IAuthPasswordSignIn" /> for the Test Gateway. Registered so the username/password card appears on the shared login page, but Lyo has no password grant
-/// yet — each attempt is refused with a short explanation. Replace with a real implementation (your <c>/account/login</c> endpoint, an identity provider password grant,
-/// or similar) when local password sign-in is needed.
+/// yet — each attempt is refused with a short explanation. Replace with a real implementation (your <c>/account/login</c> endpoint, an identity provider password grant, or similar)
+/// when local password sign-in is needed.
 /// </summary>
 internal sealed class GatewayPlaceholderPasswordSignIn : IAuthPasswordSignIn
 {

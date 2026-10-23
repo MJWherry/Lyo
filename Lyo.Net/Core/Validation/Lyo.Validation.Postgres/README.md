@@ -1,6 +1,7 @@
 # Lyo.Validation.Postgres
 
-PostgreSQL + EF Core implementation of [`IValidationSchemaStore`](../Lyo.Validation/README.md). Named validation schemas live in schema `validation`, table `schema`, with `constraints_json` / `messages_json` as jsonb.
+PostgreSQL + EF Core implementation of [`IValidationSchemaStore`](../Lyo.Validation/README.md). Named validation schemas live in schema `validation`, table `schema`, with
+`constraints_json` / `messages_json` as jsonb.
 
 **Archetype A (Lyo domain).** Hosts expose or fetch `ValidationSchema` JSON on their own API. This package is the database backend only.
 
@@ -20,7 +21,8 @@ services.AddPostgresValidationStoreFromConfiguration(configuration);
 
 ## Database schema
 
-PostgreSQL schema `validation`. Table `schema` columns: `id`, unique `key`, `target_type_name`, `description`, `constraints_json` (WhereClause), `messages_json`, timestamps. Migrations history lives in `__EFMigrationsHistory` in the same schema.
+PostgreSQL schema `validation`. Table `schema` columns: `id`, unique `key`, `target_type_name`, `description`, `constraints_json` (WhereClause), `messages_json`, timestamps.
+Migrations history lives in `__EFMigrationsHistory` in the same schema.
 
 ## Migrations
 
@@ -30,12 +32,13 @@ At design time set `VALIDATION_CONNECTION_STRING` and run `dotnet ef migrations 
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common.Json` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
+- `Lyo.Json` (direct, lyo)
 - `Lyo.Postgres` (direct, lyo)
 - `Lyo.Query.Models` (direct, lyo)
 - `Lyo.Validation` (direct, lyo)
 - `Microsoft.EntityFrameworkCore.Design` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
@@ -53,4 +56,5 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` (transitive, third-party)
 - `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

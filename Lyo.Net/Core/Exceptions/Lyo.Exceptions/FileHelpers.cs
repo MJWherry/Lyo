@@ -110,8 +110,8 @@ public static class FileHelpers
     }
 
     /// <summary>
-    /// Combines <see cref="NormalizePathPrefix" /> and <see cref="ThrowIfPathPrefixTraversal" />: returns the trimmed prefix on success and throws <see cref="ArgumentException" />
-    /// when the (normalized) value contains a traversal pattern.
+    /// Combines <see cref="NormalizePathPrefix" /> and <see cref="ThrowIfPathPrefixTraversal" />: returns the trimmed prefix on success and throws
+    /// <see cref="ArgumentException" /> when the (normalized) value contains a traversal pattern.
     /// </summary>
     /// <param name="value">Optional path prefix.</param>
     /// <param name="paramName">Supplies <see cref="ArgumentException.ParamName" />. Omitted: caller's argument expression. Override with <c>nameof(...)</c> when needed.</param>

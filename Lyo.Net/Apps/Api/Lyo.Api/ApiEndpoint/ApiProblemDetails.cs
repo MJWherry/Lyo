@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 using Lyo.Api.Models;
 using Lyo.Api.Models.Error;
 using Microsoft.AspNetCore.Http;
@@ -29,12 +30,12 @@ public static class ApiErrorResponseFactory
     }
 
     /// <summary>Builds a problem via <see cref="CreateForError" /> and throws <see cref="ApiErrorException" /> so middleware can write and log it.</summary>
-    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
+    [DoesNotReturn]
     public static IResult ThrowForError(HttpContext httpContext, LyoProblemDetails? error, IEnumerable<object?>? keys = null)
         => throw ApiErrorException.From(CreateForError(httpContext, error, keys));
 
     /// <summary>Builds a not-found problem and throws <see cref="ApiErrorException" /> so middleware can write and log it.</summary>
-    [System.Diagnostics.CodeAnalysis.DoesNotReturn]
+    [DoesNotReturn]
     public static IResult ThrowNotFound(HttpContext httpContext, IEnumerable<object?>? keys = null, string? detail = null)
         => throw ApiErrorException.From(CreateNotFound(httpContext, keys, detail));
 

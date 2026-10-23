@@ -1,0 +1,16 @@
+{
+  "id": "Lyo.FileSystemWatcher.Seed",
+  "name": "Lyo.FileSystemWatcher.Seed",
+  "area": "Data",
+  "tagline": "EF seed of file system watches, snapshots, and changes.",
+  "description": "EF seed of Count watches, one snapshot each, and one change on that snapshot. Schema filesystem_watcher.",
+  "features": [],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/FileSystemWatcher/Lyo.FileSystemWatcher.Seed/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

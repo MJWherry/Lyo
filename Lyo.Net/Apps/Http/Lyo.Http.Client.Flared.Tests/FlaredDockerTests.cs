@@ -12,13 +12,11 @@ public sealed class FlaredDockerTests
         if (string.Equals(Environment.GetEnvironmentVariable("NO_DOCKER"), "1", StringComparison.Ordinal))
             Assert.Skip("NO_DOCKER=1");
 
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var container = await ContainerTestHost.TryStartAsync(
             "ghcr.io/flaresolverr/flaresolverr:latest",
-            builder => builder
-                .WithPortBinding(8191, true)
-                .WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(8191)),
-            ct);
+            builder => builder.WithPortBinding(8191, true).WithWaitStrategy(Wait.ForUnixContainer().UntilInternalTcpPortIsAvailable(8191)), ct);
+
         if (container is null)
             Assert.Skip("Docker is not available.");
 

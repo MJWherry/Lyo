@@ -1,6 +1,7 @@
 # Lyo.QRCode.QRCoder
 
-`IQRCodeService` from [`Lyo.QRCode`](../Lyo.QRCode/README.md) implemented with QRCoder. Pick this for JPEG / Bitmap on Windows or for QRCoder's renderers. `BuiltInQRCodeService` is the in-library ISO encoder with no extra NuGet.
+`IQRCodeService` from [`Lyo.QRCode`](../Lyo.QRCode/README.md) implemented with QRCoder. Pick this for JPEG / Bitmap on Windows or for QRCoder's renderers. `BuiltInQRCodeService` is
+the in-library ISO encoder with no extra NuGet.
 
 ## Examples
 
@@ -46,16 +47,18 @@ services.AddQRCoderQrCodeServiceFromConfiguration(builder.Configuration);
 
 ## Types
 
-| Type | Description |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `QRCoderQRCodeService` | `IQRCodeService` implementation. No image dependencies. Logo, frame, caption, and padding are the caller's job through `Lyo.Images.IImageDecorationService`. |
+| Type                             | Description                                                                                                                                                                                             |
+|----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `QRCoderQRCodeService`           | `IQRCodeService` implementation. No image dependencies. Logo, frame, caption, and padding are the caller's job through `Lyo.Images.IImageDecorationService`.                                            |
 | `QRCoderQrCodeServiceExtensions` | Container helpers: `AddQRCoderQrCodeService(Action<QRCodeServiceOptions>?)`, `AddQRCoderQrCodeService(QRCodeServiceOptions)`, `AddQRCoderQrCodeServiceFromConfiguration(IConfiguration, sectionName?)`. |
 
 ## Platform and decoration
 
 - JPEG / Bitmap go through `System.Drawing` and run on Windows. PNG/SVG paths are cross-platform.
 - `ReadFromImageAsync` decoding uses `QRCodeZxingRead` in this package (ZXing.Net + ImageSharp), matching the built-in service.
-- **Decoration is out of scope.** Center logos and frames are no longer applied by the QRCoder service. Send the returned bytes through `Lyo.Images.IImageDecorationService.Pipeline(...)` and call `Overlay` / `AddFrame` / `AddCaption` / `AddOuterPadding` as needed (see the [`Lyo.Images` README](../../Images/Lyo.Images/README.md)).
+- **Decoration is out of scope.** Center logos and frames are no longer applied by the QRCoder service. Send the returned bytes through
+  `Lyo.Images.IImageDecorationService.Pipeline(...)` and call `Overlay` / `AddFrame` / `AddCaption` / `AddOuterPadding` as needed (see the [
+  `Lyo.Images` README](../../Images/Lyo.Images/README.md)).
 
 ## Dependencies
 

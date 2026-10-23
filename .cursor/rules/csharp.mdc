@@ -13,6 +13,7 @@ DI registration (`Add{Feature}` / `FromConfiguration` / `TryAdd*`) is in the cor
 - Return the widest-correct type: `IReadOnlyList<T>`, `IReadOnlyDictionary<K,V>`, `IAsyncEnumerable<T>`. Return `List<T>` or `T[]` only when mutation or a fixed buffer is the contract.
 - Accept the weakest input that is still correct (`IEnumerable<T>`, `Stream`, `IConfiguration`).
 - Prefer existing generic primitives (`Lyo.Result`, query builders, job/report runners) over a one-off type that does the same job.
+- Mint new GUIDs with `LyoGuid.CreateV7()`. Use `LyoGuid.CreateV4()` only when a version-4 UUID is required.
 
 ```csharp
 // ❌ public List<Row> GetRows() => query.ToList();

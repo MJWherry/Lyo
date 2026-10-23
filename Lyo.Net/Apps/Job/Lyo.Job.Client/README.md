@@ -1,6 +1,7 @@
 # Lyo.Job.Client
 
-Wraps `IApiClient` as a typed client for the Lyo Job API, exposing run-lifecycle methods (`StartAsync`, `LogAsync`, `FinishAsync`, `RequeueAsync`) and worker-instance endpoints from `Lyo.Job.Models.Constants.Rest.Job`.
+Wraps `IApiClient` as a typed client for the Lyo Job API, exposing run-lifecycle methods (`StartAsync`, `LogAsync`, `FinishAsync`, `RequeueAsync`) and worker-instance endpoints
+from `Lyo.Job.Models.Constants.Rest.Job`.
 
 ## Examples
 
@@ -37,7 +38,8 @@ await myClient.Jobs.Runs.ResyncQueuedAsync(); // republish due Queued runs missi
 
 ## Prefix on routes
 
-If `JobClientOptions.RoutePrefix` is set (e.g. `https://localhost:5074`), every route is `{prefix}/Job/Run/...`. An empty prefix keeps routes relative and uses `HttpClient.BaseAddress`.
+If `JobClientOptions.RoutePrefix` is set (e.g. `https://localhost:5074`), every route is `{prefix}/Job/Run/...`. An empty prefix keeps routes relative and uses
+`HttpClient.BaseAddress`.
 
 ## Dependencies
 
@@ -54,13 +56,14 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Core` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
+- `Lyo.EntityReference.Models` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
@@ -74,6 +77,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.Diagnostics.DiagnosticSource` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.RateLimiting` `10.0.5` (transitive, microsoft)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft)

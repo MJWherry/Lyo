@@ -6,9 +6,7 @@ namespace Lyo.EntityReference.Postgres;
 /// <summary>Resolves a nullable caller tenant id under a feature or global <see cref="TenancyMode" /> policy.</summary>
 public static class TenancyResolver
 {
-    /// <summary>
-    /// Resolves the effective tenant id (or <see langword="null" /> for system rows) using per-feature options, falling back to the global host options.
-    /// </summary>
+    /// <summary>Resolves the effective tenant id (or <see langword="null" /> for system rows) using per-feature options, falling back to the global host options.</summary>
     /// <param name="tenantId">Caller-supplied tenant. <see cref="Guid.Empty" /> is treated the same as <see langword="null" />.</param>
     /// <param name="feature">Per-feature tenancy block. Each unset property inherits from <paramref name="global" />.</param>
     /// <param name="global">Global host options providing the fallback <see cref="EntityRefOptions.Mode" /> and <see cref="EntityRefOptions.DefaultTenantId" />.</param>

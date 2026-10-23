@@ -4,12 +4,13 @@ using Lyo.Common.Core.Extensions;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+
 namespace Lyo.Authentication.Client;
 
 /// <summary>
-/// Outbound <see cref="DelegatingHandler" /> that adds <c>Authorization: Bearer &lt;access_token&gt;</c> on every request through the API client. When the upstream
-/// returns 401 (or the access token is within <see cref="LyoAuthClientOptions.AccessTokenSkew" /> of expiry), the handler refreshes via
-/// <see cref="LyoAuthApiClient.RefreshAsync" />, updates the active session, and retries the original request once.
+/// Outbound <see cref="DelegatingHandler" /> that adds <c>Authorization: Bearer &lt;access_token&gt;</c> on every request through the API client. When the upstream returns
+/// 401 (or the access token is within <see cref="LyoAuthClientOptions.AccessTokenSkew" /> of expiry), the handler refreshes via <see cref="LyoAuthApiClient.RefreshAsync" />, updates
+/// the active session, and retries the original request once.
 /// </summary>
 public sealed class LyoAuthDelegatingHandler : DelegatingHandler
 {

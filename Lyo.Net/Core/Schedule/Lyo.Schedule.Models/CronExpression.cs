@@ -3,9 +3,9 @@ using System.Diagnostics;
 namespace Lyo.Schedule.Models;
 
 /// <summary>
-/// Parses cron expressions and computes the next occurrence. Accepts standard 5-field and extended 6-field (with seconds) forms. Field syntax: values, ranges
-/// (n-m), steps (*/n or n-m/n), comma-separated lists, named months (JAN-DEC) and days (SUN-SAT), and <c>?</c> as an alias for <c>*</c>. When both day-of-month and day-of-week are
-/// restricted, OR logic is applied (Vixie cron behaviour).
+/// Parses cron expressions and computes the next occurrence. Accepts standard 5-field and extended 6-field (with seconds) forms. Field syntax: values, ranges (n-m), steps
+/// (*/n or n-m/n), comma-separated lists, named months (JAN-DEC) and days (SUN-SAT), and <c>?</c> as an alias for <c>*</c>. When both day-of-month and day-of-week are restricted, OR
+/// logic is applied (Vixie cron behaviour).
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class CronExpression

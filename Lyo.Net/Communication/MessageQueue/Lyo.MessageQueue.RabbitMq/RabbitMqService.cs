@@ -3,12 +3,13 @@ using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 using System.Text;
 using System.Text.Json;
-using Lyo.Common.Json;
 using Lyo.Common.Core.Conversion;
 using Lyo.Common.Core.Extensions;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
 using Lyo.Health;
+using Lyo.Json;
 using Lyo.Metrics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -656,9 +657,8 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
     }
 
     /// <summary>
-    /// Publishes a message that appears on <paramref name="queueName" /> only after <paramref name="delay" />. Uses a companion wait queue
-    /// (<c>{queueName}.wait</c>) whose dead-letter target is the destination: the payload is published there with a per-message TTL, then the broker
-    /// dead-letters it when the TTL expires. Needs no broker plugin.
+    /// Publishes a message that appears on <paramref name="queueName" /> only after <paramref name="delay" />. Uses a companion wait queue (<c>{queueName}.wait</c>) whose
+    /// dead-letter target is the destination: the payload is published there with a per-message TTL, then the broker dead-letters it when the TTL expires. Needs no broker plugin.
     /// </summary>
     public async Task<bool> SendToQueueDelayed(string queueName, byte[] data, TimeSpan delay, CancellationToken ct = default)
     {
@@ -878,7 +878,7 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
 
     /// <summary>Publish properties for every outbound message: persistence from <see cref="RabbitMqOptions.PersistentMessages" />, a message id, and a UTC timestamp.</summary>
     private BasicProperties CreateBasicProperties()
-        => new() { Persistent = _options.PersistentMessages, MessageId = Guid.NewGuid().ToString("D"), Timestamp = new(DateTimeOffset.UtcNow.ToUnixTimeSeconds()) };
+        => new() { Persistent = _options.PersistentMessages, MessageId = LyoGuid.CreateV7().ToString("D"), Timestamp = new(DateTimeOffset.UtcNow.ToUnixTimeSeconds()) };
 
     /// <summary>Converts a management API queue object into <see cref="MessageQueueInfo" />. AMQP flags, <c>x-*</c> arguments, and rates go into AdditionalProperties.</summary>
     private static MessageQueueInfo ParseQueueInfo(JsonElement el)
@@ -920,12 +920,8 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
     /// <summary>Converts a management API exchange object into <see cref="MessageExchangeInfo" />.</summary>
     private static MessageExchangeInfo ParseExchangeInfo(JsonElement el)
         => new(
-            el.TryGetProperty("name", out var name) ? name.GetString() ?? string.Empty : string.Empty,
-            el.TryGetProperty("type", out var type) ? type.GetString() : null,
-            ReadBool(el, "durable"),
-            ReadBool(el, "auto_delete"),
-            ReadBool(el, "internal"),
-            ReadArguments(el) ?? new Dictionary<string, object>());
+            el.TryGetProperty("name", out var name) ? name.GetString() ?? string.Empty : string.Empty, el.TryGetProperty("type", out var type) ? type.GetString() : null,
+            ReadBool(el, "durable"), ReadBool(el, "auto_delete"), ReadBool(el, "internal"), ReadArguments(el) ?? new Dictionary<string, object>());
 
     private static bool ReadBool(JsonElement el, string propertyName)
         => el.TryGetProperty(propertyName, out var value) && TypeConversion.TryFromJsonElement<bool>(in value, out var parsed) && parsed;
@@ -1084,7 +1080,7 @@ public sealed class RabbitMqService : IRabbitMqService, IAsyncDisposable
     {
         SemaphoreSlim? semaphore = null;
         var semaphoreAcquired = false;
-        var messageId = Guid.NewGuid().ToString("N").Substring(0, 8); // Short ID for logging
+        var messageId = LyoGuid.CreateV7().ToString("N").Substring(0, 8); // Short ID for logging
         try {
             // Take the semaphore when a per-queue or global processing limit is on
             if (_processingSemaphores.TryGetValue(queueName, out semaphore)) {

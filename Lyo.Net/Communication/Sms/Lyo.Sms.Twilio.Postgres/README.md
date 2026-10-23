@@ -1,24 +1,28 @@
 # Lyo.Sms.Twilio.Postgres
 
-PostgreSQL EF Core store for Twilio SMS traces: `TwilioSmsDbContext` and `TwilioSmsLogEntity`. Complements [`Lyo.Sms.Twilio`](../Lyo.Sms.Twilio/README.md). It never talks to Twilio on its own.
+PostgreSQL EF Core store for Twilio SMS traces: `TwilioSmsDbContext` and `TwilioSmsLogEntity`. Complements [`Lyo.Sms.Twilio`](../Lyo.Sms.Twilio/README.md). It never talks to Twilio
+on its own.
 
 ## `TwilioSmsLogEntity`
 
-`Id` holds the Twilio message SID (max 34), not a random GUID. Participant fields: `To`, `From`, `Body`, `MediaUrlsJson`. Outcome: `IsSuccess`, `Message`, `ErrorMessage`, `ElapsedTimeMs`, `Status`, `ErrorCode`. Twilio fields: `NumSegments`, `AccountSid`, `Price` / `PriceUnit`, `Direction` (`MessageDirection`, defaults outbound). `DateCreated` / `DateSent` / `DateUpdated` come from the provider. `CreatedTimestamp` / `UpdatedTimestamp` track the row.
+`Id` holds the Twilio message SID (max 34), not a random GUID. Participant fields: `To`, `From`, `Body`, `MediaUrlsJson`. Outcome: `IsSuccess`, `Message`, `ErrorMessage`,
+`ElapsedTimeMs`, `Status`, `ErrorCode`. Twilio fields: `NumSegments`, `AccountSid`, `Price` / `PriceUnit`, `Direction` (`MessageDirection`, defaults outbound). `DateCreated` /
+`DateSent` / `DateUpdated` come from the provider. `CreatedTimestamp` / `UpdatedTimestamp` track the row.
 
 ## `PostgresTwilioSmsOptions`
 
-| Constant | Value |
-| ------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `SectionName` | `"PostgresTwilioSms"` |
-| `Schema` | `"sms"` (same schema name as [`Lyo.Sms.Postgres`](../Lyo.Sms.Postgres/README.md), a different DbContext and tables) |
+| Constant      | Value                                                                                                               |
+|---------------|---------------------------------------------------------------------------------------------------------------------|
+| `SectionName` | `"PostgresTwilioSms"`                                                                                               |
+| `Schema`      | `"sms"` (same schema name as [`Lyo.Sms.Postgres`](../Lyo.Sms.Postgres/README.md), a different DbContext and tables) |
 
 `EnableAutoMigrations` follows [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md) conventions.
 
 ## Service registration
 
 - `AddTwilioSmsDbContext(string connectionString)` wires a factory plus a scoped `TwilioSmsDbContext`.
-- `AddTwilioSmsDbContextFactory(PostgresTwilioSmsOptions)` wires singleton options, `AddDbContextFactory`, and `UseNpgsql` with the `sms.__EFMigrationsHistory` history table (schema `sms`).
+- `AddTwilioSmsDbContextFactory(PostgresTwilioSmsOptions)` wires singleton options, `AddDbContextFactory`, and `UseNpgsql` with the `sms.__EFMigrationsHistory` history table
+  (schema `sms`).
 - `AddTwilioSmsDbContextFactoryFromConfiguration(IConfiguration, section = PostgresTwilioSmsOptions.SectionName)` binds config, then registers the factory.
 
 ## Dependencies

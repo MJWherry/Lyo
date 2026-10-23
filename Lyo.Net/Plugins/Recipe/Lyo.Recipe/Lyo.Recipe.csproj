@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Household recipes: catalog ingredients, ordered steps, hierarchical categories, and FileStorage attachments. Persistence facade is IRecipeStore.</Description>
+        <PackageTags>recipe cooking cookbook household</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\EntityReference\Lyo.EntityReference.Models\Lyo.EntityReference.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+        <ProjectReference Include="..\Lyo.Recipe.Models\Lyo.Recipe.Models.csproj"/>
+    </ItemGroup>
+
+</Project>

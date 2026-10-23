@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Lock.Abstractions;
 using Lyo.Metrics;
@@ -8,8 +9,8 @@ using StackExchange.Redis;
 namespace Lyo.Lock.Redis;
 
 /// <summary>
-/// Distributed exclusive lock on Redis: acquire is <c>SET key token NX PX ttl</c>; release is a Lua script so only the token owner deletes the key. Waiters can use
-/// pub/sub on a companion notify channel to cut polling latency.
+/// Distributed exclusive lock on Redis: acquire is <c>SET key token NX PX ttl</c>; release is a Lua script so only the token owner deletes the key. Waiters can use pub/sub
+/// on a companion notify channel to cut polling latency.
 /// </summary>
 /// <remarks>
 /// Register through <see cref="RedisLockServiceExtensions" /> with an existing <see cref="IConnectionMultiplexer" /> or a connection string. Pick
@@ -45,7 +46,7 @@ public sealed class RedisLockService : ILockService
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         var normalizedKey = _options.SkipKeyNormalization ? key : key.ToLowerInvariant();
         var redisKey = _options.KeyPrefix + normalizedKey;
-        var token = Guid.NewGuid().ToString("N");
+        var token = LyoGuid.CreateV7().ToString("N");
         var effectiveDuration = (lockDuration ?? _options.DefaultLockDuration).TotalMilliseconds;
         var effectiveTimeout = timeout ?? _options.DefaultAcquireTimeout;
         var deadline = DateTime.UtcNow + effectiveTimeout;

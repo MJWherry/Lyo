@@ -1,8 +1,8 @@
 namespace Lyo.IO.Temp.Enums;
 
 /// <summary>
-/// What happens when <see cref="Lyo.IO.Temp.Models.IOTempSessionOptions.MaxFileCount" />, <see cref="Lyo.IO.Temp.Models.IOTempSessionOptions.MaxTotalSizeBytes" />, or a per-file
-/// cap would be crossed.
+/// What happens when <see cref="Lyo.IO.Temp.Models.IOTempSessionOptions.MaxFileCount" />, <see cref="Lyo.IO.Temp.Models.IOTempSessionOptions.MaxTotalSizeBytes" />, or a
+/// per-file cap would be crossed.
 /// </summary>
 public enum TempOverflowStrategy
 {

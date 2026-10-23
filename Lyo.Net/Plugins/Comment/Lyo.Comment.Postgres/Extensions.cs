@@ -6,6 +6,7 @@ using Lyo.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace Lyo.Comment.Postgres;
 
 /// <summary>DI helpers for PostgreSQL comment store registration.</summary>
@@ -31,7 +32,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresCommentOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddCommentDbContextFactory(options);
         }
 
@@ -42,7 +42,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPostgresDbContextFactory<CommentDbContext, PostgresCommentOptions>(options);
             services.AddEntityRefOptions();
-
             return services;
         }
 
@@ -64,7 +63,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresCommentOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddPostgresCommentStore(options);
         }
 
@@ -75,8 +73,8 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(options);
             services.AddCommentDbContextFactory(options);
             services.AddSingleton<ICommentStore>(sp => new PostgresCommentStore(
-                sp.GetRequiredService<IDbContextFactory<CommentDbContext>>(), sp.GetRequiredService<EntityRefOptions>(),
-                sp.GetRequiredService<PostgresCommentOptions>(), sp.GetServices<IEntityRefActionInterceptor>()));
+                sp.GetRequiredService<IDbContextFactory<CommentDbContext>>(), sp.GetRequiredService<EntityRefOptions>(), sp.GetRequiredService<PostgresCommentOptions>(),
+                sp.GetServices<IEntityRefActionInterceptor>()));
 
             return services;
         }

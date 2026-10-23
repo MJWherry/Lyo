@@ -7,9 +7,7 @@ using Lyo.Exceptions;
 
 namespace Lyo.Common.Core;
 
-/// <summary>
-/// Shared CLR member lookup, dotted-path get/set, expression path extraction, attribute reads, catalog static-field discovery, and scalar classification.
-/// </summary>
+/// <summary>Shared CLR member lookup, dotted-path get/set, expression path extraction, attribute reads, catalog static-field discovery, and scalar classification.</summary>
 /// <remarks>
 /// Call sites use extension members (<c>typeof(T).FindProperty("Id")</c>, <c>row.GetPropertyValue("Address.City")</c>, <c>expr.TryGetMemberPath()</c>) after
 /// <c>using Lyo.Common.Core</c>. JSON/dictionary projected rows stay in the web grid helper; QueryProject name attributes and <c>Count()</c> suffixes stay in Query.
@@ -22,18 +20,6 @@ public static class LyoReflection
 
     private static readonly HashSet<Type> ScalarTypes = CreateScalarTypes();
 
-    private static HashSet<Type> CreateScalarTypes()
-    {
-        HashSet<Type> set = [
-            typeof(string), typeof(decimal), typeof(Guid), typeof(DateTime), typeof(DateTimeOffset), typeof(TimeSpan), typeof(Uri)
-        ];
-#if NET6_0_OR_GREATER
-        set.Add(typeof(DateOnly));
-        set.Add(typeof(TimeOnly));
-#endif
-        return set;
-    }
-
     private static readonly ConcurrentDictionary<string, PropertyInfo?> PropertyCache = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, FieldInfo?> FieldCache = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, MethodInfo?> MethodCache = new(StringComparer.Ordinal);
@@ -41,6 +27,16 @@ public static class LyoReflection
     private static readonly ConcurrentDictionary<Type, IReadOnlyList<PropertyInfo>> ReadableCache = new();
     private static readonly ConcurrentDictionary<Type, IReadOnlyList<PropertyInfo>> WritableCache = new();
     private static readonly ConcurrentDictionary<string, object> StaticFieldsCache = new(StringComparer.Ordinal);
+
+    private static HashSet<Type> CreateScalarTypes()
+    {
+        HashSet<Type> set = [typeof(string), typeof(decimal), typeof(Guid), typeof(DateTime), typeof(DateTimeOffset), typeof(TimeSpan), typeof(Uri)];
+#if NET6_0_OR_GREATER
+        set.Add(typeof(DateOnly));
+        set.Add(typeof(TimeOnly));
+#endif
+        return set;
+    }
 
     extension(Type type)
     {
@@ -51,16 +47,17 @@ public static class LyoReflection
             if (string.IsNullOrWhiteSpace(name))
                 return null;
 
-            return PropertyCache.GetOrAdd(MemberKey(type, name), _ => {
-                try {
-                    var prop = type.GetProperty(name.Trim(), PublicInstanceIgnoreCase);
-                    return prop is null || prop.IsIndexer() ? null : prop;
-                }
-                catch (AmbiguousMatchException) {
-                    return type.GetProperties(PublicInstanceIgnoreCase)
-                        .FirstOrDefault(p => !p.IsIndexer() && string.Equals(p.Name, name.Trim(), StringComparison.OrdinalIgnoreCase));
-                }
-            });
+            return PropertyCache.GetOrAdd(
+                MemberKey(type, name), _ => {
+                    try {
+                        var prop = type.GetProperty(name.Trim(), PublicInstanceIgnoreCase);
+                        return prop is null || prop.IsIndexer() ? null : prop;
+                    }
+                    catch (AmbiguousMatchException) {
+                        return type.GetProperties(PublicInstanceIgnoreCase)
+                            .FirstOrDefault(p => !p.IsIndexer() && string.Equals(p.Name, name.Trim(), StringComparison.OrdinalIgnoreCase));
+                    }
+                });
         }
 
         /// <summary>Public instance or static field by name (ignore-case). Cached per type and name.</summary>
@@ -118,10 +115,8 @@ public static class LyoReflection
         {
             ArgumentHelpers.ThrowIfNull(type);
             var key = $"{type.FullName}\u001f{typeof(T).FullName}";
-            return (IReadOnlyList<T>)StaticFieldsCache.GetOrAdd(key, _ => type.GetFields(PublicStatic)
-                .Where(static f => f.FieldType == typeof(T) && f.IsPublicStatic())
-                .Select(static f => (T)f.GetValue(null)!)
-                .ToArray());
+            return (IReadOnlyList<T>)StaticFieldsCache.GetOrAdd(
+                key, _ => type.GetFields(PublicStatic).Where(static f => f.FieldType == typeof(T) && f.IsPublicStatic()).Select(static f => (T)f.GetValue(null)!).ToArray());
         }
 
         /// <summary>True when every dotted segment of <paramref name="path" /> resolves to a public instance property on this type.</summary>
@@ -210,15 +205,12 @@ public static class LyoReflection
     extension(object? instance)
     {
         /// <summary>Reads a dotted public instance property path (ignore-case). Returns <see langword="null" /> when the instance, a segment, or the leaf is null or missing.</summary>
-        public object? GetPropertyValue(string path)
-        {
-            return TryWalk(instance, path, set: false, value: null, convertThrowing: false, out var current, out _) ? current : null;
-        }
+        public object? GetPropertyValue(string path) => TryWalk(instance, path, false, null, false, out var current, out var _) ? current : null;
 
         /// <summary>True when the path resolves to a non-null value.</summary>
         public bool TryGetPropertyValue(string path, [NotNullWhen(true)] out object? value)
         {
-            if (!TryWalk(instance, path, set: false, value: null, convertThrowing: false, out var current, out _) || current is null) {
+            if (!TryWalk(instance, path, false, null, false, out var current, out var _) || current is null) {
                 value = null;
                 return false;
             }
@@ -240,7 +232,7 @@ public static class LyoReflection
         /// <summary>Writes a dotted path after converting <paramref name="value" /> to the leaf property type. Returns <see langword="false" /> on miss or conversion failure.</summary>
         public bool TrySetPropertyValue(string path, object? value)
         {
-            if (instance is null || !TryWalk(instance, path, set: true, value, convertThrowing: false, out _, out var written))
+            if (instance is null || !TryWalk(instance, path, true, value, false, out var _, out var written))
                 return false;
 
             return written;
@@ -252,7 +244,7 @@ public static class LyoReflection
         public void SetPropertyValue(string path, object? value)
         {
             ArgumentHelpers.ThrowIfNull(instance);
-            if (!TryWalk(instance, path, set: true, value, convertThrowing: true, out _, out var written) || !written)
+            if (!TryWalk(instance, path, true, value, true, out var _, out var written) || !written)
                 ArgumentHelpers.ThrowIf(true, "Path did not resolve to a writable public instance property.");
         }
 
@@ -328,7 +320,7 @@ public static class LyoReflection
         public string GetMemberPath()
         {
             ArgumentHelpers.ThrowIfNull(expr);
-            var path = ((Expression)expr).TryGetMemberPath();
+            var path = expr.TryGetMemberPath();
             ArgumentHelpers.ThrowIf(path is null, "Invalid expression. Must be a property or field access expression.");
             return path!;
         }
@@ -338,7 +330,7 @@ public static class LyoReflection
         public string GetMemberName()
         {
             ArgumentHelpers.ThrowIfNull(expr);
-            var name = ((Expression)expr).TryGetMemberName();
+            var name = expr.TryGetMemberName();
             ArgumentHelpers.ThrowIf(name is null, "Invalid expression. Must be a property or field access expression.");
             return name!;
         }
@@ -356,17 +348,21 @@ public static class LyoReflection
     extension(MemberInfo member)
     {
         /// <summary>First custom attribute of type <typeparamref name="TAttr" />, or <see langword="null" />.</summary>
-        public TAttr? GetAttribute<TAttr>(bool inherit = true) where TAttr : Attribute
+        public TAttr? GetAttribute<TAttr>(bool inherit = true)
+            where TAttr : Attribute
         {
             ArgumentHelpers.ThrowIfNull(member);
             return member.GetCustomAttribute<TAttr>(inherit);
         }
 
         /// <summary>True when <typeparamref name="TAttr" /> is present.</summary>
-        public bool HasAttribute<TAttr>(bool inherit = true) where TAttr : Attribute => member.GetAttribute<TAttr>(inherit) is not null;
+        public bool HasAttribute<TAttr>(bool inherit = true)
+            where TAttr : Attribute
+            => member.GetAttribute<TAttr>(inherit) is not null;
 
         /// <summary>All custom attributes of type <typeparamref name="TAttr" />.</summary>
-        public IReadOnlyList<TAttr> GetAttributes<TAttr>(bool inherit = true) where TAttr : Attribute
+        public IReadOnlyList<TAttr> GetAttributes<TAttr>(bool inherit = true)
+            where TAttr : Attribute
         {
             ArgumentHelpers.ThrowIfNull(member);
             return member.GetCustomAttributes<TAttr>(inherit).ToArray();
@@ -489,7 +485,7 @@ public static class LyoReflection
                 if (!prop.CanWrite)
                     return false;
 
-                object? converted = value;
+                var converted = value;
                 if (value is not null && !prop.PropertyType.IsInstanceOfType(value)) {
                     if (convertThrowing)
                         converted = TypeConversion.ConvertTo(value, prop.PropertyType);

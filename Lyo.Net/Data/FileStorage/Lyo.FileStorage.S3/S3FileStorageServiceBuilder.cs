@@ -225,7 +225,8 @@ public sealed class S3FileStorageServiceBuilder
                 var auditHandlers = provider.GetServices<IFileAuditEventHandler>();
                 var contentPolicy = provider.GetService<IFileContentPolicy>();
                 return new(
-                    options, metadataService, loggerFactory, compressionService, encryptionService, s3Client, metrics, operationContextAccessor, auditHandlers, contentPolicy);
+                    options, metadataService, loggerFactory, compressionService, encryptionService, s3Client, metrics, operationContextAccessor, auditHandlers, contentPolicy,
+                    provider.GetService<IFileTypeSniffer>());
             });
 
         _services.AddKeyedScoped<IFileStorageService>(

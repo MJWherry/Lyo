@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Json\Lyo.Common.Json.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Json\Lyo.Json\Lyo.Json.csproj"/>
         <ProjectReference Include="..\Lyo.Drift.Models\Lyo.Drift.Models.csproj"/>
         <ProjectReference Include="..\..\..\Data\FileSystemWatcher\Lyo.FileSystemWatcher.Models\Lyo.FileSystemWatcher.Models.csproj"/>
         <ProjectReference Include="..\..\..\Apps\Web\Lyo.Web.Components\Lyo.Web.Components.csproj"/>

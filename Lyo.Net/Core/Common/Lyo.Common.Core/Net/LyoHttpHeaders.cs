@@ -1,12 +1,14 @@
 namespace Lyo.Common.Core.Net;
 
 /// <summary>
-/// Header names Lyo services share, so an inbound reader and an outbound writer cannot drift on casing or spelling. Use these instead of inline literals whenever the
-/// header is part of the Lyo contract.
+/// Header names Lyo services share, so an inbound reader and an outbound writer cannot drift on casing or spelling. Use these instead of inline literals whenever the header
+/// is part of the Lyo contract.
 /// </summary>
 /// <remarks>
-/// <para>Vendor-mandated spellings (Typecast's <c>X-API-KEY</c>, Endato's <c>galaxy-ap-name</c>) stay in their vendor clients: those are third-party wire contracts,
-/// not Lyo conventions, and matching this class's casing would break the vendor call.</para>
+/// <para>
+/// Vendor-mandated spellings (Typecast's <c>X-API-KEY</c>, Endato's <c>galaxy-ap-name</c>) stay in their vendor clients: those are third-party wire contracts, not Lyo
+/// conventions, and matching this class's casing would break the vendor call.
+/// </para>
 /// </remarks>
 public static class LyoHttpHeaders
 {

@@ -2,6 +2,7 @@ using Lyo.Authentication.Web.Components.Abstractions;
 using Lyo.Common.Core.Extensions;
 using Lyo.Exceptions;
 using Microsoft.AspNetCore.Components;
+
 namespace Lyo.Authentication.Web.Components.Wasm;
 
 /// <summary>

@@ -1,29 +1,15 @@
 using System.IO.Compression;
-using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Pathing;
 using Lyo.Common.Metadata.Records;
-using Lyo.DataTable.Models;
-using Lyo.Images;
 using Lyo.Result;
-using Lyo.TestGateway.Components;
 using Lyo.TestGateway.Services;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
 using Lyo.Web.Components.Models;
 using Lyo.Xlsx.Models;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.Web.Virtualization;
-using Microsoft.JSInterop;
 using MudBlazor;
-using static Microsoft.AspNetCore.Components.Web.RenderMode;
 
 namespace Lyo.TestGateway.Components.TestGateway;
 
@@ -32,62 +18,62 @@ public partial class CsvXlsxWorkbench
     private const long MaxUploadBytes = 16 * 1024 * 1024;
     private const int MaxCsvTextEditBytes = 256 * 1024;
 
+    private readonly List<LocalBrowserFile> _multiCombineFiles = [];
+    private byte[]? _convertXlsxBytes;
+
+    private string _convertXlsxName = string.Empty;
+    private byte[]? _csvBytes;
+    private string _csvError = string.Empty;
+    private bool _csvHasHeader = true;
+    private DataTable.Models.DataTable? _csvTable;
+    private string _csvText = "Name,Email\nAlice,alice@example.com\nBob,bob@example.com";
+    private bool _csvTextEditDisabled;
+    private string _csvUploadName = string.Empty;
+    private byte[]? _dictJsonBytes;
+    private string? _dictJsonError;
+    private string _dictJsonFileName = "grid.json";
+
+    private JsonNode? _dictJsonRoot;
+    private int _dictJsonViewerKey;
+    private byte[]? _mergeBytesA;
+    private byte[]? _mergeBytesB;
+    private string _mergeError = string.Empty;
+
+    private bool _mergeHeaderA = true;
+    private bool _mergeHeaderB = true;
+    private string _mergeNameA = string.Empty;
+    private string _mergeNameB = string.Empty;
+    private bool _mergeSkipFirstRowB = true;
+    private byte[]? _mergedCombinedBytes;
+    private bool _mergedCombinedIsXlsx;
+    private DataTable.Models.DataTable? _mergedTable;
+
+    private byte[]? _splitBytes;
+    private string _splitError = string.Empty;
+    private string _splitFileName = string.Empty;
+    private bool _splitIsXlsx;
+    private int _splitPartCount;
+    private int _splitRowsPerFile = 1000;
+    private string _splitSheetName = string.Empty;
+    private string _splitXlsxMode = "sheet";
+
+    private int _tabIndex;
+    private long _xlsxByteLength;
+    private byte[]? _xlsxBytes;
+    private string _xlsxError = string.Empty;
+    private XlsxMergeMode _xlsxMergeMode = XlsxMergeMode.PreserveSheets;
+    private DataTable.Models.DataTable? _xlsxTable;
+    private string _xlsxUploadName = string.Empty;
+
+    private bool _xlsxUseHeaderRow = true;
+
     /// <summary>Starting tab — <c>csv</c>, <c>xlsx</c>, <c>split</c>, <c>merge</c>, or <c>more</c>.</summary>
     [Parameter]
     public string InitialTab { get; set; } = "csv";
 
-    private int _tabIndex;
-    private bool _csvHasHeader = true;
-    private string _csvText = "Name,Email\nAlice,alice@example.com\nBob,bob@example.com";
-    private string _csvError = string.Empty;
-    private string _csvUploadName = string.Empty;
-    private byte[]? _csvBytes;
-    private Lyo.DataTable.Models.DataTable? _csvTable;
-    private bool _csvTextEditDisabled;
-
-    private bool _xlsxUseHeaderRow = true;
-    private string _xlsxError = string.Empty;
-    private string _xlsxUploadName = string.Empty;
-    private long _xlsxByteLength;
-    private byte[]? _xlsxBytes;
-    private Lyo.DataTable.Models.DataTable? _xlsxTable;
-
-    private bool _mergeHeaderA = true;
-    private bool _mergeHeaderB = true;
-    private bool _mergeSkipFirstRowB = true;
-    private string _mergeError = string.Empty;
-    private string _mergeNameA = string.Empty;
-    private string _mergeNameB = string.Empty;
-    private byte[]? _mergeBytesA;
-    private byte[]? _mergeBytesB;
-    private Lyo.DataTable.Models.DataTable? _mergedTable;
-    private byte[]? _mergedCombinedBytes;
-    private bool _mergedCombinedIsXlsx;
-    private XlsxMergeMode _xlsxMergeMode = XlsxMergeMode.PreserveSheets;
-
-    private readonly List<LocalBrowserFile> _multiCombineFiles = [];
-
     private bool _multiCombineAllXlsx => _multiCombineFiles.Count > 0 && _multiCombineFiles.All(f => IsXlsx(f.FileName));
 
     private bool _multiCombineAllCsv => _multiCombineFiles.Count > 0 && _multiCombineFiles.All(f => IsCsv(f.FileName));
-
-    private byte[]? _splitBytes;
-    private string _splitFileName = string.Empty;
-    private bool _splitIsXlsx;
-    private string _splitXlsxMode = "sheet";
-    private int _splitRowsPerFile = 1000;
-    private string _splitSheetName = string.Empty;
-    private int _splitPartCount;
-    private string _splitError = string.Empty;
-
-    private string _convertXlsxName = string.Empty;
-    private byte[]? _convertXlsxBytes;
-
-    private JsonNode? _dictJsonRoot;
-    private string? _dictJsonError;
-    private byte[]? _dictJsonBytes;
-    private string _dictJsonFileName = "grid.json";
-    private int _dictJsonViewerKey;
 
     protected override void OnInitialized()
         => _tabIndex = InitialTab switch {
@@ -408,7 +394,7 @@ public partial class CsvXlsxWorkbench
         }
     }
 
-    private async Task<Lyo.DataTable.Models.DataTable> ParseMergedXlsxPreviewAsync(byte[] mergedBytes, XlsxMergeMode mode)
+    private async Task<DataTable.Models.DataTable> ParseMergedXlsxPreviewAsync(byte[] mergedBytes, XlsxMergeMode mode)
     {
         if (mode == XlsxMergeMode.ConcatenateRows) {
             var result = await XlsxService.ParseXlsxBytesAsDataTableAsync(mergedBytes, "Merged").ConfigureAwait(false);
@@ -419,7 +405,7 @@ public partial class CsvXlsxWorkbench
         return sheets.Values.First();
     }
 
-    private async Task<Result<Lyo.DataTable.Models.DataTable>> ParseToDataTableAsync(string fileName, byte[] bytes, bool useHeaderRow)
+    private async Task<Result<DataTable.Models.DataTable>> ParseToDataTableAsync(string fileName, byte[] bytes, bool useHeaderRow)
     {
         if (IsCsv(fileName))
             return await CsvService.ParseBytesAsDataTableAsync(bytes, useHeaderRow).ConfigureAwait(false);
@@ -427,7 +413,7 @@ public partial class CsvXlsxWorkbench
         if (IsXlsx(fileName))
             return await XlsxService.ParseXlsxBytesAsDataTableAsync(bytes, useHeaderRow).ConfigureAwait(false);
 
-        return Result<Lyo.DataTable.Models.DataTable>.Failure($"Unsupported type: {fileName}. Use .csv or .xlsx.", "UNSUPPORTED");
+        return Result<DataTable.Models.DataTable>.Failure($"Unsupported type: {fileName}. Use .csv or .xlsx.", "UNSUPPORTED");
     }
 
     private static bool IsCsv(string name) => name.EndsWith(".csv", StringComparison.OrdinalIgnoreCase);

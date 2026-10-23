@@ -60,4 +60,5 @@ public sealed record PersonAddressRes
     public override string ToString() => $"PersonAddressRes: {HouseNumber} {StreetName}, {City}, {State} {Zipcode}";
 }
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record PersonPointRes([property: JsonPropertyName("X")] double X, [property: JsonPropertyName("Y")] double Y);

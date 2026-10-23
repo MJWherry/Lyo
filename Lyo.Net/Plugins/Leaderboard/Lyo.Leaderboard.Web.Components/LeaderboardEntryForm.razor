@@ -1,0 +1,61 @@
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="2" Class="mt-3">
+    @if (Board == null) {
+        <MudAlert Severity="Severity.Info" Dense="true">Load a board to submit an entry.</MudAlert>
+
+        return;
+    }
+    <MudPaper Class="pa-4" Outlined="true">
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.subtitle1">Submit entry</MudText>
+            <MudSelect T="Guid"
+                       Label="Member"
+                       Variant="Variant.Outlined"
+                       Margin="Margin.Dense"
+                       Value="_memberId"
+                       ValueChanged="OnMemberChanged">
+                @foreach (var member in _members) {
+                    <MudSelectItem T="Guid" Value="member.Id">@member.DisplayName (@member.Role)</MudSelectItem>
+                }
+            </MudSelect>
+            <MudSwitch T="bool" Color="Color.Primary" Label="Submit as guest (pending on verify boards)" @bind-Value="_asGuest"/>
+            <MudTextField T="string" Label="Title" Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="_title"/>
+            <MudDatePicker Label="Occurred" Date="_occurredDate" DateChanged="OnOccurredChanged" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            @foreach (var field in _fields) {
+                <MudStack Spacing="1" @key="field.Property.Id">
+                    <MudText
+                        Typo="Typo.caption">@field.Property.Label @(field.Property.Required ? "*" : "") @(string.IsNullOrWhiteSpace(field.Property.Unit) ? "" : $"({field.Property.Unit})")</MudText>
+                    @if (field.Property.ValueKind == ScoringValueKind.Choice) {
+                        <MudSelect T="string" Variant="Variant.Outlined" Margin="Margin.Dense" Value="field.ChoiceKey" ValueChanged="v => field.ChoiceKey = v">
+                            @foreach (var choice in field.Property.Choices) {
+                                <MudSelectItem T="string" Value="choice.Key">@ChoiceLabel(field.Property, choice)</MudSelectItem>
+                            }
+                        </MudSelect>
+                    }
+                    else if (field.Property.ValueKind is ScoringValueKind.Number or ScoringValueKind.Integer or ScoringValueKind.Duration) {
+                        <MudNumericField T="decimal?" Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="field.Number"
+                                         HelperText="@(field.Property.ValueKind == ScoringValueKind.Duration ? "Seconds" : null)"/>
+                    }
+                    else if (field.Property.ValueKind == ScoringValueKind.Boolean) {
+                        <MudSwitch T="bool" Color="Color.Primary" @bind-Value="field.Bool"/>
+                    }
+                    else if (field.Property.ValueKind == ScoringValueKind.DateTime) {
+                        <MudDatePicker Date="field.Date" DateChanged="d => field.Date = d" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                    }
+                    else {
+                        <MudTextField T="string" Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="field.Text"/>
+                    }
+                </MudStack>
+            }
+            <MudTextField T="string" Label="Notes" Variant="Variant.Outlined" Margin="Margin.Dense" Lines="2" @bind-Value="_notes"/>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Send"
+                       Disabled="@_busy"
+                       OnClick="SubmitAsync">
+                Submit
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+</MudStack>

@@ -16,8 +16,8 @@ public partial class DataTablePreview : IAsyncDisposable
 
     private DotNetObjectReference<DataTablePreview>? _dotNetRef;
     private ElementReference _hostRef;
-    private bool _moduleLoaded;
     private IJSObjectReference? _module;
+    private bool _moduleLoaded;
     private LyoDataTable? _mountedTable;
     private bool _needsMount;
 
@@ -61,38 +61,23 @@ public partial class DataTablePreview : IAsyncDisposable
     public Task<DataTablePreviewMeta> GetMetaAsync()
     {
         if (Table == null) {
-            return Task.FromResult(new DataTablePreviewMeta {
-                TotalRows = 0,
-                ColumnCount = 0,
-                Headers = []
-            });
+            return Task.FromResult(new DataTablePreviewMeta { TotalRows = 0, ColumnCount = 0, Headers = [] });
         }
 
         var maxCol = Table.MaxColumn;
         if (maxCol < 0) {
-            return Task.FromResult(new DataTablePreviewMeta {
-                TotalRows = Table.Rows.Count,
-                ColumnCount = 0,
-                Headers = []
-            });
+            return Task.FromResult(new DataTablePreviewMeta { TotalRows = Table.Rows.Count, ColumnCount = 0, Headers = [] });
         }
 
-        return Task.FromResult(new DataTablePreviewMeta {
-            TotalRows = Table.Rows.Count,
-            ColumnCount = maxCol + 1,
-            Headers = BuildHeaderRow(Table, maxCol)
-        });
+        return Task.FromResult(new DataTablePreviewMeta { TotalRows = Table.Rows.Count, ColumnCount = maxCol + 1, Headers = BuildHeaderRow(Table, maxCol) });
     }
 
-    /// <summary>Returns a rectangular window of cell display values for rows <paramref name="start"/>..<paramref name="start"/>+count.</summary>
+    /// <summary>Returns a rectangular window of cell display values for rows <paramref name="start" />..<paramref name="start" />+count.</summary>
     [JSInvokable]
     public Task<DataTablePreviewWindow> GetWindowAsync(int start, int count)
     {
         if (Table == null || count <= 0 || start >= Table.Rows.Count) {
-            return Task.FromResult(new DataTablePreviewWindow {
-                Start = start,
-                Cells = []
-            });
+            return Task.FromResult(new DataTablePreviewWindow { Start = start, Cells = [] });
         }
 
         var maxCol = Table.MaxColumn;
@@ -102,10 +87,7 @@ public partial class DataTablePreview : IAsyncDisposable
         for (var i = 0; i < count; i++)
             cells[i] = maxCol < 0 ? [] : BuildBodyRow(Table.Rows[start + i], maxCol);
 
-        return Task.FromResult(new DataTablePreviewWindow {
-            Start = start,
-            Cells = cells
-        });
+        return Task.FromResult(new DataTablePreviewWindow { Start = start, Cells = cells });
     }
 
     protected override void OnParametersSet()
@@ -146,15 +128,8 @@ public partial class DataTablePreview : IAsyncDisposable
             return;
 
         // Host element only exists when Table is non-null (rendered this pass).
-        await _module.InvokeVoidAsync(
-            "mount",
-            _hostRef,
-            _dotNetRef,
-            new {
-                maxHeightCss = MaxHeightCss,
-                showRowNumbers = ShowRowNumbers,
-                rowHeight = RowItemSize
-            }).ConfigureAwait(false);
+        await _module.InvokeVoidAsync("mount", _hostRef, _dotNetRef, new { maxHeightCss = MaxHeightCss, showRowNumbers = ShowRowNumbers, rowHeight = RowItemSize })
+            .ConfigureAwait(false);
     }
 
     private async Task DisposeSessionAsync()
@@ -221,7 +196,9 @@ public partial class DataTablePreview : IAsyncDisposable
     public sealed class DataTablePreviewMeta
     {
         public int TotalRows { get; set; }
+
         public int ColumnCount { get; set; }
+
         public string[] Headers { get; set; } = [];
     }
 
@@ -229,6 +206,7 @@ public partial class DataTablePreview : IAsyncDisposable
     public sealed class DataTablePreviewWindow
     {
         public int Start { get; set; }
+
         public string[][] Cells { get; set; } = [];
     }
 }

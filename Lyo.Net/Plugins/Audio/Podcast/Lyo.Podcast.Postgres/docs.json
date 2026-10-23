@@ -1,0 +1,161 @@
+{
+  "id": "Lyo.Podcast.Postgres",
+  "name": "Lyo.Podcast.Postgres",
+  "area": "Plugins",
+  "tagline": "PostgreSQL and EF Core implementation of `Lyo.Podcast.IPodcastStore`.",
+  "description": "PostgreSQL and EF Core implementation of `Lyo.Podcast.IPodcastStore` (`PostgresPodcastStore`) via `PodcastDbContext`, schema `podcast`, and `AddPostgresMigrations`. `PostgresPodcastStore` implements `Lyo.Health.IHealth`.",
+  "features": [
+    "**Schema `podcast`.** Shows, seasons, episodes, credits, identifiers, and genres.",
+    "**Constraints.** Unique slug, identifier `(scheme, normalized value)` per owner table, and season and episode numbers.",
+    "**Text.** Stored `tsvector` column and GIN index on episode transcripts.",
+    "**DI.** `AddPodcastDbContextFactory` / `AddPostgresPodcastStore` and `FromConfiguration` overloads (section `PostgresPodcast`)."
+  ],
+  "examples": [
+    {
+      "title": "Registration",
+      "language": "csharp",
+      "code": "services.AddPostgresPodcastStore(o => {\n    o.ConnectionString = connStr;\n    o.EnableAutoMigrations = true;\n});"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/Audio/Podcast/Lyo.Podcast.Postgres/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Podcast",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

@@ -53,7 +53,7 @@ dotnet user-secrets set "LyoJwt:SigningKeyId" "lyo-sig"
 
 ```json
 {
-  "LyoOidcBff": {
+  "LyoSso": {
     "AllowedReturnOrigins": [ "http://localhost:5138", "https://localhost:5138", "https://localhost:7116" ],
     "DefaultReturnUrl": "/",
     "HandoffCodeTtl": "00:00:30"
@@ -98,24 +98,27 @@ cd Lyo.Net/Tools/Lyo.TestGateway && dotnet run --launch-profile http
 
 ## Usage
 
-`appsettings.json`: When `HostedDomain` is set the provider rejects login attempts whose id_token `hd` claim does not match. Use this for Google Workspace-only deployments. Personal `@gmail.com` accounts are rejected.
+`appsettings.json`: When `HostedDomain` is set the provider rejects login attempts whose id_token `hd` claim does not match. Use this for Google Workspace-only deployments.
+Personal `@gmail.com` accounts are rejected.
 
 ## Claim mapping
 
-| id_token claim | Lyo property |
-| ---------------- | -------------------------------- |
-| `sub` | `LinkedIdentity.Subject` |
-| `email` | `LyoUser.Email` |
-| `email_verified` | `LyoUser.EmailVerified` |
-| `name` | `LyoUser.DisplayName` |
-| `picture` | `LyoUser.AvatarUrl` |
-| `locale` | `LyoUser.PreferredLanguageBcp47` |
+| id_token claim   | Lyo property                     |
+|------------------|----------------------------------|
+| `sub`            | `LinkedIdentity.Subject`         |
+| `email`          | `LyoUser.Email`                  |
+| `email_verified` | `LyoUser.EmailVerified`          |
+| `name`           | `LyoUser.DisplayName`            |
+| `picture`        | `LyoUser.AvatarUrl`              |
+| `locale`         | `LyoUser.PreferredLanguageBcp47` |
 
 Google does not emit roles, so `LinkedIdentity.Scopes` is always empty here. Give the user baseline scopes via `LyoUser.Scopes` instead.
 
 ## Local development setup
 
-End-to-end recipe for exercising the BFF flow on your laptop against real Google, with `Lyo.TestApi` as the API/auth server (`http://localhost:5251`) and `Lyo.TestGateway` as the browser consumer (`http://localhost:5138`). Google explicitly allows plain `http://localhost` (and `http://127.0.0.1`) as OAuth redirect targets, so you don't need a tunnel or HTTPS cert for local dev.
+End-to-end recipe for exercising the BFF flow on your laptop against real Google, with `Lyo.TestApi` as the API/auth server (`http://localhost:5251`) and `Lyo.TestGateway` as the
+browser consumer (`http://localhost:5138`). Google explicitly allows plain `http://localhost` (and `http://127.0.0.1`) as OAuth redirect targets, so you don't need a tunnel or
+HTTPS cert for local dev.
 
 ## 1. Create the OAuth client in Google Cloud
 
@@ -124,49 +127,59 @@ End-to-end recipe for exercising the BFF flow on your laptop against real Google
 - User type: **External** for personal `@gmail.com` testing, **Internal** if everyone is in a single Workspace.
 - App name + support email + developer contact email (anything sensible).
 - Scopes: leave the defaults; the provider only requests `openid email profile`.
-- **Test users.** While the app is in *Testing* status, only emails listed here can log in. Add your own Google account(s) now or the callback will 403.
+- **Test users.** While the app is in *Testing* status, only emails listed here can log in. Add your own Google account (s) now or the callback will 403.
 - **APIs & Services → Credentials → Create credentials → OAuth client ID**:
 - Application type: **Web application**.
 - Name: `Lyo TestApi local`.
 - **Authorized JavaScript origins**: `http://localhost:5251`.
-- **Authorized redirect URIs.** `http://localhost:5251/auth/callback/google`. Must match `GoogleAuth:RedirectUri` byte-for-byte (scheme, host, port, path, no trailing slash). The Gateway origin (`http://localhost:5138`) is **not** a Google redirect URI. The browser only goes through the API.
+- **Authorized redirect URIs.** `http://localhost:5251/auth/callback/google`. Must match `GoogleAuth:RedirectUri` byte-for-byte (scheme, host, port, path, no trailing slash). The
+  Gateway origin (`http://localhost:5138`) is **not** a Google redirect URI. The browser only goes through the API.
 - Copy the generated **Client ID** and **Client secret**. You'll paste them in the next step.
 
 ## 2. Wire the secrets into Lyo.TestApi
 
-The TestApi only registers the Google provider when `GoogleAuth:ClientId` is non-empty. Do **not** put real secrets in the committed `appsettings.json` / `appsettings.Development.json`. Use `dotnet user-secrets`. Leave `HostedDomain` **unset** for personal `@gmail.com` accounts. For Workspace-only, set it. Also seed the JWT issuer/audience so locally-issued tokens are accepted by the Gateway. The Gateway origin must be on the BFF allow-list, already present in `Lyo.TestApi/appsettings.Development.json`:
+The TestApi only registers the Google provider when `GoogleAuth:ClientId` is non-empty. Do **not** put real secrets in the committed `appsettings.json` /
+`appsettings.Development.json`. Use `dotnet user-secrets`. Leave `HostedDomain` **unset** for personal `@gmail.com` accounts. For Workspace-only, set it. Also seed the JWT
+issuer/audience so locally-issued tokens are accepted by the Gateway. The Gateway origin must be on the BFF allow-list, already present in
+`Lyo.TestApi/appsettings.Development.json`:
 
 ## 3. Point the Gateway at the TestApi
 
-The Gateway uses `Lyo.Authentication.Client`. The relevant `appsettings.json` block: Optionally pin the JWT validation values so resource APIs in the Gateway can validate access tokens locally too:
+The Gateway uses `Lyo.Authentication.Client`. The relevant `appsettings.json` block: Optionally pin the JWT validation values so resource APIs in the Gateway can validate access
+tokens locally too:
 
 ## 4. Run both services and exercise the flow
 
 - `http://localhost:5251/.well-known/jwks.json`. Should return a single Ed25519 JWK.
-- Visit `http://localhost:5138` and click **Sign in with Google** (or hit `http://localhost:5138/auth/sign-in/google?returnUrl=/`). The Gateway 302s to the TestApi, which 302s to Google, which 302s back to the TestApi callback, which 302s to `http://localhost:5138/auth/handoff?lyo_handoff=lyoh_...`. The Gateway redeems the code server-side, sets `lyo_session`, and lands you on `/`.
-- After login, `GET http://localhost:5251/auth/me` with `Authorization: Bearer <access_token>` (grab it from the session store via diagnostic tooling or from the API log line) returns the principal.
+- Visit `http://localhost:5138` and click **Sign in with Google** (or hit `http://localhost:5138/auth/sign-in/google?returnUrl=/`). The Gateway 302s to the TestApi, which 302s to
+  Google, which 302s back to the TestApi callback, which 302s to `http://localhost:5138/auth/handoff?lyo_handoff=lyoh_...`. The Gateway redeems the code server-side, sets
+  `lyo_session`, and lands you on `/`.
+- After login, `GET http://localhost:5251/auth/me` with `Authorization: Bearer <access_token>` (grab it from the session store via diagnostic tooling or from the API log line)
+  returns the principal.
 - `POST http://localhost:5138/auth/sign-out` revokes the refresh token at the API and clears `lyo_session`.
 
 ## 5. Common local pitfalls
 
-| Symptom | Cause / fix |
-| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `redirect_uri_mismatch` | The URI in Google Cloud doesn't exactly equal `GoogleAuth:RedirectUri`. Check scheme (`http` vs `https`), port, trailing slash. |
-| `Error 403: access_denied` after consent | App is in *Testing* and the Google account you logged in with isn't in the **Test users** list. |
-| `HostedDomainMismatch` from the callback | `HostedDomain` is set but the account's `hd` claim doesn't match (personal `@gmail.com` accounts have no `hd`). |
-| Callback redirects back to the API instead of the Gateway | The Gateway HTTPS launch profile (`https://localhost:7116`) stamps a `returnUrl` origin that must be in `LyoOidcBff:AllowedReturnOrigins` (exact `scheme://host:port`, no trailing slash). Off-list absolute URLs now 400 at `/auth/login`. Local TestApi allow-lists both `:5138` and `:7116`. |
-| `/auth/handoff/exchange` returns 403 `origin_mismatch` | Consumer's `Origin` header didn't match the origin the code was issued to. Ensure browser, Gateway, and API agree on `localhost` (not a mix of `localhost` / `127.0.0.1`). |
-| `lyo_session` not sent on Gateway requests | The cookie is `SameSite=Lax`; cross-site iframe scenarios won't carry it. Plain top-level navigation works. |
-| JWT signature fails | Mismatched `LyoJwt:Issuer`/`Audience`/`SigningKeyId` between TestApi and Gateway. Both must agree, and both `AddLocalKeyStore` calls must seed the same `lyo-sig` material (they do by default). |
+| Symptom                                                   | Cause / fix                                                                                                                                                                                                                                                                                 |
+|-----------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `redirect_uri_mismatch`                                   | The URI in Google Cloud doesn't exactly equal `GoogleAuth:RedirectUri`. Check scheme (`http` vs `https`), port, trailing slash.                                                                                                                                                             |
+| `Error 403: access_denied` after consent                  | App is in *Testing* and the Google account you logged in with isn't in the **Test users** list.                                                                                                                                                                                             |
+| `HostedDomainMismatch` from the callback                  | `HostedDomain` is set but the account's `hd` claim doesn't match (personal `@gmail.com` accounts have no `hd`).                                                                                                                                                                             |
+| Callback redirects back to the API instead of the Gateway | The Gateway HTTPS launch profile (`https://localhost:7116`) stamps a `returnUrl` origin that must be in `LyoSso:AllowedReturnOrigins` (exact `scheme://host:port`, no trailing slash). Off-list absolute URLs now 400 at `/auth/login`. Local TestApi allow-lists both `:5138` and `:7116`. |
+| `/auth/handoff/exchange` returns 403 `origin_mismatch`    | Consumer's `Origin` header didn't match the origin the code was issued to. Ensure browser, Gateway, and API agree on `localhost` (not a mix of `localhost` / `127.0.0.1`).                                                                                                                  |
+| `lyo_session` not sent on Gateway requests                | The cookie is `SameSite=Lax`; cross-site iframe scenarios won't carry it. Plain top-level navigation works.                                                                                                                                                                                 |
+| JWT signature fails                                       | Mismatched `LyoJwt:Issuer`/`Audience`/`SigningKeyId` between TestApi and Gateway. Both must agree, and both `AddLocalKeyStore` calls must seed the same `lyo-sig` material (they do by default).                                                                                            |
 
 ## 6. Promote to deployed environments
 
-When you move off localhost, replace the user-secrets values with the deployed equivalents and **add a second OAuth client** in Google Cloud, or extra redirect URIs on the same client, for each environment:
+When you move off localhost, replace the user-secrets values with the deployed equivalents and **add a second OAuth client** in Google Cloud, or extra redirect URIs on the same
+client, for each environment:
 
-- Staging: `https://api-staging.example.com/auth/callback/google` + `LyoOidcBff:AllowedReturnOrigins` includes `https://app-staging.example.com`
-- Production: `https://api.example.com/auth/callback/google` + `LyoOidcBff:AllowedReturnOrigins` includes `https://app.example.com`
+- Staging: `https://api-staging.example.com/auth/callback/google` + `LyoSso:AllowedReturnOrigins` includes `https://app-staging.example.com`
+- Production: `https://api.example.com/auth/callback/google` + `LyoSso:AllowedReturnOrigins` includes `https://app.example.com`
 
-Production must be on HTTPS. Google rejects non-`localhost` plain-HTTP redirect URIs. Submit the OAuth consent screen for verification before you remove the *Testing* gate, otherwise external users will still get the unverified-app screen, and personal accounts beyond the 100-test-user cap will be blocked.
+Production must be on HTTPS. Google rejects non-`localhost` plain-HTTP redirect URIs. Submit the OAuth consent screen for verification before you remove the *Testing* gate,
+otherwise external users will still get the unverified-app screen, and personal accounts beyond the 100-test-user cap will be blocked.
 
 ## Dependencies
 
@@ -178,13 +191,16 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Authentication` (transitive, lyo)
 - `Lyo.Authentication.Models` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
+- `Lyo.Authentication.Sso` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
+- `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Result` (transitive, lyo)
 - `BouncyCastle.Cryptography` `2.6.2` (transitive, third-party)
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
@@ -194,4 +210,5 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Options` `10.0.5` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

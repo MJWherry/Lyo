@@ -1,3 +1,6 @@
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
 namespace Lyo.FileStorage.AzureBlob.Tests;
 
 /// <summary>Pure-data coverage for the AzureBlobFileStorageOptions surface (CPK detection and SectionName invariants).</summary>
@@ -19,11 +22,25 @@ public sealed class AzureBlobFileStorageOptionsTests
 
     [Fact]
     public void SectionName_IsStable()
+        =>
+            // SectionName is part of the public appsettings.json binding contract.
+            Assert.Equal("AzureBlobFileStorage", AzureBlobFileStorageOptions.SectionName);
+
+    [Theory]
+    [InlineData("BlobFileStorage")]
+    [InlineData("AzureFileStorageOptions")]
+    public void AddAzureBlobFileStorageService_ObsoleteSection_DoesNotBindConnectionString(string section)
     {
-        // SectionName is part of the public appsettings.json binding contract.
-        Assert.Equal("AzureBlobFileStorage", AzureBlobFileStorageOptions.SectionName);
-        Assert.Equal("BlobFileStorage", AzureBlobFileStorageOptions.LegacyBlobConfigurationSectionName);
-        Assert.Equal("AzureFileStorageOptions", AzureBlobFileStorageOptions.LegacyAzureConfigurationSectionName);
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(
+                new Dictionary<string, string?> { [$"{section}:ConnectionString"] = "UseDevelopmentStorage=true", [$"{section}:ContainerName"] = "legacy" })
+            .Build();
+
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(configuration);
+        services.AddAzureBlobFileStorageService();
+        using var provider = services.BuildServiceProvider();
+        var options = provider.GetRequiredService<AzureBlobFileStorageOptions>();
+        Assert.True(string.IsNullOrWhiteSpace(options.ConnectionString));
     }
 
     [Fact]

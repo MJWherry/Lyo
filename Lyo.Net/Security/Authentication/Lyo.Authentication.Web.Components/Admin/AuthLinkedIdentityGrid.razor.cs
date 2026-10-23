@@ -11,6 +11,10 @@ namespace Lyo.Authentication.Web.Components;
 
 public partial class AuthLinkedIdentityGrid
 {
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Provider"), new("Subject"), new("EmailAtLink", "Email")];
+
+    private LyoDataGridProjected? _dataGrid;
+
     [Parameter]
     [EditorRequired]
     public IApiClient ApiClient { get; set; } = null!;
@@ -22,10 +26,6 @@ public partial class AuthLinkedIdentityGrid
     public Guid? UserId { get; set; }
 
     private string _route => $"{BaseRoute.TrimEnd('/')}/LinkedIdentity";
-
-    private LyoDataGridProjected? _dataGrid;
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Provider"), new("Subject"), new("EmailAtLink", "Email")];
 
     private void ApplyQuery(ProjectionQueryReqBuilder q)
     {

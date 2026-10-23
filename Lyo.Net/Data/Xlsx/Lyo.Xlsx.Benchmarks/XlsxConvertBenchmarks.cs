@@ -7,7 +7,7 @@ namespace Lyo.Xlsx.Benchmarks;
 
 /// <summary>Times XLSX conversion paths: XLSX -> CSV (bytes/stream, default and UTF-16 encoding, sync + async) and XLSX -> HTML table.</summary>
 [BenchmarkDescription(
-    "Converts an XLSX workbook (built from RowCount SampleRecords) into other formats: XLSX -> CSV bytes (default and UTF-16 encoding), XLSX -> CSV via a stream, the async CSV conversion, and XLSX -> HTML table. Captures the read-then-rewrite cost and the effect of output encoding on conversion.")]
+    "Converts an XLSX workbook (built from RowCount SampleRecords) into other formats: XLSX to CSV bytes (UTF-8, UTF-16, and UTF-32), XLSX to CSV via a stream, the async CSV conversion, and XLSX to an HTML table. Captures the read-then-rewrite cost and the effect of output encoding on conversion.")]
 [BenchmarkParameter("RowCount", Unit = "rows", Description = "Number of SampleRecord rows in the source workbook being converted (100 to 100,000).")]
 [BenchmarkDataShape(typeof(SampleRecord), Notes = "Flat 7-column record; the source workbook's first sheet is converted.")]
 [BenchmarkSla(MaxMeanMs = 10000, Standard = "Converting an up-to-100k-row workbook (read XLSX + rewrite CSV/HTML) should complete within ~10s.")]
@@ -34,6 +34,10 @@ public class XlsxConvertBenchmarks
     [Benchmark]
     [BenchmarkDescription("Convert the workbook bytes to CSV bytes using UTF-16 output encoding.")]
     public byte[] ConvertToCsvBytesUtf16() => _xlsx.ConvertXlsxToCsvBytes(_bytes, Encoding.Unicode);
+
+    [Benchmark]
+    [BenchmarkDescription("Convert the workbook bytes to CSV bytes using UTF-32 output encoding.")]
+    public byte[] ConvertToCsvBytesUtf32() => _xlsx.ConvertXlsxToCsvBytes(_bytes, Encoding.UTF32);
 
     [Benchmark]
     [BenchmarkDescription("Convert the workbook to CSV written into a MemoryStream.")]

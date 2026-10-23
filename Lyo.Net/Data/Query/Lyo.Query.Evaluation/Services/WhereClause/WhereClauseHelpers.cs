@@ -3,6 +3,8 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using Lyo.Common.Core.Conversion;
+using Lyo.Common.Core.Enums;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Enums;
 using Lyo.Query.Models.Exceptions;
@@ -68,7 +70,7 @@ public static class WhereClauseHelpers
                 sb.Append("f4:").Append(f.ToString("R", CultureInfo.InvariantCulture));
                 return;
             case byte[] bytes:
-                AppendTaggedText(sb, 'x', ToHex(bytes));
+                AppendTaggedText(sb, 'x', ByteConvert.ToHex(bytes, TextLetterCase.Lower));
                 return;
             case JsonElement je:
                 AppendJsonElement(je, sb);
@@ -91,7 +93,6 @@ public static class WhereClauseHelpers
                 return;
         }
 #endif
-
         if (value is IEnumerable enumerable) {
             AppendEnumerable(enumerable, sb);
             return;
@@ -131,6 +132,11 @@ public static class WhereClauseHelpers
             case ConditionClause c:
                 sb.Append("C(").Append(c.Field).Append(c.Comparison);
                 AppendValueCanonical(c.Value, sb);
+                if (c.Comparison is ComparisonOperatorEnum.Fuzzy or ComparisonOperatorEnum.NotFuzzy) {
+                    sb.Append("T");
+                    AppendValueCanonical(c.Threshold ?? ConditionClause.DefaultFuzzyThreshold, sb);
+                }
+
                 if (c.SubClause != null) {
                     sb.Append("Sub(");
                     AppendWhereClauseHash(c.SubClause, sb, depth + 1);
@@ -235,6 +241,7 @@ public static class WhereClauseHelpers
         switch (node) {
             case ConditionClause c:
                 yield return c;
+
                 if (c.SubClause != null) {
                     foreach (var nested in EnumerateConditions(c.SubClause, depth + 1))
                         yield return nested;
@@ -310,19 +317,5 @@ public static class WhereClauseHelpers
 #if NET
             or Int128 or UInt128
 #endif
-            ;
-
-    private static string ToHex(byte[] bytes)
-    {
-        var chars = new char[bytes.Length * 2];
-        for (var i = 0; i < bytes.Length; i++) {
-            var b = bytes[i];
-            chars[i * 2] = GetHexDigit(b >> 4);
-            chars[(i * 2) + 1] = GetHexDigit(b & 0xF);
-        }
-
-        return new(chars);
-    }
-
-    private static char GetHexDigit(int nibble) => (char)(nibble < 10 ? '0' + nibble : 'a' + (nibble - 10));
+    ;
 }

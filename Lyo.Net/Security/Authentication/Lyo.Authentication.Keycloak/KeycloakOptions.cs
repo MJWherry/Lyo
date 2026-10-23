@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Authentication.Keycloak;
 
 /// <summary>Settings for a Keycloak realm used as an OpenID Connect provider.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class KeycloakOptions
 {
     /// <summary>Section name used when nothing else is specified.</summary>
@@ -27,8 +29,8 @@ public sealed class KeycloakOptions
     public IList<string> Scopes { get; set; } = ["openid", "email", "profile", "roles"];
 
     /// <summary>
-    /// Translates Keycloak realm-role names into Lyo scopes. A role may expand to several scopes; roles missing from this map are ignored so a new Keycloak role
-    /// cannot silently grant Lyo permissions.
+    /// Translates Keycloak realm-role names into Lyo scopes. A role may expand to several scopes; roles missing from this map are ignored so a new Keycloak role cannot silently
+    /// grant Lyo permissions.
     /// </summary>
     public IDictionary<string, string[]> RolesToScopes { get; set; } = new Dictionary<string, string[]>(StringComparer.Ordinal);
 
@@ -44,4 +46,8 @@ public sealed class KeycloakOptions
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(ClientSecret);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(RedirectUri);
     }
+
+    /// <summary>Realm and client id. The client secret is omitted.</summary>
+    public override string ToString()
+        => $"BaseUrl={BaseUrl} Realm={Realm} ClientId={ClientId} ClientSecretSet={!string.IsNullOrWhiteSpace(ClientSecret)} RedirectUri={RedirectUri} Scopes={Scopes.Count} Name={Name}";
 }

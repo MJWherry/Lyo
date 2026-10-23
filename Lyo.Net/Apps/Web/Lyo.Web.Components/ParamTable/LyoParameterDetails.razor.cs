@@ -10,12 +10,12 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Lyo.Web.Components.ParamTable;
 
 /// <summary>
-/// Expanded detail editor for one parameter row: description, default value, and optionally the type picker and value-picker options. Shared by the table and
-/// card layouts of <see cref="LyoParameterEditor" /> so both draw the same fields.
+/// Expanded detail editor for one parameter row: description, default value, and optionally the type picker and value-picker options. Shared by the table and card layouts of
+/// <see cref="LyoParameterEditor" /> so both draw the same fields.
 /// </summary>
 /// <remarks>
-/// Description, default value, and options are written straight onto <see cref="Item" /> and reported through <see cref="OnChanged" />. Type changes go out
-/// through <see cref="TypeChanged" /> instead, because the host also resets incompatible values and auto-expands rows whose type needs a wide editor.
+/// Description, default value, and options are written straight onto <see cref="Item" /> and reported through <see cref="OnChanged" />. Type changes go out through
+/// <see cref="TypeChanged" /> instead, because the host also resets incompatible values and auto-expands rows whose type needs a wide editor.
 /// </remarks>
 public partial class LyoParameterDetails
 {
@@ -32,9 +32,7 @@ public partial class LyoParameterDetails
     [Parameter]
     public bool ShowOptionsEditor { get; set; }
 
-    /// <summary>
-    /// Show the Literal / Expression toggle above the default (definition parameters). Schedule and trigger overrides are values, so they have no default channel.
-    /// </summary>
+    /// <summary>Show the Literal / Expression toggle above the default (definition parameters). Schedule and trigger overrides are values, so they have no default channel.</summary>
     [Parameter]
     public bool ShowDefaultKind { get; set; }
 
@@ -87,24 +85,22 @@ public partial class LyoParameterDetails
     /// Why the template cannot produce a value of the declared type, or null when it can. Rendering here uses the same policy the API applies on save, so the caption a user
     /// reads while authoring is the message that would have blocked the write.
     /// </summary>
-    private string? ExpressionError
-        => string.IsNullOrWhiteSpace(Item.DefaultTemplate) || TryResolveExpression(out _, out var error) ? null : error;
+    private string? ExpressionError => string.IsNullOrWhiteSpace(Item.DefaultTemplate) || TryResolveExpression(out var _, out var error) ? null : error;
 
-    private string ResolvedExpressionHint
-    {
+    private string ResolvedExpressionHint {
         get {
             if (string.IsNullOrWhiteSpace(Item.DefaultTemplate))
                 return $"Template rendered when no value is supplied. Must resolve to a valid {Item.Type}.";
 
-            return TryResolveExpression(out var value, out _)
+            return TryResolveExpression(out var value, out var _)
                 ? $"Resolves to {DisplayValue(value)} — valid {Item.Type}."
                 : $"Template rendered when no value is supplied. Must resolve to a valid {Item.Type}.";
         }
     }
 
     /// <summary>
-    /// Resolved value for the caption. JSON string quoting is presentation noise here, so it comes off for every type. unlike
-    /// <see cref="LyoParameterValueJson.Unwrap" />, where stripping it changes what length and pattern constraints measure.
+    /// Resolved value for the caption. JSON string quoting is presentation noise here, so it comes off for every type. unlike <see cref="LyoParameterValueJson.Unwrap" />, where
+    /// stripping it changes what length and pattern constraints measure.
     /// </summary>
     private static string DisplayValue(string? json)
     {

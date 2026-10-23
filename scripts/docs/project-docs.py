@@ -17,6 +17,12 @@ Commands:
 Pass project names or globs after the command to limit work:
   python3 scripts/docs/project-docs.py render Lyo.Email
   python3 scripts/docs/project-docs.py render 'Lyo.Email.*' Lyo.Sms
+
+Area pages are docs.json files under a docs/ directory with no project file
+beside them. They render to readmePath, skip sync-deps, and stay out of the
+catalog. A full render emits every area page. A subset render emits one when
+the pattern matches that page's id, or when it selects a project under the
+same directory as that docs/ folder.
 """
 from __future__ import annotations
 
@@ -986,7 +992,68 @@ def _merge_index_entries(existing: list[dict], updates: list[dict]) -> list[dict
     return [by_id[i] for i in order]
 
 
-def cmd_render(projects: list[dict] | None = None, *, subset: bool = False) -> None:
+def discover_area_docs() -> list[Path]:
+    """docs.json files under a docs/ directory that has no project beside them."""
+    if not LYO_NET.is_dir():
+        return []
+    found = []
+    for path in sorted(LYO_NET.rglob(DOCS_FILENAME)):
+        if any(part in SKIP_DIRS for part in path.parts):
+            continue
+        if "docs" not in path.relative_to(LYO_NET).parts:
+            continue
+        if any(path.parent.glob("*.csproj")):
+            continue
+        found.append(path)
+    return found
+
+
+def _area_root(docs_json: Path) -> Path | None:
+    """Directory that owns the docs/ folder containing this file."""
+    for parent in docs_json.parents:
+        if parent.name == "docs":
+            return parent.parent
+    return None
+
+
+def select_area_docs(projects: list[dict] | None, patterns: list[str], *, subset: bool) -> list[Path]:
+    """All area pages, or the ones a subset pattern actually selected."""
+    pages = discover_area_docs()
+    if not subset:
+        return pages
+    selected_dirs = [proj["dir"] for proj in projects or []]
+    chosen = []
+    for path in pages:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        doc_id = data.get("id") or ""
+        if doc_id and any(fnmatchcase(doc_id, pattern) for pattern in patterns):
+            chosen.append(path)
+            continue
+        area_root = _area_root(path)
+        if area_root and any(proj_dir.is_relative_to(area_root) for proj_dir in selected_dirs):
+            chosen.append(path)
+    return chosen
+
+
+def render_area_docs(paths: list[Path]) -> int:
+    """Write each area page to its readmePath. No catalog entry and no sync-deps."""
+    written = 0
+    for path in paths:
+        pkg = json.loads(path.read_text(encoding="utf-8"))
+        readme_rel = pkg.get("readmePath")
+        if not readme_rel:
+            raise SystemExit(f"{path.relative_to(ROOT)}: missing readmePath")
+        readme = ROOT / readme_rel
+        readme.parent.mkdir(parents=True, exist_ok=True)
+        readme.write_text(docs_to_readme(pkg), encoding="utf-8")
+        print(f"render: area {readme_rel}")
+        written += 1
+    if written:
+        print(f"render: {written} area page(s)")
+    return written
+
+
+def cmd_render(projects: list[dict] | None = None, *, subset: bool = False, patterns: list[str] | None = None) -> None:
     # Always refresh dependencies from csproj / graph before emitting consumers.
     cmd_sync_deps(projects)
     packages = load_all_docs(projects)
@@ -1082,6 +1149,8 @@ def cmd_render(projects: list[dict] | None = None, *, subset: bool = False) -> N
                 "packages": blazor_entries,
             },
         )
+
+    render_area_docs(select_area_docs(projects, patterns or [], subset=subset))
 
     if subset:
         print(f"render: {len(emit_packages)} README(s) from project {DOCS_FILENAME} (subset; catalog patched, root index skipped)")
@@ -1182,12 +1251,12 @@ def main(argv: list[str] | None = None) -> int:
     elif cmd in ("sync-deps", "deps"):
         cmd_sync_deps(selected)
     elif cmd == "render":
-        cmd_render(selected, subset=subset)
+        cmd_render(selected, subset=subset, patterns=args.patterns)
     elif cmd == "audit":
         cmd_audit(selected if subset else None)
     elif cmd == "all":
         # Never extract here — docs.json is SoT; "all" means render + audit only.
-        cmd_render(selected, subset=subset)
+        cmd_render(selected, subset=subset, patterns=args.patterns)
         cmd_audit(selected if subset else None)
     return 0
 

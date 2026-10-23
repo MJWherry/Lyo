@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Description>EF seed of local users, expired tokens, linked identities, claims, scopes, and events.</Description>
+        <PackageTags>authentication seed ef</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Bogus"/>
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Seed\Lyo.Seed\Lyo.Seed.csproj"/>
+        <ProjectReference Include="..\Lyo.Authentication\Lyo.Authentication.csproj"/>
+        <ProjectReference Include="..\Lyo.Authentication.Models\Lyo.Authentication.Models.csproj"/>
+        <ProjectReference Include="..\Lyo.Authentication.Postgres\Lyo.Authentication.Postgres.csproj"/>
+    </ItemGroup>
+
+</Project>

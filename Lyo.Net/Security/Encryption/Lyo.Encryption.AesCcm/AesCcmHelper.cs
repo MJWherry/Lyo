@@ -15,8 +15,8 @@ internal static class AesCcmHelper
     public const int TagSize = 16;
 
     /// <summary>
-    /// Longest single-packet plaintext for a 12-byte nonce (RFC 3610: <c>q = 15 - nonceLen = 3</c> → <c>2^(8q) - 1</c>). Bigger payloads must use streaming APIs
-    /// (one CCM packet per chunk).
+    /// Longest single-packet plaintext for a 12-byte nonce (RFC 3610: <c>q = 15 - nonceLen = 3</c> → <c>2^(8q) - 1</c>). Bigger payloads must use streaming APIs (one CCM packet
+    /// per chunk).
     /// </summary>
     public const int MaxPlaintextLength = (1 << 24) - 1; // 16_777_215
 

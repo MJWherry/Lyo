@@ -18,9 +18,14 @@
         <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
     </ItemGroup>
     <ItemGroup>
+        <ProjectReference Include="..\Lyo.Web.WebRenderer.Models\Lyo.Web.WebRenderer.Models.csproj"/>
         <ProjectReference Include="..\..\..\..\Core\Metrics\Lyo.Metrics\Lyo.Metrics.csproj"/>
         <ProjectReference Include="..\..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
         <ProjectReference Include="..\..\..\..\Core\Common\Lyo.Common.Metadata\Lyo.Common.Metadata.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.Web.WebRenderer.Tests"/>
     </ItemGroup>
 
 </Project>

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Metadata.JsonConverters;
@@ -6,6 +7,7 @@ using Lyo.Common.Metadata.Records;
 namespace Lyo.Stt.Models;
 
 /// <summary>Settings that configure an STT service.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class SttServiceOptions
 {
     /// <summary>Default language (for example "en-US").</summary>
@@ -26,4 +28,8 @@ public class SttServiceOptions
 
     /// <summary>Upper bound on requests in one bulk call.</summary>
     public int MaxBulkSttLimit { get; set; } = 100;
+
+    /// <summary>Language, audio limits, and bulk caps.</summary>
+    public override string ToString()
+        => $"DefaultLanguageCode={DefaultLanguageCode} DefaultAudioFormat={DefaultAudioFormat} MaxAudioFileSize={MaxAudioFileSize} EnableMetrics={EnableMetrics} BulkSttConcurrencyLimit={BulkSttConcurrencyLimit} MaxBulkSttLimit={MaxBulkSttLimit}";
 }

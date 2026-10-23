@@ -1,33 +1,22 @@
-using System.Net.Http.Json;
-using Lyo.Api.Client;
 using Lyo.People.Models;
 using Lyo.Reporting.Models.Request;
 using Lyo.Reporting.Models.Response;
 using Lyo.Seed;
-using Lyo.TestGateway.Components;
 using Lyo.TestGateway.Models;
 using Lyo.TestGateway.Seeds;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.Web.Virtualization;
-using Microsoft.JSInterop;
 using MudBlazor;
-using static Microsoft.AspNetCore.Components.Web.RenderMode;
 
 namespace Lyo.TestGateway.Components.Pages;
 
 public partial class SeedPage
 {
     private int _count = 50;
+    private string? _lastMessage;
+    private Severity _lastSeverity = Severity.Info;
+    private bool _running;
     private string _seedText = "";
     private bool _skipIfNotEmpty;
     private bool _skipReportsIfNotEmpty;
-    private bool _running;
-    private string? _lastMessage;
-    private Severity _lastSeverity = Severity.Info;
 
     protected override string PageName { get; set; } = "Seed";
 
@@ -41,13 +30,9 @@ public partial class SeedPage
             catalog.Map<PersonReq>("Person");
             var transport = new ApiSeedTransport(ApiClient, catalog);
             var result = await SeedRunner.SeedAsync(
-                new PeopleApiSeedContributor(),
-                transport,
-                new() {
-                    Count = _count,
-                    RandomSeed = randomSeed,
-                    Conflict = _skipIfNotEmpty ? SeedConflictMode.SkipIfNotEmpty : SeedConflictMode.Append
-                });
+                new PeopleApiSeedContributor(), transport,
+                new() { Count = _count, RandomSeed = randomSeed, Conflict = _skipIfNotEmpty ? SeedConflictMode.SkipIfNotEmpty : SeedConflictMode.Append });
+
             if (result.Skipped) {
                 _lastSeverity = Severity.Info;
                 _lastMessage = "Skipped — Person already has rows.";
@@ -82,14 +67,11 @@ public partial class SeedPage
         _lastMessage = null;
         try {
             var catalog = new SeedApiCatalog();
-            catalog.Map<ReportDefinitionReq, ReportDefinitionRes>(Lyo.Reporting.Models.Constants.Rest.Reporting.Definitions);
+            catalog.Map<ReportDefinitionReq, ReportDefinitionRes>(Reporting.Models.Constants.Rest.Reporting.Definitions);
             var transport = new ApiSeedTransport(ApiClient, catalog);
             var result = await SeedRunner.SeedAsync(
-                new ReportingApiSeedContributor(),
-                transport,
-                new() {
-                    Conflict = _skipReportsIfNotEmpty ? SeedConflictMode.SkipIfNotEmpty : SeedConflictMode.Append
-                });
+                new ReportingApiSeedContributor(), transport, new() { Conflict = _skipReportsIfNotEmpty ? SeedConflictMode.SkipIfNotEmpty : SeedConflictMode.Append });
+
             if (result.Skipped) {
                 _lastSeverity = Severity.Info;
                 _lastMessage = "Skipped — report definitions already exist.";

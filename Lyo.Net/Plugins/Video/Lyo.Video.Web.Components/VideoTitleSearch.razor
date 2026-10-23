@@ -1,0 +1,64 @@
+@namespace Lyo.Video.Web.Components
+
+<div class="video-title-search">
+    <MudPaper Class="pa-4 mb-4" Elevation="0">
+        <MudStack Spacing="3">
+            <div>
+                <MudText Typo="Typo.h5">Browse Video</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Search movies and series by title, kind, or year.</MudText>
+            </div>
+            <MudGrid Spacing="2">
+                <MudItem xs="12" sm="6" md="4">
+                    <MudTextField @bind-Value="_titleContains" Label="Title" Immediate="false" OnKeyDown="OnTitleKeyDownAsync" Clearable="true"/>
+                </MudItem>
+                <MudItem xs="6" sm="3" md="2">
+                    <MudSelect T="VideoTitleKind?" @bind-Value="_kind" Label="Kind" Clearable="true">
+                        @foreach (var kind in Enum.GetValues<VideoTitleKind>()) {
+                            <MudSelectItem T="VideoTitleKind?" Value="kind">@kind</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="6" sm="3" md="2">
+                    <MudNumericField T="int?" @bind-Value="_year" Label="Year" Clearable="true" HideSpinButtons="true"/>
+                </MudItem>
+                @if (AvailableTags.Count > 0) {
+                    <MudItem xs="12" sm="6" md="3">
+                        <LyoCheckSelect TValue="string"
+                                        Label="Tags"
+                                        Items="TagItems"
+                                        SelectedValues="_selectedTags"
+                                        SelectedValuesChanged="@(v => _selectedTags = v.ToList())"/>
+                    </MudItem>
+                }
+                <MudItem xs="6" sm="3" md="2">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="SearchAsync" Disabled="_busy">Search</MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudStack>
+    </MudPaper>
+
+    @if (_searched && _results.Count == 0 && !_busy) {
+        <MudAlert Severity="Severity.Info">No titles found.</MudAlert>
+    }
+
+    @if (_results.Count > 0) {
+        <MudGrid Spacing="2">
+            @foreach (var title in _results) {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudCard>
+                        @if (ResolveCoverUrl(title) is { Length: > 0 } cover) {
+                            <MudCardMedia Image="@cover" Height="160"/>
+                        }
+                        <MudCardContent>
+                            <MudText Typo="Typo.subtitle1">@title.Title</MudText>
+                            <MudText Typo="Typo.caption">@title.Kind @(title.Year?.ToString())</MudText>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="@(() => OnOpen(title))">Open</MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</div>

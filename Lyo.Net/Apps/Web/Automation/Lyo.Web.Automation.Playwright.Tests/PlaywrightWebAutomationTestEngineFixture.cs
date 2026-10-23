@@ -1,6 +1,6 @@
 using Lyo.Testing;
 using Lyo.Web.Automation.Abstractions;
-using Lyo.Web.Automation.Playwright.Configuration;
+using Lyo.Web.Automation.Models;
 using Lyo.Web.Automation.Playwright.Service;
 using Lyo.Web.Automation.Tests.Fixtures;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +13,9 @@ public sealed class PlaywrightWebAutomationTestEngineFixture : IWebAutomationTes
     private readonly string _root;
     private ILoggerFactory _loggerFactory;
     private ServiceProvider _provider;
+
+    /// <summary>Current xUnit cancellation token. Reads <see cref="TestContext.Current" /> when accessed, so each test gets that test's token.</summary>
+    public CancellationToken TestCt => TestContext.Current.CancellationToken;
 
     public PlaywrightWebAutomationTestEngineFixture()
     {
@@ -57,7 +60,7 @@ public sealed class PlaywrightWebAutomationTestEngineFixture : IWebAutomationTes
             options.Headless = true;
             options.ServiceRootDirectory = _root;
             options.EnableMetrics = false;
-            options.BrowserKind = PlaywrightBrowserKind.Chromium;
+            options.BrowserKind = AutomationBrowserKind.Chromium;
             options.NavigationTimeoutMs = 20_000;
             options.LocatorDefaultTimeoutMs = 20_000;
             options.ViewportWidth = 1280;

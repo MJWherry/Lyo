@@ -1,0 +1,38 @@
+@namespace Lyo.Billing.Web.Components.Views
+
+<LyoPageHeader Title="Billing" Description="Clients, invoices, payments, and the ledger." Icon="@Icons.Material.Filled.Receipt">
+    <Actions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="ComposeAsync">New invoice</MudButton>
+    </Actions>
+</LyoPageHeader>
+
+<MudTabs @bind-ActivePanelIndex="_tabIndex" KeepPanelsAlive="true" Color="Color.Primary" SliderColor="Color.Secondary" Class="mt-2">
+    <MudTabPanel Text="Overview">
+        <MudStack Spacing="3" Class="mt-3">
+            <KpiStrip @ref="_kpis" ApiClient="ApiClient"/>
+            <LyoSection Title="Recent invoices" Icon="@Icons.Material.Filled.ReceiptLong">
+                <InvoiceGrid @ref="_overviewInvoices" ApiClient="ApiClient" OnCompose="ComposeAsync"/>
+            </LyoSection>
+        </MudStack>
+    </MudTabPanel>
+    <MudTabPanel Text="Clients">
+        @if (_clientId is { } clientId) {
+            <ClientDetailView ApiClient="ApiClient" ClientId="clientId" OnBack="() => _clientId = null" OnCompose="ComposeForClient"/>
+        }
+        else {
+            <ClientListView ApiClient="ApiClient" OnOpen="id => _clientId = id"/>
+        }
+    </MudTabPanel>
+    <MudTabPanel Text="Charges">
+        <ChargeListView ApiClient="ApiClient"/>
+    </MudTabPanel>
+    <MudTabPanel Text="Invoices">
+        <InvoiceListView @ref="_invoiceList" ApiClient="ApiClient" OnCompose="ComposeAsync"/>
+    </MudTabPanel>
+    <MudTabPanel Text="Payments">
+        <PaymentListView ApiClient="ApiClient"/>
+    </MudTabPanel>
+    <MudTabPanel Text="Ledger">
+        <LedgerView ApiClient="ApiClient"/>
+    </MudTabPanel>
+</MudTabs>

@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Lyo.Api.Models.Builders;
-using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Authentication.Models;
 using Lyo.Authentication.Models.Format;
@@ -11,7 +10,8 @@ using Lyo.Authentication.Models.Request;
 using Lyo.Authentication.Models.Response;
 using Lyo.Authentication.Services.Opaque;
 using Lyo.Authentication.Services.Users;
-using Lyo.Common.Json;
+using Lyo.Common.Core.Identifiers;
+using Lyo.Json;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,9 +31,9 @@ public sealed class AuthenticationApiPostgresTests
     {
         var user = await SeedUserAsync();
         var request = new ProjectionQueryReq { Start = 0, Amount = 10, Select = ["Id", "DisplayName", "Email"] };
-        var response = await _fixture.Client.PostAsJsonAsync($"{Constants.Rest.Auth.User}/QueryProject", request, JsonOptions, TestContext.Current.CancellationToken);
+        var response = await _fixture.Client.PostAsJsonAsync($"{Constants.Rest.Auth.User}/QueryProject", request, JsonOptions, TestCt);
         response.EnsureSuccessStatusCode();
-        var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<ProjectedQueryRes<JsonElement>>(JsonOptions, TestCt);
         Assert.NotNull(result);
         Assert.True(result.IsSuccess);
         Assert.Contains(result.Items!, row => row.GetProperty("Id").GetGuid() == user.Id);
@@ -43,7 +43,7 @@ public sealed class AuthenticationApiPostgresTests
     public async Task QueryProject_Token_SecretHash_IsRejected()
     {
         var request = new ProjectionQueryReq { Start = 0, Amount = 1, Select = ["Id", "SecretHash"] };
-        var response = await _fixture.Client.PostAsJsonAsync($"{Constants.Rest.Auth.Token}/QueryProject", request, JsonOptions, TestContext.Current.CancellationToken);
+        var response = await _fixture.Client.PostAsJsonAsync($"{Constants.Rest.Auth.Token}/QueryProject", request, JsonOptions, TestCt);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
@@ -53,9 +53,9 @@ public sealed class AuthenticationApiPostgresTests
         var token = await SeedTokenAsync();
         var now = DateTime.UtcNow;
         var patch = PatchRequestBuilder.New().WithKey(token.Id).SetProperty("RevokedTimestamp", now).SetProperty("RevokedReason", "test").Build();
-        var response = await _fixture.Client.PatchAsJsonAsync(Constants.Rest.Auth.Token, patch, JsonOptions, TestContext.Current.CancellationToken);
+        var response = await _fixture.Client.PatchAsJsonAsync(Constants.Rest.Auth.Token, patch, JsonOptions, TestCt);
         response.EnsureSuccessStatusCode();
-        var loaded = await _fixture.Services.GetRequiredService<IApiTokenStore>().GetByIdAsync(token.Id, null, TestContext.Current.CancellationToken);
+        var loaded = await _fixture.Services.GetRequiredService<IApiTokenStore>().GetByIdAsync(token.Id, null, TestCt);
         Assert.NotNull(loaded?.RevokedAt);
         Assert.Equal("test", loaded.RevokedReason);
     }
@@ -64,9 +64,9 @@ public sealed class AuthenticationApiPostgresTests
     public async Task Delete_Token_RemovesRow()
     {
         var token = await SeedTokenAsync();
-        var response = await _fixture.Client.DeleteAsync($"{Constants.Rest.Auth.Token}/{token.Id}", TestContext.Current.CancellationToken);
+        var response = await _fixture.Client.DeleteAsync($"{Constants.Rest.Auth.Token}/{token.Id}", TestCt);
         response.EnsureSuccessStatusCode();
-        Assert.Null(await _fixture.Services.GetRequiredService<IApiTokenStore>().GetByIdAsync(token.Id, null, TestContext.Current.CancellationToken));
+        Assert.Null(await _fixture.Services.GetRequiredService<IApiTokenStore>().GetByIdAsync(token.Id, null, TestCt));
     }
 
     [Fact]
@@ -74,18 +74,15 @@ public sealed class AuthenticationApiPostgresTests
     {
         var user = await SeedUserAsync();
         var created = await _fixture.Client.PostAsJsonAsync(
-            Constants.Rest.Auth.Claim, new AuthClaimReq { UserId = user.Id, Type = "department", Value = "eng" }, JsonOptions, TestContext.Current.CancellationToken);
+            Constants.Rest.Auth.Claim, new AuthClaimReq { UserId = user.Id, Type = "department", Value = "eng" }, JsonOptions, TestCt);
+
         created.EnsureSuccessStatusCode();
-        var createdBody = await created.Content.ReadFromJsonAsync<CreateResult<AuthClaimRes>>(JsonOptions, TestContext.Current.CancellationToken);
+        var createdBody = await created.Content.ReadFromJsonAsync<CreateResult<AuthClaimRes>>(JsonOptions, TestCt);
         Assert.NotNull(createdBody?.Data);
         Assert.Equal("department", createdBody.Data.Type);
-
-        var reserved = await _fixture.Client.PostAsJsonAsync(
-            Constants.Rest.Auth.Claim, new AuthClaimReq { UserId = user.Id, Type = "scope", Value = "nope" }, JsonOptions, TestContext.Current.CancellationToken);
+        var reserved = await _fixture.Client.PostAsJsonAsync(Constants.Rest.Auth.Claim, new AuthClaimReq { UserId = user.Id, Type = "scope", Value = "nope" }, JsonOptions, TestCt);
         Assert.Equal(HttpStatusCode.BadRequest, reserved.StatusCode);
-
-        var listed = await _fixture.Client.PostAsJsonAsync(
-            $"{Constants.Rest.Auth.Claim}/QueryConcrete", new QueryConcreteReq { Amount = 50 }, JsonOptions, TestContext.Current.CancellationToken);
+        var listed = await _fixture.Client.PostAsJsonAsync($"{Constants.Rest.Auth.Claim}/QueryConcrete", new QueryConcreteReq { Amount = 50 }, JsonOptions, TestCt);
         listed.EnsureSuccessStatusCode();
     }
 
@@ -93,19 +90,14 @@ public sealed class AuthenticationApiPostgresTests
     public async Task Scope_Crud_AndDuplicateRejected()
     {
         var user = await SeedUserAsync();
-        var created = await _fixture.Client.PostAsJsonAsync(
-            Constants.Rest.Auth.Scope, new AuthScopeReq { UserId = user.Id, Name = "people.read" }, JsonOptions, TestContext.Current.CancellationToken);
+        var created = await _fixture.Client.PostAsJsonAsync(Constants.Rest.Auth.Scope, new AuthScopeReq { UserId = user.Id, Name = "people.read" }, JsonOptions, TestCt);
         created.EnsureSuccessStatusCode();
-        var createdBody = await created.Content.ReadFromJsonAsync<CreateResult<AuthScopeRes>>(JsonOptions, TestContext.Current.CancellationToken);
+        var createdBody = await created.Content.ReadFromJsonAsync<CreateResult<AuthScopeRes>>(JsonOptions, TestCt);
         Assert.NotNull(createdBody?.Data);
         Assert.Equal("people.read", createdBody.Data.Name);
-
-        var duplicate = await _fixture.Client.PostAsJsonAsync(
-            Constants.Rest.Auth.Scope, new AuthScopeReq { UserId = user.Id, Name = "people.read" }, JsonOptions, TestContext.Current.CancellationToken);
+        var duplicate = await _fixture.Client.PostAsJsonAsync(Constants.Rest.Auth.Scope, new AuthScopeReq { UserId = user.Id, Name = "people.read" }, JsonOptions, TestCt);
         Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
-
-        var empty = await _fixture.Client.PostAsJsonAsync(
-            Constants.Rest.Auth.Scope, new AuthScopeReq { UserId = user.Id, Name = "  " }, JsonOptions, TestContext.Current.CancellationToken);
+        var empty = await _fixture.Client.PostAsJsonAsync(Constants.Rest.Auth.Scope, new AuthScopeReq { UserId = user.Id, Name = "  " }, JsonOptions, TestCt);
         Assert.Equal(HttpStatusCode.BadRequest, empty.StatusCode);
     }
 
@@ -113,7 +105,7 @@ public sealed class AuthenticationApiPostgresTests
     public async Task QueryProject_Event_Succeeds()
     {
         var request = new ProjectionQueryReq { Start = 0, Amount = 5, Select = ["Id", "Kind", "Timestamp"] };
-        var response = await _fixture.Client.PostAsJsonAsync($"{Constants.Rest.Auth.Event}/QueryProject", request, JsonOptions, TestContext.Current.CancellationToken);
+        var response = await _fixture.Client.PostAsJsonAsync($"{Constants.Rest.Auth.Event}/QueryProject", request, JsonOptions, TestCt);
         response.EnsureSuccessStatusCode();
     }
 
@@ -121,8 +113,9 @@ public sealed class AuthenticationApiPostgresTests
     {
         var users = _fixture.Services.GetRequiredService<IUserStore>();
         var user = new LyoUser(
-            Guid.NewGuid(), "Api Test", $"api-{Guid.NewGuid():N}@example.com", true, null, null, [], null, null, DateTime.UtcNow, null, null, null, null);
-        return await users.CreateAsync(user, null, TestContext.Current.CancellationToken);
+            LyoGuid.CreateV7(), "Api Test", $"api-{LyoGuid.CreateV7():N}@example.com", true, null, null, [], null, null, DateTime.UtcNow, null, null, null, null);
+
+        return await users.CreateAsync(user, null, TestCt);
     }
 
     private async Task<ApiTokenRecord> SeedTokenAsync()
@@ -131,9 +124,10 @@ public sealed class AuthenticationApiPostgresTests
         var store = _fixture.Services.GetRequiredService<IApiTokenStore>();
         var id = NewTokenId();
         var token = new ApiTokenRecord(
-            id, TestData.Create(32, TestData.Seed + id.GetHashCode()), ApiTokenKind.Pat, ApiTokenRing.Live, owner.Id, "api-test", [], null, DateTime.UtcNow, null, null, null,
-            null, null, null);
-        await store.InsertAsync(token, null, TestContext.Current.CancellationToken);
+            id, TestData.Create(32, TestData.Seed + id.GetHashCode()), ApiTokenKind.Pat, ApiTokenRing.Live, owner.Id, "api-test", [], null, DateTime.UtcNow, null, null, null, null,
+            null, null);
+
+        await store.InsertAsync(token, null, TestCt);
         return token;
     }
 
@@ -141,6 +135,6 @@ public sealed class AuthenticationApiPostgresTests
     {
         const string alphabet = "0123456789abcdefghjkmnpqrstvwxyz";
         var bytes = TestData.Create(11, Environment.TickCount);
-        return new string(bytes.Select(b => alphabet[b % alphabet.Length]).ToArray());
+        return new(bytes.Select(b => alphabet[b % alphabet.Length]).ToArray());
     }
 }

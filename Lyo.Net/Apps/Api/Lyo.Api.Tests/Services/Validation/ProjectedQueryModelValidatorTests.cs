@@ -21,7 +21,7 @@ public sealed class ProjectedQueryModelValidatorTests(ApiPostgresFixture fixture
         var filter = scope.ServiceProvider.GetRequiredService<IWhereClauseService>();
         var loader = scope.ServiceProvider.GetRequiredService<IEntityLoaderService>();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
-        await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await using var db = await factory.CreateDbContextAsync(TestCt);
         var result = ProjectedQueryModelValidator.Validate(
             new ProjectedQueryValidatorInput<JobContext, JobDefinition> {
                 Db = db,
@@ -43,7 +43,7 @@ public sealed class ProjectedQueryModelValidatorTests(ApiPostgresFixture fixture
         var filter = scope.ServiceProvider.GetRequiredService<IWhereClauseService>();
         var loader = scope.ServiceProvider.GetRequiredService<IEntityLoaderService>();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
-        await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await using var db = await factory.CreateDbContextAsync(TestCt);
         var result = ProjectedQueryModelValidator.Validate(
             new ProjectedQueryValidatorInput<JobContext, JobDefinition> {
                 Db = db,
@@ -66,7 +66,7 @@ public sealed class ProjectedQueryModelValidatorTests(ApiPostgresFixture fixture
         var filter = scope.ServiceProvider.GetRequiredService<IWhereClauseService>();
         var loader = scope.ServiceProvider.GetRequiredService<IEntityLoaderService>();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
-        await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await using var db = await factory.CreateDbContextAsync(TestCt);
         var result = ProjectedQueryModelValidator.Validate(
             new ProjectedQueryValidatorInput<JobContext, JobDefinition> {
                 Db = db,
@@ -89,7 +89,7 @@ public sealed class ProjectedQueryModelValidatorTests(ApiPostgresFixture fixture
         var filter = scope.ServiceProvider.GetRequiredService<IWhereClauseService>();
         var loader = scope.ServiceProvider.GetRequiredService<IEntityLoaderService>();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
-        await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await using var db = await factory.CreateDbContextAsync(TestCt);
         var result = ProjectedQueryModelValidator.Validate(
             new ProjectedQueryValidatorInput<JobContext, JobDefinition> {
                 Db = db,
@@ -133,7 +133,7 @@ public sealed class ProjectedQueryModelValidatorTests(ApiPostgresFixture fixture
         var filter = scope.ServiceProvider.GetRequiredService<IWhereClauseService>();
         var loader = scope.ServiceProvider.GetRequiredService<IEntityLoaderService>();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
-        await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await using var db = await factory.CreateDbContextAsync(TestCt);
         var result = ProjectedQueryModelValidator.Validate(
             new ProjectedQueryValidatorInput<JobContext, JobDefinition> {
                 Db = db,

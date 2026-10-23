@@ -1,30 +1,35 @@
 # Lyo.Sms.Postgres
 
-PostgreSQL EF Core store for outbound SMS logs (`SmsLogEntity`). The package never sends SMS. It wires `SmsDbContext` so workers or gateways can persist send outcomes after [`Lyo.Sms`](../Lyo.Sms/README.md) / [`Lyo.Sms.Twilio`](../Lyo.Sms.Twilio/README.md) completes.
+PostgreSQL EF Core store for outbound SMS logs (`SmsLogEntity`). The package never sends SMS. It wires `SmsDbContext` so workers or gateways can persist send outcomes after [
+`Lyo.Sms`](../Lyo.Sms/README.md) / [`Lyo.Sms.Twilio`](../Lyo.Sms.Twilio/README.md) completes.
 
 ## Schema and row type
 
 - **Schema.** `sms` (`PostgresSmsOptions.Schema` = `"sms"`).
-- **`SmsLogEntity`.** `Id` (guid), `To` / `From`, `Body`, `MediaUrlsJson` (serialized MMS attachments), `IsSuccess`, `Message`, `ErrorMessage`, `ElapsedTimeMs`, `MessageId`, `Status`, `ErrorCode`, timeline fields (`DateCreated`, `DateSent`, `DateUpdated`), and `CreatedAt`.
+- **`SmsLogEntity`.** `Id` (guid), `To` / `From`, `Body`, `MediaUrlsJson` (serialized MMS attachments), `IsSuccess`, `Message`, `ErrorMessage`, `ElapsedTimeMs`, `MessageId`,
+  `Status`, `ErrorCode`, timeline fields (`DateCreated`, `DateSent`, `DateUpdated`), and `CreatedAt`.
 
 ## `PostgresSmsOptions`
 
-| Member | Meaning |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `SectionName` | `"PostgresSms"` for `IConfiguration` binding |
-| `ConnectionString` | Required |
-| `EnableAutoMigrations` | Honored through [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md) migration host integration |
-| Implements `IPostgresMigrationConfig` | Schema = `sms` |
+| Member                                | Meaning                                                                                                    |
+|---------------------------------------|------------------------------------------------------------------------------------------------------------|
+| `SectionName`                         | `"PostgresSms"` for `IConfiguration` binding                                                               |
+| `ConnectionString`                    | Required                                                                                                   |
+| `EnableAutoMigrations`                | Honored through [`Lyo.Postgres`](../../../Data/Postgres/Lyo.Postgres/README.md) migration host integration |
+| Implements `IPostgresMigrationConfig` | Schema = `sms`                                                                                             |
 
 ## Service registration
 
-- `AddSmsDbContext(string connectionString)` registers a factory plus a scoped `SmsDbContext` (the scoped registration pulls a fresh context from `IDbContextFactory<SmsDbContext>`).
-- `AddSmsDbContextFactory(PostgresSmsOptions)` / `AddSmsDbContextFactory` (`Action<PostgresSmsOptions>`) wire singleton options plus `AddDbContextFactory` with `UseNpgsql` and the migration history schema.
+- `AddSmsDbContext(string connectionString)` registers a factory plus a scoped `SmsDbContext` (the scoped registration pulls a fresh context from
+  `IDbContextFactory<SmsDbContext>`).
+- `AddSmsDbContextFactory(PostgresSmsOptions)` / `AddSmsDbContextFactory` (`Action<PostgresSmsOptions>`) wire singleton options plus `AddDbContextFactory` with `UseNpgsql` and the
+  migration history schema.
 - `AddSmsDbContextFactoryFromConfiguration(IConfiguration, section = PostgresSmsOptions.SectionName)` binds `PostgresSms` (or an override), then registers the factory.
 
 ## When `Lyo.Sms.Twilio.Postgres` fits better
 
-If `TwilioSmsResult` is what you need (price, segments, account SID, direction), use [`Lyo.Sms.Twilio.Postgres`](../Lyo.Sms.Twilio.Postgres/README.md) (`TwilioSmsLogEntity`, keyed by Twilio message SID).
+If `TwilioSmsResult` is what you need (price, segments, account SID, direction), use [`Lyo.Sms.Twilio.Postgres`](../Lyo.Sms.Twilio.Postgres/README.md) (`TwilioSmsLogEntity`, keyed
+by Twilio message SID).
 
 ## Dependencies
 

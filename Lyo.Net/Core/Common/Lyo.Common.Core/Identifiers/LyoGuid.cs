@@ -1,5 +1,5 @@
 using System.Security.Cryptography;
-using System.Text;
+using Lyo.Common.Core.Conversion;
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Security;
 using Lyo.Exceptions;
@@ -60,8 +60,8 @@ public static class LyoGuid
     public static Guid CreateV6(DateTimeOffset timestamp) => BuildV6(timestamp.ToUnixTimeMilliseconds());
 
     /// <summary>
-    /// Mints a version 7 (time-ordered, Unix-ms epoch) GUID per RFC 9562 using the current UTC time. On .NET 9+ delegates to <see cref="Guid.CreateVersion7()" /> which
-    /// provides sub-millisecond monotonicity; earlier targets use a fully-random rand_a/rand_b region.
+    /// Mints a version 7 (time-ordered, Unix-ms epoch) GUID per RFC 9562 using the current UTC time. On .NET 9+ delegates to <see cref="Guid.CreateVersion7()" /> which provides
+    /// sub-millisecond monotonicity; earlier targets use a fully-random rand_a/rand_b region.
     /// </summary>
     public static Guid CreateV7()
 #if NET9_0_OR_GREATER
@@ -156,9 +156,7 @@ public static class LyoGuid
         return result;
     }
 
-    /// <summary>
-    /// Mints <paramref name="count" /> version 6 (time-ordered, Gregorian epoch) GUIDs in one batch. All GUIDs share the same millisecond timestamp captured at batch start.
-    /// </summary>
+    /// <summary>Mints <paramref name="count" /> version 6 (time-ordered, Gregorian epoch) GUIDs in one batch. All GUIDs share the same millisecond timestamp captured at batch start.</summary>
     public static Guid[] CreateV6Bulk(int count)
     {
         ArgumentHelpers.ThrowIfNegativeOrZero(count);
@@ -183,9 +181,7 @@ public static class LyoGuid
         return result;
     }
 
-    /// <summary>
-    /// Mints <paramref name="count" /> version 7 (time-ordered, Unix-ms epoch) GUIDs in one batch. All GUIDs share the same millisecond timestamp captured at batch start.
-    /// </summary>
+    /// <summary>Mints <paramref name="count" /> version 7 (time-ordered, Unix-ms epoch) GUIDs in one batch. All GUIDs share the same millisecond timestamp captured at batch start.</summary>
     public static Guid[] CreateV7Bulk(int count)
     {
         ArgumentHelpers.ThrowIfNegativeOrZero(count);
@@ -292,7 +288,7 @@ public static class LyoGuid
     private static byte[] BuildNameInput(Guid ns, string name)
     {
         var nsBytes = ToRfcBytes(ns);
-        var nameBytes = Encoding.UTF8.GetBytes(name);
+        var nameBytes = ByteConvert.GetBytes(name);
         var input = new byte[nsBytes.Length + nameBytes.Length];
         nsBytes.CopyTo(input, 0);
         nameBytes.CopyTo(input, nsBytes.Length);
@@ -300,8 +296,8 @@ public static class LyoGuid
     }
 
     /// <summary>
-    /// Builds a <see cref="Guid" /> from 16 bytes in RFC 4122 big-endian order using the <c>(int, short, short, ...)</c> constructor, skipping the byte-group reversal
-    /// that <c>new Guid(byte[])</c> applies to the first 8 bytes. Accepts <see cref="ReadOnlySpan{T}" /> so callers can pass stack-allocated buffers.
+    /// Builds a <see cref="Guid" /> from 16 bytes in RFC 4122 big-endian order using the <c>(int, short, short, ...)</c> constructor, skipping the byte-group reversal that
+    /// <c>new Guid(byte[])</c> applies to the first 8 bytes. Accepts <see cref="ReadOnlySpan{T}" /> so callers can pass stack-allocated buffers.
     /// </summary>
     private static Guid FromRfcBytes(ReadOnlySpan<byte> rfc)
     {

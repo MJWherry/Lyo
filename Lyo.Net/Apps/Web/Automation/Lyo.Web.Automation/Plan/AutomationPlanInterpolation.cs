@@ -11,13 +11,11 @@ namespace Lyo.Web.Automation.Plan;
 /// </summary>
 public static class AutomationPlanInterpolation
 {
-    private static readonly Regex SimplePlaceholder = new(@"\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex SimplePlaceholder = new(@"(?<!\{)\{([a-zA-Z_][a-zA-Z0-9_]*)\}(?!\})", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    private static readonly Regex DoubleBracePlaceholder = new(@"\{\{\s*([^}]+?)\s*\}\}", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex SingleBraceToken = new(@"(?<!\{)\{(?<inner>[^{}]+)\}(?!\})", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    private static readonly Regex SingleBraceToken = new(@"\{(?<inner>[^{}]+)\}", RegexOptions.Compiled | RegexOptions.CultureInvariant);
-
-    /// <summary>Expands only simple <c>{{variableName}}</c> placeholders from string variables (legacy, synchronous).</summary>
+    /// <summary>Expands simple <c>{variableName}</c> placeholders from string variables.</summary>
     public static string Expand(string template, IReadOnlyDictionary<string, string> strings)
     {
         ArgumentHelpers.ThrowIfNull(template);
@@ -26,33 +24,32 @@ public static class AutomationPlanInterpolation
             template, m => {
                 var key = m.Groups[1].Value;
                 var foundValue = strings.TryGetValue(key, out var value);
-                OperationHelpers.ThrowIf(!foundValue, $"Template references undefined string variable '{{{{{key}}}}}'. Define it with a store or extract step first.");
+                OperationHelpers.ThrowIf(!foundValue, $"Template references undefined string variable '{{{key}}}'. Define it with a store or extract step first.");
                 return value ?? string.Empty;
             });
     }
 
     /// <summary>Expands placeholders using strings, lists, elements, and optionally the browser.</summary>
     /// <remarks>
-    /// <para><b>Syntax</b>: use <c>{{page.url}}</c> (legacy) or SmartFormat-style <c>{page.url}</c>. Double braces are normalized to single braces before parsing.</para>
+    /// <para><b>Syntax</b>: <c>{page.url}</c>.</para>
     /// <para>Selector paths (after optional <see cref="IFormatterService" /> validation):</para>
     /// <list type="bullet">
-    /// <item><c>name</c>. string variable (simple identifier only in legacy <see cref="Expand" />).</item> <item><c>strings.x</c> / <c>str.x</c>. string variable <c>x</c>.</item>
+    /// <item><c>name</c>. string variable (simple identifier only in <see cref="Expand" />).</item> <item><c>strings.x</c> / <c>str.x</c>. string variable <c>x</c>.</item>
     /// <item><c>lists.x</c> / <c>list.x</c>. string-list <c>x</c>, lines joined with newlines.</item>
     /// <item><c>page.url</c>, <c>page.title</c>. current document (requires <see cref="AutomationPlanInterpolationBindings.Browser" />).</item>
     /// <item><c>elements.ref.text</c> or <c>el.ref.text</c>. visible text of element ref <c>ref</c>.</item> <item><c>elements.ref.attr.href</c>. DOM attribute.</item>
     /// </list>
-    /// If the full selector matches a string variable key (including keys with dots), that value wins first. A SmartFormat format specifier after <c>:</c> is ignored for
-    /// resolution; only
+    /// If the full selector matches a string variable key (including keys with dots), that value wins first. A SmartFormat format specifier after <c>:</c> is ignored for resolution; only
     /// the selector before <c>:</c> is used.
     /// </remarks>
     public static async Task<string> ExpandAsync(string template, AutomationPlanInterpolationBindings bindings, IFormatterService? formatter, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(template);
         ArgumentHelpers.ThrowIfNull(bindings);
-        var work = template.IndexOf("{{", StringComparison.Ordinal) >= 0 ? DoubleBracePlaceholder.Replace(template, m => "{" + m.Groups[1].Value.Trim() + "}") : template;
-        if (!SingleBraceToken.IsMatch(work))
-            return work;
+        if (!SingleBraceToken.IsMatch(template))
+            return template;
 
+        var work = template;
         if (formatter != null && !formatter.TryValidateTemplate(work, out var err))
             throw new InvalidOperationException($"Automation plan template is invalid: {err}");
 
@@ -68,13 +65,13 @@ public static class AutomationPlanInterpolation
         return work;
     }
 
-    /// <summary>Yields true if <paramref name="template" /> may contain placeholders (<c>{{</c> or <c>{…}</c>).</summary>
+    /// <summary>Yields true if <paramref name="template" /> contains a <c>{…}</c> placeholder.</summary>
     public static bool ContainsPlaceholders(string template)
     {
         if (string.IsNullOrEmpty(template))
             return false;
 
-        return template.IndexOf("{{", StringComparison.Ordinal) >= 0 || (template.IndexOf('{') >= 0 && SingleBraceToken.IsMatch(template));
+        return SingleBraceToken.IsMatch(template);
     }
 
     private static async Task<string> ResolvePlaceholderAsync(string spec, AutomationPlanInterpolationBindings b, CancellationToken ct)

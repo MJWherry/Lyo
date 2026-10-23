@@ -1,6 +1,7 @@
 # Lyo.Privacy.AspNetCore
 
-DI wiring for [`Lyo.Privacy`](../Lyo.Privacy/README.md) on ASP.NET Core: registers `ITextRedactor` / `IStructuredRedactor`, binds `PrivacyRedactorOptions` from configuration, and allows keyed per-tenant or per-feature policies.
+DI wiring for [`Lyo.Privacy`](../Lyo.Privacy/README.md) on ASP.NET Core: registers `ITextRedactor` / `IStructuredRedactor`, binds `PrivacyRedactorOptions` from configuration, and
+allows keyed per-tenant or per-feature policies.
 
 ## Examples
 
@@ -20,10 +21,10 @@ services.AddLyoPrivacyPolicy("Support", p => p
 
 ## `PrivacyServiceCollectionExtensions`
 
-| Extension | What it does |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Extension                                                                                                                                                                              | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `services.AddLyoPrivacy(IConfiguration? configuration = null, Action<PrivacyRedactorOptions>? configureOptions = null, Action<RedactionPolicyBuilder>? configureDefaultPolicy = null)` | When an `IConfiguration` is supplied, binds `PrivacyRedactorOptions` from section `PrivacyRedactorOptions.SectionName`, applies an optional inline overrides callback, and registers singleton `ITextRedactor` (`TextRedactor`) plus `IStructuredRedactor` (`JsonRedactor`). If `PrivacyRedactorOptions.JsonApplyTextRulesToStrings` is `true`, the structured redactor reuses the text redactor. `IMetrics` is used when present; otherwise `NullMetrics.Instance`. |
-| `services.AddLyoPrivacyPolicy(object serviceKey, Action<RedactionPolicyBuilder> configure)` | Registers a keyed `ITextRedactor` built from a custom `RedactionPolicyBuilder`. Reach for this when one host needs different redaction rules per workload (e.g. `"Support"`, `"Marketing"`). When `Name` is unset, the policy defaults it to `serviceKey.ToString()`. |
+| `services.AddLyoPrivacyPolicy(object serviceKey, Action<RedactionPolicyBuilder> configure)`                                                                                            | Registers a keyed `ITextRedactor` built from a custom `RedactionPolicyBuilder`. Reach for this when one host needs different redaction rules per workload (e.g. `"Support"`, `"Marketing"`). When `Name` is unset, the policy defaults it to `serviceKey.ToString()`.                                                                                                                                                                                                |
 
 ## Dependencies
 

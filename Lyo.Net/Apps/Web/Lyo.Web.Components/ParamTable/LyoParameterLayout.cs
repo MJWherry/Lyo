@@ -1,8 +1,8 @@
 namespace Lyo.Web.Components.ParamTable;
 
 /// <summary>
-/// How <see cref="LyoParameterEditor" /> presents parameter rows. Hosts pick the default through <c>AddLyoParameterEditor</c>; users switch from the editor header
-/// and their choice is remembered for that browser.
+/// How <see cref="LyoParameterEditor" /> presents parameter rows. Hosts pick the default through <c>AddLyoParameterEditor</c>; users switch from the editor header and their
+/// choice is remembered for that browser.
 /// </summary>
 public enum LyoParameterLayout
 {

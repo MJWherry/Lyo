@@ -17,7 +17,6 @@ public sealed class ReportingWebRendererDiTests
         services.AddScoped<HtmlRenderer>(sp => new(sp, sp.GetRequiredService<ILoggerFactory>()));
         services.AddScoped<IWebRendererService>(sp => new WebRendererService(sp.GetRequiredService<HtmlRenderer>()));
         services.AddReportingWebRenderer();
-
         using var provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateScopes = true, ValidateOnBuild = true });
         using var scope = provider.CreateScope();
         Assert.Contains(scope.ServiceProvider.GetServices<IReportRenderer>(), r => r is HtmlPdfReportRenderer);

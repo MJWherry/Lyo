@@ -2,7 +2,6 @@ using Lyo.Reporting.Models.Builders;
 using Lyo.Reporting.Models.Composition;
 using Lyo.Reporting.Models.Controls;
 using Lyo.Reporting.Models.Models;
-using Lyo.Reporting.Models.Response;
 
 namespace Lyo.Reporting.Tests;
 
@@ -14,15 +13,10 @@ public sealed class ReportCompositionProcessorTests
         var report = ReportBuilder<object>.New()
             .SetTitle("{ReportTitle}")
             .AddParameter("ReportTitle", example: "\"Q4\"")
-            .AddSection(
-                "S",
-                s => s.AddText("Hello {Name}")
-                    .AddGrid(g => g.SetTemplateColumns("repeat(auto-fit, minmax(220px, 1fr))").AddCard("Period", "{Period}")))
+            .AddSection("S", s => s.AddText("Hello {Name}").AddGrid(g => g.SetTemplateColumns("repeat(auto-fit, minmax(220px, 1fr))").AddCard("Period", "{Period}")))
             .Build();
 
-        var bound = ReportCompositionProcessor.Bind(
-            report, new Dictionary<string, string?> { ["ReportTitle"] = "Q4", ["Name"] = "Ada", ["Period"] = "2024" });
-
+        var bound = ReportCompositionProcessor.Bind(report, new Dictionary<string, string?> { ["ReportTitle"] = "Q4", ["Name"] = "Ada", ["Period"] = "2024" });
         Assert.Equal("Q4", bound.Title);
         Assert.Equal("Hello Ada", bound.Sections[0].Controls.OfType<Block>().First().Content);
         var card = bound.Sections[0].Controls.OfType<Grid>().SelectMany(g => g.Controls).OfType<Card>().Single();
@@ -53,12 +47,12 @@ public sealed class ReportCompositionProcessorTests
     }
 
     [Fact]
-    public void Deserialize_LegacyCompositionJson_Succeeds()
+    public void Deserialize_ContentBlocksJson_LeavesControlsEmpty()
     {
         const string json = """{"Title":"{ReportTitle}","Sections":[{"Title":"S","ContentBlocks":[{"Content":"Hello {Name}"}]}]}""";
         var report = ReportJson.Deserialize<object>(json);
         Assert.Equal("{ReportTitle}", report.Title);
-        Assert.Equal("Hello {Name}", Assert.Single(report.Sections[0].Controls.OfType<Block>()).Content);
+        Assert.Empty(report.Sections[0].Controls);
     }
 
     [Fact]
@@ -72,7 +66,6 @@ public sealed class ReportCompositionProcessorTests
         var hidden = ReportCompositionProcessor.Bind(report, new Dictionary<string, string?> { ["ShowRisks"] = "false" });
         Assert.Single(hidden.Sections);
         Assert.Equal("Always", hidden.Sections[0].Title);
-
         var shown = ReportCompositionProcessor.Bind(report, new Dictionary<string, string?> { ["ShowRisks"] = "true" });
         Assert.Equal(2, shown.Sections.Count);
     }
@@ -81,9 +74,7 @@ public sealed class ReportCompositionProcessorTests
     public void BindJson_JsonStringParameter_UnwrapsValue()
     {
         var json = ReportJson.Serialize(ReportBuilder<object>.New().SetTitle("{Period}").Build());
-        var bound = ReportCompositionProcessor.BindJson(
-            json, [new ReportGenerationParameterRes(Guid.Empty, Guid.Empty, "Period", "System.String", "\"Q4 2024\"", null, null)]);
-
+        var bound = ReportCompositionProcessor.BindJson(json, [new(Guid.Empty, Guid.Empty, "Period", "System.String", "\"Q4 2024\"", null, null)]);
         Assert.Equal("Q4 2024", bound.Title);
     }
 
@@ -119,11 +110,14 @@ public sealed class ReportCompositionProcessorTests
     {
         var invoice = ReportDesignTemplates.Invoice();
         var blocks = invoice.Sections.SelectMany(s => SectionBody.WalkControls(s.Controls)).OfType<Block>();
-        Assert.Contains(blocks, b => b.ContentType == ContentType.TableOfContents);
+        Assert.DoesNotContain(blocks, b => b.ContentType == ContentType.TableOfContents);
         var table = Assert.Single(SectionBody.CollectTables(invoice.Sections));
         Assert.Equal(DataSourceKind.FromParameter, table.DataSourceKind);
         Assert.Equal("LineItems", table.DataParameterKey);
+        Assert.Contains(table.Columns, c => c.Header == "Title");
+        Assert.Contains(table.Columns, c => c.Header == "Description");
         Assert.Contains(invoice.ParameterSpecs, p => p.Key == "LineItems" && p.ExampleValue != null);
+        Assert.True(string.IsNullOrEmpty(invoice.Description));
         Assert.Contains(invoice.Sections.SelectMany(s => s.Controls).OfType<Grid>(), g => g.Controls.OfType<Card>().Any());
     }
 

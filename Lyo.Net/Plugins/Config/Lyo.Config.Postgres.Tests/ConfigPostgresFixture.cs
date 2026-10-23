@@ -1,6 +1,5 @@
 using System.Security.Cryptography;
 using System.Text;
-using Lyo.Config;
 using Lyo.Config.Postgres.Database;
 using Lyo.Encryption.Extensions;
 using Lyo.KeyStore;
@@ -25,6 +24,6 @@ public sealed class ConfigPostgresFixture : PostgresServiceFixtureBase<ConfigDbC
             });
 
         services.AddEncryptionServiceKeyed(ConfigQueryRoutes.EncryptionKeyName, ConfigQueryRoutes.EncryptionKeyName);
-        services.AddConfigValueEncryption(ConfigQueryRoutes.EncryptionKeyName);
+        services.AddConfigValueEncryption();
     }
 }

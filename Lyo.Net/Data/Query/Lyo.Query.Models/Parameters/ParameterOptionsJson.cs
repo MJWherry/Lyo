@@ -1,9 +1,9 @@
-using Lyo.Parameters;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using Lyo.Common.Json;
 using Lyo.Common.Core.Extensions;
 using Lyo.Exceptions;
+using Lyo.Json;
+using Lyo.Parameters;
 using Lyo.Query.Models.Enums;
 
 namespace Lyo.Query.Models.Parameters;
@@ -17,8 +17,7 @@ public static class ParameterOptionsJson
     private static readonly Regex SprocNameRegex = new(@"^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)+$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     /// <summary>True when <paramref name="storedProcName" /> is a qualified <c>schema.func</c> identifier.</summary>
-    public static bool IsValidStoredProcName(string? storedProcName)
-        => !string.IsNullOrWhiteSpace(storedProcName) && SprocNameRegex.IsMatch(storedProcName.Trim());
+    public static bool IsValidStoredProcName(string? storedProcName) => !string.IsNullOrWhiteSpace(storedProcName) && SprocNameRegex.IsMatch(storedProcName.Trim());
 
     /// <summary>Serializes <paramref name="options" /> to camelCase JSON, or null when <paramref name="options" /> is null.</summary>
     public static string? Serialize(ParameterOptions? options)
@@ -57,10 +56,7 @@ public static class ParameterOptionsJson
     /// <summary>Reads <see cref="ParameterOptions.Kind" /> from Options JSON, or null when empty or invalid.</summary>
     public static ParameterOptionsKind? TryGetKind(string? json) => TryDeserialize(json, out var options) && options is not null ? options.Kind : null;
 
-    /// <summary>
-    /// Builds default Options JSON for a kind pick in the definition editor (static placeholder item or root query template). Null when <paramref name="kind" /> is
-    /// null.
-    /// </summary>
+    /// <summary>Builds default Options JSON for a kind pick in the definition editor (static placeholder item or root query template). Null when <paramref name="kind" /> is null.</summary>
     public static string? CreateDefaultForKind(ParameterOptionsKind? kind)
     {
         if (kind is null)
@@ -70,7 +66,13 @@ public static class ParameterOptionsJson
             return Serialize(new() { Kind = ParameterOptionsKind.Static, Items = [new("key", "label")] });
 
         if (kind == ParameterOptionsKind.Sproc)
-            return Serialize(new() { Kind = ParameterOptionsKind.Sproc, StoredProcName = "public.report_rows", KeyField = "Key", LabelField = "Value" });
+            return Serialize(
+                new() {
+                    Kind = ParameterOptionsKind.Sproc,
+                    StoredProcName = "public.report_rows",
+                    KeyField = "Key",
+                    LabelField = "Value"
+                });
 
         return Serialize(
             new() {

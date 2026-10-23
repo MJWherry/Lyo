@@ -4,6 +4,7 @@ using Lyo.Api.Client;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Formatter;
 using Lyo.Health;
@@ -36,14 +37,11 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
 
     private const int RequeueDelaySeconds = 2;
 
-    private static readonly string[] JobRunIncludes = [
-        "JobRunParameters", "JobRunLogs", "JobRunResults", "JobSchedule", "JobTrigger", "JobTrigger.JobTriggerParameters", "JobDefinition", "JobDefinition.JobParameters",
-        "JobDefinition.JobTriggerJobDefinitions.JobTriggerParameters"
-    ];
+    private static readonly string[] JobRunIncludes = ["JobRunParameters", "JobRunLogs", "JobRunResults", "JobSchedule", "JobDefinition", "JobDefinition.JobParameters"];
 
     private static readonly string[] JobDefinitionIncludes = [
-        "JobParameters", "JobSchedules", "JobSchedules.JobScheduleParameters", "JobTriggerJobDefinitions", "JobTriggerJobDefinitions.JobTriggerParameters",
-        "JobParallelRestrictionBaseJobDefinitions", "JobParallelRestrictionBaseJobDefinitions.OtherJobDefinition"
+        "JobParameters", "JobSchedules", "JobSchedules.JobScheduleParameters", "JobParallelRestrictionBaseJobDefinitions",
+        "JobParallelRestrictionBaseJobDefinitions.OtherJobDefinition"
     ];
 
     private readonly IApiClient _apiClient;
@@ -56,17 +54,18 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
 
     private readonly SemaphoreSlim _definitionLock = new(1, 1);
     private readonly IJobEventPublisher _eventPublisher;
-    private readonly ILogger<JobScheduler> _logger;
-    private readonly IMetrics _metrics;
-    private readonly IMqService? _mqService;
-    private readonly JobSchedulerOptions _options;
-    private readonly JobRunRequestFactory _runRequestFactory;
 
     /// <summary>
     /// Slots this process has already created (or seen as duplicates). Survives definition refresh, which reloads <c>LastRun</c> as the newest run for the definition — often a
     /// retry with no <c>JobScheduleId</c> — and would otherwise re-POST the same cron slot every check.
     /// </summary>
     private readonly Dictionary<(Guid ScheduleId, DateTime Slot), byte> _knownScheduleSlots = new();
+
+    private readonly ILogger<JobScheduler> _logger;
+    private readonly IMetrics _metrics;
+    private readonly IMqService? _mqService;
+    private readonly JobSchedulerOptions _options;
+    private readonly JobRunRequestFactory _runRequestFactory;
 
     private Dictionary<Guid, JobBlackoutCalendarRes> _blackoutCalendars = new();
 
@@ -329,7 +328,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
 
         var nextCount = requeueCount + 1;
         _logger.LogWarning(ex, "Scheduler failed processing run {RunId}; requeue {Count}/{Max}", runId, nextCount, MaxRequeueCount);
-        var retry = new QueueMessageEnvelope<Guid>(runId, nextCount, envelope?.MessageId ?? Guid.NewGuid().ToString("D"), envelope?.EnqueuedAt ?? DateTime.UtcNow);
+        var retry = new QueueMessageEnvelope<Guid>(runId, nextCount, envelope?.MessageId ?? LyoGuid.CreateV7().ToString("D"), envelope?.EnqueuedAt ?? DateTime.UtcNow);
         var bytes = JsonSerializer.SerializeToUtf8Bytes(retry);
         try {
             if (_mqService is IDelayedMqService delayedMq)
@@ -500,8 +499,8 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
         // Only this schedule's slot is a safe cursor. A retry's ScheduledSlotUtc is a dispatch delay, not a cron instant, and would skip upcoming ticks.
         var lastSlotForThisSchedule = LatestSlotForSchedule(schedule.Id, jobInfo.LastRun, jobInfo.LastFailedRun, jobInfo.LastSuccessfulRun);
         return JobScheduleReference.Resolve(
-            jobInfo.LastSuccessfulRun?.StartedTimestamp, lastSlotForThisSchedule, jobInfo.LastRun?.StartedTimestamp, jobInfo.LastRun?.CreatedTimestamp, schedule.StartDateUtc,
-            now, _options.MisfireLookbackMinutes);
+            jobInfo.LastSuccessfulRun?.StartedTimestamp, lastSlotForThisSchedule, jobInfo.LastRun?.StartedTimestamp, jobInfo.LastRun?.CreatedTimestamp, schedule.StartDateUtc, now,
+            _options.MisfireLookbackMinutes);
     }
 
     private static DateTime? LatestSlotForSchedule(Guid scheduleId, params JobRunRes?[] runs)
@@ -510,6 +509,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
         foreach (var run in runs) {
             if (run?.JobScheduleId != scheduleId || !run.ScheduledSlotUtc.HasValue)
                 continue;
+
             if (!latest.HasValue || run.ScheduledSlotUtc.Value > latest.Value)
                 latest = run.ScheduledSlotUtc;
         }
@@ -679,7 +679,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
             return false;
 
         jobInfo = currentJobInfo;
-        var runReq = BuildRunRequest(definition.Id, schedule, null, null);
+        var runReq = BuildRunRequest(definition.Id, schedule);
         runReq.JobScheduleId = schedule.Id;
         runReq.ScheduledSlotUtc = scheduledSlot;
         _logger.LogDebug("Creating job run: {Request}", runReq);
@@ -723,14 +723,14 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
         }
     }
 
-    /// <summary>
-    /// Advances in-memory schedule progress past <paramref name="scheduledSlot" /> when create fails, so the next check does not retry the
-    /// same past-due slot forever.
-    /// </summary>
+    /// <summary>Advances in-memory schedule progress past <paramref name="scheduledSlot" /> when create fails, so the next check does not retry the same past-due slot forever.</summary>
     private void MarkSlotAttempted(Guid definitionId, Guid scheduleId, JobInfo jobInfo, DateTime scheduledSlot)
     {
         var placeholder = (jobInfo.LastRun ?? new JobRunRes { JobDefinitionId = definitionId, State = JobState.Finished }) with {
-            JobScheduleId = scheduleId, ScheduledSlotUtc = scheduledSlot, State = JobState.Finished, Result = JobRunResult.Failure
+            JobScheduleId = scheduleId,
+            ScheduledSlotUtc = scheduledSlot,
+            State = JobState.Finished,
+            Result = JobRunResult.Failure
         };
 
         _jobs = new(_jobs) { [definitionId] = jobInfo with { LastRun = placeholder } };
@@ -849,14 +849,6 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
                         run.JobDefinitionId, next);
                 }
             }
-            else if (jobInfo.Definition is { AlertOnFailure: true } && _eventPublisher.IsConnected()) {
-                var alertThreshold = jobInfo.Definition.AlertAfterConsecutiveFailures;
-                if (alertThreshold <= 0 || next >= alertThreshold) {
-                    await _eventPublisher.PublishAlertAsync(
-                            run.JobDefinitionId, run.Id, JobAlertType.Failure, $"Job '{jobInfo.Definition.Name}' failed ({next} consecutive failure(s))", _stoppingToken)
-                        .ConfigureAwait(false);
-                }
-            }
         }
 
         // Schedule a retry if the run failed (or timed out) and the definition allows it.
@@ -867,10 +859,6 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
         if (run.ParentJobRunId.HasValue)
             await ProcessChildRunCompletionAsync(run).ConfigureAwait(false);
 
-        if (!run.AllowTriggers || jobInfo.Definition.JobTriggers?.Count == 0)
-            return false; // ack — handled
-
-        await ProcessTriggersAsync(updatedInfo, run).ConfigureAwait(false);
         return false; // ack — handled (true = requeue)
     }
 
@@ -883,7 +871,7 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
             "Scheduling retry attempt {Attempt}/{Max} for definition {Name} (backoff {Backoff}s, type {BackoffType})", nextAttempt, jobInfo.Definition.MaxRetryCount,
             jobInfo.Definition.Name, backoffSeconds, jobInfo.Definition.RetryBackoffType);
 
-        var retryReq = BuildRunRequest(failedRun.JobDefinitionId, null, null, null);
+        var retryReq = BuildRunRequest(failedRun.JobDefinitionId, null);
         retryReq.RetryAttempt = nextAttempt;
         retryReq.ReRanFromJobRunId = failedRun.Id;
 
@@ -902,7 +890,9 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
                 retryReq.ScheduledSlotUtc = DateTime.UtcNow.AddSeconds(backoffSeconds);
         }
 
-        var created = await _apiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(BuildUri(Constants.Rest.Job.RunsCreate), retryReq, null, _stoppingToken).ConfigureAwait(false);
+        var created = await _apiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(BuildUri(Constants.Rest.Job.RunsCreate), retryReq, null, _stoppingToken)
+            .ConfigureAwait(false);
+
         if (created.IsSuccess && created.Data != null) {
             _metrics.IncrementCounter(Constants.Metrics.Scheduler.RetriesScheduled);
             _logger.LogInformation("Created retry job run {JobRunId} (attempt {Attempt})", created.Data.Id, nextAttempt);
@@ -914,9 +904,9 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
 
             if (useDelayedMq && _mqService is IDelayedMqService delayedMq) {
                 var queue = Constants.Mq.QueueGetJobRunCreated(jobInfo.Definition.WorkerType);
-                var envelope = new QueueMessageEnvelope<Guid>(created.Data.Id, 0, Guid.NewGuid().ToString("D"), DateTime.UtcNow);
+                var envelope = new QueueMessageEnvelope<Guid>(created.Data.Id, 0, LyoGuid.CreateV7().ToString("D"), DateTime.UtcNow);
                 var bytes = JsonSerializer.SerializeToUtf8Bytes(envelope);
-                await delayedMq.SendToQueueDelayed(queue, bytes, TimeSpan.FromSeconds(backoffSeconds)).ConfigureAwait(false);
+                await delayedMq.SendToQueueDelayed(queue, bytes, TimeSpan.FromSeconds(backoffSeconds), _stoppingToken).ConfigureAwait(false);
             }
         }
         else if (created.Error?.Errors.Any(e => e.Code == ApiErrorCodes.Conflict) == true)
@@ -1003,49 +993,8 @@ public sealed class JobScheduler : BackgroundService, IJobScheduler, IHealth
         }
     }
 
-    private async Task ProcessTriggersAsync(JobInfo jobInfo, JobRunRes triggeredByRun)
-    {
-        var triggers = jobInfo.Definition.JobTriggers ?? [];
-        foreach (var trigger in triggers) {
-            if (!trigger.Enabled)
-                continue;
-
-            var matchValue = triggeredByRun.GetResultValueAs<string?>(trigger.JobResultKey);
-            if (matchValue != trigger.JobResultValue) {
-                _logger.LogDebug("Trigger criteria does not match");
-                continue;
-            }
-
-            var triggeringDef = await GetJobDefinitionAsync(trigger.TriggersJobDefinitionId, _stoppingToken).ConfigureAwait(false);
-            if (triggeringDef == null || !triggeringDef.Enabled) {
-                _logger.LogInformation("Triggered definition not found or disabled");
-                continue;
-            }
-
-            var runReq = BuildRunRequest(triggeringDef.Id, null, trigger, triggeredByRun);
-
-            // Deduplicate trigger firing across scheduler instances / redelivered completion messages: one triggered run per
-            // (trigger, completed run) pair — a duplicate create resolves to the existing run.
-            runReq.IdempotencyKey = $"trigger:{trigger.Id:N}:{triggeredByRun.Id:N}";
-            var created = await _apiClient.PostAsAsync<JobRunReq, CreateResult<JobRunRes>>(BuildUri(Constants.Rest.Job.RunsCreate), runReq, null, _stoppingToken)
-                .ConfigureAwait(false);
-            if (created.IsSuccess && created.Data != null) {
-                _metrics.IncrementCounter(Constants.Metrics.Scheduler.TriggersFired);
-                _metrics.IncrementCounter(Constants.Metrics.Scheduler.RunsCreated);
-                _logger.LogInformation("Created triggered job run {JobRunId}", created.Data.Id);
-            }
-            else if (created.Error?.Errors.Any(e => e.Code == ApiErrorCodes.Conflict) == true)
-                _metrics.IncrementCounter(Constants.Metrics.Scheduler.SlotConflicts);
-            else {
-                _metrics.IncrementCounter(Constants.Metrics.Scheduler.RunCreateFailed);
-                _logger.LogWarning("Failed to create triggered job run");
-            }
-        }
-    }
-
     /// <summary>Builds the run request for <paramref name="definitionId" /> through the shared factory, using the definition's currently cached runs as template data.</summary>
-    private JobRunReq BuildRunRequest(Guid definitionId, JobScheduleRes? schedule, JobTriggerRes? trigger, JobRunRes? triggeredBy)
-        => _runRequestFactory.Build(_jobs[definitionId], schedule, trigger, triggeredBy);
+    private JobRunReq BuildRunRequest(Guid definitionId, JobScheduleRes? schedule) => _runRequestFactory.Build(_jobs[definitionId], schedule);
 
     private string BuildUri(string path)
     {

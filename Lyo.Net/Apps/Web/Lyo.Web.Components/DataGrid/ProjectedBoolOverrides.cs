@@ -13,7 +13,7 @@ namespace Lyo.Web.Components.DataGrid;
 /// Create one per toggleable column and clear it whenever the grid reloads, otherwise a stale override will mask the server value:
 /// <code>
 /// private readonly ProjectedBoolOverrides _enabled = new("Enabled");
-///
+/// 
 /// private async Task RefreshAsync()
 /// {
 ///     _enabled.Clear();
@@ -76,8 +76,8 @@ public sealed class ProjectedBoolOverrides(string field, string keyField = Proje
         => item == null ? Task.FromResult(false) : PatchAsync(apiClient, route, item, !Get(item), snackbar, subject);
 
     /// <summary>
-    /// PATCHes every selected row through the bulk endpoint (<c>{route}/Bulk</c>). Callers should refresh the grid afterwards instead of relying on overrides, because a bulk patch
-    /// can change rows that are not currently loaded.
+    /// PATCHes every selected row through the bulk endpoint (<c>{route}/Bulk</c>). Callers should refresh the grid afterwards instead of relying on overrides, because a bulk
+    /// patch can change rows that are not currently loaded.
     /// </summary>
     /// <param name="apiClient">Client for the grid's API.</param>
     /// <param name="route">Entity route, without the <c>/Bulk</c> suffix.</param>
@@ -88,7 +88,12 @@ public sealed class ProjectedBoolOverrides(string field, string keyField = Proje
     /// <returns>Number of rows included in the patch.</returns>
     public async Task<int> PatchManyAsync(IApiClient apiClient, string route, IEnumerable<object?>? items, bool value, ISnackbar? snackbar = null, string subject = "record")
     {
-        var ids = (items ?? []).Select(i => ProjectedValueHelper.GetValue(i, keyField)).Select(v => ProjectedValueHelper.TryGetGuid(v, out var g) ? g : (Guid?)null).Where(g => g.HasValue).Select(g => g!.Value).ToList();
+        var ids = (items ?? []).Select(i => ProjectedValueHelper.GetValue(i, keyField))
+            .Select(v => ProjectedValueHelper.TryGetGuid(v, out var g) ? g : (Guid?)null)
+            .Where(g => g.HasValue)
+            .Select(g => g!.Value)
+            .ToList();
+
         if (ids.Count == 0)
             return 0;
 

@@ -1,6 +1,3 @@
-@using Lyo.Schedule.Models
-@using LyoParameterEditor = Lyo.Web.Components.ParamTable.LyoParameterEditor
-
 <MudGrid Spacing="2">
     <MudItem xs="12" md="4">
         <MudPaper Elevation="1" Class="pa-2">
@@ -8,7 +5,8 @@
                 <MudStack Row Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="px-1">
                     <MudText Typo="Typo.subtitle1">Schedules</MudText>
                     <MudStack Row Spacing="0">
-                        <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary" title="Add schedule" aria-label="Add schedule" OnClick="AddSchedule"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary" title="Add schedule" aria-label="Add schedule"
+                                       OnClick="AddSchedule"/>
                         <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Delete schedule" aria-label="Delete selected schedule"
                                        Disabled="@(_selected == null)" OnClick="DeleteSchedule"/>
                     </MudStack>
@@ -74,13 +72,16 @@
                                 <MudStack Row Spacing="1" Wrap="Wrap.Wrap">
                                     <MudChip T="string" Size="Size.Small" Variant="@(DaysMatch(DayFlags.EveryDay) ? Variant.Filled : Variant.Outlined)"
                                              Color="@(DaysMatch(DayFlags.EveryDay) ? Color.Primary : Color.Default)" Selected="@DaysMatch(DayFlags.EveryDay)"
-                                             OnClick="@(() => ApplyDays(DayFlags.EveryDay))">Every day</MudChip>
+                                             OnClick="@(() => ApplyDays(DayFlags.EveryDay))">Every day
+                                    </MudChip>
                                     <MudChip T="string" Size="Size.Small" Variant="@(DaysMatch(DayFlags.Weekdays) ? Variant.Filled : Variant.Outlined)"
                                              Color="@(DaysMatch(DayFlags.Weekdays) ? Color.Primary : Color.Default)" Selected="@DaysMatch(DayFlags.Weekdays)"
-                                             OnClick="@(() => ApplyDays(DayFlags.Weekdays))">Weekdays</MudChip>
+                                             OnClick="@(() => ApplyDays(DayFlags.Weekdays))">Weekdays
+                                    </MudChip>
                                     <MudChip T="string" Size="Size.Small" Variant="@(DaysMatch(DayFlags.Weekends) ? Variant.Filled : Variant.Outlined)"
                                              Color="@(DaysMatch(DayFlags.Weekends) ? Color.Primary : Color.Default)" Selected="@DaysMatch(DayFlags.Weekends)"
-                                             OnClick="@(() => ApplyDays(DayFlags.Weekends))">Weekends</MudChip>
+                                             OnClick="@(() => ApplyDays(DayFlags.Weekends))">Weekends
+                                    </MudChip>
                                 </MudStack>
                                 <MudSelect T="DayFlags" Label="Days" MultiSelection="true" @bind-SelectedValues="_edit.Days"
                                            Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
@@ -95,13 +96,16 @@
                                 <MudStack Row Spacing="1" Wrap="Wrap.Wrap">
                                     <MudChip T="string" Size="Size.Small" Variant="@(MonthsMatch(MonthFlags.EveryMonth) ? Variant.Filled : Variant.Outlined)"
                                              Color="@(MonthsMatch(MonthFlags.EveryMonth) ? Color.Primary : Color.Default)" Selected="@MonthsMatch(MonthFlags.EveryMonth)"
-                                             OnClick="@(() => ApplyMonths(MonthFlags.EveryMonth))">Every month</MudChip>
+                                             OnClick="@(() => ApplyMonths(MonthFlags.EveryMonth))">Every month
+                                    </MudChip>
                                     <MudChip T="string" Size="Size.Small" Variant="@(MonthsMatch(MonthFlags.QuarterlyStart) ? Variant.Filled : Variant.Outlined)"
                                              Color="@(MonthsMatch(MonthFlags.QuarterlyStart) ? Color.Primary : Color.Default)" Selected="@MonthsMatch(MonthFlags.QuarterlyStart)"
-                                             OnClick="@(() => ApplyMonths(MonthFlags.QuarterlyStart))">Quarter start</MudChip>
+                                             OnClick="@(() => ApplyMonths(MonthFlags.QuarterlyStart))">Quarter start
+                                    </MudChip>
                                     <MudChip T="string" Size="Size.Small" Variant="@(MonthsMatch(MonthFlags.QuarterlyEnd) ? Variant.Filled : Variant.Outlined)"
                                              Color="@(MonthsMatch(MonthFlags.QuarterlyEnd) ? Color.Primary : Color.Default)" Selected="@MonthsMatch(MonthFlags.QuarterlyEnd)"
-                                             OnClick="@(() => ApplyMonths(MonthFlags.QuarterlyEnd))">Quarter end</MudChip>
+                                             OnClick="@(() => ApplyMonths(MonthFlags.QuarterlyEnd))">Quarter end
+                                    </MudChip>
                                 </MudStack>
                                 <MudSelect T="MonthFlags" Label="Months" MultiSelection="true" @bind-SelectedValues="_edit.Months"
                                            Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true">
@@ -122,9 +126,11 @@
                             <MudItem xs="6" md="3">
                                 <MudTimePicker Label="Start Time" @bind-Time="_edit.StartTime" Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
                             </MudItem>
+
                             <MudItem xs="6" md="3">
                                 <MudTimePicker Label="End Time" @bind-Time="_edit.EndTime" Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
                             </MudItem>
+
                             <MudItem xs="6" md="3">
                                 <MudNumericField T="int?" Label="Interval (min)" @bind-Value="_edit.IntervalMinutes" Variant="Variant.Outlined" Margin="Margin.Dense"/>
                             </MudItem>
@@ -140,7 +146,8 @@
                                         <div style="width: 140px;">
                                             <MudTimePicker Label="Add time" @bind-Time="_newTime" Editable Variant="Variant.Outlined" Margin="Margin.Dense"/>
                                         </div>
-                                        <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary" title="Add time" aria-label="Add run time to schedule" OnClick="AddTime"/>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary" title="Add time"
+                                                       aria-label="Add run time to schedule" OnClick="AddTime"/>
                                     </MudStack>
                                 </MudStack>
                             </MudItem>

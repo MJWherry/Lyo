@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Http.Client.Extract;
 
 /// <summary>Flags for <see cref="LyoHttpDocumentExtractor" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LyoHttpExtractOptions
 {
     /// <summary>Default attributes probed for sources and images.</summary>
@@ -50,4 +53,9 @@ public sealed class LyoHttpExtractOptions
 
     /// <summary>Optional variable to store the full item list JSON (<c>variableName + "Items"</c> when null).</summary>
     public string? SaveItemsAs { get; set; }
+
+    /// <summary>Selector, source, and filter counts. The pattern is shown by length.</summary>
+    public override string ToString() =>
+        $"Selector={Selector} JsonPath={JsonPath} Base={LinkResolutionBaseUri} From={FromVariable} PatternLen={Pattern?.Length ?? 0} " +
+        $"Attributes={Attributes?.Length ?? 0} Extensions={FileExtensionFilter?.Length ?? 0} Hosts={HostFilter?.Length ?? 0} Rel={RelFilter?.Length ?? 0}";
 }

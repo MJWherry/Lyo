@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.Xlsx.Models;
 
 /// <summary>
@@ -7,6 +9,7 @@ namespace Lyo.Xlsx.Models;
 /// <param name="Value">Textual/display value of the cell.</param>
 /// <param name="ColSpan">Columns this cell spans (1 = no spanning; anchor cell of a merged range).</param>
 /// <param name="RowSpan">Rows this cell spans (1 = no spanning; anchor cell of a merged range).</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record XlsxCellValue(string Value, int ColSpan = 1, int RowSpan = 1)
 {
     /// <summary>Builds a cell with only a value (no spans).</summary>

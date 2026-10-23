@@ -15,11 +15,11 @@
         "**OpenAPI / Scalar.** `AddOpenApi()`. In development, `MapOpenApi()` and `MapScalarApiReference()` are mounted so that `/scalar/v1` (or whatever Scalar picks) shows every endpoint.",
         "**Compression.** Brotli + Gzip response compression (level `Fastest`) and request decompression so Gateway calls can send Brotli payloads.",
         "**JSON.** `LyoJsonSerializerOptions.ApplyTo` + `AddLyoDateOnlyModelConverters` + `ReferenceHandler.IgnoreCycles` + `JsonIgnoreCondition.WhenWritingNull`.",
-        "**Infra.** `AddLyoMetricsWithOpenTelemetryFromConfiguration` (`OpenTelemetry` section: `ServiceName` `Lyo.TestApi`, `Protocol` `grpc`, `MetricExportIntervalMs` `1000`; OTLP endpoint from `OTEL_EXPORTER_OTLP_ENDPOINT` when set), `AddMetrics`, `AddFormatterService`, `AddCsvService`, `AddXlsxService`, `AddCompressionService` + `AddDefaultCompressionService<CompressionService>` (wires `ICompressionResolver` for file-storage codec dispatch), `AddLocalCacheFromConfiguration`, `AddHttpContextAccessor`, Mapster via `ConfigureMapster()`.",
+        "**Infra.** `AddLyoMetricsWithOpenTelemetryFromConfiguration` (`OpenTelemetry` section: `ServiceName` `Lyo.TestApi`, `Protocol` `grpc`, `MetricExportIntervalMs` `1000`; OTLP endpoint from `OTEL_EXPORTER_OTLP_ENDPOINT` when set; Prometheus scrape at `/metrics` via `AddPrometheusExporter` and `AddMeter(\"*\")` so every meter is exported), `AddMetrics`, `AddFormatterService`, `AddCsvService`, `AddXlsxService`, `AddCompressionService` + `AddDefaultCompressionService<CompressionService>` (wires `ICompressionResolver` for file-storage codec dispatch), `AddLocalCacheFromConfiguration`, `AddHttpContextAccessor`, Mapster via `ConfigureMapster()`.",
         "**Locks.** `AddRedisLock` if `Redis:ConnectionString` (or `ConnectionStrings:Redis`) is set, otherwise `AddLocalLock()`.",
         "**Messaging.** `SetupRabbitMqServiceFromConfiguration` + `AddMqJobEventPublisherFromConfiguration` (job state changes travel through MQ). `JobMqOptions:WorkerTypes` includes `example` so `job.run.example` is declared at startup for `Lyo.Job.Worker.Example`.",
-        "**Postgres stores.** One `ConnectionStrings:Postgres` is shared by `Job`, `Drift`, `People`, `TwilioSms`, `Discord`, `Config`, `Comic`, `HomeInventory`, `FileMetadataStore`. Every `AddXxxDbContextFactory` is called with `EnableAutoMigrations = true` so a fresh database is brought up on the first run.",
-        "**CRUD/QueryConcrete.** `AddLyoCrudServices<TContext>()` on `JobContext`, `PeopleDbContext`, `TwilioSmsDbContext`, `FileMetadataStoreDbContext`; `AddLyoQueryServices()`; Person uses typed `CreateBuilder` at `/Person/*` plus root From/Joins `POST /Query` via `MapRootQueryEndpoints<PeopleDbContext>()`; Twilio uses `MapDynamicCrudEndpoints` ( includes `POST /Twilio/Query`); `AddLyoApiExport<TContext>()` + `AddCsvExport()` / `AddXlsxExport()` for `PeopleDbContext`, `DiscordDbContext`, `JobContext`; `AddPostgresSprocService<PeopleDbContext>()`.",
+        "**Postgres stores.** One `ConnectionStrings:Postgres` is shared by `Job`, `Drift`, `People`, `TwilioSms`, `Discord`, `Config`, `Book`, `Comic`, `Story`, `HomeInventory`, `FileMetadataStore`. Every `AddXxxDbContextFactory` is called with `EnableAutoMigrations = true` so a fresh database is brought up on the first run. Book registers `AddPostgresBookStore` plus `AddLyoCrudServices<BookDbContext>`. Story registers `AddStoryApi`. Algorithms registers `AddAlgorithmsApi`.",
+        "**CRUD/QueryConcrete.** `AddLyoCrudServices<TContext>()` on `JobContext`, `PeopleDbContext`, `TwilioSmsDbContext`, `FileMetadataStoreDbContext`; `AddLyoQueryServices()` + `AddLyoQueryPostgres()` (Fuzzy → `pg_trgm.similarity`); Person uses typed `CreateBuilder` at `/Person/*` plus root From/Joins `POST /Query` via `MapRootQueryEndpoints<PeopleDbContext>()`; Twilio uses `MapDynamicCrudEndpoints` ( includes `POST /Twilio/Query`); `AddLyoApiExport<TContext>()` + `AddCsvExport()` / `AddXlsxExport()` for `PeopleDbContext`, `DiscordDbContext`, `JobContext`; `AddPostgresSprocService<PeopleDbContext>()`.",
         "**File storage.** `AddTwoKeyEncryptionFromConfiguration(…, Constants.FileStorageWorkbench.ServiceKey, \"AwsKeyStore\")` + `AddPostgresFileMetadataStoreKeyed(\"gateway-filestorage-metadata\")` reading `PostgresFileMetadataStore` (uses the shared Postgres connection when unset) + `AddS3FileStorageServiceKeyed(\"gateway-filestorage\")` chained with `UseFileMetadataStore`, `UseEncryptionService`, `ConfigureS3FileStorage()` + `AddFileStorageArchiveServiceKeyed` for `GET files/archive`.",
         "**Audit.** `AddPostgresFileAuditSink()` writes into the file metadata DB; `AddScoped<IFileAuditEventHandler, FileMetadataQueryCacheInvalidationHandler>` invalidates the `Lyo.Cache` QueryProject cache for `FileMetadataEntity` on successful `Save`/`Delete`/`MultipartComplete` and on any `MigrateDeks` / `RotateDeks` so workbench grids see fresh rows.",
         "**Scheduler.** `AddJobScheduler()` is commented out; MQ queues jobs, but this host does not poll them. Run `Lyo.Job.Worker.Example` to consume `job.run.example`."
@@ -28,7 +28,7 @@
     {
       "type": "markdown",
       "title": "`SetupCourtEndpoints` (root extension)",
-      "body": "`SetupEndpoints.cs` hangs one extension method off `WebApplication` that chains every endpoint group:\n\n```text\nBuildJobGroup ← from Lyo.Job.Api (full job/job-run CRUD)\nBuildDriftGroup ← from Lyo.Drift.Api (instance upsert, snapshot/diff/change ingest, DiffAgainst)\nBuildReportingGroup ← from Lyo.Reporting.Api (definitions CRUD, generations query/get/delete, Generate/Rerun/Download; anonymous in this host)\nBuildComicGroup ← from Lyo.Comic.Api (series/volumes/chapters/pages/characters CRUD)\nBuildHomeInventoryGroup ← from Lyo.HomeInventory.Api (categories/locations/items/movements CRUD)\nBuildPersonGroup ← Person CRUD (Lyo.Api builder) + info/{schema}/{table}/{column}/GetUniqueCounts\nBuildDiscordGroup ← Discord dynamic CRUD\nBuildTwilioGroup ← Twilio dynamic CRUD (route prefix \"Twilio\")\nBuildFileStorageApi ← from Lyo.Api.FileStorage (Workbench/FileStorage group, POST upload/file, FileMetadata QueryProject)\nMapConfigApiEndpoints(requireAuthentication: false) ← Config.Api manage + resolve + query grids; this host encrypts config values\n```\n\nReporting uses `AddPostgresReportingManagement` + `AddLyoApiReporting` + `AddIOTempService`. Generate hooks save staged output via the keyed File Storage workbench service (\n`OutputFileId`), and the `OnCleanupAsync` hook deletes that stored file when generation rows are removed (retention cleanup, generation delete, or definition delete).\n`ReportingApiOptions.DownloadStreamFactory` streams persisted outputs back from the same keyed `IFileStorageService`, which maps `GET Reporting/Generation/{id}/Download`.\nCSV/XLSX/JSON renderers are wired by default; this host also calls `AddWebRendererServiceFromConfiguration` + `AddReportingWebRenderer` so HTML/PDF generate works for the report design workbench. `AllowAdHocGeneration` is true so the workbench can POST composition JSON. Retention cleanup (`ReportRetentionService.CleanupAsync`) is\nwired but not scheduled, set `PostgresReportingOptions.GenerationRetention` and trigger it from a job/scheduler to enable it.\n\nCustom Job endpoints exist because the dynamic CRUD route for `JobRun` does not expose Create/Cancel; those need to go through MQ via `JobService`.\n\nThe Person group uses `Lyo.Api` `CreateBuilder<…>` with `WithFlags(All | UpsertInheritCreate | UpsertInheritUpdate | PatchInheritsUpdate)`, a `BeforeCreate` that assigns\n`LyoGuid.CreateCombPostgres()`, plus `WithMetadata` / `WithProjectionComputedFields`. It also adds a `GET info/{schema}/{table}/{column}/GetUniqueCounts` route that invokes\n`StoredProcedures.Info.UniqueValuesWithCount` via `ISprocService`."
+      "body": "`SetupEndpoints.cs` hangs one extension method off `WebApplication` that chains every endpoint group:\n\n```text\nBuildJobGroup ← from Lyo.Job.Api (full job/job-run CRUD)\nBuildDriftGroup ← from Lyo.Drift.Api (instance upsert, snapshot/diff/change ingest, DiffAgainst)\nBuildReportingGroup ← from Lyo.Reporting.Api (definitions CRUD, generations query/get/delete, Generate/Rerun/Download; anonymous in this host)\nBuildBookGroup ← catalog CRUD (no PageEntity), POST /Book/search, POST /Book/pages/search, GET/PUT /Book/page/{id}/text\nBuildMusicGroup ← catalog CRUD (lyrics and search_vector denied on query select), POST /Music/search, POST /Music/lyrics/search, GET/PUT /Music/track/{id}/lyrics\nBuildVideoGroup ← catalog CRUD (transcript and search_vector denied on query select), POST /Video/search, POST /Video/transcripts/search, GET/PUT /Video/title/{id}/transcript and /Video/episode/{id}/transcript\nBuildComicGroup ← from Lyo.Comic.Api (series/volumes/chapters/pages/characters CRUD)\nBuildStoryGroup ← from Lyo.Story.Api (Req/Res CRUD, Query, graph save/load, playthrough start/choose/advance/events/causes)\nBuildAlgorithmsGroup ← from Lyo.Algorithms.Api (catalog list/get, revisions, revert, labels)\nBuildHomeInventoryGroup ← from Lyo.HomeInventory.Api (Req/Res CRUD, stock, attachments, nested notes/tags)\nBuildRecipeGroup ← from Lyo.Recipe.Api (Req/Res CRUD, lines/steps, attachments, nested notes/tags)\nBuildLedgerGroup ← from Lyo.Ledger.Api (accounts, journals, lines)\nBuildBillingGroup ← from Lyo.Billing.Api (charges, invoices, issue/void/pay; no PDF)\nBuildPersonGroup ← Person CRUD (Lyo.Api builder) + info/{schema}/{table}/{column}/GetUniqueCounts\nBuildDiscordGroup ← Discord dynamic CRUD\nBuildTwilioGroup ← Twilio dynamic CRUD (route prefix \"Twilio\")\nBuildFileStorageApi ← from Lyo.Api.FileStorage (Workbench/FileStorage group, POST upload/file, FileMetadata QueryProject)\nMapConfigApiEndpoints(requireAuthentication: false) ← Config.Api manage + resolve + query grids; this host encrypts config values\n```\n\nReporting uses `AddPostgresReportingManagement` + `AddLyoApiReporting` + `AddIOTempService`. Generate hooks save staged output via the keyed File Storage workbench service (\n`OutputFileId`), and the `OnCleanupAsync` hook deletes that stored file when generation rows are removed (retention cleanup, generation delete, or definition delete).\n`ReportingApiOptions.DownloadStreamFactory` streams persisted outputs back from the same keyed `IFileStorageService`, which maps `GET Reporting/Generation/{id}/Download`.\nCSV/XLSX/JSON renderers are wired by default; this host also calls `AddWebRendererServiceFromConfiguration` + `AddReportingWebRenderer` so HTML/PDF generate works for the report design workbench. `AllowAdHocGeneration` is true so the workbench can POST composition JSON. Retention cleanup (`ReportRetentionService.CleanupAsync`) is\nwired but not scheduled, set `PostgresReportingOptions.GenerationRetention` and trigger it from a job/scheduler to enable it.\n\nCustom Job endpoints exist because the dynamic CRUD route for `JobRun` does not expose Create/Cancel; those need to go through MQ via `JobService`.\n\nThe Person group uses `Lyo.Api` `CreateBuilder<…>` with `WithFlags(All | UpsertInheritCreate | UpsertInheritUpdate | PatchInheritsUpdate)`, a `BeforeCreate` that assigns\n`LyoGuid.CreateCombPostgres()`, plus `WithMetadata` / `WithProjectionComputedFields`. It also adds a `GET info/{schema}/{table}/{column}/GetUniqueCounts` route that invokes\n`StoredProcedures.Info.UniqueValuesWithCount` via `ISprocService`."
     },
     {
       "type": "table",
@@ -214,6 +214,14 @@
   "readmePath": "Lyo.Net/Tools/Lyo.TestApi/README.md",
   "dependencies": [
     {
+      "name": "Lyo.Algorithms.Api",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Api",
       "kind": "lyo",
       "tags": [
@@ -246,6 +254,14 @@
       ]
     },
     {
+      "name": "Lyo.Api.Export.Toml",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Api.Export.Xlsx",
       "kind": "lyo",
       "tags": [
@@ -254,7 +270,31 @@
       ]
     },
     {
+      "name": "Lyo.Api.Export.Xml",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Api.Export.Yaml",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Api.FileStorage",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Audiobook.Postgres",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -318,6 +358,38 @@
       ]
     },
     {
+      "name": "Lyo.Billing.Api",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Billing.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Book",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Book.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Comic.Api",
       "kind": "lyo",
       "tags": [
@@ -335,14 +407,6 @@
     },
     {
       "name": "Lyo.Comment.Postgres",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Common.Json",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -422,6 +486,38 @@
       ]
     },
     {
+      "name": "Lyo.Espn.Fantasy.Football.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FantasyFootball.Api",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FeatureFlags",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FeatureFlags.AspNetCore",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.FileMetadataStore.Postgres",
       "kind": "lyo",
       "tags": [
@@ -446,7 +542,23 @@
       ]
     },
     {
+      "name": "Lyo.Google.Youtube.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.HomeInventory.Api",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.HomeInventory.FileStorage",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -494,6 +606,14 @@
       ]
     },
     {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [
@@ -503,6 +623,38 @@
     },
     {
       "name": "Lyo.KeyStore.Aws",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Leaderboard.Api",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Leaderboard.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Ledger.Api",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Ledger.Postgres",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -542,6 +694,14 @@
       ]
     },
     {
+      "name": "Lyo.Music.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Note.Postgres",
       "kind": "lyo",
       "tags": [
@@ -558,7 +718,47 @@
       ]
     },
     {
+      "name": "Lyo.Podcast.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Rating.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Recipe.Api",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Recipe.FileStorage",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Recipe.Postgres",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -622,7 +822,63 @@
       ]
     },
     {
+      "name": "Lyo.Story.Api",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Story.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Tag.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Video.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Automation.Api",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Automation.FileStorage",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Automation.Playwright",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Automation.Postgres",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -692,12 +948,45 @@
       ]
     },
     {
+      "name": "OpenTelemetry.Exporter.Prometheus.AspNetCore",
+      "kind": "package",
+      "version": "1.16.0-beta.1",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
       "name": "Scalar.AspNetCore",
       "kind": "package",
       "version": "2.16.11",
       "tags": [
         "direct",
         "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Algorithms",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Algorithms.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Algorithms.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
       ]
     },
     {
@@ -725,6 +1014,14 @@
       ]
     },
     {
+      "name": "Lyo.Audiobook",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Audit",
       "kind": "lyo",
       "tags": [
@@ -734,6 +1031,22 @@
     },
     {
       "name": "Lyo.Authentication.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.Sso",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Billing",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -869,6 +1182,22 @@
       ]
     },
     {
+      "name": "Lyo.Email",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Email.Smtp",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Encryption",
       "kind": "lyo",
       "tags": [
@@ -894,6 +1223,22 @@
     },
     {
       "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FantasyFootball",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FantasyFootball.Postgres",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -933,6 +1278,14 @@
       ]
     },
     {
+      "name": "Lyo.Google.Youtube.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Hashing",
       "kind": "lyo",
       "tags": [
@@ -950,6 +1303,14 @@
     },
     {
       "name": "Lyo.HomeInventory",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.HomeInventory.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -981,6 +1342,30 @@
       ]
     },
     {
+      "name": "Lyo.Leaderboard",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Leaderboard.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Ledger",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.MessageQueue",
       "kind": "lyo",
       "tags": [
@@ -990,6 +1375,14 @@
     },
     {
       "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Music",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -1029,7 +1422,23 @@
       ]
     },
     {
+      "name": "Lyo.Podcast",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.QRCode",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -1061,7 +1470,39 @@
       ]
     },
     {
+      "name": "Lyo.Query.Sql",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.RateLimit",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Rating",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Recipe",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Recipe.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -1086,6 +1527,14 @@
     },
     {
       "name": "Lyo.Scheduler",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Search.Postgres",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -1125,6 +1574,22 @@
       ]
     },
     {
+      "name": "Lyo.Story",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Story.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Streams",
       "kind": "lyo",
       "tags": [
@@ -1149,6 +1614,14 @@
       ]
     },
     {
+      "name": "Lyo.Toml",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Validation",
       "kind": "lyo",
       "tags": [
@@ -1165,6 +1638,30 @@
       ]
     },
     {
+      "name": "Lyo.Video",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Automation",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.WebRenderer.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Xlsx",
       "kind": "lyo",
       "tags": [
@@ -1174,6 +1671,22 @@
     },
     {
       "name": "Lyo.Xlsx.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Xml",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Yaml",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -1290,6 +1803,15 @@
       ]
     },
     {
+      "name": "MailKit",
+      "kind": "package",
+      "version": "4.17.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
       "name": "Microsoft.AspNetCore.Components.Web",
       "kind": "package",
       "version": "10.0.5",
@@ -1302,6 +1824,16 @@
       "name": "Microsoft.Bcl.AsyncInterfaces",
       "kind": "package",
       "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.TimeProvider",
+      "kind": "package",
+      "version": "8.0.1",
       "tags": [
         "transitive",
         "microsoft",
@@ -1437,6 +1969,24 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Primitives",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Playwright",
+      "kind": "package",
+      "version": "1.59.0",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
       "name": "OpenTelemetry",
       "kind": "package",
       "version": "1.16.0",
@@ -1485,6 +2035,15 @@
       "name": "RabbitMQ.Client",
       "kind": "package",
       "version": "7.2.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "SixLabors.ImageSharp",
+      "kind": "package",
+      "version": "3.1.12",
       "tags": [
         "transitive",
         "third-party"
@@ -1596,9 +2155,45 @@
       ]
     },
     {
+      "name": "Tomlyn",
+      "kind": "package",
+      "version": "2.10.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
       "name": "Twilio",
       "kind": "package",
       "version": "7.14.9",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "YamlDotNet",
+      "kind": "package",
+      "version": "18.1.0",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "ZXing.Net",
+      "kind": "package",
+      "version": "0.16.11",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "ZXing.Net.Bindings.ImageSharp.V3",
+      "kind": "package",
+      "version": "0.16.18",
       "tags": [
         "transitive",
         "third-party"

@@ -1,39 +1,29 @@
-using System.Net.Http.Json;
-using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Web.Components.Models;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Lyo.Authentication.Web.Components.Pages;
 
 public partial class DebugPage
 {
-    /// <summary>Optional replacement for the root element id consumed by the element-id scheme.</summary>
-    [Parameter]
-    public string? ElementId { get; set; }
-
-    private AuthSessionSnapshot? _snapshot;
-
-    private bool _loading = true;
-
     private bool _busy;
 
     private string _headerJson = string.Empty;
 
+    private bool _loading = true;
+
     private string _payloadJson = string.Empty;
 
     private string _signatureSegment = string.Empty;
+
+    private AuthSessionSnapshot? _snapshot;
+
+    /// <summary>Optional replacement for the root element id consumed by the element-id scheme.</summary>
+    [Parameter]
+    public string? ElementId { get; set; }
 
     private bool IsExpired => _snapshot is not null && _snapshot.AccessTokenExpiresAt <= DateTime.UtcNow;
 
@@ -60,9 +50,8 @@ public partial class DebugPage
                 _snapshot = await SessionAccessor.GetCurrentAsync();
                 DecodeJwt();
             }
-            else {
+            else
                 Snackbar.Add("Refresh failed.", Severity.Warning);
-            }
         }
         catch (Exception ex) {
             Snackbar.Add(ex.Message, Severity.Error);

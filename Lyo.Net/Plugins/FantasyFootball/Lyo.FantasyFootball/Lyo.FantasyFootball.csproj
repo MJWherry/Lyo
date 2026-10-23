@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Fantasy football chats, trades, and league roster stored apart from the ESPN client.</Description>
+        <PackageTags>fantasy football chat trades</PackageTags>
+    </PropertyGroup>
+
+</Project>

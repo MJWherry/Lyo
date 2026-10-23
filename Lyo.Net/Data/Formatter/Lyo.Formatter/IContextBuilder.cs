@@ -9,6 +9,12 @@ public interface IContextBuilder
     /// <returns>This builder for chaining.</returns>
     IContextBuilder Add(string key, object? value);
 
+    /// <summary>Adds a factory that runs the first time the placeholder is read. A null literal is ambiguous with <see cref="Add(string, object?)" />; cast it to <see cref="object" />.</summary>
+    /// <param name="key">Placeholder name.</param>
+    /// <param name="factory">Produces the value. Invoked once per format on a copy of the bag.</param>
+    /// <returns>This builder for chaining.</returns>
+    IContextBuilder Add(string key, Func<object?> factory);
+
     /// <summary>Adds a value with an IFormattable format string (e.g. "yyyy-MM-dd", "N2", "C").</summary>
     /// <param name="key">Placeholder name.</param>
     /// <param name="value">Value to format.</param>

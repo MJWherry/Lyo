@@ -20,7 +20,21 @@ public sealed class DriftStructureSnapshotConfiguration : IEntityTypeConfigurati
         builder.Property(e => e.TreeJson).HasColumnName("tree_json").HasColumnType("jsonb");
         builder.Property(e => e.SystemInfoJson).HasColumnName("system_info_json").HasColumnType("jsonb");
         builder.HasOne(e => e.Instance).WithMany(e => e.Snapshots).HasForeignKey(e => e.InstanceId).OnDelete(DeleteBehavior.Cascade);
-        builder.HasIndex(e => new { e.InstanceId, e.Kind, e.WatchRoot, e.TakenAtUtc }).HasDatabaseName("ix_drift_snapshot_lineage_taken");
-        builder.HasIndex(e => new { e.InstanceId, e.Kind, e.WatchRoot, e.ContentHashAlgorithm, e.ContentHash }).HasDatabaseName("ix_drift_snapshot_lineage_hash");
+        builder.HasIndex(e => new {
+                e.InstanceId,
+                e.Kind,
+                e.WatchRoot,
+                e.TakenAtUtc
+            })
+            .HasDatabaseName("ix_drift_snapshot_lineage_taken");
+
+        builder.HasIndex(e => new {
+                e.InstanceId,
+                e.Kind,
+                e.WatchRoot,
+                e.ContentHashAlgorithm,
+                e.ContentHash
+            })
+            .HasDatabaseName("ix_drift_snapshot_lineage_hash");
     }
 }

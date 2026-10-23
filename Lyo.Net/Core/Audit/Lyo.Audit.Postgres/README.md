@@ -36,13 +36,13 @@ dotnet ef migrations add MigrationName --project Core/Audit/Lyo.Audit.Postgres
 
 ## Registration
 
-| Extension | What it adds |
-| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `AddAuditDbContextFactory(options)` / `(Action<…>)` | Registers `IDbContextFactory<AuditDbContext>` and the migrations helper (`AddPostgresMigrations`). |
+| Extension                                                      | What it adds                                                                                                                        |
+|----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|
+| `AddAuditDbContextFactory(options)` / `(Action<…>)`            | Registers `IDbContextFactory<AuditDbContext>` and the migrations helper (`AddPostgresMigrations`).                                  |
 | `AddAuditDbContextFactoryFromConfiguration(IConfiguration, …)` | Binds `PostgresAuditOptions` from `"PostgresAudit"` (override section via the optional `configSectionName`) and registers as above. |
-| `AddAuditDbContext(connectionString)` | Builds options from a raw connection string, registers the factory, and exposes a scoped `AuditDbContext`. |
-| `AddPostgresAuditRecorder(options)` / `(Action<…>)` | Calls `AddAuditDbContextFactory` and registers `IAuditRecorder` → `PostgresAuditRecorder` as a singleton. |
-| `AddPostgresAuditRecorderFromConfiguration(IConfiguration, …)` | Same as the options overload, binding from configuration. |
+| `AddAuditDbContext(connectionString)`                          | Builds options from a raw connection string, registers the factory, and exposes a scoped `AuditDbContext`.                          |
+| `AddPostgresAuditRecorder(options)` / `(Action<…>)`            | Calls `AddAuditDbContextFactory` and registers `IAuditRecorder` → `PostgresAuditRecorder` as a singleton.                           |
+| `AddPostgresAuditRecorderFromConfiguration(IConfiguration, …)` | Same as the options overload, binding from configuration.                                                                           |
 
 ## First steps
 
@@ -50,12 +50,15 @@ Need just the factory, for example to share with downstream services or run migr
 
 ## Health
 
-`HealthCheckName = "audit-postgres"` comes from `PostgresAuditRecorder` implementing `Lyo.Health.IHealth`. The probe constructs an `AuditDbContext` and calls `Database.CanConnectAsync`. A failed connect is `HealthResult.Unhealthy`. Hosts resolving `IEnumerable<IHealth>` pick this recorder up.
+`HealthCheckName = "audit-postgres"` comes from `PostgresAuditRecorder` implementing `Lyo.Health.IHealth`. The probe constructs an `AuditDbContext` and calls
+`Database.CanConnectAsync`. A failed connect is `HealthResult.Unhealthy`. Hosts resolving `IEnumerable<IHealth>` pick this recorder up.
 
 ## Database schema
 
-- **audit.audit_changes.** `id` (uuid), `timestamp`, `for_entity_type`, `for_entity_id` (varchar), `from_entity_type?`, `from_entity_id?` (varchar), `tenant_id?` (uuid), `old_values_json` (jsonb), `changed_properties_json` (jsonb), `created_timestamp`, `updated_timestamp?`
-- **audit.audit_events.** `id` (uuid), `event_type`, `timestamp`, `for_entity_type`, `for_entity_id` (varchar), `from_entity_type?`, `from_entity_id?` (varchar), `tenant_id?` (uuid), `message?`, `metadata_json?` (jsonb), `created_timestamp`, `updated_timestamp?`
+- **audit.audit_changes.** `id` (uuid), `timestamp`, `for_entity_type`, `for_entity_id` (varchar), `from_entity_type?`, `from_entity_id?` (varchar), `tenant_id?` (uuid),
+  `old_values_json` (jsonb), `changed_properties_json` (jsonb), `created_timestamp`, `updated_timestamp?`
+- **audit.audit_events.** `id` (uuid), `event_type`, `timestamp`, `for_entity_type`, `for_entity_id` (varchar), `from_entity_type?`, `from_entity_id?` (varchar), `tenant_id?`
+  (uuid), `message?`, `metadata_json?` (jsonb), `created_timestamp`, `updated_timestamp?`
 
 ## Tenancy
 

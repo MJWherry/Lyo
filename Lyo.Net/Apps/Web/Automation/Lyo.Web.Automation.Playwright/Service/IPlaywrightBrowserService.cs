@@ -12,9 +12,9 @@ public interface IPlaywrightBrowserService : IDisposable
 
     /// <summary>
     /// Creates a new browser session; call <see cref="IWebAutomationSession.StartBrowserAsync" /> before navigation (or use <see cref="AutomationPlanRunner" /> /
-    /// <see cref="AutomationScriptRunner" />, which start the browser on your behalf). When <paramref name="sessionOptions" /> is null, the session clones service
-    /// configuration (including <see cref="PlaywrightBrowserOptions.BrowserKind" />). A new <see cref="PlaywrightSessionOptions" /> is a full replacement and defaults to
-    /// Chromium — pin a User-Agent with <see cref="CreateSession(Action{PlaywrightBrowserOptions})" /> so Firefox from configuration is kept.
+    /// <see cref="AutomationScriptRunner" />, which start the browser on your behalf). When <paramref name="sessionOptions" /> is null, the session clones service configuration
+    /// (including <see cref="PlaywrightBrowserOptions.BrowserKind" />). A new <see cref="PlaywrightSessionOptions" /> is a full replacement and defaults to Chromium — pin a User-Agent
+    /// with <see cref="CreateSession(Action{PlaywrightBrowserOptions})" /> so Firefox from configuration is kept.
     /// </summary>
     IPlaywrightBrowserSession CreateSession(PlaywrightSessionOptions? sessionOptions = null);
 

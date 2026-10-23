@@ -10,9 +10,7 @@ public sealed class PostgresFileMetadataStoreTests(FileMetadataPostgresFixture f
 {
     protected override IServiceProvider Services => fixture.ServiceProvider;
 
-    protected override IFileMetadataStore CreateStore(IServiceScope scope)
-        => new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
+    protected override IFileMetadataStore CreateStore(IServiceScope scope) => new PostgresFileMetadataStore(scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>());
 
-    protected override DbSet<FileMetadataEntity> Metadata(IServiceScope scope)
-        => scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>().FileMetadata;
+    protected override DbSet<FileMetadataEntity> Metadata(IServiceScope scope) => scope.ServiceProvider.GetRequiredService<FileMetadataStoreDbContext>().FileMetadata;
 }

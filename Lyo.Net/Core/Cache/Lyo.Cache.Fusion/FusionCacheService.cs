@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using Lyo.Cache;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Health;
 using Lyo.Metrics;
@@ -20,15 +20,15 @@ public sealed class FusionCacheService : ICacheService
     private const string MsgTypedPayloadSerializerRequired = "Typed payload cache requires ICachePayloadSerializer (use AddFusionCache which registers both).";
 
     private readonly bool _enabled;
+    private readonly ConcurrentDictionary<string, EntryPolicy> _entryPolicies = new();
     private readonly IFusionCache _fusionCache;
     private readonly ConcurrentDictionary<CacheItem, CacheItem> _items = new();
-    private readonly ConcurrentDictionary<string, CacheItem> _storageHints = new(StringComparer.Ordinal);
     private readonly ILogger<FusionCacheService> _logger;
     private readonly IMetrics _metrics;
     private readonly CacheOptions _options;
     private readonly ICachePayloadCodec? _payloadCodec;
     private readonly ICachePayloadSerializer? _payloadSerializer;
-    private readonly ConcurrentDictionary<string, EntryPolicy> _entryPolicies = new();
+    private readonly ConcurrentDictionary<string, CacheItem> _storageHints = new(StringComparer.Ordinal);
 
     public FusionCacheService(
         IFusionCache fusionCache,
@@ -149,7 +149,7 @@ public sealed class FusionCacheService : ICacheService
     {
         var sw = Stopwatch.StartNew();
         try {
-            var testKey = $"lyo-health-{Guid.NewGuid():N}";
+            var testKey = $"lyo-health-{LyoGuid.CreateV7():N}";
             var testValue = "ok";
             Set(testKey, testValue, ["lyo-health-check"]);
             var fromCache = await GetOrSetAsync(testKey, _ => Task.FromResult<string?>(testValue), TimeSpan.FromSeconds(5), ["lyo-health-check"], ct).ConfigureAwait(false);
@@ -519,11 +519,7 @@ public sealed class FusionCacheService : ICacheService
         }
     }
 
-    public TValue? GetOrSet<TValue>(
-        string key,
-        Func<CancellationToken, TValue?> factory,
-        Action<ICacheEntryOptions> setupAction,
-        IEnumerable<string>? extraTags = null)
+    public TValue? GetOrSet<TValue>(string key, Func<CancellationToken, TValue?> factory, Action<ICacheEntryOptions> setupAction, IEnumerable<string>? extraTags = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         ArgumentHelpers.ThrowIfNull(setupAction);
@@ -711,8 +707,7 @@ public sealed class FusionCacheService : ICacheService
     }
 
     /// <inheritdoc />
-    public void Set<T>(string key, T obj, TimeSpan duration, IEnumerable<string>? tags = null)
-        => Set(key, obj, o => o.SetAbsoluteExpiration(duration), tags);
+    public void Set<T>(string key, T obj, TimeSpan duration, IEnumerable<string>? tags = null) => Set(key, obj, o => o.SetAbsoluteExpiration(duration), tags);
 
     /// <inheritdoc />
     public void Set<T>(string key, T obj, Action<ICacheEntryOptions> setupAction, IEnumerable<string>? tags = null)
@@ -832,7 +827,7 @@ public sealed class FusionCacheService : ICacheService
         Func<CancellationToken, Task<(byte[]? plaintext, string[]? tags)>> factory,
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
-        => await GetOrSetPayloadAsync(key, factory, (TimeSpan?)null, extraTags, token).ConfigureAwait(false);
+        => await GetOrSetPayloadAsync(key, factory, null, extraTags, token).ConfigureAwait(false);
 
     /// <inheritdoc />
     public async ValueTask<CacheEntryEnvelope?> GetOrSetPayloadAsync(
@@ -894,7 +889,7 @@ public sealed class FusionCacheService : ICacheService
         Func<CancellationToken, Task<TValue?>> factory,
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
-        => GetOrSetPayloadAsync(key, factory, (TimeSpan?)null, extraTags, token);
+        => GetOrSetPayloadAsync(key, factory, null, extraTags, token);
 
     /// <inheritdoc />
     public ValueTask<TValue?> GetOrSetPayloadAsync<TValue>(
@@ -915,7 +910,7 @@ public sealed class FusionCacheService : ICacheService
         Func<CancellationToken, Task<(TValue? value, string[]? tags)>> factory,
         IEnumerable<string>? extraTags = null,
         CancellationToken token = default)
-        => GetOrSetPayloadAsync(key, factory, (TimeSpan?)null, extraTags, token);
+        => GetOrSetPayloadAsync(key, factory, null, extraTags, token);
 
     /// <inheritdoc />
     public async ValueTask<TValue?> GetOrSetPayloadAsync<TValue>(
@@ -1095,11 +1090,7 @@ public sealed class FusionCacheService : ICacheService
     }
 
     /// <inheritdoc />
-    public CacheEntryEnvelope? GetOrSetPayload(
-        string key,
-        Func<CancellationToken, byte[]?> factory,
-        Action<ICacheEntryOptions> setupAction,
-        IEnumerable<string>? extraTags = null)
+    public CacheEntryEnvelope? GetOrSetPayload(string key, Func<CancellationToken, byte[]?> factory, Action<ICacheEntryOptions> setupAction, IEnumerable<string>? extraTags = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         ArgumentHelpers.ThrowIfNull(setupAction);
@@ -1345,16 +1336,12 @@ public sealed class FusionCacheService : ICacheService
         }
     }
 
-    private readonly record struct EntryPolicy(TimeSpan Duration, CacheExpirationMode Mode, string[] Tags);
-
-    private static string[] NormalizeTags(IEnumerable<string>? tags)
-        => tags?.Select(static t => t.ToLowerInvariant()).Distinct().ToArray() ?? [];
+    private static string[] NormalizeTags(IEnumerable<string>? tags) => tags?.Select(static t => t.ToLowerInvariant()).Distinct().ToArray() ?? [];
 
     /// <summary>FusionCache tag keys used as clear/expire tombstones; they do not appear as user-visible <see cref="Items" /> rows.</summary>
     private static bool IsFusionControlKey(string key)
-        => key.StartsWith(TagPrefix + TagPrefix, StringComparison.Ordinal)
-           || key.Equals(TagPrefix + "*", StringComparison.Ordinal)
-           || key.Equals(TagPrefix + "!", StringComparison.Ordinal);
+        => key.StartsWith(TagPrefix + TagPrefix, StringComparison.Ordinal) || key.Equals(TagPrefix + "*", StringComparison.Ordinal) ||
+            key.Equals(TagPrefix + "!", StringComparison.Ordinal);
 
     private void ForgetAllTracked()
     {
@@ -1369,11 +1356,9 @@ public sealed class FusionCacheService : ICacheService
         StampExpires(normalizedKey, duration);
     }
 
-    private DateTime? ExpiresFromPolicy(string key)
-        => _entryPolicies.TryGetValue(key, out var policy) ? DateTime.UtcNow.Add(policy.Duration) : null;
+    private DateTime? ExpiresFromPolicy(string key) => _entryPolicies.TryGetValue(key, out var policy) ? DateTime.UtcNow.Add(policy.Duration) : null;
 
-    private IReadOnlyList<string>? TagsFromPolicy(string key)
-        => _entryPolicies.TryGetValue(key, out var policy) && policy.Tags.Length > 0 ? policy.Tags : null;
+    private IReadOnlyList<string>? TagsFromPolicy(string key) => _entryPolicies.TryGetValue(key, out var policy) && policy.Tags.Length > 0 ? policy.Tags : null;
 
     private void StampExpires(string normalizedKey, TimeSpan duration)
     {
@@ -1392,11 +1377,9 @@ public sealed class FusionCacheService : ICacheService
         UpsertItem(CacheItem.Key(normalizedKey, encrypted: false, compressed: false, expires: expires, tags: tags));
     }
 
-    private void UpsertItem(CacheItem item)
-        => _items.AddOrUpdate(item, item, (_, existing) => item with { Created = existing.Created });
+    private void UpsertItem(CacheItem item) => _items.AddOrUpdate(item, item, (_, existing) => item with { Created = existing.Created });
 
-    private void RememberStoredBytes(string normalizedKey, byte[] stored)
-        => _storageHints[normalizedKey] = CacheItem.FromStoredBytes(normalizedKey, stored);
+    private void RememberStoredBytes(string normalizedKey, byte[] stored) => _storageHints[normalizedKey] = CacheItem.FromStoredBytes(normalizedKey, stored);
 
     private void TrackStoredBytes(string normalizedKey, byte[] stored)
     {
@@ -1453,13 +1436,14 @@ public sealed class FusionCacheService : ICacheService
             return;
 
         try {
-            _fusionCache.Set(normalizedKey, value, new FusionCacheEntryOptions { Duration = policy.Duration }, policy.Tags);
+            _fusionCache.Set(normalizedKey, value, new() { Duration = policy.Duration }, policy.Tags);
             StampExpires(normalizedKey, policy.Duration);
         }
         catch (Exception ex) {
             _logger.LogError(ex, "Error refreshing sliding cache entry for key {CacheKey}", normalizedKey);
-            _metrics.RecordError(
-                Constants.Metrics.SetDuration, ex, [(Constants.Metrics.Tags.Operation, "RefreshSliding"), (Constants.Metrics.Tags.Key, normalizedKey)]);
+            _metrics.RecordError(Constants.Metrics.SetDuration, ex, [(Constants.Metrics.Tags.Operation, "RefreshSliding"), (Constants.Metrics.Tags.Key, normalizedKey)]);
         }
     }
+
+    private readonly record struct EntryPolicy(TimeSpan Duration, CacheExpirationMode Mode, string[] Tags);
 }

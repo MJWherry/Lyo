@@ -34,8 +34,8 @@ public sealed class DiscordGuildSettings
     public bool ComicNsfwAllowed { get; set; }
 
     /// <summary>
-    /// Monotonic binding revision of the stored value (latest snapshot). Filled when loaded from the config store API; cleared before writes so it is not saved inside
-    /// the binding JSON.
+    /// Monotonic binding revision of the stored value (latest snapshot). Filled when loaded from the config store API; cleared before writes so it is not saved inside the
+    /// binding JSON.
     /// </summary>
     public int? Revision { get; set; }
 

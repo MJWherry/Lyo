@@ -16,9 +16,13 @@ public partial class LyoChip
     [Parameter]
     public string? Text { get; set; }
 
-    /// <summary>MudBlazor color. Falls back to <see cref="Spec" /> when unset.</summary>
+    /// <summary>MudBlazor color. Falls back to <see cref="Spec" /> when unset. Ignored for the fill when <see cref="Hue" /> is set.</summary>
     [Parameter]
     public Color? Color { get; set; }
+
+    /// <summary>Named identity hue. Appended after any other style so <c>--lyo-chip-hue</c> wins. Light and dark fills come from CSS.</summary>
+    [Parameter]
+    public LyoChipHue? Hue { get; set; }
 
     /// <summary>Optional Material icon shown beside the title. Falls back to <see cref="Spec" /> when unset.</summary>
     [Parameter]
@@ -60,10 +64,7 @@ public partial class LyoChip
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
-    private string ResolvedLabel
-        => !string.IsNullOrWhiteSpace(Label) ? Label
-            : !string.IsNullOrWhiteSpace(Text) ? Text
-            : Spec?.Label ?? "—";
+    private string ResolvedLabel => !string.IsNullOrWhiteSpace(Label) ? Label : !string.IsNullOrWhiteSpace(Text) ? Text : Spec?.Label ?? "—";
 
     private Color ResolvedColor => Color ?? Spec?.Color ?? MudBlazor.Color.Default;
 
@@ -71,25 +72,22 @@ public partial class LyoChip
 
     private Variant ResolvedVariant => Variant ?? Spec?.Variant ?? MudBlazor.Variant.Filled;
 
-    private string? ResolvedStyle
-    {
-        get
-        {
-            if (string.IsNullOrWhiteSpace(Style))
-                return Spec?.Style;
-            if (string.IsNullOrWhiteSpace(Spec?.Style))
-                return Style;
-            return Spec.Style + ";" + Style;
+    private string? ResolvedStyle {
+        get {
+            var style = string.IsNullOrWhiteSpace(Style) ? Spec?.Style : string.IsNullOrWhiteSpace(Spec?.Style) ? Style : Spec.Style + ";" + Style;
+            if (Hue is null)
+                return style;
+
+            return string.IsNullOrWhiteSpace(style) ? Hue.Style : style + ";" + Hue.Style;
         }
     }
 
-    private string? ResolvedClass
-    {
-        get
-        {
+    private string? ResolvedClass {
+        get {
             var hue = ResolvedStyle is not null && ResolvedStyle.Contains(LyoChipHue.CssVariable, StringComparison.Ordinal);
             if (!hue)
                 return Class;
+
             return string.IsNullOrWhiteSpace(Class) ? LyoChipHue.CssClass : Class + " " + LyoChipHue.CssClass;
         }
     }

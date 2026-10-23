@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Postgres;
 
 namespace Lyo.PackageMetadata.Postgres;
 
 /// <summary>Settings for the package metadata PostgreSQL store.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class PostgresPackageMetadataOptions : PostgresOptionsBase
 {
     public const string SectionName = "PostgresPackageMetadata";
@@ -10,11 +12,13 @@ public sealed class PostgresPackageMetadataOptions : PostgresOptionsBase
 
     /// <summary>
     /// In-process cache of ordered stack-prefix rows. See <see cref="PostgresPrefixCatalogCachingMode" />. Callers can skip caching with
-    /// <see cref="PostgresPrefixCatalogCachingMode.Disabled" /> and supply their own layer, or drop the snapshot via
-    /// <see cref="PostgresPackageMetadataStore.ClearPrefixCatalogCache" />.
+    /// <see cref="PostgresPrefixCatalogCachingMode.Disabled" /> and supply their own layer, or drop the snapshot via <see cref="PostgresPackageMetadataStore.ClearPrefixCatalogCache" />.
     /// </summary>
     public PostgresPrefixCatalogCachingMode PrefixCatalogCaching { get; set; } = PostgresPrefixCatalogCachingMode.InvalidateOnRegisterManyOrClear;
 
     /// <inheritdoc />
     protected override string SchemaName => Schema;
+
+    /// <summary>Schema, auto-migrate flag, and prefix-catalog cache mode. The connection string is omitted.</summary>
+    public override string ToString() => $"{base.ToString()} PrefixCatalogCaching={PrefixCatalogCaching}";
 }

@@ -1,0 +1,167 @@
+{
+  "id": "Lyo.Formatter.Algorithms",
+  "name": "Lyo.Formatter.Algorithms",
+  "area": "Data",
+  "tagline": "Optional formatter addon that runs Algo(\"key\") through Lyo.Algorithms.",
+  "description": "Registers an IFormatterExpressionEvaluator that understands Algo(\"key\") and score(\"key\") by calling IAlgorithmRegistry. Lyo.Formatter does not reference Algorithms. Job, Api, and AddFormatterService stay unchanged until a host calls AddFormatterAlgorithms().",
+  "features": [
+    "**Opt-in.** AddFormatterAlgorithms after AddAlgorithms and AddFormatterService. Hosts that skip it keep the built-in DateTime and LINQ expressions.",
+    "**Latest key.** The token is the whole expression: {Algo(\"attack.physical\")} or {score(\"fish.score\")}. Pins and labels stay on AlgorithmRef in application code.",
+    "**Same registry.** A cold key is loaded once. Later formats hit the compiled delegate."
+  ],
+  "examples": [
+    {
+      "title": "Format a catalog algorithm",
+      "language": "csharp",
+      "code": "services.AddAlgorithms();\nservices.AddMemoryAlgorithmStore();\nservices.AddFormatterService();\nservices.AddFormatterAlgorithms();\n\nvar text = formatter.Format(\"{Algo(\\\"attack.physical\\\")}\", new Dictionary<string, object?> { [\"Atk\"] = 10d });"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Formatter/Lyo.Formatter.Algorithms/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Algorithms",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Formatter",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Algorithms.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Parameters",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "DynamicExpresso.Core",
+      "kind": "package",
+      "version": "2.19.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "SmartFormat.NET",
+      "kind": "package",
+      "version": "3.6.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

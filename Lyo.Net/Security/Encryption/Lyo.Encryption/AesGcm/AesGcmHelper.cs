@@ -61,7 +61,7 @@ public static class AesGcmHelper
                     tlen = cipher.ProcessBytes(pb, 0, plaintext.Length, outBuf, 0);
                 }
                 finally {
-                    ArrayPool<byte>.Shared.Return(pb, clearArray: true);
+                    ArrayPool<byte>.Shared.Return(pb, true);
                 }
             }
 
@@ -72,7 +72,7 @@ public static class AesGcmHelper
             outBuf.AsSpan(plaintext.Length, TagSize).CopyTo(tag);
         }
         finally {
-            ArrayPool<byte>.Shared.Return(outBuf, clearArray: true);
+            ArrayPool<byte>.Shared.Return(outBuf, true);
         }
 #endif
     }
@@ -111,11 +111,11 @@ public static class AesGcmHelper
                     outBuf.AsSpan(0, len).CopyTo(plaintext);
                 }
                 finally {
-                    ArrayPool<byte>.Shared.Return(outBuf, clearArray: true);
+                    ArrayPool<byte>.Shared.Return(outBuf, true);
                 }
             }
             finally {
-                ArrayPool<byte>.Shared.Return(combined, clearArray: true);
+                ArrayPool<byte>.Shared.Return(combined, true);
             }
         }
         catch (InvalidCipherTextException ex) {

@@ -8,8 +8,8 @@ using Lyo.Exceptions.Models;
 namespace Lyo.Encryption.Rsa;
 
 /// <summary>
-/// Decrypts with an RSA private key. Accepts single-block and chunked ciphertext from <see cref="RsaEncryptor" />. Thread-safe: each call uses its
-/// own cryptographic context and shares no mutable crypto state.
+/// Decrypts with an RSA private key. Accepts single-block and chunked ciphertext from <see cref="RsaEncryptor" />. Thread-safe: each call uses its own cryptographic context
+/// and shares no mutable crypto state.
 /// </summary>
 public sealed class RsaDecryptor : IDecryptor, IDisposable, IAsyncDisposable
 {
@@ -64,10 +64,7 @@ public sealed class RsaDecryptor : IDecryptor, IDisposable, IAsyncDisposable
     /// <inheritdoc />
     public void SetDecryptionEncoding(Encoding encoding) => _decryptionEncoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
 
-    /// <summary>
-    /// Decrypts with RSA. Thread-safe: concurrent calls on one instance are safe because each call owns its
-    /// cryptographic context and shares no mutable crypto state.
-    /// </summary>
+    /// <summary>Decrypts with RSA. Thread-safe: concurrent calls on one instance are safe because each call owns its cryptographic context and shares no mutable crypto state.</summary>
     /// <param name="encryptedBytes">Ciphertext to decrypt</param>
     /// <param name="keyId">Ignored. RSA keys come from the constructor; present only for the interface.</param>
     /// <param name="key">Ignored. RSA keys come from the constructor; present only for the interface.</param>

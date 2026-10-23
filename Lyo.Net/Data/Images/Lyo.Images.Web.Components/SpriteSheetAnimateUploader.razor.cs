@@ -1,12 +1,6 @@
-using System.Net.Http.Json;
 using Lyo.Web.Components.FileUpload;
 using Lyo.Web.Components.Models;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
-using MudBlazor;
 
 namespace Lyo.Images.Web.Components;
 

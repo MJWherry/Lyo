@@ -1,12 +1,9 @@
-@using Lyo.Cache
-@using Lyo.Common.Metadata.Records
-@using Lyo.Health
-@using Lyo.Metrics
-@using Lyo.Web.Components.Cache
-@using CacheConstants = Lyo.Cache.Constants
 @inject IApiClient ApiClient
 @inject ICacheService CacheService
 @inject IMetrics Metrics
+@using Lyo.Cache
+@using Lyo.Metrics
+@using Lyo.Web.Components.Cache
 @inherits LyoWorkbenchBase
 
 <MudPaper Class="pa-4">
@@ -226,7 +223,8 @@
                                         <LyoRecordCard Title="@item.Name" Subtitle="@item.Type.ToString()">
                                             <LyoRecordField Label="Encrypted" Value="@(item.Encrypted is null ? "—" : item.Encrypted == true ? "Yes" : "No")"/>
                                             <LyoRecordField Label="Compressed" Value="@(item.Compressed is null ? "—" : item.Compressed == true ? "Yes" : "No")"/>
-                                            <LyoRecordField Label="Size" Value="@(item.SizeBytes is { } size ? FileSizeUnitInfo.FormatBestFitAbbreviation(size, lowercaseAbbreviation: false) : "—")"/>
+                                            <LyoRecordField Label="Size"
+                                                            Value="@(item.SizeBytes is { } size ? FileSizeUnitInfo.FormatBestFitAbbreviation(size, lowercaseAbbreviation: false) : "—")"/>
                                             <LyoRecordField Label="Created" Value="@item.Created.ToString("u")"/>
                                         </LyoRecordCard>
                                     }

@@ -6,10 +6,9 @@ using Lyo.Exceptions;
 namespace Lyo.KeyStore.KeyDerivation;
 
 /// <summary>
-/// Argon2id key-derivation service. Argon2 won the Password Hashing Competition and is the usual choice for password-based
-/// key derivation because it is memory-hard, which resists GPU and ASIC cracking. Uses the Argon2id variant (recommended for most cases), which
-/// balances side-channel resistance and GPU cracking. Note: the 'iterations' parameter maps to Argon2's time cost. Argon2 also uses memory size and
-/// parallelism, set via the constructor.
+/// Argon2id key-derivation service. Argon2 won the Password Hashing Competition and is the usual choice for password-based key derivation because it is memory-hard, which
+/// resists GPU and ASIC cracking. Uses the Argon2id variant (recommended for most cases), which balances side-channel resistance and GPU cracking. Note: the 'iterations' parameter
+/// maps to Argon2's time cost. Argon2 also uses memory size and parallelism, set via the constructor.
 /// </summary>
 public class Argon2KeyDerivationService : IKeyDerivationService
 {
@@ -54,8 +53,8 @@ public class Argon2KeyDerivationService : IKeyDerivationService
     }
 
     /// <summary>
-    /// Derives a key from a password byte array using Argon2id. The 'iterations' parameter maps to Argon2's time cost. Typical Argon2 iteration values are
-    /// 3-4 (not 600,000 like PBKDF2). If iterations &gt;= 100, it is treated as a legacy PBKDF2-style value and mapped into Argon2's range.
+    /// Derives a key from a password byte array using Argon2id. The 'iterations' parameter maps to Argon2's time cost. Typical Argon2 iteration values are 3-4 (not 600,000 like
+    /// PBKDF2). If iterations &gt;= 100, it is treated as a legacy PBKDF2-style value and mapped into Argon2's range.
     /// </summary>
     public byte[] DeriveKey(byte[] password, byte[]? salt = null, int iterations = 600000, int? keySizeBytes = null)
     {

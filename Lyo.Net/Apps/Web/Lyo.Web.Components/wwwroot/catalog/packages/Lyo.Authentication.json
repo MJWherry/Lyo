@@ -14,7 +14,7 @@
     {
       "title": "Configuration cheatsheet",
       "language": "json",
-      "code": "{\n  \"LyoAuthentication\": { \"Ring\": \"live\" },\n  \"LyoJwt\": { \"Issuer\": \"https://auth.lyo\", \"Audience\": \"lyo-api\", \"SigningKeyId\": \"lyo-sig\" },\n  \"LyoOidcBff\": {\n    \"AllowedReturnOrigins\": [ \"https://app.example.com\" ],\n    \"DefaultReturnUrl\": \"/\",\n    \"HandoffCodeTtl\": \"00:00:30\"\n  },\n  \"PostgresUser\": { \"ConnectionString\": \"...\", \"EnableAutoMigrations\": true }\n}"
+      "code": "{\n  \"LyoAuthentication\": { \"Ring\": \"live\" },\n  \"LyoJwt\": { \"Issuer\": \"https://auth.lyo\", \"Audience\": \"lyo-api\", \"SigningKeyId\": \"lyo-sig\" },\n  \"LyoSso\": {\n    \"AllowedReturnOrigins\": [ \"https://app.example.com\" ],\n    \"DefaultReturnUrl\": \"/\",\n    \"HandoffCodeTtl\": \"00:00:30\"\n  },\n  \"PostgresUser\": { \"ConnectionString\": \"...\", \"EnableAutoMigrations\": true }\n}"
     }
   ],
   "sections": [
@@ -59,12 +59,12 @@
         ]
       ],
       "lead": "The auth stack is split so consumer-side libraries (including Blazor WebAssembly clients) cannot see server-only types:",
-      "trail": "ASP.NET wiring lives in `Lyo.Authentication.AspNetCore`. Postgres persistence and the Postgres audit recorder live in `Lyo.Authentication.Postgres`. OIDC flow lives in\n`Lyo.Authentication.OpenIdConnect` with provider profiles `Lyo.Authentication.Google` and `Lyo.Authentication.Keycloak`. The consumer-side BFF runtime lives in\n`Lyo.Authentication.Client`."
+      "trail": "ASP.NET wiring lives in `Lyo.Authentication.AspNetCore`. Postgres persistence and the Postgres audit recorder live in `Lyo.Authentication.Postgres`. The shared login host is `Lyo.Authentication.Sso` (`MapLyoAuthEndpoints`). OpenID Connect lives in `Lyo.Authentication.OpenIdConnect` with profiles `Lyo.Authentication.Google` and `Lyo.Authentication.Keycloak`. SAML lives in `Lyo.Authentication.Saml` with profiles `Lyo.Authentication.Okta` and `Lyo.Authentication.Entra`. The consumer-side BFF runtime lives in `Lyo.Authentication.Client`."
     },
     {
       "type": "markdown",
       "title": "Typical host wiring (API/auth server)",
-      "body": "A web host that issues both opaque tokens and JWTs, persists users + tokens + audit events to Postgres, and runs OIDC login through Google and Keycloak:\n\n```csharp\nservices.AddLyoAuthentication(builder.Configuration);\nservices.AddPostgresAuthenticationStoresFromConfiguration(builder.Configuration);\nservices.AddLyoApiTokenAuthentication(); // ASP.NET schemes + LyoBearer policy scheme\nservices.AddAuthorization();\nservices.AddLyoOpenIdConnect(builder.Configuration);\nservices.AddGoogleProviderFromConfiguration(builder.Configuration);\nservices.AddKeycloakProviderFromConfiguration(builder.Configuration);\n\napp.UseAuthentication();\napp.UseAuthorization();\napp.MapLyoJwks(); // /.well-known/jwks.json\napp.MapLyoAuthEndpoints(); // /auth/login/{provider}, /auth/callback/{provider}, /auth/handoff/exchange, /auth/token, /auth/refresh, /auth/logout, /auth/me\napp.MapLyoTokenManagementEndpoints(); // /tokens (PAT lifecycle)\n```"
+      "body": "A web host that issues both opaque tokens and JWTs, persists users + tokens + audit events to Postgres, and runs OIDC login through Google and Keycloak:\n\n```csharp\nservices.AddLyoAuthentication(builder.Configuration);\nservices.AddPostgresAuthenticationStoresFromConfiguration(builder.Configuration);\nservices.AddLyoApiTokenAuthentication(); // ASP.NET schemes + LyoBearer policy scheme\nservices.AddAuthorization();\nservices.AddLyoOpenIdConnect(builder.Configuration);\nservices.AddGoogleProviderFromConfiguration(builder.Configuration);\nservices.AddKeycloakProviderFromConfiguration(builder.Configuration);\n\napp.UseAuthentication();\napp.UseAuthorization();\napp.MapLyoJwks(); // /.well-known/jwks.json\napp.MapLyoAuthEndpoints(); // Lyo.Authentication.Sso: /auth/login/{provider}, /auth/callback/{provider}, /auth/handoff/exchange, /auth/token, /auth/refresh, /auth/logout, /auth/me\napp.MapLyoTokenManagementEndpoints(); // /tokens (PAT lifecycle)\n```"
     },
     {
       "type": "list",

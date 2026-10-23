@@ -1,0 +1,16 @@
+{
+  "id": "Lyo.Law.Seed",
+  "name": "Lyo.Law.Seed",
+  "area": "Plugins",
+  "tagline": "EF seed of law jurisdictions, codes, nodes, annotations, and revisions.",
+  "description": "EF seed of Count jurisdictions, one code each, and a title/chapter/section tree with an annotation and a revision. Schema law.",
+  "features": [],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/Law/Lyo.Law.Seed/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 
 namespace Lyo.Web.Primitives;
 
@@ -14,7 +15,7 @@ public static class LyoStatusText
         if (string.IsNullOrWhiteSpace(status))
             return string.Empty;
 
-        var builder = new System.Text.StringBuilder(status.Length);
+        var builder = new StringBuilder(status.Length);
         var pendingSeparator = false;
         foreach (var character in status) {
             if (character is '_' or '-' || char.IsWhiteSpace(character)) {
@@ -34,8 +35,8 @@ public static class LyoStatusText
     }
 
     /// <summary>
-    /// Title-cases a normalized key for display (<c>partially delivered</c> becomes <c>Partially Delivered</c>). Use it when a palette has a color for a status but no
-    /// nicer label than the stored text.
+    /// Title-cases a normalized key for display (<c>partially delivered</c> becomes <c>Partially Delivered</c>). Use it when a palette has a color for a status but no nicer
+    /// label than the stored text.
     /// </summary>
     public static string Humanize(string? status)
     {

@@ -6,15 +6,12 @@ namespace Lyo.Diagnostic.Sanitisation;
 public sealed record TraceSanitiserOptions
 {
     /// <summary>
-    /// When true, full source file paths are replaced with just the filename. For example
-    /// "C:\Users\dev\src\MyApp\Services\OrderService.cs" → "OrderService.cs". Defaults to true.
+    /// When true, full source file paths are replaced with just the filename. For example "C:\Users\dev\src\MyApp\Services\OrderService.cs" → "OrderService.cs". Defaults to
+    /// true.
     /// </summary>
     public bool StripFilePaths { get; init; } = true;
 
-    /// <summary>
-    /// When true, machine-specific path prefixes (drive letters, /home/user, and similar) are removed even if <see cref="StripFilePaths" /> is false.
-    /// Defaults to true.
-    /// </summary>
+    /// <summary>When true, machine-specific path prefixes (drive letters, /home/user, and similar) are removed even if <see cref="StripFilePaths" /> is false. Defaults to true.</summary>
     public bool StripMachinePaths { get; init; } = true;
 
     /// <summary>
@@ -35,10 +32,7 @@ public sealed record TraceSanitiserOptions
     /// <summary>Placeholder text used where content has been redacted. Defaults to "[redacted]".</summary>
     public string RedactionPlaceholder { get; init; } = "[redacted]";
 
-    /// <summary>
-    /// When true, the exception message is included in sanitised output. Set false in production if messages may contain PII (for example SQL with data).
-    /// Defaults to true.
-    /// </summary>
+    /// <summary>When true, the exception message is included in sanitised output. Set false in production if messages may contain PII (for example SQL with data). Defaults to true.</summary>
     public bool IncludeExceptionMessage { get; init; } = true;
 
     public static TraceSanitiserOptions Default { get; } = new();

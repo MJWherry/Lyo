@@ -2,9 +2,7 @@ using Lyo.Exceptions;
 
 namespace Lyo.FileSystemWatcher.Models;
 
-/// <summary>
-/// Diffs two persistable snapshot trees. Uses path, directory flag, size, fingerprint, and hash — never live <c>FileSystemInfo</c>.
-/// </summary>
+/// <summary>Diffs two persistable snapshot trees. Uses path, directory flag, size, fingerprint, and hash — never live <c>FileSystemInfo</c>.</summary>
 public static class FileSystemSnapshotDiffer
 {
     /// <summary>Diffs two snapshots and returns create, delete, move, rename, and changed events for files and directories.</summary>
@@ -93,6 +91,7 @@ public static class FileSystemSnapshotDiffer
                     Create(
                         oldDirMatch, path, isMove ? FileSystemChangeKind.Moved : FileSystemChangeKind.Renamed, true, occurred, oldCounts.FileCount, oldCounts.DirectoryCount,
                         newCounts.FileCount, newCounts.DirectoryCount));
+
                 continue;
             }
 
@@ -155,6 +154,7 @@ public static class FileSystemSnapshotDiffer
     {
         foreach (var sub in root.Directories.Values) {
             yield return (sub.RelativePath, new() { Path = sub.RelativePath, IsDirectory = true });
+
             foreach (var pair in EnumerateNewSnapshotEntries(sub))
                 yield return pair;
         }

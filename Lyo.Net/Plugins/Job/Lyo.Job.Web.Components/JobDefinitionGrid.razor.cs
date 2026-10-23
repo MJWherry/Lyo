@@ -1,9 +1,12 @@
-
 namespace Lyo.Job.Web.Components;
 
 public partial class JobDefinitionGrid
 {
-    static JobDefinitionGrid() => FormatterLyoType.EnsureRegistered();
+    private readonly ProjectedBoolOverrides _enabled = new("Enabled");
+
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Name"), new("Type"), new("WorkerType", "Worker Type"), new("Enabled", type: LyoTypeInfo.Bool)];
+
+    private LyoDataGridProjected? _dataGrid;
 
     [Parameter]
     [EditorRequired]
@@ -23,13 +26,7 @@ public partial class JobDefinitionGrid
 
     private string _scheduleRoute => $"{BaseRoute.TrimEnd('/')}/Schedule";
 
-    private string _triggerRoute => $"{BaseRoute.TrimEnd('/')}/Trigger";
-
-    private LyoDataGridProjected? _dataGrid;
-
-    private readonly ProjectedBoolOverrides _enabled = new("Enabled");
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Name"), new("Type"), new("WorkerType", "Worker Type"), new("Enabled", type: LyoTypeInfo.Bool)];
+    static JobDefinitionGrid() => FormatterLyoType.EnsureRegistered();
 
     private bool GetEnabled(object? item) => _enabled.Get(item);
 
@@ -48,7 +45,9 @@ public partial class JobDefinitionGrid
 
     private async Task OpenCreateRunDialog()
     {
-        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobDefinitionRes>>($"{_definitionRoute}/QueryConcrete", new() { Amount = 200, Include = ["JobParameters"] });
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<JobDefinitionRes>>(
+            $"{_definitionRoute}/QueryConcrete", new() { Amount = 200, Include = ["JobParameters"] });
+
         var parameters = new DialogParameters<RunJobDialog> { { d => d.JobDefinitions, res?.Items ?? [] }, { d => d.RunRoute, _runRoute } };
         var dialog = await DialogService.ShowAsync<RunJobDialog>("Create Job Run", parameters, LyoDialogPresets.Medium);
         var result = await dialog.Result;
@@ -70,10 +69,7 @@ public partial class JobDefinitionGrid
             return;
 
         var parameters = new DialogParameters<JobDefinitionView> {
-            { d => d.JobDefinition, def },
-            { d => d.DefinitionRoute, _definitionRoute },
-            { d => d.ScheduleRoute, _scheduleRoute },
-            { d => d.TriggerRoute, _triggerRoute }
+            { d => d.JobDefinition, def }, { d => d.DefinitionRoute, _definitionRoute }, { d => d.ScheduleRoute, _scheduleRoute }
         };
 
         var dialog = await DialogService.ShowAsync<JobDefinitionView>("Job Definition", parameters, LyoDialogPresets.Large);
@@ -95,7 +91,10 @@ public partial class JobDefinitionGrid
         if (def == null)
             return;
 
-        var parameters = new DialogParameters<RunJobDialog> { { d => d.JobDefinitions, new List<JobDefinitionRes> { def } }, { d => d.SelectedJobDefinition, def }, { d => d.RunRoute, _runRoute } };
+        var parameters = new DialogParameters<RunJobDialog> {
+            { d => d.JobDefinitions, new List<JobDefinitionRes> { def } }, { d => d.SelectedJobDefinition, def }, { d => d.RunRoute, _runRoute }
+        };
+
         var dialog = await DialogService.ShowAsync<RunJobDialog>("Create Job Run", parameters, LyoDialogPresets.Medium);
         var result = await dialog.Result;
         if (result is { Canceled: false })
@@ -115,7 +114,11 @@ public partial class JobDefinitionGrid
         await OnViewRuns.InvokeAsync((guid, string.IsNullOrWhiteSpace(name) ? null : name));
     }
 
-    private Task ToggleDefinition(object? item) => _enabled.ToggleAsync(ApiClient, _definitionRoute, item, Snackbar, "Definition");
+    private async Task ToggleDefinition(object? item)
+    {
+        if (await _enabled.ToggleAsync(ApiClient, _definitionRoute, item, Snackbar, "Definition"))
+            await RefreshAsync();
+    }
 
     private async Task BulkToggle(bool value)
     {
@@ -127,8 +130,7 @@ public partial class JobDefinitionGrid
             await RefreshAsync();
     }
 
-    private IReadOnlyList<object?> SelectedRows()
-        => ProjectedGridKeys.RowsFromKeys(_dataGrid?.SelectedKeys);
+    private IReadOnlyList<object?> SelectedRows() => ProjectedGridKeys.RowsFromKeys(_dataGrid?.SelectedKeys);
 
     private async Task RefreshAsync()
     {

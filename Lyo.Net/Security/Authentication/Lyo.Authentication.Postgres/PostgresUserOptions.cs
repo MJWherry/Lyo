@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.EntityReference.Models;
 using Lyo.Postgres;
 
 namespace Lyo.Authentication.Postgres;
 
 /// <summary>Settings for <c>[user]</c> schema persistence (tokens, users, linked identities).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class PostgresUserOptions : PostgresOptionsBase
 {
     /// <summary>Configuration section name.</summary>
@@ -18,4 +20,7 @@ public sealed class PostgresUserOptions : PostgresOptionsBase
 
     /// <inheritdoc />
     protected override string SchemaName => Schema;
+
+    /// <summary>Schema, auto-migrate flag, and tenancy. The connection string is omitted.</summary>
+    public override string ToString() => $"{base.ToString()} Tenancy={Tenancy}";
 }

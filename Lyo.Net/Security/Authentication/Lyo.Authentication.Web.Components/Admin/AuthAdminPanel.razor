@@ -1,7 +1,6 @@
 @page "/auth/admin"
 @page "/auth/admin/users/{UserId:guid}"
 @namespace Lyo.Authentication.Web.Components
-@using Lyo.Authentication.Models
 
 <PageTitle>Auth admin</PageTitle>
 
@@ -10,7 +9,8 @@
         <div>
             <MudText Typo="Typo.h5">Auth admin</MudText>
             <MudText Typo="Typo.body2" Color="Color.Secondary">
-                Manage Lyo users, opaque tokens, extra JWT claims, authorization scopes, linked identities, and audit events. Token revoke keeps the row; hard-delete destroys the hash.
+                Manage Lyo users, opaque tokens, extra JWT claims, authorization scopes, linked identities, and audit events. Token revoke keeps the row; hard-delete destroys the
+                hash.
             </MudText>
         </div>
         @if (_selectedUserId is { } selected) {
@@ -36,6 +36,12 @@
             </MudTabPanel>
             <MudTabPanel Text="Audit">
                 <AuthEventGrid ApiClient="ResolvedApiClient" BaseRoute="@BaseRoute"/>
+            </MudTabPanel>
+            <MudTabPanel Text="Grants">
+                <MudStack Spacing="3">
+                    <GrantPanel AllowEdit="true"/>
+                    <GrantCheckForm/>
+                </MudStack>
             </MudTabPanel>
         </MudTabs>
     </MudStack>

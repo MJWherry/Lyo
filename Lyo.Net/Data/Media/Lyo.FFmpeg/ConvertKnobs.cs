@@ -1,4 +1,5 @@
 using Lyo.Common.Core.Records;
+using Lyo.FileTags;
 using Lyo.Media.Models;
 
 namespace Lyo.FFmpeg;
@@ -12,25 +13,25 @@ internal sealed record ConvertKnobs
 
     public AudioEncoder? AudioEncoder { get; init; }
 
-    public int? SampleRate { get; init; }
+    public AudioSampleRate? SampleRate { get; init; }
 
-    public int? Channels { get; init; }
+    public ChannelLayout? Channels { get; init; }
 
-    public string? AudioBitRate { get; init; }
+    public MediaBitRate? AudioBitRate { get; init; }
 
-    public string? AudioQuality { get; init; }
+    public AudioVbrQuality? AudioQuality { get; init; }
 
     public string? AudioFilter { get; init; }
 
     public VideoEncoder? VideoEncoder { get; init; }
 
-    public double? FrameRate { get; init; }
+    public VideoFrameRate? FrameRate { get; init; }
 
     public PixelFormat? PixelFormat { get; init; }
 
-    public int? Crf { get; init; }
+    public ConstantRateFactor? Crf { get; init; }
 
-    public string? VideoBitRate { get; init; }
+    public MediaBitRate? VideoBitRate { get; init; }
 
     public EncoderPreset? Preset { get; init; }
 
@@ -39,6 +40,8 @@ internal sealed record ConvertKnobs
     public int? Width { get; init; }
 
     public int? Height { get; init; }
+
+    public ScaleMode Scale { get; init; }
 
     public bool DropVideo { get; init; }
 
@@ -60,9 +63,33 @@ internal sealed record ConvertKnobs
 
     public MediaContainer? InputFormat { get; init; }
 
-    public int? InputSampleRate { get; init; }
+    public AudioSampleRate? InputSampleRate { get; init; }
 
-    public int? InputChannels { get; init; }
+    public ChannelLayout? InputChannels { get; init; }
+
+    public HardwareAccel? Hardware { get; init; }
+
+    public HardwareDevice? HardwareDevice { get; init; }
+
+    public IReadOnlyList<MediaStreamMap>? Maps { get; init; }
+
+    public IReadOnlyDictionary<FileTagKey, string>? Metadata { get; init; }
+
+    public bool ClearMetadata { get; init; }
+
+    public string? SubtitlePath { get; init; }
+
+    public SubtitleMode Subtitles { get; init; }
+
+    public SubtitleCodec? SubtitleCodec { get; init; }
+
+    public LoudnessTarget? Loudness { get; init; }
+
+    public bool TwoPass { get; init; }
+
+    public StreamPackaging? Packaging { get; init; }
+
+    public bool ConcatSafe { get; init; }
 
     public static ConvertKnobs FromAudio(AudioConversionOptions options)
         => new() {
@@ -83,7 +110,10 @@ internal sealed record ConvertKnobs
             IoMode = options.IoMode,
             InputFormat = options.InputFormat,
             InputSampleRate = options.InputSampleRate,
-            InputChannels = options.InputChannels
+            InputChannels = options.InputChannels,
+            Metadata = options.Metadata,
+            ClearMetadata = options.ClearMetadata,
+            Loudness = options.Loudness
         };
 
     public static ConvertKnobs FromVideo(VideoConversionOptions options)
@@ -100,6 +130,7 @@ internal sealed record ConvertKnobs
             VideoFilter = options.VideoFilter,
             Width = options.Width,
             Height = options.Height,
+            Scale = options.Scale,
             DropAudio = options.DropAudio,
             CopyCodecs = options.CopyCodecs,
             StartTime = options.StartTime,
@@ -108,6 +139,22 @@ internal sealed record ConvertKnobs
             Progress = options.Progress,
             IoMode = options.IoMode,
             FragmentedOutput = options.FragmentedOutput,
-            InputFormat = options.InputFormat
+            InputFormat = options.InputFormat,
+            AudioBitRate = options.AudioBitRate,
+            AudioQuality = options.AudioQuality,
+            SampleRate = options.SampleRate,
+            Channels = options.Channels,
+            AudioFilter = options.AudioFilter,
+            Hardware = options.Hardware,
+            HardwareDevice = options.HardwareDevice,
+            Maps = options.Maps,
+            Metadata = options.Metadata,
+            ClearMetadata = options.ClearMetadata,
+            SubtitlePath = options.SubtitlePath,
+            Subtitles = options.Subtitles,
+            SubtitleCodec = options.SubtitleCodec,
+            Loudness = options.Loudness,
+            TwoPass = options.TwoPass,
+            Packaging = options.Packaging
         };
 }

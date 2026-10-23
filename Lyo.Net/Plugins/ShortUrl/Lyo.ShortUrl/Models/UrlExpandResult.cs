@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Result;
 
 namespace Lyo.ShortUrl.Models;
 
 /// <summary>Outcome of a URL expansion operation with URL expansion-specific properties.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record UrlExpandResult : Result<string>
 {
     /// <summary>Original destination URL.</summary>

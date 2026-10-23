@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Lock;
 
 /// <summary>Settings for <see cref="LocalKeyedSemaphoreService" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class KeyedSemaphoreOptions
 {
     /// <summary>Configuration section name used by <see cref="LockServiceExtensions" /> bind helpers.</summary>
@@ -19,4 +21,7 @@ public class KeyedSemaphoreOptions
 
     /// <summary>Throws when <see cref="DefaultAcquireTimeout" /> is not positive.</summary>
     public void Validate() => ArgumentHelpers.ThrowIf(DefaultAcquireTimeout <= TimeSpan.Zero, "DefaultAcquireTimeout must be greater than zero.");
+
+    /// <summary>Default acquire timeout.</summary>
+    public override string ToString() => $"DefaultAcquireTimeout={DefaultAcquireTimeout}";
 }

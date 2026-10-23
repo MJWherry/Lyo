@@ -1,8 +1,10 @@
 # Lyo.Validation.Models
 
-`Lyo.Validation`'s contract half. Hosts that only exchange or persist validation rules — an API that returns `ValidationSchema` documents, a Postgres store that saves them — take these types and skip the validators, builders, and attributes that implement them.
+`Lyo.Validation`'s contract half. Hosts that only exchange or persist validation rules — an API that returns `ValidationSchema` documents, a Postgres store that saves them — take
+these types and skip the validators, builders, and attributes that implement them.
 
-The projection from a match explanation to errors lives here as well. `WhereClauseExplainResult.ToErrors` used to sit in `Lyo.Query.Models`, which made the query model reference `Lyo.Result` for one validation-only method. That edge went away when the method moved.
+The projection from a match explanation to errors lives here as well. `WhereClauseExplainResult.ToErrors` used to sit in `Lyo.Query.Models`, which made the query model reference
+`Lyo.Result` for one validation-only method. That edge went away when the method moved.
 
 The `Lyo.Validation` namespace stayed on the types, so importers did not have to change when they moved.
 
@@ -51,9 +53,10 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Query.Models` (direct, lyo)
 - `Lyo.Result` (direct, lyo)
 - `Lyo.Common.Core` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

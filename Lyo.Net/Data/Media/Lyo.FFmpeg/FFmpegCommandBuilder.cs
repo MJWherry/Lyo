@@ -8,29 +8,44 @@ using Lyo.Media.Models;
 namespace Lyo.FFmpeg;
 
 /// <summary>
-/// Fluent builder that assembles an ffmpeg command line. Flags are emitted only when set.
-/// Do not reuse a builder across threads. Every operation should call <see cref="New" />.
+/// Fluent builder that assembles an ffmpeg command line. Flags are emitted only when set. Do not reuse a builder across threads. Every operation should call
+/// <see cref="New" />.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class FFmpegCommandBuilder
 {
-    private static readonly string[] PreInputOrder = ["-ss", "-f", "-ar", "-ac"];
+    private static readonly string[] PreInputOrder = ["-hwaccel", "-hwaccel_output_format", "-vaapi_device", "-ss", "-f", "-safe", "-ar", "-ac"];
+
     private static readonly string[] PostInputOrder = [
-        "-t", "-c", "-c:a", "-ar", "-ac", "-b:a", "-q:a", "-c:v", "-crf", "-preset", "-b:v", "-r", "-pix_fmt", "-s", "-vf", "-af", "-movflags"
+        "-t", "-map_metadata", "-c", "-c:a", "-ar", "-ac", "-b:a", "-q:a", "-c:v", "-rc:v",
+        "-cq", "-global_quality", "-qp", "-crf", "-preset", "-b:v", "-r", "-pix_fmt", "-s", "-vf",
+        "-af", "-c:s", "-pass", "-passlogfile", "-movflags", "-hls_time", "-hls_playlist_type", "-hls_segment_filename", "-seg_duration", "-init_seg_name",
+        "-media_seg_name"
     ];
+
     private static readonly string[] PreOutputOrder = ["-f"];
 
     private readonly List<string> _customArguments = [];
+    private readonly List<string> _extraInputs = [];
+    private readonly List<string> _maps = [];
+    private readonly List<string> _metadata = [];
     private readonly Dictionary<string, string> _postInput = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> _preInput = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> _preOutput = new(StringComparer.Ordinal);
+    private string? _codecId;
+    private bool _dash;
     private FFmpegOptions? _defaults;
     private bool? _dropAudio;
     private bool? _dropVideo;
     private string? _executablePath;
+    private bool _hasUserVideoFilter;
+    private bool _hls;
     private string? _inputPath;
-    private bool? _overwrite;
     private string? _outputPath;
+    private bool? _overwrite;
+    private HardwareDevice? _requestedDevice;
+    private HardwareAccel? _requestedHardware;
+    private string? _segmentName;
 
     /// <summary>Allocates a fresh builder.</summary>
     public static FFmpegCommandBuilder New() => new();
@@ -321,20 +336,38 @@ public sealed class FFmpegCommandBuilder
     internal FFmpegCommandBuilder ApplyKnobs(ConvertKnobs options)
     {
         ArgumentHelpers.ThrowIfNull(options);
+        if (options.VideoEncoder == VideoEncoder.Av1 && options.Preset is { IsX264: true })
+            throw new ArgumentException("AV1 does not accept an x264 preset. Use EncoderPreset.Svt8.", nameof(options));
+
         Apply(options.Format, WithFormat);
         Apply(options.AudioEncoder, WithAudioCodec);
-        Apply(options.SampleRate, WithSampleRate);
-        Apply(options.Channels, WithChannels);
-        Apply(options.AudioBitRate, WithAudioBitRate);
-        Apply(options.AudioQuality, WithAudioQuality);
+        if (options.SampleRate is { } sampleRate)
+            WithSampleRate(sampleRate.Hertz);
+
+        if (options.Channels is { } channels)
+            WithChannels(channels.Count);
+
+        if (options.AudioBitRate is { } audioBitRate)
+            WithAudioBitRate(audioBitRate.Id);
+
+        if (options.AudioQuality is { } audioQuality)
+            WithAudioQuality(audioQuality.Id);
+
         Apply(options.AudioFilter, WithAudioFilter);
-        Apply(options.VideoEncoder, WithVideoCodec);
-        Apply(options.FrameRate, WithFrameRate);
+        if (options.VideoEncoder is { } videoEncoder)
+            WithVideoCodec(videoEncoder);
+
+        if (options.FrameRate is { } frameRate)
+            WithFrameRate(frameRate.Value);
+
         Apply(options.PixelFormat, WithPixelFormat);
-        Apply(options.Crf, WithCrf);
-        Apply(options.VideoBitRate, WithVideoBitRate);
+        if (options.Crf is { } crf)
+            WithCrf(crf.Value);
+
+        if (options.VideoBitRate is { } videoBitRate)
+            WithVideoBitRate(videoBitRate.Id);
+
         Apply(options.Preset, WithPreset);
-        Apply(options.VideoFilter, WithVideoFilter);
         Apply(options.DropVideo, DropVideo);
         Apply(options.DropAudio, DropAudio);
         Apply(options.CopyCodecs, CopyCodecs);
@@ -342,12 +375,74 @@ public sealed class FFmpegCommandBuilder
         Apply(options.StartTime, WithStartTime);
         Apply(options.Duration, WithDuration);
         Apply(options.InputFormat, WithInputFormat);
-        Apply(options.InputSampleRate, WithInputSampleRate);
-        Apply(options.InputChannels, WithInputChannels);
-        if (options.Width is { } w && options.Height is { } h)
-            WithSize(w, h);
+        if (options.InputSampleRate is { } inputRate)
+            WithInputSampleRate(inputRate.Hertz);
+
+        if (options.InputChannels is { } inputChannels)
+            WithInputChannels(inputChannels.Count);
+
+        if (options.Scale == ScaleMode.Stretch && options.Width is { } width && options.Height is { } height)
+            WithSize(width, height);
+
+        _hasUserVideoFilter = !string.IsNullOrWhiteSpace(options.VideoFilter);
+        var filter = FFmpegFilterChain.Video(options.Scale, options.Width, options.Height, options.VideoFilter, options.Subtitles, options.SubtitlePath);
+        if (filter != null)
+            WithVideoFilter(filter);
+
+        ApplyMaps(options);
+        ApplyMetadata(options);
+        ApplyPackaging(options);
+        ApplySubtitles(options);
+        if (options.ConcatSafe)
+            Pair(_preInput, "-safe", "0");
+
+        _requestedHardware = options.Hardware;
+        _requestedDevice = options.HardwareDevice;
+        _codecId = options.VideoEncoder?.Id;
+        if (options.Hardware != null && options.Hardware != HardwareAccel.None)
+            ApplyDevice(options.Hardware, options.HardwareDevice?.Path);
 
         return options.Overwrite ? Overwrite() : NoOverwrite();
+    }
+
+    /// <summary>
+    /// Applies <see cref="FFmpegOptions.Hardware" /> when the knobs did not set a device. <see cref="HardwareAccel.None" /> on the knobs forces the CPU. A device already set on
+    /// the knobs is left as-is.
+    /// </summary>
+    internal FFmpegCommandBuilder ApplyHost(FFmpegOptions host)
+    {
+        ArgumentHelpers.ThrowIfNull(host);
+        if (_requestedHardware != null)
+            return this;
+
+        var parsed = HardwareAccel.TryParse(host.Hardware);
+        if (parsed == null || parsed == HardwareAccel.None)
+            return this;
+
+        ApplyDevice(parsed, host.HardwareDevice);
+        return this;
+    }
+
+    /// <summary>Adds another <c>-i</c> after the primary input. Used for subtitle files and GIF palettes.</summary>
+    public FFmpegCommandBuilder WithExtraInput(string path)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(path);
+        _extraInputs.Add(path);
+        return this;
+    }
+
+    /// <summary>Sets <c>-pass</c> for libx264 or libx265 two-pass.</summary>
+    public FFmpegCommandBuilder WithPass(int pass)
+    {
+        ArgumentHelpers.ThrowIfLessThan(pass, 1);
+        return Pair(_postInput, "-pass", Number(pass));
+    }
+
+    /// <summary>Sets <c>-passlogfile</c> without the <c>-0.log</c> suffix ffmpeg appends.</summary>
+    public FFmpegCommandBuilder WithPassLogFile(string prefix)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(prefix);
+        return Pair(_postInput, "-passlogfile", prefix);
     }
 
     /// <summary>Builds the command. Input and output are required. Output may be <c>pipe:1</c>.</summary>
@@ -366,12 +461,29 @@ public sealed class FFmpegCommandBuilder
         Emit(argList, _preInput, PreInputOrder);
         argList.Add("-i");
         argList.Add(_inputPath);
+        foreach (var extra in _extraInputs) {
+            argList.Add("-i");
+            argList.Add(extra);
+        }
+
         if (_dropVideo == true)
             argList.Add("-vn");
+
         if (_dropAudio == true)
             argList.Add("-an");
 
+        foreach (var map in _maps) {
+            argList.Add("-map");
+            argList.Add(map);
+        }
+
+        ApplySegmentNames();
         Emit(argList, _postInput, PostInputOrder);
+        foreach (var tag in _metadata) {
+            argList.Add("-metadata");
+            argList.Add(tag);
+        }
+
         argList.AddRange(_customArguments);
         Emit(argList, _preOutput, PreOutputOrder);
         argList.Add(_outputPath);
@@ -384,12 +496,16 @@ public sealed class FFmpegCommandBuilder
         var parts = new List<string>();
         if (_inputPath != null)
             parts.Add($"Input: {_inputPath}");
+
         if (_outputPath != null)
             parts.Add($"Output: {_outputPath}");
+
         if (_preOutput.TryGetValue("-f", out var format))
             parts.Add($"Format: {format}");
+
         if (_postInput.TryGetValue("-c:a", out var audioCodec))
             parts.Add($"AudioCodec: {audioCodec}");
+
         if (_postInput.TryGetValue("-c:v", out var videoCodec))
             parts.Add($"VideoCodec: {videoCodec}");
 
@@ -412,6 +528,139 @@ public sealed class FFmpegCommandBuilder
     {
         bag[flag] = value;
         return this;
+    }
+
+    private void ApplyDevice(HardwareAccel device, string? devicePath)
+    {
+        if (_dropVideo == true || IsGif() || IsCopyOnly())
+            return;
+
+        var codecId = _codecId ?? "h264";
+        Pair(_postInput, "-c:v", FFmpegCodecMap.ToFfmpegVideo(codecId, device));
+        Pair(_preInput, "-hwaccel", FFmpegCodecMap.HwaccelFlag(device));
+        if (device == HardwareAccel.Nvenc && _postInput.TryGetValue("-preset", out var presetId) && EncoderPreset.TryFromId(presetId) is { IsX264: true })
+            Pair(_postInput, "-preset", EncoderPreset.P4.Id);
+
+        RemapQuality(device, devicePath);
+    }
+
+    private bool IsGif() => _preOutput.TryGetValue("-f", out var format) && string.Equals(format, "gif", StringComparison.OrdinalIgnoreCase);
+
+    private bool IsCopyOnly() => _postInput.TryGetValue("-c", out var copy) && copy == "copy" && !_postInput.ContainsKey("-c:v");
+
+    private void RemapQuality(HardwareAccel device, string? devicePath)
+    {
+        if (!_postInput.TryGetValue("-crf", out var crf)) {
+            if (device == HardwareAccel.Vaapi)
+                ApplyVaapi(devicePath, !_hasUserVideoFilter);
+
+            return;
+        }
+
+        if (device == HardwareAccel.VideoToolbox && !_postInput.ContainsKey("-b:v"))
+            throw new ArgumentException("VideoToolbox requires VideoBitRate.", nameof(device));
+
+        _postInput.Remove("-crf");
+        if (device == HardwareAccel.Nvenc) {
+            Pair(_postInput, "-rc:v", "vbr");
+            Pair(_postInput, "-cq", crf);
+        }
+        else if (device == HardwareAccel.Qsv)
+            Pair(_postInput, "-global_quality", crf);
+        else if (device == HardwareAccel.Vaapi) {
+            Pair(_postInput, "-qp", crf);
+            ApplyVaapi(devicePath, !_hasUserVideoFilter);
+        }
+    }
+
+    private void ApplyVaapi(string? devicePath, bool upload)
+    {
+        Pair(_preInput, "-hwaccel_output_format", "vaapi");
+        Pair(_preInput, "-vaapi_device", string.IsNullOrWhiteSpace(devicePath) ? HardwareDevice.RenderD128.Path : devicePath);
+        if (!upload)
+            return;
+
+        if (_postInput.TryGetValue("-vf", out var filter))
+            Pair(_postInput, "-vf", "format=nv12,hwupload," + filter);
+        else
+            Pair(_postInput, "-vf", "format=nv12,hwupload");
+    }
+
+    private void ApplyMaps(ConvertKnobs options)
+    {
+        if (options.Maps != null) {
+            foreach (var map in options.Maps)
+                _maps.Add(map.Spec);
+        }
+
+        if (options.Subtitles != SubtitleMode.Copy)
+            return;
+
+        var hasSecond = _maps.Any(static map => map.StartsWith("1:", StringComparison.Ordinal) || map == "1");
+        if (hasSecond)
+            return;
+
+        if (_maps.Count == 0)
+            _maps.Add("0");
+
+        _maps.Add("1");
+    }
+
+    private void ApplyMetadata(ConvertKnobs options)
+    {
+        if (options.ClearMetadata)
+            Pair(_postInput, "-map_metadata", "-1");
+
+        if (options.Metadata == null)
+            return;
+
+        foreach (var pair in options.Metadata)
+            _metadata.Add($"{pair.Key.Id}={pair.Value}");
+    }
+
+    private void ApplyPackaging(ConvertKnobs options)
+    {
+        if (options.Packaging is not { } packaging)
+            return;
+
+        var seconds = (packaging.SegmentDuration ?? TimeSpan.FromSeconds(packaging.IsDash ? 4 : 6)).TotalSeconds.ToString("G", CultureInfo.InvariantCulture);
+        _segmentName = packaging.SegmentFileName;
+        if (packaging.IsDash) {
+            _dash = true;
+            Pair(_postInput, "-seg_duration", seconds);
+            return;
+        }
+
+        _hls = true;
+        Pair(_postInput, "-hls_time", seconds);
+        Pair(_postInput, "-hls_playlist_type", (packaging.PlaylistType ?? HlsPlaylistType.Vod).Id);
+    }
+
+    private void ApplySubtitles(ConvertKnobs options)
+    {
+        if (options.Subtitles != SubtitleMode.Copy || string.IsNullOrWhiteSpace(options.SubtitlePath))
+            return;
+
+        _extraInputs.Add(options.SubtitlePath);
+        Pair(_postInput, "-c:s", FFmpegFilterChain.CodecFor(options.Format, options.SubtitleCodec).Id);
+    }
+
+    private void ApplySegmentNames()
+    {
+        if (_hls)
+            Pair(_postInput, "-hls_segment_filename", _segmentName ?? Beside(_outputPath!, "seg_%03d.ts"));
+
+        if (!_dash)
+            return;
+
+        Pair(_postInput, "-init_seg_name", _segmentName ?? Beside(_outputPath!, "init.m4s"));
+        Pair(_postInput, "-media_seg_name", Beside(_outputPath!, "chunk_%03d.m4s"));
+    }
+
+    private static string Beside(string output, string name)
+    {
+        var dir = Path.GetDirectoryName(output);
+        return string.IsNullOrEmpty(dir) ? name : Path.Combine(dir, name);
     }
 
     private static void Emit(List<string> args, Dictionary<string, string> bag, string[] order)

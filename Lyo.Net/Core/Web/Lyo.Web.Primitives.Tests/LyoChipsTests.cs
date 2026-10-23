@@ -1,4 +1,3 @@
-using Lyo.Web.Primitives;
 using MudBlazor;
 
 namespace Lyo.Web.Primitives.Tests;

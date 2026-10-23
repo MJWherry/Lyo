@@ -16,9 +16,7 @@ internal static class FlagEnumUi
         where T : struct, Enum
         => [.. AtomicValues<T>().Where(flag => value.HasFlag(flag))];
 
-    /// <summary>
-    /// True when the OR of <paramref name="selected" /> equals <paramref name="preset" /> exactly. Use this for preset chips so EveryDay does not also light up Weekdays.
-    /// </summary>
+    /// <summary>True when the OR of <paramref name="selected" /> equals <paramref name="preset" /> exactly. Use this for preset chips so EveryDay does not also light up Weekdays.</summary>
     public static bool MatchesPreset<T>(IEnumerable<T>? selected, T preset)
         where T : struct, Enum
     {

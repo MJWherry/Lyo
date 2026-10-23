@@ -29,7 +29,7 @@ internal sealed class FFmpegPlayEngine
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(filePath);
         FFmpegPathKind.ThrowIfLocalFileMissing(filePath);
         using var timer = _metrics.StartTimer(Constants.Metrics.PlayDuration);
-        var result = await PlayCoreAsync(filePath, stdin: null, noDisplay, autoExit, startTime, duration, ct).ConfigureAwait(false);
+        var result = await PlayCoreAsync(filePath, null, noDisplay, autoExit, startTime, duration, ct).ConfigureAwait(false);
         Track(result);
         return result;
     }
@@ -92,6 +92,7 @@ internal sealed class FFmpegPlayEngine
                         CancellationToken = ct
                     })
                 .ConfigureAwait(false);
+
             if (run.ExitCode == 0)
                 return Result<bool>.Success(true);
 

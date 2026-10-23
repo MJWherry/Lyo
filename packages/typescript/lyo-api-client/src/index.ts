@@ -10,3 +10,4 @@ export * from "./http/createApiClient.js";
 export * from "./http/createAsyncApiClient.js";
 export * from "./http/createFetchTransport.js";
 export * from "./validation/responseGuards.js";
+export * from "./http/crudResource.js";

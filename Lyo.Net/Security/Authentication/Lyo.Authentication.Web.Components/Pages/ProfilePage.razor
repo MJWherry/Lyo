@@ -34,7 +34,8 @@
                                 <text> Reason: @user.DisabledReason.</text>
                             }
                             @if (user.DisabledAt is not null) {
-                                <text> Disabled <LyoTimestamp Value="@user.DisabledAt" Kind="LyoTimestampKind.Relative"/>.</text>
+                                <text>Disabled
+                                    <LyoTimestamp Value="@user.DisabledAt" Kind="LyoTimestampKind.Relative"/>.</text>
                             }
                         </MudAlert>
                     }
@@ -141,10 +142,14 @@
                                         <tbody>
                                         @foreach (var link in _snapshot.LinkedIdentities) {
                                             <tr>
-                                                <td><LyoChip Spec="@LyoChips.Of(link.Provider, Color.Info, variant: Variant.Outlined)"/></td>
+                                                <td>
+                                                    <LyoChip Spec="@LyoChips.Of(link.Provider, Color.Info, variant: Variant.Outlined)"/>
+                                                </td>
                                                 <td><code>@link.Subject</code></td>
                                                 <td>@(link.EmailAtLink ?? "—")</td>
-                                                <td><LyoTimestamp Value="@link.LinkedAt" Kind="LyoTimestampKind.Relative"/></td>
+                                                <td>
+                                                    <LyoTimestamp Value="@link.LinkedAt" Kind="LyoTimestampKind.Relative"/>
+                                                </td>
                                                 <td>
                                                     @if (link.LastUsedAt is { } lastUsed) {
                                                         <LyoTimestamp Value="@lastUsed" Kind="LyoTimestampKind.Relative"/>
@@ -179,6 +184,13 @@
                             </LyoResponsiveTable>
                         }
                     </div>
+
+                    @if (GrantStore is not null) {
+                        <div>
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">Grants</MudText>
+                            <GrantPanel Subject="@user.Id.ToString("D")" AllowEdit="false"/>
+                        </div>
+                    }
                 </MudStack>
             </MudPaper>
         }

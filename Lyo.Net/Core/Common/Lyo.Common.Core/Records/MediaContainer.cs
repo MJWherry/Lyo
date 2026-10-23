@@ -1,14 +1,15 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using Lyo.Common.Core.Enums;
 using Lyo.Exceptions;
 
 namespace Lyo.Common.Core.Records;
 
 /// <summary>
-/// Extensible identifier for an audio or video container (file type). Built-ins cover common formats
-/// (<see cref="Mp4" />, <see cref="WebM" />, <see cref="Wav" />, <see cref="Flac" />, …).
-/// Use <see cref="Custom" /> for a format that is not listed. Lookups are thread-safe.
+/// Extensible identifier for an audio or video container (file type). Built-ins cover common formats (<see cref="Mp4" />, <see cref="WebM" />, <see cref="Wav" />,
+/// <see cref="Flac" />, …). Use <see cref="Custom" /> for a format that is not listed. Lookups are thread-safe.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record MediaContainer
 {
     private static readonly ConcurrentDictionary<string, MediaContainer> ByExt = new(StringComparer.OrdinalIgnoreCase);
@@ -42,8 +43,26 @@ public sealed record MediaContainer
     /// <summary>FLAC (<c>flac</c> / <c>.flac</c>).</summary>
     public static readonly MediaContainer Flac = new("Flac", "flac", ".flac");
 
+    /// <summary>Matroska (<c>matroska</c> / <c>.mkv</c>).</summary>
+    public static readonly MediaContainer Mkv = new("Mkv", "matroska", ".mkv");
+
+    /// <summary>MPEG-4 audio (<c>ipod</c> / <c>.m4a</c>).</summary>
+    public static readonly MediaContainer M4a = new("M4a", "ipod", ".m4a");
+
+    /// <summary>GIF (<c>gif</c> / <c>.gif</c>).</summary>
+    public static readonly MediaContainer Gif = new("Gif", "gif", ".gif");
+
+    /// <summary>HTTP Live Streaming (<c>hls</c> / <c>.m3u8</c>).</summary>
+    public static readonly MediaContainer Hls = new("Hls", "hls", ".m3u8");
+
+    /// <summary>DASH (<c>dash</c> / <c>.mpd</c>).</summary>
+    public static readonly MediaContainer Dash = new("Dash", "dash", ".mpd");
+
     /// <summary>Every built-in container. Touching this list registers the static instances for lookup.</summary>
-    public static IReadOnlyList<MediaContainer> BuiltIns { get; } = [Mp4, WebM, Mov, Mp3, Wav, S16le, Adts, Ogg, Flac];
+    public static IReadOnlyList<MediaContainer> BuiltIns { get; } = [
+        Mp4, WebM, Mov, Mp3, Wav, S16le, Adts, Ogg, Flac, Mkv,
+        M4a, Gif, Hls, Dash
+    ];
 
     /// <summary>Stable display name (e.g. <c>Mp4</c>).</summary>
     public string Name { get; }
@@ -119,7 +138,7 @@ public sealed record MediaContainer
             AudioFormat.Ogg => Ogg,
             AudioFormat.Flac => Flac,
             AudioFormat.Aac => Adts,
-            AudioFormat.M4a => Mp4,
+            AudioFormat.M4a => M4a,
             AudioFormat.Opus => Ogg,
             AudioFormat.Pcm => S16le,
             AudioFormat.Webm => WebM,
@@ -131,18 +150,28 @@ public sealed record MediaContainer
     {
         if (ReferenceEquals(this, Wav) || string.Equals(Format, "wav", StringComparison.OrdinalIgnoreCase))
             return AudioFormat.Wav;
+
         if (ReferenceEquals(this, Mp3) || string.Equals(Format, "mp3", StringComparison.OrdinalIgnoreCase))
             return AudioFormat.Mp3;
+
         if (ReferenceEquals(this, Ogg) || string.Equals(Format, "ogg", StringComparison.OrdinalIgnoreCase))
             return AudioFormat.Ogg;
+
         if (ReferenceEquals(this, Flac) || string.Equals(Format, "flac", StringComparison.OrdinalIgnoreCase))
             return AudioFormat.Flac;
+
         if (ReferenceEquals(this, Adts) || string.Equals(Format, "adts", StringComparison.OrdinalIgnoreCase))
             return AudioFormat.Aac;
+
+        if (ReferenceEquals(this, M4a) || string.Equals(Format, "ipod", StringComparison.OrdinalIgnoreCase))
+            return AudioFormat.M4a;
+
         if (IsMp4)
             return AudioFormat.M4a;
+
         if (ReferenceEquals(this, S16le) || string.Equals(Format, "s16le", StringComparison.OrdinalIgnoreCase))
             return AudioFormat.Pcm;
+
         if (ReferenceEquals(this, WebM) || string.Equals(Format, "webm", StringComparison.OrdinalIgnoreCase))
             return AudioFormat.Webm;
 

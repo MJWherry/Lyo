@@ -62,6 +62,7 @@ public static class Extensions
             var metrics = sp.GetService<IMetrics>();
             return new(opts, logger, metrics);
         });
+
         services.TryAddScoped<IAudioConverter>(sp => sp.GetRequiredService<FFmpegAudioConverter>());
         services.TryAddScoped<FFmpegAudioProber>(sp => {
             var opts = sp.GetRequiredService<FFmpegOptions>();
@@ -69,6 +70,7 @@ public static class Extensions
             var metrics = sp.GetService<IMetrics>();
             return new(opts, logger, metrics);
         });
+
         services.TryAddScoped<IAudioProber>(sp => sp.GetRequiredService<FFmpegAudioProber>());
         services.TryAddScoped<FFmpegAudioPlayer>(sp => {
             var opts = sp.GetRequiredService<FFmpegOptions>();
@@ -76,6 +78,7 @@ public static class Extensions
             var metrics = sp.GetService<IMetrics>();
             return new(opts, logger, metrics);
         });
+
         services.TryAddScoped<IAudioPlayer>(sp => sp.GetRequiredService<FFmpegAudioPlayer>());
     }
 
@@ -87,6 +90,7 @@ public static class Extensions
             var metrics = sp.GetService<IMetrics>();
             return new(opts, logger, metrics);
         });
+
         services.TryAddScoped<IVideoConverter>(sp => sp.GetRequiredService<FFmpegVideoConverter>());
         services.TryAddScoped<FFmpegVideoProber>(sp => {
             var opts = sp.GetRequiredService<FFmpegOptions>();
@@ -94,6 +98,7 @@ public static class Extensions
             var metrics = sp.GetService<IMetrics>();
             return new(opts, logger, metrics);
         });
+
         services.TryAddScoped<IVideoProber>(sp => sp.GetRequiredService<FFmpegVideoProber>());
         services.TryAddScoped<FFmpegVideoPlayer>(sp => {
             var opts = sp.GetRequiredService<FFmpegOptions>();
@@ -101,6 +106,7 @@ public static class Extensions
             var metrics = sp.GetService<IMetrics>();
             return new(opts, logger, metrics);
         });
+
         services.TryAddScoped<IVideoPlayer>(sp => sp.GetRequiredService<FFmpegVideoPlayer>());
     }
 }

@@ -4,7 +4,9 @@ Helpers for xUnit v3: fluent `Should*` asserts, exception and collection helpers
 
 ## Features
 
-- **TestData.** Reproducible seeded byte payloads (`TestData.Seed` / `Create` / `Fill`). Shares its seed with `BenchmarkData.PayloadSeed` and `DeterministicPayloadStream.DefaultSeed`.
+- **TestData.** Reproducible seeded byte payloads (`TestData.Seed` / `Create` / `Fill`). Shares its seed with `BenchmarkData.PayloadSeed` and
+  `DeterministicPayloadStream.DefaultSeed`.
+- **TestCt.** `TestCancellation.TestCt` is the current xUnit cancellation token. `*.Tests` projects import the class statically, so call sites pass `TestCt`.
 
 ## Examples
 
@@ -43,7 +45,9 @@ PollAssert.NoException(() => probe.Ping(), TimeSpan.FromSeconds(5));
 - **Ordering / ranges (where `T : IComparable<T>`).** `ShouldBeLessThan`, `ShouldBeLessThanOrEqualTo`, `ShouldBeGreaterThan`, `ShouldBeGreaterThanOrEqualTo`, `ShouldBeBetween`.
 - **Time.** `TimeSpan.ShouldBeCloseTo(expected, tolerance)`, `DateTime.ShouldBeCloseTo(expected, tolerance)`.
 - **Strings.** `ShouldEndWith`, `ShouldStartWith`, `ShouldContain(substring)`, `ShouldNotContain`, `ShouldMatch(pattern)`, `ShouldNotMatch`, `ShouldBeEmpty`, `ShouldNotBeEmpty`.
-- **Collections.** `ShouldNotBeEmpty`, `ShouldBeEmpty`, `ShouldContain(item)`, `ShouldNotContain`, `ShouldContainAll(expected)`, `ShouldContainNone(excluded)`, `ShouldHaveCount(count)`, `ShouldHaveCount(count, predicate)`, `ShouldAllSatisfy(predicate)`, `ShouldAnySatisfy(predicate)`, `ShouldHaveUniqueItems`, `ShouldBeEquivalentTo(expected)`, plus `ShouldBeOrdered` / `ShouldBeOrderedDescending` for `IComparable<T>` collections.
+- **Collections.** `ShouldNotBeEmpty`, `ShouldBeEmpty`, `ShouldContain(item)`, `ShouldNotContain`, `ShouldContainAll(expected)`, `ShouldContainNone(excluded)`,
+  `ShouldHaveCount(count)`, `ShouldHaveCount(count, predicate)`, `ShouldAllSatisfy(predicate)`, `ShouldAnySatisfy(predicate)`, `ShouldHaveUniqueItems`,
+  `ShouldBeEquivalentTo(expected)`, plus `ShouldBeOrdered` / `ShouldBeOrderedDescending` for `IComparable<T>` collections.
 
 ## Exceptions
 
@@ -60,11 +64,14 @@ Every overload takes an optional `pollInterval` (defaults to `100 ms`) and, on t
 
 ## Logging
 
-`XunitLoggerProvider(ITestOutputHelper output)` is an `ILoggerProvider` that forwards `ILogger` calls to `ITestOutputHelper.WriteLine` with `HH:mm:ss.fff` timestamps and `TRACE|DEBUG|INFO|WARN|ERROR|CRITICAL|NONE` level tags. Wire it via `services.AddLogging(b => b.AddProvider(new XunitLoggerProvider(output)))` when using `Xunit.DependencyInjection`. Writes that fail against the output helper are swallowed (the runner can already be torn down when the last logs flush).
+`XunitLoggerProvider(ITestOutputHelper output)` is an `ILoggerProvider` that forwards `ILogger` calls to `ITestOutputHelper.WriteLine` with `HH:mm:ss.fff` timestamps and
+`TRACE|DEBUG|INFO|WARN|ERROR|CRITICAL|NONE` level tags. Wire it via `services.AddLogging(b => b.AddProvider(new XunitLoggerProvider(output)))` when using
+`Xunit.DependencyInjection`. Writes that fail against the output helper are swallowed (the runner can already be torn down when the last logs flush).
 
 ## Utilities
 
-`Lyo.Testing.Utilities.AppendBytesToFile(string path, long sizeInBytes)` grows (or creates) a file by the requested number of bytes and creates parent directories if needed. Handy for filesystem tests that care about size.
+`Lyo.Testing.Utilities.AppendBytesToFile(string path, long sizeInBytes)` grows (or creates) a file by the requested number of bytes and creates parent directories if needed. Handy
+for filesystem tests that care about size.
 
 ## Dependencies
 

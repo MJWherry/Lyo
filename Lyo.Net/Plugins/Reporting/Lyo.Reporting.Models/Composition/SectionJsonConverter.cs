@@ -5,10 +5,7 @@ using Lyo.Reporting.Models.Models;
 
 namespace Lyo.Reporting.Models.Composition;
 
-/// <summary>
-/// Reads <see cref="Section" /> from either the current <c>Controls</c> shape or legacy <c>Columns</c> / <c>ContentBlocks</c> / table-shaped <c>Grids</c>.
-/// Writes only <c>Controls</c> and <c>Subsections</c>.
-/// </summary>
+/// <summary>Reads <see cref="Section" /> from the <c>Controls</c> shape and writes <c>Controls</c> and <c>Subsections</c>.</summary>
 public sealed class SectionJsonConverter : JsonConverter<Section>
 {
     public override Section Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -20,12 +17,9 @@ public sealed class SectionJsonConverter : JsonConverter<Section>
         if (root.TryGetProperty("subsections", out var subs) || root.TryGetProperty("Subsections", out subs))
             section.Subsections = DeserializeList<Section>(subs, options);
 
-        if (TryGetProperty(root, "controls", out var controlsEl) && controlsEl.ValueKind == JsonValueKind.Array && controlsEl.GetArrayLength() > 0) {
+        if (TryGetProperty(root, "controls", out var controlsEl) && controlsEl.ValueKind == JsonValueKind.Array && controlsEl.GetArrayLength() > 0)
             section.Controls = DeserializeControls(controlsEl, options);
-            return section;
-        }
 
-        MigrateLegacy(root, section, options);
         return section;
     }
 
@@ -59,108 +53,27 @@ public sealed class SectionJsonConverter : JsonConverter<Section>
     {
         if (TryGetString(root, "id", out var id))
             section.Id = id;
+
         if (TryGetString(root, "title", out var title))
             section.Title = title;
+
         if (TryGetString(root, "subtitle", out var subtitle))
             section.Subtitle = subtitle;
+
         if (TryGetString(root, "description", out var description))
             section.Description = description;
+
         if (TryGetInt(root, "order", out var order))
             section.Order = order;
+
         if (TryGetString(root, "visibleWhen", out var visibleWhen))
             section.VisibleWhen = visibleWhen;
+
         if (TryGetBool(root, "collapsed", out var collapsed))
             section.Collapsed = collapsed;
+
         if (TryGetProperty(root, "styles", out var styles) && styles.ValueKind == JsonValueKind.Object)
             section.Styles = JsonSerializer.Deserialize<Dictionary<string, string>>(styles.GetRawText(), options) ?? [];
-    }
-
-    private static void MigrateLegacy(JsonElement root, Section section, JsonSerializerOptions options)
-    {
-        var cards = TryGetProperty(root, "columns", out var columnsEl) && columnsEl.ValueKind == JsonValueKind.Array
-            ? DeserializeList<Card>(columnsEl, options)
-            : [];
-        var blocks = TryGetProperty(root, "contentBlocks", out var blocksEl) && blocksEl.ValueKind == JsonValueKind.Array
-            ? DeserializeList<Block>(blocksEl, options)
-            : [];
-        var tables = new List<Table>();
-        var grids = new List<Grid>();
-        if (TryGetProperty(root, "grids", out var gridsEl) && gridsEl.ValueKind == JsonValueKind.Array) {
-            foreach (var item in gridsEl.EnumerateArray()) {
-                if (LooksLikeTable(item))
-                    tables.Add(JsonSerializer.Deserialize<Table>(item.GetRawText(), options) ?? new Table());
-                else {
-                    var grid = JsonSerializer.Deserialize<Grid>(item.GetRawText(), options) ?? new Grid();
-                    grid.Controls = [..grid.Controls.Where(c => c is not Grid)];
-                    grids.Add(grid);
-                }
-            }
-        }
-
-        var bandOrder = TryGetInt(root, "columnBandOrder", out var bo) ? bo : 0;
-        var allZero = bandOrder == 0 && blocks.TrueForAll(b => b.Order == 0) && tables.TrueForAll(t => t.Order == 0) && grids.TrueForAll(g => g.Order == 0);
-        if (allZero) {
-            if (cards.Count > 0)
-                section.Controls.Add(WrapCards(cards));
-
-            foreach (var block in blocks)
-                section.Controls.Add(block);
-
-            foreach (var table in tables)
-                section.Controls.Add(table);
-
-            foreach (var grid in grids)
-                section.Controls.Add(grid);
-
-            return;
-        }
-
-        var mixed = new List<(int Order, int Index, Control Control)>();
-        var index = 0;
-        if (cards.Count > 0)
-            mixed.Add((bandOrder, index++, WrapCards(cards)));
-
-        foreach (var block in blocks)
-            mixed.Add((block.Order, index++, block));
-
-        foreach (var table in tables)
-            mixed.Add((table.Order, index++, table));
-
-        foreach (var grid in grids)
-            mixed.Add((grid.Order, index++, grid));
-
-        foreach (var item in mixed.OrderBy(x => x.Order).ThenBy(x => x.Index))
-            section.Controls.Add(item.Control);
-    }
-
-    private static Grid WrapCards(List<Card> cards)
-        => new() {
-            ColumnCount = Math.Max(cards.Count, 1),
-            TemplateColumns = "repeat(auto-fit, minmax(220px, 1fr))",
-            Controls = [..cards.Cast<Control>()]
-        };
-
-    private static bool LooksLikeTable(JsonElement el)
-    {
-        if (TryGetString(el, "kind", out var kind) && string.Equals(kind, "table", StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (Has(el, "showHeaders") || Has(el, "striped") || Has(el, "bordered") || Has(el, "showRowNumbers") || Has(el, "fieldMap") || Has(el, "dataParameterKey"))
-            return true;
-
-        if (TryGetProperty(el, "columns", out var columns) && columns.ValueKind == JsonValueKind.Array && columns.GetArrayLength() > 0) {
-            var first = columns[0];
-            if (Has(first, "header") || Has(first, "field"))
-                return true;
-        }
-
-        if (TryGetProperty(el, "rows", out var rows) && rows.ValueKind == JsonValueKind.Array && rows.GetArrayLength() > 0) {
-            var first = rows[0];
-            if (Has(first, "cells"))
-                return true;
-        }
-
-        return false;
     }
 
     private static List<Control> DeserializeControls(JsonElement array, JsonSerializerOptions options)
@@ -172,7 +85,7 @@ public sealed class SectionJsonConverter : JsonConverter<Section>
                 continue;
 
             if (control is Grid grid)
-                grid.Controls = [..grid.Controls.Where(c => c is not Grid)];
+                grid.Controls = [.. grid.Controls.Where(c => c is not Grid)];
 
             list.Add(control);
         }
@@ -206,8 +119,6 @@ public sealed class SectionJsonConverter : JsonConverter<Section>
         var pascal = char.ToUpperInvariant(camel[0]) + camel[1..];
         return el.TryGetProperty(pascal, out value);
     }
-
-    private static bool Has(JsonElement el, string camel) => TryGetProperty(el, camel, out _);
 
     private static bool TryGetString(JsonElement el, string camel, out string value)
     {

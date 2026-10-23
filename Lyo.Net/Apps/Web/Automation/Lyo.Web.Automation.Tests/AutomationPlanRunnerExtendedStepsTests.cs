@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Web.Automation.Abstractions;
 using Lyo.Web.Automation.Models;
 using Lyo.Web.Automation.Plan;
@@ -57,6 +58,39 @@ public sealed class AutomationPlanRunnerExtendedStepsTests
         var result = await runner.RunWithResultAsync(session, plan, null, null, CancellationToken.None);
         Assert.Equal("202", result.Snapshot.Strings["statusCode"]);
         Assert.Equal("{\"ok\":true}", result.Snapshot.Strings["responseJson"]);
+    }
+
+    [Fact]
+    public async Task RunWithResultAsync_StoreStringList_StoresTheUrls()
+    {
+        using var session = new FakeSession();
+        using var httpClient = new HttpClient(new StubHttpHandler(_ => new(HttpStatusCode.OK)));
+        var runner = new AutomationPlanRunner(httpClient, new NullSink(), new NullStorage(), new SimpleServiceProvider(new()));
+        var plan = new AutomationPlan("list", [new StoreStringListAutomationStep("urls", ["https://cdn.example/a.png", "https://cdn.example/b.png"])]);
+        var result = await runner.RunWithResultAsync(session, plan, null, null, CancellationToken.None);
+        Assert.Equal(["https://cdn.example/a.png", "https://cdn.example/b.png"], result.Snapshot.StringLists["urls"]);
+    }
+
+    [Fact]
+    public async Task RunWithResultAsync_CaptureNetwork_StoresTheUrlsTheBrowserReturns()
+    {
+        using var session = new FakeSession();
+        using var httpClient = new HttpClient(new StubHttpHandler(_ => new(HttpStatusCode.OK)));
+        var runner = new AutomationPlanRunner(httpClient, new NullSink(), new NullStorage(), new SimpleServiceProvider(new()));
+        var plan = new AutomationPlan("net", [new CaptureNetworkAutomationStep("urls", @"\.jpg$", 10)]);
+        var result = await runner.RunWithResultAsync(session, plan, null, null, CancellationToken.None);
+        Assert.Equal("https://cdn.example/a.jpg", Assert.Single(result.Snapshot.StringLists["urls"]));
+    }
+
+    [Fact]
+    public async Task RunWithResultAsync_CaptureNetworkInvalidPattern_Throws()
+    {
+        using var session = new FakeSession();
+        using var httpClient = new HttpClient(new StubHttpHandler(_ => new(HttpStatusCode.OK)));
+        var runner = new AutomationPlanRunner(httpClient, new NullSink(), new NullStorage(), new SimpleServiceProvider(new()));
+        var plan = new AutomationPlan("net", [new CaptureNetworkAutomationStep("urls", "(", 10)]);
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() => runner.RunWithResultAsync(session, plan, null, null, CancellationToken.None));
+        Assert.Contains("(", error.Message);
     }
 
     [Fact]
@@ -130,11 +164,17 @@ public sealed class AutomationPlanRunnerExtendedStepsTests
     {
         public Task<IReadOnlyList<string>> UploadDirectoryAsync(string sourceDirectory, string destinationPrefix, CancellationToken ct)
             => Task.FromResult<IReadOnlyList<string>>(Array.Empty<string>());
+
+        public Task<string?> SaveSnapshotAsync(byte[] png, Guid runId, Guid stepId, CancellationToken ct) => Task.FromResult<string?>(null);
+
+        public Task<string?> SaveAsync(byte[] data, string fileName, string pathPrefix, string contentType, CancellationToken ct) => Task.FromResult<string?>(null);
+
+        public Task<byte[]?> ReadSnapshotAsync(string fileId, CancellationToken ct) => Task.FromResult<byte[]?>(null);
     }
 
     private sealed class FakeSession : IWebAutomationSession
     {
-        public Guid SessionId { get; } = Guid.NewGuid();
+        public Guid SessionId { get; } = LyoGuid.CreateV7();
 
         public string? SessionDirectory => null;
 
@@ -164,6 +204,9 @@ public sealed class AutomationPlanRunnerExtendedStepsTests
         public Task NavigateAsync(string url, Func<string, bool> onRequest, CancellationToken ct = default) => Task.CompletedTask;
 
         public Task ReloadAsync(CancellationToken ct = default) => Task.CompletedTask;
+
+        public Task<IReadOnlyList<string>> CaptureNetworkAsync(string? urlPattern, int durationMilliseconds, CancellationToken ct = default)
+            => Task.FromResult<IReadOnlyList<string>>(["https://cdn.example/a.jpg"]);
 
         public Task<IWebAutomationElement> PollForElementAsync(ElementLocatorChain chain, CancellationToken ct = default) => throw new NotSupportedException();
 

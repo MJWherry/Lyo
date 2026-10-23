@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.OpenIdConnect.Provider;
 
 /// <summary>
@@ -41,6 +43,7 @@ public interface IOpenIdConnectProvider
 /// <param name="AvatarUrl">Optional avatar from <c>picture</c> claim.</param>
 /// <param name="PreferredLanguageBcp47">Optional BCP-47 language tag from <c>locale</c> claim.</param>
 /// <param name="ProviderScopes">Provider-derived scopes (e.g. Keycloak realm-role -> scope mapping).</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record OidcClaimMappingResult(
     string DisplayName,
     string? Email,

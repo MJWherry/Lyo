@@ -23,8 +23,8 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Binds <see cref="IValidationClauseEvaluator" /> to <see cref="WhereClauseServiceEvaluator" />. Register an <c>IWhereClauseService</c> first —
-        /// <c>AddLyoQueryServices</c> does, or bind <see cref="Query.Services.WhereClause.WhereClauseEvaluator" /> directly for a cache-free evaluator.
+        /// Binds <see cref="IValidationClauseEvaluator" /> to <see cref="WhereClauseServiceEvaluator" />. Register an <c>IWhereClauseService</c> first — <c>AddLyoQueryServices</c>
+        /// does, or bind <see cref="Query.Services.WhereClause.WhereClauseEvaluator" /> directly for a cache-free evaluator.
         /// </summary>
         public IServiceCollection AddQueryValidationEvaluator()
         {

@@ -5,6 +5,8 @@ internal interface IFileStoragePhysicalIO
 {
     Task<Stream?> ReadFromStorageAsync(Guid fileId, string? pathPrefix, CancellationToken ct);
 
+    Task<bool> DeleteFromStorageAsync(Guid fileId, string? pathPrefix, CancellationToken ct);
+
     Task<Stream> CreateOutputStreamAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct);
 
     Task<long> GetStorageSizeAsync(Guid fileId, string extension, string? pathPrefix, CancellationToken ct);

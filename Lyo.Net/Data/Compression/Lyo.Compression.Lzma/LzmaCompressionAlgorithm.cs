@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Compression.Models;
 
 namespace Lyo.Compression.Lzma;
 
 /// <summary>LZMA / LZMA2-style high-compression algorithm. Typical <c>.lzma</c> streams.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record LzmaCompressionAlgorithm : CompressionAlgorithm
 {
     /// <summary>Shared singleton instance.</summary>

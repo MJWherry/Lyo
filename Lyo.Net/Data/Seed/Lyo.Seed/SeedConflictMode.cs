@@ -9,6 +9,6 @@ public enum SeedConflictMode
     /// <summary>Opt-in: skip the run when the root set already has rows.</summary>
     SkipIfNotEmpty,
 
-    /// <summary>Run <see cref="SeedGraph.OnClear"/> then insert. The contributor must register a clear callback.</summary>
+    /// <summary>Run <see cref="SeedGraph.OnClear" /> then insert. The contributor must register a clear callback.</summary>
     Replace
 }

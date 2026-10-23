@@ -2,6 +2,11 @@ namespace Lyo.Drift.Web.Components;
 
 public partial class DriftManagement
 {
+    private Guid? _snapshotInstanceId;
+
+    private int _tabIndex;
+    private bool _tabInitialized;
+
     /// <summary>Base route for Drift endpoints (for example <c>Drift</c> or an absolute API URL plus <c>/Drift</c>).</summary>
     [Parameter]
     [EditorRequired]
@@ -14,10 +19,6 @@ public partial class DriftManagement
     /// <summary>When set, opens the Snapshots tab filtered to this instance.</summary>
     [Parameter]
     public Guid? InstanceId { get; set; }
-
-    private int _tabIndex;
-    private bool _tabInitialized;
-    private Guid? _snapshotInstanceId;
 
     protected override void OnParametersSet()
     {

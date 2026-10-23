@@ -26,10 +26,7 @@ public sealed class EmailMaskOptions
     /// <summary>When false, the at-sign is swapped for <see cref="AtReplacement" /> (or <see cref="LocalMaskLiteral" /> when that is null/empty).</summary>
     public bool PreserveAtSign { get; set; } = true;
 
-    /// <summary>
-    /// When <see cref="PreserveAtSign" /> is false, text between the masked local part and the domain; falls back to
-    /// <see cref="LocalMaskLiteral" /> when null or empty.
-    /// </summary>
+    /// <summary>When <see cref="PreserveAtSign" /> is false, text between the masked local part and the domain; falls back to <see cref="LocalMaskLiteral" /> when null or empty.</summary>
     public string? AtReplacement { get; set; }
 
     /// <summary>

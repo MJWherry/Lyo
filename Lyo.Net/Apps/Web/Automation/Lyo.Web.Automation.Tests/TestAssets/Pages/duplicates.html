@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Duplicate controls</title>
+</head>
+<body>
+<main>
+    <form id="left">
+        <input name="q" placeholder="first" type="text"/>
+        <select name="choice">
+            <option value="a">A</option>
+            <option value="b">B</option>
+        </select>
+    </form>
+    <form id="right">
+        <input name="q" placeholder="second" type="text"/>
+        <select name="choice">
+            <option value="a">A</option>
+            <option value="b">B</option>
+        </select>
+    </form>
+    <p id="echo"></p>
+</main>
+<script>
+    document.querySelectorAll("form").forEach((form) => form.addEventListener("submit", (event) => event.preventDefault()));
+    document.querySelector("#right input").addEventListener("keydown", (event) => {
+        if (event.key === "Enter")
+            document.getElementById("echo").textContent = "enter:" + event.target.value;
+    });
+    document.querySelector("#right select").addEventListener("change", (event) => {
+        document.getElementById("echo").textContent = "select:" + event.target.value;
+    });
+</script>
+</body>
+</html>

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 
 namespace Lyo.Audit;
@@ -8,7 +9,7 @@ namespace Lyo.Audit;
 public sealed record AuditChange(EntityRef Entity, IReadOnlyDictionary<string, object?> OldValues, IReadOnlyDictionary<string, object?> ChangedProperties)
 {
     /// <summary>Unique id of this audit change.</summary>
-    public Guid Id { get; init; } = Guid.NewGuid();
+    public Guid Id { get; init; } = LyoGuid.CreateV7();
 
     /// <summary>When the change was written.</summary>
     public DateTime Timestamp { get; init; } = DateTime.UtcNow;

@@ -1,11 +1,15 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 
 namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
 
 public partial class FileStoreRotateDekDialog
 {
+    private int _batchSize = 100;
+
+    private string _targetKeyId = string.Empty;
+    private string _targetKeyVersion = string.Empty;
+
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; } = default!;
 
@@ -14,10 +18,6 @@ public partial class FileStoreRotateDekDialog
 
     [Parameter]
     public IReadOnlyList<string>? KeyIds { get; set; }
-
-    private string _targetKeyId = string.Empty;
-    private string _targetKeyVersion = string.Empty;
-    private int _batchSize = 100;
 
     private void Cancel() => MudDialog.Cancel();
 

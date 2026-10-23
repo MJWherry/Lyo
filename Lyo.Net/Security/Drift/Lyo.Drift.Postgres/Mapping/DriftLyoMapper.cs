@@ -1,11 +1,10 @@
 using System.Text.Json;
 using Lyo.Api.Mapping;
-using Lyo.Common.Json;
 using Lyo.Drift.Models;
 using Lyo.Drift.Models.Request;
 using Lyo.Drift.Models.Response;
 using Lyo.Drift.Postgres.Database;
-using Lyo.FileSystemWatcher.Models;
+using Lyo.Json;
 
 namespace Lyo.Drift.Postgres.Mapping;
 
@@ -100,7 +99,7 @@ public sealed class DriftLyoMapper : ILyoMapper
 
     private static DriftChangeEvent ReqToNew(DriftChangeBatchReq req)
     {
-        var first = req.Changes.Count > 0 ? req.Changes[0] : new FileSystemChangeDto();
+        var first = req.Changes.Count > 0 ? req.Changes[0] : new();
         return new() {
             InstanceId = req.InstanceId,
             WatchRoot = req.WatchRoot ?? "",

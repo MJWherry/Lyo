@@ -8,12 +8,12 @@ using Lyo.Query.Services.WhereClause;
 namespace Lyo.Api.ApiEndpoint;
 
 /// <summary>
-/// Enforces the <c>DeniedSelectFields</c> deny-list on projected queries and exports. Projections read raw entities and bypass response mapping, so sensitive columns (for example
-/// encrypted values that mapping would mask) must be rejected before the query runs.
+/// Enforces the <c>DeniedSelectFields</c> deny-list on projected queries and exports. Projections read raw entities and bypass response mapping, so sensitive columns (for
+/// example encrypted values that mapping would mask) must be rejected before the query runs.
 /// </summary>
 /// <remarks>
-/// The deny-list covers filtering, sorting, and including a field as well as selecting it. A caller who can filter on a value they cannot read can recover it a bit at a time by
-/// watching which rows come back, so denying only the select path leaves the value readable.
+/// The deny-list covers filtering, sorting, and including a field as well as selecting it. A caller who can filter on a value they cannot read can recover it a bit at a time
+/// by watching which rows come back, so denying only the select path leaves the value readable.
 /// </remarks>
 public static class DeniedSelectFieldPolicy
 {
@@ -51,9 +51,7 @@ public static class DeniedSelectFieldPolicy
         return errors;
     }
 
-    /// <summary>
-    /// Checks the filter, sort, and include paths of any query request against the deny-list. Complements <see cref="ValidateProjection" />, which covers select.
-    /// </summary>
+    /// <summary>Checks the filter, sort, and include paths of any query request against the deny-list. Complements <see cref="ValidateProjection" />, which covers select.</summary>
     public static List<ApiError> ValidateRequestPaths(QueryRequestBase request, IReadOnlyCollection<string>? deniedFields)
     {
         if (deniedFields is not { Count: > 0 })

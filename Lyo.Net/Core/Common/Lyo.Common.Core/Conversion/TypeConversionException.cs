@@ -1,8 +1,8 @@
 namespace Lyo.Common.Core.Conversion;
 
 /// <summary>
-/// Raised when <see cref="TypeConversion" /> cannot produce the requested target type. Subclasses <see cref="InvalidOperationException" /> so callers that already catch that type
-/// keep working.
+/// Raised when <see cref="TypeConversion" /> cannot produce the requested target type. Subclasses <see cref="InvalidOperationException" /> so callers that already catch that
+/// type keep working.
 /// </summary>
 public class TypeConversionException : InvalidOperationException
 {

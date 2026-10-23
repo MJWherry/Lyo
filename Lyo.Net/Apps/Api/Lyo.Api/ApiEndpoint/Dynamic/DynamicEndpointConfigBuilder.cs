@@ -48,9 +48,7 @@ public sealed class DynamicEndpointConfigBuilder<TContext>
     /// <summary>Requires the named policies on every dynamic route that does not override those policies.</summary>
     public DynamicEndpointConfigBuilder<TContext> RequireAuthorization(params string[] policyNames) => Auth(EndpointAuth.RequireAuthorization(policyNames));
 
-    /// <summary>
-    /// Opts every dynamic route out of authorization. Includes delete, upsert, and the metadata routes that reflect every public property of every registered entity.
-    /// </summary>
+    /// <summary>Opts every dynamic route out of authorization. Includes delete, upsert, and the metadata routes that reflect every public property of every registered entity.</summary>
     public DynamicEndpointConfigBuilder<TContext> AllowAnonymous() => Auth(EndpointAuth.Anonymous());
 
     /// <summary>Field names rejected in select, filter, sort, include, and join paths on the dynamic query routes.</summary>

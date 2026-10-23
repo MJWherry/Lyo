@@ -2,9 +2,7 @@ using Lyo.Job.Models;
 using Lyo.Job.Tests.Postgres;
 using Microsoft.Extensions.Logging.Abstractions;
 using ClientPublisher = Lyo.Job.Client.MqJobEventPublisher;
-using ClientJobMqOptions = Lyo.Job.Client.JobMqOptions;
 using PostgresPublisher = Lyo.Job.Postgres.Events.MqJobEventPublisher;
-using PostgresJobMqOptions = Lyo.Job.Postgres.JobMqOptions;
 
 namespace Lyo.Job.Tests;
 
@@ -18,8 +16,8 @@ public class MqJobEventPublisherSetupTests
     public async Task SetupAsync_ClientPublisher_DeclaresJobEventExchangeAndSharedQueues()
     {
         var mq = new FakeMqService();
-        var publisher = new ClientPublisher(mq, NullLogger<ClientPublisher>.Instance, new ClientJobMqOptions { WorkerTypes = ["cs"] });
-        await publisher.SetupAsync(TestContext.Current.CancellationToken);
+        var publisher = new ClientPublisher(mq, NullLogger<ClientPublisher>.Instance, new() { WorkerTypes = ["cs"] });
+        await publisher.SetupAsync(TestCt);
         AssertJobEventTopology(mq, "cs");
     }
 
@@ -27,8 +25,8 @@ public class MqJobEventPublisherSetupTests
     public async Task SetupAsync_PostgresPublisher_DeclaresJobEventExchangeAndSharedQueues()
     {
         var mq = new FakeMqService();
-        var publisher = new PostgresPublisher(mq, NullLogger<PostgresPublisher>.Instance, new PostgresJobMqOptions { WorkerTypes = ["cs"] });
-        await publisher.SetupAsync(TestContext.Current.CancellationToken);
+        var publisher = new PostgresPublisher(mq, NullLogger<PostgresPublisher>.Instance, new() { WorkerTypes = ["cs"] });
+        await publisher.SetupAsync(TestCt);
         AssertJobEventTopology(mq, "cs");
     }
 

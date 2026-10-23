@@ -44,6 +44,6 @@ public sealed class InMemoryValidationSchemaStore : IValidationSchemaStore
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(key);
         ct.ThrowIfCancellationRequested();
-        return Task.FromResult(_schemas.TryRemove(key, out _));
+        return Task.FromResult(_schemas.TryRemove(key, out var _));
     }
 }

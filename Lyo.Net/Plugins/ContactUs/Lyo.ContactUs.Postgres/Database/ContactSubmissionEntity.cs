@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using Lyo.ContactUs.Models;
 
 namespace Lyo.ContactUs.Postgres.Database;
 
 /// <summary>Row that stores a contact form submission in the database.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ContactSubmissionEntity
 {
     /// <summary>Holds the unique identifier.</summary>
@@ -54,4 +56,20 @@ public sealed class ContactSubmissionEntity
             Company = request.Company,
             CreatedTimestamp = DateTime.UtcNow
         };
+
+    /// <summary>Maps this row to the public submission model.</summary>
+    public ContactSubmission ToSubmission()
+        => new() {
+            Id = Id,
+            Name = Name,
+            Email = Email,
+            Subject = Subject,
+            Message = Message,
+            Phone = Phone,
+            Company = Company,
+            CreatedTimestamp = CreatedTimestamp
+        };
+
+    /// <summary>Type name, id, and name.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Name}";
 }

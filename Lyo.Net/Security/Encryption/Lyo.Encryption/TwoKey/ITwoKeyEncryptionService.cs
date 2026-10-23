@@ -5,14 +5,13 @@ using Lyo.Exceptions.Models;
 namespace Lyo.Encryption.TwoKey;
 
 /// <summary>
-/// Envelope encryption: a Key Encryption Key (KEK) wraps a fresh Data Encryption Key (DEK) for each encrypt, so every operation
-/// uses a unique DEK that is itself encrypted under the KEK.
+/// Envelope encryption: a Key Encryption Key (KEK) wraps a fresh Data Encryption Key (DEK) for each encrypt, so every operation uses a unique DEK that is itself encrypted
+/// under the KEK.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Types such as <see cref="TwoKeyEncryptionService{TKeyEncryptionService, TDataEncryptionService}" /> compose two <see cref="IEncryptionService" /> instances (KEK
-/// and DEK roles). Treat <c>keyId</c> / <c>kek</c> like the single-key APIs: keystore workflows pass ids; tests or sealed systems may pass raw
-/// KEK bytes.
+/// Types such as <see cref="TwoKeyEncryptionService{TKeyEncryptionService, TDataEncryptionService}" /> compose two <see cref="IEncryptionService" /> instances (KEK and DEK
+/// roles). Treat <c>keyId</c> / <c>kek</c> like the single-key APIs: keystore workflows pass ids; tests or sealed systems may pass raw KEK bytes.
 /// </para>
 /// </remarks>
 public interface ITwoKeyEncryptionService
@@ -153,6 +152,37 @@ public interface ITwoKeyEncryptionService
     /// <exception cref="OperationCanceledException">Thrown when <paramref name="ct" /> cancels the call</exception>
     Task DecryptToStreamAsync(Stream input, Stream output, string? keyId = null, byte[]? kek = null, CancellationToken ct = default);
 
+    /// <summary>
+    /// Reads the stream header and the first chunk's length prefix from <paramref name="prefix" />, which must start at byte 0 of the ciphertext. The returned layout holds the
+    /// header, the unwrapped DEK, and the frame size used to jump to a later chunk. The caller disposes the layout.
+    /// </summary>
+    /// <param name="prefix">Ciphertext positioned at the start of the object. Must include the header and the first chunk's 4-byte length.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>Layout for a later <see cref="DecryptFromChunkAsync" /> call.</returns>
+    Task<EncryptedStreamLayout> ReadEncryptedStreamLayoutAsync(Stream prefix, CancellationToken ct = default);
+
+    /// <summary>
+    /// Decrypts ciphertext already positioned at the length prefix of <paramref name="chunkIndex" />. Discards <paramref name="skipPlaintextBytes" /> of that chunk, then writes
+    /// at most <paramref name="maxPlaintextBytes" />. The chunk counter starts at <paramref name="chunkIndex" /> so the derived nonce matches the original stream.
+    /// </summary>
+    /// <param name="header">Header bytes from <see cref="EncryptedStreamLayout.Header" />, including the nonce prefix.</param>
+    /// <param name="ciphertextAtChunk">Stream positioned at the target chunk's length prefix.</param>
+    /// <param name="output">Stream that receives plaintext.</param>
+    /// <param name="chunkIndex">Zero-based chunk index. This is the nonce counter, not a byte offset.</param>
+    /// <param name="skipPlaintextBytes">Plaintext bytes to drop from the start of this chunk.</param>
+    /// <param name="maxPlaintextBytes">Most plaintext bytes to write after the skip.</param>
+    /// <param name="unwrappedDek">DEK from <see cref="EncryptedStreamLayout.Dek" />.</param>
+    /// <param name="ct">Cancellation token.</param>
+    Task DecryptFromChunkAsync(
+        ReadOnlyMemory<byte> header,
+        Stream ciphertextAtChunk,
+        Stream output,
+        long chunkIndex,
+        int skipPlaintextBytes,
+        long maxPlaintextBytes,
+        byte[] unwrappedDek,
+        CancellationToken ct = default);
+
     /// <summary>Encrypts data and writes the ciphertext to a file.</summary>
     /// <param name="data">Plaintext</param>
     /// <param name="outputPath">Destination path for the ciphertext file</param>
@@ -194,10 +224,7 @@ public interface ITwoKeyEncryptionService
     /// <exception cref="OperationCanceledException">Thrown when <paramref name="ct" /> cancels the call</exception>
     Task<byte[]> DecryptFromFileAsync(string inputPath, string? keyId = null, byte[]? kek = null, CancellationToken ct = default);
 
-    /// <summary>
-    /// Unwraps a DEK under one KEK and re-wraps it under another. Used for rotation (same keyId, new version)
-    /// or migration (different keyId).
-    /// </summary>
+    /// <summary>Unwraps a DEK under one KEK and re-wraps it under another. Used for rotation (same keyId, new version) or migration (different keyId).</summary>
     /// <param name="encryptedDek">DEK wrapped by the source KEK</param>
     /// <param name="sourceKeyId">Key id that originally wrapped the DEK</param>
     /// <param name="sourceKeyVersion">KEK version that originally wrapped the DEK</param>
@@ -209,10 +236,7 @@ public interface ITwoKeyEncryptionService
     /// <exception cref="DecryptionFailedException">Thrown when unwrapping the DEK fails (wrong source KEK or damaged data)</exception>
     byte[] ReEncryptDek(byte[] encryptedDek, string sourceKeyId, string sourceKeyVersion, string? targetKeyId = null, string? targetKeyVersion = null);
 
-    /// <summary>
-    /// Unwraps a DEK under one KEK and re-wraps it under another, asynchronously. Used for rotation (same keyId,
-    /// new version) or migration (different keyId).
-    /// </summary>
+    /// <summary>Unwraps a DEK under one KEK and re-wraps it under another, asynchronously. Used for rotation (same keyId, new version) or migration (different keyId).</summary>
     /// <param name="encryptedDek">DEK wrapped by the source KEK</param>
     /// <param name="sourceKeyId">Key id that originally wrapped the DEK</param>
     /// <param name="sourceKeyVersion">KEK version that originally wrapped the DEK</param>

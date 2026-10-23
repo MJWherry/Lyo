@@ -7,8 +7,8 @@ using Lyo.Encryption;
 namespace Lyo.FileMetadataStore.Models;
 
 /// <summary>
-/// Stored file metadata. <see cref="Charset" /> is the client-declared character encoding of the plaintext (IANA/web name such as <c>utf-8</c> or <c>windows-1252</c>), stored as
-/// given after trim. Not converted. Null when omitted. <see cref="Metadata" /> is an opaque caller JSON bag; Lyo does not interpret keys.
+/// Stored file metadata. <see cref="Charset" /> is the client-declared character encoding of the plaintext (IANA/web name such as <c>utf-8</c> or <c>windows-1252</c>),
+/// stored as given after trim. Not converted. Null when omitted. <see cref="Metadata" /> is an opaque caller JSON bag; Lyo does not interpret keys.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public record FileStoreResult(

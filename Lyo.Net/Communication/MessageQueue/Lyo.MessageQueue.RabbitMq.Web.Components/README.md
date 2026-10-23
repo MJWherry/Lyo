@@ -4,11 +4,12 @@ Blazor UI for RabbitMQ exchanges, bindings, and broker workbenches.
 
 ## RabbitMqWorkbench
 
-`RabbitMqWorkbench` is a list-select dashboard for the full `IRabbitMqService` API. Queue and exchange snapshots load on the first render. Auto-refresh remains on the queue toolbar.
+`RabbitMqWorkbench` is a list-select dashboard for the full `IRabbitMqService` API. Queue and exchange snapshots load on the first render. Auto-refresh remains on the queue
+toolbar.
 
-| Tab | Operations |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Queues** | Type-to-filter dropdown (name plus flag chips in the list). **Info** shows durable/state/type chips plus ready/unacked/consumers. **Quick actions** peek/clear/delete/copy. Inner **Send** tab: wrap/priority/delay/send. Inner **Manage** tab: create and bind. |
+| Tab           | Operations                                                                                                                                                                                                                                                                        |
+|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Queues**    | Type-to-filter dropdown (name plus flag chips in the list). **Info** shows durable/state/type chips plus ready/unacked/consumers. **Quick actions** peek/clear/delete/copy. Inner **Send** tab: wrap/priority/delay/send. Inner **Manage** tab: create and bind.                  |
 | **Exchanges** | Type-to-filter dropdown (name plus type/durable chips). `amq.*` and the unnamed default stay hidden unless Show defaults is on. **Info** and **Quick actions** sit side by side. Inner **Send** tab: wrap/priority/delay/routing key/send. Inner **Manage** tab: create and bind. |
 
 Creating a queue supports:
@@ -34,17 +35,18 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Api.Client` (transitive, lyo)
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Common.Core` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Encryption` (transitive, lyo)
+- `Lyo.EntityReference.Models` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
 - `Lyo.Http.Client` (transitive, lyo)
 - `Lyo.IO.FileSystem` (transitive, lyo)
 - `Lyo.IO.Temp` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
@@ -52,6 +54,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
+- `Lyo.Schedule.Models` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
 - `Lyo.Validation` (transitive, lyo)
 - `Lyo.Validation.Models` (transitive, lyo)
@@ -71,6 +74,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.RateLimiting` `10.0.5` (transitive, microsoft)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

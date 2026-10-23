@@ -1,6 +1,7 @@
 # Lyo.Api.Tests.Host
 
-Reference ASP.NET Core minimal-API host that `Lyo.Api.Tests` and other integration tests target via `WebApplicationFactory<Program>`. It wires a realistic mix of `Lyo.Api` services so tests walk the same registration and middleware paths production hosts use.
+Reference ASP.NET Core minimal-API host that `Lyo.Api.Tests` and other integration tests target via `WebApplicationFactory<Program>`. It wires a realistic mix of `Lyo.Api` services
+so tests walk the same registration and middleware paths production hosts use.
 
 ## Examples
 
@@ -25,7 +26,8 @@ public sealed class JobApiTests : IClassFixture<WebApplicationFactory<Program>>
 
 ## What ships
 
-- `Program` ([`Program.cs`](Program.cs)). Top-level statements that build the host. At the bottom, the empty `Lyo.Api.Tests.Host.Program` class is the entry-point type `WebApplicationFactory<Program>` requires.
+- `Program` ([`Program.cs`](Program.cs)). Top-level statements that build the host. At the bottom, the empty `Lyo.Api.Tests.Host.Program` class is the entry-point type
+  `WebApplicationFactory<Program>` requires.
 
 ## Services registered
 
@@ -35,13 +37,17 @@ public sealed class JobApiTests : IClassFixture<WebApplicationFactory<Program>>
 - **Local cache** (`AddLocalCache`) plus `AddLyoQueryServices`.
 - **Job persistence** through `AddPostgresJobManagementFromConfiguration` (PostgreSQL `Lyo.Job` schema; configured via `appsettings.json`).
 - **Export service** for `JobContext`.
-- **Mapping** is registered by `AddPostgresJobManagementFromConfiguration` (`ILyoMapper` the Job package needs), so this host has no mapper of its own. Hosts that map their own DTOs supply an `ILyoMapper` themselves — Lyo ships no AutoMapper or Mapster adapter.
+- **Mapping** is registered by `AddPostgresJobManagementFromConfiguration` (`ILyoMapper` the Job package needs), so this host has no mapper of its own. Hosts that map their own
+  DTOs supply an `ILyoMapper` themselves — Lyo ships no AutoMapper or Mapster adapter.
 - **CORS** with a default policy that allows everything (test convenience).
 
 ## Endpoints
 
-- **Typed builder** at `/api/Job/Definition`. Uses `CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>` with `AllowAnonymous`, `WithMetadata(IncludeEntityMetadata = true)`, and lifecycle hooks (`WithGet`, `WithCreate`, `WithCreateBulk`, `WithUpdate`, `WithUpdateBulk`, `WithPatch`, `WithPatchBulk`, `WithUpsert`, `WithUpsertBulk`, `WithDelete`, `WithDeleteBulk`). Each hook appends a marker (e.g. `[afterCreate]`) to `Description` so tests can verify hook execution order.
-- **Dynamic builder** at `api/Job`. `MapDynamicCrudEndpoints<JobContext>` with `IncludeOnly<JobDefinition>` and `BeforeCreate` setting a `Guid.NewGuid()` PK when callers omit `Id`. Features: `ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance` on dynamic defaults.
+- **Typed builder** at `/api/Job/Definition`. Uses `CreateBuilder<JobContext, JobDefinition, JobDefinitionReq, JobDefinitionRes, Guid>` with `AllowAnonymous`,
+  `WithMetadata(IncludeEntityMetadata = true)`, and lifecycle hooks (`WithGet`, `WithCreate`, `WithCreateBulk`, `WithUpdate`, `WithUpdateBulk`, `WithPatch`, `WithPatchBulk`,
+  `WithUpsert`, `WithUpsertBulk`, `WithDelete`, `WithDeleteBulk`). Each hook appends a marker (e.g. `[afterCreate]`) to `Description` so tests can verify hook execution order.
+- **Dynamic builder** at `api/Job`. `MapDynamicCrudEndpoints<JobContext>` with `IncludeOnly<JobDefinition>` and `BeforeCreate` setting a `LyoGuid.CreateV7()` PK when callers omit
+  `Id`. Features: `ApiFeatureSet.DefaultCrud + ExportApiFeature.Instance` on dynamic defaults.
 
 ## Calling it from tests
 
@@ -54,13 +60,16 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Api` (direct, lyo)
 - `Lyo.Api.Export` (direct, lyo)
 - `Lyo.Api.Export.Csv` (direct, lyo)
+- `Lyo.Api.Export.Toml` (direct, lyo)
 - `Lyo.Api.Export.Xlsx` (direct, lyo)
+- `Lyo.Api.Export.Xml` (direct, lyo)
+- `Lyo.Api.Export.Yaml` (direct, lyo)
 - `Lyo.Cache` (direct, lyo)
-- `Lyo.Common.Json` (direct, lyo)
 - `Lyo.Csv` (direct, lyo)
 - `Lyo.Formatter` (direct, lyo)
 - `Lyo.Job.Models` (direct, lyo)
 - `Lyo.Job.Postgres` (direct, lyo)
+- `Lyo.Json` (direct, lyo)
 - `Lyo.Xlsx` (direct, lyo)
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Audit` (transitive, lyo)
@@ -87,13 +96,17 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Query` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Query.Sql` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `Lyo.Schedule.Models` (transitive, lyo)
 - `Lyo.Scheduler` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
+- `Lyo.Toml` (transitive, lyo)
 - `Lyo.Validation` (transitive, lyo)
 - `Lyo.Validation.Models` (transitive, lyo)
 - `Lyo.Xlsx.Models` (transitive, lyo)
+- `Lyo.Xml` (transitive, lyo)
+- `Lyo.Yaml` (transitive, lyo)
 - `BouncyCastle.Cryptography` `2.6.2` (transitive, third-party, netstandard2.0)
 - `ClosedXML` `0.105.0` (transitive, third-party)
 - `DocumentFormat.OpenXml` `3.1.1` (transitive, third-party)
@@ -127,3 +140,5 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `Tomlyn` `2.10.1` (transitive, third-party)
+- `YamlDotNet` `18.1.0` (transitive, third-party)

@@ -1,5 +1,4 @@
 using Lyo.Exceptions;
-using Lyo.Web.Automation.Selenium.WebDriver;
 
 namespace Lyo.Web.Automation.Selenium.Configuration;
 
@@ -15,20 +14,20 @@ public sealed class SeleniumBrowserOptionsBuilder
     public SeleniumBrowserOptions Build() => _options.Clone();
 
     /// <inheritdoc cref="SeleniumBrowserOptions.BrowserKind" />
-    public SeleniumBrowserOptionsBuilder BrowserKind(SeleniumBrowserKind kind)
+    public SeleniumBrowserOptionsBuilder BrowserKind(AutomationBrowserKind kind)
     {
         _options.BrowserKind = kind;
         return this;
     }
 
     /// <summary>Uses Chrome.</summary>
-    public SeleniumBrowserOptionsBuilder Chrome() => BrowserKind(SeleniumBrowserKind.Chrome);
+    public SeleniumBrowserOptionsBuilder Chrome() => BrowserKind(AutomationBrowserKind.Chrome);
 
     /// <summary>Uses Edge.</summary>
-    public SeleniumBrowserOptionsBuilder Edge() => BrowserKind(SeleniumBrowserKind.Edge);
+    public SeleniumBrowserOptionsBuilder Edge() => BrowserKind(AutomationBrowserKind.Edge);
 
     /// <summary>Uses Firefox.</summary>
-    public SeleniumBrowserOptionsBuilder Firefox() => BrowserKind(SeleniumBrowserKind.Firefox);
+    public SeleniumBrowserOptionsBuilder Firefox() => BrowserKind(AutomationBrowserKind.Firefox);
 
     /// <inheritdoc cref="SeleniumBrowserOptions.Headless" />
     public SeleniumBrowserOptionsBuilder Headless(bool enabled = true)

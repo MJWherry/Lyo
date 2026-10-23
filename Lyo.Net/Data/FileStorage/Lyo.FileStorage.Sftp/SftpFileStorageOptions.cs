@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 using Lyo.FileStorage.Models;
 using Lyo.Sftp.Client;
@@ -5,6 +6,7 @@ using Lyo.Sftp.Client;
 namespace Lyo.FileStorage.Sftp;
 
 /// <summary>Settings for <see cref="SftpFileStorageService" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class SftpFileStorageOptions : FileStorageServiceBaseOptions
 {
     /// <summary>Section key used when binding from configuration.</summary>
@@ -18,5 +20,9 @@ public sealed class SftpFileStorageOptions : FileStorageServiceBaseOptions
     {
         ArgumentHelpers.ThrowIfNull(Sftp);
         Sftp.Validate();
+        ValidateUploadFilters();
     }
+
+    /// <summary>Nested SFTP settings and the shared storage options. Passwords and private keys stay on <see cref="SftpClientOptions" />.</summary>
+    public override string ToString() => $"Sftp={Sftp} {base.ToString()}";
 }

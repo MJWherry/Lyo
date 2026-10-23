@@ -10,6 +10,10 @@
     overflow: auto;
 }
 
+::deep .lyo-package-catalog-selected {
+    background-color: var(--mud-palette-action-default-hover);
+}
+
 @media (max-width: 800px) {
     .lyo-package-catalog {
         grid-template-columns: 1fr;

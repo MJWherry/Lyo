@@ -1,0 +1,59 @@
+@using Lyo.Web.Components.ParamTable
+@using Lyo.Web.Components.QueryNodeEditor
+<MudPaper Class="pa-2" Elevation="1">
+    <MudStack Spacing="2">
+        <div class="workflow-step-fields">
+            <MudSelect T="Guid" Label="Step" Value="@Step.Id" ValueChanged="StepSelected" Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true"
+                       aria-label="Step being edited">
+                @foreach (var step in Steps) {
+                    <MudSelectItem T="Guid" Value="@step.Id">@(string.IsNullOrWhiteSpace(step.StepName) ? "Untitled step" : step.StepName)</MudSelectItem>
+                }
+            </MudSelect>
+            <MudTextField T="string" Label="Step name" Value="@Step.StepName" ValueChanged="OnStepNameChanged" Immediate="false" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+            <MudSelect T="Guid" Label="Job definition" Value="@Step.JobDefinitionId" ValueChanged="OnDefinitionChanged" Variant="Variant.Outlined" Margin="Margin.Dense"
+                       Dense="true" aria-label="Job definition this step runs">
+                @foreach (var definition in Definitions) {
+                    <MudSelectItem T="Guid" Value="@definition.Id">@definition.Name</MudSelectItem>
+                }
+            </MudSelect>
+            <div class="workflow-step-flags">
+                <MudSwitch T="bool" Value="@Step.Enabled" ValueChanged="OnEnabledChanged" Label="Enabled" Color="Color.Primary"/>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" title="Remove step"
+                               aria-label="@($"Remove step {Step.StepName}")" OnClick="@(async () => await OnRemove.InvokeAsync(Step))"/>
+            </div>
+
+            <MudSelect T="Guid" Class="workflow-step-depends" Label="Depends on" MultiSelection="true" SelectedValues="@Step.DependsOn"
+                       SelectedValuesChanged="OnDependsOnChanged" MultiSelectionTextFunc="DependsOnSummary" Variant="Variant.Outlined" Margin="Margin.Dense"
+                       Dense="true" Placeholder="No dependencies">
+                @foreach (var other in OtherSteps.Where(s => !string.IsNullOrWhiteSpace(s.StepName))) {
+                    <MudSelectItem T="Guid" Value="@other.Id">@other.StepName</MudSelectItem>
+                }
+            </MudSelect>
+            <MudSelect T="JobWorkflowFailurePolicy" Label="On failure" Value="@Step.FailurePolicy" ValueChanged="OnFailurePolicyChanged" Variant="Variant.Outlined"
+                       Margin="Margin.Dense" Dense="true" aria-label="Failure policy">
+                @foreach (var policy in Enum.GetValues<JobWorkflowFailurePolicy>()) {
+                    <MudSelectItem T="JobWorkflowFailurePolicy" Value="@policy">@policy</MudSelectItem>
+                }
+            </MudSelect>
+        </div>
+
+        <MudExpansionPanels Elevation="0" Dense MultiExpansion>
+            <MudExpansionPanel Text="@ParametersSummary">
+                <LyoParameterEditor Title="Step Parameters" Items="@_paramRows" InheritFrom="@_inheritRows" ApiClient="@ApiClient"
+                                    FormatterContext="@_stepContext" OnChanged="OnParametersChanged"/>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                    Overrides the selected definition's parameters. Values are templates resolved against this step's context:
+                    <code>{Step.&lt;name&gt;.Result.&lt;key&gt;}</code> reads an upstream step's result, <code>{Input.&lt;key&gt;}</code> a workflow run input.
+                </MudText>
+            </MudExpansionPanel>
+
+            <MudExpansionPanel Text="@ConditionSummary">
+                <QueryNodeEditorPanel WhereClause="@Step.Condition" WhereClauseChanged="OnConditionChanged" PropertyDefinitions="@_contextPaths"/>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                    Fields are context paths: <code>Step.&lt;name&gt;.Result.&lt;key&gt;</code>, <code>Input.&lt;key&gt;</code>, <code>Workflow.Name</code>. A step whose
+                    condition does not match is marked ConditionNotMet, and everything downstream of it is skipped too. A gate may only read a step this one depends on.
+                </MudText>
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+    </MudStack>
+</MudPaper>

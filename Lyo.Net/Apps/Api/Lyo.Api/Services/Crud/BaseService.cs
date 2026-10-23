@@ -2,12 +2,12 @@ using Lyo.Api.Mapping;
 using Lyo.Api.Models;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Error;
+using Lyo.Exceptions;
 using Lyo.Metrics;
 using Lyo.Metrics.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Lyo.Exceptions;
 
 namespace Lyo.Api.Services.Crud;
 

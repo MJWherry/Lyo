@@ -1,0 +1,16 @@
+@namespace Lyo.Web.Components.Media
+
+@{
+    var src = MediaSource.Normalize(Src);
+    var poster = MediaSource.Normalize(Poster);
+}
+@if (src is null) {
+    <MudText Typo="Typo.body2" Color="Color.Secondary">No video.</MudText>
+}
+else {
+    <LyoElementRoot ElementId="@ElementId" DefaultId="lyo-video">
+        <video src="@src" poster="@poster" controls="@Controls" preload="metadata" style="width: 100%;">
+            <MediaTracks Captions="@Captions"/>
+        </video>
+    </LyoElementRoot>
+}

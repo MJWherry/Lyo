@@ -72,16 +72,16 @@ public class JobBlackoutCalendarCreateTests(JobPostgresFixture fixture) : IClass
                 }
 
                 JobBlackoutCalendarEntityHelper.AssignNestedBlackoutCalendarIds(ctx.Entity);
-            }, ct: TestContext.Current.CancellationToken);
+            }, ct: TestCt);
 
         Assert.True(created.IsSuccess, created.Error?.Detail ?? "create failed");
-        await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await using var db = await factory.CreateDbContextAsync(TestCt);
         var schedules = await db.JobSchedules.AsNoTracking()
             .Include(s => s.JobBlackoutCalendar!)
             .ThenInclude(c => c.JobBlackoutWindows)
             .Where(s => s.JobDefinitionId == definitionId)
             .OrderBy(s => s.Description)
-            .ToListAsync(TestContext.Current.CancellationToken);
+            .ToListAsync(TestCt);
 
         Assert.Equal(2, schedules.Count);
         Assert.All(schedules, s => Assert.NotNull(s.JobBlackoutCalendarId));
@@ -101,7 +101,7 @@ public class JobBlackoutCalendarCreateTests(JobPostgresFixture fixture) : IClass
         Assert.True(TimeOnly.TryParse(window.EndTime, out var end));
         Assert.Equal(new(2, 0), start);
         Assert.Equal(new(4, 0), end);
-        Assert.Equal(1, await db.JobBlackoutCalendars.CountAsync(c => c.Id == calendar.Id, TestContext.Current.CancellationToken));
+        Assert.Equal(1, await db.JobBlackoutCalendars.CountAsync(c => c.Id == calendar.Id, TestCt));
     }
 
     [Fact]
@@ -152,14 +152,14 @@ public class JobBlackoutCalendarCreateTests(JobPostgresFixture fixture) : IClass
                 }
 
                 JobBlackoutCalendarEntityHelper.AssignNestedBlackoutCalendarIds(ctx.Entity);
-            }, ct: TestContext.Current.CancellationToken);
+            }, ct: TestCt);
 
         Assert.True(created.IsSuccess, created.Error?.Detail ?? "create failed");
-        await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await using var db = await factory.CreateDbContextAsync(TestCt);
         var schedule = await db.JobSchedules.AsNoTracking()
             .Include(s => s.JobBlackoutCalendar!)
             .ThenInclude(c => c.JobBlackoutWindows)
-            .SingleAsync(s => s.JobDefinitionId == definitionId, TestContext.Current.CancellationToken);
+            .SingleAsync(s => s.JobDefinitionId == definitionId, TestCt);
 
         Assert.NotNull(schedule.JobBlackoutCalendar);
         Assert.Equal("ScheduleBlackout", schedule.JobBlackoutCalendar!.Name);
@@ -226,14 +226,14 @@ public class JobBlackoutCalendarCreateTests(JobPostgresFixture fixture) : IClass
                 }
 
                 JobBlackoutCalendarEntityHelper.AssignNestedBlackoutCalendarIds(ctx.Entity);
-            }, ct: TestContext.Current.CancellationToken);
+            }, ct: TestCt);
 
         Assert.True(created.IsSuccess, created.Error?.Detail ?? "create failed");
-        await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await using var db = await factory.CreateDbContextAsync(TestCt);
         var schedule = await db.JobSchedules.AsNoTracking()
             .Include(s => s.JobBlackoutCalendar!)
             .ThenInclude(c => c.JobBlackoutWindows)
-            .SingleAsync(s => s.JobDefinitionId == definitionId, TestContext.Current.CancellationToken);
+            .SingleAsync(s => s.JobDefinitionId == definitionId, TestCt);
 
         var windows = schedule.JobBlackoutCalendar!.JobBlackoutWindows.OrderBy(w => w.Name).ToList();
         Assert.Equal(2, windows.Count);

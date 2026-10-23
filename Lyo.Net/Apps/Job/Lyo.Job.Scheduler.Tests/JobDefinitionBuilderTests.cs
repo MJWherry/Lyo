@@ -1,4 +1,5 @@
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Job.Models.Builders;
 
 namespace Lyo.Job.Scheduler.Tests;
@@ -27,7 +28,7 @@ public class JobDefinitionBuilderTests
     [Fact]
     public void WithBlackoutCalendar_OnDefinition_AppliesCalendarIdToEverySchedule()
     {
-        var calendarId = Guid.NewGuid();
+        var calendarId = LyoGuid.CreateV7();
         var definition = JobDefinitionBuilder.New("Test Job")
             .AddSchedule(s => s.EveryDay().SetCron("0 * * * *"))
             .WithBlackoutCalendar(calendarId)
@@ -44,7 +45,7 @@ public class JobDefinitionBuilderTests
     [Fact]
     public void WithBlackoutCalendar_ById_CascadesToSchedulesAddedBeforeAndAfter()
     {
-        var calendarId = Guid.NewGuid();
+        var calendarId = LyoGuid.CreateV7();
         var definition = JobDefinitionBuilder.New("Test Job")
             .AddSchedule(s => s.EveryDay().SetCron("0 * * * *"))
             .WithBlackoutCalendar(calendarId)
@@ -108,7 +109,7 @@ public class JobDefinitionBuilderTests
     [Fact]
     public void AddSchedule_WithBlackoutCalendarId_IsNotOverwrittenByDefinitionCascade()
     {
-        var scheduleId = Guid.NewGuid();
+        var scheduleId = LyoGuid.CreateV7();
         var definition = JobDefinitionBuilder.New("Test Job")
             .AddSchedule(s => s.EveryDay().SetCron("0 * * * *").WithBlackoutCalendar(scheduleId))
             .WithBlackoutCalendar("Maintenance", b => b.AddBlackoutWindow("Nightly", DayFlags.Weekdays, "02:00", "04:00"))

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.IO.Temp.Models;
 
 /// <summary>Session state at one instant: tracked files, directories, byte total, and creation time.</summary>
@@ -6,4 +8,5 @@ namespace Lyo.IO.Temp.Models;
 /// <param name="Directories">Copy of tracked directory paths.</param>
 /// <param name="TotalBytesUsed">Byte total when the snapshot was taken.</param>
 /// <param name="CreatedAt">When the session was created (UTC).</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public record TempSessionSnapshot(string SessionDirectory, IReadOnlyList<string> Files, IReadOnlyList<string> Directories, long TotalBytesUsed, DateTimeOffset CreatedAt);

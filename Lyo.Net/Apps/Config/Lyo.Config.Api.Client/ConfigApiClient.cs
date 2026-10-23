@@ -100,14 +100,11 @@ public static class ConfigApiHttpClientRegistration
 {
     extension(IServiceCollection services)
     {
-        public IHttpClientBuilder AddConfigApiClientFromConfiguration(
-            IConfiguration configuration,
-            string configSectionName = ConfigApiClientOptions.SectionName)
+        public IHttpClientBuilder AddConfigApiClientFromConfiguration(IConfiguration configuration, string configSectionName = ConfigApiClientOptions.SectionName)
         {
             var options = new ConfigApiClientOptions();
             configuration.GetSection(configSectionName).Bind(options);
             options.Validate();
-
             services.TryAddSingleton(Options.Create(options));
             services.TryAddSingleton(options);
             var builder = services.AddHttpClient<IConfigApiClient, ConfigApiClient>(client => {
@@ -117,7 +114,8 @@ public static class ConfigApiHttpClientRegistration
                 ConfigApiClient.ApplyApiKey(client.DefaultRequestHeaders, options.ApiKey);
                 LyoHttpClient.ApplyAcceptEncodingHeaders(client, options.AcceptEncodings);
             });
-            return Extensions.UseLyoHttpClientHandler<ConfigApiClientOptions>(builder);
+
+            return builder.UseLyoHttpClientHandler<ConfigApiClientOptions>();
         }
 
         /// <summary>

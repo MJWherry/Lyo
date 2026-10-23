@@ -25,8 +25,8 @@ public interface IApiTokenStore
     Task<IReadOnlyList<ApiTokenRecord>> ListForUserAsync(Guid userId, bool includeRevoked, Guid? tenantId, CancellationToken ct = default);
 
     /// <summary>
-    /// Revokes outstanding Format-B refresh tokens (<c>kind=internal</c>, scope <c>lyo:refresh</c>) for <paramref name="userId" />. When <paramref name="provider" /> is
-    /// set, only tokens whose metadata <c>lyo_provider</c> matches are revoked (one live refresh chain per IdP). Already-revoked rows are left alone.
+    /// Revokes outstanding Format-B refresh tokens (<c>kind=internal</c>, scope <c>lyo:refresh</c>) for <paramref name="userId" />. When <paramref name="provider" /> is set,
+    /// only tokens whose metadata <c>lyo_provider</c> matches are revoked (one live refresh chain per IdP). Already-revoked rows are left alone.
     /// </summary>
     Task RevokeRefreshTokensForUserAsync(Guid userId, string? provider, DateTime revokedAt, string? reason, Guid? tenantId, CancellationToken ct = default);
 

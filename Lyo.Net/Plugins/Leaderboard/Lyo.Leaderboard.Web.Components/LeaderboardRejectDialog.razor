@@ -1,0 +1,19 @@
+<LyoDialog OnSave="Confirm" SaveDisabled="@string.IsNullOrWhiteSpace(_reason)">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Reject entry</MudText>
+    </TitleContent>
+    <TitleChips>
+        @if (Entry != null) {
+            <LyoChip Spec="@LyoChips.Of(Entry.Status.ToString(), LeaderboardColorHelper.ForEntryStatus(Entry.Status))"/>
+        }
+    </TitleChips>
+    <ChildContent>
+        <MudTextField T="string"
+                      Label="Reason"
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      Immediate="true"
+                      Lines="3"
+                      @bind-Value="_reason"/>
+    </ChildContent>
+</LyoDialog>

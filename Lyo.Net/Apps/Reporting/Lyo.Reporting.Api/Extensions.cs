@@ -4,6 +4,7 @@ using Lyo.Api.Models.Error;
 using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
+using Lyo.Query.Models.Parameters;
 using Lyo.Reporting.Models;
 using Lyo.Reporting.Models.Enums;
 using Lyo.Reporting.Models.Rendering;
@@ -11,7 +12,6 @@ using Lyo.Reporting.Models.Request;
 using Lyo.Reporting.Models.Response;
 using Lyo.Reporting.Postgres;
 using Lyo.Reporting.Postgres.Database;
-using Lyo.Query.Models.Parameters;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -43,9 +43,9 @@ public static class Extensions
     }
 
     /// <summary>
-    /// Host registration for the reporting API: <c>AddPostgresReportingManagement</c> (DbContext factory, migrations, CRUD, renderers, <c>ReportService</c>,
-    /// retention, throttle) plus <see cref="AddLyoApiReporting" />. Map routes later with <see cref="BuildReportingGroup" />. Persist outputs with
-    /// <c>AddReportingGenerationHooks</c>; turn on the background sweeper with <c>AddReportingMaintenanceWorker</c>.
+    /// Host registration for the reporting API: <c>AddPostgresReportingManagement</c> (DbContext factory, migrations, CRUD, renderers, <c>ReportService</c>, retention, throttle)
+    /// plus <see cref="AddLyoApiReporting" />. Map routes later with <see cref="BuildReportingGroup" />. Persist outputs with <c>AddReportingGenerationHooks</c>; turn on the background
+    /// sweeper with <c>AddReportingMaintenanceWorker</c>.
     /// </summary>
     public static IServiceCollection AddReportingApi(this IServiceCollection services, Action<PostgresReportingOptions> configure)
     {
@@ -79,13 +79,13 @@ public static class Extensions
         ArgumentHelpers.ThrowIfNull(configuration);
         var options = new PostgresReportingOptions();
         configuration.GetSection(configSectionName).Bind(options);
-
         return services.AddReportingApi(options);
     }
 
     /// <summary>
-    /// Maps Definition CRUD (plus Export), Definition Parameter CRUD, Generation query/get/delete, Generate, Rerun, and Download when
-    /// <see cref="ReportingApiOptions.DownloadStreamFactory" /> is set. Call after <c>AddPostgresReportingManagement</c> and <see cref="AddLyoApiReporting" />.
+    /// Maps Definition CRUD (plus Export), Definition Parameter CRUD, Generation query/get/delete, Generate, Rerun, Download when
+    /// <see cref="ReportingApiOptions.DownloadStreamFactory" /> is set, and invoice PDF (<c>GET /Reporting/Invoices/{id}/pdf</c>) when <c>IBillingStore</c> is registered. Call after
+    /// <c>AddPostgresReportingManagement</c> and <see cref="AddLyoApiReporting" />.
     /// </summary>
     public static WebApplication BuildReportingGroup(this WebApplication app, ReportingApiOptions? options = null)
     {
@@ -182,7 +182,8 @@ public static class Extensions
 
         app.CreateBuilder<ReportingContext, ReportGeneration, ReportGenerationReq, ReportGenerationRes, Guid>(Constants.Rest.Reporting.Generations, "Reporting")
             .WithCrud(
-                ApiFeatureSet.ReadOnly + ApiFeature.Delete + ApiFeature.DeleteBulk, new() {
+                ApiFeatureSet.ReadOnly + ApiFeature.Delete + ApiFeature.DeleteBulk,
+                new() {
                     QueryAuth = options.GenerationAuth,
                     GetAuth = options.GenerationAuth,
                     DeleteAuth = options.GenerationAuth,
@@ -203,11 +204,9 @@ public static class Extensions
 
         generate.ApplyEndpointAuth(options.GenerateAuth);
         var resolveOptions = app.MapPost(
-                $"/{Constants.Rest.Reporting.ResolveParameterOptions}",
-                async (ParameterOptionsResolveReq req, ReportParameterOptionsExecutor executor, CancellationToken ct) => {
-                    if (req is null || string.IsNullOrWhiteSpace(req.OptionsJson) || !ParameterOptionsJson.TryDeserialize(req.OptionsJson, out var options) || options is null) {
+                $"/{Constants.Rest.Reporting.ResolveParameterOptions}", async (ParameterOptionsResolveReq req, ReportParameterOptionsExecutor executor, CancellationToken ct) => {
+                    if (req is null || string.IsNullOrWhiteSpace(req.OptionsJson) || !ParameterOptionsJson.TryDeserialize(req.OptionsJson, out var options) || options is null)
                         return Results.Ok(new ParameterOptionsResolveRes { Error = "Invalid Options JSON." });
-                    }
 
                     var siblings = req.SiblingValues ?? new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
                     return Results.Ok(await executor.ResolveAsync(options, siblings, ct).ConfigureAwait(false));
@@ -217,8 +216,8 @@ public static class Extensions
 
         resolveOptions.ApplyEndpointAuth(options.DefinitionAuth);
         var rerun = app.MapPost(
-                $"/{Constants.Rest.Reporting.Generations}/{{id:guid}}/{Constants.Rest.Reporting.GenerationsRerunSuffix}",
-                async (Guid id, ReportService reportService, HttpContext http, CancellationToken ct, bool includeReportData = false) => {
+                $"/{Constants.Rest.Reporting.Generations}/{{id:guid}}/{Constants.Rest.Reporting.GenerationsRerunSuffix}", async (
+                    Guid id, ReportService reportService, HttpContext http, CancellationToken ct, bool includeReportData = false) => {
                     var identityName = http.User.Identity?.IsAuthenticated == true ? http.User.Identity.Name : null;
                     return await ExecuteGenerationAsync(() => reportService.RerunAsync(id, identityName, includeReportData: includeReportData, ct: ct), ct).ConfigureAwait(false);
                 })
@@ -237,8 +236,7 @@ public static class Extensions
 
                         if (generation.Status != nameof(ReportGenerationStatus.Succeeded) || generation.OutputFileId is not Guid outputFileId) {
                             throw ApiErrorException.From(
-                                LyoProblemDetails.FromCode(
-                                    ApiErrorCodes.Conflict, $"Generation {id} has no downloadable output (status {generation.Status})."));
+                                LyoProblemDetails.FromCode(ApiErrorCodes.Conflict, $"Generation {id} has no downloadable output (status {generation.Status})."));
                         }
 
                         var stream = await downloadFactory(
@@ -263,15 +261,14 @@ public static class Extensions
             download.ApplyEndpointAuth(options.DownloadAuth);
         }
 
+        app.MapBillingInvoicePdf(options);
         return app;
     }
 
     private static Task CleanupGenerationOutputsAsync(IEnumerable<ReportGeneration> generations, IServiceProvider services, CancellationToken ct)
         => ReportGenerationCleanup.InvokeCleanupHooksAsync(generations, services.GetService<ReportGenerationHooks>(), services, ct).AsTask();
 
-    /// <summary>
-    /// Maps generation failures to HTTP: validation is 400, busy is 503, the server generation timeout is 504, a client disconnect is 499, and anything else surfaces as 500.
-    /// </summary>
+    /// <summary>Maps generation failures to HTTP: validation is 400, busy is 503, the server generation timeout is 504, a client disconnect is 499, and anything else surfaces as 500.</summary>
     /// <param name="action">The generation call.</param>
     /// <param name="requestAborted">Request token used to tell a caller disconnect from our own generation timeout.</param>
     internal static async Task<IResult> ExecuteGenerationAsync(Func<Task<ReportGenerationRes>> action, CancellationToken requestAborted)

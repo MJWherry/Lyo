@@ -1,4 +1,18 @@
-import type { ComparisonOperator } from "./whereClause.js";
+import { COMPARISON_OPERATORS, type ComparisonOperator } from "./whereClause.js";
+
+/** Picker group of a `LyoTypeInfo` row (mirrors the server `LyoTypeCategory` enum). */
+export type LyoTypeCategory =
+    | "Unknown"
+    | "Text"
+    | "Boolean"
+    | "Integer"
+    | "Number"
+    | "Temporal"
+    | "Identifier"
+    | "Enum"
+    | "Json"
+    | "Collection"
+    | "Binary";
 
 export type FilterPropertyType =
     | "String"
@@ -39,6 +53,8 @@ export function operatorsFor(type: FilterPropertyType = "String"): ComparisonOpe
                 "NotEndsWith",
                 "In",
                 "NotIn",
+                "Fuzzy",
+                "NotFuzzy",
             ];
         case "Number":
             return [
@@ -68,6 +84,26 @@ export function operatorsFor(type: FilterPropertyType = "String"): ComparisonOpe
             return ["Equals", "NotEquals"];
         default:
             return [...operatorsFor("String")];
+    }
+}
+
+/** Operators for a LyoType category. Identifier ids filter like text (fuzzy included); categories without a rule allow every operator. */
+export function operatorsForCategory(category: LyoTypeCategory): ComparisonOperator[] {
+    switch (category) {
+        case "Text":
+        case "Identifier":
+            return operatorsFor("String");
+        case "Integer":
+        case "Number":
+            return operatorsFor("Number");
+        case "Enum":
+            return operatorsFor("Enum");
+        case "Temporal":
+            return operatorsFor("DateTime");
+        case "Boolean":
+            return operatorsFor("Bool");
+        default:
+            return [...COMPARISON_OPERATORS];
     }
 }
 

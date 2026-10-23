@@ -58,12 +58,20 @@
     {
       "type": "paragraph",
       "title": "Related reading",
-      "text": "Internal people rows with their own `*_source` tables: [`Lyo.People.Models`](../People/Lyo.People.Models/README.md). At import time, link across stores with `EntityRef`."
+      "text": "Internal people rows with their own `*_source` tables: [`Lyo.People.Models`](../../../Plugins/People/Lyo.People.Models/README.md). At import time, link across stores with `EntityRef`."
     }
   ],
   "links": [],
   "readmePath": "Lyo.Net/Core/Geolocation/Lyo.Geolocation/README.md",
   "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
     {
       "name": "Lyo.EntityReference.Models",
       "kind": "lyo",
@@ -85,14 +93,6 @@
       "kind": "lyo",
       "tags": [
         "direct",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Common.Core",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
         "lyo"
       ]
     },

@@ -154,8 +154,8 @@ internal sealed partial class QRIsoEncoder
     /// <param name="forceUtf8">If true, use UTF-8 even when the text fits ISO-8859-1.</param>
     /// <returns>BitArray of the encoded text.</returns>
     /// <remarks>
-    /// Payload is ISO-8859-1 unless a non-ISO-8859-1 character is present or UTF-8 is forced. That does not match the QR Code
-    /// standard, which requires ECI when the encoding is not ISO-8859-1.
+    /// Payload is ISO-8859-1 unless a non-ISO-8859-1 character is present or UTF-8 is forced. That does not match the QR Code standard, which requires ECI when the encoding is
+    /// not ISO-8859-1.
     /// </remarks>
     private static BitArray PlainTextToBinaryByte(string plainText, ECIMode eciMode, bool utf8Bom, bool forceUtf8)
     {
@@ -174,8 +174,8 @@ internal sealed partial class QRIsoEncoder
     /// <param name="offset">Starting offset in the BitArray.</param>
     /// <returns>Next offset in the BitArray after the last bit written.</returns>
     /// <remarks>
-    /// Payload is ISO-8859-1 unless a non-ISO-8859-1 character is present or UTF-8 is forced. That does not match the QR Code
-    /// standard, which requires ECI when the encoding is not ISO-8859-1.
+    /// Payload is ISO-8859-1 unless a non-ISO-8859-1 character is present or UTF-8 is forced. That does not match the QR Code standard, which requires ECI when the encoding is
+    /// not ISO-8859-1.
     /// </remarks>
     private static int PlainTextToBinaryByte(string plainText, ECIMode eciMode, bool utf8Bom, bool forceUtf8, BitArray bitArray, int offset)
     {

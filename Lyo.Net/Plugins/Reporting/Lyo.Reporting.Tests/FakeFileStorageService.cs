@@ -1,6 +1,8 @@
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Compression.Models;
 using Lyo.FileMetadataStore.Models;
+using Lyo.FileStorage;
 using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.Models;
@@ -31,7 +33,7 @@ public sealed class FakeFileStorageService : IFileStorageService
         JsonElement? metadata = null,
         CancellationToken ct = default)
     {
-        var id = Guid.NewGuid();
+        var id = LyoGuid.CreateV7();
         Files[id] = data;
         return Task.FromResult(CreateResult(id, originalFileName, data.LongLength, contentType, charset, pathPrefix, metadata));
     }
@@ -49,7 +51,9 @@ public sealed class FakeFileStorageService : IFileStorageService
         string? tenantId = null,
         JsonElement? metadata = null,
         CancellationToken ct = default)
-        => SaveFileAsync(File.ReadAllBytes(filePath), originalFileName ?? Path.GetFileName(filePath), compress, encrypt, keyId, pathPrefix, chunkSize, contentType, charset, tenantId, metadata, ct);
+        => SaveFileAsync(
+            File.ReadAllBytes(filePath), originalFileName ?? Path.GetFileName(filePath), compress, encrypt, keyId, pathPrefix, chunkSize, contentType, charset, tenantId, metadata,
+            ct);
 
     public Task<FileStoreResult> SaveFromStreamAsync(
         Stream input,
@@ -81,6 +85,8 @@ public sealed class FakeFileStorageService : IFileStorageService
 
     public Task<DirectUploadBeginResult> BeginDirectUploadAsync(DirectUploadBeginRequest request, CancellationToken ct = default) => throw new NotSupportedException();
 
+    public Task<int> SweepExpiredDirectUploadsAsync(int maxUploads = 1000, CancellationToken ct = default) => throw new NotSupportedException();
+
     public Task<FileStoreResult> CompleteDirectUploadAsync(Guid fileId, DirectUploadCompleteRequest? completeRequest = null, CancellationToken ct = default)
         => throw new NotSupportedException();
 
@@ -109,6 +115,9 @@ public sealed class FakeFileStorageService : IFileStorageService
 
         return Task.FromResult(CreateResult(fileId, null, data.LongLength, null, null, null));
     }
+
+    public async Task<FileContentIntegrity> GetContentIntegrityAsync(Guid fileId, CancellationToken ct = default)
+        => FileContentIntegrity.From(await GetMetadataAsync(fileId, ct).ConfigureAwait(false));
 
     public Task<DekMigrationResult> MigrateDeksAsync(
         string sourceKeyId,

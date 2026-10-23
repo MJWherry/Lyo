@@ -7,8 +7,8 @@ namespace Lyo.Api.Authentication;
 
 /// <summary>Hand-rolled <see cref="ILyoMapper" /> for authentication admin Req, entity, and Res types.</summary>
 /// <remarks>
-/// Register as a singleton and nest it first in the host's <see cref="ILyoMapper" /> composite (Security packages must not own <see cref="ILyoMapper" />). QueryProject selects
-/// entity fields; Get/QueryConcrete use these Res mappings. Token Res never includes <c>SecretHash</c>.
+/// Register as a singleton and nest it first in the host's <see cref="ILyoMapper" /> composite (Security packages must not own <see cref="ILyoMapper" />). QueryProject
+/// selects entity fields; Get/QueryConcrete use these Res mappings. Token Res never includes <c>SecretHash</c>.
 /// </remarks>
 public sealed class AuthenticationLyoMapper : ILyoMapper
 {

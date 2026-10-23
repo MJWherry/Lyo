@@ -14,8 +14,8 @@ public partial class KeyStoreWorkbench : ComponentBase
     private string _editKeyId = "";
     private string _editKeyString = "";
     private string _editVersion = "";
-    private IKeyInventoryStore? _inventory;
     private string _inspectVersion = "";
+    private IKeyInventoryStore? _inventory;
     private KeyMetadata? _metadata;
     private string _selectedKeyId = "";
 

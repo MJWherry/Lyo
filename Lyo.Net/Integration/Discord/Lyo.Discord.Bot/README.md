@@ -1,6 +1,8 @@
 # Lyo.Discord.Bot
 
-Library (not an executable) that runs a DSharpPlus Discord bot and upserts guild data into your Lyo API (`Lyo.Discord.Client` against PostgreSQL-backed `Discord/*` endpoints). Host apps (for example `Lyo.TestConsole`) treat it as a base: configure the Discord token under `DiscordBot`, the Lyo API HTTP client under `LyoDiscordClient`, resolve services from DI, and call `RunAsync`.
+Library (not an executable) that runs a DSharpPlus Discord bot and upserts guild data into your Lyo API (`Lyo.Discord.Client` against PostgreSQL-backed `Discord/*` endpoints). Host
+apps (for example `Lyo.TestConsole`) treat it as a base: configure the Discord token under `DiscordBot`, the Lyo API HTTP client under `LyoDiscordClient`, resolve services from DI,
+and call `RunAsync`.
 
 ## Features
 
@@ -30,12 +32,13 @@ await bot.RunAsync(cancellationToken);
 
 `DiscordBot` (→ `LyoDiscordBotOptions`): settings that apply only to Discord.
 
-| Property | Description |
-| --------- | ---------------------------------------------------- |
-| `Token` | Token for the Discord bot. |
+| Property  | Description                                          |
+|-----------|------------------------------------------------------|
+| `Token`   | Token for the Discord bot.                           |
 | `Intents` | Optional. Gateway intent flags; default is `Guilds \ |
 
-`LyoDiscordClient` (→ [`LyoDiscordClientOptions`](../Lyo.Discord.Client/LyoDiscordClientOptions.cs)): HTTP client for the Lyo API (`Discord/*` routes). Inherits `ApiClientOptions`. Set `BaseUrl` (defaults to `http://localhost:5092/` when omitted), plus compression, `AcceptEncodings`, `EnsureStatusCode`, etc.
+`LyoDiscordClient` (→ [`LyoDiscordClientOptions`](../Lyo.Discord.Client/LyoDiscordClientOptions.cs)): HTTP client for the Lyo API (`Discord/*` routes). Inherits `ApiClientOptions`.
+Set `BaseUrl` (defaults to `http://localhost:5092/` when omitted), plus compression, `AcceptEncodings`, `EnsureStatusCode`, etc.
 
 ## Service registration
 
@@ -46,7 +49,8 @@ await bot.RunAsync(cancellationToken);
 
 ## Sync coverage
 
-- **Full guild sync** (owner user if needed, guild row, channels bulk, emojis via REST + bulk, users + members bulk): `GuildAvailable`, `GuildCreated`, `GuildDownloadCompleted` (each guild in the download batch).
+- **Full guild sync** (owner user if needed, guild row, channels bulk, emojis via REST + bulk, users + members bulk): `GuildAvailable`, `GuildCreated`, `GuildDownloadCompleted`
+  (each guild in the download batch).
 - **Guild metadata only**: `GuildUpdated`.
 - **Single channel**: `ChannelCreated`, `ChannelUpdated`.
 - **User + member row**: `GuildMemberAdded`, `GuildMemberUpdated`.
@@ -57,13 +61,13 @@ await bot.RunAsync(cancellationToken);
 A built-in slash-command tree under [`Commands/Settings/`](Commands/Settings) drives per-guild bot configuration through the Lyo API and the
 `DiscordGuildSettings` config-store document. Discord/DSharpPlus will not let a slash group mix direct subcommands and nested subgroups, so everything hangs off subgroups:
 
-| Command | Description |
-| -------------------------------------- | ---------------------------------------------------------------------------------- |
+| Command                                | Description                                                                        |
+|----------------------------------------|------------------------------------------------------------------------------------|
 | `/settings channels setcommandchannel` | Pick the channel where the bot accepts commands (defaults to the current channel). |
-| `/settings channels setlogchannel` | Pick the channel where the bot posts errors and operational notices. |
-| `/settings roles setmodrole` | Pick the moderator role used by bot permission checks. |
-| `/settings roles setadminrole` | Pick the admin role used by bot permission checks. |
-| `/settings info …` | Show effective guild settings (subgroup defined in `GuildSlashSettings`). |
+| `/settings channels setlogchannel`     | Pick the channel where the bot posts errors and operational notices.               |
+| `/settings roles setmodrole`           | Pick the moderator role used by bot permission checks.                             |
+| `/settings roles setadminrole`         | Pick the admin role used by bot permission checks.                                 |
+| `/settings info …`                     | Show effective guild settings (subgroup defined in `GuildSlashSettings`).          |
 
 Shared name/description constants live in [`GuildSlashSettings.cs`](Commands/Settings/GuildSlashSettings.cs); error responses are normalized via
 [`SlashCommandErrorResponder`](Commands/SlashCommandErrorResponder.cs) and `DiscordCommandException`. Register the command module on your DSharpPlus client in
@@ -77,8 +81,9 @@ so the in-process bot reads the latest values without another API round-trip.
 Subclass `LyoDiscordBotBase` and register your type with `AddLyoDiscordBot<MyBot>(configuration)`.
 
 - **`ConfigureDiscordConfiguration`.** tweak `DiscordConfiguration` (for example intents).
-- **`ConfigureDiscordClient`.** register DSharpPlus extensions (for example [CommandsNext](https://github.com/DSharpPlus/DSharpPlus), slash commands, interactivity). Call **before**
- handlers are wired.
+- **`ConfigureDiscordClient`.** register DSharpPlus extensions (for example [CommandsNext](https://github.com/DSharpPlus/DSharpPlus), slash commands, interactivity). Call
+  **before**
+  handlers are wired.
 - **`RegisterDefaultSyncHandlers`.** override if you need to change sync behavior; call `base.RegisterDefaultSyncHandlers(client)` to keep database sync.
 - **`RegisterAdditionalHandlers`.** subscribe to other gateway events.
 
@@ -123,7 +128,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.DependencyInjection` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
 - `Lyo.Api.Models` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.Compression` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
@@ -133,6 +137,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
 - `Lyo.Http.Client` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
@@ -153,6 +158,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.Buffers` `4.6.1` (transitive, microsoft, netstandard2.0)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.RateLimiting` `10.0.5` (transitive, microsoft)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

@@ -46,8 +46,8 @@ public static class LyoJwtClaims
     public const string LyoRing = "lyo:ring";
 
     /// <summary>
-    /// True when <paramref name="type" /> is a reserved JWT or Lyo claim name that user-claim CRUD must not overwrite (<c>iss</c>, <c>sub</c>, <c>aud</c>,
-    /// <c>exp</c>, <c>nbf</c>, <c>iat</c>, <c>jti</c>, <c>scope</c>, or any name starting with <c>lyo:</c>).
+    /// True when <paramref name="type" /> is a reserved JWT or Lyo claim name that user-claim CRUD must not overwrite (<c>iss</c>, <c>sub</c>, <c>aud</c>, <c>exp</c>, <c>nbf</c>
+    /// , <c>iat</c>, <c>jti</c>, <c>scope</c>, or any name starting with <c>lyo:</c>).
     /// </summary>
     public static bool IsReserved(string? type)
     {
@@ -57,13 +57,8 @@ public static class LyoJwtClaims
         if (type!.StartsWith("lyo:", StringComparison.Ordinal))
             return true;
 
-        return type.Equals(Issuer, StringComparison.Ordinal)
-            || type.Equals(Subject, StringComparison.Ordinal)
-            || type.Equals(Audience, StringComparison.Ordinal)
-            || type.Equals(ExpiresAt, StringComparison.Ordinal)
-            || type.Equals(IssuedAt, StringComparison.Ordinal)
-            || type.Equals(NotBefore, StringComparison.Ordinal)
-            || type.Equals(TokenId, StringComparison.Ordinal)
-            || type.Equals(Scope, StringComparison.Ordinal);
+        return type.Equals(Issuer, StringComparison.Ordinal) || type.Equals(Subject, StringComparison.Ordinal) || type.Equals(Audience, StringComparison.Ordinal) ||
+            type.Equals(ExpiresAt, StringComparison.Ordinal) || type.Equals(IssuedAt, StringComparison.Ordinal) || type.Equals(NotBefore, StringComparison.Ordinal) ||
+            type.Equals(TokenId, StringComparison.Ordinal) || type.Equals(Scope, StringComparison.Ordinal);
     }
 }

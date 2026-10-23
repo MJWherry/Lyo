@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Client;
 
 /// <summary>Consumer-side Lyo auth settings. <see cref="AuthBaseUrl" /> is required; the rest default for a web BFF (Gateway-style) host.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LyoAuthClientOptions
 {
     /// <summary>Configuration section name (<c>LyoAuthClient</c>).</summary>
@@ -17,8 +20,8 @@ public sealed class LyoAuthClientOptions
 
     /// <summary>
     /// Browser-facing absolute base URL of the API OIDC endpoints (e.g. <c>https://app.example.com/api</c>). Used when 302ing the user to <c>/auth/login/{provider}</c>. When
-    /// empty, falls back to <see cref="AuthBaseUrl" /> (fine for local single-host). In Docker/compose keep <see cref="AuthBaseUrl" /> as the internal URL and set this to the
-    /// public reverse-proxy URL.
+    /// empty, falls back to <see cref="AuthBaseUrl" /> (fine for local single-host). In Docker/compose keep <see cref="AuthBaseUrl" /> as the internal URL and set this to the public
+    /// reverse-proxy URL.
     /// </summary>
     public string? PublicAuthBaseUrl { get; set; }
 
@@ -45,4 +48,7 @@ public sealed class LyoAuthClientOptions
 
     /// <summary>Grace window on access-token expiry before <see cref="LyoAuthDelegatingHandler" /> refreshes early. Default 30 seconds.</summary>
     public TimeSpan AccessTokenSkew { get; set; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>API base URLs and session lifetime.</summary>
+    public override string ToString() => $"AuthBaseUrl={AuthBaseUrl} PublicAuthBaseUrl={PublicAuthBaseUrl} SessionAbsoluteExpiration={SessionAbsoluteExpiration}";
 }

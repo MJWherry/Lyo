@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -97,4 +98,5 @@ public static class ExifUserCommentDecoder
 }
 
 /// <summary>Parsed Snapchat-style UserComment fields.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record SnapchatUserCommentInfo(string AppName, string AppVersion, string Device, string OsInfo, string Suffix, string Raw);

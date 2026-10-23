@@ -39,8 +39,8 @@ public static class Extensions
         /// <summary>
         /// Registers <see cref="IHttpContextAccessor" />, the fallback <see cref="AmbientCorrelationIdResolver" /> (only when no <see cref="ICorrelationIdResolver" /> is already
         /// registered — <c>AddLyoDiagnosticsWeb</c> wins via the same <c>TryAdd</c> when both packages are present), and swaps <see cref="IAuthAuditContextAccessor" /> for
-        /// <see cref="HttpAuthAuditContextAccessor" /> so audit events pick up the inbound caller's IP, User-Agent, and correlation id (the same id structured logs and
-        /// outbound HTTP headers use). Safe to call more than once.
+        /// <see cref="HttpAuthAuditContextAccessor" /> so audit events pick up the inbound caller's IP, User-Agent, and correlation id (the same id structured logs and outbound HTTP headers
+        /// use). Safe to call more than once.
         /// </summary>
         public IServiceCollection AddLyoAuthHttpContextAccessor()
         {

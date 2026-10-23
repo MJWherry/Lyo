@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Result;
 
 namespace Lyo.ShortUrl.Models;
 
 /// <summary>Outcome of a URL statistics retrieval operation with statistics-specific properties.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record UrlStatisticsResult : Result<UrlStatistics>
 {
     /// <summary>Alias short URL.</summary>

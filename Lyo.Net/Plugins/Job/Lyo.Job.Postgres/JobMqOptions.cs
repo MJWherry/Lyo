@@ -1,9 +1,12 @@
+using System.Diagnostics;
+
 namespace Lyo.Job.Postgres;
 
 /// <summary>
-/// Message-queue topology settings for the job system. Worker run queues are declared at host startup (via
-/// <see cref="Events.MqJobEventPublisher.SetupAsync" />) and again by each worker for its own type if the broker is still empty.
+/// Message-queue topology settings for the job system. Worker run queues are declared at host startup (via <see cref="Events.MqJobEventPublisher.SetupAsync" />) and again by
+/// each worker for its own type if the broker is still empty.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class JobMqOptions
 {
     public const string SectionName = "JobMqOptions";
@@ -28,4 +31,7 @@ public sealed class JobMqOptions
         if (duplicate is not null)
             throw new ArgumentException($"{nameof(WorkerTypes)} contains duplicate worker type '{duplicate.Key}'.", nameof(WorkerTypes));
     }
+
+    /// <summary>How many worker types get run and cancel queues.</summary>
+    public override string ToString() => $"WorkerTypes={WorkerTypes?.Count ?? 0}";
 }

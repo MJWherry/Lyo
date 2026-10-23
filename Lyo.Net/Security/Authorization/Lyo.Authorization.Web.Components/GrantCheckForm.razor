@@ -1,0 +1,19 @@
+@namespace Lyo.Authorization.Web.Components
+
+<MudPaper Class="pa-4" Outlined="true">
+    <MudStack Spacing="2">
+        <MudText Typo="Typo.subtitle1">Check access</MudText>
+        @if (_error is not null) {
+            <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Outlined">@_error</MudAlert>
+        }
+        @if (_allowed is { } allowed) {
+            <LyoChip Color="@(allowed ? Color.Success : Color.Default)" Label="@(allowed ? "Allow" : "Deny")"/>
+        }
+        <MudTextField T="string" @bind-Value="_form.Subject" Label="Subject"/>
+        <MudTextField T="string" @bind-Value="_form.Action" Label="Action"/>
+        <MudTextField T="string" @bind-Value="_form.ResourceType" Label="Resource type"/>
+        <MudTextField T="string" @bind-Value="_form.ResourceId" Label="Resource id" HelperText="Blank matches only a wildcard grant"/>
+        <MudTextField T="string" @bind-Value="_form.TenantId" Label="Tenant" HelperText="Blank matches only a wildcard grant"/>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Disabled="@(_busy || Authorization is null)" OnClick="CheckAsync">Check</MudButton>
+    </MudStack>
+</MudPaper>

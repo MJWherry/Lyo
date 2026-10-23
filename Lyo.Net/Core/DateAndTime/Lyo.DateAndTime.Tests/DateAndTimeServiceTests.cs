@@ -1,7 +1,5 @@
 using Lyo.Common.Core.Enums;
-using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions.Models;
-using Xunit;
 #if NET6_0_OR_GREATER
 using TimeOnly = System.TimeOnly;
 

@@ -2,9 +2,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace Lyo.Postgres.Tests;
 
-/// <summary>
-/// These tests mutate process environment variables, so they share a collection to keep xUnit from running them in parallel.
-/// </summary>
+/// <summary>These tests mutate process environment variables, so they share a collection to keep xUnit from running them in parallel.</summary>
 [Collection(nameof(PostgresDesignTimeTests))]
 [CollectionDefinition(nameof(PostgresDesignTimeTests), DisableParallelization = true)]
 public class PostgresDesignTimeTests : IDisposable

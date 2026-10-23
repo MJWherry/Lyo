@@ -3,12 +3,12 @@ using Microsoft.AspNetCore.Components;
 namespace Lyo.Web.Primitives;
 
 /// <summary>
-/// Standard page heading: breadcrumb trail, icon, title, description, a status chip row, and a right-aligned action area that wraps under the title on narrow
-/// viewports. Use it at the top of every page and workbench so headings line up instead of each page inventing its own arrangement.
+/// Standard page heading: breadcrumb trail, icon, title, description, a status chip row, and a right-aligned action area that wraps under the title on narrow viewports. Use
+/// it at the top of every page and workbench so headings line up instead of each page inventing its own arrangement.
 /// </summary>
 /// <remarks>
-/// <see cref="TitleContent" /> sits inline beside the title for something that belongs to the name itself, such as an environment badge. Status chips belong in
-/// <see cref="Chips" />, which is a wrap row below the bar, for the same reason <c>LyoDialog</c> keeps its chips out of the header row: they collide with the actions.
+/// <see cref="TitleContent" /> sits inline beside the title for something that belongs to the name itself, such as an environment badge. Status chips belong in <see cref="Chips" />,
+/// which is a wrap row below the bar, for the same reason <c>LyoDialog</c> keeps its chips out of the header row: they collide with the actions.
 /// <code>
 /// &lt;LyoPageHeader Title="Nightly export" Description="Runs at 02:00 UTC" Icon="@Icons.Material.Filled.Schedule"
 ///                Breadcrumbs="@([new LyoBreadcrumb("Jobs", "/jobs"), new LyoBreadcrumb("Nightly export")])"&gt;

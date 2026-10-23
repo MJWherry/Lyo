@@ -40,7 +40,7 @@
         [
           "`/auth/profile`, `/auth/profile/{userId:guid}`",
           "`ProfilePage`",
-          "Current user (no segment) or arbitrary user (with `{userId}`, requires `auth.users.read` scope). Edit is shown when `IApiClient` is registered."
+          "Current user (no segment) or arbitrary user (with `{userId}`, requires `auth.users.read` scope). Edit is shown when `IApiClient` is registered. Grants for that user are listed when `IGrantStore` is registered."
         ],
         [
           "`/auth/tokens`",
@@ -50,7 +50,7 @@
         [
           "`/auth/admin`, `/auth/admin/users/{userId:guid}`",
           "`AuthAdminPanel`",
-          "Administrative users / tokens / claims / scopes / identities / audit. Token revoke keeps the row; hard-delete destroys the hash."
+          "Administrative users / tokens / claims / scopes / identities / audit / grants. Token revoke keeps the row; hard-delete destroys the hash."
         ]
       ],
       "trail": "Login, Debug, Profile, and Tokens are wrapped in [`LyoElementRoot`](../../../Apps/Web/Lyo.Web.Components/LyoElementRoot.razor) so each rendered root gets a deterministic DOM id. Override via `ElementId`. `AuthAdminPanel` talks to `Auth/User` (and siblings) through `IApiClient`; do not map those routes anonymous."
@@ -103,6 +103,14 @@
       ]
     },
     {
+      "name": "Lyo.Authorization.Web.Components",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Http.Client",
       "kind": "lyo",
       "tags": [
@@ -135,7 +143,31 @@
       ]
     },
     {
+      "name": "Lyo.Web.Components.Export.Toml",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Web.Components.Export.Xlsx",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Components.Export.Xml",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Components.Export.Yaml",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -160,7 +192,7 @@
       ]
     },
     {
-      "name": "Lyo.Common.Core",
+      "name": "Lyo.Audit",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -168,7 +200,15 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
+      "name": "Lyo.Authorization",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -216,6 +256,14 @@
       ]
     },
     {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Exceptions",
       "kind": "lyo",
       "tags": [
@@ -232,6 +280,14 @@
       ]
     },
     {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.IO.FileSystem",
       "kind": "lyo",
       "tags": [
@@ -241,6 +297,14 @@
     },
     {
       "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -297,6 +361,14 @@
     },
     {
       "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Schedule.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -466,6 +538,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

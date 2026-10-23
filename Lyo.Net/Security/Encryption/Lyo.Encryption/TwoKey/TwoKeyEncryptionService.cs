@@ -14,10 +14,8 @@ using KeyNotFoundException = Lyo.KeyStore.Exceptions.KeyNotFoundException;
 namespace Lyo.Encryption.TwoKey;
 
 /// <summary>
-/// Generic envelope service: a KEK wraps a unique DEK for each encrypt. Any IEncryptionService can fill either role,
-/// so callers can pick algorithms independently: use the same algorithm for DEK and KEK (usual case), use different algorithms when needed, and reuse existing
-/// encryption-service
-/// implementations instead of duplicating crypto.
+/// Generic envelope service: a KEK wraps a unique DEK for each encrypt. Any IEncryptionService can fill either role, so callers can pick algorithms independently: use the
+/// same algorithm for DEK and KEK (usual case), use different algorithms when needed, and reuse existing encryption-service implementations instead of duplicating crypto.
 /// </summary>
 public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncryptionService> : ITwoKeyEncryptionService, IDisposable
     where TKeyEncryptionService : IEncryptionService where TDataEncryptionService : IEncryptionService
@@ -75,10 +73,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
         _keyStore = keyStore;
     }
 
-    /// <summary>
-    /// Creates a service with separate DEK and KEK encryption services. Use when data encryption and key
-    /// wrapping need different algorithms.
-    /// </summary>
+    /// <summary>Creates a service with separate DEK and KEK encryption services. Use when data encryption and key wrapping need different algorithms.</summary>
     /// <param name="dekEncryptionService">Service that encrypts payload data with the DEK</param>
     /// <param name="kekEncryptionService">Service that wraps the DEK with the KEK</param>
     /// <param name="keyStore">Store used to fetch Key Encryption Keys (KEK)</param>
@@ -91,10 +86,7 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
         _keyStore = keyStore;
     }
 
-    /// <summary>
-    /// Disposes this service. Injected DEK/KEK services and the keystore are not disposed: the caller (or DI) owns them and they may be shared with
-    /// other consumers.
-    /// </summary>
+    /// <summary>Disposes this service. Injected DEK/KEK services and the keystore are not disposed: the caller (or DI) owns them and they may be shared with other consumers.</summary>
     public void Dispose() { }
 
     public string FileExtension => _dekEncryptionService.FileExtension + FileTypeInfo.TwoKeyEnvelopeSuffix;
@@ -589,6 +581,103 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
         }
     }
 
+    /// <inheritdoc />
+    public async Task<EncryptedStreamLayout> ReadEncryptedStreamLayoutAsync(Stream prefix, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(prefix);
+        OperationHelpers.ThrowIfNotReadable(prefix, $"Stream '{nameof(prefix)}' must be readable.");
+        if (_dekEncryptionService is not EncryptionServiceBase dekBase) {
+            throw new NotSupportedException(
+                $"The data encryption service '{_dekEncryptionService.GetType().Name}' does not support streaming. It must derive from EncryptionServiceBase (a single-key AEAD service).");
+        }
+
+        var header = new MemoryStream();
+        var fixedHeader = await TakeAsync(prefix, header, 5, "two-key stream header", ct).ConfigureAwait(false);
+        var rawFormat = fixedHeader[0];
+        if (rawFormat != (byte)StreamFormatVersion.V1)
+            throw new NotSupportedException($"Unsupported stream format version: {rawFormat}. Supported: {(byte)StreamFormatVersion.V1}.");
+
+        var dekAlgorithmId = fixedHeader[1];
+        var kekAlgorithmId = fixedHeader[2];
+        var dekKeyMaterialBytes = fixedHeader[3];
+        var dekEncoding = fixedHeader[4];
+        ValidateStreamHeader(dekAlgorithmId, kekAlgorithmId, dekKeyMaterialBytes, dekEncoding);
+        var keyIdBytes = await CopyLengthPrefixedAsync(prefix, header, 1024, "key ID", ct).ConfigureAwait(false);
+        var keyVersionBytes = await CopyLengthPrefixedAsync(prefix, header, 1024, "key version", ct).ConfigureAwait(false);
+        var encryptedDek = await CopyLengthPrefixedAsync(prefix, header, MaxEncryptedDekLength, "encrypted DEK", ct).ConfigureAwait(false);
+        if (encryptedDek.Length == 0)
+            throw new InvalidDataException("Invalid two-key stream: encrypted DEK is missing.");
+
+        var streamKeyId = keyIdBytes.Length > 0 ? Encoding.UTF8.GetString(keyIdBytes) : null;
+        var keyVersion = keyVersionBytes.Length > 0 ? Encoding.UTF8.GetString(keyVersionBytes) : null;
+        byte[]? dek = null;
+        try {
+            dek = UnwrapStreamDek(dekEncoding, encryptedDek, streamKeyId, keyVersion, null);
+            TwoKeyDekValidation.ValidatePlaintextDekLength(dek, dekKeyMaterialBytes);
+            using var cryptor = dekBase.CreateStreamCryptor(dek);
+            var nonceLength = cryptor.NonceSize - AeadStreamProcessor.CounterSize;
+            if (nonceLength > 0)
+                await TakeAsync(prefix, header, nonceLength, "nonce prefix", ct).ConfigureAwait(false);
+
+            var lengthBuffer = new byte[AeadChunkCodec.LengthPrefixSize];
+            if (await AeadChunkCodec.ReadAtLeastAsync(prefix, lengthBuffer, lengthBuffer.Length, ct).ConfigureAwait(false) != lengthBuffer.Length)
+                throw new EndOfStreamException("Unexpected end of stream while reading the first chunk length.");
+
+            var lengthAndFlag = BinaryPrimitives.ReadUInt32LittleEndian(lengthBuffer);
+            var chunkSize = (int)(lengthAndFlag & ~AeadChunkCodec.FinalChunkFlag);
+            if (chunkSize <= 0)
+                throw new InvalidDataException("Invalid two-key stream: the first chunk has no plaintext.");
+
+            var frameSize = AeadChunkCodec.LengthPrefixSize + chunkSize + cryptor.TagSize;
+            var headerBytes = header.ToArray();
+            var layout = new EncryptedStreamLayout(headerBytes.Length, chunkSize, frameSize, headerBytes, dek);
+            dek = null;
+            return layout;
+        }
+        finally {
+            SecurityUtilities.Clear(dek);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task DecryptFromChunkAsync(
+        ReadOnlyMemory<byte> header,
+        Stream ciphertextAtChunk,
+        Stream output,
+        long chunkIndex,
+        int skipPlaintextBytes,
+        long maxPlaintextBytes,
+        byte[] unwrappedDek,
+        CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNull(ciphertextAtChunk);
+        ArgumentHelpers.ThrowIfNull(output);
+        ArgumentHelpers.ThrowIfNull(unwrappedDek);
+        OperationHelpers.ThrowIfNotReadable(ciphertextAtChunk, $"Stream '{nameof(ciphertextAtChunk)}' must be readable.");
+        OperationHelpers.ThrowIfNotWritable(output, $"Stream '{nameof(output)}' must be writable.");
+        ArgumentHelpers.ThrowIfNegative(chunkIndex);
+        ArgumentHelpers.ThrowIfNegative(skipPlaintextBytes);
+        ArgumentHelpers.ThrowIfNegative(maxPlaintextBytes);
+        if (_dekEncryptionService is not EncryptionServiceBase dekBase) {
+            throw new NotSupportedException(
+                $"The data encryption service '{_dekEncryptionService.GetType().Name}' does not support streaming. It must derive from EncryptionServiceBase (a single-key AEAD service).");
+        }
+
+        var parsed = ParseHeaderBytes(header.Span);
+        ValidateStreamHeader(parsed.DekAlgorithmId, parsed.KekAlgorithmId, parsed.DekKeyMaterialBytes, parsed.DekEncoding);
+        TwoKeyDekValidation.ValidatePlaintextDekLength(unwrappedDek, parsed.DekKeyMaterialBytes);
+        using var cryptor = dekBase.CreateStreamCryptor(unwrappedDek);
+        var nonceLength = cryptor.NonceSize - AeadStreamProcessor.CounterSize;
+        if (parsed.NoncePrefix.Length != nonceLength)
+            throw new InvalidDataException($"Invalid two-key stream: nonce prefix is {parsed.NoncePrefix.Length} bytes. Expected {nonceLength}.");
+
+        ReadOnlySpan<byte> immutableFields = [parsed.Format, parsed.DekAlgorithmId, parsed.KekAlgorithmId, parsed.DekKeyMaterialBytes];
+        var (aadNonFinal, aadFinal) = EncryptionServiceBase.BuildChunkAads(BuildImmutableAadHeader(immutableFields, parsed.NoncePrefix), null);
+        await AeadStreamProcessor.DecryptChunksAsync(
+                ciphertextAtChunk, output, cryptor, parsed.NoncePrefix, aadNonFinal, aadFinal, ct, chunkIndex, skipPlaintextBytes, maxPlaintextBytes)
+            .ConfigureAwait(false);
+    }
+
     public async Task EncryptToFileAsync(byte[] data, string outputPath, string? keyId = null, byte[]? kek = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(outputPath);
@@ -744,9 +833,123 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
         return value;
     }
 
+    private void ValidateStreamHeader(byte dekAlgorithmId, byte kekAlgorithmId, byte dekKeyMaterialBytes, byte dekEncoding)
+    {
+        if (dekEncoding is not (DekEncodingEnvelope or DekEncodingAesKeyWrap))
+            throw new InvalidDataException($"Unknown DEK encoding: {dekEncoding}. Supported: {DekEncodingEnvelope} (KEK envelope), {DekEncodingAesKeyWrap} (AES Key Wrap).");
+
+        TwoKeyDekValidation.ValidateHeader(dekAlgorithmId, dekKeyMaterialBytes);
+        var expectedDekAlgId = GetAlgorithmIdFromService(_dekEncryptionService);
+        var expectedKekAlgId = GetAlgorithmIdFromService(_kekEncryptionService);
+        if (dekAlgorithmId != expectedDekAlgId) {
+            throw new InvalidDataException(
+                $"DEK algorithm ID mismatch. Expected {expectedDekAlgId} ({(EncryptionAlgorithm)expectedDekAlgId}), got {dekAlgorithmId} ({(EncryptionAlgorithm)dekAlgorithmId}).");
+        }
+
+        if (kekAlgorithmId != expectedKekAlgId) {
+            throw new InvalidDataException(
+                $"KEK algorithm ID mismatch. Expected {expectedKekAlgId} ({(EncryptionAlgorithm)expectedKekAlgId}), got {kekAlgorithmId} ({(EncryptionAlgorithm)kekAlgorithmId}).");
+        }
+    }
+
+    private byte[] UnwrapStreamDek(byte dekEncoding, byte[] encryptedDek, string? keyId, string? keyVersion, byte[]? kek)
+    {
+        var kekBytes = kek;
+        if (kekBytes == null && keyId != null) {
+            kekBytes = !string.IsNullOrWhiteSpace(keyVersion) ? _keyStore.GetKey(keyId, keyVersion) : _keyStore.GetCurrentKey(keyId);
+        }
+
+        if (kekBytes == null) {
+            var keyInfo = keyId != null ? $"key ID '{keyId}' " : "";
+            var versionInfo = !string.IsNullOrWhiteSpace(keyVersion) ? $"version {keyVersion}" : "current version";
+            throw new KeyNotFoundException(
+                $"No Key Encryption Key available for {keyInfo}{versionInfo} in KeyStore. Ensure the keystore is properly initialized with the required key.");
+        }
+
+        try {
+            if (dekEncoding == DekEncodingAesKeyWrap) {
+                if (!AesKeyWrap.IsValidKekLength(kekBytes.Length))
+                    throw new InvalidDataException($"Stream uses AES Key Wrap DEK encoding, but the resolved KEK is {kekBytes.Length} bytes (expected 16, 24 or 32).");
+
+                return AesKeyWrap.Unwrap(kekBytes, encryptedDek);
+            }
+
+            return _kekEncryptionService.Decrypt(encryptedDek, null, kekBytes);
+        }
+        catch (DecryptionFailedException) {
+            throw;
+        }
+        catch (InvalidDataException) {
+            throw;
+        }
+        catch (Exception ex) {
+            throw new DecryptionFailedException("Failed to decrypt Data Encryption Key. Possible causes: wrong KEK, corrupted data, or authentication failure.", ex);
+        }
+    }
+
+    private static async Task<byte[]> TakeAsync(Stream input, MemoryStream header, int count, string fieldName, CancellationToken ct)
+    {
+        var buffer = new byte[count];
+        if (await AeadChunkCodec.ReadAtLeastAsync(input, buffer, count, ct).ConfigureAwait(false) != count)
+            throw new EndOfStreamException($"Unexpected end of stream while reading {fieldName}.");
+
+        header.Write(buffer, 0, buffer.Length);
+        return buffer;
+    }
+
+    private static async Task<byte[]> CopyLengthPrefixedAsync(Stream input, MemoryStream header, int maxLength, string fieldName, CancellationToken ct)
+    {
+        var lengthBuffer = await TakeAsync(input, header, 4, fieldName, ct).ConfigureAwait(false);
+        var length = BinaryPrimitives.ReadInt32LittleEndian(lengthBuffer);
+        if (length < 0 || length > maxLength)
+            throw new InvalidDataException($"Invalid {fieldName} length: {length}. Maximum allowed: {maxLength} bytes.");
+
+        return length == 0 ? [] : await TakeAsync(input, header, length, fieldName, ct).ConfigureAwait(false);
+    }
+
+    private static ParsedRangeHeader ParseHeaderBytes(ReadOnlySpan<byte> header)
+    {
+        if (header.Length < 5 + 12)
+            throw new InvalidDataException("Invalid two-key stream: header is too short.");
+
+        var format = header[0];
+        if (format != (byte)StreamFormatVersion.V1)
+            throw new NotSupportedException($"Unsupported stream format version: {format}. Supported: {(byte)StreamFormatVersion.V1}.");
+
+        var offset = 5;
+        var keyIdLength = ReadHeaderInt(header, ref offset, "key ID");
+        offset = Advance(header, offset, keyIdLength, "key ID");
+        var keyVersionLength = ReadHeaderInt(header, ref offset, "key version");
+        offset = Advance(header, offset, keyVersionLength, "key version");
+        var encryptedDekLength = ReadHeaderInt(header, ref offset, "encrypted DEK");
+        offset = Advance(header, offset, encryptedDekLength, "encrypted DEK");
+        return new(format, header[1], header[2], header[3], header[4], header[offset..].ToArray());
+    }
+
+    private static int ReadHeaderInt(ReadOnlySpan<byte> header, ref int offset, string fieldName)
+    {
+        if (offset + 4 > header.Length)
+            throw new InvalidDataException($"Invalid two-key stream: header ended while reading {fieldName} length.");
+
+        var length = BinaryPrimitives.ReadInt32LittleEndian(header.Slice(offset, 4));
+        offset += 4;
+        if (length < 0)
+            throw new InvalidDataException($"Invalid {fieldName} length: {length}.");
+
+        return length;
+    }
+
+    private static int Advance(ReadOnlySpan<byte> header, int offset, int length, string fieldName)
+    {
+        if (length > header.Length - offset)
+            throw new InvalidDataException($"Invalid two-key stream: header ended inside {fieldName}.");
+
+        return offset + length;
+    }
+
     /// <summary>
-    /// Builds chunk-auth AAD: the four immutable fixed-header bytes ([FormatVersion][DEKAlgorithmId][KEKAlgorithmId][DekKeyMaterialBytes]) followed by
-    /// the per-stream nonce prefix. Mutable rotation fields (KeyId, KeyVersion, EncryptedDEK, DekEncoding) are omitted so headers can be rewritten in place during KEK rotation.
+    /// Builds chunk-auth AAD: the four immutable fixed-header bytes ([FormatVersion][DEKAlgorithmId][KEKAlgorithmId][DekKeyMaterialBytes]) followed by the per-stream nonce
+    /// prefix. Mutable rotation fields (KeyId, KeyVersion, EncryptedDEK, DekEncoding) are omitted so headers can be rewritten in place during KEK rotation.
     /// </summary>
     private static byte[] BuildImmutableAadHeader(ReadOnlySpan<byte> immutableFixedFields, ReadOnlySpan<byte> noncePrefix)
     {
@@ -763,8 +966,8 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
     private byte[] WrapDek(byte[] dek, byte[]? kek) => UsesAesKeyWrap(kek) ? AesKeyWrap.Wrap(kek!, dek) : _kekEncryptionService.Encrypt(dek, null, kek);
 
     /// <summary>
-    /// Recovers a DEK produced by <see cref="WrapDek" />. Encoding is deterministic from the KEK (service type + key size), so this mirrors <see cref="WrapDek" />
-    /// exactly: AES Key Wrap (RFC 3394 IV integrity) for raw AES-sized KEKs, otherwise the KEK service's envelope decoder.
+    /// Recovers a DEK produced by <see cref="WrapDek" />. Encoding is deterministic from the KEK (service type + key size), so this mirrors <see cref="WrapDek" /> exactly: AES
+    /// Key Wrap (RFC 3394 IV integrity) for raw AES-sized KEKs, otherwise the KEK service's envelope decoder.
     /// </summary>
     private byte[] UnwrapDek(byte[] encryptedDek, byte[]? kek)
         => UsesAesKeyWrap(kek) ? AesKeyWrap.Unwrap(kek!, encryptedDek) : _kekEncryptionService.Decrypt(encryptedDek, null, kek);
@@ -787,4 +990,6 @@ public sealed class TwoKeyEncryptionService<TKeyEncryptionService, TDataEncrypti
 
         throw new InvalidOperationException("Cannot determine algorithm ID from encryption service. Service must implement IEncryptionAlgorithmProvider.");
     }
+
+    private readonly record struct ParsedRangeHeader(byte Format, byte DekAlgorithmId, byte KekAlgorithmId, byte DekKeyMaterialBytes, byte DekEncoding, byte[] NoncePrefix);
 }

@@ -41,9 +41,7 @@ public class JobDefinition
     /// <summary>Days to keep finished runs (with logs, parameters, and results) before the maintenance service purges them. 0 uses the host's global default.</summary>
     public int RetentionDays { get; set; }
 
-    /// <summary>
-    /// Minutes without a heartbeat before a <c>Running</c> job is treated as dead. 0 = disabled (no timeout). <see cref="JobMaintenanceService" /> enforces this.
-    /// </summary>
+    /// <summary>Minutes without a heartbeat before a <c>Running</c> job is treated as dead. 0 = disabled (no timeout). <see cref="JobMaintenanceService" /> enforces this.</summary>
     public int TimeoutMinutes { get; set; }
 
     /// <summary>Max concurrent active runs (Queued + Running). 0 = unlimited.</summary>
@@ -52,9 +50,7 @@ public class JobDefinition
     /// <summary>Consecutive failures before the scheduler automatically disables this definition. 0 turns the circuit breaker off.</summary>
     public int CircuitBreakerThreshold { get; set; }
 
-    /// <summary>
-    /// Minutes after the circuit breaker trips before the definition is automatically re-enabled. Only meaningful when <see cref="CircuitBreakerThreshold" /> &gt; 0.
-    /// </summary>
+    /// <summary>Minutes after the circuit breaker trips before the definition is automatically re-enabled. Only meaningful when <see cref="CircuitBreakerThreshold" /> &gt; 0.</summary>
     public int CircuitBreakerResetMinutes { get; set; }
 
     /// <summary>UTC time when the circuit breaker last tripped (when <c>Enabled</c> was set to false by the circuit breaker).</summary>
@@ -68,16 +64,6 @@ public class JobDefinition
 
     /// <summary>Minutes after a run is queued within which it must start, or SLA is breached. 0 means not configured.</summary>
     public int MustStartByMinutes { get; set; }
-
-    /// <summary>Whether an alert is emitted when a run fails.</summary>
-    public bool AlertOnFailure { get; set; }
-
-    /// <summary>Consecutive failures before an alert is emitted. 0 alerts on every failure when <see cref="AlertOnFailure" /> is true.</summary>
-    public int AlertAfterConsecutiveFailures { get; set; }
-
-    /// <summary>Optional webhook URL that receives POSTed alert payloads.</summary>
-    [MaxLength(500)]
-    public string? AlertWebhookUrl { get; set; }
 
     /// <summary>Monotonic version bumped when the definition changes, for audit correlation with runs.</summary>
     public int DefinitionVersion { get; set; } = 1;
@@ -95,10 +81,6 @@ public class JobDefinition
     public virtual ICollection<JobRun> JobRuns { get; set; } = new List<JobRun>();
 
     public virtual ICollection<JobSchedule> JobSchedules { get; set; } = new List<JobSchedule>();
-
-    public virtual ICollection<JobTrigger> JobTriggerJobDefinitions { get; set; } = new List<JobTrigger>();
-
-    public virtual ICollection<JobTrigger> JobTriggerTriggersJobDefinitions { get; set; } = new List<JobTrigger>();
 
     public virtual ICollection<JobWorkflowStep> JobWorkflowSteps { get; set; } = new List<JobWorkflowStep>();
 }

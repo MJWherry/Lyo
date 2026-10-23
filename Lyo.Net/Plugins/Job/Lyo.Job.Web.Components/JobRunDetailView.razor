@@ -1,4 +1,3 @@
-@using Lyo.Parameters
 @using Lyo.Web.Components.LyoType
 @using Lyo.Web.Components.ParamTable
 @inject ISnackbar Snackbar
@@ -10,20 +9,25 @@
     <TitleChips>
         @if (JobRun != null) {
             <LyoChip Label="@JobRun.State.ToString()" Color="@JobColorHelper.ForState(JobRun.State)" Icon="@JobColorHelper.StateIcon(JobRun.State)"/>
+
             @if (JobRun.Result is { } result) {
                 <LyoChip Label="@result.ToString()" Color="@JobColorHelper.ForResult(result)" Icon="@JobColorHelper.ResultIcon(result)"/>
             }
+
             @if (JobRun.StartedTimestamp is not null) {
                 <LyoChip Color="@JobColorHelper.ForDuration(JobRun.StartedTimestamp, JobRun.FinishedTimestamp)"
                          Icon="@(JobRun.FinishedTimestamp is null ? Icons.Material.Filled.Timer : null)"
                          Label="@JobColorHelper.FormatDurationFromDates(JobRun.StartedTimestamp, JobRun.FinishedTimestamp)"/>
             }
+
             @if (JobRun.SlaBreached) {
                 <LyoChip Color="Color.Error" Label="SLA breached"/>
             }
+
             @if (JobRun.DryRun) {
                 <LyoChip Variant="Variant.Outlined" Label="Dry run"/>
             }
+
             @if (!string.IsNullOrWhiteSpace(JobRun.WorkerMachineName)) {
                 <LyoChip Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Memory"
                          Label="@(JobRun.WorkerProcessId is { } pid ? $"{JobRun.WorkerMachineName}:{pid}" : JobRun.WorkerMachineName)"/>
@@ -106,12 +110,9 @@
                             <LyoChip Variant="Variant.Outlined" Label="@($"Priority {JobRun?.Priority ?? 0}")"/>
                             <LyoChip Variant="Variant.Outlined" Color="@(JobRun?.SlaBreached == true ? Color.Error : Color.Success)"
                                      Label="@(JobRun?.SlaBreached == true ? "SLA breached" : "SLA ok")"/>
-                            <LyoChip Variant="Variant.Outlined" Label="@AlertText"/>
-                            @if (JobRun?.AllowTriggers == true) {
-                                <LyoChip Variant="Variant.Outlined" Label="Triggers allowed"/>
-                            }
                             @if (JobRun?.ParentJobRunId is { } parentId) {
                                 <LyoChip Variant="Variant.Outlined" Label="@($"Batch {(JobRun.BatchIndex is { } i ? $"{i + 1}" : "?")} / {JobRun.BatchTotal?.ToString() ?? "?"}")"/>
+
                                 <span class="job-run-parent-id"><LyoIdField Compact="true" Value="@parentId"/></span>
                             }
                             @if (JobRun?.DefinitionAuditVersion is { } version) {
@@ -140,8 +141,12 @@
                                 @foreach (var r in OrderedResults) {
                                     <tr>
                                         <td class="job-run-mono">@r.Key</td>
-                                        <td><LyoTypeChip TypeName="@r.Type" Variant="Variant.Outlined"/></td>
-                                        <td><LyoTruncatedText Text="@r.Value"/></td>
+                                        <td>
+                                            <LyoTypeChip TypeName="@r.Type" Variant="Variant.Outlined"/>
+                                        </td>
+                                        <td>
+                                            <LyoTruncatedText Text="@r.Value"/>
+                                        </td>
                                     </tr>
                                 }
                                 </tbody>
@@ -229,14 +234,15 @@
 
 @code {
 
-    private RenderFragment<JobRunLogRes> LogMessage => log => @<text>
-        <MudText Typo="Typo.body2">@log.Message</MudText>
-        @if (!string.IsNullOrWhiteSpace(log.Context)) {
-            <MudText Typo="Typo.caption" Class="mud-text-secondary job-run-mono">@log.Context</MudText>
-        }
-        @if (!string.IsNullOrWhiteSpace(log.StackTrace)) {
-            <pre class="job-run-log-stack">@log.StackTrace</pre>
-        }
+    private RenderFragment<JobRunLogRes> LogMessage
+        => log => @<text>
+                       <MudText Typo="Typo.body2">@log.Message</MudText>
+                       @if (!string.IsNullOrWhiteSpace(log.Context)) {
+                           <MudText Typo="Typo.caption" Class="mud-text-secondary job-run-mono">@log.Context</MudText>
+                       }
+                       @if (!string.IsNullOrWhiteSpace(log.StackTrace)) {
+                           <pre class="job-run-log-stack">@log.StackTrace</pre>
+                       }
     </text>;
 
 }

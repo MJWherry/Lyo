@@ -1,12 +1,6 @@
-using System.Net.Http.Json;
 using Lyo.Common.Metadata.Records;
 using Lyo.Result;
 using Lyo.Translation.Models;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Lyo.Translation.Web.Components;
@@ -91,7 +85,8 @@ public partial class TranslationWorkbench
         }
     }
 
-    private static string FormatErrors(IReadOnlyList<Error>? errors) => errors == null || errors.Count == 0 ? "Unknown error." : string.Join(Environment.NewLine, errors.Select(i => $"{i.Code}: {i.Message}"));
+    private static string FormatErrors(IReadOnlyList<Error>? errors)
+        => errors == null || errors.Count == 0 ? "Unknown error." : string.Join(Environment.NewLine, errors.Select(i => $"{i.Code}: {i.Message}"));
 
     private void SetStatus(string message, Severity severity)
     {

@@ -13,4 +13,7 @@ public sealed class TagEntity : EntityRelationEntityBase
 
     /// <summary>URL-friendly slug for this assignment. May be omitted.</summary>
     public string Slug { get; set; } = string.Empty;
+
+    /// <summary>Relation row plus name.</summary>
+    public override string ToString() => $"{base.ToString()} {Name}";
 }

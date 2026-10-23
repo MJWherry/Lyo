@@ -1,8 +1,8 @@
 namespace Lyo.Api.Models.Error;
 
 /// <summary>
-/// Thrown for intentional, caught API failures that carry structured <see cref="LyoProblemDetails" />.
-/// API <c>LoggingMiddleware</c> catches this, logs at Warn, and writes <c>application/problem+json</c>.
+/// Thrown for intentional, caught API failures that carry structured <see cref="LyoProblemDetails" />. API <c>LoggingMiddleware</c> catches this, logs at Warn, and writes
+/// <c>application/problem+json</c>.
 /// </summary>
 public sealed class ApiErrorException : Exception
 {

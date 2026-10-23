@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.ApiEndpoint.Config;
 
 /// <summary>Hooks, per-endpoint authorization, delete includes, metadata options, and patch property rules for a typed CRUD group (used with <c>WithCrud</c>).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record CrudConfiguration<TDbContext, TDbEntity, TRequest>
     where TDbContext : DbContext where TDbEntity : class
 {
@@ -33,7 +35,8 @@ public sealed record CrudConfiguration<TDbContext, TDbEntity, TRequest>
     public Action<DeleteContext<TDbEntity, TDbContext>>? BeforeDelete { get; init; }
 
     /// <summary>
-    /// Async pre-delete hook (for example external blob cleanup). Runs after the synchronous <see cref="BeforeDelete" /> when both are set. Receives the request cancellation token.
+    /// Async pre-delete hook (for example external blob cleanup). Runs after the synchronous <see cref="BeforeDelete" /> when both are set. Receives the request cancellation
+    /// token.
     /// </summary>
     public Func<DeleteContext<TDbEntity, TDbContext>, CancellationToken, Task>? BeforeDeleteAsync { get; init; }
 

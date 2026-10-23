@@ -11,9 +11,7 @@ namespace Lyo.Images.Decoration;
 /// <summary>Stacks a caption band above or below the image, optionally with a downward notch and rounded outside corners.</summary>
 internal static class CaptionDrawer
 {
-    /// <summary>
-    /// Builds a new image whose canvas is taller than the input by the resolved band height. The caller disposes the input and the returned image independently.
-    /// </summary>
+    /// <summary>Builds a new image whose canvas is taller than the input by the resolved band height. The caller disposes the input and the returned image independently.</summary>
     public static Image<Rgba32> Apply(Image<Rgba32> input, CaptionOptions options)
     {
         if (string.IsNullOrWhiteSpace(options.Text))

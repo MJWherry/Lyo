@@ -4,6 +4,7 @@ using Lyo.Common.Core.Enums;
 using Lyo.Query.Models.Common;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Query.Models.Enums;
+using TagScopeA;
 
 namespace Lyo.Api.Tests;
 
@@ -15,7 +16,7 @@ public sealed class QueryCacheTagBuilderTests
 
     [Fact]
     public void EntityTypeTag_DistinguishesSameNamedTypesInDifferentNamespaces()
-        => Assert.NotEqual(QueryCacheTagBuilder.EntityTypeTag(typeof(TagScopeA.Widget)), QueryCacheTagBuilder.EntityTypeTag(typeof(TagScopeB.Widget)));
+        => Assert.NotEqual(QueryCacheTagBuilder.EntityTypeTag(typeof(Widget)), QueryCacheTagBuilder.EntityTypeTag(typeof(TagScopeB.Widget)));
 
     [Fact]
     public void FormatPrimaryKeySegment_IsTypeTaggedAndLengthPrefixed()

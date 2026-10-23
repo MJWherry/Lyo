@@ -10,13 +10,11 @@ public sealed class ReportSectionBodyTests
     public void Enumerate_AllZeroOrder_IsControlsThenSubsections()
     {
         var section = new Section {
-            Controls = [new Block { Content = "b1" }, new Block { Content = "b2" }, new Grid { Title = "g1" }],
-            Subsections = [new() { Title = "child", Order = 0 }]
+            Controls = [new Block { Content = "b1" }, new Block { Content = "b2" }, new Grid { Title = "g1" }], Subsections = [new() { Title = "child", Order = 0 }]
         };
+
         var items = SectionBody.Enumerate(section);
-        Assert.Equal(
-            [SectionBodyKind.Control, SectionBodyKind.Control, SectionBodyKind.Control, SectionBodyKind.Subsection],
-            items.Select(i => i.Kind).ToList());
+        Assert.Equal([SectionBodyKind.Control, SectionBodyKind.Control, SectionBodyKind.Control, SectionBodyKind.Subsection], items.Select(i => i.Kind).ToList());
         Assert.Equal("b1", ((Block)items[0].Control!).Content);
         Assert.Equal("b2", ((Block)items[1].Control!).Content);
         Assert.Equal("g1", ((Grid)items[2].Control!).Title);
@@ -28,10 +26,7 @@ public sealed class ReportSectionBodyTests
     public void Enumerate_MixedOrders_InterleavesControlsAndSubsections()
     {
         var child = new Section { Title = "child", Order = 2 };
-        var section = new Section {
-            Controls = [new Block { Content = "first", Order = 1 }, new Block { Content = "after", Order = 3 }],
-            Subsections = [child]
-        };
+        var section = new Section { Controls = [new Block { Content = "first", Order = 1 }, new Block { Content = "after", Order = 3 }], Subsections = [child] };
         var items = SectionBody.Enumerate(section);
         Assert.Equal(SectionBodyKind.Control, items[0].Kind);
         Assert.Equal(SectionBodyKind.Subsection, items[1].Kind);
@@ -45,9 +40,7 @@ public sealed class ReportSectionBodyTests
     [Fact]
     public void Move_BlockAndTable_Interleaves()
     {
-        var section = new Section {
-            Controls = [new Block { Content = "b1" }, new Block { Content = "b2" }, new Table { Title = "t1" }]
-        };
+        var section = new Section { Controls = [new Block { Content = "b1" }, new Block { Content = "b2" }, new Table { Title = "t1" }] };
         var items = SectionBody.Enumerate(section);
         Assert.True(SectionBody.Move(section, items[2], -1));
         var after = SectionBody.Enumerate(section);
@@ -128,10 +121,7 @@ public sealed class ReportSectionBodyTests
     [Fact]
     public void MoveTableColumnTo_Cells_Permutes()
     {
-        var table = new Table {
-            Columns = [new() { Header = "A" }, new() { Header = "B" }, new() { Header = "C" }],
-            Rows = [new() { Cells = ["a", "b", "c"] }]
-        };
+        var table = new Table { Columns = [new() { Header = "A" }, new() { Header = "B" }, new() { Header = "C" }], Rows = [new() { Cells = ["a", "b", "c"] }] };
         Assert.True(SectionBody.MoveTableColumnTo(table, 0, 3));
         Assert.Equal(["B", "C", "A"], table.Columns.Select(x => x.Header).ToList());
         Assert.Equal(["b", "c", "a"], table.Rows[0].Cells);
@@ -141,9 +131,9 @@ public sealed class ReportSectionBodyTests
     public void MoveTableColumn_Cells_Permutes()
     {
         var table = new Table {
-            Columns = [new() { Header = "A" }, new() { Header = "B" }, new() { Header = "C" }],
-            Rows = [new() { Cells = ["a", "b", "c"] }, new() { Cells = ["1", "2", "3"] }]
+            Columns = [new() { Header = "A" }, new() { Header = "B" }, new() { Header = "C" }], Rows = [new() { Cells = ["a", "b", "c"] }, new() { Cells = ["1", "2", "3"] }]
         };
+
         Assert.True(SectionBody.MoveTableColumn(table, 0, 1));
         Assert.Equal(["B", "A", "C"], table.Columns.Select(c => c.Header).ToList());
         Assert.Equal(["b", "a", "c"], table.Rows[0].Cells);
@@ -155,10 +145,7 @@ public sealed class ReportSectionBodyTests
     {
         var inner = new Table { Title = "nested" };
         var direct = new Table { Title = "direct" };
-        var section = new Section {
-            Controls = [new Grid { Controls = [inner] }, direct],
-            Subsections = [new() { Controls = [new Table { Title = "child" }] }]
-        };
+        var section = new Section { Controls = [new Grid { Controls = [inner] }, direct], Subsections = [new() { Controls = [new Table { Title = "child" }] }] };
         var titles = SectionBody.CollectTables([section]).Select(t => t.Title).ToList();
         Assert.Equal(["nested", "direct", "child"], titles);
     }
@@ -167,14 +154,9 @@ public sealed class ReportSectionBodyTests
     public void Serialize_AfterMove_DoesNotDuplicate()
     {
         var report = new Report<object> {
-            Title = "T",
-            Sections = [
-                new() {
-                    Title = "S",
-                    Controls = [new Block { Content = "b1" }, new Block { Content = "b2" }, new Table { Title = "t1" }]
-                }
-            ]
+            Title = "T", Sections = [new() { Title = "S", Controls = [new Block { Content = "b1" }, new Block { Content = "b2" }, new Table { Title = "t1" }] }]
         };
+
         var section = report.Sections[0];
         SectionBody.Move(section, SectionBody.Enumerate(section)[2], -1);
         var json = ReportJson.Serialize(report);
@@ -189,39 +171,30 @@ public sealed class ReportSectionBodyTests
     }
 
     [Fact]
-    public void Deserialize_LegacyColumnsContentBlocksAndTableGrids_Migrate()
+    public void Deserialize_ColumnsContentBlocksAndGrids_LeavesControlsEmpty()
     {
         const string json = """
-            {
-              "title": "Legacy",
-              "sections": [
-                {
-                  "title": "S",
-                  "columns": [{ "label": "Revenue", "value": "10" }],
-                  "contentBlocks": [{ "content": "hello" }],
-                  "grids": [
-                    {
-                      "title": "Lines",
-                      "columns": [{ "header": "Name", "field": "Name" }],
-                      "rows": [{ "cells": ["Ada"] }]
-                    }
-                  ]
-                }
-              ]
-            }
-            """;
+                            {
+                              "title": "Legacy",
+                              "sections": [
+                                {
+                                  "title": "S",
+                                  "columns": [{ "label": "Revenue", "value": "10" }],
+                                  "contentBlocks": [{ "content": "hello" }],
+                                  "grids": [
+                                    {
+                                      "title": "Lines",
+                                      "columns": [{ "header": "Name", "field": "Name" }],
+                                      "rows": [{ "cells": ["Ada"] }]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                            """;
+
         var report = ReportJson.Deserialize<object>(json);
         var section = Assert.Single(report.Sections);
-        var kpi = Assert.Single(section.Controls.OfType<Grid>());
-        var card = Assert.Single(kpi.Controls.OfType<Card>());
-        Assert.Equal("Revenue", card.Label);
-        Assert.Equal("hello", Assert.Single(section.Controls.OfType<Block>()).Content);
-        var table = Assert.Single(SectionBody.CollectTables([section]));
-        Assert.Equal("Lines", table.Title);
-        Assert.Equal("Name", table.Columns[0].Header);
-        var written = ReportJson.Serialize(report);
-        Assert.Contains("\"controls\"", written, StringComparison.Ordinal);
-        Assert.DoesNotContain("contentBlocks", written, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("columnBandOrder", written, StringComparison.OrdinalIgnoreCase);
+        Assert.Empty(section.Controls);
     }
 }

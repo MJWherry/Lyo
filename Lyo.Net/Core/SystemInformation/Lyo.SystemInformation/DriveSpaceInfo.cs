@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.SystemInformation;
 
 /// <summary>Size and free-space facts for one logical drive.</summary>
@@ -6,4 +8,5 @@ namespace Lyo.SystemInformation;
 /// <param name="Format">File-system format (for example <c>NTFS</c>, <c>ext4</c>).</param>
 /// <param name="TotalSizeBytes">Total capacity of the drive in bytes.</param>
 /// <param name="AvailableFreeSpaceBytes">Free space available to the current user, in bytes.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record DriveSpaceInfo(string Name, string Type, string Format, long TotalSizeBytes, long AvailableFreeSpaceBytes);

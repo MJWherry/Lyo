@@ -20,14 +20,14 @@ services.AddEndatoDbContextFactory(o => {
 
 - `EndatoDbContext` ([`Database/EndatoDbContext.cs`](Database/EndatoDbContext.cs)) and `EndatoDbContextFactory` for design-time tooling.
 - `PostgresEndatoOptions` ([`PostgresEndatoOptions.cs`](PostgresEndatoOptions.cs)). `IPostgresMigrationConfig`. Section `"PostgresEndato"`. Properties: `ConnectionString`,
- `EnableAutoMigrations` (default `false`); `Schema = "endato"` is constant.
+  `EnableAutoMigrations` (default `false`); `Schema = "endato"` is constant.
 - **Migrations** under [`Migrations/`](Migrations).
 
 Person Search and Contact Enrichment stay in separate entity groups on purpose so either source can be cached on its own:
 
-| Group | Entities |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Person Search (`Ps`)** | `EndatoPsQueryEntity`, `EndatoPsPersonEntity`, `EndatoPsAddressEntity`, `EndatoPsEmailAddressEntity`, `EndatoPsPhoneNumberEntity` (+ matching `*Configuration` classes). |
+| Group                         | Entities                                                                                                                                                                 |
+|-------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Person Search (`Ps`)**      | `EndatoPsQueryEntity`, `EndatoPsPersonEntity`, `EndatoPsAddressEntity`, `EndatoPsEmailAddressEntity`, `EndatoPsPhoneNumberEntity` (+ matching `*Configuration` classes). |
 | **Contact Enrichment (`Ce`)** | `EndatoCeQueryEntity`, `EndatoCePersonEntity`, `EndatoCeAddressEntity`, `EndatoCeEmailAddressEntity`, `EndatoCePhoneNumberEntity` (+ matching `*Configuration` classes). |
 
 `OnModelCreating` calls `HasDefaultSchema("endato")` and applies each entity configuration; the migrations history table is stored in the `endato` schema as well.
@@ -36,12 +36,12 @@ Person Search and Contact Enrichment stay in separate entity groups on purpose s
 
 Every registration is an `IServiceCollection` extension (declared inside `extension(IServiceCollection services)` blocks):
 
-| Method | Description |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `AddEndatoDbContext(string connectionString)` | Shortcut: registers the factory plus a scoped `EndatoDbContext` resolved from that factory. |
-| `AddEndatoDbContextFactory(Action<PostgresEndatoOptions>)` | Constructs options in place. |
-| `AddEndatoDbContextFactoryFromConfiguration(config, sectionName?)` | Reads options from configuration (default section `"PostgresEndato"`). |
-| `AddEndatoDbContextFactory(PostgresEndatoOptions)` | Registers `IDbContextFactory<EndatoDbContext>` (Npgsql provider), wires `AddPostgresMigrations<EndatoDbContext, …>`, and points the migrations history table at the `endato` schema. |
+| Method                                                             | Description                                                                                                                                                                          |
+|--------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AddEndatoDbContext(string connectionString)`                      | Shortcut: registers the factory plus a scoped `EndatoDbContext` resolved from that factory.                                                                                          |
+| `AddEndatoDbContextFactory(Action<PostgresEndatoOptions>)`         | Constructs options in place.                                                                                                                                                         |
+| `AddEndatoDbContextFactoryFromConfiguration(config, sectionName?)` | Reads options from configuration (default section `"PostgresEndato"`).                                                                                                               |
+| `AddEndatoDbContextFactory(PostgresEndatoOptions)`                 | Registers `IDbContextFactory<EndatoDbContext>` (Npgsql provider), wires `AddPostgresMigrations<EndatoDbContext, …>`, and points the migrations history table at the `endato` schema. |
 
 ## Dependencies
 

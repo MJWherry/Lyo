@@ -3,9 +3,7 @@ using MudBlazor;
 
 namespace Lyo.Sms.Web.Components;
 
-/// <summary>
-/// Carrier delivery statuses for <see cref="LyoStatusChip" />, keyed as <c>Palette="sms"</c>. Register via <c>AddLyoSmsStatusPalette</c>.
-/// </summary>
+/// <summary>Carrier delivery statuses for <see cref="LyoStatusChip" />, keyed as <c>Palette="sms"</c>. Register via <c>AddLyoSmsStatusPalette</c>.</summary>
 /// <remarks>
 /// String-keyed view of <see cref="SmsColorHelper" />. Carrier words do not line up cleanly with the shared vocabulary: <c>sent</c> and <c>received</c> are terminal
 /// successes here, and <c>accepted</c> is still in flight.

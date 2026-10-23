@@ -1,0 +1,27 @@
+{
+  "name": "lyo-auth-cli",
+  "version": "0.1.0",
+  "description": "lyo-auth CLI: current user and personal access tokens.",
+  "type": "module",
+  "bin": {
+    "lyo-auth": "./dist/main.js"
+  },
+  "main": "./dist/main.js",
+  "types": "./dist/main.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "lyo-api-client": "file:../lyo-api-client",
+    "lyo-auth-api-client": "file:../lyo-auth-api-client"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.6.3",
+    "vitest": "^3.2.0"
+  }
+}

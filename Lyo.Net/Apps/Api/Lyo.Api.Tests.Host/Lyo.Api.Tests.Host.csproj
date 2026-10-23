@@ -6,11 +6,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Json\Lyo.Common.Json.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Json\Lyo.Json\Lyo.Json.csproj"/>
         <ProjectReference Include="..\..\..\Plugins\Job\Lyo.Job.Postgres\Lyo.Job.Postgres.csproj"/>
-        <ProjectReference Include="..\Lyo.Api.Export\Lyo.Api.Export.csproj"/>
-        <ProjectReference Include="..\Lyo.Api.Export.Csv\Lyo.Api.Export.Csv.csproj"/>
-        <ProjectReference Include="..\Lyo.Api.Export.Xlsx\Lyo.Api.Export.Xlsx.csproj"/>
+        <ProjectReference Include="..\Export\Lyo.Api.Export\Lyo.Api.Export.csproj"/>
+        <ProjectReference Include="..\Export\Lyo.Api.Export.Csv\Lyo.Api.Export.Csv.csproj"/>
+        <ProjectReference Include="..\Export\Lyo.Api.Export.Toml\Lyo.Api.Export.Toml.csproj"/>
+        <ProjectReference Include="..\Export\Lyo.Api.Export.Xlsx\Lyo.Api.Export.Xlsx.csproj"/>
+        <ProjectReference Include="..\Export\Lyo.Api.Export.Xml\Lyo.Api.Export.Xml.csproj"/>
+        <ProjectReference Include="..\Export\Lyo.Api.Export.Yaml\Lyo.Api.Export.Yaml.csproj"/>
         <ProjectReference Include="..\Lyo.Api\Lyo.Api.csproj"/>
         <ProjectReference Include="..\..\..\Core\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
         <ProjectReference Include="..\..\..\Data\Csv\Lyo.Csv\Lyo.Csv.csproj"/>

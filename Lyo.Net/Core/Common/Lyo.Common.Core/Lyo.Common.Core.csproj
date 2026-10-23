@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <Description>Dependency-free Lyo primitives: enums, scalar and string extensions, identifier generators (LyoGuid, Ksuid, Ulid, NanoId, Snowflake), cryptographic randomness, HTTP header and content-disposition constants, type conversion, path helpers, and temp-file spooling.</Description>
+        <Description>Dependency-free Lyo primitives: enums, scalar and string extensions, identifier generators (LyoGuid, Ksuid, Ulid, NanoId, Snowflake), desktop User-Agent strings, cryptographic randomness, HTTP header and content-disposition constants, type conversion, path helpers, and temp-file spooling.</Description>
         <PackageTags>common primitives enums extensions identifiers conversion pathing</PackageTags>
     </PropertyGroup>
 

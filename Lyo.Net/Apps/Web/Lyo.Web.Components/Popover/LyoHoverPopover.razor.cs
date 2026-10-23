@@ -3,18 +3,18 @@ using Microsoft.AspNetCore.Components;
 namespace Lyo.Web.Components.Popover;
 
 /// <summary>
-/// Popover that opens on hover and, unlike a tooltip, survives the pointer moving onto it, so the content can be read, scrolled, selected and copied. Clicking the
-/// anchor pins it open until the user closes it.
+/// Popover that opens on hover and, unlike a tooltip, survives the pointer moving onto it, so the content can be read, scrolled, selected and copied. Clicking the anchor
+/// pins it open until the user closes it.
 /// </summary>
 /// <remarks>
-/// Use <see cref="Text" /> for plain text and <see cref="PopoverContent" /> for markup (links, chips, a nested grid). Requires <c>MudPopoverProvider</c> in the host
-/// layout, which MudBlazor already needs for menus and selects. The anchor is focusable, so keyboard users get the same content on focus.
+/// Use <see cref="Text" /> for plain text and <see cref="PopoverContent" /> for markup (links, chips, a nested grid). Requires <c>MudPopoverProvider</c> in the host layout,
+/// which MudBlazor already needs for menus and selects. The anchor is focusable, so keyboard users get the same content on focus.
 /// </remarks>
 public partial class LyoHoverPopover : IDisposable
 {
-    private CancellationTokenSource? _transitionCts;
     private bool _hoverOpen;
     private bool _pinned;
+    private CancellationTokenSource? _transitionCts;
 
     /// <summary>Anchor content the user hovers. The popover positions itself against this element.</summary>
     [Parameter]

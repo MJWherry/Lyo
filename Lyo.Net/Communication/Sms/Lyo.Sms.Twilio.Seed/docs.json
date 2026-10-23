@@ -1,0 +1,16 @@
+{
+  "id": "Lyo.Sms.Twilio.Seed",
+  "name": "Lyo.Sms.Twilio.Seed",
+  "area": "Communication",
+  "tagline": "EF seed of Twilio SMS logs.",
+  "description": "EF seed of Count Twilio SMS logs. Separate from Lyo.Sms.Seed. Schema sms.",
+  "features": [],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Communication/Sms/Lyo.Sms.Twilio.Seed/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

@@ -14,8 +14,8 @@ public enum ApiSecretPatterns
     HighEntropyAssignment = 1 << 2,
 
     /// <summary>
-    /// Format-B Lyo opaque tokens such as <c>lyo_pat_live_01HXY...</c>. Matched independently of <see cref="HighEntropyAssignment" /> so they
-    /// redact even when they are not assigned to a variable.
+    /// Format-B Lyo opaque tokens such as <c>lyo_pat_live_01HXY...</c>. Matched independently of <see cref="HighEntropyAssignment" /> so they redact even when they are not
+    /// assigned to a variable.
     /// </summary>
     LyoToken = 1 << 3
 }

@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Result;
 
 namespace Lyo.Xlsx.Models;
 
 /// <summary>Outcome of an XLSX export, including path, sheet name, and row count when known.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record XlsxExportResult : Result<byte[]>
 {
     /// <summary>Destination file path, when the export wrote to disk.</summary>
@@ -16,6 +18,9 @@ public sealed record XlsxExportResult : Result<byte[]>
 
     /// <summary>Human-readable outcome text.</summary>
     public string? Message { get; init; }
+
+    /// <summary>Path, sheet, row count, and workbook length. Workbook bytes are omitted.</summary>
+    public override string ToString() => $"IsSuccess={IsSuccess} Rows={RowCount} Sheet={WorksheetName} Bytes={Data?.Length ?? 0} Path={FilePath}";
 
     private XlsxExportResult(bool isSuccess, byte[]? data, IReadOnlyList<Error>? errors = null)
         : base(isSuccess, data, errors) { }

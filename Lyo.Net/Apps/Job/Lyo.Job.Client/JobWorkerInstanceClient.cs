@@ -20,7 +20,7 @@ public sealed class JobWorkerInstanceClient(IApiClient client, string? routePref
 
     public Task PatchAsync(PatchRequest patch, CancellationToken ct = default) => client.PatchAsAsync<PatchRequest, object>(Route, patch, ct: ct);
 
-    /// <summary>Patches heartbeat fields. When <paramref name="metadata"/> is given it replaces the stored bag (used to refresh working set / GC heap).</summary>
+    /// <summary>Patches heartbeat fields. When <paramref name="metadata" /> is given it replaces the stored bag (used to refresh working set / GC heap).</summary>
     public Task HeartbeatAsync(Guid instanceId, int inFlightCount, CancellationToken ct = default, IReadOnlyDictionary<string, string?>? metadata = null)
     {
         var patch = PatchRequestBuilder.ForId(instanceId).SetProperty("LastHeartbeatUtc", DateTime.UtcNow).SetProperty("InFlightCount", inFlightCount);

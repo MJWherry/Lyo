@@ -86,14 +86,6 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.DataTable.Models",
       "kind": "lyo",
       "tags": [
@@ -118,7 +110,7 @@
       ]
     },
     {
-      "name": "Lyo.Email.Models",
+      "name": "Lyo.Encryption",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -126,7 +118,7 @@
       ]
     },
     {
-      "name": "Lyo.Encryption",
+      "name": "Lyo.EntityReference.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -167,6 +159,14 @@
     },
     {
       "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -222,7 +222,23 @@
       ]
     },
     {
+      "name": "Lyo.RateLimit",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Schedule.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -299,18 +315,19 @@
       ]
     },
     {
-      "name": "MailKit",
-      "kind": "package",
-      "version": "4.17.0",
-      "tags": [
-        "transitive",
-        "third-party"
-      ]
-    },
-    {
       "name": "Microsoft.Bcl.AsyncInterfaces",
       "kind": "package",
       "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.TimeProvider",
+      "kind": "package",
+      "version": "8.0.1",
       "tags": [
         "transitive",
         "microsoft",
@@ -365,24 +382,6 @@
       ]
     },
     {
-      "name": "Microsoft.Extensions.Options",
-      "kind": "package",
-      "version": "10.0.5",
-      "tags": [
-        "transitive",
-        "microsoft"
-      ]
-    },
-    {
-      "name": "Microsoft.Extensions.Options.ConfigurationExtensions",
-      "kind": "package",
-      "version": "10.0.5",
-      "tags": [
-        "transitive",
-        "microsoft"
-      ]
-    },
-    {
       "name": "System.Buffers",
       "kind": "package",
       "version": "4.6.1",
@@ -419,6 +418,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

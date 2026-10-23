@@ -2,7 +2,9 @@
 
 Typed HTTP client for the [Endato](https://www.endato.com/) data-enrichment REST API.
 
-**Archetype C (vendor client).** Canonical people rows live in [`Lyo.People.Postgres`](../../../Core/People/Lyo.People.Postgres/README.md) (Archetype A); optional vendor cache in [ `Lyo.Endato.Postgres`](../Lyo.Endato.Postgres/README.md) (Archetype D). The host maps Endato DTOs → `Person` + `person_source` (`EntitySourceRecord.From` with `EndatoPsPerson` / `EndatoCePerson` on `source_entity_*`). See [package layout](../../../docs/package-layout.md).
+**Archetype C (vendor client).** People rows live in [`Lyo.People.Postgres`](../../../Plugins/People/Lyo.People.Postgres/README.md) (Archetype E); optional vendor cache in [
+`Lyo.Endato.Postgres`](../Lyo.Endato.Postgres/README.md) (Archetype D). The host maps Endato DTOs → `Person` + `person_source` (`EntitySourceRecord.From` with `EndatoPsPerson` /
+`EndatoCePerson` on `source_entity_*`). See [package layout](../../../docs/package-layout.md).
 
 Subclasses `Lyo.Api.Client.ApiClient` so JSON serialization, Accept-Encoding, and optional request compression behave the same as any other Lyo HTTP client.
 
@@ -37,9 +39,9 @@ services.AddEndatoClient(o => {
 
 [`EndatoClient`](EndatoClient.cs) hangs the two galaxy-API endpoints off manager properties:
 
-| Property | Manager | HTTP call |
-| ------------ | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `Persons` | [`PersonManager.QueryPersonsAsync(query, ct)`](PersonManager.cs) | `POST /PersonSearch` with header `galaxy-search-type: Person`. Returns `PersonQueryResponse`. |
+| Property     | Manager                                                                     | HTTP call                                                                                                   |
+|--------------|-----------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
+| `Persons`    | [`PersonManager.QueryPersonsAsync(query, ct)`](PersonManager.cs)            | `POST /PersonSearch` with header `galaxy-search-type: Person`. Returns `PersonQueryResponse`.               |
 | `Enrichment` | [`EnrichmentManager.QueryEnrichmentAsync(query, ct)`](EnrichmentManager.cs) | `POST /Contact/Enrich` with header `galaxy-search-type: DevAPIContactEnrich`. Returns `EnrichmentResponse`. |
 
 Either manager takes a built query or a [`PersonQueryBuilder`](Models/Person/Request/PersonQueryBuilder.cs) / [
@@ -80,27 +82,28 @@ var response = await client.Enrichment.QueryEnrichmentAsync(query, ct);
 
 ## Number deserialization
 
-`EndatoClient` uses [`LyoJsonSerializerOptions`](../../../Core/Common/Lyo.Common.Json/LyoJsonSerializerOptions.cs) (`AllowReadingFromString`), so latitude/longitude land in `decimal?` whether the API sends JSON numbers or quoted strings.
+`EndatoClient` uses [`LyoJsonSerializerOptions`](../../../Core/Common/Lyo.Common.Json/LyoJsonSerializerOptions.cs) (`AllowReadingFromString`), so latitude/longitude land in
+`decimal?` whether the API sends JSON numbers or quoted strings.
 
 ## Settings ([`EndatoClientOptions`](EndatoClientOptions.cs))
 
 Binds from section `EndatoClient` (overrides the base `ApiClient` section). Picks up every
 [`ApiClientOptions`](../../Api/Lyo.Api.Client/README.md#options-apiclientoptions) flag and adds:
 
-| Property | Description |
-| ------------ | ---------------------------------------------------------------- |
-| `ApName` | Endato AP name (sent as `galaxy-ap-name`). **Required.** |
+| Property     | Description                                                      |
+|--------------|------------------------------------------------------------------|
+| `ApName`     | Endato AP name (sent as `galaxy-ap-name`). **Required.**         |
 | `ApPassword` | Endato AP password (sent as `galaxy-ap-password`). **Required.** |
 
 `BaseUrl` is required (checked in the constructor); point it at `https://api.endato.com` (or another Endato environment).
 
 ## Wire into DI ([`Extensions.cs`](Extensions.cs))
 
-| Method | Description |
-| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Method                                                          | Description                                                                                                 |
+|-----------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
 | `AddEndatoClientFromConfiguration(configuration, sectionName?)` | Reads `EndatoClientOptions` from configuration (default section `"EndatoClient"`) and registers the client. |
-| `AddEndatoClient(Action<EndatoClientOptions> configure)` | Constructs options in place. |
-| `AddEndatoClient(EndatoClientOptions options)` | Takes a ready-made options object. |
+| `AddEndatoClient(Action<EndatoClientOptions> configure)`        | Constructs options in place.                                                                                |
+| `AddEndatoClient(EndatoClientOptions options)`                  | Takes a ready-made options object.                                                                          |
 
 Every overload registers `EndatoClient` as a singleton and takes `ILoggerFactory` plus any registered `HttpClient` from DI.
 
@@ -110,8 +113,8 @@ Example `appsettings.json`:
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
-- `Lyo.Common.Json` (direct, lyo)
 - `Lyo.Http.Client` (direct, lyo)
+- `Lyo.Json` (direct, lyo)
 - `Lyo.Metrics` (direct, lyo)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Http` `10.0.5` (direct, microsoft)
@@ -124,5 +127,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `Microsoft.Extensions.Configuration.Binder` `10.0.5` (transitive, microsoft)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.RateLimiting` `10.0.5` (transitive, microsoft)

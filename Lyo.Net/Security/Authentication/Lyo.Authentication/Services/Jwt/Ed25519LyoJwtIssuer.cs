@@ -25,11 +25,11 @@ public sealed class Ed25519LyoJwtIssuer : ILyoJwtIssuer
     private readonly IAuthAuditRecorder _audit;
     private readonly IAuthAuditContextAccessor _auditContext;
     private readonly IUserClaimStore? _claims;
-    private readonly IUserScopeStore? _scopes;
     private readonly IKeyStore _keys;
     private readonly ILogger<Ed25519LyoJwtIssuer> _logger;
     private readonly LyoJwtOptions _options;
     private readonly ILyoRefreshTokenIssuer? _refreshIssuer;
+    private readonly IUserScopeStore? _scopes;
 
     /// <summary>Builds a new issuer.</summary>
     public Ed25519LyoJwtIssuer(

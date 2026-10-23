@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace Lyo.Postgres.Tests;
@@ -39,10 +38,10 @@ public class PostgresSchemaTests
     public async Task EnsureAsync_ThrowsWhenTheSchemaIsBlank()
     {
         await using var context = PostgresSchema.CreateContext<TestDbContext>(ConnectionString, TestPostgresOptions.Schema);
-        await Assert.ThrowsAsync<ArgumentException>(() => PostgresSchema.EnsureAsync(context, " ", TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentException>(() => PostgresSchema.EnsureAsync(context, " ", TestCt));
     }
 
     [Fact]
     public async Task EnsureAsync_ThrowsWhenTheContextIsNull()
-        => await Assert.ThrowsAsync<ArgumentNullException>(() => PostgresSchema.EnsureAsync(null!, TestPostgresOptions.Schema, TestContext.Current.CancellationToken));
+        => await Assert.ThrowsAsync<ArgumentNullException>(() => PostgresSchema.EnsureAsync(null!, TestPostgresOptions.Schema, TestCt));
 }

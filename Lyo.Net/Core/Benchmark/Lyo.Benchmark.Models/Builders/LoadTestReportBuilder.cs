@@ -1,8 +1,6 @@
 namespace Lyo.Benchmark.Models.Builders;
 
-/// <summary>
-/// Fluent builder for <see cref="LoadTestReport" />. The k6 normalizer (and tests) use it to assemble load-test reports on the same schema as the micro-benchmark path.
-/// </summary>
+/// <summary>Fluent builder for <see cref="LoadTestReport" />. The k6 normalizer (and tests) use it to assemble load-test reports on the same schema as the micro-benchmark path.</summary>
 public sealed class LoadTestReportBuilder
 {
     private readonly LoadTestReport _report;

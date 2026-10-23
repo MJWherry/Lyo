@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.Comic.Postgres.Database;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class PageEntity
 {
     [Key]
@@ -25,4 +27,7 @@ public sealed class PageEntity
     public DateTime? UpdatedTimestamp { get; set; }
 
     public ChapterEntity Chapter { get; set; } = null!;
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

@@ -1,3 +1,5 @@
+using Lyo.Common.Core.Identifiers;
+
 namespace Lyo.Job.Web.Components;
 
 /// <summary>
@@ -7,6 +9,12 @@ namespace Lyo.Job.Web.Components;
 public partial class JobBlackoutCalendarEditor
 {
     private static readonly IReadOnlyList<HolidayInfo> KnownHolidays = [.. HolidayInfo.All.Where(h => !ReferenceEquals(h, HolidayInfo.Unknown))];
+
+    private CalendarEditModel? _edit;
+    private bool _expanded = true;
+    private Guid? _hydratedId;
+    private Guid _hydratedScheduleId;
+    private HashSet<Guid> _loadedWindowIds = [];
 
     [Inject]
     private ISnackbar Snackbar { get; set; } = null!;
@@ -46,100 +54,22 @@ public partial class JobBlackoutCalendarEditor
     [Parameter]
     public EventCallback OnChanged { get; set; }
 
-    private enum WindowKind
-    {
-        Weekdays,
-        CalendarDays,
-        DateRange,
-        Holiday
-    }
+    private IReadOnlyCollection<string> SelectedHolidaySlugs
+        => _edit == null ? [] : [.. _edit.Windows.Where(w => w.Kind == WindowKind.Holiday && !string.IsNullOrWhiteSpace(w.HolidaySlug)).Select(w => w.HolidaySlug!)];
 
-    private sealed class CalendarEditModel
-    {
-        public Guid Id { get; set; }
-
-        public string Name { get; set; } = "Blackout";
-
-        public string? Description { get; set; }
-
-        public bool Enabled { get; set; } = true;
-
-        public List<WindowEditModel> Windows { get; set; } = [];
-    }
-
-    private sealed class WindowEditModel
-    {
-        public Guid? Id { get; set; }
-
-        public Guid ClientKey { get; } = Guid.NewGuid();
-
-        public bool IsNew { get; set; }
-
-        public string Name { get; set; } = "Window";
-
-        public WindowKind Kind { get; set; } = WindowKind.Weekdays;
-
-        public IReadOnlyCollection<DayFlags> Days { get; set; } = FlagEnumUi.SelectedAtomic(DayFlags.EveryDay);
-
-        public IReadOnlyCollection<MonthFlags> Months { get; set; } = FlagEnumUi.SelectedAtomic(MonthFlags.EveryMonth);
-
-        public IReadOnlyCollection<int> DaysOfMonth { get; set; } = [];
-
-        public bool Repeat { get; set; } = true;
-
-        public DateTime? StartDateUtc { get; set; }
-
-        public DateTime? EndDateUtc { get; set; }
-
-        public TimeSpan? StartTime { get; set; } = TimeSpan.Zero;
-
-        public TimeSpan? EndTime { get; set; } = new(23, 59, 0);
-
-        public JobBlackoutPolicy Policy { get; set; } = JobBlackoutPolicy.Skip;
-
-        public bool Enabled { get; set; } = true;
-
-        public string? HolidaySlug { get; set; }
-
-        public bool IncludeObservedDate { get; set; }
-
-        public bool MonthsMatch(MonthFlags preset) => FlagEnumUi.MatchesPreset(Months, preset);
-
-        public void ApplyMonths(MonthFlags preset) => Months = FlagEnumUi.SelectedAtomic(preset);
-
-        public void SetHolidaySlug(string? slug)
-        {
-            HolidaySlug = slug;
-            if (string.IsNullOrWhiteSpace(Name) || Name.StartsWith("Window", StringComparison.Ordinal)) {
-                var holiday = HolidayInfo.FromSlug(slug);
-                if (!ReferenceEquals(holiday, HolidayInfo.Unknown))
-                    Name = holiday.Name;
-            }
-        }
-    }
-
-    private CalendarEditModel? _edit;
-    private Guid? _hydratedId;
-    private Guid _hydratedScheduleId;
-    private HashSet<Guid> _loadedWindowIds = [];
-    private bool _expanded = true;
-
-    private IReadOnlyCollection<string> SelectedHolidaySlugs =>
-        _edit == null
-            ? []
-            : [.. _edit.Windows.Where(w => w.Kind == WindowKind.Holiday && !string.IsNullOrWhiteSpace(w.HolidaySlug)).Select(w => w.HolidaySlug!)];
-
-    private static string KindLabel(WindowKind kind) => kind switch {
-        WindowKind.CalendarDays => "Calendar days",
-        WindowKind.DateRange => "Date range",
-        _ => kind.ToString()
-    };
+    private static string KindLabel(WindowKind kind)
+        => kind switch {
+            WindowKind.CalendarDays => "Calendar days",
+            WindowKind.DateRange => "Date range",
+            var _ => kind.ToString()
+        };
 
     private static string HolidaySelectSummary(IReadOnlyList<string?>? selected)
     {
         var slugs = (selected ?? []).Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s!).ToList();
         if (slugs.Count == 0)
             return "None";
+
         if (slugs.Count == 1) {
             var holiday = HolidayInfo.FromSlug(slugs[0]);
             return ReferenceEquals(holiday, HolidayInfo.Unknown) ? slugs[0] : holiday.Name;
@@ -148,7 +78,7 @@ public partial class JobBlackoutCalendarEditor
         return $"{slugs.Count} holidays";
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     protected override void OnParametersSet()
     {
         if (Calendar == null) {
@@ -211,8 +141,7 @@ public partial class JobBlackoutCalendarEditor
     private async Task AddCalendar()
     {
         try {
-            var created = await ApiClient.PostAsAsync<JobBlackoutCalendarReq, CreateResult<JobBlackoutCalendarRes>>(
-                CalendarRoute, new() { Name = "Blackout", Enabled = true });
+            var created = await ApiClient.PostAsAsync<JobBlackoutCalendarReq, CreateResult<JobBlackoutCalendarRes>>(CalendarRoute, new() { Name = "Blackout", Enabled = true });
             var id = created?.Data?.Id;
             if (id is null || id == Guid.Empty)
                 throw new InvalidOperationException("Calendar create did not return an id.");
@@ -233,12 +162,12 @@ public partial class JobBlackoutCalendarEditor
             return;
 
         if (!await DialogService.ConfirmAsync(
-                "Remove blackout calendar", "Unlink this calendar from the schedule? If no other schedule uses it, the calendar is deleted.", "Remove"))
+            "Remove blackout calendar", "Unlink this calendar from the schedule? If no other schedule uses it, the calendar is deleted.", "Remove"))
             return;
 
         var calendarId = _edit.Id;
         try {
-            var patch = new PatchRequestBuilder().WithKey(ScheduleId).SetProperty("JobBlackoutCalendarId", (Guid?)null).Build();
+            var patch = new PatchRequestBuilder().WithKey(ScheduleId).SetProperty("JobBlackoutCalendarId", null).Build();
             await ApiClient.PatchAsAsync<PatchRequest, PatchResult<object>>(ScheduleRoute, patch);
             try {
                 await ApiClient.DeleteAsAsync<object>($"{CalendarRoute.TrimEnd('/')}/{calendarId}");
@@ -257,10 +186,7 @@ public partial class JobBlackoutCalendarEditor
         }
     }
 
-    private void AddWindow()
-    {
-        _edit?.Windows.Add(new() { IsNew = true, Name = $"Window{(_edit.Windows.Count + 1)}" });
-    }
+    private void AddWindow() => _edit?.Windows.Add(new() { IsNew = true, Name = $"Window{_edit.Windows.Count + 1}" });
 
     private void OnSelectedHolidaysChanged(IReadOnlyCollection<string>? slugs)
     {
@@ -269,11 +195,10 @@ public partial class JobBlackoutCalendarEditor
 
         var wanted = (slugs ?? []).Where(s => !string.IsNullOrWhiteSpace(s)).ToHashSet(StringComparer.OrdinalIgnoreCase);
         _edit.Windows.RemoveAll(w => w.Kind == WindowKind.Holiday && !string.IsNullOrWhiteSpace(w.HolidaySlug) && !wanted.Contains(w.HolidaySlug));
-
-        var existing = _edit.Windows
-            .Where(w => w.Kind == WindowKind.Holiday && !string.IsNullOrWhiteSpace(w.HolidaySlug))
+        var existing = _edit.Windows.Where(w => w.Kind == WindowKind.Holiday && !string.IsNullOrWhiteSpace(w.HolidaySlug))
             .Select(w => w.HolidaySlug!)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
         foreach (var holiday in KnownHolidays) {
             if (!wanted.Contains(holiday.Slug) || existing.Contains(holiday.Slug))
                 continue;
@@ -336,7 +261,10 @@ public partial class JobBlackoutCalendarEditor
             return;
 
         try {
-            var calendarReq = new JobBlackoutCalendarReq { Name = string.IsNullOrWhiteSpace(_edit.Name) ? "Blackout" : _edit.Name, Description = _edit.Description, Enabled = _edit.Enabled };
+            var calendarReq = new JobBlackoutCalendarReq {
+                Name = string.IsNullOrWhiteSpace(_edit.Name) ? "Blackout" : _edit.Name, Description = _edit.Description, Enabled = _edit.Enabled
+            };
+
             await ApiClient.PostAsAsync<UpdateRequest<JobBlackoutCalendarReq>, UpdateResult<JobBlackoutCalendarRes>>(
                 $"{CalendarRoute.TrimEnd('/')}/Update", new(calendarReq, _edit.Id));
 
@@ -362,6 +290,78 @@ public partial class JobBlackoutCalendarEditor
         }
         catch (Exception ex) {
             Snackbar.Add($"Save blackout failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private enum WindowKind
+    {
+        Weekdays,
+        CalendarDays,
+        DateRange,
+        Holiday
+    }
+
+    private sealed class CalendarEditModel
+    {
+        public Guid Id { get; set; }
+
+        public string Name { get; set; } = "Blackout";
+
+        public string? Description { get; set; }
+
+        public bool Enabled { get; set; } = true;
+
+        public List<WindowEditModel> Windows { get; set; } = [];
+    }
+
+    private sealed class WindowEditModel
+    {
+        public Guid? Id { get; set; }
+
+        public Guid ClientKey { get; } = LyoGuid.CreateV7();
+
+        public bool IsNew { get; set; }
+
+        public string Name { get; set; } = "Window";
+
+        public WindowKind Kind { get; set; } = WindowKind.Weekdays;
+
+        public IReadOnlyCollection<DayFlags> Days { get; set; } = FlagEnumUi.SelectedAtomic(DayFlags.EveryDay);
+
+        public IReadOnlyCollection<MonthFlags> Months { get; set; } = FlagEnumUi.SelectedAtomic(MonthFlags.EveryMonth);
+
+        public IReadOnlyCollection<int> DaysOfMonth { get; set; } = [];
+
+        public bool Repeat { get; set; } = true;
+
+        public DateTime? StartDateUtc { get; set; }
+
+        public DateTime? EndDateUtc { get; set; }
+
+        public TimeSpan? StartTime { get; set; } = TimeSpan.Zero;
+
+        public TimeSpan? EndTime { get; set; } = new(23, 59, 0);
+
+        public JobBlackoutPolicy Policy { get; set; } = JobBlackoutPolicy.Skip;
+
+        public bool Enabled { get; set; } = true;
+
+        public string? HolidaySlug { get; set; }
+
+        public bool IncludeObservedDate { get; set; }
+
+        public bool MonthsMatch(MonthFlags preset) => FlagEnumUi.MatchesPreset(Months, preset);
+
+        public void ApplyMonths(MonthFlags preset) => Months = FlagEnumUi.SelectedAtomic(preset);
+
+        public void SetHolidaySlug(string? slug)
+        {
+            HolidaySlug = slug;
+            if (string.IsNullOrWhiteSpace(Name) || Name.StartsWith("Window", StringComparison.Ordinal)) {
+                var holiday = HolidayInfo.FromSlug(slug);
+                if (!ReferenceEquals(holiday, HolidayInfo.Unknown))
+                    Name = holiday.Name;
+            }
         }
     }
 }

@@ -6,14 +6,14 @@ Shared TTS requests, results, options, and event payloads. Provider packages dep
 
 ## Types
 
-| Type | Purpose |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `TtsRequest` | Abstract base: `Text`, plus protected internal backing fields (`VoiceIdInternal`, …) for enums / formats |
-| `TtsResult<TRequest>` | `Result`-based outcome that may include `AudioData`, `RequestId`, `AudioSize` |
-| `TtsSynthesisResult` | Small struct used by [`ITtsService`](../Lyo.Tts/README.md) facades |
-| `TtsServiceOptions` | Defaults (`DefaultVoiceId`, `DefaultOutputFormat`), limits (`MaxTextLength`, bulk caps), and a metrics toggle |
-| `TtsSynthesizingEventArgs<T>` / `TtsSynthesizedEventArgs<T>` | Per-request events |
-| `TtsBulkSynthesizingEventArgs<T>` / `TtsBulkSynthesizedEventArgs<T>` | Batch events |
+| Type                                                                 | Purpose                                                                                                       |
+|----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| `TtsRequest`                                                         | Abstract base: `Text`, plus protected internal backing fields (`VoiceIdInternal`, …) for enums / formats      |
+| `TtsResult<TRequest>`                                                | `Result`-based outcome that may include `AudioData`, `RequestId`, `AudioSize`                                 |
+| `TtsSynthesisResult`                                                 | Small struct used by [`ITtsService`](../Lyo.Tts/README.md) facades                                            |
+| `TtsServiceOptions`                                                  | Defaults (`DefaultVoiceId`, `DefaultOutputFormat`), limits (`MaxTextLength`, bulk caps), and a metrics toggle |
+| `TtsSynthesizingEventArgs<T>` / `TtsSynthesizedEventArgs<T>`         | Per-request events                                                                                            |
+| `TtsBulkSynthesizingEventArgs<T>` / `TtsBulkSynthesizedEventArgs<T>` | Batch events                                                                                                  |
 
 Implementations usually derive a typed request from `TtsRequest` (for example AWS Polly or Typecast) and keep the JSON shape under their control.
 

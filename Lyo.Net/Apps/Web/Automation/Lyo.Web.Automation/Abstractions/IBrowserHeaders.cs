@@ -1,8 +1,8 @@
 namespace Lyo.Web.Automation.Abstractions;
 
 /// <summary>
-/// Extra HTTP request header management for browser engines that support it (for example Playwright). Headers set here are sent with every subsequent request made by the browser.
-/// Consumers should check <c>browser is IBrowserHeaders hdrs</c> before using these members.
+/// Extra HTTP request header management for browser engines that support it (for example Playwright). Headers set here are sent with every subsequent request made by the
+/// browser. Consumers should check <c>browser is IBrowserHeaders hdrs</c> before using these members.
 /// </summary>
 public interface IBrowserHeaders
 {

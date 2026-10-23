@@ -1,12 +1,14 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Health;
 using Lyo.Job.Alerts;
 using Lyo.Job.Models.Enums;
 using Lyo.MessageQueue;
 using Lyo.Notification;
 using Microsoft.Extensions.Logging.Abstractions;
+
 namespace Lyo.Job.Tests;
 
 /// <summary>
@@ -20,7 +22,6 @@ public class JobAlertConsumerTests
     {
         var (handler, publisher, _) = await StartConsumerAsync(new() { DedupWindow = TimeSpan.FromMinutes(5) });
         var alert = Alert(JobAlertType.Failure);
-
         Assert.False(await handler(Serialize(alert)));
         Assert.False(await handler(Serialize(alert)));
         Assert.Single(publisher.Published);
@@ -30,8 +31,7 @@ public class JobAlertConsumerTests
     public async Task RepeatAlert_ForADifferentAlertType_IsNotSuppressed()
     {
         var (handler, publisher, _) = await StartConsumerAsync(new() { DedupWindow = TimeSpan.FromMinutes(5) });
-        var definitionId = Guid.NewGuid();
-
+        var definitionId = LyoGuid.CreateV7();
         await handler(Serialize(Alert(JobAlertType.Failure, definitionId)));
         await handler(Serialize(Alert(JobAlertType.SlaBreach, definitionId)));
         Assert.Equal(2, publisher.Published.Count);
@@ -42,9 +42,8 @@ public class JobAlertConsumerTests
     {
         var (handler, publisher, _) = await StartConsumerAsync(new() { DedupWindow = TimeSpan.FromMilliseconds(50) });
         var alert = Alert(JobAlertType.Failure);
-
         await handler(Serialize(alert));
-        await Task.Delay(TimeSpan.FromMilliseconds(120), TestContext.Current.CancellationToken);
+        await Task.Delay(TimeSpan.FromMilliseconds(120), TestCt);
         await handler(Serialize(alert));
         Assert.Equal(2, publisher.Published.Count);
     }
@@ -54,7 +53,6 @@ public class JobAlertConsumerTests
     {
         var (handler, publisher, _) = await StartConsumerAsync(new() { DedupWindow = TimeSpan.Zero });
         var alert = Alert(JobAlertType.Failure);
-
         await handler(Serialize(alert));
         await handler(Serialize(alert));
         Assert.Equal(2, publisher.Published.Count);
@@ -103,7 +101,12 @@ public class JobAlertConsumerTests
     {
         var webhook = new RecordingWebhookHandler(HttpStatusCode.BadRequest);
         var (handler, _, _) = await StartConsumerAsync(
-            new() { DedupWindow = TimeSpan.Zero, AlertWebhookUrl = "http://localhost/hook", WebhookRetryCount = 3, WebhookRetryDelay = TimeSpan.Zero }, webhook);
+            new() {
+                DedupWindow = TimeSpan.Zero,
+                AlertWebhookUrl = "http://localhost/hook",
+                WebhookRetryCount = 3,
+                WebhookRetryDelay = TimeSpan.Zero
+            }, webhook);
 
         await handler(Serialize(Alert(JobAlertType.Failure)));
         Assert.Equal(1, webhook.Requests);
@@ -133,7 +136,7 @@ public class JobAlertConsumerTests
     private static byte[] Serialize(JobAlertEvent alert) => JsonSerializer.SerializeToUtf8Bytes(alert);
 
     private static JobAlertEvent Alert(JobAlertType type, Guid? definitionId = null)
-        => new(definitionId ?? Guid.NewGuid(), Guid.NewGuid(), type, $"{type} alert", DateTime.UtcNow);
+        => new(definitionId ?? LyoGuid.CreateV7(), LyoGuid.CreateV7(), type, $"{type} alert", DateTime.UtcNow);
 
     /// <summary>
     /// Starts the consumer and captures the queue handler it subscribes with, which is the only way in to its private message pipeline. The consumer is left running: its
@@ -145,9 +148,7 @@ public class JobAlertConsumerTests
     {
         var mq = new RecordingAlertMqService();
         var publisher = new RecordingNotificationPublisher();
-        var consumer = new JobAlertConsumer(
-            mq, options, NullLogger<JobAlertConsumer>.Instance, new SingleClientHttpClientFactory(webhook ?? new(HttpStatusCode.OK)), publisher);
-
+        var consumer = new JobAlertConsumer(mq, options, NullLogger<JobAlertConsumer>.Instance, new SingleClientHttpClientFactory(webhook ?? new(HttpStatusCode.OK)), publisher);
         await consumer.StartAsync(CancellationToken.None);
         for (var i = 0; i < 200 && mq.Handler is null; i++)
             await Task.Delay(10, CancellationToken.None);
@@ -178,6 +179,8 @@ public class JobAlertConsumerTests
         private Exception? _exception;
         private HttpStatusCode _status;
 
+        public int Requests { get; private set; }
+
         public RecordingWebhookHandler(HttpStatusCode status) => _status = status;
 
         public RecordingWebhookHandler(Exception exception)
@@ -185,8 +188,6 @@ public class JobAlertConsumerTests
             _exception = exception;
             _status = HttpStatusCode.OK;
         }
-
-        public int Requests { get; private set; }
 
         public void Succeed()
         {

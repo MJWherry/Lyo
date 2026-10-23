@@ -4,10 +4,12 @@
   "name": "Lyo.HomeInventory.Api",
   "area": "Apps",
   "tagline": "HTTP mapping for the Lyo HomeInventory API (`BuildHomeInventoryGroup`).",
-  "description": "Maps CRUD on `HomeInventoryDbContext` entities (categories, locations, items, movements) via `Lyo.Api` `CreateBuilder` with entity-as-both DTOs. Stock rows use a composite key and are not mapped. Register with `AddHomeInventoryApiFromConfiguration`, then call `BuildHomeInventoryGroup`. Standalone host: `Lyo.HomeInventory.Api.Host`.",
+  "description": "Maps HomeInventory Req/Res CRUD via `Lyo.Api` `CreateBuilder` (categories, locations, items, attachments) plus read-only movements, stock adjust/transfer, nested notes/tags, and optional multipart upload when `IHomeInventoryAttachmentFiles` is registered. Register with `AddHomeInventoryApiFromConfiguration`, then call `BuildHomeInventoryGroup`. Example host: `Lyo.HomeInventory.Api.Example`.",
   "features": [
-    "`BuildHomeInventoryGroup` maps CRUD for categories, locations, items, and movements.",
-    "`AddHomeInventoryApiFromConfiguration` registers the Postgres store, CRUD services, and an identity `ILyoMapper` for entity-as-both mapping."
+    "`BuildHomeInventoryGroup` maps Req/Res CRUD for categories, locations, items, and attachments; movements are read-only.",
+    "Stock endpoints under `HomeInventory/Items/{id}/Stock` (GET/POST, Adjust, Transfer).",
+    "Nested `Notes` and `Tags` on items, locations, and categories; delete cascades those rows.",
+    "`AddHomeInventoryApiFromConfiguration` registers the Postgres store, Note/Tag stores on the same connection, CRUD services, and `HomeInventoryLyoMapper`."
   ],
   "examples": [
     {
@@ -45,7 +47,55 @@
       ]
     },
     {
+      "name": "Lyo.HomeInventory.FileStorage",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.HomeInventory.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.HomeInventory.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Note",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Note.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Tag",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Tag.Postgres",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -62,14 +112,6 @@
     },
     {
       "name": "Lyo.Cache",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Common.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -149,6 +191,22 @@
       ]
     },
     {
+      "name": "Lyo.FileMetadataStore",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FileStorage",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Formatter",
       "kind": "lyo",
       "tags": [
@@ -174,6 +232,30 @@
     },
     {
       "name": "Lyo.HomeInventory",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.FileSystem",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -245,7 +327,23 @@
       ]
     },
     {
+      "name": "Lyo.Query.Sql",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Search.Postgres",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -443,6 +541,15 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Options.DataAnnotations",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
       "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
       "kind": "package",
       "version": "10.0.3",
@@ -497,6 +604,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

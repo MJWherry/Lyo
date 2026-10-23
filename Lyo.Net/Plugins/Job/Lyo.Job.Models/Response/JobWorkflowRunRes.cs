@@ -12,7 +12,10 @@ public sealed record JobWorkflowRunRes(
     DateTime? FinishedTimestamp,
     DateTime CreatedTimestamp,
     IReadOnlyList<JobWorkflowRunStepRes>? RunSteps,
-    JobWorkflowRes? JobWorkflow = null)
+    JobWorkflowRes? JobWorkflow = null,
+    Guid? JobScheduleId = null,
+    DateTime? ScheduledSlotUtc = null,
+    string? InputsJson = null)
 {
     public override string ToString() => $"Workflow={JobWorkflowId} State={State}";
 }

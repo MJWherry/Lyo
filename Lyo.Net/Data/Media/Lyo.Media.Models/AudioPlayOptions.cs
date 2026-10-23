@@ -26,6 +26,5 @@ public sealed record AudioPlayOptions
     public void Validate() => ArgumentHelpers.ThrowIfNotDefined(IoMode);
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"AudioPlayOptions(NoDisplay={NoDisplay}, AutoExit={AutoExit}, IoMode={IoMode}, StartTime={StartTime}, Duration={Duration})";
+    public override string ToString() => $"AudioPlayOptions(NoDisplay={NoDisplay}, AutoExit={AutoExit}, IoMode={IoMode}, StartTime={StartTime}, Duration={Duration})";
 }

@@ -1,0 +1,5 @@
+@namespace Lyo.Web.Components.Media
+
+@foreach (var track in MediaCaptions.Resolve(Captions)) {
+    <track @attributes="MediaCaptions.TrackAttributes(track)"/>
+}

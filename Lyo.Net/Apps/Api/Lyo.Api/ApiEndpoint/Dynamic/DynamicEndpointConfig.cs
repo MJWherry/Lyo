@@ -49,14 +49,14 @@ public sealed class DynamicEndpointDefaults
     public List<string> DeniedSelectFields { get; } = [];
 
     /// <summary>
-    /// Authorization applied to every dynamic route that does not override it. Required: mapping throws when this is null, because the dynamic builder exposes delete, upsert, and
-    /// property-reflecting metadata routes, and silently defaulting those to anonymous is not a safe guess. Set <see cref="EndpointAuth.Anonymous" /> to opt in on purpose.
+    /// Authorization applied to every dynamic route that does not override it. Required: mapping throws when this is null, because the dynamic builder exposes delete, upsert,
+    /// and property-reflecting metadata routes, and silently defaulting those to anonymous is not a safe guess. Set <see cref="EndpointAuth.Anonymous" /> to opt in on purpose.
     /// </summary>
     public EndpointAuth? Auth { get; set; }
 
     /// <summary>
-    /// Request-shape limits applied to the dynamic query routes, the same way <c>QueryConfig</c> limits the typed ones. Defaults are deliberately generous but finite. The dynamic
-    /// routes are reachable for every registered entity, so an unbounded include or select list there is a cheap way to make the database do unbounded work.
+    /// Request-shape limits applied to the dynamic query routes, the same way <c>QueryConfig</c> limits the typed ones. Defaults are deliberately generous but finite. The
+    /// dynamic routes are reachable for every registered entity, so an unbounded include or select list there is a cheap way to make the database do unbounded work.
     /// </summary>
     public QueryPolicy QueryPolicy { get; set; } = new() {
         MaxIncludePathCount = 20,
@@ -64,7 +64,7 @@ public sealed class DynamicEndpointDefaults
         MaxKeySetCount = 100,
         MaxSelectFieldCount = 100,
         MaxComputedFieldCount = 25,
-        MaxComputedTemplateLength = 2048,
+        MaxComputedTemplateLength = 2048
     };
 
     internal EntityEndpointConfig<TContext> ToEntityConfig<TContext>()

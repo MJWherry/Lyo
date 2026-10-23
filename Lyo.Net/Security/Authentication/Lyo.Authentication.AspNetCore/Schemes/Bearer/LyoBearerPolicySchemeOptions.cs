@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Common.Core.Net;
 using Microsoft.AspNetCore.Authentication;
 
 namespace Lyo.Authentication.AspNetCore.Schemes.Bearer;
 
 /// <summary>Options for the dispatcher policy scheme. Inherits the framework <see cref="PolicySchemeOptions.ForwardDefaultSelector" /> hook.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LyoBearerPolicySchemeOptions : PolicySchemeOptions
 {
     /// <summary>Header inspected for the credential. Default = <c>Authorization</c>.</summary>
@@ -14,4 +16,7 @@ public sealed class LyoBearerPolicySchemeOptions : PolicySchemeOptions
 
     /// <summary>Alternate header that may carry the credential with no scheme prefix. Default = <c>X-Api-Key</c>. Set <c>null</c> to skip this header.</summary>
     public string? AlsoAccept { get; set; } = LyoHttpHeaders.ApiKey;
+
+    /// <summary>Header and scheme the dispatcher inspects.</summary>
+    public override string ToString() => $"HeaderName={HeaderName} Scheme={Scheme} AlsoAccept={AlsoAccept}";
 }

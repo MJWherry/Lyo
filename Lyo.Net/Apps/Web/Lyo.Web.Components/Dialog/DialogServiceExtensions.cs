@@ -5,9 +5,7 @@ public static class DialogServiceExtensions
 {
     extension(IDialogService dialogService)
     {
-        /// <summary>
-        /// Asks the user to confirm deleting <paramref name="subject" />. Returns true only on an explicit confirm; dismissing the dialog counts as cancel.
-        /// </summary>
+        /// <summary>Asks the user to confirm deleting <paramref name="subject" />. Returns true only on an explicit confirm; dismissing the dialog counts as cancel.</summary>
         /// <param name="subject">What is being deleted, as it should read in the prompt, for example <c>definition 'Nightly export'</c>.</param>
         /// <param name="consequences">Extra sentence spelling out side effects, such as cascading deletes. Omit when there are none.</param>
         /// <param name="title">Dialog title. Default is "Delete".</param>

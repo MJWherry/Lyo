@@ -1,0 +1,132 @@
+{
+  "id": "Lyo.Authorization.AspNetCore",
+  "name": "Lyo.Authorization.AspNetCore",
+  "area": "Security",
+  "tagline": "RequireGrant for controllers and minimal APIs, beside the existing scope and role checks.",
+  "description": "Call AddLyoApiTokenAuthentication and then AddLyoGrantAuthorization. The grant policy provider forwards every name that does not start with grant|, including scope policies, role policies, the default policy, and the fallback policy. A second call is a no-op.",
+  "features": [
+    "**[RequireGrant] and .RequireGrant()** share one handler. Several attributes on one action are combined with AND.",
+    "**Subject is lyo:user when that claim is set, otherwise sub.** A grant stored only for sub does not match when lyo:user is a different value.",
+    "**Anonymous is 401. Authenticated without a grant is 403.** A store exception is 500. A missing or non-guid tenant route does not succeed and does not throw.",
+    "**MapGrantEndpoints** lists, saves, revokes, and checks grants for an already authenticated caller. Subject is `lyo:user` or else `sub`. Save, revoke, and another subject's list or check require `authorization.grants.manage` when the host passes that policy."
+  ],
+  "examples": [
+    {
+      "title": "Controller and minimal API",
+      "language": "csharp",
+      "code": "[RequireScope(\"note.read\")]\n[RequireRole(\"editor\")]\n[RequireGrant(\"read\", \"note\", resourceIdRoute: \"id\")]\n[HttpGet(\"/notes/{id:guid}\")]\npublic IActionResult GetNote(Guid id) => Ok();\n\ngroup.MapGet(\"/notes/{id:guid}\", GetNote)\n    .RequireScope(\"note.read\")\n    .RequireRole(\"editor\")\n    .RequireGrant(\"read\", \"note\", resourceIdRoute: \"id\");\n\napp.MapGrantEndpoints(GrantEndpoints.ManagePolicyName);"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Security/Authorization/Lyo.Authorization.AspNetCore/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Authorization",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Audit",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

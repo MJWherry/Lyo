@@ -110,6 +110,11 @@
                                 SelectAll="@(SelectAll ?? Request.Select ?? [])"
                                 SelectChanged="@OnSelectChanged"
                                 SelectAllChanged="@OnSelectAllChanged"/>
+                    @if ((Request.Aggregates?.Count ?? 0) > 0) {
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                            Select is the group key. Leave it empty for one summary row.
+                        </MudText>
+                    }
                 </MudPaper>
             </MudItem>
             <MudItem xs="12" md="6">
@@ -120,6 +125,17 @@
                     </MudText>
                     <ComputedFieldsList Items="@(Request.ComputedFields ?? [])"
                                         ItemsChanged="@OnComputedFieldsChanged"/>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12">
+                <MudPaper Elevation="1" Class="pa-3 h-100">
+                    <MudText Typo="Typo.subtitle1" Class="mb-2">Aggregates</MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">
+                        Count with no field counts rows in the group. A collection field, or a path ending in .count, totals that collection. A scalar field counts non-null values.
+                        CountDistinct, Sum, Average, Min, and Max require a field.
+                    </MudText>
+                    <AggregatesList Items="@(Request.Aggregates ?? [])"
+                                    ItemsChanged="@OnAggregatesChanged"/>
                 </MudPaper>
             </MudItem>
         </MudGrid>

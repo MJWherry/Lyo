@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.EntityReference.Models;
 using Lyo.Postgres;
 
 namespace Lyo.Audit.Postgres;
 
 /// <summary>Settings for the PostgreSQL audit recorder.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class PostgresAuditOptions : PostgresOptionsBase
 {
     public const string SectionName = "PostgresAudit";
@@ -15,4 +17,7 @@ public sealed class PostgresAuditOptions : PostgresOptionsBase
 
     /// <inheritdoc />
     protected override string SchemaName => Schema;
+
+    /// <summary>Schema, auto-migrate flag, and tenancy. The connection string is omitted.</summary>
+    public override string ToString() => $"{base.ToString()} Tenancy={Tenancy}";
 }

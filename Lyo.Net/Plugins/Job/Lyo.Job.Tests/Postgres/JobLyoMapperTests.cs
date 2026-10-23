@@ -1,4 +1,5 @@
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
@@ -6,7 +7,6 @@ using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres.Database;
 using Lyo.Job.Postgres.Mapping;
 using Lyo.Parameters;
-using Lyo.Query.Models.Enums;
 using Lyo.Schedule.Models;
 using JobRunResult = Lyo.Job.Models.Enums.JobRunResult;
 
@@ -19,7 +19,7 @@ public class JobLyoMapperTests
     [Fact]
     public void Definition_ReqToEntityToRes_RoundTripsNestedGraph()
     {
-        var otherDefId = Guid.NewGuid();
+        var otherDefId = LyoGuid.CreateV7();
         var req = new JobDefinitionReq("Mapped Job", "desc") {
             Type = "Test",
             WorkerType = "cs",
@@ -46,24 +46,7 @@ public class JobLyoMapperTests
                         new() {
                             Key = "ClientId",
                             Type = LyoTypeInfo.Guid.FullName,
-                            Value = Guid.NewGuid().ToString("D"),
-                            Enabled = true
-                        }
-                    ]
-                }
-            ],
-            CreateTriggers = [
-                new() {
-                    TriggersJobDefinitionId = otherDefId,
-                    JobResultKey = "Result",
-                    Comparison = ComparisonOperatorEnum.Equals,
-                    JobResultValue = "Success",
-                    Enabled = true,
-                    CreateTriggerParameters = [
-                        new() {
-                            Key = "X",
-                            Type = LyoTypeInfo.Int.FullName,
-                            Value = "2",
+                            Value = LyoGuid.CreateV7().ToString("D"),
                             Enabled = true
                         }
                     ]
@@ -92,8 +75,6 @@ public class JobLyoMapperTests
         Assert.Single(entity.JobSchedules);
         Assert.NotEqual(default, entity.JobSchedules.First().CreatedTimestamp);
         Assert.NotNull(entity.JobSchedules.First().JobBlackoutCalendar);
-        Assert.Single(entity.JobTriggerJobDefinitions);
-        Assert.Single(entity.JobTriggerJobDefinitions.First().JobTriggerParameters);
         Assert.Single(entity.JobParallelRestrictionBaseJobDefinitions);
         var res = _mapper.Map<JobDefinitionRes>(entity);
         Assert.Equal("Mapped Job", res.Name);
@@ -102,8 +83,6 @@ public class JobLyoMapperTests
         Assert.Single(res.JobSchedules!);
         Assert.NotNull(res.JobSchedules![0].JobBlackoutCalendar);
         Assert.Equal("Maint", res.JobSchedules[0].JobBlackoutCalendar!.Name);
-        Assert.Single(res.JobTriggers!);
-        Assert.Single(res.JobTriggers![0].TriggerParameters!);
         Assert.Single(res.JobParallelRestrictions!);
     }
 
@@ -111,13 +90,12 @@ public class JobLyoMapperTests
     public void RunResToReq_DoesNotCopyIdempotencyKeyOrScheduledSlot()
     {
         var res = new JobRunRes {
-            Id = Guid.NewGuid(),
-            JobDefinitionId = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
+            JobDefinitionId = LyoGuid.CreateV7(),
             State = JobState.Finished,
             Result = JobRunResult.Success,
             RetryAttempt = 1,
             Priority = 3,
-            AllowTriggers = true,
             IdempotencyKey = "retry:abc:1",
             ScheduledSlotUtc = DateTime.UtcNow.AddMinutes(-5)
         };
@@ -148,15 +126,9 @@ public class JobLyoMapperTests
         Assert.Equal(req.DefaultTemplate, entity.DefaultTemplate);
 
         // Apply has to overwrite and also populate, or clearing an expression default on an existing row would leave the template behind.
-        _mapper.Map(
-            new JobParameterReq {
-                Key = "AsOfDate",
-                Type = LyoTypeInfo.DateTime.FullName
-            }, entity);
-
+        _mapper.Map(new JobParameterReq { Key = "AsOfDate", Type = LyoTypeInfo.DateTime.FullName }, entity);
         Assert.Equal(nameof(LyoParameterDefaultKind.Literal), entity.DefaultKind);
         Assert.Null(entity.DefaultTemplate);
-
         entity.DefaultKind = nameof(LyoParameterDefaultKind.Expression);
         entity.DefaultTemplate = req.DefaultTemplate;
         var res = _mapper.Map<JobParameterRes>(entity);
@@ -168,13 +140,7 @@ public class JobLyoMapperTests
     public void Parameter_UnreadableDefaultKind_ReadsAsLiteral()
     {
         // Rows written before the column existed, or by a client sending garbage, cannot be read as expression-authored.
-        var res = _mapper.Map<JobParameterRes>(
-            new JobParameter {
-                Key = "Code",
-                Type = LyoTypeInfo.String.FullName,
-                DefaultKind = "nonsense"
-            });
-
+        var res = _mapper.Map<JobParameterRes>(new JobParameter { Key = "Code", Type = LyoTypeInfo.String.FullName, DefaultKind = "nonsense" });
         Assert.Equal(LyoParameterDefaultKind.Literal, res.DefaultKind);
     }
 

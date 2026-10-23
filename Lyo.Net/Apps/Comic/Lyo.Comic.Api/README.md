@@ -1,6 +1,7 @@
 # Lyo.Comic.Api
 
-Maps CRUD on `ComicDbContext` entities (series, alternate titles, volumes, chapters, pages, characters) via `Lyo.Api` `CreateBuilder` with entity-as-both DTOs. Register the store with `AddComicApiFromConfiguration` (or `AddPostgresComicStore` plus `AddLyoCrudServices<ComicDbContext>`), then call `BuildComicGroup`. Standalone host: `Lyo.Comic.Api.Host`.
+Maps CRUD on `ComicDbContext` entities (series, alternate titles, volumes, chapters, pages, characters) via `Lyo.Api` `CreateBuilder` with entity-as-both DTOs. Register the store
+with `AddComicApiFromConfiguration` (or `AddPostgresComicStore` plus `AddLyoCrudServices<ComicDbContext>`), then call `BuildComicGroup`. Example host: `Lyo.Comic.Api.Example`.
 
 ## Features
 
@@ -30,7 +31,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Cache` (transitive, lyo)
 - `Lyo.Comic` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.Compression` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
@@ -41,6 +41,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Formatter` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
@@ -49,6 +50,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Query` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Query.Sql` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
 - `Lyo.Validation` (transitive, lyo)
@@ -77,5 +79,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

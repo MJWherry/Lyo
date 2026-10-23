@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.SystemInformation;
 
 /// <summary>Facts for one network interface.</summary>
@@ -10,6 +12,7 @@ namespace Lyo.SystemInformation;
 /// <param name="UnicastAddresses">Unicast IP addresses assigned on this interface.</param>
 /// <param name="GatewayAddresses">Gateway addresses configured on the interface.</param>
 /// <param name="DnsAddresses">DNS server addresses configured on the interface.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record NetworkInterfaceInfo(
     string Name,
     string Description,

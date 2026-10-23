@@ -1,10 +1,8 @@
 using System.Text;
 using System.Text.Json;
 using Lyo.Api.Models.Error;
-using ApiConstants = Lyo.Api.Models.Constants;
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Identifiers;
-using Lyo.Common.Json;
 using Lyo.Diff.ObjectGraph;
 using Lyo.Drift.Models;
 using Lyo.Drift.Models.Request;
@@ -13,7 +11,10 @@ using Lyo.Drift.Postgres.Database;
 using Lyo.Exceptions;
 using Lyo.FileSystemWatcher.Models;
 using Lyo.Hashing;
+using Lyo.Json;
 using Microsoft.EntityFrameworkCore;
+using ApiConstants = Lyo.Api.Models.Constants;
+
 namespace Lyo.Drift.Postgres;
 
 /// <summary>Ingest and query for drift instances, structure snapshots, diffs, and live changes.</summary>
@@ -21,16 +22,12 @@ public sealed class DriftService
 {
     private static readonly JsonSerializerOptions Json = LyoJsonSerializerOptions.Create();
     private readonly IDbContextFactory<DriftDbContext> _factory;
-    private readonly IObjectGraphDiffService _objectGraphDiff;
     private readonly IHashingService _hashing;
+    private readonly IObjectGraphDiffService _objectGraphDiff;
     private readonly PostgresDriftOptions _options;
 
     /// <summary>Builds a service over <paramref name="factory" />.</summary>
-    public DriftService(
-        IDbContextFactory<DriftDbContext> factory,
-        IObjectGraphDiffService objectGraphDiff,
-        IHashingService hashing,
-        PostgresDriftOptions options)
+    public DriftService(IDbContextFactory<DriftDbContext> factory, IObjectGraphDiffService objectGraphDiff, IHashingService hashing, PostgresDriftOptions options)
     {
         ArgumentHelpers.ThrowIfNull(factory);
         ArgumentHelpers.ThrowIfNull(objectGraphDiff);
@@ -51,11 +48,7 @@ public sealed class DriftService
         var now = DateTime.UtcNow;
         var existing = await db.Instances.FirstOrDefaultAsync(i => i.InstanceKey == request.InstanceKey, ct).ConfigureAwait(false);
         if (existing is null) {
-            existing = new DriftInstance {
-                Id = LyoGuid.CreateCombPostgres(),
-                InstanceKey = request.InstanceKey,
-                CreatedTimestamp = now
-            };
+            existing = new() { Id = LyoGuid.CreateCombPostgres(), InstanceKey = request.InstanceKey, CreatedTimestamp = now };
             db.Instances.Add(existing);
         }
 
@@ -74,8 +67,7 @@ public sealed class DriftService
     public async Task<DriftInstanceRes> HeartbeatAsync(Guid instanceId, DriftInstanceHeartbeatReq? request, CancellationToken ct = default)
     {
         await using var db = await _factory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var entity = await db.Instances.FirstOrDefaultAsync(i => i.Id == instanceId, ct).ConfigureAwait(false)
-            ?? throw NotFound($"Drift instance '{instanceId}' was not found.");
+        var entity = await db.Instances.FirstOrDefaultAsync(i => i.Id == instanceId, ct).ConfigureAwait(false) ?? throw NotFound($"Drift instance '{instanceId}' was not found.");
         var now = DateTime.UtcNow;
         entity.LastHeartbeatUtc = request?.LastHeartbeatUtc == default || request is null ? now : request.LastHeartbeatUtc;
         if (request?.State is { } state)
@@ -120,10 +112,10 @@ public sealed class DriftService
             .OrderByDescending(s => s.TakenAtUtc)
             .FirstOrDefaultAsync(ct)
             .ConfigureAwait(false);
-        if (latest != null
-            && string.Equals(latest.ContentHash, hash, StringComparison.Ordinal)
-            && string.Equals(latest.ContentHashAlgorithm, algorithmName, StringComparison.Ordinal))
-            return ToRes(latest, deduped: true);
+
+        if (latest != null && string.Equals(latest.ContentHash, hash, StringComparison.Ordinal) &&
+            string.Equals(latest.ContentHashAlgorithm, algorithmName, StringComparison.Ordinal))
+            return ToRes(latest, true);
 
         var entity = new DriftStructureSnapshot {
             Id = LyoGuid.CreateCombPostgres(),
@@ -137,9 +129,10 @@ public sealed class DriftService
             TreeJson = request.Kind == DriftSnapshotKind.FileTree ? payload : null,
             SystemInfoJson = request.Kind == DriftSnapshotKind.SystemInfo ? payload : null
         };
+
         db.Snapshots.Add(entity);
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
-        return ToRes(entity, deduped: false);
+        return ToRes(entity, false);
     }
 
     /// <summary>Stores a precomputed diff.</summary>
@@ -158,6 +151,7 @@ public sealed class DriftService
             FileChangesJson = request.FileChangesJson,
             SystemDifferencesJson = request.SystemDifferencesJson
         };
+
         db.Diffs.Add(entity);
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         return ToRes(entity);
@@ -183,6 +177,7 @@ public sealed class DriftService
                 OccurredAtUtc = change.OccurredAtUtc == default ? DateTime.UtcNow : change.OccurredAtUtc,
                 ChangeJson = JsonSerializer.Serialize(change, Json)
             };
+
             db.Changes.Add(entity);
             created.Add(entity);
         }
@@ -196,7 +191,7 @@ public sealed class DriftService
     {
         await using var db = await _factory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entity = await db.Snapshots.AsNoTracking().FirstOrDefaultAsync(s => s.Id == snapshotId, ct).ConfigureAwait(false);
-        return entity is null ? null : ToRes(entity, deduped: false);
+        return entity is null ? null : ToRes(entity, false);
     }
 
     /// <summary>Loads one stored diff.</summary>
@@ -214,10 +209,10 @@ public sealed class DriftService
     public async Task<DriftDiffRes> DiffAgainstAsync(Guid snapshotId, Guid otherId, CancellationToken ct = default)
     {
         await using var db = await _factory.CreateDbContextAsync(ct).ConfigureAwait(false);
-        var left = await db.Snapshots.AsNoTracking().FirstOrDefaultAsync(s => s.Id == snapshotId, ct).ConfigureAwait(false)
-            ?? throw NotFound($"Snapshot '{snapshotId}' was not found.");
-        var right = await db.Snapshots.AsNoTracking().FirstOrDefaultAsync(s => s.Id == otherId, ct).ConfigureAwait(false)
-            ?? throw NotFound($"Snapshot '{otherId}' was not found.");
+        var left = await db.Snapshots.AsNoTracking().FirstOrDefaultAsync(s => s.Id == snapshotId, ct).ConfigureAwait(false) ??
+            throw NotFound($"Snapshot '{snapshotId}' was not found.");
+
+        var right = await db.Snapshots.AsNoTracking().FirstOrDefaultAsync(s => s.Id == otherId, ct).ConfigureAwait(false) ?? throw NotFound($"Snapshot '{otherId}' was not found.");
         if (!string.Equals(left.Kind, right.Kind, StringComparison.Ordinal))
             throw Invalid($"Snapshots must be the same kind (got {left.Kind} and {right.Kind}).");
 
@@ -234,10 +229,12 @@ public sealed class DriftService
             var newProjection = DeserializeRequired<SystemInfoDriftProjection>(right.SystemInfoJson, "system-info snapshot");
             var diffs = _objectGraphDiff.GetDifferences(oldProjection, newProjection);
             var dtos = diffs.Select(d => new ObjectGraphDifferenceDto {
-                Path = d.Path,
-                OldValueJson = d.OldValue is null ? null : JsonSerializer.Serialize(d.OldValue, Json),
-                NewValueJson = d.NewValue is null ? null : JsonSerializer.Serialize(d.NewValue, Json)
-            }).ToArray();
+                    Path = d.Path,
+                    OldValueJson = d.OldValue is null ? null : JsonSerializer.Serialize(d.OldValue, Json),
+                    NewValueJson = d.NewValue is null ? null : JsonSerializer.Serialize(d.NewValue, Json)
+                })
+                .ToArray();
+
             systemDifferencesJson = JsonSerializer.Serialize(dtos, Json);
         }
 
@@ -251,6 +248,7 @@ public sealed class DriftService
             FileChangesJson = fileChangesJson,
             SystemDifferencesJson = systemDifferencesJson
         };
+
         db.Diffs.Add(entity);
         await db.SaveChangesAsync(ct).ConfigureAwait(false);
         return ToRes(entity);
@@ -269,14 +267,15 @@ public sealed class DriftService
             .Select(g => g.OrderByDescending(s => s.TakenAtUtc).Select(s => s.Id).First())
             .ToListAsync(ct)
             .ConfigureAwait(false);
+
         var keep = latestIds.ToHashSet();
         var oldSnapshots = await db.Snapshots.Where(s => s.TakenAtUtc < cutoff && !keep.Contains(s.Id)).ToListAsync(ct).ConfigureAwait(false);
         var removedIds = oldSnapshots.Select(s => s.Id).ToHashSet();
         if (removedIds.Count > 0) {
-            var orphanDiffs = await db.Diffs
-                .Where(d => (d.FromSnapshotId != null && removedIds.Contains(d.FromSnapshotId.Value)) || removedIds.Contains(d.ToSnapshotId))
+            var orphanDiffs = await db.Diffs.Where(d => (d.FromSnapshotId != null && removedIds.Contains(d.FromSnapshotId.Value)) || removedIds.Contains(d.ToSnapshotId))
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
+
             db.Diffs.RemoveRange(orphanDiffs);
             db.Snapshots.RemoveRange(oldSnapshots);
         }
@@ -298,14 +297,13 @@ public sealed class DriftService
         var bytes = Encoding.UTF8.GetByteCount(json);
         if (bytes > _options.MaxSnapshotJsonBytes) {
             throw ApiErrorException.From(
-                new LyoProblemDetails(
+                new(
                     $"Snapshot JSON is {bytes} bytes; MaxSnapshotJsonBytes is {_options.MaxSnapshotJsonBytes}.", 413, DateTime.UtcNow,
                     [new(ApiConstants.ApiErrorCodes.UnprocessableEntity, "Snapshot JSON exceeds MaxSnapshotJsonBytes.")]));
         }
     }
 
-    private static string NormalizeWatchRoot(DriftSnapshotKind kind, string? watchRoot)
-        => kind == DriftSnapshotKind.SystemInfo ? "" : watchRoot ?? "";
+    private static string NormalizeWatchRoot(DriftSnapshotKind kind, string? watchRoot) => kind == DriftSnapshotKind.SystemInfo ? "" : watchRoot ?? "";
 
     private static async Task EnsureInstanceExistsAsync(DriftDbContext db, Guid instanceId, CancellationToken ct)
     {
@@ -322,11 +320,9 @@ public sealed class DriftService
         return JsonSerializer.Deserialize<T>(json, Json) ?? throw Invalid($"Stored {name} JSON could not be deserialized.");
     }
 
-    private static ApiErrorException NotFound(string detail)
-        => ApiErrorException.From(LyoProblemDetails.FromCode(ApiConstants.ApiErrorCodes.NotFound, detail));
+    private static ApiErrorException NotFound(string detail) => ApiErrorException.From(LyoProblemDetails.FromCode(ApiConstants.ApiErrorCodes.NotFound, detail));
 
-    private static ApiErrorException Invalid(string detail)
-        => ApiErrorException.From(LyoProblemDetails.FromCode(ApiConstants.ApiErrorCodes.InvalidRequest, detail));
+    private static ApiErrorException Invalid(string detail) => ApiErrorException.From(LyoProblemDetails.FromCode(ApiConstants.ApiErrorCodes.InvalidRequest, detail));
 
     internal static DriftInstanceRes ToRes(DriftInstance e)
         => new() {

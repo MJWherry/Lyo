@@ -1,4 +1,4 @@
-@using Lyo.Common.Core.Enums;
+@using Lyo.Common.Core.Enums
 @using Lyo.Web.Components.FileUpload
 <MudPaper Class="pa-4">
     <MudStack Spacing="3">
@@ -183,7 +183,8 @@
                                                     @foreach (var frame in _calculation.Frames) {
                                                         <LyoRecordCard Title="@($"Frame {frame.Index}")">
                                                             <TitleContent>
-                                                                <LyoChip Color="@(frame.IsIncluded ? Color.Success : Color.Default)" Label="@(frame.IsIncluded ? "Included" : "Excluded")"/>
+                                                                <LyoChip Color="@(frame.IsIncluded ? Color.Success : Color.Default)"
+                                                                         Label="@(frame.IsIncluded ? "Included" : "Excluded")"/>
                                                             </TitleContent>
                                                             <Actions>
                                                                 @FrameActions(frame)
@@ -376,18 +377,19 @@
 
 @code {
 
-    private RenderFragment<SpriteFrameRect> FrameActions => frame => @<text>
-        <MudButton Variant="Variant.Text"
-                   Color="@(frame.IsIncluded ? Color.Warning : Color.Success)"
-                   OnClick="@(() => ToggleFrameAsync(frame.Index))"
-                   Disabled="@_busy">
-            @(frame.IsIncluded ? "Exclude" : "Include")
-        </MudButton>
-        <MudButton Variant="Variant.Text"
-                   OnClick="@(() => PreviewFrameBySourceIndexAsync(frame.Index))"
-                   Disabled="@(!frame.IsIncluded || _busy)">
-            Preview
-        </MudButton>
+    private RenderFragment<SpriteFrameRect> FrameActions
+        => frame => @<text>
+                         <MudButton Variant="Variant.Text"
+                                    Color="@(frame.IsIncluded ? Color.Warning : Color.Success)"
+                                    OnClick="@(() => ToggleFrameAsync(frame.Index))"
+                                    Disabled="@_busy">
+                             @(frame.IsIncluded ? "Exclude" : "Include")
+                         </MudButton>
+                         <MudButton Variant="Variant.Text"
+                                    OnClick="@(() => PreviewFrameBySourceIndexAsync(frame.Index))"
+                                    Disabled="@(!frame.IsIncluded || _busy)">
+                             Preview
+                         </MudButton>
     </text>;
 
 }

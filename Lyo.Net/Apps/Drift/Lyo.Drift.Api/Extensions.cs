@@ -1,4 +1,3 @@
-using Lyo.Api;
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Drift.Models.Request;
@@ -18,27 +17,12 @@ public static class Extensions
     public static WebApplication BuildDriftGroup(this WebApplication app)
     {
         app.CreateBuilder<DriftDbContext, DriftInstance, DriftInstanceReq, DriftInstanceRes, Guid>(DriftRoutes.Instances, "Drift")
-            .WithCrud(
-                ApiFeatureSet.ReadOnly + ApiFeature.Patch + ApiFeature.Delete, new() {
-                    BeforePatch = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow
-                })
+            .WithCrud(ApiFeatureSet.ReadOnly + ApiFeature.Patch + ApiFeature.Delete, new() { BeforePatch = ctx => ctx.Entity.UpdatedTimestamp = DateTime.UtcNow })
             .Build();
 
-        app.CreateBuilder<DriftDbContext, DriftStructureSnapshot, DriftSnapshotReq, DriftSnapshotRes, Guid>(DriftRoutes.Snapshots, "Drift")
-            .WithQuery()
-            .WithGet()
-            .Build();
-
-        app.CreateBuilder<DriftDbContext, DriftDiffSnapshot, DriftDiffReq, DriftDiffRes, Guid>(DriftRoutes.Diffs, "Drift")
-            .WithQuery()
-            .WithGet()
-            .Build();
-
-        app.CreateBuilder<DriftDbContext, DriftChangeEvent, DriftChangeBatchReq, DriftChangeRes, Guid>(DriftRoutes.Changes, "Drift")
-            .WithQuery()
-            .WithGet()
-            .Build();
-
+        app.CreateBuilder<DriftDbContext, DriftStructureSnapshot, DriftSnapshotReq, DriftSnapshotRes, Guid>(DriftRoutes.Snapshots, "Drift").WithQuery().WithGet().Build();
+        app.CreateBuilder<DriftDbContext, DriftDiffSnapshot, DriftDiffReq, DriftDiffRes, Guid>(DriftRoutes.Diffs, "Drift").WithQuery().WithGet().Build();
+        app.CreateBuilder<DriftDbContext, DriftChangeEvent, DriftChangeBatchReq, DriftChangeRes, Guid>(DriftRoutes.Changes, "Drift").WithQuery().WithGet().Build();
         app.MapPost(
                 $"/{DriftRoutes.InstanceUpsert}", async (DriftInstanceReq req, DriftService drift, CancellationToken ct) => {
                     var result = await drift.UpsertInstanceAsync(req, ct).ConfigureAwait(false);

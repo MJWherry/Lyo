@@ -10,6 +10,12 @@ namespace Lyo.Authentication.Web.Components;
 
 public partial class AuthClaimEditDialog
 {
+    private bool _busy;
+
+    private string _type = string.Empty;
+
+    private string _value = string.Empty;
+
     [CascadingParameter]
     public IMudDialogInstance MudDialog { get; set; } = null!;
 
@@ -36,12 +42,6 @@ public partial class AuthClaimEditDialog
     [Inject]
     private ISnackbar Snackbar { get; set; } = null!;
 
-    private string _type = string.Empty;
-
-    private string _value = string.Empty;
-
-    private bool _busy;
-
     private bool _isNew => ClaimId is null;
 
     protected override void OnParametersSet()
@@ -59,9 +59,8 @@ public partial class AuthClaimEditDialog
 
         _busy = true;
         try {
-            if (_isNew) {
+            if (_isNew)
                 await ApiClient.PostAsAsync<AuthClaimReq, CreateResult<object>>(ClaimRoute, new() { UserId = UserId, Type = _type.Trim(), Value = _value });
-            }
             else {
                 var patch = PatchRequestBuilder.New().WithKey(ClaimId!).SetProperty("Type", _type.Trim()).SetProperty("Value", _value).Build();
                 await ApiClient.PatchAsAsync<PatchRequest, PatchResult<object>>(ClaimRoute, patch);

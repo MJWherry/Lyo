@@ -8,9 +8,7 @@ namespace Lyo.Reporting.Models.Composition;
 /// <summary>Maps dataset row objects onto <see cref="Table.Rows" /> using <see cref="Table.FieldMap" /> and column <c>Field</c> names. Does not execute Query or Sproc.</summary>
 public static class TableDataBinder
 {
-    /// <summary>
-    /// Replaces <paramref name="table" /> rows from <paramref name="rows" />. Missing parameter data yields an empty row list. Unknown columns become null cells.
-    /// </summary>
+    /// <summary>Replaces <paramref name="table" /> rows from <paramref name="rows" />. Missing parameter data yields an empty row list. Unknown columns become null cells.</summary>
     public static void Apply(Table table, IReadOnlyList<IReadOnlyDictionary<string, object?>>? rows)
     {
         ArgumentHelpers.ThrowIfNull(table);
@@ -18,9 +16,7 @@ public static class TableDataBinder
         table.Rows.AddRange(ProjectRows(table, rows));
     }
 
-    /// <summary>
-    /// Builds table rows from dataset objects without mutating <paramref name="table" />. Used by the design canvas so example JSON can paint without cloning.
-    /// </summary>
+    /// <summary>Builds table rows from dataset objects without mutating <paramref name="table" />. Used by the design canvas so example JSON can paint without cloning.</summary>
     public static List<TableRow> ProjectRows(Table table, IReadOnlyList<IReadOnlyDictionary<string, object?>>? rows)
     {
         ArgumentHelpers.ThrowIfNull(table);

@@ -1,9 +1,8 @@
 using Lyo.Exceptions;
 using Lyo.Reporting.Models;
 using Lyo.Reporting.Models.Composition;
-using Lyo.Reporting.Models.Enums;
 using Lyo.Reporting.Models.Controls;
-using Lyo.Reporting.Models.Models;
+using Lyo.Reporting.Models.Enums;
 using Lyo.Reporting.Models.Rendering;
 using Lyo.Xlsx.Models;
 

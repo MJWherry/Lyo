@@ -30,7 +30,8 @@ public sealed class PeopleApiSeedContributor : SeedContributor
     {
         var faker = options.RandomSeed is { } seed ? new Faker { Random = new(seed) } : new Faker();
         graph.Entity(
-            options.Count, _ => new PersonSeedRequest {
+            options.Count,
+            _ => new PersonSeedRequest {
                 FirstName = faker.Name.FirstName(),
                 LastName = faker.Name.LastName(),
                 MiddleName = faker.Random.Bool(0.4f) ? faker.Name.FirstName() : null,

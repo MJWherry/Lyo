@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Http.Client;
 
 /// <summary>Client-side token-bucket rate limit. Off or generous for vendors; Flared uses a strict bucket (for example 1 permit / 2s).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LyoHttpRateLimitOptions
 {
     /// <summary>When false, the rate-limit handler acquires no permits.</summary>
@@ -35,6 +37,9 @@ public sealed class LyoHttpRateLimitOptions
     /// <summary>Optional concurrency cap across in-flight requests (including downloads). 0 means unlimited.</summary>
     public int MaxConcurrent { get; set; }
 
+    /// <summary>Paths that skip this quota. An entry is <c>METHOD /path</c> (<c>GET /health</c>, <c>POST /person/{id}</c>, or a <c>/*</c> prefix). Empty means every request counts.</summary>
+    public List<string> Whitelist { get; set; } = [];
+
     /// <summary>Throws when limits are not positive while enabled.</summary>
     public void Validate()
     {
@@ -48,4 +53,8 @@ public sealed class LyoHttpRateLimitOptions
         ArgumentHelpers.ThrowIf(Jitter < 0, "Jitter must be >= 0.");
         ArgumentHelpers.ThrowIf(MaxConcurrent < 0, "MaxConcurrent must be >= 0.");
     }
+
+    /// <summary>Permit window, queue, and concurrency caps.</summary>
+    public override string ToString() =>
+        $"Enabled={Enabled} Permits={PermitLimit} Window={Window} Queue={QueueLimit} MaxConcurrent={MaxConcurrent} Whitelist={Whitelist?.Count ?? 0}";
 }

@@ -71,5 +71,13 @@ public enum ComparisonOperatorEnum
 
     /// <summary>String fields</summary>
     [Description("Not Regex")]
-    NotRegex
+    NotRegex,
+
+    /// <summary>String fields. Trigram Jaccard similarity (Postgres <c>pg_trgm.similarity</c>); optional <see cref="Lyo.Query.Models.Common.ConditionClause.Threshold" />.</summary>
+    [Description("Fuzzy")]
+    Fuzzy,
+
+    /// <summary>String fields. Negation of <see cref="Fuzzy" />.</summary>
+    [Description("Not Fuzzy")]
+    NotFuzzy
 }

@@ -26,10 +26,22 @@ public static class Constants
         public const string ConvertHtmlToPdfSizeBytes = "webrenderer.convert_html_to_pdf.size_bytes";
         public const string ConvertHtmlToPdfInputSizeBytes = "webrenderer.convert_html_to_pdf.input_size_bytes";
 
+        public const string CaptureDuration = "webrenderer.capture.duration";
+        public const string CaptureSuccess = "webrenderer.capture.success";
+        public const string CaptureFailure = "webrenderer.capture.failure";
+        public const string CaptureSizeBytes = "webrenderer.capture.size_bytes";
+        public const string CaptureInputSizeBytes = "webrenderer.capture.input_size_bytes";
+
+        public const string BrowserLaunchDuration = "webrenderer.browser.launch.duration";
+        public const string BrowserLaunchSuccess = "webrenderer.browser.launch.success";
+        public const string BrowserLaunchFailure = "webrenderer.browser.launch.failure";
+        public const string BrowserPages = "webrenderer.browser.pages";
+
         public static class Tags
         {
             public const string ComponentType = "component_type";
             public const string Operation = "operation";
+            public const string Format = "format";
         }
     }
 }

@@ -1,0 +1,225 @@
+@using Lyo.Schedule.Models
+@namespace Lyo.Web.Primitives
+
+<MudStack Spacing="2">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Wrap="Wrap.Wrap">
+        <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" aria-label="Previous" OnClick="@(() => Shift(-1))"/>
+        <MudText Typo="Typo.subtitle1">@MonthTitle()</MudText>
+        <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" aria-label="Next" OnClick="@(() => Shift(1))"/>
+        <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
+            <MudButton Color="@(_view == CalendarViewMode.Month ? Color.Primary : Color.Default)" OnClick="@(() => _view = CalendarViewMode.Month)">Month</MudButton>
+            <MudButton Color="@(_view == CalendarViewMode.Week ? Color.Primary : Color.Default)" OnClick="@(() => _view = CalendarViewMode.Week)">Week</MudButton>
+            <MudButton Color="@(_view == CalendarViewMode.Day ? Color.Primary : Color.Default)" OnClick="@(() => _view = CalendarViewMode.Day)">Day</MudButton>
+        </MudButtonGroup>
+        @if (_view != CalendarViewMode.Month) {
+            <MudButtonGroup Variant="Variant.Outlined" Size="Size.Small">
+                <MudButton Color="@(!_agenda ? Color.Primary : Color.Default)" OnClick="@(() => _agenda = false)">Hourly</MudButton>
+                <MudButton Color="@(_agenda ? Color.Primary : Color.Default)" OnClick="@(() => _agenda = true)">List</MudButton>
+            </MudButtonGroup>
+        }
+        <MudSpacer/>
+        <MudAutocomplete T="string" Value="@_zone.Id" ValueChanged="OnZoneChanged" Label="Time zone" SearchFunc="SearchZones"
+                         Variant="Variant.Outlined" Margin="Margin.Dense" Dense="true" CoerceText="false" ResetValueOnEmptyText="true"
+                         Style="min-width: 280px;"/>
+        <MudText Typo="Typo.caption">@ZoneLabel</MudText>
+        <MudSwitch T="bool" Value="@_use24Hour" ValueChanged="OnHourCycleChanged" Label="@(_use24Hour ? "24-hour" : "12-hour")" Color="Color.Primary"/>
+    </MudStack>
+
+    @if (Shown is null) {
+        <MudText Typo="Typo.body2" Color="Color.Secondary">No calendar to show.</MudText>
+    }
+    else if (_view == CalendarViewMode.Month) {
+        var days = VisibleDays();
+        <div class="lyo-cal-month">
+            @foreach (var header in Headers(days)) {
+                <MudText Typo="Typo.caption" Align="Align.Center">@header</MudText>
+            }
+            @foreach (var day in days) {
+                var summary = MonthRows(day);
+                <div class="@($"{DayClass(day)}{(Peeking(day.Date) ? " lyo-cal-day-peek" : "")}")" @onclick="@(() => OpenDay(day.Date))">
+                    <button type="button" class="lyo-cal-day-num" title="@DayTitle(day)" @onclick:stopPropagation="true"
+                            @onclick="@(() => OpenDay(day.Date))">@day.Date.Day</button>
+                    <button type="button" class="lyo-cal-peek" aria-label="@($"Show {day.Date}")" title="Show day"
+                            @onclick:stopPropagation="true" @onclick="@(() => TogglePeek(day.Date))">
+                        <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Small"/>
+                    </button>
+                    <div class="lyo-cal-day-events">
+                        @foreach (var row in summary.Rows) {
+                            var entry = day.Entries[row.Indexes[0]];
+                            if (row.Indexes.Count == 1 && EntryContent is not null) {
+                                <div class="lyo-cal-entry-host" @onclick:stopPropagation="true" @onclick="@(() => OpenEntry(entry))">
+                                    @EntryContent(entry)
+                                </div>
+                            }
+                            else if (row.Indexes.Count == 1) {
+                                <button type="button" class="@EventClass(entry)" style="@EventStyle(entry)" title="@EventTooltip(entry)"
+                                        aria-label="@EventLabel(entry)" @onclick:stopPropagation="true" @onclick="@(() => OpenEntry(entry))">
+                                    @if (!row.AllDay) {
+                                        <span class="lyo-cal-event-time">@Clock(entry)</span>
+                                    }
+                                    <span class="lyo-cal-event-title">@entry.Title</span>
+                                </button>
+                            }
+                            else {
+                                <button type="button" class="@GroupClass(day, row)" title="@GroupTitle(day, row)" aria-label="@GroupTitle(day, row)"
+                                        @onclick:stopPropagation="true" @onclick="@(() => OpenDay(day.Date))">
+                                    <span class="lyo-cal-event-title">@GroupLabel(day, row)</span>
+                                </button>
+                            }
+                        }
+                        @if (summary.MoreRows > 0) {
+                            <button type="button" class="lyo-cal-more" @onclick:stopPropagation="true" @onclick="@(() => OpenDay(day.Date))">
+                                +@summary.MoreRows more
+                            </button>
+                        }
+                    </div>
+                    @if (Peeking(day.Date)) {
+                        <div class="lyo-cal-hover" @onclick:stopPropagation="true">
+                            @Hourly([day])
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+    else if (_agenda) {
+        var days = VisibleDays();
+        <div class="lyo-cal-month lyo-cal-agenda" style="@($"grid-template-columns:repeat({days.Count}, minmax(0, 1fr))")">
+            @foreach (var day in days) {
+                <div class="@DayClass(day)">
+                    <button type="button" class="lyo-cal-day-num" @onclick="@(() => OpenDay(day.Date))">@WeekdayLabel(day.Date) @day.Date.Day</button>
+                    <div class="lyo-cal-day-events">
+                        @foreach (var entry in day.Entries) {
+                            if (EntryContent is not null) {
+                                <div class="lyo-cal-entry-host" @onclick:stopPropagation="true" @onclick="@(() => OpenEntry(entry))">
+                                    @EntryContent(entry)
+                                </div>
+                            }
+                            else {
+                                <button type="button" class="@EventClass(entry)" style="@EventStyle(entry)" title="@EventTooltip(entry)"
+                                        aria-label="@EventLabel(entry)" @onclick:stopPropagation="true" @onclick="@(() => OpenEntry(entry))">
+                                    <span class="lyo-cal-event-time">@Clock(entry)</span>
+                                    <span class="lyo-cal-event-title">@entry.Title</span>
+                                </button>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else {
+        @Hourly(VisibleDays())
+    }
+</MudStack>
+
+@if (_selected is { } selected) {
+    <div class="lyo-cal-dialog-backdrop" @onclick="CloseEntry">
+        <MudPaper Class="lyo-cal-dialog" @onclick:stopPropagation="true" Elevation="8">
+            <MudStack Spacing="1">
+                <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="1">
+                    <MudStack Spacing="1" Style="min-width: 0; flex: 1;">
+                        @if (DetailContent is not null) {
+                            @DetailContent(selected)
+                        }
+                        else if (EntryContent is not null) {
+                            @EntryContent(selected)
+                        }
+                        else {
+                            <MudText Typo="Typo.subtitle1" Style="overflow-wrap: anywhere;">@selected.Title</MudText>
+
+                            <MudText Typo="Typo.caption">@Clock(selected)</MudText>
+
+                            @if (!string.IsNullOrWhiteSpace(selected.Description)) {
+                                <MudText Typo="Typo.body2" Style="overflow-wrap: anywhere; white-space: pre-wrap;">@selected.Description</MudText>
+                            }
+
+                            @if (selected.Muted) {
+                                <MudText Typo="Typo.body2">This time is inside a blackout.</MudText>
+                            }
+
+                            @if (selected.Refs.Count > 0) {
+                                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                                    @foreach (var entity in selected.Refs) {
+                                        @if (RefContent is not null) {
+                                            @RefContent(entity)
+                                        }
+                                        else {
+                                            <LyoChip Size="Size.Small" Label="@RefLabel(entity)" Hue="@HueOf(selected)"/>
+                                        }
+                                    }
+                                </MudStack>
+                            }
+                        }
+                    </MudStack>
+                    <MudIconButton Icon="@Icons.Material.Filled.Close" aria-label="Close event" OnClick="CloseEntry"/>
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+    </div>
+}
+
+@code {
+
+    private RenderFragment Hourly(IReadOnlyList<CalendarDay> days)
+        => @<div>
+               @{
+                   var columns = days.Count;
+               }
+               <div class="lyo-cal-timehead" style="@($"--lyo-cal-cols:{columns}")">
+                   <div></div>
+                   @foreach (var day in days) {
+                       <button type="button" class="lyo-cal-colhead" @onclick="@(() => OpenDay(day.Date))">
+                           @WeekdayLabel(day.Date) @day.Date.Day
+                       </button>
+                   }
+               </div>
+               @if (HasAllDay(days)) {
+                   <div class="lyo-cal-allday" style="@($"--lyo-cal-cols:{columns}")">
+                       <div class="lyo-cal-allday-label">All day</div>
+                       @foreach (var day in days) {
+                           <div class="lyo-cal-allday-col">
+                               @foreach (var block in BlocksFor(day)) {
+                                   if (!block.AllDay)
+                                       continue;
+
+                                   var entry = day.Entries[block.Index];
+                                   <button type="button" class="@EventClass(entry)" style="@EventStyle(entry)" title="@EventTooltip(entry)"
+                                           aria-label="@EventLabel(entry)" @onclick:stopPropagation="true" @onclick="@(() => OpenEntry(entry))">
+                                       <span class="lyo-cal-event-title">@entry.Title</span>
+                                   </button>
+                               }
+                           </div>
+                       }
+                   </div>
+               }
+               <div class="lyo-cal-scroll">
+                   <div class="lyo-cal-time" style="@($"--lyo-cal-cols:{columns}")">
+                       <div>
+                           @for (var hour = 0; hour < 24; hour++) {
+                               <div class="lyo-cal-hour">@HourLabel(hour)</div>
+                           }
+                       </div>
+                       @foreach (var day in days) {
+                           <div class="lyo-cal-col" @onclick="@(() => OpenDay(day.Date))">
+                               @for (var hour = 0; hour < 24; hour++) {
+                                   <div class="lyo-cal-slot"></div>
+                               }
+                               @foreach (var block in BlocksFor(day)) {
+                                   if (block.AllDay)
+                                       continue;
+
+                                   var entry = day.Entries[block.Index];
+                                   <button type="button" class="@BlockClass(entry)" style="@BlockStyle(block, entry)" title="@EventTooltip(entry)"
+                                           aria-label="@EventLabel(entry)" @onclick:stopPropagation="true" @onclick="@(() => OpenEntry(entry))">
+                                       <span class="lyo-cal-event-time">@Clock(entry)</span>
+                                       <span class="lyo-cal-event-title">@entry.Title</span>
+                                   </button>
+                               }
+                           </div>
+                       }
+                   </div>
+               </div>
+           </div>;
+
+}

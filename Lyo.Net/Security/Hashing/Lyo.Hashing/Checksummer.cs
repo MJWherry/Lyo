@@ -2,7 +2,6 @@ using System.Buffers;
 using System.Buffers.Binary;
 using Lyo.Exceptions;
 using Lyo.Hashing.Internal;
-
 #if NET5_0_OR_GREATER
 using System.IO.Hashing;
 #endif
@@ -11,8 +10,8 @@ namespace Lyo.Hashing;
 
 /// <summary>
 /// Static helpers for non-cryptographic checksums (CRC-32, CRC-32C, CRC-64/ECMA-182, Adler-32). They catch accidental corruption only and are <strong>not</strong> a security
-/// boundary — see the package README. On modern .NET, CRC-32 and CRC-64 buffer paths call <c>System.IO.Hashing</c>; remaining algorithms use internal table-driven
-/// implementations that match across targets.
+/// boundary — see the package README. On modern .NET, CRC-32 and CRC-64 buffer paths call <c>System.IO.Hashing</c>; remaining algorithms use internal table-driven implementations
+/// that match across targets.
 /// </summary>
 public static class Checksummer
 {

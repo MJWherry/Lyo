@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lyo-cli"
+version = "0.1.0"
+description = "CLI and optional MCP server for Lyo QueryProject and CRUD."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "The Lyo authors" }]
+keywords = ["lyo", "api", "cli"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Typing :: Typed",
+]
+dependencies = [
+    "lyo-api-client>=0.1.0",
+    "lyo-auth-api-client>=0.1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+mcp = ["mcp>=2"]
+
+[project.scripts]
+lyo = "lyo_cli.cli:main"
+lyo-mcp = "lyo_cli.mcp_server:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+packages = ["lyo_cli"]
+
+[tool.setuptools.package-data]
+lyo_cli = ["py.typed"]
+
+[tool.pytest.ini_options]
+pythonpath = [
+    "src",
+    "../lyo-api-client/src",
+    "../lyo-auth-api-client/src",
+]

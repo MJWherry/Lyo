@@ -1,0 +1,33 @@
+.home-location-tree-browser {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    min-height: 22rem;
+    height: calc(100dvh - 16rem);
+    max-height: calc(100dvh - 16rem);
+    overflow: hidden;
+}
+
+.home-location-tree-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: 0.5rem;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.home-location-tree-layout > ::deep .mud-paper {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+}
+
+@media (max-width: 959.95px) {
+    .home-location-tree-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(16rem, 1fr) minmax(16rem, 1fr);
+    }
+}

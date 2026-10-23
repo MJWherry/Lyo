@@ -1,5 +1,3 @@
-using Lyo.Authentication.Keycloak;
-
 namespace Lyo.Authentication.Keycloak.Tests;
 
 public sealed class KeycloakProviderTests
@@ -26,7 +24,7 @@ public sealed class KeycloakProviderTests
     public void Provider_HonorsExplicitName()
     {
         var provider = new KeycloakOpenIdConnectProvider(
-            new KeycloakOptions {
+            new() {
                 BaseUrl = "https://x",
                 Realm = "acme",
                 ClientId = "c",
@@ -42,7 +40,7 @@ public sealed class KeycloakProviderTests
     public void Provider_TrimsBaseUrlTrailingSlash()
     {
         var provider = new KeycloakOpenIdConnectProvider(
-            new KeycloakOptions {
+            new() {
                 BaseUrl = "https://sso.lyolabs.io/",
                 Realm = "acme",
                 ClientId = "c",
@@ -62,7 +60,7 @@ public sealed class KeycloakProviderTests
 
     private static KeycloakOpenIdConnectProvider NewProvider(string realm)
         => new(
-            new KeycloakOptions {
+            new() {
                 BaseUrl = "https://sso.lyolabs.io",
                 Realm = realm,
                 ClientId = "client-id",

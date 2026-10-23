@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions.Models;
 
 namespace Lyo.MessageQueue;
 
 /// <summary>Settings shared by <see cref="QueueWorkerBase{TRequest, TResult}" /> subclasses. Bind from configuration (section <see cref="SectionName" />) or register the instance.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class QueueWorkerOptions
 {
     public const string SectionName = "QueueWorkerOptions";
@@ -11,28 +13,27 @@ public sealed class QueueWorkerOptions
     public static readonly TimeSpan DefaultDrainTimeout = TimeSpan.FromSeconds(30);
 
     /// <summary>
-    /// Application-level requeue cap used when the worker constructor omits <c>maxRequeueCount</c>. After the cap, messages go to the
-    /// worker's DLQ (or are dropped when no DLQ is set). Null means unlimited retries; the default is 5 so a failing message cannot loop forever by default.
+    /// Application-level requeue cap used when the worker constructor omits <c>maxRequeueCount</c>. After the cap, messages go to the worker's DLQ (or are dropped when no DLQ is
+    /// set). Null means unlimited retries; the default is 5 so a failing message cannot loop forever by default.
     /// </summary>
     public int? DefaultMaxRequeueCount { get; set; } = 5;
 
     /// <summary>
-    /// Base wait between retries (<see cref="QueueWorkerBase{TRequest, TResult}.RequeueDelay" />), scaled linearly by attempt (attempt 2 waits 2x,
-    /// attempt 3 waits 3x, and so on). Needs a delay-capable transport (<see cref="IDelayedMqService" />, for example RabbitMQ); other transports retry immediately. Null or zero turns the
-    /// delay off. Default is 2 seconds so a failing message cannot exhaust its retry budget in milliseconds.
+    /// Base wait between retries (<see cref="QueueWorkerBase{TRequest, TResult}.RequeueDelay" />), scaled linearly by attempt (attempt 2 waits 2x, attempt 3 waits 3x, and so
+    /// on). Needs a delay-capable transport (<see cref="IDelayedMqService" />, for example RabbitMQ); other transports retry immediately. Null or zero turns the delay off. Default is 2
+    /// seconds so a failing message cannot exhaust its retry budget in milliseconds.
     /// </summary>
     public TimeSpan? RequeueDelay { get; set; } = TimeSpan.FromSeconds(2);
 
     /// <summary>
-    /// How long <see cref="QueueWorkerBase{TRequest, TResult}.StopAsync" /> waits for in-flight messages before it gives up. For job workers this is the window a
-    /// long-running run has to finish (or hand itself back) during a graceful shutdown. Defaults to 30 seconds.
+    /// How long <see cref="QueueWorkerBase{TRequest, TResult}.StopAsync" /> waits for in-flight messages before it gives up. For job workers this is the window a long-running
+    /// run has to finish (or hand itself back) during a graceful shutdown. Defaults to 30 seconds.
     /// </summary>
     public TimeSpan DrainTimeout { get; set; } = DefaultDrainTimeout;
 
     /// <summary>
-    /// Extra time the generic host <c>ShutdownTimeout</c> must allow past <see cref="DrainTimeout" />, covering deregistration and the rest of shutdown. The
-    /// host default is well below a full drain, so registration raises <c>ShutdownTimeout</c> to <c>DrainTimeout + ShutdownTimeoutHeadroom</c> when it is lower. Defaults to 15
-    /// seconds.
+    /// Extra time the generic host <c>ShutdownTimeout</c> must allow past <see cref="DrainTimeout" />, covering deregistration and the rest of shutdown. The host default is well
+    /// below a full drain, so registration raises <c>ShutdownTimeout</c> to <c>DrainTimeout + ShutdownTimeoutHeadroom</c> when it is lower. Defaults to 15 seconds.
     /// </summary>
     public TimeSpan ShutdownTimeoutHeadroom { get; set; } = TimeSpan.FromSeconds(15);
 
@@ -62,4 +63,8 @@ public sealed class QueueWorkerOptions
         if (errors.Count > 0)
             throw new ValidationException($"Invalid {nameof(QueueWorkerOptions)}: {string.Join(" ", errors)}");
     }
+
+    /// <summary>Requeue cap, retry delay, drain timeout, and shutdown headroom.</summary>
+    public override string ToString() =>
+        $"DefaultMaxRequeueCount={DefaultMaxRequeueCount} RequeueDelay={RequeueDelay} DrainTimeout={DrainTimeout} ShutdownTimeoutHeadroom={ShutdownTimeoutHeadroom}";
 }

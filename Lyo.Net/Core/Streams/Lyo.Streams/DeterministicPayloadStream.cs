@@ -7,8 +7,8 @@ namespace Lyo.Streams;
 /// allocated. Intended for large streaming benchmarks and tests.
 /// </summary>
 /// <remarks>
-/// Seeking to an arbitrary position resets the PRNG and skips ahead; sequential reads and <c>Seek(0)</c> are faster. The same length and seed always produce
-/// the same sequence.
+/// Seeking to an arbitrary position resets the PRNG and skips ahead; sequential reads and <c>Seek(0)</c> are faster. The same length and seed always produce the same
+/// sequence.
 /// </remarks>
 public sealed class DeterministicPayloadStream : Stream
 {
@@ -25,6 +25,32 @@ public sealed class DeterministicPayloadStream : Stream
     private bool _disposed;
     private long _position;
     private Random _rng;
+
+    /// <inheritdoc />
+    public override bool CanRead => !_disposed;
+
+    /// <inheritdoc />
+    public override bool CanSeek => !_disposed;
+
+    /// <inheritdoc />
+    public override bool CanWrite => false;
+
+    /// <inheritdoc />
+    public override long Length {
+        get {
+            ThrowIfDisposed();
+            return _length;
+        }
+    }
+
+    /// <inheritdoc />
+    public override long Position {
+        get {
+            ThrowIfDisposed();
+            return _position;
+        }
+        set => Seek(value, SeekOrigin.Begin);
+    }
 
     /// <summary>Mints a stream that yields <paramref name="length" /> bytes from <see cref="DefaultSeed" />.</summary>
     public DeterministicPayloadStream(long length)
@@ -74,32 +100,6 @@ public sealed class DeterministicPayloadStream : Stream
         var buffer = new byte[sizeBytes];
         Fill(buffer, seed);
         return buffer;
-    }
-
-    /// <inheritdoc />
-    public override bool CanRead => !_disposed;
-
-    /// <inheritdoc />
-    public override bool CanSeek => !_disposed;
-
-    /// <inheritdoc />
-    public override bool CanWrite => false;
-
-    /// <inheritdoc />
-    public override long Length {
-        get {
-            ThrowIfDisposed();
-            return _length;
-        }
-    }
-
-    /// <inheritdoc />
-    public override long Position {
-        get {
-            ThrowIfDisposed();
-            return _position;
-        }
-        set => Seek(value, SeekOrigin.Begin);
     }
 
     /// <inheritdoc />

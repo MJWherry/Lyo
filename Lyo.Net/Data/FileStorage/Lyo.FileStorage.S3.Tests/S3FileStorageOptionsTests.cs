@@ -27,6 +27,5 @@ public sealed class S3FileStorageOptionsTests
     }
 
     [Fact]
-    public void Profile_DefaultsToNull()
-        => Assert.Null(new S3FileStorageOptions { BucketName = "bucket" }.Profile);
+    public void Profile_DefaultsToNull() => Assert.Null(new S3FileStorageOptions { BucketName = "bucket" }.Profile);
 }

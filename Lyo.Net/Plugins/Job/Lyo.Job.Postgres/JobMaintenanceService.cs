@@ -1,5 +1,5 @@
-using Lyo.Api.Services.Crud.Read.Query;
 using System.Diagnostics;
+using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Cache;
 using Lyo.Health;
 using Lyo.Job.Models.Enums;
@@ -43,21 +43,19 @@ namespace Lyo.Job.Postgres;
 /// </item>
 /// <item>
 /// <term>SLA breach detection</term>
-/// <description>
-/// Sets <c>SlaBreached=true</c> when a running job exceeds <c>ExpectedDurationMinutes</c> or a queued job is past <c>MustStartByMinutes</c> without starting.
-/// </description>
+/// <description>Sets <c>SlaBreached=true</c> when a running job exceeds <c>ExpectedDurationMinutes</c> or a queued job is past <c>MustStartByMinutes</c> without starting.</description>
 /// </item>
 /// </list>
 /// Register through <see cref="Extensions.AddJobMaintenanceService" />.
 /// </summary>
 public sealed class JobMaintenanceService : BackgroundService, IHealth
 {
+    private readonly ICacheService? _cache;
     private readonly IDbContextFactory<JobContext> _dbFactory;
     private readonly IJobEventPublisher _eventPublisher;
     private readonly ILogger<JobMaintenanceService> _logger;
     private readonly IMetrics _metrics;
     private readonly JobMaintenanceOptions _options;
-    private readonly ICacheService? _cache;
 
     private DateTime? _lastSuccessfulTickUtc;
     private string? _lastTickError;
@@ -154,6 +152,7 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
             await QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<JobRun, JobDefinition>(_cache).ConfigureAwait(false);
 
         await PurgeExpiredRunsAsync(ct).ConfigureAwait(false);
+        await PurgeExpiredWorkflowRunsAsync(ct).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -188,9 +187,7 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
         }
         catch (DbUpdateConcurrencyException ex) {
             _metrics.IncrementCounter(Constants.Metrics.Maintenance.ConcurrencyConflict);
-            _logger.LogInformation(
-                ex, "Maintenance pass lost a concurrency race on {Count} entrie(s); skipping this tick's tracked updates", ex.Entries.Count);
-
+            _logger.LogInformation(ex, "Maintenance pass lost a concurrency race on {Count} entrie(s); skipping this tick's tracked updates", ex.Entries.Count);
             return false;
         }
     }
@@ -248,8 +245,7 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
 
     /// <summary>
     /// Times out runs whose worker stopped heartbeating. Each transition is an atomic compare-and-swap that re-evaluates both the state and the heartbeat baseline in SQL, so a
-    /// worker that heartbeats or finishes between the candidate scan and the update wins the race. Previously the tracked-entity write clobbered a successful finish with
-    /// <c>Timeout</c>.
+    /// worker that heartbeats or finishes between the candidate scan and the update wins the race. Previously the tracked-entity write clobbered a successful finish with <c>Timeout</c>.
     /// </summary>
     /// <returns>Ids of the runs actually timed out, used for post-commit event publication.</returns>
     private async Task<IReadOnlyList<DeadJobTimeout>> FailDeadJobsAsync(JobContext db, CancellationToken ct)
@@ -285,8 +281,7 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
                 .Where(r => r.Id == candidate.RunId && (r.State == JobState.Running || r.State == JobState.Cancelling) &&
                     (r.LastHeartbeatUtc ?? r.StartedTimestamp ?? r.CreatedTimestamp) <= cutoff)
                 .ExecuteUpdateAsync(
-                    s => s
-                        .SetProperty(r => r.State, JobState.Finished)
+                    s => s.SetProperty(r => r.State, JobState.Finished)
                         .SetProperty(r => r.Result, JobRunResult.Timeout)
                         .SetProperty(r => r.FinishedTimestamp, now)
                         .SetProperty(r => r.UpdatedTimestamp, now), ct)
@@ -299,8 +294,8 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
             }
 
             _logger.LogWarning(
-                "Job run {RunId} (definition {DefinitionName}) has not sent a heartbeat since {LastActivity:u} (timeout {TimeoutMinutes} min) — marking as failed",
-                candidate.RunId, candidate.DefinitionName, candidate.Baseline, timeoutMinutes);
+                "Job run {RunId} (definition {DefinitionName}) has not sent a heartbeat since {LastActivity:u} (timeout {TimeoutMinutes} min) — marking as failed", candidate.RunId,
+                candidate.DefinitionName, candidate.Baseline, timeoutMinutes);
 
             timedOut.Add(new(candidate.RunId, candidate.JobDefinitionId, candidate.DefinitionName));
         }
@@ -310,15 +305,6 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
 
         return timedOut;
     }
-
-    /// <summary>A <c>Running</c>/<c>Cancelling</c> run considered for heartbeat timeout, projected without tracking.</summary>
-    private sealed record DeadJobCandidate(Guid RunId, Guid JobDefinitionId, string DefinitionName, int TimeoutMinutes, DateTime Baseline);
-
-    /// <summary>A run this maintenance pass moved to <c>Finished / Timeout</c>.</summary>
-    private sealed record DeadJobTimeout(Guid RunId, Guid JobDefinitionId, string DefinitionName);
-
-    /// <summary>An SLA breach found by this maintenance pass, used for post-commit alert publication.</summary>
-    private sealed record SlaBreach(Guid RunId, Guid JobDefinitionId, string DefinitionName, string Reason);
 
     /// <summary>
     /// Flags runs that have exceeded their start or duration SLA. Returns the breaches so the caller can publish alerts after the commit. Previously maintenance marked
@@ -448,9 +434,6 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
         }
     }
 
-    /// <summary>A due <c>Queued</c> run whose dispatch message looks like it was lost.</summary>
-    private sealed record StuckQueuedRun(Guid RunId, string WorkerType, int Priority);
-
     private async Task PruneStaleWorkerInstancesAsync(JobContext db, CancellationToken ct)
     {
         var cutoff = DateTime.UtcNow.AddMinutes(-_options.WorkerInstanceStaleMinutes);
@@ -526,4 +509,50 @@ public sealed class JobMaintenanceService : BackgroundService, IHealth
         _logger.LogInformation("Purged {Count} expired job runs (retention policy)", totalPurged);
         await QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<JobRun, JobDefinition>(_cache).ConfigureAwait(false);
     }
+
+    /// <summary>
+    /// Deletes settled workflow runs (and their run steps) finished longer ago than <see cref="JobMaintenanceOptions.WorkflowRetentionDays" />. Age is read from
+    /// <c>FinishedTimestamp</c>, so an in-flight run has no cutoff to be past and is never purged — deleting one would orphan the job runs still reporting into it.
+    /// </summary>
+    private async Task PurgeExpiredWorkflowRunsAsync(CancellationToken ct)
+    {
+        var retentionDays = _options.WorkflowRetentionDays;
+        if (retentionDays <= 0)
+            return;
+
+        await using var db = await _dbFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
+        var cutoff = DateTime.UtcNow.AddDays(-retentionDays);
+        var expired = await db.JobWorkflowRuns
+            .Where(r => r.FinishedTimestamp != null && r.FinishedTimestamp < cutoff && r.State != JobWorkflowRunState.Pending && r.State != JobWorkflowRunState.Running)
+            .OrderBy(r => r.FinishedTimestamp)
+            .ThenBy(r => r.Id)
+            .Take(_options.PurgeBatchSize)
+            .Include(r => r.JobWorkflowRunSteps)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
+        if (expired.Count == 0)
+            return;
+
+        foreach (var run in expired)
+            db.JobWorkflowRunSteps.RemoveRange(run.JobWorkflowRunSteps);
+
+        db.JobWorkflowRuns.RemoveRange(expired);
+        await db.SaveChangesAsync(ct).ConfigureAwait(false);
+        _metrics.IncrementCounter(Constants.Metrics.Maintenance.WorkflowRunsPurged, expired.Count);
+        _logger.LogInformation("Purged {Count} expired workflow runs (retention policy)", expired.Count);
+        await QueryCacheInvalidation.InvalidateQueryCachesForBroadEntityTypeAsync<JobWorkflowRun, JobWorkflow>(_cache).ConfigureAwait(false);
+    }
+
+    /// <summary>A <c>Running</c>/<c>Cancelling</c> run considered for heartbeat timeout, projected without tracking.</summary>
+    private sealed record DeadJobCandidate(Guid RunId, Guid JobDefinitionId, string DefinitionName, int TimeoutMinutes, DateTime Baseline);
+
+    /// <summary>A run this maintenance pass moved to <c>Finished / Timeout</c>.</summary>
+    private sealed record DeadJobTimeout(Guid RunId, Guid JobDefinitionId, string DefinitionName);
+
+    /// <summary>An SLA breach found by this maintenance pass, used for post-commit alert publication.</summary>
+    private sealed record SlaBreach(Guid RunId, Guid JobDefinitionId, string DefinitionName, string Reason);
+
+    /// <summary>A due <c>Queued</c> run whose dispatch message looks like it was lost.</summary>
+    private sealed record StuckQueuedRun(Guid RunId, string WorkerType, int Priority);
 }

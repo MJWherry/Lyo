@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Pdf.Models;
 
 /// <summary>Key/value pairs from one extracted column.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public record KvColumnResult(int ColumnIndex, IReadOnlyDictionary<string, string?> Values)
 {
     /// <summary>Combines column results into one dictionary. Later columns win on duplicate keys.</summary>

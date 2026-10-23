@@ -33,7 +33,7 @@ public class GeolocationPostgresExtensionsTests
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<GeolocationDbContext>>();
         await using var context = factory.CreateDbContext();
-        var canConnect = await context.Database.CanConnectAsync(TestContext.Current.CancellationToken);
+        var canConnect = await context.Database.CanConnectAsync(TestCt);
         Assert.True(canConnect);
     }
 
@@ -42,7 +42,7 @@ public class GeolocationPostgresExtensionsTests
     {
         var factory = _fixture.ServiceProvider.GetRequiredService<IDbContextFactory<GeolocationDbContext>>();
         await using var context = factory.CreateDbContext();
-        var pending = await context.Database.GetPendingMigrationsAsync(TestContext.Current.CancellationToken);
+        var pending = await context.Database.GetPendingMigrationsAsync(TestCt);
         Assert.Empty(pending);
     }
 
@@ -60,13 +60,13 @@ public class GeolocationPostgresExtensionsTests
             Source = EntitySourceRecord.From(EntityRef.ForKey("GoogleMapsPlace", placeId), DateTime.UtcNow)
         };
 
-        await store.SaveAddressAsync(address, TestContext.Current.CancellationToken);
-        var loaded = await store.GetAddressByIdAsync(address.Id, TestContext.Current.CancellationToken);
+        await store.SaveAddressAsync(address, TestCt);
+        var loaded = await store.GetAddressByIdAsync(address.Id, TestCt);
         Assert.NotNull(loaded);
         Assert.Equal("Mountain View", loaded.City);
         Assert.NotNull(loaded.Source);
         Assert.Equal(placeId, loaded.Source.Value.Source.EntityId);
-        var bySource = await store.GetBySourceAsync(EntityRef.ForKey("GoogleMapsPlace", placeId), TestContext.Current.CancellationToken);
+        var bySource = await store.GetBySourceAsync(EntityRef.ForKey("GoogleMapsPlace", placeId), TestCt);
         Assert.NotNull(bySource);
         Assert.Equal(address.Id, bySource.Id);
     }

@@ -28,10 +28,10 @@ public sealed class DiagnosticMiddlewareIntegrationTests
                     });
                 });
             })
-            .StartAsync(TestContext.Current.CancellationToken);
+            .StartAsync(TestCt);
 
         var client = host.GetTestServer().CreateClient();
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => client.GetAsync("/", TestContext.Current.CancellationToken));
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => client.GetAsync("/", TestCt));
         Assert.Equal("boom", ex.Message);
         var inbox = host.Services.GetRequiredService<InMemoryErrorInbox>();
         var groups = inbox.ListGroups(TimeSpan.FromMinutes(1));

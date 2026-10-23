@@ -23,7 +23,6 @@ internal static class AwsKeyStoreCredentialHelpers
         if (chain.TryGetAWSCredentials(profileName, out var credentials))
             return credentials;
 
-        throw new InvalidOperationException(
-            $"Unable to find the AWS profile '{profileName}'. Check the shared credentials file (~/.aws/credentials) and config (~/.aws/config).");
+        throw new InvalidOperationException($"Unable to find the AWS profile '{profileName}'. Check the shared credentials file (~/.aws/credentials) and config (~/.aws/config).");
     }
 }

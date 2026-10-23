@@ -16,7 +16,7 @@ public class FileMetadataStorePostgresExtensionsTests
     public void AddFileMetadataStoreDbContext_WithNullConnectionString_ThrowsArgumentNullException()
     {
         var services = new ServiceCollection();
-        var ex = Assert.Throws<ArgumentNullException>(() => services.AddFileMetadataStoreDbContext((string)null!));
+        var ex = Assert.Throws<ArgumentNullException>(() => services.AddFileMetadataStoreDbContext(null!));
         Assert.Equal("connectionString", ex.ParamName);
     }
 

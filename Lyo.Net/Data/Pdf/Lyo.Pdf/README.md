@@ -1,6 +1,7 @@
 # Lyo.Pdf
 
-Read with PdfPig and edit with PDFsharp for [`Lyo.Pdf.Models`](../Lyo.Pdf.Models/README.md). Start at `PdfService`. It hands back disposable `IPdfReader` instances for read/extract work and `IPdfWriter` instances for structural edits and merges.
+Read with PdfPig and edit with PDFsharp for [`Lyo.Pdf.Models`](../Lyo.Pdf.Models/README.md). Start at `PdfService`. It hands back disposable `IPdfReader` instances for read/extract
+work and `IPdfWriter` instances for structural edits and merges.
 
 Multi-targets `netstandard2.0;net10.0`.
 
@@ -60,9 +61,12 @@ The caller owns the instance and must dispose it (`using` /
 - **Words and lines.** `GetWords` / `GetLines` (+ async), with optional page and line tolerance.
 - **Anchored slices.** `GetWordsBetween` / `GetLinesBetween` (+ async).
 - **Regions.** `GetLinesInBoundingBox`, `GetColumnarTextInBoundingBox`, plus a word-list overload `GetColumnarText(words, columnCount, yTolerance?)`.
-- **Key/value pairs.** `ExtractKeyValuePairs` with `int? page`, `PdfWord[]`, `PdfSection`, and section-name overloads (`startSection` + ordered `sectionsInOrder` + optional `defaultEndSection`, page range, and `yTolerance`). Section-name overloads return `null` when that section is missing.
-- **Tables.** `ExtractTable(headers, …)` yields `IReadOnlyList<IReadOnlyDictionary<string, string?>>`. `ExtractDataTable(headers, …)` yields a `Lyo.DataTable`. Section-name overloads return `null` when the section is missing. `ParseBytesAsDataTable` re-opens a byte buffer for one-shot extraction.
-- **Inference helpers.** `InferKeyValuePairsFromFormatting(words, yTolerance, columnCount, inferFlags, keyValueDelimiters?)` and `InferTableHeadersFromFormatting(words, …)` rely on `PdfInferFormattingFlags` (Bold, Semicolon, Underline) and optional punctuation terminators.
+- **Key/value pairs.** `ExtractKeyValuePairs` with `int? page`, `PdfWord[]`, `PdfSection`, and section-name overloads (`startSection` + ordered `sectionsInOrder` + optional
+  `defaultEndSection`, page range, and `yTolerance`). Section-name overloads return `null` when that section is missing.
+- **Tables.** `ExtractTable(headers, …)` yields `IReadOnlyList<IReadOnlyDictionary<string, string?>>`. `ExtractDataTable(headers, …)` yields a `Lyo.DataTable`. Section-name
+  overloads return `null` when the section is missing. `ParseBytesAsDataTable` re-opens a byte buffer for one-shot extraction.
+- **Inference helpers.** `InferKeyValuePairsFromFormatting(words, yTolerance, columnCount, inferFlags, keyValueDelimiters?)` and `InferTableHeadersFromFormatting(words, …)` rely on
+  `PdfInferFormattingFlags` (Bold, Semicolon, Underline) and optional punctuation terminators.
 - **Sections.** `GetSection`, `GetWordsBetweenSections`, `GetLinesBetweenSections` (plus async).
 
 ## Edit and merge (`IPdfWriter`)
@@ -74,7 +78,9 @@ The caller owns the instance and must dispose it (`using` /
 
 ## DI registration
 
-`PdfServiceOptions` is a singleton. `PdfService` and `IPdfService` share one scoped instance. If `IHttpClientFactory` is present, the default registrations create a named client (`nameof(PdfService)`) for URL loads. Otherwise a new `HttpClient` is created per call. `IMetrics` is optional. When it is registered and `EnableMetrics = true`, PDF operations emit metrics through that implementation.
+`PdfServiceOptions` is a singleton. `PdfService` and `IPdfService` share one scoped instance. If `IHttpClientFactory` is present, the default registrations create a named client
+(`nameof(PdfService)`) for URL loads. Otherwise a new `HttpClient` is created per call. `IMetrics` is optional. When it is registered and `EnableMetrics = true`, PDF operations
+emit metrics through that implementation.
 
 ## Dependencies
 

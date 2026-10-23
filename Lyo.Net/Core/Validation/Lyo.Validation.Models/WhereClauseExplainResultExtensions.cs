@@ -8,15 +8,14 @@ namespace Lyo.Validation.Models;
 
 /// <summary>Maps a where-clause explain tree onto structured <see cref="Error" /> values.</summary>
 /// <remarks>
-/// Kept outside <c>Lyo.Query.Models</c> so query description does not pull in the result stack. Only validation turns a failed match into errors; a
-/// SQL <c>ApplyWhereClause</c> drops rows instead.
+/// Kept outside <c>Lyo.Query.Models</c> so query description does not pull in the result stack. Only validation turns a failed match into errors; a SQL
+/// <c>ApplyWhereClause</c> drops rows instead.
 /// </remarks>
 public static class WhereClauseExplainResultExtensions
 {
     /// <summary>
     /// Maps a failed in-memory explain tree to structured <see cref="Error" />s. AND groups emit one error per failing condition leaf; OR groups emit one error from
-    /// <see cref="WhereClauseExplainResult.FailureSummary" /> (or the group description). Not used for SQL <c>ApplyWhereClause</c> — those queries drop rows rather than
-    /// emitting errors.
+    /// <see cref="WhereClauseExplainResult.FailureSummary" /> (or the group description). Not used for SQL <c>ApplyWhereClause</c> — those queries drop rows rather than emitting errors.
     /// </summary>
     /// <param name="result">Explain tree to project.</param>
     /// <param name="messages">Optional code/message overrides keyed by dotted field path (ordinal ignore-case).</param>
@@ -29,20 +28,13 @@ public static class WhereClauseExplainResultExtensions
 
         var errors = new List<Error>();
         if (result.Root.Kind == WhereClauseExplainKind.None) {
-            errors.Add(
-                CreateError(
-                    field: null, comparison: null, actualValue: null, filterValue: null, description: null,
-                    fallbackMessage: result.FailureSummary ?? "Where clause did not match.", messages));
-
+            errors.Add(CreateError(null, null, null, null, null, result.FailureSummary ?? "Where clause did not match.", messages));
             return errors;
         }
 
         CollectErrors(result, result.Root, errors, messages);
         if (errors.Count == 0) {
-            errors.Add(
-                CreateError(
-                    field: null, comparison: null, actualValue: null, filterValue: null, description: null,
-                    fallbackMessage: result.FailureSummary ?? "Where clause did not match.", messages));
+            errors.Add(CreateError(null, null, null, null, null, result.FailureSummary ?? "Where clause did not match.", messages));
         }
 
         return errors;
@@ -59,7 +51,7 @@ public static class WhereClauseExplainResultExtensions
 
         if (node.Kind == WhereClauseExplainKind.Group && node.GroupOperator == GroupOperatorEnum.Or) {
             var field = FirstFailingField(node);
-            errors.Add(CreateError(field, comparison: null, actualValue: null, filterValue: null, node.Description, result.FailureSummary ?? node.ToString(), messages));
+            errors.Add(CreateError(field, null, null, null, node.Description, result.FailureSummary ?? node.ToString(), messages));
             return;
         }
 
@@ -131,6 +123,7 @@ public static class WhereClauseExplainResultExtensions
         var message = overrideMessage?.ErrorMessage;
         if (string.IsNullOrWhiteSpace(message))
             message = description;
+
         if (string.IsNullOrWhiteSpace(message))
             message = BuildDefaultMessage(field, comparison, filterValue, actualValue, fallbackMessage);
 
@@ -141,6 +134,7 @@ public static class WhereClauseExplainResultExtensions
         var metadata = new Dictionary<string, object>();
         if (!string.IsNullOrWhiteSpace(field))
             metadata["propertyName"] = field!;
+
         if (actualValue != null)
             metadata["attemptedValue"] = actualValue;
         else if (filterValue != null)

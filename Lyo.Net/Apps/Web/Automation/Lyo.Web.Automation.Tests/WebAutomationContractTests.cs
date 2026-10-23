@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Web.Automation.Abstractions;
 using Lyo.Web.Automation.Models;
 using Lyo.Web.Automation.Models.Enums;
@@ -13,7 +14,7 @@ public abstract class WebAutomationContractTests<TFactory>(TFactory factory, Web
     [Fact]
     public async Task NavigateToHomePage_ReportsExpectedTitle()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         await using var session = await factory.CreateSessionAsync(ct);
         await session.StartBrowserAsync(ct);
         await session.Browser.NavigateAsync(pageHost.HomeUri.ToString(), ct);
@@ -24,7 +25,7 @@ public abstract class WebAutomationContractTests<TFactory>(TFactory factory, Web
     [Fact]
     public async Task InputField_SendKeys_UpdatesEchoText()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         await using var session = await factory.CreateSessionAsync(ct);
         await session.StartBrowserAsync(ct);
         await session.Browser.NavigateAsync(pageHost.HomeUri.ToString(), ct);
@@ -38,7 +39,7 @@ public abstract class WebAutomationContractTests<TFactory>(TFactory factory, Web
     [Fact]
     public async Task IncrementButton_Click_ChangesCounterText()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         await using var session = await factory.CreateSessionAsync(ct);
         await session.StartBrowserAsync(ct);
         await session.Browser.NavigateAsync(pageHost.HomeUri.ToString(), ct);
@@ -52,7 +53,7 @@ public abstract class WebAutomationContractTests<TFactory>(TFactory factory, Web
     [Fact]
     public async Task Navigation_ClickLink_GoesToNextPage()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         await using var session = await factory.CreateSessionAsync(ct);
         await session.StartBrowserAsync(ct);
         await session.Browser.NavigateAsync(pageHost.HomeUri.ToString(), ct);
@@ -68,7 +69,7 @@ public abstract class WebAutomationContractTests<TFactory>(TFactory factory, Web
     [Fact]
     public async Task ControlsSearch_InputAndClick_UpdatesEcho()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         await using var session = await factory.CreateSessionAsync(ct);
         await session.StartBrowserAsync(ct);
         await session.Browser.NavigateAsync(pageHost.ControlsUri.ToString(), ct);
@@ -84,7 +85,7 @@ public abstract class WebAutomationContractTests<TFactory>(TFactory factory, Web
     [Fact]
     public async Task ControlsSearch_FindElements_ReturnsExpectedResults()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         await using var session = await factory.CreateSessionAsync(ct);
         await session.StartBrowserAsync(ct);
         await session.Browser.NavigateAsync(pageHost.ControlsUri.ToString(), ct);
@@ -95,7 +96,7 @@ public abstract class WebAutomationContractTests<TFactory>(TFactory factory, Web
     [Fact]
     public async Task AutomationPlan_StorePageTitle_StepStoresTitle()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         await using var session = await factory.CreateSessionAsync(ct);
         await using var provider = CreatePlanRunnerProvider();
         var runner = provider.GetRequiredService<IAutomationPlanRunner>();
@@ -107,7 +108,7 @@ public abstract class WebAutomationContractTests<TFactory>(TFactory factory, Web
     [Fact]
     public async Task AutomationPlan_StorePageUrl_StepStoresUrl()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         await using var session = await factory.CreateSessionAsync(ct);
         await using var provider = CreatePlanRunnerProvider();
         var runner = provider.GetRequiredService<IAutomationPlanRunner>();
@@ -119,7 +120,7 @@ public abstract class WebAutomationContractTests<TFactory>(TFactory factory, Web
     [Fact]
     public async Task AutomationPlan_HttpRequest_StepStoresStatus()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         await using var session = await factory.CreateSessionAsync(ct);
         var jsonPath = GetAssetPath("Data/http-request-body.json");
         await using var provider = CreatePlanRunnerProvider(s => s.AddSingleton<JsonPayloadService>());
@@ -136,9 +137,9 @@ public abstract class WebAutomationContractTests<TFactory>(TFactory factory, Web
     [Fact]
     public async Task AutomationPlan_DownloadFile_StepWritesFile()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         await using var session = await factory.CreateSessionAsync(ct);
-        var tempPath = Path.Combine(Path.GetTempPath(), "lyo-web-automation-tests", $"{Guid.NewGuid():N}.txt");
+        var tempPath = Path.Combine(Path.GetTempPath(), "lyo-web-automation-tests", $"{LyoGuid.CreateV7():N}.txt");
         await using var provider = CreatePlanRunnerProvider();
         var runner = provider.GetRequiredService<IAutomationPlanRunner>();
         var plan = AutomationPlanBuilder.New().DownloadFile(new Uri(pageHost.BaseUri, "files/sample-a.txt").ToString(), tempPath, "savedPath").Build();
@@ -149,7 +150,7 @@ public abstract class WebAutomationContractTests<TFactory>(TFactory factory, Web
     [Fact]
     public async Task AutomationPlan_ExtractSources_StepStoresUrls()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         await using var session = await factory.CreateSessionAsync(ct);
         await using var provider = CreatePlanRunnerProvider();
         var runner = provider.GetRequiredService<IAutomationPlanRunner>();
@@ -166,9 +167,9 @@ public abstract class WebAutomationContractTests<TFactory>(TFactory factory, Web
     [Fact]
     public async Task AutomationPlan_DownloadUrlsToDirectory_StepDownloadsFiles()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         await using var session = await factory.CreateSessionAsync(ct);
-        var tempDir = Path.Combine(Path.GetTempPath(), "lyo-web-automation-tests", Guid.NewGuid().ToString("N"));
+        var tempDir = Path.Combine(Path.GetTempPath(), "lyo-web-automation-tests", LyoGuid.CreateV7().ToString("N"));
         await using var provider = CreatePlanRunnerProvider();
         var runner = provider.GetRequiredService<IAutomationPlanRunner>();
         var plan = AutomationPlanBuilder.New()
@@ -185,7 +186,7 @@ public abstract class WebAutomationContractTests<TFactory>(TFactory factory, Web
     [Fact]
     public async Task AutomationPlan_UpsertJsonRecords_StepCallsSink()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         await using var session = await factory.CreateSessionAsync(ct);
         var sink = new RecordingDataSink();
         await using var provider = CreatePlanRunnerProvider(s => s.AddSingleton<IAutomationPlanDataSink>(sink));
@@ -198,10 +199,10 @@ public abstract class WebAutomationContractTests<TFactory>(TFactory factory, Web
     [Fact]
     public async Task AutomationPlan_UploadDirectoryToFileStorage_StepCallsStorage()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         await using var session = await factory.CreateSessionAsync(ct);
         var storage = new RecordingFileStorage();
-        var uploadDirectory = Path.Combine(Path.GetTempPath(), "lyo-web-automation-tests", Guid.NewGuid().ToString("N"));
+        var uploadDirectory = Path.Combine(Path.GetTempPath(), "lyo-web-automation-tests", LyoGuid.CreateV7().ToString("N"));
         Directory.CreateDirectory(uploadDirectory);
         await File.WriteAllTextAsync(Path.Combine(uploadDirectory, "upload.txt"), "upload-payload", ct);
         await using var provider = CreatePlanRunnerProvider(s => s.AddSingleton<IAutomationPlanFileStorage>(storage));
@@ -215,7 +216,7 @@ public abstract class WebAutomationContractTests<TFactory>(TFactory factory, Web
     [Fact]
     public async Task AutomationPlan_Dropdown_CustomWidget_SetsEcho()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         await using var session = await factory.CreateSessionAsync(ct);
         await using var provider = CreatePlanRunnerProvider();
         var runner = provider.GetRequiredService<IAutomationPlanRunner>();
@@ -236,7 +237,7 @@ public abstract class WebAutomationContractTests<TFactory>(TFactory factory, Web
     [Fact]
     public async Task AutomationPlan_Dropdown_NativeSelect_ByValue_SetsEcho()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         await using var session = await factory.CreateSessionAsync(ct);
         await using var provider = CreatePlanRunnerProvider();
         var runner = provider.GetRequiredService<IAutomationPlanRunner>();
@@ -255,7 +256,7 @@ public abstract class WebAutomationContractTests<TFactory>(TFactory factory, Web
     [Fact]
     public async Task AutomationPlan_FindDescendant_ClicksNestedOption()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         await using var session = await factory.CreateSessionAsync(ct);
         await using var provider = CreatePlanRunnerProvider();
         var runner = provider.GetRequiredService<IAutomationPlanRunner>();
@@ -277,7 +278,7 @@ public abstract class WebAutomationContractTests<TFactory>(TFactory factory, Web
     [Fact]
     public async Task AutomationPlan_InvokeDiMethod_StepStoresResult()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         await using var session = await factory.CreateSessionAsync(ct);
         await using var provider = CreatePlanRunnerProvider(s => s.AddSingleton<PlanProbeService>());
         var runner = provider.GetRequiredService<IAutomationPlanRunner>();
@@ -322,6 +323,12 @@ public abstract class WebAutomationContractTests<TFactory>(TFactory factory, Web
             IReadOnlyList<string> uploaded = ["uploaded://sample/upload.txt"];
             return Task.FromResult(uploaded);
         }
+
+        public Task<string?> SaveSnapshotAsync(byte[] png, Guid runId, Guid stepId, CancellationToken ct) => Task.FromResult<string?>(null);
+
+        public Task<string?> SaveAsync(byte[] data, string fileName, string pathPrefix, string contentType, CancellationToken ct) => Task.FromResult<string?>(null);
+
+        public Task<byte[]?> ReadSnapshotAsync(string fileId, CancellationToken ct) => Task.FromResult<byte[]?>(null);
     }
 
     private sealed class PlanProbeService

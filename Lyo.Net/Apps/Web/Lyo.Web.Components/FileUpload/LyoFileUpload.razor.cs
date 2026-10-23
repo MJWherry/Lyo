@@ -1,5 +1,6 @@
 using Lyo.Api.Models.Common.Response;
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.IO.Temp;
 using Lyo.IO.Temp.Models;
@@ -113,8 +114,8 @@ public partial class LyoFileUpload : IDisposable
     public EventCallback<LocalBrowserFile> OnClientFileRemoved { get; set; }
 
     /// <summary>
-    /// If set, the component streams browser files to temp disk instead of buffering in memory. The <see cref="OnClientFilePathReady" /> /
-    /// <see cref="OnClientFilePathRemoved" /> callbacks fire instead of <see cref="OnClientFileReady" /> / <see cref="OnClientFileRemoved" />.
+    /// If set, the component streams browser files to temp disk instead of buffering in memory. The <see cref="OnClientFilePathReady" /> / <see cref="OnClientFilePathRemoved" />
+    /// callbacks fire instead of <see cref="OnClientFileReady" /> / <see cref="OnClientFileRemoved" />.
     /// </summary>
     [Parameter]
     public IIOTempService? TempService { get; set; }
@@ -177,7 +178,7 @@ public partial class LyoFileUpload : IDisposable
             }
 
             var fileState = new LyoFileUploadState {
-                Id = Guid.NewGuid(),
+                Id = LyoGuid.CreateV7(),
                 FileName = file.Name,
                 FileSize = file.Size,
                 Status = LyoFileUploadStatus.Pending,

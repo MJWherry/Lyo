@@ -1,19 +1,17 @@
-using Lyo.Api;
 using Lyo.Api.ApiEndpoint;
 using Lyo.Api.Export;
 using Lyo.Authentication.Audit;
-using Lyo.Authentication.Services.Users;
 using Lyo.Authentication.Models;
 using Lyo.Authentication.Models.Audit;
 using Lyo.Authentication.Models.Request;
 using Lyo.Authentication.Models.Response;
 using Lyo.Authentication.Postgres.Database;
+using Lyo.Authentication.Services.Users;
 using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -48,7 +46,6 @@ public static class Extensions
     {
         ArgumentHelpers.ThrowIfNull(app);
         options ??= new();
-
         app.CreateBuilder<UserDbContext, UserEntity, AuthUserReq, AuthUserRes, Guid>(Constants.Rest.Auth.User, "Auth")
             .WithCrud(
                 UserFeatures, new() {

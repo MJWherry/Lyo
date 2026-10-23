@@ -3,10 +3,10 @@
   "name": "Lyo.Api.Client",
   "area": "Apps",
   "tagline": "Lyo API HTTP client: problem-details (`ApiException`), `ApiRouteBuilder`, Query/QueryProject, correlation. Generic JSON verbs live on `Lyo.Http.Client`.",
-  "description": "Lyo-specific HTTP client on top of `LyoHttpClient`. Non-success responses throw `ApiException` with RFC 7807 problem-details when the body parses. `QueryProjectAsync` / `QueryConcreteAsync` POST to `{route}/QueryProject` and `{route}/QueryConcrete` using `Lyo.Query.Models` only here.\n\nVendor clients (Endato, Typecast, ESPN, Discord, Google Maps) now inherit `LyoHttpClient` in `Lyo.Http.Client`. Config.Api.Client stays on `ApiClient`. Resolve via `IHttpClientFactory`.",
+  "description": "Lyo-specific HTTP client on top of `LyoHttpClient`. Non-success responses throw `ApiException` with RFC 7807 problem-details when the body parses. `QueryProjectAsync` / `QueryConcreteAsync` / `QuerySqlAsync` POST to `{route}/QueryProject`, `{route}/QueryConcrete`, and `{route}/QuerySql`.\n\nVendor clients (Endato, Typecast, ESPN, Discord, Google Maps) now inherit `LyoHttpClient` in `Lyo.Http.Client`. Config.Api.Client stays on `ApiClient`. Resolve via `IHttpClientFactory`.",
   "features": [
     "**`IApiClient` / `ApiClient`.** Subclass of `LyoHttpClient`. JSON verbs inherited; `EnsureSuccessAsync` maps problem-details to `ApiException`. User-Agent is `Lyo/{version}` (no UA rotation).",
-    "**`QueryProjectAsync` / `QueryConcreteAsync`.** `POST {route}/QueryProject` and `POST {route}/QueryConcrete`.",
+    "**`QueryProjectAsync` / `QueryConcreteAsync` / `QuerySqlAsync`.** `POST {route}/QueryProject`, `POST {route}/QueryConcrete`, and `POST {route}/QuerySql`. QuerySql returns the SQL preview and does not run the query.",
     "**`ApiRouteBuilder`.** `Build(routePrefix, relativePath)` applies the host's configured mount point, and `WithIncludes(route, includes)` appends one `include` query parameter per navigation to expand.",
     "**`AddLyoApiClient`.** Factory registration for `IApiClient` plus optional correlation handler. Vendor `AddLyoApiClient<T,T>` is obsolete — use `AddLyoHttpClient`."
   ],
@@ -192,14 +192,6 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.DateAndTime",
       "kind": "lyo",
       "tags": [
@@ -209,6 +201,14 @@
     },
     {
       "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -294,6 +294,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

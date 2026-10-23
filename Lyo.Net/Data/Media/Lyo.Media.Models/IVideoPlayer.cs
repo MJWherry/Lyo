@@ -2,7 +2,10 @@ using Lyo.Result;
 
 namespace Lyo.Media.Models;
 
-/// <summary>Plays video locally. Network streaming is <see cref="IVideoConverter.StartConvertAsync(string, VideoConversionOptions, CancellationToken)" />, not this type. Windowed play is opt-in via <see cref="VideoPlayOptions.NoDisplay" />.</summary>
+/// <summary>
+/// Plays video locally. Network streaming is <see cref="IVideoConverter.StartConvertAsync(string, VideoConversionOptions, CancellationToken)" />, not this type. Windowed
+/// play is opt-in via <see cref="VideoPlayOptions.NoDisplay" />.
+/// </summary>
 public interface IVideoPlayer
 {
     /// <summary>Plays a local path or <c>http(s)://</c> URL.</summary>

@@ -1,35 +1,124 @@
 using System.Net;
 using System.Text;
-using Lyo.Reporting.Models.Models;
 
 namespace Lyo.Reporting.Models.Sanitization;
 
 /// <summary>
-/// Allowlist sanitizer for raw markup carried by <see cref="ContentType.Html" /> and <see cref="ContentType.Chart" /> content blocks. Composition JSON is
-/// caller-supplied, so anything rendered as markup must pass through here first.
+/// Allowlist sanitizer for raw markup carried by <see cref="ContentType.Html" /> and <see cref="ContentType.Chart" /> content blocks. Composition JSON is caller-supplied, so
+/// anything rendered as markup must pass through here first.
 /// </summary>
 /// <remarks>
-/// This is a re-emitting sanitizer, not a blocklist: input is tokenized and only allowed elements and attributes are written to the output, so an element or attribute
-/// nobody thought of is dropped rather than passed through. Raw-text elements (<c>script</c>, <c>style</c>, and friends) are dropped along with their content, event-handler
-/// attributes are never emitted, and <c>href</c> / <c>src</c> values are restricted to safe schemes.
+/// This is a re-emitting sanitizer, not a blocklist: input is tokenized and only allowed elements and attributes are written to the output, so an element or attribute nobody
+/// thought of is dropped rather than passed through. Raw-text elements (<c>script</c>, <c>style</c>, and friends) are dropped along with their content, event-handler attributes are
+/// never emitted, and <c>href</c> / <c>src</c> values are restricted to safe schemes.
 /// </remarks>
 public static class ReportHtmlSanitizer
 {
     private static readonly HashSet<string> AllowedElements = new(StringComparer.OrdinalIgnoreCase) {
-        "a", "abbr", "article", "aside", "b", "blockquote", "br", "canvas", "caption", "code", "col", "colgroup", "dd", "div", "dl", "dt", "em", "figcaption", "figure",
-        "footer", "h1", "h2", "h3", "h4", "h5", "h6", "header", "hr", "i", "img", "label", "li", "main", "mark", "ol", "p", "pre", "s", "section", "small", "span", "strong",
-        "sub", "sup", "table", "tbody", "td", "tfoot", "th", "thead", "time", "tr", "u", "ul"
+        "a",
+        "abbr",
+        "article",
+        "aside",
+        "b",
+        "blockquote",
+        "br",
+        "canvas",
+        "caption",
+        "code",
+        "col",
+        "colgroup",
+        "dd",
+        "div",
+        "dl",
+        "dt",
+        "em",
+        "figcaption",
+        "figure",
+        "footer",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "header",
+        "hr",
+        "i",
+        "img",
+        "label",
+        "li",
+        "main",
+        "mark",
+        "ol",
+        "p",
+        "pre",
+        "s",
+        "section",
+        "small",
+        "span",
+        "strong",
+        "sub",
+        "sup",
+        "table",
+        "tbody",
+        "td",
+        "tfoot",
+        "th",
+        "thead",
+        "time",
+        "tr",
+        "u",
+        "ul"
     };
 
     /// <summary>Elements dropped together with everything up to their closing tag, because their content is script, styling, or an embedded document rather than markup.</summary>
     private static readonly HashSet<string> DroppedWithContent = new(StringComparer.OrdinalIgnoreCase) {
-        "script", "style", "iframe", "frame", "frameset", "object", "embed", "applet", "noscript", "noembed", "svg", "math", "template", "textarea", "title", "xmp"
+        "script",
+        "style",
+        "iframe",
+        "frame",
+        "frameset",
+        "object",
+        "embed",
+        "applet",
+        "noscript",
+        "noembed",
+        "svg",
+        "math",
+        "template",
+        "textarea",
+        "title",
+        "xmp"
     };
 
-    private static readonly HashSet<string> VoidElements = new(StringComparer.OrdinalIgnoreCase) { "br", "col", "hr", "img" };
+    private static readonly HashSet<string> VoidElements = new(StringComparer.OrdinalIgnoreCase) {
+        "br",
+        "col",
+        "hr",
+        "img"
+    };
 
     private static readonly HashSet<string> AllowedAttributes = new(StringComparer.OrdinalIgnoreCase) {
-        "align", "alt", "class", "colspan", "dir", "headers", "height", "href", "id", "lang", "rel", "rowspan", "scope", "span", "src", "style", "target", "title", "valign", "width"
+        "align",
+        "alt",
+        "class",
+        "colspan",
+        "dir",
+        "headers",
+        "height",
+        "href",
+        "id",
+        "lang",
+        "rel",
+        "rowspan",
+        "scope",
+        "span",
+        "src",
+        "style",
+        "target",
+        "title",
+        "valign",
+        "width"
     };
 
     /// <summary>Attributes whose value is a URL, so they need a scheme check rather than only escaping.</summary>
@@ -40,14 +129,14 @@ public static class ReportHtmlSanitizer
     private static readonly string[] AllowedDataUrlPrefixes = ["data:image/png;", "data:image/jpeg;", "data:image/gif;", "data:image/webp;"];
 
     /// <summary>
-    /// Sanitizes a CSS property value (layout margin/padding, inline style dictionaries). Drops declarations that can execute.
-    /// Null or empty input returns <see cref="string.Empty" />.
+    /// Sanitizes a CSS property value (layout margin/padding, inline style dictionaries). Drops declarations that can execute. Null or empty input returns
+    /// <see cref="string.Empty" />.
     /// </summary>
     public static string SanitizeCss(string? value) => string.IsNullOrEmpty(value) ? string.Empty : SanitizeStyle(value!);
 
     /// <summary>
-    /// Returns <paramref name="html" /> with every element and attribute outside the allowlist removed. Null or empty input returns <see cref="string.Empty" />, so callers
-    /// can pass the value straight to a markup sink.
+    /// Returns <paramref name="html" /> with every element and attribute outside the allowlist removed. Null or empty input returns <see cref="string.Empty" />, so callers can
+    /// pass the value straight to a markup sink.
     /// </summary>
     public static string Sanitize(string? html)
     {
@@ -71,8 +160,8 @@ public static class ReportHtmlSanitizer
     }
 
     /// <summary>
-    /// Handles the tag (or comment, or stray <c>&lt;</c>) starting at <paramref name="start" /> and returns the index to keep scanning from. Emits the tag only when it
-    /// survives the allowlist.
+    /// Handles the tag (or comment, or stray <c>&lt;</c>) starting at <paramref name="start" /> and returns the index to keep scanning from. Emits the tag only when it survives
+    /// the allowlist.
     /// </summary>
     private static int WriteTag(StringBuilder output, string html, int start)
     {
@@ -215,6 +304,7 @@ public static class ReportHtmlSanitizer
 
             if (i >= limit || html[i] != '=') {
                 yield return (name, string.Empty);
+
                 continue;
             }
 
@@ -224,6 +314,7 @@ public static class ReportHtmlSanitizer
 
             if (i >= limit) {
                 yield return (name, string.Empty);
+
                 break;
             }
 
@@ -252,8 +343,8 @@ public static class ReportHtmlSanitizer
     }
 
     /// <summary>
-    /// Data attributes are inert markup, so they are allowed wholesale. That is what carries chart configuration to the viewer's own bootstrap script. Event handlers
-    /// (<c>on*</c>) and everything else outside <see cref="AllowedAttributes" /> are dropped.
+    /// Data attributes are inert markup, so they are allowed wholesale. That is what carries chart configuration to the viewer's own bootstrap script. Event handlers (<c>on*</c>
+    /// ) and everything else outside <see cref="AllowedAttributes" /> are dropped.
     /// </summary>
     private static bool IsAllowedAttribute(string attribute)
     {

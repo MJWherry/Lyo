@@ -84,9 +84,7 @@ internal sealed partial class QRIsoEncoder
         };
     }
 
-    /// <summary>
-    /// Picks a QR version from the data segment and ECC level. Checks that a requested version is large enough, or finds the smallest version when none is given.
-    /// </summary>
+    /// <summary>Picks a QR version from the data segment and ECC level. Checks that a requested version is large enough, or finds the smallest version when none is given.</summary>
     private static int DetermineVersion(DataSegment segment, ECCLevel eccLevel, int version)
     {
         if (!CapacityTables.TryCalculateMinimumVersion(segment, eccLevel, out var minVersion))
@@ -202,9 +200,7 @@ internal sealed partial class QRIsoEncoder
         return GenerateQrCode(bitArray, eccLevel, version);
     }
 
-    /// <summary>
-    /// Accepts a valid ECC level, or maps Default to M. Raises if the level is invalid.
-    /// </summary>
+    /// <summary>Accepts a valid ECC level, or maps Default to M. Raises if the level is invalid.</summary>
     private static ECCLevel ValidateECCLevel(ECCLevel eccLevel)
         => eccLevel switch {
             ECCLevel.L or ECCLevel.M or ECCLevel.Q or ECCLevel.H => eccLevel,
@@ -212,12 +208,8 @@ internal sealed partial class QRIsoEncoder
             var _ => throw new ArgumentOutOfRangeException(nameof(eccLevel), eccLevel, "Invalid error correction level.")
         };
 
-    /// <summary>
-    /// Builds a QR matrix from a BitArray, ECC level, and version. The BitArray is expected to already include count, encoding mode, and/or ECI mode.
-    /// </summary>
-    /// <param name="bitArray">
-    /// Encoded payload bits. Must already include count, encoding mode, and/or ECI mode.
-    /// </param>
+    /// <summary>Builds a QR matrix from a BitArray, ECC level, and version. The BitArray is expected to already include count, encoding mode, and/or ECI mode.</summary>
+    /// <param name="bitArray">Encoded payload bits. Must already include count, encoding mode, and/or ECI mode.</param>
     /// <param name="eccLevel">Error-correction level (how much damage can be recovered).</param>
     /// <param name="version">QR version (matrix size and complexity).</param>
     /// <returns>A QRISOMatrix with the full module grid, for rendering or analysis.</returns>
@@ -392,9 +384,7 @@ internal sealed partial class QRIsoEncoder
         }
     }
 
-    /// <summary>
-    /// Writes the 15-bit format string: ECC level, mask pattern, and format ECC bits.
-    /// </summary>
+    /// <summary>Writes the 15-bit format string: ECC level, mask pattern, and format ECC bits.</summary>
     /// <param name="fStrEcc"><see cref="BitArray" /> to write into, or null to allocate one.</param>
     /// <param name="version">QR version (1-40, or -1 to -4 for Micro QR).</param>
     /// <param name="level">ECC level encoded in the format string.</param>
@@ -532,9 +522,7 @@ internal sealed partial class QRIsoEncoder
 #endif
     }
 
-    /// <summary>
-    /// Encodes version information into a BitArray with ECC similar to format encoding. Used for QR versions 7 and above.
-    /// </summary>
+    /// <summary>Encodes version information into a BitArray with ECC similar to format encoding. Used for QR versions 7 and above.</summary>
     /// <param name="vStr"><see cref="BitArray" /> that receives the version string.</param>
     /// <param name="version">QR version (7-40).</param>
     /// <returns>Encoded version bits, including ECC.</returns>
@@ -564,9 +552,7 @@ internal sealed partial class QRIsoEncoder
         DecToBin(version, 6, vStr, 0);
     }
 
-    /// <summary>
-    /// ECC codewords for a data slice. Divides the message polynomial by the generator polynomial; the remainder is the ECC.
-    /// </summary>
+    /// <summary>ECC codewords for a data slice. Divides the message polynomial by the generator polynomial; the remainder is the ECC.</summary>
     private static ArraySegment<byte> CalculateECCWords(BitArray bitArray, int offset, int count, ECCInfo eccInfo, Polynom generatorPolynomBase)
     {
         var eccWords = eccInfo.ECCPerBlock;
@@ -626,9 +612,7 @@ internal sealed partial class QRIsoEncoder
         return ret;
     }
 
-    /// <summary>
-    /// Converts each coefficient from alpha-exponent form to decimal in place, for operations that need integer coefficients.
-    /// </summary>
+    /// <summary>Converts each coefficient from alpha-exponent form to decimal in place, for operations that need integer coefficients.</summary>
     private static void ConvertToDecNotationInPlace(Polynom poly)
     {
         for (var i = 0; i < poly.Count; i++)
@@ -865,9 +849,7 @@ internal sealed partial class QRIsoEncoder
             var _ => EmptyBitArray
         };
 
-    /// <summary>
-    /// Bytes to BitArray, keeping MSB-to-LSB order inside each byte (unlike the BitArray constructor).
-    /// </summary>
+    /// <summary>Bytes to BitArray, keeping MSB-to-LSB order inside each byte (unlike the BitArray constructor).</summary>
     /// <param name="byteArray">Bytes to convert.</param>
     /// <param name="prefixZeros">Leading zeros to prepend.</param>
     /// <returns>BitArray of the input bits, plus optional leading zeros.</returns>
@@ -885,9 +867,7 @@ internal sealed partial class QRIsoEncoder
         return bitArray;
     }
 
-    /// <summary>
-    /// Copies bytes into a BitArray at an offset, keeping MSB-to-LSB order inside each byte (unlike the BitArray constructor).
-    /// </summary>
+    /// <summary>Copies bytes into a BitArray at an offset, keeping MSB-to-LSB order inside each byte (unlike the BitArray constructor).</summary>
     /// <param name="byteArray">Bytes to copy.</param>
     /// <param name="bitArray">Target BitArray.</param>
     /// <param name="offset">Start offset in the BitArray.</param>
@@ -933,9 +913,7 @@ internal sealed partial class QRIsoEncoder
         return resultPolynom;
     }
 
-    /// <summary>
-    /// Multiplies the generator polynomial by a lead term and lowers exponents. Used when building QR ECC codewords.
-    /// </summary>
+    /// <summary>Multiplies the generator polynomial by a lead term and lowers exponents. Used when building QR ECC codewords.</summary>
     private static Polynom MultiplyGeneratorPolynomByLeadterm(Polynom genPolynom, PolynomItem leadTerm, int lowerExponentBy)
     {
         var resultPolynom = new Polynom(genPolynom.Count);

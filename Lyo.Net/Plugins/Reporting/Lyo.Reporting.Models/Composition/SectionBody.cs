@@ -31,14 +31,12 @@ public sealed class SectionBodyItem
         return Kind switch {
             SectionBodyKind.Control => ReferenceEquals(Control, other.Control),
             SectionBodyKind.Subsection => ReferenceEquals(Subsection, other.Subsection),
-            _ => false
+            var _ => false
         };
     }
 }
 
-/// <summary>
-/// Mixed body order for section controls and subsections. All-zero <c>Order</c> keeps controls in list order, then subsections.
-/// </summary>
+/// <summary>Mixed body order for section controls and subsections. All-zero <c>Order</c> keeps controls in list order, then subsections.</summary>
 public static class SectionBody
 {
     /// <summary>True when the section has never been assigned mixed orders (all zeros).</summary>
@@ -75,8 +73,8 @@ public static class SectionBody
     }
 
     /// <summary>
-    /// Moves <paramref name="item" /> from <paramref name="source" /> into <paramref name="dest" /> at <paramref name="insertIndex" />.
-    /// Returns false when the move would nest a subsection under itself or place a grid inside a grid.
+    /// Moves <paramref name="item" /> from <paramref name="source" /> into <paramref name="dest" /> at <paramref name="insertIndex" />. Returns false when the move would nest a
+    /// subsection under itself or place a grid inside a grid.
     /// </summary>
     public static bool Relocate(Section source, Section dest, SectionBodyItem item, int insertIndex)
     {
@@ -94,6 +92,7 @@ public static class SectionBody
         var destItems = Enumerate(dest).Where(i => !item.SameAs(i)).ToList();
         if (insertIndex < 0)
             insertIndex = 0;
+
         if (insertIndex > destItems.Count)
             insertIndex = destItems.Count;
 
@@ -121,6 +120,7 @@ public static class SectionBody
         owner!.Remove(control);
         if (insertIndex < 0)
             insertIndex = 0;
+
         if (insertIndex > dest.Controls.Count)
             insertIndex = dest.Controls.Count;
 
@@ -130,8 +130,7 @@ public static class SectionBody
     }
 
     /// <summary>Swaps a table column and every row cell at that index.</summary>
-    public static bool MoveTableColumn(Table table, int index, int delta)
-        => MoveTableColumnTo(table, index, index + delta + (delta > 0 ? 1 : 0));
+    public static bool MoveTableColumn(Table table, int index, int delta) => MoveTableColumnTo(table, index, index + delta + (delta > 0 ? 1 : 0));
 
     /// <summary>Moves a table column (and lockstep cells) so it lands at <paramref name="insertIndex" /> in the pre-move list.</summary>
     public static bool MoveTableColumnTo(Table table, int fromIndex, int insertIndex)
@@ -142,6 +141,7 @@ public static class SectionBody
 
         if (insertIndex < 0)
             insertIndex = 0;
+
         if (insertIndex > table.Columns.Count)
             insertIndex = table.Columns.Count;
 
@@ -234,6 +234,7 @@ public static class SectionBody
         ArgumentHelpers.ThrowIfNull(controls);
         foreach (var control in controls) {
             yield return control;
+
             if (control is not Grid grid)
                 continue;
 
@@ -248,6 +249,7 @@ public static class SectionBody
         ArgumentHelpers.ThrowIfNull(roots);
         foreach (var section in roots) {
             yield return section;
+
             foreach (var nested in WalkSections(section.Subsections))
                 yield return nested;
         }
@@ -296,8 +298,10 @@ public static class SectionBody
         items.RemoveAt(current);
         if (insertIndex > current)
             insertIndex--;
+
         if (insertIndex < 0)
             insertIndex = 0;
+
         if (insertIndex > items.Count)
             insertIndex = items.Count;
 
@@ -314,6 +318,7 @@ public static class SectionBody
 
         if (insertIndex < 0)
             insertIndex = 0;
+
         if (insertIndex > owner.Count)
             insertIndex = owner.Count;
 
@@ -354,6 +359,7 @@ public static class SectionBody
             case SectionBodyKind.Control when item.Control is not null:
                 if (TryOwner(source, item.Control, out var owner))
                     owner!.Remove(item.Control);
+
                 break;
             case SectionBodyKind.Subsection when item.Subsection is not null:
                 source.Subsections.Remove(item.Subsection);
@@ -374,7 +380,12 @@ public static class SectionBody
     }
 
     private static SectionBodyItem CloneFor(Section dest, SectionBodyItem item)
-        => new() { Kind = item.Kind, Section = dest, Control = item.Control, Subsection = item.Subsection };
+        => new() {
+            Kind = item.Kind,
+            Section = dest,
+            Control = item.Control,
+            Subsection = item.Subsection
+        };
 
     private static List<SectionBodyItem> EnumerateLegacy(Section section)
     {
@@ -401,9 +412,7 @@ public static class SectionBody
         return raw.OrderBy(x => x.Order).ThenBy(x => x.Index).Select(x => x.Item).ToList();
     }
 
-    private static SectionBodyItem ControlItem(Section section, Control control)
-        => new() { Kind = SectionBodyKind.Control, Section = section, Control = control };
+    private static SectionBodyItem ControlItem(Section section, Control control) => new() { Kind = SectionBodyKind.Control, Section = section, Control = control };
 
-    private static SectionBodyItem SubItem(Section section, Section subsection)
-        => new() { Kind = SectionBodyKind.Subsection, Section = section, Subsection = subsection };
+    private static SectionBodyItem SubItem(Section section, Section subsection) => new() { Kind = SectionBodyKind.Subsection, Section = section, Subsection = subsection };
 }

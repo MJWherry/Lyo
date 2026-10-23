@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.DataTable.Models;
 
 /// <summary>Optional per-cell formatting for a <see cref="DataTable" />. Stored sparsely on the table, not on the cell.</summary>
@@ -19,6 +21,7 @@ namespace Lyo.DataTable.Models;
 /// <param name="BorderLeft">Left border style, if set.</param>
 /// <param name="BorderRight">Right border style, if set.</param>
 /// <param name="BorderColor">Border color as hex (when borders are set), if set.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record DataTableCellFormat(
     double? FontSize = null,
     string? FontName = null,

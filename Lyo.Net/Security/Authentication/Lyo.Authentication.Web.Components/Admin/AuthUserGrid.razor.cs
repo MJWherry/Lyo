@@ -1,5 +1,4 @@
 using Lyo.Api.Client;
-using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Authentication.Models;
 using Lyo.Authentication.Models.Response;
@@ -14,6 +13,10 @@ namespace Lyo.Authentication.Web.Components;
 
 public partial class AuthUserGrid
 {
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("DisplayName", "Name"), new("Email")];
+
+    private LyoDataGridProjected? _dataGrid;
+
     [Parameter]
     [EditorRequired]
     public IApiClient ApiClient { get; set; } = null!;
@@ -25,10 +28,6 @@ public partial class AuthUserGrid
     public EventCallback<Guid> OnOpenUser { get; set; }
 
     private string _route => $"{BaseRoute.TrimEnd('/')}/User";
-
-    private LyoDataGridProjected? _dataGrid;
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("DisplayName", "Name"), new("Email")];
 
     public Task RefreshAsync() => _dataGrid is null ? Task.CompletedTask : _dataGrid.RefreshData();
 
@@ -65,11 +64,7 @@ public partial class AuthUserGrid
         if (user is null)
             return;
 
-        var parameters = new DialogParameters<AuthUserDetailDialog> {
-            { d => d.User, user },
-            { d => d.ApiClient, ApiClient },
-            { d => d.BaseRoute, BaseRoute }
-        };
+        var parameters = new DialogParameters<AuthUserDetailDialog> { { d => d.User, user }, { d => d.ApiClient, ApiClient }, { d => d.BaseRoute, BaseRoute } };
         var dialog = await DialogService.ShowAsync<AuthUserDetailDialog>(user.DisplayName, parameters, LyoDialogPresets.Large);
         await dialog.Result;
         await RefreshAsync();

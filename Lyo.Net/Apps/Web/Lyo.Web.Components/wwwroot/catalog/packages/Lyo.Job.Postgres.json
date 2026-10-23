@@ -3,7 +3,7 @@
   "name": "Lyo.Job.Postgres",
   "area": "Plugins",
   "tagline": "PostgreSQL persistence for Lyo job management.",
-  "description": "PostgreSQL persistence for Lyo job management. Wraps EF Core, the Lyo CRUD/QueryConcrete stack, hand-rolled `JobLyoMapper` (`ILyoMapper`), optional parameter encryption, audit recording, and `IJobEventPublisher` so a host can run a job service: definitions, parameters, schedules, triggers, calendars, workflows, worker registry, runs, batch children, run parameters, run results, run logs, and stats. HTTP mapping (`BuildJobGroup`) lives in `Lyo.Job.Api`.",
+  "description": "PostgreSQL persistence for Lyo job management. Wraps EF Core, the Lyo CRUD/QueryConcrete stack, hand-rolled `JobLyoMapper` (`ILyoMapper`), optional parameter encryption, audit recording, and `IJobEventPublisher` so a host can run a job service: definitions, parameters, schedules, calendars, workflows, worker registry, runs, batch children, run parameters, run results, run logs, and stats. HTTP mapping (`BuildJobGroup`) lives in `Lyo.Job.Api`.",
   "features": [],
   "examples": [
     {
@@ -158,7 +158,7 @@
         [
           "`Running`/`Cancelling` → `Finished`/`Timeout`",
           "`JobMaintenanceService` dead-job scan",
-          "Heartbeat older than `TimeoutMinutes`; publishes `RunFinished` so retries/triggers/circuit breaker still fire."
+          "Heartbeat older than `TimeoutMinutes`; publishes `RunFinished` so retries and the circuit breaker still fire."
         ]
       ],
       "lead": "Every lifecycle transition is a compare-and-swap update (`ExecuteUpdateAsync` with the expected state in the `WHERE` clause), so duplicate MQ deliveries and races between workers,\nthe API, and maintenance resolve deterministically. Future endpoints that mutate `JobRun.State` must keep this CAS discipline. Create, delete, CAS, log, dead-job timeout, and retention purge also bust `entity:jobrun` and `entity:jobdefinition` query-cache tags so run and last-run grid pages do not stay stale."
@@ -167,6 +167,11 @@
       "type": "paragraph",
       "title": "Dispatch suppression",
       "text": "Immediate `RunCreated` publish is skipped by `CreateJobRun` when `JobRunReq.SuppressDispatch` is set **or** `ScheduledSlotUtc` is in the future (metric `job.service.run.dispatch.deferred`). Dispatch then belongs to the caller: the scheduler's delayed-MQ envelope delivers backoff retries, and the workflow engine publishes step runs only after linking them to their run step. If the owner crashes before publishing, the maintenance service's stuck-queued recovery (below) is the safety net. With suppression requested, creation succeeds even while MQ is disconnected."
+    },
+    {
+      "type": "paragraph",
+      "title": "Workflow run inputs",
+      "text": "`JobWorkflowService.StartWorkflowAsync` resolves the run's inputs once and freezes them onto `job_workflow_run.inputs_json`: the schedule's **enabled** parameters first, then `JobWorkflowStartReq.Inputs` over the top. Steps read them as `Input.{key}` — both in condition gates and in parameter templates — so a schedule edited mid-run cannot flip a gate that has already gone the other way, and schedule parameters have exactly one spelling."
     },
     {
       "type": "paragraph",
@@ -357,7 +362,7 @@
     {
       "type": "markdown",
       "title": "`JobMaintenanceService`",
-      "body": "`BackgroundService` (`IHealth`: `job-maintenance`) ticking every `CheckIntervalSeconds`:\n\n1. **Dead jobs**. `Cancelling`/`Running` runs past `TimeoutMinutes` → `Timeout`/`Finished` + optional `DeadJob` alert. After commit, publishes `RunFinished` for each timed-out run\n so the scheduler's retry/trigger/circuit-breaker accounting fires (a late worker finish for the same run is rejected by the state check and dropped by the worker as terminal).\n2. **Circuit breaker reset**. Re-enables definitions after `CircuitBreakerResetMinutes`; publishes `DefinitionUpdated` so scheduler caches refresh promptly.\n3. **Stuck queued redispatch**. Re-publishes `RunCreated` for due `Queued` runs untouched for `QueuedRunRedispatchMinutes` (lost publishes, delayed retries whose slot came due,\n crashed suppressed-dispatch owners). Bumps `UpdatedTimestamp` so a stuck run retries once per threshold window; duplicate deliveries are harmless because `StartedJobRun` only\n transitions `Queued -> Running` once.\n4. **Retention purge**. Deletes finished runs older than effective retention in `PurgeBatchSize` batches. Detaches FK references from surviving rows first: `ReRanFromJobRunId`/\n `TriggeredByJobRunId`/`ParentJobRunId` on related runs and `JobWorkflowRunStep.JobRunId` (workflow history is preserved with the run reference nulled), so purging\n workflow-created runs or parents with surviving children cannot violate FKs and wedge the purge.\n5. **Worker pruning**. Removes stale `JobWorkerInstance` rows.\n6. **SLA breach scan**. Marks `SlaBreached` and increments `job.sla.breach` for overdue queued/running jobs. Alerts for SLA breaches are published by `JobService` on start/finish\n transitions, not by this background scan.\n\n```mermaid\nflowchart LR\n    tick[Maintenance tick] --> dead[Fail dead jobs]\n    tick --> cb[Reset circuit breakers]\n    tick --> redisp[Redispatch stuck queued runs]\n    tick --> ret[Purge by retention]\n    tick --> wrk[Prune worker instances]\n    tick --> sla[Detect SLA breaches]\n    dead --> alert[PublishAlertAsync]\n    dead --> fin[PublishRunFinishedAsync]\n    cb --> defupd[PublishDefinitionUpdatedAsync]\n```"
+      "body": "`BackgroundService` (`IHealth`: `job-maintenance`) ticking every `CheckIntervalSeconds`:\n\n1. **Dead jobs**. `Cancelling`/`Running` runs past `TimeoutMinutes` → `Timeout`/`Finished` + optional `DeadJob` alert. After commit, publishes `RunFinished` for each timed-out run\n so the scheduler's retry and circuit-breaker accounting fires (a late worker finish for the same run is rejected by the state check and dropped by the worker as terminal).\n2. **Circuit breaker reset**. Re-enables definitions after `CircuitBreakerResetMinutes`; publishes `DefinitionUpdated` so scheduler caches refresh promptly.\n3. **Stuck queued redispatch**. Re-publishes `RunCreated` for due `Queued` runs untouched for `QueuedRunRedispatchMinutes` (lost publishes, delayed retries whose slot came due,\n crashed suppressed-dispatch owners). Bumps `UpdatedTimestamp` so a stuck run retries once per threshold window; duplicate deliveries are harmless because `StartedJobRun` only\n transitions `Queued -> Running` once.\n4. **Retention purge**. Deletes finished runs older than effective retention in `PurgeBatchSize` batches. Detaches FK references from surviving rows first: `ReRanFromJobRunId`/`ParentJobRunId` on related runs and `JobWorkflowRunStep.JobRunId` (workflow history is preserved with the run reference nulled), so purging\n workflow-created runs or parents with surviving children cannot violate FKs and wedge the purge.\n5. **Worker pruning**. Removes stale `JobWorkerInstance` rows.\n6. **SLA breach scan**. Marks `SlaBreached` and increments `job.sla.breach` for overdue queued/running jobs. Alerts for SLA breaches are published by `JobService` on start/finish\n transitions, not by this background scan.\n\n```mermaid\nflowchart LR\n    tick[Maintenance tick] --> dead[Fail dead jobs]\n    tick --> cb[Reset circuit breakers]\n    tick --> redisp[Redispatch stuck queued runs]\n    tick --> ret[Purge by retention]\n    tick --> wrk[Prune worker instances]\n    tick --> sla[Detect SLA breaches]\n    dead --> alert[PublishAlertAsync]\n    dead --> fin[PublishRunFinishedAsync]\n    cb --> defupd[PublishDefinitionUpdatedAsync]\n```"
     },
     {
       "type": "list",
@@ -370,7 +375,7 @@
     {
       "type": "markdown",
       "title": "Design-time migrations",
-      "body": "Set `JOB_CONNECTION_STRING` and run:\n\n```bash\nexport JOB_CONNECTION_STRING=\"Host=localhost;Database=postgres;Username=postgres;Password=password\"\ndotnet ef migrations add YourMigrationName --project Lyo.Job.Postgres\n```\n\nRecent migrations of note:\n\n- **`ParameterClrTypeFullName`.** Widens parameter/result `type` to 1024, JSON-encodes stored values, folds `allow_multiple` into `List<T>` FullNames, then drops `allow_multiple`.\n- **`WidenJobDefinitionWorkerType`.** Widens `job_definition.worker_type` from 7 to 50 characters, matching `job_worker_instance.worker_type` (worker type names longer than 7\n characters were previously truncated/rejected on the definition side only).\n- **`AddParameterDefaultExpression`.** Adds `job_parameter.default_kind` (`Literal` | `Expression`, defaulting to `Literal`) and `job_parameter.default_template`. Existing rows read as `Literal`, so the change is backward compatible.\n- **`AddJobBlackoutHolidayAndCalendarDays`.** Adds `holiday_slug`, `include_observed_date`, `month_flags`, and `days_of_month` on `job_blackout_window` so holiday and calendar-day windows are stored as rules instead of one dated row per year."
+      "body": "Set `JOB_CONNECTION_STRING` and run:\n\n```bash\nexport JOB_CONNECTION_STRING=\"Host=localhost;Database=postgres;Username=postgres;Password=password\"\ndotnet ef migrations add YourMigrationName --project Lyo.Job.Postgres\n```\n\nRecent migrations of note:\n\n- **`ParameterClrTypeFullName`.** Widens parameter/result `type` to 1024, JSON-encodes stored values, folds `allow_multiple` into `List<T>` FullNames, then drops `allow_multiple`.\n- **`WidenJobDefinitionWorkerType`.** Widens `job_definition.worker_type` from 7 to 50 characters, matching `job_worker_instance.worker_type` (worker type names longer than 7\n characters were previously truncated/rejected on the definition side only).\n- **`AddParameterDefaultExpression`.** Adds `job_parameter.default_kind` (`Literal` | `Expression`, defaulting to `Literal`) and `job_parameter.default_template`. Existing rows read as `Literal`, so the change is backward compatible.\n- **`AddJobBlackoutHolidayAndCalendarDays`.** Adds `holiday_slug`, `include_observed_date`, `month_flags`, and `days_of_month` on `job_blackout_window` so holiday and calendar-day windows are stored as rules instead of one dated row per year.\n- **`AddWorkflowsAndDropTriggers`.** Adds workflow schedules, step conditions, run inputs, and the workflow-run idempotency key, and drops `job_trigger`, `job_trigger_parameter`, and `job_run.job_trigger_id`. Triggers are no longer part of the model."
     }
   ],
   "links": [],
@@ -516,14 +521,6 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.Compression",
       "kind": "lyo",
       "tags": [
@@ -596,6 +593,14 @@
       ]
     },
     {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [
@@ -637,6 +642,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Sql",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -887,6 +900,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

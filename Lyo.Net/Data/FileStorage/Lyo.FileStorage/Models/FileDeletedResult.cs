@@ -8,6 +8,5 @@ public sealed record FileDeletedResult(Guid FileId, bool Success, string? ErrorM
     : FileStorageResult(FileId, DateTime.UtcNow)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => $"FileDeletedResult: FileId={FileId}, Success={Success}{(ErrorMessage == null ? "" : $", Error={ErrorMessage}")}";
+    public override string ToString() => $"FileDeletedResult: FileId={FileId}, Success={Success}{(ErrorMessage == null ? "" : $", Error={ErrorMessage}")}";
 }

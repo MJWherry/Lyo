@@ -1,4 +1,5 @@
 using Lyo.Reporting.Models;
+
 namespace Lyo.Reporting.Postgres;
 
 /// <summary>

@@ -74,6 +74,7 @@ internal static class FfprobeJsonParser
             var right = text[(slash + 1)..];
             if (!TypeConversion.TryConvertTo<double>(left, out var n) || !TypeConversion.TryConvertTo<double>(right, out var d) || d == 0)
                 return false;
+
             if (n == 0)
                 return false;
 

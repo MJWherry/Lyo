@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.OpenIdConnect.Discovery;
+using Lyo.Common.Core.Identifiers;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
@@ -12,8 +13,8 @@ using Org.BouncyCastle.Crypto.Signers;
 namespace Lyo.Authentication.OpenIdConnect.Tests;
 
 /// <summary>
-/// In-process stand-in OpenID Connect IdP: discovery, JWKS, and a <c>/token</c> URL. Signs with Ed25519 so validation tests skip
-/// RSA fixture setup. Used by the coordinator end-to-end test.
+/// In-process stand-in OpenID Connect IdP: discovery, JWKS, and a <c>/token</c> URL. Signs with Ed25519 so validation tests skip RSA fixture setup. Used by the coordinator
+/// end-to-end test.
 /// </summary>
 internal sealed class FakeOidcIdentityProvider
 {
@@ -40,7 +41,7 @@ internal sealed class FakeOidcIdentityProvider
 
     public string IssueCode(IDictionary<string, object?> claims)
     {
-        var code = Guid.NewGuid().ToString("N");
+        var code = LyoGuid.CreateV7().ToString("N");
         _claimsByCode[code] = claims;
         return code;
     }

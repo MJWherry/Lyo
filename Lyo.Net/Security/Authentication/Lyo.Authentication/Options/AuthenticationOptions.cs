@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Authentication.Models.Format;
 
 namespace Lyo.Authentication.Options;
 
 /// <summary>Top-level authentication options. Bound from configuration section <see cref="SectionName" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class AuthenticationOptions
 {
     /// <summary>Configuration section name.</summary>
@@ -19,4 +21,7 @@ public sealed class AuthenticationOptions
     /// (the default), snapshotted scopes are honored as-is (Option C). Set <c>true</c> only in high-security deployments that need instant scope demotion across all active tokens.
     /// </summary>
     public bool EnableDynamicScopeIntersection { get; set; } = false;
+
+    /// <summary>Deployment ring and default personal-access-token lifetime.</summary>
+    public override string ToString() => $"Ring={Ring} DefaultPatLifetime={DefaultPatLifetime}";
 }

@@ -3,8 +3,8 @@ using Lyo.Authentication.Models.Audit;
 namespace Lyo.Authentication.Audit;
 
 /// <summary>
-/// Sentinel <see cref="IAuthAuditRecorder" /> that drops every event. Registered as the default so callers can always inject
-/// <see cref="IAuthAuditRecorder" /> without forcing a persistence story onto every host.
+/// Sentinel <see cref="IAuthAuditRecorder" /> that drops every event. Registered as the default so callers can always inject <see cref="IAuthAuditRecorder" /> without
+/// forcing a persistence story onto every host.
 /// </summary>
 public sealed class NullAuthAuditRecorder : IAuthAuditRecorder
 {

@@ -5,8 +5,8 @@ using Lyo.Privacy.Enums;
 namespace Lyo.Privacy.Rules;
 
 /// <summary>
-/// Best-effort US-style street line detection (number + street name + type). Expect a high false-positive rate in unstructured text; prefer redacting structured address fields in
-/// JSON.
+/// Best-effort US-style street line detection (number + street name + type). Expect a high false-positive rate in unstructured text; prefer redacting structured address
+/// fields in JSON.
 /// </summary>
 public sealed class AddressRedactionRule : IRedactionRule
 {

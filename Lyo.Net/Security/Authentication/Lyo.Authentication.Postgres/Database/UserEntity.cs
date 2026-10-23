@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Postgres.Database;
 
 /// <summary>Row mapped to <c>[user].[user]</c>.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class UserEntity
 {
     /// <summary>Stable Lyo user id (primary key).</summary>
@@ -47,4 +50,7 @@ public sealed class UserEntity
 
     /// <summary>Optional human-readable explanation for the disable.</summary>
     public string? DisabledReason { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

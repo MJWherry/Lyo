@@ -1,13 +1,15 @@
 using Lyo.Api.Client;
+using Lyo.Book.Postgres.Database;
 using Lyo.Comic.Postgres.Database;
 using Lyo.People.Postgres.Database;
 using Lyo.Seed;
+using Lyo.Story.Postgres.Database;
 using Lyo.Tools.Postgres.Seeds;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Tools.Postgres;
 
-/// <summary>Constructs EF/API transports and executes a <see cref="SeedContributor"/>.</summary>
+/// <summary>Constructs EF/API transports and executes a <see cref="SeedContributor" />.</summary>
 internal static class SeedExecution
 {
     public const string DefaultApiBaseUrl = "http://localhost:5251/";
@@ -27,11 +29,33 @@ internal static class SeedExecution
         if (via == SeedTransportKind.Api)
             return await RunApiAsync(contributor, runner, options, apiBaseUrl, ct).ConfigureAwait(false);
 
+        if (contributor is IEfSeedSource source)
+            return await RunEfSourceAsync(contributor, source, runner, connStr, options, ct).ConfigureAwait(false);
+
         return contributor switch {
             PeopleEfSeedContributor => await RunEfAsync<PeopleDbContext>(contributor, runner, connStr, "people", options, ct).ConfigureAwait(false),
             ComicEfSeedContributor => await RunEfAsync<ComicDbContext>(contributor, runner, connStr, "comic", options, ct).ConfigureAwait(false),
+            BookEfSeedContributor => await RunEfAsync<BookDbContext>(contributor, runner, connStr, "book", options, ct).ConfigureAwait(false),
+            StoryEfSeedContributor => await RunEfAsync<StoryDbContext>(contributor, runner, connStr, "story", options, ct).ConfigureAwait(false),
             var _ => throw new SeedException($"No EF context mapping for {contributor.Name}.")
         };
+    }
+
+    private static async Task<SeedResult> RunEfSourceAsync(
+        SeedContributor contributor,
+        IEfSeedSource source,
+        ISeedRunner runner,
+        ConnectionStringProvider connStr,
+        SeedOptions options,
+        CancellationToken ct)
+    {
+        var connection = connStr.GetOrThrow();
+        await using var db = source.CreateContext(connection);
+        var transportType = typeof(EfSeedTransport<>).MakeGenericType(db.GetType());
+        if (Activator.CreateInstance(transportType, db) is not ISeedTransport transport)
+            throw new SeedException($"Could not build an EF transport for {contributor.Name}.");
+
+        return await runner.SeedAsync(contributor, transport, options, ct).ConfigureAwait(false);
     }
 
     private static async Task<SeedResult> RunEfAsync<TContext>(
@@ -50,12 +74,7 @@ internal static class SeedExecution
         return await runner.SeedAsync(contributor, transport, options, ct).ConfigureAwait(false);
     }
 
-    private static async Task<SeedResult> RunApiAsync(
-        SeedContributor contributor,
-        ISeedRunner runner,
-        SeedOptions options,
-        string? apiBaseUrl,
-        CancellationToken ct)
+    private static async Task<SeedResult> RunApiAsync(SeedContributor contributor, ISeedRunner runner, SeedOptions options, string? apiBaseUrl, CancellationToken ct)
     {
         var baseUrl = string.IsNullOrWhiteSpace(apiBaseUrl) ? DefaultApiBaseUrl : apiBaseUrl.Trim();
         using var http = new HttpClient { BaseAddress = new(baseUrl.TrimEnd('/') + "/") };

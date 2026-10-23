@@ -4,5 +4,8 @@ public enum ExportFormat
 {
     Csv,
     Xlsx,
-    Json
+    Json,
+    Yaml,
+    Xml,
+    Toml
 }

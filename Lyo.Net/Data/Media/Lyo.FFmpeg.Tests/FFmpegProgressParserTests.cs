@@ -20,7 +20,7 @@ public class FFmpegProgressParserTests
     public void Ingest_OutTimeMs_TreatedAsMicroseconds()
     {
         var snapshots = new List<MediaProgress>();
-        var parser = new FFmpegProgressParser(new SyncProgress<MediaProgress>(snapshots.Add), knownDuration: null);
+        var parser = new FFmpegProgressParser(new SyncProgress<MediaProgress>(snapshots.Add), null);
         parser.IngestLine("out_time_ms=500000");
         parser.IngestLine("progress=continue");
         Assert.Equal(TimeSpan.FromMilliseconds(500), snapshots[0].OutTime);
@@ -30,7 +30,7 @@ public class FFmpegProgressParserTests
     public void Ingest_OutTime_ParsesTimestampWhenUsMissing()
     {
         var snapshots = new List<MediaProgress>();
-        var parser = new FFmpegProgressParser(new SyncProgress<MediaProgress>(snapshots.Add), knownDuration: null);
+        var parser = new FFmpegProgressParser(new SyncProgress<MediaProgress>(snapshots.Add), null);
         parser.IngestLine("out_time=00:00:01.250000");
         parser.IngestLine("progress=continue");
         Assert.Equal(TimeSpan.FromSeconds(1.25), snapshots[0].OutTime);
@@ -40,7 +40,7 @@ public class FFmpegProgressParserTests
     public void Ingest_OutTimeUs_WinsOverOutTime()
     {
         var snapshots = new List<MediaProgress>();
-        var parser = new FFmpegProgressParser(new SyncProgress<MediaProgress>(snapshots.Add), knownDuration: null);
+        var parser = new FFmpegProgressParser(new SyncProgress<MediaProgress>(snapshots.Add), null);
         parser.IngestLine("out_time_us=1000000");
         parser.IngestLine("out_time=00:00:09.000000");
         parser.IngestLine("progress=continue");

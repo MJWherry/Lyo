@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using Lyo.Common.Core.Extensions;
 using Lyo.Result;
@@ -7,6 +8,7 @@ using Twilio.Rest.Api.V2010.Account;
 namespace Lyo.Sms.Twilio;
 
 /// <summary>Outcome of a Twilio SMS or MMS send, including Twilio-only fields.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record TwilioSmsResult : Result<SmsRequest>
 {
     /// <summary>Twilio message SID.</summary>

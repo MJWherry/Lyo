@@ -1,0 +1,16 @@
+{
+  "id": "Lyo.Authentication.Seed",
+  "name": "Lyo.Authentication.Seed",
+  "area": "Security",
+  "tagline": "EF seed of local users, expired tokens, linked identities, claims, scopes, and events.",
+  "description": "EF seed of Count local users. The constant password is stored only as a hash on an expired token. Each user also gets a local linked identity, one claim, one scope, and one event. Schema user.",
+  "features": [],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Security/Authentication/Lyo.Authentication.Seed/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

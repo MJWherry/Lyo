@@ -3,6 +3,8 @@ namespace Lyo.FileSystemWatcher;
 /// <summary>One directory in a snapshot tree. Files sit in <see cref="Files" />; child directories sit in <see cref="Directories" />.</summary>
 public sealed class SnapshotDirectoryNode
 {
+    private DirectorySnapshotEntry? _entry;
+
     /// <summary>Parent directory node. Null for the synthetic root under the watched path.</summary>
     public SnapshotDirectoryNode? Parent { get; }
 
@@ -17,6 +19,12 @@ public sealed class SnapshotDirectoryNode
 
     /// <summary>Files in this directory keyed by file name.</summary>
     public Dictionary<string, DirectorySnapshotEntry> Files { get; }
+
+    /// <summary>
+    /// Snapshot entry for this directory itself, built on first use and reused afterwards. Diffing walks every directory on every poll, and building a fresh
+    /// <see cref="DirectoryInfo" /> each time dominated the per-poll allocation.
+    /// </summary>
+    public DirectorySnapshotEntry Entry => _entry ??= new(FullPath, new DirectoryInfo(FullPath));
 
     /// <summary>Builds a node in the snapshot tree.</summary>
     /// <param name="parent">Parent node, or null at the root.</param>

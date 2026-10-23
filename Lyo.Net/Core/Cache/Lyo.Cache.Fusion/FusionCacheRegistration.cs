@@ -41,13 +41,13 @@ internal static class FusionCacheRegistration
         svc.TryAddSingleton(CachePayloadSerializerRegistration.Create);
         svc.TryAddSingleton<IFusionCacheSerializer>(sp => new CachePayloadFusionSerializer(
             sp.GetRequiredService<ICachePayloadCodec>(), sp.GetRequiredService<ICachePayloadSerializer>()));
+
         var fusionCacheBuilder = FusionCacheServiceCollectionExtensions.AddFusionCache(svc);
         if (configureFusionCache != null)
             fusionCacheBuilder.WithOptions(configureFusionCache);
 
         fusionCacheBuilder.TryWithAutoSetup();
-        fusionCacheBuilder.WithSerializer(
-            sp => new CachePayloadFusionSerializer(sp.GetRequiredService<ICachePayloadCodec>(), sp.GetRequiredService<ICachePayloadSerializer>()));
+        fusionCacheBuilder.WithSerializer(sp => new CachePayloadFusionSerializer(sp.GetRequiredService<ICachePayloadCodec>(), sp.GetRequiredService<ICachePayloadSerializer>()));
         if (configureRedisBackplane != null) {
             var serviceLocator = new ServiceLocator();
             svc.AddSingleton(serviceLocator);

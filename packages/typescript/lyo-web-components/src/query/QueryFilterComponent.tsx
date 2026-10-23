@@ -1,10 +1,13 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from "react";
-import type { ComparisonOperator, ConditionClause, FilterPropertyDefinition } from "lyo-query";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import type { ComparisonOperator, ConditionClause, FilterPropertyDefinition, SpUniqueValueCount } from "lyo-query";
 import {
+  DEFAULT_FUZZY_THRESHOLD,
   coerceValueForComparison,
+  isFuzzyComparison,
   isMultiValueComparison,
+  normalizeThreshold,
   operatorsFor,
   parseConditionValue,
   toMultiValueStrings,
@@ -14,6 +17,8 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import { ChipInput } from "./ChipInput.js";
+import { FUZZY_THRESHOLD_HELP } from "./filterChipText.js";
+import { compactMenuProps } from "./selectMenu.js";
 
 const COL = { flex: "1 1 11.5rem", minWidth: "10rem", maxWidth: "14rem" } as const;
 const NULL_SELECT = "__lyo_null__";
@@ -27,6 +32,8 @@ export type QueryFilterComponentProps = {
   defaultField?: string;
   /** Called when the user commits a filter (Enter, unique-value pick, or popover close). */
   onAdd: (condition: ConditionClause) => void;
+  /** Loads value counts for a field that has no `uniqueValues` on its definition; the value box becomes a picker once they arrive. */
+  loadUniqueValues?: (field: string) => Promise<readonly SpUniqueValueCount[]>;
 };
 
 function defaultOp(type: FilterPropertyDefinition["type"]): ComparisonOperator {
@@ -80,19 +87,36 @@ function hasCommitableValue(comparison: ComparisonOperator, value: unknown, allo
 }
 
 export const QueryFilterComponent = forwardRef<QueryFilterHandle, QueryFilterComponentProps>(
-  function QueryFilterComponent({ definitions = [], defaultField = "Id", onAdd }, ref) {
+  function QueryFilterComponent({ definitions = [], defaultField = "Id", onAdd, loadUniqueValues }, ref) {
   const initialField = definitions[0]?.propertyName ?? defaultField;
   const [field, setField] = useState(initialField);
   const [comparison, setComparison] = useState<ComparisonOperator>(() =>
     defaultOp(definitions.find((d) => d.propertyName === initialField)?.type)
   );
   const [value, setValue] = useState<unknown>("");
+  const [thresholdInput, setThresholdInput] = useState("");
+  const threshold = normalizeThreshold(thresholdInput);
 
   const def = useMemo(() => definitions.find((d) => d.propertyName === field), [definitions, field]);
+  const [loadedUnique, setLoadedUnique] = useState<Record<string, readonly SpUniqueValueCount[]>>({});
+  const hasDefinedUnique = Boolean(def?.uniqueValues?.length);
+  useEffect(() => {
+    if (!loadUniqueValues || hasDefinedUnique || !field.trim() || loadedUnique[field]) return;
+    let live = true;
+    loadUniqueValues(field)
+      .then((items) => {
+        if (live) setLoadedUnique((cur) => ({ ...cur, [field]: items }));
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [field, hasDefinedUnique, loadUniqueValues, loadedUnique]);
+  const uniqueValues = hasDefinedUnique ? def!.uniqueValues! : (loadedUnique[field] ?? []);
   const ops = operatorsFor(def?.type ?? "String");
   const multi = isMultiValueComparison(comparison);
-  const unique = def?.uniqueValues && def.uniqueValues.length > 0;
-  const uniqueHasNull = Boolean(def?.uniqueValues?.some((u) => u.value == null || u.value === ""));
+  const unique = uniqueValues.length > 0;
+  const uniqueHasNull = uniqueValues.some((u) => u.value == null || u.value === "");
 
   const commit = (allowNull = false) => {
     if (!field.trim() || !hasCommitableValue(comparison, value, allowNull)) return;
@@ -103,7 +127,13 @@ export const QueryFilterComponent = forwardRef<QueryFilterHandle, QueryFilterCom
         : typeof value === "string"
           ? parseConditionValue(comparison, value)
           : value;
-    onAdd({ $type: "condition", Field: field, Comparison: comparison, Value: nextValue });
+    onAdd({
+      $type: "condition",
+      Field: field,
+      Comparison: comparison,
+      Value: nextValue,
+      ...(isFuzzyComparison(comparison) && threshold !== undefined ? { Threshold: threshold } : {}),
+    });
     setValue(isMultiValueComparison(comparison) ? [] : "");
   };
 
@@ -112,7 +142,13 @@ export const QueryFilterComponent = forwardRef<QueryFilterHandle, QueryFilterCom
   useImperativeHandle(ref, () => ({ commit: () => commitRef.current(false) }), []);
 
   const addImmediate = (next: unknown) => {
-    onAdd({ $type: "condition", Field: field, Comparison: comparison, Value: next });
+    onAdd({
+      $type: "condition",
+      Field: field,
+      Comparison: comparison,
+      Value: next,
+      ...(isFuzzyComparison(comparison) && threshold !== undefined ? { Threshold: threshold } : {}),
+    });
     setValue(multi ? [] : "");
   };
 
@@ -121,7 +157,7 @@ export const QueryFilterComponent = forwardRef<QueryFilterHandle, QueryFilterCom
       {!uniqueHasNull ? (
         <MenuItem value={NULL_SELECT}>(null)</MenuItem>
       ) : null}
-      {def?.uniqueValues?.map((u) => (
+      {uniqueValues.map((u) => (
         <MenuItem key={u.value ?? NULL_SELECT} value={uniqueSelectValue(u.value)}>
           {u.value || "(null)"} ({u.count})
         </MenuItem>
@@ -150,7 +186,7 @@ export const QueryFilterComponent = forwardRef<QueryFilterHandle, QueryFilterCom
           setComparison(nextOp);
           setValue(isMultiValueComparison(nextOp) ? [] : "");
         }}
-        slotProps={{ select: { MenuProps: { disablePortal: true } } }}
+        slotProps={{ select: { MenuProps: compactMenuProps({ disablePortal: true }) } }}
         sx={COL}
       >
         {definitions.map((d) => (
@@ -169,7 +205,7 @@ export const QueryFilterComponent = forwardRef<QueryFilterHandle, QueryFilterCom
           setComparison(next);
           setValue(coerceValueForComparison(next, value));
         }}
-        slotProps={{ select: { MenuProps: { disablePortal: true } } }}
+        slotProps={{ select: { MenuProps: compactMenuProps({ disablePortal: true }) } }}
         sx={COL}
       >
         {ops.map((op) => (
@@ -186,7 +222,7 @@ export const QueryFilterComponent = forwardRef<QueryFilterHandle, QueryFilterCom
             select: {
               multiple: true,
               onClose: () => commitRef.current(false),
-              MenuProps: { disablePortal: true },
+              MenuProps: compactMenuProps({ disablePortal: true }),
             },
           }}
           label="Value"
@@ -207,7 +243,7 @@ export const QueryFilterComponent = forwardRef<QueryFilterHandle, QueryFilterCom
           label="Value"
           value={value === "" || value === undefined ? "" : uniqueSelectValue(value == null ? null : String(value))}
           onChange={(e) => addImmediate(decodeUniqueSelect(e.target.value))}
-          slotProps={{ select: { displayEmpty: true, MenuProps: { disablePortal: true } } }}
+          slotProps={{ select: { displayEmpty: true, MenuProps: compactMenuProps({ disablePortal: true }) } }}
           sx={COL}
         >
           <MenuItem value="" sx={{ display: "none" }} />
@@ -232,7 +268,7 @@ export const QueryFilterComponent = forwardRef<QueryFilterHandle, QueryFilterCom
             const raw = e.target.value;
             addImmediate(raw === "true" ? true : raw === "false" ? false : null);
           }}
-          slotProps={{ select: { displayEmpty: true, MenuProps: { disablePortal: true } } }}
+          slotProps={{ select: { displayEmpty: true, MenuProps: compactMenuProps({ disablePortal: true }) } }}
           sx={COL}
         >
           <MenuItem value="" sx={{ display: "none" }} />
@@ -256,10 +292,20 @@ export const QueryFilterComponent = forwardRef<QueryFilterHandle, QueryFilterCom
           sx={COL}
         />
       )}
+      {isFuzzyComparison(comparison) ? (
+        <TextField
+          size="small"
+          type="number"
+          label="Threshold"
+          placeholder={String(DEFAULT_FUZZY_THRESHOLD)}
+          helperText={FUZZY_THRESHOLD_HELP}
+          value={thresholdInput}
+          onChange={(e) => setThresholdInput(e.target.value)}
+          onBlur={() => setThresholdInput(threshold === undefined ? "" : String(threshold))}
+          slotProps={{ htmlInput: { min: 0, max: 1, step: 0.05 } }}
+          sx={{ flex: "0 1 7.5rem", minWidth: "6.5rem" }}
+        />
+      ) : null}
     </Stack>
   );
 });
-
-export function QueryNodeEditor(props: QueryFilterComponentProps) {
-  return <QueryFilterComponent {...props} />;
-}

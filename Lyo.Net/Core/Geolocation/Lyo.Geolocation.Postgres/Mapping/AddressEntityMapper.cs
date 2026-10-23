@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Postgres;
 using Lyo.Geolocation.Models.Addresses;
 using Lyo.Geolocation.Postgres.Database;
@@ -60,7 +61,7 @@ internal static class AddressEntityMapper
     public static AddressEntity ToEntity(Address address)
     {
         var entity = new AddressEntity {
-            Id = address.Id == default ? Guid.NewGuid() : address.Id,
+            Id = address.Id == default ? LyoGuid.CreateV7() : address.Id,
             HouseNumber = address.HouseNumber,
             StreetPreDirection = address.StreetPreDirection,
             StreetName = address.StreetName,

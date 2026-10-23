@@ -5,7 +5,9 @@ namespace Lyo.Pdf.Web.Components.PdfAnnotator;
 
 public partial class LyoPdfAnnotatorResultsView
 {
-    private static readonly (string Value, string Label)[] KvDelimiterSelectOptions = [(":", "Colon"), (";", "Semicolon"), ("=", "Equals"), ("?", "Question"), ("|", "Pipe"), ("-", "Dash"), (".", "Dot")];
+    private static readonly (string Value, string Label)[] KvDelimiterSelectOptions = [
+        (":", "Colon"), (";", "Semicolon"), ("=", "Equals"), ("?", "Question"), ("|", "Pipe"), ("-", "Dash"), (".", "Dot")
+    ];
 
     private static readonly HashSet<char> KvDelimiterPresetChars = [.. KvDelimiterSelectOptions.Select(o => o.Value[0])];
 
@@ -20,7 +22,8 @@ public partial class LyoPdfAnnotatorResultsView
     [Parameter]
     public EventCallback<LyoPdfAnnotationResult> OnApply { get; set; }
 
-    private static IReadOnlyList<string> GetTableHeaders(IReadOnlyList<IReadOnlyDictionary<string, string?>> rows) => rows.SelectMany(x => x.Keys).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    private static IReadOnlyList<string> GetTableHeaders(IReadOnlyList<IReadOnlyDictionary<string, string?>> rows)
+        => rows.SelectMany(x => x.Keys).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
 
     private static string GetExtractionSummary(LyoPdfAnnotationResult row)
         => row.ExtractionType switch {

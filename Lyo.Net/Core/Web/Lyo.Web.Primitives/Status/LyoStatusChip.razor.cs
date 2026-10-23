@@ -4,13 +4,13 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Lyo.Web.Primitives;
 
 /// <summary>
-/// Renders a status string as a chip, taking the color, icon, and label from the domain <see cref="ILyoStatusPalette" /> named by <see cref="Palette" /> and falling
-/// back to the shared vocabulary in <see cref="LyoDefaultStatusPalette" />.
+/// Renders a status string as a chip, taking the color, icon, and label from the domain <see cref="ILyoStatusPalette" /> named by <see cref="Palette" /> and falling back to
+/// the shared vocabulary in <see cref="LyoDefaultStatusPalette" />.
 /// </summary>
 /// <remarks>
-/// Use it instead of hand-writing <c>MudChip</c> markup around a <c>*ColorHelper</c> call, so a status looks the same on a grid cell, a detail view, and a dialog
-/// header. Any of <see cref="Label" />, <see cref="Color" />, and <see cref="Icon" /> set explicitly wins over the palette, which is how a component keeps a
-/// one-off presentation without leaving the primitive.
+/// Use it instead of hand-writing <c>MudChip</c> markup around a <c>*ColorHelper</c> call, so a status looks the same on a grid cell, a detail view, and a dialog header. Any of
+/// <see cref="Label" />, <see cref="Color" />, and <see cref="Icon" /> set explicitly wins over the palette, which is how a component keeps a one-off presentation without leaving the
+/// primitive.
 /// <code>
 /// &lt;LyoStatusChip Status="@run.Result" Palette="job"/&gt;
 /// &lt;LyoStatusChip Status="@message.Status" Palette="sms" ShowIcon="false"/&gt;
@@ -73,17 +73,10 @@ public partial class LyoStatusChip
     private LyoStatusPaletteResolver Resolver => Services.GetService<LyoStatusPaletteResolver>() ?? LyoStatusPaletteResolver.Default;
 
     /// <summary>Palette result with the explicit parameters applied, so the chip never re-derives the icon and re-introduces it after <see cref="ShowIcon" /> hid it.</summary>
-    private LyoChipSpec ResolvedSpec
-    {
-        get
-        {
+    private LyoChipSpec ResolvedSpec {
+        get {
             var spec = Resolver.Resolve(Status, Palette);
-            return new LyoChipSpec(
-                Label ?? spec.Label,
-                Color ?? spec.Color,
-                ShowIcon ? Icon ?? spec.Icon : null,
-                Variant ?? spec.Variant,
-                spec.Style);
+            return new(Label ?? spec.Label, Color ?? spec.Color, ShowIcon ? Icon ?? spec.Icon : null, Variant ?? spec.Variant, spec.Style);
         }
     }
 

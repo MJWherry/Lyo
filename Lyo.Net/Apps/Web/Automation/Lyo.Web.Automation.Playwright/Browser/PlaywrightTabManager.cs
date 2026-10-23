@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using Lyo.Common.Core.Extensions;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Web.Automation.Playwright.Service;
 using Microsoft.Extensions.Logging;
@@ -163,7 +164,7 @@ public sealed class PlaywrightTabManager
         if (PageIds.TryGetValue(page, out var box))
             return box.Value;
 
-        var id = Guid.NewGuid();
+        var id = LyoGuid.CreateV7();
         PageIds.Add(page, new(id));
         return id;
     }

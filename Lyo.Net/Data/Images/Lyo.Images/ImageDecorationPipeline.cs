@@ -10,9 +10,7 @@ using static Lyo.Images.ImageErrorCodes;
 
 namespace Lyo.Images;
 
-/// <summary>
-/// Default <see cref="IImageDecorationPipeline" />: holds a raster <see cref="Image{Rgba32}" /> or SVG text between stages and applies queued mutations in order.
-/// </summary>
+/// <summary>Default <see cref="IImageDecorationPipeline" />: holds a raster <see cref="Image{Rgba32}" /> or SVG text between stages and applies queued mutations in order.</summary>
 internal sealed class ImageDecorationPipeline : IImageDecorationPipeline
 {
     private readonly ImageServiceOptions _options;

@@ -14,8 +14,8 @@ namespace Lyo.FileSystemWatcher;
 /// <param name="NewDirCount">For directory changes, how many subdirectories exist after. Null for file changes.</param>
 /// <remarks>
 /// <para>
-/// File changes fill OldPath, NewPath, ChangeType, and IsDirectory only. Directory changes also include the file and directory counts so callers can see how the
-/// directory contents moved.
+/// File changes fill OldPath, NewPath, ChangeType, and IsDirectory only. Directory changes also include the file and directory counts so callers can see how the directory
+/// contents moved.
 /// </para>
 /// <para>
 /// Examples:

@@ -2,9 +2,7 @@
 
 namespace Lyo.Discord.Bot.Commands.Settings;
 
-/// <summary>
-/// Shared slash command and option names/descriptions for guild settings (<c>/settings</c> tree). Use with DSharpPlus attributes (compile-time string constants).
-/// </summary>
+/// <summary>Shared slash command and option names/descriptions for guild settings (<c>/settings</c> tree). Use with DSharpPlus attributes (compile-time string constants).</summary>
 public static class GuildSlashSettings
 {
     /// <summary>Root command group: <c>/settings</c>.</summary>

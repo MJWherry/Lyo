@@ -7,7 +7,8 @@ public enum LyoTimestampKind
     Absolute = 0,
 
     /// <summary>
-    /// Relative hours/minutes when the instant is within <see cref="LyoTimestamp.RelativeWindow" /> of now (past or future); otherwise absolute. Relative text has no zone abbrev.
+    /// Relative hours/minutes when the instant is within <see cref="LyoTimestamp.RelativeWindow" /> of now (past or future); otherwise absolute. Relative text has no zone
+    /// abbrev.
     /// </summary>
     Relative = 1,
 

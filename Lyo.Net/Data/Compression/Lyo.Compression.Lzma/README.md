@@ -29,7 +29,9 @@ services.AddDefaultCompressionService<CompressionService>();
 
 ## DI registration
 
-Keyed registration, ICompressionResolver, and appsettings samples are in [`Lyo.Compression`](../Lyo.Compression/README.md). Register AddLzmaCompressor() whenever stored metadata might mention LZMA so file-storage reads can decompress. [ICompressionResolver](../Lyo.Compression/README.md#icompressionresolver-per-algorithm-dispatch) does that decompress at read time.
+Keyed registration, ICompressionResolver, and appsettings samples are in [`Lyo.Compression`](../Lyo.Compression/README.md). Register AddLzmaCompressor () whenever stored metadata
+might mention LZMA so file-storage reads can decompress. [ICompressionResolver](../Lyo.Compression/README.md#icompressionresolver-per-algorithm-dispatch) does that decompress at
+read time.
 
 ## Dependencies
 

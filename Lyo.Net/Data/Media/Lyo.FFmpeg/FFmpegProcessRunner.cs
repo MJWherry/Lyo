@@ -63,7 +63,7 @@ internal sealed class FFmpegProcessRunner(FFmpegOptions? options, ILogger? logge
         var stderr = new StringBuilder();
         var stdoutCaptured = new StringBuilder();
         var progressState = new FFmpegProgressParser(spec.Progress, spec.KnownDuration);
-        var cmd = BuildCommand(spec, stderr, stdoutCaptured, progressState, captureStdout: spec.StandardOutput == null);
+        var cmd = BuildCommand(spec, stderr, stdoutCaptured, progressState, spec.StandardOutput == null);
         var result = await cmd.ExecuteAsync(cts.Token).ConfigureAwait(false);
         return new(result.ExitCode, stdoutCaptured.ToString(), stderr.ToString());
     }
@@ -77,34 +77,30 @@ internal sealed class FFmpegProcessRunner(FFmpegOptions? options, ILogger? logge
         return RunAsync(linked);
     }
 
-    private Command BuildCommand(
-        FFmpegProcessSpec spec,
-        StringBuilder stderr,
-        StringBuilder stdoutCaptured,
-        FFmpegProgressParser progressState,
-        bool captureStdout)
+    private Command BuildCommand(FFmpegProcessSpec spec, StringBuilder stderr, StringBuilder stdoutCaptured, FFmpegProgressParser progressState, bool captureStdout)
     {
-        var cmd = Cli.Wrap(spec.ExecutablePath)
-            .WithArguments(spec.Arguments)
-            .WithValidation(CommandResultValidation.None);
+        var cmd = Cli.Wrap(spec.ExecutablePath).WithArguments(spec.Arguments).WithValidation(CommandResultValidation.None);
         if (spec.StandardInput != null)
             cmd = cmd.WithStandardInputPipe(PipeSource.FromStream(spec.StandardInput));
 
         if (spec.StandardOutput != null)
             cmd = cmd.WithStandardOutputPipe(PipeTarget.ToStream(spec.StandardOutput));
-        else if (spec.ProgressOnStdout && spec.Progress != null)
-            cmd = cmd.WithStandardOutputPipe(PipeTarget.ToDelegate(line => {
-                progressState.IngestLine(line);
-                if (_options.ProcessOutputMode == FFmpegProcessOutputMode.Passthrough)
-                    _logger.LogDebug("{StdOut}", line);
-            }));
-        else
+        else if (spec.ProgressOnStdout && spec.Progress != null) {
+            cmd = cmd.WithStandardOutputPipe(
+                PipeTarget.ToDelegate(line => {
+                    progressState.IngestLine(line);
+                    if (_options.ProcessOutputMode == FFmpegProcessOutputMode.Passthrough)
+                        _logger.LogDebug("{StdOut}", line);
+                }));
+        }
+        else {
             cmd = cmd.WithStandardOutputPipe(
                 PipeTarget.ToDelegate(line => {
                     stdoutCaptured.AppendLine(line);
                     if (_options.ProcessOutputMode == FFmpegProcessOutputMode.Passthrough)
                         _logger.LogDebug("{StdOut}", line);
                 }));
+        }
 
         cmd = cmd.WithStandardErrorPipe(
             PipeTarget.ToDelegate(line => {

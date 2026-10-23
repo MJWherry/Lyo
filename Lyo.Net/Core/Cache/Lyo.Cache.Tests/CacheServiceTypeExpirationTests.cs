@@ -61,7 +61,7 @@ public class CacheServiceTypeExpirationTests : IDisposable
         var service = new FusionCacheService(_fusionCache, _logger, _options);
         var key = "test-user-key";
         var user = new TestEntity { Id = 1, Name = "Test User" };
-        await service.GetOrSetAsync<TestEntity>(key, _ => Task.FromResult(user), typeof(TestEntity), token: TestContext.Current.CancellationToken);
+        await service.GetOrSetAsync<TestEntity>(key, _ => Task.FromResult(user), typeof(TestEntity), token: TestCt);
 
         // Confirm the value is cached.
         var cached = service.GetOrSet<TestEntity>(key, _ => null, typeof(TestEntity));
@@ -280,7 +280,7 @@ public class CacheServiceTypeExpirationTests : IDisposable
         var service = new FusionCacheService(_fusionCache, _logger, options);
         var key = "wildcard-test";
         var entity = new TestEntity { Id = 1, Name = "Test" };
-        await service.GetOrSetAsync<TestEntity>(key, _ => Task.FromResult(entity), typeof(TestEntity), token: TestContext.Current.CancellationToken);
+        await service.GetOrSetAsync<TestEntity>(key, _ => Task.FromResult(entity), typeof(TestEntity), token: TestCt);
 
         // Confirm it is cached (TTL should be 120 minutes from the wildcard).
         var cached = service.GetOrSet<TestEntity>(key, _ => null, typeof(TestEntity));

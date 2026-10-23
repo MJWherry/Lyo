@@ -3,10 +3,7 @@ namespace Lyo.EntityReference.Models;
 /// <summary>Per-feature tenancy policy describing how nullable caller tenant ids are resolved before they are persisted.</summary>
 public enum TenancyMode
 {
-    /// <summary>
-    /// Caller tenant is ignored; resolved value is always <see langword="null" /> (system-level row). Only valid for stores backed by a nullable
-    /// <c>tenant_id</c> column.
-    /// </summary>
+    /// <summary>Caller tenant is ignored; resolved value is always <see langword="null" /> (system-level row). Only valid for stores backed by a nullable <c>tenant_id</c> column.</summary>
     SystemOnly,
 
     /// <summary>

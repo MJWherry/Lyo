@@ -3,8 +3,8 @@ using System.Diagnostics;
 namespace Lyo.Query.Models.Common.Request;
 
 /// <summary>
-/// Optional filter scope on a From/Join source <c>DbSet</c> before the join. Distinct from <see cref="WhereClause.SubClause" /> (two-phase in-memory). v1 allows
-/// Where + Keys only.
+/// Optional filter scope on a From/Join source <c>DbSet</c> before the join. Distinct from <see cref="WhereClause.SubClause" /> (two-phase in-memory). v1 allows Where + Keys
+/// only.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class SourceQueryScope

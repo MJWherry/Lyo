@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Models.Response;
 
 /// <summary>Linked OIDC identity for admin QueryConcrete / Get.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record AuthLinkedIdentityRes(
     Guid Id,
     Guid UserId,

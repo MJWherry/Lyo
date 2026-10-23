@@ -11,6 +11,7 @@ public sealed class DefaultFileContentPolicy : IFileContentPolicy
     public DefaultFileContentPolicy(FileStorageServiceBaseOptions options)
     {
         ArgumentHelpers.ThrowIfNull(options);
+        options.ValidateUploadFilters();
         _options = options;
     }
 
@@ -23,23 +24,38 @@ public sealed class DefaultFileContentPolicy : IFileContentPolicy
         if (_options.MaxUploadSizeBytes is { } max && context.ByteLength > max)
             throw new FilePolicyRejectedException($"Upload size {context.ByteLength} exceeds maximum {_options.MaxUploadSizeBytes} bytes.");
 
-        // null means the caller did not restrict content types (allow all).
-        // An empty allow-list that was set on purpose means deny everything. That surfaces a likely misconfiguration instead of silently allowing any upload.
-        var allowed = _options.AllowedContentTypes;
-        if (allowed is null)
-            return Task.CompletedTask;
-
-        if (context.ContentType.IsNullOrWhitespace())
-            throw new FilePolicyRejectedException("Content-Type is required for this storage configuration.");
-
-        if (allowed.Count == 0)
-            throw new FilePolicyRejectedException("Allowed content types list is empty; no content types are permitted by current policy.");
-
-        var ctNorm = context.ContentType.Trim();
-        var ok = allowed.Any(a => string.Equals(a, ctNorm, StringComparison.OrdinalIgnoreCase));
-        if (!ok)
-            throw new FilePolicyRejectedException($"Content-Type '{context.ContentType}' is not allowed.");
-
+        ThrowIfContentTypeRejected(context.ContentType);
+        FileNamePatternFilter.ThrowIfRejected(_options, context.OriginalFileName);
         return Task.CompletedTask;
+    }
+
+    private void ThrowIfContentTypeRejected(string? contentType)
+    {
+        var allowed = _options.AllowedContentTypes;
+        var denied = _options.DeniedContentTypes;
+        if (allowed is null && denied is null)
+            return;
+
+        // An empty allow-list that was set on purpose means deny everything. That surfaces a likely misconfiguration instead of silently allowing any upload.
+        if (allowed is not null) {
+            if (contentType.IsNullOrWhitespace())
+                throw new FilePolicyRejectedException("Content-Type is required for this storage configuration.");
+
+            if (allowed.Count == 0)
+                throw new FilePolicyRejectedException("Allowed content types list is empty; no content types are permitted by current policy.");
+
+            var allowedNorm = contentType.Trim();
+            if (!allowed.Any(candidate => string.Equals(candidate, allowedNorm, StringComparison.OrdinalIgnoreCase)))
+                throw new FilePolicyRejectedException($"Content-Type '{contentType}' is not allowed.");
+
+            return;
+        }
+
+        if (contentType.IsNullOrWhitespace())
+            return;
+
+        var deniedNorm = contentType.Trim();
+        if (denied!.Any(candidate => string.Equals(candidate, deniedNorm, StringComparison.OrdinalIgnoreCase)))
+            throw new FilePolicyRejectedException($"Content-Type '{contentType}' is not allowed.");
     }
 }

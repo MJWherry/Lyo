@@ -26,8 +26,8 @@ public static class StringExtensions
         /// <summary>Shortened form with a leading segment, an ellipsis run, and optionally a trailing segment—useful for masking secrets in logs.</summary>
         /// <param name="start">Max characters kept from the start; omit the start segment when <see langword="null" />.</param>
         /// <param name="end">
-        /// Zero-based index where the trailing segment begins; if <see langword="null" /> or past the last character, no trailing segment is appended after the
-        /// ellipses (unless the whole string fits in the start segment).
+        /// Zero-based index where the trailing segment begins; if <see langword="null" /> or past the last character, no trailing segment is appended after the ellipses
+        /// (unless the whole string fits in the start segment).
         /// </param>
         /// <param name="ellipsesLength">Count of <c>'.'</c> characters in the ellipsis between segments.</param>
         /// <returns>Empty string when the receiver is null or empty; otherwise the masked form.</returns>
@@ -53,8 +53,8 @@ public static class StringExtensions
         /// <summary>Truncates the receiver to at most <paramref name="maxLength" /> characters, appending an ellipsis when shortened.</summary>
         /// <param name="maxLength">Max length of the returned string, including the ellipsis suffix.</param>
         /// <returns>
-        /// The original string when it fits; otherwise a prefix plus an ellipsis. When <paramref name="maxLength" /> is divisible by 3, the suffix is three ASCII periods
-        /// (<c>...</c>), matching <see cref="Truncated(string, int?, int?, int)" />; otherwise the Unicode ellipsis character (<c>…</c>) is used.
+        /// The original string when it fits; otherwise a prefix plus an ellipsis. When <paramref name="maxLength" /> is divisible by 3, the suffix is three ASCII periods (<c>...</c>
+        /// ), matching <see cref="Truncated(string, int?, int?, int)" />; otherwise the Unicode ellipsis character (<c>…</c>) is used.
         /// </returns>
         public string Ellipsis(int maxLength)
         {
@@ -135,15 +135,13 @@ public static class StringExtensions
         public string OrDefaultIfWhiteSpace(string defaultValue = "") => value.IsNullOrWhitespace() ? defaultValue : value;
 
         /// <summary>
-        /// Truncates to a total budget of <paramref name="maxLength" /> characters, spending the tail of that budget on <paramref name="ellipsis" /> when shortened.
-        /// Null and empty inputs return <see cref="string.Empty" />, so this is safe for UI labels.
+        /// Truncates to a total budget of <paramref name="maxLength" /> characters, spending the tail of that budget on <paramref name="ellipsis" /> when shortened. Null and empty
+        /// inputs return <see cref="string.Empty" />, so this is safe for UI labels.
         /// </summary>
         /// <param name="maxLength">Total character budget including the ellipsis. Values below 1 return <see cref="string.Empty" />.</param>
         /// <param name="ellipsis">Suffix appended when shortened; truncated itself if the budget is smaller than the suffix.</param>
         /// <returns>The original value when it fits the budget; otherwise a prefix plus <paramref name="ellipsis" />.</returns>
-        /// <remarks>
-        /// Unlike <see cref="Ellipsis" />, the receiver may be null, and the suffix is fixed rather than chosen from the budget's divisibility by three.
-        /// </remarks>
+        /// <remarks>Unlike <see cref="Ellipsis" />, the receiver may be null, and the suffix is fixed rather than chosen from the budget's divisibility by three.</remarks>
         public string TruncateWithEllipsis(int maxLength, string ellipsis = "...")
         {
             if (string.IsNullOrEmpty(value) || maxLength < 1)

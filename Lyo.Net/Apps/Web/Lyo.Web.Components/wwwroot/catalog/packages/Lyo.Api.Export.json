@@ -3,7 +3,7 @@
   "name": "Lyo.Api.Export",
   "area": "Apps",
   "tagline": "Optional export add-on for Lyo.Api. Registers the Export CRUD endpoint and `IExportService<TContext>`.",
-  "description": "Optional export add-on for [Lyo.Api](../Lyo.Api/README.md). Registers the Export CRUD endpoint together with `IExportService<TContext>`.",
+  "description": "Optional export add-on for [Lyo.Api](../../Lyo.Api/README.md). Registers the Export CRUD endpoint together with `IExportService<TContext>`.",
   "features": [],
   "examples": [
     {
@@ -21,11 +21,11 @@
     {
       "type": "paragraph",
       "title": "Registration",
-      "text": "Pass `ExportApiFeature.Instance` on endpoint builders to enable export. JSON export is already built into `Lyo.Api` through `AddBuiltInExportFormatHandlers()` (invoked from `AddLyoCrudServices`). CSV and XLSX each need their format addon package."
+      "text": "Pass `ExportApiFeature.Instance` on endpoint builders to enable export. JSON export is already built into `Lyo.Api` through `AddBuiltInExportFormatHandlers()` (invoked from `AddLyoCrudServices`). YAML, XML, TOML, CSV, and XLSX each need their format addon package."
     }
   ],
   "links": [],
-  "readmePath": "Lyo.Net/Apps/Api/Lyo.Api.Export/README.md",
+  "readmePath": "Lyo.Net/Apps/Api/Export/Lyo.Api.Export/README.md",
   "dependencies": [
     {
       "name": "Lyo.Api",
@@ -53,14 +53,6 @@
     },
     {
       "name": "Lyo.Common.Core",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Common.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -156,6 +148,14 @@
       ]
     },
     {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.KeyStore",
       "kind": "lyo",
       "tags": [
@@ -205,6 +205,14 @@
     },
     {
       "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Sql",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -419,6 +427,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

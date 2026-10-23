@@ -1,14 +1,14 @@
+#if NET6_0_OR_GREATER
+using TimeOnly = System.TimeOnly;
+#else
+using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
+#endif
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
 using Lyo.Schedule.Models;
-#if NET6_0_OR_GREATER
-using TimeOnly = System.TimeOnly;
-#else
-using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
-#endif
 
 namespace Lyo.Job.Models.Builders;
 

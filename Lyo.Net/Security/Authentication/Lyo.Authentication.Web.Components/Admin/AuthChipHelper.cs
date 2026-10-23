@@ -8,8 +8,7 @@ namespace Lyo.Authentication.Web.Components;
 /// <summary>Chip specs for auth admin grids (kind, outcome, provider, token kind).</summary>
 internal static class AuthChipHelper
 {
-    public static LyoChipSpec Kind(object? item)
-        => LyoChips.FromEnum<AuthAuditEventKind>(ProjectedValueHelper.GetDisplayValue(item, "Kind"), KindColor);
+    public static LyoChipSpec Kind(object? item) => LyoChips.FromEnum<AuthAuditEventKind>(ProjectedValueHelper.GetDisplayValue(item, "Kind"), KindColor);
 
     public static LyoChipSpec Outcome(object? item)
     {
@@ -20,11 +19,10 @@ internal static class AuthChipHelper
         if (string.Equals(text, "failure", StringComparison.OrdinalIgnoreCase))
             return LyoChips.Of("failure", Color.Error);
 
-        return LyoChips.Of(text, Color.Default, variant: Variant.Outlined);
+        return LyoChips.Of(text, variant: Variant.Outlined);
     }
 
-    public static LyoChipSpec Provider(object? item)
-        => LyoChips.Of(ProjectedValueHelper.GetDisplayValue(item, "Provider"), Color.Info, variant: Variant.Outlined);
+    public static LyoChipSpec Provider(object? item) => LyoChips.Of(ProjectedValueHelper.GetDisplayValue(item, "Provider"), Color.Info, variant: Variant.Outlined);
 
     public static LyoChipSpec TokenKind(object? item)
     {
@@ -35,7 +33,7 @@ internal static class AuthChipHelper
         if (string.Equals(text, "internal", StringComparison.OrdinalIgnoreCase))
             return LyoChips.Of(text, Color.Secondary, variant: Variant.Outlined);
 
-        return LyoChips.Of(text, Color.Default, variant: Variant.Outlined);
+        return LyoChips.Of(text, variant: Variant.Outlined);
     }
 
     private static Color KindColor(AuthAuditEventKind kind)

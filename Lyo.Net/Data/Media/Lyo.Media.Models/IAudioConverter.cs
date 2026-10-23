@@ -3,8 +3,8 @@ using Lyo.Result;
 namespace Lyo.Media.Models;
 
 /// <summary>
-/// Converts and compresses audio. Does not convert video; use <see cref="IVideoConverter" />. Images stay on IImageService.
-/// Implementations must allow concurrent convert calls on one instance (one process per call, no process-wide lock).
+/// Converts and compresses audio. Does not convert video; use <see cref="IVideoConverter" />. Images stay on IImageService. Implementations must allow concurrent convert
+/// calls on one instance (one process per call, no process-wide lock).
 /// </summary>
 public interface IAudioConverter
 {
@@ -17,7 +17,10 @@ public interface IAudioConverter
     /// <summary>Converts a file or URL and writes the result to a stream. Use <see cref="MediaIoMode.Pipe" /> so the write is incremental.</summary>
     Task<Result<bool>> ConvertFileToStreamAsync(string inputPath, Stream outputStream, AudioConversionOptions? options = null, CancellationToken ct = default);
 
-    /// <summary>Converts a file or URL and returns the result as bytes. For tiny clips only; prefer a stream or <see cref="StartConvertAsync(string, AudioConversionOptions, CancellationToken)" /> for library media.</summary>
+    /// <summary>
+    /// Converts a file or URL and returns the result as bytes. For tiny clips only; prefer a stream or
+    /// <see cref="StartConvertAsync(string, AudioConversionOptions, CancellationToken)" /> for library media.
+    /// </summary>
     Task<Result<byte[]>> ConvertFileToBytesAsync(string inputPath, AudioConversionOptions? options = null, CancellationToken ct = default);
 
     /// <summary>Converts from an input stream into an output stream.</summary>
@@ -39,14 +42,26 @@ public interface IAudioConverter
     Task<Result<bool>> ConvertBytesToFileAsync(byte[] inputBytes, string outputPath, AudioConversionOptions? options = null, CancellationToken ct = default);
 
     /// <summary>
-    /// Starts a convert with output on a pipe and returns as soon as stdout is hooked. Read <see cref="IMediaProcessSession.StandardOutput" /> while the process runs.
-    /// Dispose the session to cancel. Does not apply a host process timeout.
+    /// Starts a convert with output on a pipe and returns as soon as stdout is hooked. Read <see cref="IMediaProcessSession.StandardOutput" /> while the process runs. Dispose
+    /// the session to cancel. Does not apply a host process timeout.
     /// </summary>
     Task<Result<IMediaProcessSession>> StartConvertAsync(string inputPathOrUrl, AudioConversionOptions options, CancellationToken ct = default);
 
     /// <summary>Starts a convert with stdin from <paramref name="input" /> and stdout on a readable session stream.</summary>
     Task<Result<IMediaProcessSession>> StartConvertAsync(Stream input, AudioConversionOptions options, CancellationToken ct = default);
 
-    /// <summary>Starts a raw PCM s16le session. Equivalent to <see cref="StartConvertAsync(string, AudioConversionOptions, CancellationToken)" /> with <see cref="AudioConversionOptions.ForRawPcm" />.</summary>
+    /// <summary>
+    /// Starts a raw PCM s16le session. Equivalent to <see cref="StartConvertAsync(string, AudioConversionOptions, CancellationToken)" /> with
+    /// <see cref="AudioConversionOptions.ForRawPcm(int, int)" />.
+    /// </summary>
     Task<Result<IMediaProcessSession>> StartRawPcmAsync(string inputPathOrUrl, int sampleRate = 48000, int channels = 2, CancellationToken ct = default);
+
+    /// <summary>Extracts the audio stream. Null <paramref name="options" /> uses <see cref="AudioConversionOptions.ForExtract" />.</summary>
+    Task<Result<bool>> ExtractAsync(string inputPath, string outputPath, AudioConversionOptions? options = null, CancellationToken ct = default);
+
+    /// <summary>
+    /// Concatenates files with the concat demuxer. Null <paramref name="options" /> copies streams. Inputs must share a stream layout. A set encoder re-encodes through the same
+    /// demuxer.
+    /// </summary>
+    Task<Result<bool>> ConcatAsync(IReadOnlyList<string> inputPaths, string outputPath, AudioConversionOptions? options = null, CancellationToken ct = default);
 }

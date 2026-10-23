@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <Description>HTTP API surface for Lyo HomeInventory: categories, locations, items, and movements.</Description>
+        <Description>HTTP API surface for Lyo HomeInventory: categories, locations, items, stock, attachments, notes, and tags.</Description>
         <PackageTags>api home-inventory aspnetcore</PackageTags>
     </PropertyGroup>
 
@@ -14,7 +14,13 @@
         <ProjectReference Include="..\..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
         <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
         <ProjectReference Include="..\..\Api\Lyo.Api\Lyo.Api.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\HomeInventory\Lyo.HomeInventory.Models\Lyo.HomeInventory.Models.csproj"/>
         <ProjectReference Include="..\..\..\Plugins\HomeInventory\Lyo.HomeInventory.Postgres\Lyo.HomeInventory.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\HomeInventory\Lyo.HomeInventory.FileStorage\Lyo.HomeInventory.FileStorage.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\Note\Lyo.Note\Lyo.Note.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\Note\Lyo.Note.Postgres\Lyo.Note.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\Tag\Lyo.Tag\Lyo.Tag.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\Tag\Lyo.Tag.Postgres\Lyo.Tag.Postgres.csproj"/>
     </ItemGroup>
 
 </Project>

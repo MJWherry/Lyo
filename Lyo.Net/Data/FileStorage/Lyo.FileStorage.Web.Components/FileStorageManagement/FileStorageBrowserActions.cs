@@ -3,6 +3,7 @@ using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Web.Components.FileAccessLink;
+using Lyo.FileStorage.Web.Components.FileMetadata;
 using Lyo.Web.Components.Dialog;
 using Microsoft.JSInterop;
 using MudBlazor;
@@ -12,8 +13,8 @@ namespace Lyo.FileStorage.Web.Components.FileStorageManagement;
 /// <summary>Shared Browser-grid and Tree-inspector handlers (view, download, zip archive, move, copy, rename, rotate DEK, delete).</summary>
 public sealed class FileStorageBrowserActions
 {
-    private readonly Func<Task> _onMutated;
     private readonly FileStorageManagement _host;
+    private readonly Func<Task> _onMutated;
 
     /// <summary>Binds actions to the parent. <paramref name="onMutated" /> runs after a successful mutation so grids and the tree can refresh.</summary>
     public FileStorageBrowserActions(FileStorageManagement host, Func<Task> onMutated)
@@ -52,9 +53,7 @@ public sealed class FileStorageBrowserActions
     /// <summary><c>GET files/{id}/metadata</c> (includes tombstones when <paramref name="includeDeleted" /> is set).</summary>
     public async Task<FileStoreResult?> GetMetadataAsync(Guid fileId, bool includeDeleted = false)
     {
-        var uri = includeDeleted
-            ? _host.FilesApi($"files/{fileId:D}/metadata?includeDeleted=true")
-            : _host.FilesApi($"files/{fileId:D}/metadata");
+        var uri = includeDeleted ? _host.FilesApi($"files/{fileId:D}/metadata?includeDeleted=true") : _host.FilesApi($"files/{fileId:D}/metadata");
         return await _host.ApiClient.GetAsAsync<FileStoreResult>(uri).ConfigureAwait(false);
     }
 
@@ -73,14 +72,36 @@ public sealed class FileStorageBrowserActions
             { d => d.ApiRoutePrefix, _host.FileStorageApiRoutePrefix },
             { d => d.PublicBaseUrl, _host.ResolvePublicBaseUrl() }
         };
+
         await _host.DialogService.ShowAsync<FileAccessLinkDialog>("Create access link", parameters, LyoDialogPresets.Medium);
+    }
+
+    /// <summary>Opens the image, audio, or video viewer for an active catalog file. Other types are ignored.</summary>
+    public Task PreviewFromRowAsync(object? row)
+    {
+        if (!TryGetActiveFileId(row, "Deleted files cannot be previewed.", out var fileId))
+            return Task.CompletedTask;
+
+        var kind = FileMediaPreview.PreviewKind(FileStorageColorHelper.ResolveFileType(row));
+        return kind is null ? Task.CompletedTask : PreviewAsync(fileId, kind.Value, FileStorageGridRowHelper.GetOriginalFileNameFromRow(row));
+    }
+
+    /// <summary>Opens <see cref="FileMediaPreviewDialog" /> against <c>files/{id}/download?inline=true</c>. When the API base URL is missing, reports the same warning as download.</summary>
+    public async Task PreviewAsync(Guid fileId, FileMediaPreviewKind kind, string? fileName)
+    {
+        var url = _host.GetApiAbsoluteUrl(_host.FilesApi(FileMediaPreview.InlineDownloadPath(fileId)));
+        if (url == null) {
+            _host.SetStatus("ApiClient:BaseUrl is not configured; cannot download.", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters<FileMediaPreviewDialog> { { d => d.Kind, kind }, { d => d.Src, url }, { d => d.FileName, fileName } };
+        await _host.DialogService.ShowAsync<FileMediaPreviewDialog>(string.IsNullOrWhiteSpace(fileName) ? "Preview" : fileName, parameters, LyoDialogPresets.Large);
     }
 
     /// <summary>Opens the API download endpoint, which streams bytes through the host (decrypt/decompress). Direct-to-bucket URLs are access-link or presigned-read only.</summary>
     public Task DownloadFromRowAsync(object? row)
-        => !TryGetActiveFileId(row, "Deleted files cannot be downloaded; the backing object was removed.", out var fileId)
-            ? Task.CompletedTask
-            : DownloadAsync(fileId);
+        => !TryGetActiveFileId(row, "Deleted files cannot be downloaded; the backing object was removed.", out var fileId) ? Task.CompletedTask : DownloadAsync(fileId);
 
     /// <summary>Opens the API download endpoint for one active file.</summary>
     public async Task DownloadAsync(Guid fileId)
@@ -142,8 +163,7 @@ public sealed class FileStorageBrowserActions
     }
 
     /// <summary>Confirms, then tombstone-deletes one file.</summary>
-    public Task DeleteFromRowAsync(object? row)
-        => !TryGetActiveFileId(row, "This file is already deleted.", out var fileId) ? Task.CompletedTask : DeleteAsync(fileId);
+    public Task DeleteFromRowAsync(object? row) => !TryGetActiveFileId(row, "This file is already deleted.", out var fileId) ? Task.CompletedTask : DeleteAsync(fileId);
 
     /// <summary>Confirms, then tombstone-deletes one file.</summary>
     public Task DeleteAsync(Guid fileId) => DeleteFilesAsync([fileId]);
@@ -162,9 +182,7 @@ public sealed class FileStorageBrowserActions
 
     /// <summary>Prompts for a path prefix, then moves one file.</summary>
     public Task MoveFromRowAsync(object? row)
-        => !TryGetActiveFileId(row, "Deleted files cannot be moved.", out var fileId)
-            ? Task.CompletedTask
-            : MoveAsync(fileId, FileStorageGridRowHelper.GetPathPrefixFromRow(row));
+        => !TryGetActiveFileId(row, "Deleted files cannot be moved.", out var fileId) ? Task.CompletedTask : MoveAsync(fileId, FileStorageGridRowHelper.GetPathPrefixFromRow(row));
 
     /// <summary>Prompts for a path prefix, then moves one file.</summary>
     public async Task MoveAsync(Guid fileId, string? currentPathPrefix = null)
@@ -180,9 +198,7 @@ public sealed class FileStorageBrowserActions
 
     /// <summary>Prompts for an optional path prefix, then copies one file.</summary>
     public Task CopyFromRowAsync(object? row)
-        => !TryGetActiveFileId(row, "Deleted files cannot be copied.", out var fileId)
-            ? Task.CompletedTask
-            : CopyAsync(fileId, FileStorageGridRowHelper.GetPathPrefixFromRow(row));
+        => !TryGetActiveFileId(row, "Deleted files cannot be copied.", out var fileId) ? Task.CompletedTask : CopyAsync(fileId, FileStorageGridRowHelper.GetPathPrefixFromRow(row));
 
     /// <summary>Prompts for an optional path prefix, then copies one file.</summary>
     public async Task CopyAsync(Guid fileId, string? currentPathPrefix = null)
@@ -194,10 +210,7 @@ public sealed class FileStorageBrowserActions
             return;
 
         try {
-            var copied = await _host.ApiClient
-                .PostAsAsync<CopyFileRequest, FileStoreResult>(
-                    _host.FilesApi("files/copy"), new(fileId, prefix.PathPrefix))
-                .ConfigureAwait(false);
+            var copied = await _host.ApiClient.PostAsAsync<CopyFileRequest, FileStoreResult>(_host.FilesApi("files/copy"), new(fileId, prefix.PathPrefix)).ConfigureAwait(false);
             _host.SetStatus($"Copied to {copied.Id}.", Severity.Success);
             await NotifyMutatedAsync();
         }
@@ -222,10 +235,7 @@ public sealed class FileStorageBrowserActions
             return;
 
         try {
-            await _host.ApiClient
-                .PostAsAsync<RenameFileRequest, FileStoreResult>(
-                    _host.FilesApi("files/rename"), new(fileId, rename.OriginalFileName))
-                .ConfigureAwait(false);
+            await _host.ApiClient.PostAsAsync<RenameFileRequest, FileStoreResult>(_host.FilesApi("files/rename"), new(fileId, rename.OriginalFileName)).ConfigureAwait(false);
             _host.SetStatus($"Renamed file {fileId}.", Severity.Success);
             await NotifyMutatedAsync();
         }
@@ -280,12 +290,45 @@ public sealed class FileStorageBrowserActions
             return;
         }
 
-        var dialog = await _host.DialogService.ShowAsync<FileStoreMoveDialog>("Move files", new DialogParameters(), LyoDialogPresets.Small);
+        var dialog = await _host.DialogService.ShowAsync<FileStoreMoveDialog>("Move files", new(), LyoDialogPresets.Small);
         var result = await dialog.Result;
         if (result is not { Canceled: false, Data: FileStorePathPrefixDialogResult prefix })
             return;
 
         await MoveFilesAsync(ids, prefix.PathPrefix);
+    }
+
+    /// <summary>Asks for a path prefix, then copies every file id there.</summary>
+    public async Task BulkCopyAsync(IReadOnlyList<Guid> fileIds)
+    {
+        ArgumentHelpers.ThrowIfNull(fileIds);
+        if (fileIds.Count == 0) {
+            _host.SetStatus("Select at least one active file to copy.", Severity.Warning);
+            return;
+        }
+
+        var dialog = await _host.DialogService.ShowAsync<FileStoreCopyDialog>("Copy files", new(), LyoDialogPresets.Small);
+        var result = await dialog.Result;
+        if (result is not { Canceled: false, Data: FileStorePathPrefixDialogResult prefix })
+            return;
+
+        var failed = 0;
+        foreach (var fileId in fileIds) {
+            try {
+                await _host.ApiClient.PostAsAsync<CopyFileRequest, FileStoreResult>(_host.FilesApi("files/copy"), new(fileId, prefix.PathPrefix)).ConfigureAwait(false);
+            }
+            catch (Exception ex) {
+                failed++;
+                _host.SetStatus($"Copy failed for {fileId}: {ex.Message}", Severity.Error);
+            }
+        }
+
+        var copied = fileIds.Count - failed;
+        if (copied > 0)
+            _host.SetStatus(failed == 0 ? $"Copied {copied} file(s)." : $"Copied {copied} file(s); {failed} failed.", failed == 0 ? Severity.Success : Severity.Warning);
+
+        if (copied > 0)
+            await NotifyMutatedAsync();
     }
 
     /// <summary>Asks for a path prefix, then moves every file id there.</summary>
@@ -297,7 +340,7 @@ public sealed class FileStorageBrowserActions
             return;
         }
 
-        var dialog = await _host.DialogService.ShowAsync<FileStoreMoveDialog>("Move files", new DialogParameters(), LyoDialogPresets.Small);
+        var dialog = await _host.DialogService.ShowAsync<FileStoreMoveDialog>("Move files", new(), LyoDialogPresets.Small);
         var result = await dialog.Result;
         if (result is not { Canceled: false, Data: FileStorePathPrefixDialogResult prefix })
             return;
@@ -317,9 +360,7 @@ public sealed class FileStorageBrowserActions
         var failed = 0;
         foreach (var (fileId, pathPrefix) in moves) {
             try {
-                await _host.ApiClient
-                    .PostAsAsync<MoveFileRequest, FileStoreResult>(_host.FilesApi("files/move"), new(fileId, pathPrefix))
-                    .ConfigureAwait(false);
+                await _host.ApiClient.PostAsAsync<MoveFileRequest, FileStoreResult>(_host.FilesApi("files/move"), new(fileId, pathPrefix)).ConfigureAwait(false);
             }
             catch (Exception ex) {
                 failed++;
@@ -364,9 +405,7 @@ public sealed class FileStorageBrowserActions
         var failed = 0;
         foreach (var fileId in fileIds) {
             try {
-                await _host.ApiClient
-                    .PostAsAsync<MoveFileRequest, FileStoreResult>(_host.FilesApi("files/move"), new(fileId, pathPrefix))
-                    .ConfigureAwait(false);
+                await _host.ApiClient.PostAsAsync<MoveFileRequest, FileStoreResult>(_host.FilesApi("files/move"), new(fileId, pathPrefix)).ConfigureAwait(false);
             }
             catch (Exception ex) {
                 failed++;
@@ -402,9 +441,10 @@ public sealed class FileStorageBrowserActions
         }
 
         var deletedCount = fileIds.Count - failed;
-        if (deletedCount > 0)
+        if (deletedCount > 0) {
             _host.SetStatus(
                 failed == 0 ? $"Deleted {deletedCount} file(s)." : $"Deleted {deletedCount} file(s); {failed} failed.", failed == 0 ? Severity.Success : Severity.Warning);
+        }
         else
             _host.SetStatus("No files were deleted.", Severity.Warning);
 
@@ -414,22 +454,20 @@ public sealed class FileStorageBrowserActions
 
     private async Task RotateDeksCoreAsync(IReadOnlyList<Guid> fileIds)
     {
-        var parameters = new DialogParameters<FileStoreRotateDekDialog> {
-            { d => d.FileCount, fileIds.Count },
-            { d => d.KeyIds, _host.EncryptionKeyIds }
-        };
+        var parameters = new DialogParameters<FileStoreRotateDekDialog> { { d => d.FileCount, fileIds.Count }, { d => d.KeyIds, _host.EncryptionKeyIds } };
         var dialog = await _host.DialogService.ShowAsync<FileStoreRotateDekDialog>("Rotate DEKs", parameters, LyoDialogPresets.Medium);
         var result = await dialog.Result;
         if (result is not { Canceled: false, Data: FileStoreRotateDekDialogResult rotate })
             return;
 
         try {
-            var rotation = await _host.ApiClient
-                .PostAsAsync<RotateDeksRequest, DekMigrationResult>(
+            var rotation = await _host.ApiClient.PostAsAsync<RotateDeksRequest, DekMigrationResult>(
                     _host.FilesApi("files/rotate-deks"), new(fileIds, rotate.TargetKeyId, rotate.TargetKeyVersion, rotate.BatchSize))
                 .ConfigureAwait(false);
+
             _host.SetStatus(
                 rotation.AllSucceeded ? "DEK rotation completed." : "DEK rotation completed with failures.", rotation.AllSucceeded ? Severity.Success : Severity.Warning);
+
             await NotifyMutatedAsync();
         }
         catch (Exception ex) {
@@ -464,6 +502,149 @@ public sealed class FileStorageBrowserActions
         }
 
         return ids;
+    }
+
+    /// <summary>Confirms, then deletes raw objects that are not in the catalog.</summary>
+    public async Task DeletePhysicalAsync(IReadOnlyList<string> physicalKeys)
+    {
+        ArgumentHelpers.ThrowIfNull(physicalKeys);
+        if (physicalKeys.Count == 0) {
+            _host.SetStatus("Select at least one storage object to delete.", Severity.Warning);
+            return;
+        }
+
+        var subject = physicalKeys.Count == 1 ? $"storage object '{physicalKeys[0]}'" : $"{physicalKeys.Count} storage objects";
+        if (!await _host.DialogService.ConfirmDeleteAsync(subject, "The object is not in the catalog. This cannot be undone.", "Delete storage object"))
+            return;
+
+        var failed = 0;
+        foreach (var key in physicalKeys) {
+            try {
+                await _host.ApiClient.DeleteAsAsync<bool>(_host.FilesApi("files/physical?physicalKey=" + Uri.EscapeDataString(key))).ConfigureAwait(false);
+            }
+            catch (Exception ex) {
+                failed++;
+                _host.SetStatus($"Delete failed for {key}: {ex.Message}", Severity.Error);
+            }
+        }
+
+        var deletedCount = physicalKeys.Count - failed;
+        if (deletedCount > 0) {
+            _host.SetStatus(
+                failed == 0 ? $"Deleted {deletedCount} storage object(s)." : $"Deleted {deletedCount} storage object(s); {failed} failed.",
+                failed == 0 ? Severity.Success : Severity.Warning);
+        }
+        else
+            _host.SetStatus("No storage objects were deleted.", Severity.Warning);
+
+        if (deletedCount > 0)
+            await NotifyMutatedAsync();
+    }
+
+    /// <summary>Confirms, then deletes one raw object.</summary>
+    public Task DeletePhysicalAsync(string physicalKey) => DeletePhysicalAsync([physicalKey]);
+
+    /// <summary>Prompts for a path prefix, then moves raw objects to <c>{prefix}/{leaf}</c>.</summary>
+    public async Task MovePhysicalAsync(IReadOnlyList<string> physicalKeys, string? currentPathPrefix = null)
+    {
+        ArgumentHelpers.ThrowIfNull(physicalKeys);
+        if (physicalKeys.Count == 0) {
+            _host.SetStatus("Select at least one storage object to move.", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters<FileStoreMoveDialog> { { d => d.InitialPathPrefix, currentPathPrefix } };
+        var title = physicalKeys.Count == 1 ? "Move storage object" : "Move storage objects";
+        var dialog = await _host.DialogService.ShowAsync<FileStoreMoveDialog>(title, parameters, LyoDialogPresets.Small);
+        var result = await dialog.Result;
+        if (result is not { Canceled: false, Data: FileStorePathPrefixDialogResult prefix })
+            return;
+
+        await RelocatePhysicalAsync(physicalKeys, prefix.PathPrefix, false);
+    }
+
+    /// <summary>Prompts for a path prefix, then moves one raw object.</summary>
+    public Task MovePhysicalAsync(string physicalKey, string? currentPathPrefix = null) => MovePhysicalAsync([physicalKey], currentPathPrefix);
+
+    /// <summary>Prompts for a path prefix, then copies raw objects to <c>{prefix}/{leaf}</c>.</summary>
+    public async Task CopyPhysicalAsync(IReadOnlyList<string> physicalKeys, string? currentPathPrefix = null)
+    {
+        ArgumentHelpers.ThrowIfNull(physicalKeys);
+        if (physicalKeys.Count == 0) {
+            _host.SetStatus("Select at least one storage object to copy.", Severity.Warning);
+            return;
+        }
+
+        var parameters = new DialogParameters<FileStoreCopyDialog> { { d => d.InitialPathPrefix, currentPathPrefix } };
+        var title = physicalKeys.Count == 1 ? "Copy storage object" : "Copy storage objects";
+        var dialog = await _host.DialogService.ShowAsync<FileStoreCopyDialog>(title, parameters, LyoDialogPresets.Small);
+        var result = await dialog.Result;
+        if (result is not { Canceled: false, Data: FileStorePathPrefixDialogResult prefix })
+            return;
+
+        await RelocatePhysicalAsync(physicalKeys, prefix.PathPrefix, true);
+    }
+
+    /// <summary>Prompts for a path prefix, then copies one raw object.</summary>
+    public Task CopyPhysicalAsync(string physicalKey, string? currentPathPrefix = null) => CopyPhysicalAsync([physicalKey], currentPathPrefix);
+
+    /// <summary>Renames the last segment of one raw object key.</summary>
+    public async Task RenamePhysicalAsync(string physicalKey, string? currentName = null)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(physicalKey);
+        var parameters = new DialogParameters<FileStoreRenameDialog> { { d => d.InitialOriginalFileName, currentName } };
+        var dialog = await _host.DialogService.ShowAsync<FileStoreRenameDialog>("Rename storage object", parameters, LyoDialogPresets.Small);
+        var result = await dialog.Result;
+        if (result is not { Canceled: false, Data: FileStoreRenameDialogResult rename })
+            return;
+
+        try {
+            await _host.ApiClient.PostAsAsync<RenamePhysicalObjectRequest, PhysicalObjectResult>(_host.FilesApi("files/physical/rename"), new(physicalKey, rename.OriginalFileName))
+                .ConfigureAwait(false);
+
+            _host.SetStatus($"Renamed {physicalKey}.", Severity.Success);
+            await NotifyMutatedAsync();
+        }
+        catch (Exception ex) {
+            _host.SetStatus(ex.Message, Severity.Error);
+        }
+    }
+
+    /// <summary>Opens a raw download for each physical key.</summary>
+    public async Task DownloadPhysicalManyAsync(IReadOnlyList<string> physicalKeys)
+    {
+        ArgumentHelpers.ThrowIfNull(physicalKeys);
+        foreach (var key in physicalKeys)
+            await DownloadPhysicalAsync(key).ConfigureAwait(false);
+    }
+
+    private async Task RelocatePhysicalAsync(IReadOnlyList<string> physicalKeys, string? pathPrefix, bool copy)
+    {
+        var route = copy ? "files/physical/copy" : "files/physical/move";
+        var failed = 0;
+        foreach (var key in physicalKeys) {
+            try {
+                if (copy) {
+                    await _host.ApiClient.PostAsAsync<CopyPhysicalObjectRequest, PhysicalObjectResult>(_host.FilesApi(route), new(key, pathPrefix)).ConfigureAwait(false);
+                }
+                else {
+                    await _host.ApiClient.PostAsAsync<MovePhysicalObjectRequest, PhysicalObjectResult>(_host.FilesApi(route), new(key, pathPrefix)).ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex) {
+                failed++;
+                _host.SetStatus($"{(copy ? "Copy" : "Move")} failed for {key}: {ex.Message}", Severity.Error);
+            }
+        }
+
+        var done = physicalKeys.Count - failed;
+        var verb = copy ? "Copied" : "Moved";
+        if (done > 0)
+            _host.SetStatus(
+                failed == 0 ? $"{verb} {done} storage object(s)." : $"{verb} {done} storage object(s); {failed} failed.", failed == 0 ? Severity.Success : Severity.Warning);
+
+        if (done > 0)
+            await NotifyMutatedAsync();
     }
 
     private Task NotifyMutatedAsync() => _onMutated();

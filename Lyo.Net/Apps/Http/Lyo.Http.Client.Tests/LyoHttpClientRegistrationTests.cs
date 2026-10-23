@@ -14,7 +14,7 @@ public sealed class LyoHttpClientRegistrationTests
         var client = provider.GetRequiredService<LyoHttpClient>();
         Assert.NotNull(client);
         Assert.NotNull(client.Session);
-        Assert.Equal(new Uri("https://example.test/"), client.GetClient().BaseAddress);
+        Assert.Equal(new("https://example.test/"), client.GetClient().BaseAddress);
     }
 
     [Fact]
@@ -25,12 +25,13 @@ public sealed class LyoHttpClientRegistrationTests
             o.BaseUrl = "http://localhost:5251/";
             o.RequestCompression = LyoHttpRequestCompressionType.Brotli;
         });
+
         services.AddLyoHttpClient<LyoHttpClient, LyoHttpClientOptions>();
         using var provider = services.BuildServiceProvider();
         var options = provider.GetRequiredService<IOptions<LyoHttpClientOptions>>().Value;
         var client = provider.GetRequiredService<LyoHttpClient>();
         Assert.Equal("http://localhost:5251/", options.BaseUrl);
         Assert.Equal(LyoHttpRequestCompressionType.Brotli, options.RequestCompression);
-        Assert.Equal(new Uri("http://localhost:5251/"), client.GetClient().BaseAddress);
+        Assert.Equal(new("http://localhost:5251/"), client.GetClient().BaseAddress);
     }
 }

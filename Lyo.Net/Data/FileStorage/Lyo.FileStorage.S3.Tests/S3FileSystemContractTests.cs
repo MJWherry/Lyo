@@ -6,9 +6,9 @@ namespace Lyo.FileStorage.S3.Tests;
 
 public sealed class S3FileSystemContractTests : IFileSystemContractTests
 {
-    protected override IFileSystem Create()
+    protected override ValueTask<IFileSystem?> CreateAsync()
     {
         var bucket = new InMemoryS3Bucket();
-        return new S3FileSystem(bucket.CreateClient(), "bucket", "app-data");
+        return new(new S3FileSystem(bucket.CreateClient(), "bucket", "app-data"));
     }
 }

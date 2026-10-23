@@ -1,7 +1,6 @@
 using Lyo.Exceptions;
 using Lyo.Web.Components.LyoType;
 using Lyo.Web.Components.ParamTable;
-using Lyo.Web.Primitives.DataGrid;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -35,8 +34,8 @@ public static class ServiceCollectionExtensions
         }
 
         /// <summary>
-        /// Sets the host default layout for <see cref="ParamTable.LyoParameterEditor" />. Can be skipped: editors fall back to <see cref="LyoParameterLayout.Table" /> when this is never
-        /// called. A layout the user picked earlier still wins over the default.
+        /// Sets the host default layout for <see cref="ParamTable.LyoParameterEditor" />. Can be skipped: editors fall back to <see cref="LyoParameterLayout.Table" /> when this is
+        /// never called. A layout the user picked earlier still wins over the default.
         /// </summary>
         public IServiceCollection AddLyoParameterEditor(LyoParameterEditorOptions options)
         {
@@ -97,8 +96,8 @@ public static class ServiceCollectionExtensions
         }
 
         /// <summary>
-        /// Adds the value-editor catalog so <see cref="LyoTypeValueInput" /> can render editors supplied by other packages. Call this once on the host, then call the
-        /// per-editor registration for each one (for example <c>AddLyoFormatterValueEditor</c> from <c>Lyo.Formatter.Web.Components</c>).
+        /// Adds the value-editor catalog so <see cref="LyoTypeValueInput" /> can render editors supplied by other packages. Call this once on the host, then call the per-editor
+        /// registration for each one (for example <c>AddLyoFormatterValueEditor</c> from <c>Lyo.Formatter.Web.Components</c>).
         /// </summary>
         /// <remarks>Registering an editor descriptor implies this, so calling it directly is only needed when the host wants the catalog resolvable on its own.</remarks>
         public IServiceCollection AddLyoValueEditors()

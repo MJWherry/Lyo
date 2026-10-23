@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Outbox contract. Enqueue records a message on the caller's transaction. Publishing is a separate dispatcher.</Description>
+        <PackageTags>outbox messaging</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Idempotency\Lyo.Idempotency\Lyo.Idempotency.csproj"/>
+        <ProjectReference Include="..\..\Health\Lyo.Health\Lyo.Health.csproj"/>
+        <ProjectReference Include="..\..\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+    </ItemGroup>
+
+</Project>

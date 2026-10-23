@@ -7,15 +7,15 @@ using Lyo.Api.Client;
 using Lyo.Api.Mapping;
 using Lyo.Audit.Postgres;
 using Lyo.Audit.Postgres.Database;
+using Lyo.Book.Postgres;
 using Lyo.Cache.Fusion;
 using Lyo.Comic.Postgres;
 using Lyo.Comment.Postgres;
-using Lyo.Common.Json;
 using Lyo.Compression;
 using Lyo.Csv;
 using Lyo.DateAndTime.Json;
 using Lyo.Discord.Bot;
-using Lyo.Email;
+using Lyo.Email.Smtp;
 using Lyo.Email.Postgres;
 using Lyo.Endato.Client;
 using Lyo.Endato.Postgres;
@@ -25,16 +25,16 @@ using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileMetadataStore.Postgres;
 using Lyo.FileStorage;
+using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.S3;
 using Lyo.Formatter;
 using Lyo.HomeInventory.Postgres;
-using Lyo.Http.Client;
 using Lyo.Http.Client.Flared;
-using Lyo.Http.Client.Plan;
 using Lyo.Images.Skia;
 using Lyo.IO.Temp;
 using Lyo.Job.Postgres;
 using Lyo.Job.Postgres.Database;
+using Lyo.Json;
 using Lyo.KeyStore.Aws;
 using Lyo.MessageQueue.RabbitMq;
 using Lyo.Metrics;
@@ -43,16 +43,17 @@ using Lyo.People.Postgres;
 using Lyo.Profanity;
 using Lyo.QRCode;
 using Lyo.Query.Models.Common;
+using Lyo.RateLimit;
+using Lyo.Recipe.Postgres;
 using Lyo.Reporting.Postgres;
 using Lyo.Scheduler;
 using Lyo.ShortUrl;
 using Lyo.ShortUrl.Postgres;
-using Lyo.Sms;
 using Lyo.Sms.Models;
 using Lyo.Sms.Twilio;
-using Lyo.Sms.Twilio.Builders;
 using Lyo.Sms.Twilio.Postgres;
 using Lyo.Sms.Twilio.Postgres.Database;
+using Lyo.Story.Postgres;
 using Lyo.Tag.Postgres;
 using Lyo.TestConsole;
 using Lyo.Tools;
@@ -61,7 +62,6 @@ using Lyo.Tts;
 using Lyo.Tts.AwsPolly;
 using Lyo.Tts.Typecast;
 using Lyo.Typecast.Client;
-using Lyo.Web.Automation.Plan;
 using Lyo.Web.Automation.Playwright.Service;
 using Lyo.Web.Automation.Selenium.Service;
 using Lyo.Web.WebRenderer;
@@ -71,7 +71,6 @@ using MapsterMapper;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 // ReSharper disable UnusedVariable
 #pragma warning disable CS8601 // Possible null reference assignment.
@@ -106,10 +105,11 @@ var host = Host.CreateDefaultBuilder(args)
             => new TypecastTtsAppService(
                 sp.GetRequiredService<TypecastTtsService>())); // non-generic TTS for Discord; use AwsPollyTtsAppService + AwsPollyTtsService for Polly instead
 
+        services.AddLocalRateLimit();
         services.AddFlaredHttpClientFromConfiguration(context.Configuration);
         services.AddAwsTranslationServiceFromConfiguration(context.Configuration); //translation
         services.AddProfanityFilterServiceFromConfiguration(context.Configuration); //profanity filter
-        services.AddEmailServiceFromConfiguration(context.Configuration); //email
+        services.AddSmtpEmailServiceFromConfiguration(context.Configuration); //email
         services.AddTwilioSmsServiceFromConfiguration(context.Configuration); //sms twilio
         services.AddShortUrlFromConfiguration(context.Configuration); //short url
         services.AddQRCodeServiceFromConfiguration(context.Configuration); // qrcode (built-in encoder)
@@ -132,6 +132,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddPeopleDbContextFactory(new PostgresPeopleOptions { ConnectionString = connStr, EnableAutoMigrations = true });
         services.AddPostgresCommentStore(new PostgresCommentOptions { ConnectionString = connStr, EnableAutoMigrations = true });
         services.AddPostgresHomeInventoryStore(new PostgresHomeInventoryOptions { ConnectionString = connStr, EnableAutoMigrations = true });
+        services.AddPostgresRecipeStore(new PostgresRecipeOptions { ConnectionString = connStr, EnableAutoMigrations = true });
         services.AddLyoCrudServices<TwilioSmsDbContext>();
         services.AddLyoCrudServices<AuditDbContext>();
         services.AddEmailDbContextFactory(new PostgresEmailOptions { ConnectionString = connStr, EnableAutoMigrations = true });
@@ -139,7 +140,9 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddPostgresJobManagement(new PostgresJobOptions { ConnectionString = connStr, EnableAutoMigrations = true });
         services.AddLyoCrudServices<JobContext>();
         services.AddScoped<JobService>();
+        services.AddBookDbContextFactory(new PostgresBookOptions { ConnectionString = connStr, EnableAutoMigrations = true });
         services.AddComicDbContextFactory(new PostgresComicOptions { ConnectionString = connStr, EnableAutoMigrations = true });
+        services.AddStoryDbContextFactory(new PostgresStoryOptions { ConnectionString = connStr, EnableAutoMigrations = true });
         services.AddPostgresTagStore(new PostgresTagOptions { ConnectionString = connStr, EnableAutoMigrations = true });
         var config = new TypeAdapterConfig();
         config.Default.EnumMappingStrategy(EnumMappingStrategy.ByName);
@@ -205,4 +208,10 @@ var host = Host.CreateDefaultBuilder(args)
     .Build();
 
 await host.StartAsync();
-Console.ReadLine();
+await using var scope = host.Services.CreateAsyncScope();
+var storage = scope.ServiceProvider.GetRequiredKeyedService<IFileStorageService>("client-files");
+if (storage is not IFileStorageTags tags)
+    throw new InvalidOperationException("client-files does not support file tags.");
+
+//var checkedFiles = await tags.StampAutomaticTagsAsync();
+//Console.WriteLine($"Checked {checkedFiles} files and wrote missing file-type and imported tags.");

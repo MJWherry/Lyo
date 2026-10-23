@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Components;
-
 namespace Lyo.TestGateway.Components.TestGateway;
 
 public partial class TextDiffWorkbench
@@ -19,6 +17,7 @@ public partial class TextDiffWorkbench
                                          }
                                          """;
 
-    private bool _ignoreWhitespace;
     private bool _ignoreCase;
+
+    private bool _ignoreWhitespace;
 }

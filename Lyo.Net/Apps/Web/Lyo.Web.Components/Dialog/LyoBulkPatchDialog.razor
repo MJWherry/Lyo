@@ -1,6 +1,4 @@
 @namespace Lyo.Web.Components.Dialog
-@using Lyo.Web.Components.LyoType
-@using Lyo.Web.Components.Models
 
 <LyoDialog Title="Bulk patch"
            SaveText="Patch"
@@ -13,6 +11,7 @@
     }
     else {
         <MudText Typo="Typo.body2" Class="mb-3">@Keys.Count rows will be updated.</MudText>
+
         @if (Properties.Count > 0) {
             <MudSelect T="string" Value="@_property" ValueChanged="OnPropertyChanged" Label="Property" Variant="Variant.Outlined" Dense="true" Class="mb-3">
                 @foreach (var property in Properties) {
@@ -23,9 +22,11 @@
         else {
             <MudTextField @bind-Value="_property" Label="Property" Variant="Variant.Outlined" Class="mb-3"/>
         }
+
         @if (!string.IsNullOrWhiteSpace(_property)) {
             <LyoTypeValueInput TypeName="@TypeName" Json="@_json" JsonChanged="OnJsonChanged" Label="Value" AllowUnset="true"/>
         }
+
         @if (!string.IsNullOrEmpty(_error)) {
             <MudAlert Severity="Severity.Error" Class="mt-3">@_error</MudAlert>
         }

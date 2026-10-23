@@ -66,8 +66,7 @@ internal static class EndatoContactFormatter
     }
 
     /// <summary>Formats a 10-digit US number as <c>NXX-NXX-XXXX</c>; otherwise returns the trimmed original.</summary>
-    public static string FormatNumber(string? number)
-        => FormatPhoneNumber(number);
+    public static string FormatNumber(string? number) => FormatPhoneNumber(number);
 
     private static string FormatPhoneNumber(string? number)
     {

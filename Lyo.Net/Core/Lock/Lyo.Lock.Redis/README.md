@@ -1,6 +1,7 @@
 # Lyo.Lock.Redis
 
-Redis-backed `ILockService` through [StackExchange.Redis](https://github.com/StackExchange/StackExchange.Redis). Reach for this when several app instances must exclude each other on one logical key.
+Redis-backed `ILockService` through [StackExchange.Redis](https://github.com/StackExchange/StackExchange.Redis). Reach for this when several app instances must exclude each other
+on one logical key.
 
 Keyed semaphores (`IKeyedSemaphoreService`) are not implemented here. They stay in-process in [`Lyo.Lock`](../Lyo.Lock/README.md).
 
@@ -77,14 +78,15 @@ Registers `IConnectionMultiplexer` with `TryAddSingleton` if it is missing, then
 
 ## From configuration
 
-Binds `LockOptions` from the `LockOptions` section and reads Redis from the `Redis` section (`ConnectionString`, optional `Password`). A custom Redis section name throws `ConfigurationException` (from `Lyo.Exceptions`) if no connection string can be resolved. Example `appsettings.json`:
+Binds `LockOptions` from the `LockOptions` section and reads Redis from the `Redis` section (`ConnectionString`, optional `Password`). A custom Redis section name throws
+`ConfigurationException` (from `Lyo.Exceptions`) if no connection string can be resolved. Example `appsettings.json`:
 
 ## `RedisLockOptions` (builds on `LockOptions`)
 
-| Property | Default | What it controls |
-| ------------------------- | ------- | ---------------------------------------------------------------------------------------------------------- |
-| `AcquirePollInterval` | 10 ms | Retry delay when `UsePubSubForAcquireWait` is `false`. |
-| `UsePubSubForAcquireWait` | `true` | While waiting, subscribe to a per-key notify channel. A successful Lua delete in `ReleaseAsync` publishes. |
+| Property                  | Default | What it controls                                                                                           |
+|---------------------------|---------|------------------------------------------------------------------------------------------------------------|
+| `AcquirePollInterval`     | 10 ms   | Retry delay when `UsePubSubForAcquireWait` is `false`.                                                     |
+| `UsePubSubForAcquireWait` | `true`  | While waiting, subscribe to a per-key notify channel. A successful Lua delete in `ReleaseAsync` publishes. |
 
 From `LockOptions`: `DefaultLockDuration`, `DefaultAcquireTimeout`, `KeyPrefix`, `EnableMetrics`, `SkipKeyNormalization`.
 
@@ -97,7 +99,8 @@ From `LockOptions`: `DefaultLockDuration`, `DefaultAcquireTimeout`, `KeyPrefix`,
 
 ## Ops notes
 
-- **TTL vs work duration.** Another instance can acquire if the key expires while the critical section still runs longer than `lockDuration`. Size `DefaultLockDuration` / per-call `lockDuration` above worst-case runtime, or shorten the guarded work.
+- **TTL vs work duration.** Another instance can acquire if the key expires while the critical section still runs longer than `lockDuration`. Size `DefaultLockDuration` / per-call
+  `lockDuration` above worst-case runtime, or shorten the guarded work.
 - **Clocks.** The client deadline uses `DateTime.UtcNow` for acquire timeout. Redis handles key TTL independently.
 - **Fairness.** These Redis locks are not strictly FIFO. Under contention, which waiter wins is nondeterministic.
 - **Metrics.** Same names as `Lyo.Lock.Constants.Metrics` when `EnableMetrics` is true (see [`Lyo.Lock` README](../Lyo.Lock/README.md#metrics-constants)).
@@ -106,10 +109,15 @@ From `LockOptions`: `DefaultLockDuration`, `DefaultAcquireTimeout`, `KeyPrefix`,
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
+- `Lyo.Common.Core` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Lock` (direct, lyo)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.DependencyInjection` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (direct, microsoft)
 - `StackExchange.Redis` `2.12.0` (direct, third-party)
 - `Lyo.Metrics` (transitive, lyo)
+- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `Microsoft.Extensions.DependencyInjection.Abstractions` `10.0.5` (transitive, microsoft)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

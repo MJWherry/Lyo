@@ -3,8 +3,8 @@ using System.Diagnostics;
 namespace Lyo.Query.Models.Common.Request;
 
 /// <summary>
-/// Computed field that applies a SmartFormat template to projected row data and adds the result as a named column. Needs IFormatterService registered. Templates
-/// use SmartFormat syntax, e.g. "{LastName}, {FirstName}" or "{CreatedAt:yyyy-MM-dd}".
+/// Computed field that applies a SmartFormat template to projected row data and adds the result as a named column. Needs IFormatterService registered. Templates use
+/// SmartFormat syntax, e.g. "{LastName}, {FirstName}" or "{CreatedAt:yyyy-MM-dd}".
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public class ComputedField

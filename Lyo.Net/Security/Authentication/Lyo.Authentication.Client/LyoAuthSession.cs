@@ -23,10 +23,7 @@ public sealed class LyoAuthSession
     /// <summary>When <see cref="RefreshToken" /> expires, or <c>null</c> when no refresh token is held.</summary>
     public DateTime? RefreshTokenExpiresAt { get; private set; }
 
-    /// <summary>
-    /// Claims projected from the access JWT at session create / refresh. Used by <see cref="LyoAuthCookieAuthenticationHandler" /> to populate
-    /// <see cref="ClaimsPrincipal" />.
-    /// </summary>
+    /// <summary>Claims projected from the access JWT at session create / refresh. Used by <see cref="LyoAuthCookieAuthenticationHandler" /> to populate <see cref="ClaimsPrincipal" />.</summary>
     public IReadOnlyList<Claim> Claims { get; private set; }
 
     /// <summary>When the session was first written.</summary>

@@ -33,14 +33,12 @@ internal sealed class MediaProcessSession : IMediaProcessSession
         try {
             _cts.Cancel();
         }
-        catch (ObjectDisposedException) {
-        }
+        catch (ObjectDisposedException) { }
 
         try {
             await _writer.CompleteAsync().ConfigureAwait(false);
         }
-        catch {
-        }
+        catch { }
 
         await StandardOutput.DisposeAsync().ConfigureAwait(false);
         _cts.Dispose();

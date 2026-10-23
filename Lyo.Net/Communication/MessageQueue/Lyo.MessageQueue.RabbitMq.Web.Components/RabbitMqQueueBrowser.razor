@@ -54,7 +54,8 @@
                    Size="Size.Small"
                    StartIcon="@Icons.Material.Filled.Refresh"
                    OnClick="OnRefresh"
-                   Disabled="@Busy">Refresh</MudButton>
+                   Disabled="@Busy">Refresh
+        </MudButton>
     </MudStack>
 
     @if (Queues.Count == 0) {
@@ -86,6 +87,7 @@
                         <LyoChip Spec="@priority"/>
                     }
                 </MudStack>
+
                 <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="4">
                     <MudStack Spacing="0">
                         <MudText Typo="Typo.caption" Color="Color.Secondary">Ready</MudText>
@@ -122,18 +124,21 @@
                            Size="Size.Small"
                            StartIcon="@Icons.Material.Filled.Visibility"
                            Disabled="@(Busy || SelectedQueue is null)"
-                           OnClick="@PeekSelectedAsync">Peek</MudButton>
+                           OnClick="@PeekSelectedAsync">Peek
+                </MudButton>
                 <MudButton Variant="Variant.Outlined"
                            Size="Size.Small"
                            StartIcon="@Icons.Material.Filled.ClearAll"
                            Disabled="@(Busy || SelectedQueue is null)"
-                           OnClick="@ClearSelectedAsync">Clear</MudButton>
+                           OnClick="@ClearSelectedAsync">Clear
+                </MudButton>
                 <MudButton Variant="Variant.Outlined"
                            Size="Size.Small"
                            Color="Color.Error"
                            StartIcon="@Icons.Material.Filled.Delete"
                            Disabled="@(Busy || SelectedQueue is null)"
-                           OnClick="@DeleteSelectedAsync">Delete</MudButton>
+                           OnClick="@DeleteSelectedAsync">Delete
+                </MudButton>
                 <MudIconButton Icon="@Icons.Material.Filled.ContentCopy"
                                Size="Size.Small"
                                title="Copy name"
@@ -183,7 +188,8 @@
                                   ValueChanged="RoutingKeyChanged"/>
                     <MudButton Variant="Variant.Outlined"
                                Disabled="@(Busy || SelectedQueue is null)"
-                               OnClick="OnBind">Bind</MudButton>
+                               OnClick="OnBind">Bind
+                    </MudButton>
                 </MudStack>
             </MudStack>
         </MudTabPanel>

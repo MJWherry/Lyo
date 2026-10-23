@@ -1,6 +1,7 @@
 # Lyo.EntityReference.Models
 
-Typed pair of logical entity kind (`EntityType`) and identifier string (`EntityId`), with helpers for composite keys, JSON, opaque tokens, validation, and domain row shapes. No database or EF dependency.
+Typed pair of logical entity kind (`EntityType`) and identifier string (`EntityId`), with helpers for composite keys, JSON, opaque tokens, validation, and domain row shapes. No
+database or EF dependency.
 
 ## Examples
 
@@ -45,16 +46,23 @@ var subjectId = EntityRefPersistedGuid.PersistedEntityId(subjectRef);
 - **Stable type names.** Mark CLR types with `[EntityRefLogicalType("MyModule.Widget")]` so persisted `EntityType` does not depend on `Type.FullName`.
 - **Composite ids.** Multiple key segments are sorted lexically and joined via `EntityRefCompositeEncoding` so a literal `:` inside a segment stays unambiguous.
 - **Relation vs source.** Two persistence shapes:
-- **Relations** (note, favorite, comment, …). Actor + subject endpoints. Domain types use `ActorEntityId` / `SubjectEntityType`. PostgreSQL columns remain `from_entity_*` / `for_entity_*`.
-- **Source links** (`*_source`). External import provenance only: `source_entity_id` / `source_entity_type` + `imported_at`. Owner identity lives on the parent aggregate (for example `person_id`), not in EntityReference.
-- **String persistence.** Endpoint and source ids are nullable varchar at the DB. Stores and validation helpers enforce required values per use case. Callers still pass `EntityRef` at API boundaries. Use `EntityRefPersistedGuid.PersistedEntityId()` (or `RequirePersistedGuid` when comparing to row `Guid` primary keys) when `EntityId` is a single GUID string.
-- **`EntityRelationRow`.** Abstract domain mirror of a tenant-scoped relation row (actor/subject, visibility, soft-delete, metadata). Endpoint properties are `string?`, aligned with persisted columns.
-- **`EntitySourceRecord`.** Provenance shape: `(EntityRef Source, DateTime ImportedAt)`. Use `EntitySourceRecord.From(source, importedAt)` at import. The owning aggregate id is set when persisting child `*_source` rows.
-- **`IEntitySourceDerived`.** Aggregates imported from external sources carry optional `EntitySourceRecord? Source` and `LocallyModifiedAt` when local edits diverge from the external source.
+- **Relations** (note, favorite, comment, …). Actor + subject endpoints. Domain types use `ActorEntityId` / `SubjectEntityType`. PostgreSQL columns remain `from_entity_*` /
+  `for_entity_*`.
+- **Source links** (`*_source`). External import provenance only: `source_entity_id` / `source_entity_type` + `imported_at`. Owner identity lives on the parent aggregate (for
+  example `person_id`), not in EntityReference.
+- **String persistence.** Endpoint and source ids are nullable varchar at the DB. Stores and validation helpers enforce required values per use case. Callers still pass `EntityRef`
+  at API boundaries. Use `EntityRefPersistedGuid.PersistedEntityId()` (or `RequirePersistedGuid` when comparing to row `Guid` primary keys) when `EntityId` is a single GUID string.
+- **`EntityRelationRow`.** Abstract domain mirror of a tenant-scoped relation row (actor/subject, visibility, soft-delete, metadata). Endpoint properties are `string?`, aligned
+  with persisted columns.
+- **`EntitySourceRecord`.** Provenance shape: `(EntityRef Source, DateTime ImportedAt)`. Use `EntitySourceRecord.From(source, importedAt)` at import. The owning aggregate id is set
+  when persisting child `*_source` rows.
+- **`IEntitySourceDerived`.** Aggregates imported from external sources carry optional `EntitySourceRecord? Source` and `LocallyModifiedAt` when local edits diverge from the
+  external source.
 
 ## Debugging
 
-`EntityRelationRow`, `EntityRef`, `EntityRefActionContext`, and `EntityRefOptions` use `[DebuggerDisplay(...)]` for compact watches. Several types override `ToString()` for readable logs, distinct from `ToOpaqueToken()` on `EntityRef`.
+`EntityRelationRow`, `EntityRef`, `EntityRefActionContext`, and `EntityRefOptions` use `[DebuggerDisplay(...)]` for compact watches. Several types override `ToString()` for
+readable logs, distinct from `ToOpaqueToken()` on `EntityRef`.
 
 ## Dependencies
 

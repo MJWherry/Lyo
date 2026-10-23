@@ -1,11 +1,15 @@
 # Lyo.HomeInventory.Api
 
-Maps CRUD on `HomeInventoryDbContext` entities (categories, locations, items, movements) via `Lyo.Api` `CreateBuilder` with entity-as-both DTOs. Stock rows use a composite key and are not mapped. Register with `AddHomeInventoryApiFromConfiguration`, then call `BuildHomeInventoryGroup`. Standalone host: `Lyo.HomeInventory.Api.Host`.
+Maps HomeInventory Req/Res CRUD via `Lyo.Api` `CreateBuilder` (categories, locations, items, attachments) plus read-only movements, stock adjust/transfer, nested notes/tags, and
+optional multipart upload when `IHomeInventoryAttachmentFiles` is registered. Register with `AddHomeInventoryApiFromConfiguration`, then call `BuildHomeInventoryGroup`. Example
+host: `Lyo.HomeInventory.Api.Example`.
 
 ## Features
 
-- `BuildHomeInventoryGroup` maps CRUD for categories, locations, items, and movements.
-- `AddHomeInventoryApiFromConfiguration` registers the Postgres store, CRUD services, and an identity `ILyoMapper` for entity-as-both mapping.
+- `BuildHomeInventoryGroup` maps Req/Res CRUD for categories, locations, items, and attachments; movements are read-only.
+- Stock endpoints under `HomeInventory/Items/{id}/Stock` (GET/POST, Adjust, Transfer).
+- Nested `Notes` and `Tags` on items, locations, and categories; delete cascades those rows.
+- `AddHomeInventoryApiFromConfiguration` registers the Postgres store, Note/Tag stores on the same connection, CRUD services, and `HomeInventoryLyoMapper`.
 
 ## Examples
 
@@ -26,10 +30,15 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Api` (direct, lyo)
 - `Lyo.Common.Core` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
+- `Lyo.HomeInventory.FileStorage` (direct, lyo)
+- `Lyo.HomeInventory.Models` (direct, lyo)
 - `Lyo.HomeInventory.Postgres` (direct, lyo)
+- `Lyo.Note` (direct, lyo)
+- `Lyo.Note.Postgres` (direct, lyo)
+- `Lyo.Tag` (direct, lyo)
+- `Lyo.Tag.Postgres` (direct, lyo)
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Cache` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.Compression` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
@@ -39,10 +48,15 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Encryption` (transitive, lyo)
 - `Lyo.EntityReference.Models` (transitive, lyo)
 - `Lyo.EntityReference.Postgres` (transitive, lyo)
+- `Lyo.FileMetadataStore` (transitive, lyo)
+- `Lyo.FileStorage` (transitive, lyo)
 - `Lyo.Formatter` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
 - `Lyo.HomeInventory` (transitive, lyo)
+- `Lyo.IO.FileSystem` (transitive, lyo)
+- `Lyo.IO.Temp` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
@@ -51,7 +65,9 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Query` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Query.Sql` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
+- `Lyo.Search.Postgres` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
 - `Lyo.Validation` (transitive, lyo)
 - `Lyo.Validation.Models` (transitive, lyo)
@@ -73,11 +89,13 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Options` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `Microsoft.Extensions.Options.DataAnnotations` `10.0.5` (transitive, microsoft)
 - `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` (transitive, third-party)
 - `SmartFormat.NET` `3.6.1` (transitive, third-party)
 - `System.Buffers` `4.6.1` (transitive, microsoft, netstandard2.0)
 - `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

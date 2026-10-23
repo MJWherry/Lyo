@@ -17,6 +17,11 @@
       "code": "<LyoDataGrid T=\"PersonRes\" ApiClient=\"ApiClient\" GridKey=\"PersonGrid\" Route=\"Person\"\n             KeySelector=\"@(i => new object[] { i.Id })\"\n             BeforeQuery=\"@(query => query.AddIncludes(\"contactaddresses.address\"))\">\n    <Columns>\n        <LyoPropertyColumn T=\"PersonRes\" TProperty=\"string?\" Property=\"x => x.FirstName\" Title=\"Firstname\"/>\n        <LyoIdColumn T=\"PersonRes\" TRes=\"PersonAddressRes\"\n                     Property=\"x => x.MostRecentAddressId\"\n                     Route=\"PersonAddress\"\n                     Title=\"Most recent address\"\n                     Select=\"@(new[] { \"FullAddress\", \"City\" })\"\n                     Context=\"address\">\n            @(address?.FullAddress)\n        </LyoIdColumn>\n    </Columns>\n</LyoDataGrid>"
     },
     {
+      "title": "Image, audio, and video",
+      "language": "razor",
+      "code": "@using Lyo.Web.Components.Media\n\n<LyoImage Src=\"@url\" Alt=\"Cover\" Poster=\"@fallback\"/>\n<LyoAudio Src=\"@clip\" Captions=\"@tracks\"/>\n<LyoVideo Src=\"@clip\" Poster=\"@poster\" Captions=\"@tracks\"/>"
+    },
+    {
       "title": "TypeScript — createLyoIdColumn",
       "language": "tsx",
       "code": "createLyoIdColumn({\n  id: \"recentAddr\",\n  field: \"MostRecentAddress.Id\",\n  header: \"Most recent address\",\n  related: { route: \"PersonAddress\", select: [\"FullAddress\", \"City\"] },\n  cell: (_row, address) => {\n    const rec = address as { FullAddress?: string } | null;\n    return rec?.FullAddress ?? \"—\";\n  },\n})"
@@ -93,7 +98,7 @@
       "type": "list",
       "title": "Query builder UI",
       "items": [
-        "**Query node editor (`QueryNodeEditor/`).** Visual builder for `Lyo.Query.Models` filter trees: `QueryNodeEditor`, `QueryNodeEditorPanel`, `QueryNodeEditorItem`, and `QueryFilterComponent` for the per-condition row. Comparison operators are constrained per `LyoTypeInfo.Category` via `Extensions.GetAvailableComparisonOperators`. `In` / `NotIn` are flagged through `IsMultiValueComparisonOperator`.",
+        "**Query node editor (`QueryNodeEditor/`).** Visual builder for `Lyo.Query.Models` filter trees: `QueryNodeEditor`, `QueryNodeEditorPanel`, `QueryNodeEditorItem`, and `QueryFilterComponent` for the per-condition row. Comparison operators are constrained per `LyoTypeInfo.Category` via `Extensions.GetAvailableComparisonOperators`. `In` / `NotIn` are flagged through `IsMultiValueComparisonOperator`. `Fuzzy` / `NotFuzzy` expose an optional `Threshold` (0–1, default 0.3).",
         "**Query request builder (`QueryRequestBuilder/`).** Form editor for a `ProjectionQueryReq`: `IncludeList`, `SelectList`, `SortByList`, `KeysList`, `ComputedFieldsList`, `StartAmountFields`, and `QueryReqForm`, plus the `QueryRequestBuilder` component that renders the live query score."
       ]
     },
@@ -149,9 +154,9 @@
         "**`ParamTable/LyoParameterValueField`.** Value editor: password when encrypting at run time, Options/AllowedValues select, or `LyoTypeValueInput`. Forwards `FormatterContext` to formatter-typed values.",
         "**`LyoType/LyoTypeSelect`.** Ordered catalog picker (capitalized labels, Custom… / enum FullName). List and array are a Shape control beside the type. Pass `ShowFullNameField=false` to put the CLR FullName in a parent expander.",
         "**`LyoType/LyoTypeValueInput`.** JSON-backed value editor from `LyoTypeInfo.EditorKind` (Mud scalars with Guid/Uri parse errors, enum member dropdown when the CLR type is loaded, chip collections with numeric/bool/GUID guards, free-text SmartFormat templates, `JsonEditor` for JSON/binary/unknown).",
-        "**`LyoType/LyoTypeChip`.** Capitalized type chip colored by `LyoTypeCategory` with FullName tooltip.",
+        "**`LyoType/LyoTypeChip`.** Capitalized type chip. Each `LyoTypeCategory` uses a `LyoChipHue` (Regex and Xml stay warning) with a FullName tooltip.",
         "**`Validation/LyoValidationWrapper`.** Wraps a field with validation message rendering.",
-        "**`LyoDataGrid` / `LyoDataGridProjected`.** Data grids with filtering, bulk actions, and export menu items via [`Lyo.Web.Components.Export`](../Lyo.Web.Components.Export/README.md).",
+        "**`LyoDataGrid` / `LyoDataGridProjected`.** Data grids with filtering, bulk actions, and export menu items via [`Lyo.Web.Components.Export`](../Export/Lyo.Web.Components.Export/README.md).",
         "**`JsonViewDialog` + `LyoElementRoot`.** Utility dialog and the element-id root used by every component. Optional `Path` and `Chips` render in the header (grid Dev request/response).",
         "**`Dialog/LyoDialog`.** Shared popup chrome (scrollable body, save/close). Header always has a raw-JSON debug button (`DebugData`). Click opens `JsonViewDialog`. Use `LyoDialogPresets` for size."
       ]
@@ -162,6 +167,16 @@
       "items": [
         "**`IdWorkbench`.** Interactive generator for GUID / KSUID / ULID / NanoID / Snowflake identifiers (V3 / V4 / V5 / V6 / V7 / COMB Postgres + SQL Server). Uses `Lyo.Common.Core.Identifiers`.",
         "**`IdResultPanel` + `IdEntry`.** Result display."
+      ]
+    },
+    {
+      "type": "list",
+      "title": "Media (`Media/`)",
+      "items": [
+        "**`LyoImage`.** Shows `Src`. When `Src` is blank, `Poster` is the image. Both blank renders “No image.” `Alt` defaults to empty (decorative). DOM id defaults to `lyo-image`.",
+        "**`LyoAudio`.** Native audio element with controls on and `preload=\"metadata\"`. A blank `Src` renders “No audio.” `Captions` become `<track>` elements.",
+        "**`LyoVideo`.** Native video element. `Poster` is applied only when `Src` is present. A blank `Src` renders “No video.” Controls default on.",
+        "**Captions.** `MediaCaptionTrack` (`Src`, `Label`, `Language`, `Kind`, `Default`). `MediaCaptions.Resolve` drops a blank `Src`, trims the rest, and keeps only the first default. `HtmlKind` maps to `subtitles`, `captions`, `descriptions`, `chapters`, and `metadata`."
       ]
     },
     {
@@ -188,7 +203,7 @@
     {
       "type": "paragraph",
       "title": "Internal helpers (`Extensions`)",
-      "text": "Shared visual helpers sit on internal `Extensions`: `GetStatusColor(string)`, `GetStatusIcon(string)`, `GetIcon(FileTypeFlags)`, `GetAvailableComparisonOperators(LyoTypeInfo)`, and the `IsMultiValueComparisonOperator` extension on `ComparisonOperatorEnum`. Status badges and operator menus on the grid, query editor, and form call these."
+      "text": "Shared visual helpers sit on internal `Extensions`: `GetStatusColor(string)`, `GetStatusIcon(string)`, `GetIcon(FileTypeFlags)`, `GetAvailableComparisonOperators(LyoTypeInfo)`, and the `IsMultiValueComparisonOperator` / `IsFuzzyComparisonOperator` extensions on `ComparisonOperatorEnum`. Status badges and operator menus on the grid, query editor, and form call these."
     }
   ],
   "links": [],
@@ -196,14 +211,6 @@
   "dependencies": [
     {
       "name": "Lyo.Api.Client",
-      "kind": "lyo",
-      "tags": [
-        "direct",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Common.Json",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -244,6 +251,14 @@
     },
     {
       "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -300,6 +315,15 @@
       ]
     },
     {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
       "name": "MudBlazor",
       "kind": "package",
       "version": "9.3",
@@ -334,6 +358,14 @@
     },
     {
       "name": "Lyo.Diagnostic",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -397,6 +429,22 @@
       ]
     },
     {
+      "name": "Lyo.RateLimit",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Schedule.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Streams",
       "kind": "lyo",
       "tags": [
@@ -451,12 +499,13 @@
       ]
     },
     {
-      "name": "Microsoft.Extensions.Configuration.Binder",
+      "name": "Microsoft.Bcl.TimeProvider",
       "kind": "package",
-      "version": "10.0.5",
+      "version": "8.0.1",
       "tags": [
         "transitive",
-        "microsoft"
+        "microsoft",
+        "netstandard2.0"
       ]
     },
     {
@@ -534,6 +583,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

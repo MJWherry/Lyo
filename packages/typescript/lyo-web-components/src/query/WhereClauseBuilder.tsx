@@ -3,11 +3,14 @@
 import type { ComparisonOperator, FilterPropertyType, WhereClause } from "lyo-query";
 import {
   COMPARISON_OPERATORS,
+  DEFAULT_FUZZY_THRESHOLD,
   coerceValueForComparison,
   defaultCondition,
   defaultGroup,
   fromMultiValueStrings,
+  isFuzzyComparison,
   isMultiValueComparison,
+  normalizeThreshold,
   operatorsFor,
   parseConditionValue,
   toMultiValueStrings,
@@ -22,6 +25,9 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Close from "@mui/icons-material/Close";
 import { ChipInput } from "./ChipInput.js";
+import { nodeLabel } from "./whereTree.js";
+import { FUZZY_THRESHOLD_HELP as THRESHOLD_HELP } from "./filterChipText.js";
+import { compactMenuProps } from "./selectMenu.js";
 
 export type WhereClauseBuilderProps = {
   value: WhereClause;
@@ -32,13 +38,17 @@ export type WhereClauseBuilderProps = {
   classPrefix?: string;
   depth?: number;
   propertyType?: FilterPropertyType;
+  allowDragDrop?: boolean;
+  autoSelectNewFilterNode?: boolean;
+  onNewFilterSelected?: (label: string) => void;
 };
 
 function looksLikeDateField(field: string): boolean {
   return /date|time|utc|at$/i.test(field);
 }
 
-function toDatetimeLocalValue(value: unknown): string {
+/** `datetime-local` input text for a condition value (local time). */
+export function toDatetimeLocalValue(value: unknown): string {
   if (value == null || value === "") return "";
   const raw = String(value);
   const d = new Date(raw);
@@ -50,7 +60,8 @@ function toDatetimeLocalValue(value: unknown): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function fromDatetimeLocalValue(raw: string): string | null {
+/** ISO instant from `datetime-local` input text; null when blank. */
+export function fromDatetimeLocalValue(raw: string): string | null {
   if (!raw.trim()) return null;
   const d = new Date(raw);
   if (Number.isNaN(d.getTime())) return raw;
@@ -65,6 +76,9 @@ export function WhereClauseBuilder({
   defaultField = "Id",
   depth = 0,
   propertyType,
+  allowDragDrop = true,
+  autoSelectNewFilterNode = true,
+  onNewFilterSelected,
 }: WhereClauseBuilderProps) {
   const operators = propertyType ? operatorsFor(propertyType) : [...COMPARISON_OPERATORS];
   const removeBtn = onRemove ? (
@@ -75,7 +89,10 @@ export function WhereClauseBuilder({
 
   if (value.$type === "group") {
     return (
-      <Box sx={{ borderLeft: 2, borderColor: "divider", pl: 1.5, ml: depth ? 1 : 0 }}>
+      <Box
+        draggable={allowDragDrop && depth > 0}
+        sx={{ borderLeft: 2, borderColor: "divider", pl: 1.5, ml: depth ? 1 : 0 }}
+      >
         <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" sx={{ mb: 1 }}>
           <Chip size="small" label="Group" color="primary" variant="outlined" />
           <TextField
@@ -91,15 +108,21 @@ export function WhereClauseBuilder({
           </TextField>
           <Button
             size="small"
-            onClick={() =>
-              onChange({ ...value, Children: [...value.Children, defaultCondition(defaultField)] })
-            }
+            onClick={() => {
+              const child = defaultCondition(defaultField);
+              onChange({ ...value, Children: [...value.Children, child] });
+              if (autoSelectNewFilterNode) onNewFilterSelected?.(nodeLabel(child));
+            }}
           >
             + Condition
           </Button>
           <Button
             size="small"
-            onClick={() => onChange({ ...value, Children: [...value.Children, defaultGroup(defaultField)] })}
+            onClick={() => {
+              const child = defaultGroup(defaultField);
+              onChange({ ...value, Children: [...value.Children, child] });
+              if (autoSelectNewFilterNode) onNewFilterSelected?.(nodeLabel(child));
+            }}
           >
             + Group
           </Button>
@@ -114,6 +137,9 @@ export function WhereClauseBuilder({
               fieldPresets={fieldPresets}
               defaultField={defaultField}
               propertyType={propertyType}
+              allowDragDrop={allowDragDrop}
+              autoSelectNewFilterNode={autoSelectNewFilterNode}
+              onNewFilterSelected={onNewFilterSelected}
               onChange={(next) => {
                 const Children = value.Children.slice();
                 Children[index] = next;
@@ -159,6 +185,7 @@ export function WhereClauseBuilder({
           value={value.Field}
           onChange={(e) => onChange({ ...value, Field: e.target.value })}
           select={fieldPresets.length > 0}
+          slotProps={{ select: { MenuProps: compactMenuProps() } }}
           sx={{ minWidth: 140 }}
         >
           {fieldPresets.length > 0
@@ -183,6 +210,7 @@ export function WhereClauseBuilder({
               Value: coerceValueForComparison(Comparison, value.Value),
             });
           }}
+          slotProps={{ select: { MenuProps: compactMenuProps() } }}
           sx={{ minWidth: 160 }}
         >
           {operators.map((op) => (
@@ -219,6 +247,19 @@ export function WhereClauseBuilder({
             />
           )}
         </Box>
+        {isFuzzyComparison(value.Comparison) ? (
+          <TextField
+            size="small"
+            type="number"
+            label="Threshold"
+            placeholder={String(DEFAULT_FUZZY_THRESHOLD)}
+            helperText={THRESHOLD_HELP}
+            value={value.Threshold ?? ""}
+            onChange={(e) => onChange({ ...value, Threshold: normalizeThreshold(e.target.value) })}
+            slotProps={{ htmlInput: { min: 0, max: 1, step: 0.05 } }}
+            sx={{ minWidth: 130 }}
+          />
+        ) : null}
       </Stack>
     </Box>
   );

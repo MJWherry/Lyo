@@ -1,17 +1,14 @@
 using Lyo.Api.Client;
 using Lyo.Query.Models.Common;
 using Lyo.Web.Components.Models;
-using Lyo.Web.Primitives.DataGrid;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
-using MudBlazor;
 using SortDirection = MudBlazor.SortDirection;
 
 namespace Lyo.Web.Components.DataGrid;
 
 /// <summary>
-/// Grid surface the shared toolbar talks to. Typed and projected grids implement this so one chrome component can drive bulk, search, filters, and layout
-/// without owning a <c>MudTextField</c> instance — the toolbar keeps the search field and exposes <see cref="LyoDataGridToolbar.FocusSearchAsync" />.
+/// Grid surface the shared toolbar talks to. Typed and projected grids implement this so one chrome component can drive bulk, search, filters, and layout without owning a
+/// <c>MudTextField</c> instance — the toolbar keeps the search field and exposes <see cref="LyoDataGridToolbar.FocusSearchAsync" />.
 /// </summary>
 public interface ILyoDataGridToolbarHost
 {

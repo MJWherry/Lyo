@@ -23,8 +23,8 @@ public sealed class ColumnVisibilityBinder
     }
 
     /// <summary>
-    /// Applies <see cref="LyoProjectedColumn.HiddenByDefault" /> when no grid state was loaded from the store (first visit). Call once after column registration (for example first
-    /// draw).
+    /// Applies <see cref="LyoProjectedColumn.HiddenByDefault" /> when no grid state was loaded from the store (first visit). Call once after column registration (for example
+    /// first draw).
     /// </summary>
     public void ApplyDefaultHiddenFromColumns(IEnumerable<string> fieldNames)
     {

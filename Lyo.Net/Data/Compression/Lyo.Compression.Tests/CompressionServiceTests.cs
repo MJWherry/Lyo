@@ -192,16 +192,16 @@ public class CompressionServiceTests : IDisposable
     public async Task CompressFileAsync_DecompressFileAsync_RoundTrip()
     {
         var service = NewService();
-        var tempFile = await _tempSession.CreateFileAsync("test content for async file compression", TestContext.Current.CancellationToken);
+        var tempFile = await _tempSession.CreateFileAsync("test content for async file compression", TestCt);
         var compressedFile = tempFile + service.FileExtension;
-        var compressInfo = await service.CompressFileAsync(tempFile, compressedFile, TestContext.Current.CancellationToken);
+        var compressInfo = await service.CompressFileAsync(tempFile, compressedFile, TestCt);
         Assert.True(File.Exists(compressedFile));
         Assert.True(compressInfo.CompressionRatio > 0);
         var decompressedFile = tempFile + ".decompressed";
-        await service.DecompressFileAsync(compressedFile, decompressedFile, TestContext.Current.CancellationToken);
+        await service.DecompressFileAsync(compressedFile, decompressedFile, TestCt);
         Assert.True(File.Exists(decompressedFile));
-        var originalContent = await File.ReadAllTextAsync(tempFile, TestContext.Current.CancellationToken);
-        var decompressedContent = await File.ReadAllTextAsync(decompressedFile, TestContext.Current.CancellationToken);
+        var originalContent = await File.ReadAllTextAsync(tempFile, TestCt);
+        var decompressedContent = await File.ReadAllTextAsync(decompressedFile, TestCt);
         Assert.Equal(originalContent, decompressedContent);
     }
 
@@ -226,10 +226,10 @@ public class CompressionServiceTests : IDisposable
         var original = "Test async stream compression"u8.ToArray();
         using var inputStream = new MemoryStream(original);
         using var compressedStream = new MemoryStream();
-        await service.CompressAsync(inputStream, compressedStream, ct: TestContext.Current.CancellationToken);
+        await service.CompressAsync(inputStream, compressedStream, ct: TestCt);
         compressedStream.Position = 0;
         using var decompressedStream = new MemoryStream();
-        await service.DecompressAsync(compressedStream, decompressedStream, ct: TestContext.Current.CancellationToken);
+        await service.DecompressAsync(compressedStream, decompressedStream, ct: TestCt);
         Assert.Equal(original, decompressedStream.ToArray());
     }
 
@@ -365,7 +365,7 @@ public class CompressionServiceTests : IDisposable
         var limitedService = NewService(new() { MaxInputSize = 1024 });
         compressed.Position = 0;
         using var nonSeekableOutput = new NonSeekableWriteStream(Stream.Null);
-        await Assert.ThrowsAsync<InvalidDataException>(() => limitedService.DecompressAsync(compressed, nonSeekableOutput, ct: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<InvalidDataException>(() => limitedService.DecompressAsync(compressed, nonSeekableOutput, ct: TestCt));
     }
 
     [Fact]
@@ -461,9 +461,9 @@ public class CompressionServiceTests : IDisposable
     public async Task CompressFilesAsync_Batch_RoundTrip()
     {
         var service = NewService();
-        await _tempSession.CreateFileAsync(new string('A', 1000) + " Async File 1 " + new string('B', 1000), TestContext.Current.CancellationToken);
-        await _tempSession.CreateFileAsync(new string('C', 1000) + " Async File 2 " + new string('D', 1000), TestContext.Current.CancellationToken);
-        var compressResult = await service.CompressFilesAsync(_tempSession.Files, TestContext.Current.CancellationToken);
+        await _tempSession.CreateFileAsync(new string('A', 1000) + " Async File 1 " + new string('B', 1000), TestCt);
+        await _tempSession.CreateFileAsync(new string('C', 1000) + " Async File 2 " + new string('D', 1000), TestCt);
+        var compressResult = await service.CompressFilesAsync(_tempSession.Files, TestCt);
         Assert.Equal(2, compressResult.TotalFiles);
         Assert.Equal(2, compressResult.SuccessfulFilesCount);
         Assert.Equal(0, compressResult.FailedFilesCount);
@@ -471,7 +471,7 @@ public class CompressionServiceTests : IDisposable
         // Map each compressed file back to its original
         var compressedToOriginal = compressResult.SuccessfulFiles.ToDictionary(f => f.OutputFilePath, f => _tempSession.Files.First(orig => f.InputFilePath == orig));
         var compressedFiles = compressResult.SuccessfulFiles.Select(f => f.OutputFilePath).ToList();
-        var decompressResult = await service.DecompressFilesAsync(compressedFiles, TestContext.Current.CancellationToken);
+        var decompressResult = await service.DecompressFilesAsync(compressedFiles, TestCt);
         Assert.Equal(2, decompressResult.TotalFiles);
         Assert.Equal(2, decompressResult.SuccessfulFilesCount);
 
@@ -481,8 +481,8 @@ public class CompressionServiceTests : IDisposable
             // InputFilePath on the inflated file is the compressed path
             var compressedFilePath = decompressedFile.InputFilePath;
             var originalFilePath = compressedToOriginal[compressedFilePath];
-            var original = await File.ReadAllTextAsync(originalFilePath, TestContext.Current.CancellationToken);
-            var decompressed = await File.ReadAllTextAsync(decompressedFile.OutputFilePath, TestContext.Current.CancellationToken);
+            var original = await File.ReadAllTextAsync(originalFilePath, TestCt);
+            var decompressed = await File.ReadAllTextAsync(decompressedFile.OutputFilePath, TestCt);
             Assert.Equal(original, decompressed);
         }
     }
@@ -506,9 +506,9 @@ public class CompressionServiceTests : IDisposable
         var service = NewService();
         var original = "Test string to stream compression";
         using var outputStream = new MemoryStream();
-        await service.CompressStringToStreamAsync(original, outputStream, ct: TestContext.Current.CancellationToken);
+        await service.CompressStringToStreamAsync(original, outputStream, ct: TestCt);
         outputStream.Position = 0;
-        var decompressed = await service.DecompressStringFromStreamAsync(outputStream, ct: TestContext.Current.CancellationToken);
+        var decompressed = await service.DecompressStringFromStreamAsync(outputStream, ct: TestCt);
         Assert.Equal(original, decompressed);
     }
 
@@ -545,7 +545,7 @@ public class CompressionServiceTests : IDisposable
     public async Task CompressFileAsync_Cancellation_ThrowsOperationCanceledException()
     {
         var service = NewService();
-        var tempFile = await _tempSession.CreateFileAsync(new('x', 10000), TestContext.Current.CancellationToken); // Larger file to ensure it takes time
+        var tempFile = await _tempSession.CreateFileAsync(new('x', 10000), TestCt); // Larger file to ensure it takes time
         using var cts = new CancellationTokenSource();
         await cts.CancelAsync();
         await Assert.ThrowsAsync<OperationCanceledException>(() => service.CompressFileAsync(tempFile, ct: cts.Token));
@@ -685,9 +685,9 @@ public class CompressionServiceTests : IDisposable
         var service = NewService(new() { DefaultEncoding = "InvalidEncodingName789" });
         var original = "Test async string compression";
         using var outputStream = new MemoryStream();
-        await service.CompressStringToStreamAsync(original, outputStream, ct: TestContext.Current.CancellationToken);
+        await service.CompressStringToStreamAsync(original, outputStream, ct: TestCt);
         outputStream.Position = 0;
-        var decompressed = await service.DecompressStringFromStreamAsync(outputStream, ct: TestContext.Current.CancellationToken);
+        var decompressed = await service.DecompressStringFromStreamAsync(outputStream, ct: TestCt);
         Assert.Equal(original, decompressed);
     }
 
@@ -729,8 +729,8 @@ public class CompressionServiceTests : IDisposable
     {
         var maxSize = 1024L; // 1 KB
         var service = NewService(new() { MaxInputSize = maxSize });
-        var tempFile = await _tempSession.CreateFileAsync(new('X', (int)(maxSize + 1)), TestContext.Current.CancellationToken);
-        var exception = await Assert.ThrowsAsync<ArgumentOutsideRangeException>(() => service.CompressFileAsync(tempFile, ct: TestContext.Current.CancellationToken));
+        var tempFile = await _tempSession.CreateFileAsync(new('X', (int)(maxSize + 1)), TestCt);
+        var exception = await Assert.ThrowsAsync<ArgumentOutsideRangeException>(() => service.CompressFileAsync(tempFile, ct: TestCt));
         Assert.NotNull(exception);
         Assert.Equal(maxSize + 1, exception.ActualValue);
     }
@@ -831,10 +831,10 @@ public class CompressionServiceTests : IDisposable
             });
 
         var largeContent = new string('Z', 2000); // 2 KB
-        var largeTempFile = await _tempSession.CreateFileAsync(largeContent, TestContext.Current.CancellationToken);
+        var largeTempFile = await _tempSession.CreateFileAsync(largeContent, TestCt);
         var outputFile = largeTempFile + service.FileExtension;
         try {
-            await service.CompressFileAsync(largeTempFile, outputFile, TestContext.Current.CancellationToken);
+            await service.CompressFileAsync(largeTempFile, outputFile, TestCt);
         }
         catch (ArgumentOutsideRangeException) {
             // Expected: file exceeds the size cap
@@ -869,9 +869,9 @@ public class CompressionServiceTests : IDisposable
     public async Task CompressFileAsync_AtomicOperation_CompleteFileExists()
     {
         var service = NewService();
-        var tempFile = await _tempSession.CreateFileAsync("test content for async atomic operation", TestContext.Current.CancellationToken);
+        var tempFile = await _tempSession.CreateFileAsync("test content for async atomic operation", TestCt);
         var outputFile = tempFile + service.FileExtension;
-        await service.CompressFileAsync(tempFile, outputFile, TestContext.Current.CancellationToken);
+        await service.CompressFileAsync(tempFile, outputFile, TestCt);
 
         // Confirm the output file exists and is finished (not a temp file)
         Assert.True(File.Exists(outputFile));
@@ -879,9 +879,9 @@ public class CompressionServiceTests : IDisposable
 
         // Confirm it inflates (proves a complete, valid file)
         var decompressedFile = tempFile + ".decompressed";
-        await service.DecompressFileAsync(outputFile, decompressedFile, TestContext.Current.CancellationToken);
-        var originalContent = await File.ReadAllTextAsync(tempFile, TestContext.Current.CancellationToken);
-        var decompressedContent = await File.ReadAllTextAsync(decompressedFile, TestContext.Current.CancellationToken);
+        await service.DecompressFileAsync(outputFile, decompressedFile, TestCt);
+        var originalContent = await File.ReadAllTextAsync(tempFile, TestCt);
+        var decompressedContent = await File.ReadAllTextAsync(decompressedFile, TestCt);
         Assert.Equal(originalContent, decompressedContent);
     }
 
@@ -909,19 +909,19 @@ public class CompressionServiceTests : IDisposable
     public async Task DecompressFileAsync_AtomicOperation_CompleteFileExists()
     {
         var service = NewService();
-        var tempFile = await _tempSession.CreateFileAsync("test content for async decompress atomic operation", TestContext.Current.CancellationToken);
+        var tempFile = await _tempSession.CreateFileAsync("test content for async decompress atomic operation", TestCt);
         var compressedFile = tempFile + service.FileExtension;
 
         // Compress first
-        await service.CompressFileAsync(tempFile, compressedFile, TestContext.Current.CancellationToken);
+        await service.CompressFileAsync(tempFile, compressedFile, TestCt);
         var decompressedFile = tempFile + ".decompressed";
-        await service.DecompressFileAsync(compressedFile, decompressedFile, TestContext.Current.CancellationToken);
+        await service.DecompressFileAsync(compressedFile, decompressedFile, TestCt);
 
         // Confirm the output file exists and is finished (not a temp file)
         Assert.True(File.Exists(decompressedFile));
         Assert.False(File.Exists(decompressedFile + ".tmp"), "Temporary file should not exist after successful operation");
-        var originalContent = await File.ReadAllTextAsync(tempFile, TestContext.Current.CancellationToken);
-        var decompressedContent = await File.ReadAllTextAsync(decompressedFile, TestContext.Current.CancellationToken);
+        var originalContent = await File.ReadAllTextAsync(tempFile, TestCt);
+        var decompressedContent = await File.ReadAllTextAsync(decompressedFile, TestCt);
         Assert.Equal(originalContent, decompressedContent);
     }
 
@@ -951,12 +951,12 @@ public class CompressionServiceTests : IDisposable
     public async Task CompressFilesAsync_WithCustomOutputPaths_RoundTrips()
     {
         var service = NewService();
-        var file1 = await _tempSession.CreateFileAsync("Content one for custom path", TestContext.Current.CancellationToken);
-        var file2 = await _tempSession.CreateFileAsync("Content two for custom path", TestContext.Current.CancellationToken);
+        var file1 = await _tempSession.CreateFileAsync("Content one for custom path", TestCt);
+        var file2 = await _tempSession.CreateFileAsync("Content two for custom path", TestCt);
         var out1 = _tempSession.GetFilePath("custom1" + service.FileExtension);
         var out2 = _tempSession.GetFilePath("custom2" + service.FileExtension);
         var filePaths = new Dictionary<string, string?> { [file1] = out1, [file2] = out2 };
-        var compressResult = await service.CompressFilesAsync(filePaths, TestContext.Current.CancellationToken);
+        var compressResult = await service.CompressFilesAsync(filePaths, TestCt);
         Assert.Equal(2, compressResult.TotalFiles);
         Assert.Equal(2, compressResult.SuccessfulFilesCount);
         Assert.True(File.Exists(out1));
@@ -964,10 +964,10 @@ public class CompressionServiceTests : IDisposable
         var dec1 = _tempSession.GetFilePath("dec1.txt");
         var dec2 = _tempSession.GetFilePath("dec2.txt");
         var decompPaths = new Dictionary<string, string?> { [out1] = dec1, [out2] = dec2 };
-        var decompressResult = await service.DecompressFilesAsync(decompPaths, TestContext.Current.CancellationToken);
+        var decompressResult = await service.DecompressFilesAsync(decompPaths, TestCt);
         Assert.Equal(2, decompressResult.SuccessfulFilesCount);
-        Assert.Equal("Content one for custom path", await File.ReadAllTextAsync(dec1, TestContext.Current.CancellationToken));
-        Assert.Equal("Content two for custom path", await File.ReadAllTextAsync(dec2, TestContext.Current.CancellationToken));
+        Assert.Equal("Content one for custom path", await File.ReadAllTextAsync(dec1, TestCt));
+        Assert.Equal("Content two for custom path", await File.ReadAllTextAsync(dec2, TestCt));
     }
 
     [Fact]

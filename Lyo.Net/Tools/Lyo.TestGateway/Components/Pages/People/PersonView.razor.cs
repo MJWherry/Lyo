@@ -1,50 +1,36 @@
-using System.Net.Http.Json;
-using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
-using Lyo.Common.Metadata.Records;
-using Lyo.Images;
-using Lyo.Job.Web.Components;
-using Lyo.TestGateway;
-using Lyo.TestGateway.Components;
 using Lyo.TestGateway.Models;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
 using Lyo.Web.Components.Form;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.Web.Virtualization;
-using Microsoft.JSInterop;
 using MudBlazor;
-using static Microsoft.AspNetCore.Components.Web.RenderMode;
 
 namespace Lyo.TestGateway.Components.Pages.People;
 
 public partial class PersonView
 {
+    private EditModel? _edit;
+
+    private LyoForm<EditModel>? _form;
+    private bool _hasChanges;
+    private bool _saving;
+
     [CascadingParameter]
-    IMudDialogInstance MudDialog { get; set; } = null!;
+    private IMudDialogInstance MudDialog { get; set; } = null!;
 
     /// <summary>Person record shown on the page and used as the patch target.</summary>
     [Parameter]
     [EditorRequired]
     public PersonRes Person { get; set; } = null!;
 
-    private LyoForm<EditModel>? _form;
-    private EditModel? _edit;
-    private bool _hasChanges;
-    private bool _saving;
-
-    private string TitleName
-    {
+    private string TitleName {
         get {
             if (_edit == null)
                 return string.IsNullOrWhiteSpace(Person.FullName.Trim()) ? "Person" : Person.FullName.Trim();
 
-            var name = string.Join(" ", new[] { _edit.NamePrefix, _edit.FirstName, _edit.MiddleName, _edit.LastName, _edit.NameSuffix }.Where(static s => !string.IsNullOrWhiteSpace(s)));
+            var name = string.Join(
+                " ", new[] { _edit.NamePrefix, _edit.FirstName, _edit.MiddleName, _edit.LastName, _edit.NameSuffix }.Where(static s => !string.IsNullOrWhiteSpace(s)));
+
             return string.IsNullOrWhiteSpace(name) ? "Person" : name;
         }
     }
@@ -56,25 +42,6 @@ public partial class PersonView
     private IReadOnlyList<PersonEmailAddressRes> Emails => Person.EmailAddresses ?? [];
 
     private IReadOnlyList<string> PhoneTypes => PersonViewHelpers.PhoneTypeOptions(null, Phones.Select(p => p.Type));
-
-    private sealed class EditModel
-    {
-        public Guid Id { get; set; }
-
-        public Guid? EndatoPersonId { get; set; }
-
-        public string? SourceEntityType { get; set; }
-
-        public string? NamePrefix { get; set; }
-
-        public string? FirstName { get; set; }
-
-        public string? MiddleName { get; set; }
-
-        public string? LastName { get; set; }
-
-        public string? NameSuffix { get; set; }
-    }
 
     protected override void OnParametersSet()
     {
@@ -106,7 +73,7 @@ public partial class PersonView
 
         _saving = true;
         try {
-            var result = await ApiClient.PatchAsAsync<PatchRequest, PatchResult<PersonRes>>(Lyo.TestGateway.Models.Constants.Person.Route, patch);
+            var result = await ApiClient.PatchAsAsync<PatchRequest, PatchResult<PersonRes>>(Models.Constants.Person.Route, patch);
             if (!result.IsSuccess) {
                 Snackbar.Add(result.Error?.ToString() ?? "Patch failed.", Severity.Error);
                 return;
@@ -121,5 +88,24 @@ public partial class PersonView
         finally {
             _saving = false;
         }
+    }
+
+    private sealed class EditModel
+    {
+        public Guid Id { get; set; }
+
+        public Guid? EndatoPersonId { get; set; }
+
+        public string? SourceEntityType { get; set; }
+
+        public string? NamePrefix { get; set; }
+
+        public string? FirstName { get; set; }
+
+        public string? MiddleName { get; set; }
+
+        public string? LastName { get; set; }
+
+        public string? NameSuffix { get; set; }
     }
 }

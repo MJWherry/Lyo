@@ -5,8 +5,8 @@ internal static class JobScheduleReference
 {
     /// <summary>
     /// Picks the cursor passed to <c>ScheduleCalculator.GetNextRun</c>. Uses the later of last success and last attempted slot for this schedule, then last run start/created,
-    /// then schedule start / misfire lookback. Preferring last success alone re-proposed a slot that already had a failed run and 500-looped on the unique constraint. Never a
-    /// decade-old default that traps never-run schedules.
+    /// then schedule start / misfire lookback. Preferring last success alone re-proposed a slot that already had a failed run and 500-looped on the unique constraint. Never a decade-old
+    /// default that traps never-run schedules.
     /// </summary>
     public static DateTime Resolve(
         DateTime? lastSuccessfulStartedUtc,
@@ -32,6 +32,7 @@ internal static class JobScheduleReference
     {
         if (!left.HasValue)
             return right;
+
         if (!right.HasValue)
             return left;
 

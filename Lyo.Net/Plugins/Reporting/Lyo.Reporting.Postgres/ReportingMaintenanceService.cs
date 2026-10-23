@@ -1,12 +1,13 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+
 namespace Lyo.Reporting.Postgres;
 
 /// <summary>
 /// Opt-in hosted worker (<c>AddReportingMaintenanceWorker</c>) that runs <see cref="ReportRetentionService.CleanupAsync(CancellationToken)" /> (stuck-run recovery plus
-/// retention cleanup) every <see cref="PostgresReportingOptions.MaintenanceInterval" />. Hosts that already schedule cleanup themselves (for example via Lyo.Scheduler or a
-/// Lyo.Job interval job) do not need this.
+/// retention cleanup) every <see cref="PostgresReportingOptions.MaintenanceInterval" />. Hosts that already schedule cleanup themselves (for example via Lyo.Scheduler or a Lyo.Job
+/// interval job) do not need this.
 /// </summary>
 public sealed class ReportingMaintenanceService(
     IServiceScopeFactory scopeFactory,

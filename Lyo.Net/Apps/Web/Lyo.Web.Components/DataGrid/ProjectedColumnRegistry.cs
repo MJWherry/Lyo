@@ -14,29 +14,33 @@ public sealed class ProjectedColumnRegistry
     /// <param name="cardTitle">Explicitly makes this column the card heading, overriding the automatic pick.</param>
     /// <param name="sortable">Whether the column can be sorted, which decides if it appears in the card layout's sort menu.</param>
     public void Register(
-        string field, string? title, string? quickSearchPropertyName, bool hiddenByDefault = false, RenderFragment<object?>? cell = null, bool identifier = false,
-        bool cardTitle = false, bool sortable = false)
+        string field,
+        string? title,
+        string? quickSearchPropertyName,
+        bool hiddenByDefault = false,
+        RenderFragment<object?>? cell = null,
+        bool identifier = false,
+        bool cardTitle = false,
+        bool sortable = false)
         => _columns.Add(new(field, title, quickSearchPropertyName, hiddenByDefault, cell, identifier, cardTitle, sortable));
 
     public void Clear() => _columns.Clear();
 
     /// <summary>
-    /// Columns the card layout draws, in declaration order and filtered to the visible ones. Only columns that supplied cell markup are included, so ad-hoc
-    /// <c>TemplateColumn</c>s (row action buttons and the like) stay out of the cards. Exactly zero or one entry is marked <see cref="LyoGridCardColumn.IsTitle" />.
+    /// Columns the card layout draws, in declaration order and filtered to the visible ones. Only columns that supplied cell markup are included, so ad-hoc <c>TemplateColumn</c>
+    /// s (row action buttons and the like) stay out of the cards. Exactly zero or one entry is marked <see cref="LyoGridCardColumn.IsTitle" />.
     /// </summary>
     /// <param name="visibleFieldNames">Fields currently displayed by the grid, or null to include every registered column.</param>
     public IReadOnlyList<LyoGridCardColumn> GetCardColumns(IEnumerable<string>? visibleFieldNames = null)
     {
         var visible = visibleFieldNames?.Where(f => !string.IsNullOrWhiteSpace(f)).Select(f => f.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var candidates = _columns
-            .Where(c => c.Cell is not null && !string.IsNullOrWhiteSpace(c.Field))
+        var candidates = _columns.Where(c => c.Cell is not null && !string.IsNullOrWhiteSpace(c.Field))
             .Where(c => visible is null || visible.Count == 0 || visible.Contains(c.Field.Trim()))
             .DistinctBy(c => c.Field.Trim(), StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         var titleField = PickTitleField(candidates);
-        return candidates
-            .Select(c => new LyoGridCardColumn {
+        return candidates.Select(c => new LyoGridCardColumn {
                 Field = c.Field.Trim(),
                 Title = c.Title,
                 Cell = c.Cell!,
@@ -46,9 +50,7 @@ public sealed class ProjectedColumnRegistry
             .ToList();
     }
 
-    /// <summary>
-    /// Explicit <c>CardTitle</c> wins; otherwise the first column whose label reads like a name, ignoring identifier columns. Null means the card gets no heading.
-    /// </summary>
+    /// <summary>Explicit <c>CardTitle</c> wins; otherwise the first column whose label reads like a name, ignoring identifier columns. Null means the card gets no heading.</summary>
     private static string? PickTitleField(List<ColumnEntry> candidates)
     {
         if (candidates.FirstOrDefault(c => c.CardTitle) is { } explicitTitle)
@@ -84,21 +86,22 @@ public sealed class ProjectedColumnRegistry
     }
 
     /// <summary>
-    /// Property paths OR-ed into quick search. Uses <paramref name="explicitProperties" /> when that list is non-empty; otherwise column
-    /// <c>QuickSearchPropertyName</c> values. Always unions leaf <c>Id</c> fields so identifier paste-search works without per-grid wiring.
+    /// Property paths OR-ed into quick search. Uses <paramref name="explicitProperties" /> when that list is non-empty; otherwise column <c>QuickSearchPropertyName</c> values.
+    /// Always unions leaf <c>Id</c> fields so identifier paste-search works without per-grid wiring.
     /// </summary>
     public IReadOnlyList<string> GetQuickSearchProperties(IReadOnlyList<string>? explicitProperties = null)
     {
         var named = explicitProperties is { Count: > 0 }
             ? explicitProperties
             : _columns.Where(c => !string.IsNullOrWhiteSpace(c.QuickSearchPropertyName)).Select(c => c.QuickSearchPropertyName!.Trim());
+
         var ids = _columns.Where(c => IsIdField(c.Field)).Select(c => c.Field.Trim());
         return named.Concat(ids).Where(p => !string.IsNullOrWhiteSpace(p)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
     /// <summary>
-    /// Placeholder listing the column titles (or property leaves) that quick search ORs, for example <c>Search Name, Type, Id</c>.
-    /// Falls back to <c>Search...</c> when no properties are known yet.
+    /// Placeholder listing the column titles (or property leaves) that quick search ORs, for example <c>Search Name, Type, Id</c>. Falls back to <c>Search...</c> when no
+    /// properties are known yet.
     /// </summary>
     public string GetQuickSearchPlaceholder(IReadOnlyList<string>? explicitProperties = null)
     {
@@ -107,15 +110,15 @@ public sealed class ProjectedColumnRegistry
             .Where(static l => !string.IsNullOrWhiteSpace(l))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
+
         return labels.Count == 0 ? "Search..." : "Search " + string.Join(", ", labels);
     }
 
     private string LabelForQuickSearch(string property)
     {
-        var match = _columns.FirstOrDefault(c =>
-            c.Field.Equals(property, StringComparison.OrdinalIgnoreCase)
-            || (!string.IsNullOrWhiteSpace(c.QuickSearchPropertyName)
-                && c.QuickSearchPropertyName.Trim().Equals(property, StringComparison.OrdinalIgnoreCase)));
+        var match = _columns.FirstOrDefault(c => c.Field.Equals(property, StringComparison.OrdinalIgnoreCase) || (!string.IsNullOrWhiteSpace(c.QuickSearchPropertyName) &&
+            c.QuickSearchPropertyName.Trim().Equals(property, StringComparison.OrdinalIgnoreCase)));
+
         if (!string.IsNullOrWhiteSpace(match?.Title))
             return match.Title.Trim();
 
@@ -136,6 +139,12 @@ public sealed class ProjectedColumnRegistry
     }
 
     private sealed record ColumnEntry(
-        string Field, string? Title, string? QuickSearchPropertyName, bool HiddenByDefault, RenderFragment<object?>? Cell, bool Identifier, bool CardTitle,
+        string Field,
+        string? Title,
+        string? QuickSearchPropertyName,
+        bool HiddenByDefault,
+        RenderFragment<object?>? Cell,
+        bool Identifier,
+        bool CardTitle,
         bool Sortable);
 }

@@ -31,7 +31,7 @@ public class EdgeCaseTests : IDisposable
         var fileName = Path.GetFileName(_tempSession.GetFilePath());
         var filePathA = Path.Combine(dirA, fileName);
         var filePathB = Path.Combine(dirB, fileName);
-        await _tempSession.CreateFileAsync(new byte[100], Path.Combine("dirA", fileName), TestContext.Current.CancellationToken);
+        await _tempSession.CreateFileAsync(new byte[100], Path.Combine("dirA", fileName), TestCt);
         var moveFired = false;
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory, new FileSystemWatcherOptions { IncludeSubdirectories = true });
         watcher.FileMoved += (_, e) => {
@@ -39,7 +39,7 @@ public class EdgeCaseTests : IDisposable
                 moveFired = true;
         };
 
-        await Task.Delay(200, TestContext.Current.CancellationToken); // Wait for initial snapshot
+        await Task.Delay(200, TestCt); // Wait for initial snapshot
 
         // Confirm the file exists before moving
         Assert.True(File.Exists(filePathA), $"File should exist before move: {filePathA}");
@@ -60,11 +60,11 @@ public class EdgeCaseTests : IDisposable
         var filePathB = Path.Combine(dirB, fileName);
 
         // Create the file we will move
-        await _tempSession.CreateFileAsync(new byte[100], Path.Combine("dirA", fileName), TestContext.Current.CancellationToken);
+        await _tempSession.CreateFileAsync(new byte[100], Path.Combine("dirA", fileName), TestCt);
 
         // Create 4 more files in dirA (5 total)
         for (var i = 0; i < 4; i++)
-            await _tempSession.CreateFileAsync(new byte[100], Path.Combine("dirA", $"file{i}.txt"), TestContext.Current.CancellationToken);
+            await _tempSession.CreateFileAsync(new byte[100], Path.Combine("dirA", $"file{i}.txt"), TestCt);
 
         var changeEventFired = false;
         FileSystemChangeInfo? changeInfo = null;
@@ -76,7 +76,7 @@ public class EdgeCaseTests : IDisposable
             }
         };
 
-        await Task.Delay(500, TestContext.Current.CancellationToken); // Wait for initial snapshot
+        await Task.Delay(500, TestCt); // Wait for initial snapshot
 
         // Confirm the file exists before moving
         Assert.True(File.Exists(filePathA), $"File should exist before move: {filePathA}");
@@ -101,9 +101,9 @@ public class EdgeCaseTests : IDisposable
 
         // Create several files in quick succession
         for (var i = 0; i < 10; i++)
-            await _tempSession.CreateFileAsync(new byte[100], $"file{i}.txt", TestContext.Current.CancellationToken);
+            await _tempSession.CreateFileAsync(new byte[100], $"file{i}.txt", TestCt);
 
-        await Task.Delay(1000, TestContext.Current.CancellationToken); // Wait for debounce
+        await Task.Delay(1000, TestCt); // Wait for debounce
 
         // Every file should be detected (one batch or several)
         Assert.True(eventCount >= 10);
@@ -123,7 +123,7 @@ public class EdgeCaseTests : IDisposable
         };
 
         // Wait until the initial snapshot finishes
-        await Task.Delay(500, TestContext.Current.CancellationToken);
+        await Task.Delay(500, TestCt);
 
         // Create a larger file (1MB) after the watcher is initialized
         CreateFileOfSize(largeFilePath, FileSizeUnitInfo.Megabyte.ConvertToBytes(1));
@@ -143,8 +143,8 @@ public class EdgeCaseTests : IDisposable
         var eventFired = false;
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory, options);
         watcher.FileCreated += (_, _) => eventFired = true;
-        await _tempSession.CreateFileAsync(new byte[100], Path.Combine("subdir", fileName), TestContext.Current.CancellationToken);
-        await Task.Delay(500, TestContext.Current.CancellationToken);
+        await _tempSession.CreateFileAsync(new byte[100], Path.Combine("subdir", fileName), TestCt);
+        await Task.Delay(500, TestCt);
 
         // Must not fire because the subdirectory is not watched
         Assert.False(eventFired);
@@ -153,7 +153,7 @@ public class EdgeCaseTests : IDisposable
     [Fact]
     public async Task FileCopy_DetectedAsCreate()
     {
-        var sourceFile = await _tempSession.CreateFileAsync(new byte[100], "source.txt", TestContext.Current.CancellationToken);
+        var sourceFile = await _tempSession.CreateFileAsync(new byte[100], "source.txt", TestCt);
         var destFile = Path.Combine(_tempSession.SessionDirectory, "dest.txt");
         var createFired = false;
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
@@ -162,7 +162,7 @@ public class EdgeCaseTests : IDisposable
                 createFired = true;
         };
 
-        await Task.Delay(200, TestContext.Current.CancellationToken); // Wait for initial snapshot
+        await Task.Delay(200, TestCt); // Wait for initial snapshot
         File.Copy(sourceFile, destFile);
         await PollAssert.ThatAsync(() => createFired, TimeSpan.FromSeconds(5));
         Assert.True(createFired);
@@ -176,7 +176,7 @@ public class EdgeCaseTests : IDisposable
         using var watcher = new FileSystemWatcher(emptyDir);
 
         // Must not throw
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await Task.Delay(100, TestCt);
         Assert.NotNull(watcher);
     }
 
@@ -192,7 +192,7 @@ public class EdgeCaseTests : IDisposable
         var eventFired = false;
         using var watcher = new FileSystemWatcher(longPath);
         watcher.FileCreated += (_, _) => eventFired = true;
-        await _tempSession.CreateFileAsync(new byte[100], Path.Combine("subdir0", "subdir1", "subdir2", "subdir3", "subdir4", fileName), TestContext.Current.CancellationToken);
+        await _tempSession.CreateFileAsync(new byte[100], Path.Combine("subdir0", "subdir1", "subdir2", "subdir3", "subdir4", fileName), TestCt);
         await PollAssert.ThatAsync(() => eventFired, TimeSpan.FromSeconds(5));
         Assert.True(eventFired);
     }

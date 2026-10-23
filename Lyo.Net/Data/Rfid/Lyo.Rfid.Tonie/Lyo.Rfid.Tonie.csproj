@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Toniebox SLIX-L helpers: UID content path, privacy-password XOR from the tag random, and ISO 15693 frames for a custom tag. Custom tags use the NXP factory privacy password 0F0F0F0F. A 15693 reader is required to reach a figure; NFC Type 2 readers cannot.</Description>
+        <PackageTags>rfid tonie slix iso15693</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+        <PackageReference Include="System.Memory"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\Lyo.Rfid\Lyo.Rfid.csproj"/>
+    </ItemGroup>
+
+</Project>

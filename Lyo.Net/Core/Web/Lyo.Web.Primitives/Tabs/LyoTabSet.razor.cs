@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.Extensions.DependencyInjection;
@@ -5,13 +6,12 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Lyo.Web.Primitives;
 
 /// <summary>
-/// <c>MudTabs</c> wrapper that restores the active tab from the query string, then from <see cref="ILyoUiPreferences" />, then from <see cref="DefaultTab" />.
-/// Reloading or sharing the URL therefore lands on the same panel the 35 existing <c>MudTabs</c> sites currently drop.
+/// <c>MudTabs</c> wrapper that restores the active tab from the query string, then from <see cref="ILyoUiPreferences" />, then from <see cref="DefaultTab" />. Reloading or
+/// sharing the URL therefore lands on the same panel the 35 existing <c>MudTabs</c> sites currently drop.
 /// </summary>
 /// <remarks>
-/// Put <see cref="LyoTab" /> children inside, not raw <c>MudTabPanel</c>, so each panel has a stable id. Query-string updates use <c>replace: true</c> so tab clicks
-/// do not flood the browser history. Persistence is optional: omit <see cref="PersistKey" /> and only the URL is used; omit a registered
-/// <see cref="ILyoUiPreferences" /> and the set still functions.
+/// Put <see cref="LyoTab" /> children inside, not raw <c>MudTabPanel</c>, so each panel has a stable id. Query-string updates use <c>replace: true</c> so tab clicks do not flood the
+/// browser history. Persistence is optional: omit <see cref="PersistKey" /> and only the URL is used; omit a registered <see cref="ILyoUiPreferences" /> and the set still functions.
 /// <code>
 /// &lt;LyoTabSet PersistKey="job-detail" DefaultTab="logs"&gt;
 ///     &lt;LyoTab Id="overview" Text="Overview"&gt;...&lt;/LyoTab&gt;
@@ -30,15 +30,11 @@ public partial class LyoTabSet : IDisposable
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
-    /// <summary>
-    /// Query-string key that holds the active tab id. Defaults to <c>tab</c>. Set to null or blank to keep the URL clean, such as inside a dialog.
-    /// </summary>
+    /// <summary>Query-string key that holds the active tab id. Defaults to <c>tab</c>. Set to null or blank to keep the URL clean, such as inside a dialog.</summary>
     [Parameter]
     public string? QueryParameter { get; set; } = "tab";
 
-    /// <summary>
-    /// Local-storage key suffix. The stored key is <c>pref_tab_{PersistKey}</c>. Leave unset to skip persistence and rely on the URL or the default tab.
-    /// </summary>
+    /// <summary>Local-storage key suffix. The stored key is <c>pref_tab_{PersistKey}</c>. Leave unset to skip persistence and rely on the URL or the default tab.</summary>
     [Parameter]
     public string? PersistKey { get; set; }
 
@@ -94,11 +90,13 @@ public partial class LyoTabSet : IDisposable
 
     private int ActiveIndex { get; set; }
 
-    /// <inheritdoc />
-    protected override void OnInitialized() => Navigation.LocationChanged += OnLocationChanged;
+    private string PreferenceKey => $"{PreferencePrefix}{PersistKey}";
 
     /// <inheritdoc />
     public void Dispose() => Navigation.LocationChanged -= OnLocationChanged;
+
+    /// <inheritdoc />
+    protected override void OnInitialized() => Navigation.LocationChanged += OnLocationChanged;
 
     internal void Register(LyoTab tab)
     {
@@ -117,7 +115,7 @@ public partial class LyoTabSet : IDisposable
         if (string.IsNullOrWhiteSpace(text))
             return string.Empty;
 
-        var builder = new System.Text.StringBuilder(text.Length);
+        var builder = new StringBuilder(text.Length);
         var pending = false;
         foreach (var character in text.Trim()) {
             if (char.IsLetterOrDigit(character)) {
@@ -254,8 +252,6 @@ public partial class LyoTabSet : IDisposable
             // Local storage is unavailable during prerender or when the browser refuses it.
         }
     }
-
-    private string PreferenceKey => $"{PreferencePrefix}{PersistKey}";
 
     private int IndexOf(string? id)
     {

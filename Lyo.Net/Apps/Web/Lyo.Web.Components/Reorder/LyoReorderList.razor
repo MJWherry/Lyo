@@ -1,0 +1,42 @@
+@namespace Lyo.Web.Components
+@typeparam TItem
+
+<MudStack Spacing="1">
+    @for (var index = 0; index < Items.Count; index++) {
+        var item = Items[index];
+        var itemIndex = index;
+        @if (ShowSection(itemIndex)) {
+            <MudText Typo="Typo.subtitle2">@SectionLabel!(Items[itemIndex])</MudText>
+        }
+
+        <div class="@RowClass(itemIndex)"
+             @ondragover:preventDefault
+             @ondragenter="@(() => OnDragEnter(itemIndex))"
+             @ondrop="@(() => OnDrop(itemIndex))"
+             @ondrop:preventDefault>
+            <MudPaper Outlined="true" Elevation="0" Class="pa-2">
+                <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Start">
+                    <span draggable="true" class="lyo-reorder-handle" title="Drag to reorder"
+                          @ondragstart="@(e => OnDragStart(e, itemIndex))"
+                          @ondragend="OnDragEnd">
+                        <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Size="Size.Small" Class="mud-text-secondary"/>
+                    </span>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary lyo-reorder-index">@(itemIndex + 1)</MudText>
+                    <div class="lyo-reorder-body">
+                        @ItemContent(item)
+                    </div>
+                    <MudStack Row="true" Spacing="0" AlignItems="AlignItems.Center">
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward" Size="Size.Small" title="Move up"
+                                       Disabled="@(itemIndex == 0)" OnClick="@(() => Move(itemIndex, itemIndex - 1))"/>
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward" Size="Size.Small" title="Move down"
+                                       Disabled="@(itemIndex >= Items.Count - 1)" OnClick="@(() => Move(itemIndex, itemIndex + 1))"/>
+                        @if (OnDelete.HasDelegate) {
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Delete"
+                                           OnClick="@(() => OnDelete.InvokeAsync(item))"/>
+                        }
+                    </MudStack>
+                </MudStack>
+            </MudPaper>
+        </div>
+    }
+</MudStack>

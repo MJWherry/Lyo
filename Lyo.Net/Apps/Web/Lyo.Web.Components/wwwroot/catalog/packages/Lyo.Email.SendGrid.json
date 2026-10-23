@@ -1,0 +1,174 @@
+{
+  "id": "Lyo.Email.SendGrid",
+  "name": "Lyo.Email.SendGrid",
+  "area": "Communication",
+  "tagline": "Twilio SendGrid implementation of `Lyo.Email`. `SendGridEmailService` implements `IEmailService`.",
+  "description": "Twilio SendGrid implementation of `Lyo.Email`. One `EmailRequest` becomes one `SendGridMessage` with one personalization holding every To, Cc, and Bcc. `AddSendGridEmailServiceFromConfiguration` binds the `SendGridEmailOptions` section. A 2xx response is success. Non-2xx, including 429, is a failed `EmailResult` with no retry.",
+  "features": [
+    "**SendGrid.** One API call per message through `ISendGridClient`.",
+    "**Recipients.** Display names are sent. Recipients on one personalization can see each other.",
+    "**Attachments.** Base64, with filename, content type, and disposition `attachment`. `MetadataJson` is not sent.",
+    "**Reply-to.** One address uses `reply_to`. Several use `reply_to_list` only.",
+    "**Tracking.** Click, open, and subscription tracking are turned off on each message.",
+    "**Priority.** `NonUrgent` and `Urgent` set the `Priority` header to `non-urgent` and `urgent`. `Normal` leaves that header unset, matching MailKit.",
+    "**Message id.** `X-Message-Id` may be missing on a 202. The result is still success.",
+    "**Probe.** `TestConnectionAsync` calls `GET scopes`.",
+    "**Bulk.** The base fans out one API call per message, bounded by `BulkEmailConcurrencyLimit`.",
+    "**DI.** `AddSendGridEmailService`, the options instance overload, and `AddSendGridEmailServiceFromConfiguration`. One singleton `SendGridClient` is shared.",
+    "**Secrets.** `ToString()` omits the API key."
+  ],
+  "examples": [
+    {
+      "title": "Set SendGrid options",
+      "language": "json",
+      "code": "{\n  \"SendGridEmailOptions\": {\n    \"ApiKey\": \"your_api_key\",\n    \"DefaultFromAddress\": \"noreply@example.com\",\n    \"DefaultFromName\": \"My Application\",\n    \"EnableMetrics\": false\n  }\n}"
+    },
+    {
+      "title": "Register from config",
+      "language": "csharp",
+      "code": "services.AddSendGridEmailServiceFromConfiguration(configuration);"
+    },
+    {
+      "title": "Register via a callback",
+      "language": "csharp",
+      "code": "services.AddSendGridEmailService(options =>\n{\n    options.ApiKey = \"your_api_key\";\n    options.DefaultFromAddress = \"noreply@example.com\";\n    options.DefaultFromName = \"My Application\";\n});"
+    }
+  ],
+  "sections": [
+    {
+      "title": "HTTP results",
+      "body": "`ProviderResponse` is the status code plus the response body. A missing body is allowed. The base does not require a subject or a body. SendGrid's 400 comes back as a failed result."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Communication/Email/Lyo.Email.SendGrid/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Email",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "SendGrid",
+      "kind": "package",
+      "version": "9.29.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

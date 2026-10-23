@@ -1,6 +1,5 @@
-using Lyo.Api.Models.Builders;
+using System.Diagnostics;
 using Lyo.Api.Models.Error;
-using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 using Lyo.Authentication.AspNetCore.Authorization;
 using Lyo.Authentication.Models.Format;
 using Lyo.Authentication.Models.Records;
@@ -10,6 +9,7 @@ using Lyo.Exceptions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 
 namespace Lyo.Authentication.AspNetCore.Endpoints;
 
@@ -63,8 +63,9 @@ public static class TokenManagementEndpointsMapper
     private static async Task<IResult> CreateAsync(HttpContext ctx, IApiTokenIssuer issuer, CreateTokenRequest? body)
     {
         if (body is null || body.DisplayName.IsNullOrWhitespace()) {
-            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, "A display name is required to create a token.", 
-                extensions: new() { ["error"] = "missing_display_name" }));
+            throw ApiErrorException.From(
+                LyoProblemDetails.FromCode(
+                    ApiErrorCodes.InvalidRequest, "A display name is required to create a token.", extensions: new() { ["error"] = "missing_display_name" }));
         }
 
         if (!TryResolveUser(ctx, out var userId))
@@ -72,22 +73,26 @@ public static class TokenManagementEndpointsMapper
 
         var kind = NormalizeKind(body.Kind);
         if (!IssuableKinds.Contains(kind, StringComparer.Ordinal)) {
-            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, $"Token kind '{kind}' is not supported.", 
-                extensions: new() { ["error"] = "unsupported_kind", ["supported"] = IssuableKinds }));
+            throw ApiErrorException.From(
+                LyoProblemDetails.FromCode(
+                    ApiErrorCodes.InvalidRequest, $"Token kind '{kind}' is not supported.", extensions: new() { ["error"] = "unsupported_kind", ["supported"] = IssuableKinds }));
         }
 
         var callerScopes = ExtractScopes(ctx);
         if (!KindIsAllowed(kind, callerScopes)) {
-            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.Forbidden, $"Creating '{kind}' tokens requires the '{KindScopePrefix + kind}' scope.", 
-                extensions: new() { ["error"] = "kind_not_permitted", ["kind"] = kind, ["required_scope"] = KindScopePrefix + kind }));
+            throw ApiErrorException.From(
+                LyoProblemDetails.FromCode(
+                    ApiErrorCodes.Forbidden, $"Creating '{kind}' tokens requires the '{KindScopePrefix + kind}' scope.",
+                    extensions: new() { ["error"] = "kind_not_permitted", ["kind"] = kind, ["required_scope"] = KindScopePrefix + kind }));
         }
 
         var requestedScopes = body.Scopes ?? [];
         var grantedScopes = requestedScopes.Where(callerScopes.Contains).ToArray();
         // Webhook tokens are signature-only and usually carry no scopes; every other kind needs at least one grantable scope so the token can do work.
         if (grantedScopes.Length == 0 && kind != ApiTokenKind.Webhook) {
-            throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.InvalidRequest, "None of the requested scopes can be granted by the caller.", 
-                extensions: new() { ["error"] = "no_grantable_scopes" }));
+            throw ApiErrorException.From(
+                LyoProblemDetails.FromCode(
+                    ApiErrorCodes.InvalidRequest, "None of the requested scopes can be granted by the caller.", extensions: new() { ["error"] = "no_grantable_scopes" }));
         }
 
         var issued = await issuer.IssueAsync(
@@ -154,6 +159,7 @@ public static class TokenManagementEndpointsMapper
             record.RevokedReason);
 
     /// <summary>JSON body accepted by <c>POST /tokens</c>.</summary>
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed record CreateTokenRequest(
         string? DisplayName,
         IReadOnlyList<string>? Scopes,
@@ -162,15 +168,19 @@ public static class TokenManagementEndpointsMapper
         string? Kind = null);
 
     /// <summary>JSON shape returned by <c>POST /tokens</c>.</summary>
-    public sealed record CreateTokenResponse(string Plaintext, TokenDisplay Record);
+    [DebuggerDisplay("{ToString(),nq}")]
+    public sealed record CreateTokenResponse(string Plaintext, TokenDisplay Record)
+    {
+        /// <summary>Display record. Plaintext token is omitted.</summary>
+        public override string ToString() => $"PlaintextSet={Plaintext.Length > 0} {Record}";
+    }
 
-    /// <summary>
-    /// JSON shape from <c>GET /tokens/kinds</c>: every kind the endpoint knows, whether the caller may mint it, and the scope they would
-    /// need.
-    /// </summary>
+    /// <summary>JSON shape from <c>GET /tokens/kinds</c>: every kind the endpoint knows, whether the caller may mint it, and the scope they would need.</summary>
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed record TokenKindDescriptor(string Kind, string Description, bool Allowed, string RequiredScope);
 
     /// <summary>Display-safe projection of an <see cref="ApiTokenRecord" />.</summary>
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed record TokenDisplay(
         string Id,
         string Kind,

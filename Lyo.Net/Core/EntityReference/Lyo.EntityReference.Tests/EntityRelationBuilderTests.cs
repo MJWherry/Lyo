@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 
 namespace Lyo.EntityReference.Tests;
@@ -17,8 +18,8 @@ public class EntityRelationBuilderTests
     [Fact]
     public void ForAndFrom_EntitySelectors_BuildsEndpoints()
     {
-        var subject = new TestSubjectEntity { Id = Guid.NewGuid() };
-        var actor = new TestActorEntity { Id = Guid.NewGuid() };
+        var subject = new TestSubjectEntity { Id = LyoGuid.CreateV7() };
+        var actor = new TestActorEntity { Id = LyoGuid.CreateV7() };
         var endpoints = EntityRelationBuilder.For(subject, s => [s.Id]).From(actor, a => [a.Id]);
         Assert.Equal(EntityRef.For(subject, s => s.Id), endpoints.Subject);
         Assert.Equal(EntityRef.For(actor, a => a.Id), endpoints.Actor);

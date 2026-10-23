@@ -35,7 +35,7 @@ public sealed class StackTraceDecoderPackageMetadataStoreTests
 
         store.Register(["Npgsql."], meta);
         var decoder = new StackTraceDecoder(new() { PackageMetadataStore = store });
-        var decoded = await decoder.DecodeAsync(TraceWithNpgsql, TestContext.Current.CancellationToken);
+        var decoded = await decoder.DecodeAsync(TraceWithNpgsql, TestCt);
         Assert.NotNull(decoded.AllFrames[0].PackageMetadata);
         Assert.Equal(NpgsqlRowId, decoded.AllFrames[0].PackageMetadata!.Id);
         Assert.Equal("Npgsql", decoded.AllFrames[0].PackageMetadata!.Name);
@@ -55,7 +55,7 @@ public sealed class StackTraceDecoderPackageMetadataStoreTests
         store.Register(["Npgsql."], new(NpgsqlRowId, PackageEcosystem.NuGet, "Npgsql"));
         var withStore = new StackTraceDecoder(new() { PackageMetadataStore = store });
         var plain = new StackTraceDecoder();
-        var a = await withStore.DecodeAsync(TraceWithNpgsql, TestContext.Current.CancellationToken);
+        var a = await withStore.DecodeAsync(TraceWithNpgsql, TestCt);
         var b = plain.Decode(TraceWithNpgsql);
         Assert.Equal(b.AllFrames.Select(f => f.Category).ToList(), a.AllFrames.Select(f => f.Category).ToList());
         Assert.Equal(b.UserFrameCount, a.UserFrameCount);
@@ -76,7 +76,7 @@ public sealed class StackTraceDecoderPackageMetadataStoreTests
                        at MyApp.Repos.OrderRepo.Insert(Order o) in OrderRepo.cs:line 18
                     """;
 
-        _ = await decoder.DecodeAsync(trace, TestContext.Current.CancellationToken);
+        _ = await decoder.DecodeAsync(trace, TestCt);
         Assert.Equal(1, counting.TryGetManyCallCount);
         Assert.Equal(0, counting.TryGetSingleCallCount);
     }
@@ -96,7 +96,7 @@ public sealed class StackTraceDecoderPackageMetadataStoreTests
                                                  --- End of inner exception stack trace ---
                                               """;
 
-        _ = await decoder.DecodeAsync(traceWithEmbeddedInner, TestContext.Current.CancellationToken);
+        _ = await decoder.DecodeAsync(traceWithEmbeddedInner, TestCt);
         Assert.Equal(1, counting.TryGetManyCallCount);
     }
 
@@ -108,7 +108,7 @@ public sealed class StackTraceDecoderPackageMetadataStoreTests
         innerStore.Register(["Npgsql."], new(NpgsqlRowId, PackageEcosystem.NuGet, "Npgsql"));
         var counting = new CountingPackageMetadataStore(innerStore);
         var decoder = new StackTraceDecoder(new() { PackageMetadataStore = counting });
-        _ = await decoder.DecodeAsync(outer, TestContext.Current.CancellationToken);
+        _ = await decoder.DecodeAsync(outer, TestCt);
         Assert.Equal(1, counting.TryGetManyCallCount);
     }
 

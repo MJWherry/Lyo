@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Common.Core;
 using Lyo.Common.Core.Extensions;
 
@@ -11,6 +12,7 @@ namespace Lyo.Common.Metadata.Records;
 /// <para>- <strong>ISO 639-3:</strong> three-letter language codes (for example <c>eng</c>, <c>spa</c>, <c>fra</c>)</para>
 /// <para>Base variants populate all three. Regional sub-variants carry only a BCP 47 tag.</para>
 /// </remarks>
+[DebuggerDisplay("{ToString(),nq}")]
 public record LanguageCodeInfo(string Name, string Bcp47, string? Iso6391, string? Iso6393, string Description)
 {
     // Unrecognized tag
@@ -139,7 +141,6 @@ public record LanguageCodeInfo(string Name, string Bcp47, string? Iso6391, strin
     static LanguageCodeInfo()
     {
         var fields = typeof(LanguageCodeInfo).PublicStaticFields<LanguageCodeInfo>();
-
         foreach (var langCode in fields) {
             AllCodes.Add(langCode);
             ByBcp47[langCode.Bcp47] = langCode;

@@ -5,10 +5,10 @@ namespace Lyo.Web.Components.Dialog;
 public partial class LyoDialog
 {
     [CascadingParameter]
-    IMudDialogInstance MudDialogInstance { get; set; } = null!;
+    private IMudDialogInstance MudDialogInstance { get; set; } = null!;
 
     [Inject]
-    IDialogService DialogService { get; set; } = null!;
+    private IDialogService DialogService { get; set; } = null!;
 
     /// <summary>Optional title rendered inside the dialog header. When null (and <see cref="TitleContent" /> is null), the title passed to <c>ShowAsync</c> is used.</summary>
     [Parameter]
@@ -23,8 +23,8 @@ public partial class LyoDialog
     public RenderFragment? TitleChips { get; set; }
 
     /// <summary>
-    /// Payload displayed by the header debug button as pretty-printed JSON (typically the API response or row that opened this popup).
-    /// The button is always rendered; it is disabled when this is null.
+    /// Payload displayed by the header debug button as pretty-printed JSON (typically the API response or row that opened this popup). The button is always rendered; it is
+    /// disabled when this is null.
     /// </summary>
     [Parameter]
     public object? DebugData { get; set; }

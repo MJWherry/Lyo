@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.EntityReference.Models;
 using Lyo.Postgres;
 
 namespace Lyo.Note.Postgres;
 
 /// <summary>Settings that control PostgreSQL note store.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class PostgresNoteOptions : PostgresOptionsBase
 {
     public const string SectionName = "PostgresNote";
@@ -15,4 +17,7 @@ public sealed class PostgresNoteOptions : PostgresOptionsBase
 
     /// <inheritdoc />
     protected override string SchemaName => Schema;
+
+    /// <summary>Schema, auto-migrate flag, and tenancy. The connection string is omitted.</summary>
+    public override string ToString() => $"{base.ToString()} Tenancy={Tenancy}";
 }

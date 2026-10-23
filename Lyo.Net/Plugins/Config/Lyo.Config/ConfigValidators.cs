@@ -16,9 +16,12 @@ public static class ConfigValidators
 
     private static IValidator<ConfigDefinitionRecord> BuildDefinition()
         => ValidatorBuilder<ConfigDefinitionRecord>.Create()
-            .RuleFor(x => x.SubjectEntityType).NotWhiteSpace()
-            .RuleFor(x => x.Key).NotWhiteSpace()
-            .RuleFor(x => x.ForValueType).NotWhiteSpace()
+            .RuleFor(x => x.SubjectEntityType)
+            .NotWhiteSpace()
+            .RuleFor(x => x.Key)
+            .NotWhiteSpace()
+            .RuleFor(x => x.ForValueType)
+            .NotWhiteSpace()
             .Must(x => ConfigValue.TryResolveType(x.ForValueType) != null, "config.type.unresolved", "ForValueType does not resolve to a loaded CLR type.")
             .Must(DefaultMatchesType, "config.default.type", "Default value type does not match ForValueType.")
             .Must(DefaultJsonConverts, "config.default.convert", "Default JSON cannot be converted to ForValueType.")
@@ -26,17 +29,21 @@ public static class ConfigValidators
 
     private static IValidator<ConfigBindingRecord> BuildBinding()
         => ValidatorBuilder<ConfigBindingRecord>.Create()
-            .RuleFor(x => x.Key).NotWhiteSpace()
-            .RuleFor(x => x.SubjectEntityType).NotWhiteSpace()
-            .RuleFor(x => x.SubjectEntityId).NotWhiteSpace()
+            .RuleFor(x => x.Key)
+            .NotWhiteSpace()
+            .RuleFor(x => x.SubjectEntityType)
+            .NotWhiteSpace()
+            .RuleFor(x => x.SubjectEntityId)
+            .NotWhiteSpace()
             .Must(x => x.Value != null, "config.binding.value", "Binding value is required.")
             .Must(x => x.Value == null || !string.IsNullOrWhiteSpace(x.Value.TypeName), "config.binding.type", "Binding value type is required.")
-            .Must(x => x.Value == null || ConfigValue.TryResolveType(x.Value.TypeName) != null, "config.binding.type.unresolved", "Binding value type does not resolve to a loaded CLR type.")
+            .Must(
+                x => x.Value == null || ConfigValue.TryResolveType(x.Value.TypeName) != null, "config.binding.type.unresolved",
+                "Binding value type does not resolve to a loaded CLR type.")
             .Must(BindingJsonConverts, "config.binding.convert", "Binding JSON cannot be converted to the value type.")
             .Build();
 
-    private static bool DefaultMatchesType(ConfigDefinitionRecord definition)
-        => definition.DefaultValue == null || definition.Accepts(definition.DefaultValue);
+    private static bool DefaultMatchesType(ConfigDefinitionRecord definition) => definition.DefaultValue == null || definition.Accepts(definition.DefaultValue);
 
     private static bool DefaultJsonConverts(ConfigDefinitionRecord definition)
     {
@@ -93,7 +100,7 @@ public static class ConfigValueConversion
                 raw = json.Trim().Trim('"');
             }
 
-            return TypeConversion.TryConvertTo(raw, targetType, out _);
+            return TypeConversion.TryConvertTo(raw, targetType, out var _);
         }
         catch (TypeConversionException) {
             return false;

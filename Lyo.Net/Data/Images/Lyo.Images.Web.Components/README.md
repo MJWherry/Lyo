@@ -15,14 +15,14 @@ services.AddSpriteSheetExportService(); // ISpriteSheetExportService used by Spr
 
 ## Components
 
-| Component | Purpose |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `<ImageWorkbench />` | Upload an image, inspect metadata and palette, and call `IImageService` (resize, crop, rotate, watermark, convert, thumbnail, compress). |
-| `<SpriteSheetWorkbench />` | Two tabs. Animate a flat strip, or pull a grid spritesheet from an animated source (GIF/WebP/APNG) through `ISpriteSheetExportService`. |
-| `<SpriteSheetAnimateUploader />` | Multi-sheet upload plus label/select chrome that `SpriteSheetWorkbench` uses. |
-| `<SpriteSheetImageInfo />` | Short metadata readout (dimensions, format, byte size) for a loaded raster. |
-| `<SpriteSheetPlayer />` | Plays a sliced strip in the browser with a canvas JS animator for live preview. |
-| `<SpriteSheetProcessor />` | Slicing and parameter panel for spritesheets (frame size, padding, sample budget, FPS, grid). |
+| Component                        | Purpose                                                                                                                                  |
+|----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|
+| `<ImageWorkbench />`             | Upload an image, inspect metadata and palette, and call `IImageService` (resize, crop, rotate, watermark, convert, thumbnail, compress). |
+| `<SpriteSheetWorkbench />`       | Two tabs. Animate a flat strip, or pull a grid spritesheet from an animated source (GIF/WebP/APNG) through `ISpriteSheetExportService`.  |
+| `<SpriteSheetAnimateUploader />` | Multi-sheet upload plus label/select chrome that `SpriteSheetWorkbench` uses.                                                            |
+| `<SpriteSheetImageInfo />`       | Short metadata readout (dimensions, format, byte size) for a loaded raster.                                                              |
+| `<SpriteSheetPlayer />`          | Plays a sliced strip in the browser with a canvas JS animator for live preview.                                                          |
+| `<SpriteSheetProcessor />`       | Slicing and parameter panel for spritesheets (frame size, padding, sample budget, FPS, grid).                                            |
 
 Supporting types sit in `SpriteSheetModels.cs` (`SpriteSheetEntry`, frame/grid state that drives the workbench).
 
@@ -45,16 +45,17 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Api.Client` (transitive, lyo)
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Common.Core` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Encryption` (transitive, lyo)
+- `Lyo.EntityReference.Models` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Http.Client` (transitive, lyo)
 - `Lyo.IO.FileSystem` (transitive, lyo)
 - `Lyo.IO.Temp` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
@@ -62,6 +63,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
+- `Lyo.Schedule.Models` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
 - `Lyo.Validation` (transitive, lyo)
 - `Lyo.Validation.Models` (transitive, lyo)
@@ -83,6 +85,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.RateLimiting` `10.0.5` (transitive, microsoft)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

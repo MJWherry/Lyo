@@ -17,6 +17,10 @@
         <PackageReference Include="Microsoft.Extensions.Configuration.Binder"/>
     </ItemGroup>
 
+    <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+        <PackageReference Include="Microsoft.Bcl.AsyncInterfaces"/>
+    </ItemGroup>
+
     <ItemGroup>
         <InternalsVisibleTo Include="Lyo.IO.FileSystem.Tests"/>
     </ItemGroup>

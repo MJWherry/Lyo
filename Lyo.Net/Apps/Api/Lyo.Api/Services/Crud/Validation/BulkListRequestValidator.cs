@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Api.Models;
 using Lyo.Result;
 using Lyo.Validation;
@@ -5,6 +6,7 @@ using Lyo.Validation;
 namespace Lyo.Api.Services.Crud.Validation;
 
 /// <summary>Checks bulk request list length against <see cref="BulkOperationOptions.MaxAmount" /> using <see cref="Lyo.Validation" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record BulkListRequestValidatorInput(int Count, int MaxAllowed);
 
 public static class BulkListRequestValidator

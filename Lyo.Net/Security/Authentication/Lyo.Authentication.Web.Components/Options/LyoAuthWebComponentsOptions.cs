@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Authentication.Web.Components.Models;
 
 namespace Lyo.Authentication.Web.Components.Options;
 
 /// <summary>Configuration bound from <c>LyoAuthWebComponents</c>. Drives the login page provider list and toggles the optional username/password card.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LyoAuthWebComponentsOptions
 {
     /// <summary>Configuration section name (<c>LyoAuthWebComponents</c>).</summary>
@@ -19,4 +21,7 @@ public sealed class LyoAuthWebComponentsOptions
 
     /// <summary>When <c>true</c> the password card shows a Remember-me checkbox forwarded to <c>IAuthPasswordSignIn.SignInAsync</c>. Default <c>true</c>.</summary>
     public bool ShowRememberMe { get; set; } = true;
+
+    /// <summary>How many login providers are listed, and whether the password card is on.</summary>
+    public override string ToString() => $"Providers={Providers.Count} EnablePasswordSignIn={EnablePasswordSignIn}";
 }

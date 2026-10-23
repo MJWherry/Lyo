@@ -5,6 +5,10 @@ namespace Lyo.Web.Components.DataGrid;
 
 public partial class LyoTimestamp
 {
+    private string _absolute = "";
+
+    private string? _display;
+
     /// <summary>UTC instant to display (DateTime, DateTimeOffset, ISO string, or projected JSON).</summary>
     [Parameter]
     public object? Value { get; set; }
@@ -18,16 +22,13 @@ public partial class LyoTimestamp
     public string AbsoluteFormat { get; set; } = "g";
 
     /// <summary>
-    /// ± window for <see cref="LyoTimestampKind.Relative" />, <see cref="LyoTimestampKind.TimeUntil" />, and <see cref="LyoTimestampKind.TimeSince" />.
-    /// Instants outside this duration from now draw as absolute. Default is 24 hours.
+    /// ± window for <see cref="LyoTimestampKind.Relative" />, <see cref="LyoTimestampKind.TimeUntil" />, and <see cref="LyoTimestampKind.TimeSince" />. Instants outside this
+    /// duration from now draw as absolute. Default is 24 hours.
     /// </summary>
     [Parameter]
     public TimeSpan RelativeWindow { get; set; } = TimeSpan.FromHours(24);
 
-    private string? _display;
-    private string _absolute = "";
-
-    /// <inheritdoc/>
+    /// <inheritdoc />
     protected override async Task OnParametersSetAsync()
     {
         var utc = LyoDateTimeDisplay.ToUtc(Value);

@@ -1,6 +1,7 @@
 using Lyo.Authentication.OpenIdConnect.Provider;
 using Lyo.Common.Core.Extensions;
 using Lyo.Exceptions;
+
 namespace Lyo.Authentication.Google;
 
 /// <summary>Google <see cref="IOpenIdConnectProvider" /> profile. Configuration comes from <see cref="GoogleOptions" />.</summary>

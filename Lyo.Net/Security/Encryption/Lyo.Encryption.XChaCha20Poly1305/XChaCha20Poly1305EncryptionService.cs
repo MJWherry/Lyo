@@ -9,6 +9,9 @@ namespace Lyo.Encryption.XChaCha20Poly1305;
 /// <summary>XChaCha20-Poly1305 (24-byte nonce, 32-byte key, 128-bit tag). Portable path uses HChaCha20 subkey derivation and BouncyCastle ChaCha20-Poly1305 (IETF).</summary>
 public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmetricKeyMaterialSize
 {
+    /// <inheritdoc />
+    protected override EncryptionAlgorithmInfo AlgorithmInfo => EncryptionAlgorithmInfo.XChaCha20Poly1305;
+
     public XChaCha20Poly1305EncryptionService(IKeyStore keyStore)
         : base(
             new() {
@@ -23,9 +26,6 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
 
     public int RequiredKeyBytes => 32;
 
-    /// <inheritdoc />
-    protected override EncryptionAlgorithmInfo AlgorithmInfo => EncryptionAlgorithmInfo.XChaCha20Poly1305;
-
     protected override byte GetAlgorithmId() => (byte)EncryptionAlgorithm.XChaCha20Poly1305;
 
     /// <summary>Builds a per-stream XChaCha20-Poly1305 cipher bound to <paramref name="key" /> for the chunk loop.</summary>
@@ -39,14 +39,7 @@ public class XChaCha20Poly1305EncryptionService : EncryptionServiceBase, ISymmet
     protected override void ValidateSymmetricKey(byte[] key) => ArgumentHelpers.ThrowIfNotInRange(key, RequiredKeyBytes, RequiredKeyBytes);
 
     /// <inheritdoc />
-    protected override void Seal(
-        ReadOnlySpan<byte> plaintext,
-        byte[] key,
-        Span<byte> nonce,
-        Span<byte> authenticator,
-        Span<byte> payload,
-        Span<byte> body,
-        byte[]? associatedData)
+    protected override void Seal(ReadOnlySpan<byte> plaintext, byte[] key, Span<byte> nonce, Span<byte> authenticator, Span<byte> payload, Span<byte> body, byte[]? associatedData)
         => XChaCha20Poly1305Helper.Encrypt(plaintext, key, nonce, payload, authenticator, associatedData);
 
     /// <inheritdoc />

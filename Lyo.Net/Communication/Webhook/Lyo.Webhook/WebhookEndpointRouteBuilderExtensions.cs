@@ -1,6 +1,6 @@
+using Lyo.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Lyo.Exceptions;
 
 namespace Lyo.Webhook;
 

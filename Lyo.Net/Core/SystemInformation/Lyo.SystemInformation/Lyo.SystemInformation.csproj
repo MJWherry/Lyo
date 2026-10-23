@@ -2,8 +2,8 @@
 
     <PropertyGroup>
         <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
-        <Description>Host machine inventory: hardware, software, drive space, network interfaces, monitors (including EDID parsing), and environment, with structured logging of the collected snapshot.</Description>
-        <PackageTags>systeminformation hardware diagnostics environment</PackageTags>
+        <Description>Host machine inventory: hardware, software, drive space, network interfaces, monitors (including EDID parsing), audio devices, printers, and environment, with structured logging of the collected snapshot.</Description>
+        <PackageTags>systeminformation hardware diagnostics environment audio printers</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

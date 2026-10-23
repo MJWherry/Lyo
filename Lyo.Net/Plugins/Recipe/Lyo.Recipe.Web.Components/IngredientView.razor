@@ -1,0 +1,41 @@
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="1">
+            <MudTextField @bind-Value="_req.Name" Label="Name" Required="true" Margin="Margin.Dense"/>
+            <MudTextField @bind-Value="_req.Slug" Label="Slug" Margin="Margin.Dense"/>
+            <RecipeUnitField @bind-Value="_req.DefaultUnit" Units="_units" Label="Default unit"/>
+            <MudTextField @bind-Value="_req.Notes" Label="Notes" Lines="2" Margin="Margin.Dense"/>
+            @if (_usage.Count > 0) {
+                <MudText Typo="Typo.subtitle2">Used in</MudText>
+
+                @foreach (var row in _usage) {
+                    <MudText Typo="Typo.body2">
+                        @row.RecipeTitle
+                        @if (row.StepNumbers.Count > 0) {
+                            <span> · steps @string.Join(", ", row.StepNumbers)</span>
+                        }
+                    </MudText>
+                }
+            }
+            @if (_savedId is Guid ingredientId) {
+                <MudDivider Class="my-1"/>
+
+                <RecipeAttachmentPanel ApiClient="ApiClient"
+                                       RecipeClient="RecipeClient"
+                                       AttachmentsRoute="@_attachmentsRoute"
+                                       FileStorageApiRoutePrefix="@FileStorageApiRoutePrefix"
+                                       EntityType="@RecipeEntityTypes.Ingredient"
+                                       EntityId="ingredientId"
+                                       ApiOrigin="@ApiOrigin"/>
+
+                <RecipeNotesPanel RecipeClient="RecipeClient" ParentRoute="@NotesParentRoute" EntityId="ingredientId"/>
+
+                <RecipeTagsPanel RecipeClient="RecipeClient" ParentRoute="@NotesParentRoute" EntityId="ingredientId"/>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Close</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Save" Disabled="@string.IsNullOrWhiteSpace(_req.Name)">Save</MudButton>
+    </DialogActions>
+</MudDialog>

@@ -1,5 +1,4 @@
 @namespace Lyo.Authentication.Web.Components
-@using Lyo.Authentication.Models.Response
 
 <MudDialog>
     <TitleContent>
@@ -52,6 +51,9 @@
                 </MudTabPanel>
                 <MudTabPanel Text="Audit">
                     <AuthEventGrid ApiClient="ApiClient" BaseRoute="@BaseRoute" UserId="@_user.Id"/>
+                </MudTabPanel>
+                <MudTabPanel Text="Grants">
+                    <GrantPanel Subject="@_user.Id.ToString("D")" AllowEdit="true"/>
                 </MudTabPanel>
             </MudTabs>
         </MudStack>

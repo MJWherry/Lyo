@@ -1,23 +1,37 @@
-using System.Net.Http.Json;
 using System.Security.Claims;
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Web.Components.Abstractions;
 using Lyo.Authentication.Web.Components.Models;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Lyo.Authentication.Web.Components.Pages;
 
 public partial class LoginPage
 {
+    private readonly PasswordFormModel _passwordForm = new();
+
+    private string? _busyProvider;
+
+    private ClaimsPrincipal? _currentUser;
+
+    private bool _loading = true;
+
+    private bool _passwordBusy;
+
+    private string? _passwordError;
+
+    private IAuthPasswordSignIn? _passwordHandler;
+
+    private bool _passwordVisible;
+
+    private bool _providerBusy;
+
+    private IReadOnlyList<AuthProviderDescriptor> _providers = Array.Empty<AuthProviderDescriptor>();
+
+    private bool _showPasswordCard;
+
     /// <summary>Optional return URL from a catch-all route segment (slashes are allowed).</summary>
     [Parameter]
     public string? ReturnUrl { get; set; }
@@ -25,28 +39,6 @@ public partial class LoginPage
     /// <summary>Optional replacement for the root element id consumed by the element-id scheme.</summary>
     [Parameter]
     public string? ElementId { get; set; }
-
-    private IReadOnlyList<AuthProviderDescriptor> _providers = Array.Empty<AuthProviderDescriptor>();
-
-    private ClaimsPrincipal? _currentUser;
-
-    private bool _loading = true;
-
-    private bool _passwordVisible;
-
-    private bool _passwordBusy;
-
-    private bool _providerBusy;
-
-    private string? _busyProvider;
-
-    private string? _passwordError;
-
-    private readonly PasswordFormModel _passwordForm = new();
-
-    private IAuthPasswordSignIn? _passwordHandler;
-
-    private bool _showPasswordCard;
 
     protected override async Task OnInitializedAsync()
     {

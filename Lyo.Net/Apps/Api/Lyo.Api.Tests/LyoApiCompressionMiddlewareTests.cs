@@ -1,7 +1,5 @@
 using System.IO.Compression;
-using System.Net.Http.Headers;
 using System.Text;
-using Lyo.Api;
 using Lyo.Common.Metadata.Records;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -19,7 +17,7 @@ public sealed class LyoApiCompressionMiddlewareTests
         await using var app = await StartAppAsync();
         using var response = await SendAsync(app, "/csv");
         AssertCompressed(response);
-        var body = DecompressBrotli(await response.Content.ReadAsByteArrayAsync(TestContext.Current.CancellationToken));
+        var body = DecompressBrotli(await response.Content.ReadAsByteArrayAsync(TestCt));
         Assert.Equal(Payload, Encoding.UTF8.GetString(body));
     }
 
@@ -63,14 +61,13 @@ public sealed class LyoApiCompressionMiddlewareTests
     private static async Task<HttpResponseMessage> SendAsync(WebApplication app, string path)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, path);
-        request.Headers.AcceptEncoding.Add(new StringWithQualityHeaderValue("br"));
-        var response = await app.GetTestClient().SendAsync(request, TestContext.Current.CancellationToken);
+        request.Headers.AcceptEncoding.Add(new("br"));
+        var response = await app.GetTestClient().SendAsync(request, TestCt);
         response.EnsureSuccessStatusCode();
         return response;
     }
 
-    private static void AssertCompressed(HttpResponseMessage response)
-        => Assert.Contains("br", response.Content.Headers.ContentEncoding, StringComparer.OrdinalIgnoreCase);
+    private static void AssertCompressed(HttpResponseMessage response) => Assert.Contains("br", response.Content.Headers.ContentEncoding, StringComparer.OrdinalIgnoreCase);
 
     private static byte[] DecompressBrotli(byte[] data)
     {

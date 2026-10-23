@@ -9,17 +9,16 @@ public sealed class LyoHttpClientUriTests
     public async Task PostAsAsync_RelativeUriWithBaseAddress_Sends()
     {
         var inner = new CaptureHandler();
-        using var client = new LyoHttpClient(new HttpClient(inner) { BaseAddress = new("http://localhost:5251/") });
-        await client.PostAsAsync<object, StubDto>("Person/QueryProject", new(), ct: TestContext.Current.CancellationToken);
-        Assert.Equal(new Uri("http://localhost:5251/Person/QueryProject"), inner.RequestUri);
+        using var client = new LyoHttpClient(new(inner) { BaseAddress = new("http://localhost:5251/") });
+        await client.PostAsAsync<object, StubDto>("Person/QueryProject", new(), ct: TestCt);
+        Assert.Equal(new("http://localhost:5251/Person/QueryProject"), inner.RequestUri);
     }
 
     [Fact]
     public async Task PostAsAsync_RelativeUriWithoutBaseAddress_Throws()
     {
-        using var client = new LyoHttpClient(new HttpClient());
-        var ex = await Assert.ThrowsAsync<InvalidFormatException>(
-            () => client.PostAsAsync<object, StubDto>("Person/QueryProject", new(), ct: TestContext.Current.CancellationToken));
+        using var client = new LyoHttpClient(new());
+        var ex = await Assert.ThrowsAsync<InvalidFormatException>(() => client.PostAsAsync<object, StubDto>("Person/QueryProject", new(), ct: TestCt));
         Assert.Contains("Person/QueryProject", ex.Message, StringComparison.Ordinal);
     }
 

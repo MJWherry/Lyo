@@ -1,6 +1,7 @@
 # Lyo.Cache.Fusion
 
-`ZiggyCreatures.FusionCache` is adapted to `ICacheService` by `FusionCacheService` so `Lyo.Api`, workers, and feature modules can swap in-memory [`Lyo.Cache`](../../Cache/Lyo.Cache/README.md) for Fusion plus an optional Redis backplane without rewriting call sites.
+`ZiggyCreatures.FusionCache` is adapted to `ICacheService` by `FusionCacheService` so `Lyo.Api`, workers, and feature modules can swap in-memory [
+`Lyo.Cache`](../../Cache/Lyo.Cache/README.md) for Fusion plus an optional Redis backplane without rewriting call sites.
 
 ## What Fusion gives you
 
@@ -10,22 +11,26 @@
 
 ## Parity of the payload pipeline
 
-Fusion registration reuses the same payload stack as local cache. `ICachePayloadSerializer` writes JSON bytes by default. `ICachePayloadCodec` can compress and, on .NET 10+, encrypt. See `CacheOptions.Payload` in the `Lyo.Cache` README. `GetOrSetPayloadAsync<T>` / `GetOrSetPayloadAsync` behave the same on Fusion and local cache.
+Fusion registration reuses the same payload stack as local cache. `ICachePayloadSerializer` writes JSON bytes by default. `ICachePayloadCodec` can compress and, on .NET 10+,
+encrypt. See `CacheOptions.Payload` in the `Lyo.Cache` README. `GetOrSetPayloadAsync<T>` / `GetOrSetPayloadAsync` behave the same on Fusion and local cache.
 
 ## Wire format for Redis L2
 
-When Fusion has Redis L2 (`IDistributedCache`), values are written as a LYO2 metadata envelope around codec-framed bytes — not System.Text.Json. Payload `byte[]` that is already LYO1 is stored as-is. Object `GetOrSet` values are serialized once with `ICachePayloadSerializer` then framed by `ICachePayloadCodec` (`AutoEncrypt` / `AutoCompress`). JSON L2 keys written before this format still deserialize until they expire.
+When Fusion has Redis L2 (`IDistributedCache`), values are written as a LYO2 metadata envelope around codec-framed bytes — not System.Text.Json. Payload `byte[]` that is already
+LYO1 is stored as-is. Object `GetOrSet` values are serialized once with `ICachePayloadSerializer` then framed by `ICachePayloadCodec` (`AutoEncrypt` / `AutoCompress`). JSON L2 keys
+written before this format still deserialize until they expire.
 
 ## Snapshot of L1 items
 
-`Items` is this process's Fusion L1 list (Expire/Remove/Set events), not a Redis SCAN. Framed payload writes set `CacheItem.Compressed`, `Encrypted`, and `SizeBytes`. Keys also carry `Expires` from the remembered TTL (sliding hits re-Set and refresh it). Other nodes can write L2 keys that never show up here until this process loads them.
+`Items` is this process's Fusion L1 list (Expire/Remove/Set events), not a Redis SCAN. Framed payload writes set `CacheItem.Compressed`, `Encrypted`, and `SizeBytes`. Keys also
+carry `Expires` from the remembered TTL (sliding hits re-Set and refresh it). Other nodes can write L2 keys that never show up here until this process loads them.
 
 ## Registration (`FusionCacheServiceExtensions`)
 
-| Method | Behavior |
-| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `AddFusionCache(Action<CacheOptions>?, …)` | Registers Fusion and payload services. Optional Redis backplane delegate requires `IConnectionMultiplexer` already in DI. |
-| `AddFusionCache(redisConnectionString, …)` | Registers Redis via `AddRedisConnection`, then Fusion and the backplane. |
+| Method                                               | Behavior                                                                                                                                                                                                                       |
+|------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AddFusionCache(Action<CacheOptions>?, …)`           | Registers Fusion and payload services. Optional Redis backplane delegate requires `IConnectionMultiplexer` already in DI.                                                                                                      |
+| `AddFusionCache(redisConnectionString, …)`           | Registers Redis via `AddRedisConnection`, then Fusion and the backplane.                                                                                                                                                       |
 | `AddFusionCacheFromConfiguration(IConfiguration, …)` | Binds `CacheOptions` from `"CacheOptions"`. If configuration contains `Redis:ConnectionString` (section name configurable), registers Redis and the backplane. Otherwise Fusion runs local-only with the same options binding. |
 
 `FusionCacheRegistration.AddFusionCacheInternal` is the internal entry point so this package's `AddFusionCache` does not collide with Fusion's own extension methods. Comments in

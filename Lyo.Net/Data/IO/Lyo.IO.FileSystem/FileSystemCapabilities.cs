@@ -26,5 +26,11 @@ public enum FileSystemCapabilities
     Copy = 32,
 
     /// <summary>Raise change notifications via <see cref="IFileSystem.Watch" />.</summary>
-    Watch = 64
+    Watch = 64,
+
+    /// <summary>Open an existing file for append. Object stores clear this flag and throw from <see cref="IFileSystem.OpenAppend" />.</summary>
+    Append = 128,
+
+    /// <summary>Move or rename a directory and everything under it. Backends without it throw <see cref="NotSupportedException" /> for directory moves.</summary>
+    MoveDirectory = 256
 }

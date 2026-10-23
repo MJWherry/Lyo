@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Metrics;
 using Lyo.Metrics.Models;
 using Lyo.Reporting.Models.Builders;
@@ -50,7 +51,8 @@ public static class MetricsExtensions
 
     private static string GenerateGaugeChartHtml(string chartId, string title, string[] labels, double[] values, int height)
         => GenerateChartHtml(
-            chartId, title, height, new {
+            chartId, title, height,
+            new {
                 type = "doughnut",
                 data = new {
                     labels,
@@ -58,9 +60,8 @@ public static class MetricsExtensions
                         new {
                             label = "Value",
                             data = values,
-                            backgroundColor = new[] {
-                                "rgba(37, 99, 235, 0.6)", "rgba(16, 185, 129, 0.6)", "rgba(245, 158, 11, 0.6)", "rgba(239, 68, 68, 0.6)", "rgba(139, 92, 246, 0.6)"
-                            },
+                            backgroundColor =
+                                new[] { "rgba(37, 99, 235, 0.6)", "rgba(16, 185, 129, 0.6)", "rgba(245, 158, 11, 0.6)", "rgba(239, 68, 68, 0.6)", "rgba(139, 92, 246, 0.6)" },
                             borderColor = new[] { "rgba(37, 99, 235, 1)", "rgba(16, 185, 129, 1)", "rgba(245, 158, 11, 1)", "rgba(239, 68, 68, 1)", "rgba(139, 92, 246, 1)" },
                             borderWidth = 1
                         }
@@ -85,7 +86,8 @@ public static class MetricsExtensions
             .ToArray();
 
         return GenerateChartHtml(
-            chartId, title, height, new {
+            chartId, title, height,
+            new {
                 type = "line",
                 data = new { labels, datasets },
                 options = new {
@@ -129,7 +131,7 @@ public static class MetricsExtensions
             if (counters.Count == 0)
                 return builder.AddText("No counter metrics available.");
 
-            var chartId = $"chart-counter-{Guid.NewGuid():N}";
+            var chartId = $"chart-counter-{LyoGuid.CreateV7():N}";
             var labels = counters.Select(c => c.Name).ToArray();
             var values = counters.Select(c => c.Value).ToArray();
             var html = GenerateBarChartHtml(chartId, title, labels, values, height);
@@ -151,7 +153,7 @@ public static class MetricsExtensions
             if (gauges.Count == 0)
                 return builder.AddText("No gauge metrics available.");
 
-            var chartId = $"chart-gauge-{Guid.NewGuid():N}";
+            var chartId = $"chart-gauge-{LyoGuid.CreateV7():N}";
             var labels = gauges.Select(g => g.Name).ToArray();
             var values = gauges.Select(g => g.Value).ToArray();
             var html = GenerateGaugeChartHtml(chartId, title, labels, values, height);
@@ -173,7 +175,7 @@ public static class MetricsExtensions
             if (histograms.Count == 0)
                 return builder.AddText("No histogram metrics available.");
 
-            var chartId = $"chart-histogram-{Guid.NewGuid():N}";
+            var chartId = $"chart-histogram-{LyoGuid.CreateV7():N}";
             var html = GenerateHistogramChartHtml(chartId, title, histograms, height);
             return builder.AddBlock(ContentType.Chart, html);
         }
@@ -199,7 +201,7 @@ public static class MetricsExtensions
             if (counters.Count == 0)
                 return builder.AddText($"No counter metrics found with prefix '{prefix}'.");
 
-            var chartId = $"chart-counter-{Guid.NewGuid():N}";
+            var chartId = $"chart-counter-{LyoGuid.CreateV7():N}";
             var labels = counters.Select(c => c.Name).ToArray();
             var values = counters.Select(c => c.Value).ToArray();
             var html = GenerateBarChartHtml(chartId, title, labels, values, height);
@@ -221,7 +223,7 @@ public static class MetricsExtensions
             if (counters.Count == 0)
                 return builder.AddText("No counter metrics found matching the specified tags.");
 
-            var chartId = $"chart-counter-{Guid.NewGuid():N}";
+            var chartId = $"chart-counter-{LyoGuid.CreateV7():N}";
             var labels = counters.Select(c => c.Name).ToArray();
             var values = counters.Select(c => c.Value).ToArray();
             var html = GenerateBarChartHtml(chartId, title, labels, values, height);
@@ -243,7 +245,7 @@ public static class MetricsExtensions
             if (counters.Count == 0)
                 return builder.AddText("No counter metrics found matching the filter criteria.");
 
-            var chartId = $"chart-counter-{Guid.NewGuid():N}";
+            var chartId = $"chart-counter-{LyoGuid.CreateV7():N}";
             var labels = counters.Select(c => c.Name).ToArray();
             var values = counters.Select(c => c.Value).ToArray();
             var html = GenerateBarChartHtml(chartId, title, labels, values, height);

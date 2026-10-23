@@ -8,12 +8,12 @@ namespace Lyo.FileStorage;
 
 /// <summary>
 /// Composes an <see cref="ICompressionService" /> and an <see cref="IEncryptionService" /> over streams in the right order — compress-then-encrypt on write,
-/// decrypt-then-decompress on read — as one pass over the data. The two stages run concurrently, joined by a <see cref="Pipe" /> with backpressure, so the intermediate
-/// (compressed) form is never held in full.
+/// decrypt-then-decompress on read — as one pass over the data. The two stages run concurrently, joined by a <see cref="Pipe" /> with backpressure, so the intermediate (compressed)
+/// form is never held in full.
 /// </summary>
 /// <remarks>
-/// Compressing after encryption is useless (ciphertext is incompressible), so this order is the only correct one. For the envelope-encryption (two-key) equivalent used
-/// by the storage backends, see <c>FileStorageStreamingPipelines</c>.
+/// Compressing after encryption is useless (ciphertext is incompressible), so this order is the only correct one. For the envelope-encryption (two-key) equivalent used by
+/// the storage backends, see <c>FileStorageStreamingPipelines</c>.
 /// </remarks>
 public static class CompressEncryptPipeline
 {

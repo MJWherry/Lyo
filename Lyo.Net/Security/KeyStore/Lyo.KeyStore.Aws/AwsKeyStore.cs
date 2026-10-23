@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.KeyStore.KeyDerivation;
 
@@ -12,6 +13,9 @@ namespace Lyo.KeyStore.Aws;
 /// <summary>AWS Secrets Manager <see cref="IKeyStore" />. Stores Key Encryption Keys (KEK) in Secrets Manager with key ID and versioning.</summary>
 public class AwsKeyStore : IKeyStore, IKeyInventoryStore
 {
+    /// <summary>Prefix on a secret value that stores raw key bytes. Values without it are still derived on read.</summary>
+    public const string RawKeyPrefix = "lyo-kek-raw:v1:";
+
     private readonly SemaphoreSlim _cacheLock = new(1, 1);
     private readonly ConcurrentDictionary<string, string?> _cachedCurrentVersions = new();
 
@@ -63,28 +67,23 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
             var secretName = _secretNamePrefix;
             var request = new GetSecretValueRequest { SecretId = secretName };
             if (version != null) {
-                // Specific version requested — resolve its AWS VersionId
                 var awsVersionId = await GetAwsVersionIdAsync(keyId, version, ct).ConfigureAwait(false);
-                if (!string.IsNullOrEmpty(awsVersionId) && awsVersionId.Length >= 32)
-                    request.VersionId = awsVersionId;
-                else {
-                    // Invalid version — return null
+                if (string.IsNullOrEmpty(awsVersionId))
                     return null;
-                }
+
+                request.VersionId = awsVersionId;
             }
             else {
-                // No version specified — use the current version from tracking or the AWS default
                 var currentVersion = await GetCurrentVersionAsync(keyId, ct).ConfigureAwait(false);
-                if (!string.IsNullOrEmpty(currentVersion) && currentVersion.Length >= 32) {
+                if (!string.IsNullOrEmpty(currentVersion)) {
                     var awsVersionId = await GetAwsVersionIdAsync(keyId, currentVersion, ct).ConfigureAwait(false);
-                    if (!string.IsNullOrEmpty(awsVersionId) && awsVersionId.Length >= 32)
-                        request.VersionId = awsVersionId;
-                    // If no valid version is found, use the AWSCURRENT stage (default)
+                    if (string.IsNullOrEmpty(awsVersionId))
+                        return null;
+
+                    request.VersionId = awsVersionId;
                 }
-                else {
-                    // No current version tracked — use the AWSCURRENT stage (default)
+                else
                     request.VersionStage = "AWSCURRENT";
-                }
             }
 
             var response = await _secretsManager.GetSecretValueAsync(request, ct).ConfigureAwait(false);
@@ -94,12 +93,10 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
             if (secretJson == null || !secretJson.TryGetValue(keyId, out var keyValue))
                 return null;
 
-            // Figure out which version is actually in use
-            var actualVersion = version ?? await GetCurrentVersionAsync(keyId, ct).ConfigureAwait(false);
+            if (keyValue.StartsWith(RawKeyPrefix, StringComparison.Ordinal))
+                return Convert.FromBase64String(keyValue[RawKeyPrefix.Length..]);
 
-            // Derive a proper key from the string value
-            // Covers keys stored as random strings in AWS Secrets Manager
-            // Derivation always yields a proper 32-byte key for AES-GCM
+            var actualVersion = version ?? await GetCurrentVersionAsync(keyId, ct).ConfigureAwait(false);
             return await DeriveKeyFromStringAsync(keyId, actualVersion, keyValue, ct).ConfigureAwait(false);
         }
         catch (ResourceNotFoundException) {
@@ -120,34 +117,7 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
     public async Task<string?> GetCurrentVersionAsync(string keyId, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
-        var version = await GetCurrentKeyVersionInternalAsync(keyId, ct).ConfigureAwait(false);
-
-        // If no version is tracked, try the latest secret version
-        if (!string.IsNullOrEmpty(version))
-            return version;
-
-        try {
-            var secretName = _secretNamePrefix;
-            var request = new GetSecretValueRequest { SecretId = secretName, VersionStage = "AWSCURRENT" };
-            var response = await _secretsManager.GetSecretValueAsync(request, ct).ConfigureAwait(false);
-
-            // Check whether this version has the keyId in the JSON
-            var secretJson = JsonSerializer.Deserialize<Dictionary<string, string>>(response.SecretString);
-            if (secretJson != null && secretJson.ContainsKey(keyId)) {
-                // Use the VersionId from the response as the current version
-                if (!string.IsNullOrEmpty(response.VersionId) && response.VersionId.Length >= 32) {
-                    // Remember it as the current version for this keyId
-                    await SetCurrentVersionAsync(keyId, response.VersionId, ct).ConfigureAwait(false);
-                    return response.VersionId;
-                }
-            }
-        }
-        catch (ResourceNotFoundException) {
-            // Secret does not exist
-            return null;
-        }
-
-        return version;
+        return await GetCurrentKeyVersionInternalAsync(keyId, ct).ConfigureAwait(false);
     }
 
     public void AddKey(string keyId, string version, byte[] key) => AddKeyAsync(keyId, version, key).GetAwaiter().GetResult();
@@ -159,7 +129,7 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
 
         // Use the prefix as the secret name (e.g., "dev/FileStore")
         var secretName = _secretNamePrefix;
-        var keyValue = Convert.ToBase64String(key);
+        var keyValue = RawKeyPrefix + Convert.ToBase64String(key);
         string awsVersionId;
 
         // Load the current secret value (if it exists) so other keys are kept
@@ -402,7 +372,7 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         // //var currentVersion = await GetCurrentVersionAsync(keyId, ct).ConfigureAwait(false);
-        var newVersion = Guid.CreateVersion7().ToString();
+        var newVersion = LyoGuid.CreateV7().ToString();
         await AddKeyAsync(keyId, newVersion, key, ct).ConfigureAwait(false);
         await SetCurrentVersionAsync(keyId, newVersion, ct).ConfigureAwait(false);
         return newVersion;
@@ -414,7 +384,7 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         //var currentVersion = await GetCurrentVersionAsync(keyId, ct).ConfigureAwait(false);
-        var newVersion = Guid.CreateVersion7().ToString();
+        var newVersion = LyoGuid.CreateV7().ToString();
         await AddKeyFromStringAsync(keyId, newVersion, keyString, ct).ConfigureAwait(false);
         await SetCurrentVersionAsync(keyId, newVersion, ct).ConfigureAwait(false);
         return newVersion;
@@ -464,28 +434,19 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(keyId);
         await _cacheLock.WaitAsync(ct).ConfigureAwait(false);
         try {
-            if (_cachedCurrentVersions.TryGetValue(keyId, out var cachedVersion) && !string.IsNullOrEmpty(cachedVersion)) {
-                // Validate the cached version format
-                if (cachedVersion.Length >= 32)
-                    return cachedVersion;
-
-                // Invalid cached version — clear it and continue
-                _cachedCurrentVersions[keyId] = null;
-            }
+            if (_cachedCurrentVersions.TryGetValue(keyId, out var cachedVersion) && !string.IsNullOrEmpty(cachedVersion))
+                return cachedVersion;
 
             var currentVersionSecretName = GetCurrentVersionSecretName(keyId);
             try {
                 var request = new GetSecretValueRequest { SecretId = currentVersionSecretName };
                 var response = await _secretsManager.GetSecretValueAsync(request, ct).ConfigureAwait(false);
                 var version = response.SecretString?.Trim();
-
-                // Version format must be at least 32 characters (UUID)
-                if (!string.IsNullOrEmpty(version) && version.Length >= 32) {
+                if (!string.IsNullOrEmpty(version)) {
                     _cachedCurrentVersions[keyId] = version;
                     return version;
                 }
 
-                // Invalid version format — clear cache and return null
                 _cachedCurrentVersions[keyId] = null;
                 return null;
             }
@@ -546,21 +507,17 @@ public class AwsKeyStore : IKeyStore, IKeyInventoryStore
 
     private async Task<string?> GetAwsVersionIdAsync(string keyId, string ourVersion, CancellationToken ct)
     {
-        // Version format — AWS VersionId must be at least 32 characters
-        if (string.IsNullOrEmpty(ourVersion) || ourVersion.Length < 32)
+        if (string.IsNullOrEmpty(ourVersion))
             return null;
 
-        // First check whether we have a version mapping
         var mapping = await GetVersionMappingAsync(keyId, ct).ConfigureAwait(false);
-        if (mapping != null && mapping.TryGetValue(ourVersion, out var awsVersionId)) {
-            // Validate the mapped version ID
-            if (!string.IsNullOrEmpty(awsVersionId) && awsVersionId.Length >= 32)
-                return awsVersionId;
-        }
+        if (mapping != null && mapping.TryGetValue(ourVersion, out var awsVersionId) && !string.IsNullOrEmpty(awsVersionId))
+            return awsVersionId;
 
-        // If no mapping is found, try using our version as the AWS VersionId directly
-        // Covers versions created with the UUID as the VersionId
-        // (e.g. if someone created versions by hand or used a different system)
+        // No map entry. A long token may itself be an AWS VersionId from an older store.
+        if (ourVersion.Length < 32)
+            return null;
+
         try {
             var secretName = _secretNamePrefix;
             var testRequest = new GetSecretValueRequest { SecretId = secretName, VersionId = ourVersion };

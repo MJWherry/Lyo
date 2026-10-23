@@ -4,9 +4,9 @@ using Lyo.Api.Client;
 using Lyo.Api.Middleware;
 using Lyo.Api.Models;
 using Lyo.Api.Models.Error;
-using Lyo.Common.Json;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
+using Lyo.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -16,8 +16,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.Api.Tests.Middleware;
 
-/// <summary>End-to-end checks for <see cref="LoggingMiddleware" /> exception-to-status mapping and the empty-body problem details fallback, using an in-memory test
-/// server.</summary>
+/// <summary>End-to-end checks for <see cref="LoggingMiddleware" /> exception-to-status mapping and the empty-body problem details fallback, using an in-memory test server.</summary>
 public class LoggingMiddlewareTests
 {
     private static readonly JsonSerializerOptions SerializerOptions = LyoJsonSerializerOptions.Create();
@@ -38,27 +37,31 @@ public class LoggingMiddlewareTests
                         endpoints.MapGet("/throw/rate-limit", IResult () => throw new RateLimitExceededException(TimeSpan.FromSeconds(30)));
                         endpoints.MapGet("/throw/unhandled", IResult () => throw new InvalidOperationException("boom"));
                         endpoints.MapGet(
-                            "/throw/api-error", IResult () => throw ApiErrorException.From(
+                            "/throw/api-error",
+                            IResult () => throw ApiErrorException.From(
                                 LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidSelectField, "Select field 'Foo.Bar' is not valid for type 'Person'.")));
+
                         endpoints.MapGet(
-                            "/throw/api-error-forbidden", IResult () => throw ApiErrorException.From(
-                                LyoProblemDetails.FromCode(Constants.ApiErrorCodes.Forbidden, "Caller cannot access this resource.")));
+                            "/throw/api-error-forbidden",
+                            IResult () => throw ApiErrorException.From(LyoProblemDetails.FromCode(Constants.ApiErrorCodes.Forbidden, "Caller cannot access this resource.")));
+
                         endpoints.MapGet("/bare/not-found", () => Results.NotFound());
                         endpoints.MapGet("/bare/unauthorized", () => Results.Unauthorized());
                         endpoints.MapGet(
-                            "/challenge/unauthorized", async (HttpContext ctx) => {
+                            "/challenge/unauthorized", async ctx => {
                                 ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
                                 ctx.Response.Headers.WWWAuthenticate = "Bearer";
                                 await ctx.Response.StartAsync();
                             });
+
                         endpoints.MapGet("/ok", () => Results.Ok(new { value = 1 }));
                     });
                 }))
-            .StartAsync(TestContext.Current.CancellationToken);
+            .StartAsync(TestCt);
 
     private static async Task<LyoProblemDetails> ReadProblemAsync(HttpResponseMessage response)
     {
-        var json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var json = await response.Content.ReadAsStringAsync(TestCt);
         var problem = JsonSerializer.Deserialize<LyoProblemDetails>(json, SerializerOptions);
         Assert.NotNull(problem);
         return problem;
@@ -68,7 +71,7 @@ public class LoggingMiddlewareTests
     public async Task ThrownNotFoundException_Returns404ProblemDetails()
     {
         using var host = await StartHostAsync();
-        var response = await host.GetTestClient().GetAsync("/throw/not-found", TestContext.Current.CancellationToken);
+        var response = await host.GetTestClient().GetAsync("/throw/not-found", TestCt);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
         var problem = await ReadProblemAsync(response);
@@ -82,7 +85,7 @@ public class LoggingMiddlewareTests
     public async Task ThrownHttpException_PreservesCustomErrorCode()
     {
         using var host = await StartHostAsync();
-        var response = await host.GetTestClient().GetAsync("/throw/error-code", TestContext.Current.CancellationToken);
+        var response = await host.GetTestClient().GetAsync("/throw/error-code", TestCt);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         var problem = await ReadProblemAsync(response);
         Assert.Equal("widget.duplicate_name", problem.Errors[0].Code);
@@ -92,7 +95,7 @@ public class LoggingMiddlewareTests
     public async Task ThrownValidationException_Returns400WithFieldErrors()
     {
         using var host = await StartHostAsync();
-        var response = await host.GetTestClient().GetAsync("/throw/validation", TestContext.Current.CancellationToken);
+        var response = await host.GetTestClient().GetAsync("/throw/validation", TestCt);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         var problem = await ReadProblemAsync(response);
         Assert.Equal(Constants.ApiErrorCodes.ValidationFailed, problem.Errors[0].Code);
@@ -103,7 +106,7 @@ public class LoggingMiddlewareTests
     public async Task ThrownRateLimitException_Returns429WithRetryAfterHeader()
     {
         using var host = await StartHostAsync();
-        var response = await host.GetTestClient().GetAsync("/throw/rate-limit", TestContext.Current.CancellationToken);
+        var response = await host.GetTestClient().GetAsync("/throw/rate-limit", TestCt);
         Assert.Equal((HttpStatusCode)429, response.StatusCode);
         Assert.Equal(TimeSpan.FromSeconds(30), response.Headers.RetryAfter?.Delta);
         var problem = await ReadProblemAsync(response);
@@ -114,7 +117,7 @@ public class LoggingMiddlewareTests
     public async Task UnhandledException_StillReturns500ProblemDetails()
     {
         using var host = await StartHostAsync();
-        var response = await host.GetTestClient().GetAsync("/throw/unhandled", TestContext.Current.CancellationToken);
+        var response = await host.GetTestClient().GetAsync("/throw/unhandled", TestCt);
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
         var problem = await ReadProblemAsync(response);
         Assert.Equal(500, problem.Status);
@@ -125,7 +128,7 @@ public class LoggingMiddlewareTests
     public async Task ThrownApiErrorException_ReturnsProblemStatusAndCodes()
     {
         using var host = await StartHostAsync();
-        var response = await host.GetTestClient().GetAsync("/throw/api-error", TestContext.Current.CancellationToken);
+        var response = await host.GetTestClient().GetAsync("/throw/api-error", TestCt);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
         var problem = await ReadProblemAsync(response);
@@ -139,7 +142,7 @@ public class LoggingMiddlewareTests
     public async Task ThrownApiErrorException_Forbidden_UsesProblemStatus()
     {
         using var host = await StartHostAsync();
-        var response = await host.GetTestClient().GetAsync("/throw/api-error-forbidden", TestContext.Current.CancellationToken);
+        var response = await host.GetTestClient().GetAsync("/throw/api-error-forbidden", TestCt);
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         var problem = await ReadProblemAsync(response);
         Assert.Equal(403, problem.Status);
@@ -150,7 +153,7 @@ public class LoggingMiddlewareTests
     public async Task BareNotFoundResult_GetsFallbackProblemDetailsBody()
     {
         using var host = await StartHostAsync();
-        var response = await host.GetTestClient().GetAsync("/bare/not-found", TestContext.Current.CancellationToken);
+        var response = await host.GetTestClient().GetAsync("/bare/not-found", TestCt);
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
         var problem = await ReadProblemAsync(response);
@@ -162,7 +165,7 @@ public class LoggingMiddlewareTests
     public async Task BareUnauthorizedResult_GetsFallbackProblemDetailsBody()
     {
         using var host = await StartHostAsync();
-        var response = await host.GetTestClient().GetAsync("/bare/unauthorized", TestContext.Current.CancellationToken);
+        var response = await host.GetTestClient().GetAsync("/bare/unauthorized", TestCt);
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
         var problem = await ReadProblemAsync(response);
@@ -174,7 +177,7 @@ public class LoggingMiddlewareTests
     public async Task StartedUnauthorizedChallenge_StillReturns401()
     {
         using var host = await StartHostAsync();
-        var response = await host.GetTestClient().GetAsync("/challenge/unauthorized", TestContext.Current.CancellationToken);
+        var response = await host.GetTestClient().GetAsync("/challenge/unauthorized", TestCt);
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         // Body may be empty when the challenge already started the response; logging still occurs in middleware.
     }
@@ -183,9 +186,9 @@ public class LoggingMiddlewareTests
     public async Task SuccessfulResponse_IsNotTouched()
     {
         using var host = await StartHostAsync();
-        var response = await host.GetTestClient().GetAsync("/ok", TestContext.Current.CancellationToken);
+        var response = await host.GetTestClient().GetAsync("/ok", TestCt);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("\"value\"", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Contains("\"value\"", await response.Content.ReadAsStringAsync(TestCt));
     }
 
     [Fact]
@@ -193,7 +196,7 @@ public class LoggingMiddlewareTests
     {
         using var host = await StartHostAsync();
         var apiClient = new ApiClient(httpClient: host.GetTestClient());
-        var ex = await Assert.ThrowsAsync<ApiException>(() => apiClient.GetAsAsync<object>("/throw/not-found", ct: TestContext.Current.CancellationToken));
+        var ex = await Assert.ThrowsAsync<ApiException>(() => apiClient.GetAsAsync<object>("/throw/not-found", ct: TestCt));
         Assert.Equal(404, ex.StatusCode);
         Assert.Equal(Constants.ApiErrorCodes.NotFound, ex.ErrorCode);
         Assert.False(ex.IsTransient);

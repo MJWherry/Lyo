@@ -1,0 +1,16 @@
+{
+  "id": "Lyo.Validation.Seed",
+  "name": "Lyo.Validation.Seed",
+  "area": "Core",
+  "tagline": "EF seed of validation schemas.",
+  "description": "EF seed of Count validation schemas with a small JSON body. Schema validation.",
+  "features": [],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/Validation/Lyo.Validation.Seed/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+
 namespace Lyo.Sqlite;
 
 /// <summary>Applies EF Core migrations on host start when <see cref="ISqliteMigrationConfig.EnableAutoMigrations" /> is on.</summary>

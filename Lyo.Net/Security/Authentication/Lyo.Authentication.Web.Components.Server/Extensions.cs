@@ -19,8 +19,8 @@ public static class Extensions
         /// <c>AddLyoAuthWebComponents(...)</c> on the shared library.
         /// </summary>
         /// <remarks>
-        /// Typed clients use <c>AddLyoAuthHandler()</c>, which by default chains <c>LyoCorrelationDelegatingHandler</c> as the outermost handler so every outbound call carries
-        /// the same correlation id as the inbound Blazor circuit. Pass <c>AddLyoAuthHandler(propagateCorrelationId: false)</c> at a registration site that needs to opt out.
+        /// Typed clients use <c>AddLyoAuthHandler()</c>, which by default chains <c>LyoCorrelationDelegatingHandler</c> as the outermost handler so every outbound call carries the
+        /// same correlation id as the inbound Blazor circuit. Pass <c>AddLyoAuthHandler(propagateCorrelationId: false)</c> at a registration site that needs to opt out.
         /// </remarks>
         public IServiceCollection AddLyoAuthWebComponentsServer()
         {

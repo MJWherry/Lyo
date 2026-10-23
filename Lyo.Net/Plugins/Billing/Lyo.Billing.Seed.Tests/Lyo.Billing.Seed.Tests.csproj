@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\..\Core\Testing\Lyo.Testing\Lyo.Testing.csproj"/>
+        <ProjectReference Include="..\..\..\Data\Seed\Lyo.Seed\Lyo.Seed.csproj"/>
+        <ProjectReference Include="..\Lyo.Billing\Lyo.Billing.csproj"/>
+        <ProjectReference Include="..\Lyo.Billing.Postgres\Lyo.Billing.Postgres.csproj"/>
+        <ProjectReference Include="..\Lyo.Billing.Seed\Lyo.Billing.Seed.csproj"/>
+    </ItemGroup>
+
+</Project>

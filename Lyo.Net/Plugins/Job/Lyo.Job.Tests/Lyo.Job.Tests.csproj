@@ -16,8 +16,10 @@
         <ProjectReference Include="..\..\..\Apps\Http\Lyo.Http.Client\Lyo.Http.Client.csproj"/>
         <ProjectReference Include="..\..\..\Apps\Job\Lyo.Job.Client\Lyo.Job.Client.csproj"/>
         <ProjectReference Include="..\Lyo.Job.Models\Lyo.Job.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Core\Schedule\Lyo.Schedule.Models\Lyo.Schedule.Models.csproj"/>
         <ProjectReference Include="..\Lyo.Job.Postgres\Lyo.Job.Postgres.csproj"/>
         <ProjectReference Include="..\..\..\Apps\Job\Lyo.Job.Worker\Lyo.Job.Worker.csproj"/>
+        <ProjectReference Include="..\..\..\Apps\Job\Lyo.Job.Workers.Notification\Lyo.Job.Workers.Notification.csproj"/>
         <ProjectReference Include="..\..\..\Data\Formatter\Lyo.Formatter\Lyo.Formatter.csproj"/>
         <ProjectReference Include="..\..\..\Core\Parameters\Lyo.Parameters\Lyo.Parameters.csproj"/>
     </ItemGroup>

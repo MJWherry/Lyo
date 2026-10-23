@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Components;
-
 namespace Lyo.TestGateway.Components.TestGateway;
 
 public partial class DriftWorkbench

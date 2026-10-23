@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Pathing;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore;
 using Lyo.IO.FileSystem;
@@ -8,9 +9,8 @@ namespace Lyo.FileStorage;
 public static class FileStorageReconcile
 {
     /// <summary>
-    /// Walks metadata under <paramref name="pathPrefix" /> and files under the matching physical directory.
-    /// Health probes, local metadata sidecars, and temp leftovers are skipped.
-    /// Tombstoned metadata is omitted from the store listing, so a leftover object is <see cref="FileStoragePresence.Physical" />.
+    /// Walks metadata under <paramref name="pathPrefix" /> and files under the matching physical directory. Health probes, local metadata sidecars, and temp leftovers are
+    /// skipped. Tombstoned metadata is omitted from the store listing, so a leftover object is <see cref="FileStoragePresence.Physical" />.
     /// </summary>
     public static async Task<IReadOnlyList<FileStorageReconcileEntry>> ReconcileAsync(
         IFileMetadataStore metadata,
@@ -27,7 +27,11 @@ public static class FileStorageReconcile
         var start = PhysicalDirectory(physical, pathPrefix);
         var physicalFiles = await FlattenFilesAsync(physical, start, maxKeys, ct).ConfigureAwait(false);
         var physicalById = new Dictionary<Guid, string>();
+
+        // Membership probe for the derived key below. Scanning the list instead made the join quadratic: 100M comparisons at the 10k default cap.
+        var physicalKeys = new HashSet<string>(StringComparer.Ordinal);
         foreach (var key in physicalFiles) {
+            physicalKeys.Add(key);
             if (IsSkippedPhysicalKey(key))
                 continue;
 
@@ -39,14 +43,14 @@ public static class FileStorageReconcile
         var matched = new HashSet<Guid>();
         foreach (var row in rows) {
             var expected = CloudObjectKeyBuilder.FromMetadata(row.Id, row.SourceFileName, row.PathPrefix, storagePrefix);
-            var hit = physicalById.TryGetValue(row.Id, out var listed) || physicalFiles.Contains(expected);
+            var hit = physicalById.TryGetValue(row.Id, out var listed) || physicalKeys.Contains(expected);
             if (hit)
                 matched.Add(row.Id);
 
             result.Add(
                 new(
-                    hit ? FileStoragePresence.Both : FileStoragePresence.Store, row.Id, FileStorageLogicalPath.For(row.PathPrefix, row.Id),
-                    hit ? listed ?? expected : expected, row.OriginalFileName));
+                    hit ? FileStoragePresence.Both : FileStoragePresence.Store, row.Id, FileStorageLogicalPath.For(row.PathPrefix, row.Id), hit ? listed ?? expected : expected,
+                    row.OriginalFileName));
         }
 
         foreach (var pair in physicalById) {
@@ -57,7 +61,7 @@ public static class FileStorageReconcile
         }
 
         foreach (var key in physicalFiles) {
-            if (IsSkippedPhysicalKey(key) || TryParseFileIdFromKey(key, out _))
+            if (IsSkippedPhysicalKey(key) || TryParseFileIdFromKey(key, out var _))
                 continue;
 
             result.Add(new(FileStoragePresence.Physical, null, null, key, null));
@@ -81,25 +85,22 @@ public static class FileStorageReconcile
         return Guid.TryParseExact(last.Substring(0, 32), "N", out fileId);
     }
 
-    /// <summary>True for health probes, <c>.meta</c> sidecars, and temp leftovers that are not catalog files.</summary>
+    /// <summary>True for health probes, <c>.meta</c> and <c>.tags.json</c> sidecars, and temp leftovers that are not catalog files.</summary>
     public static bool IsSkippedPhysicalKey(string key)
     {
         if (string.IsNullOrWhiteSpace(key))
             return true;
 
         var normalized = key.Replace('\\', '/');
-        if (normalized.IndexOf(".lyo-health", StringComparison.Ordinal) >= 0
-            || normalized.IndexOf(".lyo-fs-health", StringComparison.Ordinal) >= 0)
+        if (normalized.IndexOf(".lyo-health", StringComparison.Ordinal) >= 0 || normalized.IndexOf(".lyo-fs-health", StringComparison.Ordinal) >= 0)
             return true;
 
-        if (normalized.EndsWith(".meta", StringComparison.OrdinalIgnoreCase))
+        if (normalized.EndsWith(".meta", StringComparison.OrdinalIgnoreCase) || normalized.EndsWith(".tags.json", StringComparison.OrdinalIgnoreCase))
             return true;
 
         var last = PathHelpersLastSegment(normalized);
-        return last.StartsWith(".partial-", StringComparison.Ordinal)
-               || last.IndexOf(".partial-", StringComparison.Ordinal) >= 0
-               || last.StartsWith(".dek-rotate-", StringComparison.Ordinal)
-               || last.IndexOf(".dek-rotate-", StringComparison.Ordinal) >= 0;
+        return last.StartsWith(".partial-", StringComparison.Ordinal) || last.IndexOf(".partial-", StringComparison.Ordinal) >= 0 ||
+            last.StartsWith(".dek-rotate-", StringComparison.Ordinal) || last.IndexOf(".dek-rotate-", StringComparison.Ordinal) >= 0;
     }
 
     /// <summary>Physical directory for a catalog PathPrefix, using the backend's <see cref="IFileSystem.PathStyle" />.</summary>
@@ -110,10 +111,11 @@ public static class FileStorageReconcile
         if (prefix == null)
             return physical.RootPath;
 
-        if (physical.PathStyle == Common.Core.Pathing.PathStyle.Posix) {
+        if (physical.PathStyle == PathStyle.Posix) {
             var root = physical.RootPath.Replace('\\', '/').TrimEnd('/');
             if (root.Length == 0)
                 root = "/";
+
             return root == "/" ? "/" + prefix : root + "/" + prefix;
         }
 
@@ -157,7 +159,7 @@ public static class FileStorageReconcile
             if (entry.IsDirectory)
                 await FlattenIntoAsync(fs, entry.Path, keys, maxKeys, ct).ConfigureAwait(false);
             else
-                keys.Add(RelativeKey(physicalRoot: fs.RootPath, entry.Path));
+                keys.Add(RelativeKey(fs.RootPath, entry.Path));
         }
     }
 

@@ -1,4 +1,3 @@
-using Lyo.Authentication.Options;
 using Lyo.Authentication.Services.Jwt;
 using Lyo.KeyStore;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -11,8 +10,8 @@ public class Ed25519KeyBootstrapperTests
     public async Task StartAsync_WhenNoKey_GeneratesV1()
     {
         var keys = new LocalKeyStore();
-        var bs = new Ed25519KeyBootstrapper(keys, new LyoJwtOptions(), NullLogger<Ed25519KeyBootstrapper>.Instance);
-        await bs.StartAsync(TestContext.Current.CancellationToken);
+        var bs = new Ed25519KeyBootstrapper(keys, new(), NullLogger<Ed25519KeyBootstrapper>.Instance);
+        await bs.StartAsync(TestCt);
         Assert.True(keys.HasKey("lyo-sig", "v1"));
         Assert.Equal("v1", keys.GetCurrentVersion("lyo-sig"));
         var current = keys.GetCurrentKey("lyo-sig");
@@ -24,8 +23,8 @@ public class Ed25519KeyBootstrapperTests
     public async Task StartAsync_WhenAutoGenerateFalse_DoesNothing()
     {
         var keys = new LocalKeyStore();
-        var bs = new Ed25519KeyBootstrapper(keys, new LyoJwtOptions { AutoGenerateSigningKey = false }, NullLogger<Ed25519KeyBootstrapper>.Instance);
-        await bs.StartAsync(TestContext.Current.CancellationToken);
+        var bs = new Ed25519KeyBootstrapper(keys, new() { AutoGenerateSigningKey = false }, NullLogger<Ed25519KeyBootstrapper>.Instance);
+        await bs.StartAsync(TestCt);
         Assert.False(keys.HasKey("lyo-sig"));
     }
 }

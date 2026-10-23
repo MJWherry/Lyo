@@ -1,0 +1,48 @@
+@namespace Lyo.Billing.Web.Components.Views
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<LyoDialog Busy="@_busy" OnSave="IssueAsync" SaveDisabled="@(_invoice is null || _busy || _invoice.Status != InvoiceStatus.Draft)" SaveText="Issue" CloseText="Cancel"
+           DebugData="@_invoice">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Compose invoice</MudText>
+    </TitleContent>
+    <ExtraActions>
+        @if (_invoice != null) {
+            <MudButton Variant="Variant.Outlined" Color="Color.Error" Disabled="@_busy" OnClick="DeleteDraftAsync">Delete draft</MudButton>
+        }
+    </ExtraActions>
+    <ChildContent>
+        <MudGrid Spacing="2">
+            <MudItem xs="12" md="8">
+                <LyoSection Title="Header">
+                    <MudStack Spacing="2">
+                        <ClientPicker ApiClient="ApiClient" Value="_clientId" ValueChanged="OnClientChanged"/>
+                        <MudNumericField @bind-Value="_taxRate" Label="Tax rate" Min="0m" Max="1m" Step="0.01m"/>
+                        <MudButton Variant="Variant.Outlined" Disabled="@(_clientId is null || _busy || _invoice != null)" OnClick="StartDraftAsync">Create draft</MudButton>
+                    </MudStack>
+                </LyoSection>
+                @if (_invoice != null) {
+                    <LyoSection Title="Lines" Class="mt-3">
+                        <InvoiceLineEditor Lines="_invoice.Lines" AllowEdit="@(_invoice.Status == InvoiceStatus.Draft)" Add="AddLineAsync" Remove="RemoveLineAsync"/>
+                        @if (_unbilled.Count > 0) {
+                            <MudText Typo="Typo.subtitle2" Class="mt-3">Unbilled charges</MudText>
+
+                            @foreach (var charge in _unbilled) {
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudText>@charge.Description — @BillingMoney.Format(charge.Quantity * charge.UnitAmount, charge.Currency)</MudText>
+                                    <MudButton Size="Size.Small" OnClick="@(() => AddChargeAsync(charge))">Add</MudButton>
+                                </MudStack>
+                            }
+                        }
+                    </LyoSection>
+                }
+            </MudItem>
+            <MudItem xs="12" md="4">
+                @if (_invoice != null) {
+                    <InvoiceTotalsPanel Invoice="_invoice"/>
+                }
+            </MudItem>
+        </MudGrid>
+    </ChildContent>
+</LyoDialog>

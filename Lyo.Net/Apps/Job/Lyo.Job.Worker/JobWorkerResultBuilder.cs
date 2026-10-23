@@ -5,10 +5,7 @@ using Constants = Lyo.Job.Models.Constants;
 
 namespace Lyo.Job.Worker;
 
-/// <summary>
-/// Fluent builder that collects <see cref="JobRunResultReq" /> entries while a job runs. Call <see cref="Build" /> at the end to get the list for the finish
-/// endpoint.
-/// </summary>
+/// <summary>Fluent builder that collects <see cref="JobRunResultReq" /> entries while a job runs. Call <see cref="Build" /> at the end to get the list for the finish endpoint.</summary>
 public sealed class JobWorkerResultBuilder
 {
     private readonly List<JobRunResultReq> _results = [];
@@ -18,8 +15,8 @@ public sealed class JobWorkerResultBuilder
     public JobRunResult CurrentOutcome => _outcome;
 
     /// <summary>
-    /// Sets the overall outcome sent to the server. Defaults to <see cref="JobRunResult.Success" />. Prefer <see cref="Fail" /> or <see cref="Cancel" /> instead of setting
-    /// this by hand in most cases.
+    /// Sets the overall outcome sent to the server. Defaults to <see cref="JobRunResult.Success" />. Prefer <see cref="Fail" /> or <see cref="Cancel" /> instead of setting this
+    /// by hand in most cases.
     /// </summary>
     public JobWorkerResultBuilder SetOutcome(JobRunResult outcome)
     {

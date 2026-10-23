@@ -5,23 +5,6 @@ namespace Lyo.Common.Tests;
 
 public class LyoReflectionTests
 {
-    private sealed class Address
-    {
-        public string? City { get; set; }
-        public int Zip { get; set; }
-    }
-
-    private sealed class Person
-    {
-        public Guid? PlaceOfBirthAddressId { get; set; }
-        public Address? Address { get; set; }
-        public string? Name { get; set; }
-        public List<string>? Tags { get; set; }
-        public string this[int i] => Name ?? "";
-        public static readonly Person Catalog = new() { Name = "catalog" };
-        public static Person OtherCatalog = new() { Name = "other" };
-    }
-
     [Fact]
     public void FindProperty_IgnoreCase_SkipsIndexer()
     {
@@ -45,8 +28,8 @@ public class LyoReflectionTests
         var person = new Person { Name = "Ada" };
         Assert.True(person.TryGetPropertyValue("Name", out var name));
         Assert.Equal("Ada", name);
-        Assert.False(person.TryGetPropertyValue("Missing", out _));
-        Assert.False(person.TryGetPropertyValue("Address.City", out _));
+        Assert.False(person.TryGetPropertyValue("Missing", out var _));
+        Assert.False(person.TryGetPropertyValue("Address.City", out var _));
     }
 
     [Fact]
@@ -131,7 +114,7 @@ public class LyoReflectionTests
         Assert.Null(typeof(string).DefaultValue());
         Assert.True(typeof(Person).TryCreateInstance(out var created));
         Assert.IsType<Person>(created);
-        Assert.False(typeof(IDisposable).TryCreateInstance(out _));
+        Assert.False(typeof(IDisposable).TryCreateInstance(out var _));
     }
 
     [Fact]
@@ -146,7 +129,7 @@ public class LyoReflectionTests
     public void GetFieldValue_And_TryInvoke()
     {
         var person = new Person { Name = "Ada" };
-        Assert.True(person.TryInvoke(nameof(object.ToString), [], [], out var text));
+        Assert.True(person.TryInvoke(nameof(ToString), [], [], out var text));
         Assert.Equal(person.ToString(), text);
         Assert.Equal("catalog", ((Person)typeof(Person).FindField(nameof(Person.Catalog))!.GetValue(null)!).Name);
         Assert.True(typeof(Person).FindField(nameof(Person.Catalog))!.IsPublicStatic());
@@ -160,5 +143,28 @@ public class LyoReflectionTests
         Assert.Equal("PlaceOfBirthAddressId", Utilities.GetPropertyPath(boxed));
         Expression<Func<Person, string?>> nested = x => x.Address!.City;
         Assert.Equal("Address.City", Utilities.GetPropertyPath(nested));
+    }
+
+    private sealed class Address
+    {
+        public string? City { get; set; }
+
+        public int Zip { get; set; }
+    }
+
+    private sealed class Person
+    {
+        public static readonly Person Catalog = new() { Name = "catalog" };
+        public static Person OtherCatalog = new() { Name = "other" };
+
+        public Guid? PlaceOfBirthAddressId { get; set; }
+
+        public Address? Address { get; set; }
+
+        public string? Name { get; set; }
+
+        public List<string>? Tags { get; set; }
+
+        public string this[int i] => Name ?? "";
     }
 }

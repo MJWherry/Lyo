@@ -17,8 +17,8 @@ public static class RedisLockServiceExtensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers <see cref="RedisLockOptions" /> and <see cref="RedisLockService" /> as singletons. Needs <see cref="IConnectionMultiplexer" /> unless you use the overload
-        /// that takes a Redis connection string.
+        /// Registers <see cref="RedisLockOptions" /> and <see cref="RedisLockService" /> as singletons. Needs <see cref="IConnectionMultiplexer" /> unless you use the overload that
+        /// takes a Redis connection string.
         /// </summary>
         /// <param name="configureOptions">Optional lock/Redis behaviour tuning.</param>
         public IServiceCollection AddRedisLock(Action<RedisLockOptions>? configureOptions = null)

@@ -586,11 +586,7 @@ public sealed class SftpClient : ISftpClient
         await client.DeleteDirectoryAsync(path, ct).ConfigureAwait(false);
     }
 
-    private void ThrowIfDisposed()
-    {
-        if (_disposed)
-            throw new ObjectDisposedException(nameof(SftpClient));
-    }
+    private void ThrowIfDisposed() => OperationHelpers.ThrowIfDisposed(_disposed, nameof(SftpClient));
 
     private static T SyncWait<T>(Task<T> task) => task.ConfigureAwait(false).GetAwaiter().GetResult();
 

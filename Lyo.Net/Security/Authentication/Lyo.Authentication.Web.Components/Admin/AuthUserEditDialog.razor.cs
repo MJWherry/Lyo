@@ -10,6 +10,18 @@ namespace Lyo.Authentication.Web.Components;
 
 public partial class AuthUserEditDialog
 {
+    private bool _busy;
+
+    private bool _disabled;
+
+    private string _disabledReason = string.Empty;
+
+    private string _displayName = string.Empty;
+
+    private string _email = string.Empty;
+
+    private string _language = string.Empty;
+
     [CascadingParameter]
     public IMudDialogInstance MudDialog { get; set; } = null!;
 
@@ -27,18 +39,6 @@ public partial class AuthUserEditDialog
 
     [Inject]
     private ISnackbar Snackbar { get; set; } = null!;
-
-    private string _displayName = string.Empty;
-
-    private string _email = string.Empty;
-
-    private string _language = string.Empty;
-
-    private bool _disabled;
-
-    private string _disabledReason = string.Empty;
-
-    private bool _busy;
 
     protected override void OnParametersSet()
     {
@@ -60,13 +60,14 @@ public partial class AuthUserEditDialog
                 .SetProperty("DisplayName", _displayName.Trim())
                 .SetProperty("Email", _email.Trim())
                 .SetProperty("PreferredLanguageBcp47", string.IsNullOrWhiteSpace(_language) ? null : _language.Trim());
+
             if (_disabled) {
                 builder.SetProperty("DisabledTimestamp", User.DisabledTimestamp ?? DateTime.UtcNow);
                 builder.SetProperty("DisabledReason", string.IsNullOrWhiteSpace(_disabledReason) ? null : _disabledReason.Trim());
             }
             else {
-                builder.SetProperty("DisabledTimestamp", (DateTime?)null);
-                builder.SetProperty("DisabledReason", (string?)null);
+                builder.SetProperty("DisabledTimestamp", null);
+                builder.SetProperty("DisabledReason", null);
             }
 
             await ApiClient.PatchAsAsync<PatchRequest, PatchResult<AuthUserRes>>(UserRoute, builder.Build());

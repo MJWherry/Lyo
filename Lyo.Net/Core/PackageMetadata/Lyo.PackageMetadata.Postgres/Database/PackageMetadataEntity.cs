@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.PackageMetadata.Postgres.Database;
 
 /// <summary>EF entity for one registered package artifact row.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class PackageMetadataEntity
 {
     [Key]
@@ -62,4 +64,7 @@ public sealed class PackageMetadataEntity
     public DateTime UpdatedAt { get; set; }
 
     public ICollection<PackageStackPrefixEntity> StackPrefixes { get; set; } = new List<PackageStackPrefixEntity>();
+
+    /// <summary>Type name, id, and name.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Name}";
 }

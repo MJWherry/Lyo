@@ -9,8 +9,8 @@ namespace Lyo.Authentication.Services.Refresh;
 public static class LyoRefreshTokenMatch
 {
     /// <summary>
-    /// True when <paramref name="record" /> is a live <c>internal</c> refresh token for <paramref name="userId" />. When <paramref name="provider" /> is set, the
-    /// token's <c>lyo_provider</c> metadata must match.
+    /// True when <paramref name="record" /> is a live <c>internal</c> refresh token for <paramref name="userId" />. When <paramref name="provider" /> is set, the token's
+    /// <c>lyo_provider</c> metadata must match.
     /// </summary>
     public static bool IsLiveRefreshForUser(ApiTokenRecord record, Guid userId, string? provider)
     {

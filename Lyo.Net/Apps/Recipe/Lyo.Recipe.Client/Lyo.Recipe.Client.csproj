@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <RootNamespace>Lyo.Recipe.Client</RootNamespace>
+        <Description>HTTP client for extra Recipe routes: ingredient lines, steps, notes, tags, and attachment upload.</Description>
+        <PackageTags>recipe client api</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
+        <ProjectReference Include="..\..\Http\Lyo.Http.Client\Lyo.Http.Client.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\Recipe\Lyo.Recipe.Models\Lyo.Recipe.Models.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\Note\Lyo.Note\Lyo.Note.csproj"/>
+        <ProjectReference Include="..\..\..\Plugins\Tag\Lyo.Tag\Lyo.Tag.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder"/>
+        <PackageReference Include="Microsoft.Extensions.Options"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.Recipe.Client.Tests"/>
+    </ItemGroup>
+
+</Project>

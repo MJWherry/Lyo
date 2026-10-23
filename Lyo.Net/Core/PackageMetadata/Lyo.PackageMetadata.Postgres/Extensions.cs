@@ -33,7 +33,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresPackageMetadataOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddPackageMetadataDbContextFactory(options);
         }
 
@@ -43,7 +42,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPostgresDbContextFactory<PackageMetadataDbContext, PostgresPackageMetadataOptions>(options);
-
             return services;
         }
 
@@ -67,7 +65,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresPackageMetadataOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddPostgresPackageMetadataStore(options);
         }
 

@@ -1,0 +1,59 @@
+@namespace Lyo.Web.Components.Import
+
+<MudText Typo="Typo.h6">Import</MudText>
+<MudText Typo="Typo.body2">@ImportPreviewState.HostPersistsCopy</MudText>
+
+<MudSelect T="ImportJsonMode" @bind-Value="JsonMode" Label="JSON shape">
+    <MudSelectItem Value="ImportJsonMode.Array">JSON array</MudSelectItem>
+    <MudSelectItem Value="ImportJsonMode.Wrapped">JSON rows path</MudSelectItem>
+    <MudSelectItem Value="ImportJsonMode.Ndjson">NDJSON</MudSelectItem>
+</MudSelect>
+
+<MudText Typo="Typo.subtitle2">Mapping</MudText>
+<MudTextField @bind-Value="_source" Label="Source"/>
+<MudTextField @bind-Value="_target" Label="Target property"/>
+<MudCheckBox T="bool" @bind-Value="_required" Label="Required"/>
+<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddField">Add mapping</MudButton>
+@foreach (var field in State.Fields) {
+    <MudText Typo="Typo.body2">@field.Source → @field.Target@(field.Required ? " (required)" : "")</MudText>
+}
+
+@if (State.BlockedReason is not null) {
+    <MudAlert Severity="Severity.Warning">@State.BlockedReason</MudAlert>
+}
+
+<MudText Typo="Typo.subtitle2">Preview</MudText>
+@foreach (var row in State.Preview) {
+    <MudText Typo="Typo.body2">@row</MudText>
+}
+
+<MudText Typo="Typo.subtitle2">Issues</MudText>
+<MudText Typo="Typo.body2">@State.IssueListText()</MudText>
+
+@code {
+
+    /// <summary>Form state the tests and the host share.</summary>
+    [Parameter]
+    public ImportPreviewState State { get; set; } = new();
+
+    /// <summary>JSON mode. CSV and XLSX addons set the format around this workbench.</summary>
+    [Parameter]
+    public ImportJsonMode JsonMode { get; set; } = ImportJsonMode.Array;
+
+    private string _source = "";
+
+    private string _target = "";
+
+    private bool _required;
+
+    private void AddField()
+    {
+        if (!State.TryAddField(new() { Source = _source, Target = _target, Required = _required }))
+            return;
+
+        _source = "";
+        _target = "";
+        _required = false;
+    }
+
+}

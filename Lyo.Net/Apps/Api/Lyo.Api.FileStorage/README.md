@@ -1,6 +1,10 @@
 # Lyo.Api.FileStorage
 
-HTTP endpoints for Lyo file storage. After a keyed `IFileStorageService` (plus multipart and archive) is registered, hosts map `BuildFileStorageApi`. FileMetadata Query/QueryProject is included. `GET key-ids` lists encryption key identifiers; keystore CRUD is not part of this API.
+HTTP endpoints for Lyo file storage. After a keyed `IFileStorageService` (plus multipart and archive) is registered, hosts map `BuildFileStorageApi`. When `IFileStorageFactory` is
+registered, `GET {Route}/stores` lists each name and `{Route}/{name}`. File and multipart calls for that store use the name. `FileStorage:Default` serves the bare route.
+FileMetadata Query/QueryProject stays on the host route. Access links stay on the bare route. `GET capabilities` lists feature flags for presigned read, direct upload, multipart,
+copy, move, physical listing, encryption, archive, and access links. It does not include bucket, disk root, or keystore location. `GET key-ids` lists encryption key identifiers;
+keystore CRUD is not part of this API.
 
 ## Examples
 
@@ -15,9 +19,27 @@ app.BuildFileStorageApi(new FileStorageApiOptions {
 });
 ```
 
+### Stores
+
+```text
+GET FileStorage/stores
+[{ "name": "archive", "route": "FileStorage/archive", "fileMetadataRoute": null }]
+
+POST FileStorage/archive/files/save
+
+FileMetadata QueryProject stays at FileStorage/FileMetadata. The grid does not switch catalogs.
+```
+
 ## Routes this maps
 
-At `FileStorageApiOptions.Route` the group exposes: health, save/save-stream, copy/move/rename, metadata, download (always streams through the host, honors `?inline=true`; decrypt/decompress on the API), archive, access-links, presigned-read (direct-to-bucket URL), DEK migrate/rotate, `GET key-ids` (encryption key identifiers only, no raw material), `GET files/folder` (store PathPrefix plus reconcile, flags `Store` / `Physical` / `Both`), `diagnostics/storage-keys`, `multipart/*`, `direct-upload/*`. Optional `POST DirectUploadPath` (default `upload/file`). A read-only FileMetadata QueryProject lives at `FileMetadataRoute`. No `keys/*` CRUD routes exist. Wire DTOs live in `Lyo.Api.FileStorage.Models`.
+At `FileStorageApiOptions.Route` the group exposes: health, `GET capabilities` (feature flags only; no bucket, disk root, or keystore location), save/save-stream, copy/move/rename,
+metadata, download (always streams through the host, honors `?inline=true`; decrypt/decompress on the API; a full response sets `Content-Digest` for the plaintext hash). A single
+`Range` on any uncompressed object, including an encrypted one, returns `206` with `Accept-Ranges: bytes` when the backend can slice. An encrypted object is decrypted from the
+chunk that holds the requested plaintext offset. The initial `200` for that file also sends `Accept-Ranges`. Compressed objects ignore `Range` and stay a full `200` without
+`Accept-Ranges`. A well-formed range that starts at or past the end returns `416`. The same group also maps `GET files/{id}/integrity` (plaintext hash, algorithm, and size),
+archive, access-links, presigned-read (direct-to-bucket URL), DEK migrate/rotate, `GET key-ids` (encryption key identifiers only, no raw material), `GET files/folder` (store
+PathPrefix plus reconcile, flags `Store` / `Physical` / `Both`), `diagnostics/storage-keys`, `multipart/*`, `direct-upload/*`. Optional `POST DirectUploadPath` (default
+`upload/file`). A read-only FileMetadata QueryProject lives at `FileMetadataRoute`. No `keys/*` CRUD routes exist. Wire DTOs live in `Lyo.Api.FileStorage.Models`.
 
 ## Dependencies
 
@@ -26,15 +48,15 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Api` (direct, lyo)
 - `Lyo.Api.FileStorage.Models` (direct, lyo)
 - `Lyo.Cache` (direct, lyo)
+- `Lyo.Common.Core` (direct, lyo)
 - `Lyo.Common.Metadata` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.FileMetadataStore.Postgres` (direct, lyo)
 - `Lyo.FileStorage` (direct, lyo)
 - `Lyo.KeyStore` (direct, lyo)
 - `Lyo.Api.Models` (transitive, lyo)
-- `Lyo.Common.Core` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Compression` (transitive, lyo)
+- `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Diagnostic.AspNetCore` (transitive, lyo)
@@ -46,6 +68,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Health` (transitive, lyo)
 - `Lyo.IO.FileSystem` (transitive, lyo)
 - `Lyo.IO.Temp` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.Lock` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
@@ -54,6 +77,8 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Query` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
+- `Lyo.Query.Sql` (transitive, lyo)
+- `Lyo.RateLimit` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
 - `Lyo.Validation` (transitive, lyo)
@@ -64,6 +89,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Konscious.Security.Cryptography.Argon2` `1.3.1` (transitive, third-party)
 - `Microsoft.AspNetCore.OpenApi` `10.0.5` (transitive, microsoft)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Bcl.TimeProvider` `8.0.1` (transitive, microsoft, netstandard2.0)
 - `Microsoft.EntityFrameworkCore` `10.0.5` (transitive, microsoft)
 - `Microsoft.EntityFrameworkCore.Analyzers` `10.0.5` (transitive, microsoft)
 - `Microsoft.EntityFrameworkCore.Design` `10.0.5` (transitive, microsoft)
@@ -83,5 +109,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)

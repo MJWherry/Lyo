@@ -60,15 +60,16 @@ var (stream, fileName, length) = await reporting.Generations.DownloadAsync(rerun
 
 ## Authorization matrix
 
-| Surface | Options property | Endpoints |
-| -------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Definitions | `DefinitionAuth` | Export + CRUD |
-| Parameters on a definition | `DefinitionAuth` | CRUD under `Reporting/Definition/Parameter` |
-| Generations | `GenerationAuth` | Get / Query / Delete / DeleteBulk (include `Parameters`). Delete runs `OnCleanupAsync` so persisted output is removed from storage. |
-| Generate | `GenerateAuth` | `POST Reporting/Generation/Generate` (`Parameters` list in the body) |
-| Resolve parameter Options | `DefinitionAuth` | `POST Reporting/ResolveParameterOptions` (Sproc/Query picker rows for the workbench; not a public execute-any-sproc API) |
-| Rerun | `GenerateAuth` | `POST Reporting/Generation/{id}/Rerun` |
-| Download | `DownloadAuth` | `GET Reporting/Generation/{id}/Download` (mapped only when `DownloadStreamFactory` is set) |
+| Surface                    | Options property | Endpoints                                                                                                                              |
+|----------------------------|------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| Definitions                | `DefinitionAuth` | Export + CRUD                                                                                                                          |
+| Parameters on a definition | `DefinitionAuth` | CRUD under `Reporting/Definition/Parameter`                                                                                            |
+| Generations                | `GenerationAuth` | Get / Query / Delete / DeleteBulk (include `Parameters`). Delete runs `OnCleanupAsync` so persisted output is removed from storage.    |
+| Generate                   | `GenerateAuth`   | `POST Reporting/Generation/Generate` (`Parameters` list in the body)                                                                   |
+| Resolve parameter Options  | `DefinitionAuth` | `POST Reporting/ResolveParameterOptions` (Sproc/Query picker rows for the workbench; not a public execute-any-sproc API)               |
+| Rerun                      | `GenerateAuth`   | `POST Reporting/Generation/{id}/Rerun`                                                                                                 |
+| Download                   | `DownloadAuth`   | `GET Reporting/Generation/{id}/Download` (mapped only when `DownloadStreamFactory` is set)                                             |
+| Invoice PDF                | `GenerateAuth`   | `GET Reporting/Invoices/{id}/pdf` (501 when `IBillingStore` is not registered; streams stored PDF when `DownloadStreamFactory` is set) |
 
 If every auth slot shares one policy, prefer `ReportingApiOptions.WithAuth(auth, downloadStreamFactory)` over setting all four properties.
 
@@ -78,11 +79,13 @@ prefer explicit values for Worker and Discord hosts.
 
 ## CreatedBy
 
-The authenticated identity always wins: `GenerateReportReq.CreatedBy` is overwritten with `User.Identity.Name` when the caller is authenticated. Client-supplied `CreatedBy` is only honored for unauthenticated/service callers, falling back to `"Unknown"`.
+The authenticated identity always wins: `GenerateReportReq.CreatedBy` is overwritten with `User.Identity.Name` when the caller is authenticated. Client-supplied `CreatedBy` is only
+honored for unauthenticated/service callers, falling back to `"Unknown"`.
 
 ## HTTP status codes
 
-- Validation failures (`ReportValidationException`: unknown keys, bad parameters, malformed/oversized JSON, inactive or missing definition, ad-hoc disabled) → **400** ProblemDetails.
+- Validation failures (`ReportValidationException`: unknown keys, bad parameters, malformed/oversized JSON, inactive or missing definition, ad-hoc disabled) → **400**
+  ProblemDetails.
 - Concurrency saturation (`ReportBusyException`, see `PostgresReportingOptions.MaxConcurrentGenerations`) → **503** ProblemDetails.
 - Download: **404** when the generation or blob is missing, **409** when the generation has no downloadable output (not `Succeeded` or no `OutputFileId`).
 
@@ -95,11 +98,14 @@ The authenticated identity always wins: `GenerateReportReq.CreatedBy` is overwri
 
 ## Protecting sensitive fields
 
-`QueryProject` and projected `Export` read raw entities and skip the response mapper's masking, so reporting endpoints deny selecting `Value`/`EncryptedValue` on parameter paths (including nested paths like `Parameters.EncryptedValue` and computed-field templates) via `DeniedSelectFields`. `Get`/`QueryConcrete` map through the response types, which mask parameter values (`***` for encrypted-backed values, `EncryptedValue` never returned).
+`QueryProject` and projected `Export` read raw entities and skip the response mapper's masking, so reporting endpoints deny selecting `Value`/`EncryptedValue` on parameter paths
+(including nested paths like `Parameters.EncryptedValue` and computed-field templates) via `DeniedSelectFields`. `Get`/`QueryConcrete` map through the response types, which mask
+parameter values (`***` for encrypted-backed values, `EncryptedValue` never returned).
 
 ## Cleanup when a definition is deleted
 
-Deleting a definition cascades its generation rows. Before the delete, `ReportGenerationHooks.OnCleanupAsync` runs for each generation with an `OutputFileId` so the persisted blob can be removed; a hook failure aborts the delete rather than orphaning storage.
+Deleting a definition cascades its generation rows. Before the delete, `ReportGenerationHooks.OnCleanupAsync` runs for each generation with an `OutputFileId` so the persisted blob
+can be removed; a hook failure aborts the delete rather than orphaning storage.
 
 ## How a worker calls it
 
@@ -113,6 +119,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 
 - `Lyo.Api` (direct, lyo)
 - `Lyo.Api.Export` (direct, lyo)
+- `Lyo.Billing` (direct, lyo)
 - `Lyo.Common.Metadata` (direct, lyo)
 - `Lyo.Query.Models` (direct, lyo)
 - `Lyo.Reporting.Models` (direct, lyo)
@@ -121,7 +128,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Audit` (transitive, lyo)
 - `Lyo.Cache` (transitive, lyo)
 - `Lyo.Common.Core` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Compression` (transitive, lyo)
 - `Lyo.Csv` (transitive, lyo)
 - `Lyo.Csv.Models` (transitive, lyo)
@@ -138,13 +144,16 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Health` (transitive, lyo)
 - `Lyo.IO.FileSystem` (transitive, lyo)
 - `Lyo.IO.Temp` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.KeyStore` (transitive, lyo)
+- `Lyo.Ledger` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
 - `Lyo.Postgres` (transitive, lyo)
 - `Lyo.Query` (transitive, lyo)
 - `Lyo.Query.Evaluation` (transitive, lyo)
+- `Lyo.Query.Sql` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
 - `Lyo.Validation` (transitive, lyo)

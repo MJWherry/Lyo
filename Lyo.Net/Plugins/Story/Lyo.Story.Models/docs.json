@@ -1,0 +1,24 @@
+{
+  "$schema": "../../../../docs/catalog/schema/package.schema.json",
+  "id": "Lyo.Story.Models",
+  "name": "Lyo.Story.Models",
+  "area": "Plugins",
+  "tagline": "Request and response DTOs and route constants for the Story API.",
+  "description": "Wire types for story row CRUD, the play-graph aggregate, and playthrough snapshots. `Request/` and `Response/` are separate. Listing uses Lyo.Query on `Story/Stories`, not a story-specific query DTO. Domain POCOs and the play engine stay in `Lyo.Story`.",
+  "features": [
+    "Row Req/Res for stories, scenes, nodes, variables, actions, choices, reactions, effects, and read-only playthroughs.",
+    "`StoryGraphReq` / `StoryGraphRes` for the aggregate save and load routes.",
+    "`StoryPlayStateRes`, `StoryMoveRes`, and `StoryPlaythroughEventRes` for play.",
+    "`Constants.Rest.Story` route prefixes shared by the API and the client."
+  ],
+  "examples": [
+    {
+      "title": "Route constants",
+      "language": "csharp",
+      "code": "var stories = Constants.Rest.Story.Stories;\nvar graph = Constants.Rest.Story.Graph;"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/Story/Lyo.Story.Models/README.md"
+}

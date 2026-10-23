@@ -1,6 +1,8 @@
 # Lyo.Cli
 
-A `PackAsTool` dotnet tool (command name `lyo`) over Lyo libraries. **crypt** handles encryption (Lyo.Encryption); **enc** handles binary/charset encoding (Lyo.TextEncoding). The remaining verbs are **compress**/**decompress**, **hash**/**checksum**, **id**, **query build|exec**, and **csv**/**xlsx**. No dedicated CLI test project exists. System.CommandLine parses arguments; package tests cover library behavior.
+A `PackAsTool` dotnet tool (command name `lyo`) over Lyo libraries. **crypt** handles encryption (Lyo.Encryption); **enc** handles binary/charset encoding (Lyo.TextEncoding). The
+remaining verbs are **compress**/ **decompress**, **hash**/ **checksum**, **id**, **query build|exec**, **csv**/ **xlsx**, **json**/ **yaml**/ **xml**/ **toml**, **nfc**, and
+**rfid**. No dedicated CLI test project exists. System.CommandLine parses arguments; package tests cover library behavior.
 
 ## Features
 
@@ -11,6 +13,9 @@ A `PackAsTool` dotnet tool (command name `lyo`) over Lyo libraries. **crypt** ha
 - **id.** ULID, KSUID, NanoID, GUID variants, Snowflake; `-n/--count` for a batch; `-c/--copy` clipboard
 - **query build|exec.** Lyo.Query.Models builders plus a Lyo.Api.Client POST
 - **csv** / **xlsx.** Merge, split, convert, stats (xlsx→csv is native; csv→xlsx goes through DataTable glue)
+- **json** / **yaml** / **xml** / **toml.** Convert between the four document formats. Omit the input path or pass `-` for stdin, and omit `--output` or pass `-` for stdout.
+- **nfc.** Type 2 NDEF read/write over PC/SC (`readers`, `read`, `write text|uri`).
+- **rfid.** `rfid tonie path` maps a SLIX-L UID to the box content path. `rfid tonie read` and `prepare` need an ISO 15693 reader, which is not registered yet.
 
 ## Examples
 
@@ -19,6 +24,12 @@ A `PackAsTool` dotnet tool (command name `lyo`) over Lyo libraries. **crypt** ha
 ```bash
 python3 scripts/cli/pack_install.py pack-install
 lyo --help
+```
+
+### Tonie content path from a UID
+
+```bash
+lyo rfid tonie path E004035012345678
 ```
 
 ### Hash from stdin
@@ -61,11 +72,13 @@ lyo crypt encrypt secret.bin -o - --key 'passphrase' | lyo crypt decrypt - --key
 
 ## Pack and install
 
-The library pack (`scripts/nuget/build_nuget.py`) skips `Tools/`. Pack the tool with `dotnet pack Lyo.Net/Tools/Lyo.Cli/Lyo.Cli.csproj -c Release -o artifacts/cli` then `dotnet tool install -g Lyo.Cli --add-source artifacts/cli`, or use `python3 scripts/cli/pack_install.py pack-install`.
+The library pack (`scripts/nuget/build_nuget.py`) skips `Tools/`. Pack the tool with `dotnet pack Lyo.Net/Tools/Lyo.Cli/Lyo.Cli.csproj -c Release -o artifacts/cli` then
+`dotnet tool install -g Lyo.Cli --add-source artifacts/cli`, or use `python3 scripts/cli/pack_install.py pack-install`.
 
 ## Copy to clipboard (`-c/--copy`)
 
-Works on `id` and `hash`/`checksum` text results. Talks to native OS tools through Process stdin: Windows `clip`, macOS `pbcopy`, Linux `wl-copy` / `xclip` / `xsel`. No TextCopy package. For bulk IDs: `-n/--count N` (one ID per line; all copied together when using `-c`).
+Works on `id` and `hash`/`checksum` text results. Talks to native OS tools through Process stdin: Windows `clip`, macOS `pbcopy`, Linux `wl-copy` / `xclip` / `xsel`. No TextCopy
+package. For bulk IDs: `-n/--count N` (one ID per line; all copied together when using `-c`).
 
 ## Dependencies
 
@@ -73,7 +86,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 
 - `Lyo.Api.Client` (direct, lyo)
 - `Lyo.Api.Models` (direct, lyo)
-- `Lyo.Common.Json` (direct, lyo)
+- `Lyo.Common.Core` (direct, lyo)
 - `Lyo.Compression` (direct, lyo)
 - `Lyo.Compression.BZip2` (direct, lyo)
 - `Lyo.Compression.Lz4` (direct, lyo)
@@ -83,6 +96,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Compression.Zstd` (direct, lyo)
 - `Lyo.Csv` (direct, lyo)
 - `Lyo.Csv.Models` (direct, lyo)
+- `Lyo.Desktop` (direct, lyo)
 - `Lyo.Encryption` (direct, lyo)
 - `Lyo.Encryption.AesCcm` (direct, lyo)
 - `Lyo.Encryption.AesSiv` (direct, lyo)
@@ -90,15 +104,22 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Hashing` (direct, lyo)
 - `Lyo.Http.Client` (direct, lyo)
+- `Lyo.Json` (direct, lyo)
 - `Lyo.KeyStore` (direct, lyo)
+- `Lyo.Nfc` (direct, lyo)
+- `Lyo.Nfc.Pcsc` (direct, lyo)
 - `Lyo.Query.Models` (direct, lyo)
+- `Lyo.Rfid` (direct, lyo)
+- `Lyo.Rfid.Tonie` (direct, lyo)
 - `Lyo.TextEncoding` (direct, lyo)
+- `Lyo.Toml` (direct, lyo)
 - `Lyo.Xlsx` (direct, lyo)
 - `Lyo.Xlsx.Models` (direct, lyo)
+- `Lyo.Xml` (direct, lyo)
+- `Lyo.Yaml` (direct, lyo)
 - `Microsoft.Extensions.DependencyInjection` `10.0.5` (direct, microsoft)
 - `Microsoft.Extensions.Http` `10.0.5` (direct, microsoft)
 - `System.CommandLine` `2.0.10` (direct, microsoft)
-- `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
@@ -129,6 +150,8 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.Extensions.Logging.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Options` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Options.ConfigurationExtensions` `10.0.5` (transitive, microsoft)
+- `PCSC` `7.0.1` (transitive, third-party)
+- `PCSC.Iso7816` `7.0.1` (transitive, third-party)
 - `SharpZipLib` `1.4.2` (transitive, third-party)
 - `System.Buffers` `4.6.1` (transitive, microsoft, netstandard2.0)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
@@ -137,3 +160,5 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.RateLimiting` `10.0.5` (transitive, microsoft)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `Tomlyn` `2.10.1` (transitive, third-party)
+- `YamlDotNet` `18.1.0` (transitive, third-party)

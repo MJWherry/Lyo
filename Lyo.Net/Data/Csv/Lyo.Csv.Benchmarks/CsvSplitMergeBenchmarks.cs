@@ -1,6 +1,7 @@
 using BenchmarkDotNet.Attributes;
 using Lyo.Benchmark;
 using Lyo.Benchmark.Data;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Csv.Benchmarks;
 
@@ -31,11 +32,11 @@ public class CsvSplitMergeBenchmarks
     public void Setup()
     {
         _bytes = _csv.ExportToCsvBytes(SampleRecord.Generate(RowCount));
-        _filePath = Path.Combine(Path.GetTempPath(), $"lyo-csv-splitmerge-{Guid.NewGuid():N}.csv");
+        _filePath = Path.Combine(Path.GetTempPath(), $"lyo-csv-splitmerge-{LyoGuid.CreateV7():N}.csv");
         File.WriteAllBytes(_filePath, _bytes);
-        _outputDirectory = Path.Combine(Path.GetTempPath(), $"lyo-csv-split-out-{Guid.NewGuid():N}");
+        _outputDirectory = Path.Combine(Path.GetTempPath(), $"lyo-csv-split-out-{LyoGuid.CreateV7():N}");
         Directory.CreateDirectory(_outputDirectory);
-        _combineOutputPath = Path.Combine(Path.GetTempPath(), $"lyo-csv-combined-{Guid.NewGuid():N}.csv");
+        _combineOutputPath = Path.Combine(Path.GetTempPath(), $"lyo-csv-combined-{LyoGuid.CreateV7():N}.csv");
         _splitParts = _csv.SplitCsvBytesAsync(_bytes, RowsPerFile).GetAwaiter().GetResult();
         _splitFilePaths = _csv.SplitCsvFileAsync(_filePath, RowsPerFile, _outputDirectory).GetAwaiter().GetResult();
     }

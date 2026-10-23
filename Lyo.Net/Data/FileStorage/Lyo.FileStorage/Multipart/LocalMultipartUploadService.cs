@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Lyo.Common.Core.Extensions;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Audit;
@@ -57,8 +58,8 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
             throw new FilePolicyRejectedException($"DeclaredContentLength {len} exceeds configured MaxUploadSizeBytes ({cap}).");
 
         FileStorageServiceBase.ValidatePathPrefix(request.PathPrefix);
-        var sessionId = Guid.NewGuid();
-        var targetFileId = Guid.NewGuid();
+        var sessionId = LyoGuid.CreateV7();
+        var targetFileId = LyoGuid.CreateV7();
         var ttl = request.SessionTtl ?? TimeSpan.FromHours(24);
         var now = DateTime.UtcNow;
         var stagingDir = Path.Combine(_options.RootDirectoryPath, ".multipart", sessionId.ToString("N"));
@@ -149,7 +150,8 @@ public sealed class LocalMultipartUploadService : IMultipartUploadService
             using var input = File.OpenRead(mergedPath);
             var result = await _storage.SaveFromStreamAsync(
                     input, mergedInfo.Length, session.OriginalFileName ?? session.TargetFileId.ToString(), session.Compress, session.Encrypt, session.KeyId, session.PathPrefix,
-                    null, session.ContentType, session.Charset, session.TenantId, null, session.TargetFileId, FileStoreResult.DeserializeMetadata(session.MetadataJson), ct)
+                    null,
+                    session.ContentType, session.Charset, session.TenantId, null, session.TargetFileId, FileStoreResult.DeserializeMetadata(session.MetadataJson), ct)
                 .ConfigureAwait(false);
 
             await _sessions.SetStatusAsync(session.SessionId, MultipartSessionStatus.Completed, ct).ConfigureAwait(false);

@@ -11,6 +11,10 @@ namespace Lyo.Authentication.Web.Components;
 
 public partial class AuthEventGrid
 {
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Kind"), new("Outcome"), new("Provider"), new("Reason")];
+
+    private LyoDataGridProjected? _dataGrid;
+
     [Parameter]
     [EditorRequired]
     public IApiClient ApiClient { get; set; } = null!;
@@ -22,10 +26,6 @@ public partial class AuthEventGrid
     public Guid? UserId { get; set; }
 
     private string _route => $"{BaseRoute.TrimEnd('/')}/Event";
-
-    private LyoDataGridProjected? _dataGrid;
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Kind"), new("Outcome"), new("Provider"), new("Reason")];
 
     private void ApplyQuery(ProjectionQueryReqBuilder q)
     {

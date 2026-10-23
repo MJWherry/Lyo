@@ -1,0 +1,82 @@
+{
+  "id": "Lyo.Payments",
+  "name": "Lyo.Payments",
+  "area": "Apps",
+  "tagline": "Payment collector contracts plus an internal workbench implementation (no Stripe).",
+  "description": "`IPaymentCollector` collects funds and returns a reference. Hosts call Billing `RecordPaymentAsync` on success so the ledger is posted there. `InternalPaymentCollector` always succeeds and is meant for TestGateway / local workbenches.",
+  "features": [
+    "`AddInternalPaymentCollector` registers `InternalPaymentCollector` as `IPaymentCollector`.",
+    "No Stripe, card network, or plugin PDF references."
+  ],
+  "examples": [
+    {
+      "title": "Collect then record",
+      "language": "csharp",
+      "code": "services.AddInternalPaymentCollector();\nvar collected = await collector.CollectAsync(new PaymentCollectionRequest { InvoiceId = invoiceId, Amount = 1620m }, ct);\nif (collected.Succeeded)\n    await billing.RecordPaymentAsync(invoiceId, 1620m, \"USD\", PaymentMethod.Internal, collected.Reference, tenantId, ct);"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Apps/Payments/Lyo.Payments/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

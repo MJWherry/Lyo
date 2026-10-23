@@ -1,0 +1,23 @@
+{
+  "$schema": "../../../../docs/catalog/schema/package.schema.json",
+  "id": "Lyo.Web.Automation.Postgres",
+  "name": "Lyo.Web.Automation.Postgres",
+  "area": "Apps",
+  "tagline": "PostgreSQL store for automation plans and the plan grid query.",
+  "description": "Stores each plan as a row in `automation.automation_plans`: id, unique name, jsonb document, step count, and updated time. `AddAutomationPlansPostgres` replaces `IAutomationPlanStore`. `BuildAutomationPlanRecords` maps query and get on `Automation/Plans` when the host has the context.",
+  "features": [
+    "Name routes and `GET /Automation/Plan/id/{id}` read the same rows.",
+    "The grid route is `Automation/Plans` with QueryProject."
+  ],
+  "examples": [
+    {
+      "title": "Register on TestApi",
+      "language": "csharp",
+      "code": "services.AddAutomationPlansPostgres(new PostgresAutomationPlanOptions {\n    ConnectionString = connStr,\n    EnableAutoMigrations = true\n});\n\napp.BuildAutomationGroup().BuildAutomationPlanRecords();"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Apps/Web/Automation/Lyo.Web.Automation.Postgres/README.md",
+  "dependencies": []
+}

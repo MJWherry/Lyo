@@ -1,6 +1,7 @@
 # Lyo.Webhook.Twilio
 
-Twilio webhook signature checks for `Lyo.Webhook`. Compares `X-Twilio-Signature` to an HMAC-SHA1 (Base64) of the public request URL plus sorted key+value form parameters, matching Twilio's server-side behavior (including URL variants with or without an explicit default port).
+Twilio webhook signature checks for `Lyo.Webhook`. Compares `X-Twilio-Signature` to an HMAC-SHA1 (Base64) of the public request URL plus sorted key+value form parameters, matching
+Twilio's server-side behavior (including URL variants with or without an explicit default port).
 
 Reference: [Twilio webhooks security](https://www.twilio.com/docs/usage/webhooks/webhooks-security).
 
@@ -24,7 +25,8 @@ app.MapWebhook("/webhooks/twilio/sms")
 ## How to use it
 
 - Go through the `Lyo.Webhook` fluent pipeline so the body is read once, `RequestUrl` is assigned, and `Parameters` are populated for `application/x-www-form-urlencoded` posts.
-- Make sure `WebhookVerificationContext.RequestUrl` matches the URL Twilio called (scheme, host, path, query). The default `GetPublicRequestUrl()` helper uses the current request. Behind reverse proxies, configure forwarded headers / public base URL so this matches Twilio's URL.
+- Make sure `WebhookVerificationContext.RequestUrl` matches the URL Twilio called (scheme, host, path, query). The default `GetPublicRequestUrl()` helper uses the current request.
+  Behind reverse proxies, configure forwarded headers / public base URL so this matches Twilio's URL.
 - For form webhooks, `Parameters` must contain every form field Twilio sends. The core library fills `Parameters` when `Content-Type` is `application/x-www-form-urlencoded`.
 
 ## Types

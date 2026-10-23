@@ -1,9 +1,9 @@
 using Lyo.Comic.Postgres.Database;
 using Lyo.Exceptions;
 using Lyo.Postgres;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 namespace Lyo.Comic.Postgres;
 
 /// <summary>DI helpers that register the PostgreSQL comic store.</summary>
@@ -29,7 +29,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresComicOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddComicDbContextFactory(options);
         }
 
@@ -39,7 +38,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPostgresDbContextFactory<ComicDbContext, PostgresComicOptions>(options);
-
             return services;
         }
 
@@ -61,7 +59,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresComicOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddPostgresComicStore(options);
         }
 

@@ -53,7 +53,6 @@ public class CompressionAlgorithmCatalogTests
         var detectable = CompressionAlgorithm.Detectable;
         Assert.DoesNotContain(CompressionAlgorithm.Brotli, detectable);
         Assert.Contains(CompressionAlgorithm.GZip, detectable);
-
         var lengths = detectable.Select(a => a.MagicPrefixes.Max(p => p.Length)).ToArray();
         Assert.Equal(lengths.OrderByDescending(l => l), lengths);
     }

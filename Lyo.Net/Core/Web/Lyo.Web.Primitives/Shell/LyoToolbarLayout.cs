@@ -3,6 +3,12 @@ namespace Lyo.Web.Primitives;
 /// <summary>CSS class and disabled-state helpers for <see cref="LyoToolbar" /> and its child controls.</summary>
 internal static class LyoToolbarLayout
 {
+    /// <summary>
+    /// Cascading value name for <see cref="LyoToolbar.Disabled" />. Cascading the owner instance is fixed (<c>Value="this"</c>), so wrappers must subscribe to this bool or they
+    /// keep the first-render disabled state forever.
+    /// </summary>
+    public const string DisabledCascadeName = "LyoToolbarDisabled";
+
     /// <summary>Root class list. <paramref name="dense" /> tightens padding and gaps.</summary>
     public static string Root(bool dense) => dense ? "lyo-toolbar lyo-toolbar-dense" : "lyo-toolbar";
 
@@ -12,8 +18,10 @@ internal static class LyoToolbarLayout
         var css = "lyo-toolbar-group";
         if (grow)
             css += " lyo-toolbar-grow";
+
         if (alignEnd)
             css += " lyo-toolbar-end";
+
         return css;
     }
 

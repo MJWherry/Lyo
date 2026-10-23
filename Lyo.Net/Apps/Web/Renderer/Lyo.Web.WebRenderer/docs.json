@@ -2,14 +2,14 @@
   "id": "Lyo.Web.WebRenderer",
   "name": "Lyo.Web.WebRenderer",
   "area": "Apps",
-  "tagline": "Server-side Razor rendering and HTML→PDF conversion. Razor rendering uses `Microsoft.AspNetCore.Components.Web.HtmlRenderer`; PDF conversion is driven by **PuppeteerSharp** against a…",
-  "description": "Server-side Razor rendering and HTML→PDF conversion. Razor rendering uses `Microsoft.AspNetCore.Components.Web.HtmlRenderer`; PDF conversion is driven by\n**PuppeteerSharp** against a locally-installed Chromium/Chrome browser.",
+  "tagline": "Server-side Razor rendering and HTML capture to PDF, PNG, JPEG, or WebP through one shared Chromium process.",
+  "description": "Server-side Razor rendering uses `Microsoft.AspNetCore.Components.Web.HtmlRenderer`. HTML capture uses one shared Chromium process (PuppeteerSharp) and writes PDF, PNG, JPEG, or WebP into a caller-owned stream. Request and response types live in `Lyo.Web.WebRenderer.Models` so a host can pass `WebRenderReq` without referencing the browser.",
   "features": [],
   "examples": [
     {
       "title": "Register in DI ([`Extensions.cs`](Extensions.cs))",
       "language": "csharp",
-      "code": "services.AddWebRendererServiceFromConfiguration(builder.Configuration);"
+      "code": "services.AddWebRendererService(options =>\n{\n    options.BrowserExePath = \"/usr/bin/chromium\";\n    options.EnableMetrics = true;\n});\n\nservices.AddWebRendererServiceFromConfiguration(builder.Configuration);"
     }
   ],
   "sections": [
@@ -85,7 +85,7 @@
           "End-to-end file → file (PDF path defaults to `<htmlFilePath>.pdf` when null)."
         ]
       ],
-      "trail": "> Only Razor render and HTML→PDF are on the current interface; there is no in-process screenshot API. For raw screenshots, use PuppeteerSharp directly through `BrowserExePath`."
+      "trail": "`CopyCaptureToAsync` writes PDF, PNG, JPEG, or WebP into a stream you own. `ConvertHtmlToPdfAsync` is the PDF bytes wrapper. `IWebRenderGenerator.GenerateAsync` writes `WebRenderReq.OutputFilePath` and returns `WebRenderRes`. A CSS `@page` size wins when `PreferCssPageSize` is true; otherwise the named paper is used and A4 is the fallback."
     },
     {
       "type": "paragraph",
@@ -109,16 +109,31 @@
         [
           "`EnableMetrics`",
           "`false`",
-          "When `true` and an `IMetrics` is registered, records timers/counters/gauges (see below)."
+          "When `true` and an `IMetrics` is registered, records one timer, success counter, failure counter, and size gauge per operation."
+        ],
+        [
+          "`MaxConcurrentPages`",
+          "`4`",
+          "How many captures may use the shared browser at once."
+        ],
+        [
+          "`ContentTimeout`",
+          "`30s`",
+          "How long a page may take to load HTML and produce a capture. Cancellation closes the page."
+        ],
+        [
+          "`NoSandbox`",
+          "`false`",
+          "Adds `--no-sandbox`. Leave false outside containers. `--disable-dev-shm-usage` is always passed."
         ]
       ],
-      "lead": "`WebRenderOptions` is the configuration section name.",
-      "trail": "The service uses `NullMetrics.Instance` when `EnableMetrics` is `false` (default), so registering `IMetrics` is optional.\n\nMetrics emitted (see [`Constants.cs`](Constants.cs)) include `webrenderer.render_to_html(.bytes|_to_file).{duration,success,failure,size_bytes}` and\n`webrenderer.convert_html_to_pdf.{duration,success,failure,size_bytes,input_size_bytes}`, tagged with `component_type` / `operation`."
+      "lead": "`WebRenderOptions` is the configuration section name. `Validate` requires `MaxConcurrentPages` of at least 1, a positive `ContentTimeout`, and an existing file when `BrowserExePath` is set. An unset path is legal so HTML-only hosts still boot.",
+      "trail": "Metrics stay off unless `EnableMetrics` is true. Names are `webrenderer.render_to_html`, `webrenderer.render_to_html_bytes`, `webrenderer.render_to_file`, `webrenderer.capture`, and `webrenderer.browser.launch`, each with `.duration`, `.success`, and `.failure`. Capture and render also record size gauges. Tags are `component_type`, `operation`, and `format`.\n\nLogs: Information when the browser launches and shuts down, Debug when a render or capture starts, Warning with the exception on failure. A subscriber that throws is logged and the HTML is still returned."
     },
     {
       "type": "paragraph",
       "title": "Register in DI ([`Extensions.cs`](Extensions.cs))",
-      "text": "The `WebRenderOptions` configuration section is bound, then a scoped `Microsoft.AspNetCore.Components.Web.HtmlRenderer` (host `IServiceProvider` and `ILoggerFactory`) and a scoped `IWebRendererService` → `WebRendererService` are registered. Registered `ILogger<WebRendererService>` and `IMetrics` are consumed when present. `configSectionName` selects a non-default section. There is no inline-options overload. To skip configuration binding, register `WebRenderOptions` yourself before the extension runs."
+      "text": "`AddWebRendererService(Action<WebRenderOptions>)`, `AddWebRendererService(WebRenderOptions)`, and `AddWebRendererServiceFromConfiguration` register options, a singleton `BrowserSession`, a scoped `HtmlRenderer`, and a scoped `WebRendererService` as `IWebRendererService` and `IWebRenderGenerator`. `TryAdd` keeps a host registration. `ILogger<WebRendererService>` is required. `IMetrics` is used only when `EnableMetrics` is true."
     }
   ],
   "links": [],
@@ -149,6 +164,14 @@
       ]
     },
     {
+      "name": "Lyo.Web.WebRenderer.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Microsoft.AspNetCore.Components.Web",
       "kind": "package",
       "version": "10.0.5",
@@ -159,6 +182,15 @@
     },
     {
       "name": "Microsoft.Extensions.Configuration",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

@@ -152,7 +152,7 @@ cd packages/typescript/lyo-query && npm install && npm run build
 cd ../lyo-api-client && npm install && npm run build
 cd ../lyo-person-api-client && npm install && npm run build
 cd ../../
-# k6 cannot resolve bare "lyo-query" imports — run_all.py rewrites them after build.
+# k6 cannot resolve bare "lyo-query" / "lyo-api-client" imports — run_all.py rewrites them after build.
 ```
 
 Then run a scenario:

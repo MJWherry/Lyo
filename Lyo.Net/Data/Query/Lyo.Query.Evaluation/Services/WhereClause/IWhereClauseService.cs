@@ -19,8 +19,8 @@ public interface IWhereClauseService
     /// <param name="source">Queryable to filter.</param>
     /// <param name="whereClause">Filter tree, or <c>null</c> to return <paramref name="source" /> unchanged.</param>
     /// <param name="includeSubClauses">
-    /// When <c>false</c>, nested <see cref="Lyo.Query.Models.Common.WhereClause.SubClause" /> nodes are omitted from the expression (root-only
-    /// database phase). When <c>true</c> (starts as true), the full tree is translated.
+    /// When <c>false</c>, nested <see cref="Lyo.Query.Models.Common.WhereClause.SubClause" /> nodes are omitted from the expression (root-only database
+    /// phase). When <c>true</c> (starts as true), the full tree is translated.
     /// </param>
     /// <returns><paramref name="source" /> with <c>Where</c> applied when <paramref name="whereClause" /> is non-null; otherwise <paramref name="source" />.</returns>
     /// <exception cref="Lyo.Query.Models.Exceptions.InvalidQueryException">Raised when the clause references invalid paths or unsupported operators for the entity type.</exception>
@@ -60,9 +60,9 @@ public interface IWhereClauseService
     /// <see cref="Lyo.Query.Models.Common.WhereClause.SubClause" /> chains).
     /// </summary>
     /// <remarks>
-    /// On <c>net</c> targets the default implementation raises <see cref="NotSupportedException" /> so database-only services need not implement it: in-memory evaluation
-    /// against a loaded entity is supported by <see cref="WhereClauseEvaluator" />, while where clauses translated to SQL (e.g. PostgreSQL) are not explained in-process.
-    /// <c>netstandard2.0</c> has no default interface implementations, so the member is abstract there.
+    /// On <c>net</c> targets the default implementation raises <see cref="NotSupportedException" /> so database-only services need not implement it: in-memory evaluation against
+    /// a loaded entity is supported by <see cref="WhereClauseEvaluator" />, while where clauses translated to SQL (e.g. PostgreSQL) are not explained in-process. <c>netstandard2.0</c>
+    /// has no default interface implementations, so the member is abstract there.
     /// </remarks>
     WhereClauseExplainResult ExplainMatch<TEntity>(TEntity entity, Models.Common.WhereClause? whereClause)
 #if NET
@@ -73,8 +73,8 @@ public interface IWhereClauseService
 #endif
 
     /// <summary>
-    /// EF (or ORM) include paths for collection segments referenced in <paramref name="whereClause" /> (for example <c>DocketCharges</c> for <c>DocketCharges.Code</c>),
-    /// so navigations are loaded before in-memory sub-clause evaluation.
+    /// EF (or ORM) include paths for collection segments referenced in <paramref name="whereClause" /> (for example <c>DocketCharges</c> for <c>DocketCharges.Code</c>), so
+    /// navigations are loaded before in-memory sub-clause evaluation.
     /// </summary>
     /// <typeparam name="TEntity">Entity type.</typeparam>
     /// <param name="whereClause">Filter tree, or <c>null</c> (empty sequence).</param>

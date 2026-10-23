@@ -25,5 +25,5 @@ export function scrollIntoView(paneSelector, key) {
     if (visible)
         return;
 
-    el.scrollIntoView({ block: "nearest", inline: "nearest" });
+    el.scrollIntoView({block: "nearest", inline: "nearest"});
 }

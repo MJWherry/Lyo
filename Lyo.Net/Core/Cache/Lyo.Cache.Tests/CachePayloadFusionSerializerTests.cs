@@ -5,7 +5,6 @@ using Lyo.Compression;
 using Lyo.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using ZiggyCreatures.Caching.Fusion.Internals;
 using ZiggyCreatures.Caching.Fusion.Internals.Distributed;
 
 namespace Lyo.Cache.Tests;
@@ -15,7 +14,7 @@ public class CachePayloadFusionSerializerTests
     [Fact]
     public void Serialize_FramedByteEntry_PassesValueThroughWithoutJson()
     {
-        var (serializer, codec) = CreateSerializer(autoCompress: true, minSize: 64);
+        var (serializer, codec) = CreateSerializer(true, 64);
         var plaintext = new byte[200];
         var framed = codec.Encode(plaintext);
         codec.IsFramed(framed).ShouldBeTrue();
@@ -36,8 +35,8 @@ public class CachePayloadFusionSerializerTests
     [Fact]
     public void Serialize_StringEntry_FramesCompressedJson()
     {
-        var (serializer, codec) = CreateSerializer(autoCompress: true, minSize: 64);
-        var entry = new FusionCacheDistributedEntry<string>(new string('z', 500), 1, 2, null, new FusionCacheEntryMetadata(true, 9, "etag", 8, 7, 2));
+        var (serializer, codec) = CreateSerializer(true, 64);
+        var entry = new FusionCacheDistributedEntry<string>(new('z', 500), 1, 2, null, new(true, 9, "etag", 8, 7, 2));
         var blob = serializer.Serialize(entry);
         FusionL2Frame.TryParse(blob, out var header, out var valueBytes).ShouldBeTrue();
         codec.IsFramed(valueBytes).ShouldBeTrue();
@@ -55,18 +54,13 @@ public class CachePayloadFusionSerializerTests
     }
 
     [Fact]
-    public void Deserialize_LegacyJsonEntry_RoundtripsValue()
+    public void Deserialize_RawJsonEntry_Throws()
     {
-        var (serializer, _) = CreateSerializer(autoCompress: false, minSize: 1024);
+        var (serializer, _) = CreateSerializer(false, 1024);
         var entry = new FusionCacheDistributedEntry<string>("hello-legacy", 3, 4, ["legacy-tag"], null);
         var json = JsonSerializer.SerializeToUtf8Bytes(entry);
         json[0].ShouldBe((byte)'{');
-        var roundtrip = serializer.Deserialize<FusionCacheDistributedEntry<string>>(json);
-        roundtrip.ShouldNotBeNull();
-        roundtrip.Value.ShouldBe("hello-legacy");
-        roundtrip.Timestamp.ShouldBe(3);
-        roundtrip.LogicalExpirationTimestamp.ShouldBe(4);
-        roundtrip.Tags.ShouldBe(["legacy-tag"]);
+        Assert.Throws<InvalidDataException>(() => serializer.Deserialize<FusionCacheDistributedEntry<string>>(json));
     }
 
     private static (CachePayloadFusionSerializer Serializer, ICachePayloadCodec Codec) CreateSerializer(bool autoCompress, int minSize)
@@ -76,11 +70,10 @@ public class CachePayloadFusionSerializerTests
         services.AddCompressionService();
         services.AddDefaultCompressionService<CompressionService>();
         services.TryAddSingleton(CachePayloadSerializerRegistration.Create);
-        services.AddSingleton<ICachePayloadCodec>(sp => new CachePayloadCodec(
-            sp.GetRequiredService<CacheOptions>(), sp.GetRequiredService<ICompressionService>()));
+        services.AddSingleton<ICachePayloadCodec>(sp => new CachePayloadCodec(sp.GetRequiredService<CacheOptions>(), sp.GetRequiredService<ICompressionService>()));
         var sp = services.BuildServiceProvider();
         var codec = sp.GetRequiredService<ICachePayloadCodec>();
         var payloadSerializer = sp.GetRequiredService<ICachePayloadSerializer>();
-        return (new CachePayloadFusionSerializer(codec, payloadSerializer), codec);
+        return (new(codec, payloadSerializer), codec);
     }
 }

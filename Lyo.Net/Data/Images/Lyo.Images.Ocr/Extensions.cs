@@ -21,7 +21,6 @@ public static class OcrServiceCollectionExtensions
             configuration.GetSection(sectionName).Bind(options);
             options.Validate();
             services.AddSingleton(options);
-
             return services;
         }
 

@@ -61,6 +61,11 @@
           "Download",
           "`DownloadAuth`",
           "`GET Reporting/Generation/{id}/Download` (mapped only when `DownloadStreamFactory` is set)"
+        ],
+        [
+          "Invoice PDF",
+          "`GenerateAuth`",
+          "`GET Reporting/Invoices/{id}/pdf` (501 when `IBillingStore` is not registered; streams stored PDF when `DownloadStreamFactory` is set)"
         ]
       ],
       "trail": "If every auth slot shares one policy, prefer `ReportingApiOptions.WithAuth(auth, downloadStreamFactory)` over setting all four properties.\n\nAll auth slots default to `EndpointAuth.RequireAuthorization()` (authenticated user). **Breaking change:** previously the defaults were `null` (endpoint fell through to the\nbuilder/host default); anonymous access now requires an explicit `EndpointAuth.Anonymous()` per slot. Setting a property to `null` restores the old fall-through behavior, but\nprefer explicit values for Worker and Discord hosts."
@@ -125,6 +130,14 @@
       ]
     },
     {
+      "name": "Lyo.Billing",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Common.Metadata",
       "kind": "lyo",
       "tags": [
@@ -182,14 +195,6 @@
     },
     {
       "name": "Lyo.Common.Core",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Common.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -325,7 +330,23 @@
       ]
     },
     {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.KeyStore",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Ledger",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -374,6 +395,14 @@
     },
     {
       "name": "Lyo.Query.Evaluation",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Sql",
       "kind": "lyo",
       "tags": [
         "transitive",

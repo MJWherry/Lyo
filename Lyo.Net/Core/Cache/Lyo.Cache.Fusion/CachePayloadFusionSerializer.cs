@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Reflection;
-using System.Text.Json;
 using Lyo.Cache.Fusion.Internal;
 using Lyo.Exceptions;
 using ZiggyCreatures.Caching.Fusion.Internals.Distributed;
@@ -9,18 +8,18 @@ using ZiggyCreatures.Caching.Fusion.Serialization;
 namespace Lyo.Cache.Fusion;
 
 /// <summary>
-/// Fusion L2 serializer: codec-framed value bytes plus a binary metadata header. Byte arrays that are already framed are stored as-is. CLR values are
-/// serialized once with <see cref="ICachePayloadSerializer" />, then framed by <see cref="ICachePayloadCodec" />.
+/// Fusion L2 serializer: codec-framed value bytes plus a binary metadata header. Byte arrays that are already framed are stored as-is. CLR values are serialized once with
+/// <see cref="ICachePayloadSerializer" />, then framed by <see cref="ICachePayloadCodec" />.
 /// </summary>
 internal sealed class CachePayloadFusionSerializer : IFusionCacheSerializer
 {
     private static readonly ConcurrentDictionary<Type, MethodInfo> PackEntryMethods = new();
     private static readonly ConcurrentDictionary<Type, MethodInfo> UnpackEntryMethods = new();
-    private static readonly MethodInfo PackEntryDefinition = typeof(CachePayloadFusionSerializer)
-        .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
+
+    private static readonly MethodInfo PackEntryDefinition = typeof(CachePayloadFusionSerializer).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
         .Single(static m => m.Name == nameof(PackEntry) && m.IsGenericMethodDefinition);
-    private static readonly MethodInfo UnpackEntryDefinition = typeof(CachePayloadFusionSerializer)
-        .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
+
+    private static readonly MethodInfo UnpackEntryDefinition = typeof(CachePayloadFusionSerializer).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
         .Single(static m => m.Name == nameof(UnpackEntry) && m.IsGenericMethodDefinition);
 
     private readonly ICachePayloadCodec _codec;
@@ -70,10 +69,7 @@ internal sealed class CachePayloadFusionSerializer : IFusionCacheSerializer
             return DecodeClrValue<T>(valueBytes);
         }
 
-        if (data[0] is (byte)'{' or (byte)'[')
-            return JsonSerializer.Deserialize<T>(data);
-
-        throw new InvalidDataException("Fusion L2 blob is neither a LYO2 frame nor JSON.");
+        throw new InvalidDataException("Fusion L2 blob is not a LYO2 frame.");
     }
 
     /// <inheritdoc />
@@ -120,7 +116,7 @@ internal sealed class CachePayloadFusionSerializer : IFusionCacheSerializer
 
     private TValue? DecodeClrValue<TValue>(byte[] valueBytes)
     {
-        var envelope = _codec.IsFramed(valueBytes) ? _codec.Decode(valueBytes) : new CacheEntryEnvelope(valueBytes);
+        var envelope = _codec.IsFramed(valueBytes) ? _codec.Decode(valueBytes) : new(valueBytes);
         return _payloadSerializer.Deserialize<TValue>(envelope.Payload);
     }
 }

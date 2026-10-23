@@ -11,8 +11,7 @@ namespace Lyo.Reporting.Client;
 public sealed class ReportGenerationClient(IApiClient client, string? routePrefix = null)
 {
     public Task<ReportGenerationRes?> GetAsync(Guid id, IEnumerable<string>? includes = null, CancellationToken ct = default)
-        => client.GetAsAsync<ReportGenerationRes>(
-            ApiRouteBuilder.WithIncludes(ApiRouteBuilder.Build(routePrefix, $"{ReportingRoutes.Generations}/{id}"), includes), ct: ct);
+        => client.GetAsAsync<ReportGenerationRes>(ApiRouteBuilder.WithIncludes(ApiRouteBuilder.Build(routePrefix, $"{ReportingRoutes.Generations}/{id}"), includes), ct: ct);
 
     public Task<QueryRes<ReportGenerationRes>> QueryAsync(QueryConcreteReq request, CancellationToken ct = default)
         => client.PostAsAsync<QueryConcreteReq, QueryRes<ReportGenerationRes>>(ApiRouteBuilder.Build(routePrefix, ReportingRoutes.GenerationsQuery), request, ct: ct);

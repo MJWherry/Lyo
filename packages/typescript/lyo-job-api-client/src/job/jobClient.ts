@@ -1,6 +1,7 @@
-import type {ApiClient, ApiResponse, CreateResult, QueryRes} from "lyo-api-client";
+import type {ApiClient, ApiResponse, CreateResult, PatchRequest, QueryRes} from "lyo-api-client";
 import {withIncludes} from "lyo-api-client";
 import type {ProjectionQueryReq, QueryConcreteReq} from "lyo-query";
+import {JOB_WORKFLOW_RUN_GRAPH_INCLUDES} from "../includes.js";
 import type {
     JobCreateChildRunsReq,
     JobDefinitionLatestRunsRes,
@@ -15,8 +16,15 @@ import type {
     JobRunResultReq,
     JobRunResyncRes,
     JobRunStartedReq,
+    JobScheduleReq,
+    JobScheduleRes,
     JobWorkerInstanceReq,
     JobWorkerInstanceRes,
+    JobWorkflowReq,
+    JobWorkflowRes,
+    JobWorkflowRunReq,
+    JobWorkflowRunRes,
+    JobWorkflowStartReq,
 } from "../models/job.js";
 import {
     JobRoutes,
@@ -30,6 +38,7 @@ import {
     jobRunRequeuePath,
     jobRunRerunPath,
     jobRunStartedPath,
+    jobWorkflowStartPath,
 } from "../routes.js";
 import {createSyncCrudResource, jobPath, type JobClientOptions, type SyncCrudResource} from "./resource.js";
 import {emptyConcreteQuery} from "./queryBuilders.js";
@@ -56,15 +65,21 @@ export interface JobApiClient {
         resyncQueued(definitionId?: string | null): ApiResponse<JobRunResyncRes>;
         log(runId: string, request: JobRunLogReq): ApiResponse<CreateResult<JobRunLogRes>>;
         heartbeat(runId: string, request?: JobRunHeartbeatReq | null): ApiResponse<JobRunRes>;
+        patch(runId: string, body: PatchRequest): ApiResponse<unknown>;
+        patchProgress(runId: string, percent: number, message?: string | null): ApiResponse<unknown>;
         createChildren(parentRunId: string, request: JobCreateChildRunsReq): ApiResponse<JobRunRes[]>;
     };
     workerInstances: SyncCrudResource<JobWorkerInstanceReq, JobWorkerInstanceRes> & {
         register(request: JobWorkerInstanceReq): ApiResponse<CreateResult<JobWorkerInstanceRes>>;
         stop(instanceId: string): ApiResponse<unknown>;
     };
-    schedules: SyncCrudResource<unknown, unknown>;
-    triggers: SyncCrudResource<unknown, unknown>;
-    workflows: SyncCrudResource<unknown, unknown>;
+    schedules: SyncCrudResource<JobScheduleReq, JobScheduleRes>;
+    workflows: SyncCrudResource<JobWorkflowReq, JobWorkflowRes> & {
+        start(workflowId: string, request?: JobWorkflowStartReq | null): ApiResponse<CreateResult<JobWorkflowRunRes>>;
+    };
+    workflowRuns: SyncCrudResource<JobWorkflowRunReq, JobWorkflowRunRes> & {
+        getGraph(workflowRunId: string): ApiResponse<JobWorkflowRunRes>;
+    };
 }
 
 export function createJobApiClient(api: ApiClient, options?: JobClientOptions): JobApiClient {
@@ -184,6 +199,17 @@ export function createJobApiClient(api: ApiClient, options?: JobClientOptions): 
                     body: request ?? undefined,
                 });
             },
+            patch(runId, body) {
+                return api.patch(p(`${JobRoutes.runs}/${runId}`), {...body, keys: body.keys ?? [[runId]]});
+            },
+            patchProgress(runId, percent, message) {
+                const properties: Record<string, unknown> = {
+                    ProgressPercent: percent,
+                    LastHeartbeatUtc: new Date().toISOString(),
+                };
+                if (message != null) properties.ProgressMessage = message;
+                return api.patch(p(`${JobRoutes.runs}/${runId}`), {keys: [[runId]], properties});
+            },
             createChildren(parentRunId, request) {
                 return api.request<JobRunRes[], JobCreateChildRunsReq>({
                     method: "POST",
@@ -206,8 +232,27 @@ export function createJobApiClient(api: ApiClient, options?: JobClientOptions): 
                 });
             },
         },
-        schedules: createSyncCrudResource(api, p(JobRoutes.schedules)),
-        triggers: createSyncCrudResource(api, p(JobRoutes.triggers)),
-        workflows: createSyncCrudResource(api, p(JobRoutes.workflows)),
+        schedules: createSyncCrudResource<JobScheduleReq, JobScheduleRes>(api, p(JobRoutes.schedules)),
+        workflows: {
+            ...createSyncCrudResource<JobWorkflowReq, JobWorkflowRes>(api, p(JobRoutes.workflows)),
+            start(workflowId, request) {
+                const path = p(jobWorkflowStartPath(workflowId));
+                return request
+                    ? api.request<CreateResult<JobWorkflowRunRes>, JobWorkflowStartReq>({
+                          method: "POST",
+                          path,
+                          body: request,
+                      })
+                    : api.request<CreateResult<JobWorkflowRunRes>>({method: "POST", path});
+            },
+        },
+        workflowRuns: {
+            ...createSyncCrudResource<JobWorkflowRunReq, JobWorkflowRunRes>(api, p(JobRoutes.workflowRuns)),
+            getGraph(workflowRunId) {
+                return api.getById<JobWorkflowRunRes>(p(JobRoutes.workflowRuns), workflowRunId, [
+                    ...JOB_WORKFLOW_RUN_GRAPH_INCLUDES,
+                ]);
+            },
+        },
     };
 }

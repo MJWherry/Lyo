@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Config.Api.Hosting;
 
 /// <summary>Binding and poll defaults for resolved config pulled from Config API.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ConfigApiPollingOptions
 {
     public const string SectionName = "ConfigApiPolling";
@@ -18,10 +20,7 @@ public sealed class ConfigApiPollingOptions
     /// <summary>Wait after HTTP 304 (<see cref="Lyo.Config.Api.Models.ConfigResolveOutcome.NotModified" />).</summary>
     public TimeSpan DelayWhenNotModified { get; set; } = TimeSpan.FromSeconds(15);
 
-    /// <summary>
-    /// Wall-clock cap on the blocking first probe in <see cref="IHostedService.StartAsync(System.Threading.CancellationToken)" />. Omit or set non-positive to drop
-    /// the deadline.
-    /// </summary>
+    /// <summary>Wall-clock cap on the blocking first probe in <see cref="IHostedService.StartAsync(System.Threading.CancellationToken)" />. Omit or set non-positive to drop the deadline.</summary>
     public TimeSpan? StartupTimeout { get; set; } = TimeSpan.FromMinutes(5);
 
     /// <summary>When true, startup fails if <see cref="StartupTimeout" /> expires before a successful 200 snapshot.</summary>
@@ -35,4 +34,9 @@ public sealed class ConfigApiPollingOptions
         OperationHelpers.ThrowIfNullOrWhiteSpace(AppKind);
         OperationHelpers.ThrowIfNullOrWhiteSpace(AppId);
     }
+
+    /// <summary>App identity and poll delays for the config client.</summary>
+    public override string ToString() =>
+        $"Enabled={Enabled} App={AppKind}/{AppId} NotModifiedDelay={DelayWhenNotModified} " +
+        $"StartupTimeout={StartupTimeout} RequireSuccess={RequireSuccessOnStartup}";
 }

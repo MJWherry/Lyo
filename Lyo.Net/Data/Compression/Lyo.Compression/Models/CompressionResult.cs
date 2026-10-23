@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Result;
 
 namespace Lyo.Compression.Models;
 
 /// <summary>Outcome of a compress call, plus compression-specific fields.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record CompressionResult : Result<byte[]>
 {
     /// <summary>Timing and size stats for the compress.</summary>
@@ -10,6 +12,9 @@ public sealed record CompressionResult : Result<byte[]>
 
     /// <summary>Optional result message.</summary>
     public string? Message { get; init; }
+
+    /// <summary>Success flag and compressed length. Payload bytes are omitted.</summary>
+    public override string ToString() => $"IsSuccess={IsSuccess} Bytes={Data?.Length ?? 0} Info={CompressionInfo}";
 
     private CompressionResult(bool isSuccess, byte[]? data, IReadOnlyList<Error>? errors = null)
         : base(isSuccess, data, errors) { }

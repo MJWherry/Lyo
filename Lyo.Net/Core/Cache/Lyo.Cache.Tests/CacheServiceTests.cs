@@ -60,7 +60,7 @@ public class CacheServiceTests : IDisposable
             key, async ct => {
                 await Task.Delay(10, ct);
                 return expectedValue;
-            }, token: TestContext.Current.CancellationToken);
+            }, token: TestCt);
 
         result.ShouldBe(expectedValue);
 
@@ -71,7 +71,7 @@ public class CacheServiceTests : IDisposable
                 callCount++;
                 await Task.Delay(10, ct);
                 return "different-value";
-            }, token: TestContext.Current.CancellationToken);
+            }, token: TestCt);
 
         cachedResult.ShouldBe(expectedValue);
         callCount.ShouldBe(0); // Factory should not be called
@@ -88,13 +88,13 @@ public class CacheServiceTests : IDisposable
             key, _ => {
                 callCount++;
                 return Task.FromResult("value-1")!;
-            }, token: TestContext.Current.CancellationToken);
+            }, token: TestCt);
 
         var result2 = await service.GetOrSetAsync<string>(
             key, _ => {
                 callCount++;
                 return Task.FromResult("value-2")!;
-            }, token: TestContext.Current.CancellationToken);
+            }, token: TestCt);
 
         result1.ShouldBe("value-1");
         result2.ShouldBe("value-2");
@@ -252,7 +252,7 @@ public class CacheServiceTests : IDisposable
             key, _ => {
                 callCount++;
                 return Task.FromResult("value-1")!;
-            }, token: TestContext.Current.CancellationToken);
+            }, token: TestCt);
 
         result1.ShouldBe("value-1");
         callCount.ShouldBe(1);
@@ -266,7 +266,7 @@ public class CacheServiceTests : IDisposable
                     throw new("Cache error");
 
                 return Task.FromResult("value-2")!;
-            }, token: TestContext.Current.CancellationToken);
+            }, token: TestCt);
 
         // Expect a factory fallback that returns value-2.
         result2.ShouldBe("value-2");
@@ -287,7 +287,7 @@ public class CacheServiceTests : IDisposable
         var service = new FusionCacheService(_fusionCache, _logger, _options);
         var key = "test-key-tags";
         var tags = new[] { "tag1", "tag2" };
-        await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value")!, tags, TestContext.Current.CancellationToken);
+        await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value")!, tags, TestCt);
 
         // Confirm the item is present.
         var result = service.GetOrSet<string>(key, _ => "default");

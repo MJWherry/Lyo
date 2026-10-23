@@ -54,7 +54,8 @@ public static class ProjectedValueHelper
 
     /// <summary>
     /// Reads a projected field as a boolean. Projections deliver booleans as real <see cref="bool" />s, <see cref="JsonElement" /> true/false, or strings, so parsing is lenient:
-    /// <c>true/t/1/y/yes/on</c> and <c>false/f/0/n/no/off</c> are all recognized (see <see cref="TypeConversion.TryToBoolean(string,out bool,IReadOnlyCollection{string},
+    /// <c>true/t/1/y/yes/on</c> and <c>false/f/0/n/no/off</c> are all recognized (see
+    /// <see cref="TypeConversion.TryToBoolean(string,out bool,IReadOnlyCollection{string},
     /// IReadOnlyCollection{string})" />).
     /// </summary>
     public static bool GetBool(object? item, string fieldName) => ToBool(GetValue(item, fieldName));

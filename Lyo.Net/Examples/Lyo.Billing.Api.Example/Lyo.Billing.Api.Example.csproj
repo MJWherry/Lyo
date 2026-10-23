@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <IsPackable>false</IsPackable>
+        <Description>Example ASP.NET host for the Lyo Billing API (Ledger + Billing). Not packed to NuGet.</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi"/>
+        <PackageReference Include="Scalar.AspNetCore"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Core\Cache\Lyo.Cache\Lyo.Cache.csproj"/>
+        <ProjectReference Include="..\..\Data\Json\Lyo.Json\Lyo.Json.csproj"/>
+        <ProjectReference Include="..\..\Apps\Api\Lyo.Api\Lyo.Api.csproj"/>
+        <ProjectReference Include="..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
+        <ProjectReference Include="..\..\Security\KeyStore\Lyo.KeyStore\Lyo.KeyStore.csproj"/>
+        <ProjectReference Include="..\..\Apps\Ledger\Lyo.Ledger.Api\Lyo.Ledger.Api.csproj"/>
+        <ProjectReference Include="..\..\Apps\Billing\Lyo.Billing.Api\Lyo.Billing.Api.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Billing\Lyo.Billing\Lyo.Billing.csproj"/>
+        <ProjectReference Include="..\..\Plugins\Billing\Lyo.Billing.Postgres\Lyo.Billing.Postgres.csproj"/>
+    </ItemGroup>
+
+</Project>

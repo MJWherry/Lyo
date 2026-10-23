@@ -56,11 +56,11 @@
         ],
         [
           "Alerting",
-          "`AlertOnFailure`, `AlertAfterConsecutiveFailures`, `AlertWebhookUrl`; `JobAlertType`"
+          "`JobAlertType`; failure notification is a workflow step (`Lyo.Job.Workers.Notification`)"
         ],
         [
           "Blackout calendars",
-          "`JobBlackoutCalendarReq`, `JobBlackoutWindowReq` (weekdays, dated range, calendar month/day-of-month, or `HolidaySlug`), `JobBlackoutCalendarEvaluator`, `JobDefinitionReq.JobBlackoutCalendarId` / `CreateBlackoutCalendar` (definition default for all schedules), `JobScheduleReq.JobBlackoutCalendarId` / `CreateBlackoutCalendar` (per-schedule override)"
+          "`JobBlackoutCalendarReq`, `JobBlackoutWindowReq` (weekdays, dated range, calendar month/day-of-month, or `HolidaySlug`), `JobBlackoutCalendarEvaluator`, `JobBlackoutCalendar.ToCalendar` (places enabled windows on a `Calendar`; the window name is the title), `JobBlackoutCalendar.Suppress` (marks fires a skip window would block as muted and moves a deferred fire to the window end), `JobDefinitionReq.JobBlackoutCalendarId` / `CreateBlackoutCalendar` (definition default for all schedules), `JobScheduleReq.JobBlackoutCalendarId` / `CreateBlackoutCalendar` (per-schedule override)"
         ],
         [
           "Batch jobs",
@@ -138,11 +138,7 @@
           "`Linear`"
         ],
         [
-          "`AlertOnFailure`",
-          "`false`"
-        ],
-        [
-          "`MaxRetryCount`, `RetryBackoffSeconds`, `TimeoutMinutes`, `MaxConcurrentRuns`, `CircuitBreakerThreshold`, `CircuitBreakerResetMinutes`, `Priority`, `RetentionDays`, `MaxRunsPerHour`, `ExpectedDurationMinutes`, `MustStartByMinutes`, `AlertAfterConsecutiveFailures`",
+          "`MaxRetryCount`, `RetryBackoffSeconds`, `TimeoutMinutes`, `MaxConcurrentRuns`, `CircuitBreakerThreshold`, `CircuitBreakerResetMinutes`, `Priority`, `RetentionDays`, `MaxRunsPerHour`, `ExpectedDurationMinutes`, `MustStartByMinutes`",
           "`0` (disabled / unset)"
         ]
       ],
@@ -176,16 +172,6 @@
           "Schedule parameter",
           "`JobScheduleParameterReq`",
           "`JobScheduleParameterRes`"
-        ],
-        [
-          "Trigger",
-          "`JobTriggerReq`",
-          "`JobTriggerRes`"
-        ],
-        [
-          "Trigger parameter",
-          "`JobTriggerParameterReq`",
-          "`JobTriggerParameterRes`"
         ],
         [
           "Parallel restriction",
@@ -259,7 +245,12 @@
     {
       "type": "markdown",
       "title": "Builders (`Builders/`)",
-      "body": "Request DTOs can be assembled with fluent factories instead of raw initializers.\n\n- `JobDefinitionBuilder`. `New(name)`, `SetDescription`, `SetType`, `ForPythonWorker` / `ForCSharpWorker`, `AsImportInCSharp`, helpers for schedule/parameter/trigger/restriction,\n and email parameters. `AddBlackoutWindow` / `WithBlackoutCalendar` set a definition-level default cascaded to every schedule (by id or inline). `Build()` returns\n `JobDefinitionReq`.\n- `JobScheduleBuilder`. `Weekdays`, `EveryDay`, `SetMonths`, `SetDays`, `SetTimes`, `SetInterval`, cron helpers, `WithMisfirePolicy`, `WithBlackoutCalendar`,\n `AddBlackoutWindow`, `Build()` → `JobScheduleReq`.\n- `JobBlackoutCalendarBuilder`. `AddBlackoutWindow(...)` with `JobBlackoutPolicy` (`Defer` / `Skip`); `AddBlackoutHoliday(HolidayInfo, ...)` / `AddBlackoutHolidays(...)` /\n `AddFederalHolidayBlackouts()` store one window per holiday (`HolidaySlug`); `AddBlackoutCalendarDays(...)` stores month flags plus days of month. `JobBlackoutCalendarEvaluator.AdjustSlotForBlackout` matches those rules at runtime. `Build()` → `JobBlackoutCalendarReq`.\n- **`JobScheduleBuilder.WithBlackoutCalendar`.** Override on one schedule: link by `Guid`, or create inline via `Action<JobBlackoutCalendarBuilder>`.\n- **`JobWorkflowBuilder`.** Ordered steps with `DependsOnStepIds` and `JobWorkflowFailurePolicy`. `Build()` → `JobWorkflowReq`.\n- `JobRunResultBuilder`, `JobRunBuilder`, `JobTriggerBuilder`. As before; `JobRunBuilder` supports `AddEncryptedParameter`."
+      "body": "Request DTOs can be assembled with fluent factories instead of raw initializers.\n\n- `JobDefinitionBuilder`. `New(name)`, `SetDescription`, `SetType`, `ForPythonWorker` / `ForCSharpWorker`, `AsImportInCSharp`, helpers for schedule/parameter/restriction,\n and email parameters. `AddBlackoutWindow` / `WithBlackoutCalendar` set a definition-level default cascaded to every schedule (by id or inline). `Build()` returns\n `JobDefinitionReq`.\n- `JobScheduleBuilder`. `Weekdays`, `EveryDay`, `SetMonths`, `SetDays`, `SetTimes`, `SetInterval`, cron helpers, `WithMisfirePolicy`, `WithBlackoutCalendar`,\n `AddBlackoutWindow`, `Build()` → `JobScheduleReq`.\n- `JobBlackoutCalendarBuilder`. `AddBlackoutWindow(...)` with `JobBlackoutPolicy` (`Defer` / `Skip`); `AddBlackoutHoliday(HolidayInfo, ...)` / `AddBlackoutHolidays(...)` /\n `AddFederalHolidayBlackouts()` store one window per holiday (`HolidaySlug`); `AddBlackoutCalendarDays(...)` stores month flags plus days of month. `JobBlackoutCalendarEvaluator.AdjustSlotForBlackout` matches those rules at runtime. `Build()` → `JobBlackoutCalendarReq`.\n- **`JobScheduleBuilder.WithBlackoutCalendar`.** Override on one schedule: link by `Guid`, or create inline via `Action<JobBlackoutCalendarBuilder>`.\n- **`JobWorkflowBuilder`.** Ordered steps with `DependsOnStepIds`, `JobWorkflowFailurePolicy`, and an optional `WhereClause` condition serialized onto `JobWorkflowStepReq.ConditionJson`. `Build()` rejects a gate that reads an unknown step, or one the step does not depend on — reading a step before it runs would silently skip. `Build()` → `JobWorkflowReq`.\n- **`JobWorkflowStepCondition`.** Factory for those clauses: `When(sourceStep, resultKey, comparator, value)` for an upstream result, `WhenPath(path, comparator, value)` for any context path, and `All(...)` / `Any(...)` to nest them under AND / OR.\n- `JobRunResultBuilder`, `JobRunBuilder`. As before; `JobRunBuilder` supports `AddEncryptedParameter`."
+    },
+    {
+      "type": "markdown",
+      "title": "Step conditions (`JobWorkflowConditionEvaluator`)",
+      "body": "A workflow step runs only when its `ConditionJson` gate opens. The gate is a serialized `Lyo.Query.Models.Common.WhereClause` — the same AST the query engine filters with — so a `ConditionClause` is one predicate and a `GroupClause` nests predicates under AND / OR to any depth. A null `ConditionJson` runs the step unconditionally.\n\n`JobWorkflowConditionEvaluator.Evaluate(step, context)` returns `Run` or `Skip` against the `JobContextBag` the engine builds for that step. Each `ConditionClause.Field` is a path into that bag:\n\n| Path | Reads |\n| --- | --- |\n| `Step.{name}.Result.{key}` | A result value from an upstream step's completed run |\n| `Step.{name}.Parameter.{key}` | A parameter that upstream step ran with |\n| `Step.{name}.State` | That step's run state |\n| `Input.{key}` | A workflow run input (`JobWorkflowStartReq.Inputs` over the schedule's enabled parameters, frozen at start) |\n| `Workflow.*`, `WorkflowRun.*` | Fields on the workflow and its run |\n| `Definition.*` | Fields on the job definition this step runs |\n\nThe engine and the workflow editor both seed that bag through `JobContextBag.WithWorkflowStep(step, definition, upstream)`, which layers the step, its job definition, and each dependency's completed run (keyed by the dependency's step name) onto the run-level scope. One seeder means the paths a gate can read are defined in one place instead of being restated by the editor.\n\nResolution tries the flat key, then a nested-bag path, then walks object properties by reflection, so `Workflow.Name` reaches a CLR property while `Step.Extract.Result.RowCount` reads a seeded entry. An unresolvable path is a `Skip`, not an error; so is malformed JSON. An empty `GroupClause` states nothing and therefore gates nothing, so clearing a clause in the editor does not strand the step.\n\nA step that does not open is marked `ConditionNotMet`, and every step downstream of it is skipped too."
     },
     {
       "type": "table",
@@ -411,10 +402,6 @@
         [
           "`job.scheduler.slot.conflicts`",
           "Idempotent slot conflicts (23505)"
-        ],
-        [
-          "`job.scheduler.triggers.fired`",
-          "Trigger-driven runs"
         ],
         [
           "`job.scheduler.retries.scheduled`",
@@ -642,6 +629,14 @@
       ]
     },
     {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Schedule.Models",
       "kind": "lyo",
       "tags": [
@@ -668,7 +663,7 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
+      "name": "Lyo.EntityReference.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -684,7 +679,7 @@
       ]
     },
     {
-      "name": "Lyo.Query.Models",
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -709,6 +704,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

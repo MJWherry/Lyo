@@ -17,10 +17,7 @@ public sealed class PostgresChangeTracker : IChangeTracker, IHealth
     private readonly EntityRefOptions _entityRefOptions;
     private readonly TenancyOptions _featureTenancy;
 
-    public PostgresChangeTracker(
-        IDbContextFactory<ChangeTrackerDbContext> contextFactory,
-        EntityRefOptions entityRefOptions,
-        PostgresChangeTrackerOptions changeTrackerOptions)
+    public PostgresChangeTracker(IDbContextFactory<ChangeTrackerDbContext> contextFactory, EntityRefOptions entityRefOptions, PostgresChangeTrackerOptions changeTrackerOptions)
     {
         ArgumentHelpers.ThrowIfNull(contextFactory);
         ArgumentHelpers.ThrowIfNull(entityRefOptions);
@@ -124,8 +121,7 @@ public sealed class PostgresChangeTracker : IChangeTracker, IHealth
     public string HealthCheckName => "change-tracker-postgres";
 
     /// <inheritdoc />
-    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default)
-        => PostgresHealth.CheckAsync(_contextFactory, PostgresChangeTrackerOptions.Schema, ct);
+    public Task<HealthResult> CheckHealthAsync(CancellationToken ct = default) => PostgresHealth.CheckAsync(_contextFactory, PostgresChangeTrackerOptions.Schema, ct);
 
     private ChangeEntryEntity ToEntity(ChangeRecord record)
     {

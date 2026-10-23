@@ -1,0 +1,48 @@
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        @if (_detail is null) {
+            <MudProgressCircular Indeterminate="true" Size="Size.Small"/>
+        }
+        else {
+            <MudStack Spacing="2">
+                <MudText Typo="Typo.subtitle2">@_detail.JurisdictionKey / @_detail.CodeKey</MudText>
+                <MudText Typo="Typo.body2">@_detail.Citation</MudText>
+                <pre class="mud-typography-body2">@_detail.Body</pre>
+                <MudTextField @bind-Value="_heading" Label="Heading" Required="true" Margin="Margin.Dense"/>
+                <MudTextField @bind-Value="_label" Label="Label" Required="true" Margin="Margin.Dense"/>
+                <MudTextField @bind-Value="_citation" Label="Citation" Margin="Margin.Dense"/>
+                <MudTextField @bind-Value="_body" Label="Body" Lines="12" Margin="Margin.Dense"/>
+                <MudCheckBox @bind-Value="_repealed" Label="Repealed" Dense="true"/>
+                <MudText Typo="Typo.subtitle1">Notes</MudText>
+                @foreach (var note in _annotations) {
+                    <MudStack Row="true" Spacing="1">
+                        <MudSelect T="LawAnnotationKind" @bind-Value="note.Kind" Label="Kind" Margin="Margin.Dense" Dense="true" Style="min-width: 12rem;">
+                            @foreach (var kind in Enum.GetValues<LawAnnotationKind>()) {
+                                <MudSelectItem Value="kind">@kind</MudSelectItem>
+                            }
+                        </MudSelect>
+                        <MudTextField @bind-Value="note.Body" Label="Note" Margin="Margin.Dense" Class="flex-grow-1"/>
+                    </MudStack>
+                }
+                <MudButton OnClick="AddNote" StartIcon="@Icons.Material.Filled.Add" Size="Size.Small" Variant="Variant.Outlined">Add note</MudButton>
+                <MudText Typo="Typo.subtitle1">Children</MudText>
+                @if (_children.Count == 0) {
+                    <MudText Typo="Typo.body2">None</MudText>
+                }
+                else {
+                    @foreach (var child in _children) {
+                        <MudText Typo="Typo.body2">@child.Label @child.Heading</MudText>
+                    }
+                }
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close">Close</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Save"
+                   Disabled="@(_detail is null || string.IsNullOrWhiteSpace(_heading) || string.IsNullOrWhiteSpace(_label))">Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>

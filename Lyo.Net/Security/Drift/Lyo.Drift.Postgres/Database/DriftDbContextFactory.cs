@@ -8,6 +8,5 @@ public sealed class DriftDbContextFactory : IDesignTimeDbContextFactory<DriftDbC
 {
     /// <inheritdoc />
     public DriftDbContext CreateDbContext(string[] args)
-        => new(PostgresDesignTime.CreateOptions<DriftDbContext>(
-            "DRIFT_CONNECTION_STRING", PostgresDriftOptions.Schema, "Host=localhost;Database=lyo;Username=lyo;Password=lyo"));
+        => new(PostgresDesignTime.CreateOptions<DriftDbContext>("DRIFT_CONNECTION_STRING", PostgresDriftOptions.Schema, "Host=localhost;Database=lyo;Username=lyo;Password=lyo"));
 }

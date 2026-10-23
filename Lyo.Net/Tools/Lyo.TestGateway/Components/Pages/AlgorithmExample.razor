@@ -1,0 +1,8 @@
+@using Constants = Constants
+@attribute [Route("/" + Constants.Page.Algorithms)]
+@rendermode InteractiveServer
+@inherits AuthorizedPage
+
+<PageTitle>Algorithms</PageTitle>
+
+<AlgorithmWorkbench />

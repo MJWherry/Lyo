@@ -1,5 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using Lyo.Benchmark.Data;
+using Lyo.Common.Core.Identifiers;
 using Lyo.IO.Temp;
 using Lyo.IO.Temp.Models;
 
@@ -30,8 +31,8 @@ public abstract class LyoBenchmarkBase
 
     /// <summary>
     /// Builds <see cref="TempService" /> and <see cref="Temp" />, then runs <see cref="OnGlobalSetup" />. Do not put an untargeted <see cref="GlobalSetupAttribute" /> on a
-    /// derived suite; override <see cref="OnGlobalSetup" /> instead. Targeted <c>[GlobalSetup(Target = ...)]</c> / <c>Targets</c> methods are fine for per-benchmark prep — they
-    /// must call <see cref="EnsureGlobalSetup" /> first, because BenchmarkDotNet can run those targeted setups before this base method.
+    /// derived suite; override <see cref="OnGlobalSetup" /> instead. Targeted <c>[GlobalSetup(Target = ...)]</c> / <c>Targets</c> methods are fine for per-benchmark prep — they must call
+    /// <see cref="EnsureGlobalSetup" /> first, because BenchmarkDotNet can run those targeted setups before this base method.
     /// </summary>
     [GlobalSetup]
     public void BenchmarkGlobalSetup() => EnsureGlobalSetup();
@@ -47,7 +48,7 @@ public abstract class LyoBenchmarkBase
 
         TempService = new IOTempService(
             new() {
-                DirectoryName = $"lyo-bench-{Guid.NewGuid():N}",
+                DirectoryName = $"lyo-bench-{LyoGuid.CreateV7():N}",
                 EnableMetrics = false,
                 // Streaming suites can emit 2 GiB of plaintext plus matching ciphertext/compressed files and per-iteration outputs.
                 MaxFileSizeBytes = 8L * BenchmarkData.MiB * 1024,
@@ -101,8 +102,8 @@ public abstract class LyoBenchmarkBase
     }
 
     /// <summary>
-    /// Writes a seeded plaintext file of <paramref name="size" /> bytes under <see cref="Temp" /> and opens a readable <see cref="FileStream" />. The caller owns the stream;
-    /// the session dispose path deletes the file.
+    /// Writes a seeded plaintext file of <paramref name="size" /> bytes under <see cref="Temp" /> and opens a readable <see cref="FileStream" />. The caller owns the stream; the
+    /// session dispose path deletes the file.
     /// </summary>
     protected FileStream CreateSeededFile(long size, int bufferSize = BenchmarkData.MiB)
         => new(CreateSeededFilePath(size, bufferSize), FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize);

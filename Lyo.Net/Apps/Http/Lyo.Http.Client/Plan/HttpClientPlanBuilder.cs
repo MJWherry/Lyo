@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Core.Net;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
@@ -9,16 +10,16 @@ using Lyo.Result;
 namespace Lyo.Http.Client.Plan;
 
 /// <summary>
-/// The only fluent HTTP API. <see cref="Build" /> serializes; <see cref="RunAsync(CancellationToken)" /> executes.
-/// Parse/extract attach to the open request. <see cref="Commit" /> seals it. A new Get/Post/Download/Delay auto-commits.
+/// The only fluent HTTP API. <see cref="Build" /> serializes; <see cref="RunAsync(CancellationToken)" /> executes. Parse/extract attach to the open request.
+/// <see cref="Commit" /> seals it. A new Get/Post/Download/Delay auto-commits.
 /// </summary>
 public sealed class HttpClientPlanBuilder
 {
-    private readonly List<HttpClientPlanStep> _steps = [];
-    private readonly string? _name;
     private readonly ILyoHttpClient? _client;
-    private HttpRequestPlanStep? _open;
+    private readonly string? _name;
     private readonly List<HttpClientPlanStep> _openThen = [];
+    private readonly List<HttpClientPlanStep> _steps = [];
+    private HttpRequestPlanStep? _open;
 
     private HttpClientPlanBuilder(string? name, ILyoHttpClient? client)
     {
@@ -50,7 +51,7 @@ public sealed class HttpClientPlanBuilder
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(method);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(uri);
         AutoCommit();
-        _open = new(method, uri) { StepId = Guid.NewGuid() };
+        _open = new(method, uri) { StepId = LyoGuid.CreateV7() };
         return this;
     }
 
@@ -93,6 +94,7 @@ public sealed class HttpClientPlanBuilder
             list.Add(name);
             return s with { HeadersToRemove = list };
         });
+
         return this;
     }
 
@@ -108,9 +110,17 @@ public sealed class HttpClientPlanBuilder
     {
         MutateOpen(s => {
             var list = s.Cookies?.ToList() ?? [];
-            list.Add(new() { Name = name, Value = value, Domain = domain, Path = path });
+            list.Add(
+                new() {
+                    Name = name,
+                    Value = value,
+                    Domain = domain,
+                    Path = path
+                });
+
             return s with { Cookies = list };
         });
+
         return this;
     }
 
@@ -131,6 +141,7 @@ public sealed class HttpClientPlanBuilder
             list.Add(name);
             return s with { CookiesToRemove = list };
         });
+
         return this;
     }
 
@@ -156,8 +167,7 @@ public sealed class HttpClientPlanBuilder
     }
 
     /// <summary>JSON body from an object.</summary>
-    public HttpClientPlanBuilder WithJsonBody<T>(T body, JsonSerializerOptions? options = null)
-        => WithJsonBody(JsonSerializer.Serialize(body, options));
+    public HttpClientPlanBuilder WithJsonBody<T>(T body, JsonSerializerOptions? options = null) => WithJsonBody(JsonSerializer.Serialize(body, options));
 
     /// <summary>Form fields.</summary>
     public HttpClientPlanBuilder WithForm(IEnumerable<KeyValuePair<string, string>> fields)
@@ -206,8 +216,7 @@ public sealed class HttpClientPlanBuilder
         => Then(new HttpExtractSourcesPlanStep(variableName, new() { Selector = selector, Attributes = attributes ?? LyoHttpExtractOptions.DefaultSourceAttributes.ToArray() }));
 
     /// <summary>Extract images.</summary>
-    public HttpClientPlanBuilder ThenExtractImages(string variableName, LyoHttpExtractOptions? options = null)
-        => Then(new HttpExtractImagesPlanStep(variableName, options));
+    public HttpClientPlanBuilder ThenExtractImages(string variableName, LyoHttpExtractOptions? options = null) => Then(new HttpExtractImagesPlanStep(variableName, options));
 
     /// <summary>Extract links.</summary>
     public HttpClientPlanBuilder ThenExtractLinks(string variableName, string[]? extensionFilter = null, string[]? hostFilter = null, LyoHttpExtractOptions? options = null)
@@ -215,6 +224,7 @@ public sealed class HttpClientPlanBuilder
         options ??= new();
         if (extensionFilter != null)
             options.FileExtensionFilter = extensionFilter;
+
         if (hostFilter != null)
             options.HostFilter = hostFilter;
 
@@ -226,48 +236,37 @@ public sealed class HttpClientPlanBuilder
         => Then(new HttpExtractAttributePlanStep(variableName, new() { Selector = selector, Attributes = [attribute] }));
 
     /// <summary>Extract inner text.</summary>
-    public HttpClientPlanBuilder ThenExtractText(string variableName, string selector)
-        => Then(new HttpExtractTextPlanStep(variableName, new() { Selector = selector }));
+    public HttpClientPlanBuilder ThenExtractText(string variableName, string selector) => Then(new HttpExtractTextPlanStep(variableName, new() { Selector = selector }));
 
     /// <summary>Extract inner HTML.</summary>
-    public HttpClientPlanBuilder ThenExtractHtml(string variableName, string selector)
-        => Then(new HttpExtractHtmlPlanStep(variableName, new() { Selector = selector }));
+    public HttpClientPlanBuilder ThenExtractHtml(string variableName, string selector) => Then(new HttpExtractHtmlPlanStep(variableName, new() { Selector = selector }));
 
     /// <summary>Extract with a regex.</summary>
-    public HttpClientPlanBuilder ThenExtractRegex(string pattern, string variableName, string? group = null)
-        => Then(new HttpExtractRegexPlanStep(variableName, pattern, group));
+    public HttpClientPlanBuilder ThenExtractRegex(string pattern, string variableName, string? group = null) => Then(new HttpExtractRegexPlanStep(variableName, pattern, group));
 
     /// <summary>Extract meta / OG. Prefix keys with <paramref name="variablePrefix" />.</summary>
-    public HttpClientPlanBuilder ThenExtractMeta(string variablePrefix)
-        => Then(new HttpExtractMetaPlanStep(variablePrefix));
+    public HttpClientPlanBuilder ThenExtractMeta(string variablePrefix) => Then(new HttpExtractMetaPlanStep(variablePrefix));
 
     /// <summary>Extract JSON-LD.</summary>
-    public HttpClientPlanBuilder ThenExtractJsonLd(string variableName)
-        => Then(new HttpExtractJsonLdPlanStep(variableName));
+    public HttpClientPlanBuilder ThenExtractJsonLd(string variableName) => Then(new HttpExtractJsonLdPlanStep(variableName));
 
     /// <summary>Extract a table.</summary>
-    public HttpClientPlanBuilder ThenExtractTable(string selector, string variableName)
-        => Then(new HttpExtractTablePlanStep(variableName, selector));
+    public HttpClientPlanBuilder ThenExtractTable(string selector, string variableName) => Then(new HttpExtractTablePlanStep(variableName, selector));
 
     /// <summary>Parse JSON body.</summary>
-    public HttpClientPlanBuilder ThenExtractJson(string variableName)
-        => Then(new HttpExtractJsonPlanStep(variableName));
+    public HttpClientPlanBuilder ThenExtractJson(string variableName) => Then(new HttpExtractJsonPlanStep(variableName));
 
     /// <summary>JSON path.</summary>
-    public HttpClientPlanBuilder ThenExtractJsonPath(string variableName, string jsonPath)
-        => Then(new HttpExtractJsonPathPlanStep(variableName, jsonPath));
+    public HttpClientPlanBuilder ThenExtractJsonPath(string variableName, string jsonPath) => Then(new HttpExtractJsonPathPlanStep(variableName, jsonPath));
 
     /// <summary>JSON array → string list.</summary>
-    public HttpClientPlanBuilder ThenExtractJsonArray(string variableName, string? jsonPath = null)
-        => Then(new HttpExtractJsonArrayPlanStep(variableName, jsonPath));
+    public HttpClientPlanBuilder ThenExtractJsonArray(string variableName, string? jsonPath = null) => Then(new HttpExtractJsonArrayPlanStep(variableName, jsonPath));
 
     /// <summary>JSON records.</summary>
-    public HttpClientPlanBuilder ThenExtractJsonRecords(string variableName, string? jsonPath = null)
-        => Then(new HttpExtractJsonRecordsPlanStep(variableName, jsonPath));
+    public HttpClientPlanBuilder ThenExtractJsonRecords(string variableName, string? jsonPath = null) => Then(new HttpExtractJsonRecordsPlanStep(variableName, jsonPath));
 
     /// <summary>Copy a response header.</summary>
-    public HttpClientPlanBuilder ThenExtractHeader(string headerName, string variableName)
-        => Then(new HttpExtractHeaderPlanStep(headerName, variableName));
+    public HttpClientPlanBuilder ThenExtractHeader(string headerName, string variableName) => Then(new HttpExtractHeaderPlanStep(headerName, variableName));
 
     /// <summary>Failure policy on the open request.</summary>
     public HttpClientPlanBuilder OnFailure(HttpStepFailure failure)
@@ -306,17 +305,26 @@ public sealed class HttpClientPlanBuilder
     }
 
     /// <summary>Filter a string list. Auto-commits the open request so extract cannot attach here.</summary>
-    public HttpClientPlanBuilder FilterList(string sourceVariable, string targetVariable, string? includeRegex = null, string? excludeRegex = null, int skip = 0, int take = 0, bool distinct = true)
+    public HttpClientPlanBuilder FilterList(
+        string sourceVariable,
+        string targetVariable,
+        string? includeRegex = null,
+        string? excludeRegex = null,
+        int skip = 0,
+        int take = 0,
+        bool distinct = true)
     {
         AutoCommit();
-        _steps.Add(new HttpFilterListPlanStep(sourceVariable, targetVariable) {
-            StepId = Guid.NewGuid(),
-            IncludeRegex = includeRegex,
-            ExcludeRegex = excludeRegex,
-            Skip = skip,
-            Take = take,
-            Distinct = distinct
-        });
+        _steps.Add(
+            new HttpFilterListPlanStep(sourceVariable, targetVariable) {
+                StepId = LyoGuid.CreateV7(),
+                IncludeRegex = includeRegex,
+                ExcludeRegex = excludeRegex,
+                Skip = skip,
+                Take = take,
+                Distinct = distinct
+            });
+
         return this;
     }
 
@@ -324,7 +332,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder MapList(string sourceVariable, string targetVariable, string? prefix = null, string? suffix = null)
     {
         AutoCommit();
-        _steps.Add(new HttpMapListPlanStep(sourceVariable, targetVariable, prefix, suffix) { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpMapListPlanStep(sourceVariable, targetVariable, prefix, suffix) { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -332,7 +340,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder DownloadFile(string uri, string destination, string? savePathAs = null)
     {
         AutoCommit();
-        _steps.Add(new HttpDownloadFilePlanStep(uri, destination) { StepId = Guid.NewGuid(), SavePathAs = savePathAs });
+        _steps.Add(new HttpDownloadFilePlanStep(uri, destination) { StepId = LyoGuid.CreateV7(), SavePathAs = savePathAs });
         return this;
     }
 
@@ -340,7 +348,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder DownloadUrls(string variableName, string directory, string? prefix = null)
     {
         AutoCommit();
-        _steps.Add(new HttpDownloadUrlsPlanStep(variableName, directory, prefix) { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpDownloadUrlsPlanStep(variableName, directory, prefix) { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -351,7 +359,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder Delay(TimeSpan min, TimeSpan? max = null)
     {
         AutoCommit();
-        _steps.Add(new HttpDelayPlanStep(min, max) { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpDelayPlanStep(min, max) { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -359,7 +367,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder ThenSetHeader(string name, string value)
     {
         AutoCommit();
-        _steps.Add(new HttpSetHeaderPlanStep(name, value) { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpSetHeaderPlanStep(name, value) { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -367,7 +375,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder ThenRemoveHeader(string name)
     {
         AutoCommit();
-        _steps.Add(new HttpRemoveHeaderPlanStep(name) { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpRemoveHeaderPlanStep(name) { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -375,7 +383,15 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder ThenSetCookie(string name, string value, string? domain = null, string? path = null)
     {
         AutoCommit();
-        _steps.Add(new HttpSetCookiePlanStep(new() { Name = name, Value = value, Domain = domain, Path = path }) { StepId = Guid.NewGuid() });
+        _steps.Add(
+            new HttpSetCookiePlanStep(
+                new() {
+                    Name = name,
+                    Value = value,
+                    Domain = domain,
+                    Path = path
+                }) { StepId = LyoGuid.CreateV7() });
+
         return this;
     }
 
@@ -383,7 +399,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder ThenRemoveCookie(string name, string? domain = null)
     {
         AutoCommit();
-        _steps.Add(new HttpRemoveCookiePlanStep(name, domain) { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpRemoveCookiePlanStep(name, domain) { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -391,7 +407,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder ThenClearCookies()
     {
         AutoCommit();
-        _steps.Add(new HttpClearCookiesPlanStep { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpClearCookiesPlanStep { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -399,7 +415,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder ThenExportCookies(string variableName)
     {
         AutoCommit();
-        _steps.Add(new HttpExportCookiesPlanStep(variableName) { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpExportCookiesPlanStep(variableName) { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -407,7 +423,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder ThenLoadCookies(string? variableName = null, string? cookieFile = null)
     {
         AutoCommit();
-        _steps.Add(new HttpLoadCookiesPlanStep(variableName, cookieFile) { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpLoadCookiesPlanStep(variableName, cookieFile) { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -415,7 +431,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder StoreLiteral(string variableName, string value)
     {
         AutoCommit();
-        _steps.Add(new HttpStoreLiteralPlanStep(variableName, value) { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpStoreLiteralPlanStep(variableName, value) { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -423,7 +439,7 @@ public sealed class HttpClientPlanBuilder
     public HttpClientPlanBuilder StoreTemplate(string variableName, string template)
     {
         AutoCommit();
-        _steps.Add(new HttpStoreTemplatePlanStep(variableName, template) { StepId = Guid.NewGuid() });
+        _steps.Add(new HttpStoreTemplatePlanStep(variableName, template) { StepId = LyoGuid.CreateV7() });
         return this;
     }
 
@@ -476,8 +492,7 @@ public sealed class HttpClientPlanBuilder
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(destinationPath);
         var plan = Build();
-        var request = plan.Steps.OfType<HttpRequestPlanStep>().LastOrDefault()
-            ?? throw new InvalidOperationException("DownloadToFileAsync needs a request step.");
+        var request = plan.Steps.OfType<HttpRequestPlanStep>().LastOrDefault() ?? throw new InvalidOperationException("DownloadToFileAsync needs a request step.");
         var client = _client ?? throw new InvalidOperationException("Pass a client to HttpClientPlanBuilder.New.");
         return await client.DownloadToFileAsync(request.Uri, destinationPath, ct: ct).ConfigureAwait(false);
     }

@@ -1,14 +1,6 @@
-@namespace Lyo.Web.Components.Cache
-@using System.Collections
-@using System.Text.Json
-@using Lyo.Api.Client
-@using Lyo.Api.Models.Common.Request
-@using Lyo.Api.Models.Common.Response
 @using Lyo.Api.Models.Enums
-@using Lyo.Common.Core.Conversion
-@using Lyo.Common.Metadata.Records
 @using Lyo.Web.Components.DataGrid
-@using Lyo.Web.Components.Models
+@namespace Lyo.Web.Components.Cache
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
@@ -95,6 +87,8 @@
 </LyoDataGridProjected>
 
 @code {
+
     private RenderFragment<object?> GetRowMenuControls()
         => row => @<MudMenuItem Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteRowAsync(row))">Delete</MudMenuItem>;
+
 }

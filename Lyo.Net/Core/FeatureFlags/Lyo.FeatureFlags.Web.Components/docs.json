@@ -1,0 +1,96 @@
+{
+  "id": "Lyo.FeatureFlags.Web.Components",
+  "name": "Lyo.FeatureFlags.Web.Components",
+  "area": "Core",
+  "tagline": "Blazor switch list and show/hide wrapper for feature flags.",
+  "description": "FeatureFlagPanel lists every flag's name and mode from the in-process snapshot. AllowEdit defaults to false. A switch sets that flag on or off through IFeatureFlagUpdater. A percentage or rules flag loses that targeting when the switch changes. FeatureFlagView renders its child only when IFeatureFlagService.IsEnabled is true. A missing service or a disabled flag renders nothing. Register AddFeatureFlags or AddFeatureFlagsFromConfiguration on the host.",
+  "features": [
+    "**FeatureFlagPanel.** Read-only until AllowEdit is true. The switch is on only for mode On. A percentage or rules row says that switching replaces that flag with on or off.",
+    "**FeatureFlagView.** Takes Name, ChildContent, and an optional FeatureFlagContext. Null context is an anonymous caller."
+  ],
+  "examples": [
+    {
+      "title": "Panel and view",
+      "language": "razor",
+      "code": "<FeatureFlagPanel AllowEdit=\"true\"/>\n\n<FeatureFlagView Name=\"checkout\">\n    <CheckoutForm/>\n</FeatureFlagView>"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/FeatureFlags/Lyo.FeatureFlags.Web.Components/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.FeatureFlags",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "MudBlazor",
+      "kind": "package",
+      "version": "9.3",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Primitives",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

@@ -4,8 +4,8 @@ using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Update;
 using Lyo.Api.Tests.Fixtures;
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
-using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres.Database;
@@ -27,7 +27,7 @@ public sealed class QueryCacheTagInvalidationPostgresTests
     [Fact]
     public async Task Query_WithNestedInclude_InvalidatesWhenRootEntityPatched()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var defId = await _fixture.SeedJobDefinitionAsync($"QTagInv_{suffix}");
         await _fixture.SeedJobRunAsync(defId, $"before-{suffix}");
         using var scope = _fixture.ServiceProvider.CreateScope();
@@ -42,14 +42,14 @@ public sealed class QueryCacheTagInvalidationPostgresTests
 
         async Task<string?> NameFromQuery()
         {
-            var result = await queryService.Query<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+            var result = await queryService.Query<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
             Assert.True(result.IsSuccess);
             return result.Items![0].Name;
         }
 
         Assert.Contains($"QTagInv_{suffix}", await NameFromQuery(), StringComparison.Ordinal);
         var patchRequest = new PatchRequest { Keys = [[defId]], Properties = new() { ["Name"] = $"QTagInv_renamed_{suffix}" } };
-        var patchResult = await patchService.PatchAsync<JobDefinition, JobDefinitionRes>(patchRequest, ct: TestContext.Current.CancellationToken);
+        var patchResult = await patchService.PatchAsync<JobDefinition, JobDefinitionRes>(patchRequest, ct: TestCt);
         Assert.Equal(PatchResultEnum.Updated, patchResult.Result);
         Assert.Equal($"QTagInv_renamed_{suffix}", await NameFromQuery());
     }
@@ -57,7 +57,7 @@ public sealed class QueryCacheTagInvalidationPostgresTests
     [Fact]
     public async Task Query_WithNestedInclude_InvalidatesWhenIncludedEntityPatched()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var defId = await _fixture.SeedJobDefinitionAsync($"QTagCascade_{suffix}");
         var runId = await _fixture.SeedJobRunAsync(defId, $"before-{suffix}");
         using var scope = _fixture.ServiceProvider.CreateScope();
@@ -72,7 +72,7 @@ public sealed class QueryCacheTagInvalidationPostgresTests
 
         async Task<string?> CreatedByFromQuery()
         {
-            var result = await queryService.Query<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+            var result = await queryService.Query<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
             Assert.True(result.IsSuccess);
             var def = result.Items![0];
             return def.JobRuns.Single(r => r.Id == runId).CreatedBy;
@@ -80,7 +80,7 @@ public sealed class QueryCacheTagInvalidationPostgresTests
 
         Assert.Equal($"before-{suffix}", await CreatedByFromQuery());
         var patchRequest = new PatchRequest { Keys = [[runId]], Properties = new() { ["CreatedBy"] = $"after-{suffix}" } };
-        var patchResult = await patchService.PatchAsync<JobRun, JobRunRes>(patchRequest, ct: TestContext.Current.CancellationToken);
+        var patchResult = await patchService.PatchAsync<JobRun, JobRunRes>(patchRequest, ct: TestCt);
         Assert.Equal(PatchResultEnum.Updated, patchResult.Result);
         Assert.Equal($"after-{suffix}", await CreatedByFromQuery());
     }
@@ -88,7 +88,7 @@ public sealed class QueryCacheTagInvalidationPostgresTests
     [Fact]
     public async Task QueryProject_WithSelectOnNestedPath_InvalidatesWhenRelatedEntityPatched()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var defId = await _fixture.SeedJobDefinitionAsync($"QPTagInv_{suffix}");
         var runId = await _fixture.SeedJobRunAsync(defId, $"before-{suffix}");
         using var scope = _fixture.ServiceProvider.CreateScope();
@@ -103,7 +103,7 @@ public sealed class QueryCacheTagInvalidationPostgresTests
 
         async Task<string?> CreatedByFromProjection()
         {
-            var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+            var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
             Assert.True(result.IsSuccess);
             var projected = Assert.IsType<List<object?>>(result.Items![0]);
             Assert.Single(projected);
@@ -112,7 +112,7 @@ public sealed class QueryCacheTagInvalidationPostgresTests
 
         Assert.Equal($"before-{suffix}", await CreatedByFromProjection());
         var patchRequest = new PatchRequest { Keys = [[runId]], Properties = new() { ["CreatedBy"] = $"after-{suffix}" } };
-        var patchResult = await patchService.PatchAsync<JobRun, JobRunRes>(patchRequest, ct: TestContext.Current.CancellationToken);
+        var patchResult = await patchService.PatchAsync<JobRun, JobRunRes>(patchRequest, ct: TestCt);
         Assert.Equal(PatchResultEnum.Updated, patchResult.Result);
         Assert.Equal($"after-{suffix}", await CreatedByFromProjection());
     }
@@ -120,7 +120,7 @@ public sealed class QueryCacheTagInvalidationPostgresTests
     [Fact]
     public async Task Get_WithNestedInclude_InvalidatesWhenRootEntityPatched()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var defId = await _fixture.SeedJobDefinitionAsync($"GTagInv_{suffix}");
         await _fixture.SeedJobRunAsync(defId, $"before-{suffix}");
         using var scope = _fixture.ServiceProvider.CreateScope();
@@ -129,14 +129,14 @@ public sealed class QueryCacheTagInvalidationPostgresTests
 
         async Task<string?> NameFromGet()
         {
-            var entity = await queryService.Get<JobDefinition>([defId], ["JobRuns"], TestContext.Current.CancellationToken);
+            var entity = await queryService.Get<JobDefinition>([defId], ["JobRuns"], TestCt);
             Assert.NotNull(entity);
             return entity.Name;
         }
 
         Assert.Contains($"GTagInv_{suffix}", await NameFromGet(), StringComparison.Ordinal);
         var patchRequest = new PatchRequest { Keys = [[defId]], Properties = new() { ["Name"] = $"GTagInv_renamed_{suffix}" } };
-        var patchResult = await patchService.PatchAsync<JobDefinition, JobDefinitionRes>(patchRequest, ct: TestContext.Current.CancellationToken);
+        var patchResult = await patchService.PatchAsync<JobDefinition, JobDefinitionRes>(patchRequest, ct: TestCt);
         Assert.Equal(PatchResultEnum.Updated, patchResult.Result);
         Assert.Equal($"GTagInv_renamed_{suffix}", await NameFromGet());
     }
@@ -144,7 +144,7 @@ public sealed class QueryCacheTagInvalidationPostgresTests
     [Fact]
     public async Task Get_WithNestedInclude_InvalidatesWhenIncludedEntityPatched()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var defId = await _fixture.SeedJobDefinitionAsync($"GTagCascade_{suffix}");
         var runId = await _fixture.SeedJobRunAsync(defId, $"before-{suffix}");
         using var scope = _fixture.ServiceProvider.CreateScope();
@@ -153,14 +153,14 @@ public sealed class QueryCacheTagInvalidationPostgresTests
 
         async Task<string?> CreatedByFromGet()
         {
-            var entity = await queryService.Get<JobDefinition>([defId], ["JobRuns"], TestContext.Current.CancellationToken);
+            var entity = await queryService.Get<JobDefinition>([defId], ["JobRuns"], TestCt);
             Assert.NotNull(entity);
             return entity.JobRuns.Single(r => r.Id == runId).CreatedBy;
         }
 
         Assert.Equal($"before-{suffix}", await CreatedByFromGet());
         var patchRequest = new PatchRequest { Keys = [[runId]], Properties = new() { ["CreatedBy"] = $"after-{suffix}" } };
-        var patchResult = await patchService.PatchAsync<JobRun, JobRunRes>(patchRequest, ct: TestContext.Current.CancellationToken);
+        var patchResult = await patchService.PatchAsync<JobRun, JobRunRes>(patchRequest, ct: TestCt);
         Assert.Equal(PatchResultEnum.Updated, patchResult.Result);
         Assert.Equal($"after-{suffix}", await CreatedByFromGet());
     }
@@ -168,7 +168,7 @@ public sealed class QueryCacheTagInvalidationPostgresTests
     [Fact]
     public async Task Query_EditorIncludes_InvalidatesWhenParameterOptionsUpdated()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var defId = await _fixture.SeedJobDefinitionAsync($"QTagParam_{suffix}");
         var beforeOptions = ParameterOptionsJson.FromAllowedValues("""["inbound"]""");
         var afterOptions = ParameterOptionsJson.FromAllowedValues("""["inbound","outbound"]""");
@@ -180,7 +180,7 @@ public sealed class QueryCacheTagInvalidationPostgresTests
 
         async Task<string?> OptionsFromQuery()
         {
-            var result = await queryService.Query<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+            var result = await queryService.Query<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
             Assert.True(result.IsSuccess);
             return result.Items![0].JobParameters.Single(p => p.Id == paramId).Options;
         }
@@ -193,8 +193,8 @@ public sealed class QueryCacheTagInvalidationPostgresTests
             Options = afterOptions,
             AllowedValues = ParameterOptionsJson.ToAllowedValues(afterOptions)
         };
-        var updateResult = await updateService.UpdateAsync<JobParameterReq, JobParameter, JobParameterRes>(
-            new UpdateRequest<JobParameterReq>(updateReq, paramId), ct: TestContext.Current.CancellationToken);
+
+        var updateResult = await updateService.UpdateAsync<JobParameterReq, JobParameter, JobParameterRes>(new(updateReq, paramId), ct: TestCt);
         Assert.Equal(UpdateResultEnum.Updated, updateResult.Result);
         Assert.Equal(afterOptions, await OptionsFromQuery());
     }
@@ -202,7 +202,7 @@ public sealed class QueryCacheTagInvalidationPostgresTests
     [Fact]
     public async Task Query_EditorIncludes_InvalidatesWhenScheduleUpdated()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var defId = await _fixture.SeedJobDefinitionAsync($"QTagSched_{suffix}");
         var scheduleId = await _fixture.SeedJobScheduleAsync(defId, $"before-{suffix}");
         using var scope = _fixture.ServiceProvider.CreateScope();
@@ -212,7 +212,7 @@ public sealed class QueryCacheTagInvalidationPostgresTests
 
         async Task<string?> DescriptionFromQuery()
         {
-            var result = await queryService.Query<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+            var result = await queryService.Query<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
             Assert.True(result.IsSuccess);
             return result.Items![0].JobSchedules.Single(s => s.Id == scheduleId).Description;
         }
@@ -223,11 +223,11 @@ public sealed class QueryCacheTagInvalidationPostgresTests
             Type = ScheduleType.SetTimes,
             DayFlags = DayFlags.EveryDay,
             Description = $"after-{suffix}",
-            Times = [new TimeOnly(9, 0)],
+            Times = [new(9, 0)],
             Enabled = true
         };
-        var updateResult = await updateService.UpdateAsync<JobScheduleReq, JobSchedule, JobScheduleRes>(
-            new UpdateRequest<JobScheduleReq>(updateReq, scheduleId), ct: TestContext.Current.CancellationToken);
+
+        var updateResult = await updateService.UpdateAsync<JobScheduleReq, JobSchedule, JobScheduleRes>(new(updateReq, scheduleId), ct: TestCt);
         Assert.Equal(UpdateResultEnum.Updated, updateResult.Result);
         Assert.Equal($"after-{suffix}", await DescriptionFromQuery());
     }
@@ -237,11 +237,6 @@ public sealed class QueryCacheTagInvalidationPostgresTests
             Start = 0,
             Amount = 1,
             Keys = [[defId]],
-            Include = [
-                "JobParameters",
-                "JobSchedules.JobScheduleParameters",
-                "JobSchedules.JobBlackoutCalendar.JobBlackoutWindows",
-                "JobTriggerTriggersJobDefinitions"
-            ]
+            Include = ["JobParameters", "JobSchedules.JobScheduleParameters", "JobSchedules.JobBlackoutCalendar.JobBlackoutWindows"]
         };
 }

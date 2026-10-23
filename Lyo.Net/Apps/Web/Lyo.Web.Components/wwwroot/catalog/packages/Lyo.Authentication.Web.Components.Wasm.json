@@ -19,7 +19,7 @@
     {
       "title": "Quick start (3)",
       "language": "json",
-      "code": "{\n  \"LyoOidcBff\": {\n    \"AllowedReturnOrigins\": [ \"https://spa.example.com\" ],\n    \"DefaultReturnUrl\": \"/\",\n    \"HandoffCodeTtl\": \"00:00:30\"\n  }\n}"
+      "code": "{\n  \"LyoSso\": {\n    \"AllowedReturnOrigins\": [ \"https://spa.example.com\" ],\n    \"DefaultReturnUrl\": \"/\",\n    \"HandoffCodeTtl\": \"00:00:30\"\n  }\n}"
     },
     {
       "title": "Flow",
@@ -77,7 +77,7 @@
     {
       "type": "paragraph",
       "title": "Quick start",
-      "text": "Register in the consuming WASM host's `Program.cs`. Serve `appsettings.json` from the WASM client's `wwwroot/`. On the API side, the WASM origin must appear in `LyoOidcBff.AllowedReturnOrigins`:"
+      "text": "Register in the consuming WASM host's `Program.cs`. Serve `appsettings.json` from the WASM client's `wwwroot/`. On the API side, the WASM origin must appear in `LyoSso.AllowedReturnOrigins`:"
     },
     {
       "type": "markdown",
@@ -156,6 +156,14 @@
       ]
     },
     {
+      "name": "Lyo.Audit",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Authentication.Models",
       "kind": "lyo",
       "tags": [
@@ -164,7 +172,15 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
+      "name": "Lyo.Authorization",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authorization.Web.Components",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -204,6 +220,14 @@
       ]
     },
     {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Exceptions",
       "kind": "lyo",
       "tags": [
@@ -213,6 +237,14 @@
     },
     {
       "name": "Lyo.Hashing",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -237,6 +269,14 @@
     },
     {
       "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -292,7 +332,23 @@
       ]
     },
     {
+      "name": "Lyo.RateLimit",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Schedule.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -348,7 +404,31 @@
       ]
     },
     {
+      "name": "Lyo.Web.Components.Export.Toml",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Web.Components.Export.Xlsx",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Components.Export.Xml",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Components.Export.Yaml",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -395,6 +475,16 @@
       "name": "Microsoft.Bcl.AsyncInterfaces",
       "kind": "package",
       "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.TimeProvider",
+      "kind": "package",
+      "version": "8.0.1",
       "tags": [
         "transitive",
         "microsoft",
@@ -494,6 +584,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

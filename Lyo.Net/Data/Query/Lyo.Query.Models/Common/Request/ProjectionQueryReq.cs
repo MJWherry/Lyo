@@ -18,8 +18,14 @@ public sealed class ProjectionQueryReq : QueryRequestBase, IQueryExecutionReques
     /// <summary>Optional computed fields (SmartFormat). Needs IFormatterService. Placeholders reference <see cref="Select" /> field names.</summary>
     public List<ComputedField> ComputedFields { get; set; } = [];
 
+    /// <summary>
+    /// When non-empty, the request returns one row per distinct <see cref="Select" /> value and each entry is an extra column. Empty <see cref="Select" /> is one summary row
+    /// over the filtered set. Omit this list to keep one row per entity.
+    /// </summary>
+    public List<AggregateSelect> Aggregates { get; set; } = [];
+
     QueryRequestOptions IQueryExecutionRequest.Options => Options;
 
     public override string ToString()
-        => $"{(Start.HasValue ? $"Start={Start}, " : "")}{(Amount.HasValue ? $"Amount={Amount}, " : "")}Includes={Include.Count}, Selects={Select.Count}, ComputedFields={ComputedFields.Count}, SortBys={SortBy.Count}, {Options}";
+        => $"{(Start.HasValue ? $"Start={Start}, " : "")}{(Amount.HasValue ? $"Amount={Amount}, " : "")}Includes={Include.Count}, Selects={Select.Count}, ComputedFields={ComputedFields.Count}, Aggregates={Aggregates.Count}, SortBys={SortBy.Count}, {Options}";
 }

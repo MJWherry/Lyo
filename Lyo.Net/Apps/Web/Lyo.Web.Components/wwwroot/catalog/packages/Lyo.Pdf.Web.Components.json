@@ -17,7 +17,7 @@
       "type": "list",
       "title": "Components",
       "items": [
-        "`HtmlToPdfWorkbench.razor`. Paste HTML or upload an `.html` / `.htm` / `.txt` file, then turn it into a PDF through `IWebRendererService`.",
+        "`HtmlToPdfWorkbench.razor`. Paste HTML or upload an `.html` / `.htm` / `.txt` file, pick PDF, PNG, JPEG, or WebP, and for PDF pick paper and orientation. The result previews in the page and can be downloaded.",
         "`PdfAnnotationWorkbench.razor`. Hosts `LyoPdfAnnotator` and shows a live table of saved annotations and their extracted payloads.",
         "`PdfAnnotator/LyoPdfAnnotator.razor` (+ `LyoPdfAnnotator.razor.cs`, `LyoPdfAnnotatorResultsView.razor`). Drawing canvas and result list. Fires `AnnotationsChanged` and `AnnotationsSaved`."
       ]
@@ -86,6 +86,14 @@
       ]
     },
     {
+      "name": "Lyo.Web.WebRenderer.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "MudBlazor",
       "kind": "package",
       "version": "9.3",
@@ -119,14 +127,6 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.DataTable.Models",
       "kind": "lyo",
       "tags": [
@@ -152,6 +152,14 @@
     },
     {
       "name": "Lyo.Encryption",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -192,6 +200,14 @@
     },
     {
       "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -248,6 +264,14 @@
     },
     {
       "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Schedule.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -462,6 +486,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

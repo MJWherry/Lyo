@@ -29,10 +29,22 @@ public sealed class ReportParameterValidatorTests
             }
         };
 
-        Assert.Contains(ReportParameterValidator.Validate(def, [new("Code", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("A"))]), e => e.Contains("at least", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(ReportParameterValidator.Validate(def, [new("Code", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("ABCDE"))]), e => e.Contains("exceed", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(ReportParameterValidator.Validate(def, [new("Code", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("ab"))]), e => e.Contains("pattern", StringComparison.OrdinalIgnoreCase));
-        Assert.Contains(ReportParameterValidator.Validate(def, [new("Code", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("XY"))]), e => e.Contains("allowed", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(
+            ReportParameterValidator.Validate(def, [new("Code", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("A"))]),
+            e => e.Contains("at least", StringComparison.OrdinalIgnoreCase));
+
+        Assert.Contains(
+            ReportParameterValidator.Validate(def, [new("Code", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("ABCDE"))]),
+            e => e.Contains("exceed", StringComparison.OrdinalIgnoreCase));
+
+        Assert.Contains(
+            ReportParameterValidator.Validate(def, [new("Code", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("ab"))]),
+            e => e.Contains("pattern", StringComparison.OrdinalIgnoreCase));
+
+        Assert.Contains(
+            ReportParameterValidator.Validate(def, [new("Code", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("XY"))]),
+            e => e.Contains("allowed", StringComparison.OrdinalIgnoreCase));
+
         Assert.Empty(ReportParameterValidator.Validate(def, [new("Code", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("AB"))]));
     }
 
@@ -64,14 +76,7 @@ public sealed class ReportParameterValidatorTests
     [Fact]
     public void Validate_CollectionJsonArrayRow_Accepts()
     {
-        var def = new List<ReportDefinitionParameter> {
-            new() {
-                Key = "Tag",
-                Type = LyoTypeInfo.StringList.FullName,
-                Required = true
-            }
-        };
-
+        var def = new List<ReportDefinitionParameter> { new() { Key = "Tag", Type = LyoTypeInfo.StringList.FullName, Required = true } };
         Assert.Empty(ReportParameterValidator.Validate(def, [new("Tag", LyoTypeInfo.StringList, """["a","b"]""")]));
     }
 
@@ -129,9 +134,13 @@ public sealed class ReportParameterValidatorTests
     public void Validate_UnknownKeysFromDefinition_Rejects()
     {
         var def = new List<ReportDefinitionParameter> { new() { Key = "Known", Type = LyoTypeInfo.String.FullName } };
-        var errors = ReportParameterValidator.Validate(def, [new("Known", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("x")), new("Mystery", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("y"))], true);
+        var errors = ReportParameterValidator.Validate(
+            def, [new("Known", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("x")), new("Mystery", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("y"))], true);
+
         Assert.Contains(errors, e => e.Contains("Mystery", StringComparison.Ordinal) && e.Contains("Unknown parameter key", StringComparison.OrdinalIgnoreCase));
-        var allowed = ReportParameterValidator.Validate(def, [new("Known", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("x")), new("Mystery", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("y"))]);
+        var allowed = ReportParameterValidator.Validate(
+            def, [new("Known", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("x")), new("Mystery", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("y"))]);
+
         Assert.Empty(allowed);
     }
 

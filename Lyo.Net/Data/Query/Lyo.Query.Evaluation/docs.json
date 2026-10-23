@@ -9,9 +9,10 @@
     "**Match explanation.** `ExplainMatch` produces the `WhereClauseExplainNode` tree that validation turns into errors.",
     "**Queryable translation.** `ApplyWhereClause`, `SortByProperty`, and `ApplyOrdering` against `IQueryable<T>`.",
     "**Path resolution.** Dotted paths, including collection segments, go through `TryValidatePropertyPath` and `SharedEntityMetadataCache`.",
+    "**FuzzyMatch.** CLR trigram Jaccard for `Fuzzy` / `NotFuzzy`. Postgres hosts rewrite the same call to SQL `similarity()`.",
     "**Value conversion.** Filter literals go through `IValueConversionService` / `ValueConversionService`, which delegates to `TypeConversion`.",
     "**Metrics.** Durations, success counters, and errors under `Lyo.Query.Constants.Metrics`, tagged `entity_type`. Pass an `IMetrics` to opt in; omit it and nothing is recorded or allocated.",
-    "**Extension points.** `GetMatcher`, `GetEfPredicate`, and `GetIncludePaths` are virtual so a host can plug in its own caching."
+    "**Extension points.** `GetMatcher`, `GetEfPredicate`, `GetIncludePaths`, and `RewriteQueryablePredicate` are virtual so a host can plug in caching or provider-specific rewrites (Postgres Fuzzy → `similarity()`)."
   ],
   "examples": [
     {
@@ -78,7 +79,7 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
+      "name": "Lyo.Common.Metadata",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -86,7 +87,7 @@
       ]
     },
     {
-      "name": "Lyo.Common.Metadata",
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -119,6 +120,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

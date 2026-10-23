@@ -1,6 +1,6 @@
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using Lyo.Common.Core.Conversion;
+using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Common.Tests;
 
@@ -23,7 +23,7 @@ public class TypeConversionTests
     [Fact]
     public void ConvertTo_SameType_ReturnsSameInstance()
     {
-        var value = Guid.NewGuid().ToString();
+        var value = LyoGuid.CreateV7().ToString();
         Assert.Same(value, TypeConversion.ConvertTo(value, typeof(string)));
     }
 
@@ -41,7 +41,7 @@ public class TypeConversionTests
     [Fact]
     public void ConvertTo_StringToGuid_Parses()
     {
-        var guid = Guid.NewGuid();
+        var guid = LyoGuid.CreateV7();
         Assert.Equal(guid, TypeConversion.ConvertTo(guid.ToString(), typeof(Guid)));
     }
 
@@ -127,7 +127,7 @@ public class TypeConversionTests
     [Fact]
     public void ConvertTo_JsonString_ToGuid()
     {
-        var guid = Guid.NewGuid();
+        var guid = LyoGuid.CreateV7();
         Assert.Equal(guid, TypeConversion.ConvertTo(ToElement(guid.ToString()), typeof(Guid)));
     }
 
@@ -528,7 +528,7 @@ public class TypeConversionTests
     [Fact]
     public void ConvertTo_Span_ParsesGuid()
     {
-        var guid = Guid.NewGuid();
+        var guid = LyoGuid.CreateV7();
         Assert.Equal(guid, TypeConversion.ConvertTo<Guid>(guid.ToString().AsSpan()));
     }
 

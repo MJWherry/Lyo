@@ -16,8 +16,12 @@
                 <MudText Typo="Typo.caption" Color="Color.Secondary">@_items.Count revision(s) for binding</MudText>
                 <LyoIdField Compact="true" Value="@BindingId"/>
             </MudStack>
-            <MudAlert Severity="Severity.Info" Dense="true">Revert copies that snapshot and appends a new revision so history stays linear. Value history is empty until the first binding save.</MudAlert>
+
+            <MudAlert Severity="Severity.Info" Dense="true">Revert copies that snapshot and appends a new revision so history stays linear. Value history is empty until the first
+                binding save.
+            </MudAlert>
         }
+
         <LyoResponsiveTable>
             <TableContent>
                 <MudTable Items="_items" Dense="true" Hover="true" Breakpoint="Breakpoint.None" Elevation="0" Loading="_loading">
@@ -75,11 +79,12 @@
 
 @code {
 
-    private RenderFragment<ConfigBindingRevisionRecord> RevertButton => revision => @<text>
-        <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Warning"
-                   Disabled="@_busy" OnClick="@(() => RevertAsync(revision))">
-            Revert
-        </MudButton>
+    private RenderFragment<ConfigBindingRevisionRecord> RevertButton
+        => revision => @<text>
+                            <MudButton Size="Size.Small" Variant="Variant.Outlined" Color="Color.Warning"
+                                       Disabled="@_busy" OnClick="@(() => RevertAsync(revision))">
+                                Revert
+                            </MudButton>
     </text>;
 
 }

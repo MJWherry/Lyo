@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Compression.Models;
 
 /// <summary>Per-file outcome for dictionary batch decompress APIs.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record DecompressionFileInfo(long CompressedSize, long DecompressedSize, long TimeMs, string InputFilePath, string OutputFilePath)
     : DecompressionInfo(CompressedSize, DecompressedSize, TimeMs)
 {

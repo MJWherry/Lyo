@@ -3,13 +3,13 @@ using Lyo.Exceptions;
 namespace Lyo.Formatter.Web.Components;
 
 /// <summary>
-/// Host-registered sample data for formatter editors: keys a template can use that only the host knows about, such as objects a job worker binds with
-/// <c>AddContext</c> at run time.
+/// Host-registered sample data for formatter editors: keys a template can use that only the host knows about, such as objects a job worker binds with <c>AddContext</c> at
+/// run time.
 /// </summary>
 /// <remarks>
-/// Templates are written long before they run, and the keys they may use come from several places at once — the scheduler, the worker, and the host application.
-/// An author cannot be expected to remember them, so the host declares its own contribution once at startup and every formatter editor picks it up. Views layer
-/// their own live keys on top; see <see cref="Merge" />.
+/// Templates are written long before they run, and the keys they may use come from several places at once — the scheduler, the worker, and the host application. An author
+/// cannot be expected to remember them, so the host declares its own contribution once at startup and every formatter editor picks it up. Views layer their own live keys on top; see
+/// <see cref="Merge" />.
 /// </remarks>
 public sealed class LyoFormatterExampleContext
 {
@@ -26,12 +26,10 @@ public sealed class LyoFormatterExampleContext
         return this;
     }
 
-    /// <summary>
-    /// Merges the host default with a view's own context; the view's keys win on collision.
-    /// </summary>
+    /// <summary>Merges the host default with a view's own context; the view's keys win on collision.</summary>
     /// <remarks>
-    /// A dictionary can be merged key by key. Any other object cannot — its keys are properties, and grafting host keys onto it would need a wrapper that changes
-    /// every path the user sees. A non-dictionary view context therefore replaces the host default outright.
+    /// A dictionary can be merged key by key. Any other object cannot — its keys are properties, and grafting host keys onto it would need a wrapper that changes every path the
+    /// user sees. A non-dictionary view context therefore replaces the host default outright.
     /// </remarks>
     /// <param name="host">Host default, typically resolved from DI. Null when the host registered nothing.</param>
     /// <param name="view">Context supplied by the view. Null when the view has no live keys of its own.</param>

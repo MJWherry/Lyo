@@ -12,8 +12,7 @@ namespace Lyo.Reporting.Client;
 public sealed class ReportDefinitionClient(IApiClient client, string? routePrefix = null)
 {
     public Task<ReportDefinitionRes?> GetAsync(Guid id, IEnumerable<string>? includes = null, CancellationToken ct = default)
-        => client.GetAsAsync<ReportDefinitionRes>(
-            ApiRouteBuilder.WithIncludes(ApiRouteBuilder.Build(routePrefix, $"{ReportingRoutes.Definitions}/{id}"), includes), ct: ct);
+        => client.GetAsAsync<ReportDefinitionRes>(ApiRouteBuilder.WithIncludes(ApiRouteBuilder.Build(routePrefix, $"{ReportingRoutes.Definitions}/{id}"), includes), ct: ct);
 
     public Task<CreateResult<ReportDefinitionRes>> CreateAsync(ReportDefinitionReq request, CancellationToken ct = default)
         => client.PostAsAsync<ReportDefinitionReq, CreateResult<ReportDefinitionRes>>(ApiRouteBuilder.Build(routePrefix, ReportingRoutes.Definitions), request, ct: ct);

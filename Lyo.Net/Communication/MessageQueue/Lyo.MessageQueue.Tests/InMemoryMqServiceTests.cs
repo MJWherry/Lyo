@@ -10,9 +10,9 @@ public sealed class InMemoryMqServiceTests
     {
         using var service = new InMemoryMqService();
         Assert.False(service.IsConnected());
-        await service.ConnectAsync(TestContext.Current.CancellationToken);
+        await service.ConnectAsync(TestCt);
         Assert.True(service.IsConnected());
-        await service.DisconnectAsync(TestContext.Current.CancellationToken);
+        await service.DisconnectAsync(TestCt);
         Assert.False(service.IsConnected());
     }
 
@@ -21,8 +21,8 @@ public sealed class InMemoryMqServiceTests
     {
         var received = new List<byte[]>();
         using var service = new InMemoryMqService();
-        await service.ConnectAsync(TestContext.Current.CancellationToken);
-        await service.CreateQueue("test-queue", ct: TestContext.Current.CancellationToken);
+        await service.ConnectAsync(TestCt);
+        await service.CreateQueue("test-queue", ct: TestCt);
         await service.SendToQueue("test-queue", Encoding.UTF8.GetBytes("message-1"));
         await service.SendToQueue("test-queue", Encoding.UTF8.GetBytes("message-2"));
         var cts = new CancellationTokenSource();
@@ -37,7 +37,7 @@ public sealed class InMemoryMqServiceTests
                 return false;
             }, cts.Token);
 
-        await Task.Delay(500, cts.Token).ContinueWith(_ => { }, TestContext.Current.CancellationToken);
+        await Task.Delay(500, cts.Token).ContinueWith(_ => { }, TestCt);
         Assert.Equal(2, received.Count);
         Assert.Equal("message-1", Encoding.UTF8.GetString(received[0]));
         Assert.Equal("message-2", Encoding.UTF8.GetString(received[1]));
@@ -48,8 +48,8 @@ public sealed class InMemoryMqServiceTests
     {
         var callCount = 0;
         using var mq = new InMemoryMqService();
-        await mq.ConnectAsync(TestContext.Current.CancellationToken);
-        await mq.CreateQueue("requeue-test", ct: TestContext.Current.CancellationToken);
+        await mq.ConnectAsync(TestCt);
+        await mq.CreateQueue("requeue-test", ct: TestCt);
         await mq.SendToQueue("requeue-test", Encoding.UTF8.GetBytes("{\"Id\":\"x\",\"Payload\":\"y\"}"));
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
         _ = mq.SubscribeToQueue(
@@ -63,16 +63,14 @@ public sealed class InMemoryMqServiceTests
     }
 
     [Fact]
-    public async Task SubscribeToQueueAsync_EnvelopedAndLegacy_Roundtrips()
+    public async Task SubscribeToQueueAsync_EnvelopedArrives_BarePayloadDoesNot()
     {
         using var mq = new InMemoryMqService();
-        await mq.ConnectAsync(TestContext.Current.CancellationToken);
-        await mq.CreateQueue("typed-test", ct: TestContext.Current.CancellationToken);
+        await mq.ConnectAsync(TestCt);
+        await mq.CreateQueue("typed-test", ct: TestCt);
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-
-        // One enveloped message and one legacy bare payload — both must arrive typed.
         await mq.SendToQueueWithEnvelopeAsync("typed-test", new TestRequest("e1", "enveloped"), options, traceId: "trace-1");
-        await mq.SendToQueue("typed-test", JsonSerializer.SerializeToUtf8Bytes(new TestRequest("l1", "legacy"), options));
+        await mq.SendToQueue("typed-test", JsonSerializer.SerializeToUtf8Bytes(new TestRequest("l1", "bare"), options));
         var received = new List<(TestRequest Payload, QueueMessageEnvelope<TestRequest>? Envelope)>();
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
         _ = mq.SubscribeToQueueAsync<TestRequest>(
@@ -81,25 +79,24 @@ public sealed class InMemoryMqServiceTests
                 return Task.FromResult(false);
             }, options, cts.Token);
 
-        for (var i = 0; i < 50 && received.Count < 2; i++)
+        for (var i = 0; i < 50 && received.Count < 1; i++)
             await Task.Delay(50, cts.Token);
 
-        Assert.Equal(2, received.Count);
-        Assert.Equal("e1", received[0].Payload.Id);
-        Assert.NotNull(received[0].Envelope);
-        Assert.Equal("trace-1", received[0].Envelope!.TraceId);
-        Assert.Equal("l1", received[1].Payload.Id);
-        Assert.Null(received[1].Envelope);
+        await Task.Delay(200, cts.Token);
+        var only = Assert.Single(received);
+        Assert.Equal("e1", only.Payload.Id);
+        Assert.NotNull(only.Envelope);
+        Assert.Equal("trace-1", only.Envelope!.TraceId);
     }
 
     [Fact]
     public async Task SubscribeToQueueAsync_UnparseableMessage_AcksInsteadOfLooping()
     {
         using var mq = new InMemoryMqService();
-        await mq.ConnectAsync(TestContext.Current.CancellationToken);
-        await mq.CreateQueue("typed-poison-test", ct: TestContext.Current.CancellationToken);
+        await mq.ConnectAsync(TestCt);
+        await mq.CreateQueue("typed-poison-test", ct: TestCt);
         await mq.SendToQueue("typed-poison-test", Encoding.UTF8.GetBytes("not json at all"));
-        await mq.SendToQueue("typed-poison-test", JsonSerializer.SerializeToUtf8Bytes(new TestRequest("ok", "good"), new JsonSerializerOptions()));
+        await mq.SendToQueueWithEnvelopeAsync("typed-poison-test", new TestRequest("ok", "good"), new());
         var received = new List<TestRequest>();
         var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
         _ = mq.SubscribeToQueueAsync<TestRequest>(

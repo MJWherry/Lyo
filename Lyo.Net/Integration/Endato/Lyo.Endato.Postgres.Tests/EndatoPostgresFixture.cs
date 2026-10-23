@@ -6,6 +6,6 @@ namespace Lyo.Endato.Postgres.Tests;
 
 public sealed class EndatoPostgresFixture : PostgresServiceFixtureBase<EndatoDbContext>
 {
-    protected override void ConfigureServices(IServiceCollection services, string connectionString) =>
-        services.AddEndatoDbContextFactory(new PostgresEndatoOptions { ConnectionString = connectionString, EnableAutoMigrations = true });
+    protected override void ConfigureServices(IServiceCollection services, string connectionString)
+        => services.AddEndatoDbContextFactory(new PostgresEndatoOptions { ConnectionString = connectionString, EnableAutoMigrations = true });
 }

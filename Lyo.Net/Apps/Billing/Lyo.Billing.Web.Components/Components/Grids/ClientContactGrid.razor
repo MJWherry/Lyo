@@ -1,0 +1,59 @@
+@namespace Lyo.Billing.Web.Components.Components.Grids
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+@if (ClientId is { } clientId && clientId != Guid.Empty) {
+    <MudStack Spacing="2">
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.End">
+            <MudTextField @bind-Value="_displayName" Label="Name" Class="flex-grow-1"/>
+            <MudSelect T="BillingContactRole" @bind-Value="_role" Label="Role" Style="max-width: 10rem;">
+                @foreach (var role in Enum.GetValues<BillingContactRole>()) {
+                    <MudSelectItem Value="@role">@role</MudSelectItem>
+                }
+            </MudSelect>
+            <MudTextField @bind-Value="_title" Label="Title" Style="max-width: 10rem;"/>
+            <MudCheckBox @bind-Value="_isPrimary" Label="Primary"/>
+            <MudCheckBox @bind-Value="_isBilling" Label="Billing"/>
+            <MudButton Variant="Variant.Outlined" Disabled="@(_busy || string.IsNullOrWhiteSpace(_displayName))" OnClick="AddLiteAsync">Add</MudButton>
+        </MudStack>
+        <LyoDataGridProjected @ref="_dataGrid"
+                              ApiClient="ApiClient"
+                              GridKey="@GridKey"
+                              Route="Billing/Contacts"
+                              KeySelector="@(i => ProjectedGridKeys.GuidId(i))"
+                              FilterPropertyDefinitions="@_propertyDefinitions"
+                              BeforeQuery="ApplyQuery"
+                              Features="@(LyoDataGridFeatureFlags.Filterable | LyoDataGridFeatureFlags.Searchable)">
+            <Columns>
+                <TemplateColumn T="object?" Title="" Sortable="false" Hideable="false"
+                                HeaderStyle="@LyoDataGridColumnStyles.QuickActionsHeaderStyle"
+                                CellStyle="@LyoDataGridColumnStyles.QuickActionsCellStyle">
+                    <CellTemplate Context="cell">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Detach"
+                                       OnClick="@(() => DetachAsync(cell.Item))"/>
+                    </CellTemplate>
+                </TemplateColumn>
+                <LyoProjectedColumn Field="SubjectEntityType" Title="Type" HeaderStyle="width: 140px;"/>
+                <LyoIdColumn T="object?" TRes="PersonLookup" Field="SubjectEntityId" Route="Person" Title="Person"
+                             Select="@(new[] { "FirstName", "LastName" })" HeaderStyle="width: 180px;" Context="person">
+                    @(person == null ? null : $"{person.FirstName} {person.LastName}".Trim())
+                </LyoIdColumn>
+                <LyoIdColumn T="object?" TRes="BillingPersonLookup" Field="SubjectEntityId" Route="Billing/People" Title="Billing person"
+                             Select="@(new[] { "DisplayName" })" HeaderStyle="width: 180px;" Context="person">
+                    @(person?.DisplayName)
+                </LyoIdColumn>
+                <LyoProjectedColumn Field="Title" Title="Title"/>
+                <LyoProjectedColumn Field="Role" Title="Role" Align="Align.Center" HeaderStyle="width: 110px;">
+                    <CellContent Context="item">
+                        <LyoChip Spec="@(LyoChips.FromEnum<BillingContactRole>(ProjectedValueHelper.GetDisplayValue(item, "Role"), _ => Color.Default))"/>
+                    </CellContent>
+                </LyoProjectedColumn>
+                <LyoProjectedColumn Field="IsPrimary" Title="Primary"/>
+                <LyoProjectedColumn Field="IsBillingContact" Title="Billing"/>
+            </Columns>
+        </LyoDataGridProjected>
+    </MudStack>
+}
+else {
+    <MudText Typo="Typo.caption" Color="Color.Secondary">Save the client before adding contacts.</MudText>
+}

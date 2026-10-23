@@ -9,9 +9,9 @@ public sealed class SchedulerOptions
     /// <summary>
     /// Milliseconds between due-schedule checks. Default: 10000 (10 seconds).
     /// <para>
-    /// <b>Look-ahead window:</b> A schedule is due when its next fire time falls within <c>now + CheckIntervalMs + 1000 ms</c>. That window avoids missed
-    /// fires when the check runs a bit late versus the scheduled time. For tight timing (for example the schedule interval ≈ the check interval), reduce
-    /// <c>CheckIntervalMs</c> so the look-ahead is a smaller share of the period.
+    /// <b>Look-ahead window:</b> A schedule is due when its next fire time falls within <c>now + CheckIntervalMs + 1000 ms</c>. That window avoids missed fires when the check runs
+    /// a bit late versus the scheduled time. For tight timing (for example the schedule interval ≈ the check interval), reduce <c>CheckIntervalMs</c> so the look-ahead is a smaller share
+    /// of the period.
     /// </para>
     /// </summary>
     public int CheckIntervalMs { get; set; } = 10_000;
@@ -26,8 +26,8 @@ public sealed class SchedulerOptions
     public TimeSpan? ActionTimeout { get; set; } = TimeSpan.FromMinutes(120);
 
     /// <summary>
-    /// How many days ahead to search when computing the next scheduled run. Default: 366 days so monthly schedules work (for example a job on the 1st of a
-    /// specific month may need up to ~365 days of look-ahead).
+    /// How many days ahead to search when computing the next scheduled run. Default: 366 days so monthly schedules work (for example a job on the 1st of a specific month may
+    /// need up to ~365 days of look-ahead).
     /// </summary>
     public int MaxDaysLookAhead { get; set; } = 366;
 

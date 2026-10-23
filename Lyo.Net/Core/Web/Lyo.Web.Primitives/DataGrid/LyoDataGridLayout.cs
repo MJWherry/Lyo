@@ -1,8 +1,8 @@
 namespace Lyo.Web.Primitives.DataGrid;
 
 /// <summary>
-/// How <see cref="LyoDataGrid{T}" /> and <see cref="LyoDataGridProjected" /> present rows. Hosts pick the default through <c>AddLyoDataGrid</c>; users switch from the
-/// grid toolbar and that choice is remembered per browser.
+/// How <see cref="LyoDataGrid{T}" /> and <see cref="LyoDataGridProjected" /> present rows. Hosts pick the default through <c>AddLyoDataGrid</c>; users switch from the grid
+/// toolbar and that choice is remembered per browser.
 /// </summary>
 public enum LyoDataGridLayout
 {

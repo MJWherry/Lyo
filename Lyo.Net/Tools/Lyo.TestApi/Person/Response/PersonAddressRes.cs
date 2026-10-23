@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using NpgsqlTypes;
 
 namespace Lyo.TestApi.Person.Response;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record PersonAddressRes
 {
     public Guid Id { get; init; }

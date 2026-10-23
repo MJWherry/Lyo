@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using Lyo.Api.Models;
 using Lyo.Api.Models.Common.Request;
@@ -12,9 +13,10 @@ namespace Lyo.Api.ApiEndpoint.Config;
 /// <summary>
 /// Optional per-patch rules: which JSON property names may be updated for the current user. Pair with <see cref="EndpointAuth" /> on the same endpoint for typical APIs. When
 /// <see cref="Custom" /> is set, it replaces <see cref="PolicyAllowedProperties" />. Otherwise, allowed names are the union of property sets from each
-/// <see cref="PolicyAllowedProperties" /> entry whose policy passes <see cref="IAuthorizationService.AuthorizeAsync(ClaimsPrincipal, string)" />. Use <c>"*"</c> in a
-/// policy's set to allow every key present in <see cref="PatchRequest.Properties" /> when that policy succeeds.
+/// <see cref="PolicyAllowedProperties" /> entry whose policy passes <see cref="IAuthorizationService.AuthorizeAsync(ClaimsPrincipal, string)" />. Use <c>"*"</c> in a policy's set to
+/// allow every key present in <see cref="PatchRequest.Properties" /> when that policy succeeds.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record PatchPropertyAuthorization
 {
     /// <summary>Maps an ASP.NET Core policy name to allowed CLR property names (case-insensitive). Ignored when <see cref="Custom" /> is set.</summary>
@@ -106,8 +108,8 @@ public static class PatchPropertyAuthorizationApplier
 
     /// <summary>
     /// Applies the same rules to a full-replacement write (PUT-style update, or upsert). PATCH names the properties it touches. A replacement carries every property, so the set
-    /// being written is derived by diffing <paramref name="incoming" /> against the persisted <paramref name="current" />. Without this, a caller restricted from patching a
-    /// property could change it anyway by switching verb.
+    /// being written is derived by diffing <paramref name="incoming" /> against the persisted <paramref name="current" />. Without this, a caller restricted from patching a property
+    /// could change it anyway by switching verb.
     /// </summary>
     /// <param name="authorization">The endpoint's property rules; a null or empty rule set approves the write without inspecting it.</param>
     /// <param name="httpContext">The current request, used to resolve the caller for policy evaluation.</param>

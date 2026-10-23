@@ -1,6 +1,7 @@
 using System.Data.Common;
 using System.Diagnostics;
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Job.Models;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Events;
@@ -9,14 +10,13 @@ using Lyo.MessageQueue;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+
 namespace Lyo.Job.Postgres.Events;
 
 /// <summary>
-/// Default <see cref="IJobEventPublisher" /> for API hosts with a job database, backed by <see cref="IMqService" /> and optional EF <c>JobContext</c> for worker-type
-/// discovery. Uses the standard job MQ topology (exchange <c>job.events</c>, routing keys, and per-worker-type queues) defined in <see cref="Constants.Mq" />.
-/// <para>
-/// Register via <c>services.AddMqJobEventPublisher()</c> after registering your <see cref="IMqService" /> implementation (for example <c>services.AddRabbitMq(...)</c>).
-/// </para>
+/// Default <see cref="IJobEventPublisher" /> for API hosts with a job database, backed by <see cref="IMqService" /> and optional EF <c>JobContext</c> for worker-type discovery. Uses
+/// the standard job MQ topology (exchange <c>job.events</c>, routing keys, and per-worker-type queues) defined in <see cref="Constants.Mq" />.
+/// <para>Register via <c>services.AddMqJobEventPublisher()</c> after registering your <see cref="IMqService" /> implementation (for example <c>services.AddRabbitMq(...)</c>).</para>
 /// <para>Scheduler and worker hosts must not use this type. Use <c>Lyo.Job.Client.AddMqJobEventPublisher*</c> (IMqService + Job.Client) instead.</para>
 /// </summary>
 public sealed class MqJobEventPublisher : IJobEventPublisher
@@ -81,6 +81,14 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
     }
 
     /// <inheritdoc />
+    public async Task PublishWorkflowRunCreatedAsync(Guid workflowRunId, CancellationToken ct = default)
+    {
+        _logger.LogDebug("Publishing workflow run {WorkflowRunId} created", workflowRunId);
+        await _mqService.SendToExchange(Constants.Mq.JobEventExchange, Constants.Mq.JobWorkflowRunCreatedRoutingKey, JsonSerializer.SerializeToUtf8Bytes(workflowRunId))
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
     public async Task PublishRunCancelledAsync(Guid runId, CancellationToken ct = default)
     {
         _logger.LogDebug("Publishing run {RunId} cancelled", runId);
@@ -124,7 +132,7 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
         // Cancellations are broadcast through the exchange onto a per-instance exclusive queue. A shared per-worker-type queue would be a
         // competing-consumer queue: with scaled-out workers only one instance would receive each cancel, and if it is not the instance
         // executing the run the cancellation is silently lost.
-        var suffix = string.IsNullOrWhiteSpace(instanceSuffix) ? Guid.NewGuid().ToString("N") : instanceSuffix;
+        var suffix = string.IsNullOrWhiteSpace(instanceSuffix) ? LyoGuid.CreateV7().ToString("N") : instanceSuffix;
         var queueName = Constants.Mq.QueueGetJobRunCancelInstance(workerType, suffix);
         if (!await _mqService.CreateQueue(queueName, false, true, true, null, ct).ConfigureAwait(false))
             throw new InvalidOperationException($"Failed to declare per-instance cancellation queue '{queueName}'.");
@@ -192,7 +200,7 @@ public sealed class MqJobEventPublisher : IJobEventPublisher
             _logger.LogWarning(ex, "Job definition table is not available yet; using JobMqOptions:WorkerTypes only.");
         }
 
-        return types.ToList();
+        return [.. types];
     }
 
     private async Task EnsureExchangeCreatedAsync(CancellationToken ct)

@@ -1,0 +1,45 @@
+@if (Draft is not null) {
+    <MudStack Spacing="2">
+        <MudTextField @bind-Value="Draft.Input" @bind-Value:after="Notify" Label="Input identifier" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"/>
+        <MudSelect T="MissingKeyPolicy" @bind-Value="Draft.Missing" @bind-Value:after="Notify" Label="Missing" AnchorOrigin="Origin.BottomCenter">
+            @foreach (var policy in Enum.GetValues<MissingKeyPolicy>()) {
+                <MudSelectItem Value="@policy">@policy</MudSelectItem>
+            }
+        </MudSelect>
+        @if (ShowMissing) {
+            <MudTextField @bind-Value="Draft.MissingValue" @bind-Value:after="Notify" Label="Missing value" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"/>
+        }
+        @foreach (var entry in Draft.Entries) {
+            <MudStack Row="true" Spacing="1">
+                <MudTextField @bind-Value="entry.Key" @bind-Value:after="Notify" Label="Key" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"/>
+                <MudTextField @bind-Value="entry.Value" @bind-Value:after="Notify" Label="Value" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"/>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" aria-label="Remove entry" OnClick="@(() => Remove(entry))"/>
+            </MudStack>
+        }
+        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" OnClick="Add">Add entry</MudButton>
+    </MudStack>
+}
+
+@code {
+    [Parameter]
+    public AlgorithmDraft? Draft { get; set; }
+
+    [Parameter]
+    public EventCallback Changed { get; set; }
+
+    private bool ShowMissing => Draft is not null && !AlgorithmDraftRules.IsNumericAlias(Draft.Result) && Draft.Missing == MissingKeyPolicy.Zero;
+
+    private Task Notify() => Changed.InvokeAsync();
+
+    private Task Add()
+    {
+        Draft?.Entries.Add(new());
+        return Notify();
+    }
+
+    private Task Remove(AlgorithmMapEntry entry)
+    {
+        Draft?.Entries.Remove(entry);
+        return Notify();
+    }
+}

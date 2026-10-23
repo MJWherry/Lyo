@@ -53,10 +53,10 @@ public class CacheServiceMetricsTests : IDisposable
         var key = "hit-test-key";
 
         // First call is a miss and writes the value.
-        await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value1")!, token: TestContext.Current.CancellationToken);
+        await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value1")!, token: TestCt);
 
         // Second call should be a hit.
-        await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value2")!, token: TestContext.Current.CancellationToken);
+        await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value2")!, token: TestCt);
         Assert.True(metrics.HitCounters.Count > 0, "Should have recorded at least one hit");
         var hit = metrics.HitCounters.FirstOrDefault(h => h.Tags != null && h.Tags.ContainsKey(Constants.Metrics.Tags.Key) && h.Tags[Constants.Metrics.Tags.Key]
             .Equals(key, StringComparison.OrdinalIgnoreCase));
@@ -72,7 +72,7 @@ public class CacheServiceMetricsTests : IDisposable
         var key = "miss-test-key";
 
         // First call is a miss.
-        await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value1")!, token: TestContext.Current.CancellationToken);
+        await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value1")!, token: TestCt);
         Assert.True(metrics.MissCounters.Count > 0, "Should have recorded at least one miss");
         var miss = metrics.MissCounters.FirstOrDefault(m
             => m.Tags != null && m.Tags.ContainsKey(Constants.Metrics.Tags.Key) && m.Tags[Constants.Metrics.Tags.Key].Equals(key, StringComparison.OrdinalIgnoreCase));
@@ -90,7 +90,7 @@ public class CacheServiceMetricsTests : IDisposable
             key, async ct => {
                 await Task.Delay(50, ct);
                 return "value";
-            }, token: TestContext.Current.CancellationToken);
+            }, token: TestCt);
 
         Assert.True(metrics.MissTimings.Count > 0);
         var miss = metrics.MissTimings.FirstOrDefault(m => m.Tags != null && m.Tags.ContainsKey(Constants.Metrics.Tags.Key) && m.Tags[Constants.Metrics.Tags.Key]
@@ -257,7 +257,7 @@ public class CacheServiceMetricsTests : IDisposable
         // Disabling the cache after setup would not surface this.
         // A throwing factory is the reliable way to exercise the path.
         try {
-            await service.GetOrSetAsync<string>(key, _ => Task.FromException<string?>(new InvalidOperationException("Test error")), token: TestContext.Current.CancellationToken);
+            await service.GetOrSetAsync<string>(key, _ => Task.FromException<string?>(new InvalidOperationException("Test error")), token: TestCt);
         }
         catch (InvalidOperationException) {
             // Factory throw is the expected outcome.
@@ -305,7 +305,7 @@ public class CacheServiceMetricsTests : IDisposable
         service.Set("key2", "value2");
 
         // Give event handlers a moment to run.
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await Task.Delay(100, TestCt);
         Assert.True(metrics.CacheSizeGauges.Count > 0);
         // Cache size should be recorded (0 or more, depending on event timing).
         Assert.All(metrics.CacheSizeGauges, gauge => Assert.True(gauge.Value >= 0));
@@ -318,9 +318,9 @@ public class CacheServiceMetricsTests : IDisposable
         var service = new FusionCacheService(_fusionCache, _logger, _options, metrics);
         var key = "size-test-key";
         service.Set(key, "value");
-        await Task.Delay(50, TestContext.Current.CancellationToken);
+        await Task.Delay(50, TestCt);
         await service.InvalidateCacheItem(key);
-        await Task.Delay(50, TestContext.Current.CancellationToken);
+        await Task.Delay(50, TestCt);
         Assert.True(metrics.CacheSizeGauges.Count > 0);
     }
 

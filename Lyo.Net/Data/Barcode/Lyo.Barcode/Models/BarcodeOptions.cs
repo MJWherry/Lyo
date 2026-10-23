@@ -28,8 +28,8 @@ public class BarcodeOptions
     public bool ShowHumanReadableTextBelow { get; set; }
 
     /// <summary>
-    /// Caption under the bars when <see cref="ShowHumanReadableTextBelow" /> is on. Null or whitespace falls back to the encoded payload, the same
-    /// string given to <see cref="IBarcodeService.GenerateAsync(string, BarcodeSymbology, BarcodeOptions?, CancellationToken)" />.
+    /// Caption under the bars when <see cref="ShowHumanReadableTextBelow" /> is on. Null or whitespace falls back to the encoded payload, the same string given to
+    /// <see cref="IBarcodeService.GenerateAsync(string, BarcodeSymbology, BarcodeOptions?, CancellationToken)" />.
     /// </summary>
     public string? HumanReadableText { get; set; }
 

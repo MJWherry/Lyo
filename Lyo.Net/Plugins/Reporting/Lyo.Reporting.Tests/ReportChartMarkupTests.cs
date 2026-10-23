@@ -9,9 +9,7 @@ public sealed class ReportChartMarkupTests
     [Fact]
     public void Serialize_StructuredChart_RoundTrips()
     {
-        var report = ReportBuilder<object>.New()
-            .AddSection(s => s.AddChart(ChartKind.Bar, "Sales", ["Q1|10", "Q2|20"]))
-            .Build();
+        var report = ReportBuilder<object>.New().AddSection(s => s.AddChart(ChartKind.Bar, "Sales", ["Q1|10", "Q2|20"])).Build();
         var json = ReportJson.Serialize(report);
         var back = ReportJson.Deserialize<object>(json);
         var block = Assert.Single(back.Sections[0].Controls.OfType<Block>());
@@ -22,15 +20,11 @@ public sealed class ReportChartMarkupTests
     }
 
     [Fact]
-    public void Deserialize_LegacyHtmlChart_HasNoKind()
+    public void Deserialize_ContentBlocksChart_LeavesControlsEmpty()
     {
         const string json = """{"title":"Old","sections":[{"contentBlocks":[{"contentType":6,"content":"<canvas data-lyo-chart=\"{}\"></canvas>"}]}]}""";
         var report = ReportJson.Deserialize<object>(json);
-        var block = Assert.Single(report.Sections[0].Controls.OfType<Block>());
-        Assert.Equal(ContentType.Chart, block.ContentType);
-        Assert.Null(block.ChartKind);
-        Assert.Contains("data-lyo-chart", block.Content, StringComparison.Ordinal);
-        Assert.Null(ReportChartMarkup.TryBuild(block));
+        Assert.Empty(report.Sections[0].Controls);
     }
 
     [Fact]
@@ -44,8 +38,7 @@ public sealed class ReportChartMarkupTests
     }
 
     [Fact]
-    public void TryBuild_MissingKind_ReturnsNull()
-        => Assert.Null(ReportChartMarkup.TryBuild(new() { ContentType = ContentType.Chart, ListItems = ["A|1"] }));
+    public void TryBuild_MissingKind_ReturnsNull() => Assert.Null(ReportChartMarkup.TryBuild(new() { ContentType = ContentType.Chart, ListItems = ["A|1"] }));
 
     [Fact]
     public void ApplyFromRows_LabelAndValue_MapsSeries()

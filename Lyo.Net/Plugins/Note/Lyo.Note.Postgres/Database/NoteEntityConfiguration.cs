@@ -1,4 +1,5 @@
 using Lyo.EntityReference.Postgres.Database;
+using Lyo.Search.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -16,6 +17,7 @@ public sealed class NoteEntityConfiguration : EntityRelationConfiguration<NoteEn
         builder.HasKey(e => e.Id);
         MapColumns(builder);
         builder.Property(e => e.Content).IsRequired().HasMaxLength(8192).HasColumnName("content");
+        PostgresTextSearch.Map(builder, e => e.SearchVector, PostgresTextSearch.EnglishColumn("content"), "ix_note_search_vector");
         builder.Property(e => e.UpdatedTimestamp).HasColumnType("timestamp with time zone").HasColumnName("updated_timestamp");
         builder.HasIndex(e => new { e.TenantId, e.SubjectEntityType, e.SubjectEntityId }).HasDatabaseName("ix_note_tenant_for_entity");
         builder.HasIndex(e => new { e.TenantId, e.ActorEntityType, e.ActorEntityId }).HasDatabaseName("ix_note_tenant_from_entity");

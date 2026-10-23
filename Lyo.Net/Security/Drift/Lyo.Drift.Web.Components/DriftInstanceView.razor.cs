@@ -23,6 +23,5 @@ public partial class DriftInstanceView
         await DialogService.ShowAsync<JsonViewDialog<JsonNode?>>(title, parameters, LyoDialogPresets.Medium);
     }
 
-    private static JsonNode? ParseJson(string? json)
-        => string.IsNullOrWhiteSpace(json) ? null : JsonNode.Parse(json);
+    private static JsonNode? ParseJson(string? json) => string.IsNullOrWhiteSpace(json) ? null : JsonNode.Parse(json);
 }

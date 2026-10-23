@@ -6,8 +6,8 @@ using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Services.Cache;
 using Lyo.Cache;
-using Lyo.Common.Json;
 using Lyo.Common.Core.Enums;
+using Lyo.Json;
 using Lyo.Query.Models.Builders;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -40,7 +40,7 @@ public sealed class CacheEndpointTests
         Assert.Equal(3, result.Total);
         Assert.True(result.HasMore);
         var row = Assert.IsType<Dictionary<string, object?>>(result.Items![0]);
-        Assert.Equal("beta-key", row["Name"]?.ToString(), ignoreCase: true);
+        Assert.Equal("beta-key", row["Name"]?.ToString(), true);
         Assert.True(row.ContainsKey("Encrypted"));
         Assert.True(row.ContainsKey("Compressed"));
         Assert.True(row.ContainsKey("SizeBytes"));
@@ -92,12 +92,12 @@ public sealed class CacheEndpointTests
         cache.Set("k1", "v1", ["t1"]);
         cache.Set("k2", "v2", ["t2"]);
         cache.Set("k3", "v3", ["t2"]);
-        var keysRemoved = await service.DeleteAsync(new DeleteRequest { Keys = [["Key", "k1"]] });
+        var keysRemoved = await service.DeleteAsync(new() { Keys = [["Key", "k1"]] });
         Assert.True(keysRemoved.IsSuccess, keysRemoved.Error?.Detail);
-        Assert.False(cache.TryGetValue<string>("k1", out _));
-        var tagsRemoved = await service.DeleteBulkAsync([new DeleteRequest { Keys = [["Tag", "t2"], ["Tag", "__tag:t2"]], AllowMultiple = true }]);
+        Assert.False(cache.TryGetValue<string>("k1", out var _));
+        var tagsRemoved = await service.DeleteBulkAsync([new() { Keys = [["Tag", "t2"], ["Tag", "__tag:t2"]], AllowMultiple = true }]);
         Assert.True(tagsRemoved.DeletedCount >= 1);
-        Assert.False(cache.TryGetValue<string>("k2", out _));
+        Assert.False(cache.TryGetValue<string>("k2", out var _));
         cache.Set("k4", "v4");
         var cleared = await service.ClearAsync();
         Assert.True(cleared.RemovedCount >= 1);
@@ -121,11 +121,10 @@ public sealed class CacheEndpointTests
         var before = cache.Items.Count;
         var client = app.GetTestClient();
         var query = ProjectionQueryReqBuilder.New().AddSelects("Name", "Type", "Created").SetPagination(0, 25).Build();
-        var response = await client.PostAsJsonAsync("/Cache/QueryProject", query, SerializerOptions, TestContext.Current.CancellationToken);
-        var responseBody = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        var response = await client.PostAsJsonAsync("/Cache/QueryProject", query, SerializerOptions, TestCt);
+        var responseBody = await response.Content.ReadAsStringAsync(TestCt);
         Assert.True(response.StatusCode == HttpStatusCode.OK, $"{response.StatusCode}: {responseBody}");
-        var cacheControl = response.Headers.CacheControl?.ToString()
-            ?? (response.Headers.TryGetValues("Cache-Control", out var values) ? string.Join(",", values) : "");
+        var cacheControl = response.Headers.CacheControl?.ToString() ?? (response.Headers.TryGetValues("Cache-Control", out var values) ? string.Join(",", values) : "");
         Assert.Contains("no-store", cacheControl, StringComparison.OrdinalIgnoreCase);
         var body = JsonSerializer.Deserialize<ProjectedQueryRes<object?>>(responseBody, SerializerOptions);
         Assert.NotNull(body);
@@ -142,22 +141,23 @@ public sealed class CacheEndpointTests
         cache.Set("mk1", "v1", ["mt1"]);
         cache.Set("mk2", "v2", ["mt2"]);
         var client = app.GetTestClient();
-        using (var deleteKey = new HttpRequestMessage(HttpMethod.Delete, "/Cache") { Content = JsonContent.Create(new DeleteRequest { Keys = [["Key", "mk1"]] }, options: SerializerOptions) }) {
-            var removeKeys = await client.SendAsync(deleteKey, TestContext.Current.CancellationToken);
+        using (var deleteKey =
+            new HttpRequestMessage(HttpMethod.Delete, "/Cache") { Content = JsonContent.Create(new DeleteRequest { Keys = [["Key", "mk1"]] }, options: SerializerOptions) }) {
+            var removeKeys = await client.SendAsync(deleteKey, TestCt);
             Assert.Equal(HttpStatusCode.OK, removeKeys.StatusCode);
         }
 
-        Assert.False(cache.TryGetValue<string>("mk1", out _));
+        Assert.False(cache.TryGetValue<string>("mk1", out var _));
         using (var deleteTag = new HttpRequestMessage(HttpMethod.Delete, "/Cache/Bulk") {
-                   Content = JsonContent.Create(new List<DeleteRequest> { new() { Keys = [["Tag", "mt2"]], AllowMultiple = true } }, options: SerializerOptions)
-               }) {
-            var removeTags = await client.SendAsync(deleteTag, TestContext.Current.CancellationToken);
+                Content = JsonContent.Create(new List<DeleteRequest> { new() { Keys = [["Tag", "mt2"]], AllowMultiple = true } }, options: SerializerOptions)
+            }) {
+            var removeTags = await client.SendAsync(deleteTag, TestCt);
             Assert.Equal(HttpStatusCode.OK, removeTags.StatusCode);
         }
 
-        Assert.False(cache.TryGetValue<string>("mk2", out _));
+        Assert.False(cache.TryGetValue<string>("mk2", out var _));
         cache.Set("mk3", "v3");
-        var clear = await client.PostAsJsonAsync("/Cache/Clear", new { }, SerializerOptions, TestContext.Current.CancellationToken);
+        var clear = await client.PostAsJsonAsync("/Cache/Clear", new { }, SerializerOptions, TestCt);
         Assert.Equal(HttpStatusCode.OK, clear.StatusCode);
         Assert.Empty(cache.Items);
     }
@@ -170,9 +170,8 @@ public sealed class CacheEndpointTests
         builder.Services.AddLocalCache();
         builder.Services.AddLyoQueryServices();
         await using var app = builder.Build();
-        app.MapCacheEndpoints("Cache");
+        app.MapCacheEndpoints();
         await app.StartAsync();
-
         var routes = app.Services.GetRequiredService<EndpointDataSource>().Endpoints;
         Assert.NotEmpty(routes);
         foreach (var endpoint in routes) {
@@ -200,7 +199,7 @@ public sealed class CacheEndpointTests
         builder.Services.AddLocalCache();
         builder.Services.AddLyoQueryServices();
         var app = builder.Build();
-        app.MapCacheEndpoints("Cache", auth: auth ?? EndpointAuth.Anonymous());
+        app.MapCacheEndpoints(auth: auth ?? EndpointAuth.Anonymous());
         await app.StartAsync();
         return app;
     }

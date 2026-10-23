@@ -1,7 +1,6 @@
 using System.Text.Json;
 using Lyo.DataTable.Models;
 using Lyo.Exceptions;
-using Lyo.Reporting.Models;
 using Lyo.Reporting.Models.Composition;
 using Lyo.Reporting.Models.Controls;
 using Lyo.Reporting.Models.Models;
@@ -95,6 +94,6 @@ public static class ReportGridDataTableMapper
             JsonElement { ValueKind: JsonValueKind.True } => "True",
             JsonElement { ValueKind: JsonValueKind.False } => "False",
             JsonElement je => je.ToString(),
-            _ => value.ToString() ?? string.Empty
+            var _ => value.ToString() ?? string.Empty
         };
 }

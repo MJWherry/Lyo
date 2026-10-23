@@ -1,8 +1,10 @@
 # Lyo.KeyStore
 
-Key encryption key (KEK) storage and rotation contracts for [`Lyo.Encryption`](../Lyo.Encryption/README.md). Encryption services call `IKeyStore` by `keyId` and optional version string so ciphertext can outlive a single key-material rotation.
+Key encryption key (KEK) storage and rotation contracts for [`Lyo.Encryption`](../Lyo.Encryption/README.md). Encryption services call `IKeyStore` by `keyId` and optional version
+string so ciphertext can outlive a single key-material rotation.
 
-Vocabulary: the KEK lives in the store. Data encryption keys (DEKs) used by envelope / two-key flows are generated per operation by the encryption layer and are not persisted in the keystore. Only the KEK that wraps them is stored.
+Vocabulary: the KEK lives in the store. Data encryption keys (DEKs) used by envelope / two-key flows are generated per operation by the encryption layer and are not persisted in
+the keystore. Only the KEK that wraps them is stored.
 
 ## Examples
 
@@ -45,30 +47,33 @@ services.AddKeyedLocalKeyStore(storeKey, ks =>
 
 Versions are strings, for example `"1"`, `"2025-01"`, or opaque ids from an HSM. `GetCurrentVersion` returns the version used when callers omit an explicit version on encrypt.
 
-| Concern | Members |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Read material | `GetKey`, `GetKeyAsync`, `GetCurrentKey`, `GetCurrentKeyAsync` |
-| Read version pointer | `GetCurrentVersion`, `GetCurrentVersionAsync` |
-| Write / rotate | `AddKey`, `AddKeyAsync`, `AddKeyFromString`, `AddKeyFromStringAsync`, `SetCurrentVersion`, `SetCurrentVersionAsync`, `UpdateKey`, `UpdateKeyAsync`, `UpdateKeyFromString`, `UpdateKeyFromStringAsync` |
-| Existence | `HasKey`, `HasKeyAsync` |
-| Metadata | `GetKeyMetadata`, `SetKeyMetadata`, async variants; `GetSaltForVersion` when derivation salts are tracked per version |
+| Concern              | Members                                                                                                                                                                                               |
+|----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Read material        | `GetKey`, `GetKeyAsync`, `GetCurrentKey`, `GetCurrentKeyAsync`                                                                                                                                        |
+| Read version pointer | `GetCurrentVersion`, `GetCurrentVersionAsync`                                                                                                                                                         |
+| Write / rotate       | `AddKey`, `AddKeyAsync`, `AddKeyFromString`, `AddKeyFromStringAsync`, `SetCurrentVersion`, `SetCurrentVersionAsync`, `UpdateKey`, `UpdateKeyAsync`, `UpdateKeyFromString`, `UpdateKeyFromStringAsync` |
+| Existence            | `HasKey`, `HasKeyAsync`                                                                                                                                                                               |
+| Metadata             | `GetKeyMetadata`, `SetKeyMetadata`, async variants; `GetSaltForVersion` when derivation salts are tracked per version                                                                                 |
 
-`UpdateKey*` allocates a new version, monotonic in `LocalKeyStore`, and sets it current. Use this for rotation. `AddKey` pins an exact `(keyId, version)` pair. Use that when importing known version labels from another system.
+`UpdateKey*` allocates a new version, monotonic in `LocalKeyStore`, and sets it current. Use this for rotation. `AddKey` pins an exact `(keyId, version)` pair. Use that when
+importing known version labels from another system.
 
 ## Exceptions
 
-Failures surface as `KeyNotFoundException`, `InvalidKeyException`, `KeyVersionNotFoundException`, all rooted at `EncryptionKeyException`. Log with `keyId`. Never log raw key bytes. Pair with metrics so silent misconfiguration does not look like bad client data.
+Failures surface as `KeyNotFoundException`, `InvalidKeyException`, `KeyVersionNotFoundException`, all rooted at `EncryptionKeyException`. Log with `keyId`. Never log raw key bytes.
+Pair with metrics so silent misconfiguration does not look like bad client data.
 
 ## Key derivation (`KeyDerivation/`)
 
-HKDF (RFC 5869), PBKDF2-SHA256 helpers, and Argon2 adapters live in this assembly so onboarding UIs can derive stable bytes from passphrases consistently with `AddKeyFromString`. Prefer `SecureKeyGenerator` when generating random material instead of ad-hoc RNG.
+HKDF (RFC 5869), PBKDF2-SHA256 helpers, and Argon2 adapters live in this assembly so onboarding UIs can derive stable bytes from passphrases consistently with `AddKeyFromString`.
+Prefer `SecureKeyGenerator` when generating random material instead of ad-hoc RNG.
 
 Implementations of `IKeyDerivationService`:
 
-| Service | Notes |
-| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `Pbkdf2KeyDerivationService` | PBKDF2 (SHA-256 by default). Iteration count and output length are configurable. |
-| `HkdfKeyDerivationService` | HKDF-Extract + HKDF-Expand (SHA-256 by default). Derives sub-keys from existing key material. |
+| Service                      | Notes                                                                                                                      |
+|------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| `Pbkdf2KeyDerivationService` | PBKDF2 (SHA-256 by default). Iteration count and output length are configurable.                                           |
+| `HkdfKeyDerivationService`   | HKDF-Extract + HKDF-Expand (SHA-256 by default). Derives sub-keys from existing key material.                              |
 | `Argon2KeyDerivationService` | Argon2id with configurable memory / parallelism / time-cost via constructor parameters (BouncyCastle on `netstandard2.0`). |
 
 ## Key validation (`KeyValidator`)
@@ -79,15 +84,29 @@ Implementations of `IKeyDerivationService`:
 
 ## Inventory (`IKeyInventoryStore`)
 
-Optional capability for admin UIs and audits: enumerate logical `keyId`s and versions. Not every store implements listing. Probe for `IKeyInventoryStore` or your cloud-specific API before assuming discovery works.
+Optional capability for admin UIs and audits: enumerate logical `keyId`s and versions. Not every store implements listing. Probe for `IKeyInventoryStore` or your cloud-specific API
+before assuming discovery works. `KeyStoreMigrator` requires it on the source.
+
+## Copying a store (`KeyStoreMigrator`)
+
+`KeyStoreMigrator.CopyAsync` copies every version of the given key ids from a source that implements `IKeyInventoryStore` onto another `IKeyStore`. `CopyInventoryAsync` does that
+for every id the source lists, including keys no file uses. Both take an optional `IProgress<KeyStoreMigrationProgress>`. Null reports nothing. Each report is one version after it
+is verified: copied, skipped, or failed.
+
+The copy uses `AddKey`, so version strings stay the ones already written into ciphertext (`"1"`, `"v1"`, `"2025-01"`). A destination version with the same bytes is skipped.
+Different bytes throw before `AddKey` overwrites them. The destination current pointer is set to the source pointer only when the destination had no pointer, or already pointed at
+the same version. A different pointer throws and is left where it was. After `AddKey`, the destination `GetKey` must match the source bytes or the copy stops before
+`SetCurrentVersion`.
+
+`FileStorageTransfer` in `Lyo.FileStorage` calls `CopyAsync` for the key ids a transfer actually references. Use `CopyInventoryAsync` when the whole store should move.
 
 ## Dependency injection
 
-| Extension | Registers |
-| -------------------------------------------------------------------- | ------------------------------------------------ |
-| `AddLocalKeyStore()` | `LocalKeyStore` + unkeyed `IKeyStore` |
-| `AddLocalKeyStore(Action<LocalKeyStore> configure)` | Configured `LocalKeyStore` + unkeyed `IKeyStore` |
-| `AddKeyedLocalKeyStore(string key, Action<LocalKeyStore> configure)` | Per-key `LocalKeyStore` + `IKeyStore` |
+| Extension                                                            | Registers                                        |
+|----------------------------------------------------------------------|--------------------------------------------------|
+| `AddLocalKeyStore()`                                                 | `LocalKeyStore` + unkeyed `IKeyStore`            |
+| `AddLocalKeyStore(Action<LocalKeyStore> configure)`                  | Configured `LocalKeyStore` + unkeyed `IKeyStore` |
+| `AddKeyedLocalKeyStore(string key, Action<LocalKeyStore> configure)` | Per-key `LocalKeyStore` + `IKeyStore`            |
 
 Configuration uses the `configure =>` lambda. There is no `AddLocalKeyStoreFromConfiguration`. Read `IConfiguration` inside `configure`, the same pattern as other Lyo libraries:
 
@@ -105,11 +124,14 @@ services.AddLocalKeyStore(ks =>
 });
 ```
 
-`AddKeyedLocalKeyStore` registers distinct `LocalKeyStore` instances per DI key. Useful when a single process hosts multiple logical tenants, if you are careful about keyed resolution and never cross-wire `IKeyStore` instances.
+`AddKeyedLocalKeyStore` registers distinct `LocalKeyStore` instances per DI key. Useful when a single process hosts multiple logical tenants, if you are careful about keyed
+resolution and never cross-wire `IKeyStore` instances.
 
-`LocalKeyStore.RemoveKey(string keyId, string version)` retires a non-current version and returns `false` when the version doesn't exist or matches `GetCurrentVersion`. Call `SetCurrentVersion` before pruning the previous current.
+`LocalKeyStore.RemoveKey(string keyId, string version)` retires a non-current version and returns `false` when the version doesn't exist or matches `GetCurrentVersion`. Call
+`SetCurrentVersion` before pruning the previous current.
 
-**Production.** `LocalKeyStore` is not durable and not audited. Swap for `Lyo.KeyStore.Aws`, Azure Key Vault, PKCS#11, or another `IKeyStore` that meets your retention and access policies.
+**Production.** `LocalKeyStore` is not durable and not audited. Swap for `Lyo.KeyStore.Aws`, Azure Key Vault, PKCS#11, or another `IKeyStore` that meets your retention and access
+policies.
 
 ## Cloud bridge
 
@@ -117,7 +139,8 @@ See [`Lyo.KeyStore.Aws`](../Lyo.KeyStore.Aws/README.md) for `AwsKeyStore` and he
 
 ## How encryption uses the store
 
-Symmetric and envelope services resolve `keyId` on encrypt. Ciphertext and stream headers carry `keyId` and version so decrypt can call `GetKey(keyId, version)` even after rotation. Two-key flows wrap per-operation DEKs. KEK rotation can use `ReEncryptDek` on `ITwoKeyEncryptionService` without re-encrypting bulk payload. See the encryption README.
+Symmetric and envelope services resolve `keyId` on encrypt. Ciphertext and stream headers carry `keyId` and version so decrypt can call `GetKey(keyId, version)` even after
+rotation. Two-key flows wrap per-operation DEKs. KEK rotation can use `ReEncryptDek` on `ITwoKeyEncryptionService` without re-encrypting bulk payload. See the encryption README.
 
 ## Operational checklist
 
@@ -128,7 +151,10 @@ Symmetric and envelope services resolve `keyId` on encrypt. Ciphertext and strea
 
 ## Dependency injection
 
-`Microsoft.Extensions.DependencyInjection.Extensions` in this package: `AddLocalKeyStore()` registers a shared `LocalKeyStore` as `IKeyStore`. `AddLocalKeyStore(Action<LocalKeyStore>)` configures keys before the container finishes building. Keyed encryption registration lives in [`EncryptionServiceExtensions`](../Lyo.Encryption/Extensions/EncryptionServiceExtensions.cs), for example `AddEncryptionServiceKeyed`. See also [`Lyo.Encryption/README.md`](../Lyo.Encryption/README.md).
+`Microsoft.Extensions.DependencyInjection.Extensions` in this package: `AddLocalKeyStore()` registers a shared `LocalKeyStore` as `IKeyStore`.
+`AddLocalKeyStore(Action<LocalKeyStore>)` configures keys before the container finishes building. Keyed encryption registration lives in [
+`EncryptionServiceExtensions`](../Lyo.Encryption/Extensions/EncryptionServiceExtensions.cs), for example `AddEncryptionServiceKeyed`. See also [
+`Lyo.Encryption/README.md`](../Lyo.Encryption/README.md).
 
 ## Encryption guide
 

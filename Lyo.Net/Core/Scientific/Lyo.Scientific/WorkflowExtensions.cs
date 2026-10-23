@@ -7,8 +7,8 @@ namespace Lyo.Scientific;
 
 /// <summary>Helpers that attach scientific reference data to quick estimates.</summary>
 /// <remarks>
-/// These favor convenience over modeling depth. For reaction balancing, orbital mechanics, shocks, or fatigue, call the matching
-/// <c>Lyo.Scientific.Functions.*Functions</c> static APIs instead.
+/// These favor convenience over modeling depth. For reaction balancing, orbital mechanics, shocks, or fatigue, call the matching <c>Lyo.Scientific.Functions.*Functions</c>
+/// static APIs instead.
 /// </remarks>
 public static class ScientificWorkflowExtensions
 {

@@ -1,9 +1,7 @@
+using System.Diagnostics;
 using System.Globalization;
 using Lyo.Common.Metadata.Records;
 using Lyo.IO.Temp.Enums;
-#if NETSTANDARD2_0
-using System.Diagnostics;
-#endif
 
 namespace Lyo.IO.Temp.Models;
 
@@ -11,12 +9,13 @@ namespace Lyo.IO.Temp.Models;
 /// Naming, layout, caps, and overflow for one session. Sessions from <see cref="Lyo.IO.Temp.IIOTempService.CreateSession" /> get <see cref="RootDirectory" /> set to the
 /// service folder.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 // ReSharper disable once InconsistentNaming
 public sealed class IOTempSessionOptions
 {
     /// <summary>
-    /// Default parent for sessions created without a service. Includes the process id so two runners or processes on one machine do not share a cleanup root, while still
-    /// sitting under a discoverable <c>lyo-io-temp</c> folder.
+    /// Default parent for sessions created without a service. Includes the process id so two runners or processes on one machine do not share a cleanup root, while still sitting
+    /// under a discoverable <c>lyo-io-temp</c> folder.
     /// </summary>
     private static readonly string DefaultRootDirectory = Path.Combine(
         Path.GetTempPath(), "lyo-io-temp",
@@ -62,21 +61,19 @@ public sealed class IOTempSessionOptions
     /// <summary>Cap in bytes for one new or appended file; null turns the check off.</summary>
     public long? MaxFileSizeBytes { get; init; } = FileSizeUnitInfo.Gigabyte.ConvertToBytes(1);
 
-    /// <summary>
-    /// Cap on total bytes of files in this session. When crossed, <see cref="OverflowStrategy" /> either deletes old/large files or throws.
-    /// </summary>
+    /// <summary>Cap on total bytes of files in this session. When crossed, <see cref="OverflowStrategy" /> either deletes old/large files or throws.</summary>
     public long? MaxTotalSizeBytes { get; init; }
 
-    /// <summary>
-    /// Cap on how many tracked files this session may hold at once. When crossed, <see cref="OverflowStrategy" /> either deletes oldest/largest files or throws.
-    /// </summary>
+    /// <summary>Cap on how many tracked files this session may hold at once. When crossed, <see cref="OverflowStrategy" /> either deletes oldest/largest files or throws.</summary>
     public int? MaxFileCount { get; init; }
 
-    /// <summary>
-    /// Optional lifetime for files in this session. The cleanup worker and <see cref="IIOTempService.Cleanup()" /> use it when set; otherwise the service-level lifetime is used.
-    /// </summary>
+    /// <summary>Optional lifetime for files in this session. The cleanup worker and <see cref="IIOTempService.Cleanup()" /> use it when set; otherwise the service-level lifetime is used.</summary>
     public TimeSpan? FileLifetime { get; init; }
 
     /// <summary>What to do when <see cref="MaxFileCount" />, <see cref="MaxTotalSizeBytes" />, or a per-file cap would be crossed.</summary>
     public TempOverflowStrategy OverflowStrategy { get; init; } = TempOverflowStrategy.ThrowException;
+
+    /// <summary>Session root and size caps.</summary>
+    public override string ToString()
+        => $"RootDirectory={RootDirectory} MaxFileSizeBytes={MaxFileSizeBytes} MaxTotalSizeBytes={MaxTotalSizeBytes} MaxFileCount={MaxFileCount}";
 }

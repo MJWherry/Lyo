@@ -4,8 +4,8 @@ using Lyo.Exceptions;
 namespace Lyo.Web.Components.DataGrid;
 
 /// <summary>
-/// Collects <c>LyoIdColumn</c> descriptors during grid render so the parent load can batch related QueryProject calls.
-/// Cleared and rebuilt each render, same as <see cref="ProjectedColumnRegistry" />.
+/// Collects <c>LyoIdColumn</c> descriptors during grid render so the parent load can batch related QueryProject calls. Cleared and rebuilt each render, same as
+/// <see cref="ProjectedColumnRegistry" />.
 /// </summary>
 public sealed class RelatedColumnRegistry
 {
@@ -21,14 +21,15 @@ public sealed class RelatedColumnRegistry
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(route);
         ArgumentHelpers.ThrowIfNull(resType);
         ArgumentHelpers.ThrowIfNull(select);
-        _columns.Add(new() {
-            Field = field.Trim(),
-            Route = route.Trim().TrimEnd('/'),
-            ResType = resType,
-            Select = select,
-            ApiClient = apiClient,
-            Hidden = hidden
-        });
+        _columns.Add(
+            new() {
+                Field = field.Trim(),
+                Route = route.Trim().TrimEnd('/'),
+                ResType = resType,
+                Select = select,
+                ApiClient = apiClient,
+                Hidden = hidden
+            });
     }
 
     /// <summary>Updates hidden state after the user toggles a column so the next load can skip its related fetch.</summary>

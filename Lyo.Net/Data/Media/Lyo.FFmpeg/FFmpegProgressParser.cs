@@ -5,8 +5,8 @@ using Lyo.Media.Models;
 namespace Lyo.FFmpeg;
 
 /// <summary>
-/// Parses ffmpeg <c>-progress</c> <c>key=value</c> lines into <see cref="MediaProgress" />.
-/// Prefers <c>out_time_us</c>. Treats <c>out_time_ms</c> as microseconds (ffmpeg 8 stores µs in that key). Falls back to <c>out_time</c>.
+/// Parses ffmpeg <c>-progress</c> <c>key=value</c> lines into <see cref="MediaProgress" />. Prefers <c>out_time_us</c>. Treats <c>out_time_ms</c> as microseconds (ffmpeg 8
+/// stores µs in that key). Falls back to <c>out_time</c>.
 /// </summary>
 internal sealed class FFmpegProgressParser(IProgress<MediaProgress>? progress, TimeSpan? knownDuration)
 {
@@ -45,9 +45,8 @@ internal sealed class FFmpegProgressParser(IProgress<MediaProgress>? progress, T
             if (TypeConversion.TryConvertTo<double>(text, out var speed))
                 _speed = speed;
         }
-        else if (key.Equals("progress", StringComparison.Ordinal)) {
+        else if (key.Equals("progress", StringComparison.Ordinal))
             Report();
-        }
     }
 
     private void TrySetMicroseconds(ReadOnlySpan<char> value)
@@ -73,8 +72,7 @@ internal sealed class FFmpegProgressParser(IProgress<MediaProgress>? progress, T
             return;
 
         if (TimeSpan.TryParseExact(text, @"hh\:mm\:ss\.ffffff", CultureInfo.InvariantCulture, out var parsed) ||
-            TimeSpan.TryParseExact(text, @"hh\:mm\:ss\.fff", CultureInfo.InvariantCulture, out parsed) ||
-            TimeSpan.TryParse(text, CultureInfo.InvariantCulture, out parsed))
+            TimeSpan.TryParseExact(text, @"hh\:mm\:ss\.fff", CultureInfo.InvariantCulture, out parsed) || TimeSpan.TryParse(text, CultureInfo.InvariantCulture, out parsed))
             _outTime = parsed;
     }
 

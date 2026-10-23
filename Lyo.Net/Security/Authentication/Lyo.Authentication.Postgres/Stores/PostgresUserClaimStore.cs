@@ -1,6 +1,7 @@
 using Lyo.Authentication.Models.Records;
 using Lyo.Authentication.Postgres.Database;
 using Lyo.Authentication.Services.Users;
+using Lyo.Common.Core.Identifiers;
 using Lyo.EntityReference.Models;
 using Lyo.EntityReference.Postgres;
 using Lyo.Exceptions;
@@ -44,6 +45,7 @@ public sealed class PostgresUserClaimStore : IUserClaimStore
             .OrderBy(c => c.CreatedTimestamp)
             .ToListAsync(ct)
             .ConfigureAwait(false);
+
         return rows.Select(ToRecord).ToArray();
     }
 
@@ -55,7 +57,7 @@ public sealed class PostgresUserClaimStore : IUserClaimStore
         await using var context = await _contextFactory.CreateDbContextAsync(ct).ConfigureAwait(false);
         var entity = ToEntity(claim);
         if (entity.Id == Guid.Empty)
-            entity.Id = Guid.NewGuid();
+            entity.Id = LyoGuid.CreateV7();
 
         entity.TenantId = resolvedTenant;
         if (entity.CreatedTimestamp == default)
@@ -87,6 +89,5 @@ public sealed class PostgresUserClaimStore : IUserClaimStore
             UpdatedTimestamp = claim.UpdatedAt
         };
 
-    private static LyoUserClaim ToRecord(UserClaimEntity entity)
-        => new(entity.Id, entity.UserId, entity.Type, entity.Value, entity.CreatedTimestamp, entity.UpdatedTimestamp);
+    private static LyoUserClaim ToRecord(UserClaimEntity entity) => new(entity.Id, entity.UserId, entity.Type, entity.Value, entity.CreatedTimestamp, entity.UpdatedTimestamp);
 }

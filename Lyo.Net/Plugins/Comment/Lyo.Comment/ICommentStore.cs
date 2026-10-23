@@ -4,8 +4,8 @@ namespace Lyo.Comment;
 
 /// <summary>Store contract for comments.</summary>
 /// <remarks>
-/// Stores take <see cref="EntityRef" /> at the API edge and persist <c>EntityId</c> as one Guid (Option A). Pass null for <c>tenantId</c> on methods in
-/// single-tenant hosts (resolved through <see cref="EntityRefOptions.DefaultTenantId" />).
+/// Stores take <see cref="EntityRef" /> at the API edge and persist <c>EntityId</c> as one Guid (Option A). Pass null for <c>tenantId</c> on methods in single-tenant hosts
+/// (resolved through <see cref="EntityRefOptions.DefaultTenantId" />).
 /// </remarks>
 public interface ICommentStore
 {

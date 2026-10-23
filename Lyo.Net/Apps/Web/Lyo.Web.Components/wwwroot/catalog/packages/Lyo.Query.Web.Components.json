@@ -13,7 +13,7 @@
       "items": [
         "`QueryBuilderWorkbench.razor` (`QueryBuilderWorkbench.razor.cs`). Full-screen workbench that pairs a query editor with a runner panel. Holds the current `QueryConcreteReq` (`/QueryConcrete`), `ProjectionQueryReq` (`/QueryProject`), and `QueryReq` (root `/Query` From/Joins), plus shared bookkeeping (`Include`, `Select`, `Keys`). Persists state to the browser via `ClientStore.GetQueryWorkbenchStateAsync` / `SetQueryWorkbenchStateAsync` with a 450 ms debounce. Dispose also flushes the final state.",
         "`QueryBuilderSettings.razor` (`QueryBuilderSettings.razor.cs`). Host / endpoint / run-mode selector inside the workbench.",
-        "`QueryRunPanel.razor` (`QueryRunPanel.razor.cs`). Sends HTTP for the current query, shows the response in a JSON editor, and reports latency / size. Optional auth header on the runner: none, `Authorization: Bearer {token}`, or a custom name/value. Splitter behavior comes from `_content/Lyo.Query.Web.Components/scripts/queryWorkbenchSplitter.js`. Endpoint segments: `QueryConcrete`, `QueryProject`, or `Query` (root)."
+        "`QueryRunPanel.razor` (`QueryRunPanel.razor.cs`). Sends HTTP for the current query, shows the response in a JSON editor, and reports latency / size. **Show SQL** posts the same body to `QuerySql` (`{route}/QuerySql` for concrete and projection, `{prefix}QuerySql` for root) and does not execute the query. Optional auth header on the runner: none, `Authorization: Bearer {token}`, or a custom name/value. Splitter behavior comes from `_content/Lyo.Query.Web.Components/scripts/queryWorkbenchSplitter.js`. Endpoint segments: `QueryConcrete`, `QueryProject`, or `Query` (root)."
       ]
     },
     {
@@ -93,14 +93,6 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.DataTable.Models",
       "kind": "lyo",
       "tags": [
@@ -126,6 +118,14 @@
     },
     {
       "name": "Lyo.Encryption",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -166,6 +166,14 @@
     },
     {
       "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -214,6 +222,14 @@
     },
     {
       "name": "Lyo.Result",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Schedule.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -383,6 +399,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

@@ -13,6 +13,9 @@ public static class ExportFormatExtensions
                 ExportFormat.Csv => FileTypeInfo.Csv,
                 ExportFormat.Xlsx => FileTypeInfo.Xlsx,
                 ExportFormat.Json => FileTypeInfo.Json,
+                ExportFormat.Yaml => FileTypeInfo.Yaml,
+                ExportFormat.Xml => FileTypeInfo.Xml,
+                ExportFormat.Toml => FileTypeInfo.Toml,
                 var _ => FileTypeInfo.Unknown
             };
 

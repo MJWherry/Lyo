@@ -1,41 +1,22 @@
+using System.Diagnostics;
 using Lyo.Result;
 
 namespace Lyo.Xlsx.Models;
 
-/// <summary>Outcome of an XLSX parse, including path and row count when known.</summary>
-public sealed record XlsxParseResult : Result<IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>>
+/// <summary>Typed sheet parse that keeps good rows when other rows have a bad cell. A missing sheet or a missing required header fails the document.</summary>
+/// <typeparam name="T">Row type.</typeparam>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record XlsxParseResult<T> : Result<IReadOnlyList<T>>
 {
-    /// <summary>Source file path, when the parse read from disk.</summary>
-    public string? FilePath { get; init; }
+    /// <summary>Row problems. Empty or null when every data row bound.</summary>
+    public IReadOnlyList<XlsxParseError>? ParseErrors { get; init; }
 
-    /// <summary>Number of rows parsed.</summary>
-    public int? RowCount { get; init; }
-
-    /// <summary>Human-readable outcome text.</summary>
-    public string? Message { get; init; }
-
-    private XlsxParseResult(bool isSuccess, IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>>? data, IReadOnlyList<Error>? errors = null)
+    private XlsxParseResult(bool isSuccess, List<T>? data, IReadOnlyList<Error>? errors = null)
         : base(isSuccess, data, errors) { }
 
-    /// <summary>Builds a successful parse result with the row/column map.</summary>
-    public static XlsxParseResult FromSuccess(
-        IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> parsedData,
-        string? filePath = null,
-        int? rowCount = null,
-        string? message = null)
-        => new(true, parsedData) { FilePath = filePath, RowCount = rowCount, Message = message };
+    /// <summary>Partial or full success. <paramref name="parseErrors" /> may be set while success stays true.</summary>
+    public static XlsxParseResult<T> FromSuccess(List<T> rows, IReadOnlyList<XlsxParseError>? parseErrors = null) => new(true, rows) { ParseErrors = parseErrors };
 
-    /// <summary>Builds a failed parse result from an exception.</summary>
-    public static XlsxParseResult FromException(Exception exception, string? filePath = null, string? errorCode = null)
-    {
-        var error = Error.FromException(exception, errorCode);
-        return new(false, null, new List<Error> { error }) { FilePath = filePath };
-    }
-
-    /// <summary>Builds a failed parse result with a custom error message.</summary>
-    public static XlsxParseResult FromError(string errorMessage, string errorCode, string? filePath = null, Exception? exception = null)
-    {
-        var error = exception != null ? Error.FromException(exception, errorCode) : new(errorMessage, errorCode);
-        return new(false, null, new List<Error> { error }) { FilePath = filePath };
-    }
+    /// <summary>Document failure. No rows are returned.</summary>
+    public static XlsxParseResult<T> FromError(string message, string code) => new(false, null, [new(message, code)]);
 }

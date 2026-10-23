@@ -1,40 +1,32 @@
-using System.Net.Http.Json;
 using Lyo.Email.Builders;
 using Lyo.Email.Models;
 using Lyo.Result;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
 using Lyo.Web.Components.FileUpload;
 using Lyo.Web.Components.Models;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
+using Lyo.Web.Primitives;
 using MudBlazor;
 
 namespace Lyo.Email.Web.Components;
 
 public partial class EmailWorkbench
 {
-    private sealed record EmailAttachment(string FileName, byte[] Content);
-
-    private bool _busy;
+    private readonly List<string> _attachmentUploadLog = [];
     private readonly List<EmailAttachment> _emailAttachments = [];
     private readonly string _emailValidationPattern = RegexPatterns.EmailRegex.ToString();
+    private string _attachmentUploadStatus = "No attachment uploads yet.";
+
+    private bool _busy;
     private List<string> _emailBccValues = [];
     private List<string> _emailCcValues = [];
     private string _emailFromAddress = string.Empty;
     private string? _emailFromName;
     private string _emailHtmlBody = "<p>Hello from Lyo.</p>";
-    private Result<EmailRequest>? _lastEmailResult;
-    private EmailResult? _lastEmailProviderResult;
-    private string _lastEmailSummary = string.Empty;
     private string _emailSubject = "Lyo test message";
     private string _emailTextBody = "<p>Hello from Lyo.</p>";
     private List<string> _emailToValues = ["test@example.com"];
-    private string _attachmentUploadStatus = "No attachment uploads yet.";
-    private readonly List<string> _attachmentUploadLog = [];
+    private EmailResult? _lastEmailProviderResult;
+    private Result<EmailRequest>? _lastEmailResult;
+    private string _lastEmailSummary = string.Empty;
 
     private Task OnEmailAttachmentReadyAsync(LocalBrowserFile file)
     {
@@ -63,7 +55,8 @@ public partial class EmailWorkbench
 
     private Task OnAttachmentUploadCancelledAsync(LyoFileUploadEventArgs args) => UpdateAttachmentUploadAsync($"{args.FileName} cancelled.", $"Cancelled {args.FileName}");
 
-    private Task OnAttachmentUploadFailedAsync(LyoFileUploadEventArgs args) => UpdateAttachmentUploadAsync($"{args.FileName} failed: {args.ErrorMessage}", $"Failed {args.FileName}");
+    private Task OnAttachmentUploadFailedAsync(LyoFileUploadEventArgs args)
+        => UpdateAttachmentUploadAsync($"{args.FileName} failed: {args.ErrorMessage}", $"Failed {args.FileName}");
 
     private async Task SendEmailAsync()
     {
@@ -96,7 +89,10 @@ public partial class EmailWorkbench
             foreach (var attachment in _emailAttachments)
                 builder.AddAttachment(attachment.FileName, attachment.Content);
 
-            _lastEmailResult = string.IsNullOrWhiteSpace(_emailFromAddress) ? await EmailService.SendEmailAsync(builder) : await EmailService.SendEmailAsync(builder, _emailFromAddress, _emailFromName);
+            _lastEmailResult = string.IsNullOrWhiteSpace(_emailFromAddress)
+                ? await EmailService.SendEmailAsync(builder)
+                : await EmailService.SendEmailAsync(builder, _emailFromAddress, _emailFromName);
+
             _lastEmailProviderResult = _lastEmailResult as EmailResult;
             _lastEmailSummary = _lastEmailResult.IsSuccess ? $"Email sent to {_emailToValues.Count} recipient(s)." : LyoResultErrorFormatter.FormatErrors(_lastEmailResult.Errors);
             SetStatus(_lastEmailSummary, _lastEmailResult.IsSuccess ? Severity.Success : Severity.Error);
@@ -165,4 +161,6 @@ public partial class EmailWorkbench
 
         return Task.CompletedTask;
     }
+
+    private sealed record EmailAttachment(string FileName, byte[] Content);
 }

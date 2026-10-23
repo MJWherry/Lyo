@@ -29,7 +29,8 @@ services.AddDefaultCompressionService<CompressionService>();
 
 ## DI registration
 
-Registration, ICompressionResolver, and the configuration-file sample are in [`Lyo.Compression`](../Lyo.Compression/README.md). When stored metadata might reference XZ, register AddXzCompressor() so file-storage reads work. ICompressionResolver then dispatches those reads from CompressionAlgorithm metadata.
+Registration, ICompressionResolver, and the configuration-file sample are in [`Lyo.Compression`](../Lyo.Compression/README.md). When stored metadata might reference XZ, register
+AddXzCompressor () so file-storage reads work. ICompressionResolver then dispatches those reads from CompressionAlgorithm metadata.
 
 ## Dependencies
 

@@ -1,5 +1,3 @@
-using Lyo.DataTable.Models;
-
 namespace Lyo.DataTable.Models.Tests;
 
 public sealed class DataTableBuilderTests
@@ -62,7 +60,7 @@ public sealed class DataTableBuilderTests
     {
         var table = new DataTableBuilder().AddHeaders("Name").AddRow(r => r.AddCells("Alice")).AddRow(r => r.AddCells("Bob")).Build();
         var names = new List<string>();
-        await foreach (var row in table.EnumerateRowsAsync(TestContext.Current.CancellationToken))
+        await foreach (var row in table.EnumerateRowsAsync(TestCt))
             names.Add(row.Cells[0].DisplayValue);
 
         Assert.Equal(["Alice", "Bob"], names);

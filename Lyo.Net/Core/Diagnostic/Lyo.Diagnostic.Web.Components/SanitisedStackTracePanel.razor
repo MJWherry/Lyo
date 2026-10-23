@@ -77,8 +77,9 @@ else {
 
 @code {
 
-    private RenderFragment<SanitisedFrame> FrameFlags => frame => @<text>
-        @(frame.IsAsync ? "async " : "")@(frame.IsLambda ? "lambda" : "")@(!frame.IsAsync && !frame.IsLambda ? "—" : "")
+    private RenderFragment<SanitisedFrame> FrameFlags
+        => frame => @<text>
+                         @(frame.IsAsync ? "async " : "")@(frame.IsLambda ? "lambda" : "")@(!frame.IsAsync && !frame.IsLambda ? "—" : "")
     </text>;
 
 }

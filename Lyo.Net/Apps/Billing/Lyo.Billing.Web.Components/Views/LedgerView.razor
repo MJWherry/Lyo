@@ -1,0 +1,12 @@
+@namespace Lyo.Billing.Web.Components.Views
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="3" Class="mt-3">
+    <MudButton Variant="Variant.Outlined" OnClick="EnsureChartAsync" Disabled="@_busy">Ensure chart of accounts</MudButton>
+    <LyoSection Title="Accounts">
+        <AccountGrid ApiClient="ApiClient"/>
+    </LyoSection>
+    <LyoSection Title="Journals">
+        <JournalGrid ApiClient="ApiClient"/>
+    </LyoSection>
+</MudStack>

@@ -8,8 +8,8 @@
         <ToolCommandName>lyo</ToolCommandName>
         <PackageId>Lyo.Cli</PackageId>
         <IsPackable>true</IsPackable>
-        <Description>Installable Lyo command-line tools (crypt, enc, compress, hash, id, query, csv, xlsx).</Description>
-        <PackageTags>lyo cli tool crypt encoding compression hashing csv xlsx query</PackageTags>
+        <Description>Installable Lyo command-line tools (crypt, enc, compress, hash, id, query, csv, xlsx, json, yaml, xml, toml, nfc).</Description>
+        <PackageTags>lyo cli tool crypt encoding compression hashing csv xlsx json yaml xml toml query nfc</PackageTags>
         <RootNamespace>Lyo.Cli</RootNamespace>
     </PropertyGroup>
 
@@ -20,9 +20,11 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\Core\Common\Lyo.Common.Json\Lyo.Common.Json.csproj"/>
+        <ProjectReference Include="..\..\Core\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
+        <ProjectReference Include="..\..\Data\Json\Lyo.Json\Lyo.Json.csproj"/>
         <ProjectReference Include="..\..\Core\Common\Lyo.TextEncoding\Lyo.TextEncoding.csproj"/>
         <ProjectReference Include="..\..\Core\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
+        <ProjectReference Include="..\..\Apps\Desktop\Lyo.Desktop\Lyo.Desktop.csproj"/>
         <ProjectReference Include="..\..\Data\Compression\Lyo.Compression\Lyo.Compression.csproj"/>
         <ProjectReference Include="..\..\Data\Compression\Lyo.Compression.BZip2\Lyo.Compression.BZip2.csproj"/>
         <ProjectReference Include="..\..\Data\Compression\Lyo.Compression.Lz4\Lyo.Compression.Lz4.csproj"/>
@@ -35,6 +37,9 @@
         <ProjectReference Include="..\..\Data\Query\Lyo.Query.Models\Lyo.Query.Models.csproj"/>
         <ProjectReference Include="..\..\Data\Xlsx\Lyo.Xlsx\Lyo.Xlsx.csproj"/>
         <ProjectReference Include="..\..\Data\Xlsx\Lyo.Xlsx.Models\Lyo.Xlsx.Models.csproj"/>
+        <ProjectReference Include="..\..\Data\Yaml\Lyo.Yaml\Lyo.Yaml.csproj"/>
+        <ProjectReference Include="..\..\Data\Xml\Lyo.Xml\Lyo.Xml.csproj"/>
+        <ProjectReference Include="..\..\Data\Toml\Lyo.Toml\Lyo.Toml.csproj"/>
         <ProjectReference Include="..\..\Apps\Api\Lyo.Api.Client\Lyo.Api.Client.csproj"/>
         <ProjectReference Include="..\..\Apps\Http\Lyo.Http.Client\Lyo.Http.Client.csproj"/>
         <ProjectReference Include="..\..\Apps\Api\Lyo.Api.Models\Lyo.Api.Models.csproj"/>
@@ -44,6 +49,10 @@
         <ProjectReference Include="..\..\Security\Encryption\Lyo.Encryption.XChaCha20Poly1305\Lyo.Encryption.XChaCha20Poly1305.csproj"/>
         <ProjectReference Include="..\..\Security\KeyStore\Lyo.KeyStore\Lyo.KeyStore.csproj"/>
         <ProjectReference Include="..\..\Security\Hashing\Lyo.Hashing\Lyo.Hashing.csproj"/>
+        <ProjectReference Include="..\..\Data\Nfc\Lyo.Nfc\Lyo.Nfc.csproj"/>
+        <ProjectReference Include="..\..\Data\Nfc\Lyo.Nfc.Pcsc\Lyo.Nfc.Pcsc.csproj"/>
+        <ProjectReference Include="..\..\Data\Rfid\Lyo.Rfid\Lyo.Rfid.csproj"/>
+        <ProjectReference Include="..\..\Data\Rfid\Lyo.Rfid.Tonie\Lyo.Rfid.Tonie.csproj"/>
     </ItemGroup>
 
 </Project>

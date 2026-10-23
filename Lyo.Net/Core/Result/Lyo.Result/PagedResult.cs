@@ -1,7 +1,10 @@
+using System.Diagnostics;
+
 namespace Lyo.Result;
 
 /// <summary>One page of a paged query. Use as the data payload of <see cref="Result{T}" />: <c>Result&lt;PagedResult&lt;T&gt;&gt;</c>.</summary>
 /// <typeparam name="T">Item type.</typeparam>
+[DebuggerDisplay("{ToString(),nq}")]
 public record PagedResult<T>
 {
     /// <summary>Items on this page.</summary>

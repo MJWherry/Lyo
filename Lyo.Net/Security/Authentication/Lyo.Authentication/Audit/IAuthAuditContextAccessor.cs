@@ -3,8 +3,8 @@ using Lyo.Authentication.Models.Audit;
 namespace Lyo.Authentication.Audit;
 
 /// <summary>
-/// Per-request enricher for <see cref="AuthAuditEvent" />: supplies ambient context (IP, user-agent, correlation id) the current host knows. Recorders
-/// consult this when the caller omitted those fields. The default <see cref="NullAuthAuditContextAccessor" /> returns nothing.
+/// Per-request enricher for <see cref="AuthAuditEvent" />: supplies ambient context (IP, user-agent, correlation id) the current host knows. Recorders consult this when the
+/// caller omitted those fields. The default <see cref="NullAuthAuditContextAccessor" /> returns nothing.
 /// </summary>
 public interface IAuthAuditContextAccessor
 {

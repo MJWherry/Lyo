@@ -27,7 +27,10 @@ public static class CacheEndpointExtensions
     /// <param name="configure">Optional endpoint conventions applied on top of <paramref name="auth" /> (for example rate limiting, OpenAPI metadata).</param>
     /// <param name="auth">Authorization for every cache route. Defaults to <see cref="EndpointAuth.RequireAuthorization()" />.</param>
     public static IEndpointRouteBuilder MapCacheEndpoints(
-        this IEndpointRouteBuilder endpoints, string baseRoute = "Cache", Action<RouteHandlerBuilder>? configure = null, EndpointAuth? auth = null)
+        this IEndpointRouteBuilder endpoints,
+        string baseRoute = "Cache",
+        Action<RouteHandlerBuilder>? configure = null,
+        EndpointAuth? auth = null)
     {
         var prefix = string.IsNullOrWhiteSpace(baseRoute) ? "Cache" : baseRoute.Trim().Trim('/');
         var effectiveAuth = auth ?? EndpointAuth.RequireAuthorization();
@@ -59,8 +62,7 @@ public static class CacheEndpointExtensions
 
         Apply(
             endpoints.MapDelete(
-                    $"{prefix}", async (
-                        [FromBody] DeleteRequest request, [FromServices] CacheQueryService cacheQuery, HttpContext httpContext, CancellationToken ct = default) => {
+                    $"{prefix}", async ([FromBody] DeleteRequest request, [FromServices] CacheQueryService cacheQuery, HttpContext httpContext, CancellationToken ct = default) => {
                         WriteNoStore(httpContext);
                         var result = await cacheQuery.DeleteAsync(request, ct).ConfigureAwait(false);
                         if (result.IsSuccess)

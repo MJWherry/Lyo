@@ -11,8 +11,8 @@ using JobRunResultEnum = Lyo.Job.Models.Enums.JobRunResult;
 namespace Lyo.Job.Tests.Postgres;
 
 /// <summary>
-/// Regression checks for the maintenance-versus-finish race: dead-job detection re-reads the heartbeat inside a guarded update, the orphan ceiling bounds runs whose definition
-/// sets no timeout, and <c>job_run</c> carries an <c>xmin</c> concurrency token so a read-modify-write pass cannot clobber a worker's concurrent finish.
+/// Regression checks for the maintenance-versus-finish race: dead-job detection re-reads the heartbeat inside a guarded update, the orphan ceiling bounds runs whose
+/// definition sets no timeout, and <c>job_run</c> carries an <c>xmin</c> concurrency token so a read-modify-write pass cannot clobber a worker's concurrent finish.
 /// </summary>
 [Trait("Category", "Integration")]
 [Collection(JobMaintenanceCollection.Name)]
@@ -122,15 +122,14 @@ public class JobMaintenanceRaceTests
 
         var cutoff = DateTime.UtcNow.AddMinutes(-5);
         await using (var refresher = await CreateDbContextAsync()) {
-            await refresher.JobRuns.Where(r => r.Id == runId)
-                .ExecuteUpdateAsync(s => s.SetProperty(r => r.LastHeartbeatUtc, DateTime.UtcNow), TestContext.Current.CancellationToken);
+            await refresher.JobRuns.Where(r => r.Id == runId).ExecuteUpdateAsync(s => s.SetProperty(r => r.LastHeartbeatUtc, DateTime.UtcNow), TestCt);
         }
 
         await using var db = await CreateDbContextAsync();
         var rows = await db.JobRuns
             .Where(r => r.Id == runId && (r.State == JobState.Running || r.State == JobState.Cancelling) &&
                 (r.LastHeartbeatUtc ?? r.StartedTimestamp ?? r.CreatedTimestamp) <= cutoff)
-            .ExecuteUpdateAsync(s => s.SetProperty(r => r.State, JobState.Finished), TestContext.Current.CancellationToken);
+            .ExecuteUpdateAsync(s => s.SetProperty(r => r.State, JobState.Finished), TestCt);
 
         Assert.Equal(0, rows);
         Assert.Equal(JobState.Running, (await GetRunAsync(runId)).State);
@@ -141,23 +140,20 @@ public class JobMaintenanceRaceTests
     {
         var definitionId = await CreateDefinitionAsync(d => d.TimeoutMinutes = 5);
         var runId = await SeedRunAsync(definitionId, JobState.Running, r => r.StartedTimestamp = DateTime.UtcNow);
-
         await using var stale = await CreateDbContextAsync();
-        var staleRun = await stale.JobRuns.FirstAsync(r => r.Id == runId, TestContext.Current.CancellationToken);
-
+        var staleRun = await stale.JobRuns.FirstAsync(r => r.Id == runId, TestCt);
         await using (var winner = await CreateDbContextAsync()) {
-            var run = await winner.JobRuns.FirstAsync(r => r.Id == runId, TestContext.Current.CancellationToken);
+            var run = await winner.JobRuns.FirstAsync(r => r.Id == runId, TestCt);
             run.State = JobState.Finished;
             run.Result = JobRunResultEnum.Success;
             run.FinishedTimestamp = DateTime.UtcNow;
-            await winner.SaveChangesAsync(TestContext.Current.CancellationToken);
+            await winner.SaveChangesAsync(TestCt);
         }
 
         // Without the xmin token this stale write would silently overwrite the worker's finish with a timeout.
         staleRun.State = JobState.Finished;
         staleRun.Result = JobRunResultEnum.Timeout;
-        await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => stale.SaveChangesAsync(TestContext.Current.CancellationToken));
-
+        await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => stale.SaveChangesAsync(TestCt));
         var persisted = await GetRunAsync(runId);
         Assert.Equal(JobRunResultEnum.Success, persisted.Result);
     }
@@ -176,7 +172,7 @@ public class JobMaintenanceRaceTests
         Assert.Equal(JobRunResultEnum.Timeout, (await GetRunAsync(runId)).Result);
 
         // The worker eventually reports success; the finish CAS guard must reject it instead of append results to a finished run.
-        var (result, error) = await _fixture.JobService.FinishedJobRun(runId, [], TestContext.Current.CancellationToken);
+        var (result, error) = await _fixture.JobService.FinishedJobRun(runId, [], TestCt);
         Assert.Null(result);
         Assert.NotNull(error);
         Assert.Equal(JobRunResultEnum.Timeout, (await GetRunAsync(runId)).Result);
@@ -197,7 +193,7 @@ public class JobMaintenanceRaceTests
         configure?.Invoke(definition);
         await using var db = await CreateDbContextAsync();
         db.JobDefinitions.Add(definition);
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
         return id;
     }
 
@@ -208,14 +204,13 @@ public class JobMaintenanceRaceTests
             JobDefinitionId = definitionId,
             State = state,
             CreatedBy = "test",
-            CreatedTimestamp = DateTime.UtcNow,
-            AllowTriggers = false
+            CreatedTimestamp = DateTime.UtcNow
         };
 
         configure?.Invoke(run);
         await using var db = await CreateDbContextAsync();
         db.JobRuns.Add(run);
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestCt);
         return run.Id;
     }
 
@@ -226,19 +221,19 @@ public class JobMaintenanceRaceTests
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<JobMaintenanceService>>();
         var maintenance = new JobMaintenanceService(factory, logger, _fixture.FakePublisher, options);
         var method = typeof(JobMaintenanceService).GetMethod("RunMaintenanceAsync", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        await (Task)method.Invoke(maintenance, [TestContext.Current.CancellationToken])!;
+        await (Task)method.Invoke(maintenance, [TestCt])!;
     }
 
     private async Task<JobRun> GetRunAsync(Guid runId)
     {
         await using var db = await CreateDbContextAsync();
-        return await db.JobRuns.AsNoTracking().FirstAsync(r => r.Id == runId, TestContext.Current.CancellationToken);
+        return await db.JobRuns.AsNoTracking().FirstAsync(r => r.Id == runId, TestCt);
     }
 
     private async Task<JobContext> CreateDbContextAsync()
     {
         using var scope = _fixture.ServiceProvider.CreateScope();
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
-        return await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        return await factory.CreateDbContextAsync(TestCt);
     }
 }

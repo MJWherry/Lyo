@@ -1,4 +1,3 @@
-using Lyo.IO.FileSystem;
 using MudBlazor;
 
 namespace Lyo.IO.FileSystem.Web.Components.Tests;
@@ -33,11 +32,7 @@ public sealed class LyoFileTreeFilterTests
 
     private static TreeItemData<FileTreeNode> Item(string name, string path, params TreeItemData<FileTreeNode>[] children)
     {
-        var node = new FileTreeNode(new FileSystemEntry(path, name, children.Length > 0, 0, DateTimeOffset.MinValue, DateTimeOffset.MinValue));
-        return new TreeItemData<FileTreeNode> {
-            Value = node,
-            Text = name,
-            Children = children.Length == 0 ? null : [.. children]
-        };
+        var node = new FileTreeNode(new(path, name, children.Length > 0, 0, DateTimeOffset.MinValue, DateTimeOffset.MinValue));
+        return new() { Value = node, Text = name, Children = children.Length == 0 ? null : [.. children] };
     }
 }

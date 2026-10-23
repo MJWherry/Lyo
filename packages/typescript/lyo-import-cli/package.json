@@ -1,0 +1,27 @@
+{
+  "name": "lyo-import-cli",
+  "version": "0.1.0",
+  "description": "lyo-import CLI: post a file to POST /Import and print rows. Does not save.",
+  "type": "module",
+  "bin": {
+    "lyo-import": "./dist/main.js"
+  },
+  "main": "./dist/main.js",
+  "types": "./dist/main.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "lyo-api-client": "file:../lyo-api-client",
+    "lyo-import-api-client": "file:../lyo-import-api-client"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.6.3",
+    "vitest": "^3.2.0"
+  }
+}

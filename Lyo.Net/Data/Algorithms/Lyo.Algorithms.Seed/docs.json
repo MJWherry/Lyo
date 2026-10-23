@@ -1,0 +1,16 @@
+{
+  "id": "Lyo.Algorithms.Seed",
+  "name": "Lyo.Algorithms.Seed",
+  "area": "Data",
+  "tagline": "EF seed of algorithm definitions, revisions, and labels.",
+  "description": "EF seed of Count expression definitions, one published revision, and a latest label. The first row publishes the fishing formula under leaderboard.seed_fishing_0. Schema algorithms.",
+  "features": [],
+  "examples": [],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Algorithms/Lyo.Algorithms.Seed/README.md",
+  "dependencies": [],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

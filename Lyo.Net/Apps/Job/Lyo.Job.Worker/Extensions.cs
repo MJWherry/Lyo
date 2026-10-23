@@ -19,16 +19,16 @@ namespace Lyo.Job.Worker;
 public static class Extensions
 {
     /// <summary>
-    /// Adds a <typeparamref name="TWorker" /> as a singleton hosted service. Needs <see cref="IMqService" />, <see cref="IJobClient" /> (or <see cref="IApiClient" />
-    /// plus <paramref name="apiBaseUrl" /> to build one), and <see cref="IJobEventPublisher" /> already registered.
+    /// Adds a <typeparamref name="TWorker" /> as a singleton hosted service. Needs <see cref="IMqService" />, <see cref="IJobClient" /> (or <see cref="IApiClient" /> plus
+    /// <paramref name="apiBaseUrl" /> to build one), and <see cref="IJobEventPublisher" /> already registered.
     /// </summary>
     /// <typeparam name="TWorker">Concrete worker type (must extend <see cref="JobWorkerBase" />).</typeparam>
     /// <param name="services">Service collection.</param>
     /// <param name="workerType">Worker type string. Must match <c>WorkerType</c> on job definitions.</param>
     /// <param name="apiBaseUrl">Job API base URL. Used to register <see cref="IJobClient" /> when it is not already registered.</param>
     /// <param name="maxRequeueCount">
-    /// Max requeues before DLQ routing. Null uses a registered <see cref="QueueWorkerOptions.DefaultMaxRequeueCount" />, or 5 when no options
-    /// are registered, so a throwing worker cannot retry forever by default.
+    /// Max requeues before DLQ routing. Null uses a registered <see cref="QueueWorkerOptions.DefaultMaxRequeueCount" />, or 5 when no options are
+    /// registered, so a throwing worker cannot retry forever by default.
     /// </param>
     /// <param name="dlqName">Dead-letter queue name. Null becomes <c>job.run.{workerType}.dlq</c> so capped-out messages are kept instead of dropped.</param>
     public static IServiceCollection AddJobWorker<TWorker>(

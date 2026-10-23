@@ -12,8 +12,8 @@ using Lyo.Testing;
 namespace Lyo.Encryption.Tests;
 
 /// <summary>
-/// Covers the compact stream chunk layout (<c>[lengthAndFinalFlag:4][ciphertext][tag:16]</c>, nonces derived from the header prefix) used by the
-/// low-allocation streaming AEAD path: round-trips across chunk edges, tamper detection, unique per-chunk nonces, and decrypt across instances/algorithms.
+/// Covers the compact stream chunk layout (<c>[lengthAndFinalFlag:4][ciphertext][tag:16]</c>, nonces derived from the header prefix) used by the low-allocation streaming
+/// AEAD path: round-trips across chunk edges, tamper detection, unique per-chunk nonces, and decrypt across instances/algorithms.
 /// </summary>
 public class StreamingChunkFormatTests
 {
@@ -64,7 +64,7 @@ public class StreamingChunkFormatTests
     [MemberData(nameof(ServiceAndSize))]
     public async Task Stream_Roundtrip_WithRawKey_AcrossChunkBoundaries(string algorithm, int size)
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var svc = CreateService(algorithm, new LocalKeyStore());
         var key = DeriveKey("raw-key");
         var plaintext = TestData.Create(size);
@@ -77,7 +77,7 @@ public class StreamingChunkFormatTests
     [MemberData(nameof(ServiceAndSize))]
     public async Task Stream_Roundtrip_WithKeyId_AcrossChunkBoundaries(string algorithm, int size)
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         const string keyId = "stream-key";
         var keyStore = new LocalKeyStore();
         keyStore.UpdateKeyFromString(keyId, "stream-password");
@@ -93,7 +93,7 @@ public class StreamingChunkFormatTests
     [InlineData("chacha")]
     public async Task Stream_Decrypt_WithFreshServiceInstance_Succeeds(string algorithm)
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         const string keyId = "shared-key";
         var keyStore = new LocalKeyStore();
         keyStore.UpdateKeyFromString(keyId, "shared-password");
@@ -108,7 +108,7 @@ public class StreamingChunkFormatTests
     [Fact]
     public async Task Stream_Decrypt_WithMismatchedAlgorithm_Throws()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         const string keyId = "algo-key";
         var keyStore = new LocalKeyStore();
         keyStore.UpdateKeyFromString(keyId, "algo-password");
@@ -124,7 +124,7 @@ public class StreamingChunkFormatTests
     [InlineData("chacha")]
     public async Task Stream_Decrypt_TamperedCiphertext_ThrowsDecryptionFailed(string algorithm)
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var svc = CreateService(algorithm, new LocalKeyStore());
         var key = DeriveKey("tamper-key");
         var plaintext = TestData.Create(200);
@@ -140,7 +140,7 @@ public class StreamingChunkFormatTests
     [InlineData("chacha")]
     public async Task Stream_PerChunkNonces_AreUnique(string algorithm)
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var svc = CreateService(algorithm, new LocalKeyStore());
         var key = DeriveKey("nonce-key");
 
@@ -165,7 +165,7 @@ public class StreamingChunkFormatTests
     [InlineData("chacha")]
     public async Task Stream_Decrypt_ReorderedChunks_Throws(string algorithm)
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var svc = CreateService(algorithm, new LocalKeyStore());
         var key = DeriveKey("reorder-key");
 
@@ -182,7 +182,7 @@ public class StreamingChunkFormatTests
     [InlineData("chacha")]
     public async Task Stream_Decrypt_DuplicatedChunk_Throws(string algorithm)
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var svc = CreateService(algorithm, new LocalKeyStore());
         var key = DeriveKey("replay-key");
 
@@ -199,7 +199,7 @@ public class StreamingChunkFormatTests
     [InlineData("chacha")]
     public async Task Stream_Decrypt_TruncatedAtChunkBoundary_Throws(string algorithm)
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var svc = CreateService(algorithm, new LocalKeyStore());
         var key = DeriveKey("truncate-key");
 
@@ -216,7 +216,7 @@ public class StreamingChunkFormatTests
     [InlineData("chacha")]
     public async Task Stream_Decrypt_DataAfterFinalChunk_Throws(string algorithm)
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var svc = CreateService(algorithm, new LocalKeyStore());
         var key = DeriveKey("extend-key");
         var encrypted = await EncryptAsync(svc, TestData.Create(48), key, null, 16, ct);
@@ -231,7 +231,7 @@ public class StreamingChunkFormatTests
     [InlineData("chacha")]
     public async Task Stream_Decrypt_TamperedHeaderNoncePrefix_Throws(string algorithm)
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var svc = CreateService(algorithm, new LocalKeyStore());
         var key = DeriveKey("header-tamper-key");
         var encrypted = await EncryptAsync(svc, TestData.Create(48), key, null, 16, ct);
@@ -250,7 +250,7 @@ public class StreamingChunkFormatTests
     [InlineData("xchacha")]
     public async Task Stream_AssociatedData_RoundtripsAndBindsToStream(string algorithm)
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var svc = CreateService(algorithm, new LocalKeyStore());
         var key = DeriveKey("stream-aad-key");
         var plaintext = TestData.Create(100);
@@ -308,7 +308,7 @@ public class StreamingChunkFormatTests
     [InlineData(500)]
     public async Task AesSiv_Stream_IsDeterministic_ForSameKeyAndChunkSize(int size)
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         var key = DeriveKey("siv-determinism-key");
         var plaintext = TestData.Create(size);
         var first = await EncryptAsync(new AesSivEncryptionService(new LocalKeyStore()), plaintext, key, null, 16, ct);
@@ -324,7 +324,7 @@ public class StreamingChunkFormatTests
     [InlineData(500)]
     public async Task TwoKey_Stream_Roundtrip_AcrossChunkBoundaries(int size)
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         const string keyId = "twokey-stream";
         var keyStore = new LocalKeyStore();
         keyStore.UpdateKeyFromString(keyId, "twokey-password");
@@ -353,7 +353,7 @@ public class StreamingChunkFormatTests
     [Fact]
     public async Task TwoKey_Stream_TamperedCiphertext_ThrowsDecryptionFailed()
     {
-        var ct = TestContext.Current.CancellationToken;
+        var ct = TestCt;
         const string keyId = "twokey-tamper";
         var keyStore = new LocalKeyStore();
         keyStore.UpdateKeyFromString(keyId, "twokey-password");
@@ -375,8 +375,8 @@ public class StreamingChunkFormatTests
     }
 
     /// <summary>
-    /// Breaks a ciphertext stream into raw frames (<c>[lengthAndFinalFlag:4][ciphertext][tag:16]</c>) so tests can reorder, replay, or drop whole frames.
-    /// Expects a 12-byte-nonce algorithm and a raw-key stream (empty keyId/keyVersion in the header).
+    /// Breaks a ciphertext stream into raw frames (<c>[lengthAndFinalFlag:4][ciphertext][tag:16]</c>) so tests can reorder, replay, or drop whole frames. Expects a 12-byte-nonce
+    /// algorithm and a raw-key stream (empty keyId/keyVersion in the header).
     /// </summary>
     private static List<byte[]> ParseChunkFrames(byte[] encrypted, out int headerLength)
     {
@@ -414,8 +414,8 @@ public class StreamingChunkFormatTests
     }
 
     /// <summary>
-    /// Reads the stream header (per-stream nonce prefix) then walks compact frames (<c>[lengthAndFinalFlag:4][ciphertext][tag]</c>), deriving
-    /// each chunk nonce as <c>prefix || counter</c> the same way the codec does — the wire stores no nonces.
+    /// Reads the stream header (per-stream nonce prefix) then walks compact frames (<c>[lengthAndFinalFlag:4][ciphertext][tag]</c>), deriving each chunk nonce as
+    /// <c>prefix || counter</c> the same way the codec does — the wire stores no nonces.
     /// </summary>
     private static List<byte[]> ExtractChunkNonces(byte[] encrypted, out int finalFlagCount)
     {

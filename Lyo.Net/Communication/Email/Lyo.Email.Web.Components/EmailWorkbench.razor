@@ -1,11 +1,8 @@
-@using Lyo.Email.Builders
-@using Lyo.Email.Models
-@using Lyo.Result
-@using Lyo.Web.Primitives.ChipInput
+@inject IEmailService EmailService
 @using Lyo.Web.Components.FileUpload
 @using Lyo.Web.Components.Form
 @using Lyo.Web.Components.RichTextEditor
-@inject IEmailService EmailService
+@using Lyo.Web.Primitives.ChipInput
 @inherits LyoWorkbenchBase
 
 <MudPaper Class="pa-4">
@@ -145,8 +142,8 @@
                                 <td>@(_lastEmailProviderResult?.SentDate?.ToString("u") ?? "(none)")</td>
                             </tr>
                             <tr>
-                                <td><strong>SMTP Response</strong></td>
-                                <td>@(_lastEmailProviderResult?.SmtpResponse ?? "(none)")</td>
+                                <td><strong>Provider response</strong></td>
+                                <td>@(_lastEmailProviderResult?.ProviderResponse ?? "(none)")</td>
                             </tr>
                             <tr>
                                 <td><strong>Errors</strong></td>

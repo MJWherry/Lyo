@@ -25,8 +25,7 @@ public sealed class ReportingPostgresFixture : PostgresServiceFixtureBase<Report
         services.AddIOTempService();
         services.AddSingleton<IFileStorageService>(FakeFileStorage);
         // Much of the suite generates from ad-hoc ReportDataJson, which the shipped default now rejects.
-        services.AddPostgresReportingManagement(
-            new PostgresReportingOptions { ConnectionString = connectionString, EnableAutoMigrations = true, AllowAdHocGeneration = true });
+        services.AddPostgresReportingManagement(new PostgresReportingOptions { ConnectionString = connectionString, EnableAutoMigrations = true, AllowAdHocGeneration = true });
     }
 
     protected override ValueTask OnMigratedAsync(CancellationToken cancellationToken)

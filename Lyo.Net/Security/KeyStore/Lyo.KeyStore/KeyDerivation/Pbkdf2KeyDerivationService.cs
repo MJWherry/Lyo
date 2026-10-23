@@ -7,10 +7,7 @@ using System.Security.Cryptography;
 
 namespace Lyo.KeyStore.KeyDerivation;
 
-/// <summary>
-/// PBKDF2 key-derivation service. Uses Rfc2898DeriveBytes (PBKDF2) with SHA-256. Follows OWASP 2023 recommendations: 600,000+
-/// iterations and a 32-byte salt.
-/// </summary>
+/// <summary>PBKDF2 key-derivation service. Uses Rfc2898DeriveBytes (PBKDF2) with SHA-256. Follows OWASP 2023 recommendations: 600,000+ iterations and a 32-byte salt.</summary>
 public class Pbkdf2KeyDerivationService : IKeyDerivationService
 {
     private const int DefaultIterations = 600000; // OWASP 2023 recommendation (minimum 600,000)

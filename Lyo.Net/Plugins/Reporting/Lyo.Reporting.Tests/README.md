@@ -12,7 +12,8 @@ dotnet build Plugins/Reporting/Lyo.Reporting.Tests
 
 ## Coverage highlights
 
-- **Validation** (`ReportParameterValidatorTests`): typed value checks via `LyoTypeInfo.TryValidateJson` (legacy enum names still resolve), regex timeout/invalid-pattern/length-cap handling, unknown-key rejection when
+- **Validation** (`ReportParameterValidatorTests`): typed value checks via `LyoTypeInfo.TryValidateJson` (legacy enum names still resolve), regex timeout/invalid-pattern/length-cap
+  handling, unknown-key rejection when
   generating from a definition, required satisfied by `EncryptedValue` alone.
 - **Write-time validation** (`ReportDefinitionWriteValidatorTests`): composition JSON parse/size, `DefaultFormat`/`Type` enum checks, regex compile, min/max coherence.
 - **Input hygiene & resilience** (`ReportServiceUnitTests`, `ReportGenerationHardenTests`, `ReportFeatureTests`): filename sanitization (traversal, invalid chars, length cap),
@@ -21,7 +22,8 @@ dotnet build Plugins/Reporting/Lyo.Reporting.Tests
 - **Sensitive fields** (`ReportingApiOptionsTests`): secure-by-default auth surfaces, `DeniedSelectFieldPolicy` blocking `EncryptedValue` selects/templates on QueryProject and
   Export (incl. nested paths).
 - **Features** (`ReportRendererTests`, `ReportFeatureTests`): Xlsx multi-worksheet round-trips with sheet-name dedupe/truncation, Json renderer verbatim output, `RerunAsync`
-  snapshot replay, retention cleanup keeps in-flight/recent rows and invokes `OnCleanupAsync`, download stream factory round-trip via `FakeFileStorageService`, generation-delete / definition-delete
+  snapshot replay, retention cleanup keeps in-flight/recent rows and invokes `OnCleanupAsync`, download stream factory round-trip via `FakeFileStorageService`, generation-delete /
+  definition-delete
   cleanup hooks (`ReportGenerationCleanupTests`).
 
 ## Worker → API auth smoke (manual)

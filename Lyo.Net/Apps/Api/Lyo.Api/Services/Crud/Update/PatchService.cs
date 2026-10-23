@@ -87,7 +87,8 @@ public class PatchService<TContext>(
                 return result;
             }
 
-            await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(cache, cacheOptions, typeof(TDbModel), [typeConversion.GetPrimaryKeyValues(entity, context)], ct, Logger)
+            await QueryCacheInvalidation.InvalidateQueryCachesForEntityKeysAsync(
+                    cache, cacheOptions, typeof(TDbModel), [typeConversion.GetPrimaryKeyValues(entity, context)], ct, Logger)
                 .ConfigureAwait(false);
 
             var keys = typeConversion.GetPrimaryKeyValues(entity, context);
@@ -353,7 +354,6 @@ public class PatchService<TContext>(
                 }
 
                 await context.SaveChangesAsync(ct).ConfigureAwait(false);
-
                 foreach (var (mapIndex, entities) in entityMap) {
                     try {
                         var req = requests[mapIndex];
@@ -628,13 +628,13 @@ public class PatchService<TContext>(
     private Dictionary<string, PropertyInfo> GetCachedProperties(Type type)
     {
         var cacheKey = $"{PropertyCacheKeyPrefix}{type.FullName}";
-        return PropertiesByType.GetOrAdd(cacheKey, static (_, state) => {
-            var (self, t) = state;
-            self.Logger.LogDebug("Caching property information for type {TypeName}", t.Name);
-            var properties = t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
-            self.Logger.LogTrace("Cached {PropertyCount} properties for type {TypeName}", properties.Count, t.Name);
-            return properties;
-        }, (this, type));
+        return PropertiesByType.GetOrAdd(
+            cacheKey, static (_, state) => {
+                var (self, t) = state;
+                self.Logger.LogDebug("Caching property information for type {TypeName}", t.Name);
+                var properties = t.GetProperties(BindingFlags.Public | BindingFlags.Instance).ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
+                self.Logger.LogTrace("Cached {PropertyCount} properties for type {TypeName}", properties.Count, t.Name);
+                return properties;
+            }, (this, type));
     }
 }

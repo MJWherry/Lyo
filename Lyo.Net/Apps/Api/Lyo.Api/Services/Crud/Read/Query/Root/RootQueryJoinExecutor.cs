@@ -9,9 +9,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Lyo.Api.Services.Crud.Read.Query.Root;
 
 /// <summary>
-/// Executes root From/Joins as EF-translatable joins (arbitrary ON columns, chained aliases). Left:
-/// <c>SelectMany(o =&gt; inner.Where(on).DefaultIfEmpty(), …)</c>. Right inverts the driver. FullOuter is Left
-/// concatenated with right-only rows. Final Select is sparse only.
+/// Executes root From/Joins as EF-translatable joins (arbitrary ON columns, chained aliases). Left: <c>SelectMany(o =&gt; inner.Where(on).DefaultIfEmpty(), …)</c>. Right
+/// inverts the driver. FullOuter is Left concatenated with right-only rows. Final Select is sparse only.
 /// </summary>
 internal static class RootQueryJoinExecutor
 {
@@ -48,7 +47,7 @@ internal static class RootQueryJoinExecutor
         where TFrom : class
     {
         var deferPaging = plan.Joins.Any(static j => j.Type is JoinType.Right or JoinType.FullOuter);
-        var carrier = deferPaging ? (IQueryable)(IQueryable<TFrom>)fromSet : ApplySkipTake((IQueryable<TFrom>)fromSet, start, amount);
+        var carrier = deferPaging ? (IQueryable<TFrom>)fromSet : ApplySkipTake((IQueryable<TFrom>)fromSet, start, amount);
         var carrierType = typeof(TFrom);
         var aliasAccess = new Dictionary<string, Func<Expression, Expression>>(StringComparer.OrdinalIgnoreCase) { [plan.FromAlias] = e => e };
         var fromMayBeNull = false;
@@ -60,8 +59,8 @@ internal static class RootQueryJoinExecutor
             carrier = joinPlan.Type switch {
                 JoinType.Right => ApplyRightJoin(carrier, carrierType, joinSet, joinClr, pairType, aliasAccess, joinPlan.On, ref fromMayBeNull),
                 JoinType.FullOuter => ApplyFullOuterJoin(carrier, carrierType, joinSet, joinClr, pairType, aliasAccess, joinPlan.On, ref fromMayBeNull),
-                JoinType.Left => ApplyLeftOrInnerJoin(carrier, carrierType, joinSet, joinClr, pairType, aliasAccess, joinPlan.On, leftOuter: true),
-                var _ => ApplyLeftOrInnerJoin(carrier, carrierType, joinSet, joinClr, pairType, aliasAccess, joinPlan.On, leftOuter: false)
+                JoinType.Left => ApplyLeftOrInnerJoin(carrier, carrierType, joinSet, joinClr, pairType, aliasAccess, joinPlan.On, true),
+                var _ => ApplyLeftOrInnerJoin(carrier, carrierType, joinSet, joinClr, pairType, aliasAccess, joinPlan.On, false)
             };
 
             carrierType = pairType;
@@ -137,10 +136,7 @@ internal static class RootQueryJoinExecutor
         var innerP = Expression.Parameter(joinClr, "inner");
         var onEqual = BuildOnPredicate(ons, outerP, aliasAccess, innerP);
         var whereCall = Expression.Call(typeof(Queryable), nameof(Queryable.Where), [joinClr], joinSet.Expression, Expression.Quote(Expression.Lambda(onEqual, innerP)));
-        Expression collection = leftOuter
-            ? Expression.Call(typeof(Queryable), nameof(Queryable.DefaultIfEmpty), [joinClr], whereCall)
-            : whereCall;
-
+        Expression collection = leftOuter ? Expression.Call(typeof(Queryable), nameof(Queryable.DefaultIfEmpty), [joinClr], whereCall) : whereCall;
         var collectionSel = Expression.Lambda(typeof(Func<,>).MakeGenericType(carrierType, typeof(IEnumerable<>).MakeGenericType(joinClr)), collection, outerP);
         var resultOuterP = Expression.Parameter(carrierType, "o");
         var resultInnerP = Expression.Parameter(joinClr, "j");
@@ -190,17 +186,15 @@ internal static class RootQueryJoinExecutor
         ref bool fromMayBeNull)
     {
         fromMayBeNull = true;
-        var left = ApplyLeftOrInnerJoin(carrier, carrierType, joinSet, joinClr, pairType, aliasAccess, ons, leftOuter: true);
+        var left = ApplyLeftOrInnerJoin(carrier, carrierType, joinSet, joinClr, pairType, aliasAccess, ons, true);
         var right = ApplyRightJoin(carrier, carrierType, joinSet, joinClr, pairType, aliasAccess, ons, ref fromMayBeNull);
         var pairP = Expression.Parameter(pairType, "p");
         var outerProp = Expression.Property(pairP, nameof(RootJoinPair<object, object>.Outer));
-        Expression outerIsNull = carrierType.IsValueType
-            ? Expression.Constant(false)
-            : Expression.Equal(outerProp, Expression.Constant(null, carrierType));
+        Expression outerIsNull = carrierType.IsValueType ? Expression.Constant(false) : Expression.Equal(outerProp, Expression.Constant(null, carrierType));
         var rightOnly = right.Provider.CreateQuery(
             Expression.Call(typeof(Queryable), nameof(Queryable.Where), [pairType], right.Expression, Expression.Quote(Expression.Lambda(outerIsNull, pairP))));
-        return left.Provider.CreateQuery(
-            Expression.Call(typeof(Queryable), nameof(Queryable.Concat), [pairType], left.Expression, rightOnly.Expression));
+
+        return left.Provider.CreateQuery(Expression.Call(typeof(Queryable), nameof(Queryable.Concat), [pairType], left.Expression, rightOnly.Expression));
     }
 
     /// <summary>Combines every <c>ON</c> clause with <c>AND</c>. Each clause resolves its own left alias, so a chained join can key off both the From row and an earlier join.</summary>
@@ -312,8 +306,7 @@ internal static class RootQueryJoinExecutor
         if (entity.Type.IsValueType)
             return value;
 
-        return Expression.Condition(
-            Expression.Equal(entity, Expression.Constant(null, entity.Type)), Expression.Default(targetType), value);
+        return Expression.Condition(Expression.Equal(entity, Expression.Constant(null, entity.Type)), Expression.Default(targetType), value);
     }
 
     private static Type NullableIfNeeded(Type type, bool mayBeNull)

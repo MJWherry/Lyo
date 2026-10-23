@@ -1,25 +1,7 @@
 using System.Diagnostics;
-using System.Net.Http.Json;
-using Lyo.Api.Client;
-using Lyo.Images;
-using Lyo.Images.Models;
 using Lyo.Lock.Abstractions;
 using Lyo.Metrics;
-using Lyo.TestGateway;
-using Lyo.TestGateway.Components;
-using Lyo.TestGateway.Models;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
-using Lyo.Web.Components.DataGrid;
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.Web.Virtualization;
-using Microsoft.JSInterop;
 using MudBlazor;
-using static Microsoft.AspNetCore.Components.Web.RenderMode;
 using LockConstants = Lyo.Lock.Constants;
 
 namespace Lyo.TestGateway.Components.TestGateway;
@@ -28,20 +10,20 @@ public partial class LockWorkbench
 {
     private readonly List<DemoEvent> _events = [];
     private readonly object _eventsLock = new();
-    private bool _busy;
+    private double _acquireDurationAverageMs;
+    private int _acquireDurationCount;
     private long _acquireFailure;
     private long _acquireSuccess;
-    private int _acquireDurationCount;
-    private double _acquireDurationAverageMs;
-    private int _executeDurationCount;
+    private bool _busy;
     private double _executeDurationAverageMs;
+    private int _executeDurationCount;
     private ILockHandle? _heldLock;
     private int _holdMilliseconds = 750;
     private DateTime _lastMetricsRefresh;
     private DemoSummary? _lastRun;
     private string _lockKey = "workbench:local-lock";
-    private int _releaseDurationCount;
     private double _releaseDurationAverageMs;
+    private int _releaseDurationCount;
     private int _timeoutMilliseconds = 2500;
     private int _workerCount = 6;
 
@@ -54,8 +36,6 @@ public partial class LockWorkbench
         }
     }
 
-    protected override Task OnInitializedAsync() => RefreshMetricsAsync();
-
     public async ValueTask DisposeAsync()
     {
         if (_heldLock == null)
@@ -64,6 +44,8 @@ public partial class LockWorkbench
         await _heldLock.ReleaseAsync();
         _heldLock = null;
     }
+
+    protected override Task OnInitializedAsync() => RefreshMetricsAsync();
 
     private async Task AcquireHeldLockAsync()
     {
@@ -221,7 +203,15 @@ public partial class LockWorkbench
             startGate.TrySetResult(true);
             await Task.WhenAll(tasks);
             stopwatch.Stop();
-            var summary = useLock ? maxConcurrent == 1 && timedOutWorkers == 0 ? "Workers were serialized correctly; only one entered at a time." : "The locked run did not stay fully serialized, or some workers timed out." : maxConcurrent > 1 ? "Unlocked workers overlapped, showing the race you avoid with the lock service." : "Unlocked workers happened to avoid overlap on this run.";
+            var summary = useLock
+                ?
+                maxConcurrent == 1 && timedOutWorkers == 0
+                    ? "Workers were serialized correctly; only one entered at a time."
+                    : "The locked run did not stay fully serialized, or some workers timed out."
+                : maxConcurrent > 1
+                    ? "Unlocked workers overlapped, showing the race you avoid with the lock service."
+                    : "Unlocked workers happened to avoid overlap on this run.";
+
             _lastRun = new() {
                 Completed = completedWorkers,
                 Elapsed = stopwatch.Elapsed,

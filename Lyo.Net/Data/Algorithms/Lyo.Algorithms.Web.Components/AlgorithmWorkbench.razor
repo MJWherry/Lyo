@@ -1,0 +1,95 @@
+<div class="algorithm-workbench">
+    <MudPaper Outlined="true" Class="algorithm-catalog pa-3">
+        <MudStack Spacing="1" Class="algorithm-catalog-head">
+            <MudText Typo="Typo.subtitle1">Catalog</MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="NewDraft">New draft</MudButton>
+            <MudStack Row="true" Spacing="1">
+                <MudButton Variant="Variant.Outlined" Disabled="@(!AlgorithmKeys.IsKey(_draft.Key))" OnClick="DeleteCurrentAsync">Delete</MudButton>
+                <MudButton Variant="Variant.Outlined" Disabled="@(_selected.Count == 0)" OnClick="DeleteSelectedAsync">Delete selected</MudButton>
+            </MudStack>
+        </MudStack>
+        <div class="algorithm-catalog-list">
+            @foreach (var row in _definitions) {
+                <div class="@(row.Key == _draft.Key ? "algorithm-catalog-row is-current" : "algorithm-catalog-row")">
+                    <MudCheckBox T="bool" Value="@_selected.Contains(row.Key)" ValueChanged="@(value => ToggleSelected(row.Key, value))" Dense="true" aria-label="@("Select " + row.Key)"/>
+                    <button type="button" class="algorithm-catalog-key" @onclick="@(() => OpenKey(row.Key))">@row.Key</button>
+                </div>
+            }
+        </div>
+    </MudPaper>
+    <MudPaper Outlined="true" Class="algorithm-main pa-3">
+        <MudTabs>
+            <MudTabPanel Text="Editor">
+                <MudStack Spacing="2" Class="pt-2">
+                    <MudStack Row="true" Spacing="1">
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="LoadFishing">Fishing derby</MudButton>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="LoadAttack">Attack</MudButton>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="LoadSchedule">Schedule</MudButton>
+                    </MudStack>
+                    <div class="algorithm-header">
+                        <MudTextField @bind-Value="_draft.Key" @bind-Value:after="OnChanged" Label="Key" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"/>
+                        <MudTextField @bind-Value="_draft.Name" @bind-Value:after="OnChanged" Label="Name" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                        <MudSelect T="AlgorithmKind" Value="_draft.Kind" ValueChanged="SetKind" Label="Kind" Margin="Margin.Dense" AnchorOrigin="Origin.BottomCenter">
+                            @foreach (var kind in Enum.GetValues<AlgorithmKind>()) {
+                                <MudSelectItem Value="@kind">@kind</MudSelectItem>
+                            }
+                        </MudSelect>
+                        <MudTextField @bind-Value="_draft.Result" @bind-Value:after="OnChanged" Label="Result" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"/>
+                    </div>
+                    @if (_draft.Kind is AlgorithmKind.Expression or AlgorithmKind.Named) {
+                        @if (_draft.Kind == AlgorithmKind.Named) {
+                            <MudTextField @bind-Value="_draft.Source" @bind-Value:after="OnChanged" Label="Startup key" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"/>
+                        }
+                        else {
+                            <AlgorithmExpressionEditor Source="@_draft.Source" SourceChanged="SetSource" BagNames="BagNames" CatalogKeys="CatalogKeys" Focused="@_focused" FocusedChanged="SetFocused" ChipSelected="OnChip"/>
+                        }
+                    }
+                    else if (_draft.Kind == AlgorithmKind.DiscreteMap) {
+                        <AlgorithmDiscreteMapEditor Draft="_draft" Changed="OnChanged"/>
+                    }
+                    else if (_draft.Kind == AlgorithmKind.RangeBand) {
+                        <AlgorithmRangeBandEditor Draft="_draft" Changed="OnChanged"/>
+                    }
+                    else if (_draft.Kind == AlgorithmKind.Linear) {
+                        <AlgorithmLinearEditor Draft="_draft" Changed="OnChanged"/>
+                    }
+                    else {
+                        <AlgorithmCompositeEditor Draft="_draft" Changed="OnChanged"/>
+                    }
+                    <AlgorithmTypePanel Draft="_draft" FormulaNames="@(_draft.Kind == AlgorithmKind.Expression ? FormulaNames : null)" Changed="OnChanged"/>
+                    @foreach (var issue in _draft.Issues()) {
+                        <MudAlert Severity="Severity.Warning" Dense="true">@issue</MudAlert>
+                    }
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!CanSave)" OnClick="SaveAsync">Save revision</MudButton>
+                    <AlgorithmRevisionPanel Revisions="_revisions" Open="OpenRevision" Revert="RevertAsync" SetLabel="SetLabelAsync"/>
+                </MudStack>
+            </MudTabPanel>
+            <MudTabPanel Text="Runner">
+                <MudStack Spacing="2" Class="pt-2">
+                    <LyoParameterValueGrid Entries="_entries" ValueChanged="OnValuesChanged" HighlightedKey="@_focused" ShowDivider="false" Title="Parameters"/>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="RunAsync">Run</MudButton>
+                    @if (!string.IsNullOrWhiteSpace(_error)) {
+                        <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
+                    }
+                    @if (_preview is not null) {
+                        <MudText Typo="Typo.h6">@_preview.Result = @Format(_preview.Value)</MudText>
+                    }
+                    <AlgorithmBreakdownView Steps="@(_preview?.Steps ?? [])"/>
+                </MudStack>
+            </MudTabPanel>
+        </MudTabs>
+    </MudPaper>
+</div>
+
+<style>
+    .algorithm-workbench { display: flex; gap: 12px; height: calc(100dvh - 88px); min-height: 0; }
+    .algorithm-catalog { flex: 0 0 280px; width: 280px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+    .algorithm-catalog-head { flex: 0 0 auto; }
+    .algorithm-catalog-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+    .algorithm-catalog-row { display: flex; align-items: center; gap: 4px; }
+    .algorithm-catalog-row.is-current { background: color-mix(in srgb, var(--mud-palette-primary) 12%, transparent); }
+    .algorithm-catalog-key { flex: 1; text-align: left; background: transparent; border: 0; padding: 4px 0; text-transform: none; font: inherit; cursor: pointer; }
+    .algorithm-main { flex: 1 1 auto; min-width: 0; min-height: 0; overflow: auto; }
+    .algorithm-header { display: flex; gap: 8px; flex-wrap: wrap; }
+    .algorithm-header > * { flex: 1 1 8rem; min-width: 0; }
+</style>

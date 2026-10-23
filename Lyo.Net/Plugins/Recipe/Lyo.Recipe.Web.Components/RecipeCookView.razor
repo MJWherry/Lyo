@@ -1,0 +1,70 @@
+<MudDialog>
+    <DialogContent>
+        @if (_loading) {
+            <MudProgressLinear Indeterminate="true"/>
+        }
+        else if (_index < 0) {
+            <MudStack Spacing="2">
+                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                    <MudNumericField @bind-Value="_cookingFor" Label="Cooking for" Margin="Margin.Dense" Min="1" Style="max-width: 8rem;"/>
+                    @if (!string.IsNullOrWhiteSpace(Recipe.YieldLabel)) {
+                        <MudText Typo="Typo.body2">@Recipe.YieldLabel</MudText>
+                    }
+                </MudStack>
+                @if (PrimaryImage(_recipeFiles) is { } hero) {
+                    <img src="@Download(hero.FileId)" alt="@(hero.Caption ?? Recipe.Title)" style="max-width: 100%; max-height: 16rem; object-fit: contain;"/>
+                }
+                @foreach (var group in _lines.GroupBy(l => l.GroupLabel ?? "")) {
+                    @if (!string.IsNullOrWhiteSpace(group.Key)) {
+                        <MudText Typo="Typo.subtitle2">@group.Key</MudText>
+                    }
+
+                    @foreach (var line in group) {
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+                            <MudText>@FormatLine(line)</MudText>
+                            @foreach (var number in StepNumbers(line)) {
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">@number</MudChip>
+                            }
+                        </MudStack>
+                    }
+                }
+            </MudStack>
+        }
+        else if (CurrentStep is { } step) {
+            <MudStack Spacing="2">
+                @if (!string.IsNullOrWhiteSpace(step.GroupLabel)) {
+                    <MudText Typo="Typo.overline">@step.GroupLabel</MudText>
+                }
+                <MudText Typo="Typo.h6">@step.Instruction</MudText>
+                @if (PrimaryImage(FilesFor(step.Id)) is { } primary) {
+                    <img src="@Download(primary.FileId)" alt="@(primary.Caption ?? "Step")" style="max-width: 100%; max-height: 18rem; object-fit: contain;"/>
+                }
+                <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                    @foreach (var file in OtherImages(step.Id)) {
+                        <img src="@Download(file.FileId)" alt="@(file.Caption ?? "Reference")" style="max-height: 4rem;"/>
+                    }
+                </MudStack>
+                @foreach (var line in LinesFor(step.Id)) {
+                    <MudText>@FormatLine(line)</MudText>
+                }
+                @if (step.DurationMinutes is int minutes && minutes > 0) {
+                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                        <MudText Typo="Typo.h5">@FormatRemaining()</MudText>
+                        @if (_timerRunning) {
+                            <MudButton Variant="Variant.Outlined" OnClick="PauseTimer">Pause</MudButton>
+                        }
+                        else {
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => StartTimer(minutes)">Start</MudButton>
+                        }
+                    </MudStack>
+                }
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudText Typo="Typo.caption" Class="mr-auto">@(_index < 0 ? "Ingredients" : $"Step {_index + 1} of {_steps.Count}")</MudText>
+        <MudButton OnClick="Back" Disabled="@(_index < 0)">Back</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Next" Disabled="@(_index >= _steps.Count - 1)">Next</MudButton>
+        <MudButton OnClick="Close">Close</MudButton>
+    </DialogActions>
+</MudDialog>

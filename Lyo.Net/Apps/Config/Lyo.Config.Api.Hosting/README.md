@@ -1,8 +1,10 @@
 # Lyo.Config.Api.Hosting
 
-Connects `IConfigApiClient` ([`Lyo.Config.Api.Client`](../Lyo.Config.Api.Client/README.md)) to `Microsoft.Extensions.Options` and `Microsoft.Extensions.DependencyInjection`. A `BackgroundService` keeps a shared `ResolvedConfigRecord` ledger (`304` polling + ETags). Then one definition-key JSON blob binds each `IOptionsMonitor<TOptions>`.
+Connects `IConfigApiClient` ([`Lyo.Config.Api.Client`](../Lyo.Config.Api.Client/README.md)) to `Microsoft.Extensions.Options` and `Microsoft.Extensions.DependencyInjection`. A
+`BackgroundService` keeps a shared `ResolvedConfigRecord` ledger (`304` polling + ETags). Then one definition-key JSON blob binds each `IOptionsMonitor<TOptions>`.
 
-Prefer `IOptionsMonitor<TOptions>.CurrentValue` (or `OnChange`) for values that reload at runtime. `IOptions<TOptions>` is not registered here and would not observe remote updates anyway.
+Prefer `IOptionsMonitor<TOptions>.CurrentValue` (or `OnChange`) for values that reload at runtime. `IOptions<TOptions>` is not registered here and would not observe remote updates
+anyway.
 
 ## Examples
 
@@ -50,16 +52,17 @@ From your worker/API host, reference the project `Lyo.Config.Api.Hosting` (`Micr
 ## Configuration
 
 - `StartupTimeout`. Omit or `null` to wait indefinitely for the first **200**.
-- `RequireSuccessOnStartup`. `false` allows the host to start after `StartupTimeout` even if no snapshot arrived (ledger stays empty unless you later reload manually; prefer keeping `true` unless you tolerate cold-start without remote config).
+- `RequireSuccessOnStartup`. `false` allows the host to start after `StartupTimeout` even if no snapshot arrived (ledger stays empty unless you later reload manually; prefer
+  keeping `true` unless you tolerate cold-start without remote config).
 
 ## Polling on versus off
 
 The entire background poller is gated by `ConfigApiPollingOptions.Enabled` (defaults to `true`):
 
-| `Enabled` | `ConfigApiPollingHostedService` behavior | `ConfigApiResolvedLedger.Current` at startup | Behavior of `IOptionsMonitor<T>` from `AddConfigApiOptions<T>` |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `true` | `StartAsync` validates `AppKind` / `AppId` and **blocks until the first 200** (or `StartupTimeout` if set). `ExecuteAsync` then loops `ResolveForAppAsync` with the latest ETag and `DelayWhenNotModified`. Errors retry after fixed back-offs and are logged. | Populated with the first successful payload after `StartAsync` returns. | `CurrentValue` returns the bound `TOptions`. `OnChange` fires after each ledger swap. |
-| `false` | `StartAsync` skips validation and the first probe; `ExecuteAsync` returns immediately. The hosted service stays in the DI container but does not touch the network. **No ledger updates from the network ever occur.** Some other code path (typically tests) may still call `ConfigApiResolvedLedger.SetResolved` manually. | `null` unless something else calls `SetResolved` directly. | Materialization sees a `null` ledger and falls back to `ConfigApiMissingDefinitionKeyBehavior`: `Throw` raises `InvalidOperationException`; `UseDefaultInstance` returns `new TOptions()`. |
+| `Enabled` | `ConfigApiPollingHostedService` behavior                                                                                                                                                                                                                                                                                     | `ConfigApiResolvedLedger.Current` at startup                            | Behavior of `IOptionsMonitor<T>` from `AddConfigApiOptions<T>`                                                                                                                             |
+|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `true`    | `StartAsync` validates `AppKind` / `AppId` and **blocks until the first 200** (or `StartupTimeout` if set). `ExecuteAsync` then loops `ResolveForAppAsync` with the latest ETag and `DelayWhenNotModified`. Errors retry after fixed back-offs and are logged.                                                               | Populated with the first successful payload after `StartAsync` returns. | `CurrentValue` returns the bound `TOptions`. `OnChange` fires after each ledger swap.                                                                                                      |
+| `false`   | `StartAsync` skips validation and the first probe; `ExecuteAsync` returns immediately. The hosted service stays in the DI container but does not touch the network. **No ledger updates from the network ever occur.** Some other code path (typically tests) may still call `ConfigApiResolvedLedger.SetResolved` manually. | `null` unless something else calls `SetResolved` directly.              | Materialization sees a `null` ledger and falls back to `ConfigApiMissingDefinitionKeyBehavior`: `Throw` raises `InvalidOperationException`; `UseDefaultInstance` returns `new TOptions()`. |
 
 > In production, the polling service is the **only** writer to `ConfigApiResolvedLedger`. With `Enabled == false`, every options monitor is effectively driven by
 > `missingDefinitionKeyBehavior`. Use that mode for test hosts or for services that consume config exclusively via REST.
@@ -69,11 +72,11 @@ The entire background poller is gated by `ConfigApiPollingOptions.Enabled` (defa
 The shared in-process snapshot that ties the background poller to all `IOptionsMonitor<T>` instances is [`ConfigApiResolvedLedger`](./ConfigApiResolvedLedger.cs). It is
 registered as a **singleton** by `AddConfigApiPolling` (and also `TryAddSingleton`-ed by `AddConfigApiOptions<T>`, so you can register options without polling).
 
-| Member | Purpose |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ResolvedConfigRecord? Current` | Latest payload. `null` until the first successful resolve. Thread-safe getter (lock-protected). |
-| `string? CurrentEtag` | Opaque ETag from the last successful 200 response. Passed back to the server as `If-None-Match` on every subsequent probe. |
-| `IChangeToken GetReloadToken()` | Returns a `CancellationChangeToken` invalidated on the next swap. Used by `ConfigApiOptionsMonitor<T>` to rebuild its cached `TOptions`. |
+| Member                                                          | Purpose                                                                                                                                                       |
+|-----------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ResolvedConfigRecord? Current`                                 | Latest payload. `null` until the first successful resolve. Thread-safe getter (lock-protected).                                                               |
+| `string? CurrentEtag`                                           | Opaque ETag from the last successful 200 response. Passed back to the server as `If-None-Match` on every subsequent probe.                                    |
+| `IChangeToken GetReloadToken()`                                 | Returns a `CancellationChangeToken` invalidated on the next swap. Used by `ConfigApiOptionsMonitor<T>` to rebuild its cached `TOptions`.                      |
 | `void SetResolved(ResolvedConfigRecord resolved, string? etag)` | Atomically updates `Current` + `CurrentEtag`, cancels the previous reload token (notifying every subscriber), and disposes the old `CancellationTokenSource`. |
 
 `GetReloadToken` is subscribed via `ChangeToken.OnChange` by `ConfigApiOptionsMonitor<T>`, so every successful ledger swap triggers re-materialization of *all* registered options
@@ -84,20 +87,25 @@ types in lock-step.
 `ConfigApiResolvedLedger.Current.TryGetValue(definitionKey, …)` then `configValue.GetValue<T>(ConfigJsonSerializerOptions.Default)` is the materialization path. Failure modes
 are controlled by the `ConfigApiMissingDefinitionKeyBehavior` selected at registration:
 
-| Condition | `Throw` (default) | `UseDefaultInstance` |
-| ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | -------------------- |
-| Ledger is empty (`Current == null`). | `InvalidOperationException("No Config API snapshot is available yet (ledger empty). …")` | `new TOptions()` |
-| Definition key absent from the resolved payload, or its JSON value is `null`. | `InvalidOperationException("Definition key '<key>' is missing from resolved Config API payload …")` | `new TOptions()` |
-| Key present, JSON not assignable to `TOptions` (deserialize returns `null`). | `InvalidOperationException("JSON for definition key '<key>' did not deserialize to <TOptions>.")` | `new TOptions()` |
+| Condition                                                                     | `Throw` (default)                                                                                   | `UseDefaultInstance` |
+|-------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------|----------------------|
+| Ledger is empty (`Current == null`).                                          | `InvalidOperationException("No Config API snapshot is available yet (ledger empty). …")`            | `new TOptions()`     |
+| Definition key absent from the resolved payload, or its JSON value is `null`. | `InvalidOperationException("Definition key '<key>' is missing from resolved Config API payload …")` | `new TOptions()`     |
+| Key present, JSON not assignable to `TOptions` (deserialize returns `null`).  | `InvalidOperationException("JSON for definition key '<key>' did not deserialize to <TOptions>.")`   | `new TOptions()`     |
 
 Pick `UseDefaultInstance` for features that may have no bindings yet; keep `Throw` for required configuration so misconfiguration fails fast at startup.
 
 ## Limitations
 
-- **No named options.** `ConfigApiOptionsMonitor<T>` ignores the `name` argument on `IOptionsMonitor<T>.Get(string?)`: requests for `Options.DefaultName` (or `null` / empty) return the cached `CurrentValue`. Anything else throws `InvalidOperationException`. There is no way to map several names onto different definition keys through this monitor.
-- **One definition key per `TOptions` type per host.** `AddConfigApiOptions<TOptions>(definitionKey, …)` registers an unkeyed singleton `IOptionsMonitor<TOptions>`. Calling it twice with the same `TOptions` and different `definitionKey` values **replaces** the prior registration (last call wins); you cannot bind one POCO to two definition keys in the same host. Use distinct `TOptions` types (or sub-records) for each definition key.
-- **`Enabled = false` leaves the ledger empty.** Without polling, `ConfigApiResolvedLedger.Current` stays `null` unless something else calls `SetResolved` directly. Options monitors then fall back to `ConfigApiMissingDefinitionKeyBehavior` semantics, see the table above.
-- **`IOptions<T>` and `IOptionsSnapshot<T>` are not registered** by this package. Inject `IOptionsMonitor<T>` (or, in scoped consumers, `IOptionsSnapshot<T>` if you register your own adapter) so changes from the polling service propagate.
+- **No named options.** `ConfigApiOptionsMonitor<T>` ignores the `name` argument on `IOptionsMonitor<T>.Get(string?)`: requests for `Options.DefaultName` (or `null` / empty) return
+  the cached `CurrentValue`. Anything else throws `InvalidOperationException`. There is no way to map several names onto different definition keys through this monitor.
+- **One definition key per `TOptions` type per host.** `AddConfigApiOptions<TOptions>(definitionKey, …)` registers an unkeyed singleton `IOptionsMonitor<TOptions>`. Calling it
+  twice with the same `TOptions` and different `definitionKey` values **replaces** the prior registration (last call wins); you cannot bind one POCO to two definition keys in the
+  same host. Use distinct `TOptions` types (or sub-records) for each definition key.
+- **`Enabled = false` leaves the ledger empty.** Without polling, `ConfigApiResolvedLedger.Current` stays `null` unless something else calls `SetResolved` directly. Options
+  monitors then fall back to `ConfigApiMissingDefinitionKeyBehavior` semantics, see the table above.
+- **`IOptions<T>` and `IOptionsSnapshot<T>` are not registered** by this package. Inject `IOptionsMonitor<T>` (or, in scoped consumers, `IOptionsSnapshot<T>` if you register your
+  own adapter) so changes from the polling service propagate.
 
 ## What happens at runtime
 
@@ -109,9 +117,11 @@ flowchart LR
 
 1. The hosted service probes `IConfigApiClient.ResolveForAppAsync` with `AppKind`/`AppId` and `If-None-Match` from `ConfigApiResolvedLedger.CurrentEtag`.
 2. On **200**, the ledger swaps in the new `ResolvedConfigRecord` and invalidates `IChangeToken` listeners.
-3. Each `ConfigApiOptionsMonitor<T>` reacts by re-materializing `T` via `ResolvedConfigRecord.TryGetValue(definitionKey, …)` + JSON deserialize (same `ConfigJsonSerializerOptions.Default` semantics as `GetValue<T>` elsewhere).
+3. Each `ConfigApiOptionsMonitor<T>` reacts by re-materializing `T` via `ResolvedConfigRecord.TryGetValue(definitionKey, …)` + JSON deserialize (same
+   `ConfigJsonSerializerOptions.Default` semantics as `GetValue<T>` elsewhere).
 
-REST paths remain in [`../Lyo.Config.Api/README.md`](../Lyo.Config.Api/README.md). Resolve outcomes (`ConfigResolveOutcome`) are in [`Lyo.Config.Api.Models`](../Lyo.Config.Api.Models/README.md); HTTP registration and `ConfigPolling` in [`Lyo.Config.Api.Client`](../Lyo.Config.Api.Client/README.md).
+REST paths remain in [`../Lyo.Config.Api/README.md`](../Lyo.Config.Api/README.md). Resolve outcomes (`ConfigResolveOutcome`) are in [
+`Lyo.Config.Api.Models`](../Lyo.Config.Api.Models/README.md); HTTP registration and `ConfigPolling` in [`Lyo.Config.Api.Client`](../Lyo.Config.Api.Client/README.md).
 
 ## Dependencies
 
@@ -123,7 +133,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Api.Client` (transitive, lyo)
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Common.Core` (transitive, lyo)
-- `Lyo.Common.Json` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.Config` (transitive, lyo)
 - `Lyo.Config.Api.Models` (transitive, lyo)
@@ -133,6 +142,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Http.Client` (transitive, lyo)
+- `Lyo.Json` (transitive, lyo)
 - `Lyo.Metrics` (transitive, lyo)
 - `Lyo.PackageMetadata` (transitive, lyo)
 - `Lyo.Parameters` (transitive, lyo)
@@ -150,6 +160,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `System.ComponentModel.Annotations` `5.0.0` (transitive, microsoft)
 - `System.IO.Hashing` `10.0.5` (transitive, microsoft, net10.0)
 - `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Encoding.CodePages` `10.0.5` (transitive, microsoft)
 - `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `System.Threading.RateLimiting` `10.0.5` (transitive, microsoft)
 - `System.Threading.Tasks.Extensions` `4.6.3` (transitive, microsoft)

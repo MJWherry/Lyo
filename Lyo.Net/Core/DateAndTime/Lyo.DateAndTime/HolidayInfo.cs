@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using Lyo.Common.Core.Enums;
 using Lyo.Exceptions;
@@ -11,8 +12,8 @@ namespace Lyo.DateAndTime;
 /// <summary>Immutable metadata for a U.S. civic or federal holiday, including rules that compute calendar dates and optional weekend observance shifts.</summary>
 /// <remarks>
 /// <para>
-/// Static instances register themselves into lookup dictionaries (by slug, name, and aliases) in the static constructor. Use <see cref="FromSlug" />, <see cref="FromName" />, or
-/// <see cref="FromAlias" /> for tolerant user input.
+/// Static instances register themselves into lookup dictionaries (by slug, name, and aliases) in the static constructor. Use <see cref="FromSlug" />, <see cref="FromName" />,
+/// or <see cref="FromAlias" /> for tolerant user input.
 /// </para>
 /// <para>Easter uses the Gregorian Meeus/Jones/Butcher algorithm via <see cref="GetDate" />.</para>
 /// </remarks>
@@ -27,6 +28,7 @@ namespace Lyo.DateAndTime;
 /// <param name="DayOfWeek">Weekday anchor for nth/last weekday rules.</param>
 /// <param name="Occurrence">1-based weekday occurrence in the month when <paramref name="DateRule" /> is <see cref="HolidayDateRule.NthWeekdayOfMonth" />.</param>
 /// <param name="Aliases">Alternate strings accepted by <see cref="FromAlias" />.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HolidayInfo(
     string Name,
     string Slug,

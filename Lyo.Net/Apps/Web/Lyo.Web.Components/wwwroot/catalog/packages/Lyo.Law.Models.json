@@ -1,0 +1,35 @@
+{
+  "id": "Lyo.Law.Models",
+  "name": "Lyo.Law.Models",
+  "area": "Plugins",
+  "tagline": "Request and response types, enums, and route constants for state statutes.",
+  "description": "Wire types for the state statute API. Jurisdictions are US states. A code is one named compilation inside a state. Nodes are the outline and the text. This package has no DI registration. Federal law is not a type in this package.",
+  "features": [
+    "Enums for node kind and annotation kind. Node text is stored as text.",
+    "`Constants.Rest.Law` route prefixes, including the source-key upsert and citation lookup."
+  ],
+  "examples": [
+    {
+      "title": "Route constants",
+      "language": "csharp",
+      "code": "var nodes = Constants.Rest.Law.Nodes;\nvar upsert = Constants.Rest.Law.NodesBySource;"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/Law/Lyo.Law.Models/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

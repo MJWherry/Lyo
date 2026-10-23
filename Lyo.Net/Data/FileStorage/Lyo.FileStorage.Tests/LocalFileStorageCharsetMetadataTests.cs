@@ -19,9 +19,9 @@ public sealed class LocalFileStorageCharsetMetadataTests
     public async Task SaveFileAsync_WithCharset_StoresUnchanged()
     {
         using var scope = LocalFileStorageTestScope.Create();
-        var saved = await scope.Storage.SaveFileAsync("hello"u8.ToArray(), "notes.txt", contentType: "text/plain", charset: "windows-1252", ct: TestContext.Current.CancellationToken);
+        var saved = await scope.Storage.SaveFileAsync("hello"u8.ToArray(), "notes.txt", contentType: "text/plain", charset: "windows-1252", ct: TestCt);
         Assert.Equal("windows-1252", saved.Charset);
-        var meta = await scope.Storage.GetMetadataAsync(saved.Id, TestContext.Current.CancellationToken);
+        var meta = await scope.Storage.GetMetadataAsync(saved.Id, TestCt);
         Assert.Equal("windows-1252", meta.Charset);
     }
 
@@ -29,11 +29,11 @@ public sealed class LocalFileStorageCharsetMetadataTests
     public async Task SaveFileAsync_TrimsCharset_AndWhitespaceBecomesNull()
     {
         using var scope = LocalFileStorageTestScope.Create();
-        var trimmed = await scope.Storage.SaveFileAsync("a"u8.ToArray(), "a.txt", charset: "  utf-8  ", ct: TestContext.Current.CancellationToken);
+        var trimmed = await scope.Storage.SaveFileAsync("a"u8.ToArray(), "a.txt", charset: "  utf-8  ", ct: TestCt);
         Assert.Equal("utf-8", trimmed.Charset);
-        var omitted = await scope.Storage.SaveFileAsync("b"u8.ToArray(), "b.txt", ct: TestContext.Current.CancellationToken);
+        var omitted = await scope.Storage.SaveFileAsync("b"u8.ToArray(), "b.txt", ct: TestCt);
         Assert.Null(omitted.Charset);
-        var blank = await scope.Storage.SaveFileAsync("c"u8.ToArray(), "c.txt", charset: " \t ", ct: TestContext.Current.CancellationToken);
+        var blank = await scope.Storage.SaveFileAsync("c"u8.ToArray(), "c.txt", charset: " \t ", ct: TestCt);
         Assert.Null(blank.Charset);
     }
 
@@ -42,17 +42,17 @@ public sealed class LocalFileStorageCharsetMetadataTests
     {
         using var scope = LocalFileStorageTestScope.Create();
         var tooLong = new string('x', FileStoreResult.MaxCharsetLength + 1);
-        await Assert.ThrowsAsync<ArgumentOutsideRangeException>(() => scope.Storage.SaveFileAsync("a"u8.ToArray(), "a.txt", charset: tooLong, ct: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentOutsideRangeException>(() => scope.Storage.SaveFileAsync("a"u8.ToArray(), "a.txt", charset: tooLong, ct: TestCt));
     }
 
     [Fact]
     public async Task CopyFileAsync_PreservesCharset()
     {
         using var scope = LocalFileStorageTestScope.Create();
-        var saved = await scope.Storage.SaveFileAsync("copy-me"u8.ToArray(), "src.txt", charset: "iso-8859-1", ct: TestContext.Current.CancellationToken);
-        var copy = await scope.Storage.CopyFileAsync(saved.Id, ct: TestContext.Current.CancellationToken);
+        var saved = await scope.Storage.SaveFileAsync("copy-me"u8.ToArray(), "src.txt", charset: "iso-8859-1", ct: TestCt);
+        var copy = await scope.Storage.CopyFileAsync(saved.Id, ct: TestCt);
         Assert.Equal("iso-8859-1", copy.Charset);
-        var meta = await scope.Storage.GetMetadataAsync(copy.Id, TestContext.Current.CancellationToken);
+        var meta = await scope.Storage.GetMetadataAsync(copy.Id, TestCt);
         Assert.Equal("iso-8859-1", meta.Charset);
     }
 
@@ -67,16 +67,15 @@ public sealed class LocalFileStorageCharsetMetadataTests
                 ContentType = "text/plain",
                 Charset = "utf-8",
                 PathPrefix = "du"
-            }, TestContext.Current.CancellationToken);
+            }, TestCt);
 
-        var pending = await scope.Storage.GetMetadataAsync(begin.FileId, TestContext.Current.CancellationToken);
+        var pending = await scope.Storage.GetMetadataAsync(begin.FileId, TestCt);
         Assert.Equal("utf-8", pending.Charset);
-
         var payload = "hello-direct-upload-plain"u8.ToArray();
         await using (var ms = new MemoryStream(payload))
-            await scope.Storage.ReceiveDirectPutAsync(begin.FileId, ms, TestContext.Current.CancellationToken);
+            await scope.Storage.ReceiveDirectPutAsync(begin.FileId, ms, TestCt);
 
-        var done = await scope.Storage.CompleteDirectUploadAsync(begin.FileId, ct: TestContext.Current.CancellationToken);
+        var done = await scope.Storage.CompleteDirectUploadAsync(begin.FileId, ct: TestCt);
         Assert.Equal("utf-8", done.Charset);
     }
 
@@ -86,11 +85,10 @@ public sealed class LocalFileStorageCharsetMetadataTests
         using var scope = LocalFileStorageTestScope.Create();
         var sessions = new InMemoryMultipartUploadSessionStore();
         var multipart = new LocalMultipartUploadService(scope.Storage, sessions, scope.Options);
-        var begin = await multipart.BeginAsync(new() { PartSizeBytes = 16 * 1024, Charset = "utf-16" }, TestContext.Current.CancellationToken);
+        var begin = await multipart.BeginAsync(new() { PartSizeBytes = 16 * 1024, Charset = "utf-16" }, TestCt);
         var payload = "hello multipart"u8.ToArray();
-        await multipart.UploadPartAsync(begin.SessionId, 1, new MemoryStream(payload), TestContext.Current.CancellationToken);
-        var meta = await multipart.CompleteAsync(
-            new() { SessionId = begin.SessionId, Parts = [new() { PartNumber = 1, ETagOrBlockId = "n/a" }] }, TestContext.Current.CancellationToken);
+        await multipart.UploadPartAsync(begin.SessionId, 1, new MemoryStream(payload), TestCt);
+        var meta = await multipart.CompleteAsync(new() { SessionId = begin.SessionId, Parts = [new() { PartNumber = 1, ETagOrBlockId = "n/a" }] }, TestCt);
         Assert.Equal("utf-16", meta.Charset);
     }
 }

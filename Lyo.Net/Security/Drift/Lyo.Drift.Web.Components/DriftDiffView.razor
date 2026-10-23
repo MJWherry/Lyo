@@ -8,6 +8,7 @@
     <ChildContent>
         @if (_fileChanges.Count > 0) {
             <MudText Typo="Typo.subtitle2" Class="mb-2">File changes</MudText>
+
             <MudSimpleTable Dense="true" Hover="true" Elevation="0" Class="mb-4">
                 <thead>
                 <tr>
@@ -20,7 +21,9 @@
                 <tbody>
                 @foreach (var change in _fileChanges) {
                     <tr>
-                        <td><LyoChip Spec="@(LyoChips.FromEnum<FileSystemChangeKind>(change.ChangeType.ToString(), DriftColorHelper.ForChangeKind))"/></td>
+                        <td>
+                            <LyoChip Spec="@(LyoChips.FromEnum<FileSystemChangeKind>(change.ChangeType.ToString(), DriftColorHelper.ForChangeKind))"/>
+                        </td>
                         <td>@(change.OldPath ?? "—")</td>
                         <td>@(change.NewPath ?? "—")</td>
                         <td>@(change.IsDirectory ? "yes" : "no")</td>
@@ -31,6 +34,7 @@
         }
         @if (_systemDiffs.Count > 0) {
             <MudText Typo="Typo.subtitle2" Class="mb-2">System differences</MudText>
+
             <MudSimpleTable Dense="true" Hover="true" Elevation="0">
                 <thead>
                 <tr>
@@ -43,8 +47,12 @@
                 @foreach (var row in _systemDiffs) {
                     <tr>
                         <td>@row.Path</td>
-                        <td><LyoTruncatedText Text="@(row.OldValueJson ?? "—")"/></td>
-                        <td><LyoTruncatedText Text="@(row.NewValueJson ?? "—")"/></td>
+                        <td>
+                            <LyoTruncatedText Text="@(row.OldValueJson ?? "—")"/>
+                        </td>
+                        <td>
+                            <LyoTruncatedText Text="@(row.NewValueJson ?? "—")"/>
+                        </td>
                     </tr>
                 }
                 </tbody>

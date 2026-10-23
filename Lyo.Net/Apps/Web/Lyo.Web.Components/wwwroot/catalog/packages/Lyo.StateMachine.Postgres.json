@@ -1,0 +1,231 @@
+{
+  "id": "Lyo.StateMachine.Postgres",
+  "name": "Lyo.StateMachine.Postgres",
+  "area": "Core",
+  "tagline": "PostgreSQL storage for Lyo state machines: instances with optimistic concurrency, data, timers, history, and queries, plus versioned definition documents.",
+  "description": "PostgreSQL + EF Core implementation of `IStateStore<TState>`, `IStateInstanceQuery<TState>`, and `IStateMachineDefinitionStore` from [`Lyo.StateMachine.Models`](../Lyo.StateMachine.Models/README.md). Use it with `StateMachineInstance` and `StateMachineDefinitionCache` from [`Lyo.StateMachine`](../Lyo.StateMachine/README.md) for jobs, workers, and other entities whose state must survive restarts, and for machines defined as data.",
+  "features": [
+    "**Optimistic concurrency.** The version check, instance write, and history row commit in one transaction. A stale writer gets `false` and nothing is written.",
+    "**Data and timers.** Instance data is stored as `jsonb`; the timer due time is indexed with the machine name so a scheduler can poll `ListAsync(new() { DueBeforeUtc = now })` cheaply.",
+    "**Queries.** List by states, due time, or update time with paging; count by state; page history oldest first; delete an instance and its history with an optional version check.",
+    "**Transition history.** Each save with a `TransitionRecord` adds a row, unique per (machine, instance, version).",
+    "**Definition documents.** `PostgresStateMachineDefinitionStore` saves each `StateMachineDocument` revision as an immutable `jsonb` row; a publish only succeeds when `expectedRevision` is still the latest.",
+    "**Any state type.** Enum states are stored by member name. Supply an `IStateKeyConverter<TState>` for other types.",
+    "**UTC only.** Snapshot, transition, and filter times must be UTC (`ArgumentException` otherwise)."
+  ],
+  "examples": [
+    {
+      "title": "Registration",
+      "language": "csharp",
+      "code": "services.AddStateMachinePostgresFromConfiguration(configuration);\nservices.AddPostgresStateStore<JobState>();            // IStateStore<JobState> + IStateInstanceQuery<JobState>\nservices.AddPostgresStateMachineDefinitionStore();     // IStateMachineDefinitionStore\n\n// Custom state type\nservices.AddPostgresStateStore(new MyStateKeyConverter());"
+    },
+    {
+      "title": "Polling due timers",
+      "language": "csharp",
+      "code": "var due = await query.ListAsync(\"job\", new() { DueBeforeUtc = DateTime.UtcNow }, take: 50, ct: ct);\nforeach (var item in due)\n    await new StateMachineInstance<JobState, JobTrigger, JobContext>(definition, store, item.InstanceKey)\n        .FireDueAsync(ctx, DateTime.UtcNow, ct);"
+    }
+  ],
+  "sections": [
+    {
+      "type": "paragraph",
+      "title": "Database schema",
+      "text": "PostgreSQL schema `state_machine`. Table `instance`: primary key (`machine_name`, `instance_key`), `state`, `version` (concurrency token), `entered_timestamp`, `updated_timestamp`, `due_at`, `data_json` (`jsonb`); indexes on (`machine_name`, `state`) and (`machine_name`, `due_at`). Table `transition`: `id`, `machine_name`, `instance_key`, `from_state`, `to_state`, `trigger`, `version`, `occurred_timestamp`. Table `definition`: primary key (`name`, `revision`), `document` (`jsonb`), `created_timestamp`. Migrations history lives in `__EFMigrationsHistory` in the same schema."
+    },
+    {
+      "type": "paragraph",
+      "title": "Migrations",
+      "text": "At design time set `STATE_MACHINE_CONNECTION_STRING` and run `dotnet ef migrations add MigrationName --project Core/StateMachine/Lyo.StateMachine.Postgres --context StateMachineDbContext`. Set `EnableAutoMigrations` to apply them at host start."
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Core/StateMachine/Lyo.StateMachine.Postgres/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.StateMachine",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.StateMachine.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Design",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Lyo.Health",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.EntityFrameworkCore.Relational",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Options",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "kind": "package",
+      "version": "10.0.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ]
+}

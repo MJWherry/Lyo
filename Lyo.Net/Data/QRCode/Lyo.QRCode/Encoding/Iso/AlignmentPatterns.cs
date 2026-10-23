@@ -12,8 +12,8 @@ internal sealed partial class QRIsoEncoder
         public static AlignmentPattern FromVersion(int version) => AlignmentPatternTable[version];
 
         /// <summary>
-        /// Builds a lookup from QR version to alignment patterns. Scanners use those patterns to read the symbol at high speed and when it is partly obscured. Version
-        /// dictates size and complexity.
+        /// Builds a lookup from QR version to alignment patterns. Scanners use those patterns to read the symbol at high speed and when it is partly obscured. Version dictates size
+        /// and complexity.
         /// </summary>
         /// <returns>Dictionary of version numbers to <see cref="AlignmentPattern" /> positions for each version.</returns>
         private static Dictionary<int, AlignmentPattern> CreateAlignmentPatternTable()

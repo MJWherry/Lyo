@@ -7,8 +7,8 @@ using JobRunResult = Lyo.Job.Models.Enums.JobRunResult;
 namespace Lyo.Job.Postgres;
 
 /// <summary>
-/// Run statistics for one job definition. Postgres aggregates every number here rather than the CLR: a definition with a long retention window holds hundreds of thousands
-/// of runs, and materializing the window to count it made the stats endpoint the heaviest read in the job API.
+/// Run statistics for one job definition. Postgres aggregates every number here rather than the CLR: a definition with a long retention window holds hundreds of thousands of
+/// runs, and materializing the window to count it made the stats endpoint the heaviest read in the job API.
 /// </summary>
 /// <param name="dbFactory">Factory for the read-only contexts each aggregate uses.</param>
 public sealed class JobDefinitionStatsQuery(IDbContextFactory<JobContext> dbFactory)
@@ -23,7 +23,8 @@ public sealed class JobDefinitionStatsQuery(IDbContextFactory<JobContext> dbFact
     private static readonly JobRunResult?[] SuccessResults = [JobRunResult.Success, JobRunResult.SuccessWithWarnings, JobRunResult.PartialSuccess];
 
     /// <summary>
-    /// Aggregates run statistics over the last <paramref name="days" /> days plus current <c>Running</c> / <c>Queued</c> counts. Returns null when that definition does not exist.
+    /// Aggregates run statistics over the last <paramref name="days" /> days plus current <c>Running</c> / <c>Queued</c> counts. Returns null when that definition does not
+    /// exist.
     /// </summary>
     /// <param name="definitionId">Definition being reported on.</param>
     /// <param name="days">Window length in days.</param>
@@ -68,25 +69,22 @@ public sealed class JobDefinitionStatsQuery(IDbContextFactory<JobContext> dbFact
         var aggregate = await db.JobRuns.AsNoTracking()
             .Where(r => r.JobDefinitionId == definitionId && r.CreatedTimestamp >= since)
             .GroupBy(_ => 1)
-            .Select(
-                g => new {
-                    Total = g.Count(),
-                    SuccessCount = g.Count(r => SuccessResults.Contains(r.Result)),
-                    FailureCount = g.Count(r => r.Result == JobRunResult.Failure),
-                    DurationCount = g.Count(r => r.StartedTimestamp != null && r.FinishedTimestamp != null),
-                    AvgDurationMs = g.Average(
-                        r => r.StartedTimestamp == null || r.FinishedTimestamp == null ? (double?)null : (r.FinishedTimestamp!.Value - r.StartedTimestamp!.Value).TotalMilliseconds),
-                    LastRunAt = g.Max(r => (DateTime?)r.CreatedTimestamp),
-                    LastSuccessAt = g.Max(r => SuccessResults.Contains(r.Result) ? r.FinishedTimestamp ?? r.CreatedTimestamp : (DateTime?)null)
-                })
+            .Select(g => new {
+                Total = g.Count(),
+                SuccessCount = g.Count(r => SuccessResults.Contains(r.Result)),
+                FailureCount = g.Count(r => r.Result == JobRunResult.Failure),
+                DurationCount = g.Count(r => r.StartedTimestamp != null && r.FinishedTimestamp != null),
+                AvgDurationMs =
+                    g.Average(r => r.StartedTimestamp == null || r.FinishedTimestamp == null ? null : (r.FinishedTimestamp!.Value - r.StartedTimestamp!.Value).TotalMilliseconds),
+                LastRunAt = g.Max(r => (DateTime?)r.CreatedTimestamp),
+                LastSuccessAt = g.Max(r => SuccessResults.Contains(r.Result) ? r.FinishedTimestamp ?? r.CreatedTimestamp : (DateTime?)null)
+            })
             .FirstOrDefaultAsync(ct)
             .ConfigureAwait(false);
 
         return aggregate is null
             ? new(0, 0, 0, 0, null, null, null)
-            : new(
-                aggregate.Total, aggregate.SuccessCount, aggregate.FailureCount, aggregate.DurationCount, aggregate.AvgDurationMs, aggregate.LastRunAt,
-                aggregate.LastSuccessAt);
+            : new(aggregate.Total, aggregate.SuccessCount, aggregate.FailureCount, aggregate.DurationCount, aggregate.AvgDurationMs, aggregate.LastRunAt, aggregate.LastSuccessAt);
     }
 
     /// <summary>Postgres orders and skips. Only the single percentile row comes back.</summary>

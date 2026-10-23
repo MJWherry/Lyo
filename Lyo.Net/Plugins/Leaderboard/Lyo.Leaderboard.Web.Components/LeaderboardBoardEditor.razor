@@ -1,0 +1,106 @@
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudStack Spacing="3" Class="mt-3">
+    <MudPaper Class="pa-4" Outlined="true">
+        <LyoForm TModel="CreateBoardRequest" Model="_edit" ShowActions="false" HasChangesChanged="v => _formHasChanges = v" @ref="_form">
+            <MudGrid Spacing="2">
+                <MudItem xs="12" sm="6">
+                    <LyoFormInput TModel="CreateBoardRequest" TValue="string" Model="_edit" PropertyExpression="@(m => m.Name)" Label="Name" AllowEditing="true"/>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <LyoFormInput TModel="CreateBoardRequest" TValue="string?" Model="_edit" PropertyExpression="@(m => m.Slug)" Label="Slug" AllowEditing="true"/>
+                </MudItem>
+                <MudItem xs="12">
+                    <LyoFormInput TModel="CreateBoardRequest" TValue="string?" Model="_edit" PropertyExpression="@(m => m.Description)" Label="Description" AllowEditing="true"
+                                  AllowMultiline="true" Lines="2"/>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="BoardVisibility" Label="Visibility" Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="_edit.Visibility">
+                        @foreach (var value in Enum.GetValues<BoardVisibility>()) {
+                            <MudSelectItem T="BoardVisibility" Value="value">@value</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="JoinPolicy" Label="Join policy" Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="_edit.JoinPolicy">
+                        @foreach (var value in Enum.GetValues<JoinPolicy>()) {
+                            <MudSelectItem T="JoinPolicy" Value="value">@value</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <LyoFormInput TModel="CreateBoardRequest" TValue="bool" Model="_edit" PropertyExpression="@(m => m.RequireVerification)" Label="Require verification"
+                                  AllowEditing="true"/>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <LyoFormInput TModel="CreateBoardRequest" TValue="bool" Model="_edit" PropertyExpression="@(m => m.MembersCanSubmit)" Label="Members can submit"
+                                  AllowEditing="true"/>
+                </MudItem>
+                <MudItem xs="12" sm="4">
+                    <LyoFormInput TModel="CreateBoardRequest" TValue="bool" Model="_edit" PropertyExpression="@(m => m.AllowMultipleEntries)" Label="Allow multiple entries"
+                                  AllowEditing="true"/>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="AggregationKind" Label="Aggregation" Variant="Variant.Outlined" Margin="Margin.Dense" @bind-Value="_edit.AggregationKind">
+                        @foreach (var value in Enum.GetValues<AggregationKind>()) {
+                            <MudSelectItem T="AggregationKind" Value="value">@value</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField T="string" Label="Score formula" Variant="Variant.Outlined" Margin="Margin.Dense" Lines="4"
+                                  HelperText="Property keys are numbers. A choice key is {key}_key, for example fish_type_key == &quot;bass&quot;."
+                                  @bind-Value="_edit.ScoreFormula"/>
+                </MudItem>
+            </MudGrid>
+        </LyoForm>
+        <MudStack Row="true" Spacing="1" Class="mt-3">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@_saving" OnClick="SaveAsync">
+                @(_board == null ? "Create board" : "Save board")
+            </MudButton>
+            @if (_board != null) {
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" Disabled="@_saving" OnClick="ArchiveAsync">Archive</MudButton>
+            }
+        </MudStack>
+    </MudPaper>
+
+    @if (_board != null) {
+        <MudPaper Class="pa-4" Outlined="true">
+            <MudStack Spacing="2">
+                <MudStack Row="true" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.subtitle1">Scoring properties</MudText>
+                    <MudSpacer/>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreatePropertyAsync">
+                        Add property
+                    </MudButton>
+                </MudStack>
+                <MudTable Items="_properties" Dense="true" Hover="true" Breakpoint="Breakpoint.Sm">
+                    <HeaderContent>
+                        <MudTh>Key</MudTh>
+                        <MudTh>Label</MudTh>
+                        <MudTh>Value</MudTh>
+                        <MudTh></MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Key">@context.Key</MudTd>
+                        <MudTd DataLabel="Label">@context.Label</MudTd>
+                        <MudTd DataLabel="Value">
+                            <LyoChip Spec="@LyoChips.Of(context.ValueKind.ToString(), Color.Info)"/>
+                        </MudTd>
+                        <MudTd>
+                            <MudStack Row="true" Spacing="0">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" title="Edit" OnClick="@(() => OpenEditPropertyAsync(context))"/>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" title="Delete"
+                                               OnClick="@(() => DeletePropertyAsync(context))"/>
+                            </MudStack>
+                        </MudTd>
+                    </RowTemplate>
+                    <NoRecordsContent>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">No properties yet.</MudText>
+                    </NoRecordsContent>
+                </MudTable>
+            </MudStack>
+        </MudPaper>
+    }
+</MudStack>

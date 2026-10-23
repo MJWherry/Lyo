@@ -1,0 +1,8 @@
+@namespace Lyo.Web.Components.Export.Xml
+
+@* Host must be a Parameter — MudMenu popovers do not reliably receive cascading values *@
+<MudMenuItem Icon="@Icons.Material.Filled.Code"
+             Disabled="@(ExportHost is null || !ExportHost.CanExport)"
+             OnClick="@ExportXmlAsync">
+    Export as XML
+</MudMenuItem>

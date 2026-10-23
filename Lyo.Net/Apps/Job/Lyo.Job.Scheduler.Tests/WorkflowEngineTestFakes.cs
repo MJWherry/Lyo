@@ -2,6 +2,7 @@ using System.Text.Json;
 using Lyo.Api.Client;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Http.Client;
 using Lyo.Http.Client.Plan;
@@ -9,13 +10,14 @@ using Lyo.Http.Client.Session;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
+using Lyo.Metrics;
+using Lyo.Metrics.Models;
 using Lyo.Query.Models.Common.Request;
 using Constants = Lyo.Job.Models.Constants;
 
 namespace Lyo.Job.Scheduler.Tests;
 
-/// <summary>Every <see cref="IApiClient" /> member throws. Fakes derive from this and override only the calls the code under test makes, so an unexpected call fails
-/// loudly.</summary>
+/// <summary>Every <see cref="IApiClient" /> member throws. Fakes derive from this and override only the calls the code under test makes, so an unexpected call fails loudly.</summary>
 internal abstract class StubApiClient : IApiClient
 {
     public void Dispose() { }
@@ -35,20 +37,13 @@ internal abstract class StubApiClient : IApiClient
     public Task<HttpClientPlanRunResult> RunAsync(HttpClientPlan plan, HttpClientPlanRuntime? runtime = null, CancellationToken ct = default)
         => throw new NotImplementedException();
 
-    public virtual Task<TResult> PostAsAsync<TRequest, TResult>(
-        string uri,
-        TRequest? request = default,
-        Action<HttpRequestMessage>? before = null,
-        CancellationToken ct = default)
+    public virtual Task<TResult> PostAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException(uri);
 
-    public virtual Task<TResult?> GetAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default) => throw new NotImplementedException(uri);
+    public virtual Task<TResult?> GetAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        => throw new NotImplementedException(uri);
 
-    public virtual Task<TResult> PatchAsAsync<TRequest, TResult>(
-        string uri,
-        TRequest? request = default,
-        Action<HttpRequestMessage>? before = null,
-        CancellationToken ct = default)
+    public virtual Task<TResult> PatchAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException(uri);
 
     public virtual Task<TResult?> GetAsAsync<TRequest, TResult>(
@@ -118,30 +113,24 @@ internal abstract class StubApiClient : IApiClient
 
     public string ToQueryString<T>(T obj, string? enumerableDelimiter = null) => throw new NotImplementedException();
 
-    public Task<TResult?> QueryProjectAsync<TResult>(
-        string route,
-        ProjectionQueryReq request,
-        Action<HttpRequestMessage>? before = null,
-        CancellationToken ct = default)
+    public Task<TResult?> QueryProjectAsync<TResult>(string route, ProjectionQueryReq request, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException(route);
 
-    public Task<TResult?> QueryConcreteAsync<TResult>(
-        string route,
-        QueryConcreteReq request,
-        Action<HttpRequestMessage>? before = null,
-        CancellationToken ct = default)
+    public Task<TResult?> QueryConcreteAsync<TResult>(string route, QueryConcreteReq request, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        => throw new NotImplementedException(route);
+
+    public Task<TResult?> QuerySqlAsync<TResult>(string route, QueryRequestBase request, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         => throw new NotImplementedException(route);
 }
 
 /// <summary>
-/// In-memory backing store for one workflow run. Patches are applied to the stored state, so a <c>GET</c> issued after a step patch observes the new step state exactly as the
-/// real API would. which is what makes finalization assertions meaningful.
+/// In-memory backing store for one workflow run. Patches are applied to the stored state, so a <c>GET</c> issued after a step patch observes the new step state exactly as
+/// the real API would. which is what makes finalization assertions meaningful.
 /// </summary>
 internal sealed class FakeWorkflowApiClient : StubApiClient
 {
+    private readonly Dictionary<Guid, JobDefinitionRes> _definitions = [];
     private readonly Dictionary<Guid, JobRunRes> _jobRuns = [];
-
-    public FakeWorkflowApiClient(JobWorkflowRunRes workflowRun) => WorkflowRun = workflowRun;
 
     /// <summary>Current workflow run state, including patches applied through this client.</summary>
     public JobWorkflowRunRes WorkflowRun { get; private set; }
@@ -152,6 +141,8 @@ internal sealed class FakeWorkflowApiClient : StubApiClient
 
     public List<(Guid Id, PatchRequest Patch)> StepPatches { get; } = [];
 
+    public FakeWorkflowApiClient(JobWorkflowRunRes workflowRun) => WorkflowRun = workflowRun;
+
     /// <summary>Registers the finished job run that <c>GET Job/Run/{id}</c> returns.</summary>
     public FakeWorkflowApiClient WithJobRun(JobRunRes run)
     {
@@ -159,18 +150,31 @@ internal sealed class FakeWorkflowApiClient : StubApiClient
         return this;
     }
 
+    /// <summary>Registers a definition the engine's batched parameter lookup returns. Steps whose definition is not registered create their runs without parameters.</summary>
+    public FakeWorkflowApiClient WithDefinition(JobDefinitionRes definition)
+    {
+        _definitions[definition.Id] = definition;
+        return this;
+    }
+
     public JobWorkflowStepState StepState(Guid workflowStepId) => WorkflowRun.RunSteps!.First(s => s.JobWorkflowStepId == workflowStepId).State;
 
-    public override Task<TResult> PostAsAsync<TRequest, TResult>(
-        string uri,
-        TRequest? request = default,
-        Action<HttpRequestMessage>? before = null,
-        CancellationToken ct = default)
+    public override Task<TResult> PostAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
         where TRequest : default
     {
         if (uri.Contains($"{Constants.Rest.Job.WorkflowRunSteps}/QueryConcrete", StringComparison.OrdinalIgnoreCase)) {
-            var runId = ExtractQueriedJobRunId(request);
+            var runId = ExtractQueriedIds(request).FirstOrDefault();
             var matches = WorkflowRun.RunSteps!.Where(s => s.JobRunId == runId).ToList();
+            return Task.FromResult((TResult)(object)BuildQueryRes(matches));
+        }
+
+        if (uri.Contains($"{Constants.Rest.Job.Definitions}/QueryConcrete", StringComparison.OrdinalIgnoreCase)) {
+            var matches = ExtractQueriedIds(request).Where(_definitions.ContainsKey).Select(id => _definitions[id]).ToList();
+            return Task.FromResult((TResult)(object)BuildQueryRes(matches));
+        }
+
+        if (uri.Contains($"{Constants.Rest.Job.Runs}/QueryConcrete", StringComparison.OrdinalIgnoreCase)) {
+            var matches = ExtractQueriedIds(request).Where(_jobRuns.ContainsKey).Select(id => _jobRuns[id]).ToList();
             return Task.FromResult((TResult)(object)BuildQueryRes(matches));
         }
 
@@ -178,7 +182,7 @@ internal sealed class FakeWorkflowApiClient : StubApiClient
             var runReq = (JobRunReq)(object)request!;
             CreatedRunRequests.Add(runReq);
             var created = new JobRunRes {
-                Id = Guid.NewGuid(),
+                Id = LyoGuid.CreateV7(),
                 JobDefinitionId = runReq.JobDefinitionId,
                 State = JobState.Queued,
                 CreatedTimestamp = DateTime.UtcNow
@@ -244,17 +248,44 @@ internal sealed class FakeWorkflowApiClient : StubApiClient
         return Guid.TryParse(lastSegment, out var id) ? id : Guid.Empty;
     }
 
-    /// <summary>Reads the run id out of the engine's <c>JobRunId Equals</c> where clause without depending on the query builder's internal shape.</summary>
-    private static Guid ExtractQueriedJobRunId<TRequest>(TRequest? request)
+    /// <summary>Reads the ids out of the engine's where clause without depending on the query builder's internal shape. Covers both the single-id and <c>In</c> forms.</summary>
+    private static List<Guid> ExtractQueriedIds<TRequest>(TRequest? request)
     {
         var json = JsonSerializer.Serialize(request);
-        foreach (var candidate in json.Split(['"', ',', ':', '{', '}', '[', ']'], StringSplitOptions.RemoveEmptyEntries)) {
-            if (Guid.TryParse(candidate, out var id))
-                return id;
-        }
-
-        return Guid.Empty;
+        return [
+            .. json.Split(['"', ',', ':', '{', '}', '[', ']'], StringSplitOptions.RemoveEmptyEntries)
+                .Select(c => Guid.TryParse(c, out var id) ? id : (Guid?)null)
+                .Where(id => id is not null)
+                .Select(id => id!.Value)
+        ];
     }
 
     private static QueryRes<T> BuildQueryRes<T>(IReadOnlyList<T> items) => new(new(), true, items, 0, items.Count, items.Count, false, 0, null);
+}
+
+/// <summary>Counts counter increments by name so tests can assert the workflow engine's observability without a real metrics backend.</summary>
+internal sealed class RecordingMetrics : IMetrics
+{
+    private readonly Dictionary<string, long> _counters = [];
+
+    public void IncrementCounter(string name, IConvertible? value = null, IEnumerable<(string, string)>? tags = null)
+        => _counters[name] = Count(name) + (value is null ? 1L : Convert.ToInt64(value));
+
+    public void DecrementCounter(string name, IConvertible? value = null, IEnumerable<(string, string)>? tags = null)
+        => _counters[name] = Count(name) - (value is null ? 1L : Convert.ToInt64(value));
+
+    public void RecordGauge(string name, IConvertible value, IEnumerable<(string, string)>? tags = null) { }
+
+    public void RecordHistogram(string name, IConvertible value, IEnumerable<(string, string)>? tags = null) { }
+
+    public void RecordTiming(string name, TimeSpan duration, IEnumerable<(string, string)>? tags = null) { }
+
+    public MetricsTimer StartTimer(string name, IEnumerable<(string, string)>? tags = null) => default;
+
+    public void RecordError(string name, Exception exception, IEnumerable<(string, string)>? tags = null) { }
+
+    public void RecordEvent(string name, IConvertible? value = null, IEnumerable<(string, string)>? tags = null) { }
+
+    /// <summary>Total increments recorded for <paramref name="name" />, or zero when it was never touched.</summary>
+    public long Count(string name) => _counters.TryGetValue(name, out var value) ? value : 0;
 }

@@ -17,6 +17,7 @@ namespace Lyo.Web.Automation.Models;
 [JsonDerivedType(typeof(FindElementChainAutomationStep), "findElementChain")]
 [JsonDerivedType(typeof(FindAndActChainAutomationStep), "findAndActChain")]
 [JsonDerivedType(typeof(DelayAutomationStep), "delay")]
+[JsonDerivedType(typeof(CaptureNetworkAutomationStep), "captureNetwork")]
 [JsonDerivedType(typeof(ReloadAutomationStep), "reload")]
 [JsonDerivedType(typeof(SetViewportSizeAutomationStep), "setViewportSize")]
 [JsonDerivedType(typeof(RandomizeViewportAutomationStep), "randomizeViewport")]
@@ -30,6 +31,7 @@ namespace Lyo.Web.Automation.Models;
 [JsonDerivedType(typeof(WriteStringListToFileAutomationStep), "writeStringListToFile")]
 [JsonDerivedType(typeof(DownloadUrlsToDirectoryAutomationStep), "downloadUrlsToDirectory")]
 [JsonDerivedType(typeof(StoreLiteralAutomationStep), "storeLiteral")]
+[JsonDerivedType(typeof(StoreStringListAutomationStep), "storeStringList")]
 [JsonDerivedType(typeof(StoreTemplateAutomationStep), "storeTemplate")]
 [JsonDerivedType(typeof(StoreStringListFromTemplateAutomationStep), "storeStringListFromTemplate")]
 [JsonDerivedType(typeof(StorePageUrlAutomationStep), "storePageUrl")]
@@ -138,6 +140,18 @@ public sealed record DelayAutomationStep(int DelayMilliseconds, string? Name = n
     public override string ToString() => FormatStepDebugLine($"delay {DelayMilliseconds} ms");
 }
 
+/// <summary>
+/// Listens for network request URLs for <see cref="DurationMilliseconds" /> and stores the matches in the string-list variable <see cref="VariableName" />.
+/// <see cref="UrlPattern" /> is a regular expression. A null or blank pattern keeps every URL.
+/// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record CaptureNetworkAutomationStep(string VariableName, string? UrlPattern = null, int DurationMilliseconds = 3000, string? Name = null)
+    : AutomationStepDefinition(Name)
+{
+    /// <inheritdoc />
+    public override string ToString() => FormatStepDebugLine($"captureNetwork var={VariableName} pattern={UrlPattern ?? "*"} for {DurationMilliseconds} ms");
+}
+
 /// <summary>Reloads the current document (F5).</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record ReloadAutomationStep(string? Name = null)
@@ -164,10 +178,7 @@ public sealed record SetViewportSizeAutomationStep(int Width, int Height, string
 /// <see cref="SetViewportSizeAutomationStep" />. Use after navigate (optionally after <see cref="DelayAutomationStep" />) to mimic a user resizing the window.
 /// </summary>
 [DebuggerDisplay("{ToString(),nq}")]
-public sealed record RandomizeViewportAutomationStep(
-    IReadOnlyList<DesktopDisplaySize>? Sizes = null,
-    int JitterPixels = 0,
-    string? Name = null)
+public sealed record RandomizeViewportAutomationStep(IReadOnlyList<DesktopDisplaySize>? Sizes = null, int JitterPixels = 0, string? Name = null)
     : AutomationStepDefinition(Name)
 {
     /// <inheritdoc />
@@ -296,6 +307,15 @@ public sealed record StoreLiteralAutomationStep(string VariableName, string Valu
 {
     /// <inheritdoc />
     public override string ToString() => FormatStepDebugLine($"storeLiteral var:{VariableName} = {AutomationDisplayText.Ellipsis(Value, 64)}");
+}
+
+/// <summary>Stores <see cref="Values" /> as the string-list variable <see cref="VariableName" />. Later steps, such as download URLs, can read that list.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record StoreStringListAutomationStep(string VariableName, IReadOnlyList<string> Values, string? Name = null)
+    : AutomationStepDefinition(Name)
+{
+    /// <inheritdoc />
+    public override string ToString() => FormatStepDebugLine($"storeStringList var:{VariableName} count={Values.Count}");
 }
 
 /// <summary>Expands <see cref="Template" /> using current string variables (<c>{{name}}</c>) and stores the result in <see cref="VariableName" />.</summary>

@@ -1,8 +1,11 @@
+using System.Diagnostics;
+
 // ReSharper disable UnusedMember.Local
 
 namespace Lyo.Streams;
 
 /// <summary>Tunable chunk-size thresholds consumed by <see cref="StreamChunkSizeHelper" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class StreamChunkSizeOptions
 {
     /// <summary>Smallest chunk (default 64KB). Used for files under 1MB.</summary>
@@ -25,6 +28,12 @@ public class StreamChunkSizeOptions
 
     /// <summary>Byte cutoff for "very large" files (default 10GB).</summary>
     public long VeryLargeFileThreshold { get; set; } = 10L * 1024 * 1024 * 1024;
+
+    /// <summary>Chunk sizes and file-size thresholds.</summary>
+    public override string ToString()
+        => $"MinChunkSize={MinChunkSize} DefaultChunkSize={DefaultChunkSize} MaxChunkSize={MaxChunkSize} "
+         + $"SmallFileThreshold={SmallFileThreshold} MediumFileThreshold={MediumFileThreshold} "
+         + $"LargeFileThreshold={LargeFileThreshold} VeryLargeFileThreshold={VeryLargeFileThreshold}";
 }
 
 /// <summary>Picks a chunk size for stream work from the stream or file length.</summary>

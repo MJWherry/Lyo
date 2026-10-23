@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
-        <Description>Example Drift agent. Watches configured directories and posts snapshots to Lyo.Drift.Api.Host.</Description>
+        <Description>Example Drift agent. Watches configured directories and posts snapshots to Lyo.Drift.Api.Example.</Description>
         <ImplicitUsings>enable</ImplicitUsings>
         <IsPackable>false</IsPackable>
     </PropertyGroup>

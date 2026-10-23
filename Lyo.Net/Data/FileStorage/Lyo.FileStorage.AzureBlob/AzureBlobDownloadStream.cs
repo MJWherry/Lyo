@@ -1,8 +1,8 @@
 namespace Lyo.FileStorage.AzureBlob;
 
 /// <summary>
-/// Stream that owns a download response and disposes it when the caller disposes the stream. Returning <c>BlobDownloadStreamingResult.Content</c> without this wrapper
-/// leaves the HTTP connection checked out of the Azure SDK pool.
+/// Stream that owns a download response and disposes it when the caller disposes the stream. Returning <c>BlobDownloadStreamingResult.Content</c> without this wrapper leaves
+/// the HTTP connection checked out of the Azure SDK pool.
 /// </summary>
 internal sealed class AzureBlobDownloadStream : Stream
 {

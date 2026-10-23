@@ -1,0 +1,7 @@
+@inject IApiClient ApiClient
+@inject IConfiguration Configuration
+
+<RecipeManagement ApiClient="ApiClient"
+                  RecipeClient="_recipeClient"
+                  BaseRoute="@_baseRoute"
+                  FileStorageApiRoutePrefix="@_fileStoragePrefix"/>

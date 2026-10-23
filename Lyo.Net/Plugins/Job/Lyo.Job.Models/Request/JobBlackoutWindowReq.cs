@@ -1,19 +1,18 @@
-using System.Diagnostics;
-using Lyo.Common.Core.Enums;
-using Lyo.Job.Models.Enums;
 #if NET6_0_OR_GREATER
 using TimeOnly = System.TimeOnly;
 #else
 using TimeOnly = Lyo.DateAndTime.TimeOnlyModel;
 #endif
+using System.Diagnostics;
+using Lyo.Common.Core.Enums;
+using Lyo.Job.Models.Enums;
 
 namespace Lyo.Job.Models.Request;
 
 /// <summary>One blackout window inside a <see cref="JobBlackoutCalendarReq" />.</summary>
 /// <remarks>
-/// Four mutually exclusive kinds, inferred from which fields are set:
-/// weekdays (<see cref="DayFlags" />), calendar days (<see cref="DaysOfMonth" /> plus <see cref="MonthFlags" />), a dated range
-/// (<see cref="StartDateUtc" />), or a calculated holiday (<see cref="HolidaySlug" />).
+/// Four mutually exclusive kinds, inferred from which fields are set: weekdays (<see cref="DayFlags" />), calendar days (<see cref="DaysOfMonth" /> plus
+/// <see cref="MonthFlags" />), a dated range (<see cref="StartDateUtc" />), or a calculated holiday (<see cref="HolidaySlug" />).
 /// </remarks>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class JobBlackoutWindowReq

@@ -13,7 +13,9 @@ public static class TestComparatorsData
         { "Name", ComparisonOperatorEnum.NotContains, "li", 1 },
         { "Name", ComparisonOperatorEnum.NotStartsWith, "Al", 1 },
         { "Name", ComparisonOperatorEnum.NotEndsWith, "ce", 1 },
-        { "Name", ComparisonOperatorEnum.NotRegex, "(?i)^ali", 1 }
+        { "Name", ComparisonOperatorEnum.NotRegex, "(?i)^ali", 1 },
+        { "Name", ComparisonOperatorEnum.Fuzzy, "Alice", 2 },
+        { "Name", ComparisonOperatorEnum.NotFuzzy, "Alice", 1 }
     };
 
     public static TheoryData<string, ComparisonOperatorEnum, object, int> IntComparatorData { get; } = new() {

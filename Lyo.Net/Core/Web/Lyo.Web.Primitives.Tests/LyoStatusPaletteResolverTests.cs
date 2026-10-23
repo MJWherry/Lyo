@@ -1,4 +1,3 @@
-using Lyo.Web.Primitives;
 using MudBlazor;
 
 namespace Lyo.Web.Primitives.Tests;
@@ -32,7 +31,6 @@ public sealed class LyoStatusPaletteResolverTests
     {
         public string Name => "job";
 
-        public LyoChipSpec? Resolve(string? status)
-            => LyoStatusText.Normalize(status) == "running" ? new LyoChipSpec("Running", Color.Warning) : null;
+        public LyoChipSpec? Resolve(string? status) => LyoStatusText.Normalize(status) == "running" ? new LyoChipSpec("Running", Color.Warning) : null;
     }
 }

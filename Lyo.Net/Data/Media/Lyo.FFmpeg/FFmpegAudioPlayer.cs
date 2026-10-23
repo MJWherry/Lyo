@@ -35,7 +35,7 @@ public sealed class FFmpegAudioPlayer : IAudioPlayer
     public Task<Result<bool>> PlayBytesAsync(byte[] bytes, AudioPlayOptions? options = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(bytes);
-        return PlayStreamAsync(new MemoryStream(bytes, writable: false), options, ct);
+        return PlayStreamAsync(new MemoryStream(bytes, false), options, ct);
     }
 
     internal static List<string> BuildPlayArguments(string input, AudioPlayOptions opts, bool suppressOutput)

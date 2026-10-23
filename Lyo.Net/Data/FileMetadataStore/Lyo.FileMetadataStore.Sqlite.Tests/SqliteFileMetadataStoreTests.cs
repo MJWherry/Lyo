@@ -13,8 +13,7 @@ public sealed class SqliteFileMetadataStoreTests(FileMetadataSqliteFixture fixtu
     protected override IFileMetadataStore CreateStore(IServiceScope scope)
         => new SqliteFileMetadataStore(scope.ServiceProvider.GetRequiredService<SqliteFileMetadataStoreDbContext>());
 
-    protected override DbSet<FileMetadataEntity> Metadata(IServiceScope scope)
-        => scope.ServiceProvider.GetRequiredService<SqliteFileMetadataStoreDbContext>().FileMetadata;
+    protected override DbSet<FileMetadataEntity> Metadata(IServiceScope scope) => scope.ServiceProvider.GetRequiredService<SqliteFileMetadataStoreDbContext>().FileMetadata;
 
     [Fact]
     public async Task CheckHealthAsync_WhenConnected_ReturnsHealthy()
@@ -22,7 +21,7 @@ public sealed class SqliteFileMetadataStoreTests(FileMetadataSqliteFixture fixtu
         Assert.NotNull(Services);
         using var scope = Services.CreateScope();
         var store = (SqliteFileMetadataStore)CreateStore(scope);
-        var result = await store.CheckHealthAsync(TestContext.Current.CancellationToken);
+        var result = await store.CheckHealthAsync(TestCt);
         Assert.True(result.IsHealthy);
     }
 }

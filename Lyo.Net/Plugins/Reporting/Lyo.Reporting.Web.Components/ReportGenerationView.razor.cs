@@ -1,9 +1,4 @@
-using Lyo.Api.Models.Common.Response;
 using Lyo.Parameters;
-using Lyo.Reporting.Client;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
-using Lyo.Web.Components.DataGrid;
 using Lyo.Web.Components.Dialog;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -13,6 +8,10 @@ namespace Lyo.Reporting.Web.Components;
 
 public partial class ReportGenerationView
 {
+    private string? _loadedReportDataJson;
+
+    private bool _outputOpened;
+
     [Parameter]
     [EditorRequired]
     public ReportGenerationRes Generation { get; set; } = null!;
@@ -33,10 +32,6 @@ public partial class ReportGenerationView
     /// </summary>
     [Parameter]
     public Func<Guid, CancellationToken, Task<string?>>? LoadReportDataAsync { get; set; }
-
-    private bool _outputOpened;
-
-    private string? _loadedReportDataJson;
 
     private string DurationText => ReportColorHelper.FormatDurationFromDates(Generation.StartedTimestamp, Generation.FinishedTimestamp);
 
@@ -77,9 +72,7 @@ public partial class ReportGenerationView
                     return;
                 }
 
-                var title = string.IsNullOrWhiteSpace(Generation.OriginalFileName)
-                    ? $"{Generation.Format} preview"
-                    : Generation.OriginalFileName!;
+                var title = string.IsNullOrWhiteSpace(Generation.OriginalFileName) ? $"{Generation.Format} preview" : Generation.OriginalFileName!;
                 var parameters = new DialogParameters<ReportTabularPreviewDialog> { { d => d.Sheets, sheets } };
                 await DialogService.ShowAsync<ReportTabularPreviewDialog>(title, parameters, LyoDialogPresets.Large);
             }

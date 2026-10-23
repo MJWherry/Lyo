@@ -1,5 +1,6 @@
 using Lyo.Api.Mapping;
 using Lyo.Cache;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Query.Services.ValueConversion;
 using Lyo.Query.Services.WhereClause;
 using MapsterMapper;
@@ -69,7 +70,7 @@ internal static class QueryBenchmarkSupport
         for (var i = 0; i < count; i++) {
             people.Add(
                 new() {
-                    Id = Guid.NewGuid(),
+                    Id = LyoGuid.CreateV7(),
                     Name = $"Person {i}",
                     Age = 18 + i % 60,
                     IsActive = i % 2 == 0,

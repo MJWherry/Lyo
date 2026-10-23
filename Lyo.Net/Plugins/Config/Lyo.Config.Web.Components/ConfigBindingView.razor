@@ -35,7 +35,9 @@
         </MudGrid>
         @if (!IsNew) {
             <MudDivider Class="my-3"/>
+
             <MudText Typo="Typo.subtitle2">Value history</MudText>
+
             <ConfigRevisionList Store="Store"
                                 BindingId="_edit.Id"
                                 DataVersion="_historyVersion"

@@ -53,8 +53,8 @@ public static class Ulid
     }
 
     /// <summary>
-    /// Mints <paramref name="count" /> ULID strings in one batch using the current UTC time. All ULIDs share the same millisecond timestamp captured at batch start.
-    /// Uses one RNG fill for all <paramref name="count" /> × 10 random bytes.
+    /// Mints <paramref name="count" /> ULID strings in one batch using the current UTC time. All ULIDs share the same millisecond timestamp captured at batch start. Uses one RNG
+    /// fill for all <paramref name="count" /> × 10 random bytes.
     /// </summary>
     public static string[] CreateBulk(int count)
     {

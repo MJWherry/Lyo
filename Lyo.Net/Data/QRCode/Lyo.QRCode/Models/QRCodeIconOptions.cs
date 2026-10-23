@@ -28,9 +28,7 @@ public class QRCodeIconOptions
     /// <summary>If true, the consumer's overlay step should draw a border around the icon. Metadata only. The encoder never reads this.</summary>
     public bool DrawIconBorder { get; set; } = true;
 
-    /// <summary>
-    /// Clamps <paramref name="iconSizePercent" /> to <c>1</c>…<see cref="MaxIconSizePercent" /> (for compositing when options were set without validation, for example).
-    /// </summary>
+    /// <summary>Clamps <paramref name="iconSizePercent" /> to <c>1</c>…<see cref="MaxIconSizePercent" /> (for compositing when options were set without validation, for example).</summary>
     public static int ClampIconSizePercent(int iconSizePercent) => Math.Clamp(iconSizePercent, 1, MaxIconSizePercent);
 
     public override string ToString()

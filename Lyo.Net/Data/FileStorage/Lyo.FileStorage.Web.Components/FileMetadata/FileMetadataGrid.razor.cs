@@ -5,11 +5,10 @@ using Lyo.Csv.Models;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage.Web.Components.FileAccessLink;
 using Lyo.FileStorage.Web.Components.FileStorageManagement;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
 using Lyo.Web.Components.DataGrid;
 using Lyo.Web.Components.Dialog;
 using Lyo.Web.Components.Models;
+using Lyo.Web.Primitives;
 using Lyo.Xlsx.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,19 +18,15 @@ using MudBlazor;
 namespace Lyo.FileStorage.Web.Components.FileMetadata;
 
 /// <summary>
-/// QueryProject grid over file metadata: view, metadata, download, zip, and access links.
-/// Calls <c>{ApiRoutePrefix}/FileMetadata</c>, <c>files/{id}/download</c>, <c>files/archive</c>, and <c>files/{id}/metadata</c>.
+/// QueryProject grid over file metadata: view, metadata, download, zip, and access links. Calls <c>{ApiRoutePrefix}/FileMetadata</c>, <c>files/{id}/download</c>,
+/// <c>files/archive</c>, and <c>files/{id}/metadata</c>.
 /// </summary>
 public partial class FileMetadataGrid
 {
     private static readonly string[] KeySelectFields = ["Id", "OriginalFileName", "ContentType", "Charset", "OriginalFileSize", "DeletedAt", "Availability"];
 
     private readonly List<FilterPropertyDefinition> _propertyDefinitions = [
-        new("OriginalFileName", "Name"),
-        new("PathPrefix", "Path prefix"),
-        new("ContentType", "Type"),
-        new("Charset", "Charset"),
-        new("Id", "ID")
+        new("OriginalFileName", "Name"), new("PathPrefix", "Path prefix"), new("ContentType", "Type"), new("Charset", "Charset"), new("Id", "ID")
     ];
 
     private LyoDataGridProjected? _dataGrid;
@@ -66,10 +61,7 @@ public partial class FileMetadataGrid
     [Parameter]
     public string? FileMetadataQueryRoute { get; set; }
 
-    /// <summary>
-    /// Public origin for opening download/view URLs in a new tab (no trailing slash).
-    /// When null, uses <see cref="IApiClient" /> <c>BaseAddress</c>.
-    /// </summary>
+    /// <summary>Public origin for opening download/view URLs in a new tab (no trailing slash). When null, uses <see cref="IApiClient" /> <c>BaseAddress</c>.</summary>
     [Parameter]
     public string? PublicBaseUrl { get; set; }
 
@@ -85,9 +77,7 @@ public partial class FileMetadataGrid
 
     private string Prefix => string.IsNullOrWhiteSpace(ApiRoutePrefix) ? "FileStorage" : ApiRoutePrefix.Trim().TrimEnd('/');
 
-    private string ResolvedQueryRoute => string.IsNullOrWhiteSpace(FileMetadataQueryRoute)
-        ? $"{Prefix}/FileMetadata"
-        : FileMetadataQueryRoute.Trim().TrimStart('/');
+    private string ResolvedQueryRoute => string.IsNullOrWhiteSpace(FileMetadataQueryRoute) ? $"{Prefix}/FileMetadata" : FileMetadataQueryRoute.Trim().TrimStart('/');
 
     private static bool IsDeleted(object? item) => FileStorageGridRowHelper.IsRowDeleted(item);
 
@@ -104,9 +94,7 @@ public partial class FileMetadataGrid
     private static string FormatSize(object? item)
     {
         var raw = ProjectedValueHelper.GetValue(item, "OriginalFileSize");
-        return ProjectedValueHelper.TryGetInt64(raw, out var size)
-            ? FileSizeUnitInfo.FormatBestFitAbbreviation(size, lowercaseAbbreviation: false)
-            : "-";
+        return ProjectedValueHelper.TryGetInt64(raw, out var size) ? FileSizeUnitInfo.FormatBestFitAbbreviation(size, lowercaseAbbreviation: false) : "-";
     }
 
     private string FileDownloadPath(Guid fileId, bool inline)
@@ -153,7 +141,7 @@ public partial class FileMetadataGrid
                 return;
             }
 
-            await OpenFileAsync(fileId, inline: true).ConfigureAwait(true);
+            await OpenFileAsync(fileId, true).ConfigureAwait(true);
         }
         catch (Exception ex) {
             Snackbar.Add(ex.Message, Severity.Error);
@@ -166,9 +154,7 @@ public partial class FileMetadataGrid
             return;
 
         try {
-            var uri = IsDeleted(item)
-                ? $"{Prefix}/files/{fileId:D}/metadata?includeDeleted=true"
-                : $"{Prefix}/files/{fileId:D}/metadata";
+            var uri = IsDeleted(item) ? $"{Prefix}/files/{fileId:D}/metadata?includeDeleted=true" : $"{Prefix}/files/{fileId:D}/metadata";
             var result = await Client.GetAsAsync<FileStoreResult>(uri).ConfigureAwait(true);
             if (result == null) {
                 Snackbar.Add($"Metadata for {fileId} was not returned.", Severity.Warning);
@@ -188,7 +174,7 @@ public partial class FileMetadataGrid
         if (!FileStorageGridRowHelper.TryGetFileIdFromRow(item, out var fileId) || IsDeleted(item))
             return Task.CompletedTask;
 
-        return OpenFileAsync(fileId, inline: false);
+        return OpenFileAsync(fileId, false);
     }
 
     private async Task OpenFileAsync(Guid fileId, bool inline)
@@ -201,30 +187,30 @@ public partial class FileMetadataGrid
     {
         var csv = Services.GetService<ICsvService>();
         if (csv == null) {
-            await OpenFileAsync(fileId, inline: true).ConfigureAwait(true);
+            await OpenFileAsync(fileId, true).ConfigureAwait(true);
             return;
         }
 
-        var bytes = await Client.GetFileAsync(FileDownloadPath(fileId, inline: false)).ConfigureAwait(true);
-        var parsed = await csv.ParseBytesAsDataTableAsync(bytes, hasHeaderRow: true).ConfigureAwait(true);
+        var bytes = await Client.GetFileAsync(FileDownloadPath(fileId, false)).ConfigureAwait(true);
+        var parsed = await csv.ParseBytesAsDataTableAsync(bytes, true).ConfigureAwait(true);
         if (!parsed.TryGetValue(out var table)) {
             Snackbar.Add(parsed.Errors is { Count: > 0 } errors ? errors[0].Message : "Could not parse CSV.", Severity.Error);
             return;
         }
 
-        await ShowTabularPreviewAsync(fileName ?? "CSV", [new FileTabularPreviewSheet(fileName ?? "CSV", table)]).ConfigureAwait(true);
+        await ShowTabularPreviewAsync(fileName ?? "CSV", [new(fileName ?? "CSV", table)]).ConfigureAwait(true);
     }
 
     private async Task ViewXlsxAsync(Guid fileId, string? fileName)
     {
         var xlsx = Services.GetService<IXlsxService>();
         if (xlsx == null) {
-            await OpenFileAsync(fileId, inline: true).ConfigureAwait(true);
+            await OpenFileAsync(fileId, true).ConfigureAwait(true);
             return;
         }
 
-        var bytes = await Client.GetFileAsync(FileDownloadPath(fileId, inline: false)).ConfigureAwait(true);
-        var all = await xlsx.ParseXlsxBytesAsAllSheetsAsync(bytes, useHeaderRow: true).ConfigureAwait(true);
+        var bytes = await Client.GetFileAsync(FileDownloadPath(fileId, false)).ConfigureAwait(true);
+        var all = await xlsx.ParseXlsxBytesAsAllSheetsAsync(bytes, true).ConfigureAwait(true);
         var sheets = all.Select(kv => new FileTabularPreviewSheet(kv.Key, kv.Value)).ToList();
         if (sheets.Count == 0) {
             Snackbar.Add("No worksheets found to preview.", Severity.Warning);
@@ -236,7 +222,7 @@ public partial class FileMetadataGrid
 
     private async Task ViewHtmlAsync(Guid fileId, string? fileName)
     {
-        var bytes = await Client.GetFileAsync(FileDownloadPath(fileId, inline: false)).ConfigureAwait(true);
+        var bytes = await Client.GetFileAsync(FileDownloadPath(fileId, false)).ConfigureAwait(true);
         var html = Encoding.UTF8.GetString(bytes);
         var parameters = new DialogParameters<FileHtmlPreviewDialog> { { d => d.Html, html } };
         await DialogService.ShowAsync<FileHtmlPreviewDialog>(fileName ?? "HTML", parameters, LyoDialogPresets.Large);
@@ -261,6 +247,7 @@ public partial class FileMetadataGrid
             if (FileStorageGridRowHelper.TryGetFileIdFromRow(row, out var id) && !ids.Contains(id))
                 ids.Add(id);
         }
+
         if (ids.Count == 0) {
             Snackbar.Add("No file ids in the current selection.", Severity.Warning);
             return;
@@ -290,6 +277,7 @@ public partial class FileMetadataGrid
             { d => d.PublicBaseUrl, PublicBaseUrl },
             { d => d.ShowAdvanced, ShowAdvancedAccessLink }
         };
+
         await DialogService.ShowAsync<FileAccessLinkDialog>("Create access link", parameters, LyoDialogPresets.Medium);
     }
 }

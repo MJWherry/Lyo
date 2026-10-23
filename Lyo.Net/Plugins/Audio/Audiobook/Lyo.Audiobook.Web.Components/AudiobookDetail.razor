@@ -1,0 +1,72 @@
+@namespace Lyo.Audiobook.Web.Components
+
+@if (Work is null) {
+    <MudText Typo="Typo.body2">No audiobook selected.</MudText>
+}
+else {
+    <MudStack Spacing="3">
+        <MudStack Row="true" Spacing="3">
+            @if (!string.IsNullOrWhiteSpace(CoverImageUrl)) {
+                <MudImage Src="@CoverImageUrl" Alt="@Work.Title" Width="160" ObjectFit="ObjectFit.Contain"/>
+            }
+            <div>
+                <MudText Typo="Typo.h5">@Work.Title</MudText>
+                @if (!string.IsNullOrWhiteSpace(Work.Subtitle)) {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">@Work.Subtitle</MudText>
+                }
+                <MudText Typo="Typo.body2">@Work.Year · @FormatRuntime(Work.RuntimeSeconds)</MudText>
+            </div>
+        </MudStack>
+        @if (!string.IsNullOrWhiteSpace(Work.Overview)) {
+            <MudText Typo="Typo.body1">@Work.Overview</MudText>
+        }
+        <MudText Typo="Typo.subtitle1">Credits</MudText>
+        @if (Work.Credits.Count == 0) {
+            <MudText Typo="Typo.body2">None</MudText>
+        }
+        else {
+            <MudSimpleTable Dense="true" Hover="true">
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Role</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var credit in Work.Credits) {
+                    <tr>
+                        <td>@credit.DisplayName</td>
+                        <td>@credit.Role</td>
+                    </tr>
+                }
+                </tbody>
+            </MudSimpleTable>
+        }
+        <MudText Typo="Typo.subtitle1">Chapters</MudText>
+        @if (Work.Chapters.Count == 0) {
+            <MudText Typo="Typo.body2">No chapters.</MudText>
+        }
+        else {
+            <MudSimpleTable Dense="true" Hover="true">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Title</th>
+                    <th>Start</th>
+                    <th>Duration</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var chapter in Work.Chapters) {
+                    <tr>
+                        <td>@chapter.Number</td>
+                        <td>@chapter.Title</td>
+                        <td>@FormatRuntime(chapter.StartSeconds)</td>
+                        <td>@FormatRuntime(chapter.DurationSeconds)</td>
+                    </tr>
+                }
+                </tbody>
+            </MudSimpleTable>
+        }
+    </MudStack>
+}

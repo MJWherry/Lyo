@@ -1,18 +1,16 @@
 using Lyo.Common.Metadata.Records;
+using Lyo.Exceptions;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
 using Constants = Lyo.Job.Models.Constants;
-using Lyo.Exceptions;
 
 namespace Lyo.Job.Scheduler;
 
 /// <summary>Folds a batch parent's child-run outcomes and counters into the result set the parent finishes with.</summary>
 public static class JobBatchResultAggregator
 {
-    /// <summary>
-    /// Folds <paramref name="children" /> into parent results: the worst outcome wins, and the create/update/delete/failed counters are summed (omitted when zero).
-    /// </summary>
+    /// <summary>Folds <paramref name="children" /> into parent results: the worst outcome wins, and the create/update/delete/failed counters are summed (omitted when zero).</summary>
     /// <param name="children">Completed child runs of one parent, with their results loaded.</param>
     public static IReadOnlyList<JobRunResultReq> Aggregate(IReadOnlyList<JobRunRes> children)
     {

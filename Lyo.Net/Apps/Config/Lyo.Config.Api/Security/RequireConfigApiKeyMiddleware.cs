@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Lyo.Common.Core.Net;
@@ -5,6 +6,7 @@ using Lyo.Common.Core.Net;
 namespace Lyo.Config.Api.Security;
 
 /// <summary>Wires shared-secret validation onto config endpoints hosted from a central API.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ConfigApiSecurityOptions
 {
     public const string SectionName = "ConfigApiSecurity";
@@ -14,6 +16,9 @@ public sealed class ConfigApiSecurityOptions
 
     /// <summary>Shared secret accepted from <c>X-Api-Key</c> or an <c>Authorization: Bearer</c> header.</summary>
     public string? ApiKey { get; set; }
+
+    /// <summary>Whether an API key is required. The key is omitted.</summary>
+    public override string ToString() => $"RequireApiKey={RequireApiKey} ApiKeySet={!string.IsNullOrWhiteSpace(ApiKey)}";
 }
 
 /// <summary>Rejects /api/config map-group traffic unless the opt-in secret is present and valid.</summary>

@@ -1,73 +1,67 @@
-using System.Net.Http.Json;
 using Lyo.Privacy.Enums;
 using Lyo.Privacy.Policy;
 using Lyo.Privacy.Rules;
-using Lyo.Web.Primitives;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Lyo.Privacy.Web.Components;
 
 public partial class RedactionPolicyBuilderPanel
 {
-    [Parameter]
-    public EventCallback<RedactionPolicy> OnPolicyApplied { get; set; }
-
-    private List<string> _neverRedactChips = [];
-
-    private List<string> _regexChips = [];
-
-    private string _policyLabel = "Workbench policy";
-
-    private string _placeholder = "[redacted]";
-
-    private bool _mergeAdjacent = true;
-
-    private bool _idUsSsn;
-
-    private bool _idUkNino;
-
-    private bool _idDeSteuer;
-
-    private bool _ruleEmail = true;
-
-    private bool _rulePhone = true;
-
-    private bool _ruleCard = true;
-
-    private bool _ruleUrl = true;
-
-    private bool _ruleIp = true;
-
-    private bool _ruleAddress;
-
-    private bool _ruleIban;
-
-    private bool _ruleBank;
-
-    private string _phoneMode = "lastDigits";
-
-    private int _phoneDigitsParam = 4;
-
-    private int _phoneMinDigits = 10;
-
-    private string _ipMode = "truncate";
-
-    private ulong _bankMinNumeric;
+    private bool _apiAssignment;
 
     private bool _apiAws;
 
     private bool _apiGithub;
 
-    private bool _apiAssignment;
-
     private double _apiMinEntropy;
 
+    private ulong _bankMinNumeric;
+
     private bool _extraBearerJwt;
+
+    private bool _idDeSteuer;
+
+    private bool _idUkNino;
+
+    private bool _idUsSsn;
+
+    private string _ipMode = "truncate";
+
+    private bool _mergeAdjacent = true;
+
+    private List<string> _neverRedactChips = [];
+
+    private int _phoneDigitsParam = 4;
+
+    private int _phoneMinDigits = 10;
+
+    private string _phoneMode = "lastDigits";
+
+    private string _placeholder = "[redacted]";
+
+    private string _policyLabel = "Workbench policy";
+
+    private List<string> _regexChips = [];
+
+    private bool _ruleAddress;
+
+    private bool _ruleBank;
+
+    private bool _ruleCard = true;
+
+    private bool _ruleEmail = true;
+
+    private bool _ruleIban;
+
+    private bool _ruleIp = true;
+
+    private bool _rulePhone = true;
+
+    private bool _ruleUrl = true;
+
+    [Parameter]
+    public EventCallback<RedactionPolicy> OnPolicyApplied { get; set; }
 
     private Task OnNeverRedactChipsChanged(IEnumerable<string> values)
     {
@@ -159,7 +153,10 @@ public partial class RedactionPolicyBuilderPanel
 
     private RedactionPolicy BuildPolicy()
     {
-        var b = new RedactionPolicyBuilder().WithPolicyName(string.IsNullOrWhiteSpace(_policyLabel) ? "Workbench policy" : _policyLabel.Trim()).WithPlaceholder(string.IsNullOrWhiteSpace(_placeholder) ? "[redacted]" : _placeholder.Trim()).WithMergeAdjacentRuns(_mergeAdjacent);
+        var b = new RedactionPolicyBuilder().WithPolicyName(string.IsNullOrWhiteSpace(_policyLabel) ? "Workbench policy" : _policyLabel.Trim())
+            .WithPlaceholder(string.IsNullOrWhiteSpace(_placeholder) ? "[redacted]" : _placeholder.Trim())
+            .WithMergeAdjacentRuns(_mergeAdjacent);
+
         foreach (var literal in _neverRedactChips) {
             if (!string.IsNullOrWhiteSpace(literal))
                 b.AddNeverRedactSubstring(literal.Trim());

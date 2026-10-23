@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Api.Models.Error;
 using Lyo.Api.Services.Crud.Validation;
 using Lyo.Formatter;
@@ -8,6 +9,7 @@ using Lyo.Query.Models.Enums;
 namespace Lyo.Api.Services.Crud.Read.Project;
 
 /// <summary>Filter conditions taken from a WhereClause for MatchedOnly mode, with the group operator (And/Or) that combines them.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ProjectedFilterConditions(IReadOnlyList<ProjectedFilterCondition> Conditions, GroupOperatorEnum Operator = GroupOperatorEnum.And);
 
 /// <summary>Resolves projection specs, builds projection expressions, and projects entities onto selected fields.</summary>
@@ -117,7 +119,9 @@ public interface IProjectionService
 }
 
 /// <summary>Resolved field spec used for projection.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ProjectedFieldSpec(string RequestedPath, string NormalizedPath, string[] NormalizedParts);
 
 /// <summary>Filter condition used for projection-level filtering.</summary>
-public sealed record ProjectedFilterCondition(string NormalizedField, ComparisonOperatorEnum Comparison, object? Value);
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record ProjectedFilterCondition(string NormalizedField, ComparisonOperatorEnum Comparison, object? Value, double? Threshold = null);

@@ -28,14 +28,20 @@ public sealed class AutomationPlanRuntimeOptions
     /// </summary>
     public AutomationPlanRunDirectoryOptions? PlanRunDirectory { get; init; }
 
-    /// <summary>
-    /// If set, step templates are validated with <see cref="IFormatterService" /> (SmartFormat) before expansion. Placeholders use single braces, for example <c>{page.url}</c>, or
-    /// legacy double braces <c>{{page.url}}</c> which are normalized first.
-    /// </summary>
+    /// <summary>If set, step templates are validated with <see cref="IFormatterService" /> (SmartFormat) before expansion. Placeholders use single braces, for example <c>{page.url}</c>.</summary>
     public IFormatterService? Formatter { get; init; }
 
     /// <summary>Optional base URL used when resolving relative links extracted from pages.</summary>
     public Uri? LinkResolutionBaseUri { get; init; }
+
+    /// <summary>Zero-based index of the first step to execute. Earlier steps are reported <see cref="Lyo.Web.Automation.Models.Enums.AutomationPlanStepOutcome.Skipped" /> and do not run.</summary>
+    public int StartStepIndex { get; init; }
+
+    /// <summary>Inclusive zero-based index of the last step to execute. Later steps are not started. Null runs through the end.</summary>
+    public int? EndStepIndex { get; init; }
+
+    /// <summary>When set, the runner waits here before each step while <see cref="AutomationPlanRunGate.Pause" /> is held.</summary>
+    public AutomationPlanRunGate? Gate { get; init; }
 
     /// <inheritdoc />
     public override string ToString()
@@ -51,8 +57,7 @@ public sealed class AutomationPlanRunDirectoryOptions
     /// <summary>Parent folder for runs. When <see cref="NestRunUnderRoot" /> is true, each run uses a subfolder here.</summary>
     public required string RootDirectory { get; init; }
 
-    /// <summary>When true (default), artifacts go under <c>Path.Combine(<see cref="RootDirectory" />, folder)</c> where folder is <see cref="RunFolderName" /> or the run
-    /// id.</summary>
+    /// <summary>When true (default), artifacts go under <c>Path.Combine(<see cref="RootDirectory" />, folder)</c> where folder is <see cref="RunFolderName" /> or the run id.</summary>
     public bool NestRunUnderRoot { get; init; } = true;
 
     /// <summary>When <see cref="NestRunUnderRoot" /> is true, names the run subfolder; default is the run <c>Guid</c> (<c>N</c> format).</summary>

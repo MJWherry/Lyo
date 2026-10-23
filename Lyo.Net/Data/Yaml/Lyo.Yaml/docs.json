@@ -1,0 +1,106 @@
+{
+  "$schema": "../../../../docs/catalog/schema/package.schema.json",
+  "id": "Lyo.Yaml",
+  "name": "Lyo.Yaml",
+  "area": "Data",
+  "tagline": "Typed YAML parse and export, and conversion to and from JSON, over YamlDotNet.",
+  "description": "YamlService.Default is the Lyo document contract: camelCase, omitted nulls, and a block document. new YamlService(o => { ... }) changes naming, enums, number handling, write omission, quoting, multi-document mode, and encoding. One instance is safe for concurrent parse and export. The serializer and deserializer are built once and reused. Options are fixed after construction.\n\nByte methods take an optional Encoding. A missing argument uses the service encoding (UTF-8 without a BOM). A character span is already decoded. File and stream reads detect a BOM. ConvertToJson stays compact so it matches the JSON contract. Async twins exist on net10.0.",
+  "features": [
+    "YamlService.Default and new YamlService(configure) for camelCase, snake_case, kebab-case, or PascalCase, block or flow style, explicit --- markers, and multi-document lists.",
+    "`Order` follows the shared document options: Defined, Alphabetical, or Specified through `[MemberOrder]` and `OrderNames`.",
+    "`ExportFormattedToYamlString` writes formatter fields in dictionary order. `ExportColumnsToYamlString` writes a header-to-property map in that same order. `Order` does not reorder either list.",
+    "Optional Encoding on ParseBytes, Parse(ReadOnlySpan<byte>), ExportToYamlBytes, and TryExport.",
+    "QuoteStrings selects plain, single-quoted, or double-quoted strings. AllowAliases expands anchors. The default rejects aliases.",
+    "ConvertToJson and ConvertFromJson for a file, stream, bytes, and a string. Cross-format conversion is two calls through JSON.",
+    "Write omission of nulls, defaults, empty strings, and empty collections follows the shared document options.",
+    "`ExportToYamlStringFromDataTable` writes a data table as a sequence of maps. `ParseStringAsDataTable` reads it back. `hasFooterRow` moves the last map into the footer. String cells are double-quoted so a value such as 01 stays text."
+  ],
+  "examples": [
+    {
+      "title": "Round-trip through YAML",
+      "language": "csharp",
+      "code": "using Lyo.Yaml;\n\nstring doc = YamlService.Default.ExportToYamlString(person);\nstring json = YamlService.Default.ConvertToJson(doc);\nvar flow = new YamlService(o => o.WriteIndented = false);"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Data/Yaml/Lyo.Yaml/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "YamlDotNet",
+      "kind": "package",
+      "version": "18.1.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

@@ -1,4 +1,5 @@
-using Lyo.Web.Automation.Models;
+using System.Diagnostics;
+using Lyo.Exceptions.Models;
 using Lyo.Web.Automation.Selenium.Browser;
 using Lyo.Web.Automation.Selenium.Service;
 using Lyo.Web.Automation.Selenium.WebDriver;
@@ -10,19 +11,16 @@ namespace Lyo.Web.Automation.Selenium.Configuration;
 /// HTTP request headers are not represented here: ChromeDriver does not apply arbitrary default headers to navigations without Chrome DevTools Protocol. Set user agent via
 /// <see cref="UserAgents" /> and WebDriver/Chrome flags via <see cref="WebDriverArguments" />.
 /// </remarks>
+[DebuggerDisplay("{ToString(),nq}")]
 public class SeleniumBrowserOptions
 {
     public const string SectionName = "SeleniumBrowserOptions";
 
-    public List<string> UserAgents { get; set; } = [
-        "Mozilla/5.0 (X11; Windows; Windows x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.114 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.246",
-        "Mozilla/5.0 (X11; CrOS x86_64 8172.45.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.64 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.111 Safari/537.36"
-    ];
+    /// <summary>User-Agent pool. One entry is chosen at launch. An empty list is generated for <see cref="BrowserKind" /> on this host.</summary>
+    public List<string> UserAgents { get; set; } = [];
 
-    /// <summary>Which browser engine to drive locally or on a remote grid.</summary>
-    public SeleniumBrowserKind BrowserKind { get; set; } = SeleniumBrowserKind.Chrome;
+    /// <summary>Which browser to drive locally or on a remote grid. Chrome and Chromium use ChromeDriver. WebKit is rejected by <see cref="Validate" />.</summary>
+    public AutomationBrowserKind BrowserKind { get; set; } = AutomationBrowserKind.Chrome;
 
     /// <summary>If true, starts the browser in headless mode (where supported).</summary>
     public bool Headless { get; set; }
@@ -49,8 +47,8 @@ public class SeleniumBrowserOptions
     public string? ArtifactsDirectory { get; set; }
 
     /// <summary>
-    /// Chrome WebDriver arguments. Do not add <c>disable-gpu</c> unless you need software GL: that flag forces SwiftShader, which bot-detection sites flag. Docker hosts
-    /// without a GPU still use SwiftShader even without the flag; do not spoof <c>WEBGL_UNMASKED_RENDERER</c>.
+    /// Chrome WebDriver arguments. Do not add <c>disable-gpu</c> unless you need software GL: that flag forces SwiftShader, which bot-detection sites flag. Docker hosts without
+    /// a GPU still use SwiftShader even without the flag; do not spoof <c>WEBGL_UNMASKED_RENDERER</c>.
     /// </summary>
     public List<string> WebDriverArguments { get; set; } = ["disable-infobars", "disable-extensions", "disable-dev-shm-usage", "no-sandbox"];
 
@@ -62,10 +60,8 @@ public class SeleniumBrowserOptions
 
     /// <summary>
     /// When true (default), enables Chrome/Edge performance logging via Chrome DevTools Protocol. This is required for network request monitoring in
-    /// <see cref="Lyo.Web.Automation.Abstractions.IWebAutomationNavigator.NavigateAsync(string, Func{string, bool}, CancellationToken)" /> unless a JS request-interception
-    /// startup script
-    /// populates <c>window.__lyoCapturedUrls</c>. Disable on sites that detect CDP as "DevTools open" and redirect or block scraping. When disabled, add a JS interception script
-    /// to
+    /// <see cref="Lyo.Web.Automation.Abstractions.IWebAutomationNavigator.NavigateAsync(string, Func{string, bool}, CancellationToken)" /> unless a JS request-interception startup script
+    /// populates <c>window.__lyoCapturedUrls</c>. Disable on sites that detect CDP as "DevTools open" and redirect or block scraping. When disabled, add a JS interception script to
     /// <see cref="StartupScripts" /> so network requests can still be observed without CDP.
     /// </summary>
     public bool EnablePerformanceLogging { get; set; } = true;
@@ -76,9 +72,7 @@ public class SeleniumBrowserOptions
     /// <summary>Browser window height passed as Chrome <c>--window-size</c> and <c>Manage().Window.Size</c>.</summary>
     public int BrowserWindowHeight { get; set; } = 1080;
 
-    /// <summary>
-    /// When true, <see cref="ApplySessionViewport" /> picks from <see cref="ViewportSizes" /> (or <see cref="DesktopDisplaySize.Common" />) once per browser start.
-    /// </summary>
+    /// <summary>When true, <see cref="ApplySessionViewport" /> picks from <see cref="ViewportSizes" /> (or <see cref="DesktopDisplaySize.Common" />) once per browser start.</summary>
     public bool RandomizeViewportOnSessionStart { get; set; }
 
     /// <summary>Pool used when <see cref="RandomizeViewportOnSessionStart" /> is true. Empty means <see cref="DesktopDisplaySize.Common" />.</summary>
@@ -116,6 +110,13 @@ public class SeleniumBrowserOptions
     {
         WebDriverArguments.Add(WebDriverArgumentFormatter.Format(key, value));
         return this;
+    }
+
+    /// <summary>Rejects <see cref="AutomationBrowserKind.WebKit" />. Call at registration so an unsupported driver fails before launch.</summary>
+    public void Validate()
+    {
+        if (BrowserKind == AutomationBrowserKind.WebKit)
+            throw new ConfigurationException("Selenium cannot launch WebKit.", nameof(BrowserKind));
     }
 
     /// <summary>Applies <see cref="RandomizeViewportOnSessionStart" />. Call once before creating the WebDriver so <c>--window-size</c> matches.</summary>
@@ -157,6 +158,11 @@ public class SeleniumBrowserOptions
             PollingMaxAttempts = PollingMaxAttempts,
             PollingDelayBetweenAttempts = PollingDelayBetweenAttempts
         };
+
+    /// <summary>Browser, remote driver, and timeouts.</summary>
+    public override string ToString() =>
+        $"Browser={BrowserKind} Headless={Headless} Remote={RemoteWebDriverUri} Window={BrowserWindowWidth}x{BrowserWindowHeight} Agents={UserAgents?.Count ?? 0} " +
+        $"PageLoad={PageLoadTimeoutSeconds}s Implicit={ImplicitWaitSeconds}s Script={ScriptTimeoutSeconds}s MaxWait={SeleniumMaxWaitSeconds}s";
 }
 
 /// <summary>Per-session browser configuration. Pass to <see cref="ISeleniumBrowserService.CreateSession" /> to override service defaults for one session.</summary>

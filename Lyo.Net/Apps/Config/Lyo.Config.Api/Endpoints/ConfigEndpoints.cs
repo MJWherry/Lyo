@@ -1,14 +1,12 @@
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Error;
-using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 using Lyo.Authentication.AspNetCore.Authorization;
-using Lyo.Config;
 using Lyo.Config.Api.Infrastructure;
 using Lyo.EntityReference.Models;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.DependencyInjection;
+using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
+
 namespace Lyo.Config.Api.Endpoints;
 
 internal static class ConfigEndpoints
@@ -168,7 +166,8 @@ internal static class ConfigEndpoints
                 });
 
             manage.MapGet(
-                "/definitions/by-key", async Task<Results<Ok<ConfigDefinitionRecord>, NotFound>> (string? subjectEntityType, string? key, IConfigStore store, CancellationToken ct) => {
+                "/definitions/by-key", async Task<Results<Ok<ConfigDefinitionRecord>, NotFound>> (string? subjectEntityType, string? key, IConfigStore store, CancellationToken ct)
+                    => {
                     var existing = await store.GetDefinitionAsync(RequireValue(subjectEntityType, "subjectEntityType"), RequireValue(key, "key"), ct).ConfigureAwait(false);
                     if (existing is null)
                         throw ApiErrorException.From(LyoProblemDetails.FromCode(ApiErrorCodes.NotFound, "Resource was not found."));
@@ -186,18 +185,29 @@ internal static class ConfigEndpoints
                 });
 
             manage.MapPut(
-                "/definitions", async Task<Results<Ok<ConfigDefinitionRecord>, ValidationProblem>> (HttpContext http, ConfigDefinitionRecord body, IConfigStore store, CancellationToken ct) => {
+                "/definitions", async Task<Results<Ok<ConfigDefinitionRecord>, ValidationProblem>> (
+                    HttpContext http, ConfigDefinitionRecord body, IConfigStore store, CancellationToken ct) => {
                     try {
                         body.Validate();
                     }
                     catch (Exception ex) when (ex is InvalidOperationException or ArgumentException or ArgumentNullException or FormatException) {
-                        throw ApiErrorException.From(LyoProblemDetailsBuilder.CreateWithActivity().WithErrorCode(ApiErrorCodes.ValidationFailed).WithMessage("One or more validation errors occurred.").AddApiError(ApiErrorCodes.InvalidField, $"body: {ex.Message}").Build());
+                        throw ApiErrorException.From(
+                            LyoProblemDetailsBuilder.CreateWithActivity()
+                                .WithErrorCode(ApiErrorCodes.ValidationFailed)
+                                .WithMessage("One or more validation errors occurred.")
+                                .AddApiError(ApiErrorCodes.InvalidField, $"body: {ex.Message}")
+                                .Build());
                     }
 
                     if (body.IsEncrypted) {
                         var encryption = http.RequestServices.GetService<IConfigValueEncryptionService>();
                         if (encryption?.IsEncryptionEnabled != true)
-                            throw ApiErrorException.From(LyoProblemDetailsBuilder.CreateWithActivity().WithErrorCode(ApiErrorCodes.ValidationFailed).WithMessage("Encrypted config requires IEncryptionService on the API host.").AddApiError(ApiErrorCodes.InvalidField, "body.IsEncrypted").Build());
+                            throw ApiErrorException.From(
+                                LyoProblemDetailsBuilder.CreateWithActivity()
+                                    .WithErrorCode(ApiErrorCodes.ValidationFailed)
+                                    .WithMessage("Encrypted config requires IEncryptionService on the API host.")
+                                    .AddApiError(ApiErrorCodes.InvalidField, "body.IsEncrypted")
+                                    .Build());
                     }
 
                     await store.SaveDefinitionAsync(body, ct).ConfigureAwait(false);
@@ -221,8 +231,8 @@ internal static class ConfigEndpoints
 
             ProtectAdmin(
                 manage.MapPost(
-                    "/definitions/{definitionId:guid}/revert",
-                    async Task<Results<Ok<ConfigRevertRevisionRequest>, ProblemHttpResult>> (Guid definitionId, ConfigRevertRevisionRequest body, IConfigStore store, CancellationToken ct) => {
+                    "/definitions/{definitionId:guid}/revert", async Task<Results<Ok<ConfigRevertRevisionRequest>, ProblemHttpResult>> (
+                        Guid definitionId, ConfigRevertRevisionRequest body, IConfigStore store, CancellationToken ct) => {
                         try {
                             await store.RevertDefinitionToRevisionAsync(definitionId, body.Revision, ct).ConfigureAwait(false);
                         }
@@ -283,7 +293,8 @@ internal static class ConfigEndpoints
 
             ProtectAdmin(
                 manage.MapDelete(
-                    "/bindings", async Task<Results<NoContent, ProblemHttpResult>> (string? subjectEntityType, string? subjectEntityId, IConfigStore store, CancellationToken ct) => {
+                    "/bindings", async Task<Results<NoContent, ProblemHttpResult>> (string? subjectEntityType, string? subjectEntityId, IConfigStore store, CancellationToken ct)
+                        => {
                         try {
                             await store.DeleteBindingsAsync(RequireEntity(subjectEntityType, subjectEntityId), null, ct).ConfigureAwait(false);
                         }
@@ -328,8 +339,8 @@ internal static class ConfigEndpoints
 
             ProtectAdmin(
                 manage.MapPost(
-                    "/bindings/{bindingId:guid}/revert",
-                    async Task<Results<Ok<ConfigRevertRevisionRequest>, ProblemHttpResult>> (Guid bindingId, ConfigRevertRevisionRequest body, IConfigStore store, CancellationToken ct) => {
+                    "/bindings/{bindingId:guid}/revert", async Task<Results<Ok<ConfigRevertRevisionRequest>, ProblemHttpResult>> (
+                        Guid bindingId, ConfigRevertRevisionRequest body, IConfigStore store, CancellationToken ct) => {
                         try {
                             await store.RevertBindingToRevisionAsync(bindingId, body.Revision, null, ct).ConfigureAwait(false);
                         }
@@ -341,7 +352,8 @@ internal static class ConfigEndpoints
                     }));
 
             manage.MapGet(
-                "/resolved", async Task<Results<Ok<ResolvedConfigRecord>, ProblemHttpResult>> (string? subjectEntityType, string? subjectEntityId, IConfigStore store, CancellationToken ct) => {
+                "/resolved", async Task<Results<Ok<ResolvedConfigRecord>, ProblemHttpResult>> (
+                    string? subjectEntityType, string? subjectEntityId, IConfigStore store, CancellationToken ct) => {
                     try {
                         var resolved = await store.LoadConfigAsync(RequireEntity(subjectEntityType, subjectEntityId), null, ct).ConfigureAwait(false);
                         return TypedResults.Ok(resolved);

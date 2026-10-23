@@ -26,6 +26,5 @@ public sealed record MultipartUploadSessionRecord(
     public string? MetadataJson { get; init; }
 
     /// <inheritdoc />
-    public override string ToString()
-        => $"MultipartUploadSessionRecord: SessionId={SessionId}, TargetFileId={TargetFileId}, Status={Status}, ProviderKind={ProviderKind}";
+    public override string ToString() => $"MultipartUploadSessionRecord: SessionId={SessionId}, TargetFileId={TargetFileId}, Status={Status}, ProviderKind={ProviderKind}";
 }

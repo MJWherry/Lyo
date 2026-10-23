@@ -6,9 +6,9 @@ namespace Lyo.Testing.Containers;
 
 /// <summary>
 /// xUnit fixture base for suites that need a Postgres container plus a built <see cref="IServiceProvider" /> with migrations applied. Subclasses supply only
-/// <see cref="ConfigureServices" />; console logging, provider construction, <c>MigrateAsync</c>, and provider disposal live here. Override
-/// <see cref="OnMigratedAsync" /> to seed rows or resolve services onto fixture properties, and <see cref="MigrateAsync" /> when the context is registered as a scoped
-/// <see cref="DbContext" /> rather than through <see cref="IDbContextFactory{TContext}" />.
+/// <see cref="ConfigureServices" />; console logging, provider construction, <c>MigrateAsync</c>, and provider disposal live here. Override <see cref="OnMigratedAsync" /> to seed
+/// rows or resolve services onto fixture properties, and <see cref="MigrateAsync" /> when the context is registered as a scoped <see cref="DbContext" /> rather than through
+/// <see cref="IDbContextFactory{TContext}" />.
 /// </summary>
 /// <typeparam name="TContext">The <see cref="DbContext" /> whose migrations are applied once the container is up.</typeparam>
 public abstract class PostgresServiceFixtureBase<TContext> : PostgresContainerFixtureBase

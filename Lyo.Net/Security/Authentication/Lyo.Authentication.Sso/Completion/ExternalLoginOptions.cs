@@ -1,0 +1,34 @@
+using System.Diagnostics;
+
+namespace Lyo.Authentication.Sso.Completion;
+
+/// <summary>Tuning knobs for external-login completion. Bound from section <c>LyoExternalLogin</c>.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed class ExternalLoginOptions
+{
+    /// <summary>Configuration section.</summary>
+    public const string SectionName = "LyoExternalLogin";
+
+    /// <summary>How to handle a never-before-seen (provider, subject) pair.</summary>
+    public ExternalLoginPolicy Policy { get; set; } = ExternalLoginPolicy.JustInTime;
+
+    /// <summary>When <see cref="Policy" /> is <see cref="ExternalLoginPolicy.JitFromAllowedClaim" />, the claim name to inspect (e.g. <c>hd</c>).</summary>
+    public string? AllowedClaimName { get; set; }
+
+    /// <summary>Allowed values for <see cref="AllowedClaimName" />. Any match passes.</summary>
+    public IList<string> AllowedClaimValues { get; set; } = [];
+
+    /// <summary>When <c>true</c>, reject providers that report <c>email_verified=false</c>. Default <c>true</c>.</summary>
+    public bool RequireVerifiedEmail { get; set; } = true;
+
+    /// <summary>
+    /// Baseline scopes written onto every newly provisioned user as <c>[user].[scope]</c> rows (and mirrored onto <c>ScopesJson</c>). Use this to give freshly onboarded users a
+    /// starting set of self-service permissions (e.g. <c>auth.tokens.read</c> + <c>auth.tokens.write</c> so they can mint their own PATs without an out-of-band admin grant).
+    /// Provider-derived scopes (IdP protocol scopes, Keycloak role maps) are not copied onto issued JWTs. Unused for users that already exist when a fresh OIDC login arrives — existing
+    /// user rows are not granted these automatically.
+    /// </summary>
+    public IList<string> DefaultUserScopes { get; set; } = [];
+
+    /// <summary>Provisioning policy and how many claim values and default scopes are configured.</summary>
+    public override string ToString() => $"Policy={Policy} AllowedClaimName={AllowedClaimName} AllowedClaimValues={AllowedClaimValues.Count} DefaultUserScopes={DefaultUserScopes.Count}";
+}

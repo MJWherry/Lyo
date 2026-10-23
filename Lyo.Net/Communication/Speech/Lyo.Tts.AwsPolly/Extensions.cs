@@ -124,7 +124,6 @@ public static class Extensions
             configure(options);
             options.Validate();
             services.AddSingleton(options);
-
             services.AddSingleton<AwsPollyTtsService>(provider => {
                 var options = provider.GetRequiredService<AwsPollyOptions>();
                 var logger = provider.GetService<ILogger<AwsPollyTtsService>>();

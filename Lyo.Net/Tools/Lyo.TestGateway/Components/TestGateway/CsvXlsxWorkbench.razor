@@ -1,17 +1,9 @@
-@using System.IO.Compression
-@using System.Text
-@using System.Text.Json
 @using System.Text.Json.Nodes
-@using Lyo.Common.Core.Enums;
-@using Lyo.Common.Core.Pathing;
+@using Lyo.Common.Core.Enums
 @using Lyo.Csv.Models
-@using Lyo.DataTable.Models
-@using Lyo.Result
-@using Lyo.Web.Components
 @using Lyo.Web.Components.DataTablePreview
 @using Lyo.Web.Components.FileUpload
 @using Lyo.Web.Components.JsonEditor
-@using Lyo.Web.Components.Models
 @using Lyo.Xlsx.Models
 @inject ICsvService CsvService
 @inject IXlsxService XlsxService
@@ -68,6 +60,7 @@
                             CSV is larger than @(MaxCsvTextEditBytes / 1024) KiB, so the paste editor is hidden to avoid Blazor lag.
                             Toggle “First row is header” and click Re-parse upload to refresh the preview.
                         </MudAlert>
+
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ParseCsvBytesAsync" Disabled="@(_csvBytes == null)">
                             Re-parse upload
                         </MudButton>
@@ -80,17 +73,20 @@
                                       FullWidth="true"
                                       Variant="Variant.Outlined"
                                       Style="font-family: ui-monospace, monospace;"/>
+
                         <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
                             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ParseCsvTextAsync">Parse text</MudButton>
                             <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadCsvTableAsync" Disabled="@(_csvTable == null)">Download .csv</MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadCsvHtmlAsync" Disabled="@(_csvBytes == null)">Download HTML table</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadCsvHtmlAsync" Disabled="@(_csvBytes == null)">Download HTML table
+                            </MudButton>
                         </MudStack>
                     }
 
                     @if (_csvTextEditDisabled) {
                         <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
                             <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadCsvTableAsync" Disabled="@(_csvTable == null)">Download .csv</MudButton>
-                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadCsvHtmlAsync" Disabled="@(_csvBytes == null)">Download HTML table</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="DownloadCsvHtmlAsync" Disabled="@(_csvBytes == null)">Download HTML table
+                            </MudButton>
                         </MudStack>
                     }
 

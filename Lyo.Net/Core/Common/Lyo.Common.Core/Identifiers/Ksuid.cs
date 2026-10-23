@@ -63,8 +63,8 @@ public static class Ksuid
     }
 
     /// <summary>
-    /// Mints <paramref name="count" /> KSUID strings in one batch using the current UTC time. All KSUIDs share the same second-precision timestamp captured at batch
-    /// start. Uses one RNG fill for all <paramref name="count" /> × 16 random bytes.
+    /// Mints <paramref name="count" /> KSUID strings in one batch using the current UTC time. All KSUIDs share the same second-precision timestamp captured at batch start. Uses
+    /// one RNG fill for all <paramref name="count" /> × 16 random bytes.
     /// </summary>
     public static string[] CreateBulk(int count)
     {

@@ -35,7 +35,9 @@ services.AddDefaultCompressionService<CompressionService>();
 
 ## DI registration
 
-AddLz4Compressor() registers the factory and nothing else. AddCompressionService, AddDefaultCompressionService<CompressionService>(), and keyed registration live in [`Lyo.Compression`](../Lyo.Compression/README.md). If stored files might carry CompressionAlgorithm = LZ4, register this factory so file-storage reads can open them. [ICompressionResolver](../Lyo.Compression/README.md#icompressionresolver-per-algorithm-dispatch) picks the codec from metadata in GetFileAsync / GetFileStreamAsync.
+AddLz4Compressor () registers the factory and nothing else. AddCompressionService, AddDefaultCompressionService<CompressionService>(), and keyed registration live in [
+`Lyo.Compression`](../Lyo.Compression/README.md). If stored files might carry CompressionAlgorithm = LZ4, register this factory so file-storage reads can open
+them. [ICompressionResolver](../Lyo.Compression/README.md#icompressionresolver-per-algorithm-dispatch) picks the codec from metadata in GetFileAsync / GetFileStreamAsync.
 
 ## Dependencies
 

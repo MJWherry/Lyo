@@ -11,6 +11,7 @@ Full reference: `docs/testing.md`.
 ## xUnit (`*.Tests` projects)
 
 - Framework is **xUnit v3**, never NUnit or MSTest. Methods use `[Fact]` / `[Theory]` + `[InlineData]`; diagnostics go through `ITestOutputHelper`. Do not add `NUnit.Framework` (or MSTest) package references.
+- Pass `TestCt` (or `fixture.TestCt`) instead of `TestContext.Current.CancellationToken`.
 
 ```csharp
 // ❌ [Test] public void Parse_BadHeader() { Assert.That(ok, Is.False); }
@@ -23,18 +24,33 @@ Full reference: `docs/testing.md`.
 - **Theories:** collapse Facts into `[Theory]` + `[InlineData]` only when the assertion body is the same and inputs are the only difference. Keep a Fact when setup, expected exception type, or asserted fields differ.
 - **Delete vs keep:** delete the same SUT with the same assertions in two places, constructor `ShouldNotBeNull()` smokes already covered by a test that constructs and uses the service, and wrapper tests that re-run an inner evaluator's full scenario matrix. Keep same method names on different SUTs, unit + integration of the same story, provider matrices (Sqlite vs Postgres), and cross-layer tests of a different type.
 - Test classes sit in the sibling `Lyo.{X}.Tests` project mirroring the source namespace; internals are reachable via `InternalsVisibleTo`.
-- **Do not** create `Lyo.{X}.Models.Tests`. `.Models` packages are contracts/DTOs. Tests of logic that lives in a Models assembly go in the sibling non-Models suite (`Lyo.{X}.Tests` or `Lyo.{X}.Postgres.Tests`). Do not create sibling tests for `.Api.Host` hosts either.
+- **Do not** create `Lyo.{X}.Models.Tests`. `.Models` packages are contracts/DTOs. Tests of logic that lives in a Models assembly go in the sibling non-Models suite (`Lyo.{X}.Tests` or `Lyo.{X}.Postgres.Tests`). Do not create sibling tests for `.Api.Example` hosts either.
 - Suites touching Postgres/Redis use Testcontainers and need a reachable Docker daemon. Keep pure unit tests filterable with `[Trait("Category", "Fast")]` where the project uses categories.
 - Nullable warnings CS8618/CS8619/CS8610 and CA1806 are already suppressed for `*.Tests` projects — don't add pragmas for them.
-- **Seeded payloads:** never use unseeded `new Random()`, `RandomNumberGenerator.GetBytes`/`Fill`, or crypto RNG for test *data* (plaintexts, keys, nonces under test). Use `Lyo.Testing.TestData.Create` / `Fill` (`TestData.Seed`, same value as `BenchmarkData.PayloadSeed` / `DeterministicPayloadStream.DefaultSeed`). Distinct values → distinct seeds (e.g. `TestData.Seed + i` or `TestData.Seed ^ 1` for a wrong key). Temp paths may still use `Guid.NewGuid()`.
+- **Seeded payloads:** never use unseeded `new Random()`, `RandomNumberGenerator.GetBytes`/`Fill`, or crypto RNG for test *data* (plaintexts, keys, nonces under test). Use `Lyo.Testing.TestData.Create` / `Fill` (`TestData.Seed`, same value as `BenchmarkData.PayloadSeed` / `DeterministicPayloadStream.DefaultSeed`). Distinct values → distinct seeds (e.g. `TestData.Seed + i` or `TestData.Seed ^ 1` for a wrong key). In-memory bytes stay on `TestData`. Disk starts only when those bytes have to land on a file.
+- **Disk IO:** a test that creates a file, a directory, or a random file tree uses `Lyo.IO.Temp`. `using var session = new IOTempSession();` then `session.CreateFile(data, "song.mp3")`. The name keeps the extension. `session.Generator` builds random files, text, CSV, JSON, XML, and directory trees. Dispose the session; that deletes the folder. Do not build a path under `Path.GetTempPath`, call `Path.GetTempFileName` or `Directory.CreateTempSubdirectory`, write with `File.WriteAll*` into a hand-rolled temp path, or `File.Delete` / `Directory.Delete` it in a `finally`. `Lyo.IO.Temp` stays generic: no test helpers, no test base, and no static session that opens a folder for tests that never touch disk. Open the session in the test that needs the file. A class whose service under test is rooted on disk keeps one `IOTempSession` field and disposes it with the class.
+
+```csharp
+// ❌ BAD — manual temp path and manual delete
+var src = Path.Combine(Path.GetTempPath(), "lyo-tag-" + Guid.NewGuid().ToString("N") + ".mp3");
+await File.WriteAllBytesAsync(src, bytes, TestCt);
+try { await storage.SaveFileAsync(src, ct: TestCt); }
+finally { File.Delete(src); }
+
+// ✅ GOOD — this test needs a file, so it opens a session here
+using var session = new IOTempSession();
+var src = session.CreateFile(bytes, "song.mp3");
+await storage.SaveFileAsync(src, ct: TestCt);
+```
 - Run:
   - whole solution: `dotnet test Lyo.Net/Lyo.slnx`
   - one project: `dotnet test Lyo.Net/{Area}/{Group}/Lyo.{X}.Tests`
   - filtered: `dotnet test ... --filter 'Category=Fast'`
-- Add or update tests whenever behavior changes; don't scaffold empty test stubs for code with no behavior to assert.
+- Add or update a test when it locks a caller-visible outcome. Mechanical substitutions and passthroughs do not get a new test. See the TDD rule.
 
 ## BenchmarkDotNet (`*.Benchmarks` projects)
 
 - Normal console projects run in Release: `dotnet run -c Release --project {path}`.
 - `python3 scripts/benchmarks/run_dotnet.py` runs suites and rebuilds the dashboard data under `docs/benchmarks/data/`.
-- Payloads: `BenchmarkData.DeterministicBytes` / `DeterministicPayloadStream` (`BenchmarkData.PayloadSeed` == `TestData.Seed`). Do not use crypto RNG for suite inputs.
+- Payloads: `BenchmarkData.DeterministicBytes` / `DeterministicPayloadStream` (`BenchmarkData.PayloadSeed` == `TestData.Seed`). Do not use crypto RNG for suite inputs. In-memory bytes stay on `BenchmarkData`.
+- Disk inputs use `Lyo.IO.Temp` through `LyoBenchmarkBase`. Suite files go on `Temp`. Per-iteration files go on `IterationTemp`. Same ban on hand-rolled temp paths as tests.

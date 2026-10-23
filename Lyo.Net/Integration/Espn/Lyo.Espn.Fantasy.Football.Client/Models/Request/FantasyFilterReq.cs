@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Espn.Fantasy.Football.Client.Models.Request;
 
 /// <summary>Strongly typed request body for ESPN's x-fantasy-filter header.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FantasyFilterReq
 {
     /// <summary>Per-player filter options.</summary>
@@ -11,13 +14,11 @@ public sealed record FantasyFilterReq
 
     /// <summary>Per-topic filter options.</summary>
     public TopicsFilterReq? Topics { get; init; }
-
-    /// <summary>Topic groups keyed by ESPN topic type id.</summary>
-    public IReadOnlyDictionary<string, TopicTypeFilterReq>? TopicsByType { get; init; }
 }
 
 /// <summary>Model for a filter value block with a single value.</summary>
 /// <typeparam name="T">CLR type of the value.</typeparam>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FilterValueReq<T>
 {
     /// <summary>Value applied by the filter.</summary>
@@ -27,6 +28,7 @@ public sealed record FilterValueReq<T>
 /// <summary>Model for a filter value block with an additional value collection.</summary>
 /// <typeparam name="TValue">CLR type of the primary value.</typeparam>
 /// <typeparam name="TAdditional">CLR type of the extra value.</typeparam>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FilterValueReq<TValue, TAdditional>
 {
     /// <summary>Primary filter value.</summary>
@@ -37,6 +39,7 @@ public sealed record FilterValueReq<TValue, TAdditional>
 }
 
 /// <summary>Model for an ESPN sort definition.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record SortReq
 {
     /// <summary>Sort priority; lower values win first.</summary>
@@ -47,6 +50,7 @@ public sealed record SortReq
 }
 
 /// <summary>ESPN filter settings for players.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record PlayerFilterReq
 {
     /// <summary>Player ids included in the request.</summary>
@@ -54,9 +58,22 @@ public sealed record PlayerFilterReq
 
     /// <summary>Player card stats the scoring period filter ESPN expects.</summary>
     public FilterValueReq<int, string>? FilterStatsForTopScoringPeriodIds { get; init; }
+
+    /// <summary>Roster statuses to include, such as <c>FREEAGENT</c> and <c>WAIVERS</c>.</summary>
+    public FilterValueReq<IReadOnlyList<string>>? FilterStatus { get; init; }
+
+    /// <summary>Upper bound on players returned.</summary>
+    public int? Limit { get; init; }
+
+    /// <summary>How many players to skip.</summary>
+    public int? Offset { get; init; }
+
+    /// <summary>Percent-owned sort. Free-agent reads use priority 1, descending.</summary>
+    public SortReq? SortPercOwned { get; init; }
 }
 
 /// <summary>ESPN filter settings for transactions.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record TransactionsFilterReq
 {
     /// <summary>Transaction types included.</summary>
@@ -64,6 +81,7 @@ public sealed record TransactionsFilterReq
 }
 
 /// <summary>Filter settings for communication topics.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record TopicsFilterReq
 {
     /// <summary>Topic types included.</summary>
@@ -86,11 +104,4 @@ public sealed record TopicsFilterReq
 
     /// <summary>ESPN message type ids to include.</summary>
     public FilterValueReq<IReadOnlyList<int>>? FilterIncludeMessageTypeIds { get; init; }
-}
-
-/// <summary>A single topic type group sort settings.</summary>
-public sealed record TopicTypeFilterReq
-{
-    /// <summary>The topic group sort definition.</summary>
-    public SortReq? SortMessageDate { get; init; }
 }

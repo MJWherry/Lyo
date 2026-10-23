@@ -1,4 +1,4 @@
-using Lyo.Parameters;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Metadata.Records;
 using Lyo.Formatter;
 using Lyo.Job.Client;
@@ -8,12 +8,13 @@ using Lyo.Job.Models.Response;
 using Lyo.Job.Tests.Postgres;
 using Lyo.Job.Worker;
 using Lyo.MessageQueue;
+using Lyo.Parameters;
 using Lyo.Result;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Lyo.Job.Tests;
 
-/// <summary>String parameter placeholders resolve against <c>jobrun</c> and <c>AddContext</c> objects through <see cref="IFormatterService"/>.</summary>
+/// <summary>String parameter placeholders resolve against <c>jobrun</c> and <c>AddContext</c> objects through <see cref="IFormatterService" />.</summary>
 public class JobWorkerParameterFormatTests
 {
     private static readonly DateTimeOffset Frozen = new(2026, 8, 22, 16, 0, 0, TimeSpan.Zero);
@@ -24,6 +25,7 @@ public class JobWorkerParameterFormatTests
         var api = new FormatApiClient(
             Param("StartDate", LyoTypeInfo.DateTime, LyoTypeInfo.DateTime.ToJson(new DateTime(2026, 8, 1))),
             Param("EmailSubject", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("{jobrun.parameters.startdate:yyyy-MM-dd}")));
+
         var worker = CreateWorker(api);
         string? subject = null;
         await worker.InvokeDoWorkAsync(
@@ -91,7 +93,7 @@ public class JobWorkerParameterFormatTests
     public async Task NoFormatter_LeavesTemplatesUnchanged()
     {
         var api = new FormatApiClient(Param("EmailTo", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("{client.contact.emailAddress}")));
-        var worker = CreateWorker(api, formatter: null);
+        var worker = CreateWorker(api, null);
         string? to = null;
         await worker.InvokeDoWorkAsync(
             api.RunId, ctx => {
@@ -109,6 +111,7 @@ public class JobWorkerParameterFormatTests
         var api = new FormatApiClient(
             Param("EmailTo", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("{client.contact.emailAddress}")),
             Param("EmailSubject", LyoTypeInfo.String, LyoTypeInfo.String.ToJson("{jobrun.parameters.emailTo}")));
+
         var worker = CreateWorker(api);
         string? subject = null;
         await worker.InvokeDoWorkAsync(
@@ -156,28 +159,27 @@ public class JobWorkerParameterFormatTests
 
     private static TestJobWorker CreateWorker(FormatApiClient api) => CreateWorker(api, new FormatterService(() => Frozen));
 
-    private static JobRunParameterRes Param(string key, LyoTypeInfo type, string value)
-        => new(Guid.NewGuid(), Guid.NewGuid(), key, type.FullName, value, null, null, true);
+    private static JobRunParameterRes Param(string key, LyoTypeInfo type, string value) => new(LyoGuid.CreateV7(), LyoGuid.CreateV7(), key, type.FullName, value, null, null, true);
 
     private sealed class TestJobWorker(IMqService mq, IJobClient jobClient, IJobEventPublisher events)
         : JobWorkerBase(mq, jobClient, events, "cs", NullLogger.Instance)
     {
-        protected override TimeSpan HeartbeatInterval => TimeSpan.FromHours(1);
-
         private Func<IJobWorkerContext, Task> _execute = _ => Task.CompletedTask;
+
+        protected override TimeSpan HeartbeatInterval => TimeSpan.FromHours(1);
 
         protected override Task ExecuteAsync(IJobWorkerContext ctx) => _execute(ctx);
 
         public Task<Result<Unit>> InvokeDoWorkAsync(Guid runId, Func<IJobWorkerContext, Task> execute)
         {
             _execute = execute;
-            return DoWorkAsync(runId, TestContext.Current.CancellationToken);
+            return DoWorkAsync(runId, TestCt);
         }
     }
 
     private sealed class FormatApiClient(params JobRunParameterRes[] parameters) : StubApiClient
     {
-        public Guid RunId { get; } = Guid.NewGuid();
+        public Guid RunId { get; } = LyoGuid.CreateV7();
 
         public override Task<TResult?> GetAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
             where TResult : default
@@ -186,17 +188,27 @@ public class JobWorkerParameterFormatTests
         public override Task<TResult> PostAsAsync<TResult>(string uri, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
             => Task.FromResult((TResult)(object)BuildRun(uri.Contains("/Started", StringComparison.OrdinalIgnoreCase) ? JobState.Running : JobState.Finished));
 
-        public override Task<TResult> PostAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        public override Task<TResult> PostAsAsync<TRequest, TResult>(
+            string uri,
+            TRequest? request = default,
+            Action<HttpRequestMessage>? before = null,
+            CancellationToken ct = default)
             where TRequest : default
         {
             if (uri.Contains("/Started", StringComparison.OrdinalIgnoreCase))
                 return Task.FromResult((TResult)(object)BuildRun(JobState.Running));
+
             if (uri.Contains("/Finished", StringComparison.OrdinalIgnoreCase))
                 return Task.FromResult((TResult)(object)BuildRun(JobState.Finished));
+
             return Task.FromResult(default(TResult)!);
         }
 
-        public override Task<TResult> PatchAsAsync<TRequest, TResult>(string uri, TRequest? request = default, Action<HttpRequestMessage>? before = null, CancellationToken ct = default)
+        public override Task<TResult> PatchAsAsync<TRequest, TResult>(
+            string uri,
+            TRequest? request = default,
+            Action<HttpRequestMessage>? before = null,
+            CancellationToken ct = default)
             where TRequest : default
             => Task.FromResult(default(TResult)!);
 
@@ -205,8 +217,8 @@ public class JobWorkerParameterFormatTests
                 Id = RunId,
                 State = state,
                 CreatedTimestamp = DateTime.UtcNow,
-                JobDefinitionId = Guid.NewGuid(),
-                JobDefinition = new(Guid.NewGuid(), "TestDef", null, "Test", "cs", true, null, null, null, null),
+                JobDefinitionId = LyoGuid.CreateV7(),
+                JobDefinition = new(LyoGuid.CreateV7(), "TestDef", null, "Test", "cs", true, null, null, null),
                 JobRunParameters = parameters.Select(p => p with { JobRunId = RunId }).ToList()
             };
     }

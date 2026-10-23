@@ -1,5 +1,6 @@
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Common.Request;
+using Lyo.Common.Core.Identifiers;
 using Microsoft.AspNetCore.Components;
 
 namespace Lyo.Web.Components.Form;
@@ -30,8 +31,8 @@ public partial class LyoForm<TModel>
     public RenderFragment? ChildContent { get; set; }
 
     /// <summary>
-    /// If false, renders only the fields (no MudCard, no Save/Reset buttons). Use inside dialogs where the dialog owns the action bar and calls
-    /// <see cref="BuildPatchRequest" /> / <see cref="GetChanges" /> directly. Default is true (standalone card with actions).
+    /// If false, renders only the fields (no MudCard, no Save/Reset buttons). Use inside dialogs where the dialog owns the action bar and calls <see cref="BuildPatchRequest" />
+    /// / <see cref="GetChanges" /> directly. Default is true (standalone card with actions).
     /// </summary>
     [Parameter]
     public bool ShowActions { get; set; } = true;
@@ -112,8 +113,8 @@ public partial class LyoForm<TModel>
     public Dictionary<string, PropertyChange> GetChanges() => _changes.Where(entry => entry.Value.HasChanged).ToDictionary(entry => entry.Key, entry => entry.Value);
 
     /// <summary>
-    /// Constructs a <see cref="PatchRequest" /> for the entity identified by <paramref name="key" /> containing only the properties the user actually changed in this form. Returns
-    /// null when nothing changed, so callers can skip the API call entirely.
+    /// Constructs a <see cref="PatchRequest" /> for the entity identified by <paramref name="key" /> containing only the properties the user actually changed in this form.
+    /// Returns null when nothing changed, so callers can skip the API call entirely.
     /// </summary>
     public PatchRequest? BuildPatchRequest(object key)
     {
@@ -132,7 +133,7 @@ public partial class LyoForm<TModel>
     {
         var previousHasChanges = HasChanges;
         var previousChangeCount = ChangeCount;
-        var id = Guid.NewGuid().ToString();
+        var id = LyoGuid.CreateV7().ToString();
         _operations.Add(
             new() {
                 Id = id,

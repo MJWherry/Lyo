@@ -28,7 +28,7 @@ public class SftpFileSystemTests
     [Trait("Category", "Integration")]
     public async Task ListWriteReadDelete_RoundTrip()
     {
-        var host = await SftpTestHost.TryStartAsync(TestContext.Current.CancellationToken);
+        var host = await SftpTestHost.TryStartAsync(TestCt);
         if (host is null) {
             Assert.Skip("Docker/Testcontainers unavailable");
             return;
@@ -36,27 +36,27 @@ public class SftpFileSystemTests
 
         await using var container = host.Value.Container;
         using var client = new SftpClient(host.Value.Options);
-        await client.HealthPingAsync(TestContext.Current.CancellationToken);
+        await client.HealthPingAsync(TestCt);
         using var fs = new SftpFileSystem(client);
         var dir = PathHelpers.Combine(PathStyle.Posix, fs.RootPath, "vfs-dir");
         var file = PathHelpers.Combine(PathStyle.Posix, dir, "note.txt");
-        await fs.CreateDirectoryAsync(dir, TestContext.Current.CancellationToken);
+        await fs.CreateDirectoryAsync(dir, TestCt);
         fs.WriteAllBytes(file, [.. "sftp-vfs"u8]);
-        Assert.True(await fs.FileExistsAsync(file, TestContext.Current.CancellationToken));
-        var listed = await fs.ListDirectoryAsync(dir, TestContext.Current.CancellationToken);
+        Assert.True(await fs.FileExistsAsync(file, TestCt));
+        var listed = await fs.ListDirectoryAsync(dir, TestCt);
         Assert.Contains(listed, e => e is { IsDirectory: false, Name: "note.txt" });
-        await using (var stream = await fs.OpenReadAsync(file, TestContext.Current.CancellationToken)) {
+        await using (var stream = await fs.OpenReadAsync(file, TestCt)) {
             using var ms = new MemoryStream();
-            await stream.CopyToAsync(ms, TestContext.Current.CancellationToken);
+            await stream.CopyToAsync(ms, TestCt);
             Assert.Equal("sftp-vfs"u8.ToArray(), ms.ToArray());
         }
 
         var copied = PathHelpers.Combine(PathStyle.Posix, dir, "copy.txt");
-        await fs.CopyFileAsync(file, copied, TestContext.Current.CancellationToken);
-        await fs.MoveAsync(copied, PathHelpers.Combine(PathStyle.Posix, dir, "moved.txt"), TestContext.Current.CancellationToken);
-        await fs.DeleteFileAsync(file, TestContext.Current.CancellationToken);
-        Assert.False(await fs.FileExistsAsync(file, TestContext.Current.CancellationToken));
-        await fs.DeleteDirectoryAsync(dir, ct: TestContext.Current.CancellationToken);
-        Assert.False(await fs.DirectoryExistsAsync(dir, TestContext.Current.CancellationToken));
+        await fs.CopyFileAsync(file, copied, ct: TestCt);
+        await fs.MoveAsync(copied, PathHelpers.Combine(PathStyle.Posix, dir, "moved.txt"), ct: TestCt);
+        await fs.DeleteFileAsync(file, TestCt);
+        Assert.False(await fs.FileExistsAsync(file, TestCt));
+        await fs.DeleteDirectoryAsync(dir, ct: TestCt);
+        Assert.False(await fs.DirectoryExistsAsync(dir, TestCt));
     }
 }

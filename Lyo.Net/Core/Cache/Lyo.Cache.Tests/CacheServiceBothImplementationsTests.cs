@@ -1,4 +1,5 @@
 using Lyo.Cache.Fusion;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Testing;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
@@ -56,7 +57,7 @@ public class CacheServiceBothImplementationsTests : IDisposable
             key, async ct => {
                 await Task.Delay(5, ct);
                 return expectedValue;
-            }, token: TestContext.Current.CancellationToken);
+            }, token: TestCt);
 
         result.ShouldBe(expectedValue);
         var callCount = 0;
@@ -69,7 +70,7 @@ public class CacheServiceBothImplementationsTests : IDisposable
                 catch (Exception exception) {
                     return Task.FromException<string?>(exception);
                 }
-            }, token: TestContext.Current.CancellationToken);
+            }, token: TestCt);
 
         cachedResult.ShouldBe(expectedValue);
         callCount.ShouldBe(0);
@@ -128,9 +129,9 @@ public class CacheServiceBothImplementationsTests : IDisposable
         var key1 = $"both-tag-key1-{implementation}";
         var key2 = $"both-tag-key2-{implementation}";
         var key3 = $"both-tag-key3-{implementation}";
-        await service.GetOrSetAsync<string>(key1, _ => Task.FromResult("v1")!, [tag], TestContext.Current.CancellationToken);
-        await service.GetOrSetAsync<string>(key2, _ => Task.FromResult("v2")!, [tag], TestContext.Current.CancellationToken);
-        await service.GetOrSetAsync<string>(key3, _ => Task.FromResult("v3")!, ["other-tag"], TestContext.Current.CancellationToken);
+        await service.GetOrSetAsync<string>(key1, _ => Task.FromResult("v1")!, [tag], TestCt);
+        await service.GetOrSetAsync<string>(key2, _ => Task.FromResult("v2")!, [tag], TestCt);
+        await service.GetOrSetAsync<string>(key3, _ => Task.FromResult("v3")!, ["other-tag"], TestCt);
         service.GetOrSet<string>(key1, _ => "default").ShouldBe("v1");
         service.GetOrSet<string>(key2, _ => "default").ShouldBe("v2");
         service.GetOrSet<string>(key3, _ => "default").ShouldBe("v3");
@@ -147,7 +148,7 @@ public class CacheServiceBothImplementationsTests : IDisposable
         var service = CreateCacheService(implementation);
         var tag = $"both-factory-tags-{implementation}";
         var key = $"both-factory-tags-key-{implementation}";
-        await service.GetOrSetAsync<string>(key, _ => Task.FromResult<(string?, string[]?)>(("value", [tag])), token: TestContext.Current.CancellationToken);
+        await service.GetOrSetAsync<string>(key, _ => Task.FromResult<(string?, string[]?)>(("value", [tag])), token: TestCt);
         service.GetOrSet<string>(key, _ => "default").ShouldBe("value");
         await service.InvalidateCacheItemByTag(tag);
         service.GetOrSet<string>(key, _ => "default").ShouldBe("default");
@@ -160,7 +161,7 @@ public class CacheServiceBothImplementationsTests : IDisposable
         var service = CreateCacheService(implementation);
         var extraTag = $"both-extra-{implementation}";
         var key = $"both-extra-key-{implementation}";
-        await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value")!, [extraTag], TestContext.Current.CancellationToken);
+        await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value")!, [extraTag], TestCt);
         service.GetOrSet<string>(key, _ => "default").ShouldBe("value");
         await service.InvalidateCacheItemByTag(extraTag);
         service.GetOrSet<string>(key, _ => "default").ShouldBe("default");
@@ -171,13 +172,13 @@ public class CacheServiceBothImplementationsTests : IDisposable
     public void Set_WithAbsoluteDuration_ExpiresWithoutRefresh(string implementation)
     {
         var service = CreateCacheService(implementation);
-        var key = $"both-absolute-set-{implementation}-{Guid.NewGuid():N}";
+        var key = $"both-absolute-set-{implementation}-{LyoGuid.CreateV7():N}";
         var ttl = TimeSpan.FromMilliseconds(400);
         service.Set(key, "value", ttl);
         service.TryGetValue<string>(key, out var first).ShouldBeTrue();
         first.ShouldBe("value");
         Thread.Sleep(550);
-        service.TryGetValue<string>(key, out _).ShouldBeFalse();
+        service.TryGetValue<string>(key, out var _).ShouldBeFalse();
     }
 
     [Theory]
@@ -185,7 +186,7 @@ public class CacheServiceBothImplementationsTests : IDisposable
     public void Set_WithSlidingExpiration_TryGetValueExtendsLifetime(string implementation)
     {
         var service = CreateCacheService(implementation);
-        var key = $"both-sliding-set-{implementation}-{Guid.NewGuid():N}";
+        var key = $"both-sliding-set-{implementation}-{LyoGuid.CreateV7():N}";
         var ttl = TimeSpan.FromMilliseconds(500);
         service.Set(key, "value", o => o.SetSlidingExpiration(ttl));
         Thread.Sleep(150);
@@ -201,19 +202,25 @@ public class CacheServiceBothImplementationsTests : IDisposable
     public void GetOrSet_WithSlidingSetup_HitDoesNotCallFactoryAndExtendsLifetime(string implementation)
     {
         var service = CreateCacheService(implementation);
-        var key = $"both-sliding-getorset-{implementation}-{Guid.NewGuid():N}";
+        var key = $"both-sliding-getorset-{implementation}-{LyoGuid.CreateV7():N}";
         var ttl = TimeSpan.FromMilliseconds(500);
         var factoryCalls = 0;
-        service.GetOrSet(key, _ => {
-            factoryCalls++;
-            return "value";
-        }, o => o.SetSlidingExpiration(ttl)).ShouldBe("value");
+        service.GetOrSet(
+                key, _ => {
+                    factoryCalls++;
+                    return "value";
+                }, o => o.SetSlidingExpiration(ttl))
+            .ShouldBe("value");
+
         factoryCalls.ShouldBe(1);
         Thread.Sleep(150);
-        service.GetOrSet(key, _ => {
-            factoryCalls++;
-            return "other";
-        }, o => o.SetSlidingExpiration(ttl)).ShouldBe("value");
+        service.GetOrSet(
+                key, _ => {
+                    factoryCalls++;
+                    return "other";
+                }, o => o.SetSlidingExpiration(ttl))
+            .ShouldBe("value");
+
         factoryCalls.ShouldBe(1);
         Thread.Sleep(400);
         service.TryGetValue<string>(key, out var still).ShouldBeTrue();
@@ -225,13 +232,13 @@ public class CacheServiceBothImplementationsTests : IDisposable
     public void Set_WithAbsoluteDuration_TryGetValueDoesNotExtendLifetime(string implementation)
     {
         var service = CreateCacheService(implementation);
-        var key = $"both-absolute-norefresh-{implementation}-{Guid.NewGuid():N}";
+        var key = $"both-absolute-norefresh-{implementation}-{LyoGuid.CreateV7():N}";
         var ttl = TimeSpan.FromMilliseconds(400);
         service.Set(key, "value", ttl);
         Thread.Sleep(150);
-        service.TryGetValue<string>(key, out _).ShouldBeTrue();
+        service.TryGetValue<string>(key, out var _).ShouldBeTrue();
         Thread.Sleep(400);
-        service.TryGetValue<string>(key, out _).ShouldBeFalse();
+        service.TryGetValue<string>(key, out var _).ShouldBeFalse();
     }
 
     [Theory]
@@ -239,13 +246,13 @@ public class CacheServiceBothImplementationsTests : IDisposable
     public async Task Set_WithSlidingExpiration_TagsSurviveRefresh(string implementation)
     {
         var service = CreateCacheService(implementation);
-        var key = $"both-sliding-tag-{implementation}-{Guid.NewGuid():N}";
-        var tag = $"both-sliding-tag-name-{implementation}-{Guid.NewGuid():N}";
+        var key = $"both-sliding-tag-{implementation}-{LyoGuid.CreateV7():N}";
+        var tag = $"both-sliding-tag-name-{implementation}-{LyoGuid.CreateV7():N}";
         service.Set(key, "value", o => o.SetSlidingExpiration(TimeSpan.FromMinutes(5)), [tag]);
         service.TryGetValue<string>(key, out var hit).ShouldBeTrue();
         hit.ShouldBe("value");
         await service.InvalidateCacheItemByTag(tag);
-        service.TryGetValue<string>(key, out _).ShouldBeFalse();
+        service.TryGetValue<string>(key, out var _).ShouldBeFalse();
     }
 
     [Fact]
@@ -253,9 +260,9 @@ public class CacheServiceBothImplementationsTests : IDisposable
     {
         var disabled = new CacheOptions { Enabled = false };
         var service = new LocalCacheService(_memoryCache, _localLogger, disabled);
-        var key = $"both-sliding-disabled-{Guid.NewGuid():N}";
+        var key = $"both-sliding-disabled-{LyoGuid.CreateV7():N}";
         service.Set(key, "value", o => o.SetSlidingExpiration(TimeSpan.FromHours(1)));
-        service.TryGetValue<string>(key, out _).ShouldBeFalse();
+        service.TryGetValue<string>(key, out var _).ShouldBeFalse();
     }
 
     [Theory]
@@ -286,17 +293,17 @@ public class CacheServiceBothImplementationsTests : IDisposable
     public async Task ClearAsync_RemovesAllKeysAndTags(string implementation)
     {
         var service = CreateCacheService(implementation);
-        var key1 = $"both-clear-key1-{implementation}-{Guid.NewGuid():N}";
-        var key2 = $"both-clear-key2-{implementation}-{Guid.NewGuid():N}";
-        var tag = $"both-clear-tag-{implementation}-{Guid.NewGuid():N}";
+        var key1 = $"both-clear-key1-{implementation}-{LyoGuid.CreateV7():N}";
+        var key2 = $"both-clear-key2-{implementation}-{LyoGuid.CreateV7():N}";
+        var tag = $"both-clear-tag-{implementation}-{LyoGuid.CreateV7():N}";
         service.Set(key1, "v1", [tag]);
         service.Set(key2, "v2", [tag]);
         service.GetOrSet<string>(key1, _ => "default").ShouldBe("v1");
         service.GetOrSet<string>(key2, _ => "default").ShouldBe("v2");
         service.Items.Count.ShouldBeGreaterThan(0);
         await service.ClearAsync();
-        service.TryGetValue<string>(key1, out _).ShouldBeFalse();
-        service.TryGetValue<string>(key2, out _).ShouldBeFalse();
+        service.TryGetValue<string>(key1, out var _).ShouldBeFalse();
+        service.TryGetValue<string>(key2, out var _).ShouldBeFalse();
         service.Items.Count.ShouldBe(0);
     }
 
@@ -316,7 +323,7 @@ public class CacheServiceBothImplementationsTests : IDisposable
     {
         var service = CreateCacheService(implementation);
         var key = $"Both-MixedCase-{implementation}";
-        await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value")!, token: TestContext.Current.CancellationToken);
+        await service.GetOrSetAsync<string>(key, _ => Task.FromResult("value")!, token: TestCt);
         var result = service.GetOrSet<string>(key.ToLowerInvariant(), _ => "default");
         result.ShouldBe("value");
     }

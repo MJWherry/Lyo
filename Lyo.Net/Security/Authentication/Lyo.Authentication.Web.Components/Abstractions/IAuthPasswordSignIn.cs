@@ -3,8 +3,8 @@ using Lyo.Authentication.Web.Components.Models;
 namespace Lyo.Authentication.Web.Components.Abstractions;
 
 /// <summary>
-/// Optional username + password sign-in strategy. Not registered by default — the BFF / API stack has no password grant today, so this is a placeholder for apps
-/// that want to bolt local password auth onto the same login page. When no implementation is registered the password form is omitted entirely.
+/// Optional username + password sign-in strategy. Not registered by default — the BFF / API stack has no password grant today, so this is a placeholder for apps that want to
+/// bolt local password auth onto the same login page. When no implementation is registered the password form is omitted entirely.
 /// </summary>
 public interface IAuthPasswordSignIn
 {

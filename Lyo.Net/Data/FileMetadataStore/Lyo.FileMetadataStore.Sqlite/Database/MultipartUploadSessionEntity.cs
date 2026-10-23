@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.FileMetadataStore.Sqlite.Database;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class MultipartUploadSessionEntity
 {
     public Guid SessionId { get; set; }
@@ -48,4 +50,7 @@ public sealed class MultipartUploadSessionEntity
 
     /// <summary>Opaque caller JSON bag copied onto <c>file_metadata</c> at complete. Null when omitted.</summary>
     public string? MetadataJson { get; set; }
+
+    /// <summary>Type name and session id.</summary>
+    public override string ToString() => $"{GetType().Name} {SessionId}";
 }

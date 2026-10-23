@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Web.Components.Wasm;
 
 /// <summary>WASM-side Lyo auth settings. <see cref="AuthBaseUrl" /> is the only required field.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class WasmAuthClientOptions
 {
     /// <summary>Configuration section name (<c>LyoAuthWasmClient</c>).</summary>
@@ -8,7 +11,7 @@ public sealed class WasmAuthClientOptions
 
     /// <summary>
     /// Absolute base URL of the Lyo API hosting OIDC endpoints (e.g. <c>https://api.example.com</c>). Required. The API must include this client's origin in
-    /// <c>LyoOidcBff.AllowedReturnOrigins</c>.
+    /// <c>LyoSso.AllowedReturnOrigins</c>.
     /// </summary>
     public string AuthBaseUrl { get; set; } = string.Empty;
 
@@ -23,4 +26,7 @@ public sealed class WasmAuthClientOptions
 
     /// <summary>Grace window on access-token expiry before <c>WasmAuthDelegatingHandler</c> refreshes early. Default 30 seconds.</summary>
     public TimeSpan AccessTokenSkew { get; set; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>API base URL the browser calls.</summary>
+    public override string ToString() => $"AuthBaseUrl={AuthBaseUrl}";
 }

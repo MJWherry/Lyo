@@ -15,9 +15,7 @@ internal enum XlsxCellKind
     Date
 }
 
-/// <summary>
-/// One worksheet cell held so it can be written to the OpenXML stream and measured for approximate column width without re-inspecting the source value.
-/// </summary>
+/// <summary>One worksheet cell held so it can be written to the OpenXML stream and measured for approximate column width without re-inspecting the source value.</summary>
 internal readonly struct XlsxCell
 {
     private XlsxCell(XlsxCellKind kind, string displayText, double numeric, int colSpan = 1, int rowSpan = 1, DataTableCellFormat? format = null)
@@ -63,9 +61,9 @@ internal readonly struct XlsxCell
 }
 
 /// <summary>
-/// Streams one or more worksheets into an XLSX package via <see cref="OpenXmlWriter" />, keeping memory bounded regardless of row count. Column widths come from a
-/// bounded sample of the leading rows instead of ClosedXML's graphics-engine auto-fit. When cells carry <see cref="DataTableCellFormat" />, a style cache maps unique
-/// formats to stylesheet xf indices (capped to avoid pathological stylesheets).
+/// Streams one or more worksheets into an XLSX package via <see cref="OpenXmlWriter" />, keeping memory bounded regardless of row count. Column widths come from a bounded
+/// sample of the leading rows instead of ClosedXML's graphics-engine auto-fit. When cells carry <see cref="DataTableCellFormat" />, a style cache maps unique formats to stylesheet xf
+/// indices (capped to avoid pathological stylesheets).
 /// </summary>
 internal sealed class OpenXmlStreamWriter : IDisposable
 {

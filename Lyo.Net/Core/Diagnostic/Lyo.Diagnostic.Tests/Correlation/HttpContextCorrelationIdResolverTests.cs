@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Lyo.Diagnostic.AspNetCore;
 using Lyo.Diagnostic.AspNetCore.Correlation;
 using Microsoft.AspNetCore.Http;
+
 namespace Lyo.Diagnostic.Tests.Correlation;
 
 public sealed class HttpContextCorrelationIdResolverTests

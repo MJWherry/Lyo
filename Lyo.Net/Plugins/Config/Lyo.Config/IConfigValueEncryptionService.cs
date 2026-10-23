@@ -1,7 +1,8 @@
 namespace Lyo.Config;
 
 /// <summary>
-/// Wraps encrypt/decrypt of config JSON payloads at rest. Implemented by the API/store host; clients only send <see cref="ConfigDefinitionRecord.IsEncrypted" /> plus plaintext.
+/// Wraps encrypt/decrypt of config JSON payloads at rest. Implemented by the API/store host; clients only send <see cref="ConfigDefinitionRecord.IsEncrypted" /> plus
+/// plaintext.
 /// </summary>
 public interface IConfigValueEncryptionService
 {

@@ -3,6 +3,7 @@ using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Enums;
 using Lyo.Api.Services.Crud.Create;
 using Lyo.Api.Services.Crud.Update;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Job.Models.Enums;
 using Lyo.Job.Models.Request;
 using Lyo.Job.Models.Response;
@@ -30,7 +31,7 @@ public class JobWorkerInstanceMaintenanceTests
         var patchService = scope.ServiceProvider.GetRequiredService<IPatchService<JobContext>>();
         var heartbeat = DateTime.UtcNow.AddSeconds(5);
         var patchRequest = PatchRequestBuilder.ForId(instanceId).SetProperty("LastHeartbeatUtc", heartbeat).SetProperty("InFlightCount", 0).Build();
-        var result = await patchService.PatchAsync<JobWorkerInstance, JobWorkerInstanceRes>(patchRequest, ct: TestContext.Current.CancellationToken);
+        var result = await patchService.PatchAsync<JobWorkerInstance, JobWorkerInstanceRes>(patchRequest, ct: TestCt);
         Assert.Equal(PatchResultEnum.Updated, result.Result);
         Assert.Equal(heartbeat, result.NewData!.LastHeartbeatUtc, TimeSpan.FromSeconds(1));
     }
@@ -42,20 +43,20 @@ public class JobWorkerInstanceMaintenanceTests
         using var scope = _fixture.ServiceProvider.CreateScope();
         var patchService = scope.ServiceProvider.GetRequiredService<IPatchService<JobContext>>();
         var patchRequest = PatchRequestBuilder.ForId(instanceId).SetProperty("State", JobWorkerInstanceState.Stopped).SetProperty("InFlightCount", 0).Build();
-        var result = await patchService.PatchAsync<JobWorkerInstance, JobWorkerInstanceRes>(patchRequest, ct: TestContext.Current.CancellationToken);
+        var result = await patchService.PatchAsync<JobWorkerInstance, JobWorkerInstanceRes>(patchRequest, ct: TestCt);
         Assert.Equal(PatchResultEnum.Updated, result.Result);
         Assert.Equal(JobWorkerInstanceState.Stopped, result.NewData!.State);
-        await using var db = await GetDbContextFactory().CreateDbContextAsync(TestContext.Current.CancellationToken);
-        var stored = await db.JobWorkerInstances.AsNoTracking().SingleAsync(i => i.Id == instanceId, TestContext.Current.CancellationToken);
+        await using var db = await GetDbContextFactory().CreateDbContextAsync(TestCt);
+        var stored = await db.JobWorkerInstances.AsNoTracking().SingleAsync(i => i.Id == instanceId, TestCt);
         Assert.Equal(nameof(JobWorkerInstanceState.Stopped), stored.State);
     }
 
     [Fact]
     public async Task Maintenance_PrunesStaleRunningWorkerInstance()
     {
-        var instanceId = Guid.NewGuid();
+        var instanceId = LyoGuid.CreateV7();
         var staleHeartbeat = DateTime.UtcNow.AddMinutes(-10);
-        await using (var db = await GetDbContextFactory().CreateDbContextAsync(TestContext.Current.CancellationToken)) {
+        await using (var db = await GetDbContextFactory().CreateDbContextAsync(TestCt)) {
             db.JobWorkerInstances.Add(
                 new() {
                     Id = instanceId,
@@ -68,20 +69,20 @@ public class JobWorkerInstanceMaintenanceTests
                     LastHeartbeatUtc = staleHeartbeat
                 });
 
-            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+            await db.SaveChangesAsync(TestCt);
         }
 
         await InvokeMaintenanceAsync(new() { WorkerInstanceStaleMinutes = 5 });
-        await using var verify = await GetDbContextFactory().CreateDbContextAsync(TestContext.Current.CancellationToken);
-        Assert.False(await verify.JobWorkerInstances.AnyAsync(i => i.Id == instanceId, TestContext.Current.CancellationToken));
+        await using var verify = await GetDbContextFactory().CreateDbContextAsync(TestCt);
+        Assert.False(await verify.JobWorkerInstances.AnyAsync(i => i.Id == instanceId, TestCt));
     }
 
     [Fact]
     public async Task Maintenance_PrunesStoppedWorkerInstance_EvenWhenHeartbeatIsRecent()
     {
-        var instanceId = Guid.NewGuid();
+        var instanceId = LyoGuid.CreateV7();
         var now = DateTime.UtcNow;
-        await using (var db = await GetDbContextFactory().CreateDbContextAsync(TestContext.Current.CancellationToken)) {
+        await using (var db = await GetDbContextFactory().CreateDbContextAsync(TestCt)) {
             db.JobWorkerInstances.Add(
                 new() {
                     Id = instanceId,
@@ -94,12 +95,12 @@ public class JobWorkerInstanceMaintenanceTests
                     LastHeartbeatUtc = now
                 });
 
-            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+            await db.SaveChangesAsync(TestCt);
         }
 
         await InvokeMaintenanceAsync(new() { WorkerInstanceStaleMinutes = 5 });
-        await using var verify = await GetDbContextFactory().CreateDbContextAsync(TestContext.Current.CancellationToken);
-        Assert.False(await verify.JobWorkerInstances.AnyAsync(i => i.Id == instanceId, TestContext.Current.CancellationToken));
+        await using var verify = await GetDbContextFactory().CreateDbContextAsync(TestCt);
+        Assert.False(await verify.JobWorkerInstances.AnyAsync(i => i.Id == instanceId, TestCt));
     }
 
     private async Task<Guid> CreateWorkerInstanceAsync()
@@ -117,9 +118,7 @@ public class JobWorkerInstanceMaintenanceTests
             LastHeartbeatUtc = now
         };
 
-        var result = await createService.CreateAsync<JobWorkerInstanceReq, JobWorkerInstance, JobWorkerInstanceRes>(
-            req, ctx => ctx.Entity.Id = Guid.NewGuid(), ct: TestContext.Current.CancellationToken);
-
+        var result = await createService.CreateAsync<JobWorkerInstanceReq, JobWorkerInstance, JobWorkerInstanceRes>(req, ctx => ctx.Entity.Id = LyoGuid.CreateV7(), ct: TestCt);
         Assert.True(result.IsSuccess);
         return result.Data!.Id;
     }
@@ -131,7 +130,7 @@ public class JobWorkerInstanceMaintenanceTests
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<JobMaintenanceService>>();
         var maintenance = new JobMaintenanceService(factory, logger, _fixture.FakePublisher, options);
         var method = typeof(JobMaintenanceService).GetMethod("RunMaintenanceAsync", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        await (Task)method.Invoke(maintenance, [TestContext.Current.CancellationToken])!;
+        await (Task)method.Invoke(maintenance, [TestCt])!;
     }
 
     private IDbContextFactory<JobContext> GetDbContextFactory()

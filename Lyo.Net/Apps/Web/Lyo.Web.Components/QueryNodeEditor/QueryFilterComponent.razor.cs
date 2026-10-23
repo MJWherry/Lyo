@@ -19,6 +19,7 @@ public partial class QueryFilterComponent
     private FilterPropertyDefinition? _currentProperty;
     private IReadOnlyList<SpUniqueValueCount>? _currentPropertyUniqueValues;
     private string? _currentStringValue;
+    private double? _currentThreshold;
 
     private List<ConditionClause> _filters = [];
     private bool _isLoadingUniqueValues;
@@ -69,7 +70,7 @@ public partial class QueryFilterComponent
     private static bool ShouldUseTextInput(FilterPropertyDefinition property, ComparisonOperatorEnum comparator)
         => property.IsTextLike && comparator is ComparisonOperatorEnum.Contains or ComparisonOperatorEnum.NotContains or ComparisonOperatorEnum.Equals
             or ComparisonOperatorEnum.NotEquals or ComparisonOperatorEnum.StartsWith or ComparisonOperatorEnum.NotStartsWith or ComparisonOperatorEnum.EndsWith
-            or ComparisonOperatorEnum.NotEndsWith;
+            or ComparisonOperatorEnum.NotEndsWith or ComparisonOperatorEnum.Fuzzy or ComparisonOperatorEnum.NotFuzzy;
 
     private Task OnUniqueValuesChanged(IEnumerable<string?> values)
     {
@@ -112,11 +113,10 @@ public partial class QueryFilterComponent
             value = _currentProperty.UniqueValues != null || _currentProperty.EnumValues != null || _currentProperty.HasDynamicUniqueValues ? _currentMultiSelectValues.ToList() :
                 string.IsNullOrWhiteSpace(_currentCsvValue) ? new() : _currentCsvValue.Split(',').Select(item => item.Trim()).Where(item => !string.IsNullOrEmpty(item)).ToList();
         }
-        else {
+        else
             value = CurrentScalarValue(_currentProperty);
-        }
 
-        _filters.Add(new(_currentProperty.PropertyName, _currentComparison, value));
+        _filters.Add(new(_currentProperty.PropertyName, _currentComparison, value, threshold: _currentComparison.IsFuzzyComparisonOperator() ? _currentThreshold : null));
         await FiltersChanged.InvokeAsync(_filters);
         ClearInputs();
     }
@@ -136,7 +136,8 @@ public partial class QueryFilterComponent
         if (_currentComparison is ComparisonOperatorEnum.Equals or ComparisonOperatorEnum.NotEquals)
             return true;
 
-        if (_currentProperty.IsTextLike && _currentComparison is ComparisonOperatorEnum.Contains or ComparisonOperatorEnum.NotContains)
+        if (_currentProperty.IsTextLike && _currentComparison is ComparisonOperatorEnum.Contains or ComparisonOperatorEnum.NotContains
+            or ComparisonOperatorEnum.Fuzzy or ComparisonOperatorEnum.NotFuzzy)
             return true;
 
         if (_currentProperty.IsBoolean)
@@ -176,8 +177,7 @@ public partial class QueryFilterComponent
         return string.IsNullOrWhiteSpace(_currentStringValue) ? null : _currentStringValue;
     }
 
-    private void OnTimeOnlyChanged(TimeSpan? time)
-        => _currentDateValue = time is { } t ? DateTime.MinValue.Add(t) : null;
+    private void OnTimeOnlyChanged(TimeSpan? time) => _currentDateValue = time is { } t ? DateTime.MinValue.Add(t) : null;
 
     private void ClearInputs()
     {
@@ -185,6 +185,7 @@ public partial class QueryFilterComponent
         _currentNumberValue = null;
         _currentDateValue = null;
         _currentCsvValue = null;
+        _currentThreshold = null;
         _currentMultiSelectValues = [];
         _currentPropertyUniqueValues = null;
     }

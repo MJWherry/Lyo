@@ -1,0 +1,61 @@
+@namespace Lyo.Podcast.Web.Components
+
+<div class="podcast-show-search">
+    <MudPaper Class="pa-4 mb-4" Elevation="0">
+        <MudStack Spacing="3">
+            <div>
+                <MudText Typo="Typo.h5">Browse Podcasts</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary">Search shows by title or status.</MudText>
+            </div>
+            <MudGrid Spacing="2">
+                <MudItem xs="12" sm="6" md="4">
+                    <MudTextField @bind-Value="_titleContains" Label="Title" Immediate="false" OnKeyDown="OnTitleKeyDownAsync" Clearable="true"/>
+                </MudItem>
+                <MudItem xs="6" sm="3" md="2">
+                    <MudSelect T="PodcastShowStatus?" @bind-Value="_status" Label="Status" Clearable="true">
+                        @foreach (var status in Enum.GetValues<PodcastShowStatus>()) {
+                            <MudSelectItem T="PodcastShowStatus?" Value="status">@status</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                @if (AvailableTags.Count > 0) {
+                    <MudItem xs="12" sm="6" md="3">
+                        <LyoCheckSelect TValue="string"
+                                        Label="Tags"
+                                        Items="TagItems"
+                                        SelectedValues="_selectedTags"
+                                        SelectedValuesChanged="@(v => _selectedTags = v.ToList())"/>
+                    </MudItem>
+                }
+                <MudItem xs="6" sm="3" md="2">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" OnClick="SearchAsync" Disabled="_busy">Search</MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudStack>
+    </MudPaper>
+
+    @if (_searched && _results.Count == 0 && !_busy) {
+        <MudAlert Severity="Severity.Info">No shows found.</MudAlert>
+    }
+
+    @if (_results.Count > 0) {
+        <MudGrid Spacing="2">
+            @foreach (var show in _results) {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudCard>
+                        @if (ResolveCoverUrl(show) is { Length: > 0 } cover) {
+                            <MudCardMedia Image="@cover" Height="160"/>
+                        }
+                        <MudCardContent>
+                            <MudText Typo="Typo.subtitle1">@show.Title</MudText>
+                            <MudText Typo="Typo.caption">@show.Status</MudText>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="@(() => OnOpen(show))">Open</MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</div>

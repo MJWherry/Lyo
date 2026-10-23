@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 
 namespace Lyo.Endato.Postgres.Database;
 
 /// <summary>Row that stores an Endato Person Search email address.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class EndatoPsEmailAddressEntity
 {
     [Key]
@@ -27,4 +29,7 @@ public sealed class EndatoPsEmailAddressEntity
 
     [Required]
     public bool NonBusiness { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

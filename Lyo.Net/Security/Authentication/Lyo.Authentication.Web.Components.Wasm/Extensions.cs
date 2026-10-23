@@ -17,9 +17,9 @@ public static class Extensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Registers WASM-side <see cref="IAuthSignInLauncher" /> / <see cref="IAuthUserClient" /> / <see cref="IAuthSessionAccessor" />, the <see cref="WasmAuthSessionStore" />
-        /// , the <see cref="WasmAuthDelegatingHandler" />, and the <see cref="WasmAuthStateProvider" /> so <c>AuthorizeView</c> works out of the box. Bind
-        /// <see cref="WasmAuthClientOptions" /> from configuration.
+        /// Registers WASM-side <see cref="IAuthSignInLauncher" /> / <see cref="IAuthUserClient" /> / <see cref="IAuthSessionAccessor" />, the <see cref="WasmAuthSessionStore" /> ,
+        /// the <see cref="WasmAuthDelegatingHandler" />, and the <see cref="WasmAuthStateProvider" /> so <c>AuthorizeView</c> works out of the box. Bind <see cref="WasmAuthClientOptions" />
+        /// from configuration.
         /// </summary>
         public IServiceCollection AddLyoAuthWebComponentsWasm(IConfiguration configuration, string sectionName = WasmAuthClientOptions.SectionName)
         {

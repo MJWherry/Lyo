@@ -68,7 +68,7 @@ export async function mount(host, dotNetRef, options) {
     state.tbody = tbody;
 
     const onScroll = () => scheduleRender(state);
-    host.addEventListener('scroll', onScroll, { passive: true });
+    host.addEventListener('scroll', onScroll, {passive: true});
     state.onScroll = onScroll;
 
     const meta = await dotNetRef.invokeMethodAsync('GetMetaAsync');
@@ -131,7 +131,7 @@ async function renderWindow(state) {
     if (state.disposed || !state.host)
         return;
 
-    const { host, rowHeight, totalRows } = state;
+    const {host, rowHeight, totalRows} = state;
     // Header is sticky and takes space at the top of the scrollport; body rows use bodySpace.
     const headerH = host.querySelector('.lyo-dt-js-header')?.offsetHeight ?? rowHeight;
     const scrollTop = Math.max(0, host.scrollTop);
@@ -186,7 +186,7 @@ async function renderWindow(state) {
 }
 
 function renderHeader(state) {
-    const { headerRow, headers, columnCount, showRowNumbers } = state;
+    const {headerRow, headers, columnCount, showRowNumbers} = state;
     headerRow.replaceChildren();
     if (showRowNumbers) {
         const th = document.createElement('th');

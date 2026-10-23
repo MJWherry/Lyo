@@ -1,35 +1,26 @@
-using System.Net.Http.Json;
-using Lyo.Api.Client;
 using Lyo.Api.Models.Builders;
 using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
-using Lyo.Images;
-using Lyo.TestGateway;
-using Lyo.TestGateway.Components;
 using Lyo.TestGateway.Models;
 using Lyo.Web.Components.Form;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.Components.Web.Virtualization;
-using Microsoft.JSInterop;
 using MudBlazor;
-using static Microsoft.AspNetCore.Components.Web.RenderMode;
 
 namespace Lyo.TestGateway.Components.Pages.People;
 
 public partial class PersonForm
 {
+    private static readonly HashSet<string> AllowedPersonPatchProperties = [
+        nameof(PersonRes.EndatoPersonId), nameof(PersonRes.NamePrefix), nameof(PersonRes.FirstName), nameof(PersonRes.MiddleName), nameof(PersonRes.LastName),
+        nameof(PersonRes.NameSuffix), nameof(PersonRes.SourceEntityType)
+    ];
+
+    private LyoForm<PersonRes>? _formRef;
+
     [Parameter]
     public PersonRes? Person { get; set; }
 
     private PersonRes? CurrentPerson { get; set; }
-
-    private LyoForm<PersonRes>? _formRef;
-
-    private static readonly HashSet<string> AllowedPersonPatchProperties = [nameof(PersonRes.EndatoPersonId), nameof(PersonRes.NamePrefix), nameof(PersonRes.FirstName), nameof(PersonRes.MiddleName), nameof(PersonRes.LastName), nameof(PersonRes.NameSuffix), nameof(PersonRes.SourceEntityType)];
 
     protected override void OnParametersSet()
     {
@@ -71,7 +62,7 @@ public partial class PersonForm
         }
 
         var patchRequest = patchBuilder.Build();
-        var patchResult = await ApiClient.PatchAsAsync<PatchRequest, PatchResult<PersonRes>>(Lyo.TestGateway.Models.Constants.Person.Route, patchRequest);
+        var patchResult = await ApiClient.PatchAsAsync<PatchRequest, PatchResult<PersonRes>>(Models.Constants.Person.Route, patchRequest);
         if (!patchResult.IsSuccess) {
             Snackbar.Add(patchResult.Error?.ToString() ?? "Patch failed.", Severity.Error);
             return;

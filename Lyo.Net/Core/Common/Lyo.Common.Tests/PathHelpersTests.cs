@@ -43,8 +43,7 @@ public class PathHelpersTests
     [InlineData("/mem/lyo", "/mem/lyo/../secret", false)]
     [InlineData("/mem/lyo", "/mem/lyo", true)]
     [InlineData("/", "/upload/roundtrip.txt", true)]
-    public void IsUnderRoot_Posix_ReturnsExpected(string root, string path, bool expected)
-        => Assert.Equal(expected, PathHelpers.IsUnderRoot(PathStyle.Posix, root, path));
+    public void IsUnderRoot_Posix_ReturnsExpected(string root, string path, bool expected) => Assert.Equal(expected, PathHelpers.IsUnderRoot(PathStyle.Posix, root, path));
 
     [Fact]
     public void ThrowIfEscapesRoot_Posix_Throws()

@@ -1,0 +1,140 @@
+{
+  "id": "Lyo.Recipe.Models",
+  "name": "Lyo.Recipe.Models",
+  "area": "Plugins",
+  "tagline": "Shared request/response DTOs, enums, and route constants for Recipe HTTP and Blazor clients.",
+  "description": "Wire types for the household recipe API. `Request/` and `Response/` types are used by `Lyo.Recipe.Api` and `Lyo.Recipe.Web.Components`. Enums live here so the store contract and HTTP surface share one vocabulary. This package has no DI registration.",
+  "features": [
+    "Enums for status, difficulty, and attachment role.",
+    "`Constants.Rest.Recipe` route prefixes.",
+    "`RecipeFilePaths` FileStorage PathPrefix helpers (`recipe/recipes/{id}`, `recipe/steps/{id}`).",
+    "`RecipeEntityTypes` stable EntityRef type names for Note/Tag composition."
+  ],
+  "examples": [
+    {
+      "title": "Route constants",
+      "language": "csharp",
+      "code": "var recipes = Constants.Rest.Recipe.Recipes;\nvar prefix = RecipeFilePaths.ForRecipe(recipeId);"
+    }
+  ],
+  "sections": [],
+  "links": [],
+  "readmePath": "Lyo.Net/Plugins/Recipe/Lyo.Recipe.Models/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.EntityReference.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Parameters",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

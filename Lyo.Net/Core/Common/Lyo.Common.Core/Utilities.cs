@@ -10,9 +10,7 @@ using Lyo.Exceptions.Models;
 
 namespace Lyo.Common.Core;
 
-/// <summary>
-/// Shared helpers: file-size conversion (powers of 1024), URI redaction, type classification, SHA256 hashing, and LINQ expression property name/path extraction.
-/// </summary>
+/// <summary>Shared helpers: file-size conversion (powers of 1024), URI redaction, type classification, SHA256 hashing, and LINQ expression property name/path extraction.</summary>
 public static class Utilities
 {
     private static readonly Regex SensitiveUriRegex = new(@"(?i:(?<!result|status)(\w*secret|\w*token|\bcode\b|\w*password))(?:\s|=|:)(.*?)(?:\s|&)");
@@ -91,9 +89,7 @@ public static class Utilities
     /// <summary>SHA256 digest of a file.</summary>
     /// <param name="path">Path to an existing file.</param>
     /// <returns>The 32-byte SHA256 digest.</returns>
-    /// <exception cref="ArgumentException">
-    /// <paramref name="path" /> is null, empty, or not a valid relative URI per <see cref="ArgumentHelpers.ThrowIfFileNotFound(string)" />.
-    /// </exception>
+    /// <exception cref="ArgumentException"><paramref name="path" /> is null, empty, or not a valid relative URI per <see cref="ArgumentHelpers.ThrowIfFileNotFound(string)" />.</exception>
     /// <exception cref="InvalidFormatException"><paramref name="path" /> fails URI validation.</exception>
     /// <exception cref="FileNotFoundException">The file does not exist.</exception>
     public static byte[] Hash(string path)
@@ -145,9 +141,7 @@ public static class Utilities
     /// <param name="path">Path to an existing file.</param>
     /// <param name="ct">Cancellation token.</param>
     /// <returns>A task that completes with the 32-byte SHA256 digest.</returns>
-    /// <exception cref="ArgumentException">
-    /// <paramref name="path" /> is null, empty, or not a valid relative URI per <see cref="ArgumentHelpers.ThrowIfFileNotFound(string)" />.
-    /// </exception>
+    /// <exception cref="ArgumentException"><paramref name="path" /> is null, empty, or not a valid relative URI per <see cref="ArgumentHelpers.ThrowIfFileNotFound(string)" />.</exception>
     /// <exception cref="InvalidFormatException"><paramref name="path" /> fails URI validation.</exception>
     /// <exception cref="FileNotFoundException">The file does not exist.</exception>
     public static async Task<byte[]> HashAsync(string path, CancellationToken ct = default)

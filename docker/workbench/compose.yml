@@ -1,5 +1,5 @@
-# Local workbench stack: TestApi, TestGateway, job worker/scheduler examples, plus Postgres,
-# RabbitMQ, and Redis on one network. Not the benchmark runner (see docker-compose.yml at repo root).
+# Local workbench stack: TestApi, TestGateway, Game server, job worker/scheduler examples, plus Postgres,
+# RabbitMQ, Redis, and Prometheus on one network. Not the benchmark runner (see docker-compose.yml at repo root).
 #
 #   python3 scripts/docker/run_workbench.py up
 #   python3 scripts/docker/run_workbench.py down
@@ -164,6 +164,18 @@ services:
       testapi:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+    networks:
+      - lyo-workbench
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      testapi:
         condition: service_healthy
     networks:
       - lyo-workbench

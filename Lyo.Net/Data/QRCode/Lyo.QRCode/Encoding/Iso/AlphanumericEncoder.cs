@@ -2,9 +2,7 @@ namespace Lyo.QRCode.Encoding.Iso;
 
 internal sealed partial class QRIsoEncoder
 {
-    /// <summary>
-    /// Encodes alphanumeric characters (<c>0–9</c>, uppercase <c>A–Z</c>, space, <c>$</c>, <c>%</c>, <c>*</c>, <c>+</c>, <c>-</c>, period, <c>/</c>, colon) as QR binary.
-    /// </summary>
+    /// <summary>Encodes alphanumeric characters (<c>0–9</c>, uppercase <c>A–Z</c>, space, <c>$</c>, <c>%</c>, <c>*</c>, <c>+</c>, <c>-</c>, period, <c>/</c>, colon) as QR binary.</summary>
     internal static class AlphanumericEncoder
     {
 #if HAS_SPAN
@@ -42,9 +40,7 @@ internal sealed partial class QRIsoEncoder
         /// <returns>Bit count required for the text.</returns>
         public static int GetBitLength(int textLength) => textLength / 2 * 11 + (textLength & 1) * 6;
 
-        /// <summary>
-        /// Encodes alphanumeric plain text as QR binary. Pairs pack into 11-bit groups; a leftover odd character uses 6 bits.
-        /// </summary>
+        /// <summary>Encodes alphanumeric plain text as QR binary. Pairs pack into 11-bit groups; a leftover odd character uses 6 bits.</summary>
         /// <param name="plainText">Alphanumeric text to encode. Must contain only QR alphanumeric-mode characters.</param>
         /// <returns>BitArray of the encoded alphanumeric payload.</returns>
         public static BitArray GetBitArray(string plainText)
@@ -54,9 +50,7 @@ internal sealed partial class QRIsoEncoder
             return codeText;
         }
 
-        /// <summary>
-        /// Writes a slice of alphanumeric plain text into an existing BitArray. Pairs pack into 11-bit groups; a leftover odd character uses 6 bits.
-        /// </summary>
+        /// <summary>Writes a slice of alphanumeric plain text into an existing BitArray. Pairs pack into 11-bit groups; a leftover odd character uses 6 bits.</summary>
         /// <param name="plainText">Alphanumeric text to encode. Must contain only QR alphanumeric-mode characters.</param>
         /// <param name="index">Starting index in the text to encode from.</param>
         /// <param name="count">Number of characters to encode.</param>

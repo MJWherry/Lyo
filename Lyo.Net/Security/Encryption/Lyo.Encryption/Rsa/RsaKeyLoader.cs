@@ -1,3 +1,6 @@
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using Lyo.KeyStore.Exceptions;
 #if !NET10_0_OR_GREATER
 using Lyo.Exceptions.Models;
 using Org.BouncyCastle.Crypto;
@@ -6,9 +9,6 @@ using Org.BouncyCastle.OpenSsl;
 #else
 using System.Text.RegularExpressions;
 #endif
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
-using Lyo.KeyStore.Exceptions;
 
 namespace Lyo.Encryption.Rsa;
 

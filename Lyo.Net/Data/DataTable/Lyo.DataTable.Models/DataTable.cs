@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Lyo.DataTable.Models;
 
@@ -206,7 +207,7 @@ public sealed class DataTable
 
 #if !NETSTANDARD2_0
     /// <summary>Enumerates body rows asynchronously for <c>await foreach</c> ergonomics. The table remains fully materialised in memory.</summary>
-    public async IAsyncEnumerable<DataTableRow> EnumerateRowsAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
+    public async IAsyncEnumerable<DataTableRow> EnumerateRowsAsync([EnumeratorCancellation] CancellationToken ct = default)
     {
         foreach (var row in _rows) {
             ct.ThrowIfCancellationRequested();

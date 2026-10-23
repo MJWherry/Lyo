@@ -1,6 +1,7 @@
 using System.Buffers;
 using System.Text;
 using System.Text.RegularExpressions;
+using Lyo.Common.Core.Conversion;
 using Lyo.Exceptions;
 using Lyo.TextEncoding.Internal;
 
@@ -280,48 +281,15 @@ public static class CharsetEncoding
     {
         options ??= CharsetEncodingOptions.Default;
         encoding ??= GetEncoding(options.DefaultCharset, options);
-#if NET5_0_OR_GREATER
-        var max = encoding.GetMaxByteCount(text.Length);
-        byte[]? rented = null;
-        Span<byte> buffer = max <= 512 ? stackalloc byte[max] : (rented = ArrayPool<byte>.Shared.Rent(max));
-        try {
-            var written = encoding.GetBytes(text, buffer);
-            return buffer[..written].ToArray();
-        }
-        finally {
-            if (rented is not null)
-                ArrayPool<byte>.Shared.Return(rented);
-        }
-#else
-        return encoding.GetBytes(text.ToString());
-#endif
+        return ByteConvert.GetBytes(text, encoding);
     }
 
     /// <summary>Tries to encode into <paramref name="destination" />.</summary>
     public static bool TryGetBytes(ReadOnlySpan<char> text, Span<byte> destination, out int bytesWritten, Encoding? encoding = null, CharsetEncodingOptions? options = null)
     {
-        bytesWritten = 0;
         options ??= CharsetEncodingOptions.Default;
         encoding ??= GetEncoding(options.DefaultCharset, options);
-#if NET5_0_OR_GREATER
-        if (encoding.GetMaxByteCount(text.Length) > destination.Length && encoding.GetByteCount(text) > destination.Length)
-            return false;
-        try {
-            bytesWritten = encoding.GetBytes(text, destination);
-            return true;
-        }
-        catch (ArgumentException) {
-            return false;
-        }
-#else
-        var bytes = encoding.GetBytes(text.ToString());
-        if (destination.Length < bytes.Length)
-            return false;
-
-        bytes.CopyTo(destination);
-        bytesWritten = bytes.Length;
-        return true;
-#endif
+        return ByteConvert.TryGetBytes(text, destination, out bytesWritten, encoding);
     }
 
     /// <summary>Decodes bytes to a string.</summary>
@@ -329,11 +297,7 @@ public static class CharsetEncoding
     {
         options ??= CharsetEncodingOptions.Default;
         encoding ??= GetEncoding(options.DefaultCharset, options);
-#if NET5_0_OR_GREATER
-        return encoding.GetString(bytes);
-#else
-        return encoding.GetString(bytes.ToArray());
-#endif
+        return ByteConvert.GetString(bytes, encoding);
     }
 
     /// <inheritdoc cref="GetString(ReadOnlySpan{byte}, Encoding?, CharsetEncodingOptions?)" />
@@ -353,28 +317,9 @@ public static class CharsetEncoding
     /// <summary>Tries to decode into <paramref name="destination" />.</summary>
     public static bool TryGetString(ReadOnlySpan<byte> bytes, Span<char> destination, out int charsWritten, Encoding? encoding = null, CharsetEncodingOptions? options = null)
     {
-        charsWritten = 0;
         options ??= CharsetEncodingOptions.Default;
         encoding ??= GetEncoding(options.DefaultCharset, options);
-#if NET5_0_OR_GREATER
-        if (encoding.GetMaxCharCount(bytes.Length) > destination.Length && encoding.GetCharCount(bytes) > destination.Length)
-            return false;
-        try {
-            charsWritten = encoding.GetChars(bytes, destination);
-            return true;
-        }
-        catch (ArgumentException) {
-            return false;
-        }
-#else
-        var s = encoding.GetString(bytes.ToArray());
-        if (destination.Length < s.Length)
-            return false;
-
-        s.AsSpan().CopyTo(destination);
-        charsWritten = s.Length;
-        return true;
-#endif
+        return ByteConvert.TryGetString(bytes, destination, out charsWritten, encoding);
     }
 
     /// <summary>Reads all text from a file.</summary>

@@ -1,0 +1,46 @@
+@if (Draft is not null) {
+    <MudStack Spacing="2">
+        <MudTextField @bind-Value="Draft.Input" @bind-Value:after="Notify" Label="Input identifier" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"/>
+        <MudSelect T="OutOfRangePolicy" @bind-Value="Draft.OutOfRange" @bind-Value:after="Notify" Label="Out of range" AnchorOrigin="Origin.BottomCenter">
+            @foreach (var policy in Enum.GetValues<OutOfRangePolicy>()) {
+                <MudSelectItem Value="@policy">@policy</MudSelectItem>
+            }
+        </MudSelect>
+        @if (ShowMissing) {
+            <MudTextField @bind-Value="Draft.MissingValue" @bind-Value:after="Notify" Label="Missing value" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true"/>
+        }
+        @foreach (var band in Draft.Bands) {
+            <MudStack Row="true" Spacing="1">
+                <MudTextField @bind-Value="band.Min" @bind-Value:after="Notify" Label="Min" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                <MudTextField @bind-Value="band.Max" @bind-Value:after="Notify" Label="Max" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                <MudTextField @bind-Value="band.Value" @bind-Value:after="Notify" Label="Value" Variant="Variant.Outlined" Margin="Margin.Dense"/>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" aria-label="Remove band" OnClick="@(() => Remove(band))"/>
+            </MudStack>
+        }
+        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Add" OnClick="Add">Add band</MudButton>
+    </MudStack>
+}
+
+@code {
+    [Parameter]
+    public AlgorithmDraft? Draft { get; set; }
+
+    [Parameter]
+    public EventCallback Changed { get; set; }
+
+    private bool ShowMissing => Draft is not null && !AlgorithmDraftRules.IsNumericAlias(Draft.Result) && Draft.OutOfRange == OutOfRangePolicy.Zero;
+
+    private Task Notify() => Changed.InvokeAsync();
+
+    private Task Add()
+    {
+        Draft?.Bands.Add(new());
+        return Notify();
+    }
+
+    private Task Remove(AlgorithmBandEntry band)
+    {
+        Draft?.Bands.Remove(band);
+        return Notify();
+    }
+}

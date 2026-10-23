@@ -1,11 +1,25 @@
 namespace Lyo.Job.Web.Components;
 
 /// <summary>
-/// Basic-info activity panel: running and queued counts, last-run snapshots, and upcoming scheduled slots. Loads
-/// <c>GET Job/Definition/{id}/Stats</c>, <c>POST Job/Definition/LatestRuns</c>, and <c>GET Job/Definition/{id}/NextRuns</c>.
+/// Basic-info activity panel: running and queued counts, last-run snapshots, and upcoming scheduled slots. Loads <c>GET Job/Definition/{id}/Stats</c>,
+/// <c>POST Job/Definition/LatestRuns</c>, and <c>GET Job/Definition/{id}/NextRuns</c>.
 /// </summary>
 public partial class JobDefinitionActivity
 {
+    private string? _error;
+    private JobDefinitionLatestRunsRes? _latest;
+
+    /// <summary>Definition whose load is in flight or already rendered. Set only after its data is applied, so a fast switch cannot mark the new definition loaded with old data.</summary>
+    private Guid _loadedId;
+
+    private bool _loading;
+    private List<DateTime> _nextRuns = [];
+
+    /// <summary>Definition of the most recent load. A response for any other definition is stale and discarded.</summary>
+    private Guid _requestedId;
+
+    private JobDefinitionStatsRes? _stats;
+
     [Inject]
     private ISnackbar Snackbar { get; set; } = null!;
 
@@ -23,20 +37,7 @@ public partial class JobDefinitionActivity
     [Parameter]
     public Guid JobDefinitionId { get; set; }
 
-    /// <summary>Definition whose load is in flight or already rendered. Set only after its data is applied, so a fast switch cannot mark the new definition loaded with old
-    /// data.</summary>
-    private Guid _loadedId;
-
-    /// <summary>Definition of the most recent load. A response for any other definition is stale and discarded.</summary>
-    private Guid _requestedId;
-
-    private bool _loading;
-    private string? _error;
-    private JobDefinitionStatsRes? _stats;
-    private JobDefinitionLatestRunsRes? _latest;
-    private List<DateTime> _nextRuns = [];
-
-    /// <inheritdoc/>
+    /// <inheritdoc />
     protected override async Task OnParametersSetAsync()
     {
         if (JobDefinitionId == default || JobDefinitionId == _loadedId || string.IsNullOrWhiteSpace(DefinitionRoute))

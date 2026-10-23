@@ -51,6 +51,11 @@
           "Adds `EntityTypes` (root + navigation/template CLR class names on success) and echoes the executed `Select`."
         ],
         [
+          "`QuerySqlRes`",
+          "`POST {route}/QuerySql`",
+          "`Sql` and `Parameters` (`Name`, `Value`). The statement was not executed."
+        ],
+        [
           "`CreateResult<T>` / `CreateBulkResult<T>`",
           "Create + Bulk create",
           "`IsSuccess` / `Data` / `Error` per row; bulk wraps `CreatedCount` / `FailedCount`."
@@ -173,7 +178,7 @@
       ]
     },
     {
-      "name": "Lyo.Common.Json",
+      "name": "Lyo.Json",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -206,6 +211,15 @@
         "transitive",
         "microsoft",
         "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
       ]
     },
     {

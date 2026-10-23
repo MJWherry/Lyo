@@ -2,16 +2,12 @@ using Lyo.Common.Metadata.Records;
 
 namespace Lyo.Reporting.Models.Enums;
 
-/// <summary>
-/// Maps <see cref="ReportFormat" /> onto the shared <see cref="FileTypeInfo" /> catalog so renderers and the report service never hardcode a MIME type or extension.
-/// </summary>
+/// <summary>Maps <see cref="ReportFormat" /> onto the shared <see cref="FileTypeInfo" /> catalog so renderers and the report service never hardcode a MIME type or extension.</summary>
 public static class ReportFormatExtensions
 {
     extension(ReportFormat format)
     {
-        /// <summary>
-        /// Catalog entry for this format, carrying the MIME type, extension, and aliases. Unrecognized values fall back to HTML, matching the renderer default.
-        /// </summary>
+        /// <summary>Catalog entry for this format, carrying the MIME type, extension, and aliases. Unrecognized values fall back to HTML, matching the renderer default.</summary>
         public FileTypeInfo FileType
             => format switch {
                 ReportFormat.Pdf => FileTypeInfo.Pdf,

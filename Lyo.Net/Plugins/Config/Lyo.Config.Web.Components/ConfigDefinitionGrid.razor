@@ -1,7 +1,9 @@
-@using Lyo.Common.Metadata.Records
 @using Lyo.Web.Components.Export
 @using Lyo.Web.Components.Export.Csv
+@using Lyo.Web.Components.Export.Toml
 @using Lyo.Web.Components.Export.Xlsx
+@using Lyo.Web.Components.Export.Xml
+@using Lyo.Web.Components.Export.Yaml
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
@@ -22,6 +24,9 @@
                 <LyoDataGridExportMenu Host="context">
                     <ExportCsvMenuItem Host="context"/>
                     <ExportJsonMenuItem Host="context"/>
+                    <ExportYamlMenuItem Host="context"/>
+                    <ExportXmlMenuItem Host="context"/>
+                    <ExportTomlMenuItem Host="context"/>
                     <ExportXlsxMenuItem Host="context"/>
                 </LyoDataGridExportMenu>
             </BulkExportControls>
@@ -70,7 +75,8 @@
                 </LyoProjectedColumn>
                 <LyoProjectedColumn Field="IsRequired" Title="Required" Align="Align.Center" HeaderStyle="width: 110px;">
                     <CellContent Context="item">
-                        <LyoChip Spec="@LyoChips.FromBool(ProjectedValueHelper.GetBool(item, "IsRequired"), "Required", "Optional", ConfigColorHelper.ForRequired(true), Color.Default)"/>
+                        <LyoChip
+                            Spec="@LyoChips.FromBool(ProjectedValueHelper.GetBool(item, "IsRequired"), "Required", "Optional", ConfigColorHelper.ForRequired(true), Color.Default)"/>
                     </CellContent>
                 </LyoProjectedColumn>
                 <LyoProjectedColumn Field="IsEncrypted" Title="Encrypted" Align="Align.Center" HeaderStyle="width: 120px;">

@@ -34,14 +34,14 @@ var history = await changeTracker.GetForEntityAsync(orderRef);
 
 ## `IChangeTracker` methods
 
-| Method | What it does |
-| ---------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `RecordChange` / `RecordChangeAsync` | Write one `ChangeRecord`. |
-| `RecordChanges` / `RecordChangesAsync` | Record many records in one batch (empty collections are skipped). |
-| `GetByIdAsync(Guid id, …)` | Fetch a stored change by `ChangeRecord.Id`. |
-| `GetForEntityAsync(EntityRef forEntity, …)` | History for one entity, newest first. |
-| `GetForEntityTypeAsync(string forEntityType, string? forEntityId = null, …)` | History scoped by entity type, optionally filtered by id. |
-| `DeleteForEntityAsync(EntityRef forEntity, …)` | Deletes every history row recorded against a given entity. |
+| Method                                                                       | What it does                                                      |
+|------------------------------------------------------------------------------|-------------------------------------------------------------------|
+| `RecordChange` / `RecordChangeAsync`                                         | Write one `ChangeRecord`.                                         |
+| `RecordChanges` / `RecordChangesAsync`                                       | Record many records in one batch (empty collections are skipped). |
+| `GetByIdAsync(Guid id, …)`                                                   | Fetch a stored change by `ChangeRecord.Id`.                       |
+| `GetForEntityAsync(EntityRef forEntity, …)`                                  | History for one entity, newest first.                             |
+| `GetForEntityTypeAsync(string forEntityType, string? forEntityId = null, …)` | History scoped by entity type, optionally filtered by id.         |
+| `DeleteForEntityAsync(EntityRef forEntity, …)`                               | Deletes every history row recorded against a given entity.        |
 
 Only a contract lives here. Adapter packages supply health and diagnostics. See `Lyo.ChangeTracker.Postgres`.
 

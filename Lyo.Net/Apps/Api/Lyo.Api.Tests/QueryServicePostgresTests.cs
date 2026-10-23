@@ -3,6 +3,7 @@ using Lyo.Api.Services.Crud.Read.Project;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Tests.Fixtures;
 using Lyo.Common.Core.Enums;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Job.Models.Response;
 using Lyo.Job.Postgres.Database;
 using Lyo.Query.Models.Builders;
@@ -22,7 +23,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var request = new QueryConcreteReq { Start = 0, Amount = 500 };
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.True(result.Items!.Count >= 1);
@@ -40,7 +41,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var request = new QueryConcreteReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Equals, "FilterTestA") };
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.All(result.Items!, i => Assert.Equal("FilterTestA", i.Name));
@@ -49,7 +50,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task QueryProjected_WithSelect_OnlyReturnsSelectedFields()
     {
-        var name = $"Projected_{Guid.NewGuid():N}";
+        var name = $"Projected_{LyoGuid.CreateV7():N}";
         var defId = await fixture.SeedJobDefinitionAsync(name, "Projected description");
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
@@ -60,7 +61,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
-        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -72,15 +73,164 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     }
 
     [Fact]
+    public async Task QueryProjected_GroupByPriority_ReturnsCountAndSumFromSql()
+    {
+        var prefix = $"Agg_{LyoGuid.CreateV7():N}";
+        var id1 = await fixture.SeedJobDefinitionAsync(prefix + "a");
+        var id2 = await fixture.SeedJobDefinitionAsync(prefix + "b");
+        var id3 = await fixture.SeedJobDefinitionAsync(prefix + "c");
+        using var scope = fixture.ServiceProvider.CreateScope();
+        var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
+        await using (var context = await factory.CreateDbContextAsync(TestCt)) {
+            var seeded = await context.Set<JobDefinition>().Where(d => d.Id == id1 || d.Id == id2 || d.Id == id3).ToListAsync(TestCt);
+            foreach (var row in seeded) {
+                row.Type = row.Id == id3 ? "Beta" : "Alpha";
+                row.Priority = row.Id == id3 ? 2 : 1;
+                row.MaxRetryCount = row.Id == id1 ? 3 : row.Id == id2 ? 5 : 7;
+            }
+
+            await context.SaveChangesAsync(TestCt);
+        }
+
+        var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
+        var request = new ProjectionQueryReq {
+            Start = 0,
+            Amount = 10,
+            Select = ["Type", "Priority"],
+            Aggregates = [new(AggregateFunction.Count, "Count"), new(AggregateFunction.Sum, "RetrySum", "MaxRetryCount")],
+            WhereClause = WhereClauseBuilder.And(b => b.StartsWith("Name", prefix)),
+            SortBy = [new("Type", SortDirection.Asc)],
+            Options = new() { TotalCountMode = QueryTotalCountMode.Exact }
+        };
+
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
+        Assert.True(result.IsSuccess, result.Error?.Detail ?? result.Error?.ToString());
+        Assert.Equal(2, result.Total);
+        Assert.Equal(2, result.Items!.Count);
+        var low = Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(result.Items[0]);
+        var high = Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(result.Items[1]);
+        Assert.Equal("Alpha", low["Type"]?.ToString());
+        Assert.Equal(1, Convert.ToInt32(low["Priority"]));
+        Assert.Equal(2, Convert.ToInt32(low["Count"]));
+        Assert.Equal(8, Convert.ToInt32(low["RetrySum"]));
+        Assert.Equal("Beta", high["Type"]?.ToString());
+        Assert.Equal(2, Convert.ToInt32(high["Priority"]));
+        Assert.Equal(1, Convert.ToInt32(high["Count"]));
+        Assert.Equal(7, Convert.ToInt32(high["RetrySum"]));
+    }
+
+    [Fact]
+    public async Task QueryProjected_GroupByNameRange_ReturnsCountDistinctFromSql()
+    {
+        var token = $"Idx_{LyoGuid.CreateV7():N}";
+        var aa1 = await fixture.SeedJobDefinitionAsync("Aa" + token + "1", token);
+        var aa2 = await fixture.SeedJobDefinitionAsync("Aa" + token + "2", token);
+        var bb = await fixture.SeedJobDefinitionAsync("Bb" + token, token);
+        using var scope = fixture.ServiceProvider.CreateScope();
+        var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
+        await using (var context = await factory.CreateDbContextAsync(TestCt)) {
+            var seeded = await context.Set<JobDefinition>().Where(d => d.Id == aa1 || d.Id == aa2 || d.Id == bb).ToListAsync(TestCt);
+            foreach (var row in seeded)
+                row.Type = row.Id == aa2 ? "Beta" : "Alpha";
+
+            await context.SaveChangesAsync(TestCt);
+        }
+
+        var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
+        var request = new ProjectionQueryReq {
+            Start = 0,
+            Amount = 10,
+            Select = ["Name[0:2]"],
+            Aggregates = [new(AggregateFunction.CountDistinct, "Types", "Type")],
+            WhereClause = WhereClauseBuilder.And(b => b.Equals("Description", token)),
+            SortBy = [new("Name[0:2]", SortDirection.Asc)],
+            Options = new() { TotalCountMode = QueryTotalCountMode.Exact }
+        };
+
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
+        Assert.True(result.IsSuccess, result.Error?.Detail ?? result.Error?.ToString());
+        Assert.Equal(2, result.Total);
+        var first = Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(result.Items![0]);
+        var second = Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(result.Items[1]);
+        Assert.Equal("Aa", first["Name[0:2]"]?.ToString());
+        Assert.Equal(2, Convert.ToInt32(first["Types"]));
+        Assert.Equal("Bb", second["Name[0:2]"]?.ToString());
+        Assert.Equal(1, Convert.ToInt32(second["Types"]));
+    }
+
+    [Fact]
+    public async Task QueryProjected_GroupByParameterCount_ReturnsSumFromSql()
+    {
+        var token = $"Cnt_{LyoGuid.CreateV7():N}";
+        var two = await fixture.SeedJobDefinitionAsync("Two" + token, token);
+        var one = await fixture.SeedJobDefinitionAsync("One" + token, token);
+        await fixture.SeedJobDefinitionAsync("Zero" + token, token);
+        await fixture.SeedJobParameterAsync(two, "a-" + token);
+        await fixture.SeedJobParameterAsync(two, "b-" + token);
+        await fixture.SeedJobParameterAsync(one, "c-" + token);
+        using var scope = fixture.ServiceProvider.CreateScope();
+        var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
+        var request = new ProjectionQueryReq {
+            Start = 0,
+            Amount = 10,
+            Select = ["Name", "JobParameters.count"],
+            Aggregates = [new(AggregateFunction.Sum, "Count", "JobParameters.count")],
+            WhereClause = WhereClauseBuilder.And(b => b.Equals("Description", token)),
+            SortBy = [new("Name", SortDirection.Asc)],
+            Options = new() { TotalCountMode = QueryTotalCountMode.Exact }
+        };
+
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
+        Assert.True(result.IsSuccess, result.Error?.Detail ?? result.Error?.ToString());
+        Assert.Equal(3, result.Total);
+        var rows = result.Items!.Select(item => Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(item)).ToList();
+        Assert.Equal(1, Convert.ToInt32(rows[0]["JobParameters.count"]));
+        Assert.Equal(1, Convert.ToInt32(rows[0]["Count"]));
+        Assert.StartsWith("One", rows[0]["Name"]?.ToString());
+        Assert.Equal(2, Convert.ToInt32(rows[1]["JobParameters.count"]));
+        Assert.Equal(2, Convert.ToInt32(rows[1]["Count"]));
+        Assert.StartsWith("Two", rows[1]["Name"]?.ToString());
+        Assert.Equal(0, Convert.ToInt32(rows[2]["JobParameters.count"]));
+        Assert.Equal(0, Convert.ToInt32(rows[2]["Count"]));
+        Assert.StartsWith("Zero", rows[2]["Name"]?.ToString());
+    }
+
+    [Fact]
+    public async Task QueryProjected_CountParametersAndSchedules_ReturnsDifferentTotalsFromSql()
+    {
+        var token = $"Cnt2_{LyoGuid.CreateV7():N}";
+        var id = await fixture.SeedJobDefinitionAsync("Mix" + token, token);
+        await fixture.SeedJobParameterAsync(id, "a-" + token);
+        await fixture.SeedJobParameterAsync(id, "b-" + token);
+        await fixture.SeedJobScheduleAsync(id, token);
+        using var scope = fixture.ServiceProvider.CreateScope();
+        var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
+        var request = new ProjectionQueryReq {
+            Start = 0,
+            Amount = 10,
+            Select = ["Name"],
+            Aggregates = [new(AggregateFunction.Count, "Parameters", "JobParameters"), new(AggregateFunction.Count, "Schedules", "JobSchedules")],
+            WhereClause = WhereClauseBuilder.And(b => b.Equals("Description", token)),
+            Options = new() { TotalCountMode = QueryTotalCountMode.Exact }
+        };
+
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
+        Assert.True(result.IsSuccess, result.Error?.Detail ?? result.Error?.ToString());
+        var row = Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(Assert.Single(result.Items!));
+        Assert.Equal(2, Convert.ToInt32(row["Parameters"]));
+        Assert.Equal(1, Convert.ToInt32(row["Schedules"]));
+    }
+
+    [Fact]
     public async Task QueryProjected_TwelveRootScalars_MaterializesSqlProjectionWithoutRecordCast()
     {
-        var defName = $"WideScalar_{Guid.NewGuid():N}";
+        var defName = $"WideScalar_{LyoGuid.CreateV7():N}";
         var defId = await fixture.SeedJobDefinitionAsync(defName);
-        var createdBy = $"wide-user-{Guid.NewGuid():N}"[..20];
+        var createdBy = $"wide-user-{LyoGuid.CreateV7():N}"[..20];
         var runId = await fixture.SeedJobRunAsync(defId, createdBy);
         List<string> select = [
-            "Id", "JobDefinitionId", "CreatedBy", "State", "AllowTriggers", "CreatedTimestamp", "RetryAttempt", "Priority", "DryRun", "SlaBreached", "ProgressPercent",
-            "IdempotencyKey"
+            "Id", "JobDefinitionId", "CreatedBy", "State", "CreatedTimestamp", "RetryAttempt", "Priority", "DryRun", "SlaBreached", "ProgressPercent",
+            "IdempotencyKey", "TraceId"
         ];
 
         using var scope = fixture.ServiceProvider.CreateScope();
@@ -91,18 +241,16 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         Assert.NotNull(build.Projection);
         Assert.NotNull(build.ConversionPlan);
         Assert.Equal(12, build.ConversionPlan!.Slots.Count);
-
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
-        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await using var context = await factory.CreateDbContextAsync(TestCt);
         context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
-        var raw = await context.Set<JobRun>().AsNoTracking().Where(r => r.Id == runId).Select(build.Projection!).ToListAsync(TestContext.Current.CancellationToken);
+        var raw = await context.Set<JobRun>().AsNoTracking().Where(r => r.Id == runId).Select(build.Projection!).ToListAsync(TestCt);
         Assert.Single(raw);
         var converted = projectionService.ConvertSqlProjectedResults(raw, specs, build.ConversionPlan);
         var sqlRow = Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(converted[0]);
         Assert.Equal(runId, sqlRow["Id"]);
         Assert.Equal(defId, sqlRow["JobDefinitionId"]);
         Assert.Equal(createdBy, sqlRow["CreatedBy"]?.ToString());
-
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var request = new ProjectionQueryReq {
             Start = 0,
@@ -110,7 +258,8 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             Select = select,
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, runId)
         };
-        var result = await queryService.QueryProjected<JobRun>(request, x => x.CreatedTimestamp, SortDirection.Asc, TestContext.Current.CancellationToken);
+
+        var result = await queryService.QueryProjected<JobRun>(request, x => x.CreatedTimestamp, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -122,9 +271,9 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task QueryProjected_JobRunGridSelect_MaterializesSqlProjection()
     {
-        var defName = $"RunGrid_{Guid.NewGuid():N}";
+        var defName = $"RunGrid_{LyoGuid.CreateV7():N}";
         var defId = await fixture.SeedJobDefinitionAsync(defName);
-        var createdBy = $"grid-user-{Guid.NewGuid():N}"[..20];
+        var createdBy = $"grid-user-{LyoGuid.CreateV7():N}"[..20];
         var runId = await fixture.SeedJobRunAsync(defId, createdBy);
         List<string> select = [
             "Id", "JobDefinition.Name", "WorkerMachineName", "State", "Result", "CreatedTimestamp", "StartedTimestamp", "FinishedTimestamp", "WorkerInstanceId", "WorkerProcessId",
@@ -138,11 +287,10 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         var build = projectionService.TryBuildSqlProjectionExpression<JobRun>(specs);
         Assert.NotNull(build.Projection);
         Assert.NotNull(build.ConversionPlan);
-
         var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<JobContext>>();
-        await using var context = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        await using var context = await factory.CreateDbContextAsync(TestCt);
         context.ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
-        var raw = await context.Set<JobRun>().AsNoTracking().Where(r => r.Id == runId).Select(build.Projection!).ToListAsync(TestContext.Current.CancellationToken);
+        var raw = await context.Set<JobRun>().AsNoTracking().Where(r => r.Id == runId).Select(build.Projection!).ToListAsync(TestCt);
         Assert.Single(raw);
         var converted = projectionService.ConvertSqlProjectedResults(raw, specs, build.ConversionPlan);
         var sqlRow = Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(converted[0]);
@@ -150,7 +298,6 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         Assert.Equal(defName, sqlRow["JobDefinition.Name"]?.ToString());
         Assert.Equal(0, Convert.ToInt32(sqlRow["JobRunResults.Count"]));
         Assert.Equal(0, Convert.ToInt32(sqlRow["JobRunLogs.Count"]));
-
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var request = new ProjectionQueryReq {
             Start = 0,
@@ -158,7 +305,8 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             Select = select,
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, runId)
         };
-        var result = await queryService.QueryProjected<JobRun>(request, x => x.CreatedTimestamp, SortDirection.Asc, TestContext.Current.CancellationToken);
+
+        var result = await queryService.QueryProjected<JobRun>(request, x => x.CreatedTimestamp, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         var apiRow = Assert.IsAssignableFrom<IReadOnlyDictionary<string, object?>>(result.Items![0]);
         Assert.Equal(defName, apiRow["JobDefinition.Name"]?.ToString());
@@ -170,7 +318,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var request = new ProjectionQueryReq { Start = 0, Amount = 10 };
-        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.False(result.IsSuccess);
         Assert.NotNull(result.Error);
     }
@@ -188,7 +336,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             Include = Enumerable.Range(0, 17).Select(static i => $"JobRuns{i}").ToList()
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.False(result.IsSuccess);
         Assert.NotNull(result.Error);
         Assert.Contains(result.Error!.Errors, e => e.Description.Contains("Include path count", StringComparison.OrdinalIgnoreCase));
@@ -201,7 +349,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var request = new QueryConcreteReq { Start = 0, Amount = 301, Include = ["JobRuns"] };
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.False(result.IsSuccess);
         Assert.NotNull(result.Error);
         Assert.Contains(result.Error!.Errors, e => e.Description.Contains("include queries", StringComparison.OrdinalIgnoreCase));
@@ -221,7 +369,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
-        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.False(result.IsSuccess);
         Assert.NotNull(result.Error);
         Assert.Contains(result.Error!.Errors, e => e.Description.Contains("template length", StringComparison.OrdinalIgnoreCase));
@@ -232,8 +380,8 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     {
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var request = new QueryConcreteReq { Start = 0, Amount = 10, Keys = Enumerable.Range(0, 301).Select(_ => new object[] { Guid.NewGuid() }).ToList() };
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var request = new QueryConcreteReq { Start = 0, Amount = 10, Keys = Enumerable.Range(0, 301).Select(_ => new object[] { LyoGuid.CreateV7() }).ToList() };
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.False(result.IsSuccess);
         Assert.Contains(result.Error!.Errors, e => e.Description.Contains("Key set count", StringComparison.OrdinalIgnoreCase));
     }
@@ -244,7 +392,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var request = new ProjectionQueryReq { Start = 0, Amount = 10, Select = Enumerable.Range(0, 301).Select(i => $"Field{i}").ToList() };
-        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.False(result.IsSuccess);
         Assert.Contains(result.Error!.Errors, e => e.Description.Contains("Select field count", StringComparison.OrdinalIgnoreCase));
     }
@@ -261,7 +409,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             ComputedFields = Enumerable.Range(0, 33).Select(i => new ComputedField($"C{i}", "{Name}")).ToList()
         };
 
-        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.False(result.IsSuccess);
         Assert.Contains(result.Error!.Errors, e => e.Description.Contains("Computed field count", StringComparison.OrdinalIgnoreCase));
     }
@@ -272,7 +420,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var request = new QueryConcreteReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("NotARealField", ComparisonOperatorEnum.Equals, "x") };
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.False(result.IsSuccess);
         Assert.NotNull(result.Error);
     }
@@ -283,7 +431,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var request = new QueryConcreteReq { Start = 0, Amount = 10, SortBy = [new("NotARealField", SortDirection.Asc)] };
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.False(result.IsSuccess);
         Assert.NotNull(result.Error);
     }
@@ -294,14 +442,13 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         var defId = await fixture.SeedJobDefinitionAsync("GetInvalidInclude");
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        await Assert.ThrowsAsync<ApiErrorException>(()
-            => queryService.Get<JobDefinition, JobDefinitionRes>([defId], ["NotANavigation"], null, null, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ApiErrorException>(() => queryService.Get<JobDefinition, JobDefinitionRes>([defId], ["NotANavigation"], null, null, TestCt));
     }
 
     [Fact]
     public async Task QueryProjected_WithCollectionNavigationPath_ReturnsProjectedNestedValues()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var defId = await fixture.SeedJobDefinitionAsync($"ProjectedNested_{suffix}");
         await fixture.SeedJobRunAsync(defId, $"nested-user-{suffix}");
         using var scope = fixture.ServiceProvider.CreateScope();
@@ -313,7 +460,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
-        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -324,7 +471,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task QueryProjected_WithWildcardPath_ReturnsProjectedObjectGraph()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var defId = await fixture.SeedJobDefinitionAsync($"ProjectedWildcard_{suffix}");
         await fixture.SeedJobRunAsync(defId, $"wildcard-user-{suffix}");
         using var scope = fixture.ServiceProvider.CreateScope();
@@ -336,7 +483,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
-        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -351,7 +498,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task QueryProjected_WithRootWildcard_FlattensToRootObjectWithoutWildcardKey()
     {
-        var name = $"ProjectedRootWildcard_{Guid.NewGuid():N}";
+        var name = $"ProjectedRootWildcard_{LyoGuid.CreateV7():N}";
         var defId = await fixture.SeedJobDefinitionAsync(name, "Root wildcard description");
         await fixture.SeedJobRunAsync(defId, "root-wildcard-user");
         using var scope = fixture.ServiceProvider.CreateScope();
@@ -363,7 +510,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
-        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -377,7 +524,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task QueryProjected_MatchedOnly_FiltersCollectionScalarProjectionByWhereClause()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var defId = await fixture.SeedJobDefinitionAsync($"ProjectedMatchedOnlyScalar_{suffix}");
         await fixture.SeedJobRunAsync(defId, $"keep-{suffix}");
         await fixture.SeedJobRunAsync(defId, $"drop-{suffix}");
@@ -392,7 +539,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
                 => and.AddCondition("jobruns.createdby", ComparisonOperatorEnum.Equals, $"keep-{suffix}").AddCondition("Id", ComparisonOperatorEnum.Equals, defId))
         };
 
-        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -404,7 +551,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task QueryProjected_MatchedOnly_FiltersCollectionWildcardProjectionByWhereClause()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var defId = await fixture.SeedJobDefinitionAsync($"ProjectedMatchedOnlyWildcard_{suffix}");
         await fixture.SeedJobRunAsync(defId, $"keep-{suffix}");
         await fixture.SeedJobRunAsync(defId, $"drop-{suffix}");
@@ -419,7 +566,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
                 => and.AddCondition("jobruns.createdby", ComparisonOperatorEnum.Equals, $"keep-{suffix}").AddCondition("Id", ComparisonOperatorEnum.Equals, defId))
         };
 
-        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -433,7 +580,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task QueryProjected_WithReferenceNavigationToScalar_ReturnsProjectedValues()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var defName = $"RefNavDef_{suffix}";
         var defId = await fixture.SeedJobDefinitionAsync(defName, "Ref nav description");
         await fixture.SeedJobRunAsync(defId, "ref-user");
@@ -446,7 +593,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
-        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -458,7 +605,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task QueryProjected_WithDeepPath_ReturnsProjectedNestedValues()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var defId = await fixture.SeedJobDefinitionAsync($"DeepPath_{suffix}");
         var runId = await fixture.SeedJobRunAsync(defId, "deep-user");
         await fixture.SeedJobRunLogAsync(runId, $"deep-log-msg-{suffix}");
@@ -471,7 +618,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
-        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -497,7 +644,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task QueryProjected_WithEmptyCollection_ReturnsEmptyArray()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var defId = await fixture.SeedJobDefinitionAsync($"EmptyCollection_{suffix}");
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
@@ -508,7 +655,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
-        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -519,7 +666,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task QueryProjected_WithKeysAndSelect_ReturnsProjectedRows()
     {
-        var name = $"KeysSelect_{Guid.NewGuid():N}";
+        var name = $"KeysSelect_{LyoGuid.CreateV7():N}";
         var defId = await fixture.SeedJobDefinitionAsync(name, "Keys+Select test");
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
@@ -530,7 +677,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             Select = ["Id", "Name"]
         };
 
-        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -543,7 +690,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task QueryProjected_WithSimpleRootFields_ReturnsProjectedRows()
     {
-        var name = $"SimpleRoot_{Guid.NewGuid():N}";
+        var name = $"SimpleRoot_{LyoGuid.CreateV7():N}";
         var defId = await fixture.SeedJobDefinitionAsync(name);
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
@@ -554,7 +701,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
-        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -566,7 +713,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task QueryProjected_WithSelectAndComputedField_FormatsOutputAndStripsDependencyColumns()
     {
-        var name = $"CfProj_{Guid.NewGuid():N}";
+        var name = $"CfProj_{LyoGuid.CreateV7():N}";
         var defId = await fixture.SeedJobDefinitionAsync(name);
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
@@ -578,7 +725,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
-        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -604,7 +751,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
-        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.False(result.IsSuccess);
         Assert.NotNull(result.Error);
     }
@@ -612,8 +759,8 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task QueryProjected_WithMultipleRows_ReturnsProjectedForEach()
     {
-        var name1 = $"MultiRow1_{Guid.NewGuid():N}";
-        var name2 = $"MultiRow2_{Guid.NewGuid():N}";
+        var name1 = $"MultiRow1_{LyoGuid.CreateV7():N}";
+        var name2 = $"MultiRow2_{LyoGuid.CreateV7():N}";
         await fixture.SeedJobDefinitionAsync(name1);
         await fixture.SeedJobDefinitionAsync(name2);
         using var scope = fixture.ServiceProvider.CreateScope();
@@ -625,7 +772,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = WhereClauseBuilder.Or(or => or.Equals("Name", name1).Equals("Name", name2))
         };
 
-        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Equal(2, result.Items!.Count);
@@ -637,7 +784,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task QueryProjected_ReferenceOnlyNavigation_ReturnsProjectedValue()
     {
-        var defName = $"RefOnly_{Guid.NewGuid():N}";
+        var defName = $"RefOnly_{LyoGuid.CreateV7():N}";
         var defId = await fixture.SeedJobDefinitionAsync(defName);
         await fixture.SeedJobRunAsync(defId, "ref-only-user");
         using var scope = fixture.ServiceProvider.CreateScope();
@@ -649,7 +796,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = WhereClauseBuilder.Condition("JobDefinitionId", ComparisonOperatorEnum.Equals, defId)
         };
 
-        var result = await queryService.QueryProjected<JobRun>(request, x => x.CreatedTimestamp, SortDirection.Desc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobRun>(request, x => x.CreatedTimestamp, SortDirection.Desc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.NotEmpty(result.Items!);
@@ -660,7 +807,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task QueryProjected_WithCountCollectionPath_ReturnsProjectedCount()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var defId = await fixture.SeedJobDefinitionAsync($"CountProj_{suffix}");
         await fixture.SeedJobRunAsync(defId, "run-1");
         await fixture.SeedJobRunAsync(defId, "run-2");
@@ -673,7 +820,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
-        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -685,7 +832,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task QueryProjected_WithCountAndOtherFields_ReturnsProjectedRows()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var defId = await fixture.SeedJobDefinitionAsync($"CountFields_{suffix}");
         await fixture.SeedJobRunAsync(defId, "user-a");
         using var scope = fixture.ServiceProvider.CreateScope();
@@ -697,7 +844,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
-        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -710,7 +857,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task QueryProjected_WithCountOnEmptyCollection_ReturnsZero()
     {
-        var name = $"CountEmpty_{Guid.NewGuid():N}";
+        var name = $"CountEmpty_{LyoGuid.CreateV7():N}";
         var defId = await fixture.SeedJobDefinitionAsync(name);
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
@@ -721,7 +868,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = WhereClauseBuilder.Condition("Id", ComparisonOperatorEnum.Equals, defId)
         };
 
-        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.QueryProjected<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -732,7 +879,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task Query_MatchedOnly_FiltersIncludedCollectionByWhereClause()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var defId = await fixture.SeedJobDefinitionAsync($"QueryMatchedOnlyInclude_{suffix}");
         await fixture.SeedJobRunAsync(defId, $"keep-{suffix}");
         await fixture.SeedJobRunAsync(defId, $"drop-{suffix}");
@@ -746,7 +893,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = WhereClauseBuilder.And(b => b.Equals("Id", defId).NotEquals("JobRuns.CreatedBy", $"drop-{suffix}"))
         };
 
-        var result = await queryService.Query<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -758,7 +905,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task Query_MatchedOnly_WithOrOperator_FiltersIncludedCollectionToMatchingItemsOnly()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var defId = await fixture.SeedJobDefinitionAsync($"QueryMatchedOnlyOr_{suffix}");
         await fixture.SeedJobRunAsync(defId, $"user-{suffix}@gmail.com");
         await fixture.SeedJobRunAsync(defId, $"user-{suffix}@yahoo.com");
@@ -773,7 +920,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = WhereClauseBuilder.Or(b => b.EndsWith("JobRuns.CreatedBy", "@gmail.com", "@yahoo.com"))
         };
 
-        var result = await queryService.Query<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -789,7 +936,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var request = new QueryConcreteReq { Keys = [[defId]], Start = 0, Amount = 10 };
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -811,7 +958,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = queryNode
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -833,7 +980,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = queryNode
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Empty(result.Items!);
@@ -849,7 +996,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var queryNode = WhereClauseBuilder.And(b => b.NotEquals("Name", null));
         var broadRequest = new QueryConcreteReq { Start = 0, Amount = 500, WhereClause = queryNode };
-        var broadResult = await queryService.Query<JobDefinition, JobDefinitionRes>(broadRequest, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var broadResult = await queryService.Query<JobDefinition, JobDefinitionRes>(broadRequest, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(broadResult.IsSuccess);
         Assert.True(broadResult.Items!.Count >= 2);
         var keyedRequest = new QueryConcreteReq {
@@ -859,7 +1006,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = queryNode
         };
 
-        var keyedResult = await queryService.Query<JobDefinition, JobDefinitionRes>(keyedRequest, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var keyedResult = await queryService.Query<JobDefinition, JobDefinitionRes>(keyedRequest, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(keyedResult.IsSuccess);
         Assert.Single(keyedResult.Items!);
         Assert.Equal(defId, keyedResult.Items![0].Id);
@@ -875,7 +1022,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var unkeyedRequest = new QueryConcreteReq { Start = 0, Amount = 300, Include = ["JobDefinition"] };
-        var unkeyedResult = await queryService.Query<JobRun, JobRunRes>(unkeyedRequest, x => x.CreatedTimestamp, SortDirection.Desc, TestContext.Current.CancellationToken);
+        var unkeyedResult = await queryService.Query<JobRun, JobRunRes>(unkeyedRequest, x => x.CreatedTimestamp, SortDirection.Desc, TestCt);
         Assert.True(unkeyedResult.IsSuccess);
         Assert.True(unkeyedResult.Items!.Count >= 2);
         var keyedRequest = new QueryConcreteReq {
@@ -885,7 +1032,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             Include = ["JobDefinition"]
         };
 
-        var keyedResult = await queryService.Query<JobRun, JobRunRes>(keyedRequest, x => x.CreatedTimestamp, SortDirection.Desc, TestContext.Current.CancellationToken);
+        var keyedResult = await queryService.Query<JobRun, JobRunRes>(keyedRequest, x => x.CreatedTimestamp, SortDirection.Desc, TestCt);
         Assert.True(keyedResult.IsSuccess);
         Assert.Single(keyedResult.Items!);
         Assert.Equal(runId, keyedResult.Items![0].Id);
@@ -900,7 +1047,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var request = new QueryConcreteReq { Start = 1, Amount = 1, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.StartsWith, "Page") };
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -910,7 +1057,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task Query_WithTotalCountModeNone_ReturnsNullTotal()
     {
-        var prefix = $"CountModeNone_{Guid.NewGuid():N}";
+        var prefix = $"CountModeNone_{LyoGuid.CreateV7():N}";
         await fixture.SeedJobDefinitionAsync($"{prefix}_A");
         await fixture.SeedJobDefinitionAsync($"{prefix}_B");
         using var scope = fixture.ServiceProvider.CreateScope();
@@ -922,7 +1069,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.StartsWith, prefix)
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -933,7 +1080,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task Query_WithTotalCountModeHasMore_ReturnsUnknownTotalUntilLastPage()
     {
-        var prefix = $"CountModeMore_{Guid.NewGuid():N}";
+        var prefix = $"CountModeMore_{LyoGuid.CreateV7():N}";
         await fixture.SeedJobDefinitionAsync($"{prefix}_A");
         await fixture.SeedJobDefinitionAsync($"{prefix}_B");
         using var scope = fixture.ServiceProvider.CreateScope();
@@ -946,7 +1093,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var firstPage = await queryService.Query<JobDefinition, JobDefinitionRes>(firstPageRequest, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var firstPage = await queryService.Query<JobDefinition, JobDefinitionRes>(firstPageRequest, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(firstPage.IsSuccess);
         Assert.NotNull(firstPage.Items);
         Assert.Single(firstPage.Items!);
@@ -960,7 +1107,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var secondPage = await queryService.Query<JobDefinition, JobDefinitionRes>(secondPageRequest, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var secondPage = await queryService.Query<JobDefinition, JobDefinitionRes>(secondPageRequest, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(secondPage.IsSuccess);
         Assert.NotNull(secondPage.Items);
         Assert.Single(secondPage.Items!);
@@ -982,7 +1129,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Desc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Desc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.True(result.Items!.Count >= 2);
@@ -997,7 +1144,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         var defId = await fixture.SeedJobDefinitionAsync("GetTest");
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var result = await queryService.Get<JobDefinition, JobDefinitionRes>([defId], null, null, null, TestContext.Current.CancellationToken);
+        var result = await queryService.Get<JobDefinition, JobDefinitionRes>([defId], null, null, null, TestCt);
         Assert.NotNull(result);
         Assert.Equal(defId, result.Id);
         Assert.Equal("GetTest", result.Name);
@@ -1008,7 +1155,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     {
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var result = await queryService.Get<JobDefinition, JobDefinitionRes>([Guid.NewGuid()], null, null, null, TestContext.Current.CancellationToken);
+        var result = await queryService.Get<JobDefinition, JobDefinitionRes>([LyoGuid.CreateV7()], null, null, null, TestCt);
         Assert.Null(result);
     }
 
@@ -1019,7 +1166,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         var runId = await fixture.SeedJobRunAsync(defId);
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
-        var result = await queryService.Get<JobRun, JobRunRes>([runId], ["JobDefinition"], null, null, TestContext.Current.CancellationToken);
+        var result = await queryService.Get<JobRun, JobRunRes>([runId], ["JobDefinition"], null, null, TestCt);
         Assert.NotNull(result);
         Assert.Equal(runId, result.Id);
         Assert.NotNull(result.JobDefinition);
@@ -1040,7 +1187,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             Include = ["JobDefinition"]
         };
 
-        var result = await queryService.Query<JobRun, JobRunRes>(request, x => x.CreatedTimestamp, SortDirection.Desc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobRun, JobRunRes>(request, x => x.CreatedTimestamp, SortDirection.Desc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1065,7 +1212,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             })
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Equal(2, result.Items!.Count);
@@ -1089,7 +1236,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             })
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1106,7 +1253,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var queryNode = WhereClauseBuilder.And(b => b.Equals("Name", "NodeMatch").AddAnd(c => c.Equals("Type", "Test")));
         var request = new QueryConcreteReq { Start = 0, Amount = 10, WhereClause = queryNode };
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1123,7 +1270,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var queryNode = WhereClauseBuilder.Or(b => b.Equals("Name", "OrFirst").AddOr(c => c.Equals("Name", "OrSecond")));
         var request = new QueryConcreteReq { Start = 0, Amount = 10, WhereClause = queryNode };
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Equal(2, result.Items!.Count);
@@ -1139,7 +1286,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
         using var scope = fixture.ServiceProvider.CreateScope();
         var queryService = scope.ServiceProvider.GetRequiredService<IQueryService<JobContext>>();
         var request = new QueryConcreteReq { Start = 0, Amount = 10, WhereClause = WhereClauseBuilder.Condition("Name", ComparisonOperatorEnum.Contains, "Middle") };
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1163,7 +1310,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Desc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Desc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1185,7 +1332,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Desc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Desc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Equal(2, result.Items!.Count);
@@ -1210,7 +1357,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1233,7 +1380,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             })
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1257,7 +1404,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1281,7 +1428,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1306,7 +1453,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1329,7 +1476,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             })
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1353,7 +1500,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1379,7 +1526,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1405,7 +1552,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1431,7 +1578,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1457,7 +1604,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition, JobDefinitionRes>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);
@@ -1467,7 +1614,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task Query_TwoPhaseSubQuery_WithNestedChildren_ReturnsExpectedMatches()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var matchName = $"SubNested_Match_{suffix}";
         var nonMatchName = $"SubNested_NoMatch_{suffix}";
         var matchId = await fixture.SeedJobDefinitionAsync(matchName);
@@ -1492,7 +1639,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var resWithSub = await queryService.Query<JobDefinition>(reqWithSub, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var resWithSub = await queryService.Query<JobDefinition>(reqWithSub, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(resWithSub.IsSuccess);
         var idsWithSub = resWithSub.Items!.Select(i => i.Id).OrderBy(i => i).ToList();
         Assert.Contains(matchId, idsWithSub);
@@ -1502,7 +1649,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task Query_TwoPhaseSubQuery_OnCollectionField_LoadsCollectionForInMemoryFilter()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var hitName = $"SubCollection_Hit_{suffix}";
         var missName = $"SubCollection_Miss_{suffix}";
         var hitId = await fixture.SeedJobDefinitionAsync(hitName);
@@ -1521,7 +1668,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             SortBy = [new("Name", SortDirection.Asc)]
         };
 
-        var result = await queryService.Query<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition>(request, x => x.Name, SortDirection.Asc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         var ids = result.Items!.Select(i => i.Id).ToList();
@@ -1532,7 +1679,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
     [Fact]
     public async Task Query_TwoPhaseSubQuery_WithSortAndPaging_ReturnsExpectedOrderedPage()
     {
-        var suffix = Guid.NewGuid().ToString("N")[..8];
+        var suffix = LyoGuid.CreateV7().ToString("N")[..8];
         var names = new[] { $"SubOrder_C_{suffix}", $"SubOrder_A_{suffix}", $"SubOrder_B_{suffix}" };
         foreach (var name in names) {
             var id = await fixture.SeedJobDefinitionAsync(name);
@@ -1552,7 +1699,7 @@ public class QueryServicePostgresTests(ApiPostgresFixture fixture)
             Options = new() { TotalCountMode = QueryTotalCountMode.Exact }
         };
 
-        var result = await queryService.Query<JobDefinition>(request, x => x.Name, SortDirection.Desc, TestContext.Current.CancellationToken);
+        var result = await queryService.Query<JobDefinition>(request, x => x.Name, SortDirection.Desc, TestCt);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Items);
         Assert.Single(result.Items!);

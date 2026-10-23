@@ -3,12 +3,10 @@ using Microsoft.AspNetCore.Components;
 namespace Lyo.Web.Primitives;
 
 /// <summary>
-/// Wraps a toolbar input so dense outlined fields lose MudBlazor's extra top margin. Does not redeclare Mud field parameters; put the input in
-/// <see cref="ChildContent" />. Set <see cref="Grow" /> so the field takes leftover width.
+/// Wraps a toolbar input so dense outlined fields lose MudBlazor's extra top margin. Does not redeclare Mud field parameters; put the input in <see cref="ChildContent" />.
+/// Set <see cref="Grow" /> so the field takes leftover width.
 /// </summary>
-/// <remarks>
-/// Do not wrap a search cluster that positions its own nav buttons over the input; keep that markup as a custom group child.
-/// </remarks>
+/// <remarks>Do not wrap a search cluster that positions its own nav buttons over the input; keep that markup as a custom group child.</remarks>
 public partial class LyoToolbarField
 {
     /// <summary>The input, usually a dense outlined <c>MudTextField</c> or <c>MudSelect</c>.</summary>

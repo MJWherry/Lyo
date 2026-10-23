@@ -1,0 +1,265 @@
+{
+  "id": "Lyo.Web.Automation.PuppeteerSharp",
+  "name": "Lyo.Web.Automation.PuppeteerSharp",
+  "area": "Apps",
+  "tagline": "PuppeteerSharp backend for `Lyo.Web.Automation`: Chrome, Chromium, Edge, and Firefox sessions, tabs, frames, and the same JSON plans as Playwright and Selenium.",
+  "description": "PuppeteerSharp backend for the `Lyo.Web.Automation` abstractions. It launches Chrome, Chromium, Edge, or Firefox, owns a session-scoped browser context, and exposes the same tab, frame, dialog, keyboard, and locator helpers as [`Lyo.Web.Automation.Playwright`](../Lyo.Web.Automation.Playwright/README.md) so JSON automation plans behave the same on this engine. WebKit is rejected. This package does not reference `Lyo.Http.Client` or `Lyo.Web.WebRenderer` and does not download a browser.",
+  "features": [
+    "**`PuppeteerSharpBrowser`.** Concrete `IWebAutomationBrowser`. `StartBrowserAsync` launches `BrowserKind` from `BrowserExePath` or `AutomationBrowserDetector` and opens one page in a browser context.",
+    "`PuppeteerSharpTabManager` / `PuppeteerSharpBrowserTabInfo`. Engine-native tab info. Portable tab switching stays on `IWebAutomationTabs`.",
+    "`PuppeteerSharpWebAutomationElement` and `PuppeteerSharpLocatorFactory`. Map `ElementLocator` (id, name, css, xpath, link text, class, tag) onto Puppeteer selectors.",
+    "**Cloudflare handoff is host-owned.** Copy the solver user-agent onto `UserAgents`, `ProxyUrl` onto the context, and cookies onto `CookieJar`. This package does not reference `Lyo.Http.Client`."
+  ],
+  "examples": [
+    {
+      "title": "First steps",
+      "language": "csharp",
+      "code": "services.AddPuppeteerSharpBrowserServiceFromConfiguration(builder.Configuration);\n\nvar service = sp.GetRequiredService<IPuppeteerSharpBrowserService>();\nusing var session = service.CreateSession();\nawait session.StartBrowserAsync();\nawait session.Browser.NavigateAsync(\"https://example.com\");"
+    }
+  ],
+  "sections": [
+    {
+      "type": "list",
+      "title": "Service layer ([`Service/`](Service))",
+      "items": [
+        "**`IPuppeteerSharpBrowserService`.** `CreateSession()` clones service options. `CreateSession(Action<PuppeteerSharpBrowserOptions>)` overlays that clone. `CreateSession(new PuppeteerSharpSessionOptions())` replaces it. `ActiveSessionCount`, `Dispose`.",
+        "**`IPuppeteerSharpBrowserSession`.** Session scope. `Tabs` is `PuppeteerSharpTabManager`.",
+        "`AddPuppeteerSharpBrowser`, `AddPuppeteerSharpBrowserService`, and `AddPuppeteerSharpBrowserServiceFromConfiguration`. The options-instance overloads call `Validate()`."
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Settings ([`Configuration/PuppeteerSharpBrowserOptions.cs`](Configuration/PuppeteerSharpBrowserOptions.cs))",
+      "headers": [
+        "Property",
+        "Default",
+        "Notes"
+      ],
+      "rows": [
+        [
+          "`BrowserKind`",
+          "`Chrome`",
+          "`AutomationBrowserKind`: `Chrome`, `Chromium`, `Edge`, `Firefox`. WebKit is rejected. Firefox drops Chromium launch-arg defaults."
+        ],
+        [
+          "`BrowserExePath`",
+          "`null`",
+          "When empty, launch uses `AutomationBrowserDetector` for `BrowserKind` (that browser's env vars, then `BROWSER_PATH` and `PUPPETEER_EXECUTABLE_PATH`, then install paths). An explicit path wins. Launch throws when the file is missing. No browser download."
+        ],
+        [
+          "`Headless`",
+          "`false`",
+          "Launch headless when true."
+        ],
+        [
+          "`ServiceRootDirectory`",
+          "`{tmp}/lyo-puppeteersharp`",
+          "Each session creates `session-{id}/` with `browser-profile/`, `artifacts/`, and `downloads/`."
+        ],
+        [
+          "`LaunchArguments`",
+          "Chromium defaults including `--no-sandbox`",
+          "Every entry must start with `-`. `ResolveLaunchArguments` adds `--window-size` for Chrome, Chromium, and Edge. Firefox omits those defaults and `--window-size`."
+        ],
+        [
+          "`ViewportWidth` / `ViewportHeight`",
+          "`1920` × `1080`",
+          "CSS viewport. `ApplySessionViewport` can randomize from `ViewportSizes`."
+        ],
+        [
+          "`NavigationWaitUntil`",
+          "`DOMContentLoaded`",
+          "Puppeteer `waitUntil` for goto and reload."
+        ],
+        [
+          "`NavigationTimeoutMs`",
+          "`30000`",
+          "Navigation timeout."
+        ],
+        [
+          "`LocatorDefaultTimeoutMs`",
+          "`30000`",
+          "Element wait used by each poll attempt."
+        ],
+        [
+          "`EnableMetrics`",
+          "`true`",
+          "Records `lyo.webautomation.puppeteersharp.*` when an `IMetrics` is registered."
+        ]
+      ]
+    }
+  ],
+  "links": [],
+  "readmePath": "Lyo.Net/Apps/Web/Automation/Lyo.Web.Automation.PuppeteerSharp/README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.Temp",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Web.Automation",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Configuration.Binder",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.DependencyInjection.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Logging.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "PuppeteerSharp",
+      "kind": "package",
+      "version": "24.0.0",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "direct",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Formatter",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.IO.FileSystem",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Metrics",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Parameters",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "DynamicExpresso.Core",
+      "kind": "package",
+      "version": "2.19.3",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Hosting.Abstractions",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "SmartFormat.NET",
+      "kind": "package",
+      "version": "3.6.1",
+      "tags": [
+        "transitive",
+        "third-party"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "netstandard2.0",
+    "net10.0"
+  ]
+}

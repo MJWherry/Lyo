@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions.Models;
 
 namespace Lyo.Exceptions.Tests;
@@ -5,7 +6,7 @@ namespace Lyo.Exceptions.Tests;
 public class NewGuardHelpersTests
 {
     [Fact]
-    public void ThrowIfEmpty_NonEmptyGuid_DoesNotThrow() => ArgumentHelpers.ThrowIfEmpty(Guid.NewGuid());
+    public void ThrowIfEmpty_NonEmptyGuid_DoesNotThrow() => ArgumentHelpers.ThrowIfEmpty(LyoGuid.CreateV7());
 
     [Fact]
     public void ThrowIfEmpty_EmptyGuid_ThrowsWithCallerExpressionAsParamName()

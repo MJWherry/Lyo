@@ -1,27 +1,26 @@
 using Lyo.Reporting.Models;
 using Lyo.Reporting.Postgres;
+
 namespace Lyo.Reporting.Tests;
 
 public sealed class ReportGenerationThrottleTests
 {
     private static ReportGenerationThrottle Create(int maxConcurrent)
-        => new(new PostgresReportingOptions { ConnectionString = "unused", MaxConcurrentGenerations = maxConcurrent }) {
-            AcquireTimeout = TimeSpan.FromMilliseconds(100)
-        };
+        => new(new() { ConnectionString = "unused", MaxConcurrentGenerations = maxConcurrent }) { AcquireTimeout = TimeSpan.FromMilliseconds(100) };
 
     [Fact]
-    public async Task AcquireAsync_Unlimited_ReturnsNullReleaser() => Assert.Null(await Create(0).AcquireAsync(TestContext.Current.CancellationToken));
+    public async Task AcquireAsync_Unlimited_ReturnsNullReleaser() => Assert.Null(await Create(0).AcquireAsync(TestCt));
 
     [Fact]
     public async Task AcquireAsync_Saturated_FailsBusyThenRecovers()
     {
         var throttle = Create(1);
-        var slot = await throttle.AcquireAsync(TestContext.Current.CancellationToken);
+        var slot = await throttle.AcquireAsync(TestCt);
         Assert.NotNull(slot);
-        var ex = await Assert.ThrowsAsync<ReportBusyException>(() => throttle.AcquireAsync(TestContext.Current.CancellationToken));
+        var ex = await Assert.ThrowsAsync<ReportBusyException>(() => throttle.AcquireAsync(TestCt));
         Assert.Contains("busy", ex.Message, StringComparison.OrdinalIgnoreCase);
         slot!.Dispose();
-        var next = await throttle.AcquireAsync(TestContext.Current.CancellationToken);
+        var next = await throttle.AcquireAsync(TestCt);
         Assert.NotNull(next);
         next!.Dispose();
     }
@@ -30,11 +29,11 @@ public sealed class ReportGenerationThrottleTests
     public async Task Dispose_Twice_ReleasesOnce()
     {
         var throttle = Create(1);
-        var slot = await throttle.AcquireAsync(TestContext.Current.CancellationToken);
+        var slot = await throttle.AcquireAsync(TestCt);
         slot!.Dispose();
         slot.Dispose();
-        var a = await throttle.AcquireAsync(TestContext.Current.CancellationToken);
-        await Assert.ThrowsAsync<ReportBusyException>(() => throttle.AcquireAsync(TestContext.Current.CancellationToken));
+        var a = await throttle.AcquireAsync(TestCt);
+        await Assert.ThrowsAsync<ReportBusyException>(() => throttle.AcquireAsync(TestCt));
         a!.Dispose();
     }
 

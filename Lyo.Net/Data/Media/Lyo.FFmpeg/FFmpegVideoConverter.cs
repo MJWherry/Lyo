@@ -30,47 +30,47 @@ public sealed class FFmpegVideoConverter : IVideoConverter
 
     /// <inheritdoc />
     public Task<Result<bool>> ConvertFileToFileAsync(string inputPath, string outputPath, VideoConversionOptions? options = null, CancellationToken ct = default)
-        => _engine.ConvertFileToFileAsync(inputPath, outputPath, Prepare(options, fileToFile: true), ct);
+        => _engine.ConvertFileToFileAsync(inputPath, outputPath, Prepare(options, true), ct);
 
     /// <inheritdoc />
     public Task<Result<bool>> ConvertFileToStreamAsync(string inputPath, Stream outputStream, VideoConversionOptions? options = null, CancellationToken ct = default)
-        => _engine.ConvertFileToStreamAsync(inputPath, outputStream, Prepare(options, fileToFile: false), ct);
+        => _engine.ConvertFileToStreamAsync(inputPath, outputStream, Prepare(options, false), ct);
 
     /// <inheritdoc />
     public Task<Result<byte[]>> ConvertFileToBytesAsync(string inputPath, VideoConversionOptions? options = null, CancellationToken ct = default)
-        => _engine.ConvertFileToBytesAsync(inputPath, Prepare(options, fileToFile: false), ct);
+        => _engine.ConvertFileToBytesAsync(inputPath, Prepare(options, false), ct);
 
     /// <inheritdoc />
     public Task<Result<bool>> ConvertStreamToStreamAsync(Stream inputStream, Stream outputStream, VideoConversionOptions? options = null, CancellationToken ct = default)
-        => _engine.ConvertStreamToStreamAsync(inputStream, outputStream, Prepare(options, fileToFile: false), ct);
+        => _engine.ConvertStreamToStreamAsync(inputStream, outputStream, Prepare(options, false), ct);
 
     /// <inheritdoc />
     public Task<Result<bool>> ConvertStreamToFileAsync(Stream inputStream, string outputPath, VideoConversionOptions? options = null, CancellationToken ct = default)
-        => _engine.ConvertStreamToFileAsync(inputStream, outputPath, Prepare(options, fileToFile: false), ct);
+        => _engine.ConvertStreamToFileAsync(inputStream, outputPath, Prepare(options, false), ct);
 
     /// <inheritdoc />
     public Task<Result<byte[]>> ConvertStreamToBytesAsync(Stream inputStream, VideoConversionOptions? options = null, CancellationToken ct = default)
-        => _engine.ConvertStreamToBytesAsync(inputStream, Prepare(options, fileToFile: false), ct);
+        => _engine.ConvertStreamToBytesAsync(inputStream, Prepare(options, false), ct);
 
     /// <inheritdoc />
     public Task<Result<byte[]>> ConvertBytesToBytesAsync(byte[] inputBytes, VideoConversionOptions? options = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(inputBytes);
-        return ConvertStreamToBytesAsync(new MemoryStream(inputBytes, writable: false), options, ct);
+        return ConvertStreamToBytesAsync(new MemoryStream(inputBytes, false), options, ct);
     }
 
     /// <inheritdoc />
     public Task<Result<bool>> ConvertBytesToStreamAsync(byte[] inputBytes, Stream outputStream, VideoConversionOptions? options = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(inputBytes);
-        return ConvertStreamToStreamAsync(new MemoryStream(inputBytes, writable: false), outputStream, options, ct);
+        return ConvertStreamToStreamAsync(new MemoryStream(inputBytes, false), outputStream, options, ct);
     }
 
     /// <inheritdoc />
     public Task<Result<bool>> ConvertBytesToFileAsync(byte[] inputBytes, string outputPath, VideoConversionOptions? options = null, CancellationToken ct = default)
     {
         ArgumentHelpers.ThrowIfNull(inputBytes);
-        return ConvertStreamToFileAsync(new MemoryStream(inputBytes, writable: false), outputPath, options, ct);
+        return ConvertStreamToFileAsync(new MemoryStream(inputBytes, false), outputPath, options, ct);
     }
 
     /// <inheritdoc />
@@ -87,6 +87,14 @@ public sealed class FFmpegVideoConverter : IVideoConverter
         ArgumentHelpers.ThrowIfNull(options);
         options.Validate();
         return _engine.StartConvertAsync(input, ConvertKnobs.FromVideo(options), ct);
+    }
+
+    /// <inheritdoc />
+    public Task<Result<bool>> ConcatAsync(IReadOnlyList<string> inputPaths, string outputPath, VideoConversionOptions? options = null, CancellationToken ct = default)
+    {
+        var request = new VideoConcatRequest { Inputs = inputPaths, OutputPath = outputPath, Options = options ?? new() { CopyCodecs = true } };
+        request.Validate();
+        return _engine.ConcatAsync(request.Inputs, request.OutputPath, ConvertKnobs.FromVideo(request.Options), ct);
     }
 
     /// <inheritdoc />

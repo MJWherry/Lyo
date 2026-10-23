@@ -3,12 +3,10 @@ using MudBlazor;
 
 namespace Lyo.MessageQueue.RabbitMq.Web.Components;
 
-/// <summary>
-/// Broker queue states for <see cref="LyoStatusChip" />, keyed as <c>Palette="rabbitmq"</c>. Register via <c>AddLyoRabbitMqStatusPalette</c>.
-/// </summary>
+/// <summary>Broker queue states for <see cref="LyoStatusChip" />, keyed as <c>Palette="rabbitmq"</c>. Register via <c>AddLyoRabbitMqStatusPalette</c>.</summary>
 /// <remarks>
-/// String-keyed view of <see cref="RabbitMqColorHelper.ForState" />. The broker can report states this client does not list (<c>flow</c>, <c>idle</c>,
-/// <c>syncing</c>, and others), so any state other than <c>running</c> is treated as a warning, not an error.
+/// String-keyed view of <see cref="RabbitMqColorHelper.ForState" />. The broker can report states this client does not list (<c>flow</c>, <c>idle</c>, <c>syncing</c>, and
+/// others), so any state other than <c>running</c> is treated as a warning, not an error.
 /// </remarks>
 public sealed class RabbitMqStatusPalette : ILyoStatusPalette
 {
@@ -32,6 +30,7 @@ public sealed class RabbitMqStatusPalette : ILyoStatusPalette
             "flow" => Icons.Material.Filled.Warning,
             var _ => Icons.Material.Filled.Help
         };
-        return new LyoChipSpec(LyoStatusText.Humanize(key), color, icon);
+
+        return new(LyoStatusText.Humanize(key), color, icon);
     }
 }

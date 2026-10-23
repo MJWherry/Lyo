@@ -1,12 +1,11 @@
-using Lyo.Encryption;
-using Lyo.FileMetadataStore;
+using Lyo.Common.Core.Identifiers;
 using Lyo.FileMetadataStore.Models;
 
 namespace Lyo.FileMetadataStore.Tests;
 
 public class LocalFileMetadataStoreListByPathPrefixTests : IDisposable
 {
-    private readonly string _root = Path.Combine(Path.GetTempPath(), "lyo-meta-list-" + Guid.NewGuid().ToString("N"));
+    private readonly string _root = Path.Combine(Path.GetTempPath(), "lyo-meta-list-" + LyoGuid.CreateV7().ToString("N"));
 
     public LocalFileMetadataStoreListByPathPrefixTests() => Directory.CreateDirectory(_root);
 
@@ -25,16 +24,16 @@ public class LocalFileMetadataStoreListByPathPrefixTests : IDisposable
     public async Task ListByPathPrefixAsync_FiltersImmediateVsDescendants()
     {
         var store = new LocalFileMetadataStore(_root);
-        var root = Meta(Guid.NewGuid(), null, "root.txt");
-        var reports = Meta(Guid.NewGuid(), "reports", "a.pdf");
-        var nested = Meta(Guid.NewGuid(), "reports/2024", "b.pdf");
-        await store.SaveMetadataAsync(root.Id, root, TestContext.Current.CancellationToken);
-        await store.SaveMetadataAsync(reports.Id, reports, TestContext.Current.CancellationToken);
-        await store.SaveMetadataAsync(nested.Id, nested, TestContext.Current.CancellationToken);
-        var immediate = await store.ListByPathPrefixAsync("reports", false, 50, TestContext.Current.CancellationToken);
+        var root = Meta(LyoGuid.CreateV7(), null, "root.txt");
+        var reports = Meta(LyoGuid.CreateV7(), "reports", "a.pdf");
+        var nested = Meta(LyoGuid.CreateV7(), "reports/2024", "b.pdf");
+        await store.SaveMetadataAsync(root.Id, root, TestCt);
+        await store.SaveMetadataAsync(reports.Id, reports, TestCt);
+        await store.SaveMetadataAsync(nested.Id, nested, TestCt);
+        var immediate = await store.ListByPathPrefixAsync("reports", false, 50, TestCt);
         Assert.Single(immediate);
         Assert.Equal(reports.Id, immediate[0].Id);
-        var descendants = await store.ListByPathPrefixAsync("reports", true, 50, TestContext.Current.CancellationToken);
+        var descendants = await store.ListByPathPrefixAsync("reports", true, 50, TestCt);
         Assert.Equal(2, descendants.Count);
     }
 

@@ -1,6 +1,7 @@
 # Lyo.FileSystemWatcher.Models
 
-Serializable contracts for Lyo.FileSystemWatcher snapshots and change events. Use these types to store or send trees without live FileSystemInfo. FileSystemSnapshotDiffer.DetectChanges diffs two DTO trees using path, size, fingerprint, and hash.
+Serializable contracts for Lyo.FileSystemWatcher snapshots and change events. Use these types to store or send trees without live FileSystemInfo.
+FileSystemSnapshotDiffer.DetectChanges diffs two DTO trees using path, size, fingerprint, and hash.
 
 ## Features
 

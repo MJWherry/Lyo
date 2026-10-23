@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.KeyStore;
 
 /// <summary>Metadata attached to a key version in the store.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public record KeyMetadata
 {
     /// <summary>When the key was created or added to the store.</summary>

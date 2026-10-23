@@ -12,6 +12,7 @@ using static Lyo.Translation.TranslationErrorCodes;
 namespace Lyo.Translation;
 
 /// <summary>Shared base for translation providers; implements the common bulk-translate path.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public abstract class TranslationServiceBase : ITranslationService, IDisposable
 {
     private int _disposedInt;
@@ -192,4 +193,7 @@ public abstract class TranslationServiceBase : ITranslationService, IDisposable
         if (disposing)
             BulkTranslationSemaphore.Dispose();
     }
+
+    /// <summary>Service name and the options it was built with. Secrets stay out of the options text.</summary>
+    public override string ToString() => $"{GetType().Name} {Options}";
 }

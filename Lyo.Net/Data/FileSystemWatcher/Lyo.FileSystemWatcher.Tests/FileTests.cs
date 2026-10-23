@@ -39,7 +39,7 @@ public class FileTests : IDisposable
             fired = true;
         };
 
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestCt);
         await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(1));
     }
 
@@ -47,7 +47,7 @@ public class FileTests : IDisposable
     public async Task File_ChangeFile_AnyEventFires()
     {
         var fired = false;
-        var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestContext.Current.CancellationToken);
+        var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestCt);
         var fileName = Path.GetFileName(filePath);
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
         watcher.OnAnyChange += (_, e) => {
@@ -70,7 +70,7 @@ public class FileTests : IDisposable
     public async Task File_FileDeleted_AnyEventFires()
     {
         var fired = false;
-        var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestContext.Current.CancellationToken);
+        var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestCt);
         var fileName = Path.GetFileName(filePath);
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
         watcher.OnAnyChange += (_, e) => {
@@ -93,7 +93,7 @@ public class FileTests : IDisposable
     public async Task File_FileRenamed_AnyEventFires()
     {
         var fired = false;
-        var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestContext.Current.CancellationToken);
+        var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestCt);
         var fileName = Path.GetFileName(filePath);
         var newFileName = Path.GetFileName(_tempSession.GetFilePath());
         var newFilePath = Path.Combine(_tempSession.SessionDirectory, newFileName);
@@ -118,7 +118,7 @@ public class FileTests : IDisposable
     public async Task File_FileMoved_AnyEventFires()
     {
         var fired = false;
-        var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestContext.Current.CancellationToken);
+        var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestCt);
         var fileName = Path.GetFileName(filePath);
         var subDirectoryName = Path.GetFileName(_tempSession.GetDirectoryPath());
         Directory.CreateDirectory(Path.Combine(_tempSession.SessionDirectory, subDirectoryName));
@@ -153,7 +153,7 @@ public class FileTests : IDisposable
             fired = true;
         };
 
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestCt);
         await PollAssert.ThatAsync(() => fired, TimeSpan.FromSeconds(1));
     }
 
@@ -161,7 +161,7 @@ public class FileTests : IDisposable
     public async Task File_FileChanged_ChangedEventFires()
     {
         var fired = false;
-        var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestContext.Current.CancellationToken);
+        var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestCt);
         var fileName = Path.GetFileName(filePath);
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
         watcher.FileChanged += (_, e) => {
@@ -180,7 +180,7 @@ public class FileTests : IDisposable
     public async Task File_FileDeleted_DeletedEventFires()
     {
         var fired = false;
-        var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestContext.Current.CancellationToken);
+        var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestCt);
         var fileName = Path.GetFileName(filePath);
         using var watcher = new FileSystemWatcher(_tempSession.SessionDirectory);
         watcher.FileDeleted += (_, e) => {
@@ -199,7 +199,7 @@ public class FileTests : IDisposable
     public async Task File_FileRenamed_RenamedEventFires()
     {
         var fired = false;
-        var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestContext.Current.CancellationToken);
+        var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestCt);
         var fileName = Path.GetFileName(filePath);
         var newFileName = Path.GetFileName(_tempSession.GetFilePath());
         var newFilePath = Path.Combine(_tempSession.SessionDirectory, newFileName);
@@ -220,7 +220,7 @@ public class FileTests : IDisposable
     public async Task File_FileMoved_MovedEventFires()
     {
         var fired = false;
-        var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestContext.Current.CancellationToken);
+        var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestCt);
         var fileName = Path.GetFileName(filePath);
         var subDirectoryName = Path.GetFileName(_tempSession.GetDirectoryPath());
         Directory.CreateDirectory(Path.Combine(_tempSession.SessionDirectory, subDirectoryName));
@@ -258,7 +258,7 @@ public class FileTests : IDisposable
             }
         };
 
-        await _tempSession.CreateFileAsync(new byte[100], fileName, TestContext.Current.CancellationToken);
+        await _tempSession.CreateFileAsync(new byte[100], fileName, TestCt);
         await PollAssert.ThatAsync(() => createdFired && changedFired, TimeSpan.FromSeconds(30));
     }
 
@@ -282,7 +282,7 @@ public class FileTests : IDisposable
         };
 
         for (var i = 0; i < fileAmount; i++) {
-            var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestContext.Current.CancellationToken);
+            var filePath = await _tempSession.CreateFileAsync(new byte[100], ct: TestCt);
             expectedFileNames.Add(Path.GetFileName(filePath));
         }
 

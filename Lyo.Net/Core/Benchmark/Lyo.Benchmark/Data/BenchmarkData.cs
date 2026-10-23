@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
-using Lyo.Streams;
 using Lyo.Exceptions;
+using Lyo.Streams;
 
 namespace Lyo.Benchmark.Data;
 
@@ -83,8 +83,8 @@ public static class BenchmarkData
     }
 
     /// <summary>
-    /// Writes deterministic bytes from <see cref="PayloadSeed" /> into <paramref name="buffer" />. The same seed and length always yield the same sequence, so suite results
-    /// stay comparable across runs and algorithms.
+    /// Writes deterministic bytes from <see cref="PayloadSeed" /> into <paramref name="buffer" />. The same seed and length always yield the same sequence, so suite results stay
+    /// comparable across runs and algorithms.
     /// </summary>
     public static void FillDeterministic(Span<byte> buffer) => DeterministicPayloadStream.Fill(buffer);
 

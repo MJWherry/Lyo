@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Components;
 namespace Lyo.Web.Components.DataGrid;
 
 /// <summary>
-/// Card presentation of grid rows for narrow viewports: one card per row, each visible column rendered as a label and the very same cell markup the table uses.
-/// Driven by <see cref="LyoDataGrid{T}" /> and <see cref="LyoDataGridProjected" />, which keep owning paging, sorting, selection and data loading.
+/// Card presentation of grid rows for narrow viewports: one card per row, each visible column rendered as a label and the very same cell markup the table uses. Driven by
+/// <see cref="LyoDataGrid{T}" /> and <see cref="LyoDataGridProjected" />, which keep owning paging, sorting, selection and data loading.
 /// </summary>
 public partial class LyoDataGridCards
 {

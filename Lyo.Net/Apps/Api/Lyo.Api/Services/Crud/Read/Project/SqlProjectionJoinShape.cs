@@ -1,3 +1,4 @@
+using Lyo.Query.Services.Path;
 using Lyo.Query.Services.WhereClause;
 
 namespace Lyo.Api.Services.Crud.Read.Project;
@@ -22,12 +23,20 @@ internal static class SqlProjectionJoinShape
             if (SharedEntityMetadataCache.IsCollectionType(current))
                 current = SharedEntityMetadataCache.GetCollectionElementType(current);
 
-            var property = SharedEntityMetadataCache.ResolveProperty(current, t);
+            if (!QueryPath.TryParseSegment(t, out var segmentName, out var window, out var _))
+                return false;
+
+            var property = SharedEntityMetadataCache.ResolveProperty(current, segmentName);
             if (property is null)
                 return false;
 
-            if (SharedEntityMetadataCache.IsCollectionType(property.PropertyType))
-                return true;
+            if (SharedEntityMetadataCache.IsCollectionType(property.PropertyType)) {
+                if (window is not { IsSingle: true })
+                    return true;
+
+                current = SharedEntityMetadataCache.GetCollectionElementType(property.PropertyType);
+                continue;
+            }
 
             current = property.PropertyType;
         }

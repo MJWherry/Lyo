@@ -21,6 +21,5 @@ public sealed record FileSystemEntry(
     IReadOnlyDictionary<string, string>? Properties = null)
 {
     /// <inheritdoc />
-    public override string ToString()
-        => IsDirectory ? $"dir {Name} ({Path})" : $"file {Name} ({Path}, {Length} bytes)";
+    public override string ToString() => IsDirectory ? $"dir {Name} ({Path})" : $"file {Name} ({Path}, {Length} bytes)";
 }

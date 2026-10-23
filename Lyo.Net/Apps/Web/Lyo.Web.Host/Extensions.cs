@@ -3,7 +3,6 @@ using Lyo.Exceptions;
 using Lyo.Web.Components;
 using Lyo.Web.Primitives;
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using MudBlazor.Services;
@@ -16,8 +15,8 @@ public static class Extensions
     extension(IServiceCollection services)
     {
         /// <summary>
-        /// Adds MudBlazor, local storage, clipboard/timezone interop, <see cref="ClientStore" />, the status-palette resolver, and an empty workbench
-        /// registry. Domain palettes and workbenches still register themselves.
+        /// Adds MudBlazor, local storage, clipboard/timezone interop, <see cref="ClientStore" />, the status-palette resolver, and an empty workbench registry. Domain palettes and
+        /// workbenches still register themselves.
         /// </summary>
         /// <param name="configureMud">Optional MudBlazor tweak. When omitted, snackbars sit bottom-right and popovers close on an outside click.</param>
         public IServiceCollection AddLyoWebShell(Action<MudServicesConfiguration>? configureMud = null)
@@ -33,10 +32,11 @@ public static class Extensions
             services.TryAddScoped(sp => {
                 var client = new HttpClient();
                 if (sp.GetService<NavigationManager>() is { } navigation)
-                    client.BaseAddress = new Uri(navigation.BaseUri);
+                    client.BaseAddress = new(navigation.BaseUri);
 
                 return client;
             });
+
             return services;
         }
     }

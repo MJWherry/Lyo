@@ -22,7 +22,6 @@ namespace Lyo.Job.Postgres;
 /// <summary>Extension methods for registering the PostgreSQL job management database context.</summary>
 public static class Extensions
 {
-
     /// <param name="services">Service collection to register into</param>
     extension(IServiceCollection services)
     {
@@ -60,7 +59,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(configSectionName);
             var options = new PostgresJobOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddJobDbContextFactory(options);
         }
 
@@ -72,14 +70,13 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             services.AddPostgresDbContextFactory<JobContext, PostgresJobOptions>(options);
-
             return services;
         }
 
         /// <summary>
         /// Registers job management on a PostgreSQL backend. Drop-and-play: registers DbContextFactory, auto-migrations (when enabled), CRUD services, and
-        /// <see cref="JobLyoMapper" /> as <see cref="ILyoMapper" /> (hosts may replace with <see cref="Api.Mapping.CompositeLyoMapper" />). Requires AddLyoQueryServices plus
-        /// AddFusionCache or AddLocalCache.
+        /// <see cref="JobLyoMapper" /> as <see cref="ILyoMapper" /> (hosts may replace with <see cref="Api.Mapping.CompositeLyoMapper" />). Requires AddLyoQueryServices plus AddFusionCache
+        /// or AddLocalCache.
         /// </summary>
         public IServiceCollection AddPostgresJobManagement(Action<PostgresJobOptions> configure)
         {
@@ -96,20 +93,20 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(configuration);
             var options = new PostgresJobOptions();
             configuration.GetSection(configSectionName).Bind(options);
-
             return services.AddPostgresJobManagement(options);
         }
 
         /// <summary>
         /// Registers job management on a PostgreSQL backend. Drop-and-play: registers DbContextFactory, auto-migrations (when enabled), CRUD services, and
-        /// <see cref="JobLyoMapper" /> as <see cref="ILyoMapper" /> (hosts may replace with <see cref="Api.Mapping.CompositeLyoMapper" />). Requires AddLyoQueryServices plus
-        /// AddFusionCache or AddLocalCache.
+        /// <see cref="JobLyoMapper" /> as <see cref="ILyoMapper" /> (hosts may replace with <see cref="Api.Mapping.CompositeLyoMapper" />). Requires AddLyoQueryServices plus AddFusionCache
+        /// or AddLocalCache.
         /// </summary>
         public IServiceCollection AddPostgresJobManagement(PostgresJobOptions options)
         {
             services.AddJobDbContextFactory(options);
             services.AddLyoCrudServices<JobContext>();
             services.AddScoped<JobService>();
+            services.AddScoped<JobWorkflowService>();
             services.TryAddSingleton<JobLyoMapper>();
             services.TryAddSingleton<ILyoMapper>(sp => sp.GetRequiredService<JobLyoMapper>());
             // Register a no-op publisher so JobService can be resolved without a message-queue transport.
@@ -119,8 +116,8 @@ public static class Extensions
         }
 
         /// <summary>
-        /// Registers <see cref="JobMaintenanceService" /> as a hosted background service. Automatically fails dead jobs (heartbeat timeout), resets circuit breakers, purges old
-        /// run history per retention settings, and prunes stale worker instances. Requires <see cref="IDbContextFactory{JobContext}" /> to already be registered (call
+        /// Registers <see cref="JobMaintenanceService" /> as a hosted background service. Automatically fails dead jobs (heartbeat timeout), resets circuit breakers, purges old run
+        /// history per retention settings, and prunes stale worker instances. Requires <see cref="IDbContextFactory{JobContext}" /> to already be registered (call
         /// <see cref="AddJobDbContextFactory(IServiceCollection, PostgresJobOptions)" /> first).
         /// </summary>
         /// <param name="configure">Optional action that configures <see cref="JobMaintenanceOptions" />.</param>

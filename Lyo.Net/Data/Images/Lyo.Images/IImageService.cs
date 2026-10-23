@@ -4,9 +4,7 @@ using Lyo.Result;
 
 namespace Lyo.Images;
 
-/// <summary>
-/// Image-processing service. Extends <see cref="IImageDecorationService" />, so callers that take <see cref="IImageService" /> also get overlay, frame, caption, and padding.
-/// </summary>
+/// <summary>Image-processing service. Extends <see cref="IImageDecorationService" />, so callers that take <see cref="IImageService" /> also get overlay, frame, caption, and padding.</summary>
 public interface IImageService : IImageDecorationService
 {
     /// <summary>Default image format.</summary>
@@ -63,8 +61,8 @@ public interface IImageService : IImageDecorationService
     Task<Result<byte[]>> GenerateThumbnailAsync(Stream inputStream, int maxWidth, int maxHeight, ImageFormat? format = null, int? quality = null, CancellationToken ct = default);
 
     /// <summary>
-    /// Image metadata (dimensions, format, and optional EXIF: location, device, date taken, and similar). EXIF coverage depends on the backend (ImageSharp has full EXIF; Skia has
-    /// basic metadata, plus EXIF when MetadataExtractor is wired).
+    /// Image metadata (dimensions, format, and optional EXIF: location, device, date taken, and similar). EXIF coverage depends on the backend (ImageSharp has full EXIF; Skia
+    /// has basic metadata, plus EXIF when MetadataExtractor is wired).
     /// </summary>
     Task<Result<ImageMetadata>> GetMetadataAsync(Stream imageStream, CancellationToken ct = default);
 

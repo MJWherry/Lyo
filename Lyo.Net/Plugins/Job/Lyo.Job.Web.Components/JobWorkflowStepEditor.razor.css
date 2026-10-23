@@ -1,0 +1,17 @@
+.workflow-step-fields {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1.3fr) auto;
+    gap: 12px;
+    align-items: end;
+}
+
+.workflow-step-depends {
+    grid-column: 1 / 4;
+}
+
+.workflow-step-flags {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 40px;
+}

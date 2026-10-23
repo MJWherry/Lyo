@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.Diff.Text;
 
 /// <summary>One contiguous text-diff segment, pointing at spans in the original old and new strings.</summary>
@@ -5,4 +7,8 @@ namespace Lyo.Diff.Text;
 /// For <see cref="TextDiffKind.Delete" />, <see cref="NewStart" /> and <see cref="NewLength" /> are zero. For <see cref="TextDiffKind.Insert" />, <see cref="OldStart" /> and
 /// <see cref="OldLength" /> are zero.
 /// </remarks>
-public readonly record struct TextDiffChunk(TextDiffKind Kind, int OldStart, int OldLength, int NewStart, int NewLength);
+[DebuggerDisplay("{ToString(),nq}")]
+public readonly record struct TextDiffChunk(TextDiffKind Kind, int OldStart, int OldLength, int NewStart, int NewLength)
+{
+    public override string ToString() => $"{Kind} Old={OldStart} ({OldLength}) New={NewStart} ({NewLength})";
+}

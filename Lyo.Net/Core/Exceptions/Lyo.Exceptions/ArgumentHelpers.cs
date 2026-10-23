@@ -13,9 +13,9 @@ namespace Lyo.Exceptions;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Optional name parameters follow the same convention as <see cref="M:System.ArgumentNullException.ThrowIfNull(System.Object,System.String)" />: when they are omitted at the call
-/// site, the compiler supplies the caller's argument expression (via <see cref="CallerArgumentExpressionAttribute" />), which becomes <see cref="ArgumentException.ParamName" />. Pass
-/// <c>nameof(...)</c> explicitly when you want a stable parameter name instead of an expression (for example <c>options.BaseUrl</c> vs. <c>baseUrl</c>).
+/// Optional name parameters follow the same convention as <see cref="M:System.ArgumentNullException.ThrowIfNull(System.Object,System.String)" />: when they are omitted at the
+/// call site, the compiler supplies the caller's argument expression (via <see cref="CallerArgumentExpressionAttribute" />), which becomes <see cref="ArgumentException.ParamName" />.
+/// Pass <c>nameof(...)</c> explicitly when you want a stable parameter name instead of an expression (for example <c>options.BaseUrl</c> vs. <c>baseUrl</c>).
 /// </para>
 /// <para>
 /// <b>Exceptions:</b> null object references use <see cref="ArgumentNullException" />; failed string or logical constraints on non-null arguments use
@@ -92,8 +92,8 @@ public static class ArgumentHelpers
     /// <param name="paramName">Supplies <see cref="ArgumentException.ParamName" />. Omitted: caller's argument expression. Override with <c>nameof(...)</c> when needed.</param>
     /// <exception cref="ArgumentNullException">Thrown if the argument is null (.NET Standard 2.0 only; see class remarks).</exception>
     /// <exception cref="ArgumentException">
-    /// Thrown if the argument is null (non–.NET Standard 2.0), empty, or consists only of white-space characters; or when empty or whitespace-only (.NET
-    /// Standard 2.0).
+    /// Thrown if the argument is null (non–.NET Standard 2.0), empty, or consists only of white-space characters; or when empty or whitespace-only
+    /// (.NET Standard 2.0).
     /// </exception>
 #if NET6_0_OR_GREATER
     [StackTraceHidden]
@@ -410,8 +410,8 @@ public static class ArgumentHelpers
     /// <param name="collection">Collection under test.</param>
     /// <param name="paramName">Supplies <see cref="ArgumentException.ParamName" />. Omitted: caller expression for <paramref name="collection" />.</param>
     /// <remarks>
-    /// Delegates to <see cref="ThrowIfNull" /> for a null reference, then checks for an empty sequence. For single-use enumerables (for example LINQ without ToList), prefer passing
-    /// ICollection or IReadOnlyCollection to avoid consuming the first element.
+    /// Delegates to <see cref="ThrowIfNull" /> for a null reference, then checks for an empty sequence. For single-use enumerables (for example LINQ without ToList), prefer
+    /// passing ICollection or IReadOnlyCollection to avoid consuming the first element.
     /// </remarks>
     /// <exception cref="ArgumentNullException">Thrown when collection is null.</exception>
     /// <exception cref="ArgumentException">Thrown when collection is empty.</exception>
@@ -743,10 +743,7 @@ public static class ArgumentHelpers
             ThrowArgumentException($"Value cannot be the default value of {typeof(T).Name}.", paramName);
     }
 
-    /// <summary>
-    /// Throws ArgumentException when the enum value is not a defined member of <typeparamref name="TEnum" /> (for example after casting from an int or parsing
-    /// user input).
-    /// </summary>
+    /// <summary>Throws ArgumentException when the enum value is not a defined member of <typeparamref name="TEnum" /> (for example after casting from an int or parsing user input).</summary>
     /// <typeparam name="TEnum">The enum type to check against.</typeparam>
     /// <param name="value">The enum value to check.</param>
     /// <param name="paramName">Supplies <see cref="ArgumentException.ParamName" />. Omitted: caller expression for <paramref name="value" />.</param>

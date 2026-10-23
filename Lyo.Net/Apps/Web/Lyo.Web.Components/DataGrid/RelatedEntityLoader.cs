@@ -7,9 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Lyo.Web.Components.DataGrid;
 
-/// <summary>
-/// After a parent grid page loads, batches related QueryProject calls (Keys = FKs on the page) and fills <see cref="RelatedEntityLookup" />.
-/// </summary>
+/// <summary>After a parent grid page loads, batches related QueryProject calls (Keys = FKs on the page) and fills <see cref="RelatedEntityLookup" />.</summary>
 public static class RelatedEntityLoader
 {
     /// <summary>
@@ -29,7 +27,6 @@ public static class RelatedEntityLoader
         ArgumentHelpers.ThrowIfNull(rows);
         ArgumentHelpers.ThrowIfNull(defaultClient);
         ArgumentHelpers.ThrowIfNull(logger);
-
         lookup.Clear();
         var rowList = rows as IReadOnlyList<object?> ?? rows.ToList();
         foreach (var group in RelatedProjection.GroupVisible(registry)) {
@@ -62,11 +59,7 @@ public static class RelatedEntityLoader
         ILogger logger,
         CancellationToken ct)
     {
-        var req = ProjectionQueryReqBuilder.New()
-            .AddSelects(group.Select.ToArray())
-            .AddKeys(keys)
-            .SetPagination(0, keys.Count)
-            .Build();
+        var req = ProjectionQueryReqBuilder.New().AddSelects(group.Select.ToArray()).AddKeys(keys).SetPagination(0, keys.Count).Build();
         var route = group.Route.TrimEnd('/') + "/QueryProject";
         var result = await client.PostAsAsync<ProjectionQueryReq, ProjectedQueryRes<object?>>(route, req, ct: ct).ConfigureAwait(false);
         if (result is not { IsSuccess: true } || result.Items is null) {

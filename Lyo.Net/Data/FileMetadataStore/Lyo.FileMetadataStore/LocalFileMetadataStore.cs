@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
 using Lyo.Hashing;
@@ -11,8 +12,10 @@ namespace Lyo.FileMetadataStore;
 public class LocalFileMetadataStore : IFileMetadataStore
 {
     private const string MetadataExtension = ".meta";
+    private const string TagExtension = ".tags.json";
     private readonly ILogger<LocalFileMetadataStore> _logger;
     private readonly string _rootDirectoryPath;
+    private readonly SemaphoreSlim _tagGate = new(1, 1);
 
     public LocalFileMetadataStore(string rootDirectoryPath, ILoggerFactory? loggerFactory = null)
     {
@@ -140,6 +143,10 @@ public class LocalFileMetadataStore : IFileMetadataStore
 
         try {
             File.Delete(metadataPath);
+            var tagPath = TagPath(fileId);
+            if (File.Exists(tagPath))
+                File.Delete(tagPath);
+
             _logger.LogDebug("Purged metadata file for file {FileId}", fileId);
             return Task.FromResult(true);
         }
@@ -259,11 +266,269 @@ public class LocalFileMetadataStore : IFileMetadataStore
             }
         }
 
-        return results
-            .OrderBy(static r => r.PathPrefix, StringComparer.Ordinal)
-            .ThenBy(static r => r.Id)
-            .Take(maxKeys)
-            .ToList();
+        return results.OrderBy(static r => r.PathPrefix, StringComparer.Ordinal).ThenBy(static r => r.Id).Take(maxKeys).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<FileStoreResult>> ListPendingDirectUploadsAsync(DateTime beganBefore, int maxKeys, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
+        var results = new List<FileStoreResult>();
+        if (!Directory.Exists(_rootDirectoryPath))
+            return results;
+
+        var cutoff = DateTime.SpecifyKind(beganBefore, DateTimeKind.Utc);
+        foreach (var metadataPath in Directory.GetFiles(_rootDirectoryPath, $"*{MetadataExtension}", SearchOption.AllDirectories)) {
+            ct.ThrowIfCancellationRequested();
+            try {
+#if NETSTANDARD2_0
+                var json = File.ReadAllText(metadataPath);
+#else
+                var json = await File.ReadAllTextAsync(metadataPath, ct).ConfigureAwait(false);
+#endif
+                var metadata = JsonSerializer.Deserialize<FileStoreResult>(json);
+                if (metadata is { DeletedAt: null, Availability: FileAvailability.PendingDirectUpload } && metadata.Timestamp.ToUniversalTime() < cutoff)
+                    results.Add(metadata);
+            }
+            catch (Exception ex) {
+                _logger.LogWarning(ex, "Failed to read metadata file {MetadataPath}", metadataPath);
+            }
+        }
+
+        return results.OrderBy(static r => r.Timestamp).Take(maxKeys).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<FileStoreResult>> SearchByNameAsync(string text, int maxKeys, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(text);
+        ArgumentHelpers.ThrowIfLessThan(maxKeys, 1);
+        var results = new List<FileStoreResult>();
+        if (!Directory.Exists(_rootDirectoryPath))
+            return results;
+
+        foreach (var metadataPath in Directory.GetFiles(_rootDirectoryPath, $"*{MetadataExtension}", SearchOption.AllDirectories)) {
+            ct.ThrowIfCancellationRequested();
+            try {
+#if NETSTANDARD2_0
+                var json = File.ReadAllText(metadataPath);
+#else
+                var json = await File.ReadAllTextAsync(metadataPath, ct).ConfigureAwait(false);
+#endif
+                var metadata = JsonSerializer.Deserialize<FileStoreResult>(json);
+                if (metadata is { DeletedAt: null, OriginalFileName: { } name } && name.IndexOf(text, StringComparison.OrdinalIgnoreCase) >= 0)
+                    results.Add(metadata);
+            }
+            catch (Exception ex) {
+                _logger.LogWarning(ex, "Failed to read metadata file {MetadataPath}", metadataPath);
+            }
+        }
+
+        return results.OrderBy(static row => row.OriginalFileName, StringComparer.OrdinalIgnoreCase).Take(maxKeys).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<FileRevision> SaveNewVersionAsync(Guid fileId, string storedKey, CancellationToken ct = default)
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(storedKey);
+        var current = await GetMetadataAsync(fileId, ct).ConfigureAwait(false);
+        var revision = new FileRevision(Guid.NewGuid(), fileId, current.SourceFileName, DateTime.UtcNow);
+        var directory = Path.Combine(_rootDirectoryPath, "versions");
+        Directory.CreateDirectory(directory);
+        var json = JsonSerializer.Serialize(revision);
+        var path = Path.Combine(directory, revision.Id.ToString("N") + ".ver");
+#if NETSTANDARD2_0
+        ct.ThrowIfCancellationRequested();
+        File.WriteAllText(path, json);
+#else
+        await File.WriteAllTextAsync(path, json, ct).ConfigureAwait(false);
+#endif
+        await SaveMetadataAsync(fileId, current with { SourceFileName = storedKey }, ct).ConfigureAwait(false);
+        return revision;
+    }
+
+    /// <inheritdoc />
+    public async Task<FileRevision?> GetVersionAsync(Guid revisionId, CancellationToken ct = default)
+    {
+        var path = Path.Combine(_rootDirectoryPath, "versions", revisionId.ToString("N") + ".ver");
+        if (!File.Exists(path))
+            return null;
+#if NETSTANDARD2_0
+        ct.ThrowIfCancellationRequested();
+        var json = File.ReadAllText(path);
+#else
+        var json = await File.ReadAllTextAsync(path, ct).ConfigureAwait(false);
+#endif
+        return JsonSerializer.Deserialize<FileRevision>(json);
+    }
+
+    /// <inheritdoc />
+    public async Task<FileTag> AddFileTagAsync(Guid fileId, string tagType, string value, string? slug, bool automatic, CancellationToken ct = default)
+    {
+        FileTagTypes.Validate(tagType, value, slug);
+        await _tagGate.WaitAsync(ct).ConfigureAwait(false);
+        try {
+            var tags = await ReadTagsAsync(fileId, ct).ConfigureAwait(false);
+            foreach (var tag in tags) {
+                if (tag.TagType == tagType && tag.Value == value)
+                    return tag;
+            }
+
+            var created = new FileTag(LyoGuid.CreateV7(), fileId, tagType, value, slug ?? "", automatic);
+            tags.Add(created);
+            await WriteTagsAsync(fileId, tags, ct).ConfigureAwait(false);
+            return created;
+        }
+        finally {
+            _tagGate.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> RemoveFileTagAsync(Guid fileId, string tagType, string value, CancellationToken ct = default)
+    {
+        await _tagGate.WaitAsync(ct).ConfigureAwait(false);
+        try {
+            var tags = await ReadTagsAsync(fileId, ct).ConfigureAwait(false);
+            var removed = tags.RemoveAll(t => t.TagType == tagType && t.Value == value);
+            if (removed == 0)
+                return false;
+
+            await WriteTagsAsync(fileId, tags, ct).ConfigureAwait(false);
+            return true;
+        }
+        finally {
+            _tagGate.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<FileTag>> ListFileTagsAsync(Guid fileId, CancellationToken ct = default)
+    {
+        await _tagGate.WaitAsync(ct).ConfigureAwait(false);
+        try {
+            return await ReadTagsAsync(fileId, ct).ConfigureAwait(false);
+        }
+        finally {
+            _tagGate.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task CopyFileTagsAsync(Guid sourceFileId, Guid destinationFileId, CancellationToken ct = default)
+    {
+        var source = await ListFileTagsAsync(sourceFileId, ct).ConfigureAwait(false);
+        foreach (var tag in source)
+            await AddFileTagAsync(destinationFileId, tag.TagType, tag.Value, tag.Slug, tag.Automatic, ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task DeleteFileTagsAsync(Guid fileId, CancellationToken ct = default)
+    {
+        await _tagGate.WaitAsync(ct).ConfigureAwait(false);
+        try {
+            var path = TagPath(fileId);
+            if (File.Exists(path))
+                File.Delete(path);
+        }
+        finally {
+            _tagGate.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<string>> ListManualTagTypesAsync(CancellationToken ct = default)
+    {
+        var files = await ListByPathPrefixAsync(null, true, int.MaxValue, ct).ConfigureAwait(false);
+        var live = new HashSet<Guid>();
+        foreach (var file in files) {
+            if (file.DeletedAt == null)
+                live.Add(file.Id);
+        }
+
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var tag in await ReadAllTagsAsync(ct).ConfigureAwait(false)) {
+            if (!tag.Automatic && live.Contains(tag.FileId))
+                names.Add(tag.TagType);
+        }
+
+        return names.ToArray();
+    }
+
+    /// <inheritdoc />
+    public async Task<FileTagGroupPage> ListTagGroupAsync(IReadOnlyList<FileTagGroupKey> groupBy, string? virtualPath, int maxKeys, CancellationToken ct = default)
+    {
+        var files = await ListByPathPrefixAsync(null, true, int.MaxValue, ct).ConfigureAwait(false);
+        var tags = await ReadAllTagsAsync(ct).ConfigureAwait(false);
+        return FileTagGrouper.Group(groupBy, virtualPath, files, tags, maxKeys);
+    }
+
+    private async Task<List<FileTag>> ReadAllTagsAsync(CancellationToken ct)
+    {
+        if (!Directory.Exists(_rootDirectoryPath))
+            return [];
+
+        var all = new List<FileTag>();
+        foreach (var path in Directory.GetFiles(_rootDirectoryPath, "*" + TagExtension, SearchOption.AllDirectories)) {
+            ct.ThrowIfCancellationRequested();
+            var json = await ReadTagTextAsync(path, ct).ConfigureAwait(false);
+            var tags = JsonSerializer.Deserialize<List<FileTag>>(json);
+            if (tags != null)
+                all.AddRange(tags);
+        }
+
+        return all;
+    }
+
+    private async Task<List<FileTag>> ReadTagsAsync(Guid fileId, CancellationToken ct)
+    {
+        var path = TagPath(fileId);
+        if (!File.Exists(path))
+            return [];
+
+        var json = await ReadTagTextAsync(path, ct).ConfigureAwait(false);
+        return JsonSerializer.Deserialize<List<FileTag>>(json) ?? [];
+    }
+
+    private async Task WriteTagsAsync(Guid fileId, List<FileTag> tags, CancellationToken ct)
+    {
+        var path = TagPath(fileId);
+        if (tags.Count == 0) {
+            if (File.Exists(path))
+                File.Delete(path);
+
+            return;
+        }
+
+        var directory = Path.GetDirectoryName(path);
+        if (!string.IsNullOrEmpty(directory))
+            Directory.CreateDirectory(directory);
+
+        var json = JsonSerializer.Serialize(tags);
+#if NETSTANDARD2_0
+        ct.ThrowIfCancellationRequested();
+        File.WriteAllText(path, json);
+        await Task.CompletedTask.ConfigureAwait(false);
+#else
+        await File.WriteAllTextAsync(path, json, ct).ConfigureAwait(false);
+#endif
+    }
+
+    private static async Task<string> ReadTagTextAsync(string path, CancellationToken ct)
+    {
+#if NETSTANDARD2_0
+        ct.ThrowIfCancellationRequested();
+        return File.ReadAllText(path);
+#else
+        return await File.ReadAllTextAsync(path, ct).ConfigureAwait(false);
+#endif
+    }
+
+    private string TagPath(Guid fileId)
+    {
+        var idString = fileId.ToString("N");
+        var subDir = Path.Combine(idString.Substring(0, 2), idString.Substring(2, 2));
+        return Path.Combine(_rootDirectoryPath, subDir, idString + TagExtension);
     }
 
     private string GetMetadataPath(Guid fileId)

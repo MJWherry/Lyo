@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Web.Components.Models;
 
@@ -35,4 +36,5 @@ public enum LyoFileUploadStatus
     Cancelled
 }
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record LyoFileUploadEventArgs(string FileName, long FileSize, LyoFileUploadStatus Status, double Progress, string? ErrorMessage = null);

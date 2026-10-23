@@ -19,9 +19,9 @@ public sealed class DefaultLyoRefreshTokenExchange : ILyoRefreshTokenExchange
     private readonly IAuthAuditContextAccessor _auditContext;
     private readonly ILyoJwtIssuer _jwtIssuer;
     private readonly ILogger<DefaultLyoRefreshTokenExchange> _logger;
+    private readonly IUserScopeStore? _scopes;
     private readonly IApiTokenStore _store;
     private readonly IUserStore _users;
-    private readonly IUserScopeStore? _scopes;
     private readonly IApiTokenValidator _validator;
 
     /// <summary>Builds a new exchange.</summary>

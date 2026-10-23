@@ -15,6 +15,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Lyo.Lock\Lyo.Lock.csproj"/>
+        <ProjectReference Include="..\..\Common\Lyo.Common.Core\Lyo.Common.Core.csproj"/>
         <ProjectReference Include="..\..\Exceptions\Lyo.Exceptions\Lyo.Exceptions.csproj"/>
     </ItemGroup>
 

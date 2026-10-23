@@ -62,7 +62,7 @@ public class TwilioSmsServiceTests
     public async Task SendAsync_NullBuilder_ThrowsArgumentNullException()
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
-        await ExceptionAssertions.ThrowsAsync<ArgumentNullException>(async () => await service.SendAsync((SmsMessageBuilder)null!, ct: TestContext.Current.CancellationToken));
+        await ExceptionAssertions.ThrowsAsync<ArgumentNullException>(async () => await service.SendAsync((SmsMessageBuilder)null!, ct: TestCt));
     }
 
     [Fact]
@@ -72,7 +72,7 @@ public class TwilioSmsServiceTests
         var builder = SmsMessageBuilder.New().SetTo("+15551234567").SetBody("Test");
 
         // Compiles and exercises the API; Twilio will fail at runtime
-        var result = await service.SendAsync(builder, ct: TestContext.Current.CancellationToken);
+        var result = await service.SendAsync(builder, ct: TestCt);
         Assert.NotNull(result);
     }
 
@@ -83,7 +83,7 @@ public class TwilioSmsServiceTests
         var builder = SmsMessageBuilder.New().SetTo("+15551234567").SetBody("Test");
 
         // Compiles and exercises the API; Twilio will fail at runtime
-        var result = await service.SendAsync(builder, "+19998887777", TestContext.Current.CancellationToken);
+        var result = await service.SendAsync(builder, "+19998887777", TestCt);
         Assert.NotNull(result);
     }
 
@@ -94,7 +94,7 @@ public class TwilioSmsServiceTests
         var builder = SmsMessageBuilder.New().SetTo("+15551234567").AddAttachment("https://example.com/image.jpg");
 
         // Compiles and exercises the API; Twilio will fail at runtime
-        var result = await service.SendAsync(builder, ct: TestContext.Current.CancellationToken);
+        var result = await service.SendAsync(builder, ct: TestCt);
         Assert.NotNull(result);
     }
 
@@ -102,35 +102,35 @@ public class TwilioSmsServiceTests
     public async Task SendBulkAsync_NullBuilders_ThrowsArgumentNullException()
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
-        await Assert.ThrowsAsync<ArgumentNullException>(() => service.SendBulkAsync((IEnumerable<SmsMessageBuilder>)null!, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => service.SendBulkAsync((IEnumerable<SmsMessageBuilder>)null!, TestCt));
     }
 
     [Fact]
     public async Task SendBulkSmsAsync_NullMessages_ThrowsArgumentNullException()
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
-        await Assert.ThrowsAsync<ArgumentNullException>(() => service.SendBulkSmsAsync(null!, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => service.SendBulkSmsAsync(null!, TestCt));
     }
 
     [Fact]
     public async Task GetMessageByIdAsync_NullMessageId_ThrowsArgumentNullException()
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
-        await Assert.ThrowsAsync<ArgumentNullException>(() => service.GetMessageByIdAsync(null!, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => service.GetMessageByIdAsync(null!, TestCt));
     }
 
     [Fact]
     public async Task GetMessageByIdAsync_EmptyMessageId_ThrowsArgumentException()
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
-        await ExceptionAssertions.ThrowsAsync<ArgumentException>(() => service.GetMessageByIdAsync("", TestContext.Current.CancellationToken));
+        await ExceptionAssertions.ThrowsAsync<ArgumentException>(() => service.GetMessageByIdAsync("", TestCt));
     }
 
     [Fact]
     public void GetMessagesAsync_NullFilter_ThrowsArgumentNullException()
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
-        ExceptionAssertions.Throws<ArgumentNullException>(() => service.GetMessagesAsync(null!, TestContext.Current.CancellationToken).GetAwaiter().GetResult());
+        ExceptionAssertions.Throws<ArgumentNullException>(() => service.GetMessagesAsync(null!, TestCt).GetAwaiter().GetResult());
     }
 
     [Fact]
@@ -138,18 +138,17 @@ public class TwilioSmsServiceTests
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
         var filter = new SmsMessageQueryFilter();
-        var result = await service.GetMessagesAsync(filter, TestContext.Current.CancellationToken);
+        var result = await service.GetMessagesAsync(filter, TestCt);
         result.ShouldNotBeNull();
         result.Items.ShouldNotBeNull();
-        result.Start.ShouldBe(0);
-        result.Amount.ShouldBeGreaterThan(0);
+        result.PageSize.ShouldBeGreaterThan(0);
     }
 
     [Fact]
     public async Task GetMessagesAsync_NullBuilder_ThrowsArgumentNullException()
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
-        await Assert.ThrowsAsync<ArgumentNullException>(() => service.GetMessagesAsync(null!, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => service.GetMessagesAsync(null!, TestCt));
     }
 
     [Fact]
@@ -157,7 +156,7 @@ public class TwilioSmsServiceTests
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
         var builder = TwilioMessageQueryBuilder.New().Inbound().WithPageSize(10);
-        var result = await service.GetMessagesAsync(builder, TestContext.Current.CancellationToken);
+        var result = await service.GetMessagesAsync(builder, TestCt);
         result.ShouldNotBeNull();
         result.Items.ShouldNotBeNull();
     }
@@ -167,14 +166,14 @@ public class TwilioSmsServiceTests
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
         var builder = TwilioMessageQueryBuilder.New().WithDateSentAfter(new(2026, 6, 1, 0, 0, 0, DateTimeKind.Utc)).WithDateSentBefore(new(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
-        await Assert.ThrowsAsync<ArgumentOutsideRangeException>(() => service.GetMessagesAsync(builder, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentOutsideRangeException>(() => service.GetMessagesAsync(builder, TestCt));
     }
 
     [Fact]
     public async Task GetInboundMessagesAsync_DefaultArguments_ReturnsPaginatedResults()
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
-        var result = await service.GetInboundMessagesAsync(ct: TestContext.Current.CancellationToken);
+        var result = await service.GetInboundMessagesAsync(ct: TestCt);
         result.ShouldNotBeNull();
         result.Items.ShouldNotBeNull();
     }
@@ -183,21 +182,21 @@ public class TwilioSmsServiceTests
     public async Task GetInboundMessagesAsync_InvalidPageSize_ThrowsArgumentOutOfRangeException()
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
-        await Assert.ThrowsAsync<ArgumentOutsideRangeException>(() => service.GetInboundMessagesAsync(pageSize: 0, ct: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentOutsideRangeException>(() => service.GetInboundMessagesAsync(pageSize: 0, ct: TestCt));
     }
 
     [Fact]
     public async Task GetInboundMessagesAsync_InvalidToNumber_ThrowsInvalidFormatException()
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
-        await Assert.ThrowsAsync<InvalidFormatException>(() => service.GetInboundMessagesAsync("invalid", ct: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<InvalidFormatException>(() => service.GetInboundMessagesAsync("invalid", ct: TestCt));
     }
 
     [Fact]
     public async Task GetOutboundMessagesAsync_DefaultArguments_ReturnsPaginatedResults()
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
-        var result = await service.GetOutboundMessagesAsync(ct: TestContext.Current.CancellationToken);
+        var result = await service.GetOutboundMessagesAsync(ct: TestCt);
         result.ShouldNotBeNull();
         result.Items.ShouldNotBeNull();
     }
@@ -206,7 +205,7 @@ public class TwilioSmsServiceTests
     public async Task GetOutboundMessagesAsync_InvalidFromNumber_ThrowsInvalidFormatException()
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
-        await Assert.ThrowsAsync<InvalidFormatException>(() => service.GetOutboundMessagesAsync("invalid", ct: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<InvalidFormatException>(() => service.GetOutboundMessagesAsync("invalid", ct: TestCt));
     }
 
     [Fact]
@@ -214,7 +213,7 @@ public class TwilioSmsServiceTests
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
         var message = new SmsRequest { To = "", Body = "Test" };
-        var result = await service.SendAsync(message, TestContext.Current.CancellationToken);
+        var result = await service.SendAsync(message, TestCt);
         result.IsSuccess.ShouldBeFalse();
     }
 
@@ -230,7 +229,7 @@ public class TwilioSmsServiceTests
         };
 
         var service = new TwilioSmsService(options, CreateRestClient(options), _logger, metrics);
-        var result = await service.SendAsync(new() { To = "", Body = "Test" }, TestContext.Current.CancellationToken);
+        var result = await service.SendAsync(new() { To = "", Body = "Test" }, TestCt);
         result.IsSuccess.ShouldBeFalse();
         Assert.NotNull(metrics.GetHistogram(Twilio.Constants.Metrics.SendDuration));
         Assert.Equal(1, metrics.GetCounterValue(Twilio.Constants.Metrics.SendFailure));
@@ -242,7 +241,7 @@ public class TwilioSmsServiceTests
         var optionsWithoutDefault = new TwilioOptions { AccountSid = "AC1234567890abcdef1234567890abcdef", AuthToken = "test_auth_token" };
         var service = new TwilioSmsService(optionsWithoutDefault, CreateRestClient(optionsWithoutDefault), _logger);
         var message = new SmsRequest { To = "+15551234567", Body = "Test" };
-        var result = await service.SendAsync(message, TestContext.Current.CancellationToken);
+        var result = await service.SendAsync(message, TestCt);
         result.IsSuccess.ShouldBeFalse();
         result.Errors.ShouldNotBeNull();
         result.Errors!.Count.ShouldBeGreaterThan(0);
@@ -253,7 +252,7 @@ public class TwilioSmsServiceTests
     public async Task SendSmsAsync_WithBody_Works()
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
-        var result = await service.SendSmsAsync("+15551234567", "Test message", ct: TestContext.Current.CancellationToken);
+        var result = await service.SendSmsAsync("+15551234567", "Test message", ct: TestCt);
 
         // Twilio fails at runtime; this still checks the API signature
         result.ShouldNotBeNull();
@@ -264,7 +263,7 @@ public class TwilioSmsServiceTests
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
         var mediaUrls = new[] { "https://example.com/image.jpg" };
-        var result = await service.SendMmsAsync("+15551234567", mediaUrls, ct: TestContext.Current.CancellationToken);
+        var result = await service.SendMmsAsync("+15551234567", mediaUrls, ct: TestCt);
 
         // Twilio fails at runtime; this still checks the API signature
         result.ShouldNotBeNull();
@@ -275,7 +274,7 @@ public class TwilioSmsServiceTests
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
         var mediaUrls = new[] { "https://example.com/image.jpg" };
-        var result = await service.SendMmsAsync("+15551234567", mediaUrls, "Check this out!", ct: TestContext.Current.CancellationToken);
+        var result = await service.SendMmsAsync("+15551234567", mediaUrls, "Check this out!", ct: TestCt);
 
         // Twilio fails at runtime; this still checks the API signature
         result.ShouldNotBeNull();
@@ -286,7 +285,7 @@ public class TwilioSmsServiceTests
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
         var mediaUrls = new[] { "https://example.com/image.jpg" };
-        var result = await service.SendMmsAsync("+15551234567", mediaUrls, "Check this out!", "+19998887777", TestContext.Current.CancellationToken);
+        var result = await service.SendMmsAsync("+15551234567", mediaUrls, "Check this out!", "+19998887777", TestCt);
 
         // Twilio fails at runtime; this still checks the API signature
         result.ShouldNotBeNull();
@@ -297,7 +296,7 @@ public class TwilioSmsServiceTests
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
         var mediaUrls = new[] { new Uri("https://example.com/image.jpg") };
-        var result = await service.SendMmsAsync("+15551234567", mediaUrls, ct: TestContext.Current.CancellationToken);
+        var result = await service.SendMmsAsync("+15551234567", mediaUrls, ct: TestCt);
 
         // Twilio fails at runtime; this still checks the API signature
         result.ShouldNotBeNull();
@@ -308,7 +307,7 @@ public class TwilioSmsServiceTests
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
         var mediaUrls = new[] { new Uri("https://example.com/image.jpg") };
-        var result = await service.SendMmsAsync("+15551234567", mediaUrls, "Check this out!", ct: TestContext.Current.CancellationToken);
+        var result = await service.SendMmsAsync("+15551234567", mediaUrls, "Check this out!", ct: TestCt);
 
         // Twilio fails at runtime; this still checks the API signature
         result.ShouldNotBeNull();
@@ -319,21 +318,21 @@ public class TwilioSmsServiceTests
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
         var mediaUrls = Array.Empty<string>();
-        await Assert.ThrowsAsync<ArgumentException>(() => service.SendMmsAsync("+15551234567", mediaUrls, ct: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentException>(() => service.SendMmsAsync("+15551234567", mediaUrls, ct: TestCt));
     }
 
     [Fact]
     public async Task SendMmsAsync_NullMediaUrls_ThrowsArgumentNullException()
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
-        await Assert.ThrowsAsync<ArgumentNullException>(() => service.SendMmsAsync("+15551234567", (IEnumerable<string>)null!, ct: TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => service.SendMmsAsync("+15551234567", (IEnumerable<string>)null!, ct: TestCt));
     }
 
     [Fact]
     public async Task SendBulkAsync_NullBulkBuilder_ThrowsArgumentNullException()
     {
         var service = new TwilioSmsService(_options, CreateRestClient(_options), _logger);
-        await Assert.ThrowsAsync<ArgumentNullException>(() => service.SendBulkAsync((BulkSmsBuilder)null!, TestContext.Current.CancellationToken));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => service.SendBulkAsync((BulkSmsBuilder)null!, TestCt));
     }
 
     [Fact]
@@ -349,7 +348,7 @@ public class TwilioSmsServiceTests
 
         var service = new TwilioSmsService(options, CreateRestClient(options), _logger, metrics);
         var messages = new[] { new SmsRequest { To = "", Body = "Test 1" }, new SmsRequest { To = "", Body = "Test 2" } };
-        var results = await service.SendBulkSmsAsync(messages, TestContext.Current.CancellationToken);
+        var results = await service.SendBulkSmsAsync(messages, TestCt);
         Assert.Equal(2, results.Count);
         Assert.NotNull(metrics.GetHistogram(Twilio.Constants.Metrics.BulkSendDuration));
         Assert.Equal(2, metrics.GetCounterValue(Twilio.Constants.Metrics.BulkSendTotal));

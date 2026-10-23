@@ -27,6 +27,6 @@ public sealed class LyoHttpCookie
     /// <summary>Optional expiry.</summary>
     public DateTimeOffset? Expiry { get; init; }
 
-    /// <inheritdoc />
-    public override string ToString() => $"{Name}={Value}";
+    /// <summary>Cookie name and domain. The value is omitted.</summary>
+    public override string ToString() => $"{Name} Domain={Domain} ValueSet={!string.IsNullOrEmpty(Value)}";
 }

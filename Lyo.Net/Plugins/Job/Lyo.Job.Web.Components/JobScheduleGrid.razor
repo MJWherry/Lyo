@@ -15,6 +15,52 @@
             </MudButton>
         </MudStack>
 
+        @if (_monthCalendar is not null) {
+            <LyoCalendar Calendar="_monthCalendar"
+                         TimeZone="_calendarZone"
+                         TimeZoneChanged="OnCalendarZoneChanged"
+                         Use24Hour="_use24Hour"
+                         Use24HourChanged="OnHourCycleChanged"
+                         VisibleMonthChanged="OnVisibleMonthChanged"
+                         CategoryHues="CalendarHues">
+                <DetailContent Context="entry">
+                    @{
+                        var row = RowFor(entry);
+                    }
+                    @if (row is null) {
+                        <MudText Typo="Typo.subtitle1" Style="overflow-wrap: anywhere;">@entry.Title</MudText>
+                    }
+                    else {
+                        <MudText Typo="Typo.h6" Style="overflow-wrap: anywhere;">@row.DefinitionName</MudText>
+
+                        <MudText Typo="Typo.body2" Style="overflow-wrap: anywhere;">@(row.Schedule.Description ?? "—")</MudText>
+
+                        <LyoChip Label="@row.Schedule.Type.ToString()" Color="Color.Primary"/>
+
+                        <MudText Typo="Typo.caption">Schedule @row.Schedule.Id.ToString()[..8]…</MudText>
+
+                        <MudText Typo="Typo.body2">@(row.Schedule.TimeZoneId ?? "UTC")</MudText>
+
+                        <MudText Typo="Typo.body2">@(row.Schedule.Enabled ? "Enabled" : "Disabled")</MudText>
+
+                        @if (row.Schedule.JobBlackoutCalendar is { } blackout) {
+                            <MudText Typo="Typo.body2">Blackout @blackout.Name</MudText>
+                        }
+
+                        @if (entry.Muted) {
+                            <MudText Typo="Typo.body2">This time is inside a blackout, so the job will not run.</MudText>
+                        }
+
+                        @if (row.NextRunUtc.HasValue) {
+                            <MudText Typo="Typo.caption">Next run
+                                <LyoTimestamp Value="@row.NextRunUtc.Value" Kind="LyoTimestampKind.Relative"/>
+                            </MudText>
+                        }
+                    }
+                </DetailContent>
+            </LyoCalendar>
+        }
+
         @if (_loading) {
             <MudProgressLinear Indeterminate="true" Color="Color.Primary"/>
         }
@@ -142,7 +188,9 @@
                                 <tbody>
                                 @foreach (var run in _upcomingRuns) {
                                     <tr>
-                                        <td><LyoTimestamp Value="@run.RunAtUtc" Kind="LyoTimestampKind.Relative"/></td>
+                                        <td>
+                                            <LyoTimestamp Value="@run.RunAtUtc" Kind="LyoTimestampKind.Relative"/>
+                                        </td>
                                         <td>@run.DefinitionName</td>
                                         <td>@(run.ScheduleDescription ?? run.ScheduleId.ToString()[..8] + "…")</td>
                                         <td>@run.ScheduleType</td>

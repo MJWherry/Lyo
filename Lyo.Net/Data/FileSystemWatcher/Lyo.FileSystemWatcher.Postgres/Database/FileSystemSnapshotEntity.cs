@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.FileSystemWatcher.Postgres.Database;
 
 /// <summary>One structure snapshot of a watch.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class FileSystemSnapshotEntity
 {
     [Key]
@@ -31,4 +33,7 @@ public sealed class FileSystemSnapshotEntity
     public FileSystemWatchEntity Watch { get; set; } = null!;
 
     public List<FileSystemChangeEntity> Changes { get; set; } = [];
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

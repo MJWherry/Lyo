@@ -1,8 +1,11 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 using Lyo.FileStorage.Models;
 
 namespace Lyo.FileStorage.S3;
 
+/// <summary>Settings for the S3 file store.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class S3FileStorageOptions : FileStorageServiceBaseOptions
 {
     public const string SectionName = "S3FileStorageOptions";
@@ -14,8 +17,8 @@ public sealed class S3FileStorageOptions : FileStorageServiceBaseOptions
     public string? Region { get; set; }
 
     /// <summary>
-    /// Optional AWS access key ID. When set with <see cref="SecretAccessKey" />, used instead of <see cref="Profile" /> or the default credential chain. When both keys are null or
-    /// whitespace, <see cref="Profile" /> is used if set; otherwise the default AWS chain (environment, shared credentials file, IAM role).
+    /// Optional AWS access key ID. When set with <see cref="SecretAccessKey" />, used instead of <see cref="Profile" /> or the default credential chain. When both keys are null
+    /// or whitespace, <see cref="Profile" /> is used if set; otherwise the default AWS chain (environment, shared credentials file, IAM role).
     /// </summary>
     public string? AccessKeyId { get; set; }
 
@@ -23,8 +26,8 @@ public sealed class S3FileStorageOptions : FileStorageServiceBaseOptions
     public string? SecretAccessKey { get; set; }
 
     /// <summary>
-    /// Named profile from the shared credentials/config files (<c>~/.aws/credentials</c> and <c>~/.aws/config</c>). Used when static keys are omitted. When unset, the AWS default
-    /// chain is used (which looks for the <c>default</c> profile). If set but the profile is missing, client construction fails rather than falling back to <c>default</c>.
+    /// Named profile from the shared credentials/config files (<c>~/.aws/credentials</c> and <c>~/.aws/config</c>). Used when static keys are omitted. When unset, the AWS
+    /// default chain is used (which looks for the <c>default</c> profile). If set but the profile is missing, client construction fails rather than falling back to <c>default</c>.
     /// </summary>
     public string? Profile { get; set; }
 
@@ -44,5 +47,13 @@ public sealed class S3FileStorageOptions : FileStorageServiceBaseOptions
     public string? ServerSideEncryptionAwsKmsKeyId { get; set; }
 
     /// <summary>Throws when BucketName is missing. Access keys stay optional (IAM / profile / default chain).</summary>
-    public void Validate() => ArgumentHelpers.ThrowIfNullOrWhiteSpace(BucketName);
+    public void Validate()
+    {
+        ArgumentHelpers.ThrowIfNullOrWhiteSpace(BucketName);
+        ValidateUploadFilters();
+    }
+
+    /// <summary>Bucket, region, and whether static keys are set. Key values are omitted.</summary>
+    public override string ToString()
+        => $"BucketName={BucketName} Region={Region} AccessKeySet={!string.IsNullOrWhiteSpace(AccessKeyId)} SecretAccessKeySet={!string.IsNullOrWhiteSpace(SecretAccessKey)} Profile={Profile} ServiceUrl={ServiceUrl} {base.ToString()}";
 }

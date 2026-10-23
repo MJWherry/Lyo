@@ -2,6 +2,10 @@ namespace Lyo.Drift.Web.Components;
 
 public partial class DriftDiffGrid
 {
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Source")];
+
+    private LyoDataGridProjected? _dataGrid;
+
     /// <summary>HTTP client used for Query.</summary>
     [Parameter]
     [EditorRequired]
@@ -14,18 +18,13 @@ public partial class DriftDiffGrid
 
     private string _route => $"{BaseRoute.TrimEnd('/')}/Diff";
 
-    private LyoDataGridProjected? _dataGrid;
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Source")];
-
     private async Task ViewDiff(object? item)
     {
         var id = DriftColorHelper.GetGuidId(item);
         if (id is null)
             return;
 
-        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<DriftDiffRes>>(
-            $"{_route}/QueryConcrete", new() { Keys = [[id.Value]], Amount = 1 });
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<DriftDiffRes>>($"{_route}/QueryConcrete", new() { Keys = [[id.Value]], Amount = 1 });
         var diff = res?.Items?.FirstOrDefault();
         if (diff is null)
             return;

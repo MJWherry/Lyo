@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
-
 #if NETSTANDARD2_0
 #pragma warning disable CS8604 // Possible null reference argument.
 #endif

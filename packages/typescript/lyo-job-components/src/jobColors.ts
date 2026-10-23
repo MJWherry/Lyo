@@ -1,4 +1,9 @@
+import {projectedField as readProjectedField, projectedId as readProjectedId} from "lyo-web-components";
+
 export type JobStatusColor = "success" | "error" | "warning" | "info" | "secondary" | "inherit";
+
+export const projectedField = readProjectedField;
+export const projectedId = readProjectedId;
 
 export function jobStateColor(state: string | null | undefined): JobStatusColor {
     switch ((state ?? "").toLowerCase()) {
@@ -45,24 +50,6 @@ export function workerStateColor(state: string | null | undefined): JobStatusCol
         default:
             return "inherit";
     }
-}
-
-export function projectedField(row: Record<string, unknown>, field: string): unknown {
-    if (field in row) return row[field];
-    const camel = field.charAt(0).toLowerCase() + field.slice(1);
-    if (camel in row) return row[camel];
-    const nested = field.split(".");
-    let cur: unknown = row;
-    for (const part of nested) {
-        if (!cur || typeof cur !== "object") return undefined;
-        const rec = cur as Record<string, unknown>;
-        cur = rec[part] ?? rec[part.charAt(0).toLowerCase() + part.slice(1)];
-    }
-    return cur;
-}
-
-export function projectedId(row: Record<string, unknown>): string {
-    return String(projectedField(row, "Id") ?? "");
 }
 
 export function canCancelRun(row: Record<string, unknown>): boolean {

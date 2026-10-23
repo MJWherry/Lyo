@@ -23,8 +23,8 @@ public static class Extensions
 
         /// <summary>Registers options, the startup migrator, and an <see cref="IDbContextFactory{TContext}" /> whose history table lives in the package schema.</summary>
         /// <remarks>
-        /// A <c>*.Postgres</c> package can call this from its own <c>Add{Feature}DbContextFactory</c> and stop there. <typeparamref name="TOptions" /> supplies the
-        /// schema, so migration history stays in that schema and several packages can share one database.
+        /// A <c>*.Postgres</c> package can call this from its own <c>Add{Feature}DbContextFactory</c> and stop there. <typeparamref name="TOptions" /> supplies the schema, so
+        /// migration history stays in that schema and several packages can share one database.
         /// <para><paramref name="options" /> is validated first. A bad connection string fails here instead of on the first query.</para>
         /// </remarks>
         /// <param name="options">Package options. Stored as <c>IOptions&lt;TOptions&gt;</c> and as <typeparamref name="TOptions" />.</param>
@@ -36,7 +36,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(options);
             options.Validate();
-
             var schema = ((IPostgresMigrationConfig)options).Schema;
             services.AddSingleton(Options.Create(options));
             services.TryAddSingleton(options);

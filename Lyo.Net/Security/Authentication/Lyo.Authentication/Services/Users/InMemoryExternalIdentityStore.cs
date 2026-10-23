@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Lyo.Authentication.Models.Records;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 
@@ -57,7 +58,7 @@ public sealed class InMemoryExternalIdentityStore : IExternalIdentityStore
             return Task.FromResult(updated);
         }
 
-        var link = new LinkedIdentity(Guid.NewGuid(), userId, provider, subject, emailAtLink, snapScopes, rawClaims, now, now, now, null);
+        var link = new LinkedIdentity(LyoGuid.CreateV7(), userId, provider, subject, emailAtLink, snapScopes, rawClaims, now, now, now, null);
         _byId[link.Id] = link;
         return Task.FromResult(link);
     }

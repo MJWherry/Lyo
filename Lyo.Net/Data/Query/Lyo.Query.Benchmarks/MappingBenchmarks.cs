@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using BenchmarkDotNet.Attributes;
 using Lyo.Api.Mapping;
 using Lyo.Benchmark;
+using Lyo.Common.Core.Identifiers;
 using Mapster;
 using MapsterMapper;
 
@@ -37,10 +39,10 @@ public class MappingBenchmarks
 
     private MapEntity CreateEntity(int seed)
         => new() {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             Name = $"Entity {seed}",
             Age = 20 + seed % 50,
-            Children = Enumerable.Range(0, ChildCount).Select(c => new MapChild { Id = Guid.NewGuid(), Label = $"child-{c}", Value = c }).ToList()
+            Children = Enumerable.Range(0, ChildCount).Select(c => new MapChild { Id = LyoGuid.CreateV7(), Label = $"child-{c}", Value = c }).ToList()
         };
 
     [Benchmark(Baseline = true)]
@@ -72,6 +74,8 @@ public sealed class MapChild
     public int Value { get; set; }
 }
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record MapEntityRes(Guid Id, string Name, int Age, List<MapChildRes> Children);
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record MapChildRes(Guid Id, string Label, int Value);

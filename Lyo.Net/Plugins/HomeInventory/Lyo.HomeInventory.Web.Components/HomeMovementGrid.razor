@@ -1,0 +1,16 @@
+<LyoDataGridProjected ApiClient="ApiClient"
+                      GridKey="HomeMovementGrid"
+                      Route="@_route"
+                      KeySelector="@(i => ProjectedGridKeys.GuidId(i))"
+                      FilterPropertyDefinitions="@_propertyDefinitions"
+                      Features="@(LyoDataGridFeatureFlags.Filterable | LyoDataGridFeatureFlags.Searchable)">
+    <Columns>
+        <LyoProjectedColumn Field="ItemId" Title="Item"/>
+        <LyoProjectedColumn Field="MovementType" Title="Type"/>
+        <LyoProjectedColumn Field="Quantity" Title="Qty"/>
+        <LyoProjectedColumn Field="FromLocationId" Title="From"/>
+        <LyoProjectedColumn Field="ToLocationId" Title="To"/>
+        <LyoProjectedColumn Field="ReferenceNumber" Title="Ref"/>
+        <LyoProjectedColumn Field="CreatedTimestamp" Title="When" Timestamp="LyoTimestampKind.Absolute"/>
+    </Columns>
+</LyoDataGridProjected>

@@ -58,21 +58,27 @@ public static class Extensions
         app.CreateBuilder<ComicDbContext, SeriesEntity, SeriesEntity, SeriesEntity, Guid>("Comic/Series", "Comic")
             .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateCombPostgres() : ctx.Entity.Id })
             .Build();
+
         app.CreateBuilder<ComicDbContext, AlternateTitleEntity, AlternateTitleEntity, AlternateTitleEntity, Guid>("Comic/AlternateTitles", "Comic")
             .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateCombPostgres() : ctx.Entity.Id })
             .Build();
+
         app.CreateBuilder<ComicDbContext, VolumeEntity, VolumeEntity, VolumeEntity, Guid>("Comic/Volumes", "Comic")
             .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateCombPostgres() : ctx.Entity.Id })
             .Build();
+
         app.CreateBuilder<ComicDbContext, ChapterEntity, ChapterEntity, ChapterEntity, Guid>("Comic/Chapters", "Comic")
             .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateCombPostgres() : ctx.Entity.Id })
             .Build();
+
         app.CreateBuilder<ComicDbContext, PageEntity, PageEntity, PageEntity, Guid>("Comic/Pages", "Comic")
             .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateCombPostgres() : ctx.Entity.Id })
             .Build();
+
         app.CreateBuilder<ComicDbContext, CharacterEntity, CharacterEntity, CharacterEntity, Guid>("Comic/Characters", "Comic")
             .WithCrud(ApiFeatureSet.DefaultCrud, new() { BeforeCreate = ctx => ctx.Entity.Id = ctx.Entity.Id == default ? LyoGuid.CreateCombPostgres() : ctx.Entity.Id })
             .Build();
+
         return app;
     }
 }

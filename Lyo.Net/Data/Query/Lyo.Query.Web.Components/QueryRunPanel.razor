@@ -51,11 +51,20 @@
             <MudButton Variant="Variant.Filled"
                        Color="Color.Primary"
                        Size="Size.Small"
-                       StartIcon="@(_loading ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.PlayArrow)"
+                       StartIcon="@(_busy == BusyKind.Run ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.PlayArrow)"
                        OnClick="@RunQuery"
                        Class="run-query-btn"
-                       Disabled="@_loading">
-                @(_loading ? "Running…" : "Run Query")
+                       Disabled="@(_busy != BusyKind.None)">
+                @(_busy == BusyKind.Run ? "Running…" : "Run Query")
+            </MudButton>
+            <MudButton Variant="Variant.Outlined"
+                       Color="Color.Primary"
+                       Size="Size.Small"
+                       StartIcon="@(_busy == BusyKind.Sql ? Icons.Material.Filled.HourglassEmpty : Icons.Material.Filled.Code)"
+                       OnClick="@ShowSql"
+                       Class="run-query-btn"
+                       Disabled="@(_busy != BusyKind.None)">
+                @(_busy == BusyKind.Sql ? "Showing…" : "Show SQL")
             </MudButton>
         </MudStack>
 
@@ -305,7 +314,7 @@
                                 </span>
                             }
                         </MudText>
-                        @if ((_lastResponseElapsedMs.HasValue || _lastResponseSizeBytes.HasValue || _resultJson.ValueKind != JsonValueKind.Undefined || !string.IsNullOrEmpty(_resultRawText)) && !_loading) {
+                        @if ((_lastResponseElapsedMs.HasValue || _lastResponseSizeBytes.HasValue || _resultJson.ValueKind != JsonValueKind.Undefined || !string.IsNullOrEmpty(_resultRawText)) && _busy == BusyKind.None) {
                             <MudIconButton Icon="@Icons.Material.Filled.Clear"
                                            Size="Size.Small"
                                            OnClick="ClearResponse"
@@ -313,7 +322,7 @@
                         }
                     </div>
                     <div class="pane-editor-host">
-                        @if (_resultJson.ValueKind != JsonValueKind.Undefined && !_loading) {
+                        @if (_resultJson.ValueKind != JsonValueKind.Undefined && _busy == BusyKind.None) {
                             <JsonEditor @key="_responseEditorRenderKey"
                                         T="JsonElement"
                                         Value="@_resultJson"
@@ -331,11 +340,11 @@
                                 </MudAlert>
                             }
                         }
-                        else if (!string.IsNullOrEmpty(_resultRawText) && !_loading) {
+                        else if (!string.IsNullOrEmpty(_resultRawText) && _busy == BusyKind.None) {
                             <pre class="response-raw-text">@_resultRawText</pre>
                         }
                         else {
-                            <MudText Typo="Typo.body2" Color="Color.Secondary">Run query to see response.</MudText>
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">Run the query or show SQL to see a response.</MudText>
                         }
                     </div>
                 </div>

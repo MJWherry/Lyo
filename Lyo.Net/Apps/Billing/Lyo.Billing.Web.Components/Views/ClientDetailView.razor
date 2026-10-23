@@ -1,0 +1,29 @@
+@namespace Lyo.Billing.Web.Components.Views
+@inject IDialogService DialogService
+
+<MudStack Spacing="3" Class="mt-3">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        <MudButton Variant="Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="@(() => OnBack.InvokeAsync())">Clients</MudButton>
+        <MudText Typo="Typo.h6">@_name</MudText>
+        <ArBalanceChip ApiClient="ApiClient" ClientId="ClientId"/>
+        <MudSpacer/>
+        <MudButton Variant="Variant.Outlined" OnClick="EditAsync">Edit</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => OnCompose.InvokeAsync(ClientId))">Invoice</MudButton>
+    </MudStack>
+    <MudTabs Elevation="0" Rounded="true">
+        <MudTabPanel Text="Contacts">
+            <ClientContactGrid @key="_linksVersion" ApiClient="ApiClient" ClientId="ClientId"/>
+        </MudTabPanel>
+        <MudTabPanel Text="Addresses">
+            <ClientAddressGrid @key="_linksVersion" ApiClient="ApiClient" ClientId="ClientId"/>
+        </MudTabPanel>
+        <MudTabPanel Text="Phones">
+            <ClientPhoneGrid @key="_linksVersion" ApiClient="ApiClient" ClientId="ClientId"/>
+        </MudTabPanel>
+        <MudTabPanel Text="Emails">
+            <ClientEmailGrid @key="_linksVersion" ApiClient="ApiClient" ClientId="ClientId"/>
+        </MudTabPanel>
+    </MudTabs>
+    <ChargeGrid ApiClient="ApiClient" ClientId="ClientId"/>
+    <InvoiceGrid ApiClient="ApiClient" ClientId="ClientId" OnCompose="@(() => OnCompose.InvokeAsync(ClientId))"/>
+</MudStack>

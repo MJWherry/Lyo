@@ -4,17 +4,17 @@ using Lyo.Exceptions;
 namespace Lyo.Authentication.Models.Format;
 
 /// <summary>
-/// Crockford base32 encoder/decoder. Used for the <c>id</c> segment of a Format-B Lyo token: 64 random bits as 11 lowercase characters (no padding, no <c>I</c>/
-/// <c>L</c>/<c>O</c>/<c>U</c>). Tokens Lyo writes are always lowercase; the decoder accepts standard Crockford ambiguity-friendly upper case (<c>I</c>→<c>1</c>, <c>L</c>→
-/// <c>1</c>, <c>O</c>→<c>0</c>) for inbound parsing.
+/// Crockford base32 encoder/decoder. Used for the <c>id</c> segment of a Format-B Lyo token: 64 random bits as 11 lowercase characters (no padding, no <c>I</c>/ <c>L</c>/
+/// <c>O</c>/<c>U</c>). Tokens Lyo writes are always lowercase; the decoder accepts standard Crockford ambiguity-friendly upper case (<c>I</c>→<c>1</c>, <c>L</c>→ <c>1</c>, <c>O</c>→
+/// <c>0</c>) for inbound parsing.
 /// </summary>
 public static class Base32Crockford
 {
     private const string Alphabet = "0123456789abcdefghjkmnpqrstvwxyz";
 
     /// <summary>
-    /// Fixed character length of an encoded 64-bit Lyo token id. Eight bytes ÷ 5 bits per char, rounded up = 13. We use 11 chars carrying 55 bits — enough for ~36
-    /// quadrillion ids before birthday collision is a practical concern at &gt;1B tokens, and nicer looking than 13 chars.
+    /// Fixed character length of an encoded 64-bit Lyo token id. Eight bytes ÷ 5 bits per char, rounded up = 13. We use 11 chars carrying 55 bits — enough for ~36 quadrillion
+    /// ids before birthday collision is a practical concern at &gt;1B tokens, and nicer looking than 13 chars.
     /// </summary>
     /// <remarks>
     /// The 8 random bytes are truncated to 55 bits (top 9 bits dropped) so 11 chars round-trip losslessly. Discarded entropy is replaced by uniform reseeding inside

@@ -1,8 +1,7 @@
 using Lyo.Common.Core.Conversion;
-using Lyo.Web.Components;
-using Lyo.Web.Primitives;
 using Lyo.Web.Components.DataGrid;
 using Lyo.Web.Components.LyoType;
+using Lyo.Web.Primitives;
 using MudBlazor;
 
 namespace Lyo.Reporting.Web.Components;
@@ -21,15 +20,13 @@ public static class ReportColorHelper
         };
 
     /// <summary>
-    /// Format chip using named <see cref="LyoChipHue" /> values, not Mud Primary/Secondary/Tertiary.
-    /// Those theme slots are green, gray, and surface in the default Lyo palette, so Html/Csv/status all collapsed to the same green.
+    /// Format chip using named <see cref="LyoChipHue" /> values, not Mud Primary/Secondary/Tertiary. Those theme slots are green, gray, and surface in the default Lyo palette,
+    /// so Html/Csv/status all collapsed to the same green.
     /// </summary>
-    public static LyoChipSpec ForFormatChip(ReportFormat format)
-        => FormatHue(format) is { } hue ? LyoChips.Of(format.ToString(), hue) : LyoChips.Of(format.ToString());
+    public static LyoChipSpec ForFormatChip(ReportFormat format) => FormatHue(format) is { } hue ? LyoChips.Of(format.ToString(), hue) : LyoChips.Of(format.ToString());
 
     /// <summary>Format chip from a projected name; unknown names stay an em dash.</summary>
-    public static LyoChipSpec ForFormatChip(string? text)
-        => TypeConversion.EnumOrNull<ReportFormat>(text) is { } format ? ForFormatChip(format) : LyoChips.Of(text);
+    public static LyoChipSpec ForFormatChip(string? text) => TypeConversion.EnumOrNull<ReportFormat>(text) is { } format ? ForFormatChip(format) : LyoChips.Of(text);
 
     /// <summary>Identity hue per format. Unknown future members get a default chip, not a guessed degree.</summary>
     private static LyoChipHue? FormatHue(ReportFormat format)
@@ -43,8 +40,7 @@ public static class ReportColorHelper
         };
 
     /// <summary>Chip color for a status name; unknown names use <see cref="Color.Default" />.</summary>
-    public static Color ForStatus(string? text)
-        => TypeConversion.EnumOrNull<ReportGenerationStatus>(text) is { } status ? ForStatus(status) : Color.Default;
+    public static Color ForStatus(string? text) => TypeConversion.EnumOrNull<ReportGenerationStatus>(text) is { } status ? ForStatus(status) : Color.Default;
 
     /// <summary>Human-readable duration derived from milliseconds.</summary>
     public static string FormatDuration(double? ms) => LyoDurationDisplay.Format(ms);
@@ -61,6 +57,6 @@ public static class ReportColorHelper
     /// <summary>Chip color for a completed duration: quick success, then info / warning / error.</summary>
     public static Color ForDurationMs(double ms) => LyoDurationDisplay.ForDurationMs(ms);
 
-    /// <summary>Chip color for a report parameter type (CLR FullName or a catalog alias).</summary>
-    public static Color ForParameterType(string? type) => LyoTypeUi.ForType(type);
+    /// <summary>Chip spec for a report parameter type (CLR FullName or a catalog alias).</summary>
+    public static LyoChipSpec ForParameterType(string? type) => LyoTypeUi.ForType(type);
 }

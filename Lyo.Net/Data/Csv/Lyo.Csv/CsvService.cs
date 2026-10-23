@@ -10,7 +10,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Lyo.Csv;
 
 /// <summary>Facade over the owned CSV reader/writer stack for export, import, validation, and batch work (sync and async).</summary>
-/// <remarks>Safe for concurrent use: each call is independent and does not share mutable state with other calls.</remarks>
+/// <remarks>
+/// Safe for concurrent use. A call clones the options it starts with and keeps that clone. <see cref="SetEncoding" /> and <see cref="SetOptions" /> publish a new instance
+/// for later calls.
+/// </remarks>
 public sealed class CsvService : ICsvService
 {
     private readonly HttpClient? _httpClient;
@@ -19,6 +22,9 @@ public sealed class CsvService : ICsvService
     private readonly CsvWriter _writer;
 
     private CsvOptions _options;
+
+    /// <summary>Service with the default CSV dialect: comma, header row, UTF-8 without a BOM. Do not call <see cref="SetEncoding" /> or <see cref="SetOptions" /> on this instance.</summary>
+    public static CsvService Default { get; } = new();
 
     /// <summary>Builds a new <see cref="CsvService" />.</summary>
     /// <param name="logger">Optional logger; a null logger is used when omitted.</param>
@@ -31,8 +37,8 @@ public sealed class CsvService : ICsvService
         _options = (options ?? new CsvOptions()).Clone();
         _options.Validate();
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-        _writer = new(() => _options, _logger);
-        _reader = new(() => _options, _logger, () => _options.Pooling);
+        _writer = new(() => Volatile.Read(ref _options), _logger);
+        _reader = new(() => Volatile.Read(ref _options), _logger);
     }
 
     /// <inheritdoc cref='P:Lyo.Csv.Models.ICsvService.Writer' />
@@ -45,7 +51,9 @@ public sealed class CsvService : ICsvService
     public void SetEncoding(Encoding encoding)
     {
         ArgumentHelpers.ThrowIfNull(encoding);
-        _options.Encoding = encoding;
+        var next = Volatile.Read(ref _options).Clone();
+        next.Encoding = encoding;
+        Volatile.Write(ref _options, next);
     }
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.SetOptions(Lyo.Csv.Models.CsvOptions)' />
@@ -53,7 +61,7 @@ public sealed class CsvService : ICsvService
     {
         ArgumentHelpers.ThrowIfNull(options);
         options.Validate();
-        _options = options.Clone();
+        Volatile.Write(ref _options, options.Clone());
     }
 
     /// <inheritdoc cref='M:Lyo.Csv.Models.ICsvService.ExportToCsv``1(System.Collections.Generic.IEnumerable{``0},System.String)' />
@@ -232,6 +240,9 @@ public sealed class CsvService : ICsvService
 
         return results;
     }
+
+    /// <inheritdoc cref="ICsvService.ParseStringAsResult{T}" />
+    public CsvParseResult<T> ParseStringAsResult<T>(string csv) => _reader.ParseStringAsResult<T>(csv);
 
     // ReSharper disable once UnusedParameter.Local
     private async Task<byte[]> FetchBytesFromUrlAsync(string url, CancellationToken ct)
@@ -548,7 +559,7 @@ public sealed class CsvService : ICsvService
         ArgumentHelpers.ThrowIfNullOrEmpty(inputList, nameof(inputs));
         ArgumentHelpers.ThrowIfNull(output);
         OperationHelpers.ThrowIfNotWritable(output, $"Stream '{nameof(output)}' must be writable.");
-        var options = _options;
+        var options = Volatile.Read(ref _options).Clone();
         await using var outputWriter = new StreamWriter(output, options.Encoding, 8192, leaveOpen);
         await using var outputCsv = new CsvTextWriter(outputWriter, options);
         var firstInput = true;
@@ -634,7 +645,7 @@ public sealed class CsvService : ICsvService
         ArgumentHelpers.ThrowIfNull(outputStreamFactory);
         ArgumentHelpers.ThrowIfNegativeOrZero(rowsPerFile);
         OperationHelpers.ThrowIfNotReadable(input, $"Stream '{nameof(input)}' must be readable.");
-        var options = _options;
+        var options = Volatile.Read(ref _options).Clone();
         using var inputCsv = new CsvTextReader(new StreamReader(input, options.Encoding, true, 8192, leaveOpen), options);
         IReadOnlyList<string>? headers = null;
         if (options.HasHeaderRecord) {

@@ -1,11 +1,13 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Lyo.Media.Models;
 
 /// <summary>
-/// Extensible audio codec identifier. Lookups are thread-safe. Use <see cref="Custom" /> for a codec that is not listed.
-/// Ids are codec tokens (<c>mp3</c>, <c>aac</c>), not a specific backend's encoder binary name.
+/// Extensible audio codec identifier. Lookups are thread-safe. Use <see cref="Custom" /> for a codec that is not listed. Ids are codec tokens (<c>mp3</c>, <c>aac</c>), not a
+/// specific backend's encoder binary name.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record AudioEncoder
 {
     private static readonly ConcurrentDictionary<string, AudioEncoder> ById = new(StringComparer.OrdinalIgnoreCase);
@@ -23,11 +25,17 @@ public sealed record AudioEncoder
     /// <summary>Opus (<c>opus</c>).</summary>
     public static readonly AudioEncoder Opus = Create("Opus", "opus");
 
+    /// <summary>FLAC (<c>flac</c>).</summary>
+    public static readonly AudioEncoder Flac = Create("Flac", "flac");
+
+    /// <summary>Vorbis (<c>vorbis</c>). Backends map this onto <c>libvorbis</c>.</summary>
+    public static readonly AudioEncoder Vorbis = Create("Vorbis", "vorbis");
+
     /// <summary>Stream copy (<c>copy</c>).</summary>
     public static readonly AudioEncoder Copy = Create("Copy", "copy");
 
     /// <summary>Every built-in encoder. Touching this list registers the static instances for lookup.</summary>
-    public static IReadOnlyList<AudioEncoder> BuiltIns { get; } = [Mp3, Aac, PcmS16le, Opus, Copy];
+    public static IReadOnlyList<AudioEncoder> BuiltIns { get; } = [Mp3, Aac, PcmS16le, Opus, Flac, Vorbis, Copy];
 
     /// <summary>Stable display name (e.g. <c>Aac</c>).</summary>
     public string Name { get; }
@@ -60,7 +68,7 @@ public sealed record AudioEncoder
     public static AudioEncoder Custom(string id)
     {
         _ = BuiltIns;
-        return NamedCatalog.GetOrCustom(ById, id, key => new AudioEncoder(key, key));
+        return NamedCatalog.GetOrCustom(ById, id, key => new(key, key));
     }
 
     /// <inheritdoc />

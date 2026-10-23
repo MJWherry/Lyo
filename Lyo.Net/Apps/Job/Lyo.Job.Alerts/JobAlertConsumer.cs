@@ -26,9 +26,9 @@ public sealed class JobAlertConsumer : BackgroundService
 
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-    private readonly ConcurrentDictionary<string, DateTime> _lastDispatchUtc = new(StringComparer.Ordinal);
-
     private readonly IHttpClientFactory _httpClientFactory;
+
+    private readonly ConcurrentDictionary<string, DateTime> _lastDispatchUtc = new(StringComparer.Ordinal);
     private readonly ILogger<JobAlertConsumer> _logger;
     private readonly IMetrics _metrics;
     private readonly IMqService _mqService;
@@ -93,6 +93,7 @@ public sealed class JobAlertConsumer : BackgroundService
             _logger.LogDebug(
                 "Suppressed duplicate {AlertType} alert for definition {DefinitionId} inside the {DedupWindow} dedup window", alert.AlertType, alert.DefinitionId,
                 _options.DedupWindow);
+
             _metrics.IncrementCounter(Constants.Metrics.Alerts.Suppressed, tags: [("alert_type", alert.AlertType.ToString())]);
             return false;
         }
@@ -117,8 +118,8 @@ public sealed class JobAlertConsumer : BackgroundService
     }
 
     /// <summary>
-    /// True if the same definition/alert-type pair already went out inside <see cref="JobAlertsOptions.DedupWindow" />. Records the send when it is not a
-    /// duplicate, so the caller must ask only once per message.
+    /// True if the same definition/alert-type pair already went out inside <see cref="JobAlertsOptions.DedupWindow" />. Records the send when it is not a duplicate, so the
+    /// caller must ask only once per message.
     /// </summary>
     private bool IsDuplicate(JobAlertEvent alert)
     {
@@ -146,7 +147,7 @@ public sealed class JobAlertConsumer : BackgroundService
     private void ForgetDedupEntry(JobAlertEvent alert)
     {
         if (_options.DedupWindow > TimeSpan.Zero)
-            _lastDispatchUtc.TryRemove(DedupKey(alert), out _);
+            _lastDispatchUtc.TryRemove(DedupKey(alert), out var _);
     }
 
     private static string DedupKey(JobAlertEvent alert) => $"{alert.DefinitionId:N}:{(int)alert.AlertType}";
@@ -159,7 +160,7 @@ public sealed class JobAlertConsumer : BackgroundService
 
         foreach (var entry in _lastDispatchUtc) {
             if (now - entry.Value >= _options.DedupWindow)
-                _lastDispatchUtc.TryRemove(entry.Key, out _);
+                _lastDispatchUtc.TryRemove(entry.Key, out var _);
         }
 
         var excess = _lastDispatchUtc.Count - _options.DedupCacheLimit;
@@ -167,7 +168,7 @@ public sealed class JobAlertConsumer : BackgroundService
             return;
 
         foreach (var entry in _lastDispatchUtc.OrderBy(e => e.Value).Take(excess))
-            _lastDispatchUtc.TryRemove(entry.Key, out _);
+            _lastDispatchUtc.TryRemove(entry.Key, out var _);
     }
 
     /// <summary>Sends the original bytes to the configured DLQ so an unparseable alert can be inspected instead of disappearing. Never throws.</summary>
@@ -191,8 +192,8 @@ public sealed class JobAlertConsumer : BackgroundService
     }
 
     /// <summary>
-    /// POSTs the alert to the webhook. Transient failures retry up to <see cref="JobAlertsOptions.WebhookRetryCount" /> extra times with exponential backoff. Throws only
-    /// when every attempt failed, which puts the message back on the queue for a later delivery.
+    /// POSTs the alert to the webhook. Transient failures retry up to <see cref="JobAlertsOptions.WebhookRetryCount" /> extra times with exponential backoff. Throws only when
+    /// every attempt failed, which puts the message back on the queue for a later delivery.
     /// </summary>
     private async Task PostWebhookAsync(JobAlertEvent alert, CancellationToken ct)
     {
@@ -207,6 +208,7 @@ public sealed class JobAlertConsumer : BackgroundService
                 if (!IsRetryable(response.StatusCode) || attempt == attempts) {
                     _logger.LogWarning(
                         "Job alert webhook returned {StatusCode} for definition {DefinitionId} after {Attempts} attempt(s)", response.StatusCode, alert.DefinitionId, attempt);
+
                     _metrics.IncrementCounter(Constants.Metrics.Alerts.WebhookFailed, tags: [("status", ((int)response.StatusCode).ToString())]);
                     return;
                 }
@@ -230,6 +232,5 @@ public sealed class JobAlertConsumer : BackgroundService
     }
 
     /// <summary>5xx and throttle responses are worth another try. Other 4xx (except 408/429) will fail the same way every time.</summary>
-    private static bool IsRetryable(HttpStatusCode status)
-        => status is HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests || (int)status >= 500;
+    private static bool IsRetryable(HttpStatusCode status) => status is HttpStatusCode.RequestTimeout or HttpStatusCode.TooManyRequests || (int)status >= 500;
 }

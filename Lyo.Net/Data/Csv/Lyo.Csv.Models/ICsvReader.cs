@@ -37,6 +37,13 @@ public interface ICsvReader
     /// <summary>Parses bytes into row/column dictionaries.</summary>
     IReadOnlyDictionary<int, IReadOnlyDictionary<int, string>> ParseBytesAsDictionary(byte[] csvBytes);
 
+    /// <summary>
+    /// Parses <paramref name="csv" /> into good rows and per-row errors. A bad cell omits that row and records a <see cref="CsvParseError" /> whose
+    /// <see cref="CsvParseError.RowNumber" /> is the 1-based file row (the header is row 1). An empty document fails. A header with no data rows succeeds with zero rows.
+    /// </summary>
+    /// <typeparam name="T">Mapped row type.</typeparam>
+    CsvParseResult<T> ParseStringAsResult<T>(string csv);
+
 #if !NETSTANDARD2_0
     /// <summary>Parses a file into a list of <typeparamref name="T" />.</summary>
     Task<List<T>> ParseFileAsync<T>(string csvFilePath, CancellationToken ct = default);

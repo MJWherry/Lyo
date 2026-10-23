@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Components;
 namespace Lyo.Web.Primitives;
 
 /// <summary>
-/// One panel inside <see cref="LyoTabSet" />. Registers its <see cref="Id" /> with the parent so the set can deep-link and persist the active tab by name rather than
-/// by index, which would break when a panel is added or reordered.
+/// One panel inside <see cref="LyoTabSet" />. Registers its <see cref="Id" /> with the parent so the set can deep-link and persist the active tab by name rather than by
+/// index, which would break when a panel is added or reordered.
 /// </summary>
 public partial class LyoTab : IDisposable
 {
@@ -40,8 +40,8 @@ public partial class LyoTab : IDisposable
     public string ResolvedId => string.IsNullOrWhiteSpace(Id) ? LyoTabSet.Slug(Text) : Id.Trim();
 
     /// <inheritdoc />
-    protected override void OnInitialized() => Owner?.Register(this);
+    public void Dispose() => Owner?.Unregister(this);
 
     /// <inheritdoc />
-    public void Dispose() => Owner?.Unregister(this);
+    protected override void OnInitialized() => Owner?.Register(this);
 }

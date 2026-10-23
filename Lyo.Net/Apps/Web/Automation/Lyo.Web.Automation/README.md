@@ -1,6 +1,14 @@
 # Lyo.Web.Automation
 
-Locators, JSON automation plans, session abstraction, and plan runners live here as shared models. This package does not take a dependency on Playwright or Selenium types.
+Locators, JSON automation plans, session abstraction, and plan runners live here as shared models. `AutomationBrowserMetadata` holds each browser's name, environment variables, and
+install paths. `AutomationBrowserDetector` resolves an executable from that catalog. This package does not take a dependency on Playwright or Selenium types.
+
+## Features
+
+- `Constants.Rest` spells the automation run routes (`Automation/Run`, cancel, log, snapshots) so the C# client and the TypeScript client share one spelling.
+  `IAutomationBrowserSessionFactory.CreateSession` is the host seam that opens a session for a browser kind and a headless flag. `CaptureNetworkAutomationStep` listens for request
+  URLs for a duration and stores the ones that match a regular expression. `AutomationRunStoragePaths` is the file-storage layout: `Runs/{runId}` for the run and
+  `Runs/{runId}/steps/{stepId}/{stepId}.png` for a step screenshot. Extractions use the same run or step prefix.
 
 ## Dependencies
 

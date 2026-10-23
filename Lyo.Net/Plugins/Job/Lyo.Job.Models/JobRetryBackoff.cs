@@ -8,8 +8,8 @@ public static class JobRetryBackoff
     private static readonly Random JitterRandom = new();
 
     /// <summary>
-    /// Delay in seconds before retry <paramref name="attempt" /> (1-based). Linear: <c>baseSeconds × attempt</c>. Exponential:
-    /// <c>baseSeconds × 2^(attempt-1)</c> with ±25% random jitter.
+    /// Delay in seconds before retry <paramref name="attempt" /> (1-based). Linear: <c>baseSeconds × attempt</c>. Exponential: <c>baseSeconds × 2^(attempt-1)</c> with ±25%
+    /// random jitter.
     /// </summary>
     public static int ComputeBackoffSeconds(int baseSeconds, int attempt, JobRetryBackoffType type)
     {

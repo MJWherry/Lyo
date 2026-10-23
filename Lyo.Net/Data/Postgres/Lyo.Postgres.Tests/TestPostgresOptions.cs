@@ -29,7 +29,8 @@ public sealed class TestPostgresOptionsWithExtraValidation : PostgresOptionsBase
 }
 
 /// <summary>Minimal context used to drive the shared option-building and registration helpers.</summary>
-public sealed class TestDbContext(DbContextOptions<TestDbContext> options) : DbContext(options)
+public sealed class TestDbContext(DbContextOptions<TestDbContext> options)
+    : DbContext(options)
 {
     public DbSet<TestRow> Rows => Set<TestRow>();
 }

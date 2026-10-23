@@ -43,10 +43,7 @@ public static class PolicyJson
         return b.Build();
     }
 
-    /// <summary>
-    /// Serializes a policy to JSON that <see cref="Build" /> can read. Rules must be concrete types this library can map;
-    /// <see cref="DelegateRedactionRule" /> is not supported.
-    /// </summary>
+    /// <summary>Serializes a policy to JSON that <see cref="Build" /> can read. Rules must be concrete types this library can map; <see cref="DelegateRedactionRule" /> is not supported.</summary>
     public static string SerializePolicy(RedactionPolicy policy, bool writeIndented = true)
     {
         ArgumentHelpers.ThrowIfNull(policy);

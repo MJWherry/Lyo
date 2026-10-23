@@ -62,6 +62,7 @@ public sealed class GridBuilder
                 Alignment = alignment,
                 Emphasized = emphasized
             });
+
         return this;
     }
 

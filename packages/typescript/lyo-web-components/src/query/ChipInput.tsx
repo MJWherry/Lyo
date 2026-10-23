@@ -3,6 +3,7 @@
 import { useCallback, useId, useState, type ClipboardEvent, type KeyboardEvent } from "react";
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
+import FormHelperText from "@mui/material/FormHelperText";
 import IconButton from "@mui/material/IconButton";
 import TextField from "@mui/material/TextField";
 import Clear from "@mui/icons-material/Clear";
@@ -18,6 +19,11 @@ export type ChipInputProps = {
   classPrefix?: string;
   disabled?: boolean;
   label?: string;
+  /** Chips that fail this pattern are rejected and `validationMessage` is shown. */
+  validationPattern?: RegExp;
+  validationMessage?: string;
+  /** Rejects a chip when this returns a message. Used for query paths, where a window is more than a character class. */
+  validate?: (value: string) => string | null;
 };
 
 function parseValues(raw: string, splitSeparators: boolean): string[] {
@@ -38,9 +44,13 @@ export function ChipInput({
   showClearButton = true,
   disabled = false,
   label,
+  validationPattern,
+  validationMessage = "Invalid value.",
+  validate,
 }: ChipInputProps) {
   const inputId = useId();
   const [draft, setDraft] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   const addFromRaw = useCallback(
     (raw: string, splitSeparators: boolean) => {
@@ -49,6 +59,13 @@ export function ChipInput({
         setDraft("");
         return;
       }
+      const rejected = pending.filter((value) => (validationPattern && !validationPattern.test(value)) || validate?.(value));
+      if (rejected.length > 0) {
+        const detail = validate?.(rejected[0]);
+        setError(detail ?? `${validationMessage} (${rejected.join(", ")})`);
+        return;
+      }
+      setError(null);
       const next = [...values];
       for (const value of pending) {
         if (!next.includes(value)) next.push(value);
@@ -56,7 +73,7 @@ export function ChipInput({
       onChange(next);
       setDraft("");
     },
-    [onChange, values]
+    [onChange, values, validationPattern, validationMessage, validate]
   );
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -79,6 +96,7 @@ export function ChipInput({
   };
 
   return (
+    <Box>
     <Box
       sx={{
         display: "flex",
@@ -86,7 +104,7 @@ export function ChipInput({
         alignItems: "center",
         gap: 0.25,
         border: 1,
-        borderColor: "divider",
+        borderColor: error ? "error.main" : "divider",
         borderRadius: 1,
         px: 1,
         py: 0.5,
@@ -142,6 +160,8 @@ export function ChipInput({
           <Clear fontSize="small" />
         </IconButton>
       ) : null}
+    </Box>
+      {error ? <FormHelperText error>{error}</FormHelperText> : null}
     </Box>
   );
 }

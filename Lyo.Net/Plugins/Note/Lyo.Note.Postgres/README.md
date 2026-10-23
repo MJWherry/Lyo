@@ -1,6 +1,7 @@
 # Lyo.Note.Postgres
 
-Entity Framework Core store for `Lyo.Note` on PostgreSQL. Rows live in `note.note` (`PostgresNoteOptions.Schema = "note"`), and the package includes migrations. Notes carry **subject** / **actor** entity references (`for_entity_*` / `from_entity_*`).
+Entity Framework Core store for `Lyo.Note` on PostgreSQL. Rows live in `note.note` (`PostgresNoteOptions.Schema = "note"`), and the package includes migrations. Notes carry
+**subject** / **actor** entity references (`for_entity_*` / `from_entity_*`).
 
 `PostgresNoteStore` implements `INoteStore` and `Lyo.Health.IHealth` (`HealthCheckName = "note-postgres"`). Registering the store also registers a liveness probe.
 
@@ -59,7 +60,8 @@ dotnet ef migrations add MigrationName --project Plugins/Note/Lyo.Note.Postgres
 ## Service registration
 
 - `AddNoteDbContextFactory(Action<PostgresNoteOptions>)` / `AddNoteDbContextFactory(PostgresNoteOptions)` register the `IDbContextFactory<NoteDbContext>` only.
-- `AddNoteDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresNoteOptions.SectionName)` does the same, bound from configuration. Default section: `PostgresNote`.
+- `AddNoteDbContextFactoryFromConfiguration(IConfiguration, string sectionName = PostgresNoteOptions.SectionName)` does the same, bound from configuration. Default section:
+  `PostgresNote`.
 - `AddPostgresNoteStore(Action<PostgresNoteOptions>)` / `AddPostgresNoteStore(PostgresNoteOptions)` register the DbContext factory **and** the `INoteStore` singleton.
 - `AddPostgresNoteStoreFromConfiguration(IConfiguration, string sectionName = PostgresNoteOptions.SectionName)` registers the store by binding configuration.
 
@@ -84,11 +86,16 @@ var fromEntity = EntityRef.ForKey("User", "123");
 
 ## Database schema
 
-- **note.note.** `EntityRelationEntityBase`: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id`, nullable varchar 128/256), `tenant_id`, `context`, `visibility`, `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`, `deleted_by_id`, `metadata` (jsonb), plus note-specific `content` and `updated_timestamp`.
+- **note.note.** `EntityRelationEntityBase`: `id` (uuid), subject/actor columns (`for_entity_type`, `for_entity_id`, `from_entity_type`, `from_entity_id`, nullable varchar
+  128/256), `tenant_id`, `context`, `visibility`, `created_at`, `expires_at`, `deleted_at`, `deleted_by_type`, `deleted_by_id`, `metadata` (jsonb), plus note-specific `content` and
+  `updated_timestamp`.
 
 ## Tenant isolation
 
-Every read and write on `PostgresNoteStore` takes an optional `Guid? tenantId`. `TenancyResolver` applies the policy in `PostgresNoteOptions.Tenancy`. When that is unset, it inherits `EntityRefOptions.Mode`. Because `tenant_id` is non-null, only `SingleTenantDefault` and `MultiTenantStrict` are valid. Construction rejects `SystemOnly`. Every query gets a `WhereTenant` filter, so one tenant's notes cannot appear in another. The policy matrix and an `appsettings.json` snippet live in [`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy).
+Every read and write on `PostgresNoteStore` takes an optional `Guid? tenantId`. `TenancyResolver` applies the policy in `PostgresNoteOptions.Tenancy`. When that is unset, it
+inherits `EntityRefOptions.Mode`. Because `tenant_id` is non-null, only `SingleTenantDefault` and `MultiTenantStrict` are valid. Construction rejects `SystemOnly`. Every query gets
+a `WhereTenant` filter, so one tenant's notes cannot appear in another. The policy matrix and an `appsettings.json` snippet live in [
+`Lyo.EntityReference.Postgres`](../../../Core/EntityReference/Lyo.EntityReference.Postgres/README.md#tenancy).
 
 ```json
 {
@@ -109,8 +116,10 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Health` (direct, lyo)
 - `Lyo.Note` (direct, lyo)
 - `Lyo.Postgres` (direct, lyo)
+- `Lyo.Search.Postgres` (direct, lyo)
 - `Microsoft.EntityFrameworkCore` `10.0.5` (direct, microsoft)
 - `Microsoft.EntityFrameworkCore.Design` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Lyo.Common.Core` (transitive, lyo)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `Microsoft.EntityFrameworkCore.Relational` `10.0.5` (transitive, microsoft)

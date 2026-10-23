@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Identifiers;
 using Lyo.PackageMetadata.Postgres;
 using Lyo.PackageMetadata.Postgres.Database;
 using Lyo.Testing.Containers;
@@ -11,9 +12,9 @@ public sealed class PackageMetadataPostgresFixture : PostgresServiceFixtureBase<
     private static readonly string LongRowSha512 =
         "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f";
 
-    protected override void ConfigureServices(IServiceCollection services, string connectionString) =>
-        services.AddDbContextFactory<PackageMetadataDbContext>(
-            opts => opts.UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", PostgresPackageMetadataOptions.Schema)));
+    protected override void ConfigureServices(IServiceCollection services, string connectionString)
+        => services.AddDbContextFactory<PackageMetadataDbContext>(opts => opts.UseNpgsql(
+            connectionString, npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", PostgresPackageMetadataOptions.Schema)));
 
     protected override async ValueTask OnMigratedAsync(CancellationToken cancellationToken)
     {
@@ -41,8 +42,8 @@ public sealed class PackageMetadataPostgresFixture : PostgresServiceFixtureBase<
             });
 
         ctx.StackPrefixes.AddRange(
-            new PackageStackPrefixEntity { Id = Guid.NewGuid(), PackageMetadataId = shortId, NormalizedPrefix = "Npgsql." },
-            new PackageStackPrefixEntity { Id = Guid.NewGuid(), PackageMetadataId = longId, NormalizedPrefix = "Npgsql.Internal." });
+            new PackageStackPrefixEntity { Id = LyoGuid.CreateV7(), PackageMetadataId = shortId, NormalizedPrefix = "Npgsql." },
+            new PackageStackPrefixEntity { Id = LyoGuid.CreateV7(), PackageMetadataId = longId, NormalizedPrefix = "Npgsql.Internal." });
 
         await ctx.SaveChangesAsync(cancellationToken);
     }

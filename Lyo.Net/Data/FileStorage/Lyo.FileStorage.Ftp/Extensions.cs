@@ -2,7 +2,6 @@ using Lyo.Compression;
 using Lyo.Encryption.TwoKey;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore;
-using Lyo.FileStorage.Abstractions;
 using Lyo.FileStorage.Audit;
 using Lyo.FileStorage.OperationContext;
 using Lyo.FileStorage.Policy;
@@ -18,21 +17,20 @@ namespace Lyo.FileStorage.Ftp;
 public static class Extensions
 {
     private static void RegisterService(IServiceCollection services)
-    {
-        global::Lyo.FileStorage.FileStorageServiceRegistration.AddScopedFileStorage<FtpFileStorageService>(services, sp => {
-            var opts = sp.GetRequiredService<FtpFileStorageOptions>();
-            var metadataStore = sp.GetRequiredService<IFileMetadataStore>();
-            var ftp = sp.GetRequiredService<IFtpClient>();
-            var loggerFactory = sp.GetService<ILoggerFactory>();
-            var compression = sp.GetService<ICompressionService>();
-            var encryption = sp.GetService<ITwoKeyEncryptionService>();
-            var metrics = opts.EnableMetrics ? sp.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
-            var op = sp.GetService<IFileOperationContextAccessor>();
-            var auditHandlers = sp.GetServices<IFileAuditEventHandler>();
-            var policy = sp.GetService<IFileContentPolicy>();
-            return new(opts, metadataStore, ftp, loggerFactory, compression, encryption, metrics, op, auditHandlers, policy);
-        });
-    }
+        => FileStorageServiceRegistration.AddScopedFileStorage<FtpFileStorageService>(
+            services, sp => {
+                var opts = sp.GetRequiredService<FtpFileStorageOptions>();
+                var metadataStore = sp.GetRequiredService<IFileMetadataStore>();
+                var ftp = sp.GetRequiredService<IFtpClient>();
+                var loggerFactory = sp.GetService<ILoggerFactory>();
+                var compression = sp.GetService<ICompressionService>();
+                var encryption = sp.GetService<ITwoKeyEncryptionService>();
+                var metrics = opts.EnableMetrics ? sp.GetService<IMetrics>() ?? NullMetrics.Instance : NullMetrics.Instance;
+                var op = sp.GetService<IFileOperationContextAccessor>();
+                var auditHandlers = sp.GetServices<IFileAuditEventHandler>();
+                var policy = sp.GetService<IFileContentPolicy>();
+                return new(opts, metadataStore, ftp, loggerFactory, compression, encryption, metrics, op, auditHandlers, policy, sp.GetService<IFileTypeSniffer>());
+            });
 
     extension(IServiceCollection services)
     {
@@ -65,7 +63,6 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(configuration);
             var options = new FtpFileStorageOptions();
             configuration.GetSection(sectionName).Bind(options);
-
             return services.AddFtpFileStorageService(options);
         }
     }

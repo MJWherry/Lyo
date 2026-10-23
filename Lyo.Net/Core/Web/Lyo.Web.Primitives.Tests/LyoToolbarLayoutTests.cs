@@ -1,5 +1,3 @@
-using Lyo.Web.Primitives;
-
 namespace Lyo.Web.Primitives.Tests;
 
 public sealed class LyoToolbarLayoutTests
@@ -30,6 +28,5 @@ public sealed class LyoToolbarLayoutTests
     [InlineData(true, false, true)]
     [InlineData(false, true, true)]
     [InlineData(true, true, true)]
-    public void IsDisabled_ORsControlAndOwner(bool disabled, bool ownerDisabled, bool expected)
-        => Assert.Equal(expected, LyoToolbarLayout.IsDisabled(disabled, ownerDisabled));
+    public void IsDisabled_ORsControlAndOwner(bool disabled, bool ownerDisabled, bool expected) => Assert.Equal(expected, LyoToolbarLayout.IsDisabled(disabled, ownerDisabled));
 }

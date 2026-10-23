@@ -27,6 +27,8 @@ services.AddEmailDbContextFactory(opts =>
 ### Insert after send
 
 ```csharp
+using Lyo.Common.Core.Identifiers;
+
 emailService.EmailSent += async (_, args) =>
 {
     var result = args.EmailResult;
@@ -35,7 +37,7 @@ emailService.EmailSent += async (_, args) =>
     string? htmlFilePath = null;
     if (!string.IsNullOrWhiteSpace(request?.HtmlBody))
     {
-        htmlFileName = $"{Guid.NewGuid():N}.html";
+        htmlFileName = $"{LyoGuid.CreateV7():N}.html";
         htmlFilePath = Path.Combine(htmlArchiveRoot, htmlFileName);
         await File.WriteAllTextAsync(htmlFilePath, request.HtmlBody);
     }
@@ -50,7 +52,7 @@ emailService.EmailSent += async (_, args) =>
         HtmlFileName = htmlFileName,
         HtmlFilePath = htmlFilePath,
         IsSuccess = result.IsSuccess,
-        Message = result.SmtpResponse,
+        Message = result.ProviderResponse,
         MessageId = result.MessageId,
         SentTimestamp = result.SentDate,
         ErrorMessage = result.Errors?.FirstOrDefault()?.Message
@@ -87,12 +89,17 @@ Every extension hangs off `IServiceCollection`. Hosts map and insert; this packa
 
 Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.ProjectGraph.html`).
 
+- `Lyo.Common.Core` (direct, lyo)
 - `Lyo.Exceptions` (direct, lyo)
 - `Lyo.Postgres` (direct, lyo)
 - `Microsoft.EntityFrameworkCore.Design` `10.0.5` (direct, microsoft)
+- `Microsoft.Extensions.Configuration.Binder` `10.0.5` (direct, microsoft)
 - `Lyo.Health` (transitive, lyo)
+- `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
 - `Microsoft.EntityFrameworkCore` `10.0.5` (transitive, microsoft)
 - `Microsoft.EntityFrameworkCore.Relational` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Hosting.Abstractions` `10.0.5` (transitive, microsoft)
 - `Microsoft.Extensions.Options` `10.0.5` (transitive, microsoft)
 - `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` (transitive, third-party)
+- `System.Memory` `4.6.3` (transitive, microsoft, netstandard2.0)
+- `System.Text.Json` `10.0.5` (transitive, microsoft, netstandard2.0)

@@ -6,10 +6,7 @@ namespace Lyo.FileStorage.Models;
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed record MoveFileRequest
 {
-    /// <summary>
-    /// Target path prefix. Null or empty clears the logical prefix. Backends may fall back to default sharding. Must pass the same path-prefix safety checks as save and
-    /// copy.
-    /// </summary>
+    /// <summary>Target path prefix. Null or empty clears the logical prefix. Backends may fall back to default sharding. Must pass the same path-prefix safety checks as save and copy.</summary>
     public string? PathPrefix { get; init; }
 
     /// <inheritdoc />

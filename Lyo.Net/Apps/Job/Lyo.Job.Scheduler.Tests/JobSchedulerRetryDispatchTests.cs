@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Reflection;
 using System.Text.Json;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Formatter;
 using Lyo.Job.Models;
 using Lyo.Job.Models.Enums;
@@ -11,8 +12,7 @@ namespace Lyo.Job.Scheduler.Tests;
 
 /// <summary>
 /// Regression tests for the scheduler review fixes: retry backoff produces exactly one dispatch path (delayed-MQ envelope or future slot. never an immediate publish plus a
-/// delayed one), retry/trigger creation is idempotent across duplicate completion messages, timeouts count as failures, and deleted definitions are evicted from the in-memory
-/// cache
+/// delayed one), retry/trigger creation is idempotent across duplicate completion messages, timeouts count as failures, and deleted definitions are evicted from the in-memory cache
 /// on 404.
 /// </summary>
 public class JobSchedulerRetryDispatchTests
@@ -24,7 +24,7 @@ public class JobSchedulerRetryDispatchTests
         var api = new FakeSchedulerApiClient(definition);
         var delayedMq = new RecordingDelayedMqService();
         var scheduler = CreateScheduler(api, delayedMq);
-        await scheduler.RefreshDefinitionsAsync(TestContext.Current.CancellationToken);
+        await scheduler.RefreshDefinitionsAsync(TestCt);
         var failedRun = BuildFailedRun(definition.Id, JobRunResult.Failure);
         await InvokeProcessCompletedAsync(scheduler, failedRun);
         var retryReq = Assert.Single(api.CreatedRunRequests);
@@ -44,7 +44,7 @@ public class JobSchedulerRetryDispatchTests
         var definition = BuildDefinition(2, 30);
         var api = new FakeSchedulerApiClient(definition);
         var scheduler = CreateScheduler(api, null);
-        await scheduler.RefreshDefinitionsAsync(TestContext.Current.CancellationToken);
+        await scheduler.RefreshDefinitionsAsync(TestCt);
         var failedRun = BuildFailedRun(definition.Id, JobRunResult.Failure);
         var before = DateTime.UtcNow;
         await InvokeProcessCompletedAsync(scheduler, failedRun);
@@ -62,7 +62,7 @@ public class JobSchedulerRetryDispatchTests
         var definition = BuildDefinition(3, 0);
         var api = new FakeSchedulerApiClient(definition);
         var scheduler = CreateScheduler(api, null);
-        await scheduler.RefreshDefinitionsAsync(TestContext.Current.CancellationToken);
+        await scheduler.RefreshDefinitionsAsync(TestCt);
         var failedRun = BuildFailedRun(definition.Id, JobRunResult.Failure);
 
         // The same completion message delivered twice (competing schedulers / broker redelivery).
@@ -79,7 +79,7 @@ public class JobSchedulerRetryDispatchTests
         var definition = BuildDefinition(1, 0);
         var api = new FakeSchedulerApiClient(definition);
         var scheduler = CreateScheduler(api, null);
-        await scheduler.RefreshDefinitionsAsync(TestContext.Current.CancellationToken);
+        await scheduler.RefreshDefinitionsAsync(TestCt);
         await InvokeProcessCompletedAsync(scheduler, BuildFailedRun(definition.Id, JobRunResult.Timeout));
 
         // Dead-job timeouts must feed the retry pipeline like any other failure.
@@ -93,7 +93,7 @@ public class JobSchedulerRetryDispatchTests
         var definition = BuildDefinition(3, 0);
         var api = new FakeSchedulerApiClient(definition);
         var scheduler = CreateScheduler(api, null);
-        await scheduler.RefreshDefinitionsAsync(TestContext.Current.CancellationToken);
+        await scheduler.RefreshDefinitionsAsync(TestCt);
         await InvokeProcessCompletedAsync(scheduler, BuildFailedRun(definition.Id, JobRunResult.Cancelled));
         Assert.Empty(api.CreatedRunRequests);
     }
@@ -104,7 +104,7 @@ public class JobSchedulerRetryDispatchTests
         var definition = BuildDefinition(0, 0);
         var api = new FakeSchedulerApiClient(definition);
         var scheduler = CreateScheduler(api, null);
-        await scheduler.RefreshDefinitionsAsync(TestContext.Current.CancellationToken);
+        await scheduler.RefreshDefinitionsAsync(TestCt);
         Assert.True(GetCachedJobs(scheduler).Contains(definition.Id));
         api.Return404ForDefinitionGet = true;
         var requeue = await InvokeOnDefinitionUpdatedAsync(scheduler, definition.Id);
@@ -124,16 +124,15 @@ public class JobSchedulerRetryDispatchTests
             }, api, new FormatterService(), new FakeEventPublisher(), mqService: mqService);
 
     private static JobDefinitionRes BuildDefinition(int maxRetryCount, int retryBackoffSeconds)
-        => new(Guid.NewGuid(), "RetryDef", null, "Test", "cs", true, [], [], [], null, maxRetryCount, retryBackoffSeconds);
+        => new(LyoGuid.CreateV7(), "RetryDef", null, "Test", "cs", true, [], [], null, maxRetryCount, retryBackoffSeconds);
 
     private static JobRunRes BuildFailedRun(Guid definitionId, JobRunResult result)
         => new() {
-            Id = Guid.NewGuid(),
+            Id = LyoGuid.CreateV7(),
             JobDefinitionId = definitionId,
             State = JobState.Finished,
             Result = result,
             RetryAttempt = 0,
-            AllowTriggers = false,
             CreatedTimestamp = DateTime.UtcNow.AddMinutes(-2),
             FinishedTimestamp = DateTime.UtcNow
         };

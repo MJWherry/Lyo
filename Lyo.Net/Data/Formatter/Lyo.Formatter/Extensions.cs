@@ -17,7 +17,7 @@ public static class Extensions
         {
             ArgumentHelpers.ThrowIfNull(services);
             FormatterLyoType.EnsureRegistered();
-            services.AddSingleton<FormatterService>();
+            services.AddSingleton<FormatterService>(provider => provider.GetService<IFormatterExpressionEvaluator>() is { } evaluator ? new(evaluator) : new FormatterService());
             services.AddSingleton<IFormatterService>(provider => provider.GetRequiredService<FormatterService>());
             services.AddParameterTemplateResolver();
             return services;
@@ -31,15 +31,18 @@ public static class Extensions
             ArgumentHelpers.ThrowIfNull(services);
             ArgumentHelpers.ThrowIfNull(formatterFactory);
             FormatterLyoType.EnsureRegistered();
-            services.AddSingleton<FormatterService>(provider => new(formatterFactory(provider)));
+            services.AddSingleton<FormatterService>(provider => provider.GetService<IFormatterExpressionEvaluator>() is { } evaluator
+                ? new(formatterFactory(provider), evaluator)
+                : new FormatterService(formatterFactory(provider)));
+
             services.AddSingleton<IFormatterService>(provider => provider.GetRequiredService<FormatterService>());
             services.AddParameterTemplateResolver();
             return services;
         }
 
         /// <summary>
-        /// Registers the <see cref="LyoTemplateResolver" /> used by job and report services to resolve expression parameter defaults. Invoked by
-        /// <see cref="AddFormatterService()" />; call it directly only when wiring <see cref="IFormatterService" /> by hand.
+        /// Registers the <see cref="LyoTemplateResolver" /> used by job and report services to resolve expression parameter defaults. Invoked by <see cref="AddFormatterService()" />
+        /// ; call it directly only when wiring <see cref="IFormatterService" /> by hand.
         /// </summary>
         /// <returns>Service collection for chaining.</returns>
         public IServiceCollection AddParameterTemplateResolver()

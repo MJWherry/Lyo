@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using System.Linq.Expressions;
 
 namespace Lyo.Api.ApiEndpoint.Config;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ExportConfig<TDbEntity>
 {
     public string GroupName { get; init; } = null!;

@@ -4,8 +4,8 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Lyo.Api.ApiEndpoint.Config;
 using Lyo.Api.Models;
-using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Builders;
+using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Common.Response;
 using Lyo.Api.Models.Enums;
 using Lyo.Api.Models.Error;
@@ -13,13 +13,15 @@ using Lyo.Api.Services.Crud.Create;
 using Lyo.Api.Services.Crud.Delete;
 using Lyo.Api.Services.Crud.Read.Query;
 using Lyo.Api.Services.Crud.Read.Query.Root;
+using Lyo.Api.Services.Crud.Read.Query.Sql;
 using Lyo.Api.Services.Crud.Update;
 using Lyo.Api.Services.Export;
-using Lyo.Common.Json;
 using Lyo.Common.Core.Conversion;
 using Lyo.Common.Core.Enums;
 using Lyo.Exceptions;
+using Lyo.Json;
 using Lyo.Query.Models.Common.Request;
+using Lyo.Query.Sql;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -92,7 +94,8 @@ public static class DynamicCrudEndpointBuilder
         var rootQueryRegistry = RootQueryEntityRegistry.FromDbContext(context, types);
         var routePrefix = string.IsNullOrEmpty(baseRoute) ? "" : baseRoute.TrimEnd('/') + "/";
         var endpoint = webApp.MapPost(
-                $"{routePrefix}Query", async ([FromBody] QueryReq queryRequest, [FromServices] IRootQueryService<TContext> rootQueryService, HttpContext httpContext, CancellationToken ct) => {
+                $"{routePrefix}Query", async (
+                    [FromBody] QueryReq queryRequest, [FromServices] IRootQueryService<TContext> rootQueryService, HttpContext httpContext, CancellationToken ct) => {
                     var deniedErrors = DeniedSelectFieldPolicy.ValidateRootQuery(queryRequest, deniedSelectFields);
                     if (deniedErrors.Count > 0) {
                         var problem = LyoProblemDetailsBuilder.CreateWithActivity()
@@ -117,13 +120,48 @@ public static class DynamicCrudEndpointBuilder
 
         EndpointAuthorizationApplier.Apply(endpoint, auth);
         configure?.Invoke(endpoint);
+        var sqlEndpoint = webApp.MapPost(
+                $"{routePrefix}QuerySql", ([FromBody] QueryReq queryRequest, HttpContext httpContext) => {
+                    var deniedErrors = DeniedSelectFieldPolicy.ValidateRootQuery(queryRequest, deniedSelectFields);
+                    if (deniedErrors.Count > 0) {
+                        var problem = LyoProblemDetailsBuilder.CreateWithActivity()
+                            .WithErrorCode(Constants.ApiErrorCodes.InvalidQuery)
+                            .WithMessage("Invalid query.")
+                            .AddErrors(deniedErrors)
+                            .Build();
+
+                        return ApiErrorResponseFactory.ThrowForError(httpContext, problem);
+                    }
+
+                    try {
+                        return Results.Ok(QuerySqlPreview.Translate(queryRequest, rootQueryRegistry));
+                    }
+                    catch (SqlTranslationException ex) {
+                        return ApiErrorResponseFactory.ThrowForError(
+                            httpContext,
+                            LyoProblemDetailsBuilder.CreateWithActivity().WithErrorCode(Constants.ApiErrorCodes.InvalidQuery).WithStatus(400).WithMessage(ex.Message).Build());
+                    }
+                })
+            .WithTags("Dynamic")
+            .WithName($"RootQuerySql{typeof(TContext).Name}{(string.IsNullOrEmpty(baseRoute) ? "" : "_" + baseRoute.Replace('/', '_'))}")
+            .Produces<QuerySqlRes>()
+            .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest);
+
+        EndpointAuthorizationApplier.Apply(sqlEndpoint, auth);
+        configure?.Invoke(sqlEndpoint);
         return webApp;
     }
 
     private static DynamicEndpointConfig<TContext> ConvertDynamicOptionsToConfig<TContext>(DynamicEndpointOptions<TContext> options)
         where TContext : DbContext
     {
-        var defaults = new DynamicEndpointDefaults { Features = options.Features, BaseRoute = options.BaseRoute, Auth = options.Auth, QueryPolicy = options.QueryPolicy };
+        var defaults = new DynamicEndpointDefaults {
+            Features = options.Features,
+            BaseRoute = options.BaseRoute,
+            Auth = options.Auth,
+            QueryPolicy = options.QueryPolicy
+        };
+
         defaults.ExcludedTypes.UnionWith(options.ExcludedTypes);
         defaults.IncludedTypes.AddRange(options.IncludedTypes);
         defaults.DeniedSelectFields.AddRange(options.DeniedSelectFields);
@@ -218,8 +256,7 @@ public static class DynamicCrudEndpointBuilder
         if (defaults.Features.Contains(ApiFeature.Query)) {
             Authorize(
                 webApp.MapPost(
-                        $"{entityRoute}/QueryConcrete",
-                        async (
+                        $"{entityRoute}/QueryConcrete", async (
                             [FromRoute] string entityType, [FromBody] QueryConcreteReq queryRequest, [FromServices] IQueryService<TContext> queryService, HttpContext httpContext,
                             CancellationToken ct) => {
                             var policyErrors = QueryPolicyValidator.Validate(queryRequest, queryPolicy);
@@ -236,8 +273,8 @@ public static class DynamicCrudEndpointBuilder
             Authorize(
                 webApp.MapPost(
                         $"{entityRoute}/QueryProject", async (
-                            [FromRoute] string entityType, [FromBody] ProjectionQueryReq queryRequest, [FromServices] IQueryService<TContext> queryService,
-                            HttpContext httpContext, CancellationToken ct) => {
+                            [FromRoute] string entityType, [FromBody] ProjectionQueryReq queryRequest, [FromServices] IQueryService<TContext> queryService, HttpContext httpContext,
+                            CancellationToken ct) => {
                             if (!enableComputedFields && queryRequest.ComputedFields.Count > 0) {
                                 return ApiErrorResponseFactory.ThrowForError(
                                     httpContext,
@@ -290,9 +327,8 @@ public static class DynamicCrudEndpointBuilder
                     webApp.MapPost(
                             $"{entityRoute}/Bulk",
                             async (
-                                    [FromRoute] string entityType, HttpRequest request, [FromServices] ICreateService<TContext> createService, HttpContext httpContext,
-                                    CancellationToken ct)
-                                => await HandleCreateBulk(registry, entityType, request, createService, httpContext, jsonOptions, ct))
+                                [FromRoute] string entityType, HttpRequest request, [FromServices] ICreateService<TContext> createService, HttpContext httpContext,
+                                CancellationToken ct) => await HandleCreateBulk(registry, entityType, request, createService, httpContext, jsonOptions, ct))
                         .WithTags("Dynamic")
                         .Produces<CreateBulkResult<object>>()
                         .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest)
@@ -317,8 +353,8 @@ public static class DynamicCrudEndpointBuilder
                     webApp.MapPatch(
                             $"{entityRoute}/Bulk",
                             async (
-                                [FromRoute] string entityType, [FromBody] List<PatchRequest> requests, [FromServices] IPatchService<TContext> patchService,
-                                HttpContext httpContext, CancellationToken ct) => await HandlePatchBulk(registry, entityType, requests, patchService, httpContext, ct))
+                                [FromRoute] string entityType, [FromBody] List<PatchRequest> requests, [FromServices] IPatchService<TContext> patchService, HttpContext httpContext,
+                                CancellationToken ct) => await HandlePatchBulk(registry, entityType, requests, patchService, httpContext, ct))
                         .WithTags("Dynamic")
                         .Produces<PatchBulkResult<object>>()
                         .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest)
@@ -344,8 +380,8 @@ public static class DynamicCrudEndpointBuilder
                     webApp.MapPost(
                             $"{entityRoute}/Bulk/Update",
                             async (
-                                [FromRoute] string entityType, [FromBody] JsonNode? body, [FromServices] IUpdateService<TContext> updateService,
-                                [FromServices] IQueryService<TContext> queryService, HttpContext httpContext, CancellationToken ct)
+                                    [FromRoute] string entityType, [FromBody] JsonNode? body, [FromServices] IUpdateService<TContext> updateService,
+                                    [FromServices] IQueryService<TContext> queryService, HttpContext httpContext, CancellationToken ct)
                                 => await HandleUpdateBulk(registry, entityType, body, updateService, queryService, httpContext, jsonOptions, ct))
                         .WithTags("Dynamic")
                         .Produces<UpdateBulkResult<object>>()
@@ -372,8 +408,8 @@ public static class DynamicCrudEndpointBuilder
                     webApp.MapPost(
                             $"{entityRoute}/Bulk/Upsert",
                             async (
-                                [FromRoute] string entityType, [FromBody] JsonNode? body, [FromServices] IUpsertService<TContext> upsertService,
-                                [FromServices] IQueryService<TContext> queryService, HttpContext httpContext, CancellationToken ct)
+                                    [FromRoute] string entityType, [FromBody] JsonNode? body, [FromServices] IUpsertService<TContext> upsertService,
+                                    [FromServices] IQueryService<TContext> queryService, HttpContext httpContext, CancellationToken ct)
                                 => await HandleUpsertBulk(registry, entityType, body, upsertService, queryService, httpContext, jsonOptions, ct))
                         .WithTags("Dynamic")
                         .Produces<UpsertBulkResult<object>>()
@@ -411,7 +447,8 @@ public static class DynamicCrudEndpointBuilder
                             $"{entityRoute}/Bulk",
                             async (
                                 [FromRoute] string entityType, [FromBody] List<DeleteRequest> requests, [FromServices] IDeleteService<TContext> deleteService,
-                                HttpContext httpContext, CancellationToken ct) => await HandleDeleteBulk(registry, entityType, requests, deleteService, httpContext, ct))
+                                HttpContext httpContext,
+                                CancellationToken ct) => await HandleDeleteBulk(registry, entityType, requests, deleteService, httpContext, ct))
                         .WithTags("Dynamic")
                         .Produces<DeleteBulkResult<object>>()
                         .Produces<LyoProblemDetails>(StatusCodes.Status400BadRequest)
@@ -424,12 +461,10 @@ public static class DynamicCrudEndpointBuilder
         void Authorize(RouteHandlerBuilder route) => EndpointAuthorizationApplier.Apply(route, auth);
     }
 
-    /// <summary>
-    /// Rejects per-entity hooks that the dynamic builder does not invoke.
-    /// </summary>
+    /// <summary>Rejects per-entity hooks that the dynamic builder does not invoke.</summary>
     /// <remarks>
-    /// Only the create <c>Before</c> hook, the patch <c>Before</c>/<c>After</c> hooks, and property authorization survive the reflection dispatch. Everything else was accepted at
-    /// configuration time and then passed to the services as <c>null</c>. Map the entity with the typed builder when it needs those hooks.
+    /// Only the create <c>Before</c> hook, the patch <c>Before</c>/<c>After</c> hooks, and property authorization survive the reflection dispatch. Everything else was accepted
+    /// at configuration time and then passed to the services as <c>null</c>. Map the entity with the typed builder when it needs those hooks.
     /// </remarks>
     private static void ThrowOnUnsupportedHooks<TContext>(DynamicEndpointConfig<TContext> config)
         where TContext : DbContext
@@ -468,6 +503,8 @@ public static class DynamicCrudEndpointBuilder
                 "remove the hooks.");
         }
 
+        return;
+
         static void AddIf(List<string> target, bool condition, string name)
         {
             if (condition)
@@ -476,8 +513,8 @@ public static class DynamicCrudEndpointBuilder
     }
 
     /// <summary>
-    /// Dynamic routes carry <c>{entityType}</c> and serve every registered entity, so a per-entity <see cref="EndpointAuth" /> cannot be expressed as a route convention. Rejecting
-    /// it is better than accepting configuration that silently does nothing.
+    /// Dynamic routes carry <c>{entityType}</c> and serve every registered entity, so a per-entity <see cref="EndpointAuth" /> cannot be expressed as a route convention.
+    /// Rejecting it is better than accepting configuration that silently does nothing.
     /// </summary>
     private static void ThrowOnPerEntityAuth<TContext>(DynamicEndpointConfig<TContext> config)
         where TContext : DbContext
@@ -513,8 +550,7 @@ public static class DynamicCrudEndpointBuilder
         return new(m.EntityType.Name, m.KeyPropertyName, m.KeyType.Name, properties);
     }
 
-    private static CrudMetadataResponse BuildMetadata(IReadOnlyList<EntityEndpointMetadata> entities)
-        => new(entities.Select(ToEntityTypeMetadata).ToList());
+    private static CrudMetadataResponse BuildMetadata(IReadOnlyList<EntityEndpointMetadata> entities) => new(entities.Select(ToEntityTypeMetadata).ToList());
 
     private static PropertyMetadata ToPropertyMetadata(PropertyInfo p)
     {
@@ -786,12 +822,10 @@ public static class DynamicCrudEndpointBuilder
             .ConfigureAwait(false);
     }
 
-    /// <summary>
-    /// Returns the result as 200, or maps its <c>Error</c> to the matching status when it reports a failure.
-    /// </summary>
+    /// <summary>Returns the result as 200, or maps its <c>Error</c> to the matching status when it reports a failure.</summary>
     /// <remarks>
-    /// The dynamic handlers work through reflection and used to hand the boxed result straight to <c>Results.Json</c>, so a failed query or delete came back as 200 with a problem
-    /// document in the body. Clients checking the status code treated those as successes.
+    /// The dynamic handlers work through reflection and used to hand the boxed result straight to <c>Results.Json</c>, so a failed query or delete came back as 200 with a
+    /// problem document in the body. Clients checking the status code treated those as successes.
     /// </remarks>
     private static IResult ResultOrProblem(HttpContext httpContext, object? result)
     {
@@ -802,15 +836,12 @@ public static class DynamicCrudEndpointBuilder
         if (resultType.GetProperty("IsSuccess")?.GetValue(result) is not false)
             return Results.Json(result);
 
-        return resultType.GetProperty("Error")?.GetValue(result) is LyoProblemDetails problem
-            ? ApiErrorResponseFactory.ThrowForError(httpContext, problem)
-            : Results.Json(result);
+        return resultType.GetProperty("Error")?.GetValue(result) is LyoProblemDetails problem ? ApiErrorResponseFactory.ThrowForError(httpContext, problem) : Results.Json(result);
     }
 
     private static IResult RejectInvalidQuery(HttpContext httpContext, List<ApiError> errors)
         => ApiErrorResponseFactory.ThrowForError(
-            httpContext,
-            LyoProblemDetailsBuilder.CreateWithActivity().WithErrorCode(Constants.ApiErrorCodes.InvalidQuery).WithMessage("Invalid query.").AddErrors(errors).Build());
+            httpContext, LyoProblemDetailsBuilder.CreateWithActivity().WithErrorCode(Constants.ApiErrorCodes.InvalidQuery).WithMessage("Invalid query.").AddErrors(errors).Build());
 
     private static async Task<IResult> HandleQuery<TContext>(
         IReadOnlyDictionary<string, EntityEndpointMetadata> registry,
@@ -896,9 +927,9 @@ public static class DynamicCrudEndpointBuilder
             return RejectUnreadableBody(httpContext, entityType);
         }
 
-        if (body == null) {
-            return ApiErrorResponseFactory.ThrowForError(httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidRequest, "Request body is required", DateTime.UtcNow));
-        }
+        if (body == null)
+            return ApiErrorResponseFactory.ThrowForError(
+                httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidRequest, "Request body is required", DateTime.UtcNow));
 
         var task = (Task)meta.Cache.CreateAsync.Invoke(createService, [body, meta.Cache.BeforeCreateDelegate, null, null, ct])!;
         await task.ConfigureAwait(false);
@@ -936,9 +967,9 @@ public static class DynamicCrudEndpointBuilder
             return RejectUnreadableBody(httpContext, entityType);
         }
 
-        if (body == null) {
-            return ApiErrorResponseFactory.ThrowForError(httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidRequest, "Request body is required", DateTime.UtcNow));
-        }
+        if (body == null)
+            return ApiErrorResponseFactory.ThrowForError(
+                httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidRequest, "Request body is required", DateTime.UtcNow));
 
         var task = (Task)meta.Cache.CreateBulkAsync.Invoke(createService, [body, meta.Cache.BeforeCreateDelegate, null, null, ct])!;
         await task.ConfigureAwait(false);
@@ -959,9 +990,8 @@ public static class DynamicCrudEndpointBuilder
             return ApiErrorResponseFactory.ThrowNotFound(httpContext, null, $"Unknown entity type: {entityType}");
 
         var fieldAuth = await PatchPropertyAuthorizationApplier.ApplyAsync(meta.PatchPropertyAuthorization, httpContext, meta.EntityType, patchRequest, ct).ConfigureAwait(false);
-        if (!fieldAuth.Success) {
+        if (!fieldAuth.Success)
             return ApiErrorResponseFactory.ThrowForError(httpContext, fieldAuth.Error);
-        }
 
         patchRequest = fieldAuth.Request!;
         var task = (Task)meta.Cache.PatchAsync.Invoke(patchService, [patchRequest, meta.AdaptedPatchBefore, meta.AdaptedPatchAfter, ct])!;
@@ -989,16 +1019,15 @@ public static class DynamicCrudEndpointBuilder
 
         if (requests.Count == 0) {
             return ApiErrorResponseFactory.ThrowForError(
-                    httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidPatchRequest, "At least one patch request is required", DateTime.UtcNow));
+                httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidPatchRequest, "At least one patch request is required", DateTime.UtcNow));
         }
 
         if (meta.PatchPropertyAuthorization != null) {
             var sanitized = new List<PatchRequest>(requests.Count);
             foreach (var pr in requests) {
                 var fieldAuth = await PatchPropertyAuthorizationApplier.ApplyAsync(meta.PatchPropertyAuthorization, httpContext, meta.EntityType, pr, ct).ConfigureAwait(false);
-                if (!fieldAuth.Success) {
+                if (!fieldAuth.Success)
                     return ApiErrorResponseFactory.ThrowForError(httpContext, fieldAuth.Error);
-                }
 
                 sanitized.Add(fieldAuth.Request!);
             }
@@ -1023,9 +1052,9 @@ public static class DynamicCrudEndpointBuilder
         CancellationToken ct)
         where TContext : DbContext
     {
-        if (body == null) {
-            return ApiErrorResponseFactory.ThrowForError(httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidRequest, "Request body is required", DateTime.UtcNow));
-        }
+        if (body == null)
+            return ApiErrorResponseFactory.ThrowForError(
+                httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidRequest, "Request body is required", DateTime.UtcNow));
 
         if (!TryGetMetadata(registry, entityType, out var meta))
             return ApiErrorResponseFactory.ThrowNotFound(httpContext, null, $"Unknown entity type: {entityType}");
@@ -1039,9 +1068,9 @@ public static class DynamicCrudEndpointBuilder
             return RejectUnreadableBody(httpContext, entityType);
         }
 
-        if (request == null) {
-            return ApiErrorResponseFactory.ThrowForError(httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidRequest, "Request body is required", DateTime.UtcNow));
-        }
+        if (request == null)
+            return ApiErrorResponseFactory.ThrowForError(
+                httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidRequest, "Request body is required", DateTime.UtcNow));
 
         EnsureKeyOnUpdateData(request, meta);
         var propertyDenial = await AuthorizeDynamicWriteAsync(meta, httpContext, queryService, request, "Data", ct).ConfigureAwait(false);
@@ -1071,9 +1100,9 @@ public static class DynamicCrudEndpointBuilder
         CancellationToken ct)
         where TContext : DbContext
     {
-        if (body == null) {
-            return ApiErrorResponseFactory.ThrowForError(httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidRequest, "Request body is required", DateTime.UtcNow));
-        }
+        if (body == null)
+            return ApiErrorResponseFactory.ThrowForError(
+                httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidRequest, "Request body is required", DateTime.UtcNow));
 
         if (!TryGetMetadata(registry, entityType, out var meta))
             return ApiErrorResponseFactory.ThrowNotFound(httpContext, null, $"Unknown entity type: {entityType}");
@@ -1087,9 +1116,9 @@ public static class DynamicCrudEndpointBuilder
             return RejectUnreadableBody(httpContext, entityType);
         }
 
-        if (requests == null) {
-            return ApiErrorResponseFactory.ThrowForError(httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidRequest, "Request body is required", DateTime.UtcNow));
-        }
+        if (requests == null)
+            return ApiErrorResponseFactory.ThrowForError(
+                httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidRequest, "Request body is required", DateTime.UtcNow));
 
         foreach (var req in (IEnumerable)requests) {
             EnsureKeyOnUpdateData(req!, meta);
@@ -1115,9 +1144,9 @@ public static class DynamicCrudEndpointBuilder
         CancellationToken ct)
         where TContext : DbContext
     {
-        if (body == null) {
-            return ApiErrorResponseFactory.ThrowForError(httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidRequest, "Request body is required", DateTime.UtcNow));
-        }
+        if (body == null)
+            return ApiErrorResponseFactory.ThrowForError(
+                httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidRequest, "Request body is required", DateTime.UtcNow));
 
         if (!TryGetMetadata(registry, entityType, out var meta))
             return ApiErrorResponseFactory.ThrowNotFound(httpContext, null, $"Unknown entity type: {entityType}");
@@ -1131,9 +1160,9 @@ public static class DynamicCrudEndpointBuilder
             return RejectUnreadableBody(httpContext, entityType);
         }
 
-        if (request == null) {
-            return ApiErrorResponseFactory.ThrowForError(httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidRequest, "Request body is required", DateTime.UtcNow));
-        }
+        if (request == null)
+            return ApiErrorResponseFactory.ThrowForError(
+                httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidRequest, "Request body is required", DateTime.UtcNow));
 
         EnsureKeyOnUpsertData(request, meta);
         var propertyDenial = await AuthorizeDynamicWriteAsync(meta, httpContext, queryService, request, "NewData", ct).ConfigureAwait(false);
@@ -1163,9 +1192,9 @@ public static class DynamicCrudEndpointBuilder
         CancellationToken ct)
         where TContext : DbContext
     {
-        if (body == null) {
-            return ApiErrorResponseFactory.ThrowForError(httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidRequest, "Request body is required", DateTime.UtcNow));
-        }
+        if (body == null)
+            return ApiErrorResponseFactory.ThrowForError(
+                httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidRequest, "Request body is required", DateTime.UtcNow));
 
         if (!TryGetMetadata(registry, entityType, out var meta))
             return ApiErrorResponseFactory.ThrowNotFound(httpContext, null, $"Unknown entity type: {entityType}");
@@ -1179,9 +1208,9 @@ public static class DynamicCrudEndpointBuilder
             return RejectUnreadableBody(httpContext, entityType);
         }
 
-        if (requests == null) {
-            return ApiErrorResponseFactory.ThrowForError(httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidRequest, "Request body is required", DateTime.UtcNow));
-        }
+        if (requests == null)
+            return ApiErrorResponseFactory.ThrowForError(
+                httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidRequest, "Request body is required", DateTime.UtcNow));
 
         foreach (var req in (IEnumerable)requests) {
             EnsureKeyOnUpsertData(req!, meta);
@@ -1250,9 +1279,10 @@ public static class DynamicCrudEndpointBuilder
         if (!TryGetMetadata(registry, entityType, out var meta))
             return ApiErrorResponseFactory.ThrowNotFound(httpContext, null, $"Unknown entity type: {entityType}");
 
-        if (requests.Count == 0)
+        if (requests.Count == 0) {
             return ApiErrorResponseFactory.ThrowForError(
                 httpContext, LyoProblemDetails.FromCode(Constants.ApiErrorCodes.InvalidDeleteRequest, "At least one delete request is required", DateTime.UtcNow));
+        }
 
         var task = (Task)meta.Cache.DeleteBulkAsync.Invoke(deleteService, [requests, null, null, null, null, ct])!;
         await task.ConfigureAwait(false);

@@ -4,6 +4,14 @@ namespace Lyo.Drift.Web.Components;
 
 public partial class DriftSnapshotGrid
 {
+    private static readonly string[] _quickSearchProperties = ["WatchRoot", "ContentHash"];
+
+    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Kind"), new("WatchRoot", "Watch Root"), new("ContentHashAlgorithm", "Hash")];
+
+    private Guid? _appliedInstanceId;
+
+    private LyoDataGridProjected? _dataGrid;
+
     /// <summary>HTTP client used for Query and snapshot actions.</summary>
     [Parameter]
     [EditorRequired]
@@ -23,14 +31,6 @@ public partial class DriftSnapshotGrid
     public EventCallback<Guid?> InstanceIdChanged { get; set; }
 
     private string _route => $"{BaseRoute.TrimEnd('/')}/Snapshot";
-
-    private LyoDataGridProjected? _dataGrid;
-
-    private Guid? _appliedInstanceId;
-
-    private static readonly string[] _quickSearchProperties = ["WatchRoot", "ContentHash"];
-
-    private readonly List<FilterPropertyDefinition> _propertyDefinitions = [new("Kind"), new("WatchRoot", "Watch Root"), new("ContentHashAlgorithm", "Hash")];
 
     protected override async Task OnParametersSetAsync()
     {
@@ -87,11 +87,7 @@ public partial class DriftSnapshotGrid
         if (snapshot is null)
             return;
 
-        var parameters = new DialogParameters<DriftDiffAgainstDialog> {
-            { d => d.ApiClient, ApiClient },
-            { d => d.BaseRoute, BaseRoute },
-            { d => d.FromSnapshot, snapshot }
-        };
+        var parameters = new DialogParameters<DriftDiffAgainstDialog> { { d => d.ApiClient, ApiClient }, { d => d.BaseRoute, BaseRoute }, { d => d.FromSnapshot, snapshot } };
         var dialog = await DialogService.ShowAsync<DriftDiffAgainstDialog>("Diff against", parameters, LyoDialogPresets.Medium);
         var result = await dialog.Result;
         if (result is { Canceled: false, Data: DriftDiffRes diff }) {
@@ -106,8 +102,7 @@ public partial class DriftSnapshotGrid
         if (id is null)
             return null;
 
-        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<DriftSnapshotRes>>(
-            $"{_route}/QueryConcrete", new() { Keys = [[id.Value]], Amount = 1 });
+        var res = await ApiClient.PostAsAsync<QueryConcreteReq, QueryRes<DriftSnapshotRes>>($"{_route}/QueryConcrete", new() { Keys = [[id.Value]], Amount = 1 });
         return res?.Items?.FirstOrDefault();
     }
 }

@@ -1,377 +1,214 @@
+using Lyo.Common.Metadata.Records;
 using Lyo.Email.Builders;
-using MimeKit;
+using Lyo.Email.Models;
+using Lyo.Exceptions.Models;
+using Lyo.IO.Temp.Models;
 
 namespace Lyo.Email.Tests;
 
 public class EmailRequestBuilderTests
 {
     [Fact]
-    public void New_CreatesNewBuilder()
-    {
-        var builder = EmailRequestBuilder.New();
-        Assert.NotNull(builder);
-    }
+    public void New_CreatesNewBuilder() => Assert.NotNull(EmailRequestBuilder.New());
 
     [Fact]
     public void AddTo_StringEmail_AddsRecipient()
     {
-        var builder = EmailRequestBuilder.New();
-        var result = builder.AddTo("test@example.com", "Test User");
-        Assert.Same(builder, result);
-        var message = builder.SetSubject("Test").Build();
-        Assert.Single(message.To.Mailboxes);
-        Assert.Equal("test@example.com", message.To.Mailboxes.First().Address);
-        Assert.Equal("Test User", message.To.Mailboxes.First().Name);
+        var request = EmailRequestBuilder.New().AddTo("test@example.com", "Test User").SetSubject("Test").Build();
+        var to = Assert.Single(request.ToAddresses!);
+        Assert.Equal("test@example.com", to.Address);
+        Assert.Equal("Test User", to.Name);
     }
 
     [Fact]
     public void AddTo_StringEmailOnly_UsesEmailAsName()
     {
-        var builder = EmailRequestBuilder.New();
-        builder.AddTo("test@example.com");
-        var message = builder.SetSubject("Test").Build();
-        Assert.Single(message.To.Mailboxes);
-        Assert.Equal("test@example.com", message.To.Mailboxes.First().Address);
-        Assert.Equal("test@example.com", message.To.Mailboxes.First().Name);
+        var request = EmailRequestBuilder.New().AddTo("test@example.com").SetSubject("Test").Build();
+        var to = Assert.Single(request.ToAddresses!);
+        Assert.Equal("test@example.com", to.Address);
+        Assert.Equal("test@example.com", to.Name);
     }
 
     [Fact]
-    public void AddTo_MultipleEmails_AddsAll()
+    public void AddTo_EmailAddress_AddsRecipient()
     {
-        var builder = EmailRequestBuilder.New();
-        builder.AddTo("test1@example.com", "User 1").AddTo("test2@example.com", "User 2");
-        var message = builder.SetSubject("Test").Build();
-        Assert.Equal(2, message.To.Count);
+        var request = EmailRequestBuilder.New().AddTo(new EmailAddress("test@example.com", "Test User")).SetSubject("Test").Build();
+        var to = Assert.Single(request.ToAddresses!);
+        Assert.Equal("test@example.com", to.Address);
+        Assert.Equal("Test User", to.Name);
     }
 
     [Fact]
     public void AddTo_ParamsArray_AddsAll()
     {
-        var builder = EmailRequestBuilder.New();
-        // Three or more args hit the params array (two args bind to AddTo(string, string))
-        builder.AddTo("test1@example.com", "test2@example.com", "test3@example.com");
-        var message = builder.SetSubject("Test").Build();
-        Assert.Equal(3, message.To.Count);
+        var request = EmailRequestBuilder.New().AddTo("test1@example.com", "test2@example.com", "test3@example.com").SetSubject("Test").Build();
+        Assert.Equal(3, request.ToAddresses!.Count);
     }
 
     [Fact]
-    public void AddTo_Enumerable_AddsAll()
+    public void AddCc_StringEmail_KeepsDisplayName()
     {
-        var builder = EmailRequestBuilder.New();
-        builder.AddTo(["test1@example.com", "test2@example.com"]);
-        var message = builder.SetSubject("Test").Build();
-        Assert.Equal(2, message.To.Count);
+        var request = EmailRequestBuilder.New().AddTo("to@example.com").AddCc("cc@example.com", "CC User").Build();
+        var cc = Assert.Single(request.CcAddresses!);
+        Assert.Equal("cc@example.com", cc.Address);
+        Assert.Equal("CC User", cc.Name);
     }
 
     [Fact]
-    public void AddTo_MailboxAddress_AddsRecipient()
+    public void AddBcc_StringEmail_KeepsDisplayName()
     {
-        var builder = EmailRequestBuilder.New();
-        var mailbox = new MailboxAddress("Test User", "test@example.com");
-        builder.AddTo(mailbox);
-        var message = builder.SetSubject("Test").Build();
-        Assert.Single(message.To.Mailboxes);
-        Assert.Equal("test@example.com", message.To.Mailboxes.First().Address);
+        var request = EmailRequestBuilder.New().AddTo("to@example.com").AddBcc("bcc@example.com", "BCC User").Build();
+        var bcc = Assert.Single(request.BccAddresses!);
+        Assert.Equal("bcc@example.com", bcc.Address);
+        Assert.Equal("BCC User", bcc.Name);
     }
 
     [Fact]
-    public void AddCc_StringEmail_AddsCcRecipient()
+    public void SetFrom_LastCallWins()
     {
-        var builder = EmailRequestBuilder.New();
-        builder.AddTo("to@example.com").AddCc("cc@example.com", "CC User");
-        var message = builder.SetSubject("Test").Build();
-        Assert.Single(message.Cc.Mailboxes);
-        Assert.Equal("cc@example.com", message.Cc.Mailboxes.First().Address);
-    }
-
-    [Fact]
-    public void AddBcc_StringEmail_AddsBccRecipient()
-    {
-        var builder = EmailRequestBuilder.New();
-        builder.AddTo("to@example.com").AddBcc("bcc@example.com", "BCC User");
-        var message = builder.SetSubject("Test").Build();
-        Assert.Single(message.Bcc.Mailboxes);
-        Assert.Equal("bcc@example.com", message.Bcc.Mailboxes.First().Address);
-    }
-
-    [Fact]
-    public void SetFrom_StringEmail_AddsFrom()
-    {
-        var builder = EmailRequestBuilder.New();
-        builder.SetFrom("sender@example.com", "Sender Name");
-        var message = builder.SetSubject("Test").Build();
-        Assert.Single(message.From.Mailboxes);
-        Assert.Equal("sender@example.com", message.From.Mailboxes.First().Address);
-        Assert.Equal("Sender Name", message.From.Mailboxes.First().Name);
+        var request = EmailRequestBuilder.New().SetFrom("first@example.com", "First").SetFrom("sender@example.com", "Sender Name").Build();
+        Assert.Equal("sender@example.com", request.FromAddress);
+        Assert.Equal("Sender Name", request.FromName);
     }
 
     [Fact]
     public void SetFrom_StringEmailOnly_UsesEmailAsName()
     {
-        var builder = EmailRequestBuilder.New();
-        builder.SetFrom("sender@example.com");
-        var message = builder.SetSubject("Test").Build();
-        Assert.Single(message.From.Mailboxes);
-        Assert.Equal("sender@example.com", message.From.Mailboxes.First().Address);
-        Assert.Equal("sender@example.com", message.From.Mailboxes.First().Name);
+        var request = EmailRequestBuilder.New().SetFrom("sender@example.com").Build();
+        Assert.Equal("sender@example.com", request.FromAddress);
+        Assert.Equal("sender@example.com", request.FromName);
     }
 
     [Fact]
-    public void SetReplyTo_StringEmail_AddsReplyTo()
+    public void SetReplyTo_AppendsEachCall()
     {
-        var builder = EmailRequestBuilder.New();
-        builder.SetReplyTo("reply@example.com", "Reply Name");
-        var message = builder.SetSubject("Test").Build();
-        Assert.Single(message.ReplyTo.Mailboxes);
-        Assert.Equal("reply@example.com", message.ReplyTo.Mailboxes.First().Address);
+        var request = EmailRequestBuilder.New().SetReplyTo("one@example.com", "One").SetReplyTo("two@example.com", "Two").Build();
+        Assert.Equal(2, request.ReplyTo!.Count);
+        Assert.Equal("one@example.com", request.ReplyTo[0].Address);
+        Assert.Equal("Two", request.ReplyTo[1].Name);
     }
 
     [Fact]
-    public void SetSubject_SetsSubject()
+    public void SetSubject_Empty_IsAllowed()
     {
-        var builder = EmailRequestBuilder.New();
-        builder.SetSubject("Test Subject");
-        var message = builder.Build();
-        Assert.Equal("Test Subject", message.Subject);
+        var request = EmailRequestBuilder.New().SetSubject(string.Empty).Build();
+        Assert.Equal(string.Empty, request.Subject);
     }
 
     [Fact]
-    public void SetPriority_SetsPriority()
+    public void SetSubject_Null_Throws() => Assert.Throws<ArgumentNullException>(() => EmailRequestBuilder.New().SetSubject(null!));
+
+    [Theory]
+    [InlineData(EmailPriority.Normal)]
+    [InlineData(EmailPriority.NonUrgent)]
+    [InlineData(EmailPriority.Urgent)]
+    public void SetPriority_SetsPriority(EmailPriority priority)
     {
-        var builder = EmailRequestBuilder.New();
-        builder.SetPriority(MessagePriority.Urgent);
-        var message = builder.SetSubject("Test").Build();
-        Assert.Equal(MessagePriority.Urgent, message.Priority);
+        var request = EmailRequestBuilder.New().SetPriority(priority).Build();
+        Assert.Equal(priority, request.Priority);
     }
 
     [Fact]
-    public void SetHtmlBody_SetsHtmlBody()
+    public void SetHtmlAndText_AndAppend_KeepBothBodies()
     {
-        var builder = EmailRequestBuilder.New();
-        builder.SetHtmlBody("<html><body>Test</body></html>");
-        var message = builder.SetSubject("Test").Build();
-        Assert.NotNull(message.HtmlBody);
-        Assert.Contains("Test", message.HtmlBody);
+        var request = EmailRequestBuilder.New().SetHtmlBody("<p>First</p>").AppendHtmlBody("<p>Second</p>").SetTextBody("First").AppendTextBody("Second").Build();
+        Assert.Contains("First", request.HtmlBody);
+        Assert.Contains("Second", request.HtmlBody);
+        Assert.Contains("First", request.TextBody);
+        Assert.Contains("Second", request.TextBody);
     }
 
     [Fact]
-    public void SetTextBody_SetsTextBody()
+    public void AddAttachment_Bytes_KeepsContentTypeAndMetadata()
     {
-        var builder = EmailRequestBuilder.New();
-        builder.SetTextBody("Plain text body");
-        var message = builder.SetSubject("Test").Build();
-        Assert.NotNull(message.TextBody);
-        Assert.Contains("Plain text body", message.TextBody);
+        var data = new byte[] { 1, 2, 3 };
+        var request = EmailRequestBuilder.New().AddAttachment("test.txt", data, "text/plain", """{"k":1}""").Build();
+        var attachment = Assert.Single(request.Attachments!);
+        Assert.Equal("test.txt", attachment.FileName);
+        Assert.Equal(data, attachment.Data);
+        Assert.Equal("text/plain", attachment.ContentType);
+        Assert.Equal("""{"k":1}""", attachment.MetadataJson);
     }
 
     [Fact]
-    public void AppendHtmlBody_AppendsToHtmlBody()
+    public void AddAttachment_Stream_ReadsBytes()
     {
-        var builder = EmailRequestBuilder.New();
-        builder.SetHtmlBody("<html><body>First</body></html>");
-        builder.AppendHtmlBody("<p>Second</p>");
-        var message = builder.SetSubject("Test").Build();
-        Assert.Contains("First", message.HtmlBody);
-        Assert.Contains("Second", message.HtmlBody);
+        using var stream = new MemoryStream([1, 2, 3, 4, 5]);
+        var request = EmailRequestBuilder.New().AddAttachment("test.txt", stream).Build();
+        var attachment = Assert.Single(request.Attachments!);
+        Assert.Equal(new byte[] { 1, 2, 3, 4, 5 }, attachment.Data);
     }
 
     [Fact]
-    public void AppendTextBody_AppendsToTextBody()
+    public void AddAttachment_Dictionary_AddsAll()
     {
-        var builder = EmailRequestBuilder.New();
-        builder.SetTextBody("First");
-        builder.AppendTextBody("Second");
-        var message = builder.SetSubject("Test").Build();
-        Assert.Contains("First", message.TextBody);
-        Assert.Contains("Second", message.TextBody);
+        var request = EmailRequestBuilder.New().AddAttachment(new Dictionary<string, byte[]> { ["file1.txt"] = [1], ["file2.txt"] = [2] }).Build();
+        Assert.Equal(2, request.Attachments!.Count);
     }
 
     [Fact]
-    public void AddAttachment_FileNameAndData_AddsAttachment()
+    public void AddAttachmentFromFile_ReadsTheFile()
     {
-        var builder = EmailRequestBuilder.New();
-        var data = new byte[] { 1, 2, 3, 4, 5 };
-        builder.AddAttachment("test.txt", data);
-        var message = builder.SetSubject("Test").Build();
-        Assert.Single(message.BodyParts.OfType<MimePart>());
+        using var session = new IOTempSession();
+        var path = session.CreateFile("hello"u8.ToArray(), "note.txt");
+        var request = EmailRequestBuilder.New().AddAttachmentFromFile(path).Build();
+        var attachment = Assert.Single(request.Attachments!);
+        Assert.Equal("note.txt", attachment.FileName);
+        Assert.Equal("hello"u8.ToArray(), attachment.Data);
     }
 
     [Fact]
-    public void AddAttachment_FileNameAndStream_AddsAttachment()
+    public void AddAttachmentsAsZip_SetsZipContentType()
     {
-        var builder = EmailRequestBuilder.New();
-        var data = new byte[] { 1, 2, 3, 4, 5 };
-        using var stream = new MemoryStream(data);
-        builder.AddAttachment("test.txt", stream);
-        var message = builder.SetSubject("Test").Build();
-        Assert.Single(message.BodyParts.OfType<MimePart>());
+        var request = EmailRequestBuilder.New().AddAttachmentsAsZip("files.zip", new Dictionary<string, byte[]> { ["file1.txt"] = [1] }).Build();
+        var attachment = Assert.Single(request.Attachments!);
+        Assert.Equal("files.zip", attachment.FileName);
+        Assert.Equal(FileTypeInfo.Zip.MimeType, attachment.ContentType);
+        Assert.NotEmpty(attachment.Data);
     }
 
     [Fact]
-    public void AddAttachment_Dictionary_AddsAllAttachments()
+    public void AddZippedFile_AddsZipAttachment()
     {
-        var builder = EmailRequestBuilder.New();
-        var files = new Dictionary<string, byte[]> { { "file1.txt", [1, 2, 3] }, { "file2.txt", [4, 5, 6] } };
-        builder.AddAttachment(files);
-        var message = builder.SetSubject("Test").Build();
-        var attachments = message.BodyParts.OfType<MimePart>().ToList();
-        Assert.Equal(2, attachments.Count);
-    }
-
-    [Fact]
-    public void AddAttachmentFromFile_ValidPath_AddsAttachment()
-    {
-        var tempFile = Path.GetTempFileName();
-        try {
-            File.WriteAllText(tempFile, "test content");
-            var builder = EmailRequestBuilder.New();
-            builder.AddAttachmentFromFile(tempFile);
-            var message = builder.SetSubject("Test").Build();
-            Assert.Single(message.BodyParts.OfType<MimePart>());
-        }
-        finally {
-            File.Delete(tempFile);
-        }
-    }
-
-    [Fact]
-    public void AddAttachmentsAsZip_Dictionary_AddsZipAttachment()
-    {
-        var builder = EmailRequestBuilder.New();
-        var files = new Dictionary<string, byte[]> { { "file1.txt", [1, 2, 3] }, { "file2.txt", [4, 5, 6] } };
-        builder.AddAttachmentsAsZip("files.zip", files);
-        var message = builder.SetSubject("Test").Build();
-        var attachments = message.BodyParts.OfType<MimePart>().ToList();
-        Assert.Single(attachments);
-        Assert.Equal("files.zip", attachments[0].FileName);
-    }
-
-    [Fact]
-    public void AddAttachmentsAsZip_FilePaths_AddsZipAttachment()
-    {
-        var tempFile1 = Path.GetTempFileName();
-        var tempFile2 = Path.GetTempFileName();
-        try {
-            File.WriteAllText(tempFile1, "content1");
-            File.WriteAllText(tempFile2, "content2");
-            var builder = EmailRequestBuilder.New();
-            builder.AddAttachmentsAsZip("files.zip", tempFile1, tempFile2);
-            var message = builder.SetSubject("Test").Build();
-            var attachments = message.BodyParts.OfType<MimePart>().ToList();
-            Assert.Single(attachments);
-            Assert.Equal("files.zip", attachments[0].FileName);
-        }
-        finally {
-            File.Delete(tempFile1);
-            File.Delete(tempFile2);
-        }
-    }
-
-    [Fact]
-    public void AddZippedFile_WithConfigure_AddsZipAttachment()
-    {
-        var builder = EmailRequestBuilder.New();
-        builder.AddZippedFile(
-            "files.zip", zip => {
-                zip.AddFile("file1.txt", [1, 2, 3]);
-                zip.AddFile("file2.txt", [4, 5, 6]);
-            });
-
-        var message = builder.SetSubject("Test").Build();
-        var attachments = message.BodyParts.OfType<MimePart>().ToList();
-        Assert.Single(attachments);
-        Assert.Equal("files.zip", attachments[0].FileName);
+        var request = EmailRequestBuilder.New().AddZippedFile("files.zip", zip => zip.AddFile("file1.txt", [1, 2, 3])).Build();
+        var attachment = Assert.Single(request.Attachments!);
+        Assert.Equal("files.zip", attachment.FileName);
+        Assert.Equal(FileTypeInfo.Zip.MimeType, attachment.ContentType);
     }
 
     [Fact]
     public void AddHeader_AddsCustomHeader()
     {
-        var builder = EmailRequestBuilder.New();
-        builder.AddHeader("X-Custom-Header", "CustomValue");
-        var message = builder.SetSubject("Test").Build();
-        Assert.Equal("CustomValue", message.Headers["X-Custom-Header"]);
+        var request = EmailRequestBuilder.New().AddHeader("X-Custom-Header", "CustomValue").Build();
+        var header = Assert.Single(request.Headers!);
+        Assert.Equal("X-Custom-Header", header.Name);
+        Assert.Equal("CustomValue", header.Value);
     }
 
     [Fact]
-    public void ClearTo_ClearsToRecipients()
+    public void ClearToCcBccAndAttachments_RemovesThem()
     {
-        var builder = EmailRequestBuilder.New();
-        builder.AddTo("test@example.com");
-        builder.ClearTo();
-        var message = builder.SetSubject("Test").Build();
-        Assert.Empty(message.To);
+        var request = EmailRequestBuilder.New().AddTo("to@example.com").AddCc("cc@example.com").AddBcc("bcc@example.com").AddAttachment("test.txt", [1]).ClearTo().ClearCc().ClearBcc()
+            .ClearAttachments()
+            .Build();
+
+        Assert.Null(request.ToAddresses);
+        Assert.Null(request.CcAddresses);
+        Assert.Null(request.BccAddresses);
+        Assert.Null(request.Attachments);
     }
 
     [Fact]
-    public void ClearCc_ClearsCcRecipients()
+    public void ToString_IncludesSubjectAndCount()
     {
-        var builder = EmailRequestBuilder.New();
-        builder.AddCc("cc@example.com");
-        builder.ClearCc();
-        var message = builder.SetSubject("Test").Build();
-        Assert.Empty(message.Cc);
+        var text = EmailRequestBuilder.New().SetSubject("Test Subject").AddTo("test@example.com").ToString();
+        Assert.Contains("Test Subject", text);
+        Assert.Contains("1", text);
     }
 
     [Fact]
-    public void ClearBcc_ClearsBccRecipients()
-    {
-        var builder = EmailRequestBuilder.New();
-        builder.AddBcc("bcc@example.com");
-        builder.ClearBcc();
-        var message = builder.SetSubject("Test").Build();
-        Assert.Empty(message.Bcc);
-    }
+    public void ToString_NoSubject_ShowsNoSubject() => Assert.Contains("(no subject)", EmailRequestBuilder.New().AddTo("test@example.com").ToString());
 
     [Fact]
-    public void ClearAttachments_ClearsAttachments()
-    {
-        var builder = EmailRequestBuilder.New();
-        builder.AddTo("test@example.com").SetTextBody("Test body").AddAttachment("test.txt", [1, 2, 3]);
-        builder.ClearAttachments();
-        var message = builder.Build();
-        // After attachments are cleared, only body parts should remain
-        // MimeKit wraps body plus attachments in a Multipart
-        // With attachments gone the body should be the sole part
-        if (message.Body is Multipart multipart) {
-            // Count parts whose ContentDisposition is Attachment
-            var attachmentParts = multipart.OfType<MimePart>()
-                .Where(p => p.ContentDisposition != null && p.ContentDisposition.Disposition == ContentDisposition.Attachment)
-                .ToList();
-
-            Assert.Empty(attachmentParts);
-        }
-        else {
-            // A non-multipart body means no attachments (body is a TextPart or similar)
-            Assert.True(true); // No attachments
-        }
-    }
-
-    [Fact]
-    public void Build_CreatesMimeMessage()
-    {
-        var builder = EmailRequestBuilder.New();
-        builder.SetSubject("Test Subject").SetTextBody("Test Body").AddTo("test@example.com");
-        var message = builder.Build();
-        Assert.NotNull(message);
-        Assert.Equal("Test Subject", message.Subject);
-    }
-
-    [Fact]
-    public void ToString_ReturnsDescriptiveString()
-    {
-        var builder = EmailRequestBuilder.New();
-        builder.SetSubject("Test Subject").AddTo("test@example.com");
-        var result = builder.ToString();
-        Assert.Contains("Test Subject", result);
-        Assert.Contains("1", result);
-    }
-
-    [Fact]
-    public void ToString_NoSubject_ShowsNoSubject()
-    {
-        var builder = EmailRequestBuilder.New();
-        builder.AddTo("test@example.com");
-        var result = builder.ToString();
-        Assert.Contains("(no subject)", result);
-    }
+    public void EmailAddress_ToString_ReturnsAddress() => Assert.Equal("ada@x.com", new EmailAddress("ada@x.com", "Ada").ToString());
 }

@@ -2,7 +2,9 @@
 
 EF Core schema and DbContext registration for a PostgreSQL-backed short-URL store.
 
-> This package has no `PostgresShortUrlService` / `PostgresShortUrlStore`. It ships the database pieces (DbContext, entities, migrations, options, and DI helpers for the context). To get an `IShortUrlService` that talks to this schema, implement one on `ShortUrlDbContext` (or use `Lyo.ShortUrl.ShortUrlService` for id-only generation. That class does not persist anything).
+> This package has no `PostgresShortUrlService` / `PostgresShortUrlStore`. It ships the database pieces (DbContext, entities, migrations, options, and DI helpers for the context).
+> To get an `IShortUrlService` that talks to this schema, implement one on `ShortUrlDbContext` (or use `Lyo.ShortUrl.ShortUrlService` for id-only generation. That class does not
+> persist anything).
 
 ## Examples
 
@@ -19,7 +21,9 @@ services.AddSingleton<IShortUrlService, MyEfBackedShortUrlService>();
 ## Package contents
 
 - `ShortUrlDbContext` + `ShortUrlDbContextFactory` under `Database/`, with `DbSet<ShortUrlEntity>` and `DbSet<UrlClickEntity>`. The default schema is `"url"`.
-- `ShortUrlEntity`. The canonical short-link row: string-keyed `Id` (max 100 chars) used as the short code, `LongUrl` (≤ 1024), optional `CustomAlias`, `CreatedTimestamp` / `UpdatedTimestamp` / `ExpirationDate` / `LastAccessedDate`, `ClickCount`, `IsActive`, and a `Clicks` navigation. Includes a `FromShortenRequest(...)` factory and a `BuildShortUrl(baseUrl)` helper that mirrors `Lyo.ShortUrl.ShortUrlService`'s `BaseUrl` behaviour.
+- `ShortUrlEntity`. The canonical short-link row: string-keyed `Id` (max 100 chars) used as the short code, `LongUrl` (≤ 1024), optional `CustomAlias`, `CreatedTimestamp` /
+  `UpdatedTimestamp` / `ExpirationDate` / `LastAccessedDate`, `ClickCount`, `IsActive`, and a `Clicks` navigation. Includes a `FromShortenRequest(...)` factory and a
+  `BuildShortUrl(baseUrl)` helper that mirrors `Lyo.ShortUrl.ShortUrlService`'s `BaseUrl` behaviour.
 - `UrlClickEntity`. Append-only click log row (`ShortUrlId` FK, `ClickedAt`, optional `IpAddress` / `UserAgent` / `Referrer`).
 - `*EntityConfiguration` Fluent API mappings under the same folder.
 - `PostgresShortUrlOptions` (`SectionName = "PostgresShortUrl"`, `Schema = "url"`, `ConnectionString`, `EnableAutoMigrations`).
@@ -28,21 +32,23 @@ services.AddSingleton<IShortUrlService, MyEfBackedShortUrlService>();
 
 ## Service registration (`Extensions`)
 
-| Entry point | Effect |
-| --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `AddShortUrlDbContext(string connectionString)` | Registers the DbContext factory plus a scoped `ShortUrlDbContext` resolved from the factory. |
+| Entry point                                                                                                           | Effect                                                                                                                                                                                                                      |
+|-----------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AddShortUrlDbContext(string connectionString)`                                                                       | Registers the DbContext factory plus a scoped `ShortUrlDbContext` resolved from the factory.                                                                                                                                |
 | `AddShortUrlDbContextFactory(Action<PostgresShortUrlOptions>)` *(plus `(options)` and `FromConfiguration` overloads)* | Registers `IOptions<PostgresShortUrlOptions>`, `AddPostgresMigrations<ShortUrlDbContext, PostgresShortUrlOptions>()`, and `IDbContextFactory<ShortUrlDbContext>` (`UseNpgsql` + migrations history under the `url` schema). |
 
-There is intentionally no `AddPostgresShortUrlStore` / `AddPostgresShortUrlService`. See the note at the top of this README. Wire your own service on top of the factory, for example:
+There is intentionally no `AddPostgresShortUrlStore` / `AddPostgresShortUrlService`. See the note at the top of this README. Wire your own service on top of the factory, for
+example:
 
 ## Database schema
 
-| Table | Notable columns |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Table            | Notable columns                                                                                                                                                                 |
+|------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `url.short_urls` | `Id` (PK, string ≤ 100), `LongUrl` (≤ 1024), `CustomAlias?` (≤ 100), `CreatedTimestamp`, `UpdatedTimestamp?`, `ExpirationDate?`, `LastAccessedDate?`, `ClickCount`, `IsActive`. |
-| `url.url_clicks` | `Id` (PK, `long`), `ShortUrlId` (FK → `short_urls.Id`), `ClickedAt`, optional `IpAddress` (≤ 45), `UserAgent` (≤ 500), `Referrer` (≤ 512). |
+| `url.url_clicks` | `Id` (PK, `long`), `ShortUrlId` (FK → `short_urls.Id`), `ClickedAt`, optional `IpAddress` (≤ 45), `UserAgent` (≤ 500), `Referrer` (≤ 512).                                      |
 
-(Exact table / column names follow the EF defaults plus the configurations under `Database/`. The migrations history is tracked in `__EFMigrationsHistory` under the same `url` schema.)
+(Exact table / column names follow the EF defaults plus the configurations under `Database/`. The migrations history is tracked in `__EFMigrationsHistory` under the same `url`
+schema.)
 
 ## Dependencies
 

@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Lyo.Exceptions;
 using Lyo.Query.Models.Attributes;
+using Lyo.Query.Services.Path;
 
 namespace Lyo.Query.Services.WhereClause;
 
@@ -114,20 +115,40 @@ public static class SharedEntityMetadataCache
                 currentType = GetCollectionElementType(currentType);
 
             var part = parts[i];
-            if (part == "*") {
+            if (!QueryPath.TryParseSegment(part, out var name, out var window, out var parseError))
+                throw new ArgumentException(parseError is null ? $"Selected field '{path}' is not a valid range." : $"Selected field '{path}' {parseError}");
+
+            if (name == "*") {
+                ArgumentHelpers.ThrowIf(window is not null, $"Selected field '{path}' contains '*' in an invalid position.");
                 ArgumentHelpers.ThrowIf(i != parts.Length - 1, $"Selected field '{path}' contains '*' in an invalid position.");
-                normalizedParts.Add(part);
+                normalizedParts.Add(name);
                 break;
             }
 
-            if (part.Equals("count", StringComparison.OrdinalIgnoreCase) && lastWasCollection) {
+            if (name.Equals("count", StringComparison.OrdinalIgnoreCase) && window is null && lastWasCollection) {
                 normalizedParts.Add("count");
                 break;
             }
 
-            var property = ResolvePropertyCore(currentType, part);
+            var property = ResolvePropertyCore(currentType, name);
             ArgumentHelpers.ThrowIfNull(property, $"Selected field '{path}' not found on type '{currentType.Name}'.");
-            normalizedParts.Add(property.Name);
+            normalizedParts.Add(property!.Name + (window is null ? "" : window.Value.Text));
+            if (window is not null) {
+                if ((Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType) == typeof(string)) {
+                    currentType = typeof(string);
+                    lastWasCollection = false;
+                    continue;
+                }
+
+                if (!IsCollectionType(property.PropertyType))
+                    throw new ArgumentException($"Index is only valid on a string or a collection ('{path}').");
+
+                var elementType = GetCollectionElementType(property.PropertyType);
+                currentType = elementType;
+                lastWasCollection = !window.Value.IsSingle;
+                continue;
+            }
+
             currentType = property.PropertyType;
             lastWasCollection = IsCollectionType(currentType);
             if (lastWasCollection)

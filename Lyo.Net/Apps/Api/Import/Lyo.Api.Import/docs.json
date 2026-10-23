@@ -1,0 +1,129 @@
+{
+  "id": "Lyo.Api.Import",
+  "name": "Lyo.Api.Import",
+  "area": "Apps",
+  "tagline": "Import API. JSON is built in. The endpoint returns rows and does not write a store.",
+  "description": "Validates an import request and dispatches to a format handler. JSON (array, wrapped rows path, NDJSON) is built in. YAML, XML, TOML, CSV, and XLSX are addon packages. A file over the row or byte cap fails the document and returns no rows.",
+  "features": [
+    "Built-in JSON import that round-trips a file written by JSON export when the column map is empty.",
+    "Partial success: a bad element is an issue and the other rows stay.",
+    "Duplicate target properties fail the document before any row is read."
+  ],
+  "examples": [
+    {
+      "title": "Registration",
+      "language": "csharp",
+      "code": "builder.Services.AddLyoApiImport();\nbuilder.Services.AddYamlImport();\nbuilder.Services.AddXmlImport();\nbuilder.Services.AddTomlImport();\nbuilder.Services.AddCsvImport();\nbuilder.Services.AddXlsxImport();\napp.MapLyoImport();"
+    }
+  ],
+  "readmePath": "README.md",
+  "dependencies": [
+    {
+      "name": "Lyo.Api.Models",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Json",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Core",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Common.Metadata",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DateAndTime",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Parameters",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Query.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.AsyncInterfaces",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Memory",
+      "kind": "package",
+      "version": "4.6.3",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "System.Text.Encoding.CodePages",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "System.Text.Json",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    }
+  ],
+  "targetFrameworks": [
+    "net10.0"
+  ],
+  "sections": []
+}

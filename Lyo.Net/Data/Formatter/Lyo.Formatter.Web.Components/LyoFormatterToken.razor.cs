@@ -1,4 +1,3 @@
-using Lyo.Formatter;
 using Microsoft.AspNetCore.Components;
 
 namespace Lyo.Formatter.Web.Components;
@@ -28,8 +27,10 @@ public partial class LyoFormatterToken
             var css = "lyo-fmt-token";
             if (Unresolved)
                 css += " lyo-fmt-token-unresolved";
+
             if (Hovered)
                 css += " lyo-fmt-token-active";
+
             return css;
         }
     }

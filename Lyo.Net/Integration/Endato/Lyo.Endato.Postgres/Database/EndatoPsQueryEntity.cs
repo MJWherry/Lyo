@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.Endato.Postgres.Database;
 
 /// <summary>Row that stores an Endato Person Search query.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class EndatoPsQueryEntity
 {
     [Key]
@@ -31,4 +33,7 @@ public sealed class EndatoPsQueryEntity
     public DateTimeOffset RequestTimestamp { get; set; }
 
     public ICollection<EndatoPsPersonEntity> People { get; set; } = new List<EndatoPsPersonEntity>();
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

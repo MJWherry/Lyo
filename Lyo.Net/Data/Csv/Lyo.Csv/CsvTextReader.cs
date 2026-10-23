@@ -109,9 +109,8 @@ internal sealed class CsvTextReader
             return;
         }
 
-        if (_row.Count != _expectedColumnCount.Value) {
+        if (_row.Count != _expectedColumnCount.Value)
             throw new CsvBadDataException($"Inconsistent number of columns at row {RowNumber + 1}: expected {_expectedColumnCount}, found {_row.Count}.");
-        }
     }
 
     private bool ReadRowSync()

@@ -15,17 +15,28 @@ function downloadBlob(blob: Blob, fileName: string) {
   URL.revokeObjectURL(url);
 }
 
+/** Formats the grid can export. Each one opens the column picker (order and custom formatter fields). */
+export const lyoDataGridExportFormats: readonly { format: ExportFormat; label: string }[] = [
+  { format: "Csv", label: "Export CSV" },
+  { format: "Xlsx", label: "Export XLSX" },
+  { format: "Json", label: "Export JSON" },
+  { format: "Yaml", label: "Export YAML" },
+  { format: "Xml", label: "Export XML" },
+  { format: "Toml", label: "Export TOML" },
+];
+
 export function LyoDataGridExportMenu({
   onPickFormat,
+  disabled,
 }: {
   onPickFormat: (format: ExportFormat) => void;
+  disabled?: boolean;
 }) {
-  return (
-    <>
-      <MenuItem onClick={() => onPickFormat("Csv")}>Export CSV</MenuItem>
-      <MenuItem onClick={() => onPickFormat("Xlsx")}>Export XLSX</MenuItem>
-    </>
-  );
+  return lyoDataGridExportFormats.map((item) => (
+    <MenuItem key={item.format} disabled={disabled} onClick={() => onPickFormat(item.format)}>
+      {item.label}
+    </MenuItem>
+  ));
 }
 
 export function LyoDataGridExportDialog<T>({
@@ -46,7 +57,7 @@ export function LyoDataGridExportDialog<T>({
       columns={grid.columns}
       hiddenFields={grid.hidden}
       filterPropertyDefinitions={grid.filterPropertyDefinitions}
-      saveText={format === "Xlsx" ? "Export XLSX" : format === "Csv" ? "Export CSV" : "Export"}
+      saveText={lyoDataGridExportFormats.find((item) => item.format === format)?.label ?? "Export"}
       onClose={onClose}
       onExport={async (columnList: ExportColumnMapping[]) => {
         if (!format || !grid.apiClient.export) {

@@ -1,6 +1,4 @@
 using Lyo.Api.ApiEndpoint.Config;
-using Lyo.Api.Models;
-using Lyo.Api.Models.Common.Request;
 using Lyo.Api.Models.Error;
 using ApiErrorCodes = Lyo.Api.Models.Constants.ApiErrorCodes;
 

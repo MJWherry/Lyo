@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Lyo.Common.Core.Identifiers;
 using Lyo.Common.Core.Pathing;
 using Lyo.Common.Metadata.Records;
 using Lyo.Compression;
@@ -43,6 +44,7 @@ public abstract class RemoteFileStorageServiceBase : FileStorageServiceBase
     /// <param name="operationContextAccessor">Optional ambient actor/tenant context.</param>
     /// <param name="auditHandlers">Optional audit event handlers.</param>
     /// <param name="contentPolicy">Optional content policy gate.</param>
+    /// <param name="fileTypeSniffer">Optional header sniffer. Starts as <see cref="MagicFileTypeSniffer" />.</param>
     protected RemoteFileStorageServiceBase(
         FileStorageServiceBaseOptions options,
         IFileMetadataStore metadataService,
@@ -53,16 +55,20 @@ public abstract class RemoteFileStorageServiceBase : FileStorageServiceBase
         IMetrics? metrics = null,
         IFileOperationContextAccessor? operationContextAccessor = null,
         IEnumerable<IFileAuditEventHandler>? auditHandlers = null,
-        IFileContentPolicy? contentPolicy = null)
+        IFileContentPolicy? contentPolicy = null,
+        IFileTypeSniffer? fileTypeSniffer = null)
         : base(
             ArgumentHelpers.ThrowIfNullReturn(options), ArgumentHelpers.ThrowIfNullReturn(metadataService), logger, compressionService, twoKeyEncryptionService, metrics,
-            operationContextAccessor, auditHandlers, contentPolicy)
+            operationContextAccessor, auditHandlers, contentPolicy, fileTypeSniffer)
     {
         ArgumentHelpers.ThrowIfNull(transport);
         _transport = transport;
         _root = transport.RootRemoteDirectory;
         Logger.LogInformation("Initialized {Protocol} file storage under {Root}", _transport.ProtocolName, _root);
     }
+
+    /// <summary>Copy and move are supported. Presigned read and direct upload are not. FTP and SFTP have no delegated upload URL.</summary>
+    public override FileStorageCapabilities GetCapabilities() => new(false, false, true, true, this is IFileStoragePhysical);
 
     /// <inheritdoc />
     protected override async Task<HealthResult> CheckHealthLightweightAsync(CancellationToken ct)
@@ -180,7 +186,7 @@ public abstract class RemoteFileStorageServiceBase : FileStorageServiceBase
         if (src is null)
             throw new FileNotFoundException($"Source {_transport.ProtocolName} file missing for id {sourceFileId}");
 
-        var destId = Guid.NewGuid();
+        var destId = LyoGuid.CreateV7();
         var destPrefix = NormalizePathPrefix(request?.PathPrefix ?? meta.PathPrefix);
         var suffix = InferTrailingSuffixAfterFileId(meta.Id, meta.SourceFileName);
         var dest = GetFilePath(destId, suffix, destPrefix);
@@ -212,9 +218,7 @@ public abstract class RemoteFileStorageServiceBase : FileStorageServiceBase
         return movedMeta;
     }
 
-    /// <summary>
-    /// Builds the absolute remote path for a file. Without a prefix, ids are sharded two levels deep by their leading hex digits so one directory does not collect every file.
-    /// </summary>
+    /// <summary>Builds the absolute remote path for a file. Without a prefix, ids are sharded two levels deep by their leading hex digits so one directory does not collect every file.</summary>
     /// <param name="fileId">File identifier, rendered without dashes.</param>
     /// <param name="extension">Suffix appended after the id, including any pipeline extensions.</param>
     /// <param name="pathPrefix">Caller-chosen prefix. Sharding is skipped when this is supplied.</param>
@@ -226,7 +230,7 @@ public abstract class RemoteFileStorageServiceBase : FileStorageServiceBase
             combined = PathHelpers.Combine(PathStyle.Posix, _root, pathPrefix!.Replace('\\', '/').Trim('/'), fileName);
         else {
             var id = fileId.ToString("N");
-            combined = PathHelpers.Combine(PathStyle.Posix, _root, id.Substring(0, 2), id.Substring(2, 2), fileName);
+            combined = PathHelpers.Combine(PathStyle.Posix, _root, id[..2], id.Substring(2, 2), fileName);
         }
 
         var full = PathHelpers.GetFullPath(PathStyle.Posix, combined);

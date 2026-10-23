@@ -1,4 +1,5 @@
 using System.Globalization;
+using Lyo.Common.Core;
 using Lyo.IO.Temp.Models;
 using Lyo.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +29,40 @@ public class FormatterServiceTests : IDisposable, IAsyncDisposable
     public async ValueTask DisposeAsync() => await _tempSession.DisposeAsync();
 
     public void Dispose() => _tempSession.Dispose();
+
+    [Fact]
+    public void Format_FactoryPlaceholder_InvokesOnEachFormat_CallerBagStaysPending()
+    {
+        var calls = 0;
+        var bag = new ContextBag();
+        bag.Set(
+            "Name", () => {
+                calls++;
+                return "Ada";
+            });
+
+        Assert.Equal("Hello, Ada!", _service.Format("Hello, {Name}!", bag));
+        Assert.Equal(1, calls);
+        Assert.Equal("Hello, Ada!", _service.Format("Hello, {Name}!", bag));
+        Assert.Equal(2, calls);
+        Assert.Equal("Ada", bag["Name"]);
+        Assert.Equal(3, calls);
+    }
+
+    [Fact]
+    public void Format_BuilderFactory_FillsPlaceholder()
+    {
+        var calls = 0;
+        var result = _service.Format(
+            "Hello, {Name}!", ctx => ctx.Add(
+                "Name", () => {
+                    calls++;
+                    return "Ada";
+                }));
+
+        Assert.Equal("Hello, Ada!", result);
+        Assert.Equal(1, calls);
+    }
 
     [Fact]
     public void Format_SimplePlaceholder_ReplacesWithValue()
@@ -120,8 +155,8 @@ public class FormatterServiceTests : IDisposable, IAsyncDisposable
     public async Task Format_TemplateFromIOTempFile_Works()
     {
         var templateContent = "Report for {User} at {Date}";
-        var tempPath = await _tempSession.CreateFileAsync(templateContent, TestContext.Current.CancellationToken);
-        var contentFromFile = await File.ReadAllTextAsync(tempPath, TestContext.Current.CancellationToken);
+        var tempPath = await _tempSession.CreateFileAsync(templateContent, TestCt);
+        var contentFromFile = await File.ReadAllTextAsync(tempPath, TestCt);
         var result = _service.Format(contentFromFile, new { User = "Admin", Date = "2026-02-16" });
         Assert.Equal("Report for Admin at 2026-02-16", result);
     }

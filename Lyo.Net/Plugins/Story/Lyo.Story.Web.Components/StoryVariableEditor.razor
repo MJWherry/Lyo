@@ -1,0 +1,34 @@
+<MudStack Spacing="1">
+    @for (var index = 0; index < Variables.Count; index++) {
+        var variable = Variables[index];
+        var captured = index;
+        <MudGrid Spacing="1">
+            <MudItem xs="3">
+                <MudTextField T="string" Label="Key" Value="@variable.Key" ValueChanged="@(value => Set(captured, item => item.Key = value))" Margin="Margin.Dense"
+                              Variant="Variant.Outlined"/>
+            </MudItem>
+            <MudItem xs="3">
+                <MudTextField T="string" Label="Name" Value="@variable.Name" ValueChanged="@(value => Set(captured, item => item.Name = value))" Margin="Margin.Dense"
+                              Variant="Variant.Outlined"/>
+            </MudItem>
+            <MudItem xs="2">
+                <MudSelect T="StoryVariableType" Value="variable.Type" ValueChanged="@(value => Set(captured, item => item.Type = value))" Label="Type" Margin="Margin.Dense"
+                           Variant="Variant.Outlined">
+                    @foreach (var type in Enum.GetValues<StoryVariableType>()) {
+                        if (type != StoryVariableType.Unknown) {
+                            <MudSelectItem Value="type">@type</MudSelectItem>
+                        }
+                    }
+                </MudSelect>
+            </MudItem>
+            <MudItem xs="3">
+                <MudTextField T="string" Label="Default" Value="@variable.DefaultValue" ValueChanged="@(value => Set(captured, item => item.DefaultValue = value))"
+                              Margin="Margin.Dense" Variant="Variant.Outlined"/>
+            </MudItem>
+            <MudItem xs="1" Class="d-flex align-center">
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" aria-label="Remove variable" OnClick="@(() => Remove(captured))"/>
+            </MudItem>
+        </MudGrid>
+    }
+    <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.Add" OnClick="Add">Add variable</MudButton>
+</MudStack>

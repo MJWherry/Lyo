@@ -16,8 +16,8 @@ public static class Extensions
     {
         /// <summary>
         /// Registers the consumer-side Lyo auth runtime: options, <see cref="LyoAuthSessionStore" />, the typed <see cref="LyoAuthApiClient" /> aimed at
-        /// <see cref="LyoAuthClientOptions.AuthBaseUrl" />, <see cref="LyoAuthDelegatingHandler" />, cookie scheme (<see cref="LyoAuthClientOptions.SchemeName" />),
-        /// data protection, and <see cref="Microsoft.AspNetCore.Http.IHttpContextAccessor" />. Does not register <see cref="LyoAuthStateProvider" /> (Blazor-only); call
+        /// <see cref="LyoAuthClientOptions.AuthBaseUrl" />, <see cref="LyoAuthDelegatingHandler" />, cookie scheme (<see cref="LyoAuthClientOptions.SchemeName" />), data protection, and
+        /// <see cref="Microsoft.AspNetCore.Http.IHttpContextAccessor" />. Does not register <see cref="LyoAuthStateProvider" /> (Blazor-only); call
         /// <see cref="AddLyoAuthBlazorStateProvider" /> on Blazor hosts.
         /// </summary>
         public IServiceCollection AddLyoAuthClient(Action<LyoAuthClientOptions> configure)
@@ -75,10 +75,9 @@ public static class Extensions
     extension(IHttpClientBuilder builder)
     {
         /// <summary>
-        /// Attaches <see cref="LyoAuthDelegatingHandler" /> so outbound calls get <c>Authorization: Bearer</c> and auto-refresh. When
-        /// <paramref name="propagateCorrelationId" /> is <c>true</c> (the default), also chains <see cref="Lyo.Diagnostic.Correlation.LyoCorrelationDelegatingHandler" /> as the
-        /// <strong>outermost</strong> handler so the correlation header is stamped before auth runs (covers the primary call and any nested refresh). Opt out by
-        /// passing <c>false</c> when the host already stamps that header elsewhere.
+        /// Attaches <see cref="LyoAuthDelegatingHandler" /> so outbound calls get <c>Authorization: Bearer</c> and auto-refresh. When <paramref name="propagateCorrelationId" /> is
+        /// <c>true</c> (the default), also chains <see cref="Lyo.Diagnostic.Correlation.LyoCorrelationDelegatingHandler" /> as the <strong>outermost</strong> handler so the correlation
+        /// header is stamped before auth runs (covers the primary call and any nested refresh). Opt out by passing <c>false</c> when the host already stamps that header elsewhere.
         /// </summary>
         public IHttpClientBuilder AddLyoAuthHandler(bool propagateCorrelationId = true)
         {

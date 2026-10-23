@@ -6,6 +6,7 @@ import type {
   SortBy,
 } from "lyo-query";
 import type { ReactNode } from "react";
+import type { LyoIdAbbreviation } from "../display/idField.js";
 
 export const LyoDataGridFeatureFlags = {
   None: 0,
@@ -32,22 +33,55 @@ export function hasFeature(flags: number, feature: number): boolean {
   return (flags & feature) === feature;
 }
 
+export type LyoRelatedQueryProject = (
+  route: string,
+  body: unknown
+) => Promise<{ ok?: boolean; data?: { isSuccess?: boolean; items?: unknown[] | null } }>;
+
+/** API client a related lookup targets when the related entity lives behind a different API than the grid's. */
+export type LyoRelatedClient = { queryProject: LyoRelatedQueryProject };
+
 export type LyoRelatedLookup = {
   /** Related entity QueryProject base route (for example `PersonAddress`). */
   route: string;
   /** Related Select paths. `Id` is always unioned by the loader. */
   select: readonly string[];
+  /** Client for the related QueryProject. Defaults to the grid's `apiClient`. */
+  client?: LyoRelatedClient;
 };
+
+export type LyoColumnAlign = "left" | "center" | "right";
 
 export type LyoColumn<T> = {
   id: string;
   field: string;
   header: string;
   sortable?: boolean;
+  /** Server sort path when it differs from `field` (for example a display column sorted by `Owner.LastName`). */
+  sortKey?: string;
   filterable?: boolean;
   hideable?: boolean;
   hiddenByDefault?: boolean;
   quickSearch?: boolean;
+  /** Column shows an identifier: it is never picked as the card heading. */
+  identifier?: boolean;
+  /** How `LyoIdField` shortens an identifier column. */
+  idAbbreviation?: LyoIdAbbreviation;
+  /** Character count for `idAbbreviation`. */
+  idAbbreviationLength?: number;
+  /** Makes this column the card heading, overriding the automatic name-like pick. */
+  cardTitle?: boolean;
+  /** Renders the value with `LyoTimestamp` when no `cell` is supplied. */
+  timestamp?: boolean;
+  /** Timestamp shows the latest of several instants (see `LyoTimestamp` `latest`). */
+  timestampLatest?: boolean;
+  /** Age under which the timestamp reads as relative ("5 minutes ago"). */
+  timestampRelativeWindowMs?: number;
+  /** Truncates plain text cells with an ellipsis and a tooltip holding the full value. */
+  maxDisplayLength?: number;
+  /** Formats the value for plain text cells when no `cell` is supplied. */
+  format?: (value: unknown, row: T) => string;
+  align?: LyoColumnAlign;
   type?: FilterPropertyDefinition["type"];
   accessor?: (row: T) => unknown;
   /** Second argument is the related entity when `related` is set; otherwise undefined. */
@@ -62,17 +96,19 @@ export function createLyoColumn<T>(col: LyoColumn<T>): LyoColumn<T> {
   return { sortable: true, filterable: true, hideable: true, ...col };
 }
 
-/** Parent FK column that QueryProjects related rows by `Keys` after the parent page loads. */
+/**
+ * Identifier column. With `related` it QueryProjects the related rows by `Keys` after the parent page loads and passes the match to `cell`.
+ * Without a `cell` the grid renders the value with `LyoIdField` (copy button, navigation when `LyoIdNavigation` knows the route).
+ */
 export function createLyoIdColumn<T, TRes = unknown>(
-  col: Omit<LyoColumn<T>, "related" | "cell"> & {
-    related: LyoRelatedLookup;
+  col: Omit<LyoColumn<T>, "cell"> & {
     cell?: (row: T, related: TRes | null) => ReactNode;
   }
 ): LyoColumn<T> {
   const { cell, ...rest } = col;
   return createLyoColumn({
     ...rest,
-    related: col.related,
+    identifier: true,
     cell: cell ? (row, related) => cell(row, (related as TRes | null | undefined) ?? null) : undefined,
   });
 }
@@ -97,9 +133,18 @@ export type LyoDataGridPersistedState = {
   hiddenColumnFields?: string[];
   selectedItemKeys?: unknown[][];
   columnSizing?: Record<string, number>;
+  layout?: "Auto" | "Table" | "Cards";
 };
 
 export type LyoDataGridMode = "concrete" | "project" | "query";
+
+export function projectedField(row: Record<string, unknown>, field: string): unknown {
+  return projectedValue(row, field);
+}
+
+export function projectedId(row: Record<string, unknown>): string {
+  return String(projectedField(row, "Id") ?? "");
+}
 
 export function projectedValue(row: unknown, field: string): unknown {
   if (row == null || typeof row !== "object") return undefined;

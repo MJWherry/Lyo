@@ -5,9 +5,7 @@ using Lyo.FileMetadataStore.Models;
 
 namespace Lyo.FileStorage;
 
-/// <summary>
-/// Zip download names and relative entry paths for <see cref="Abstractions.IFileStorageArchiveService" />. Sanitizing and path shape go through <see cref="PathHelpers" />.
-/// </summary>
+/// <summary>Zip download names and relative entry paths for <see cref="Abstractions.IFileStorageArchiveService" />. Sanitizing and path shape go through <see cref="PathHelpers" />.</summary>
 public static class FileStorageArchivePath
 {
     /// <summary>Drops path segments and invalid filename characters, then forces a <c>.zip</c> extension. Starts as <c>files.zip</c>.</summary>

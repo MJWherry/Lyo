@@ -163,23 +163,6 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
-                    b.Property<int>("AlertAfterConsecutiveFailures")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0)
-                        .HasColumnName("alert_after_consecutive_failures");
-
-                    b.Property<bool>("AlertOnFailure")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("alert_on_failure");
-
-                    b.Property<string>("AlertWebhookUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("alert_webhook_url");
-
                     b.Property<int>("CircuitBreakerResetMinutes")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
@@ -537,10 +520,6 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
 
-                    b.Property<bool>("AllowTriggers")
-                        .HasColumnType("boolean")
-                        .HasColumnName("allow_triggers");
-
                     b.Property<int?>("BatchIndex")
                         .HasColumnType("integer")
                         .HasColumnName("batch_index");
@@ -585,10 +564,6 @@ namespace Lyo.Job.Postgres.Migrations
                     b.Property<Guid?>("JobScheduleId")
                         .HasColumnType("uuid")
                         .HasColumnName("job_schedule_id");
-
-                    b.Property<Guid?>("JobTriggerId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("job_trigger_id");
 
                     b.Property<DateTime?>("LastHeartbeatUtc")
                         .HasColumnType("timestamp with time zone")
@@ -653,10 +628,6 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnType("character varying(64)")
                         .HasColumnName("trace_id");
 
-                    b.Property<Guid?>("TriggeredByJobRunId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("triggered_by_job_run_id");
-
                     b.Property<DateTime?>("UpdatedTimestamp")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_timestamp");
@@ -716,13 +687,9 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.HasIndex(new[] { "JobScheduleId" }, "ix_job_run_job_schedule_id");
 
-                    b.HasIndex(new[] { "JobTriggerId" }, "ix_job_run_job_trigger_id");
-
                     b.HasIndex(new[] { "ParentJobRunId" }, "ix_job_run_parent_job_run_id");
 
                     b.HasIndex(new[] { "State" }, "ix_job_run_state");
-
-                    b.HasIndex(new[] { "TriggeredByJobRunId" }, "ix_job_run_triggered_by_job_run_id");
 
                     b.HasIndex(new[] { "WorkerInstanceId" }, "ix_job_run_worker_instance_id");
 
@@ -913,9 +880,13 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("job_blackout_calendar_id");
 
-                    b.Property<Guid>("JobDefinitionId")
+                    b.Property<Guid?>("JobDefinitionId")
                         .HasColumnType("uuid")
                         .HasColumnName("job_definition_id");
+
+                    b.Property<Guid?>("JobWorkflowId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_workflow_id");
 
                     b.Property<string>("MisfirePolicy")
                         .IsRequired()
@@ -966,7 +937,12 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.HasIndex(new[] { "JobDefinitionId" }, "ix_job_schedule_job_definition_id");
 
-                    b.ToTable("job_schedule", "job");
+                    b.HasIndex(new[] { "JobWorkflowId" }, "ix_job_schedule_job_workflow_id");
+
+                    b.ToTable("job_schedule", "job", t =>
+                        {
+                            t.HasCheckConstraint("ck_job_schedule_exactly_one_owner", "num_nonnulls(job_definition_id, job_workflow_id) = 1");
+                        });
                 });
 
             modelBuilder.Entity("Lyo.Job.Postgres.Database.JobScheduleParameter", b =>
@@ -1025,126 +1001,6 @@ namespace Lyo.Job.Postgres.Migrations
                     b.HasIndex(new[] { "Key" }, "ix_job_schedule_parameter_key");
 
                     b.ToTable("job_schedule_parameter", "job");
-                });
-
-            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobTrigger", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
-
-                    b.Property<DateTime>("CreatedTimestamp")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_timestamp");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(3000)
-                        .HasColumnType("character varying(3000)")
-                        .HasColumnName("description");
-
-                    b.Property<bool>("Enabled")
-                        .HasColumnType("boolean")
-                        .HasColumnName("enabled");
-
-                    b.Property<Guid>("JobDefinitionId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("job_definition_id");
-
-                    b.Property<string>("TriggerComparator")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("trigger_comparator");
-
-                    b.Property<string>("TriggerJobResultKey")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("trigger_job_result_key");
-
-                    b.Property<string>("TriggerJobResultValue")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("trigger_job_result_value");
-
-                    b.Property<Guid>("TriggersJobDefinitionId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("triggers_job_definition_id");
-
-                    b.Property<DateTime?>("UpdatedTimestamp")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_timestamp");
-
-                    b.HasKey("Id")
-                        .HasName("pk_job_trigger");
-
-                    b.HasIndex(new[] { "JobDefinitionId" }, "ix_job_trigger_job_definition_id");
-
-                    b.HasIndex(new[] { "TriggerJobResultKey" }, "ix_job_trigger_trigger_job_result_key");
-
-                    b.HasIndex(new[] { "TriggersJobDefinitionId" }, "ix_job_trigger_triggers_job_definition_id");
-
-                    b.ToTable("job_trigger", "job");
-                });
-
-            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobTriggerParameter", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("id")
-                        .HasDefaultValueSql("gen_random_uuid()");
-
-                    b.Property<DateTime>("CreatedTimestamp")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_timestamp");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(3000)
-                        .HasColumnType("character varying(3000)")
-                        .HasColumnName("description");
-
-                    b.Property<bool>("Enabled")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true)
-                        .HasColumnName("enabled");
-
-                    b.Property<Guid>("JobTriggerId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("job_trigger_id");
-
-                    b.Property<string>("Key")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("key");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(1024)
-                        .HasColumnType("character varying(1024)")
-                        .HasColumnName("type");
-
-                    b.Property<DateTime?>("UpdatedTimestamp")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_timestamp");
-
-                    b.Property<string>("Value")
-                        .HasMaxLength(3000)
-                        .HasColumnType("character varying(3000)")
-                        .HasColumnName("value");
-
-                    b.HasKey("Id")
-                        .HasName("pk_job_trigger_parameter");
-
-                    b.HasIndex(new[] { "JobTriggerId" }, "ix_job_trigger_parameter_job_trigger_id");
-
-                    b.HasIndex(new[] { "Key" }, "ix_job_trigger_parameter_key");
-
-                    b.ToTable("job_trigger_parameter", "job");
                 });
 
             modelBuilder.Entity("Lyo.Job.Postgres.Database.JobWorkerInstance", b =>
@@ -1268,9 +1124,26 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("finished_timestamp");
 
+                    b.Property<string>("IdempotencyKey")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("idempotency_key");
+
+                    b.Property<string>("InputsJson")
+                        .HasColumnType("text")
+                        .HasColumnName("inputs_json");
+
+                    b.Property<Guid?>("JobScheduleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_schedule_id");
+
                     b.Property<Guid>("JobWorkflowId")
                         .HasColumnType("uuid")
                         .HasColumnName("job_workflow_id");
+
+                    b.Property<DateTime?>("ScheduledSlotUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("scheduled_slot_utc");
 
                     b.Property<DateTime?>("StartedTimestamp")
                         .HasColumnType("timestamp with time zone")
@@ -1288,6 +1161,16 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_job_workflow_run");
+
+                    b.HasIndex("JobScheduleId", "ScheduledSlotUtc")
+                        .IsUnique()
+                        .HasDatabaseName("ix_job_workflow_run_schedule_slot_unique")
+                        .HasFilter("job_schedule_id IS NOT NULL AND scheduled_slot_utc IS NOT NULL");
+
+                    b.HasIndex("JobWorkflowId", "IdempotencyKey")
+                        .IsUnique()
+                        .HasDatabaseName("ix_job_workflow_run_idempotency_key_unique")
+                        .HasFilter("idempotency_key IS NOT NULL");
 
                     b.HasIndex(new[] { "JobWorkflowId" }, "ix_job_workflow_run_job_workflow_id");
 
@@ -1349,6 +1232,10 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id")
                         .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<string>("ConditionJson")
+                        .HasColumnType("text")
+                        .HasColumnName("condition_json");
 
                     b.Property<DateTime>("CreatedTimestamp")
                         .HasColumnType("timestamp with time zone")
@@ -1460,11 +1347,6 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasForeignKey("JobScheduleId")
                         .HasConstraintName("fk_job_run_job_schedule_job_schedule_id");
 
-                    b.HasOne("Lyo.Job.Postgres.Database.JobTrigger", "JobTrigger")
-                        .WithMany("JobRuns")
-                        .HasForeignKey("JobTriggerId")
-                        .HasConstraintName("fk_job_run_job_trigger_job_trigger_id");
-
                     b.HasOne("Lyo.Job.Postgres.Database.JobRun", "ParentJobRun")
                         .WithMany("InverseParentJobRun")
                         .HasForeignKey("ParentJobRunId")
@@ -1475,22 +1357,13 @@ namespace Lyo.Job.Postgres.Migrations
                         .HasForeignKey("ReRanFromJobRunId")
                         .HasConstraintName("fk_job_run_re_ran_from");
 
-                    b.HasOne("Lyo.Job.Postgres.Database.JobRun", "TriggeredByJobRun")
-                        .WithMany("InverseTriggeredByJobRun")
-                        .HasForeignKey("TriggeredByJobRunId")
-                        .HasConstraintName("fk_job_run_triggered_by");
-
                     b.Navigation("JobDefinition");
 
                     b.Navigation("JobSchedule");
 
-                    b.Navigation("JobTrigger");
-
                     b.Navigation("ParentJobRun");
 
                     b.Navigation("ReRanFromJobRun");
-
-                    b.Navigation("TriggeredByJobRun");
                 });
 
             modelBuilder.Entity("Lyo.Job.Postgres.Database.JobRunLog", b =>
@@ -1536,12 +1409,18 @@ namespace Lyo.Job.Postgres.Migrations
                     b.HasOne("Lyo.Job.Postgres.Database.JobDefinition", "JobDefinition")
                         .WithMany("JobSchedules")
                         .HasForeignKey("JobDefinitionId")
-                        .IsRequired()
                         .HasConstraintName("fk_job_schedule_job_definition_job_definition_id");
+
+                    b.HasOne("Lyo.Job.Postgres.Database.JobWorkflow", "JobWorkflow")
+                        .WithMany("JobSchedules")
+                        .HasForeignKey("JobWorkflowId")
+                        .HasConstraintName("fk_job_schedule_job_workflow_job_workflow_id");
 
                     b.Navigation("JobBlackoutCalendar");
 
                     b.Navigation("JobDefinition");
+
+                    b.Navigation("JobWorkflow");
                 });
 
             modelBuilder.Entity("Lyo.Job.Postgres.Database.JobScheduleParameter", b =>
@@ -1555,43 +1434,20 @@ namespace Lyo.Job.Postgres.Migrations
                     b.Navigation("JobSchedule");
                 });
 
-            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobTrigger", b =>
-                {
-                    b.HasOne("Lyo.Job.Postgres.Database.JobDefinition", "JobDefinition")
-                        .WithMany("JobTriggerJobDefinitions")
-                        .HasForeignKey("JobDefinitionId")
-                        .IsRequired()
-                        .HasConstraintName("fk_job_trigger_job_definition_job_definition_id");
-
-                    b.HasOne("Lyo.Job.Postgres.Database.JobDefinition", "TriggersJobDefinition")
-                        .WithMany("JobTriggerTriggersJobDefinitions")
-                        .HasForeignKey("TriggersJobDefinitionId")
-                        .IsRequired()
-                        .HasConstraintName("fk_job_trigger_triggers_job_definition");
-
-                    b.Navigation("JobDefinition");
-
-                    b.Navigation("TriggersJobDefinition");
-                });
-
-            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobTriggerParameter", b =>
-                {
-                    b.HasOne("Lyo.Job.Postgres.Database.JobTrigger", "JobTrigger")
-                        .WithMany("JobTriggerParameters")
-                        .HasForeignKey("JobTriggerId")
-                        .IsRequired()
-                        .HasConstraintName("fk_job_trigger_parameter_job_trigger_job_trigger_id");
-
-                    b.Navigation("JobTrigger");
-                });
-
             modelBuilder.Entity("Lyo.Job.Postgres.Database.JobWorkflowRun", b =>
                 {
+                    b.HasOne("Lyo.Job.Postgres.Database.JobSchedule", "JobSchedule")
+                        .WithMany()
+                        .HasForeignKey("JobScheduleId")
+                        .HasConstraintName("fk_job_workflow_run_job_schedule_job_schedule_id");
+
                     b.HasOne("Lyo.Job.Postgres.Database.JobWorkflow", "JobWorkflow")
                         .WithMany("JobWorkflowRuns")
                         .HasForeignKey("JobWorkflowId")
                         .IsRequired()
                         .HasConstraintName("fk_job_workflow_run_job_workflow_job_workflow_id");
+
+                    b.Navigation("JobSchedule");
 
                     b.Navigation("JobWorkflow");
                 });
@@ -1660,10 +1516,6 @@ namespace Lyo.Job.Postgres.Migrations
 
                     b.Navigation("JobSchedules");
 
-                    b.Navigation("JobTriggerJobDefinitions");
-
-                    b.Navigation("JobTriggerTriggersJobDefinitions");
-
                     b.Navigation("JobWorkflowSteps");
                 });
 
@@ -1672,8 +1524,6 @@ namespace Lyo.Job.Postgres.Migrations
                     b.Navigation("InverseParentJobRun");
 
                     b.Navigation("InverseReRanFromJobRun");
-
-                    b.Navigation("InverseTriggeredByJobRun");
 
                     b.Navigation("JobRunLogs");
 
@@ -1691,15 +1541,10 @@ namespace Lyo.Job.Postgres.Migrations
                     b.Navigation("JobScheduleParameters");
                 });
 
-            modelBuilder.Entity("Lyo.Job.Postgres.Database.JobTrigger", b =>
-                {
-                    b.Navigation("JobRuns");
-
-                    b.Navigation("JobTriggerParameters");
-                });
-
             modelBuilder.Entity("Lyo.Job.Postgres.Database.JobWorkflow", b =>
                 {
+                    b.Navigation("JobSchedules");
+
                     b.Navigation("JobWorkflowRuns");
 
                     b.Navigation("JobWorkflowSteps");

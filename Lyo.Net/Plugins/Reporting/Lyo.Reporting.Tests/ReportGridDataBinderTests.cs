@@ -17,10 +17,7 @@ public sealed class ReportGridDataBinderTests
         };
 
         TableDataBinder.Apply(
-            table, [
-                new Dictionary<string, object?> { ["client"] = "Ada", ["Total"] = 12 },
-                new Dictionary<string, object?> { ["client"] = "Lin", ["Total"] = 3 }
-            ]);
+            table, [new Dictionary<string, object?> { ["client"] = "Ada", ["Total"] = 12 }, new Dictionary<string, object?> { ["client"] = "Lin", ["Total"] = 3 }]);
 
         Assert.Equal(2, table.Rows.Count);
         Assert.Equal("Ada", table.Rows[0].Cells[0]);

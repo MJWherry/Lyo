@@ -1,0 +1,47 @@
+@namespace Lyo.Web.Automation.Web.Components
+
+<MudStack Spacing="2">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_busy || Plan is null" OnClick="RunAsync">Run</MudButton>
+    @if (!string.IsNullOrEmpty(_status)) {
+        <MudAlert Severity="@(_error == null ? Severity.Info : Severity.Warning)">@_status @(_error ?? "")</MudAlert>
+    }
+    <MudGrid>
+        <MudItem xs="12" md="4">
+            <MudStack Spacing="1">
+                @if (_steps.Count == 0) {
+                    <MudText Typo="Typo.body2">Steps show up here as the run finishes.</MudText>
+                }
+                @for (var i = 0; i < _steps.Count; i++) {
+                    var index = i;
+                    var step = _steps[index];
+                    <MudButton Variant="@(_selected == index ? Variant.Filled : Variant.Outlined)" FullWidth="true" OnClick="@(() => SelectAsync(index))">
+                        @(index + 1). @(string.IsNullOrWhiteSpace(step.Name) ? AutomationPlanDraft.StepLabel(step.Type) : step.Name) — @step.Outcome
+                    </MudButton>
+                }
+            </MudStack>
+        </MudItem>
+        <MudItem xs="12" md="8">
+            @if (_selectedStep is null) {
+                <MudAlert Severity="Severity.Info">Select a step to see its screenshot and context.</MudAlert>
+            }
+            else {
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.subtitle1">@_selectedStep.Outcome · @_selectedStep.DurationMs ms</MudText>
+                    @if (!string.IsNullOrEmpty(_selectedStep.Error)) {
+                        <MudAlert Severity="Severity.Error">@_selectedStep.Error</MudAlert>
+                    }
+                    @if (_image is not null) {
+                        <img src="@_image" alt="Step screenshot" style="max-width: 100%;"/>
+                    }
+                    <MudText Typo="Typo.subtitle2">Context</MudText>
+                    <pre style="white-space: pre-wrap;">@ContextJson(_selectedStep.Context)</pre>
+                </MudStack>
+            }
+            @if (_latest is not null) {
+                <MudText Typo="Typo.subtitle2" Class="mt-4">Overall context</MudText>
+
+                <pre style="white-space: pre-wrap;">@ContextJson(_latest.Context)</pre>
+            }
+        </MudItem>
+    </MudGrid>
+</MudStack>

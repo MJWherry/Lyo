@@ -4,8 +4,8 @@ namespace Lyo.Note;
 
 /// <summary>Store contract for notes.</summary>
 /// <remarks>
-/// Stores take <see cref="EntityRef" /> at the API edge and persist <c>EntityId</c> as one Guid (Option A). Pass null for <c>tenantId</c> on methods in
-/// single-tenant hosts (resolved through <see cref="EntityRefOptions.DefaultTenantId" />).
+/// Stores take <see cref="EntityRef" /> at the API edge and persist <c>EntityId</c> as one Guid (Option A). Pass null for <c>tenantId</c> on methods in single-tenant hosts
+/// (resolved through <see cref="EntityRefOptions.DefaultTenantId" />).
 /// </remarks>
 public interface INoteStore
 {
@@ -29,4 +29,7 @@ public interface INoteStore
 
     /// <summary>Removes every notes for an entity.</summary>
     Task DeleteForEntityAsync(EntityRef forEntity, Guid? tenantId = null, CancellationToken ct = default);
+
+    /// <summary>Notes whose body matches <paramref name="term" />. Notes that do not match are omitted.</summary>
+    Task<IReadOnlyList<NoteRecord>> SearchAsync(string term, Guid? tenantId = null, CancellationToken ct = default);
 }

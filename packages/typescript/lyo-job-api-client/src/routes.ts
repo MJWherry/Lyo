@@ -7,8 +7,6 @@ export const JobRoutes = {
     definitionParameters: "Job/Definition/Parameter",
     schedules: "Job/Schedule",
     scheduleParameters: "Job/ScheduleParameters",
-    triggers: "Job/Triggers",
-    triggerParameters: "Job/TriggerParameters",
     runs: "Job/Run",
     runsCreate: "Job/Run/Create",
     runsResync: "Job/Run/Resync",
@@ -64,6 +62,11 @@ export function jobDefinitionStatsPath(definitionId: string): string {
 
 export function jobDefinitionNextRunsPath(definitionId: string): string {
     return `${JobRoutes.definitions}/${definitionId}/NextRuns`;
+}
+
+/** `POST /Job/Workflow/{id}/Start` — the only route that actually starts a workflow. */
+export function jobWorkflowStartPath(workflowId: string): string {
+    return `${JobRoutes.workflows}/${workflowId}/Start`;
 }
 
 export function joinRoutePrefix(routePrefix: string | undefined, relativePath: string): string {

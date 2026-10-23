@@ -1,3 +1,4 @@
+using Lyo.Common.Core.Net;
 using Lyo.Web.Automation.Models;
 using Lyo.Web.Automation.Playwright.Configuration;
 using Microsoft.Playwright;
@@ -22,7 +23,13 @@ public sealed class PlaywrightBrowserOptionsTests
     [Fact]
     public void ApplySessionViewport_RaisesScreenToCoverViewport()
     {
-        var options = new PlaywrightBrowserOptions { ViewportWidth = 2560, ViewportHeight = 1440, ScreenWidth = 1920, ScreenHeight = 1080 };
+        var options = new PlaywrightBrowserOptions {
+            ViewportWidth = 2560,
+            ViewportHeight = 1440,
+            ScreenWidth = 1920,
+            ScreenHeight = 1080
+        };
+
         options.ApplySessionViewport();
         Assert.Equal(2560, options.ScreenWidth);
         Assert.Equal(1440, options.ScreenHeight);
@@ -33,11 +40,12 @@ public sealed class PlaywrightBrowserOptionsTests
     {
         var options = new PlaywrightBrowserOptions {
             RandomizeViewportOnSessionStart = true,
-            ViewportSizes = [new DesktopDisplaySize(1440, 900)],
+            ViewportSizes = [new(1440, 900)],
             ViewportWidth = 800,
             ViewportHeight = 600
         };
-        options.ApplySessionViewport(new Random(1));
+
+        options.ApplySessionViewport(new(1));
         Assert.Equal(1440, options.ViewportWidth);
         Assert.Equal(900, options.ViewportHeight);
         Assert.Equal(1440, options.ScreenWidth);
@@ -57,7 +65,7 @@ public sealed class PlaywrightBrowserOptionsTests
     [Fact]
     public void ResolveLaunchArguments_Firefox_OmitsWindowSizeAndChromiumDefaults()
     {
-        var options = new PlaywrightBrowserOptions { BrowserKind = PlaywrightBrowserKind.Firefox, ScreenWidth = 1920, ScreenHeight = 1080 };
+        var options = new PlaywrightBrowserOptions { BrowserKind = AutomationBrowserKind.Firefox, ScreenWidth = 1920, ScreenHeight = 1080 };
         var args = options.ResolveLaunchArguments();
         Assert.DoesNotContain(args, a => a.Contains("window-size", StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain(args, a => a.Contains("no-sandbox", StringComparison.OrdinalIgnoreCase));
@@ -67,10 +75,7 @@ public sealed class PlaywrightBrowserOptionsTests
     [Fact]
     public void ResolveLaunchArguments_Firefox_KeepsCallerArgsThatAreNotChromiumDefaults()
     {
-        var options = new PlaywrightBrowserOptions {
-            BrowserKind = PlaywrightBrowserKind.Firefox,
-            LaunchArguments = ["--width=1280"]
-        };
+        var options = new PlaywrightBrowserOptions { BrowserKind = AutomationBrowserKind.Firefox, LaunchArguments = ["--width=1280"] };
         Assert.Equal(["--width=1280"], options.ResolveLaunchArguments());
     }
 
@@ -82,19 +87,21 @@ public sealed class PlaywrightBrowserOptionsTests
     }
 
     [Fact]
-    public void ResolveContextUserAgent_Firefox_DefaultPool_IsNull()
+    public void ResolveContextUserAgent_Firefox_DefaultPool_IsGenerated()
     {
-        var options = new PlaywrightBrowserOptions { BrowserKind = PlaywrightBrowserKind.Firefox };
-        Assert.Null(options.ResolveContextUserAgent());
+        var options = new PlaywrightBrowserOptions { BrowserKind = AutomationBrowserKind.Firefox };
+        var ua = options.ResolveContextUserAgent();
+        Assert.Contains($"Firefox/{UserAgentGenerator.FirefoxVersion}", ua, StringComparison.Ordinal);
+        Assert.DoesNotContain("Chrome/", ua, StringComparison.Ordinal);
     }
 
     [Fact]
     public void ResolveContextUserAgent_Firefox_Custom_UsesFirst()
     {
         var options = new PlaywrightBrowserOptions {
-            BrowserKind = PlaywrightBrowserKind.Firefox,
-            UserAgents = ["Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0"]
+            BrowserKind = AutomationBrowserKind.Firefox, UserAgents = ["Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0"]
         };
+
         Assert.Equal("Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0", options.ResolveContextUserAgent());
     }
 
@@ -114,13 +121,14 @@ public sealed class PlaywrightBrowserOptionsTests
         var options = new PlaywrightBrowserOptions {
             RandomizeViewportOnSessionStart = true,
             ViewportJitterPixels = 8,
-            ViewportSizes = [new DesktopDisplaySize(1366, 768)],
+            ViewportSizes = [new(1366, 768)],
             NavigationWaitUntil = WaitUntilState.Load
         };
+
         var clone = options.Clone();
         Assert.True(clone.RandomizeViewportOnSessionStart);
         Assert.Equal(8, clone.ViewportJitterPixels);
-        Assert.Equal(new DesktopDisplaySize(1366, 768), Assert.Single(clone.ViewportSizes));
+        Assert.Equal(new(1366, 768), Assert.Single(clone.ViewportSizes));
         Assert.Equal(WaitUntilState.Load, clone.NavigationWaitUntil);
         clone.ViewportSizes[0] = new(1, 1);
         Assert.Equal(1366, options.ViewportSizes[0].Width);

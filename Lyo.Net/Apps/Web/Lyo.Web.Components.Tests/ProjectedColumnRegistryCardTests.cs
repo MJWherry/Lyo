@@ -13,9 +13,7 @@ public class ProjectedColumnRegistryCardTests
         var registry = new ProjectedColumnRegistry();
         registry.Register("Name", "Name", null, cell: Cell);
         registry.Register("Actions", null, null);
-
         var columns = registry.GetCardColumns();
-
         Assert.Equal(["Name"], columns.Select(c => c.Field));
     }
 
@@ -25,9 +23,7 @@ public class ProjectedColumnRegistryCardTests
         var registry = new ProjectedColumnRegistry();
         registry.Register("Name", "Name", null, cell: Cell);
         registry.Register("State", "State", null, cell: Cell);
-
         var columns = registry.GetCardColumns(["State"]);
-
         Assert.Equal(["State"], columns.Select(c => c.Field));
     }
 
@@ -37,9 +33,7 @@ public class ProjectedColumnRegistryCardTests
         var registry = new ProjectedColumnRegistry();
         registry.Register("Name", "Name", null, cell: Cell);
         registry.Register("State", "State", null, cell: Cell);
-
         var columns = registry.GetCardColumns([]);
-
         Assert.Equal(["Name", "State"], columns.Select(c => c.Field));
     }
 
@@ -49,9 +43,7 @@ public class ProjectedColumnRegistryCardTests
         var registry = new ProjectedColumnRegistry();
         registry.Register("Name", "Name", null, cell: Cell);
         registry.Register(" name ", "Name again", null, cell: Cell);
-
         var columns = registry.GetCardColumns();
-
         Assert.Single(columns);
     }
 
@@ -61,9 +53,7 @@ public class ProjectedColumnRegistryCardTests
         var registry = new ProjectedColumnRegistry();
         registry.Register("Name", "Name", null, cell: Cell);
         registry.Register("Subject", "Subject", null, cell: Cell, cardTitle: true);
-
         var title = registry.GetCardColumns().Single(c => c.IsTitle);
-
         Assert.Equal("Subject", title.Field);
     }
 
@@ -73,9 +63,7 @@ public class ProjectedColumnRegistryCardTests
         var registry = new ProjectedColumnRegistry();
         registry.Register("State", "State", null, cell: Cell);
         registry.Register("JobDefinition.Name", "Name", null, cell: Cell);
-
         var title = registry.GetCardColumns().Single(c => c.IsTitle);
-
         Assert.Equal("JobDefinition.Name", title.Field);
     }
 
@@ -84,9 +72,7 @@ public class ProjectedColumnRegistryCardTests
     {
         var registry = new ProjectedColumnRegistry();
         registry.Register("Person.FullName", null, null, cell: Cell);
-
         var title = registry.GetCardColumns().Single(c => c.IsTitle);
-
         Assert.Equal("Person.FullName", title.Field);
     }
 
@@ -95,7 +81,6 @@ public class ProjectedColumnRegistryCardTests
     {
         var registry = new ProjectedColumnRegistry();
         registry.Register("Key", "Key", null, cell: Cell, identifier: true);
-
         Assert.DoesNotContain(registry.GetCardColumns(), c => c.IsTitle);
     }
 
@@ -105,7 +90,6 @@ public class ProjectedColumnRegistryCardTests
         var registry = new ProjectedColumnRegistry();
         registry.Register("State", "State", null, cell: Cell);
         registry.Register("CreatedTimestamp", "Created", null, cell: Cell);
-
         Assert.DoesNotContain(registry.GetCardColumns(), c => c.IsTitle);
     }
 
@@ -115,9 +99,7 @@ public class ProjectedColumnRegistryCardTests
         var registry = new ProjectedColumnRegistry();
         registry.Register("Name", "Name", null, cell: Cell, sortable: true);
         registry.Register("State", "State", null, cell: Cell);
-
         var columns = registry.GetCardColumns();
-
         Assert.True(columns.Single(c => c.Field == "Name").Sortable);
         Assert.False(columns.Single(c => c.Field == "State").Sortable);
     }
@@ -128,7 +110,6 @@ public class ProjectedColumnRegistryCardTests
         var registry = new ProjectedColumnRegistry();
         registry.Register("Name", "Name", null, cell: Cell);
         registry.Clear();
-
         Assert.Empty(registry.GetCardColumns());
     }
 }
