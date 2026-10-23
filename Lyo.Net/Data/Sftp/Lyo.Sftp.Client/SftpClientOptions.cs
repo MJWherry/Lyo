@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
@@ -5,6 +6,7 @@ using Lyo.Exceptions.Models;
 namespace Lyo.Sftp.Client;
 
 /// <summary>Settings that <see cref="SftpClient" /> binds and validates.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class SftpClientOptions
 {
     /// <summary>Section key used when binding from configuration.</summary>
@@ -71,4 +73,8 @@ public sealed class SftpClientOptions
                 "AllowedHostKeyFingerprints is required when HostKeyPolicy is FingerprintAllowList.", nameof(AllowedHostKeyFingerprints), null, "one or more fingerprints");
         }
     }
+
+    /// <summary>Host, port, and user. The password and private key are omitted.</summary>
+    public override string ToString()
+        => $"Host={Host} Port={Port} Username={Username} RootRemoteDirectory={RootRemoteDirectory} PasswordSet={!string.IsNullOrWhiteSpace(Password)} PrivateKeySet={!string.IsNullOrWhiteSpace(PrivateKeyPem) || !string.IsNullOrWhiteSpace(PrivateKeyPath)}";
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Common.Core.Identifiers;
@@ -6,6 +7,7 @@ namespace Lyo.Common.Core.Identifiers;
 /// Parameters for reading a millisecond timestamp from the high bits of a snowflake value. Different systems use different epoch origins and bit layouts (for example
 /// timestamp field width).
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct SnowflakeLayout(int TimestampShiftBits, long EpochMillisecondsSinceUnixEpoch)
 {
     public bool Equals(SnowflakeLayout other) => TimestampShiftBits == other.TimestampShiftBits && EpochMillisecondsSinceUnixEpoch == other.EpochMillisecondsSinceUnixEpoch;
@@ -22,6 +24,7 @@ public readonly record struct SnowflakeLayout(int TimestampShiftBits, long Epoch
 /// A 64-bit snowflake identifier: a millisecond-resolution timestamp in the high bits and instance-specific data in the low bits. The exact layout comes from
 /// <see cref="SnowflakeLayout" />.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct Snowflake(ulong Value) : IComparable<Snowflake>
 {
     public int CompareTo(Snowflake other) => Value.CompareTo(other.Value);

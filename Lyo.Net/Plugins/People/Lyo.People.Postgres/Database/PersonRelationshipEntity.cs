@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 
 namespace Lyo.People.Postgres.Database;
 
 /// <summary>PostgreSQL row for a person-to-person relationship.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class PersonRelationshipEntity
 {
     [Key]
@@ -34,4 +36,7 @@ public sealed class PersonRelationshipEntity
 
     [ForeignKey(nameof(PersonId))]
     public PersonEntity? Person { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

@@ -144,7 +144,7 @@
       "title": "Other `Program.cs` registrations",
       "items": [
         "Infra: `AddCsvService`, `AddXlsxService`, `AddCompressionService` + `AddDefaultCompressionService<CompressionService>` (`ICompressionResolver` included), `AddLyoMetricsWithOpenTelemetryFromConfiguration` (`OpenTelemetry` section: `ServiceName` `Lyo.TestGateway`; OTLP endpoint from env when set), `AddScheduler`, `AddLocalCacheFromConfiguration`, `AddLocalLock(enableMetrics)`, `AddLocalKeyedSemaphore(enableMetrics)`, `AddImageSharpImageServiceFromConfiguration`, `AddPdfService`, `AddSpriteSheetExportService`, `AddPdfAnnotatorInterop`.",
-        "Communication: `AddEmailServiceFromConfiguration`, `AddTwilioSmsServiceFromConfiguration`, `SetupRabbitMqServiceFromConfiguration`, `AddAwsTranslationServiceFromConfiguration`, `AddProfanityFilterServiceFromConfiguration`, Typecast client + TTS service, `AddQRCodeServiceFromConfiguration`, `AddNativeBarcodeServiceFromConfiguration`.",
+        "Communication: `AddSmtpEmailServiceFromConfiguration`, `AddTwilioSmsServiceFromConfiguration`, `SetupRabbitMqServiceFromConfiguration`, `AddAwsTranslationServiceFromConfiguration`, `AddProfanityFilterServiceFromConfiguration`, Typecast client + TTS service, `AddQRCodeServiceFromConfiguration`, `AddNativeBarcodeServiceFromConfiguration`.",
         "Web: `AddWebRendererServiceFromConfiguration`, `AddBlazoredLocalStorage`, `AddMudServices(...)`, `IIOTempService` rooted at `lyo-gateway-uploads`, `TestGatewayFileTransformer` on the file-tools workbench.",
         "API client: `Configure<ApiClientOptions>(…ApiClientOptions.SectionName)`, `AddLyoApiClient`.",
         "File workbench: `AddFileStorageWorkbenchSupport(builder.Configuration)`. Key store: `AddLocalKeyStore()`.",
@@ -190,8 +190,8 @@
           "Typecast TTS workbench"
         ],
         [
-          "`EmailServiceOptions`",
-          "SMTP-based `Lyo.Email`"
+          "`SmtpEmailOptions`",
+          "SMTP-based `Lyo.Email.Smtp`"
         ],
         [
           "`TwilioOptions`",
@@ -434,6 +434,14 @@
     },
     {
       "name": "Lyo.Email",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Email.Smtp",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -1213,14 +1221,6 @@
     },
     {
       "name": "Lyo.Drift.Models",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
-      "name": "Lyo.Email.Models",
       "kind": "lyo",
       "tags": [
         "transitive",

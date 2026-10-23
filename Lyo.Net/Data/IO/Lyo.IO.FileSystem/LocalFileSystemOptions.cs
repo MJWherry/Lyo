@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.IO.FileSystem;
 
 /// <summary>Settings for <see cref="LocalFileSystem" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LocalFileSystemOptions
 {
     /// <summary>Section name used when binding configuration.</summary>
@@ -19,4 +21,7 @@ public sealed class LocalFileSystemOptions
 
     /// <summary>Throws when <see cref="RootPath" /> is missing.</summary>
     public void Validate() => ArgumentHelpers.ThrowIfNullOrWhiteSpace(RootPath);
+
+    /// <summary>Jailed root path and whether a missing root is created.</summary>
+    public override string ToString() => $"RootPath={RootPath} CreateRootIfMissing={CreateRootIfMissing}";
 }

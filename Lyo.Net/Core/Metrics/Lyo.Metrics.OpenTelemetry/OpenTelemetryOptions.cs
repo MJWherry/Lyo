@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Metrics.OpenTelemetry;
@@ -7,6 +8,7 @@ namespace Lyo.Metrics.OpenTelemetry;
 /// Bind the <see cref="SectionName" /> section from appsettings. Leave <see cref="Endpoint" /> empty so a JetBrains OpenTelemetry plugin (or any collector) can supply
 /// <c>OTEL_EXPORTER_OTLP_ENDPOINT</c> at debug time — that port changes per IDE session and does not belong in committed config.
 /// </remarks>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class OpenTelemetryOptions
 {
     /// <summary>Configuration section name used by <c>AddLyoMetricsWithOpenTelemetryFromConfiguration</c>.</summary>
@@ -46,4 +48,7 @@ public sealed class OpenTelemetryOptions
 
     internal static bool IsOtlpProtocol(string protocol)
         => protocol.Equals("grpc", StringComparison.OrdinalIgnoreCase) || protocol.Equals("http/protobuf", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Service name, collector endpoint, protocol, and export interval.</summary>
+    public override string ToString() => $"ServiceName={ServiceName} Endpoint={Endpoint} Protocol={Protocol} MetricExportIntervalMs={MetricExportIntervalMs}";
 }

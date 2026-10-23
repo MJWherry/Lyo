@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Common.Metadata.Records;
 
 namespace Lyo.ContentThreatScan;
 
 /// <summary>Heuristic knobs: MIME/extension gate, slice size, binary check, and regex weights.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ContentThreatHeuristicOptions
 {
     /// <summary>Prefix length examined, capped so CPU stays bounded.</summary>
@@ -59,4 +61,7 @@ public sealed class ContentThreatHeuristicOptions
 
     /// <summary>Cap on the remaining rule-points bucket.</summary>
     public decimal MaxCategoryContributionOther { get; set; } = 30m;
+
+    /// <summary>How many bytes are examined and how many text extensions are allowed.</summary>
+    public override string ToString() => $"MaxBytesToAnalyze={MaxBytesToAnalyze} TextExtensions={TextExtensions.Count}";
 }

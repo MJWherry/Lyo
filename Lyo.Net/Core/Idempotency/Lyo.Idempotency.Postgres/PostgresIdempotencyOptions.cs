@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Postgres;
 
 namespace Lyo.Idempotency.Postgres;
 
 /// <summary>Connection and limits for the idempotency schema.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class PostgresIdempotencyOptions : PostgresOptionsBase
 {
     /// <summary>Configuration section name.</summary>
@@ -24,4 +26,7 @@ public sealed class PostgresIdempotencyOptions : PostgresOptionsBase
         if (Limits.MaxScopeLength < 1)
             throw new ArgumentException("MaxScopeLength must be positive.", nameof(Limits));
     }
+
+    /// <summary>Schema, auto-migrate flag, and limits. The connection string is omitted.</summary>
+    public override string ToString() => $"{base.ToString()} Limits={Limits}";
 }

@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Common.Metadata.Records;
 
 namespace Lyo.Compression.Models;
 
 /// <summary>Inputs for <see cref="ICompressionAlgorithmSelector" /> when picking a compression algorithm on write.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record CompressionSelectionContext
 {
     public required long ByteLength { get; init; }

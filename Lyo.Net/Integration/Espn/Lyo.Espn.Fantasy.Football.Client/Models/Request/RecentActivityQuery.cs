@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Espn.Fantasy.Football.Client.Models.Request;
 
 /// <summary>Query options for recent activity from league communication.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record RecentActivityQuery
 {
     /// <summary>Upper bound on topics returned.</summary>

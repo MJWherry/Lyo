@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Common.Metadata.Records;
 
 namespace Lyo.Encryption.Models;
@@ -16,6 +17,7 @@ namespace Lyo.Encryption.Models;
 /// wrap keys asymmetrically and envelope size follows the RSA modulus, not a fixed nonce and tag.
 /// </para>
 /// </remarks>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record EncryptionAlgorithmInfo
 {
     /// <summary>

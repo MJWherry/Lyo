@@ -14,6 +14,7 @@ namespace Lyo.Sms;
 
 /// <summary>Shared base for SMS providers; implements the common bulk-send path.</summary>
 /// <typeparam name="TResult">Send-result type (for example <see cref="Result{SmsRequest}" /> or a provider subtype).</typeparam>
+[DebuggerDisplay("{ToString(),nq}")]
 public abstract class SmsServiceBase<TResult> : ISmsService<TResult>, IDisposable
     where TResult : Result<SmsRequest>
 {
@@ -368,4 +369,7 @@ public abstract class SmsServiceBase<TResult> : ISmsService<TResult>, IDisposabl
         if (disposing)
             BulkSmsSemaphore.Dispose();
     }
+
+    /// <summary>Service name and the options it was built with. Secrets stay out of the options text.</summary>
+    public override string ToString() => $"{GetType().Name} {Options}";
 }

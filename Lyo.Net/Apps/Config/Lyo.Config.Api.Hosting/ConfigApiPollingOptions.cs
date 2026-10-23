@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Config.Api.Hosting;
 
 /// <summary>Binding and poll defaults for resolved config pulled from Config API.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ConfigApiPollingOptions
 {
     public const string SectionName = "ConfigApiPolling";
@@ -32,4 +34,9 @@ public sealed class ConfigApiPollingOptions
         OperationHelpers.ThrowIfNullOrWhiteSpace(AppKind);
         OperationHelpers.ThrowIfNullOrWhiteSpace(AppId);
     }
+
+    /// <summary>App identity and poll delays for the config client.</summary>
+    public override string ToString() =>
+        $"Enabled={Enabled} App={AppKind}/{AppId} NotModifiedDelay={DelayWhenNotModified} " +
+        $"StartupTimeout={StartupTimeout} RequireSuccess={RequireSuccessOnStartup}";
 }

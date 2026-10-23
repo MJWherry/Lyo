@@ -1,7 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.FileStorage.Models;
 
+/// <summary>Settings for the local disk file store.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class DiskFileStorageOptions : FileStorageServiceBaseOptions
 {
     public const string SectionName = "DiskFileStorage";
@@ -32,4 +35,7 @@ public sealed class DiskFileStorageOptions : FileStorageServiceBaseOptions
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(RootDirectoryPath);
         ValidateUploadFilters();
     }
+
+    /// <summary>Root directory and the shared storage options.</summary>
+    public override string ToString() => $"RootDirectoryPath={RootDirectoryPath} {base.ToString()}";
 }

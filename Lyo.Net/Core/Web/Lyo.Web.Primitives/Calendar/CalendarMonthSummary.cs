@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.DateAndTime;
 using Lyo.Exceptions;
 
@@ -51,10 +52,12 @@ internal static class CalendarMonthSummary
     /// <param name="AllDay">True when every index covers the civil day.</param>
     /// <param name="Hour">Local hour 0–23, or -1 for the all-day row.</param>
     /// <param name="Indexes">Input indexes in this row.</param>
+    [DebuggerDisplay("{ToString(),nq}")]
     public readonly record struct Row(bool AllDay, int Hour, IReadOnlyList<int> Indexes);
 
     /// <summary>The rows that fit in a month cell, plus how many hour groups were left off.</summary>
     /// <param name="Rows">At most <see cref="MaxRows" /> rows.</param>
     /// <param name="MoreRows">Hour groups and the all-day row that did not fit.</param>
+    [DebuggerDisplay("{ToString(),nq}")]
     public readonly record struct Result(IReadOnlyList<Row> Rows, int MoreRows);
 }

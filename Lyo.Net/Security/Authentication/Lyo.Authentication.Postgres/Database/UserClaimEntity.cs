@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Postgres.Database;
 
 /// <summary>Entity for the <c>[user].[claim]</c> table (admin-assigned extra JWT claims).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class UserClaimEntity
 {
     /// <summary>Stable row id. PK.</summary>
@@ -23,4 +26,7 @@ public sealed class UserClaimEntity
 
     /// <summary>When the row was last updated.</summary>
     public DateTime? UpdatedTimestamp { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

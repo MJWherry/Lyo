@@ -1,10 +1,12 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Globalization;
 using Lyo.Exceptions;
 
 namespace Lyo.Media.Models;
 
 /// <summary>Constant rate factor. Hardware encoders remap <see cref="Value" /> onto their own quality flag. Lookups are thread-safe.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ConstantRateFactor
 {
     private static readonly ConcurrentDictionary<string, ConstantRateFactor> ById = new(StringComparer.OrdinalIgnoreCase);

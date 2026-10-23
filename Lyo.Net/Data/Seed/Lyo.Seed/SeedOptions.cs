@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Seed;
 
 /// <summary>Run settings handed to <see cref="SeedContributor.Configure" />. The engine never applies <see cref="RandomSeed" />; contributors that use Bogus (or similar) should.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class SeedOptions
 {
     /// <summary>How many root entities to create. Starts at 50.</summary>
@@ -11,4 +14,7 @@ public sealed class SeedOptions
 
     /// <summary>What happens when destination data already exists. Starts as <see cref="SeedConflictMode.Append" />; skip is opt-in.</summary>
     public SeedConflictMode Conflict { get; init; } = SeedConflictMode.Append;
+
+    /// <summary>Root count, optional generator seed, and conflict mode.</summary>
+    public override string ToString() => $"Count={Count} RandomSeed={RandomSeed} Conflict={Conflict}";
 }

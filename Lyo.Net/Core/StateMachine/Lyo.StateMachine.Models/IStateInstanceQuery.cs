@@ -1,9 +1,12 @@
+using System.Diagnostics;
+
 namespace Lyo.StateMachine.Models;
 
 /// <summary>One saved instance returned by <see cref="IStateInstanceQuery{TState}" />.</summary>
 /// <param name="InstanceKey">Key of the instance within its machine.</param>
 /// <param name="Snapshot">Saved snapshot.</param>
 /// <param name="UpdatedAtUtc">When the store last wrote the instance.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record StateInstance<TState>(string InstanceKey, StateSnapshot<TState> Snapshot, DateTime UpdatedAtUtc)
     where TState : notnull;
 

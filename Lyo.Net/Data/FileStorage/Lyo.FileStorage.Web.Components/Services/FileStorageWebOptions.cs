@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.FileStorage.Web.Components.Services;
 
 /// <summary>Browser-side options: API route prefix and stream-upload path. Host DI for storage/keystore is not configured here.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class FileStorageWebOptions
 {
     /// <summary>Configuration section name (<c>FileStorage</c>).</summary>
@@ -17,4 +20,7 @@ public sealed class FileStorageWebOptions
 
     /// <summary>Public origin for download and access-link URLs. No trailing slash.</summary>
     public string? PublicBaseUrl { get; set; }
+
+    /// <summary>API route prefix, stream-upload path, and public origin.</summary>
+    public override string ToString() => $"ApiRoutePrefix={ApiRoutePrefix} StreamUploadRelativePath={StreamUploadRelativePath} PublicBaseUrl={PublicBaseUrl}";
 }

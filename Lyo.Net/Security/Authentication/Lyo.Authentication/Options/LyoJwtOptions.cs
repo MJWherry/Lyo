@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Options;
 
 /// <summary>Options that control Lyo-signed JWT issuance and validation.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LyoJwtOptions
 {
     /// <summary>Configuration section name.</summary>
@@ -32,4 +35,7 @@ public sealed class LyoJwtOptions
     /// <c>true</c>. Set to <c>false</c> for environments that provision the key out-of-band (HSM or a sealed secret).
     /// </summary>
     public bool AutoGenerateSigningKey { get; set; } = true;
+
+    /// <summary>Issuer, audience, lifetimes, and algorithm. Signing key material is not on this type.</summary>
+    public override string ToString() => $"Issuer={Issuer} Audience={Audience} AccessTokenLifetime={AccessTokenLifetime} Algorithm={Algorithm} SigningKeyId={SigningKeyId}";
 }

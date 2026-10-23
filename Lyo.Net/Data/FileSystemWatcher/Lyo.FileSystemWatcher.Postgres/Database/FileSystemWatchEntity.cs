@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.FileSystemWatcher.Postgres.Database;
 
 /// <summary>A watched directory and its options.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class FileSystemWatchEntity
 {
     [Key]
@@ -21,4 +23,7 @@ public sealed class FileSystemWatchEntity
     public List<FileSystemSnapshotEntity> Snapshots { get; set; } = [];
 
     public List<FileSystemChangeEntity> Changes { get; set; } = [];
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

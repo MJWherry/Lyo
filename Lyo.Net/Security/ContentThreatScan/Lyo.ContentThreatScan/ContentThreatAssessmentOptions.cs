@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.ContentThreatScan;
 
 /// <summary>Assessment knobs shared when heuristic and external scores are composed.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ContentThreatAssessmentOptions
 {
     /// <summary>Applied to heuristic+external summed points before thresholds. A value below zero turns the cap off.</summary>
@@ -20,4 +23,7 @@ public sealed class ContentThreatAssessmentOptions
 
     /// <summary>Rule id recorded on those failure bumps (for audit).</summary>
     public string FailureContributionRuleId { get; set; } = "external.failure";
+
+    /// <summary>Score cap and the suspect and threat thresholds.</summary>
+    public override string ToString() => $"DispositionScoreCap={DispositionScoreCap} SuspectThreshold={SuspectThreshold} ThreatThreshold={ThreatThreshold}";
 }

@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.Comic.Postgres.Database;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class CharacterEntity
 {
     [Key]
@@ -30,4 +32,7 @@ public sealed class CharacterEntity
     public SeriesEntity Series { get; set; } = null!;
 
     public ICollection<VolumeEntity> Volumes { get; set; } = [];
+
+    /// <summary>Type name, id, and name.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Name}";
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.DateAndTime;
 using Lyo.Exceptions;
 
@@ -107,6 +108,7 @@ internal static class CalendarEventLayout
     /// <param name="TopPercent">Distance from local midnight, as a percent of the day.</param>
     /// <param name="HeightPercent">Visual height as a percent of the day. Points use a short block so they stay readable.</param>
     /// <param name="AllDay">True when the entry covers the civil day and should sit above the time grid.</param>
+    [DebuggerDisplay("{ToString(),nq}")]
     public readonly record struct Block(int Index, int Lane, int LaneCount, double TopPercent, double HeightPercent, bool AllDay);
 
     private sealed record Timed(int Index, double Start, double End);

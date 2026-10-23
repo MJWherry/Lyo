@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Common.Core.Archives;
 
 /// <summary>One entry listed by <see cref="ZipFileReader" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ZipFileEntry
 {
     /// <summary>Entry name as stored in the archive, using <c>/</c> separators.</summary>

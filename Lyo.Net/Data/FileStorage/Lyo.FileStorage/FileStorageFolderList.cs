@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore;
 using Lyo.FileStorage.Abstractions;
@@ -18,6 +19,7 @@ namespace Lyo.FileStorage;
 /// <param name="Compression">Compression algorithm name, when known.</param>
 /// <param name="IsEncrypted">True when metadata says the object was encrypted.</param>
 /// <param name="Encryption">Data-encryption algorithm name, when known.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FileStorageFolderEntry(
     string Name,
     bool IsDirectory,

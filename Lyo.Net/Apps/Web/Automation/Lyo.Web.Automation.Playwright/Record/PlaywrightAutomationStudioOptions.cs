@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Web.Automation.Playwright.Configuration;
 
 namespace Lyo.Web.Automation.Playwright.Record;
 
 /// <summary>How a recording session starts. <see cref="Headless" /> defaults to false so the browser window is visible.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class PlaywrightAutomationStudioOptions
 {
     /// <summary>Optional page opened when the session starts. Becomes the first navigate step.</summary>
@@ -22,4 +24,7 @@ public sealed class PlaywrightAutomationStudioOptions
 
     /// <summary>Extra browser settings applied after <see cref="Headless" />.</summary>
     public Action<PlaywrightBrowserOptions>? ConfigureBrowser { get; set; }
+
+    /// <summary>Start URL, plan output directory, and headless flag.</summary>
+    public override string ToString() => $"StartUrl={StartUrl} Output={OutputDirectory} Headless={Headless} Plan={PlanPath}";
 }

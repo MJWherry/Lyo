@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Sso.Completion;
 
 /// <summary>Tuning knobs for external-login completion. Bound from section <c>LyoExternalLogin</c>.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ExternalLoginOptions
 {
     /// <summary>Configuration section.</summary>
@@ -25,4 +28,7 @@ public sealed class ExternalLoginOptions
     /// user rows are not granted these automatically.
     /// </summary>
     public IList<string> DefaultUserScopes { get; set; } = [];
+
+    /// <summary>Provisioning policy and how many claim values and default scopes are configured.</summary>
+    public override string ToString() => $"Policy={Policy} AllowedClaimName={AllowedClaimName} AllowedClaimValues={AllowedClaimValues.Count} DefaultUserScopes={DefaultUserScopes.Count}";
 }

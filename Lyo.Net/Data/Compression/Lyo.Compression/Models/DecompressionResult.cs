@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Result;
 
 namespace Lyo.Compression.Models;
 
 /// <summary>Outcome of a decompress call, plus decompression-specific fields.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record DecompressionResult : Result<byte[]>
 {
     /// <summary>Timing and size stats for the decompress.</summary>
@@ -10,6 +12,9 @@ public sealed record DecompressionResult : Result<byte[]>
 
     /// <summary>Optional result message.</summary>
     public string? Message { get; init; }
+
+    /// <summary>Success flag and decompressed length. Payload bytes are omitted.</summary>
+    public override string ToString() => $"IsSuccess={IsSuccess} Bytes={Data?.Length ?? 0} Info={DecompressionInfo}";
 
     private DecompressionResult(bool isSuccess, byte[]? data, IReadOnlyList<Error>? errors = null)
         : base(isSuccess, data, errors) { }

@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Idempotency.Postgres.Database;
 
 /// <summary>Row in <c>idempotency.entry</c>.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class IdempotencyEntryEntity
 {
     /// <summary>Primary key.</summary>
@@ -59,4 +62,7 @@ public sealed class IdempotencyEntryEntity
 
     /// <summary>When the row was completed or failed.</summary>
     public DateTime? CompletedTimestamp { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

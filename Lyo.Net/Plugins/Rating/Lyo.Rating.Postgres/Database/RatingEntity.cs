@@ -25,4 +25,7 @@ public sealed class RatingEntity : EntityRelationEntityBase
 
     /// <summary>UTC time of the last write.</summary>
     public DateTime? UpdatedTimestamp { get; set; }
+
+    /// <summary>Relation row plus title.</summary>
+    public override string ToString() => $"{base.ToString()} {Title}";
 }

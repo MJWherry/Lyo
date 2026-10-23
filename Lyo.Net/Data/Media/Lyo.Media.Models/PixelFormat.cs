@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Lyo.Media.Models;
 
 /// <summary>Extensible pixel-layout identifier. Lookups are thread-safe. Use <see cref="Custom" /> for a layout that is not listed.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record PixelFormat
 {
     private static readonly ConcurrentDictionary<string, PixelFormat> ById = new(StringComparer.OrdinalIgnoreCase);

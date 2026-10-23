@@ -1,8 +1,14 @@
+using System.Diagnostics;
+
 namespace Lyo.ContactUs.Models;
 
 /// <summary>A stored contact form submission.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ContactSubmission
 {
+    /// <summary>Id, sender, and subject. The message body is omitted.</summary>
+    public override string ToString() => $"{Id} {Name} <{Email}> Subject={Subject} MessageLength={Message?.Length ?? 0}";
+
     /// <summary>Unique identifier for the submission.</summary>
     public Guid Id { get; init; }
 

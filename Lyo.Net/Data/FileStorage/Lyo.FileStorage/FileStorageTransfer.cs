@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore;
 using Lyo.FileMetadataStore.Models;
@@ -83,6 +84,7 @@ public enum FileStorageTransferItemOutcome
 /// <param name="ProgressByteInterval">Minimum new bytes between mid-file progress snapshots. Must be at least 1.</param>
 /// <param name="Disposition">Copy leaves the source. Move tombstones it after the destination hashes match.</param>
 /// <param name="FileIds">Ids to transfer. Null selects the catalog. Empty throws before any write.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FileStorageTransferRequest(
     FileStorageTransferScope Scope,
     FileStorageKeyMode KeyMode,
@@ -97,11 +99,13 @@ public sealed record FileStorageTransferRequest(
 /// <param name="Storage">File storage service.</param>
 /// <param name="Metadata">Catalog for that service. A shared catalog is the same instance on both sides.</param>
 /// <param name="Keys">Key store for that service.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FileStorageTransferEndpoint(IFileStorageService Storage, IFileMetadataStore Metadata, IKeyStore Keys);
 
 /// <summary>One file the transfer could not copy. Earlier files are left on the destination.</summary>
 /// <param name="FileId">File id when the failure happened after the row was known.</param>
 /// <param name="Message">Exception message.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FileStorageTransferFileError(Guid? FileId, string Message);
 
 /// <summary>Counts from one transfer run. <see cref="FilesFailed" /> greater than zero means the run did not fully succeed.</summary>
@@ -111,6 +115,7 @@ public sealed record FileStorageTransferFileError(Guid? FileId, string Message);
 /// <param name="KeysCopied">Key versions written on the destination, or one when a new key was minted.</param>
 /// <param name="Errors">Per-file failures. Empty when every row succeeded or was skipped.</param>
 /// <param name="FilesRemoved">Source files tombstoned after a verified copy or skip. Zero for <see cref="FileStorageTransferDisposition.Copy" />.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FileStorageTransferResult(
     int FilesCopied,
     int FilesSkipped,
@@ -135,6 +140,7 @@ public sealed record FileStorageTransferResult(
 /// <param name="KeysTotal">Key ids selected for copy.</param>
 /// <param name="ItemOutcome">What the current file has done. Null during listing and the key phase.</param>
 /// <param name="FilesRemoved">Source files tombstoned so far.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FileStorageTransferProgress(
     FileStorageTransferPhase Phase,
     int FilesCompleted,

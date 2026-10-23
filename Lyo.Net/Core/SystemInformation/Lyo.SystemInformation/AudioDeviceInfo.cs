@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.SystemInformation;
 
 /// <summary>Facts for one audio endpoint. Fields the current platform cannot supply are <see langword="null" />.</summary>
@@ -9,6 +11,7 @@ namespace Lyo.SystemInformation;
 /// proc does not classify speakers.
 /// </param>
 /// <param name="IsDefault">True when this is the console default for its direction. Null when the platform does not report a default.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record AudioDeviceInfo(string Name, string Kind, string? Description, string? FormFactor, bool? IsDefault)
 {
     /// <summary>Kind for a playback-only endpoint.</summary>

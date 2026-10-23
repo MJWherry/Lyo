@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.SystemInformation;
 
 /// <summary>Facts for one connected monitor. Fields the current platform cannot supply are <see langword="null" />.</summary>
@@ -8,4 +10,5 @@ namespace Lyo.SystemInformation;
 /// <param name="RefreshRateHz">Current refresh rate in hertz (Windows only).</param>
 /// <param name="Adapter">Display adapter (GPU) driving the monitor (Windows only).</param>
 /// <param name="IsPrimary">True when this is the primary display (Windows only; <see langword="null" /> when unknown).</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record MonitorInfo(string Connector, string? Model, string? ManufacturerId, string? CurrentResolution, int? RefreshRateHz, string? Adapter, bool? IsPrimary);

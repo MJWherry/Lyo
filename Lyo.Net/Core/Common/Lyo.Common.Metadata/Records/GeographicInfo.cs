@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Common.Core;
 using Lyo.Common.Core.Enums;
 using Lyo.Common.Core.Extensions;
@@ -6,6 +7,7 @@ using Lyo.Common.Metadata.Extensions;
 namespace Lyo.Common.Metadata.Records;
 
 /// <summary>Catalog row for a place: state or province, country, and timezone.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public record GeographicInfo(USState? State, string? Province, CountryCode Country, string CountryName, string? TimeZoneId)
 {
     // Unrecognized location

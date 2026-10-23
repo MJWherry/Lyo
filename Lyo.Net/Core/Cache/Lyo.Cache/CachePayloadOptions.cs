@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Cache;
 
 /// <summary>Compress/encrypt settings for payload cache APIs.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class CachePayloadOptions
 {
     /// <summary>When true, compresses payload bytes before caching once plaintext is at least <see cref="AutoCompressMinSizeBytes" />.</summary>
@@ -14,4 +17,9 @@ public sealed class CachePayloadOptions
 
     /// <summary>Key id given to <see cref="Lyo.Encryption.IEncryptionService" /> when <see cref="AutoEncrypt" /> is true.</summary>
     public string? EncryptionKeyId { get; set; }
+
+    /// <summary>Compression threshold and whether encryption is on. The key id is omitted.</summary>
+    public override string ToString()
+        => $"AutoCompress={AutoCompress} AutoCompressMinSizeBytes={AutoCompressMinSizeBytes} "
+         + $"AutoEncrypt={AutoEncrypt} EncryptionKeyIdSet={!string.IsNullOrWhiteSpace(EncryptionKeyId)}";
 }

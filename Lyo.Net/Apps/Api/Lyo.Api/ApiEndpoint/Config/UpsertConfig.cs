@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.ApiEndpoint.Config;
 
 /// <summary>Upsert endpoint settings. Use UpsertConfig&lt;object, object, DbContext&gt; for dynamic endpoints.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record UpsertConfig<TRequest, TEntity, TDbContext>
     where TDbContext : DbContext where TEntity : class
 {

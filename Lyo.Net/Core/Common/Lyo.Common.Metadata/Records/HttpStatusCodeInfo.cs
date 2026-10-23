@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using Lyo.Common.Core;
 using Lyo.Common.Core.Enums;
@@ -5,6 +6,7 @@ using Lyo.Common.Core.Enums;
 namespace Lyo.Common.Metadata.Records;
 
 /// <summary>Catalog row for an HTTP status: numeric code, name, description, category, and the wrapped <see cref="HttpStatusCode" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public record HttpStatusCodeInfo(int Code, string Name, string Description, HttpStatusCodeCategory Category, HttpStatusCode HttpStatusCode)
 {
     // Unrecognized status

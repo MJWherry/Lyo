@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Job.Alerts;
 
 /// <summary>Settings for <see cref="JobAlertConsumer" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class JobAlertsOptions
 {
     /// <summary>Default configuration section.</summary>
@@ -72,4 +75,9 @@ public sealed class JobAlertsOptions
         if (errors.Count > 0)
             throw new InvalidOperationException($"Invalid {nameof(JobAlertsOptions)}: {string.Join(" ", errors)}");
     }
+
+    /// <summary>Alert webhook, retry limits, and dedup cap.</summary>
+    public override string ToString() =>
+        $"Webhook={AlertWebhookUrl} Timeout={WebhookTimeout} Retries={WebhookRetryCount} Delay={WebhookRetryDelay} " +
+        $"Dedup={DedupWindow}/{DedupCacheLimit} Dlq={DeadLetterQueueName}";
 }

@@ -41,6 +41,7 @@ namespace Lyo.FileStorage;
 /// to the narrow internal interfaces this class implements explicitly (<see cref="IFileStoragePhysicalIO" />, <see cref="IFileAuditPublisher" />, and similar).
 /// </para>
 /// </remarks>
+[DebuggerDisplay("{ToString(),nq}")]
 public abstract class FileStorageServiceBase
     : IFileStorageService, IFileStorageTags, IDisposable, IFileStoragePhysicalIO, IFileAuditPublisher, IFileStorageMetadataNormalization, IFileStorageMetadataLookup
 {
@@ -1793,4 +1794,7 @@ public abstract class FileStorageServiceBase
     }
 
 #endregion
+
+    /// <summary>Service name and the options it was built with. Secrets stay out of the options text.</summary>
+    public override string ToString() => $"{GetType().Name} {Options}";
 }

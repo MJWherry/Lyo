@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Collections.Specialized;
 using Avalonia;
 using Avalonia.Controls;
@@ -12,6 +13,7 @@ using Avalonia.VisualTree;
 namespace Lyo.Desktop.Components;
 
 /// <summary>Screen point from an edge-dock drag, in pixels.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct EdgeDockPoint(int X, int Y);
 
 /// <summary>One quick action shown when an <see cref="EdgeDockBar" /> opens.</summary>

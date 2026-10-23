@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Authentication.Models.Records;
 
 namespace Lyo.Authentication.Web.Components.Models;
@@ -9,4 +10,5 @@ namespace Lyo.Authentication.Web.Components.Models;
 /// <param name="User">Lyo user record.</param>
 /// <param name="Scopes">User scopes. <c>/auth/me</c> uses bearer claims; <c>/auth/users/{id}</c> uses <see cref="LyoUser.Scopes" />.</param>
 /// <param name="LinkedIdentities">All external identities currently linked to the user.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record AuthMeSnapshot(LyoUser User, string[] Scopes, LinkedIdentity[] LinkedIdentities);

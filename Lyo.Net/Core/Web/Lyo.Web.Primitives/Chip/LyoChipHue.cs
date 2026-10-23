@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 
 namespace Lyo.Web.Primitives;
@@ -7,6 +8,7 @@ namespace Lyo.Web.Primitives;
 /// contrast. Prefer these over Mud Primary/Secondary/Tertiary — those slots are green, gray, and surface in the default Lyo palette.
 /// </summary>
 /// <param name="Degrees">Hue on the color wheel. Values outside 0–359 wrap via <see cref="Normalized" />.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record LyoChipHue(int Degrees)
 {
     /// <summary>Full turn of the HSL wheel.</summary>

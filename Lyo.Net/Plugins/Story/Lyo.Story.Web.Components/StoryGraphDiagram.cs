@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using Lyo.Diagram;
 using Lyo.Diagram.Models;
@@ -8,6 +9,7 @@ namespace Lyo.Story.Web.Components;
 /// <summary>A story drawn as a <see cref="DiagramDocument" />, plus the node keys left off because they form a cycle.</summary>
 /// <param name="Document">One page whose shapes are nodes and whose edges are choices.</param>
 /// <param name="Cyclic">Node keys that were not drawn.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record StoryGraphPicture(DiagramDocument Document, IReadOnlyList<string> Cyclic);
 
 /// <summary>Projects a story draft onto a diagram. Positions come from <see cref="StoryGraphLayout" />.</summary>

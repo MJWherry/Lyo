@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions.Models;
 
 namespace Lyo.Job.Workers.Notification;
 
 /// <summary>Options for <see cref="WebhookNotificationWorker" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class WebhookNotificationWorkerOptions
 {
     /// <summary>Default name of the configuration section.</summary>
@@ -56,4 +58,8 @@ public sealed class WebhookNotificationWorkerOptions
         if (errors.Count > 0)
             throw new ValidationException($"Invalid {nameof(WebhookNotificationWorkerOptions)}: {string.Join(" ", errors)}");
     }
+
+    /// <summary>Worker type, retry limits, and dead-letter queue.</summary>
+    public override string ToString() =>
+        $"WorkerType={WorkerType} Retries={RetryCount} Delay={RetryDelay} Timeout={Timeout} MaxRequeue={MaxRequeueCount} Dlq={DlqName}";
 }

@@ -145,6 +145,14 @@
       ]
     },
     {
+      "name": "Lyo.Authentication.Sso",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Cache",
       "kind": "lyo",
       "tags": [
@@ -170,6 +178,14 @@
     },
     {
       "name": "Lyo.Compression",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.DataTable.Models",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -217,7 +233,7 @@
       ]
     },
     {
-      "name": "Lyo.Email.Models",
+      "name": "Lyo.Email.Smtp",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -385,6 +401,14 @@
       ]
     },
     {
+      "name": "Lyo.RateLimit",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Result",
       "kind": "lyo",
       "tags": [
@@ -482,6 +506,16 @@
       "name": "Microsoft.Bcl.AsyncInterfaces",
       "kind": "package",
       "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.TimeProvider",
+      "kind": "package",
+      "version": "8.0.1",
       "tags": [
         "transitive",
         "microsoft",

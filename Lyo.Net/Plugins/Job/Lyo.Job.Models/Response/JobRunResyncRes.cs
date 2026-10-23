@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Job.Models.Response;
 
 /// <summary>Result of <c>POST Job/Run/Resync</c>: how many due <c>Queued</c> runs were considered, already on a worker queue, republished, or failed to publish.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record JobRunResyncRes
 {
     /// <summary>Due <c>Queued</c> runs considered (not a dry run; slot due or unset).</summary>

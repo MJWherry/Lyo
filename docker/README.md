@@ -3,7 +3,7 @@
 Two separate stacks live under `docker/`:
 
 - **Benchmark/test runner** (this file, root [`docker-compose.yml`](../docker-compose.yml), [`docker/Dockerfile`](Dockerfile)): compile and run `*.Benchmarks` / `*.Tests` in isolation.
-- **Workbench** ([`docker/workbench/`](workbench/)): run `Lyo.TestApi`, `Lyo.TestGateway`, and the job examples against Postgres, RabbitMQ, and Redis on one network. See [Workbench stack](#workbench-stack) below.
+- **Workbench** ([`docker/workbench/`](workbench/)): run `Lyo.TestApi`, `Lyo.TestGateway`, and the job examples against Postgres, RabbitMQ, Redis, and Prometheus on one network. See [Workbench stack](#workbench-stack) below.
 
 ## Dockerized benchmarks and tests
 
@@ -127,7 +127,7 @@ Caveats:
 
 ## Workbench stack
 
-Kitchen-sink hosts for local testing: TestApi, TestGateway, `Lyo.Job.Worker.Example`, `Lyo.Job.Scheduler.Example`, plus Postgres, RabbitMQ, and Redis. All services share the `lyo-workbench` Docker network so they talk by hostname (`testapi`, `postgres`, `rabbitmq`, `redis`). This is **not** the benchmark runner and does not use the root `docker-compose.yml`.
+Kitchen-sink hosts for local testing: TestApi, TestGateway, `Lyo.Job.Worker.Example`, `Lyo.Job.Scheduler.Example`, plus Postgres, RabbitMQ, Redis, and Prometheus. All services share the `lyo-workbench` Docker network so they talk by hostname (`testapi`, `postgres`, `rabbitmq`, `redis`, `prometheus`). This is **not** the benchmark runner and does not use the root `docker-compose.yml`.
 
 ```bash
 python3 scripts/docker/run_workbench.py up      # build images, start detached
@@ -149,7 +149,8 @@ Host ports are offset so they do not collide with typical local Postgres (5437),
 | Service | In-network | Host |
 |---------|------------|------|
 | TestGateway | `http://testgateway:8080` | [http://localhost:5138](http://localhost:5138) |
-| TestApi (Scalar in Development) | `http://testapi:8080` | [http://localhost:5251](http://localhost:5251) (`/health`, `/scalar/v1`) |
+| TestApi (Scalar in Development) | `http://testapi:8080` | [http://localhost:5251](http://localhost:5251) (`/health`, `/metrics`, `/scalar/v1`) |
+| Prometheus | `http://prometheus:9090` | [http://localhost:9090](http://localhost:9090) (scrapes `testapi:8080/metrics` every 5s) |
 | Postgres | `postgres:5432` | `localhost:5438` |
 | RabbitMQ AMQP / management | `rabbitmq:5672` / `:15672` | `localhost:5673` / [http://localhost:15673](http://localhost:15673) |
 | Redis | `redis:6379` | `localhost:6380` |

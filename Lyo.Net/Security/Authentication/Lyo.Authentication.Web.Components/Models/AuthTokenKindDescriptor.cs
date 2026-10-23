@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 
 namespace Lyo.Authentication.Web.Components.Models;
@@ -10,6 +11,7 @@ namespace Lyo.Authentication.Web.Components.Models;
 /// <param name="Description">Human-readable explanation suitable for inline help on the create form.</param>
 /// <param name="Allowed">True when the caller currently holds the scope needed to mint this kind.</param>
 /// <param name="RequiredScope">Scope the caller would need to mint this kind (<c>auth.tokens.write</c> for PAT, <c>auth.tokens.write.{kind}</c> for everything else).</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record AuthTokenKindDescriptor(
     [property: JsonPropertyName("kind")] string Kind,
     [property: JsonPropertyName("description")]

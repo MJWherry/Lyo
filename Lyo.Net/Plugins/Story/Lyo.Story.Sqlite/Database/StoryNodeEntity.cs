@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using Lyo.Story.Enums;
 
 namespace Lyo.Story.Sqlite.Database;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class StoryNodeEntity
 {
     public Guid Id { get; set; }
@@ -29,4 +31,7 @@ public sealed class StoryNodeEntity
     public StorySceneEntity? Scene { get; set; }
 
     public ICollection<StoryChoiceEntity> Choices { get; set; } = [];
+
+    /// <summary>Type name, id, and title.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Title}";
 }

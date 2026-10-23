@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Exceptions.Models;
 using PuppeteerSharp;
 
 namespace Lyo.Web.WebRenderer;
 
 /// <summary>Browser and metrics settings for <see cref="WebRendererService" />. Section name is <see cref="SectionName" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class WebRenderOptions
 {
     /// <summary>Configuration section name.</summary>
@@ -36,4 +38,7 @@ public sealed class WebRenderOptions
         if (!string.IsNullOrWhiteSpace(BrowserExePath) && !File.Exists(BrowserExePath))
             throw new ConfigurationException($"BrowserExePath '{BrowserExePath}' does not exist.", nameof(BrowserExePath));
     }
+
+    /// <summary>Browser path and capture limits.</summary>
+    public override string ToString() => $"Browser={BrowserExePath} MaxPages={MaxConcurrentPages} Timeout={ContentTimeout}";
 }

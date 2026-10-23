@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Common.Core.Net;
 using Microsoft.AspNetCore.Authentication;
 
 namespace Lyo.Authentication.AspNetCore.Schemes.Jwt;
 
 /// <summary>Options for the Lyo-JWT authentication handler.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LyoJwtAuthenticationOptions : AuthenticationSchemeOptions
 {
     /// <summary>Header that carries the bearer credential. Default = <c>Authorization</c>.</summary>
@@ -11,4 +13,7 @@ public sealed class LyoJwtAuthenticationOptions : AuthenticationSchemeOptions
 
     /// <summary>Expected scheme inside <see cref="HeaderName" />. Default = <c>Bearer</c>.</summary>
     public string Scheme { get; set; } = "Bearer";
+
+    /// <summary>Header and scheme the handler accepts.</summary>
+    public override string ToString() => $"HeaderName={HeaderName} Scheme={Scheme}";
 }

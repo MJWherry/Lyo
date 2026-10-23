@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.StateMachine.Postgres.Database;
 
 /// <summary>Current snapshot of one state machine instance. Primary key is (<see cref="MachineName" />, <see cref="InstanceKey" />).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class StateMachineInstanceEntity
 {
     public string MachineName { get; set; } = string.Empty;
@@ -21,4 +24,7 @@ public sealed class StateMachineInstanceEntity
 
     /// <summary>Instance data as JSON (<c>jsonb</c>).</summary>
     public string? DataJson { get; set; }
+
+    /// <summary>Type name and primary key.</summary>
+    public override string ToString() => $"{GetType().Name} {MachineName} {InstanceKey}";
 }

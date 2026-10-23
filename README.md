@@ -27,7 +27,7 @@ These are the areas that tend to anchor product work. Each links to deeper docs 
 | **Encryption**          | Authenticated encryption (AES-GCM, ChaCha, CCM, SIV, XChaCha), RSA/hybrid, envelope/two-key, keystore integration.                                                                                                                      | [Lyo.Encryption](Lyo.Net/Security/Encryption/Lyo.Encryption/README.md) · [benchmark summary](Lyo.Net/Security/Encryption/Lyo.Encryption.Benchmarks/BENCHMARK_SUMMARY.md)                                                                          |
 | **Caching**             | Local and Fusion-backed ICacheService, typed byte payloads, query cache tags for invalidation (with Lyo.Api).                                                                                                                           | [Lyo.Cache](Lyo.Net/Core/Cache/Lyo.Cache/README.md)                                                                                                                                                                                               |
 | **Diagnostics**         | Stack decoding, exception classification, breadcrumbs, in-memory error inbox, trace sanitisation. Optional IPackageMetadataStore for namespace-to-package enrichment.                                                                   | [Lyo.Diagnostic](Lyo.Net/Core/Diagnostic/Lyo.Diagnostic/README.md) · [Lyo.Diagnostic.AspNetCore](Lyo.Net/Core/Diagnostic/Lyo.Diagnostic.AspNetCore/README.md) · [Lyo.PackageMetadata](Lyo.Net/Core/PackageMetadata/Lyo.PackageMetadata/README.md) |
-| **Content threat scan** | Heuristic scoring for readable text. Optional Malware Bazaar, VirusTotal, and clamd reputation. Composes with Lyo.FileStorage malware scanning.                                                                                         | [Lyo.ContentThreatScan](Lyo.Net/Security/ContentThreatScan/Lyo.ContentThreatScan/README.md) · [Lyo.ContentThreatScan.Intel](Lyo.Net/Security/ContentThreatScan/Lyo.ContentThreatScan.Intel/README.md)                                             |
+| **Content threat scan** | Heuristic scoring for readable text. Optional Malware Bazaar, VirusTotal, clamd, and clamav-rest reputation. Composes with Lyo.FileStorage malware scanning.                                                                                         | [Lyo.ContentThreatScan](Lyo.Net/Security/ContentThreatScan/Lyo.ContentThreatScan/README.md) · [Lyo.ContentThreatScan.ClamAv](Lyo.Net/Security/ContentThreatScan/Lyo.ContentThreatScan.ClamAv/README.md) · [Lyo.ContentThreatScan.Intel](Lyo.Net/Security/ContentThreatScan/Lyo.ContentThreatScan.Intel/README.md) · [Lyo.ClamAv.Client](Lyo.Net/Integration/ClamAv/Lyo.ClamAv.Client/README.md) |
 | **Hashing**             | SHA-2 digests, MD5 for non-security fingerprints, hex helpers, stream hashing, DI-friendly IHashingService.                                                                                                                             | [Lyo.Hashing](Lyo.Net/Security/Hashing/Lyo.Hashing/README.md)                                                                                                                                                                                     |
 | **Compression**         | Ten codecs (LZ4, Zstd, Brotli, GZip, and others), streams/files, size limits and bomb protections.                                                                                                                                      | [Lyo.Compression](Lyo.Net/Data/Compression/Lyo.Compression/README.md) · [benchmark summary](Lyo.Net/Data/Compression/Lyo.Compression.Benchmarks/BENCHMARK_SUMMARY.md)                                                                             |
 
@@ -63,8 +63,9 @@ by top-level area.
 
 ### Communication
 
-- [Lyo.Email](Lyo.Net/Communication/Email/Lyo.Email/README.md): MailKit SMTP sender. `EmailService` is the `IEmailService` implementation.
-- [Lyo.Email.Models](Lyo.Net/Communication/Email/Lyo.Email.Models/README.md): Shared models, options, failure codes, and event payloads for the `Lyo.Email` SMTP sender.
+- [Lyo.Email](Lyo.Net/Communication/Email/Lyo.Email/README.md): Provider-neutral email contracts, request builder, and send pipeline. Register `Lyo.Email.Smtp` or `Lyo.Email.SendGrid` to send.
+- [Lyo.Email.SendGrid](Lyo.Net/Communication/Email/Lyo.Email.SendGrid/README.md): Twilio SendGrid implementation of `Lyo.Email`. `SendGridEmailService` implements `IEmailService`.
+- [Lyo.Email.Smtp](Lyo.Net/Communication/Email/Lyo.Email.Smtp/README.md): MailKit SMTP implementation of `Lyo.Email`. `SmtpEmailService` implements `IEmailService`.
 - [Lyo.Email.Postgres](Lyo.Net/Communication/Email/Lyo.Email.Postgres/README.md): PostgreSQL EF Core store for email mailbox logs (`EmailLogEntity`). The package never sends or
   fetches mail. Hosts insert outbound rows after SMTP send and inbound rows after their own IMAP/POP client.
 - [Lyo.Email.Web.Components](Lyo.Net/Communication/Email/Lyo.Email.Web.Components/README.md): MudBlazor workbench that sends mail through an injected `IEmailService`.
@@ -461,6 +462,7 @@ by top-level area.
 
 ### Integration
 
+- [Lyo.ClamAv.Client](Lyo.Net/Integration/ClamAv/Lyo.ClamAv.Client/README.md): HTTP client for a self-hosted clamav-rest scan service.
 - [Lyo.Discord.Bot](Lyo.Net/Integration/Discord/Lyo.Discord.Bot/README.md): Library (not an executable) that runs a DSharpPlus Discord bot and upserts guild data into your Lyo API
   (`Lyo.Discord.Client` against PostgreSQL-backed `Discord/*` endpoints).
 - [Lyo.Discord.Client](Lyo.Net/Integration/Discord/Lyo.Discord.Client/README.md): Typed HTTP client for the Discord REST endpoints `Lyo.Api` exposes (the `Discord/*` group
@@ -621,6 +623,7 @@ by top-level area.
 - [Lyo.Authorization.Web.Components](Lyo.Net/Security/Authorization/Lyo.Authorization.Web.Components/README.md): In-process Blazor grant list, editor, and check form.
 - [Lyo.ContentThreatScan](Lyo.Net/Security/ContentThreatScan/Lyo.ContentThreatScan/README.md): Heuristic scanning and numeric disposition scoring for readable text payloads:
   scripts, markup, suspicious SQL-ish patterns.
+- [Lyo.ContentThreatScan.ClamAv](Lyo.Net/Security/ContentThreatScan/Lyo.ContentThreatScan.ClamAv/README.md): Maps a clamav-rest verdict into a content-threat reputation envelope.
 - [Lyo.ContentThreatScan.Intel](Lyo.Net/Security/ContentThreatScan/Lyo.ContentThreatScan.Intel/README.md): Optional `DefaultContentThreatReputationPipeline` for Malware Bazaar,
   VirusTotal, and `clamd` INSTREAM (TCP).
 - [Lyo.Drift.Models](Lyo.Net/Security/Drift/Lyo.Drift.Models/README.md): DTOs, enums, and route constants for the Lyo Drift collector: instances, structure snapshots, and diffs.

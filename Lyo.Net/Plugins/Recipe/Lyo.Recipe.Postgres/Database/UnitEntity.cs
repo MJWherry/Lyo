@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.Recipe.Postgres.Database;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class UnitEntity
 {
     [Key]
@@ -19,4 +21,7 @@ public sealed class UnitEntity
     public string Abbreviation { get; set; } = string.Empty;
 
     public int SortOrder { get; set; }
+
+    /// <summary>Type name, id, and name.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Name}";
 }

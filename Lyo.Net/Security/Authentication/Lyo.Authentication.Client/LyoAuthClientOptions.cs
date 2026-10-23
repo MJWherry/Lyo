@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Client;
 
 /// <summary>Consumer-side Lyo auth settings. <see cref="AuthBaseUrl" /> is required; the rest default for a web BFF (Gateway-style) host.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LyoAuthClientOptions
 {
     /// <summary>Configuration section name (<c>LyoAuthClient</c>).</summary>
@@ -45,4 +48,7 @@ public sealed class LyoAuthClientOptions
 
     /// <summary>Grace window on access-token expiry before <see cref="LyoAuthDelegatingHandler" /> refreshes early. Default 30 seconds.</summary>
     public TimeSpan AccessTokenSkew { get; set; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>API base URLs and session lifetime.</summary>
+    public override string ToString() => $"AuthBaseUrl={AuthBaseUrl} PublicAuthBaseUrl={PublicAuthBaseUrl} SessionAbsoluteExpiration={SessionAbsoluteExpiration}";
 }

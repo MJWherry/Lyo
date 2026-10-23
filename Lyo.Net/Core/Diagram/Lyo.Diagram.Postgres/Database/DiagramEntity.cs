@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Diagram.Postgres.Database;
 
 /// <summary>One persisted diagram. The page and cell model lives in <see cref="DocumentJson" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class DiagramEntity
 {
     /// <summary>Primary key. Matches <see cref="Lyo.Diagram.Models.DiagramDocument.Id" />.</summary>
@@ -17,4 +20,7 @@ public sealed class DiagramEntity
 
     /// <summary>When the row was last updated, UTC. Null until the first update.</summary>
     public DateTime? UpdatedTimestamp { get; set; }
+
+    /// <summary>Type name, id, and name.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Name}";
 }

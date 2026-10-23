@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Authentication.Google;
 
 /// <summary>Settings that drive the Google OpenID Connect provider profile.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class GoogleOptions
 {
     /// <summary>Section name used when nothing else is specified.</summary>
@@ -39,4 +41,7 @@ public sealed class GoogleOptions
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(ClientSecret);
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(RedirectUri);
     }
+
+    /// <summary>Client id and redirect. The client secret is omitted.</summary>
+    public override string ToString() => $"ClientId={ClientId} ClientSecretSet={!string.IsNullOrWhiteSpace(ClientSecret)} RedirectUri={RedirectUri} HostedDomain={HostedDomain} Name={Name}";
 }

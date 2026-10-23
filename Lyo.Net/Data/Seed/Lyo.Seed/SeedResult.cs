@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Seed;
 
 /// <summary>What <see cref="ISeedRunner.SeedAsync" /> reports when a run finishes.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record SeedResult(bool Success, bool Skipped, string Contributor, IReadOnlyDictionary<string, int> Counts, IReadOnlyList<string> Errors)
 {
     /// <summary>Insert finished with no errors.</summary>

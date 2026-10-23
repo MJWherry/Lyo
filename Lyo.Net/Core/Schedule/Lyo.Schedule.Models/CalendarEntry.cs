@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.EntityReference.Models;
 using Lyo.Exceptions;
 
@@ -13,6 +14,7 @@ namespace Lyo.Schedule.Models;
 /// <param name="Category">Optional grouping key a host can map to a hue when <paramref name="Hue" /> is unset.</param>
 /// <param name="Refs">Entity references attached to the entry. The calendar stores them and does not load the entities.</param>
 /// <param name="Muted">True when the entry should be drawn gray, such as a fire a blackout would skip.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record CalendarEntry(
     DateTime Start,
     DateTime End,

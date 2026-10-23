@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using Lyo.Exceptions;
 
@@ -10,6 +11,7 @@ namespace Lyo.Story.Web.Components;
 /// <param name="Row">Position among the siblings sharing that column.</param>
 /// <param name="X">Left offset in pixels.</param>
 /// <param name="Y">Top offset in pixels.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record StoryGraphNodePlacement(string Key, StoryNodeDraft Node, int Column, int Row, int X, int Y);
 
 /// <summary>One arrow from a choice to the node its last goto step names.</summary>
@@ -21,6 +23,7 @@ public sealed record StoryGraphNodePlacement(string Key, StoryNodeDraft Node, in
 /// <param name="EndX">Target anchor, on the left edge.</param>
 /// <param name="EndY">Target anchor, on the left edge.</param>
 /// <param name="Path">SVG <c>d</c> attribute.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record StoryGraphEdgePlacement(string FromKey, string ToKey, string ChoiceKey, int StartX, int StartY, int EndX, int EndY, string Path);
 
 /// <summary>

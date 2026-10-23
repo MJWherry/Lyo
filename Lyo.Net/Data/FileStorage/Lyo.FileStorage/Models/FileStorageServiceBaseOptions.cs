@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Lyo.Common.Core.Extensions;
 using Lyo.Common.Metadata.Records;
@@ -8,6 +9,7 @@ using Lyo.FileMetadataStore.Models;
 namespace Lyo.FileStorage.Models;
 
 /// <summary>Shared settings used by every file storage service.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public abstract class FileStorageServiceBaseOptions
 {
     /// <summary>How deep periodic health probes go. Starts as full round-trip I/O.</summary>
@@ -152,4 +154,8 @@ public abstract class FileStorageServiceBaseOptions
                 throw new ArgumentException($"'{name}' is not a FileTypeInfo name.", paramName);
         }
     }
+
+    /// <summary>Health check, hash, duplicate detection, and upload cap. Credentials stay on the provider options.</summary>
+    public override string ToString()
+        => $"HealthCheckMode={HealthCheckMode} HashAlgorithm={HashAlgorithm} EnableDuplicateDetection={EnableDuplicateDetection} MaxUploadSizeBytes={MaxUploadSizeBytes}";
 }

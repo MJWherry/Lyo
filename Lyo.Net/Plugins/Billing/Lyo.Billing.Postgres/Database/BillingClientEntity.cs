@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.Billing.Postgres.Database;
 
 /// <summary>Bill-to client in schema <c>billing</c> with encrypted tax id.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class BillingClientEntity
 {
     [Key]
@@ -66,4 +68,7 @@ public sealed class BillingClientEntity
     public List<InvoiceEntity> Invoices { get; set; } = [];
 
     public List<ChargeEntity> Charges { get; set; } = [];
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

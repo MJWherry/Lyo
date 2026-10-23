@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 using Lyo.Json;
 
@@ -7,6 +8,7 @@ namespace Lyo.Xml;
 /// Options for <see cref="XmlService" />. The JSON contract fields control names, numbers, and omission. <see cref="JsonOptions.ReadNumbersFromStrings" /> starts true so
 /// element text such as <c>36</c> stays a number.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class XmlOptions : JsonOptions
 {
     /// <summary>Configuration section name. Nothing in this package binds it.</summary>
@@ -58,4 +60,7 @@ public sealed class XmlOptions : JsonOptions
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(localName);
         _named[localName] = asAttribute;
     }
+
+    /// <summary>Root and item element names, plus the JSON contract limits.</summary>
+    public override string ToString() => $"{base.ToString()} RootElementName={RootElementName} ItemElementName={ItemElementName} Namespace={Namespace}";
 }

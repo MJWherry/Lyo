@@ -1,8 +1,11 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 using Lyo.FileStorage.Models;
 
 namespace Lyo.FileStorage.S3;
 
+/// <summary>Settings for the S3 file store.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class S3FileStorageOptions : FileStorageServiceBaseOptions
 {
     public const string SectionName = "S3FileStorageOptions";
@@ -49,4 +52,8 @@ public sealed class S3FileStorageOptions : FileStorageServiceBaseOptions
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(BucketName);
         ValidateUploadFilters();
     }
+
+    /// <summary>Bucket, region, and whether static keys are set. Key values are omitted.</summary>
+    public override string ToString()
+        => $"BucketName={BucketName} Region={Region} AccessKeySet={!string.IsNullOrWhiteSpace(AccessKeyId)} SecretAccessKeySet={!string.IsNullOrWhiteSpace(SecretAccessKey)} Profile={Profile} ServiceUrl={ServiceUrl} {base.ToString()}";
 }

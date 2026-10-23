@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using Lyo.Story.Enums;
 
 namespace Lyo.Story.Postgres.Database;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class StoryEntity
 {
     public Guid Id { get; set; }
@@ -41,4 +43,7 @@ public sealed class StoryEntity
     public ICollection<StoryReactionEntity> Reactions { get; set; } = [];
 
     public ICollection<StoryPlaythroughEntity> Playthroughs { get; set; } = [];
+
+    /// <summary>Type name, id, and title.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Title}";
 }

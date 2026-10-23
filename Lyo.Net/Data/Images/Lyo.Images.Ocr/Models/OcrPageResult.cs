@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.Images.Ocr.Models;
 
 /// <summary>OCR result for a single raster page.</summary>
@@ -6,4 +8,5 @@ namespace Lyo.Images.Ocr.Models;
 /// <param name="Lines">Lines assembled from those words.</param>
 /// <param name="ImageWidth">Analyzed bitmap width in pixels.</param>
 /// <param name="ImageHeight">Analyzed bitmap height in pixels.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record OcrPageResult(string FullText, IReadOnlyList<OcrWord> Words, IReadOnlyList<OcrLine> Lines, int ImageWidth, int ImageHeight);

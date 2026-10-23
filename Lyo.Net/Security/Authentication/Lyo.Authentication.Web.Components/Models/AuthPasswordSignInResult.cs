@@ -1,9 +1,12 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Web.Components.Models;
 
 /// <summary>Outcome of an <see cref="Abstractions.IAuthPasswordSignIn.SignInAsync" /> attempt. Union-style record plus a static factory pair.</summary>
 /// <param name="Succeeded">True when sign-in completed.</param>
 /// <param name="ReturnUrl">Where to navigate after success (overrides the page's own return URL when non-null).</param>
 /// <param name="FailureReason">Human-readable reason rendered as a <c>MudAlert</c> on failure.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record AuthPasswordSignInResult(bool Succeeded, string? ReturnUrl, string? FailureReason)
 {
     /// <summary>A successful result, optionally overriding the return URL the page already has.</summary>

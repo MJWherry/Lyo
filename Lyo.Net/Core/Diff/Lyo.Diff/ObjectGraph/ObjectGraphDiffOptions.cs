@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using System.Reflection;
 
 namespace Lyo.Diff.ObjectGraph;
 
 /// <summary>Depth, path filters, and leaf equality for <see cref="IObjectGraphDiffService" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ObjectGraphDiffOptions
 {
     /// <summary>Maximum property nesting depth (1 means top-level only).</summary>
@@ -22,4 +24,9 @@ public sealed class ObjectGraphDiffOptions
 
     /// <summary>When set, called for candidate leaves before default equality; return true when the values should be treated as equal.</summary>
     public Func<ObjectGraphLeafContext, bool>? CustomEquals { get; set; }
+
+    /// <summary>Maximum depth and whether path or equality filters are set.</summary>
+    public override string ToString()
+        => $"MaxDepth={MaxDepth} CompareArrayElements={CompareArrayElements} "
+         + $"IncludePathSet={IncludePath is not null} ExcludePathSet={ExcludePath is not null} CustomEqualsSet={CustomEquals is not null}";
 }

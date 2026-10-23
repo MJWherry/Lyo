@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Screenshot;
 
 /// <summary>Screen rectangle in pixels. Width and height are the viewport that is grabbed on each frame.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct CaptureRegion(int X, int Y, int Width, int Height)
 {
     /// <summary>Intersection of this rectangle with <paramref name="screen" />. No overlap returns a zero width and height.</summary>

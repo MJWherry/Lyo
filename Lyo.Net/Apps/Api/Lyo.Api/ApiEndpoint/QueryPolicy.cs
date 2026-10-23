@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Api.Models;
 using Lyo.Api.Models.Error;
 using Lyo.Query.Models.Common.Request;
@@ -9,6 +10,7 @@ namespace Lyo.Api.ApiEndpoint;
 /// Every limit is optional and unset means unbounded. The dynamic routes used to bypass these entirely, which let a caller ask for a hundred include paths against a route
 /// the host believed was capped at five.
 /// </remarks>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record QueryPolicy
 {
     /// <summary>Most navigation include paths allowed per request.</summary>

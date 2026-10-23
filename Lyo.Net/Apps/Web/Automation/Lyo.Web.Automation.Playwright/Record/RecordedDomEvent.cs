@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Web.Automation.Models;
 using Lyo.Web.Automation.Models.Enums;
 
@@ -26,6 +27,7 @@ public enum RecordedPickTool
 }
 
 /// <summary>A click made while a pick tool is armed. <see cref="Repeating" /> is true when a parent has two or more children of <see cref="DescendantTag" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record RecordedPick(
     RecordedPickTool Tool,
     bool Repeating,
@@ -39,6 +41,7 @@ public sealed record RecordedPick(
 /// A step typed into the panel. <see cref="LocatorKind" /> and <see cref="Value" /> locate an element. <see cref="Action" /> is click, input, or clear. <see cref="Text" />
 /// is what an input action types.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record RecordedInsert(
     string StepType,
     string? VariableName = null,
@@ -51,6 +54,7 @@ public sealed record RecordedInsert(
     string? Text = null);
 
 /// <summary>One browser event, already reduced to a locator by the page script.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record RecordedDomEvent(
     RecordedDomEventKind Kind,
     string? ElementKey = null,

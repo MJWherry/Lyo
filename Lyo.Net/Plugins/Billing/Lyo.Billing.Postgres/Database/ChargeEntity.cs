@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.Billing.Postgres.Database;
 
 /// <summary>Unbilled work row.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ChargeEntity
 {
     [Key]
@@ -40,4 +42,7 @@ public sealed class ChargeEntity
     public InvoiceEntity? Invoice { get; set; }
 
     public BillingClientEntity? Client { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Idempotency;
 
 /// <summary>Limits and the default lifetime for API claims.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class IdempotencyOptions
 {
     /// <summary>Default maximum stored scope length.</summary>
@@ -26,4 +29,9 @@ public sealed class IdempotencyOptions
 
     /// <summary>How long an API claim stays replayable when the caller does not pass an expiry. Also the lease for API rows, so they are not stolen early.</summary>
     public TimeSpan DefaultLifetime { get; set; } = TimeSpan.FromHours(24);
+
+    /// <summary>Scope, key, body, and lifetime limits.</summary>
+    public override string ToString()
+        => $"MaxScopeLength={MaxScopeLength} MaxKeyLength={MaxKeyLength} MaxResponseBytes={MaxResponseBytes} "
+         + $"MaxPayloadBytes={MaxPayloadBytes} DefaultLifetime={DefaultLifetime}";
 }

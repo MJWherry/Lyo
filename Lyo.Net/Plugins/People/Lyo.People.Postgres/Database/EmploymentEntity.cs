@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 
 namespace Lyo.People.Postgres.Database;
 
 /// <summary>PostgreSQL row for an employment stint.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class EmploymentEntity
 {
     [Key]
@@ -53,4 +55,7 @@ public sealed class EmploymentEntity
 
     [ForeignKey(nameof(CompanyAddressId))]
     public AddressEntity? CompanyAddress { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

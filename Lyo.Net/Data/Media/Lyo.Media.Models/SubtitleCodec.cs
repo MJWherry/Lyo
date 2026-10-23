@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Lyo.Media.Models;
 
 /// <summary>Subtitle codec token passed to <c>-c:s</c>. Lookups are thread-safe.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record SubtitleCodec
 {
     private static readonly ConcurrentDictionary<string, SubtitleCodec> ById = new(StringComparer.OrdinalIgnoreCase);

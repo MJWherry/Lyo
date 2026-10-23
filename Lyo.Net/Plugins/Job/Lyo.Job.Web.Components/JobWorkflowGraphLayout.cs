@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using Lyo.Exceptions;
 
@@ -10,6 +11,7 @@ namespace Lyo.Job.Web.Components;
 /// <param name="Row">Position among the siblings sharing that column.</param>
 /// <param name="X">Left offset in pixels.</param>
 /// <param name="Y">Top offset in pixels.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record JobWorkflowGraphNode(string Name, JobWorkflowStepDraft Step, int Column, int Row, int X, int Y);
 
 /// <summary>One arrow from a dependency to the step that waits on it.</summary>
@@ -20,6 +22,7 @@ public sealed record JobWorkflowGraphNode(string Name, JobWorkflowStepDraft Step
 /// <param name="EndX">Target anchor, the middle of its left edge.</param>
 /// <param name="EndY">Target anchor, the middle of its left edge.</param>
 /// <param name="Path">SVG <c>d</c> attribute: an orthogonal polyline that leaves the source to the right and arrives at the target from the left.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record JobWorkflowGraphEdge(string FromName, string ToName, int StartX, int StartY, int EndX, int EndY, string Path);
 
 /// <summary>

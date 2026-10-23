@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.SystemInformation;
 
 /// <summary>
@@ -15,4 +17,5 @@ namespace Lyo.SystemInformation;
 /// True when a mains adapter is online (Linux: <c>power_supply</c> type <c>Mains</c>; Windows: <c>GetSystemPowerStatus</c>). Null when the platform does not
 /// expose AC vs battery.
 /// </param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record PowerPolicyInfo(string? Profile, string? CpuGovernor, string? EnergyPerformancePreference, string? SchemeId, bool? OnAcPower);

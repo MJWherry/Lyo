@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Result;
 
 namespace Lyo.Encryption.Models;
 
 /// <summary>Outcome of an encrypt call, including encryption-specific fields.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record EncryptionResult : Result<byte[]>
 {
     /// <summary>Key id used when encrypting.</summary>
@@ -16,6 +18,9 @@ public sealed record EncryptionResult : Result<byte[]>
 
     /// <summary>Encrypted payload size in bytes.</summary>
     public int? EncryptedSize { get; init; }
+
+    /// <summary>Success flag, key id, and ciphertext length. Payload bytes are omitted.</summary>
+    public override string ToString() => $"IsSuccess={IsSuccess} KeyId={KeyId} Version={KeyVersion} Bytes={EncryptedSize ?? Data?.Length ?? 0}";
 
     private EncryptionResult(bool isSuccess, byte[]? data, IReadOnlyList<Error>? errors = null)
         : base(isSuccess, data, errors) { }

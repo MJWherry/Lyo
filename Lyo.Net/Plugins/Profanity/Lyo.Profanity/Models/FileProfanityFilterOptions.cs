@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
@@ -5,6 +6,7 @@ using Lyo.Exceptions;
 namespace Lyo.Profanity.Models;
 
 /// <summary>Settings for the file-based profanity filter service. Extends <see cref="ProfanityFilterOptions" /> with file-specific settings.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class FileProfanityFilterOptions : ProfanityFilterOptions
 {
     /// <summary>Options binding. Default: "ProfanityFilter" configuration section name.</summary>
@@ -57,4 +59,7 @@ public class FileProfanityFilterOptions : ProfanityFilterOptions
         base.Validate();
         ArgumentHelpers.ThrowIfNull(Encoding);
     }
+
+    /// <summary>Word-list path, URL, and language-map size.</summary>
+    public override string ToString() => $"WordsFile={WordsFilePath} WordsUrl={WordsUrl} Languages={WordsByLanguage?.Count ?? 0} {base.ToString()}";
 }

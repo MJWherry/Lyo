@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.RequestSigning;
 
 /// <summary>Header name, HMAC key, and max age for <see cref="RequestSigner" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class RequestSignatureOptions
 {
     /// <summary>Configuration section name.</summary>
@@ -30,4 +32,7 @@ public sealed class RequestSignatureOptions
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(HeaderName);
         ArgumentHelpers.ThrowIfLessThanOrEqual(MaxAge.Ticks, 0L, nameof(MaxAge));
     }
+
+    /// <summary>Header name and max age. HMAC key values are omitted.</summary>
+    public override string ToString() => $"HeaderName={HeaderName} MaxAge={MaxAge} KeySet={!string.IsNullOrWhiteSpace(Key)} PreviousKeySet={!string.IsNullOrWhiteSpace(PreviousKey)}";
 }

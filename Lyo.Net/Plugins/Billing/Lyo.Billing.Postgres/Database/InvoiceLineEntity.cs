@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.Billing.Postgres.Database;
 
 /// <summary>Frozen invoice line.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class InvoiceLineEntity
 {
     [Key]
@@ -31,4 +33,7 @@ public sealed class InvoiceLineEntity
     public int Pricing { get; set; }
 
     public InvoiceEntity Invoice { get; set; } = null!;
+
+    /// <summary>Type name, id, and title.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Title}";
 }

@@ -1,220 +1,236 @@
 using System.Diagnostics;
 using Lyo.Common.Core.Archives;
-using Lyo.Common.Core.Extensions;
 using Lyo.Common.Metadata.Records;
 using Lyo.Email.Models;
 using Lyo.Exceptions;
 using Lyo.Result;
-using MimeKit;
 
 namespace Lyo.Email.Builders;
 
-/// <summary>Fluent helper for an email: recipients, attachments, and custom headers.</summary>
+/// <summary>Fluent helper for an email: recipients, bodies, attachments, and custom headers. <see cref="Build" /> returns an <see cref="EmailRequest" />.</summary>
 [DebuggerDisplay("{ToString(),nq}")]
 public sealed class EmailRequestBuilder
 {
-    private readonly List<EmailAttachment> _attachmentMetadata = [];
+    private readonly List<EmailAttachment> _attachments = [];
 
-    private readonly BodyBuilder _bodyBuilder = new();
+    private readonly List<EmailAddress> _bcc = [];
 
-    private readonly MimeMessage _message = new();
+    private readonly List<EmailAddress> _cc = [];
 
-    /// <summary>Attachment metadata used in logs (fileName and similar). Empty when there are none.</summary>
-    public IReadOnlyList<EmailAttachment>? AttachmentMetadata => _attachmentMetadata.Count > 0 ? _attachmentMetadata : null;
+    private readonly List<EmailHeader> _headers = [];
 
-    /// <summary>Adds several To recipients from an enumerable.</summary>
-    /// <param name="to">Addresses; each value is used as both address and display name.</param>
+    private readonly List<EmailAddress> _replyTo = [];
+
+    private readonly List<EmailAddress> _to = [];
+
+    private EmailAddress? _from;
+
+    private string? _htmlBody;
+
+    private EmailPriority? _priority;
+
+    private string? _subject;
+
+    private string? _textBody;
+
+    /// <summary>Adds several To recipients from an enumerable. Each address is also the display name.</summary>
+    /// <param name="to">Addresses.</param>
     /// <returns>This builder for further calls.</returns>
     public EmailRequestBuilder AddTo(IEnumerable<string> to)
     {
-        foreach (var i in to)
-            AddTo(i);
+        ArgumentHelpers.ThrowIfNull(to);
+        foreach (var address in to)
+            AddTo(address);
 
         return this;
     }
 
-    /// <summary>Adds several To recipients via a params array.</summary>
-    /// <param name="to">Addresses; each value is used as both address and display name.</param>
+    /// <summary>Adds several To recipients. Two string arguments bind to <see cref="AddTo(string, string?)" />.</summary>
+    /// <param name="to">Addresses. Each value is used as both address and display name.</param>
     /// <returns>This builder for further calls.</returns>
-    /// <remarks>Exactly two string arguments bind to AddTo(string email, string name). Pass three or more, or an array, to hit this overload.</remarks>
     public EmailRequestBuilder AddTo(params string[] to)
     {
         ArgumentHelpers.ThrowIfNull(to);
-        foreach (var i in to)
-            AddTo(i);
+        foreach (var address in to)
+            AddTo(address);
 
         return this;
     }
 
-    /// <summary>Adds one To recipient with address and display name.</summary>
+    /// <summary>Adds one To recipient.</summary>
     /// <param name="email">Address.</param>
-    /// <param name="name">Display name.</param>
+    /// <param name="name">Display name. The address is used when this is omitted.</param>
     /// <returns>This builder for further calls.</returns>
     public EmailRequestBuilder AddTo(string email, string? name = null)
     {
-        FormatHelpers.ThrowIfInvalidFormat(email, RegexPatterns.EmailRegex, "Invalid email format: {0}", "Email (e.g., user@example.com)");
-        _message.To.Add(new MailboxAddress(name ?? email, email));
+        RequireEmail(email);
+        _to.Add(new(email, name ?? email));
         return this;
     }
 
-    /// <summary>Adds one To recipient from a MailboxAddress.</summary>
-    /// <param name="to">Mailbox to add.</param>
+    /// <summary>Adds one To recipient.</summary>
+    /// <param name="to">Address to add.</param>
     /// <returns>This builder for further calls.</returns>
-    public EmailRequestBuilder AddTo(MailboxAddress to)
+    public EmailRequestBuilder AddTo(EmailAddress to)
     {
         ArgumentHelpers.ThrowIfNull(to);
-        _message.To.Add(to);
+        RequireEmail(to.Address);
+        _to.Add(to);
         return this;
     }
 
-    /// <summary>Adds several Cc recipients from an enumerable.</summary>
-    /// <param name="cc">Addresses; each value is used as both address and display name.</param>
+    /// <summary>Adds several Cc recipients. Each address is also the display name.</summary>
+    /// <param name="cc">Addresses.</param>
     /// <returns>This builder for further calls.</returns>
     public EmailRequestBuilder AddCc(IEnumerable<string> cc)
     {
         ArgumentHelpers.ThrowIfNull(cc);
-        foreach (var i in cc)
-            AddCc(i);
+        foreach (var address in cc)
+            AddCc(address);
 
         return this;
     }
 
-    /// <summary>Adds several Cc recipients via a params array.</summary>
-    /// <param name="cc">Addresses; each value is used as both address and display name.</param>
+    /// <summary>Adds several Cc recipients. Each value is used as both address and display name.</summary>
+    /// <param name="cc">Addresses.</param>
     /// <returns>This builder for further calls.</returns>
     public EmailRequestBuilder AddCc(params string[] cc)
     {
         ArgumentHelpers.ThrowIfNull(cc);
-        foreach (var i in cc)
-            AddCc(i, i);
+        foreach (var address in cc)
+            AddCc(address);
 
         return this;
     }
 
-    /// <summary>Adds one Cc recipient with address and display name.</summary>
+    /// <summary>Adds one Cc recipient.</summary>
     /// <param name="email">Address.</param>
-    /// <param name="name">Display name.</param>
+    /// <param name="name">Display name. The address is used when this is omitted.</param>
     /// <returns>This builder for further calls.</returns>
     public EmailRequestBuilder AddCc(string email, string? name = null)
     {
-        FormatHelpers.ThrowIfInvalidFormat(email, RegexPatterns.EmailRegex, "Invalid email format: {0}", "Email (e.g., user@example.com)");
-        _message.Cc.Add(new MailboxAddress(name ?? email, email));
+        RequireEmail(email);
+        _cc.Add(new(email, name ?? email));
         return this;
     }
 
-    /// <summary>Adds one Cc recipient from a MailboxAddress.</summary>
-    /// <param name="cc">Mailbox to add.</param>
+    /// <summary>Adds one Cc recipient.</summary>
+    /// <param name="cc">Address to add.</param>
     /// <returns>This builder for further calls.</returns>
-    public EmailRequestBuilder AddCc(MailboxAddress cc)
+    public EmailRequestBuilder AddCc(EmailAddress cc)
     {
         ArgumentHelpers.ThrowIfNull(cc);
-        _message.Cc.Add(cc);
+        RequireEmail(cc.Address);
+        _cc.Add(cc);
         return this;
     }
 
-    /// <summary>Adds several Bcc recipients from an enumerable.</summary>
-    /// <param name="bcc">Addresses; each value is used as both address and display name.</param>
+    /// <summary>Adds several Bcc recipients. Each address is also the display name.</summary>
+    /// <param name="bcc">Addresses.</param>
     /// <returns>This builder for further calls.</returns>
     public EmailRequestBuilder AddBcc(IEnumerable<string> bcc)
     {
         ArgumentHelpers.ThrowIfNull(bcc);
-        foreach (var i in bcc)
-            AddBcc(i);
+        foreach (var address in bcc)
+            AddBcc(address);
 
         return this;
     }
 
-    /// <summary>Adds several Bcc recipients via a params array.</summary>
-    /// <param name="bcc">Addresses; each value is used as both address and display name.</param>
+    /// <summary>Adds several Bcc recipients. Each value is used as both address and display name.</summary>
+    /// <param name="bcc">Addresses.</param>
     /// <returns>This builder for further calls.</returns>
     public EmailRequestBuilder AddBcc(params string[] bcc)
     {
         ArgumentHelpers.ThrowIfNull(bcc);
-        foreach (var i in bcc)
-            AddBcc(i);
+        foreach (var address in bcc)
+            AddBcc(address);
 
         return this;
     }
 
-    /// <summary>Adds one Bcc recipient with address and display name.</summary>
+    /// <summary>Adds one Bcc recipient.</summary>
     /// <param name="email">Address.</param>
-    /// <param name="name">Display name.</param>
+    /// <param name="name">Display name. The address is used when this is omitted.</param>
     /// <returns>This builder for further calls.</returns>
     public EmailRequestBuilder AddBcc(string email, string? name = null)
     {
-        FormatHelpers.ThrowIfInvalidFormat(email, RegexPatterns.EmailRegex, "Invalid email format: {0}", "Email (e.g., user@example.com)");
-        _message.Bcc.Add(new MailboxAddress(name ?? email, email));
+        RequireEmail(email);
+        _bcc.Add(new(email, name ?? email));
         return this;
     }
 
-    /// <summary>Adds one Bcc recipient from a MailboxAddress.</summary>
-    /// <param name="bcc">Mailbox to add.</param>
+    /// <summary>Adds one Bcc recipient.</summary>
+    /// <param name="bcc">Address to add.</param>
     /// <returns>This builder for further calls.</returns>
-    public EmailRequestBuilder AddBcc(MailboxAddress bcc)
+    public EmailRequestBuilder AddBcc(EmailAddress bcc)
     {
         ArgumentHelpers.ThrowIfNull(bcc);
-        _message.Bcc.Add(bcc);
+        RequireEmail(bcc.Address);
+        _bcc.Add(bcc);
         return this;
     }
 
-    /// <summary>Sets the From address.</summary>
+    /// <summary>Sets the From address. A later call replaces the previous From.</summary>
     /// <param name="email">Address.</param>
-    /// <param name="name">Optional display name; defaults to the address.</param>
+    /// <param name="name">Display name. The address is used when this is omitted.</param>
     /// <returns>This builder for further calls.</returns>
     public EmailRequestBuilder SetFrom(string email, string? name = null)
     {
-        FormatHelpers.ThrowIfInvalidFormat(email, RegexPatterns.EmailRegex, "Invalid email format: {0}", "Email (e.g., user@example.com)");
-        _message.From.Add(new MailboxAddress(name ?? email, email));
+        RequireEmail(email);
+        _from = new(email, name ?? email);
         return this;
     }
 
-    /// <summary>Sets From from a MailboxAddress.</summary>
-    /// <param name="from">Mailbox to use.</param>
+    /// <summary>Sets From. A later call replaces the previous From.</summary>
+    /// <param name="from">Address to use.</param>
     /// <returns>This builder for further calls.</returns>
-    public EmailRequestBuilder SetFrom(MailboxAddress from)
+    public EmailRequestBuilder SetFrom(EmailAddress from)
     {
         ArgumentHelpers.ThrowIfNull(from);
-        _message.From.Add(from);
+        RequireEmail(from.Address);
+        _from = from;
         return this;
     }
 
-    /// <summary>Sets the Reply-To address.</summary>
+    /// <summary>Appends a Reply-To address.</summary>
     /// <param name="email">Address.</param>
-    /// <param name="name">Optional display name; defaults to the address.</param>
+    /// <param name="name">Display name. The address is used when this is omitted.</param>
     /// <returns>This builder for further calls.</returns>
     public EmailRequestBuilder SetReplyTo(string email, string? name = null)
     {
-        FormatHelpers.ThrowIfInvalidFormat(email, RegexPatterns.EmailRegex, "Invalid email format: {0}", "Email (e.g., user@example.com)");
-        _message.ReplyTo.Add(new MailboxAddress(name ?? email, email));
+        RequireEmail(email);
+        _replyTo.Add(new(email, name ?? email));
         return this;
     }
 
-    /// <summary>Sets Reply-To from a MailboxAddress.</summary>
-    /// <param name="replyTo">Mailbox to use.</param>
+    /// <summary>Appends a Reply-To address.</summary>
+    /// <param name="replyTo">Address to append.</param>
     /// <returns>This builder for further calls.</returns>
-    public EmailRequestBuilder SetReplyTo(MailboxAddress replyTo)
+    public EmailRequestBuilder SetReplyTo(EmailAddress replyTo)
     {
         ArgumentHelpers.ThrowIfNull(replyTo);
-        _message.ReplyTo.Add(replyTo);
+        RequireEmail(replyTo.Address);
+        _replyTo.Add(replyTo);
         return this;
     }
 
-    /// <summary>Sets the subject line.</summary>
+    /// <summary>Sets the subject line. Empty is allowed. Null is not.</summary>
     /// <param name="subject">Subject text.</param>
     /// <returns>This builder for further calls.</returns>
     public EmailRequestBuilder SetSubject(string subject)
     {
         ArgumentHelpers.ThrowIfNull(subject);
-        _message.Subject = subject;
+        _subject = subject;
         return this;
     }
 
     /// <summary>Sets message priority.</summary>
-    /// <param name="priority">Priority (Normal, Low, High, Urgent).</param>
+    /// <param name="priority">Priority.</param>
     /// <returns>This builder for further calls.</returns>
-    public EmailRequestBuilder SetPriority(MessagePriority priority)
+    public EmailRequestBuilder SetPriority(EmailPriority priority)
     {
-        _message.Priority = priority;
+        _priority = priority;
         return this;
     }
 
@@ -223,7 +239,7 @@ public sealed class EmailRequestBuilder
     /// <returns>This builder for further calls.</returns>
     public EmailRequestBuilder SetHtmlBody(string html)
     {
-        _bodyBuilder.HtmlBody = html;
+        _htmlBody = html;
         return this;
     }
 
@@ -232,7 +248,7 @@ public sealed class EmailRequestBuilder
     /// <returns>This builder for further calls.</returns>
     public EmailRequestBuilder SetTextBody(string text)
     {
-        _bodyBuilder.TextBody = text;
+        _textBody = text;
         return this;
     }
 
@@ -241,7 +257,7 @@ public sealed class EmailRequestBuilder
     /// <returns>This builder for further calls.</returns>
     public EmailRequestBuilder AppendHtmlBody(string html)
     {
-        _bodyBuilder.HtmlBody += html;
+        _htmlBody = (_htmlBody ?? string.Empty) + html;
         return this;
     }
 
@@ -250,64 +266,46 @@ public sealed class EmailRequestBuilder
     /// <returns>This builder for further calls.</returns>
     public EmailRequestBuilder AppendTextBody(string text)
     {
-        _bodyBuilder.TextBody += text;
+        _textBody = (_textBody ?? string.Empty) + text;
         return this;
     }
 
-    /// <summary>Adds an EmailAttachment, including optional log metadata.</summary>
+    /// <summary>Adds an attachment, including optional log metadata. Metadata stays off the wire.</summary>
     /// <param name="attachment">Attachment with name, bytes, and optional metadata.</param>
     /// <returns>This builder for further calls.</returns>
     public EmailRequestBuilder AddAttachment(EmailAttachment attachment)
     {
         ArgumentHelpers.ThrowIfNull(attachment);
-        var contentType = !attachment.ContentType.IsNullOrWhitespace() ? ContentType.Parse(attachment.ContentType) : null;
-        if (contentType != null)
-            _bodyBuilder.Attachments.Add(attachment.FileName, attachment.Data, contentType);
-        else
-            _bodyBuilder.Attachments.Add(attachment.FileName, attachment.Data);
-
-        _attachmentMetadata.Add(attachment);
+        _attachments.Add(attachment);
         return this;
     }
 
     /// <summary>Adds an attachment from bytes.</summary>
     /// <param name="fileName">Attachment file name.</param>
     /// <param name="data">File bytes.</param>
-    /// <param name="contentType">Optional MIME type; MimeKit infers it from the extension when omitted.</param>
-    /// <param name="metadataJson">Optional JSON metadata stored only in logs.</param>
+    /// <param name="contentType">Optional MIME type.</param>
+    /// <param name="metadataJson">Optional JSON metadata stored only on the request.</param>
     /// <returns>This builder for further calls.</returns>
-    public EmailRequestBuilder AddAttachment(string fileName, byte[] data, ContentType? contentType = null, string? metadataJson = null)
+    public EmailRequestBuilder AddAttachment(string fileName, byte[] data, string? contentType = null, string? metadataJson = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(fileName);
         ArgumentHelpers.ThrowIfNull(data);
-        if (contentType != null)
-            _bodyBuilder.Attachments.Add(fileName, data, contentType);
-        else
-            _bodyBuilder.Attachments.Add(fileName, data);
-
-        _attachmentMetadata.Add(new(fileName, data, contentType?.ToString(), metadataJson));
+        _attachments.Add(new(fileName, data, contentType, metadataJson));
         return this;
     }
 
-    /// <summary>Adds an attachment from a stream.</summary>
+    /// <summary>Adds an attachment from a stream. The stream is read to completion.</summary>
     /// <param name="fileName">Attachment file name.</param>
     /// <param name="data">Stream of file bytes.</param>
-    /// <param name="contentType">Optional MIME type; MimeKit infers it from the extension when omitted.</param>
-    /// <param name="metadataJson">Optional JSON metadata stored only in logs.</param>
+    /// <param name="contentType">Optional MIME type.</param>
+    /// <param name="metadataJson">Optional JSON metadata stored only on the request.</param>
     /// <returns>This builder for further calls.</returns>
-    public EmailRequestBuilder AddAttachment(string fileName, Stream data, ContentType? contentType = null, string? metadataJson = null)
+    public EmailRequestBuilder AddAttachment(string fileName, Stream data, string? contentType = null, string? metadataJson = null)
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(fileName);
         ArgumentHelpers.ThrowIfNull(data);
         OperationHelpers.ThrowIfNotReadable(data, $"Stream '{nameof(data)}' must be readable.");
-        var bytes = ReadStreamToBytes(data);
-        if (contentType != null)
-            _bodyBuilder.Attachments.Add(fileName, bytes, contentType);
-        else
-            _bodyBuilder.Attachments.Add(fileName, bytes);
-
-        _attachmentMetadata.Add(new(fileName, bytes, contentType?.ToString(), metadataJson));
-        return this;
+        return AddAttachment(fileName, ReadStreamToBytes(data), contentType, metadataJson);
     }
 
     /// <summary>Adds several attachments from a name-to-bytes map.</summary>
@@ -316,10 +314,8 @@ public sealed class EmailRequestBuilder
     public EmailRequestBuilder AddAttachment(Dictionary<string, byte[]> files)
     {
         ArgumentHelpers.ThrowIfNull(files);
-        foreach (var file in files) {
-            _bodyBuilder.Attachments.Add(file.Key, file.Value);
-            _attachmentMetadata.Add(new(file.Key, file.Value));
-        }
+        foreach (var file in files)
+            _attachments.Add(new(file.Key, file.Value));
 
         return this;
     }
@@ -331,9 +327,7 @@ public sealed class EmailRequestBuilder
     {
         ArgumentHelpers.ThrowIfFileNotFound(filePath);
         var fileName = Path.GetFileName(filePath);
-        var data = File.ReadAllBytes(filePath);
-        _bodyBuilder.Attachments.Add(fileName, data);
-        _attachmentMetadata.Add(new(fileName, data));
+        _attachments.Add(new(fileName, File.ReadAllBytes(filePath)));
         return this;
     }
 
@@ -346,8 +340,7 @@ public sealed class EmailRequestBuilder
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(zipFileName);
         ArgumentHelpers.ThrowIfNull(files);
         var zipData = ZipFileBuilder.Create().AddFiles(files).Build();
-        _bodyBuilder.Attachments.Add(zipFileName, zipData, ContentType.Parse(FileTypeInfo.Zip.MimeType));
-        _attachmentMetadata.Add(new(zipFileName, zipData, FileTypeInfo.Zip.MimeType));
+        _attachments.Add(new(zipFileName, zipData, FileTypeInfo.Zip.MimeType));
         return this;
     }
 
@@ -360,8 +353,7 @@ public sealed class EmailRequestBuilder
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(zipFileName);
         ArgumentHelpers.ThrowIfNull(filePaths);
         var zipData = ZipFileBuilder.Create().AddFiles(filePaths).Build();
-        _bodyBuilder.Attachments.Add(zipFileName, zipData, ContentType.Parse(FileTypeInfo.Zip.MimeType));
-        _attachmentMetadata.Add(new(zipFileName, zipData, FileTypeInfo.Zip.MimeType));
+        _attachments.Add(new(zipFileName, zipData, FileTypeInfo.Zip.MimeType));
         return this;
     }
 
@@ -375,9 +367,7 @@ public sealed class EmailRequestBuilder
         ArgumentHelpers.ThrowIfNull(configure);
         var zipBuilder = ZipFileBuilder.Create();
         configure(zipBuilder);
-        var zipData = zipBuilder.Build();
-        _bodyBuilder.Attachments.Add(zipFileName, zipData, ContentType.Parse(FileTypeInfo.Zip.MimeType));
-        _attachmentMetadata.Add(new(zipFileName, zipData, FileTypeInfo.Zip.MimeType));
+        _attachments.Add(new(zipFileName, zipBuilder.Build(), FileTypeInfo.Zip.MimeType));
         return this;
     }
 
@@ -389,7 +379,7 @@ public sealed class EmailRequestBuilder
     {
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(name);
         ArgumentHelpers.ThrowIfNull(value);
-        _message.Headers.Add(name, value);
+        _headers.Add(new(name, value));
         return this;
     }
 
@@ -397,7 +387,7 @@ public sealed class EmailRequestBuilder
     /// <returns>This builder for further calls.</returns>
     public EmailRequestBuilder ClearTo()
     {
-        _message.To.Clear();
+        _to.Clear();
         return this;
     }
 
@@ -405,7 +395,7 @@ public sealed class EmailRequestBuilder
     /// <returns>This builder for further calls.</returns>
     public EmailRequestBuilder ClearCc()
     {
-        _message.Cc.Clear();
+        _cc.Clear();
         return this;
     }
 
@@ -413,7 +403,7 @@ public sealed class EmailRequestBuilder
     /// <returns>This builder for further calls.</returns>
     public EmailRequestBuilder ClearBcc()
     {
-        _message.Bcc.Clear();
+        _bcc.Clear();
         return this;
     }
 
@@ -421,31 +411,16 @@ public sealed class EmailRequestBuilder
     /// <returns>This builder for further calls.</returns>
     public EmailRequestBuilder ClearAttachments()
     {
-        _bodyBuilder.Attachments.Clear();
-        _attachmentMetadata.Clear();
+        _attachments.Clear();
         return this;
     }
 
-    /// <summary>Reads a stream to completion into a byte array.</summary>
-    /// <param name="stream">Stream to read.</param>
-    /// <returns>The full contents as bytes.</returns>
-    private static byte[] ReadStreamToBytes(Stream stream)
-    {
-        if (stream is MemoryStream ms)
-            return ms.ToArray();
-
-        using var memory = new MemoryStream();
-        stream.CopyTo(memory);
-        return memory.ToArray();
-    }
-
-    /// <summary>Produces the MimeMessage.</summary>
-    /// <returns>A message ready to send.</returns>
-    public MimeMessage Build()
-    {
-        _message.Body = _bodyBuilder.ToMessageBody();
-        return _message;
-    }
+    /// <summary>Produces the request. Later edits to this builder do not change the returned instance.</summary>
+    /// <returns>A request ready to send.</returns>
+    public EmailRequest Build()
+        => new(
+            _from?.Address, _from?.Name, Copy(_to), Copy(_cc), Copy(_bcc), _subject, _attachments.Count > 0 ? _attachments.ToArray() : null, _textBody, _htmlBody,
+            _replyTo.Count > 0 ? _replyTo.ToArray() : null, _headers.Count > 0 ? _headers.ToArray() : null, _priority);
 
     /// <summary>Starts a new EmailRequestBuilder.</summary>
     /// <returns>A fresh builder.</returns>
@@ -453,5 +428,19 @@ public sealed class EmailRequestBuilder
 
     /// <summary>Diagnostic snapshot of the builder.</summary>
     /// <returns>Text covering subject and recipient count.</returns>
-    public override string ToString() => $"Email: {(string.IsNullOrWhiteSpace(_message.Subject) ? "(no subject)" : _message.Subject)} to {_message.To.Count} recipient(s)";
+    public override string ToString() => $"Email: {(string.IsNullOrWhiteSpace(_subject) ? "(no subject)" : _subject)} to {_to.Count} recipient(s)";
+
+    private static void RequireEmail(string email) => FormatHelpers.ThrowIfInvalidFormat(email, RegexPatterns.EmailRegex, "Invalid email format: {0}", "Email (e.g., user@example.com)");
+
+    private static IReadOnlyList<EmailAddress>? Copy(List<EmailAddress> addresses) => addresses.Count > 0 ? addresses.ToArray() : null;
+
+    private static byte[] ReadStreamToBytes(Stream stream)
+    {
+        if (stream is MemoryStream memoryStream)
+            return memoryStream.ToArray();
+
+        using var memory = new MemoryStream();
+        stream.CopyTo(memory);
+        return memory.ToArray();
+    }
 }

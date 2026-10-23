@@ -802,6 +802,8 @@ export type LyoParameterValueGridProps = LyoParameterOptionSources & {
   /** Per-value Encrypt switch (job runs). */
   showEncrypt?: boolean;
   editorContext?: unknown;
+  /** Key of the entry to outline. */
+  highlightedKey?: string | null;
 };
 
 /** Run-dialog grid: one value field per entry, wide editors full width, sibling values fed to `{{Key}}` options. */
@@ -814,6 +816,7 @@ export function LyoParameterValueGrid({
   apiClient,
   resolveOptions,
   editorContext,
+  highlightedKey,
 }: LyoParameterValueGridProps) {
   if (entries.length === 0) return null;
   const siblings = siblingMap(entries);
@@ -823,7 +826,11 @@ export function LyoParameterValueGrid({
       {title ? <Typography variant="subtitle1">{title}</Typography> : null}
       <Grid container spacing={2}>
         {entries.map((entry, index) => (
-          <Grid key={entry.definition.key} size={{ xs: 12, md: isWideEditor(entry.definition.type) ? 12 : 6 }}>
+          <Grid
+            key={entry.definition.key}
+            size={{ xs: 12, md: isWideEditor(entry.definition.type) ? 12 : 6 }}
+            sx={entry.definition.key === highlightedKey ? { outline: "2px solid", outlineColor: "primary.main", borderRadius: 1, p: 0.5 } : undefined}
+          >
             <LyoParameterValueField
               typeName={entry.definition.type}
               json={entry.value}

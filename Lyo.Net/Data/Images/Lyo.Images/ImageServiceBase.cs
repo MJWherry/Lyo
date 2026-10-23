@@ -18,6 +18,7 @@ using static Lyo.Images.ImageErrorCodes;
 namespace Lyo.Images;
 
 /// <summary>Abstract base for <see cref="IImageService" /> implementations (e.g. ImageSharp, SkiaSharp) sharing validation, metrics wiring, and shared helpers.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public abstract class ImageServiceBase : IImageService
 {
     /// <summary>Logger used by this service.</summary>
@@ -564,4 +565,7 @@ public abstract class ImageServiceBase : IImageService
 
     /// <summary>Infers image format from <see cref="ImageInfo" />.</summary>
     protected static ImageFormat DetectFormat(ImageInfo info) => DetectFormat(info.Metadata.DecodedImageFormat);
+
+    /// <summary>Service name and the options it was built with.</summary>
+    public override string ToString() => $"{GetType().Name} {Options}";
 }

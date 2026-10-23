@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Api.Models.Common;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record QueryRequestScoreBreakdown(
     int TotalScore,
     int PagingScore,

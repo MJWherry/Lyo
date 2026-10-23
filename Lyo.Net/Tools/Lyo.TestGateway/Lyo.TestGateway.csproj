@@ -79,6 +79,7 @@
         <ProjectReference Include="..\..\Data\Compression\Lyo.Compression.Xz\Lyo.Compression.Xz.csproj"/>
         <ProjectReference Include="..\..\Data\Compression\Lyo.Compression.Zstd\Lyo.Compression.Zstd.csproj"/>
         <ProjectReference Include="..\..\Data\Csv\Lyo.Csv\Lyo.Csv.csproj"/>
+        <ProjectReference Include="..\..\Communication\Email\Lyo.Email.Smtp\Lyo.Email.Smtp.csproj"/>
         <ProjectReference Include="..\..\Communication\Email\Lyo.Email\Lyo.Email.csproj"/>
         <ProjectReference Include="..\..\Security\Encryption\Lyo.Encryption\Lyo.Encryption.csproj"/>
         <ProjectReference Include="..\..\Security\Encryption\Lyo.Encryption.AesCcm\Lyo.Encryption.AesCcm.csproj"/>

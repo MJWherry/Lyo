@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 using Microsoft.AspNetCore.Authorization;
 
@@ -17,6 +18,7 @@ namespace Lyo.Api.ApiEndpoint;
 ///        .WithUpdate(auth: EndpointAuth.RequireAuthorization("AdminOnly"));
 /// </code>
 /// </example>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record EndpointAuth
 {
     /// <summary>When true, allows anonymous access on this endpoint.</summary>

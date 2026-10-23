@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Components;
 
 namespace Lyo.Reporting.Business.Example;
@@ -24,6 +25,7 @@ public partial class Invoice
         public decimal GrandTotal => LineItems.Sum(i => i.Total);
     }
 
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed record InvoiceLineItem(string Description, decimal Cost, decimal Quantity, decimal? TotalOverride = null)
     {
         public decimal Total => TotalOverride ?? Cost * Quantity;

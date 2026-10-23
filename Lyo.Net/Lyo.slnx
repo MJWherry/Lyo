@@ -714,9 +714,12 @@
     </Folder>
     <Folder Name="/Communication/"/>
     <Folder Name="/Communication/Email/">
-        <Project Path="Communication/Email/Lyo.Email.Models/Lyo.Email.Models.csproj"/>
         <Project Path="Communication/Email/Lyo.Email.Postgres/Lyo.Email.Postgres.csproj"/>
         <Project Path="Communication/Email/Lyo.Email.Postgres.Tests/Lyo.Email.Postgres.Tests.csproj"/>
+        <Project Path="Communication/Email/Lyo.Email.SendGrid.Tests/Lyo.Email.SendGrid.Tests.csproj"/>
+        <Project Path="Communication/Email/Lyo.Email.SendGrid/Lyo.Email.SendGrid.csproj"/>
+        <Project Path="Communication/Email/Lyo.Email.Smtp.Tests/Lyo.Email.Smtp.Tests.csproj"/>
+        <Project Path="Communication/Email/Lyo.Email.Smtp/Lyo.Email.Smtp.csproj"/>
         <Project Path="Communication/Email/Lyo.Email.Tests/Lyo.Email.Tests.csproj"/>
         <Project Path="Communication/Email/Lyo.Email.Web.Components/Lyo.Email.Web.Components.csproj"/>
         <Project Path="Communication/Email/Lyo.Email/Lyo.Email.csproj"/>
@@ -771,6 +774,8 @@
         <Project Path="Security/Hashing/Lyo.Hashing.Tests/Lyo.Hashing.Tests.csproj"/>
     </Folder>
     <Folder Name="/Security/ContentThreatScan/">
+        <Project Path="Security/ContentThreatScan/Lyo.ContentThreatScan.ClamAv/Lyo.ContentThreatScan.ClamAv.csproj"/>
+        <Project Path="Security/ContentThreatScan/Lyo.ContentThreatScan.ClamAv.Tests/Lyo.ContentThreatScan.ClamAv.Tests.csproj"/>
         <Project Path="Security/ContentThreatScan/Lyo.ContentThreatScan.Intel/Lyo.ContentThreatScan.Intel.csproj"/>
         <Project Path="Security/ContentThreatScan/Lyo.ContentThreatScan.Tests/Lyo.ContentThreatScan.Tests.csproj"/>
         <Project Path="Security/ContentThreatScan/Lyo.ContentThreatScan/Lyo.ContentThreatScan.csproj"/>
@@ -838,6 +843,10 @@
         <Project Path="Security/Authentication/Lyo.Authentication.Seed.Tests/Lyo.Authentication.Seed.Tests.csproj"/>
     </Folder>
     <Folder Name="/Integration/"/>
+    <Folder Name="/Integration/ClamAv/">
+        <Project Path="Integration/ClamAv/Lyo.ClamAv.Client/Lyo.ClamAv.Client.csproj"/>
+        <Project Path="Integration/ClamAv/Lyo.ClamAv.Client.Tests/Lyo.ClamAv.Client.Tests.csproj"/>
+    </Folder>
     <Folder Name="/Integration/Endato/">
         <Project Path="Integration/Endato/Lyo.Endato.Client/Lyo.Endato.Client.csproj"/>
         <Project Path="Integration/Endato/Lyo.Endato.Client.Tests/Lyo.Endato.Client.Tests.csproj"/>

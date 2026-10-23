@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Models.Response;
 
 /// <summary>Display-safe opaque token. Never includes the secret hash.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record AuthTokenRes(
     string Id,
     string Kind,

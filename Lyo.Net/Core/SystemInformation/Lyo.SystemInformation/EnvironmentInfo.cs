@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.SystemInformation;
 
 /// <summary>Machine, user, culture, timezone, and environment-variable facts for the current process.</summary>
@@ -14,6 +16,7 @@ namespace Lyo.SystemInformation;
 /// <param name="UtcOffset">Current UTC offset of the local time zone.</param>
 /// <param name="SystemUptime">Elapsed time since the machine started.</param>
 /// <param name="Variables">Environment variables with secret-like values already redacted.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record EnvironmentInfo(
     string MachineName,
     string UserName,

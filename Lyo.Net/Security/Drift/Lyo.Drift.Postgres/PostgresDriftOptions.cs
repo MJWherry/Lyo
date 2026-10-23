@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Hashing;
 using Lyo.Postgres;
 
 namespace Lyo.Drift.Postgres;
 
 /// <summary>Settings for the Drift PostgreSQL schema and ingest limits.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class PostgresDriftOptions : PostgresOptionsBase
 {
     /// <summary>Configuration section name.</summary>
@@ -34,4 +36,7 @@ public sealed class PostgresDriftOptions : PostgresOptionsBase
         if (!Enum.IsDefined(ContentHashAlgorithm))
             throw new ArgumentException($"{nameof(ContentHashAlgorithm)} is not a known digest.", nameof(ContentHashAlgorithm));
     }
+
+    /// <summary>Schema, snapshot size, and hash algorithm. The connection string is omitted.</summary>
+    public override string ToString() => $"{base.ToString()} MaxSnapshotJsonBytes={MaxSnapshotJsonBytes} ContentHashAlgorithm={ContentHashAlgorithm} SnapshotRetention={SnapshotRetention}";
 }

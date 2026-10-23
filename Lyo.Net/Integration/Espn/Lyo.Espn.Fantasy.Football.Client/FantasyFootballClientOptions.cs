@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Http.Client;
 
 namespace Lyo.Espn.Fantasy.Football.Client;
@@ -6,6 +7,7 @@ namespace Lyo.Espn.Fantasy.Football.Client;
 /// Settings that control the ESPN fantasy football client. Inherits <see cref="LyoHttpClientOptions" />; use <see cref="LyoHttpClientOptions.BaseUrl" /> for the ESPN fantasy
 /// API host root.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class FantasyFootballClientOptions : LyoHttpClientOptions
 {
     /// <summary>Default options-section name for <see cref="FantasyFootballClientOptions" />.</summary>
@@ -32,4 +34,9 @@ public class FantasyFootballClientOptions : LyoHttpClientOptions
         BaseUrl = "https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/";
         UserAgent.Enabled = true;
     }
+
+    /// <summary>Chat, write, and news hosts, whether league cookies are set, and the shared HTTP options. Cookie values are omitted.</summary>
+    public override string ToString() =>
+        $"CommunicationBaseUrl={CommunicationBaseUrl} WritesBaseUrl={WritesBaseUrl} NewsBaseUrl={NewsBaseUrl} " +
+        $"EspnS2Set={!string.IsNullOrWhiteSpace(EspnS2)} SwidSet={!string.IsNullOrWhiteSpace(Swid)} {base.ToString()}";
 }

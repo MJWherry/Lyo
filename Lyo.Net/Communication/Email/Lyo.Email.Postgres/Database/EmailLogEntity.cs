@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using Lyo.Common.Core.Identifiers;
 
 namespace Lyo.Email.Postgres.Database;
 
 /// <summary>Database row for an outbound or inbound email log. HTML content is not stored here; hosts write their own file and record the path.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class EmailLogEntity
 {
     /// <summary>Primary key.</summary>
@@ -76,4 +78,7 @@ public class EmailLogEntity
 
     /// <summary>Attachment metadata rows for this message. Bytes are not stored.</summary>
     public ICollection<EmailAttachmentLogEntity> Attachments { get; set; } = [];
+
+    /// <summary>Direction, subject, and whether the send or fetch succeeded. The body is omitted.</summary>
+    public override string ToString() => $"{Direction} {Subject} IsSuccess={IsSuccess} MessageId={MessageId}";
 }

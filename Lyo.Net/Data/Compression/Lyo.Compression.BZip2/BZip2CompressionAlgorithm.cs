@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Compression.Models;
 
 namespace Lyo.Compression.BZip2;
 
 /// <summary>BZip2 (Burrows-Wheeler). Slower than gzip, often a better ratio. Typical <c>.bz2</c> streams.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record BZip2CompressionAlgorithm : CompressionAlgorithm
 {
     /// <summary>Shared singleton instance.</summary>

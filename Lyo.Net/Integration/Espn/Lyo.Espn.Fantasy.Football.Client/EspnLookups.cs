@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Espn.Fantasy.Football.Client.Models.Response;
 using Lyo.Exceptions;
 
 namespace Lyo.Espn.Fantasy.Football.Client;
 
 /// <summary>One transaction item plus the teams and player its ids refer to.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record TransactionItemView(TransactionItemRes Item, TeamRes? FromTeam, TeamRes? ToTeam, PlayerInfoItemRes? Player);
 
 /// <summary>Resolves transaction ids through <see cref="FantasyFootballClient.LeagueDirectory" /> and <see cref="FantasyFootballClient.PlayerCache" />.</summary>

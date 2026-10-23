@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.RateLimit;
 
 /// <summary>Settings for <see cref="LocalRateLimitService" />. Redis options subclass this.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class RateLimitOptions
 {
     /// <summary>Configuration section bound by <c>AddLocalRateLimitFromConfiguration</c>.</summary>
@@ -26,4 +28,7 @@ public class RateLimitOptions
         ArgumentHelpers.ThrowIfNull(Clock);
         ArgumentHelpers.ThrowIf(MaxEntries <= 0, "MaxEntries must be greater than zero.");
     }
+
+    /// <summary>Fail-open flag and in-memory partition cap.</summary>
+    public override string ToString() => $"FailOpen={FailOpen} MaxEntries={MaxEntries}";
 }

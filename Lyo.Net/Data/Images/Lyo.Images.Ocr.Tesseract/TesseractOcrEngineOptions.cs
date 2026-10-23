@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Images.Ocr.Models;
 
 namespace Lyo.Images.Ocr.Tesseract;
 
 /// <summary>Tesseract-only options (tessdata directory).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class TesseractOcrEngineOptions
 {
     /// <summary>Configuration key nested under <see cref="OcrEngineOptions.SectionName" />.</summary>
@@ -10,4 +12,7 @@ public sealed class TesseractOcrEngineOptions
 
     /// <summary>Absolute or relative path to the tessdata folder that holds <c>*.traineddata</c> files.</summary>
     public string TessdataDirectory { get; set; } = "";
+
+    /// <summary>Tessdata directory.</summary>
+    public override string ToString() => $"TessdataDirectory={TessdataDirectory}";
 }

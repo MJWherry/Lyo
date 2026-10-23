@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 
 namespace Lyo.HomeInventory.Postgres.Database;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class HomeItemEntity
 {
     [Key]
@@ -55,4 +57,7 @@ public sealed class HomeItemEntity
     public List<HomeItemStockEntity> StockRows { get; set; } = [];
 
     public List<HomeItemMovementEntity> Movements { get; set; } = [];
+
+    /// <summary>Type name, id, and name.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Name}";
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.StateMachine.Models;
 
 namespace Lyo.StateMachine;
@@ -11,6 +12,7 @@ namespace Lyo.StateMachine;
 /// <param name="Kind">Transition, re-entry, internal, or ignored.</param>
 /// <param name="OccurredAtUtc">Time from the definition clock.</param>
 /// <param name="Duration">Time spent in guards and hooks for this fire.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record StateTransitioned<TState, TTrigger>(
     string MachineName,
     TState Source,
@@ -27,6 +29,7 @@ public sealed record StateTransitioned<TState, TTrigger>(
 /// <param name="State">State the trigger was fired from.</param>
 /// <param name="Trigger">Trigger fired.</param>
 /// <param name="Rejection">Why it was rejected.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record StateTransitionRejected<TState, TTrigger>(string MachineName, TState State, TTrigger Trigger, TransitionRejection Rejection)
     where TState : notnull where TTrigger : notnull;
 

@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Api.Import;
 
 /// <summary>Caps for one import. Crossing either cap fails the document and returns no rows.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ImportOptions
 {
     /// <summary>Configuration section. Bind is a no-op when the section is absent, so these defaults remain.</summary>
@@ -21,4 +24,7 @@ public sealed class ImportOptions
         if (MaxImportRows <= 0)
             throw new ArgumentOutOfRangeException(nameof(MaxImportRows));
     }
+
+    /// <summary>Byte and row caps for one import.</summary>
+    public override string ToString() => $"MaxImportBytes={MaxImportBytes} MaxImportRows={MaxImportRows}";
 }

@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Lyo.Media.Models;
 
@@ -6,6 +7,7 @@ namespace Lyo.Media.Models;
 /// Extensible audio codec identifier. Lookups are thread-safe. Use <see cref="Custom" /> for a codec that is not listed. Ids are codec tokens (<c>mp3</c>, <c>aac</c>), not a
 /// specific backend's encoder binary name.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record AudioEncoder
 {
     private static readonly ConcurrentDictionary<string, AudioEncoder> ById = new(StringComparer.OrdinalIgnoreCase);

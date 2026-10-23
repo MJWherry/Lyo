@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Result;
 
 namespace Lyo.Csv.Models;
 
 /// <summary>Outcome of a CSV parse, plus CSV-specific fields.</summary>
 /// <typeparam name="T">Type of objects parsed from CSV.</typeparam>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record CsvParseResult<T> : Result<IReadOnlyList<T>>
 {
     /// <summary>File path that was parsed (if applicable).</summary>

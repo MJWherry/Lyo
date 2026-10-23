@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using Lyo.Common.Core.Enums;
 using Lyo.Exceptions;
 
@@ -8,6 +9,7 @@ namespace Lyo.Common.Core.Records;
 /// Extensible identifier for an audio or video container (file type). Built-ins cover common formats (<see cref="Mp4" />, <see cref="WebM" />, <see cref="Wav" />,
 /// <see cref="Flac" />, …). Use <see cref="Custom" /> for a format that is not listed. Lookups are thread-safe.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record MediaContainer
 {
     private static readonly ConcurrentDictionary<string, MediaContainer> ByExt = new(StringComparer.OrdinalIgnoreCase);

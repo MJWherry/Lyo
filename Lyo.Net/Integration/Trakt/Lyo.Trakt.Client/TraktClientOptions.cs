@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Http.Client;
 
 namespace Lyo.Trakt.Client;
@@ -6,6 +7,7 @@ namespace Lyo.Trakt.Client;
 /// Settings for <see cref="TraktClient" />. Bind from section <c>TraktClient</c>. Catalog calls use <see cref="LyoHttpClientOptions.BaseUrl" />. OAuth calls use
 /// <c>https://auth.trakt.tv</c>.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class TraktClientOptions : LyoHttpClientOptions
 {
     /// <summary>Configuration section name.</summary>
@@ -26,4 +28,7 @@ public class TraktClientOptions : LyoHttpClientOptions
         BaseUrl = "https://api.trakt.tv/";
         RateLimit.HonorRetryAfter = false;
     }
+
+    /// <summary>Client id, whether the client secret is set, redirect URI, and shared HTTP options. The secret is omitted.</summary>
+    public override string ToString() => $"ClientId={ClientId} ClientSecretSet={!string.IsNullOrWhiteSpace(ClientSecret)} RedirectUri={RedirectUri} {base.ToString()}";
 }

@@ -1,9 +1,12 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Sso;
 
 /// <summary>
 /// Tunables for the SSO browser flow: which return URLs may receive the handoff redirect, the fallback when none is supplied, and how long a handoff code lives. Bound from
 /// <c>LyoSso</c>.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class SsoBffOptions
 {
     /// <summary>Configuration section name (<c>LyoSso</c>).</summary>
@@ -20,4 +23,7 @@ public sealed class SsoBffOptions
 
     /// <summary>Lifetime of a handoff code. Default 30 seconds.</summary>
     public TimeSpan HandoffCodeTtl { get; set; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>How many return origins are allowed, the fallback path, and the handoff lifetime.</summary>
+    public override string ToString() => $"AllowedReturnOrigins={AllowedReturnOrigins.Count} DefaultReturnUrl={DefaultReturnUrl} HandoffCodeTtl={HandoffCodeTtl}";
 }

@@ -1,24 +1,13 @@
 {
   "generatedAt": "2026-10-07T00:31:52.491800+00:00",
-  "packageCount": 415,
+  "packageCount": 418,
   "packages": [
     {
       "id": "Lyo.Email",
       "area": "Communication",
       "topic": "Lyo.Email",
       "name": "Lyo.Email",
-      "tagline": "MailKit SMTP sender. `EmailService` is the `IEmailService` implementation.",
-      "targetFrameworks": [
-        "netstandard2.0",
-        "net10.0"
-      ]
-    },
-    {
-      "id": "Lyo.Email.Models",
-      "area": "Communication",
-      "topic": "Lyo.Email",
-      "name": "Lyo.Email.Models",
-      "tagline": "Shared models, options, failure codes, and event payloads for the `Lyo.Email` SMTP sender.",
+      "tagline": "Provider-neutral email contracts, request builder, and send pipeline. Register `Lyo.Email.Smtp` or `Lyo.Email.SendGrid` to send.",
       "targetFrameworks": [
         "netstandard2.0",
         "net10.0"
@@ -4329,6 +4318,50 @@
       "name": "Lyo.Algorithms.Web.Components",
       "tagline": "Blazor workbench for algorithm revisions, typed context bags, and live breakdown previews.",
       "targetFrameworks": [
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Email.SendGrid",
+      "area": "Communication",
+      "topic": "Lyo.Email",
+      "name": "Lyo.Email.SendGrid",
+      "tagline": "Twilio SendGrid implementation of `Lyo.Email`. `SendGridEmailService` implements `IEmailService`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.Email.Smtp",
+      "area": "Communication",
+      "topic": "Lyo.Email",
+      "name": "Lyo.Email.Smtp",
+      "tagline": "MailKit SMTP implementation of `Lyo.Email`. `SmtpEmailService` implements `IEmailService`.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.ClamAv.Client",
+      "area": "Integration",
+      "topic": "Lyo.ClamAv",
+      "name": "Lyo.ClamAv.Client",
+      "tagline": "HTTP client for a self-hosted clamav-rest scan service.",
+      "targetFrameworks": [
+        "netstandard2.0",
+        "net10.0"
+      ]
+    },
+    {
+      "id": "Lyo.ContentThreatScan.ClamAv",
+      "area": "Security",
+      "topic": "Lyo.ContentThreatScan",
+      "name": "Lyo.ContentThreatScan.ClamAv",
+      "tagline": "Maps a clamav-rest verdict into a content-threat reputation envelope.",
+      "targetFrameworks": [
+        "netstandard2.0",
         "net10.0"
       ]
     }

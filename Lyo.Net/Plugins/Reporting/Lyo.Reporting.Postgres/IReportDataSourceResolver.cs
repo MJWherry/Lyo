@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Query.Models.Common.Request;
 using Lyo.Reporting.Models.Request;
 
@@ -22,4 +23,5 @@ public interface IReportDataSourceResolver
 }
 
 /// <summary>Definition-parameter Options needed to resolve Query/Sproc datasets (no EF type).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct ReportParameterOptionsRef(string Key, string Type, string? Options);

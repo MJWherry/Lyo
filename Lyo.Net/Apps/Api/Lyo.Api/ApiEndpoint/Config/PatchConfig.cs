@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.ApiEndpoint.Config;
 
 /// <summary>Patch endpoint settings. Use PatchConfig&lt;object, DbContext&gt; for dynamic endpoints.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record PatchConfig<TEntity, TDbContext>
     where TDbContext : DbContext where TEntity : class
 {

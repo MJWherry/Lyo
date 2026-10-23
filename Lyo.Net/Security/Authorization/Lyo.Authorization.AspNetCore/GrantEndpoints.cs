@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Security.Claims;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
@@ -155,5 +156,6 @@ public static class GrantEndpoints
         };
 
     /// <summary>Check response. A store failure is not returned as <c>allowed: false</c>.</summary>
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed record GrantCheckResponse(bool Allowed);
 }

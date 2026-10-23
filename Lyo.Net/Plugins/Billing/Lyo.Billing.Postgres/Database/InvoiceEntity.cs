@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.Billing.Postgres.Database;
 
 /// <summary>Invoice header with encrypted tax snapshot.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class InvoiceEntity
 {
     [Key]
@@ -80,4 +82,7 @@ public sealed class InvoiceEntity
     public List<PaymentEntity> Payments { get; set; } = [];
 
     public BillingClientEntity? Client { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

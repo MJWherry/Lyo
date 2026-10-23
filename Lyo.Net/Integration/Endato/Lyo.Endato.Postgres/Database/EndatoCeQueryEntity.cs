@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 
 namespace Lyo.Endato.Postgres.Database;
 
 /// <summary>Row that stores an Endato Contact Enrichment query.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class EndatoCeQueryEntity
 {
     [Key]
@@ -44,4 +46,7 @@ public sealed class EndatoCeQueryEntity
 
     [Required]
     public DateTimeOffset RequestTimestamp { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

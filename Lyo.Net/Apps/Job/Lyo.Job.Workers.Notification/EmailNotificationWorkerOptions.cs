@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions.Models;
 
 namespace Lyo.Job.Workers.Notification;
 
 /// <summary>Options for <see cref="EmailNotificationWorker" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class EmailNotificationWorkerOptions
 {
     /// <summary>Default name of the configuration section.</summary>
@@ -34,4 +36,7 @@ public sealed class EmailNotificationWorkerOptions
         if (errors.Count > 0)
             throw new ValidationException($"Invalid {nameof(EmailNotificationWorkerOptions)}: {string.Join(" ", errors)}");
     }
+
+    /// <summary>Worker type, default sender, and requeue limit.</summary>
+    public override string ToString() => $"WorkerType={WorkerType} From={DefaultFromAddress} Name={DefaultFromName} MaxRequeue={MaxRequeueCount} Dlq={DlqName}";
 }

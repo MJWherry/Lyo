@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -48,6 +49,7 @@ public sealed class RootQueryEntityRegistry
 }
 
 /// <summary>One allowlisted entity used by root Query.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record RootQueryEntityEntry(Type ClrType, IEntityType EfEntityType, IReadOnlyDictionary<string, PropertyInfo> Properties, IKey? PrimaryKey)
 {
     public bool TryGetProperty(string name, out PropertyInfo property) => Properties.TryGetValue(name, out property!);

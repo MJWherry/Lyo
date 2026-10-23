@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Espn.Fantasy.Football.Client.Models.Request;
 
 /// <summary>Strongly typed request body for ESPN's x-fantasy-filter header.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FantasyFilterReq
 {
     /// <summary>Per-player filter options.</summary>
@@ -15,6 +18,7 @@ public sealed record FantasyFilterReq
 
 /// <summary>Model for a filter value block with a single value.</summary>
 /// <typeparam name="T">CLR type of the value.</typeparam>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FilterValueReq<T>
 {
     /// <summary>Value applied by the filter.</summary>
@@ -24,6 +28,7 @@ public sealed record FilterValueReq<T>
 /// <summary>Model for a filter value block with an additional value collection.</summary>
 /// <typeparam name="TValue">CLR type of the primary value.</typeparam>
 /// <typeparam name="TAdditional">CLR type of the extra value.</typeparam>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FilterValueReq<TValue, TAdditional>
 {
     /// <summary>Primary filter value.</summary>
@@ -34,6 +39,7 @@ public sealed record FilterValueReq<TValue, TAdditional>
 }
 
 /// <summary>Model for an ESPN sort definition.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record SortReq
 {
     /// <summary>Sort priority; lower values win first.</summary>
@@ -44,6 +50,7 @@ public sealed record SortReq
 }
 
 /// <summary>ESPN filter settings for players.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record PlayerFilterReq
 {
     /// <summary>Player ids included in the request.</summary>
@@ -66,6 +73,7 @@ public sealed record PlayerFilterReq
 }
 
 /// <summary>ESPN filter settings for transactions.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record TransactionsFilterReq
 {
     /// <summary>Transaction types included.</summary>
@@ -73,6 +81,7 @@ public sealed record TransactionsFilterReq
 }
 
 /// <summary>Filter settings for communication topics.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record TopicsFilterReq
 {
     /// <summary>Topic types included.</summary>

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.RateLimit;
 
 /// <summary>One permit against a named quota. The store does not queue or wait.</summary>
@@ -7,4 +9,5 @@ namespace Lyo.RateLimit;
 /// <param name="Window">Restore period. Must be at least one millisecond.</param>
 /// <param name="Pattern">Window rule.</param>
 /// <param name="NowUnixMilliseconds">Unix milliseconds. Zero uses the store clock (Redis <c>TIME</c> when the store is Redis).</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct RateLimitRequest(string Policy, string PartitionKey, int PermitLimit, TimeSpan Window, RateLimitWindow Pattern, long NowUnixMilliseconds = 0);

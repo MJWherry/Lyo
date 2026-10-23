@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
 
 namespace Lyo.Story.Api;
@@ -6,6 +7,7 @@ namespace Lyo.Story.Api;
 /// How <c>MapStoryRoutes</c> binds callers. A host that serves players (such as a Game server) sets <see cref="PlayerRef" /> and <see cref="TenantId" /> from claims; a
 /// trusted authoring host can leave them null to trust the request.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class StoryRouteOptions
 {
     /// <summary>Policy required to save or list graphs and to set playthrough variables. Null leaves those routes open to whoever passes the group's own authorization.</summary>
@@ -22,4 +24,7 @@ public sealed class StoryRouteOptions
     /// graph saves for another tenant get 403. A null result means the caller only sees stories without a tenant.
     /// </summary>
     public Func<HttpContext, Guid?>? TenantId { get; set; }
+
+    /// <summary>Author policy and whether player and tenant resolvers are set.</summary>
+    public override string ToString() => $"AuthorPolicy={AuthorPolicy} PlayerRefSet={PlayerRef is not null} TenantIdSet={TenantId is not null}";
 }

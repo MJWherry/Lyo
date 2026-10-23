@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Common.Core.Enums;
 using Lyo.Exceptions;
 using Lyo.Leaderboard.Enums;
@@ -37,4 +38,5 @@ public static class LeaderboardAggregator
 /// <summary>One approved entry used during aggregation.</summary>
 /// <param name="Score">Computed entry total.</param>
 /// <param name="OccurredAt">When the event happened.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct ApprovedEntryScore(decimal Score, DateTime OccurredAt);

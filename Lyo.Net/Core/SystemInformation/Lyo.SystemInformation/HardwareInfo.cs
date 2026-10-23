@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.SystemInformation;
 
 /// <summary>Hardware facts about the host system.</summary>
@@ -11,6 +13,7 @@ namespace Lyo.SystemInformation;
 /// <param name="AudioDevices">Audio endpoints (Linux via <c>/proc/asound</c>, Windows via WASAPI; empty on other platforms).</param>
 /// <param name="Printers">Installed printers (Linux via CUPS <c>printers.conf</c>, Windows via <c>EnumPrinters</c>; empty when unreadable).</param>
 /// <param name="PowerPolicy">Power-policy facts (profile, CPU governor, EPP, Windows scheme, AC vs battery); fields are null when unreadable.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HardwareInfo(
     int ProcessorCount,
     string? CpuModel,

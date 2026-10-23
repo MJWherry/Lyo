@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Web.Automation.Api;
 
 /// <summary>Limits for in-memory automation runs. Plans are not stored. Artifacts live under <see cref="ArtifactRoot" /> until <see cref="RunTtl" /> elapses.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class AutomationApiOptions
 {
     /// <summary>Configuration section. <c>WebAutomation:Api</c>.</summary>
@@ -24,4 +26,7 @@ public sealed class AutomationApiOptions
         ArgumentHelpers.ThrowIf(RunTtl <= TimeSpan.Zero, "RunTtl must be positive.", nameof(RunTtl));
         ArgumentHelpers.ThrowIf(string.IsNullOrWhiteSpace(ArtifactRoot), "ArtifactRoot is required.", nameof(ArtifactRoot));
     }
+
+    /// <summary>Concurrent-run cap, artifact lifetime, and artifact directory.</summary>
+    public override string ToString() => $"MaxConcurrentRuns={MaxConcurrentRuns} RunTtl={RunTtl} ArtifactRoot={ArtifactRoot}";
 }

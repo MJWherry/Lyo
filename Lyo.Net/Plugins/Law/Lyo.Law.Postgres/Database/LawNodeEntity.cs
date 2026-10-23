@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Law.Models.Enums;
 using NpgsqlTypes;
 
 namespace Lyo.Law.Postgres.Database;
 
 /// <summary>One outline or text unit in a state code.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LawNodeEntity
 {
     /// <summary>Row id.</summary>
@@ -65,4 +67,7 @@ public sealed class LawNodeEntity
 
     /// <summary>Official notes.</summary>
     public List<LawAnnotationEntity> Annotations { get; set; } = [];
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.StateMachine.Models;
 
 /// <summary>One history entry written by a state store alongside the new snapshot.</summary>
@@ -7,5 +9,6 @@ namespace Lyo.StateMachine.Models;
 /// <param name="Trigger">Trigger name (its <c>ToString()</c>).</param>
 /// <param name="Version">Snapshot version produced by this transition.</param>
 /// <param name="OccurredAtUtc">When the transition happened, in UTC.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record TransitionRecord<TState>(TState From, TState To, string Trigger, long Version, DateTime OccurredAtUtc)
     where TState : notnull;

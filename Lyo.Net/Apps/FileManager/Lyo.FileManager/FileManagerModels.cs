@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Api.FileStorage.Models;
 using Lyo.FileMetadataStore.Models;
 using Lyo.FileStorage;
@@ -6,6 +7,7 @@ using FileStoragePresence = Lyo.Api.FileStorage.Models.FileStoragePresence;
 namespace Lyo.FileManager;
 
 /// <summary>One child of a folder listing.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FileManagerEntry(
     string Name,
     bool IsDirectory,
@@ -21,18 +23,23 @@ public sealed record FileManagerEntry(
     string? Encryption = null);
 
 /// <summary>A FileMetadata query row.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FileManagerQueryRow(Guid Id, string? OriginalFileName, string? PathPrefix, long OriginalFileSize);
 
 /// <summary>Immediate children of one prefix.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FileManagerListing(IReadOnlyList<FileManagerEntry> Entries, bool Truncated);
 
 /// <summary>Connect probe.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FileManagerHealth(bool IsHealthy, string? Message);
 
 /// <summary>How many steps of a bulk action succeeded.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FileManagerActionResult(int Succeeded, int Failed, IReadOnlyList<string> Errors);
 
 /// <summary>Options for one upload into the current prefix.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class FileManagerUploadOptions
 {
     /// <summary>Compress before write.</summary>
@@ -58,6 +65,10 @@ public sealed class FileManagerUploadOptions
 
     /// <summary>Encryption algorithm name, such as <c>AesSiv</c> or <c>AesGcm</c>. Used when <see cref="Encrypt" /> is true. Null keeps AES-SIV.</summary>
     public string? EncryptionAlgorithm { get; init; }
+
+    /// <summary>Upload flags and multipart threshold. The key id is omitted.</summary>
+    public override string ToString() =>
+        $"Compress={Compress} Encrypt={Encrypt} KeyIdSet={!string.IsNullOrWhiteSpace(KeyId)} Threshold={MultipartThresholdBytes} Type={ContentType}";
 }
 
 /// <summary>Shared limits for uploads and the local key.</summary>

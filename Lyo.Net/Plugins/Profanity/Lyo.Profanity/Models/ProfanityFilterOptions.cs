@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
 
 namespace Lyo.Profanity.Models;
 
 /// <summary>Settings that configure the profanity filter service.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class ProfanityFilterOptions
 {
     /// <summary>Options binding. Default: "ProfanityFilter" configuration section name.</summary>
@@ -72,4 +74,8 @@ public class ProfanityFilterOptions
         info = LanguageCodeInfo.FromIso6393(code);
         return info != LanguageCodeInfo.Unknown ? info : LanguageCodeInfo.EnUs;
     }
+
+    /// <summary>Language, replacement strategy, and extra word-list sizes.</summary>
+    public override string ToString() =>
+        $"Language={Language} Strategy={ReplacementStrategy} Additional={AdditionalWords?.Count ?? 0} Excluded={ExcludedWords?.Count ?? 0}";
 }

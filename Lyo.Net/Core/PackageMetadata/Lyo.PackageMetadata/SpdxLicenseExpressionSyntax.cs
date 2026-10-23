@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.PackageMetadata;
 
 /// <summary>
@@ -11,6 +13,7 @@ namespace Lyo.PackageMetadata;
 /// <param name="Right">Right operand of a binary <c>and</c> / <c>or</c> node.</param>
 /// <param name="InnerLicense">License operand of a <c>with</c> node.</param>
 /// <param name="InnerException">Exception operand of a <c>with</c> node.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record SpdxLicenseExpressionSyntax(
     string Kind,
     string? Identifier = null,

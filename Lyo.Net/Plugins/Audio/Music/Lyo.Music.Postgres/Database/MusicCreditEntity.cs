@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using Lyo.Music.Enums;
 
 namespace Lyo.Music.Postgres.Database;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class MusicCreditEntity
 {
     public Guid Id { get; set; }
@@ -23,4 +25,7 @@ public sealed class MusicCreditEntity
     public MusicReleaseEntity? Release { get; set; }
 
     public MusicTrackEntity? Track { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

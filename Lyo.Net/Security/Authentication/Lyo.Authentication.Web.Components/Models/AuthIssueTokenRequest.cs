@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 
 namespace Lyo.Authentication.Web.Components.Models;
@@ -8,6 +9,7 @@ namespace Lyo.Authentication.Web.Components.Models;
 /// <param name="Scopes">Requested scopes. Intersected with the caller's effective scopes; non-overlap returns <c>400 no_grantable_scopes</c> (except <c>webhook</c>).</param>
 /// <param name="LifetimeSeconds">Optional override for how long the token lives. <c>null</c> = the kind's default lifetime; <c>0</c> = no expiry.</param>
 /// <param name="Metadata">Optional metadata bag, persisted alongside the token.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record AuthIssueTokenRequest(
     [property: JsonPropertyName("displayName")]
     string DisplayName,

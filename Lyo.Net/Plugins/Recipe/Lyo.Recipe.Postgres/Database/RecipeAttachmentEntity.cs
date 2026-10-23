@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.Recipe.Postgres.Database;
 
 /// <summary>FileStorage file linked to a recipe subject.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class RecipeAttachmentEntity
 {
     [Key]
@@ -32,4 +34,7 @@ public sealed class RecipeAttachmentEntity
     public DateTime CreatedTimestamp { get; set; }
 
     public DateTime? UpdatedTimestamp { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

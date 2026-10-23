@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 using Lyo.FileSystemWatcher.Models;
 
 namespace Lyo.FileSystemWatcher;
 
 /// <summary>Settings that control how FileSystemWatcher scans and reports changes.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class FileSystemWatcherOptions
 {
     /// <summary>If true, subdirectories are included in the native watch and in <c>TakeSnapshot</c>. Starts as false.</summary>
@@ -37,4 +39,8 @@ public class FileSystemWatcherOptions
         FileSystemPathGlob.ValidatePatterns(IncludePatterns, PathComparison);
         FileSystemPathGlob.ValidatePatterns(ExcludePatterns, PathComparison);
     }
+
+    /// <summary>Debounce, hashing, and include/exclude pattern counts.</summary>
+    public override string ToString()
+        => $"DebounceTimerDelay={DebounceTimerDelay} EnableFileHashing={EnableFileHashing} IncludePatterns={IncludePatterns.Count} ExcludePatterns={ExcludePatterns.Count}";
 }

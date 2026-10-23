@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.Formatter;
 
 /// <summary>
@@ -8,4 +10,5 @@ namespace Lyo.Formatter;
 /// <param name="Text">Display text: unescaped literal, replacement value, or the raw <c>{Name}</c> token when unresolved.</param>
 /// <param name="PlaceholderKey">Placeholder path (e.g. <c>Name</c>, <c>Docket.Number</c>). Null for literals.</param>
 /// <param name="RawToken">Exact substring from the template (escaped literals and <c>{Name:N0}</c> tokens). Used to rebuild a highlighted overlay.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FormatterSegment(FormatterSegmentKind Kind, string Text, string? PlaceholderKey, string? RawToken);

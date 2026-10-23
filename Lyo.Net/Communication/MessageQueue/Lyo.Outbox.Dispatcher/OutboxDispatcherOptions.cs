@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Outbox.Dispatcher;
 
 /// <summary>Poll, lease, and retry settings for <see cref="OutboxDispatcher" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class OutboxDispatcherOptions
 {
     /// <summary>Configuration section name.</summary>
@@ -39,4 +42,7 @@ public sealed class OutboxDispatcherOptions
         if (Backoff < TimeSpan.Zero)
             throw new ArgumentException("Backoff cannot be negative.", nameof(Backoff));
     }
+
+    /// <summary>Poll interval, batch size, lease, max attempts, and backoff.</summary>
+    public override string ToString() => $"PollInterval={PollInterval} BatchSize={BatchSize} Lease={Lease} MaxAttempts={MaxAttempts} Backoff={Backoff}";
 }

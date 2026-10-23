@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.Ftp.Client;
 
 /// <summary>Metadata for one remote FTP directory entry.</summary>
@@ -5,4 +7,5 @@ namespace Lyo.Ftp.Client;
 /// <param name="IsDirectory">True if the entry is a directory.</param>
 /// <param name="Length">File size in bytes. Zero for directories.</param>
 /// <param name="LastWriteTimeUtc">Last write time in UTC when the server reports it.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FtpEntryInfo(string FullPath, bool IsDirectory, long Length, DateTimeOffset LastWriteTimeUtc);

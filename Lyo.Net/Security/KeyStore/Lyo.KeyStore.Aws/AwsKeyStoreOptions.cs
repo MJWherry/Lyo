@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.KeyStore.Aws;
 
 /// <summary>AWS credentials and related settings.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class AwsKeyStoreOptions
 {
     public const string SectionName = "AwsKeyStore";
@@ -32,4 +34,8 @@ public class AwsKeyStoreOptions
         var hasSecret = !string.IsNullOrWhiteSpace(SecretAccessKey);
         ArgumentHelpers.ThrowIf(hasAccess != hasSecret, $"{nameof(AccessKeyId)} and {nameof(SecretAccessKey)} must both be set or both be omitted.");
     }
+
+    /// <summary>Region and profile. Access key values are omitted.</summary>
+    public override string ToString()
+        => $"Region={Region} Profile={Profile} SecretNamePrefix={SecretNamePrefix} AccessKeySet={!string.IsNullOrWhiteSpace(AccessKeyId)} SecretAccessKeySet={!string.IsNullOrWhiteSpace(SecretAccessKey)}";
 }

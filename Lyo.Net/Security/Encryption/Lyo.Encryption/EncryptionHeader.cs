@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 
 namespace Lyo.Encryption;
@@ -6,6 +7,7 @@ namespace Lyo.Encryption;
 /// Two-key encrypted-stream header. Layout for <see cref="StreamFormatVersion.V1" />:
 /// [FormatVersion:1][DEKAlgorithmId:1][KEKAlgorithmId:1][DekKeyMaterialBytes:1][DekEncoding:1][KeyIdLength:4][KeyId][KeyVersionLength:4][KeyVersion][EncryptedDEKLength:4][EncryptedDEK].
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record EncryptionHeader
 {
     /// <summary><see cref="DekEncoding" /> value: the DEK is sealed with the KEK service's ordinary single-shot envelope (when no raw AES-sized KEK exists, for example RSA KEKs).</summary>
@@ -193,4 +195,8 @@ public sealed record EncryptionHeader
             EncryptedDataEncryptionKey = encryptedDataEncryptionKey ?? EncryptedDataEncryptionKey
         };
     }
+
+    /// <summary>Key id, algorithms, and wrapped DEK length. Key bytes are omitted.</summary>
+    public override string ToString()
+        => $"KeyId={KeyId} Ver={KeyVersion} DekAlg={DekAlgorithmId} KekAlg={KekAlgorithmId} DekBytes={DekKeyMaterialBytes} Wrapped={EncryptedDataEncryptionKey.Length}";
 }

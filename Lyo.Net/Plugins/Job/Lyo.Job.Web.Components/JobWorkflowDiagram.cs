@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using Lyo.Diagram;
 using Lyo.Diagram.Models;
@@ -8,6 +9,7 @@ namespace Lyo.Job.Web.Components;
 /// <summary>A workflow drawn as a <see cref="DiagramDocument" />, plus the step names that were left off the page because they form a cycle.</summary>
 /// <param name="Document">One page whose shapes are steps and whose edges are dependencies.</param>
 /// <param name="Cyclic">Step names that can never run. They are not on the page.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record JobWorkflowPicture(DiagramDocument Document, IReadOnlyList<string> Cyclic);
 
 /// <summary>Projects a workflow's steps onto a diagram. Positions come from <see cref="JobWorkflowGraphLayout" />; the cells are what the graph view draws.</summary>

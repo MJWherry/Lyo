@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Postgres.Database;
 
 /// <summary>Entity for the <c>[user].[scope]</c> table (admin-assigned JWT authorization scopes).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class UserScopeEntity
 {
     /// <summary>Stable row id. PK.</summary>
@@ -20,4 +23,7 @@ public sealed class UserScopeEntity
 
     /// <summary>When the row was last updated.</summary>
     public DateTime? UpdatedTimestamp { get; set; }
+
+    /// <summary>Type name, id, and name.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Name}";
 }

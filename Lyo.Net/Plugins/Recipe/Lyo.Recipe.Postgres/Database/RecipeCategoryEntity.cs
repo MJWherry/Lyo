@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.Recipe.Postgres.Database;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class RecipeCategoryEntity
 {
     [Key]
@@ -30,4 +32,7 @@ public sealed class RecipeCategoryEntity
     public List<RecipeCategoryEntity> Children { get; set; } = [];
 
     public List<RecipeEntity> Recipes { get; set; } = [];
+
+    /// <summary>Type name, id, and name.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Name}";
 }

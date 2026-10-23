@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 using Lyo.Exceptions.Models;
 using Lyo.Web.Automation.Models;
@@ -6,6 +7,7 @@ using PuppeteerSharp;
 namespace Lyo.Web.Automation.PuppeteerSharp.Configuration;
 
 /// <summary>Application-wide defaults for PuppeteerSharp automation. Section name is <see cref="SectionName" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class PuppeteerSharpBrowserOptions
 {
     /// <summary>Configuration section name.</summary>
@@ -240,6 +242,11 @@ public class PuppeteerSharpBrowserOptions
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(arg);
         ArgumentHelpers.ThrowIf(!arg.StartsWith("-", StringComparison.Ordinal), $"Launch argument '{arg}' must start with '-'.");
     }
+
+    /// <summary>Browser executable, proxy, and navigation limits. The proxy password is omitted.</summary>
+    public override string ToString() =>
+        $"Browser={BrowserKind} Exe={BrowserExePath} Headless={Headless} Proxy={ProxyUrl} ProxyPasswordSet={!string.IsNullOrWhiteSpace(ProxyPassword)} " +
+        $"Viewport={ViewportWidth}x{ViewportHeight} NavTimeoutMs={NavigationTimeoutMs} Agents={UserAgents?.Count ?? 0}";
 }
 
 /// <summary>Per-session overrides for <see cref="Service.IPuppeteerSharpBrowserService.CreateSession(PuppeteerSharpSessionOptions?)" />.</summary>

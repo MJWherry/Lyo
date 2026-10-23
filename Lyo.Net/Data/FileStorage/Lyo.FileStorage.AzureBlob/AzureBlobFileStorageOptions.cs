@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Azure.Storage.Blobs.Models;
 using Lyo.Exceptions;
 using Lyo.FileStorage.Models;
@@ -5,6 +6,7 @@ using Lyo.FileStorage.Models;
 namespace Lyo.FileStorage.AzureBlob;
 
 /// <summary>Options for <see cref="AzureBlobFileStorageService" /> over Azure Blob Storage.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class AzureBlobFileStorageOptions : FileStorageServiceBaseOptions
 {
     public const string SectionName = "AzureBlobFileStorage";
@@ -42,4 +44,8 @@ public sealed class AzureBlobFileStorageOptions : FileStorageServiceBaseOptions
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(ContainerName);
         ValidateUploadFilters();
     }
+
+    /// <summary>Container and prefix. The connection string and customer key are omitted.</summary>
+    public override string ToString()
+        => $"ContainerName={ContainerName} BlobPrefix={BlobPrefix} EncryptionScope={EncryptionScope} CustomerKeySet={!string.IsNullOrWhiteSpace(CustomerProvidedKeyBase64)} {base.ToString()}";
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.ContactUs.Models;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
@@ -7,6 +8,7 @@ using static Lyo.ContactUs.ContactUsErrorCodes;
 namespace Lyo.ContactUs;
 
 /// <summary>Shared implementation of contact form service with validation and logging.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public abstract class ContactUsServiceBase : IContactUsService
 {
     /// <summary>Logger instance.</summary>
@@ -98,4 +100,7 @@ public abstract class ContactUsServiceBase : IContactUsService
 
     /// <summary>Lists stored submissions, newest first (storage-specific implementation).</summary>
     protected abstract Task<IReadOnlyList<ContactSubmission>> ListCoreAsync(CancellationToken ct);
+
+    /// <summary>Service name and the options it was built with.</summary>
+    public override string ToString() => $"{GetType().Name} {Options}";
 }

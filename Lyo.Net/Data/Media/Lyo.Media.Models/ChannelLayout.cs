@@ -1,10 +1,12 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Globalization;
 using Lyo.Exceptions;
 
 namespace Lyo.Media.Models;
 
 /// <summary>Channel count passed to <c>-ac</c>. Lookups are thread-safe. Use <see cref="FromCount" /> for a count that is not listed.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ChannelLayout
 {
     private static readonly ConcurrentDictionary<string, ChannelLayout> ById = new(StringComparer.OrdinalIgnoreCase);

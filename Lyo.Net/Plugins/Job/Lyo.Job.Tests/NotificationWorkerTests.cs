@@ -238,22 +238,22 @@ public class NotificationWorkerTests
 
         public EmailRequest? LastRequest { get; private set; }
 
-        public Task<Result<EmailRequest>> SendEmailAsync(EmailRequest request, CancellationToken ct = default)
+        public Task<EmailResult> SendEmailAsync(EmailRequest request, CancellationToken ct = default)
         {
             if (Throw is not null)
                 throw Throw;
 
             Sent = true;
             LastRequest = request;
-            return Task.FromResult(Failure is null ? Result<EmailRequest>.Success(request) : Result<EmailRequest>.Failure(new Error(Failure, "send_failed")));
+            return Task.FromResult(Failure is null ? EmailResult.FromSuccess(request, "ok") : EmailResult.FromError(Failure, request));
         }
 
-        public Task<Result<EmailRequest>> SendEmailAsync(EmailRequestBuilder requestBuilder, string fromAddress, string? fromName = null, CancellationToken ct = default)
+        public Task<EmailResult> SendEmailAsync(EmailRequestBuilder requestBuilder, string fromAddress, string? fromName = null, CancellationToken ct = default)
             => throw new NotSupportedException();
 
-        public Task<Result<EmailRequest>> SendEmailAsync(EmailRequestBuilder requestBuilder, CancellationToken ct = default) => throw new NotSupportedException();
+        public Task<EmailResult> SendEmailAsync(EmailRequestBuilder requestBuilder, CancellationToken ct = default) => throw new NotSupportedException();
 
-        public Task<IReadOnlyList<Result<EmailRequest>>> SendBulkEmailAsync(IEnumerable<EmailRequestBuilder> builders, CancellationToken ct = default)
+        public Task<IReadOnlyList<EmailResult>> SendBulkEmailAsync(IEnumerable<EmailRequestBuilder> builders, CancellationToken ct = default)
             => throw new NotSupportedException();
 
         public Task<BulkResult<EmailRequest>> SendBulkEmailAsync(BulkEmailRequestBuilder bulkRequestBuilder, CancellationToken ct = default) => throw new NotSupportedException();

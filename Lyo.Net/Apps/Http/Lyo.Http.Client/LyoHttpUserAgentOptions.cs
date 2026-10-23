@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Common.Core.Net;
 using Lyo.Exceptions;
 
 namespace Lyo.Http.Client;
 
 /// <summary>Desktop Chrome User-Agent pool and rotation. Vendors leave this off; Flared turns it on with <see cref="LyoHttpUserAgentRotation.PerSession" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LyoHttpUserAgentOptions
 {
     /// <summary>Chrome User-Agent for this host. Replace <see cref="Agents" /> to rotate through a custom pool.</summary>
@@ -45,4 +47,7 @@ public sealed class LyoHttpUserAgentOptions
         var index = Math.Abs(seed) % agents.Length;
         return agents[index];
     }
+
+    /// <summary>Whether the pool is on, how it rotates, and how many agents it holds.</summary>
+    public override string ToString() => $"Enabled={Enabled} Rotation={Rotation} Agents={Agents?.Length ?? 0}";
 }

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.Desktop.Components;
 
 /// <summary>Which side of the work area a window bubble is parked on. The flat side faces this edge.</summary>
@@ -22,6 +24,7 @@ public enum ScreenEdge
 /// <param name="Y">Top edge of the bubble, in screen pixels.</param>
 /// <param name="Width">Bubble width, in screen pixels.</param>
 /// <param name="Height">Bubble height, in screen pixels.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct ScreenEdgeAnchor(ScreenEdge Edge, int X, int Y, int Width, int Height);
 
 /// <summary>Corner radii for a bubble whose flat side sits on a screen edge. Values are in device-independent pixels.</summary>
@@ -29,6 +32,7 @@ public readonly record struct ScreenEdgeAnchor(ScreenEdge Edge, int X, int Y, in
 /// <param name="TopRight">Top-right radius.</param>
 /// <param name="BottomRight">Bottom-right radius.</param>
 /// <param name="BottomLeft">Bottom-left radius.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct ScreenEdgeCorners(int TopLeft, int TopRight, int BottomRight, int BottomLeft);
 
 /// <summary>Picks the nearest screen edge for a docked window bubble.</summary>

@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Story.Client;
 
 /// <summary>Settings used to build <see cref="StoryClient" /> routes.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class StoryClientOptions
 {
     /// <summary>Configuration section this type binds from.</summary>
@@ -22,4 +25,7 @@ public sealed class StoryClientOptions
         if (RoutePrefix.Contains("://", StringComparison.Ordinal))
             throw new ArgumentException($"{nameof(RoutePrefix)} is a path prefix, not an absolute URL. Set HttpClient.BaseAddress for the host.", nameof(RoutePrefix));
     }
+
+    /// <summary>Route prefix used in front of story routes.</summary>
+    public override string ToString() => $"RoutePrefix={RoutePrefix}";
 }

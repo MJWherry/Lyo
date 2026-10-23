@@ -1,7 +1,6 @@
 # Lyo.Leaderboard.Api
 
-Embed with `AddLeaderboardApi` and `MapLeaderboardApiEndpoints`. Test hosts use `AddLeaderboardApiForWorkbench`, which skips algorithm registration when the catalog is already
-present, and maps routes with authentication off.
+Embed with `AddLeaderboardApi` and `MapLeaderboardApiEndpoints`. Test hosts use `AddLeaderboardApiForWorkbench`, which skips algorithm registration when the catalog is already present, and maps routes with authentication off.
 
 ## Features
 
@@ -33,6 +32,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Authentication.Postgres` (direct, lyo)
 - `Lyo.Cache` (direct, lyo)
 - `Lyo.Email` (direct, lyo)
+- `Lyo.Email.Smtp` (direct, lyo)
 - `Lyo.Json` (direct, lyo)
 - `Lyo.KeyStore` (direct, lyo)
 - `Lyo.Leaderboard` (direct, lyo)
@@ -45,14 +45,15 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Algorithms.Models` (transitive, lyo)
 - `Lyo.Api.Models` (transitive, lyo)
 - `Lyo.Authentication.Models` (transitive, lyo)
+- `Lyo.Authentication.Sso` (transitive, lyo)
 - `Lyo.Common.Core` (transitive, lyo)
 - `Lyo.Common.Metadata` (transitive, lyo)
 - `Lyo.Compression` (transitive, lyo)
+- `Lyo.DataTable.Models` (transitive, lyo)
 - `Lyo.DateAndTime` (transitive, lyo)
 - `Lyo.Diagnostic` (transitive, lyo)
 - `Lyo.Diagnostic.AspNetCore` (transitive, lyo)
 - `Lyo.Diff` (transitive, lyo)
-- `Lyo.Email.Models` (transitive, lyo)
 - `Lyo.Encryption` (transitive, lyo)
 - `Lyo.EntityReference.Models` (transitive, lyo)
 - `Lyo.EntityReference.Postgres` (transitive, lyo)
@@ -67,6 +68,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Query.Evaluation` (transitive, lyo)
 - `Lyo.Query.Models` (transitive, lyo)
 - `Lyo.Query.Sql` (transitive, lyo)
+- `Lyo.RateLimit` (transitive, lyo)
 - `Lyo.Result` (transitive, lyo)
 - `Lyo.Streams` (transitive, lyo)
 - `Lyo.Validation` (transitive, lyo)
@@ -78,6 +80,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `MailKit` `4.17.0` (transitive, third-party)
 - `Microsoft.AspNetCore.OpenApi` `10.0.5` (transitive, microsoft)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Bcl.TimeProvider` `8.0.1` (transitive, microsoft, netstandard2.0)
 - `Microsoft.EntityFrameworkCore` `10.0.5` (transitive, microsoft)
 - `Microsoft.EntityFrameworkCore.Analyzers` `10.0.5` (transitive, microsoft)
 - `Microsoft.EntityFrameworkCore.Design` `10.0.5` (transitive, microsoft)

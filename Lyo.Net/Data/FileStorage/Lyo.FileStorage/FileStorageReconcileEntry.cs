@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.FileStorage;
 
 /// <summary>One row from <see cref="FileStorageReconcile" />.</summary>
@@ -6,4 +8,5 @@ namespace Lyo.FileStorage;
 /// <param name="LogicalPath">Catalog path <c>/{prefix}/{fileId}</c> when known.</param>
 /// <param name="PhysicalKey">Object key relative to the physical root, when known.</param>
 /// <param name="OriginalFileName">Display name from metadata when known.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FileStorageReconcileEntry(FileStoragePresence Presence, Guid? FileId, string? LogicalPath, string? PhysicalKey, string? OriginalFileName);

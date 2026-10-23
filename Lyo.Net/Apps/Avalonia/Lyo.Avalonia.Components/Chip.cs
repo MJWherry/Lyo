@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
@@ -56,6 +57,7 @@ public static class ChipHues
 }
 
 /// <summary>Label and hue for one chip. Hue below zero is neutral.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct ChipSpec(string Label, int Hue);
 
 /// <summary>Small filled label, the desktop match for a web chip.</summary>

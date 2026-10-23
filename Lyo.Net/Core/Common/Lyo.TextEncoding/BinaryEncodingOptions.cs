@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Common.Core.Enums;
 
 namespace Lyo.TextEncoding;
 
 /// <summary>Fixed defaults for <see cref="BinaryEncodingService" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class BinaryEncodingOptions
 {
     /// <summary>Process-wide defaults used by <see cref="BinaryEncodingService.Shared" />.</summary>
@@ -13,4 +15,7 @@ public sealed class BinaryEncodingOptions
 
     /// <summary>When greater than zero, Base64/Base64Url encode output is wrapped with CRLF every N characters (for example 76 for MIME). Hex is never wrapped. Zero means no wrapping.</summary>
     public int LineLength { get; set; }
+
+    /// <summary>Hex letter case and Base64 line length.</summary>
+    public override string ToString() => $"DefaultHexLetterCase={DefaultHexLetterCase} LineLength={LineLength}";
 }

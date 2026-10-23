@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.StateMachine;
 
 /// <summary>A trigger that carries a typed payload, for example <c>Trigger&lt;JobTrigger, RetryPayload&gt;</c>.</summary>
@@ -8,5 +10,6 @@ namespace Lyo.StateMachine;
 /// <typeparam name="TTrigger">Trigger type, usually an enum.</typeparam>
 /// <typeparam name="TPayload">Data that travels with the trigger.</typeparam>
 /// <param name="Value">The underlying trigger value.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record Trigger<TTrigger, TPayload>(TTrigger Value)
     where TTrigger : notnull;

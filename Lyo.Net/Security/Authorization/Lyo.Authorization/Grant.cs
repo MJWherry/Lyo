@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Authorization;
 
 /// <summary>A stored grant. Change it by revoking and saving again. There is no update.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record Grant
 {
     /// <summary>Row id assigned by the store.</summary>

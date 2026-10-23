@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 
 namespace Lyo.People.Postgres.Database;
 
 /// <summary>PostgreSQL row for a social-media profile.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class SocialMediaProfileEntity
 {
     [Key]
@@ -36,4 +38,7 @@ public sealed class SocialMediaProfileEntity
 
     [ForeignKey(nameof(PersonId))]
     public PersonEntity? Person { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

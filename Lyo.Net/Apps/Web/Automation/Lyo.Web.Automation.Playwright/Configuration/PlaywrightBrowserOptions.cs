@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 using Lyo.Web.Automation.Models;
 using Microsoft.Playwright;
@@ -5,6 +6,7 @@ using Microsoft.Playwright;
 namespace Lyo.Web.Automation.Playwright.Configuration;
 
 /// <summary>Application-wide defaults for Playwright-driven automation.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class PlaywrightBrowserOptions
 {
     public const string SectionName = "PlaywrightBrowserOptions";
@@ -232,6 +234,11 @@ public class PlaywrightBrowserOptions
             IgnoreHttpsErrors = IgnoreHttpsErrors,
             CloseOwnedResourcesOnDispose = CloseOwnedResourcesOnDispose
         };
+
+    /// <summary>Browser, proxy, and navigation limits. The proxy password is omitted.</summary>
+    public override string ToString() =>
+        $"Browser={BrowserKind} Headless={Headless} Channel={Channel} Proxy={ProxyUrl} ProxyPasswordSet={!string.IsNullOrWhiteSpace(ProxyPassword)} " +
+        $"Viewport={ViewportWidth}x{ViewportHeight} NavTimeoutMs={NavigationTimeoutMs} SlowMo={SlowMoMilliseconds} Agents={UserAgents?.Count ?? 0}";
 }
 
 /// <summary>Per-session overrides for <see cref="Service.IPlaywrightBrowserService.CreateSession(PlaywrightSessionOptions?)" />.</summary>

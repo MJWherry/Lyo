@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Lyo.Media.Models;
 
 /// <summary>VBR quality digit for <c>-q:a</c>. <see cref="V0" /> is the highest quality. Lookups are thread-safe.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record AudioVbrQuality
 {
     private static readonly ConcurrentDictionary<string, AudioVbrQuality> ById = new(StringComparer.OrdinalIgnoreCase);

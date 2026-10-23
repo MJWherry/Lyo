@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Lyo.Media.Models;
 
 /// <summary>VAAPI render node. Lookups are thread-safe. Use <see cref="Custom" /> for another device path.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HardwareDevice
 {
     private static readonly ConcurrentDictionary<string, HardwareDevice> ById = new(StringComparer.OrdinalIgnoreCase);

@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Desktop;
 
 /// <summary>A modifier plus key stored in a settings file, such as <c>Ctrl+Shift+S</c>. This type does not listen for keys.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct HotkeyChord(HotkeyModifiers Modifiers, string Key)
 {
     /// <summary>Parses a chord such as <c>Ctrl+Shift+S</c>. Modifiers may appear in any order. A single-letter key is stored in upper case.</summary>

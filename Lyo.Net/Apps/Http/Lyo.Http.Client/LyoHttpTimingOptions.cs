@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Http.Client;
 
 /// <summary>Optional delay before each send. Off for vendors; Flared turns this on instead of shipping a second sleep stack.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LyoHttpTimingOptions
 {
     /// <summary>When false, the timing handler is a no-op.</summary>
@@ -24,4 +26,7 @@ public sealed class LyoHttpTimingOptions
         ArgumentHelpers.ThrowIf(DelayBeforeSendMax < DelayBeforeSendMin, "DelayBeforeSendMax must be >= DelayBeforeSendMin.");
         ArgumentHelpers.ThrowIf(Jitter < 0, "Jitter must be >= 0.");
     }
+
+    /// <summary>Send delay window and jitter.</summary>
+    public override string ToString() => $"Enabled={Enabled} Delay={DelayBeforeSendMin}-{DelayBeforeSendMax} Jitter={Jitter}";
 }

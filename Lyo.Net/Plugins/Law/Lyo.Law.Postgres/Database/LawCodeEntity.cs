@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Law.Postgres.Database;
 
 /// <summary>One named statutory compilation inside a state.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LawCodeEntity
 {
     /// <summary>Row id.</summary>
@@ -32,4 +35,7 @@ public sealed class LawCodeEntity
 
     /// <summary>Nodes in this compilation.</summary>
     public List<LawNodeEntity> Nodes { get; set; } = [];
+
+    /// <summary>Type name, id, and name.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Name}";
 }

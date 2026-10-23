@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Amazon;
 using Amazon.SecretsManager;
 using Lyo.Api.FileStorage.Models;
@@ -33,7 +34,12 @@ using ApiPresence = Lyo.Api.FileStorage.Models.FileStoragePresence;
 namespace Lyo.FileManager;
 
 /// <summary>Which metadata registration a local server will use. Building this does not open a database.</summary>
-public sealed record FileStorageLocalPlan(FileManagerMetadataKind MetadataKind, string ConnectionString, string RootDirectory);
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record FileStorageLocalPlan(FileManagerMetadataKind MetadataKind, string ConnectionString, string RootDirectory)
+{
+    /// <summary>Metadata kind and root directory. Connection string is omitted.</summary>
+    public override string ToString() => $"{MetadataKind} Root={RootDirectory} ConnectionStringSet={!string.IsNullOrEmpty(ConnectionString)}";
+}
 
 /// <summary>In-process FileStorage on a directory plus SQLite or Postgres.</summary>
 public sealed class FileStorageLocalHost : IFileManagerApi, IFileManagerTransfer

@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using Lyo.Story.Enums;
 
 namespace Lyo.Story.Sqlite.Database;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class StoryPlaythroughEntity
 {
     public Guid Id { get; set; }
@@ -27,4 +29,7 @@ public sealed class StoryPlaythroughEntity
     public ICollection<StoryPlaythroughVariableEntity> Variables { get; set; } = [];
 
     public ICollection<StoryPlaythroughEventEntity> Events { get; set; } = [];
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

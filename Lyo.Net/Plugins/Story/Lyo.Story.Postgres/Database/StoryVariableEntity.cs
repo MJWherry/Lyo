@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using Lyo.Story.Enums;
 
 namespace Lyo.Story.Postgres.Database;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class StoryVariableEntity
 {
     public Guid Id { get; set; }
@@ -19,4 +21,7 @@ public sealed class StoryVariableEntity
     public string? Description { get; set; }
 
     public StoryEntity Story { get; set; } = null!;
+
+    /// <summary>Type name, id, and name.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Name}";
 }

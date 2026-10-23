@@ -50,7 +50,7 @@ Downloads open the API `GET {ApiRoutePrefix}/files/{id}/download` URL. The Gatew
 ## Other `Program.cs` registrations
 
 - Infra: `AddCsvService`, `AddXlsxService`, `AddCompressionService` + `AddDefaultCompressionService<CompressionService>` (`ICompressionResolver` included), `AddLyoMetricsWithOpenTelemetryFromConfiguration` (`OpenTelemetry` section: `ServiceName` `Lyo.TestGateway`; OTLP endpoint from env when set), `AddScheduler`, `AddLocalCacheFromConfiguration`, `AddLocalLock(enableMetrics)`, `AddLocalKeyedSemaphore(enableMetrics)`, `AddImageSharpImageServiceFromConfiguration`, `AddPdfService`, `AddSpriteSheetExportService`, `AddPdfAnnotatorInterop`.
-- Communication: `AddEmailServiceFromConfiguration`, `AddTwilioSmsServiceFromConfiguration`, `SetupRabbitMqServiceFromConfiguration`, `AddAwsTranslationServiceFromConfiguration`, `AddProfanityFilterServiceFromConfiguration`, Typecast client + TTS service, `AddQRCodeServiceFromConfiguration`, `AddNativeBarcodeServiceFromConfiguration`.
+- Communication: `AddSmtpEmailServiceFromConfiguration`, `AddTwilioSmsServiceFromConfiguration`, `SetupRabbitMqServiceFromConfiguration`, `AddAwsTranslationServiceFromConfiguration`, `AddProfanityFilterServiceFromConfiguration`, Typecast client + TTS service, `AddQRCodeServiceFromConfiguration`, `AddNativeBarcodeServiceFromConfiguration`.
 - Web: `AddWebRendererServiceFromConfiguration`, `AddBlazoredLocalStorage`, `AddMudServices(...)`, `IIOTempService` rooted at `lyo-gateway-uploads`, `TestGatewayFileTransformer` on the file-tools workbench.
 - API client: `Configure<ApiClientOptions>(…ApiClientOptions.SectionName)`, `AddLyoApiClient`.
 - File workbench: `AddFileStorageWorkbenchSupport(builder.Configuration)`. Key store: `AddLocalKeyStore()`.
@@ -71,7 +71,7 @@ Downloads open the API `GET {ApiRoutePrefix}/files/{id}/download` URL. The Gatew
 | `AddConfigApiStore` | `IConfigStore` over TestApi manage routes for the `/config` workbench. Encryption happens on TestApi. |
 | `AwsTranslationOptions` | `AddAwsTranslationServiceFromConfiguration` |
 | `TypecastClient`, `TypecastOptions` | Typecast TTS workbench |
-| `EmailServiceOptions` | SMTP-based `Lyo.Email` |
+| `SmtpEmailOptions` | SMTP-based `Lyo.Email.Smtp` |
 | `TwilioOptions` | `Lyo.Sms.Twilio` |
 | `RabbitMqOptions` | `Lyo.MessageQueue.RabbitMq` |
 | `WebRenderOptions` | `Lyo.Web.WebRenderer` (HTML → PDF) |
@@ -110,6 +110,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Diagnostic.Web.Components` (direct, lyo)
 - `Lyo.Drift.Web.Components` (direct, lyo)
 - `Lyo.Email` (direct, lyo)
+- `Lyo.Email.Smtp` (direct, lyo)
 - `Lyo.Email.Web.Components` (direct, lyo)
 - `Lyo.Encryption` (direct, lyo)
 - `Lyo.Encryption.AesCcm` (direct, lyo)
@@ -207,7 +208,6 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Diagram` (transitive, lyo)
 - `Lyo.Diagram.Models` (transitive, lyo)
 - `Lyo.Drift.Models` (transitive, lyo)
-- `Lyo.Email.Models` (transitive, lyo)
 - `Lyo.EntityReference.Models` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.FantasyFootball` (transitive, lyo)

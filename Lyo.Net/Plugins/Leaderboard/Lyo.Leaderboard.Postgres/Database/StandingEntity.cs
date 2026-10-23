@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Leaderboard.Postgres.Database;
 
 /// <summary>Materialized standing row.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class StandingEntity
 {
     public Guid BoardId { get; set; }
@@ -24,4 +27,7 @@ public sealed class StandingEntity
     public BoardEntity? Board { get; set; }
 
     public MemberEntity? Member { get; set; }
+
+    /// <summary>Type name and primary key.</summary>
+    public override string ToString() => $"{GetType().Name} {BoardId} {MemberId}";
 }

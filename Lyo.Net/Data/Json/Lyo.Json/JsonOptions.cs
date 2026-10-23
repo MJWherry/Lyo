@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using Lyo.Common.Core.Enums;
@@ -5,6 +6,7 @@ using Lyo.Common.Core.Enums;
 namespace Lyo.Json;
 
 /// <summary>Options for <see cref="JsonService" />. A host <see cref="System.Text.Json.JsonSerializerOptions" /> instance, when supplied, replaces this contract.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class JsonOptions
 {
     /// <summary>Configuration section name. Nothing in this package binds it.</summary>
@@ -85,4 +87,7 @@ public class JsonOptions
         if (MaxDepth < 1)
             throw new ArgumentOutOfRangeException(nameof(MaxDepth), "MaxDepth must be at least 1.");
     }
+
+    /// <summary>Naming, enum format, and maximum depth.</summary>
+    public override string ToString() => $"Naming={Naming} Enums={Enums} MaxDepth={MaxDepth}";
 }

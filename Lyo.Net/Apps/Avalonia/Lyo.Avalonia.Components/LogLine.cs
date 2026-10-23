@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using Lyo.Exceptions;
 using Microsoft.Extensions.Logging;
@@ -7,6 +8,7 @@ namespace Lyo.Desktop.Components;
 /// <summary>One named value from a log scope or a structured message property.</summary>
 /// <param name="Name">Property name. <c>{OriginalFormat}</c> is not stored.</param>
 /// <param name="Value">Printed value.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record LogField(string Name, string Value);
 
 /// <summary>One row in a <see cref="LogView" />. <paramref name="Timestamp" /> is UTC when the line comes from <see cref="LogSink" />.</summary>
@@ -16,6 +18,7 @@ public sealed record LogField(string Name, string Value);
 /// <param name="Source">Logger or component name. Blank is omitted from the row and from <see cref="Format" />.</param>
 /// <param name="Context">Scope and message properties. Null when the line has none.</param>
 /// <param name="ExceptionText"><see cref="Exception.ToString" /> when the line was logged with an exception.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record LogLine(DateTimeOffset Timestamp, LogLevel Level, string Message, string? Source = null, IReadOnlyList<LogField>? Context = null, string? ExceptionText = null)
 {
     /// <summary>True when <paramref name="line" /> is at least <paramref name="minLevel" /> and its message or source contains <paramref name="search" />.</summary>

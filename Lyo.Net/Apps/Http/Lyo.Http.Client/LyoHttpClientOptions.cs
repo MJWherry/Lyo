@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Common.Core.Net;
 using Lyo.Exceptions;
 
@@ -7,6 +8,7 @@ namespace Lyo.Http.Client;
 /// HTTP transport settings for <see cref="LyoHttpClient" />. Vendor option types subclass this so compression, Accept-Encoding, rate limit, and <see cref="BaseUrl" /> bind
 /// the same way from configuration.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public partial class LyoHttpClientOptions
 {
     /// <summary>Default configuration section for <see cref="LyoHttpClientOptions" />.</summary>
@@ -72,4 +74,7 @@ public partial class LyoHttpClientOptions
         Timing.Validate();
         UserAgent.Validate();
     }
+
+    /// <summary>Base URL and status behavior. The proxy password is omitted.</summary>
+    public override string ToString() => $"BaseUrl={BaseUrl} EnsureStatusCode={EnsureStatusCode} ProxyPasswordSet={!string.IsNullOrWhiteSpace(ProxyPassword)}";
 }

@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Postgres.Database;
 
 /// <summary>Entity for the <c>[user].[linked_identity]</c> table (external OIDC identity links).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LinkedIdentityEntity
 {
     /// <summary>Stable id for the link. PK.</summary>
@@ -38,4 +41,7 @@ public sealed class LinkedIdentityEntity
 
     /// <summary>When the link was soft-deleted. While non-null the link is inactive and the (provider, subject) pair can be re-linked.</summary>
     public DateTime? UnlinkedTimestamp { get; set; }
+
+    /// <summary>Type name, id, and subject.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Subject}";
 }

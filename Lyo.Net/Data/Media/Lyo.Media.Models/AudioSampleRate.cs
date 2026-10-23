@@ -1,10 +1,12 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Globalization;
 using Lyo.Exceptions;
 
 namespace Lyo.Media.Models;
 
 /// <summary>Output or input sample rate in hertz. Lookups are thread-safe. Use <see cref="FromHertz" /> for a rate that is not listed.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record AudioSampleRate
 {
     private static readonly ConcurrentDictionary<string, AudioSampleRate> ById = new(StringComparer.OrdinalIgnoreCase);

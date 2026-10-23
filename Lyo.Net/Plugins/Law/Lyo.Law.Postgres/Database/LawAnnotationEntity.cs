@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Law.Models.Enums;
 
 namespace Lyo.Law.Postgres.Database;
 
 /// <summary>An official note on a statute node.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LawAnnotationEntity
 {
     /// <summary>Row id.</summary>
@@ -31,4 +33,7 @@ public sealed class LawAnnotationEntity
 
     /// <summary>Owning node.</summary>
     public LawNodeEntity Node { get; set; } = null!;
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

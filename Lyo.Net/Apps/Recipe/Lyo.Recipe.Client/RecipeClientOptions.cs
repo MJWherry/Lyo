@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Recipe.Client;
 
 /// <summary>Settings used to build <see cref="RecipeClient" /> routes.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class RecipeClientOptions
 {
     /// <summary>Configuration section this type binds from.</summary>
@@ -22,4 +25,7 @@ public sealed class RecipeClientOptions
         if (RoutePrefix.Contains("://", StringComparison.Ordinal))
             throw new ArgumentException($"{nameof(RoutePrefix)} is a path prefix, not an absolute URL. Set HttpClient.BaseAddress for the host.", nameof(RoutePrefix));
     }
+
+    /// <summary>Route prefix used in front of recipe routes.</summary>
+    public override string ToString() => $"RoutePrefix={RoutePrefix}";
 }

@@ -1,12 +1,17 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Diagnostic.Inbox;
 
 /// <summary>Bounds and behaviour for <see cref="InMemoryErrorInbox" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class InMemoryErrorInboxOptions
 {
     /// <summary>Maximum occurrences retained across all groups; oldest dropped when exceeded. Defaults to 5000.</summary>
     public int MaxOccurrences { get; set; } = 5_000;
+
+    /// <summary>Maximum retained occurrences.</summary>
+    public override string ToString() => $"MaxOccurrences={MaxOccurrences}";
 }
 
 /// <summary>Thread-safe FIFO-capped store of <see cref="ErrorOccurrenceRecord" /> for single-process triage.</summary>

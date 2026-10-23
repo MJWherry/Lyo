@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.FeatureFlags;
 
 /// <summary>Named flags bound from the <see cref="SectionName" /> configuration section or built with <see cref="FeatureFlagOptionExtensions.Add" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class FeatureFlagOptions
 {
     /// <summary>Configuration section <c>AddFeatureFlagsFromConfiguration</c> binds by default.</summary>
@@ -84,4 +86,7 @@ public sealed class FeatureFlagOptions
 
         ArgumentHelpers.ThrowIf(predicates == 0, "A rule needs a user, tenant, claim, or attribute.");
     }
+
+    /// <summary>Flag count. Definitions are omitted.</summary>
+    public override string ToString() => $"Flags={Flags?.Count}";
 }

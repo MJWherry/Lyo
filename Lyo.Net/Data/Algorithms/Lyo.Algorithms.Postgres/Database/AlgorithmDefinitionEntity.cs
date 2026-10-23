@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Algorithms.Postgres.Database;
 
 /// <summary>Row in <c>algorithms.algorithm_definition</c>.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class AlgorithmDefinitionEntity
 {
     public Guid Id { get; set; }
@@ -22,4 +25,7 @@ public sealed class AlgorithmDefinitionEntity
     public List<AlgorithmRevisionEntity> Revisions { get; set; } = [];
 
     public List<AlgorithmLabelEntity> Labels { get; set; } = [];
+
+    /// <summary>Type name, id, and name.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Name}";
 }

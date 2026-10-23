@@ -1,8 +1,10 @@
 using System.Collections;
+using System.Diagnostics;
 
 namespace Lyo.Api.ApiEndpoint;
 
 /// <summary>Identifies a CRUD endpoint or pipeline behavior registered for an API group. Extensible via addon packages (self-registering subclasses).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public abstract record ApiFeature
 {
     private static readonly Dictionary<string, ApiFeature> _byName = new(StringComparer.OrdinalIgnoreCase);
@@ -44,6 +46,7 @@ public abstract record ApiFeature
 }
 
 /// <summary>Set of <see cref="ApiFeature" /> instances enabled for an endpoint group. Use <see cref="Contains" /> or <c>feature is in set</c>.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ApiFeatureSet : IEnumerable<ApiFeature>
 {
     private readonly ApiFeature[] _features;

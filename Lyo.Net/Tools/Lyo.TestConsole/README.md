@@ -1,9 +1,6 @@
 # Lyo.TestConsole
 
-Scratch host used to exercise Lyo services from a long-lived `Microsoft.Extensions.Hosting` process. Most of `Program.cs` is registration: nearly every Lyo service is wired so you
-can resolve any of them from one scope and try things end-to-end. The main routine is short and throwaway. Right now it solves mangafire with Flared, copies cookies and UA into
-Playwright via [`FlaredPlaywrightHandoff`](FlaredPlaywrightHandoff.cs) (host-owned; Playwright does not reference `Lyo.Http.Client`), navigates, and (optionally) starts the Discord
-bot.
+Scratch host used to exercise Lyo services from a long-lived `Microsoft.Extensions.Hosting` process. Most of `Program.cs` is registration: nearly every Lyo service is wired so you can resolve any of them from one scope and try things end-to-end. The main routine is short and throwaway. Right now it solves mangafire with Flared, copies cookies and UA into Playwright via [`FlaredPlaywrightHandoff`](FlaredPlaywrightHandoff.cs) (host-owned; Playwright does not reference `Lyo.Http.Client`), navigates, and (optionally) starts the Discord bot.
 
 ## Examples
 
@@ -23,39 +20,22 @@ await session.Browser.NavigateToAsync(url);
 ## What the process does
 
 - Creates a scope and resolves `IPlaywrightBrowserService` plus the Flared `LyoHttpClient`.
-- Flared `GET` the mangafire title URL, then `CreateSession(o => FlaredPlaywrightHandoff.Apply)` → `StartBrowserAsync` → `ApplyCookiesAsync` → `NavigateToAsync`. Playwright must be
-  Chromium. The helper lives in this host so Playwright stays free of `Lyo.Http.Client`.
+- Flared `GET` the mangafire title URL, then `CreateSession(o => FlaredPlaywrightHandoff.Apply)` → `StartBrowserAsync` → `ApplyCookiesAsync` → `NavigateToAsync`. Playwright must be Chromium. The helper lives in this host so Playwright stays free of `Lyo.Http.Client`.
 - `Console.ReadLine()` keeps the process open until Enter is pressed. A Selenium block further down is commented out.
 - Resolves `IOptions<LyoDiscordBotOptions>` and, if `Token` is non-empty, hooks Ctrl+C, then runs `LyoDiscordBot.RunAsync(botCts.Token)`, then stops the host.
 
 ## What the host registers
 
-- **Infra / format.** Logging (simple console, UTC), `AddIOTempService`, `AddLyoMetrics`, `AddCompressionService`, `AddLyoDiffServices`, `AddPdfServiceFromConfiguration`,
-  `AddFormatterService`, `AddCsvService`, `AddXlsxService`, `AddSkiaImageServiceFromConfiguration`, `AddScheduler(o => o.CheckIntervalMs = 1000)`,
-  `AddFusionCacheFromConfiguration`.
-- **Browser automation.** `AddSeleniumBrowserService`, `AddPlaywrightBrowserServiceFromConfiguration`, `AddFlaredHttpClientFromConfiguration`,
-  `AddWebRendererServiceFromConfiguration` (HTML → PDF through a headless browser).
-- **Speech.** Typecast (`AddTypecastClientFromConfiguration`, `AddTypecastTtsServiceFromConfiguration`) and AWS Polly (`AddAwsPollyTtsServiceFromConfiguration`). A non-generic
-  `ITtsService` is wired to `TypecastTtsAppService` for the Discord bot; swap in `AwsPollyTtsAppService` when you want Polly there.
-- **Communication.** `AddAwsTranslationServiceFromConfiguration`, `AddProfanityFilterServiceFromConfiguration`, `AddEmailServiceFromConfiguration`,
-  `AddTwilioSmsServiceFromConfiguration`, `AddShortUrlFromConfiguration`, `AddQRCodeServiceFromConfiguration`, `SetupRabbitMqServiceFromConfiguration`,
-  `AddFFmpegServicesFromConfiguration`.
+- **Infra / format.** Logging (simple console, UTC), `AddIOTempService`, `AddLyoMetrics`, `AddCompressionService`, `AddLyoDiffServices`, `AddPdfServiceFromConfiguration`, `AddFormatterService`, `AddCsvService`, `AddXlsxService`, `AddSkiaImageServiceFromConfiguration`, `AddScheduler(o => o.CheckIntervalMs = 1000)`, `AddFusionCacheFromConfiguration`.
+- **Browser automation.** `AddSeleniumBrowserService`, `AddPlaywrightBrowserServiceFromConfiguration`, `AddFlaredHttpClientFromConfiguration`, `AddWebRendererServiceFromConfiguration` (HTML → PDF through a headless browser).
+- **Speech.** Typecast (`AddTypecastClientFromConfiguration`, `AddTypecastTtsServiceFromConfiguration`) and AWS Polly (`AddAwsPollyTtsServiceFromConfiguration`). A non-generic `ITtsService` is wired to `TypecastTtsAppService` for the Discord bot; swap in `AwsPollyTtsAppService` when you want Polly there.
+- **Communication.** `AddAwsTranslationServiceFromConfiguration`, `AddProfanityFilterServiceFromConfiguration`, `AddSmtpEmailServiceFromConfiguration`, `AddTwilioSmsServiceFromConfiguration`, `AddShortUrlFromConfiguration`, `AddQRCodeServiceFromConfiguration`, `SetupRabbitMqServiceFromConfiguration`, `AddFFmpegServicesFromConfiguration`.
 - **Integrations.** `AddFantasyFootballClientFromConfiguration` (ESPN), `AddLyoDiscordBot<LyoDiscordBot>(…)`.
-- **AWS file storage (S3 plus two-key).** `AddAwsKeyStoreFromConfiguration` + `AddTwoKeyEncryptionServiceKeyed("two-key-aws", "dev/FileStore")`, then
-  `AddPostgresFileMetadataStoreKeyed("postgres-filemetadatastore")` and `AddS3FileStorageServiceKeyed("client-files")` chained to `UseFileMetadataStore` + `UseEncryptionService` +
-  `ConfigureS3FileStorage().Build(configuration)`.
-- **Local file storage (alternate key).** `AddFileStorageServiceKeyed("two-key-local-filestore", …, "two-key-aws")` rooted at `~/My Documents/local-filestorage` with
-  `EnableDuplicateDetection = true` and `DuplicateStrategy = ReturnExisting`, backed by `LocalFileMetadataStore` at `~/My Documents/local-filestore`. Both file storage services
-  share the same `two-key-aws` encryption key store.
-- **Database stores.** `ConnectionString` (root config key, default `null`) is passed to `AddReportingDbContextFactory`, `AddEndatoDbContextFactory`, `AddShortUrlDbContextFactory`,
-  `AddTwilioSmsDbContextFactory`, `AddPostgresAuditRecorder`, `AddPeopleDbContextFactory`, `AddPostgresCommentStore`, `AddPostgresHomeInventoryStore`, `AddPostgresRecipeStore`,
-  `AddEmailDbContextFactory`, `AddFileMetadataStoreDbContextFactory`, `AddPostgresJobManagement`, `AddBookDbContextFactory`, `AddComicDbContextFactory`, `AddStoryDbContextFactory`,
-  `AddPostgresTagStore`. All use `EnableAutoMigrations = true`.
-- **CRUD/QueryConcrete.** `AddLyoCrudServices<TwilioSmsDbContext>()`, `AddLyoCrudServices<AuditDbContext>()`, `AddLyoCrudServices<JobContext>()`, `AddLyoQueryServices()`,
-  `AddScoped<JobService>`.
-- **Mapping.** Mapster `TypeAdapterConfig` set up with `EnumMappingStrategy.ByName`, `MaxDepth(8)`, `NameMatchingStrategy.IgnoreCase`, a polymorphic `ConstructUsing(src => src)`
-  for the abstract `WhereClause`, and a bidirectional mapping between `TwilioSmsResult` and `TwilioSmsLogEntity` (forward by Mapster, reverse via
-  `SmsLogMappingHelper.MapToTwilioSmsResult`). Wired up via `IMapper`/`ILyoMapper` (`MapsterLyoMapper`).
+- **AWS file storage (S3 plus two-key).** `AddAwsKeyStoreFromConfiguration` + `AddTwoKeyEncryptionServiceKeyed("two-key-aws", "dev/FileStore")`, then `AddPostgresFileMetadataStoreKeyed("postgres-filemetadatastore")` and `AddS3FileStorageServiceKeyed("client-files")` chained to `UseFileMetadataStore` + `UseEncryptionService` + `ConfigureS3FileStorage().Build(configuration)`.
+- **Local file storage (alternate key).** `AddFileStorageServiceKeyed("two-key-local-filestore", …, "two-key-aws")` rooted at `~/My Documents/local-filestorage` with `EnableDuplicateDetection = true` and `DuplicateStrategy = ReturnExisting`, backed by `LocalFileMetadataStore` at `~/My Documents/local-filestore`. Both file storage services share the same `two-key-aws` encryption key store.
+- **Database stores.** `ConnectionString` (root config key, default `null`) is passed to `AddReportingDbContextFactory`, `AddEndatoDbContextFactory`, `AddShortUrlDbContextFactory`, `AddTwilioSmsDbContextFactory`, `AddPostgresAuditRecorder`, `AddPeopleDbContextFactory`, `AddPostgresCommentStore`, `AddPostgresHomeInventoryStore`, `AddPostgresRecipeStore`, `AddEmailDbContextFactory`, `AddFileMetadataStoreDbContextFactory`, `AddPostgresJobManagement`, `AddBookDbContextFactory`, `AddComicDbContextFactory`, `AddStoryDbContextFactory`, `AddPostgresTagStore`. All use `EnableAutoMigrations = true`.
+- **CRUD/QueryConcrete.** `AddLyoCrudServices<TwilioSmsDbContext>()`, `AddLyoCrudServices<AuditDbContext>()`, `AddLyoCrudServices<JobContext>()`, `AddLyoQueryServices()`, `AddScoped<JobService>`.
+- **Mapping.** Mapster `TypeAdapterConfig` set up with `EnumMappingStrategy.ByName`, `MaxDepth(8)`, `NameMatchingStrategy.IgnoreCase`, a polymorphic `ConstructUsing(src => src)` for the abstract `WhereClause`, and a bidirectional mapping between `TwilioSmsResult` and `TwilioSmsLogEntity` (forward by Mapster, reverse via `SmsLogMappingHelper.MapToTwilioSmsResult`). Wired up via `IMapper`/`ILyoMapper` (`MapsterLyoMapper`).
 - **API client.** `IApiClient` wired as `new ApiClient(LyoJsonSerializerOptions.Create().AddLyoDateOnlyModelConverters())`.
 - **Job scheduler.** `AddJobScheduler(new() { ApiBaseUrl = "http://localhost:5092/" })`.
 
@@ -63,17 +43,17 @@ await session.Browser.NavigateToAsync(url);
 
 `appsettings.json` ships every section nulled out so the host will not accidentally talk to a real service. Bound sections:
 
-| Key                                        | Purpose                                                                  |
-|--------------------------------------------|--------------------------------------------------------------------------|
-| `ConnectionString`                         | Root Postgres connection string shared by every `AddXxxDbContextFactory` |
-| `AwsKeyStore`, `S3FileStorageOptions`      | Two-key encryption plus S3 file storage (`client-files`)                 |
-| `AwsPollyOptions`, `AwsTranslationOptions` | AWS Polly TTS / Translate                                                |
-| `TypecastClient`                           | Typecast TTS API key plus base URL                                       |
-| `EmailServiceOptions`                      | SMTP host, port, and credentials                                         |
-| `TwilioOptions`                            | Twilio account SID, auth token, and default `From` number                |
-| `RabbitMqOptions`                          | RabbitMQ connection plus admin URL                                       |
-| `Redis:ConnectionString`                   | Distributed cache target (defaults to `localhost:6379`)                  |
-| `CacheOptions`                             | `AddFusionCacheFromConfiguration` settings                               |
+| Key | Purpose |
+| ------------------------------------------ | ------------------------------------------------------------------------ |
+| `ConnectionString` | Root Postgres connection string shared by every `AddXxxDbContextFactory` |
+| `AwsKeyStore`, `S3FileStorageOptions` | Two-key encryption plus S3 file storage (`client-files`) |
+| `AwsPollyOptions`, `AwsTranslationOptions` | AWS Polly TTS / Translate |
+| `TypecastClient` | Typecast TTS API key plus base URL |
+| `SmtpEmailOptions` | SMTP host, port, and credentials |
+| `TwilioOptions` | Twilio account SID, auth token, and default `From` number |
+| `RabbitMqOptions` | RabbitMQ connection plus admin URL |
+| `Redis:ConnectionString` | Distributed cache target (defaults to `localhost:6379`) |
+| `CacheOptions` | `AddFusionCacheFromConfiguration` settings |
 
 Bot/scheduler/file storage settings come from the same hierarchy through their respective `AddXxxFromConfiguration` extensions.
 
@@ -94,6 +74,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Discord.Bot` (direct, lyo)
 - `Lyo.Email` (direct, lyo)
 - `Lyo.Email.Postgres` (direct, lyo)
+- `Lyo.Email.Smtp` (direct, lyo)
 - `Lyo.Encryption` (direct, lyo)
 - `Lyo.Endato.Client` (direct, lyo)
 - `Lyo.Endato.Postgres` (direct, lyo)
@@ -122,6 +103,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.People.Postgres` (direct, lyo)
 - `Lyo.Profanity` (direct, lyo)
 - `Lyo.QRCode` (direct, lyo)
+- `Lyo.RateLimit` (direct, lyo)
 - `Lyo.Recipe.Postgres` (direct, lyo)
 - `Lyo.Reporting.Models` (direct, lyo)
 - `Lyo.Reporting.Postgres` (direct, lyo)
@@ -158,13 +140,13 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Lyo.Diff` (transitive, lyo)
 - `Lyo.Discord.Client` (transitive, lyo)
 - `Lyo.Discord.Models` (transitive, lyo)
-- `Lyo.Email.Models` (transitive, lyo)
 - `Lyo.EntityReference.Models` (transitive, lyo)
 - `Lyo.EntityReference.Postgres` (transitive, lyo)
 - `Lyo.Exceptions` (transitive, lyo)
 - `Lyo.FFmpeg.Models` (transitive, lyo)
 - `Lyo.FileStorage` (transitive, lyo)
 - `Lyo.FileSystemWatcher.Models` (transitive, lyo)
+- `Lyo.FileTags` (transitive, lyo)
 - `Lyo.Geolocation.Models` (transitive, lyo)
 - `Lyo.Hashing` (transitive, lyo)
 - `Lyo.Health` (transitive, lyo)
@@ -234,6 +216,7 @@ Generated from `ProjectReference` / `PackageReference` (same model as `docs/Lyo.
 - `Microsoft.AspNetCore.Components.Web` `10.0.5` (transitive, microsoft)
 - `Microsoft.AspNetCore.OpenApi` `10.0.5` (transitive, microsoft)
 - `Microsoft.Bcl.AsyncInterfaces` `10.0.5` (transitive, microsoft, netstandard2.0)
+- `Microsoft.Bcl.TimeProvider` `8.0.1` (transitive, microsoft, netstandard2.0)
 - `Microsoft.EntityFrameworkCore` `10.0.5` (transitive, microsoft)
 - `Microsoft.EntityFrameworkCore.Analyzers` `10.0.5` (transitive, microsoft)
 - `Microsoft.EntityFrameworkCore.Design` `10.0.5` (transitive, microsoft)

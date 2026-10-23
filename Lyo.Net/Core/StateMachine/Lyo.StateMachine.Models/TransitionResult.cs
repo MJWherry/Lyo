@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.StateMachine.Models;
 
 /// <summary>Outcome of firing a trigger. Invalid transitions are reported here rather than thrown.</summary>
@@ -9,6 +11,7 @@ namespace Lyo.StateMachine.Models;
 /// using.
 /// </param>
 /// <param name="Kind">What happened. <see cref="TransitionKind.None" /> for rejections.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record TransitionResult<TState>(TransitionRejection Rejection, TState From, StateSnapshot<TState> Snapshot, TransitionKind Kind = TransitionKind.None)
     where TState : notnull
 {

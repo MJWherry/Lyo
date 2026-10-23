@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Result;
 
 namespace Lyo.Tts.Models;
 
 /// <summary>Outcome of a synthesis, including fields unique to TTS.</summary>
 /// <typeparam name="TRequest">TTS request type.</typeparam>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record TtsResult<TRequest> : Result<TRequest>
     where TRequest : TtsRequest
 {
@@ -18,6 +20,9 @@ public sealed record TtsResult<TRequest> : Result<TRequest>
 
     /// <summary>Audio size, in bytes.</summary>
     public int? AudioSize { get; init; }
+
+    /// <summary>Success flag, request id, and audio length. Audio bytes are omitted.</summary>
+    public override string ToString() => $"IsSuccess={IsSuccess} RequestId={RequestId} AudioBytes={AudioSize ?? AudioData?.Length ?? 0}";
 
     private TtsResult(bool isSuccess, TRequest? data, IReadOnlyList<Error>? errors = null)
         : base(isSuccess, data, errors) { }

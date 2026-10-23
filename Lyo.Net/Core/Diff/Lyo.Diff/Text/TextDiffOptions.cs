@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using System.Globalization;
 
 namespace Lyo.Diff.Text;
 
 /// <summary>Tokenizer mode and safety limits for <see cref="ITextDiffService" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class TextDiffOptions
 {
     /// <summary>How input strings are split into tokens before the diff.</summary>
@@ -16,4 +18,7 @@ public sealed class TextDiffOptions
 
     /// <summary>Token cap per side; exceeding it throws <see cref="InvalidOperationException" />.</summary>
     public int MaxTokensPerSide { get; set; } = 100_000;
+
+    /// <summary>Tokenizer mode and per-side token cap.</summary>
+    public override string ToString() => $"Mode={Mode} MaxTokensPerSide={MaxTokensPerSide} NormalizeLineEndings={NormalizeLineEndings}";
 }

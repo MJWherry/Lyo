@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Diagram.Models;
 
 /// <summary>Identity and name of a stored diagram, without its cells. <see cref="IDiagramStore.ListAsync" /> returns these.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record DiagramSummary
 {
     /// <summary>Store key. Matches <see cref="DiagramDocument.Id" />.</summary>

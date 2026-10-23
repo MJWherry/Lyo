@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.Book.Postgres.Database;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class BookGenreEntity
 {
     [Key]
@@ -22,4 +24,7 @@ public sealed class BookGenreEntity
     public ICollection<BookGenreEntity> Children { get; set; } = [];
 
     public ICollection<BookBookGenreEntity> BookLinks { get; set; } = [];
+
+    /// <summary>Type name, id, and name.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Name}";
 }

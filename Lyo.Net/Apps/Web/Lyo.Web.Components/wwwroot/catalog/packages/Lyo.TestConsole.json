@@ -30,7 +30,7 @@
         "**Infra / format.** Logging (simple console, UTC), `AddIOTempService`, `AddLyoMetrics`, `AddCompressionService`, `AddLyoDiffServices`, `AddPdfServiceFromConfiguration`, `AddFormatterService`, `AddCsvService`, `AddXlsxService`, `AddSkiaImageServiceFromConfiguration`, `AddScheduler(o => o.CheckIntervalMs = 1000)`, `AddFusionCacheFromConfiguration`.",
         "**Browser automation.** `AddSeleniumBrowserService`, `AddPlaywrightBrowserServiceFromConfiguration`, `AddFlaredHttpClientFromConfiguration`, `AddWebRendererServiceFromConfiguration` (HTML → PDF through a headless browser).",
         "**Speech.** Typecast (`AddTypecastClientFromConfiguration`, `AddTypecastTtsServiceFromConfiguration`) and AWS Polly (`AddAwsPollyTtsServiceFromConfiguration`). A non-generic `ITtsService` is wired to `TypecastTtsAppService` for the Discord bot; swap in `AwsPollyTtsAppService` when you want Polly there.",
-        "**Communication.** `AddAwsTranslationServiceFromConfiguration`, `AddProfanityFilterServiceFromConfiguration`, `AddEmailServiceFromConfiguration`, `AddTwilioSmsServiceFromConfiguration`, `AddShortUrlFromConfiguration`, `AddQRCodeServiceFromConfiguration`, `SetupRabbitMqServiceFromConfiguration`, `AddFFmpegServicesFromConfiguration`.",
+        "**Communication.** `AddAwsTranslationServiceFromConfiguration`, `AddProfanityFilterServiceFromConfiguration`, `AddSmtpEmailServiceFromConfiguration`, `AddTwilioSmsServiceFromConfiguration`, `AddShortUrlFromConfiguration`, `AddQRCodeServiceFromConfiguration`, `SetupRabbitMqServiceFromConfiguration`, `AddFFmpegServicesFromConfiguration`.",
         "**Integrations.** `AddFantasyFootballClientFromConfiguration` (ESPN), `AddLyoDiscordBot<LyoDiscordBot>(…)`.",
         "**AWS file storage (S3 plus two-key).** `AddAwsKeyStoreFromConfiguration` + `AddTwoKeyEncryptionServiceKeyed(\"two-key-aws\", \"dev/FileStore\")`, then `AddPostgresFileMetadataStoreKeyed(\"postgres-filemetadatastore\")` and `AddS3FileStorageServiceKeyed(\"client-files\")` chained to `UseFileMetadataStore` + `UseEncryptionService` + `ConfigureS3FileStorage().Build(configuration)`.",
         "**Local file storage (alternate key).** `AddFileStorageServiceKeyed(\"two-key-local-filestore\", …, \"two-key-aws\")` rooted at `~/My Documents/local-filestorage` with `EnableDuplicateDetection = true` and `DuplicateStrategy = ReturnExisting`, backed by `LocalFileMetadataStore` at `~/My Documents/local-filestore`. Both file storage services share the same `two-key-aws` encryption key store.",
@@ -66,7 +66,7 @@
           "Typecast TTS API key plus base URL"
         ],
         [
-          "`EmailServiceOptions`",
+          "`SmtpEmailOptions`",
           "SMTP host, port, and credentials"
         ],
         [
@@ -191,6 +191,14 @@
     },
     {
       "name": "Lyo.Email.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Email.Smtp",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -415,6 +423,14 @@
     },
     {
       "name": "Lyo.QRCode",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.RateLimit",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -712,14 +728,6 @@
       ]
     },
     {
-      "name": "Lyo.Email.Models",
-      "kind": "lyo",
-      "tags": [
-        "transitive",
-        "lyo"
-      ]
-    },
-    {
       "name": "Lyo.EntityReference.Models",
       "kind": "lyo",
       "tags": [
@@ -761,6 +769,14 @@
     },
     {
       "name": "Lyo.FileSystemWatcher.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FileTags",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -1341,6 +1357,16 @@
       "name": "Microsoft.Bcl.AsyncInterfaces",
       "kind": "package",
       "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
+      "name": "Microsoft.Bcl.TimeProvider",
+      "kind": "package",
+      "version": "8.0.1",
       "tags": [
         "transitive",
         "microsoft",

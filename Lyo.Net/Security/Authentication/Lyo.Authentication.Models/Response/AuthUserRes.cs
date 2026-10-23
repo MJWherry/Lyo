@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Models.Response;
 
 /// <summary>Display-safe Lyo user for QueryConcrete / Get. QueryProject selects entity fields (including <c>ScopesJson</c>).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record AuthUserRes(
     Guid Id,
     string DisplayName,

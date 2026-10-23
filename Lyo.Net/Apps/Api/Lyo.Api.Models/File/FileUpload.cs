@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Api.Models.File;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public record FileUpload(
     string OriginalFileName,
     long OriginalFileSize,
@@ -15,4 +18,9 @@ public record FileUpload(
     byte[]? EncryptedFileHash,
     byte[]? EncryptedDataEncryptionKey,
     int? DataEncryptionKeyVersion,
-    DateTime UploadTimestamp);
+    DateTime UploadTimestamp)
+{
+    /// <summary>File name, size, and hash lengths. Hash and key bytes are omitted.</summary>
+    public override string ToString()
+        => $"{OriginalFileName} {OriginalFileSize}B Zip={IsCompressed} Enc={IsEncrypted} Hash={OriginalFileHash.Length} Dek={EncryptedDataEncryptionKey?.Length ?? 0}";
+}

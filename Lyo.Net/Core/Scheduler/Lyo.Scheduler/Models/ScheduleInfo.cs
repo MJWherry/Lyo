@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Schedule.Models;
 
 namespace Lyo.Scheduler.Models;
@@ -6,4 +7,5 @@ namespace Lyo.Scheduler.Models;
 /// <param name="Id">Unique identifier.</param>
 /// <param name="Name">Optional display name.</param>
 /// <param name="Definition">When the schedule fires.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ScheduleInfo(string Id, string? Name, ScheduleDefinition Definition);

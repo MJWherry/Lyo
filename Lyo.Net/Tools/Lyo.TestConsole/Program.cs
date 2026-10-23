@@ -15,7 +15,7 @@ using Lyo.Compression;
 using Lyo.Csv;
 using Lyo.DateAndTime.Json;
 using Lyo.Discord.Bot;
-using Lyo.Email;
+using Lyo.Email.Smtp;
 using Lyo.Email.Postgres;
 using Lyo.Endato.Client;
 using Lyo.Endato.Postgres;
@@ -109,7 +109,7 @@ var host = Host.CreateDefaultBuilder(args)
         services.AddFlaredHttpClientFromConfiguration(context.Configuration);
         services.AddAwsTranslationServiceFromConfiguration(context.Configuration); //translation
         services.AddProfanityFilterServiceFromConfiguration(context.Configuration); //profanity filter
-        services.AddEmailServiceFromConfiguration(context.Configuration); //email
+        services.AddSmtpEmailServiceFromConfiguration(context.Configuration); //email
         services.AddTwilioSmsServiceFromConfiguration(context.Configuration); //sms twilio
         services.AddShortUrlFromConfiguration(context.Configuration); //short url
         services.AddQRCodeServiceFromConfiguration(context.Configuration); // qrcode (built-in encoder)

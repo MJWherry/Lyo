@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using NpgsqlTypes;
 
 namespace Lyo.Book.Postgres.Database;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class BookPageEntity
 {
     [Key]
@@ -35,4 +37,7 @@ public sealed class BookPageEntity
     public DateTime? UpdatedTimestamp { get; set; }
 
     public BookChapterEntity Chapter { get; set; } = null!;
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

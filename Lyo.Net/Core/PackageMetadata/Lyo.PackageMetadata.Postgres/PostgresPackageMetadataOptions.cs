@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Postgres;
 
 namespace Lyo.PackageMetadata.Postgres;
 
 /// <summary>Settings for the package metadata PostgreSQL store.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class PostgresPackageMetadataOptions : PostgresOptionsBase
 {
     public const string SectionName = "PostgresPackageMetadata";
@@ -16,4 +18,7 @@ public sealed class PostgresPackageMetadataOptions : PostgresOptionsBase
 
     /// <inheritdoc />
     protected override string SchemaName => Schema;
+
+    /// <summary>Schema, auto-migrate flag, and prefix-catalog cache mode. The connection string is omitted.</summary>
+    public override string ToString() => $"{base.ToString()} PrefixCatalogCaching={PrefixCatalogCaching}";
 }

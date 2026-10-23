@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Espn.Fantasy.Football.Client.Models.Request;
 
 /// <summary>Query options for transactions from the league.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record TransactionsQuery
 {
     /// <summary>Scoring period for transaction reads. If omitted, ESPN returns its default window.</summary>

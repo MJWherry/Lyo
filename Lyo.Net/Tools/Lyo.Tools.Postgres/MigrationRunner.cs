@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Audit.Postgres.Database;
 using Lyo.Book.Postgres;
 using Lyo.Book.Postgres.Database;
@@ -33,6 +34,7 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.Tools.Postgres;
 
 /// <summary>Whether one migration is applied or still pending.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record MigrationStatus(string Name, bool IsApplied);
 
 /// <summary>

@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Web.Automation.Client;
 
 /// <summary>Settings used to build <see cref="AutomationPlanClient" /> routes.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class AutomationPlanClientOptions
 {
     /// <summary>Configuration section this type binds from.</summary>
@@ -20,4 +22,7 @@ public sealed class AutomationPlanClientOptions
         ArgumentHelpers.ThrowIf(RoutePrefix.Trim().Length == 0, "RoutePrefix must be null or a non-whitespace value.", nameof(RoutePrefix));
         ArgumentHelpers.ThrowIf(RoutePrefix.Contains("://", StringComparison.Ordinal), "RoutePrefix is a path prefix, not an absolute URL.", nameof(RoutePrefix));
     }
+
+    /// <summary>Route prefix used in front of automation run routes.</summary>
+    public override string ToString() => $"RoutePrefix={RoutePrefix}";
 }

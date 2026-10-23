@@ -46,6 +46,7 @@
         <ProjectReference Include="..\..\Integration\Discord\Lyo.Discord.Bot\Lyo.Discord.Bot.csproj"/>
         <ProjectReference Include="..\..\Data\Compression\Lyo.Compression\Lyo.Compression.csproj"/>
         <ProjectReference Include="..\..\Data\Csv\Lyo.Csv\Lyo.Csv.csproj"/>
+        <ProjectReference Include="..\..\Communication\Email\Lyo.Email.Smtp\Lyo.Email.Smtp.csproj"/>
         <ProjectReference Include="..\..\Communication\Email\Lyo.Email\Lyo.Email.csproj"/>
         <ProjectReference Include="..\..\Apps\Job\Lyo.Job.Scheduler\Lyo.Job.Scheduler.csproj"/>
         <ProjectReference Include="..\..\Plugins\ShortUrl\Lyo.ShortUrl.Postgres\Lyo.ShortUrl.Postgres.csproj"/>

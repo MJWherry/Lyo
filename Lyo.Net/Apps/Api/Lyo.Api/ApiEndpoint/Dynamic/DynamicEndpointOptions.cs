@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.ApiEndpoint.Dynamic;
 
 /// <summary>Settings for dynamic endpoint registration that maps every entity in a DbContext.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class DynamicEndpointOptions<TContext>
     where TContext : DbContext
 {
@@ -105,4 +107,10 @@ public sealed class DynamicEndpointOptions<TContext>
         IncludedTypes.AddRange([typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5)]);
         return this;
     }
+
+    /// <summary>Route prefix, type counts, and query limits.</summary>
+    public override string ToString() =>
+        $"BaseRoute={BaseRoute} Included={IncludedTypes.Count} Excluded={ExcludedTypes.Count} Denied={DeniedSelectFields.Count} " +
+        $"Auth={(Auth?.AllowAnonymous == true ? "anonymous" : "restricted")} Includes={QueryPolicy?.MaxIncludePathCount} " +
+        $"Page={QueryPolicy?.MaxIncludePageSize} Keys={QueryPolicy?.MaxKeySetCount}";
 }

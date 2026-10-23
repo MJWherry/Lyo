@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Rfid.Tonie;
 
 /// <summary>Directory and file name a Toniebox looks up from an 8-byte SLIX-L UID. The file name is the first four UID bytes reversed. The directory name is the last four reversed.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct TonieContentPath(string FileName, string DirectoryName)
 {
     /// <summary>

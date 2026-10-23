@@ -187,6 +187,7 @@ Stays under `Communication/Translation/`.
 | `Lyo.Google.Youtube.Models` | C | `Integration/Google/` | - | - | DTOs only. `Lyo.Video` references this, not the client |
 | `Lyo.Google.Youtube.Client` | C | `Integration/Google/` | - | - | Data API. Hosts pass models into `IVideoStore` |
 | `Lyo.Typecast.Client` | C | `Integration/Typecast/` | - | - | Used by `Lyo.Tts.Typecast` |
+| `Lyo.ClamAv.Client` | C | `Integration/ClamAv/` | - | - | clamav-rest. Used by `Lyo.ContentThreatScan.ClamAv` |
 | `Lyo.Espn.Fantasy.Football.Client` | C | `Integration/Espn/` | - | 2 | Name lacks `.Client` suffix; acceptable |
 | `Lyo.OpenSubtitles.Client` | C | `Integration/OpenSubtitles/` | - | - | Consumer REST. Host stores subtitle files |
 | `Lyo.Trakt.Client` | C | `Integration/Trakt/` | - | - | Catalog and OAuth. Host stores tokens |
@@ -325,7 +326,9 @@ Drop-in modules. No `Build*Group` route mapping.
 | `Lyo.Stt` | B | `Communication/Speech/` | - | - | Abstract STT contract; no in-repo provider |
 | `Lyo.Webhook` | B | `Communication/Webhook/` | - | 7 | ASP.NET inbound webhooks. `AssemblyName`/`PackageId` unchanged. |
 | `Lyo.Webhook.Twilio` | B | `Communication/Webhook/` | - | 7 | HMAC verifier; no Twilio SDK. Stays a B provider, not Integration. |
-| `Lyo.Email` | B | `Communication/Email/` | - | - | |
+| `Lyo.Email` | B | `Communication/Email/` | - | - | Provider-neutral contracts, builder, and pipeline |
+| `Lyo.Email.Smtp` | B | `Communication/Email/` | - | - | MailKit SMTP provider |
+| `Lyo.Email.SendGrid` | B | `Communication/Email/` | - | - | Twilio SendGrid provider. Monolithic SDK+provider |
 | `Lyo.Email.Postgres` | A-like | `Communication/Email/` | - | - | |
 | `Lyo.MessageQueue` | B | `Communication/MessageQueue/` | - | - | |
 | `Lyo.MessageQueue.RabbitMq` | B | `Communication/MessageQueue/` | - | - | |
@@ -356,6 +359,7 @@ Drop-in modules. No `Build*Group` route mapping.
 | `Lyo.KeyStore.Web.Components` | B | `Security/KeyStore/` | - | - | In-process IKeyStore workbench (no HTTP) |
 | `Lyo.ContentThreatScan` | B | `Security/ContentThreatScan/` | - | - | |
 | `Lyo.ContentThreatScan.Intel` | B | `Security/ContentThreatScan/` | - | - | |
+| `Lyo.ContentThreatScan.ClamAv` | B | `Security/ContentThreatScan/` | - | - | HTTP clamav-rest adapter over `Lyo.ClamAv.Client` |
 | `Lyo.Drift.Models` | E | `Security/Drift/` | - | - | File-integrity / config-drift contracts. Not a capability+provider. Uses Hashing. |
 | `Lyo.Drift.Postgres` | E | `Security/Drift/` | - | - | Store only. HTTP is `Lyo.Drift.Api`. |
 | `Lyo.Drift.Web.Components` | E | `Security/Drift/` | - | - | Workbench UI |

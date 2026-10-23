@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Diagnostics;
 using System.Buffers.Binary;
 using System.Security.Cryptography;
 using System.Text;
@@ -29,6 +30,7 @@ namespace Lyo.Encryption;
 /// AES-SIV (nonce misuse-resistant: a repeated nonce only reveals whether two plaintexts match, never the key stream).
 /// </para>
 /// </remarks>
+[DebuggerDisplay("{ToString(),nq}")]
 public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlgorithmProvider, IRawAead
 {
     /// <summary>KeyStore used to fetch encryption keys. Null when the service does not use a store.</summary>
@@ -597,4 +599,7 @@ public abstract class EncryptionServiceBase : IEncryptionService, IEncryptionAlg
         var decrypted = DecryptFile(inputPath, keyId, key);
         File.WriteAllBytes(outputPath, decrypted);
     }
+
+    /// <summary>Service name and the options it was built with.</summary>
+    public override string ToString() => $"{GetType().Name} {Options}";
 }

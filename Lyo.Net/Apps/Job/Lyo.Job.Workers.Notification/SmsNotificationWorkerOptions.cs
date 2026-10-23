@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions.Models;
 
 namespace Lyo.Job.Workers.Notification;
 
 /// <summary>Options for <see cref="SmsNotificationWorker" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class SmsNotificationWorkerOptions
 {
     /// <summary>Default name of the configuration section.</summary>
@@ -31,4 +33,7 @@ public sealed class SmsNotificationWorkerOptions
         if (errors.Count > 0)
             throw new ValidationException($"Invalid {nameof(SmsNotificationWorkerOptions)}: {string.Join(" ", errors)}");
     }
+
+    /// <summary>Worker type, default sender, and requeue limit.</summary>
+    public override string ToString() => $"WorkerType={WorkerType} From={DefaultFrom} MaxRequeue={MaxRequeueCount} Dlq={DlqName}";
 }

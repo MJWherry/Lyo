@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Text.Json;
 using Lyo.Media.Models;
@@ -51,5 +52,6 @@ internal static class FFmpegLoudness
         return double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var number) && double.IsFinite(number);
     }
 
+    [DebuggerDisplay("{ToString(),nq}")]
     public readonly record struct Measurement(string Integrated, string TruePeak, string Range, string Threshold);
 }

@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Diagram.Models;
 
 /// <summary>A diagram document: a name and one or more pages of cells. This is the stored model. draw.io files are produced from it.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record DiagramDocument
 {
     /// <summary>Store key. The builder mints a version-7 GUID. Importing a draw.io file assigns a new id.</summary>
@@ -14,6 +17,7 @@ public sealed record DiagramDocument
 }
 
 /// <summary>One page in a <see cref="DiagramDocument" />. Maps to a draw.io <c>diagram</c> element.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record DiagramPage
 {
     /// <summary>Page id. Export writes it on the <c>diagram</c> element. draw.io reserves cell ids <c>0</c> and <c>1</c> for the root, so do not reuse those here.</summary>
@@ -33,6 +37,7 @@ public sealed record DiagramPage
 }
 
 /// <summary>A vertex or edge. <see cref="ParentId" /> null means the default layer (draw.io cell <c>1</c>).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record DiagramCell
 {
     /// <summary>Cell id, unique on the page. Ids <c>0</c> and <c>1</c> are reserved by draw.io.</summary>
@@ -64,6 +69,7 @@ public sealed record DiagramCell
 }
 
 /// <summary>draw.io <c>mxGeometry</c>: bounds, edge routing, and waypoints.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record DiagramGeometry
 {
     /// <summary>Left edge, in page coordinates. Null when the cell does not set <c>x</c> (typical for a relative edge).</summary>
@@ -92,6 +98,7 @@ public sealed record DiagramGeometry
 }
 
 /// <summary>A point in page coordinates.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record DiagramPoint
 {
     /// <summary>X coordinate.</summary>

@@ -109,6 +109,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Npgsql;
+using OpenTelemetry.Metrics;
 using Scalar.AspNetCore;
 using Constants = Lyo.TestApi.Constants;
 
@@ -126,7 +127,10 @@ builder.Services.Configure<FormOptions>(options => {
 
 builder.Services.AddOpenApi();
 builder.Services.AddLyoApiCompression();
-builder.Services.AddLyoMetricsWithOpenTelemetryFromConfiguration(builder.Configuration);
+builder.Services.AddLyoMetricsWithOpenTelemetryFromConfiguration(builder.Configuration, configureMeterProvider: metrics => {
+    metrics.AddMeter("*");
+    metrics.AddPrometheusExporter();
+});
 builder.Services.AddMetrics();
 builder.Services.AddFormatterService();
 builder.Services.AddCsvService();
@@ -339,6 +343,7 @@ app.UseAuthentication();
 app.UseFeatureFlags();
 app.UseAuthorization();
 app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "Lyo.TestApi" })).AllowAnonymous().WithTags("Health");
+app.MapPrometheusScrapingEndpoint().AllowAnonymous().DisableHttpMetrics();
 app.MapFeatureFlags();
 app.MapFeatureFlagManagement();
 app.MapGet("/feature-flags/sample", () => Results.Ok(new { feature = "sample" })).RequireFeature("sample");

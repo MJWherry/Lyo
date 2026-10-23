@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Web.Components.ParamTable;
 
 /// <summary>Host defaults for <see cref="LyoParameterEditor" />. Wire with <c>AddLyoParameterEditor</c>; hosts that never register it get the table layout with the toggle available.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LyoParameterEditorOptions
 {
     /// <summary>Configuration section bound by <c>AddLyoParameterEditorFromConfiguration</c>.</summary>
@@ -16,4 +18,7 @@ public sealed class LyoParameterEditorOptions
 
     /// <summary>Throws when <see cref="Layout" /> is not a declared enum value, which configuration binding can produce.</summary>
     public void Validate() => ArgumentHelpers.ThrowIfNotDefined(Layout);
+
+    /// <summary>Default layout and whether the user can switch.</summary>
+    public override string ToString() => $"Layout={Layout} AllowLayoutToggle={AllowLayoutToggle}";
 }

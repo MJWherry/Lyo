@@ -1,9 +1,12 @@
+using System.Diagnostics;
+
 namespace Lyo.Web.Automation.Models;
 
 /// <summary>
 /// A desktop width×height in CSS pixels. Used for session start and the <c>randomizeViewport</c> plan step. Headless Chromium reports <c>window.screen</c> as 800×600 unless
 /// the engine sets a real screen size — that pair is a bot-detection tell, so it is not in <see cref="Common" />.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct DesktopDisplaySize(int Width, int Height)
 {
     /// <summary>Lower bound after jitter so a roll cannot land on Chromium's 800×600 headless default.</summary>

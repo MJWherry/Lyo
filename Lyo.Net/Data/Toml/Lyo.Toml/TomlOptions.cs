@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Json;
 
 namespace Lyo.Toml;
@@ -6,6 +7,7 @@ namespace Lyo.Toml;
 /// Options for <see cref="TomlService" />. The JSON contract fields control names, numbers, and omission. <see cref="JsonOptions.IgnoreNulls" /> must stay true because TOML
 /// has no null.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class TomlOptions : JsonOptions
 {
     /// <summary>Configuration section name. Nothing in this package binds it.</summary>
@@ -30,6 +32,9 @@ public sealed class TomlOptions : JsonOptions
         if (!IgnoreNulls)
             throw new ArgumentException("TOML has no null. IgnoreNulls must stay true.");
     }
+
+    /// <summary>Items key, nested-table shape, date style, and the JSON contract limits.</summary>
+    public override string ToString() => $"{base.ToString()} ItemsKey={ItemsKey} NestedTables={NestedTables} DateStyle={DateStyle}";
 }
 
 /// <summary>Shape of a nested TOML object.</summary>

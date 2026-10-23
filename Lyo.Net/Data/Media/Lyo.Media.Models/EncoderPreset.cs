@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Lyo.Media.Models;
 
 /// <summary>Extensible encoder speed/quality preset identifier. Lookups are thread-safe. Use <see cref="Custom" /> for a preset that is not listed.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record EncoderPreset
 {
     private static readonly ConcurrentDictionary<string, EncoderPreset> ById = new(StringComparer.OrdinalIgnoreCase);

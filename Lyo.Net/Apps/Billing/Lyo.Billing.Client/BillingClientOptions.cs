@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Billing.Client;
 
 /// <summary>Settings used to build <see cref="BillingClient" /> routes.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class BillingClientOptions
 {
     /// <summary>Configuration section this type binds from.</summary>
@@ -22,4 +25,7 @@ public sealed class BillingClientOptions
         if (RoutePrefix.Contains("://", StringComparison.Ordinal))
             throw new ArgumentException($"{nameof(RoutePrefix)} is a path prefix, not an absolute URL. Set HttpClient.BaseAddress for the host.", nameof(RoutePrefix));
     }
+
+    /// <summary>Route prefix used in front of billing routes.</summary>
+    public override string ToString() => $"RoutePrefix={RoutePrefix}";
 }

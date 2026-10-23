@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Media.Models;
 
 /// <summary>EBU loudness target for a two-pass <c>loudnorm</c> measure and apply. Mutually exclusive with a raw audio filter.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record LoudnessTarget
 {
     /// <summary>Streaming target, −16 LUFS, −1.5 dBTP, LRA 11.</summary>

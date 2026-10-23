@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Espn.Fantasy.Football.Client.Models.Request;
 
 /// <summary>Body posted to the fantasy writes host. Null fields are omitted.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FantasyTransactionReq
 {
     /// <summary>True when the acting user is posting as the league manager. Builders default this to false.</summary>
@@ -38,6 +41,7 @@ public sealed record FantasyTransactionReq
 }
 
 /// <summary>One player action inside a <see cref="FantasyTransactionReq" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FantasyTransactionItemReq
 {
     /// <summary>ESPN player id.</summary>

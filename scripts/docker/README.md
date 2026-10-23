@@ -11,7 +11,7 @@ Compose-backed runner. Default starts the container detached and returns immedia
 - `python3 scripts/docker/run.py --wait Lyo.Encryption.Benchmarks`. Detached run that blocks until the container exits (then host history sync)
 - `python3 scripts/docker/run.py --build-only`. Rebuild the image without starting a suite
 - `python3 scripts/docker/resolve_targets.py '*.Benchmarks'`. List resolved project names for a filter
-- `python3 scripts/docker/run_workbench.py up`. Build and start TestApi, TestGateway, job examples, Postgres, RabbitMQ, Redis (detached)
+- `python3 scripts/docker/run_workbench.py up`. Build and start TestApi, TestGateway, job examples, Postgres, RabbitMQ, Redis, and Prometheus (detached)
 - `python3 scripts/docker/run_workbench.py down`. Stop the workbench stack
 - `python3 scripts/docker/run_workbench.py build`. Rebuild workbench images without starting containers
 - `python3 scripts/docker/run_workbench.py logs`. Follow workbench container logs

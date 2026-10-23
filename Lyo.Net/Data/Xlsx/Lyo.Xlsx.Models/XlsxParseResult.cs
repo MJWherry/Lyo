@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Result;
 
 namespace Lyo.Xlsx.Models;
 
 /// <summary>Typed sheet parse that keeps good rows when other rows have a bad cell. A missing sheet or a missing required header fails the document.</summary>
 /// <typeparam name="T">Row type.</typeparam>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record XlsxParseResult<T> : Result<IReadOnlyList<T>>
 {
     /// <summary>Row problems. Empty or null when every data row bound.</summary>

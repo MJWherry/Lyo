@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Web.Primitives.DataGrid;
@@ -6,6 +7,7 @@ namespace Lyo.Web.Primitives.DataGrid;
 /// Host defaults for every <see cref="LyoDataGrid{T}" /> and <see cref="LyoDataGridProjected" />. Register with <c>AddLyoDataGrid</c>; hosts that never register it receive
 /// <see cref="LyoDataGridLayout.Auto" /> with the toolbar toggle available.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LyoDataGridOptions
 {
     /// <summary>Configuration section bound by <c>AddLyoDataGridFromConfiguration</c>.</summary>
@@ -26,4 +28,7 @@ public sealed class LyoDataGridOptions
         ArgumentHelpers.ThrowIfNotDefined(Layout);
         ArgumentHelpers.ThrowIfNotDefined(CardBreakpoint);
     }
+
+    /// <summary>Default layout, toolbar toggle, and card breakpoint.</summary>
+    public override string ToString() => $"Layout={Layout} AllowLayoutToggle={AllowLayoutToggle} CardBreakpoint={CardBreakpoint}";
 }

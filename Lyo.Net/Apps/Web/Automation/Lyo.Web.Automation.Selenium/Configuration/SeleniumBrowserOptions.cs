@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Exceptions.Models;
 using Lyo.Web.Automation.Selenium.Browser;
 using Lyo.Web.Automation.Selenium.Service;
@@ -10,6 +11,7 @@ namespace Lyo.Web.Automation.Selenium.Configuration;
 /// HTTP request headers are not represented here: ChromeDriver does not apply arbitrary default headers to navigations without Chrome DevTools Protocol. Set user agent via
 /// <see cref="UserAgents" /> and WebDriver/Chrome flags via <see cref="WebDriverArguments" />.
 /// </remarks>
+[DebuggerDisplay("{ToString(),nq}")]
 public class SeleniumBrowserOptions
 {
     public const string SectionName = "SeleniumBrowserOptions";
@@ -156,6 +158,11 @@ public class SeleniumBrowserOptions
             PollingMaxAttempts = PollingMaxAttempts,
             PollingDelayBetweenAttempts = PollingDelayBetweenAttempts
         };
+
+    /// <summary>Browser, remote driver, and timeouts.</summary>
+    public override string ToString() =>
+        $"Browser={BrowserKind} Headless={Headless} Remote={RemoteWebDriverUri} Window={BrowserWindowWidth}x{BrowserWindowHeight} Agents={UserAgents?.Count ?? 0} " +
+        $"PageLoad={PageLoadTimeoutSeconds}s Implicit={ImplicitWaitSeconds}s Script={ScriptTimeoutSeconds}s MaxWait={SeleniumMaxWaitSeconds}s";
 }
 
 /// <summary>Per-session browser configuration. Pass to <see cref="ISeleniumBrowserService.CreateSession" /> to override service defaults for one session.</summary>

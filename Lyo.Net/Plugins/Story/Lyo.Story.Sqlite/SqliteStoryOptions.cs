@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 using Lyo.Sqlite;
 
 namespace Lyo.Story.Sqlite;
 
 /// <summary>Settings for the local SQLite story database. Section <see cref="SectionName" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class SqliteStoryOptions : ISqliteMigrationConfig
 {
     /// <summary>Configuration section name.</summary>
@@ -17,4 +19,7 @@ public sealed class SqliteStoryOptions : ISqliteMigrationConfig
 
     /// <summary>Throws when <see cref="ConnectionString" /> is missing.</summary>
     public void Validate() => ArgumentHelpers.ThrowIfNullOrWhiteSpace(ConnectionString);
+
+    /// <summary>Auto-migrate flag. The connection string is omitted.</summary>
+    public override string ToString() => $"EnableAutoMigrations={EnableAutoMigrations}";
 }

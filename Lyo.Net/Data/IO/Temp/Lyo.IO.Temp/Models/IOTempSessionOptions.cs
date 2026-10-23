@@ -1,9 +1,7 @@
+using System.Diagnostics;
 using System.Globalization;
 using Lyo.Common.Metadata.Records;
 using Lyo.IO.Temp.Enums;
-#if NETSTANDARD2_0
-using System.Diagnostics;
-#endif
 
 namespace Lyo.IO.Temp.Models;
 
@@ -11,6 +9,7 @@ namespace Lyo.IO.Temp.Models;
 /// Naming, layout, caps, and overflow for one session. Sessions from <see cref="Lyo.IO.Temp.IIOTempService.CreateSession" /> get <see cref="RootDirectory" /> set to the
 /// service folder.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 // ReSharper disable once InconsistentNaming
 public sealed class IOTempSessionOptions
 {
@@ -73,4 +72,8 @@ public sealed class IOTempSessionOptions
 
     /// <summary>What to do when <see cref="MaxFileCount" />, <see cref="MaxTotalSizeBytes" />, or a per-file cap would be crossed.</summary>
     public TempOverflowStrategy OverflowStrategy { get; init; } = TempOverflowStrategy.ThrowException;
+
+    /// <summary>Session root and size caps.</summary>
+    public override string ToString()
+        => $"RootDirectory={RootDirectory} MaxFileSizeBytes={MaxFileSizeBytes} MaxTotalSizeBytes={MaxTotalSizeBytes} MaxFileCount={MaxFileCount}";
 }

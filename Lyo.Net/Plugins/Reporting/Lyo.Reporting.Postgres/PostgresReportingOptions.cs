@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Postgres;
 
 namespace Lyo.Reporting.Postgres;
 
 /// <summary>Settings for PostgreSQL reporting.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class PostgresReportingOptions : PostgresOptionsBase
 {
     public const string SectionName = "PostgresReporting";
@@ -81,4 +83,10 @@ public sealed class PostgresReportingOptions : PostgresOptionsBase
                 throw new ArgumentException($"{nameof(PreRenderedFileRoots)} entries must be absolute paths; got '{root}'.", nameof(PreRenderedFileRoots));
         }
     }
+
+    /// <summary>Schema, size limits, and how many pre-render roots are configured. Root paths and the connection string are omitted.</summary>
+    public override string ToString()
+        => $"{base.ToString()} MaxReportDataJsonBytes={MaxReportDataJsonBytes} MaxOutputFileBytes={MaxOutputFileBytes} "
+           + $"AllowAdHocGeneration={AllowAdHocGeneration} PreRenderedFileRoots={PreRenderedFileRoots.Count} "
+           + $"MaxConcurrentGenerations={MaxConcurrentGenerations} GenerationTimeout={GenerationTimeout}";
 }

@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Leaderboard.Postgres.Database;
 
 /// <summary>Persisted scored event.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class EntryEntity
 {
     public Guid Id { get; set; }
@@ -40,4 +43,7 @@ public sealed class EntryEntity
     public MemberEntity? Member { get; set; }
 
     public List<EntryValueEntity> Values { get; set; } = [];
+
+    /// <summary>Type name, id, and title.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Title}";
 }

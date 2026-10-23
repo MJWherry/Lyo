@@ -1,10 +1,12 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Globalization;
 using Lyo.Exceptions;
 
 namespace Lyo.Media.Models;
 
 /// <summary>Output frame rate. Lookups are thread-safe. Use <see cref="FromDouble" /> for a rate that is not listed.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record VideoFrameRate
 {
     private static readonly ConcurrentDictionary<string, VideoFrameRate> ById = new(StringComparer.OrdinalIgnoreCase);

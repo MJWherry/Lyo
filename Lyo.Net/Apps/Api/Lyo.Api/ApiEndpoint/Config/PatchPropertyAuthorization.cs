@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using Lyo.Api.Models;
 using Lyo.Api.Models.Common.Request;
@@ -15,6 +16,7 @@ namespace Lyo.Api.ApiEndpoint.Config;
 /// <see cref="PolicyAllowedProperties" /> entry whose policy passes <see cref="IAuthorizationService.AuthorizeAsync(ClaimsPrincipal, string)" />. Use <c>"*"</c> in a policy's set to
 /// allow every key present in <see cref="PatchRequest.Properties" /> when that policy succeeds.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record PatchPropertyAuthorization
 {
     /// <summary>Maps an ASP.NET Core policy name to allowed CLR property names (case-insensitive). Ignored when <see cref="Custom" /> is set.</summary>

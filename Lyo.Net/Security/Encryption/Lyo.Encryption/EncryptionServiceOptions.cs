@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Encryption;
 
 /// <summary>Tunables that control encryption-service behavior.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class EncryptionServiceOptions
 {
     /// <summary>Format version written on encrypt. Null means the service does not version the format.</summary>
@@ -17,4 +20,7 @@ public class EncryptionServiceOptions
 
     /// <summary>AES-GCM key width for <see cref="AesGcm.AesGcmEncryptionService" /> and hybrid AES paths. Unused by non-AES services.</summary>
     public AesGcmKeySizeBits AesGcmKeySize { get; set; } = AesGcmKeySizeBits.Bits256;
+
+    /// <summary>Format, size limits, file extension, and AES-GCM key width.</summary>
+    public override string ToString() => $"CurrentFormatVersion={CurrentFormatVersion} MaxInputSize={MaxInputSize} MinInputSize={MinInputSize} FileExtension={FileExtension} AesGcmKeySize={AesGcmKeySize}";
 }

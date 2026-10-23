@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.Billing.Postgres.Database;
 
 /// <summary>Payment against an invoice.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class PaymentEntity
 {
     [Key]
@@ -27,4 +29,7 @@ public sealed class PaymentEntity
     public DateTime ReceivedAt { get; set; }
 
     public InvoiceEntity Invoice { get; set; } = null!;
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Leaderboard.Api;
 
 /// <summary>Hosting options for join URLs and optional invite email.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LeaderboardApiOptions
 {
     /// <summary>Configuration section name.</summary>
@@ -11,4 +14,7 @@ public sealed class LeaderboardApiOptions
 
     /// <summary>When true and Email is registered, email/user invites send a join message.</summary>
     public bool SendInviteEmail { get; set; } = true;
+
+    /// <summary>Public origin used for join URLs.</summary>
+    public override string ToString() => $"PublicBaseUrl={PublicBaseUrl} SendInviteEmail={SendInviteEmail}";
 }

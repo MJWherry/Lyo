@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.StateMachine.Models;
 
 /// <summary>A state machine definition as data: states, transitions, and the names of guards, hooks, and selectors to resolve from a registry at load time.</summary>
@@ -5,6 +7,7 @@ namespace Lyo.StateMachine.Models;
 /// States and triggers are strings (converted with <see cref="IStateKeyConverter{TValue}" />). Code cannot be stored, so every guard, hook, action, and dynamic selector is
 /// referenced by name. <see cref="Revision" /> is assigned by <see cref="IStateMachineDefinitionStore" /> when saved.
 /// </remarks>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record StateMachineDocument
 {
     /// <summary>Machine name. Stores key saved instances by it.</summary>
@@ -24,6 +27,7 @@ public sealed record StateMachineDocument
 }
 
 /// <summary>One state in a <see cref="StateMachineDocument" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record StateDocument
 {
     /// <summary>State key.</summary>
@@ -52,6 +56,7 @@ public sealed record StateDocument
 }
 
 /// <summary>A timer on a state.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record TimerDocument
 {
     /// <summary>Time in the state before the trigger is due.</summary>
@@ -81,6 +86,7 @@ public enum TransitionDocumentKind
 }
 
 /// <summary>One rule in a <see cref="StateDocument" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record TransitionDocument
 {
     /// <summary>Rule kind.</summary>

@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Common.Metadata.Records;
 
 namespace Lyo.ContentThreatScan.Intel;
 
 /// <summary>Keys, quotas, weights, caches, ClamTCP, and failure hooks for <see cref="DefaultContentThreatReputationPipeline" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ReputationPipelineOptions
 {
     public Uri MalwareBazaarEndpoint { get; set; } = new("https://mb-api.abuse.ch/api/v1/", UriKind.Absolute);
@@ -38,9 +40,15 @@ public sealed class ReputationPipelineOptions
     public decimal ProviderFailureThreatBump { get; set; } = 132m;
 
     public ClamdInstreamScanOptions Clamd { get; set; } = new();
+
+    /// <summary>Provider endpoints and whether API keys are set. Key values are omitted.</summary>
+    public override string ToString()
+        => $"MalwareBazaarEndpoint={MalwareBazaarEndpoint} MalwareBazaarAuthKeySet={!string.IsNullOrWhiteSpace(MalwareBazaarAuthKey)} "
+           + $"VirusTotalApiRoot={VirusTotalApiRoot} VirusTotalApiKeySet={!string.IsNullOrWhiteSpace(VirusTotalApiKey)} ProviderTimeout={ProviderTimeout} Clamd={Clamd}";
 }
 
 /// <summary>Optional clamd INSTREAM probe over TCP.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ClamdInstreamScanOptions
 {
     public bool Enabled { get; set; }
@@ -60,4 +68,7 @@ public sealed class ClamdInstreamScanOptions
 
     /// <summary>INSTREAM framing chunk writes (zero terminator not included).</summary>
     public int InstreamChunkSize { get; set; } = 8192;
+
+    /// <summary>Whether the probe is on, and which host and port it uses.</summary>
+    public override string ToString() => $"Enabled={Enabled} Host={Host} Port={Port}";
 }

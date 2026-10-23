@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Components;
 
 namespace Lyo.Reporting.Business.Example;
@@ -22,6 +23,7 @@ public partial class InvoiceCompact
         public decimal GrandTotal => LineItems.Sum(i => i.Total);
     }
 
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed record InvoiceCompactLineItem(string Description, int Quantity, decimal UnitPrice)
     {
         public decimal Total => Quantity * UnitPrice;

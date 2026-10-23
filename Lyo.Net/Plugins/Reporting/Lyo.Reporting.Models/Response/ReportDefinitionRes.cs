@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Reporting.Models.Enums;
 
 namespace Lyo.Reporting.Models.Response;
 
 /// <summary>Response payload for a report definition.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ReportDefinitionRes(
     Guid Id,
     string Name,

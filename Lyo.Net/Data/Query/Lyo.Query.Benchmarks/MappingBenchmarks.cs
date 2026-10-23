@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using BenchmarkDotNet.Attributes;
 using Lyo.Api.Mapping;
 using Lyo.Benchmark;
@@ -73,6 +74,8 @@ public sealed class MapChild
     public int Value { get; set; }
 }
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record MapEntityRes(Guid Id, string Name, int Age, List<MapChildRes> Children);
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record MapChildRes(Guid Id, string Label, int Value);

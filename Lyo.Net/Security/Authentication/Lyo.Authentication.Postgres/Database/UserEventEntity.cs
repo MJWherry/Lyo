@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Authentication.Models.Audit;
 
 namespace Lyo.Authentication.Postgres.Database;
 
 /// <summary>EF entity for the <c>[user].[event]</c> audit table. Persistence of <see cref="AuthAuditEvent" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class UserEventEntity
 {
     /// <summary>Server-generated row id (Guid v4). PK.</summary>
@@ -43,4 +45,7 @@ public sealed class UserEventEntity
 
     /// <summary>Open-ended metadata, JSON-serialized.</summary>
     public string? MetadataJson { get; set; }
+
+    /// <summary>Type name, id, and subject.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Subject}";
 }

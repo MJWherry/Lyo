@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Espn.Fantasy.Football.Client.Models.Request;
 
 /// <summary>Page window for one Fantasy Chat conversation. The chat app's first page is the newest 25 messages.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ChatConversationQuery
 {
     /// <summary>How many messages to return.</summary>

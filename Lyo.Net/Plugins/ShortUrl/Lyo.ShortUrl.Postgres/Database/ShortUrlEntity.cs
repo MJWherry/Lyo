@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 
 namespace Lyo.ShortUrl.Postgres.Database;
 
 /// <summary>Row that stores a short URL in the database.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ShortUrlEntity
 {
     /// <summary>Unique identifier (short code/alias) for this record.</summary>
@@ -63,4 +65,7 @@ public sealed class ShortUrlEntity
             IsActive = true,
             ClickCount = 0
         };
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

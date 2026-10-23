@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Compression.Models;
 
 namespace Lyo.Compression.Snappier;
 
 /// <summary>Snappy framing (Snappier). Very fast, less CPU than zlib on warm payloads. Default extension <c>.snappy</c>.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record SnappierCompressionAlgorithm : CompressionAlgorithm
 {
     /// <summary>Shared singleton instance.</summary>

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Saml;
 
 /// <summary>Server-side SP-initiated login ticket. The id travels in RelayState and is not a URL.</summary>
@@ -7,4 +9,5 @@ namespace Lyo.Authentication.Saml;
 /// <param name="ReturnUrl">Sanitized return target captured at login start.</param>
 /// <param name="Mode">Delivery mode captured at start. SAML completion always uses the browser handoff.</param>
 /// <param name="ExpiresAt">UTC instant after which the ticket is rejected.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record SamlLoginTicket(string Id, string Provider, string RequestId, string ReturnUrl, string Mode, DateTime ExpiresAt);

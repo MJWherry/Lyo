@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lyo.Api.ApiEndpoint.Config;
 
 /// <summary>Create endpoint settings. Use CreateConfig&lt;object, object, DbContext&gt; for dynamic endpoints.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record CreateConfig<TRequest, TEntity, TDbContext>
     where TDbContext : DbContext where TEntity : class
 {

@@ -11,6 +11,7 @@ using static Lyo.Tts.TtsErrorCodes;
 namespace Lyo.Tts;
 
 /// <summary>Shared base for TTS providers; implements the common bulk-synthesize path.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public abstract class TtsServiceBase<TRequest> : ITtsService<TRequest>, IDisposable
     where TRequest : TtsRequest
 {
@@ -265,4 +266,7 @@ public abstract class TtsServiceBase<TRequest> : ITtsService<TRequest>, IDisposa
         if (disposing)
             BulkTtsSemaphore.Dispose();
     }
+
+    /// <summary>Service name and the options it was built with. Secrets stay out of the options text.</summary>
+    public override string ToString() => $"{GetType().Name} {Options}";
 }

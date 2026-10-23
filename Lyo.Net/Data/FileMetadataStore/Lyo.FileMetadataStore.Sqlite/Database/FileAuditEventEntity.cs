@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 
 namespace Lyo.FileMetadataStore.Sqlite.Database;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class FileAuditEventEntity
 {
     [Key]
@@ -39,4 +41,7 @@ public sealed class FileAuditEventEntity
     public string? Error { get; set; }
 
     public Guid? CorrelationId { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

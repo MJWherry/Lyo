@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Leaderboard.Postgres.Database;
 
 /// <summary>Persisted manual point adjustment.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class AdjustmentEntity
 {
     public Guid Id { get; set; }
@@ -24,4 +27,7 @@ public sealed class AdjustmentEntity
     public BoardEntity? Board { get; set; }
 
     public MemberEntity? Member { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Components;
 
 namespace Lyo.Reporting.Business.Example;
@@ -19,6 +20,7 @@ public partial class Receipt
         decimal TaxAmount,
         decimal Total);
 
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed record ReceiptLineItem(string Description, int Quantity, decimal UnitPrice)
     {
         public decimal Total => Quantity * UnitPrice;

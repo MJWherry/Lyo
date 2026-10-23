@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Authentication.Models.Records;
 
 namespace Lyo.Authentication.Sso.Protocol;
@@ -7,4 +8,5 @@ namespace Lyo.Authentication.Sso.Protocol;
 /// <param name="ReturnUrl">Return target captured at login start.</param>
 /// <param name="Mode"><c>browser</c> or <c>api</c>.</param>
 /// <param name="Provider">Provider that completed the login.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ExternalLoginResult(IssuedLyoJwt Issued, string ReturnUrl, string Mode, string Provider);

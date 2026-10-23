@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.Ledger.Postgres.Database;
 
 /// <summary>Chart-of-accounts row.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LedgerAccountEntity
 {
     [Key]
@@ -23,4 +25,7 @@ public sealed class LedgerAccountEntity
     public DateTime CreatedAt { get; set; }
 
     public List<LedgerJournalLineEntity> Lines { get; set; } = [];
+
+    /// <summary>Type name, id, and name.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Name}";
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Reporting.Models.Enums;
 
 namespace Lyo.Reporting.Models.Response;
@@ -6,6 +7,7 @@ namespace Lyo.Reporting.Models.Response;
 /// Report generation response. <see cref="ReportDataJson" /> is null on generate and rerun responses unless the caller asked for it (<c>IncludeReportData</c>), because the
 /// composition JSON can reach several megabytes and most callers only need the status and output identifiers. Query and get responses still include it.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ReportGenerationRes(
     Guid Id,
     Guid? ReportDefinitionId,

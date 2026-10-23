@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Drift.Models;
 using Lyo.Exceptions;
 using Lyo.FileSystemWatcher.Models;
@@ -5,6 +6,7 @@ using Lyo.FileSystemWatcher.Models;
 namespace Lyo.Drift.Agent;
 
 /// <summary>One directory the agent watches.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class DriftWatchOptions
 {
     /// <summary>Absolute directory path.</summary>
@@ -24,9 +26,15 @@ public sealed class DriftWatchOptions
 
     /// <summary>Debounce delay in milliseconds.</summary>
     public int DebounceTimerDelay { get; set; } = 250;
+
+    /// <summary>Watched directory, pattern counts, and debounce.</summary>
+    public override string ToString() =>
+        $"Path={Path} Subdirs={IncludeSubdirectories} Include={IncludePatterns?.Count ?? 0} " +
+        $"Exclude={ExcludePatterns?.Count ?? 0} DebounceMs={DebounceTimerDelay}";
 }
 
 /// <summary>Settings for the Drift agent hosted service.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class DriftAgentOptions
 {
     /// <summary>Configuration section name.</summary>
@@ -83,6 +91,11 @@ public sealed class DriftAgentOptions
 
     /// <summary>Resolved include groups for system-info projection.</summary>
     public IReadOnlyList<SystemInfoDriftGroup> ResolvedSystemInfoInclude() => SystemInfoDriftGroups.Parse(SystemInfo.Include);
+
+    /// <summary>Collector URL, watch count, and ingest limits. Watch paths are not listed.</summary>
+    public override string ToString() =>
+        $"ApiBaseUrl={ApiBaseUrl} Instance={InstanceKey} Watches={Watches?.Count ?? 0} Heartbeat={HeartbeatInterval} " +
+        $"Ingest={IngestChannelCapacity} MaxContentBytes={MaxContentBytes} SystemInfoGroups={SystemInfo?.Include?.Count ?? 0}";
 }
 
 /// <summary>Agent-side include list for the system-info projection.</summary>

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Postgres;
@@ -11,6 +12,7 @@ namespace Lyo.Postgres;
 /// that constant without building options (migration factories, test fixtures, <c>MigrationsHistoryTable</c> calls).
 /// </para>
 /// </remarks>
+[DebuggerDisplay("{ToString(),nq}")]
 public abstract class PostgresOptionsBase : IPostgresMigrationConfig
 {
     /// <summary>PostgreSQL schema that owns this package's tables and its migration-history table.</summary>
@@ -32,4 +34,7 @@ public abstract class PostgresOptionsBase : IPostgresMigrationConfig
     /// </remarks>
     /// <exception cref="ArgumentException">Raised when <see cref="ConnectionString" /> is null, empty, or whitespace.</exception>
     public virtual void Validate() => ArgumentHelpers.ThrowIfNullOrWhiteSpace(ConnectionString);
+
+    /// <summary>Schema and auto-migrate flag. The connection string is omitted.</summary>
+    public override string ToString() => $"Schema={SchemaName} EnableAutoMigrations={EnableAutoMigrations}";
 }

@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 using Lyo.Sqlite;
 
 namespace Lyo.FileMetadataStore.Sqlite;
 
 /// <summary>Options for the SQLite file metadata store.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class SqliteFileMetadataStoreOptions : ISqliteMigrationConfig
 {
     public const string SectionName = "SqliteFileMetadataStore";
@@ -16,4 +18,7 @@ public sealed class SqliteFileMetadataStoreOptions : ISqliteMigrationConfig
 
     /// <summary>Throws when <see cref="ConnectionString" /> is missing.</summary>
     public void Validate() => ArgumentHelpers.ThrowIfNullOrWhiteSpace(ConnectionString);
+
+    /// <summary>Auto-migrate flag. The connection string is omitted.</summary>
+    public override string ToString() => $"EnableAutoMigrations={EnableAutoMigrations}";
 }

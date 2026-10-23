@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 
 namespace Lyo.Authentication.Web.Components.Models;
@@ -16,6 +17,7 @@ namespace Lyo.Authentication.Web.Components.Models;
 /// <param name="LastUsedAt">Best-effort last-validated timestamp.</param>
 /// <param name="RevokedAt">When the token was revoked, or <c>null</c> if still active.</param>
 /// <param name="RevokedReason">Audit string captured at revocation.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record AuthTokenSummary(
     [property: JsonPropertyName("id")] string Id,
     [property: JsonPropertyName("kind")] string Kind,

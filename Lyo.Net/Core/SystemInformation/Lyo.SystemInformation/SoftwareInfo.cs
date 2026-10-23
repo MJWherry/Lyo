@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.SystemInformation;
 
 /// <summary>Operating system, runtime, and current-process facts.</summary>
@@ -14,6 +16,7 @@ namespace Lyo.SystemInformation;
 /// <param name="ProcessName">Name of the current process.</param>
 /// <param name="ProcessStartTimeUtc">UTC time when the current process started.</param>
 /// <param name="ProcessUptime">Elapsed time since the current process started.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record SoftwareInfo(
     string OsDescription,
     string OsPlatform,

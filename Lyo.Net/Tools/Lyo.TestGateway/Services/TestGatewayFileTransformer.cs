@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Diagnostics;
 using System.Text;
 using Lyo.Common.Metadata.Records;
 using Lyo.Compression;
@@ -36,9 +37,13 @@ public enum TestGatewayFileOperation
     Decompress
 }
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record TestGatewayUploadedFile(string FileName, string ContentType, byte[] Content)
 {
     public long Size => Content.LongLength;
+
+    /// <summary>File name, content type, and byte length. File bytes are omitted.</summary>
+    public override string ToString() => $"{FileName} ({ContentType}, {Content?.Length ?? 0} bytes)";
 }
 
 public sealed record TestGatewayTransformOptions(
@@ -55,7 +60,12 @@ public sealed record TestGatewayTransformOptions(
     AesSivKeySizeBits DataAesSivKeySize = AesSivKeySizeBits.Bits256,
     AesSivKeySizeBits KeyAesSivKeySize = AesSivKeySizeBits.Bits256);
 
-public sealed record TestGatewayTransformResult(string OutputFileName, string OutputContentType, byte[] OutputBytes, IReadOnlyList<KeyValuePair<string, string>> Details);
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record TestGatewayTransformResult(string OutputFileName, string OutputContentType, byte[] OutputBytes, IReadOnlyList<KeyValuePair<string, string>> Details)
+{
+    /// <summary>Output name, content type, and byte length. Output bytes are omitted.</summary>
+    public override string ToString() => $"{OutputFileName} ({OutputContentType}, {OutputBytes?.Length ?? 0} bytes, {Details.Count} details)";
+}
 
 public sealed class TestGatewayFileTransformer
 {

@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Job.Models.Enums;
 
 namespace Lyo.Job.Models.Response;
 
 /// <summary>A registered (live) worker instance, including host metadata reported when it registered.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record JobWorkerInstanceRes
 {
     /// <summary>Instance id assigned at register.</summary>

@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Api.FileStorage.Models;
 using Lyo.Exceptions;
 
 namespace Lyo.FileManager;
 
 /// <summary>Which File Manager commands the connected server allows.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FileManagerCommandState(bool PresignedRead, bool Copy, bool Move, bool AccessLinks, bool Encryption)
 {
     /// <summary>Maps storage capability flags onto the commands the window shows.</summary>

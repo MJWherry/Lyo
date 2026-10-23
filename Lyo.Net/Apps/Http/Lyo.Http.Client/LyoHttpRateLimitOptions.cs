@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Http.Client;
 
 /// <summary>Client-side token-bucket rate limit. Off or generous for vendors; Flared uses a strict bucket (for example 1 permit / 2s).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LyoHttpRateLimitOptions
 {
     /// <summary>When false, the rate-limit handler acquires no permits.</summary>
@@ -51,4 +53,8 @@ public sealed class LyoHttpRateLimitOptions
         ArgumentHelpers.ThrowIf(Jitter < 0, "Jitter must be >= 0.");
         ArgumentHelpers.ThrowIf(MaxConcurrent < 0, "MaxConcurrent must be >= 0.");
     }
+
+    /// <summary>Permit window, queue, and concurrency caps.</summary>
+    public override string ToString() =>
+        $"Enabled={Enabled} Permits={PermitLimit} Window={Window} Queue={QueueLimit} MaxConcurrent={MaxConcurrent} Whitelist={Whitelist?.Count ?? 0}";
 }

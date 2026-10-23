@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Algorithms;
 
 /// <summary>Points at one catalog algorithm. Exactly one of latest, a revision number, or a label.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record AlgorithmRef
 {
     /// <summary>Catalog key.</summary>

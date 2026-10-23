@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 
 namespace Lyo.People.Postgres.Database;
 
 /// <summary>PostgreSQL row for an identity document.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class IdentificationEntity
 {
     [Key]
@@ -41,4 +43,7 @@ public sealed class IdentificationEntity
 
     [ForeignKey(nameof(PersonId))]
     public PersonEntity? Person { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

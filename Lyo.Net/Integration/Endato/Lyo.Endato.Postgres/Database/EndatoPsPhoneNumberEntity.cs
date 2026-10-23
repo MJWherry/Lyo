@@ -1,10 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 using NpgsqlTypes;
 
 namespace Lyo.Endato.Postgres.Database;
 
 /// <summary>Row that stores an Endato Person Search phone number.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class EndatoPsPhoneNumberEntity
 {
     [Key]
@@ -51,4 +53,7 @@ public sealed class EndatoPsPhoneNumberEntity
 
     [Required]
     public DateOnly TotalFirstSeenDate { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

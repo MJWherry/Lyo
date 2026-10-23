@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.OpenIdConnect.Pkce;
 
 /// <summary>Per-login state sealed into the <c>lyo_oidc_state</c> cookie. Survives the round trip to the IdP.</summary>
@@ -16,4 +18,10 @@ namespace Lyo.Authentication.OpenIdConnect.Pkce;
 /// How the callback should deliver issued tokens to the caller. <c>browser</c> (default) drops a single-use handoff code in the redirect URL; <c>api</c> returns
 /// tokens as JSON with no redirect.
 /// </param>
-public sealed record PkceState(string Verifier, string Nonce, string Provider, string ReturnUrl, string State, string Mode = "browser");
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record PkceState(string Verifier, string Nonce, string Provider, string ReturnUrl, string State, string Mode = "browser")
+{
+    /// <summary>Provider, mode, and return URL. Verifier, nonce, and state are omitted.</summary>
+    public override string ToString()
+        => $"Provider={Provider} Mode={Mode} ReturnUrl={ReturnUrl} VerifierSet={Verifier.Length > 0} NonceSet={Nonce.Length > 0} StateSet={State.Length > 0}";
+}

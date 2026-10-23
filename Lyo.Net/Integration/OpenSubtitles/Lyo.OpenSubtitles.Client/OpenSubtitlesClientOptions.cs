@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Http.Client;
 
 namespace Lyo.OpenSubtitles.Client;
@@ -6,6 +7,7 @@ namespace Lyo.OpenSubtitles.Client;
 /// Settings for <see cref="OpenSubtitlesClient" />. Bind from section <c>OpenSubtitlesClient</c>. <see cref="LyoHttpClientOptions.BaseUrl" /> defaults to the consumer API
 /// root.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class OpenSubtitlesClientOptions : LyoHttpClientOptions
 {
     /// <summary>Configuration section name.</summary>
@@ -19,4 +21,7 @@ public class OpenSubtitlesClientOptions : LyoHttpClientOptions
 
     /// <summary>Creates options pointed at <c>https://api.opensubtitles.com/api/v1/</c>.</summary>
     public OpenSubtitlesClientOptions() => BaseUrl = "https://api.opensubtitles.com/api/v1/";
+
+    /// <summary>Whether an API key is set, plus the shared HTTP options. The key value is omitted.</summary>
+    public override string ToString() => $"ApiKeySet={!string.IsNullOrWhiteSpace(ApiKey)} ApplicationUserAgent={ApplicationUserAgent} {base.ToString()}";
 }

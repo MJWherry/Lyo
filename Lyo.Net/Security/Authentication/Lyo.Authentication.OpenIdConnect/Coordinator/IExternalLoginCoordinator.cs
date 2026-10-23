@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Authentication.Sso.Protocol;
 
 namespace Lyo.Authentication.OpenIdConnect.Coordinator;
@@ -16,4 +17,9 @@ public interface IExternalLoginCoordinator
 /// <summary>Result of <see cref="IExternalLoginCoordinator.BuildLoginRedirectAsync" />.</summary>
 /// <param name="AuthorizeUrl">Where to send the browser.</param>
 /// <param name="SealedState">HttpOnly cookie value presented back to <see cref="IExternalLoginCoordinator.HandleCallbackAsync" />.</param>
-public sealed record ExternalLoginRedirect(string AuthorizeUrl, string SealedState);
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record ExternalLoginRedirect(string AuthorizeUrl, string SealedState)
+{
+    /// <summary>Authorize URL. The sealed state value is omitted.</summary>
+    public override string ToString() => $"AuthorizeUrl={AuthorizeUrl} SealedStateSet={SealedState.Length > 0}";
+}

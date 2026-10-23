@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.EntityReference.Models;
 
 namespace Lyo.Schedule.Models;
@@ -12,6 +13,7 @@ namespace Lyo.Schedule.Models;
 /// <param name="Category">Optional grouping key a host can map to a hue when <paramref name="Hue" /> is unset.</param>
 /// <param name="Refs">Entity references attached to the span, such as the people in a meeting. The calendar stores them and does not load the entities.</param>
 /// <param name="Muted">True when the span should be drawn gray, such as a fire a blackout would skip.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record TimeFrame(
     DateTime Start,
     DateTime End,

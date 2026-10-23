@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.Ledger.Postgres.Database;
 
 /// <summary>Journal header.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LedgerJournalEntity
 {
     [Key]
@@ -34,4 +36,7 @@ public sealed class LedgerJournalEntity
     public List<LedgerJournalEntity> Reversals { get; set; } = [];
 
     public List<LedgerJournalLineEntity> Lines { get; set; } = [];
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

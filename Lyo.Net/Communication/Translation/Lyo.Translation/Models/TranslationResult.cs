@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Common.Metadata.Records;
 using Lyo.Result;
 
 namespace Lyo.Translation.Models;
 
 /// <summary>Outcome of a translation, including fields unique to that operation.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record TranslationResult : Result<TranslationRequest>
 {
     /// <summary>Text returned by the provider.</summary>

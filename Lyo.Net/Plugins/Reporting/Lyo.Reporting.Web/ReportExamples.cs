@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Common.Core.Identifiers;
 using Lyo.Metrics;
 using Lyo.Reporting.Models.Builders;
@@ -355,23 +356,29 @@ public static class ReportExamples
 
     public sealed record EmployeePerformanceOptions(string EmployeeName, string Position, DateOnly StartDate, DateOnly EndDate);
 
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed record ProjectData(string Name, int Score, int DurationWeeks, DateOnly StartDate, DateOnly EndDate);
 
     public sealed record FinancialStatementOptions(string CompanyName, DateOnly StartDate, DateOnly EndDate, decimal TotalRevenue, decimal TotalExpenses, decimal NetIncome);
 
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed record ExpenseItem(string Category, decimal Amount);
 
     public sealed record ProjectStatusOptions(string ProjectName, string Status, int Progress, DateOnly StartDate, DateOnly TargetDate);
 
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed record TaskItem(string TaskName, string Status, int Progress, string AssignedTo);
 
     public sealed record MetricsDashboardOptions(DateTime StartDate, DateTime EndDate, string Environment);
 
     public sealed record InvoiceOptions(string InvoiceNumber, DateTime InvoiceDate, DateTime DueDate, BillerInfo Biller, CustomerInfo Customer, string PaymentTerms);
 
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed record BillerInfo(string CompanyName, string Address, string CityStateZip, string Email, string Phone);
 
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed record CustomerInfo(string CompanyName, string Address, string CityStateZip, string Email);
 
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed record InvoiceLineItem(string Description, int Quantity, decimal UnitPrice);
 }

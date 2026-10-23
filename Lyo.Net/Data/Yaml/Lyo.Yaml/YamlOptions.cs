@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Json;
 
 namespace Lyo.Yaml;
@@ -6,6 +7,7 @@ namespace Lyo.Yaml;
 /// Options for <see cref="YamlService" />. The JSON contract fields control names, numbers, and omission. <see cref="JsonOptions.WriteIndented" /> selects block YAML when
 /// true and flow YAML when false.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class YamlOptions : JsonOptions
 {
     /// <summary>Configuration section name. Nothing in this package binds it.</summary>
@@ -25,6 +27,9 @@ public sealed class YamlOptions : JsonOptions
 
     /// <summary>Builds options. YAML starts indented, which means a block document.</summary>
     public YamlOptions() => WriteIndented = true;
+
+    /// <summary>Quote style and the JSON contract limits.</summary>
+    public override string ToString() => $"{base.ToString()} QuoteStrings={QuoteStrings}";
 }
 
 /// <summary>Quoting for YAML strings.</summary>

@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Authorization.Postgres.Database;
 
 /// <summary>Row in <c>authorization.grant</c>.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class GrantEntity
 {
     /// <summary>Primary key.</summary>
@@ -32,4 +35,7 @@ public sealed class GrantEntity
 
     /// <summary>Insert time.</summary>
     public DateTime CreatedTimestamp { get; set; }
+
+    /// <summary>Type name, id, and subject.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Subject}";
 }

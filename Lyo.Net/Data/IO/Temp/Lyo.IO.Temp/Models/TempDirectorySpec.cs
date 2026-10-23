@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
 
 namespace Lyo.IO.Temp.Models;
 
 /// <summary>Shape of a fake temp directory: file count, size, and nested children.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public record TempDirectorySpec
 {
     [ThreadStatic]

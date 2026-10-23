@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Law.Postgres.Database;
 
 /// <summary>A US state. <c>US</c> is not a valid key.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LawJurisdictionEntity
 {
     /// <summary>Row id.</summary>
@@ -20,4 +23,7 @@ public sealed class LawJurisdictionEntity
 
     /// <summary>Compilations in this state.</summary>
     public List<LawCodeEntity> Codes { get; set; } = [];
+
+    /// <summary>Type name, id, and name.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Name}";
 }

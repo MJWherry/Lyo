@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Desktop.Components;
 
 namespace Lyo.Web.Automation.Studio;
 
 /// <summary>Label and hue for one network chip.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct NetworkChipSpec(string Label, int Hue);
 
 /// <summary>Chips for a captured request: method, status, and resource type.</summary>

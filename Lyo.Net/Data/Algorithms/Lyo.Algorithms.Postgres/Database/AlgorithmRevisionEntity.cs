@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Algorithms.Postgres.Database;
 
 /// <summary>Append-only row in <c>algorithms.algorithm_definition_revision</c>.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class AlgorithmRevisionEntity
 {
     public Guid DefinitionId { get; set; }
@@ -16,4 +19,7 @@ public sealed class AlgorithmRevisionEntity
     public DateTime CreatedTimestamp { get; set; }
 
     public AlgorithmDefinitionEntity? Definition { get; set; }
+
+    /// <summary>Type name and primary key.</summary>
+    public override string ToString() => $"{GetType().Name} {DefinitionId} {Revision}";
 }

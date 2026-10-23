@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Leaderboard.Postgres.Database;
 
 /// <summary>Persisted membership.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class MemberEntity
 {
     public Guid Id { get; set; }
@@ -26,4 +29,7 @@ public sealed class MemberEntity
     public DateTime? UpdatedAt { get; set; }
 
     public BoardEntity? Board { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

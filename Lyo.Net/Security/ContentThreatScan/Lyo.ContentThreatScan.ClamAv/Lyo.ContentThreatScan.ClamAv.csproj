@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+        <Description>Maps clamav-rest scan verdicts into Lyo content-threat reputation envelopes.</Description>
+        <PackageTags>clamav content-threat virus scan</PackageTags>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lyo.ContentThreatScan\Lyo.ContentThreatScan.csproj"/>
+        <ProjectReference Include="..\..\..\Integration\ClamAv\Lyo.ClamAv.Client\Lyo.ClamAv.Client.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions"/>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions"/>
+        <PackageReference Include="Microsoft.Extensions.Options"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Lyo.ContentThreatScan.ClamAv.Tests"/>
+    </ItemGroup>
+
+</Project>

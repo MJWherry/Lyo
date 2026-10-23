@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Law.Postgres.Database;
 
 /// <summary>Insert-only snapshot of a node taken when an upsert changes the content hash.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LawRevisionEntity
 {
     /// <summary>Row id.</summary>
@@ -29,4 +32,7 @@ public sealed class LawRevisionEntity
 
     /// <summary>Owning node.</summary>
     public LawNodeEntity Node { get; set; } = null!;
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

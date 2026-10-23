@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions.Models;
 
 namespace Lyo.Job.Scheduler;
 
 /// <summary>Settings for <see cref="JobWorkflowEngine" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class JobWorkflowEngineOptions
 {
     public const string SectionName = "JobWorkflowEngine";
@@ -26,4 +28,7 @@ public sealed class JobWorkflowEngineOptions
         if (errors.Count > 0)
             throw new ValidationException($"Invalid {nameof(JobWorkflowEngineOptions)}: {string.Join(" ", errors)}");
     }
+
+    /// <summary>Job API base URL and creator stamp.</summary>
+    public override string ToString() => $"ApiBaseUrl={ApiBaseUrl} CreatedBy={CreatedBy}";
 }

@@ -54,8 +54,8 @@ public class EmailNotificationWorker : JobWorkerBase
         var cc = NotificationParameters.Optional(ctx, Constants.ParameterKey.Cc);
         var request = new EmailRequest(
             NotificationParameters.Optional(ctx, Constants.ParameterKey.From) ?? _options.DefaultFromAddress,
-            NotificationParameters.Optional(ctx, Constants.ParameterKey.FromName) ?? _options.DefaultFromName, NotificationParameters.Recipients(to),
-            cc is null ? null : NotificationParameters.Recipients(cc), Subject: subject, TextBody: isHtml ? null : body, HtmlBody: isHtml ? body : null);
+            NotificationParameters.Optional(ctx, Constants.ParameterKey.FromName) ?? _options.DefaultFromName, Addresses(NotificationParameters.Recipients(to)),
+            cc is null ? null : Addresses(NotificationParameters.Recipients(cc)), Subject: subject, TextBody: isHtml ? null : body, HtmlBody: isHtml ? body : null);
 
         try {
             var result = await _email.SendEmailAsync(request, ctx.CancellationToken).ConfigureAwait(false);
@@ -71,4 +71,6 @@ public class EmailNotificationWorker : JobWorkerBase
             ctx.Results.AddError($"Email to '{to}' failed: {ex.Message}");
         }
     }
+
+    private static IReadOnlyList<EmailAddress> Addresses(IReadOnlyList<string> values) => values.Select(static value => new EmailAddress(value)).ToArray();
 }

@@ -20,6 +20,7 @@
         <ProjectReference Include="..\..\..\Data\QRCode\Lyo.QRCode\Lyo.QRCode.csproj"/>
         <ProjectReference Include="..\..\..\Plugins\ShortUrl\Lyo.ShortUrl\Lyo.ShortUrl.csproj"/>
         <ProjectReference Include="..\..\..\Plugins\ShortUrl\Lyo.ShortUrl.Postgres\Lyo.ShortUrl.Postgres.csproj"/>
+        <ProjectReference Include="..\..\..\Communication\Email\Lyo.Email.Smtp\Lyo.Email.Smtp.csproj"/>
         <ProjectReference Include="..\..\..\Communication\Email\Lyo.Email\Lyo.Email.csproj"/>
         <ProjectReference Include="..\..\Api\Lyo.Api\Lyo.Api.csproj"/>
         <ProjectReference Include="..\..\..\Data\Algorithms\Lyo.Algorithms\Lyo.Algorithms.csproj"/>

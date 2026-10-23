@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 
 namespace Lyo.People.Postgres.Database;
 
 /// <summary>Person-to-email link with a role and an optional date range.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ContactEmailAddressEntity
 {
     [Key]
@@ -39,4 +41,7 @@ public sealed class ContactEmailAddressEntity
 
     [ForeignKey(nameof(EmailAddressId))]
     public EmailAddressEntity? EmailAddress { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

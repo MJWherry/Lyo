@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 namespace Lyo.Stt;
 
 /// <summary>Shared base for STT providers; implements the common bulk-recognize path.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public abstract class SttServiceBase : ISttService, IDisposable
 {
     private int _disposedInt;
@@ -225,4 +226,7 @@ public abstract class SttServiceBase : ISttService, IDisposable
         if (disposing)
             BulkSttSemaphore.Dispose();
     }
+
+    /// <summary>Service name and the options it was built with. Secrets stay out of the options text.</summary>
+    public override string ToString() => $"{GetType().Name} {Options}";
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 using Lyo.Api.Models.Error;
 using Lyo.Authentication.Audit;
@@ -448,26 +449,47 @@ public static class AuthEndpointsMapper
     private static LyoOAuthTokenResponse BuildTokenResponse(IssuedLyoJwt issued) => LyoOAuthTokenResponse.FromIssued(issued, DateTime.UtcNow);
 
     /// <summary>JSON body accepted by <c>POST /auth/handoff/exchange</c>.</summary>
-    public sealed record HandoffExchangeRequest([property: JsonPropertyName("code")] string? Code);
+    [DebuggerDisplay("{ToString(),nq}")]
+    public sealed record HandoffExchangeRequest([property: JsonPropertyName("code")] string? Code)
+    {
+        /// <summary>Whether a handoff code was supplied. The code is omitted.</summary>
+        public override string ToString() => $"CodeSet={!string.IsNullOrEmpty(Code)}";
+    }
 
     /// <summary>JSON body accepted by <c>POST /auth/token</c>.</summary>
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed record TokenRequest(
         [property: JsonPropertyName("grant_type")]
         string? GrantType,
         [property: JsonPropertyName("refresh_token")]
-        string? RefreshToken);
+        string? RefreshToken)
+    {
+        /// <summary>Grant type. Refresh token is omitted.</summary>
+        public override string ToString() => $"GrantType={GrantType} RefreshTokenSet={!string.IsNullOrEmpty(RefreshToken)}";
+    }
 
     /// <summary>JSON body accepted by <c>POST /auth/refresh</c>.</summary>
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed record RefreshRequest(
         [property: JsonPropertyName("refresh_token")]
-        string? RefreshToken);
+        string? RefreshToken)
+    {
+        /// <summary>Whether a refresh token was supplied. The token is omitted.</summary>
+        public override string ToString() => $"RefreshTokenSet={!string.IsNullOrEmpty(RefreshToken)}";
+    }
 
     /// <summary>JSON body accepted by <c>POST /auth/logout</c>.</summary>
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed record LogoutRequest(
         [property: JsonPropertyName("refresh_token")]
-        string? RefreshToken);
+        string? RefreshToken)
+    {
+        /// <summary>Whether a refresh token was supplied. The token is omitted.</summary>
+        public override string ToString() => $"RefreshTokenSet={!string.IsNullOrEmpty(RefreshToken)}";
+    }
 
     /// <summary>JSON shape returned by <c>GET /auth/me</c>.</summary>
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed record MeResponse(LyoUser User, string[] Scopes, LinkedIdentity[] LinkedIdentities);
 }
 

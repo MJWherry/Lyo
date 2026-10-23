@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
 using Lyo.Exceptions;
@@ -9,6 +10,7 @@ namespace Lyo.Formatter.Web.Components;
 /// <param name="Path">Selector as it appears inside <c>{...}</c>, e.g. <c>User.First</c>.</param>
 /// <param name="Preview">Short display of the current value, for scanning the list.</param>
 /// <param name="HasChildren">True when the value has nested keys or properties the user can continue into.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record LyoFormatterContextEntry(string Path, string Preview, bool HasChildren);
 
 /// <summary>The <c>{...}</c> token that holds the caret, used to insert or replace a context path.</summary>
@@ -17,6 +19,7 @@ public sealed record LyoFormatterContextEntry(string Path, string Preview, bool 
 /// <param name="Prefix">Selector text after <c>{</c> up to the caret (format specifiers omitted).</param>
 /// <param name="Key">Full selector inside the token, ignoring <c>:format</c>.</param>
 /// <param name="Closed">True when a matching <c>}</c> exists after the caret.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct LyoFormatterPlaceholderSpan(int BraceIndex, int EndIndex, string Prefix, string Key, bool Closed);
 
 /// <summary>

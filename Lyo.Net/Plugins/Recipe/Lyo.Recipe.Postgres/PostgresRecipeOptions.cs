@@ -1,9 +1,11 @@
+using System.Diagnostics;
 using Lyo.EntityReference.Models;
 using Lyo.Postgres;
 
 namespace Lyo.Recipe.Postgres;
 
 /// <summary>Settings for the recipe PostgreSQL schema.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class PostgresRecipeOptions : PostgresOptionsBase
 {
     /// <summary>Configuration section this type binds from.</summary>
@@ -18,4 +20,7 @@ public sealed class PostgresRecipeOptions : PostgresOptionsBase
 
     /// <inheritdoc />
     protected override string SchemaName => Schema;
+
+    /// <summary>Schema, auto-migrate flag, and tenancy. The connection string is omitted.</summary>
+    public override string ToString() => $"{base.ToString()} Tenancy={Tenancy}";
 }

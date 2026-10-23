@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 using NpgsqlTypes;
 
 namespace Lyo.Music.Postgres.Database;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class MusicTrackEntity
 {
     public Guid Id { get; set; }
@@ -38,4 +40,7 @@ public sealed class MusicTrackEntity
     public MusicReleaseEntity? Release { get; set; }
 
     public ICollection<MusicCreditEntity> Credits { get; set; } = [];
+
+    /// <summary>Type name, id, and title.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Title}";
 }

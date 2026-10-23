@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.FileMetadataStore.Models;
@@ -6,6 +7,7 @@ namespace Lyo.FileMetadataStore.Models;
 /// <param name="TagType">Tag dimension.</param>
 /// <param name="Kind">How the stored text is parsed.</param>
 /// <param name="Grain">Which part of the parsed value is the folder name.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public readonly record struct FileTagGroupKey(string TagType, FileTagValueKind Kind, FileTagGrain Grain)
 {
     /// <summary>Builds a key whose kind is the one <paramref name="grain" /> implies when the query omits a kind.</summary>

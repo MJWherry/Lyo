@@ -1,5 +1,8 @@
+using System.Diagnostics;
+
 namespace Lyo.Story.Postgres.Database;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class StorySceneEntity
 {
     public Guid Id { get; set; }
@@ -15,4 +18,7 @@ public sealed class StorySceneEntity
     public StoryEntity Story { get; set; } = null!;
 
     public ICollection<StoryNodeEntity> Nodes { get; set; } = [];
+
+    /// <summary>Type name, id, and title.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Title}";
 }

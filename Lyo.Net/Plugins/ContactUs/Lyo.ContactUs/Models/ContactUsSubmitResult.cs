@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Result;
 
 namespace Lyo.ContactUs.Models;
 
 /// <summary>Outcome of a contact form submission.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ContactUsSubmitResult : Result<Guid?>
 {
     /// <summary>The ID for the submitted contact form entry (when successful).</summary>

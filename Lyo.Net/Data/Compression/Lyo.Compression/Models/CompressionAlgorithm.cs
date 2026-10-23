@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 using Lyo.Common.Core.Extensions;
 using Lyo.Common.Core.Net;
@@ -24,6 +25,7 @@ namespace Lyo.Compression.Models;
 /// </para>
 /// </remarks>
 [JsonConverter(typeof(CompressionAlgorithmJsonConverter))]
+[DebuggerDisplay("{ToString(),nq}")]
 public abstract record CompressionAlgorithm
 {
     private static readonly ConcurrentDictionary<string, CompressionAlgorithm> ByExt = new(StringComparer.OrdinalIgnoreCase);
@@ -125,6 +127,7 @@ public abstract record CompressionAlgorithm
 }
 
 /// <summary>Concrete record used by built-in algorithms shipped in <c>Lyo.Compression</c>. Addon packages should declare their own dedicated subclass instead of reusing this type.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record BuiltInCompressionAlgorithm : CompressionAlgorithm
 {
     /// <param name="name">Algorithm name (e.g. <c>"GZip"</c>).</param>

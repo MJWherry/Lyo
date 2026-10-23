@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 using Lyo.Web.Components.JsonEditor;
 
 namespace Lyo.Query.Web.Components;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record QueryWorkbenchRunConfiguration
 {
     public Dictionary<string, List<string>> HostEndpoints { get; init; } = new();

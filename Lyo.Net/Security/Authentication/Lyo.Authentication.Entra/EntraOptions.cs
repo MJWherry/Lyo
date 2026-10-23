@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Authentication.Saml;
 using Lyo.Exceptions;
 
@@ -7,6 +8,7 @@ namespace Lyo.Authentication.Entra;
 /// Microsoft Entra SAML app settings. The Identifier (Entity ID) and Reply URL must match <see cref="EntityId" /> and <see cref="AcsUrl" /> exactly. Leave request
 /// verification and assertion encryption off.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class EntraOptions
 {
     /// <summary>Configuration section.</summary>
@@ -46,4 +48,7 @@ public sealed class EntraOptions
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(ApplicationId);
         SamlServiceProviderRules.Validate(EntityId, AcsUrl);
     }
+
+    /// <summary>Tenant, application id, and assertion consumer URL.</summary>
+    public override string ToString() => $"TenantId={TenantId} ApplicationId={ApplicationId} EntityId={EntityId} AcsUrl={AcsUrl}";
 }

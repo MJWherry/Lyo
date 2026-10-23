@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection;
 using Lyo.Api.Services.TypeConversion;
@@ -12,6 +13,7 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.Api.Services.Crud.Read;
 
 /// <summary>Result of building a query path (key-constrained, subquery, or the standard path).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record QueryExecutionState<TDbModel>(IQueryable<TDbModel> BaseQueryable, int? Total, bool IsInMemoryResults, bool OrderingAppliedInDb)
     where TDbModel : class;
 

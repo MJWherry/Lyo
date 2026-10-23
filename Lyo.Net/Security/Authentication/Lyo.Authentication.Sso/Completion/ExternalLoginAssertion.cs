@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Sso.Completion;
 
 /// <summary>Protocol-neutral identity produced after a provider validates a login. Completion links this to a Lyo user and mints one JWT.</summary>
@@ -10,6 +12,7 @@ namespace Lyo.Authentication.Sso.Completion;
 /// <param name="PreferredLanguageBcp47">Optional BCP-47 language tag.</param>
 /// <param name="ProviderScopes">Scopes stored on the link. They are not copied onto the Lyo JWT.</param>
 /// <param name="RawClaims">Provider claims. A value is a <see cref="string" /> or an <see cref="IReadOnlyList{T}" /> of strings.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ExternalLoginAssertion(
     string Provider,
     string Subject,

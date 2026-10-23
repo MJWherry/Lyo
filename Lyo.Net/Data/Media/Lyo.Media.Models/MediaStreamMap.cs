@@ -1,9 +1,11 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Media.Models;
 
 /// <summary>One <c>-map</c> selector. Lookups are thread-safe. Use <see cref="Custom" /> for a selector that is not a simple stream.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record MediaStreamMap
 {
     private static readonly ConcurrentDictionary<string, MediaStreamMap> ById = new(StringComparer.OrdinalIgnoreCase);

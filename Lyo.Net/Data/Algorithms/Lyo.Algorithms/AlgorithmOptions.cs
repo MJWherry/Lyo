@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Algorithms;
 
 /// <summary>Host settings for <c>AddAlgorithms</c>. Section name <see cref="SectionName" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class AlgorithmOptions
 {
     /// <summary>Configuration section. <c>Algorithms</c>.</summary>
@@ -27,4 +29,7 @@ public sealed class AlgorithmOptions
             ArgumentHelpers.ThrowIfNullOrWhiteSpace(expression.Expression);
         }
     }
+
+    /// <summary>Override flag, expression count, and chain-depth limit. Expression text is omitted.</summary>
+    public override string ToString() => $"AllowRuntimeOverride={AllowRuntimeOverride} Expressions={Expressions.Count} MaxChainDepth={MaxChainDepth}";
 }

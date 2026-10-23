@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Lock.Redis;
 
 /// <summary>Adds a Redis acquire strategy to <see cref="LockOptions" /> (poll interval versus pub/sub wakeups).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class RedisLockOptions : LockOptions
 {
     /// <summary>Pause between acquire attempts when <see cref="UsePubSubForAcquireWait" /> is <see langword="false" />.</summary>
@@ -20,4 +22,7 @@ public class RedisLockOptions : LockOptions
         base.Validate();
         ArgumentHelpers.ThrowIf(AcquirePollInterval <= TimeSpan.Zero, "AcquirePollInterval must be greater than zero.");
     }
+
+    /// <summary>Poll interval, pub/sub wait, and the shared lock limits.</summary>
+    public override string ToString() => $"{base.ToString()} AcquirePollInterval={AcquirePollInterval} UsePubSubForAcquireWait={UsePubSubForAcquireWait}";
 }

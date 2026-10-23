@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.StateMachine.Models;
 
 namespace Lyo.StateMachine;
@@ -12,5 +13,10 @@ namespace Lyo.StateMachine;
 /// <param name="Trigger">Trigger that caused the transition.</param>
 /// <param name="Payload">Payload for <see cref="Trigger{TTrigger,TPayload}" /> triggers, otherwise null. Prefer <c>OnEntryFrom</c> for typed access.</param>
 /// <param name="Kind">Transition, re-entry, or internal.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record TransitionInfo<TState, TTrigger, TContext>(TContext Context, TState Source, TState Destination, TTrigger Trigger, object? Payload, TransitionKind Kind)
-    where TState : notnull where TTrigger : notnull;
+    where TState : notnull where TTrigger : notnull
+{
+    /// <summary>Source, destination, trigger, and kind. Payload is omitted.</summary>
+    public override string ToString() => $"{Source} -{Trigger}/{Kind}-> {Destination} PayloadSet={Payload is not null}";
+}

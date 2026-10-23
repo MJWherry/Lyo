@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 using Lyo.FileMetadataStore.Models;
 
@@ -7,8 +8,12 @@ namespace Lyo.FileStorage;
 /// <param name="HashAlgorithm">Algorithm that produced <see cref="OriginalFileHash" />. SHA-256 when the row did not record one.</param>
 /// <param name="OriginalFileHash">Digest of the plaintext bytes.</param>
 /// <param name="OriginalFileSize">Plaintext length in bytes.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record FileContentIntegrity(HashAlgorithm HashAlgorithm, byte[] OriginalFileHash, long OriginalFileSize)
 {
+    /// <summary>Hash algorithm, plaintext size, and digest length. Digest bytes are omitted.</summary>
+    public override string ToString() => $"{HashAlgorithm} Size={OriginalFileSize} HashBytes={OriginalFileHash.Length}";
+
     /// <summary>Projects the plaintext hash from <paramref name="metadata" />. Throws when that hash is missing.</summary>
     /// <param name="metadata">Stored file row.</param>
     public static FileContentIntegrity From(FileStoreResult metadata)

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.MessageQueue;
 
 /// <summary>Queue-message envelope with requeue tracking, tracing, and metadata.</summary>
@@ -8,4 +10,9 @@ namespace Lyo.MessageQueue;
 /// <param name="EnqueuedAt">First enqueue time. Use for staleness checks and metrics.</param>
 /// <param name="TraceId">Distributed trace id that ties processing back to the original request.</param>
 /// <param name="Version">Envelope schema version, so the format can evolve.</param>
-public sealed record QueueMessageEnvelope<T>(T Payload, int RequeueCount = 0, string? MessageId = null, DateTime? EnqueuedAt = null, string? TraceId = null, int Version = 1);
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record QueueMessageEnvelope<T>(T Payload, int RequeueCount = 0, string? MessageId = null, DateTime? EnqueuedAt = null, string? TraceId = null, int Version = 1)
+{
+    /// <summary>Id, requeue count, and trace. Payload is omitted.</summary>
+    public override string ToString() => $"Id={MessageId} Requeues={RequeueCount} Trace={TraceId} Version={Version} PayloadSet={Payload is not null}";
+}

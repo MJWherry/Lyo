@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection;
 using Lyo.Common.Core.Enums;
@@ -10,6 +11,7 @@ using Microsoft.Extensions.Logging;
 namespace Lyo.Api.Services.Crud.Read;
 
 /// <summary>Result of an ID-first include paging attempt.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record IdFirstPagingResult<TDbModel>(TDbModel[] Results, bool HasMore)
     where TDbModel : class;
 

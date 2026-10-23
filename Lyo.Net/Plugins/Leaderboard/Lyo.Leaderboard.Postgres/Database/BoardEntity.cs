@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Leaderboard.Postgres.Database;
 
 /// <summary>Persisted board row.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class BoardEntity
 {
     public Guid Id { get; set; }
@@ -64,4 +67,7 @@ public sealed class BoardEntity
     public List<AdjustmentEntity> Adjustments { get; set; } = [];
 
     public List<StandingEntity> Standings { get; set; } = [];
+
+    /// <summary>Type name, id, and name.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Name}";
 }

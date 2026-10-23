@@ -10,7 +10,7 @@ using Lyo.Authentication.Keycloak;
 using Lyo.Authentication.OpenIdConnect;
 using Lyo.Authentication.Postgres;
 using Lyo.Cache;
-using Lyo.Email;
+using Lyo.Email.Smtp;
 using Lyo.Exceptions;
 using Lyo.KeyStore;
 using Lyo.Leaderboard.Api.Endpoints;
@@ -68,8 +68,8 @@ public static class Extensions
         if (!string.IsNullOrWhiteSpace(configuration.GetSection("PostgresShortUrl")["ConnectionString"]))
             services.AddPostgresShortUrlServiceFromConfiguration(configuration);
 
-        if (!string.IsNullOrWhiteSpace(configuration.GetSection("EmailServiceOptions")["Host"]))
-            services.AddEmailServiceFromConfiguration(configuration);
+        if (!string.IsNullOrWhiteSpace(configuration.GetSection(SmtpEmailOptions.SectionName)["Host"]))
+            services.AddSmtpEmailServiceFromConfiguration(configuration);
 
         return services;
     }

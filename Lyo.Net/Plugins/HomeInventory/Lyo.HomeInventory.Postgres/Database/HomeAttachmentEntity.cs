@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.HomeInventory.Postgres.Database;
 
 /// <summary>FileStorage file linked to an inventory subject.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class HomeAttachmentEntity
 {
     [Key]
@@ -32,4 +34,7 @@ public sealed class HomeAttachmentEntity
     public DateTime CreatedTimestamp { get; set; }
 
     public DateTime? UpdatedTimestamp { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

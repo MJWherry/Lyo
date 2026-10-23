@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using DSharpPlus;
 
 namespace Lyo.Discord.Bot;
@@ -6,6 +7,7 @@ namespace Lyo.Discord.Bot;
 /// Settings for <see cref="LyoDiscordBotBase" /> (Discord token and gateway intents only). The Lyo API HTTP client is configured separately via
 /// <see cref="Lyo.Discord.Client.LyoDiscordClientOptions" />.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class LyoDiscordBotOptions
 {
     /// <summary>Default options-section name (matches existing appsettings: <c>DiscordBot</c>).</summary>
@@ -16,4 +18,7 @@ public sealed class LyoDiscordBotOptions
 
     /// <summary>DSharpPlus gateway intents for the DSharpPlus client. Default: guilds + members (required for sync).</summary>
     public DiscordIntents Intents { get; set; } = DiscordIntents.Guilds | DiscordIntents.GuildMembers;
+
+    /// <summary>Gateway intents and whether a bot token is set. The token is omitted.</summary>
+    public override string ToString() => $"Intents={Intents} TokenSet={!string.IsNullOrWhiteSpace(Token)}";
 }

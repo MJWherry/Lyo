@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Algorithms.Client;
 
 /// <summary>Settings used to build <see cref="AlgorithmClient" /> routes.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class AlgorithmClientOptions
 {
     /// <summary>Configuration section this type binds from.</summary>
@@ -22,4 +25,7 @@ public sealed class AlgorithmClientOptions
         if (RoutePrefix.Contains("://", StringComparison.Ordinal))
             throw new ArgumentException($"{nameof(RoutePrefix)} is a path prefix, not an absolute URL. Set HttpClient.BaseAddress for the host.", nameof(RoutePrefix));
     }
+
+    /// <summary>Route prefix used in front of catalog routes.</summary>
+    public override string ToString() => $"RoutePrefix={RoutePrefix}";
 }

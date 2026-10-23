@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 using KeyNotFoundException = Lyo.KeyStore.Exceptions.KeyNotFoundException;
 
@@ -159,10 +160,12 @@ public enum KeyStoreMigrationItemOutcome
 /// <param name="KeyId">Key id this report describes.</param>
 /// <param name="Version">Version this report describes.</param>
 /// <param name="Outcome">How that version finished.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record KeyStoreMigrationProgress(int KeysCompleted, int KeysTotal, string KeyId, string Version, KeyStoreMigrationItemOutcome Outcome);
 
 /// <summary>Counts from a finished key-store copy.</summary>
 /// <param name="KeysCopied">Key ids that finished.</param>
 /// <param name="VersionsCopied">Versions written and verified.</param>
 /// <param name="VersionsSkipped">Versions already present with the same bytes.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record KeyStoreMigrationResult(int KeysCopied, int VersionsCopied, int VersionsSkipped);

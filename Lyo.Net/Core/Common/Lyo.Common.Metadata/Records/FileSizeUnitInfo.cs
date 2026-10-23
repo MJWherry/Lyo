@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using Lyo.Common.Core;
 using Lyo.Common.Core.Enums;
@@ -6,6 +7,7 @@ using Lyo.Common.Core.Extensions;
 namespace Lyo.Common.Metadata.Records;
 
 /// <summary>Catalog row for a file-size unit: display name, abbreviation, byte multiplier, and the wrapped <see cref="FileSizeUnit" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public record FileSizeUnitInfo(string Name, string Abbreviation, string Description, long BytesMultiplier, FileSizeUnit FileSizeUnit)
 {
     // Unrecognized unit

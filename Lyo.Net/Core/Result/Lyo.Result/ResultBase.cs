@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Result.Interfaces;
 
 namespace Lyo.Result;
 
 /// <summary>Base record shared by Result&lt;T&gt; and BulkResult&lt;T&gt;.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public abstract record ResultBase : IResult
 {
     public DateTime Timestamp { get; init; } = DateTime.UtcNow;

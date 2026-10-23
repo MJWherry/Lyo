@@ -49,6 +49,7 @@ public sealed record HttpClientPlan(string? Name, IReadOnlyList<HttpClientPlanSt
 [JsonDerivedType(typeof(HttpClearCookiesPlanStep), "clearCookies")]
 [JsonDerivedType(typeof(HttpExportCookiesPlanStep), "exportCookies")]
 [JsonDerivedType(typeof(HttpLoadCookiesPlanStep), "loadCookies")]
+[DebuggerDisplay("{ToString(),nq}")]
 public abstract record HttpClientPlanStep(string? Name = null)
 {
     /// <summary>Stable id assigned by the builder when omitted.</summary>
@@ -56,9 +57,15 @@ public abstract record HttpClientPlanStep(string? Name = null)
 }
 
 /// <summary>HTTP request (GET/POST/PUT/PATCH/DELETE).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpRequestPlanStep(string Method, string Uri, string? Name = null)
     : HttpClientPlanStep(Name)
 {
+    /// <summary>Method and URI. Bodies, headers, and cookies are counts or lengths.</summary>
+    public override string ToString() =>
+        $"{Method} {Uri} Headers={Headers?.Count ?? 0} JsonBody={JsonBody?.Length ?? 0} "
+        + $"RawBody={RawBody?.Length ?? 0} Form={Form?.Count ?? 0} Cookies={Cookies?.Count ?? 0}";
+
     /// <summary>Extra request headers.</summary>
     public Dictionary<string, string>? Headers { get; init; }
 
@@ -121,10 +128,12 @@ public sealed record HttpRequestPlanStep(string Method, string Uri, string? Name
 }
 
 /// <summary>Wait between steps (on top of the timing handler).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpDelayPlanStep(TimeSpan Min, TimeSpan? Max = null, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>Download one URL to a file.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpDownloadFilePlanStep(string Uri, string Destination, string? Name = null)
     : HttpClientPlanStep(Name)
 {
@@ -133,70 +142,87 @@ public sealed record HttpDownloadFilePlanStep(string Uri, string Destination, st
 }
 
 /// <summary>Download every URL in a string-list variable into a directory.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpDownloadUrlsPlanStep(string VariableName, string Directory, string? Prefix = null, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>Parse the current (or named) body as JSON into a variable.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpExtractJsonPlanStep(string VariableName, string? FromVariable = null, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>JSON path into a variable.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpExtractJsonPathPlanStep(string VariableName, string JsonPath, string? FromVariable = null, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>JSON array into a string-list variable.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpExtractJsonArrayPlanStep(string VariableName, string? JsonPath = null, string? FromVariable = null, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>Array of objects into a JSON variable.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpExtractJsonRecordsPlanStep(string VariableName, string? JsonPath = null, string? FromVariable = null, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>Copy a response header into a variable.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpExtractHeaderPlanStep(string HeaderName, string VariableName, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>CSS + attributes → URL list.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpExtractSourcesPlanStep(string VariableName, LyoHttpExtractOptions Options, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>Image URLs.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpExtractImagesPlanStep(string VariableName, LyoHttpExtractOptions? Options = null, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>Link URLs.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpExtractLinksPlanStep(string VariableName, LyoHttpExtractOptions? Options = null, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>One attribute.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpExtractAttributePlanStep(string VariableName, LyoHttpExtractOptions Options, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>Inner text.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpExtractTextPlanStep(string VariableName, LyoHttpExtractOptions Options, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>Inner HTML.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpExtractHtmlPlanStep(string VariableName, LyoHttpExtractOptions Options, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>Regex.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpExtractRegexPlanStep(string VariableName, string Pattern, string? Group = null, string? FromVariable = null, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>Meta / OG / canonical. <paramref name="VariablePrefix" /> prefixes stored keys (e.g. <c>og</c>).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpExtractMetaPlanStep(string VariablePrefix, LyoHttpExtractOptions? Options = null, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>JSON-LD.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpExtractJsonLdPlanStep(string VariableName, LyoHttpExtractOptions? Options = null, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>HTML table.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpExtractTablePlanStep(string VariableName, string Selector, LyoHttpExtractOptions? Options = null, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>Filter a string list in bindings.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpFilterListPlanStep(string SourceVariable, string TargetVariable, string? Name = null)
     : HttpClientPlanStep(Name)
 {
@@ -217,41 +243,63 @@ public sealed record HttpFilterListPlanStep(string SourceVariable, string Target
 }
 
 /// <summary>Map a string list (prefix/suffix/template).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpMapListPlanStep(string SourceVariable, string TargetVariable, string? Prefix = null, string? Suffix = null, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>Store a literal string.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpStoreLiteralPlanStep(string VariableName, string Value, string? Name = null)
-    : HttpClientPlanStep(Name);
+    : HttpClientPlanStep(Name)
+{
+    /// <summary>Variable name and stored-literal length. The literal is omitted.</summary>
+    public override string ToString() => $"{VariableName} ValueLength={Value.Length} Name={Name}";
+}
 
 /// <summary>Store an interpolated template.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpStoreTemplatePlanStep(string VariableName, string Template, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>Set a session default header for later steps.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpSetHeaderPlanStep(string HeaderName, string Value, string? Name = null)
-    : HttpClientPlanStep(Name);
+    : HttpClientPlanStep(Name)
+{
+    /// <summary>Header name and value length. The header value is omitted.</summary>
+    public override string ToString() => $"{HeaderName} ValueLength={Value.Length} Name={Name}";
+}
 
 /// <summary>Remove a session default header.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpRemoveHeaderPlanStep(string HeaderName, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>Add a cookie to the jar.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpSetCookiePlanStep(LyoHttpCookie Cookie, string? Name = null)
-    : HttpClientPlanStep(Name);
+    : HttpClientPlanStep(Name)
+{
+    /// <summary>Cookie name only. The cookie value is omitted.</summary>
+    public override string ToString() => $"{Cookie.Name} Name={Name}";
+}
 
 /// <summary>Remove a cookie from the jar.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpRemoveCookiePlanStep(string CookieName, string? Domain = null, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>Empty the jar.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpClearCookiesPlanStep(string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>Export the jar into a JSON variable (not for committed secrets).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpExportCookiesPlanStep(string VariableName, string? Name = null)
     : HttpClientPlanStep(Name);
 
 /// <summary>Load cookies from a JSON variable or runtime cookie file.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HttpLoadCookiesPlanStep(string? VariableName = null, string? CookieFile = null, string? Name = null)
     : HttpClientPlanStep(Name);

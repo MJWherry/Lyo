@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions;
 
 namespace Lyo.Lock;
 
 /// <summary>Settings for <see cref="LocalLockService" /> and shared defaults used by Redis-backed locks.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public class LockOptions
 {
     /// <summary>Configuration section name used by <see cref="LockServiceExtensions" /> bind helpers.</summary>
@@ -30,4 +32,7 @@ public class LockOptions
         ArgumentHelpers.ThrowIf(DefaultLockDuration <= TimeSpan.Zero, "DefaultLockDuration must be greater than zero.");
         ArgumentHelpers.ThrowIfNullOrWhiteSpace(KeyPrefix);
     }
+
+    /// <summary>Acquire timeout, lock duration, and key prefix.</summary>
+    public override string ToString() => $"DefaultAcquireTimeout={DefaultAcquireTimeout} DefaultLockDuration={DefaultLockDuration} KeyPrefix={KeyPrefix}";
 }

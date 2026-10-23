@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using System.Text;
 
 namespace Lyo.TextEncoding;
 
 /// <summary>Fixed defaults for <see cref="CharsetEncodingService" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class CharsetEncodingOptions
 {
     /// <summary>Process-wide defaults used by <see cref="CharsetEncodingService.Shared" />.</summary>
@@ -22,4 +24,9 @@ public sealed class CharsetEncodingOptions
 
     /// <summary>When true, write APIs emit <see cref="System.Text.Encoding.GetPreamble" /> before the body when it is non-empty.</summary>
     public bool EmitBom { get; set; }
+
+    /// <summary>Default charset and whether encoder or decoder fallbacks are set.</summary>
+    public override string ToString()
+        => $"DefaultCharset={DefaultCharset.Name} RegisterCodePages={RegisterCodePages} EmitBom={EmitBom} "
+         + $"EncoderFallbackSet={EncoderFallback is not null} DecoderFallbackSet={DecoderFallback is not null}";
 }

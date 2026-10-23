@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 
 namespace Lyo.Config.Postgres.Database;
 
 /// <summary>Postgres row that holds config definitions in PostgreSQL.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ConfigDefinitionEntity
 {
     [Key]
@@ -40,4 +42,7 @@ public sealed class ConfigDefinitionEntity
     public DateTime CreatedTimestamp { get; set; }
 
     public DateTime? UpdatedTimestamp { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

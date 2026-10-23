@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.Pdf.Models;
 
 /// <summary>Style metadata attached to a PDF word (font, color, emphasis).</summary>
@@ -7,6 +9,7 @@ namespace Lyo.Pdf.Models;
 /// <param name="FontItalic">True when the font is italic.</param>
 /// <param name="FontColor">Hex color (e.g. #FF0000) when the PDF exposes it.</param>
 /// <param name="FontUnderline">True when a stroked path crosses the word band (vector underline detection).</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record PdfWordFormat(
     double? FontSize = null,
     string? FontName = null,

@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Job.Models.Response;
 
 /// <summary>Aggregated statistics for a job definition, computed over a rolling window (30 days by default).</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record JobDefinitionStatsRes
 {
     public Guid JobDefinitionId { get; init; }

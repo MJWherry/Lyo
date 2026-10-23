@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Leaderboard.Postgres.Database;
 
 /// <summary>Persisted scoring property.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ScoringPropertyEntity
 {
     public Guid Id { get; set; }
@@ -34,4 +37,7 @@ public sealed class ScoringPropertyEntity
     public DateTime? UpdatedAt { get; set; }
 
     public BoardEntity? Board { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

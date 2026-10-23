@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Lyo.Media.Models;
 
 /// <summary>HLS playlist type passed to <c>-hls_playlist_type</c>. Lookups are thread-safe.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HlsPlaylistType
 {
     private static readonly ConcurrentDictionary<string, HlsPlaylistType> ById = new(StringComparer.OrdinalIgnoreCase);

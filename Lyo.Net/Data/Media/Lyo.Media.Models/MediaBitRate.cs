@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Lyo.Media.Models;
 
 /// <summary>Audio or video bitrate token passed to ffmpeg (<c>128k</c>, <c>2M</c>). Lookups are thread-safe. Use <see cref="Custom" /> for a rate that is not listed.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record MediaBitRate
 {
     private static readonly ConcurrentDictionary<string, MediaBitRate> ById = new(StringComparer.OrdinalIgnoreCase);

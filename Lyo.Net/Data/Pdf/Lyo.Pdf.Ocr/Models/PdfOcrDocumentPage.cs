@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Images.Ocr.Models;
 using Lyo.Pdf.Models;
 
@@ -8,4 +9,5 @@ namespace Lyo.Pdf.Ocr.Models;
 /// <param name="WordsInPdfPoints"><see cref="PdfWord" /> instances in PDF coordinate space.</param>
 /// <param name="PageWidthPoints">Page width from <see cref="IPdfReader.GetPageSizePoints" />.</param>
 /// <param name="PageHeightPoints">Page height from <see cref="IPdfReader.GetPageSizePoints" />.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record PdfOcrDocumentPage(OcrPageResult Ocr, IReadOnlyList<PdfWord> WordsInPdfPoints, double PageWidthPoints, double PageHeightPoints);

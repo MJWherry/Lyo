@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 
 namespace Lyo.People.Postgres.Database;
 
 /// <summary>Person-to-phone link with a role and an optional date range.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ContactPhoneNumberEntity
 {
     [Key]
@@ -37,4 +39,7 @@ public sealed class ContactPhoneNumberEntity
 
     [ForeignKey(nameof(PhoneNumberId))]
     public PhoneNumberEntity? PhoneNumber { get; set; }
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

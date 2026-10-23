@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.StateMachine.Models;
 
 /// <summary>The saved state of one state machine instance (a job row, a character, a worker).</summary>
@@ -11,5 +13,6 @@ namespace Lyo.StateMachine.Models;
 /// <param name="EnteredAtUtc">When <paramref name="State" /> was entered, in UTC.</param>
 /// <param name="DueAtUtc">When the earliest timer on <paramref name="State" /> fires, or null when the state has no timer. Stores index it so workers can find due instances.</param>
 /// <param name="DataJson">Optional JSON document stored with the instance. Transitions carry it forward unchanged.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record StateSnapshot<TState>(TState State, long Version, DateTime EnteredAtUtc, DateTime? DueAtUtc = null, string? DataJson = null)
     where TState : notnull;

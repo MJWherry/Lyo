@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions.Models;
 
 namespace Lyo.MessageQueue;
 
 /// <summary>Settings shared by <see cref="QueueWorkerBase{TRequest, TResult}" /> subclasses. Bind from configuration (section <see cref="SectionName" />) or register the instance.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class QueueWorkerOptions
 {
     public const string SectionName = "QueueWorkerOptions";
@@ -61,4 +63,8 @@ public sealed class QueueWorkerOptions
         if (errors.Count > 0)
             throw new ValidationException($"Invalid {nameof(QueueWorkerOptions)}: {string.Join(" ", errors)}");
     }
+
+    /// <summary>Requeue cap, retry delay, drain timeout, and shutdown headroom.</summary>
+    public override string ToString() =>
+        $"DefaultMaxRequeueCount={DefaultMaxRequeueCount} RequeueDelay={RequeueDelay} DrainTimeout={DrainTimeout} ShutdownTimeoutHeadroom={ShutdownTimeoutHeadroom}";
 }

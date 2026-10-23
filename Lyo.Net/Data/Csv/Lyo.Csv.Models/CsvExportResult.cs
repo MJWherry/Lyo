@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Result;
 
 namespace Lyo.Csv.Models;
 
 /// <summary>Outcome of a CSV export, plus CSV-specific fields.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record CsvExportResult : Result<byte[]>
 {
     /// <summary>File path where the CSV was exported (if applicable).</summary>
@@ -13,6 +15,9 @@ public sealed record CsvExportResult : Result<byte[]>
 
     /// <summary>Optional result message.</summary>
     public string? Message { get; init; }
+
+    /// <summary>Path, row count, and CSV length. CSV bytes are omitted.</summary>
+    public override string ToString() => $"IsSuccess={IsSuccess} Rows={RowCount} Bytes={Data?.Length ?? 0} Path={FilePath}";
 
     private CsvExportResult(bool isSuccess, byte[]? data, IReadOnlyList<Error>? errors = null)
         : base(isSuccess, data, errors) { }

@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 using Lyo.Book.Enums;
 
 namespace Lyo.Book.Postgres.Database;
 
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class BookSeriesEntity
 {
     [Key]
@@ -43,4 +45,7 @@ public sealed class BookSeriesEntity
     public ICollection<BookSeriesAlternateTitleEntity> AlternateTitles { get; set; } = [];
 
     public ICollection<BookEntity> Books { get; set; } = [];
+
+    /// <summary>Type name, id, and title.</summary>
+    public override string ToString() => $"{GetType().Name} {Id} {Title}";
 }

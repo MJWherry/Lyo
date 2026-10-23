@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.PackageMetadata;
 
 /// <summary>
@@ -27,6 +29,7 @@ namespace Lyo.PackageMetadata;
 /// <param name="Tags">Free-form tags or keywords for the package, when available.</param>
 /// <param name="CreatedAt">When this metadata row was first stored (UTC). Set by the Postgres store; optional elsewhere.</param>
 /// <param name="UpdatedAt">When this metadata row was last updated (UTC). Set by the Postgres store; optional elsewhere.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record PackageMetadata(
     Guid Id,
     PackageEcosystem Ecosystem,

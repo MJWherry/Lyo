@@ -15,7 +15,7 @@
         "**OpenAPI / Scalar.** `AddOpenApi()`. In development, `MapOpenApi()` and `MapScalarApiReference()` are mounted so that `/scalar/v1` (or whatever Scalar picks) shows every endpoint.",
         "**Compression.** Brotli + Gzip response compression (level `Fastest`) and request decompression so Gateway calls can send Brotli payloads.",
         "**JSON.** `LyoJsonSerializerOptions.ApplyTo` + `AddLyoDateOnlyModelConverters` + `ReferenceHandler.IgnoreCycles` + `JsonIgnoreCondition.WhenWritingNull`.",
-        "**Infra.** `AddLyoMetricsWithOpenTelemetryFromConfiguration` (`OpenTelemetry` section: `ServiceName` `Lyo.TestApi`, `Protocol` `grpc`, `MetricExportIntervalMs` `1000`; OTLP endpoint from `OTEL_EXPORTER_OTLP_ENDPOINT` when set), `AddMetrics`, `AddFormatterService`, `AddCsvService`, `AddXlsxService`, `AddCompressionService` + `AddDefaultCompressionService<CompressionService>` (wires `ICompressionResolver` for file-storage codec dispatch), `AddLocalCacheFromConfiguration`, `AddHttpContextAccessor`, Mapster via `ConfigureMapster()`.",
+        "**Infra.** `AddLyoMetricsWithOpenTelemetryFromConfiguration` (`OpenTelemetry` section: `ServiceName` `Lyo.TestApi`, `Protocol` `grpc`, `MetricExportIntervalMs` `1000`; OTLP endpoint from `OTEL_EXPORTER_OTLP_ENDPOINT` when set; Prometheus scrape at `/metrics` via `AddPrometheusExporter` and `AddMeter(\"*\")` so every meter is exported), `AddMetrics`, `AddFormatterService`, `AddCsvService`, `AddXlsxService`, `AddCompressionService` + `AddDefaultCompressionService<CompressionService>` (wires `ICompressionResolver` for file-storage codec dispatch), `AddLocalCacheFromConfiguration`, `AddHttpContextAccessor`, Mapster via `ConfigureMapster()`.",
         "**Locks.** `AddRedisLock` if `Redis:ConnectionString` (or `ConnectionStrings:Redis`) is set, otherwise `AddLocalLock()`.",
         "**Messaging.** `SetupRabbitMqServiceFromConfiguration` + `AddMqJobEventPublisherFromConfiguration` (job state changes travel through MQ). `JobMqOptions:WorkerTypes` includes `example` so `job.run.example` is declared at startup for `Lyo.Job.Worker.Example`.",
         "**Postgres stores.** One `ConnectionStrings:Postgres` is shared by `Job`, `Drift`, `People`, `TwilioSms`, `Discord`, `Config`, `Book`, `Comic`, `Story`, `HomeInventory`, `FileMetadataStore`. Every `AddXxxDbContextFactory` is called with `EnableAutoMigrations = true` so a fresh database is brought up on the first run. Book registers `AddPostgresBookStore` plus `AddLyoCrudServices<BookDbContext>`. Story registers `AddStoryApi`. Algorithms registers `AddAlgorithmsApi`.",
@@ -294,6 +294,14 @@
       ]
     },
     {
+      "name": "Lyo.Audiobook.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Audit.Postgres",
       "kind": "lyo",
       "tags": [
@@ -471,6 +479,38 @@
     },
     {
       "name": "Lyo.Endato.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Espn.Fantasy.Football.Client",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FantasyFootball.Api",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FeatureFlags",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FeatureFlags.AspNetCore",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -671,6 +711,14 @@
     },
     {
       "name": "Lyo.People.Postgres",
+      "kind": "lyo",
+      "tags": [
+        "direct",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Podcast.Postgres",
       "kind": "lyo",
       "tags": [
         "direct",
@@ -900,6 +948,15 @@
       ]
     },
     {
+      "name": "OpenTelemetry.Exporter.Prometheus.AspNetCore",
+      "kind": "package",
+      "version": "1.16.0-beta.1",
+      "tags": [
+        "direct",
+        "third-party"
+      ]
+    },
+    {
       "name": "Scalar.AspNetCore",
       "kind": "package",
       "version": "2.16.11",
@@ -957,6 +1014,14 @@
       ]
     },
     {
+      "name": "Lyo.Audiobook",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Audit",
       "kind": "lyo",
       "tags": [
@@ -966,6 +1031,14 @@
     },
     {
       "name": "Lyo.Authentication.Models",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.Authentication.Sso",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -1117,7 +1190,7 @@
       ]
     },
     {
-      "name": "Lyo.Email.Models",
+      "name": "Lyo.Email.Smtp",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -1150,6 +1223,22 @@
     },
     {
       "name": "Lyo.Exceptions",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FantasyFootball",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.FantasyFootball.Postgres",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -1333,6 +1422,14 @@
       ]
     },
     {
+      "name": "Lyo.Podcast",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
       "name": "Lyo.Postgres",
       "kind": "lyo",
       "tags": [
@@ -1374,6 +1471,14 @@
     },
     {
       "name": "Lyo.Query.Sql",
+      "kind": "lyo",
+      "tags": [
+        "transitive",
+        "lyo"
+      ]
+    },
+    {
+      "name": "Lyo.RateLimit",
       "kind": "lyo",
       "tags": [
         "transitive",
@@ -1726,6 +1831,16 @@
       ]
     },
     {
+      "name": "Microsoft.Bcl.TimeProvider",
+      "kind": "package",
+      "version": "8.0.1",
+      "tags": [
+        "transitive",
+        "microsoft",
+        "netstandard2.0"
+      ]
+    },
+    {
       "name": "Microsoft.EntityFrameworkCore.Analyzers",
       "kind": "package",
       "version": "10.0.5",
@@ -1846,6 +1961,15 @@
     },
     {
       "name": "Microsoft.Extensions.Options.DataAnnotations",
+      "kind": "package",
+      "version": "10.0.5",
+      "tags": [
+        "transitive",
+        "microsoft"
+      ]
+    },
+    {
+      "name": "Microsoft.Extensions.Primitives",
       "kind": "package",
       "version": "10.0.5",
       "tags": [

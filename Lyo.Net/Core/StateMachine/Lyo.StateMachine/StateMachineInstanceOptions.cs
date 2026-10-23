@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace Lyo.StateMachine;
 
 /// <summary>Behaviour of a <see cref="StateMachineInstance{TState,TTrigger,TContext}" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class StateMachineInstanceOptions
 {
     /// <summary>
@@ -21,4 +23,7 @@ public sealed class StateMachineInstanceOptions
         if (MaxConflictRetries < 0)
             throw new ArgumentOutOfRangeException(nameof(MaxConflictRetries), MaxConflictRetries, "Must be zero or more.");
     }
+
+    /// <summary>Conflict retry limit. Serializer settings are omitted.</summary>
+    public override string ToString() => $"MaxConflictRetries={MaxConflictRetries} JsonSet={Json is not null}";
 }

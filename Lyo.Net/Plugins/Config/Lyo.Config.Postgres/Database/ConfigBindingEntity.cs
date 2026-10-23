@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
 
 namespace Lyo.Config.Postgres.Database;
 
@@ -6,6 +7,7 @@ namespace Lyo.Config.Postgres.Database;
 /// Ties a <see cref="ConfigDefinitionEntity" /> to one entity instance. JSON lives on <see cref="ConfigBindingRevisionEntity" />; <see cref="ValueType" /> copies
 /// <see cref="ConfigDefinitionEntity.ForValueType" /> so queries stay simple.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class ConfigBindingEntity
 {
     [Key]
@@ -41,4 +43,7 @@ public sealed class ConfigBindingEntity
     public DateTime? UpdatedTimestamp { get; set; }
 
     public ConfigDefinitionEntity Definition { get; set; } = null!;
+
+    /// <summary>Type name and id.</summary>
+    public override string ToString() => $"{GetType().Name} {Id}";
 }

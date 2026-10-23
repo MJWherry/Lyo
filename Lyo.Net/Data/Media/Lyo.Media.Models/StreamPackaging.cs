@@ -1,6 +1,9 @@
+using System.Diagnostics;
+
 namespace Lyo.Media.Models;
 
 /// <summary>HLS or DASH segment settings. The output path is the playlist.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record StreamPackaging
 {
     /// <summary>Segment length. Null means the factory default.</summary>

@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions.Models;
 
 namespace Lyo.Job.Scheduler;
 
 /// <summary>Settings for <see cref="JobWorkflowScheduler" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class JobWorkflowSchedulerOptions
 {
     public const string SectionName = "JobWorkflowScheduler";
@@ -46,4 +48,8 @@ public sealed class JobWorkflowSchedulerOptions
         if (errors.Count > 0)
             throw new ValidationException($"Invalid {nameof(JobWorkflowSchedulerOptions)}: {string.Join(" ", errors)}");
     }
+
+    /// <summary>Job API base URL, schedule interval, and misfire lookback.</summary>
+    public override string ToString() =>
+        $"ApiBaseUrl={ApiBaseUrl} TimeZone={TimeZone?.Id ?? "UTC"} Check={ScheduleCheckIntervalSeconds}s Lookback={MisfireLookbackMinutes}m";
 }

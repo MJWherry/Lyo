@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.Web.Primitives;
 
 /// <summary>One row shown in <see cref="LyoLogViewer" />.</summary>
@@ -5,4 +7,5 @@ namespace Lyo.Web.Primitives;
 /// <param name="Level">Severity used for colour and the level filter.</param>
 /// <param name="Message">Primary line of text.</param>
 /// <param name="Source">Optional logger or component name shown before the message.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record LyoLogEntry(DateTimeOffset Timestamp, LyoLogLevel Level, string Message, string? Source = null);

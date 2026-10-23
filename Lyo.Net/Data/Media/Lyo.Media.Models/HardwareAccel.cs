@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace Lyo.Media.Models;
 
@@ -6,6 +7,7 @@ namespace Lyo.Media.Models;
 /// Hardware encoder device. Lookups are thread-safe. <see cref="None" /> forces the CPU. A null option inherits the host setting. <see cref="Custom" /> does not invent
 /// encoder names such as <c>h264_amf</c>.
 /// </summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record HardwareAccel
 {
     private static readonly ConcurrentDictionary<string, HardwareAccel> ById = new(StringComparer.OrdinalIgnoreCase);

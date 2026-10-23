@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace Lyo.Authentication.Sso.Handoff;
 
 /// <summary>
@@ -15,6 +17,7 @@ namespace Lyo.Authentication.Sso.Handoff;
 /// one frontend.
 /// </param>
 /// <param name="CreatedAt">Server-side issuance timestamp.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record LyoHandoffCode(
     string Id,
     string AccessToken,
@@ -22,4 +25,9 @@ public sealed record LyoHandoffCode(
     DateTime AccessTokenExpiresAt,
     DateTime? RefreshTokenExpiresAt,
     string IssuedTo,
-    DateTime CreatedAt);
+    DateTime CreatedAt)
+{
+    /// <summary>Handoff id, origin, and expiry. Access and refresh tokens are omitted.</summary>
+    public override string ToString()
+        => $"Id={Id} To={IssuedTo} AccessExp={AccessTokenExpiresAt:O} RefreshExp={RefreshTokenExpiresAt:O} AccessSet={AccessToken.Length > 0} RefreshSet={RefreshToken != null}";
+}

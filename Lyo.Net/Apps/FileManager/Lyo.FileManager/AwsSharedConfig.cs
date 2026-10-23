@@ -1,7 +1,14 @@
+using System.Diagnostics;
+
 namespace Lyo.FileManager;
 
 /// <summary>One profile from the AWS shared credentials and config files.</summary>
-public sealed record AwsProfile(string Name, string? AccessKeyId, string? SecretAccessKey, string? Region);
+[DebuggerDisplay("{ToString(),nq}")]
+public sealed record AwsProfile(string Name, string? AccessKeyId, string? SecretAccessKey, string? Region)
+{
+    /// <summary>Profile name and region. Access key id and secret are omitted.</summary>
+    public override string ToString() => $"Name={Name} Region={Region} AccessKeySet={!string.IsNullOrEmpty(AccessKeyId)} SecretSet={!string.IsNullOrEmpty(SecretAccessKey)}";
+}
 
 /// <summary>Reads <c>~/.aws/credentials</c> and <c>~/.aws/config</c>. Region from config fills a credentials profile that omitted it.</summary>
 public static class AwsSharedConfig

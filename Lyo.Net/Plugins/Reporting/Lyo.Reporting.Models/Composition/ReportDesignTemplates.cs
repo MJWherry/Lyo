@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Common.Metadata.Records;
 using Lyo.Exceptions;
 using Lyo.Reporting.Models.Builders;
@@ -12,6 +13,7 @@ namespace Lyo.Reporting.Models.Composition;
 /// <param name="Name">Definition and menu label.</param>
 /// <param name="Description">Short purpose copied onto the seeded definition.</param>
 /// <param name="Create">Factory that returns a new composition graph.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record ReportDesignSample(string Name, string Description, Func<Report<object>> Create)
 {
     /// <summary>Builds a create-definition request, copying example parameter JSON onto <c>Value</c> so generate has sample rows.</summary>

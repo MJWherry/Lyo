@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using Lyo.Exceptions.Models;
 
 namespace Lyo.Job.Postgres;
 
 /// <summary>Options used by <see cref="JobMaintenanceService" />.</summary>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed class JobMaintenanceOptions
 {
     /// <summary>Default name of the configuration section.</summary>
@@ -89,4 +91,10 @@ public sealed class JobMaintenanceOptions
         if (errors.Count > 0)
             throw new ValidationException($"Invalid {nameof(JobMaintenanceOptions)}: {string.Join(" ", errors)}");
     }
+
+    /// <summary>Maintenance intervals, retention, and batch caps.</summary>
+    public override string ToString() =>
+        $"Interval={CheckIntervalSeconds}s RetentionDays={DefaultRetentionDays}/{WorkflowRetentionDays} PurgeBatch={PurgeBatchSize} " +
+        $"Stale={WorkerInstanceStaleMinutes}m Redispatch={QueuedRunRedispatchMinutes}/{QueuedRunRedispatchBatchSize} " +
+        $"Orphan={OrphanedRunTimeoutMinutes}m Scan={ActiveRunScanBatchSize}";
 }

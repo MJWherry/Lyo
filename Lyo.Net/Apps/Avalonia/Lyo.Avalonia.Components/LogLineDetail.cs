@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Diagnostic.StackTrace;
 using Lyo.Exceptions;
 
@@ -7,6 +8,7 @@ namespace Lyo.Desktop.Components;
 /// <param name="Category">User code, system, or test framework.</param>
 /// <param name="Method">Method with parameters collapsed.</param>
 /// <param name="Location">File and line when the trace has them.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record LogFrame(string Category, string Method, string? Location);
 
 /// <summary>What <see cref="LogLineView" /> shows for one <see cref="LogLine" />. An exception is decoded with <see cref="StackTraceDecoder" />.</summary>
@@ -18,6 +20,7 @@ public sealed record LogFrame(string Category, string Method, string? Location);
 /// <param name="Confidence">How sure the decoder is about <paramref name="CrashSite" />.</param>
 /// <param name="Fingerprint">Stable id for this trace.</param>
 /// <param name="Frames">Frames in trace order, outermost call last.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public sealed record LogLineDetail(
     string Message,
     IReadOnlyList<LogField> Context,

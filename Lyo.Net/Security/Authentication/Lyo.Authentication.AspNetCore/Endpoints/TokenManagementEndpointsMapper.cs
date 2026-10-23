@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Lyo.Api.Models.Error;
 using Lyo.Authentication.AspNetCore.Authorization;
 using Lyo.Authentication.Models.Format;
@@ -158,6 +159,7 @@ public static class TokenManagementEndpointsMapper
             record.RevokedReason);
 
     /// <summary>JSON body accepted by <c>POST /tokens</c>.</summary>
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed record CreateTokenRequest(
         string? DisplayName,
         IReadOnlyList<string>? Scopes,
@@ -166,12 +168,19 @@ public static class TokenManagementEndpointsMapper
         string? Kind = null);
 
     /// <summary>JSON shape returned by <c>POST /tokens</c>.</summary>
-    public sealed record CreateTokenResponse(string Plaintext, TokenDisplay Record);
+    [DebuggerDisplay("{ToString(),nq}")]
+    public sealed record CreateTokenResponse(string Plaintext, TokenDisplay Record)
+    {
+        /// <summary>Display record. Plaintext token is omitted.</summary>
+        public override string ToString() => $"PlaintextSet={Plaintext.Length > 0} {Record}";
+    }
 
     /// <summary>JSON shape from <c>GET /tokens/kinds</c>: every kind the endpoint knows, whether the caller may mint it, and the scope they would need.</summary>
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed record TokenKindDescriptor(string Kind, string Description, bool Allowed, string RequiredScope);
 
     /// <summary>Display-safe projection of an <see cref="ApiTokenRecord" />.</summary>
+    [DebuggerDisplay("{ToString(),nq}")]
     public sealed record TokenDisplay(
         string Id,
         string Kind,
